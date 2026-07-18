@@ -12719,7 +12719,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
             u.mod_fatigue( 1 );
         }
     }
-    if( !u.has_artifact_with( AEP_STEALTH ) ) {
+    if( !u.has_artifact_with( AEP_STEALTH ) &&
+        !u.has_enchantment_flag( enchantment_flag_id( "SILENT" ) ) ) {
         int volume = u.is_stealthy() ? 30 : 50;
         volume *= u.mutation_value( "noise_modifier" );
         volume += u.bonus_from_enchantments( volume, enchantment_value_id( "NOISE" ) );

@@ -107,10 +107,13 @@ static const trait_id trait_INFRESIST( "INFRESIST" );
 static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
 static const trait_id trait_M_SKIN3( "M_SKIN3" );
 static const trait_id trait_NOPAIN( "NOPAIN" );
-static const trait_id trait_SEESLEEP( "SEESLEEP" );
 static const trait_id trait_SCHIZOPHRENIC( "SCHIZOPHRENIC" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_WATERSLEEP( "WATERSLEEP" );
+
+static const enchantment_flag_id ench_flag_INTERNAL_ALARMCLOCK( "INTERNAL_ALARMCLOCK" );
+static const enchantment_flag_id ench_flag_SLEEP_SIGHT( "SLEEP_SIGHT" );
+static const enchantment_flag_id ench_flag_NO_LIGHT_WAKE( "NO_LIGHT_WAKE" );
 
 static void eff_fun_onfire( player &u, effect &it )
 {
@@ -1167,8 +1170,9 @@ void Character::hardcoded_effects( effect &it )
         bool woke_up = false;
         int tirednessVal = rng( 5, 200 ) + rng( 0, std::abs( get_fatigue() * 2 * 5 ) );
         if( !is_blind() && !has_effect( effect_narcosis ) ) {
-            if( !has_enchantment_flag(
-                    enchantment_flag_id( "SLEEP_SIGHT" ) ) ) { // People who can see while sleeping are acclimated to the light.
+            // If you can see while sleeping light probably doesn't bother you
+            if( !has_enchantment_flag( ench_flag_SLEEP_SIGHT ) &&
+                !has_enchantment_flag( ench_flag_NO_LIGHT_WAKE ) ) {
                 if( has_trait( trait_HEAVYSLEEPER2 ) && !has_trait( trait_HIBERNATE ) ) {
                     // So you can too sleep through noon
                     if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
@@ -1194,7 +1198,7 @@ void Character::hardcoded_effects( effect &it )
                     it.set_duration( 0_turns );
                     woke_up = true;
                 }
-            } else if( !has_enchantment_flag( enchantment_flag_id( "SLEEP_SIGHT" ) ) ) {
+            } else if( has_enchantment_flag( ench_flag_SLEEP_SIGHT ) ) {
                 Creature *hostile_critter = g->is_hostile_very_close();
                 if( hostile_critter != nullptr ) {
                     add_msg_if_player( _( "You see %s approaching!" ),
@@ -1270,7 +1274,7 @@ void Character::hardcoded_effects( effect &it )
     } else if( id == effect_alarm_clock ) {
         if( in_sleep_state() ) {
             const bool asleep = has_effect( effect_sleep );
-            if( has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
+            if( has_enchantment_flag( ench_flag_INTERNAL_ALARMCLOCK ) ) {
                 if( dur == 1_turns ) {
                     if( !asleep ) {
                         add_msg_if_player( _( "Your internal chronometer went off and you haven't slept a wink." ) );

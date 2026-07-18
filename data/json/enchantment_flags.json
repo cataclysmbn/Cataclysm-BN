@@ -36,6 +36,10 @@
     "type": "enchantment_flag"
   },
   {
+    "id": "SILENT",
+    "type": "enchantment_flag"
+  },
+  {
     "id": "EAT_ROTTEN",
     "type": "enchantment_flag"
   },
@@ -86,6 +90,18 @@
   },
   {
     "id": "FIRE_FIELD_IMMUNE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "NO_THERMAL_WAKE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "NO_DAMAGE_WAKE",
+    "type": "enchantment_flag"
+  },
+  {
+    "id": "NO_LIGHT_WAKE",
     "type": "enchantment_flag"
   }
 ]

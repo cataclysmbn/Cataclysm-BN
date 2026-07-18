@@ -1545,7 +1545,6 @@ static bool lua_trap_can_trigger_check( const Character &target, const trap &tra
 
 static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_bub_ms &loc )
 {
-    // Lua itrap can_trigger prevents triggering when returning false
     if( const auto *itrap_cb = trap.lua_callbacks ) {
         itrap_cb->call_on_trigger( target, trap, loc );
     }
@@ -1554,7 +1553,6 @@ static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_b
 static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
         const tripoint_bub_ms &loc )
 {
-    // Lua itrap can_trigger prevents triggering when returning false
     if( const auto *itrap_cb = trap.lua_callbacks ) {
         itrap_cb->call_on_trigger_aftermath( target, trap, loc );
     }
@@ -1563,7 +1561,7 @@ static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
 bool trapfunc::lua( const tripoint_bub_ms &p, Creature *target, item * )
 {
     const auto character = target->as_character();
-    auto trap = g->m.tr_at( p ); // Maybe this should be passed instead?
+    auto trap = g->m.tr_at( p );
     if( !lua_trap_can_trigger_check( *character, trap, p ) ) {
         return false;
     }

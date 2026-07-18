@@ -1691,3 +1691,14 @@ void MonsterGenerator::check_monster_definitions() const
         }
     }
 }
+
+void MonsterGenerator::resolve_lua_monster_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_monster_callback_actor>> &actors )
+{
+    for( const mtype &mt : mon_templates->get_all() ) {
+        auto it = actors.find( mt.id.str() );
+        if( it != actors.end() ) {
+            mt.lua_callbacks = it->second.get();
+        }
+    }
+}

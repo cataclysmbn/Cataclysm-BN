@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <span>
 
+class lua_monster_callback_actor;
 class Item_factory;
 class map;
 class mapgen_constructor;

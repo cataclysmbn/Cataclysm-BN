@@ -816,7 +816,7 @@ int spell::casting_time(const Character& guy) const {
     int casting_time = 0;
     if (has_flag(spell_flag::MOD_MELEE_MOVES)) {
         item& weapon = guy.used_weapon();
-        if (!weapon.is_null()) { casting_time += weapon.attack_cost(); }
+        if (!weapon.is_null()) { casting_time += guy.attack_cost(weapon); }
     }
     // Shortcut to avoid checking the flag twice
     if (type->base_casting_time < 0 && casting_time > 0) {

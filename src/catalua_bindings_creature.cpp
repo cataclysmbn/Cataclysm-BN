@@ -242,10 +242,8 @@ void cata::detail::reg_creature( sol::state &lua )
             if( bpid.has_value() )
             {
                 return cr.has_effect( eff, *bpid );
-            } else
-            {
-                return cr.has_effect( eff );
             }
+            return cr.has_effect( eff );
         } );
 
         luna::set_fx( ut, "get_effect", []( Creature & cr, const efftype_id & eff,
@@ -465,6 +463,22 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint_bub_ms & p, int f ) );
+        luna::set_fx( ut, "add_armor_item", []( monster & m, detached_ptr<item> &armor ) { return m.set_armor_item( std::move( armor ) ); } );
+        luna::set_fx( ut, "get_armor_item", []( monster & m ) { return m.get_armor_item(); } );
+        luna::set_fx( ut, "remove_armor_item", []( monster & m ) { return m.remove_armor_item(); } );
+
+        luna::set_fx( ut, "add_saddle_item", []( monster & m, detached_ptr<item> &saddle ) { return m.set_tack_item( std::move( saddle ) ); } );
+        luna::set_fx( ut, "get_saddle_item", []( monster & m ) { return m.get_tack_item() ; } );
+        luna::set_fx( ut, "remove_saddle_item", []( monster & m ) {return m.remove_tack_item();} );
+
+        luna::set_fx( ut, "add_storage_item", []( monster & m, detached_ptr<item> &storage ) { return m.set_storage_item( std::move( storage ) ) ;} );
+        luna::set_fx( ut, "get_storage_item", []( monster & m ) { return m.get_storage_item() ;} );
+        luna::set_fx( ut, "remove_storage_item", []( monster & m ) { return m.remove_storage_item() ;} );
+
+        luna::set_fx( ut, "add_battery_item", []( monster & m, detached_ptr<item> &storage ) { return m.set_battery_item( std::move( storage ) ) ;} );
+        luna::set_fx( ut, "get_battery_item", []( monster & m ) { return m.get_battery_item() ;} );
+        luna::set_fx( ut, "remove_battery_item", []( monster & m ) { return m.remove_battery_item() ;} );
+
         luna::set_fx( ut, "set_move_target", sol::overload(
         []( monster & mon, const tripoint_bub_ms & p ) -> void {
             mon.set_dest( p );

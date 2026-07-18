@@ -1563,7 +1563,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( petfood.feed ), mon.get_name() );
         }
 
-        mon.make_pet();
+        mon.make_pet( *p->as_character() );
 
         // Apply well_fed effect to improve monster productivity
         // This effect increases reproduction rate, milk production, growth speed, and HP recovery

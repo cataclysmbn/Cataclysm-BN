@@ -822,7 +822,7 @@ static void smash()
         !query_yn( _( "Are you sure you want to smash with an item that might shatter?" ) ) ) {
         return;
     }
-    const int move_cost = !u.is_armed() ? 80 : weapon.attack_cost() * 0.8;
+    const int move_cost = !u.is_armed() ? 80 : u.attack_cost( weapon ) * 0.8;
 
     bool didit = false;
     bool mech_smash = false;

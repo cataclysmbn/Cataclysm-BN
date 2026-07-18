@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enchantment_condition.h"
 #include "json.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -30,6 +31,8 @@ public:
     static void reset();
 
     enchantment_value_id id;
+
+    std::set<enchantment_condition_type> unsupported_conditions;
 
     bool was_loaded = false;
     bool can_add = true;

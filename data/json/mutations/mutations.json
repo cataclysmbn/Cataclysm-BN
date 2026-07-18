@@ -236,7 +236,7 @@
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
     "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISON_IMMUNE" ] } ]
+    "mut_enchantments": [ { "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -730,7 +730,7 @@
     "starting_trait": true,
     "cancels": [ "URSINE_EYE", "EAGLEEYED", "HYPEROPIC" ],
     "category": [ "BEAST", "TROGLOBITE", "URSINE" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "NEARSIGHTED" ] } ]
+    "mut_enchantments": [ { "flags": [ "NEARSIGHTED" ] } ]
   },
   {
     "type": "mutation",
@@ -784,12 +784,7 @@
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
     "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
-    "mut_enchantments": [
-      {
-        "condition": "ALWAYS",
-        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 2 }, { "value": "SLEEP_DB_RESIST", "add": 30 } ]
-      }
-    ]
+    "mut_enchantments": [ { "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 2 }, { "value": "SLEEP_DB_RESIST", "add": 30 } ] } ]
   },
   {
     "type": "mutation",
@@ -1371,7 +1366,7 @@
     "leads_to": [ "NIGHTVISION3" ],
     "cancels": [ "BIRD_EYE", "LIZ_EYE", "FEL_EYE", "URSINE_EYE", "COMPOUND_EYES", "ELFAEYES" ],
     "category": [ "CEPHALOPOD" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -1421,7 +1416,7 @@
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "type": "mutation",
@@ -1445,7 +1440,7 @@
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
     "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "type": "mutation",
@@ -1594,7 +1589,7 @@
     "prereqs": [ "EYEBULGE" ],
     "category": [ "LIZARD", "FISH" ],
     "wet_protection": [ { "part": "eyes", "neutral": 1 } ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -1678,7 +1673,7 @@
     ],
     "armor": [ { "parts": "ALL", "cut": 2, "bash": 3, "bullet": 1 } ],
     "speed_modifier": 0.8,
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
+    "mut_enchantments": [ { "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -1707,7 +1702,7 @@
     ],
     "armor": [ { "parts": "ALL", "cut": 3, "bash": 5, "bullet": 2 } ],
     "speed_modifier": 0.8,
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
+    "mut_enchantments": [ { "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -2292,7 +2287,7 @@
       { "part": "torso", "ignored": 20 }
     ],
     "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "BLISTER_COUNT", "add": -5 } ] } ]
+    "mut_enchantments": [ { "values": [ { "value": "BLISTER_COUNT", "add": -5 } ] } ]
   },
   {
     "type": "mutation",
@@ -2731,7 +2726,7 @@
     "description": "Your body is unusually inhospitable to parasitic lifeforms.  You will never become infested with internal parasites.",
     "starting_trait": true,
     "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_PARASITE_IMMUNE" ] } ]
+    "mut_enchantments": [ { "flags": [ "FOOD_PARASITE_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -2935,7 +2930,7 @@
     "description": "Your digestive system is specialized to allow you to consume decaying material.  You can eat rotten food, albeit for less nutrition than usual.",
     "cancels": [ "HERBIVORE", "RUMINANT" ],
     "category": [ "TROGLOBITE", "CHIMERA" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE" ] } ]
+    "mut_enchantments": [ { "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE" ] } ]
   },
   {
     "type": "mutation",
@@ -2951,7 +2946,7 @@
     "cancels": [ "HERBIVORE", "CARNIVORE", "GRAZER" ],
     "leads_to": [ "CHLOROMORPH" ],
     "category": [ "PLANT" ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE", "ONLY_EAT_ROTTEN" ] } ]
+    "mut_enchantments": [ { "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE", "ONLY_EAT_ROTTEN" ] } ]
   },
   {
     "type": "mutation",
@@ -3016,7 +3011,7 @@
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
     "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
     "kcal_scale": 0.15,
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "FOOD_POISON_IMMUNE" ] } ]
+    "mut_enchantments": [ { "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -4302,7 +4297,7 @@
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
     "passive_mods": { "per_mod": 5 },
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -4950,12 +4945,7 @@
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
     "category": [ "BEAST", "LUPINE" ],
-    "mut_enchantments": [
-      {
-        "condition": "ALWAYS",
-        "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 5 }, { "value": "SLEEP_DB_RESIST", "add": 50 } ]
-      }
-    ]
+    "mut_enchantments": [ { "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 5 }, { "value": "SLEEP_DB_RESIST", "add": 50 } ] } ]
   },
   {
     "type": "mutation",
@@ -5262,7 +5252,7 @@
       { "part": "hand_r", "neutral": 2, "good": 3 },
       { "part": "torso", "neutral": 14, "good": 26 }
     ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "immune_fields": [ "fd_slime" ] } ]
+    "mut_enchantments": [ { "immune_fields": [ "fd_slime" ] } ]
   },
   {
     "type": "mutation",
@@ -5881,7 +5871,7 @@
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
+    "mut_enchantments": [ { "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
   },
   {
     "type": "mutation",
@@ -5902,7 +5892,7 @@
     "active": true,
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
-    "mut_enchantments": [ { "condition": "INACTIVE", "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
+    "mut_enchantments": [ { "conditions": [ "INACTIVE" ], "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
   },
   {
     "type": "mutation",
@@ -6377,7 +6367,7 @@
     "threshreq": [ "THRESH_FISH" ],
     "armor": [ { "parts": "eyes", "cut": 3, "bash": 1 } ],
     "active": true,
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT", "SLEEP_SIGHT" ] } ]
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT", "SLEEP_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -6417,7 +6407,7 @@
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
     "mixed_effect": true,
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "ELECTROSENSE" ] } ]
+    "mut_enchantments": [ { "flags": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
@@ -6877,7 +6867,7 @@
     "valid": false,
     "description": "Be vewwy vewwy quiet.  We're hunting bugs.",
     "debug": true,
-    "mut_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "NOISE", "multiply": 0 } ] } ]
+    "mut_enchantments": [ { "flags": [ "SILENT" ] } ]
   },
   {
     "type": "mutation",
@@ -7166,6 +7156,6 @@
       "MYOPIC",
       "HYPEROPIC"
     ],
-    "mut_enchantments": [ { "condition": "ALWAYS", "flags": [ "BLIND" ] } ]
+    "mut_enchantments": [ { "flags": [ "BLIND" ] } ]
   }
 ]

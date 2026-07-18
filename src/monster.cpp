@@ -16,6 +16,7 @@
 #include "bodypart.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -97,6 +98,7 @@ static const efftype_id effect_feral_infighting_punishment( "feral_infighting_pu
 static const efftype_id effect_feral_killed_recently( "feral_killed_recently" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_grabbing( "grabbing" );
+static const efftype_id effect_has_bag( "has_bag" );
 static const efftype_id effect_heavysnare( "heavysnare" );
 static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_in_pit( "in_pit" );
@@ -114,6 +116,7 @@ static const efftype_id effect_paralyzepoison( "paralyzepoison" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_run( "run" );
+static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_smoke( "smoke" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_supercharged( "supercharged" );
@@ -1151,16 +1154,18 @@ std::string monster::extended_description() const
         ss += std::string( _( "It has a head." ) ) + "\n";
     }
 
-    if( bonded_character_id == g->u.getID() ) {
-        ss += string_format( _( "It regards you as family. (%s)\n" ), pet_bond_level );
-    } else if( pet_bond_level > 5 ) {
-        ss += string_format( _( "It really likes you. (%s)\n" ), pet_bond_level );
-    } else if( pet_bond_level > 2 ) {
-        ss += string_format( _( "It likes you. (%s)\n" ), pet_bond_level );
-    } else if( pet_bond_level > 0 ) {
-        ss += string_format( _( "It is curious about you. (%s)\n" ), pet_bond_level );
-    } else {
-        ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
+    if( is_pet() ) {
+        if( bonded_character_id == g->u.getID() ) {
+            ss += string_format( _( "It regards you as family. (%s)\n" ), pet_bond_level );
+        } else if( pet_bond_level > 5 ) {
+            ss += string_format( _( "It really likes you. (%s)\n" ), pet_bond_level );
+        } else if( pet_bond_level > 2 ) {
+            ss += string_format( _( "It likes you. (%s)\n" ), pet_bond_level );
+        } else if( pet_bond_level > 0 ) {
+            ss += string_format( _( "It is curious about you. (%s)\n" ), pet_bond_level );
+        } else {
+            ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
+        }
     }
 
     if( training_level > 0 && type->pet_training ) {
@@ -1433,12 +1438,14 @@ detached_ptr<item> monster::set_tack_item( detached_ptr<item> &&to )
 {
     if( to && to->typeId() != itype_id::NULL_ID() ) {
         has_processable_items = true;
+        add_effect( effect_saddled, 1_turns );
     }
     return tack_item.swap( std::move( to ) );
 }
 
 detached_ptr<item> monster::remove_tack_item()
 {
+    remove_effect( effect_saddled );
     return set_tack_item( detached_ptr<item>() );
 }
 
@@ -1475,12 +1482,17 @@ detached_ptr<item> monster::set_armor_item( detached_ptr<item> &&to )
 {
     if( to && to->typeId() != itype_id::NULL_ID() ) {
         has_processable_items = true;
+        add_effect( effect_monster_armor, 1_turns );
     }
     return armor_item.swap( std::move( to ) );
 }
 
 detached_ptr<item> monster::remove_armor_item()
 {
+    if( armor_item ) {
+        armor_item->erase_var( "pet_armor" );
+        remove_effect( effect_monster_armor );
+    }
     return set_armor_item( detached_ptr<item>() );
 }
 
@@ -1496,12 +1508,14 @@ detached_ptr<item> monster::set_storage_item( detached_ptr<item> &&to )
 {
     if( to && to->typeId() != itype_id::NULL_ID() ) {
         has_processable_items = true;
+        add_effect( effect_has_bag, 1_turns );
     }
     return storage_item.swap( std::move( to ) );
 }
 
 detached_ptr<item> monster::remove_storage_item()
 {
+    remove_effect( effect_has_bag );
     return set_storage_item( detached_ptr<item>() );
 }
 
@@ -3826,6 +3840,19 @@ void monster::make_pet()
     add_effect( effect_pet, 1_turns );
 }
 
+void monster::make_pet( Character &actor )
+{
+    // There is another call of make_pet in spawn_monsters_submap so the original call remains
+    make_pet();
+    if( const auto _lua_callbacks = type->lua_callbacks ) {
+        _lua_callbacks->call_on_tame( actor, *this );
+    }
+
+    cata::run_hooks( "on_monster_tame", [&](
+    auto & params ) { params["avatar"] = &actor; params["monster"] = *this; }
+                   );
+}
+
 bool monster::is_pet() const
 {
     return ( friendly == -1 && has_effect( effect_pet ) );
@@ -4386,4 +4413,12 @@ auto monster::get_faction_anger( mfaction_id target_faction ) const -> int
 
     auto it = faction_anger.find( target_faction );
     return ( it != faction_anger.end() ) ? it->second : 0;
+}
+
+const lua_monster_callback_actor *monster::get_lua_callbacks() const
+{
+    if( type && type->lua_callbacks ) {
+        return type->lua_callbacks;
+    }
+    return nullptr;
 }

@@ -2,20 +2,19 @@
   {
     "type": "enchantment",
     "id": "ENCH_INVISIBILITY",
-    "condition": "ACTIVE",
+    "conditions": [ "ACTIVE" ],
     "ench_effects": [ { "effect": "invisibility", "intensity": 1 } ]
   },
   {
     "type": "enchantment",
     "id": "ENCH_SHADOW_CLOUD",
-    "condition": "ACTIVE",
+    "conditions": [ "ACTIVE" ],
     "ench_effects": [ { "effect": "invisibility", "intensity": 1 } ],
     "emitter": "emit_shadow_field"
   },
   {
     "type": "enchantment",
     "id": "ENCH_BIO_CARBON",
-    "condition": "ALWAYS",
     "values": [
       { "value": "ARMOR_BASH", "multiply": -0.05 },
       { "value": "ARMOR_CUT", "multiply": -0.1 },
@@ -26,7 +25,7 @@
   {
     "type": "enchantment",
     "id": "ENCH_UNCANNY_DODGE",
-    "condition": "ACTIVE",
+    "conditions": [ "ACTIVE" ],
     "mutations": [ "ENCH_UNCANNY_DODGE_EFFECT" ]
   },
   {
@@ -42,8 +41,6 @@
   {
     "type": "enchantment",
     "id": "ENCH_WEAPON_DEBUGGY_ACIDIC",
-    "condition": "ALWAYS",
-    "has": "WIELD",
     "values": [ { "value": "ITEM_DAMAGE_ACID", "add": 9999 } ]
   },
   {
@@ -57,8 +54,7 @@
   {
     "type": "enchantment",
     "id": "ENCH_INSECT_WINGS_ACTIVE",
-    "has": "HELD",
-    "condition": "ACTIVE",
+    "conditions": [ "ACTIVE" ],
     "values": [ { "value": "MOVE_COST", "multiply": -0.25 } ]
   }
 ]

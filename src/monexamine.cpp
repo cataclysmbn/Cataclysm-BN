@@ -11,6 +11,8 @@
 #include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "debug.h"
@@ -73,6 +75,8 @@ static const flag_id json_flag_TIE_UP( "TIE_UP" );
 static const flag_id json_flag_TACK( "TACK" );
 static const flag_id json_flag_MECH_BAT( "MECH_BAT" );
 
+static const int ITEM_RADIUS = 2;
+
 namespace
 {
 
@@ -111,7 +115,8 @@ bool monexamine::pet_menu( monster &z )
         check_bat,
         change_orders,
         disable_pet,
-        attack
+        attack,
+        COUNT
     };
 
     uilist amenu;
@@ -296,109 +301,199 @@ bool monexamine::pet_menu( monster &z )
     } else {
         amenu.addentry( attack, true, 'A', _( "Attack" ) );
     }
+
+    std::vector<lua_menu_entry> lua_entries {};
+    std::map<int, lua_menu_entry> lua_entries_map;
+    const auto cb_actor = z.get_lua_callbacks();
+    if( cb_actor ) {
+        const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
+        for( const auto entry : entries ) {
+            if( entry.valid() ) {
+                lua_entries.push_back( entry );
+            }
+        }
+    }
+
+    const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
+    [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
+    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+        if( !result.is<sol::table>() ) { continue; }
+
+        const sol::table &entries_table = result.as<sol::table>();
+        const int size = entries_table.size();
+        for( int j = 1; j <= size; ++j ) {
+            sol::optional<sol::table> entry_opt = entries_table[j];
+            if( !entry_opt.has_value() ) {
+                debugmsg( "Empty entry at index %d", j );
+                continue;
+            }
+
+            const sol::table &entry = *entry_opt;
+            std::string id = entry.get<std::string>( "menu_id" );
+            std::string label = entry.get<std::string>( "menu_label" );
+            lua_entries.emplace_back( id, label );
+        }
+    }
+
+    std::ranges::sort( lua_entries, []( const lua_menu_entry & a, const lua_menu_entry & b ) {
+        return a.menu_label > b.menu_label;
+    } );
+
+    int last_int = COUNT - 1;
+    for( const auto entry : lua_entries ) {
+        last_int++;
+        lua_entries_map.emplace( last_int, entry );
+        amenu.addentry( last_int, true, ' ', entry.menu_label );
+    }
+
     amenu.query();
     int choice = amenu.ret;
+    std::string entry_str_id;
 
     switch( choice ) {
         case push_zlave:
+            entry_str_id = "push_zlave";
             push( z );
             break;
         case lead:
+            entry_str_id = "lead";
             start_leading( z );
             break;
         case stop_lead:
+            entry_str_id = "stop_lead";
             stop_leading( z );
             break;
         case rename:
+            entry_str_id = "rename";
             rename_pet( z );
             break;
         case attach_bag:
+            entry_str_id = "attach_bag";
             attach_bag_to( z );
             break;
         case remove_bag:
+            entry_str_id = "remove_bag";
             remove_bag_from( z );
             break;
         case drop_all:
+            entry_str_id = "drop_all";
             dump_items( z );
             break;
         case give_items:
+            entry_str_id = "give_items";
             return give_items_to( z );
         case take_items:
+            entry_str_id = "take_items";
             take_items_from( z );
             break;
         case mon_armor_add:
+            entry_str_id = "mon_armor_add";
             return add_armor( z );
         case mon_harness_remove:
+            entry_str_id = "mon_harness_remove";
             remove_harness( z );
             break;
         case mon_armor_remove:
+            entry_str_id = "mon_armor_remove";
             remove_armor( z );
             break;
         case play_with_pet:
             if( query_yn( _( "Spend a few minutes to play with your %s?" ), pet_name ) ) {
+                entry_str_id = "play_with_pet";
                 play_with( z );
             }
             break;
         case train_combat_pet:
+            entry_str_id = "train_combat_pet";
             train_pet( z );
             break;
         case slaughter:
             if( query_yn( _( "Really kill the %s?" ), pet_name ) ) {
+                entry_str_id = "slaughter";
                 kill_zslave( z );
             }
             break;
         case leash:
+            entry_str_id = "leash";
             add_leash( z );
             break;
         case unleash:
+            entry_str_id = "unleash";
             remove_leash( z );
             break;
         case attach_saddle:
+            entry_str_id = "attach_saddle";
+            attach_or_remove_saddle( z );
+            break;
         case remove_saddle:
+            entry_str_id = "remove_saddle";
             attach_or_remove_saddle( z );
             break;
         case mount:
+            entry_str_id = "mount";
             mount_pet( z );
             break;
         case tie:
+            entry_str_id = "tie";
             tie_pet( z );
             break;
         case untie:
+            entry_str_id = "untie";
             untie_pet( z );
             break;
         case milk:
+            entry_str_id = "milk";
             milk_source( z );
             break;
         case shear:
+            entry_str_id = "shear";
             shear_animal( z );
             break;
         case pay:
+            entry_str_id = "pay";
             pay_bot( z );
             break;
         case remove_bat:
+            entry_str_id = "remove_bat";
             remove_battery( z );
             break;
         case insert_bat:
+            entry_str_id = "insert_bat";
             insert_battery( z );
             break;
         case check_bat:
+            entry_str_id = "check_bat";
             break;
         case change_orders:
+            entry_str_id = "change_orders";
             toggle_ignore_targets( z );
             break;
         case disable_pet:
             if( query_yn( _( "Really deactivate your %s?" ), pet_name ) ) {
+                entry_str_id = "disable_pet";
                 deactivate_pet( z );
             }
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
+                entry_str_id = "attack";
                 avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
+            if( choice >= COUNT ) {
+                entry_str_id = lua_entries_map[choice].menu_id;
+            }
             break;
     }
+    if( !entry_str_id.empty() ) {
+        if( cb_actor ) {
+            cb_actor->call_on_examine_menu_entry( you, z, entry_str_id );
+        }
+        cata::run_hooks( "on_monster_examine_menu_entry", [&](
+        auto & params ) { params["avatar"] = &you; params["monster"] = &z; params["entry"] = entry_str_id; } );
+    }
+
     return true;
 }
 
@@ -427,7 +522,8 @@ static item *pet_armor_loc( monster &z )
                z.get_volume() <= it.get_pet_armor_max_vol();
     };
 
-    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Pet armor" ) );
+    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Pet armor" ), "",
+            ITEM_RADIUS );
 }
 
 static item *tack_loc()
@@ -436,7 +532,7 @@ static item *tack_loc()
         return it.has_flag( json_flag_TACK );
     };
 
-    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Tack" ) );
+    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Tack" ), "", ITEM_RADIUS );
 }
 
 void monexamine::remove_battery( monster &z )
@@ -624,7 +720,6 @@ bool monexamine::mfriend_menu( monster &z )
 void monexamine::attach_or_remove_saddle( monster &z )
 {
     if( z.has_effect( effect_saddled ) ) {
-        z.remove_effect( effect_saddled );
         get_avatar().i_add( z.remove_tack_item() );
     } else {
         item *loc = tack_loc();
@@ -633,7 +728,6 @@ void monexamine::attach_or_remove_saddle( monster &z )
             add_msg( _( "Never mind." ) );
             return;
         }
-        z.add_effect( effect_saddled, 1_turns );
         z.set_tack_item( loc->detach() );
     }
 }
@@ -710,7 +804,7 @@ void monexamine::attach_bag_to( monster &z )
     };
 
     avatar &you = get_avatar();
-    item *loc = game_menus::inv::titled_filter_menu( filter, you, _( "Bag item" ) );
+    item *loc = game_menus::inv::titled_filter_menu( filter, you, _( "Bag item" ), "", ITEM_RADIUS );
 
     if( !loc ) {
         add_msg( _( "Never mind." ) );
@@ -720,7 +814,6 @@ void monexamine::attach_bag_to( monster &z )
     item &it = *loc;
     z.set_storage_item( it.detach( ) );
     add_msg( _( "You mount the %1$s on your %2$s." ), it.display_name(), pet_name );
-    z.add_effect( effect_has_bag, 1_turns );
     // Update encumbrance in case we were wearing it
     you.flag_encumbrance();
     you.moves -= 200;
@@ -740,7 +833,6 @@ void monexamine::remove_bag_from( monster &z )
     } else {
         add_msg( m_bad, _( "Your %1$s doesn't have a bag!" ), pet_name );
     }
-    z.remove_effect( effect_has_bag );
 }
 
 void monexamine::dump_items( monster &z )
@@ -849,7 +941,6 @@ bool monexamine::add_armor( monster &z )
     z.set_armor_item( loc->detach() );
     add_msg( pgettext( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
              pet_name );
-    z.add_effect( effect_monster_armor, 1_turns );
     // TODO: armoring a horse takes a lot longer than 2 seconds. This should be a long action.
     get_avatar().moves -= 200;
     return true;
@@ -864,10 +955,8 @@ void monexamine::remove_harness( monster &z )
 void monexamine::remove_armor( monster &z )
 {
     std::string pet_name = z.get_name();
-    if( z.get_armor_item() ) {
-        z.get_armor_item()->erase_var( "pet_armor" );
-        item *armor = z.get_armor_item();
-        get_map().add_item_or_charges( z.bub_pos(), armor->detach() );
+    if( item *armor = z.get_armor_item() ) {
+        get_map().add_item_or_charges( z.bub_pos(), z.remove_armor_item() );
         add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
                  pet_name );
         // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
@@ -875,7 +964,6 @@ void monexamine::remove_armor( monster &z )
     } else {
         add_msg( m_bad, _( "Your %1$s isn't wearing armor!" ), pet_name );
     }
-    z.remove_effect( effect_monster_armor );
 }
 
 void monexamine::play_with( monster &z )

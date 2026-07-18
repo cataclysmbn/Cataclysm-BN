@@ -53,7 +53,7 @@
     "magazine_well": "250 ml",
     "flags": [ "STURDY", "WATERPROOF", "THERMOMETER", "RAINPROOF", "POWERARMOR_COMPATIBLE" ],
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
     }
   }
 ]

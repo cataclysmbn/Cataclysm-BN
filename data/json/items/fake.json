@@ -150,9 +150,7 @@
     "volume": "750 ml",
     "bashing": 1,
     "to_hit": -1,
-    "relic_data": {
-      "passive_effects": [ { "has": "WIELD", "condition": "ALWAYS", "values": [ { "value": "CLAIRVOYANCE", "max": 10 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WIELD" ], "values": [ { "value": "CLAIRVOYANCE", "max": 10 } ] } ] }
   },
   {
     "id": "acid_spit",

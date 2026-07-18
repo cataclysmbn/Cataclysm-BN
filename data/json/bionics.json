@@ -55,7 +55,7 @@
     "flags": [ "BIONIC_FAULTY" ],
     "starting_bionic": true,
     "points": -1,
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "NOISE", "add": 30 } ] } ]
+    "bio_enchantments": [ { "values": [ { "value": "NOISE", "add": 30 } ] } ]
   },
   {
     "id": "bio_armor_arms",
@@ -80,7 +80,7 @@
     "cut_protec": [ [ "eyes", 3 ] ],
     "points": 1,
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 10 } ] } ]
+    "bio_enchantments": [ { "values": [ { "value": "INTIMIDATE", "add": 10 } ] } ]
   },
   {
     "id": "bio_armor_head",
@@ -172,7 +172,7 @@
     "description": "The lenses surgically installed over your eyes can be tinted to block out incoming light.",
     "included": true,
     "flags": [ "BIONIC_TOGGLED" ],
-    "bio_enchantments": [ { "condition": "ACTIVE", "ench_effects": [ { "effect": "blind", "intensity": 1 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "ench_effects": [ { "effect": "blind", "intensity": 1 } ] } ]
   },
   {
     "id": "bio_blood_anal",
@@ -283,7 +283,7 @@
     "time": 1,
     "points": 3,
     "flags": [ "BIONIC_TOGGLED" ],
-    "bio_enchantments": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
   },
   {
     "id": "bio_cloak",
@@ -330,10 +330,7 @@
     "starting_bionic": true,
     "points": -1,
     "flags": [ "BIONIC_FAULTY" ],
-    "bio_enchantments": [
-      { "condition": "ALWAYS", "values": [ { "value": "PERSUADE", "add": -50 } ] },
-      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 20 } ] }
-    ]
+    "bio_enchantments": [ { "values": [ { "value": "PERSUADE", "add": -50 }, { "value": "INTIMIDATE", "add": 20 } ] } ]
   },
   {
     "id": "bio_dex_enhancer",
@@ -353,9 +350,7 @@
     "occupied_bodyparts": [ [ "torso", 5 ] ],
     "points": 3,
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
-    "bio_enchantments": [
-      { "condition": "ALWAYS", "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISON_IMMUNE" ] }
-    ]
+    "bio_enchantments": [ { "flags": [ "EAT_ROTTEN", "CONSUME_UNCLEAN", "FOOD_PARASITE_IMMUNE", "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "id": "bio_dis_acid",
@@ -466,13 +461,7 @@
     "can_uninstall": false,
     "points": 1,
     "no_uninstall_reason": "The telescopic lenses are part of the patient's eyes now, remove them and the patient would become blind",
-    "bio_enchantments": [
-      {
-        "condition": "ALWAYS",
-        "values": [ { "value": "OVERMAP_SIGHT", "add": 1 } ],
-        "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ]
-      }
-    ]
+    "bio_enchantments": [ { "values": [ { "value": "OVERMAP_SIGHT", "add": 1 } ], "flags": [ "UNDERWATER_SIGHT", "FIX_NEARSIGHTED" ] } ]
   },
   {
     "id": "bio_face_mask",
@@ -482,9 +471,9 @@
     "points": 1,
     "occupied_bodyparts": [ [ "head", 3 ], [ "mouth", 1 ] ],
     "bio_enchantments": [
-      { "condition": "ALWAYS", "values": [ { "value": "LIE", "add": 20 } ] },
-      { "condition": "ALWAYS", "values": [ { "value": "PERSUADE", "add": 10 } ] },
-      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 10 } ] }
+      {
+        "values": [ { "value": "LIE", "add": 20 }, { "value": "PERSUADE", "add": 10 }, { "value": "INTIMIDATE", "add": 10 } ]
+      }
     ]
   },
   {
@@ -550,7 +539,7 @@
     "starting_bionic": true,
     "points": 1,
     "flags": [ "BIONIC_TOGGLED" ],
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "LUMINATION", "max": 300 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "LUMINATION", "max": 300 } ] } ]
   },
   {
     "id": "bio_tattoo_led",
@@ -563,7 +552,7 @@
     "starting_bionic": true,
     "points": 1,
     "flags": [ "BIONIC_TOGGLED" ],
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "LUMINATION", "max": 5 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "LUMINATION", "max": 5 } ] } ]
   },
   {
     "id": "bio_glowy",
@@ -593,6 +582,17 @@
     "flags": [ "BIONIC_TOGGLED" ],
     "trigger_cost": "25 kJ",
     "points": 2
+  },
+  {
+    "id": "bio_grossfood",
+    "type": "bionic",
+    "name": { "str": "Taste Fouler" },
+    "occupied_bodyparts": [ [ "head", 1 ], [ "mouth", 1 ] ],
+    "description": "A malfunctioning processor haphazardly interfaced with your taste receptors has given everything you consume a horrid bitter taste.  Food and drink will severely harm your morale.",
+    "flags": [ "BIONIC_FAULTY" ],
+    "points": -1,
+    "starting_bionic": true,
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "FOOD_FUN", "add": -4 } ] } ]
   },
   {
     "id": "bio_ground_sonar",
@@ -638,7 +638,9 @@
     "react_cost": "1 kJ",
     "time": 1,
     "points": 2,
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "BLISTER_COUNT", "add": -20 } ], "flags": [ "FIRE_FIELD_IMMUNE" ] } ]
+    "bio_enchantments": [
+      { "conditions": [ "ACTIVE" ], "values": [ { "value": "BLISTER_COUNT", "add": -20 } ], "flags": [ "FIRE_FIELD_IMMUNE" ] }
+    ]
   },
   {
     "id": "bio_hydraulics",
@@ -652,7 +654,7 @@
     "time": 1,
     "required_bionics": [ "bio_weight" ],
     "points": 4,
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 20 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "STRENGTH", "add": 20 } ] } ]
   },
   {
     "id": "bio_infolink",
@@ -664,7 +666,7 @@
     "act_cost": "10 J",
     "starting_bionic": true,
     "points": 1,
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "INTERNAL_ALARMCLOCK", "WATCH", "RADIO", "THERMOMETER", "VIEW_DRONE_CAM" ] } ]
+    "bio_enchantments": [ { "flags": [ "INTERNAL_ALARMCLOCK", "WATCH", "RADIO", "THERMOMETER", "VIEW_DRONE_CAM" ] } ]
   },
   {
     "id": "bio_infrared",
@@ -677,7 +679,7 @@
     "react_cost": "5 J",
     "time": 1,
     "points": 1,
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "INFRARED_VISION" ] } ]
+    "bio_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "id": "bio_int_enhancer",
@@ -773,7 +775,7 @@
     "occupied_bodyparts": [ [ "eyes", 1 ] ],
     "points": 1,
     "flags": [ "BIONIC_NPC_USABLE" ],
-    "bio_enchantments": [ { "condition": "ALWAYS", "flags": [ "UNDERWATER_SIGHT" ] } ]
+    "bio_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "id": "bio_memory",
@@ -787,7 +789,7 @@
     "trigger_cost": "25 J",
     "time": 1,
     "points": 1,
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "EFFECTIVE_FOCUS", "add": 10 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "EFFECTIVE_FOCUS", "add": 10 } ] } ]
   },
   {
     "id": "bio_metabolics",
@@ -838,7 +840,7 @@
     "act_cost": "10 J",
     "react_cost": "10 J",
     "time": 1,
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "NIGHT_VISION", "max": 10 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "NIGHT_VISION", "max": 10 } ] } ]
   },
   {
     "id": "bio_noise",
@@ -1106,6 +1108,26 @@
     "points": -1
   },
   {
+    "id": "bio_sleep_shutdown",
+    "type": "bionic",
+    "name": { "str": "Sleep Mode Shutdown" },
+    "description": "For better or worse, this CBM suppresses most stimuli while asleep, preventing you from waking up from those causes.",
+    "occupied_bodyparts": [ [ "head", 1 ] ],
+    "flags": [ "BIONIC_FAULTY", "BIONIC_SHOCKPROOF" ],
+    "points": -2,
+    "starting_bionic": true,
+    "bio_enchantments": [
+      {
+        "condition": "ALWAYS",
+        "values": [
+          { "value": "SLEEP_PAIN_THRESH", "add": 1000, "//": "If you are that in pain props to you" },
+          { "value": "SLEEP_DB_RESIST", "add": 1000, "//": "Sounds can't exceed 191" }
+        ],
+        "flags": [ "NO_THERMAL_WAKE", "NO_DAMAGE_WAKE", "NO_LIGHT_WAKE" ]
+      }
+    ]
+  },
+  {
     "id": "bio_spasm",
     "type": "bionic",
     "name": { "str": "Motor Control Overstimulator" },
@@ -1133,7 +1155,7 @@
     ],
     "points": 2,
     "flags": [ "BIONIC_NPC_USABLE" ],
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "SPEED", "multiply": 0.1 } ] } ]
+    "bio_enchantments": [ { "values": [ { "value": "SPEED", "multiply": 0.1 } ] } ]
   },
   {
     "id": "bio_stiff",
@@ -1193,7 +1215,8 @@
     "description": "Your eyes are surgically equipped with range finders, and their movement is synced with that of your arms, to a degree.  Shots you fire will be much more accurate, particularly at long range.",
     "occupied_bodyparts": [ [ "eyes", 1 ], [ "arm_l", 3 ], [ "arm_r", 3 ], [ "hand_l", 1 ], [ "hand_r", 1 ] ],
     "points": 2,
-    "flags": [ "BIONIC_NPC_USABLE" ]
+    "flags": [ "BIONIC_NPC_USABLE" ],
+    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "RANGED_DISPERSION", "multiply": -0.25 } ] } ]
   },
   {
     "id": "bio_teleport",
@@ -1305,7 +1328,7 @@
     "react_cost": "6 J",
     "time": 1,
     "points": 2,
-    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "SWIM_MOVE_COST", "multiply": -0.25 } ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "values": [ { "value": "SWIM_MOVE_COST", "multiply": -0.25 } ] } ]
   },
   {
     "id": "bio_ups",
@@ -1327,9 +1350,9 @@
     "starting_bionic": true,
     "points": -1,
     "bio_enchantments": [
-      { "condition": "ALWAYS", "values": [ { "value": "LIE", "add": 10 } ] },
-      { "condition": "ALWAYS", "values": [ { "value": "PERSUADE", "add": -20 } ] },
-      { "condition": "ALWAYS", "values": [ { "value": "INTIMIDATE", "add": 20 } ] }
+      {
+        "values": [ { "value": "LIE", "add": 10 }, { "value": "PERSUADE", "add": -20 }, { "value": "INTIMIDATE", "add": 20 } ]
+      }
     ]
   },
   {
@@ -1453,7 +1476,7 @@
     "description": "Space inside your chest cavity has been surgically converted into a storage area.  You may carry an extra 2 liters of volume.",
     "occupied_bodyparts": [ [ "torso", 8 ] ],
     "flags": [ "BIONIC_NPC_USABLE", "BIONIC_SHOCKPROOF" ],
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "CARRY_STORAGE", "add": 2000 } ] } ]
+    "bio_enchantments": [ { "values": [ { "value": "CARRY_STORAGE", "add": 2000 } ] } ]
   },
   {
     "id": "bio_shock_absorber",
@@ -1516,7 +1539,7 @@
     "occupied_bodyparts": [ [ "head", 1 ] ],
     "starting_bionic": true,
     "points": 1,
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
+    "bio_enchantments": [ { "values": [ { "value": "READING_SPEED", "multiply": -0.25 } ] } ]
   },
   {
     "id": "afs_bio_dopamine_stimulators",
@@ -1553,7 +1576,7 @@
     "react_cost": "20 J",
     "time": 1,
     "included_bionics": [ "bio_electrosense_voltmeter", "bio_electrosense_bscanner" ],
-    "bio_enchantments": [ { "condition": "ACTIVE", "flags": [ "ELECTROSENSE" ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "flags": [ "ELECTROSENSE" ] } ]
   },
   {
     "id": "bio_electrosense_voltmeter",

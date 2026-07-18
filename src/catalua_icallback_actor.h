@@ -11,6 +11,7 @@
 class Character;
 class Creature;
 class item;
+class monster;
 struct bionic;
 struct dealt_damage_instance;
 struct tripoint;
@@ -256,4 +257,37 @@ class lua_itrap_actor : public lua_icallback_actor_base
         /** Called after trap aftermath. */
         void call_on_trigger_aftermath( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
 
+};
+
+
+struct lua_menu_entry {
+    std::string menu_id;
+    std::string menu_label;
+
+    bool valid() const {
+        return !menu_id.empty() && !menu_label.empty();
+    }
+};
+
+class lua_monster_callback_actor
+{
+    private:
+        std::string mon_str_id;
+        sol::protected_function on_tame_func;
+        sol::protected_function get_examine_menu_entries_func;
+        sol::protected_function on_examine_menu_entry_func;
+
+    public:
+        lua_monster_callback_actor( const std::string &mon_str_id,
+                                    sol::protected_function &&on_tame_func,
+                                    sol::protected_function &&get_examine_menu_entries,
+                                    sol::protected_function &&on_examine_menu_entry_func
+                                  );
+
+        void call_on_tame( Character &who, monster &pet ) const;
+        std::vector<lua_menu_entry>  call_get_examine_menu_entries( Character &who,
+                monster &monster ) const;
+        void call_on_examine_menu_entry( Character &who, monster &monster, std::string entry ) const;
+
+        std::string get_mon_str_id() const;
 };

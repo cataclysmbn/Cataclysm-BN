@@ -137,9 +137,7 @@
     "looks_like": "small_relic",
     "color": "yellow",
     "flags": [ "MAGIC_FOCUS", "USE_PLAYER_ENERGY", "NO_SALVAGE" ],
-    "relic_data": {
-      "passive_effects": [ { "has": "WIELD", "condition": "ALWAYS", "values": [ { "value": "MANA_REGEN", "multiply": 0.25 } ] } ]
-    },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WIELD" ], "values": [ { "value": "MANA_REGEN", "multiply": 0.25 } ] } ] },
     "use_action": [
       "MEDITATE",
       {
@@ -209,8 +207,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_sun_sword_daze",
@@ -346,8 +343,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "values": [ { "value": "MOVE_COST", "add": -25 } ],
           "hit_you_effect": [
             {
@@ -1063,8 +1059,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_shrike_misericorde_chill",
@@ -1109,8 +1104,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_bane_staff_venom",
@@ -1242,8 +1236,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "mutations": [ "SCHIZOPHRENIC" ],
           "ench_effects": [ { "effect": "arcana_clairvoyance_hidden", "intensity": 1 } ],
           "values": [
@@ -1553,7 +1546,7 @@
     "max_charges": 24,
     "ammo": "essence_blood_type",
     "relic_data": {
-      "passive_effects": [ { "has": "WIELD", "condition": "ACTIVE", "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 } ] } ]
+      "passive_effects": [ { "conditions": [ "WIELD", "ACTIVE" ], "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 } ] } ]
     },
     "use_action": [
       {
@@ -1609,8 +1602,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 }, { "id": "arcana_react_moonstone_touch", "once_in": 10 } ],
           "hit_me_effect": [
             {
@@ -1622,8 +1614,7 @@
           ]
         },
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "values": [ { "value": "ARMOR_COLD", "multiply": -0.5 } ],
           "ench_effects": [ { "effect": "cold_ward", "intensity": 1 } ]
         }
@@ -1682,8 +1673,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "values": [ { "value": "INTELLIGENCE", "add": 4 }, { "value": "MANA_REGEN", "multiply": 0.5 } ]
         }
       ],
@@ -1758,8 +1748,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "mutations": [ "ARCANA_STAFF_EFFECT" ],
           "hit_you_effect": [ { "id": "arcana_react_sanguine_staff_drain" } ]
         }
@@ -1816,8 +1805,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_EFFECT" ],
           "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
           "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
@@ -1880,8 +1868,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_EFFECT" ],
           "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
           "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],

@@ -5,6 +5,7 @@
 #include "character.h"
 #include "creature.h"
 #include "debug.h"
+#include "enchantment_condition.h"
 #include "enchantment_flag.h"
 #include "enchantment_value.h"
 #include "enum_conversions.h"
@@ -26,66 +27,6 @@
 #include <set>
 #include <vector>
 
-template <typename E> struct enum_traits;
-
-template <> struct enum_traits<enchantment::has> {
-    static constexpr enchantment::has last = enchantment::has::NUM_HAS;
-};
-
-template <> struct enum_traits<enchantment::condition> {
-    static constexpr enchantment::condition last = enchantment::condition::NUM_CONDITION;
-};
-
-namespace io {
-// TODO: Migrate these enums to ids too
-// *INDENT-OFF*
-template <> std::string enum_to_string<enchantment::has>(enchantment::has data) {
-    switch (data) {
-        case enchantment::has::HELD:
-            return "HELD";
-        case enchantment::has::WIELD:
-            return "WIELD";
-        case enchantment::has::WORN:
-            return "WORN";
-        case enchantment::has::NUM_HAS:
-            break;
-    }
-    debugmsg("Invalid enchantment::has");
-    abort();
-}
-
-template <> std::string enum_to_string<enchantment::condition>(enchantment::condition data) {
-    switch (data) {
-        case enchantment::condition::ALWAYS:
-            return "ALWAYS";
-        case enchantment::condition::UNDERGROUND:
-            return "UNDERGROUND";
-        case enchantment::condition::ABOVEGROUND:
-            return "ABOVEGROUND";
-        case enchantment::condition::UNDERWATER:
-            return "UNDERWATER";
-        case enchantment::condition::DAY:
-            return "DAY";
-        case enchantment::condition::NIGHT:
-            return "NIGHT";
-        case enchantment::condition::DUSK:
-            return "DUSK";
-        case enchantment::condition::DAWN:
-            return "DAWN";
-        case enchantment::condition::ACTIVE:
-            return "ACTIVE";
-        case enchantment::condition::INACTIVE:
-            return "INACTIVE";
-        case enchantment::condition::NUM_CONDITION:
-            break;
-    }
-    debugmsg("Invalid enchantment::condition");
-    abort();
-}
-
-// *INDENT-ON*
-} // namespace io
-
 namespace {
 generic_factory<enchantment> enchant_factory("enchantment");
 } // namespace
@@ -94,30 +35,11 @@ IMPLEMENT_STRING_AND_INT_IDS(enchantment, enchant_factory);
 
 std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
     std::string cond_string;
-    if (is_item) {
-        if (active_conditions.first == has::WIELD) {}
-        const auto itemCond = active_conditions.first;
-        cond_string =
-            itemCond == has::WIELD  ? _("While wielded and ")
-            : itemCond == has::WORN ? _("While worn and ")
-            : itemCond == has::HELD
-                ? _("While held and ")
-                : "You shouldn't see this";
+    if (conditions.empty()) { cond_string = _("At all times"); }
+    for (const enchantment_condition_id cond_id : conditions) {
+        if (!cond_string.empty()) { cond_string += _(" and "); }
+        cond_string += cond_id->condition_info;
     }
-    const auto genCond = active_conditions.second;
-    cond_string +=
-        genCond == condition::ALWAYS        ? _("At all times:")
-        : genCond == condition::ACTIVE      ? _("While active:")
-        : genCond == condition::INACTIVE    ? _("While inactive:")
-        : genCond == condition::UNDERGROUND ? _("While underground:")
-        : genCond == condition::ABOVEGROUND ? _("While aboveground:")
-        : genCond == condition::UNDERWATER  ? _("While underwater:")
-        : genCond == condition::NIGHT       ? _("During the night:")
-        : genCond == condition::DAY         ? _("During the day:")
-        : genCond == condition::DUSK        ? _("At dusk:")
-        : genCond == condition::DAWN
-            ? _("At dawn:")
-            : "You shouldn't see this";
 
     std::map<enchantment_value_id, int> value_effects;
     for (const auto [ench_id, effect] : values_add) {
@@ -160,38 +82,103 @@ void enchantment::load_enchantment(const JsonObject& jo, const std::string& src)
 void enchantment::reset() { enchant_factory.reset(); }
 
 bool enchantment::is_active(const Character& guy, const item& parent) const {
-    if (!guy.has_item(parent)) { return false; }
 
-    if (active_conditions.first == has::WIELD && !guy.is_wielding(parent)) { return false; }
-
-    if (active_conditions.first == has::WORN && !guy.is_worn(parent)) { return false; }
-
-    return is_active(guy, parent.is_active());
+    bool is_active = parent.is_active();
+    bool active = true;
+    for (const enchantment_condition_id cond_id : conditions) {
+        if (!active) { break; }
+        switch (cond_id->cond_type) {
+            case enchantment_condition_type::ITEM:
+                active &= cond_id->item_condition(parent);
+                break;
+            case enchantment_condition_type::ITEM_CHARACTER:
+                active &= cond_id->item_character_condition(guy, parent);
+                break;
+            case enchantment_condition_type::CHARACTER:
+                active &= cond_id->character_condition(guy, is_active);
+                break;
+            case enchantment_condition_type::GLOBAL:
+                active &= cond_id->generic_condition(is_active);
+                break;
+            default:
+                debugmsg(
+                    "Enchantment %s has.... AN INVALID ENCHANTMENT CONDITION TYPE, it will never trigger.",
+                    id.str());
+                active = false;
+                break;
+        }
+    }
+    return active;
 }
 
-bool enchantment::is_active(const Character& guy, const bool active) const {
-    if (active_conditions.second == condition::ACTIVE) { return active; }
+bool enchantment::is_active(const item& parent) const {
 
-    if (active_conditions.second == condition::INACTIVE) { return !active; }
-
-    if (active_conditions.second == condition::ALWAYS) { return true; }
-
-    if (active_conditions.second == condition::NIGHT) { return is_night(calendar::turn); }
-
-    if (active_conditions.second == condition::DAY) { return is_day(calendar::turn); }
-
-    if (active_conditions.second == condition::DUSK) { return is_dusk(calendar::turn); }
-
-    if (active_conditions.second == condition::DAWN) { return is_dawn(calendar::turn); }
-
-    if (active_conditions.second == condition::UNDERGROUND) { return guy.bub_pos().z() < 0; }
-
-    if (active_conditions.second == condition::ABOVEGROUND) { return guy.bub_pos().z() > -1; }
-
-    if (active_conditions.second == condition::UNDERWATER) {
-        return get_map().is_divable(guy.bub_pos());
+    bool is_active = parent.is_active();
+    bool active = true;
+    for (const enchantment_condition_id cond_id : conditions) {
+        if (!active) { break; }
+        switch (cond_id->cond_type) {
+            case enchantment_condition_type::ITEM:
+                active &= cond_id->item_condition(parent);
+                break;
+            case enchantment_condition_type::ITEM_CHARACTER:
+                debugmsg(
+                    "Enchantment %s has item and character condition %s on a non-supporting enchantment value, it will never trigger.",
+                    id.str(), cond_id.str());
+                active = false;
+                break;
+            case enchantment_condition_type::CHARACTER:
+                debugmsg(
+                    "Enchantment %s has character condition %s on a non-supporting enchantment value, it will never trigger.",
+                    id.str(), cond_id.str());
+                active = false;
+                break;
+            case enchantment_condition_type::GLOBAL:
+                active &= cond_id->generic_condition(is_active);
+                break;
+            default:
+                debugmsg(
+                    "Enchantment %s has.... AN INVALID ENCHANTMENT CONDITION TYPE, it will never trigger.",
+                    id.str());
+                active = false;
+                break;
+        }
     }
-    return false;
+    return active;
+}
+
+bool enchantment::is_active(const Character& guy, const bool is_active) const {
+    bool active = true;
+    for (const enchantment_condition_id cond_id : conditions) {
+        if (!active) { break; }
+        switch (cond_id->cond_type) {
+            case enchantment_condition_type::ITEM:
+                debugmsg(
+                    "Enchantment %s has item condition %s on a non-item, it will never trigger.",
+                    id.str(), cond_id.str());
+                active = false;
+                break;
+            case enchantment_condition_type::ITEM_CHARACTER:
+                debugmsg(
+                    "Enchantment %s has item and character condition %s on a non-item, it will never trigger.",
+                    id.str(), cond_id.str());
+                active = false;
+                break;
+            case enchantment_condition_type::CHARACTER:
+                active &= cond_id->character_condition(guy, is_active);
+                break;
+            case enchantment_condition_type::GLOBAL:
+                active &= cond_id->generic_condition(is_active);
+                break;
+            default:
+                debugmsg(
+                    "Enchantment %s has.... AN INVALID ENCHANTMENT CONDITION TYPE, it will never trigger.",
+                    id.str());
+                active = false;
+                break;
+        }
+    }
+    return active;
 }
 
 void enchantment::add_activation(const time_duration& freq, const fake_spell& fake) {
@@ -225,8 +212,11 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
         }
     }
 
-    active_conditions.first = io::string_to_enum<has>(jo.get_string("has", "HELD"));
-    active_conditions.second = io::string_to_enum<condition>(jo.get_string("condition", "ALWAYS"));
+    optional(jo, was_loaded, "conditions", conditions);
+    if (jo.has_string("has")) { conditions.insert(enchantment_condition_id(jo.get_string("has"))); }
+    if (jo.has_string("condition")) {
+        conditions.insert(enchantment_condition_id(jo.get_string("condition")));
+    }
 
     for (JsonObject jsobj : jo.get_array("ench_effects")) {
         ench_effects.emplace(efftype_id(jsobj.get_string("effect")), jsobj.get_int("intensity"));
@@ -269,8 +259,7 @@ void enchantment::serialize(JsonOut& jsout) const {
         return;
     }
 
-    jsout.member("has", io::enum_to_string<has>(active_conditions.first));
-    jsout.member("condition", io::enum_to_string<condition>(active_conditions.second));
+    jsout.member("conditions", conditions);
     if (emitter) { jsout.member("emitter", emitter); }
 
     if (!hit_you_effect.empty()) { jsout.member("hit_you_effect", hit_you_effect); }
@@ -336,9 +325,7 @@ void enchantment::serialize(JsonOut& jsout) const {
     jsout.end_object();
 }
 
-bool enchantment::stacks_with(const enchantment& rhs) const {
-    return active_conditions == rhs.active_conditions;
-}
+bool enchantment::stacks_with(const enchantment& rhs) const { return conditions == rhs.conditions; }
 
 bool enchantment::add(const enchantment& rhs) {
     if (!stacks_with(rhs)) { return false; }
@@ -407,6 +394,12 @@ bool enchantment::has_flag(const enchantment_flag_id flag) const {
         }
     }
     return false;
+}
+
+bool enchantment::has_value(const enchantment_value_id value) const {
+    if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
+    return values_add.contains(value) || values_multiply.contains(value)
+        || values_max.contains(value);
 }
 
 int enchantment::get_value_add(const enchantment_value_id value) const {
@@ -517,8 +510,7 @@ bool enchantment::operator==(const enchantment& rhs) const {
         && ench_effects == rhs.ench_effects && values_multiply == rhs.values_multiply
         && values_add == rhs.values_add && values_max == rhs.values_max
         && hit_me_effect == rhs.hit_me_effect && hit_you_effect == rhs.hit_you_effect
-        && intermittent_activation == intermittent_activation
-        && active_conditions == rhs.active_conditions;
+        && intermittent_activation == intermittent_activation && conditions == rhs.conditions;
 }
 
 namespace {
@@ -622,10 +614,24 @@ bool nested_enchant_check(
     return true;
 }
 
-void enchantment::check() const {
+void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_types) const {
     // TODO: Where was it declared? CONTEXT!
     const char* ench_desc = id.is_empty() ? "An inline enchantment" : "Enchantment";
     std::vector<std::string> problems;
+    std::set<enchantment_condition_type> cond_types;
+    for (const auto& ench_cond_id : conditions) {
+        if (!ench_cond_id.is_valid()) {
+            problems.push_back(
+                string_format("\nenchantment condition %s is invalid", ench_cond_id.str()));
+        } else {
+            if (incompatible_cond_types.contains(ench_cond_id->cond_type)) {
+                problems.push_back(string_format(
+                    "\nenchantment condition %s has type %s unsupported by the enchantment's usage",
+                    ench_cond_id.str(), io::enum_to_string(ench_cond_id->cond_type)));
+            }
+            cond_types.insert(ench_cond_id->cond_type);
+        }
+    }
     for (const trait_id& mut : mutations) {
         if (!mut.is_valid()) {
             debugmsg("%s %s has invalid mutation %s", ench_desc, id.c_str(), mut.c_str());
@@ -648,9 +654,20 @@ void enchantment::check() const {
         if (!ench_val_id.is_valid()) {
             problems.push_back(
                 string_format("\nenchantment value %s is invalid", ench_val_id.str()));
-        } else if (!ench_val_id->can_add) {
-            problems.push_back(
-                string_format("\nenchantment value %s cannot be added to", ench_val_id.str()));
+        } else {
+            if (!ench_val_id->can_add) {
+                problems.push_back(
+                    string_format("\nenchantment value %s cannot be added to", ench_val_id.str()));
+            }
+            for (const auto& cond_type : ench_val_id->unsupported_conditions) {
+                if (cond_types.contains(cond_type)) {
+                    problems.push_back(string_format(
+                        "\nenchantment value %s does not support condition type %s",
+                        ench_val_id.str(), io::enum_to_string(cond_type))
+
+                    );
+                }
+            }
         }
     }
     auto val_max_copy = values_max;
@@ -658,9 +675,20 @@ void enchantment::check() const {
         if (!ench_val_id.is_valid()) {
             problems.push_back(
                 string_format("\nenchantment value %s is invalid", ench_val_id.str()));
-        } else if (!ench_val_id->can_max) {
-            problems.push_back(
-                string_format("\nenchantment value %s cannot use max", ench_val_id.str()));
+        } else {
+            if (!ench_val_id->can_max) {
+                problems.push_back(
+                    string_format("\nenchantment value %s cannot use max", ench_val_id.str()));
+            }
+            for (const auto& cond_type : ench_val_id->unsupported_conditions) {
+                if (cond_types.contains(cond_type)) {
+                    problems.push_back(string_format(
+                        "\nenchantment value %s does not support condition type %s",
+                        ench_val_id.str(), io::enum_to_string(cond_type))
+
+                    );
+                }
+            }
         }
     }
     auto val_mult_copy = values_multiply;
@@ -668,9 +696,21 @@ void enchantment::check() const {
         if (!ench_val_id.is_valid()) {
             problems.push_back(
                 string_format("\nenchantment value %s is invalid", ench_val_id.str()));
-        } else if (!ench_val_id->can_mult) {
-            problems.push_back(
-                string_format("\nenchantment value %s cannot be added to", ench_val_id.str()));
+        } else {
+            if (!ench_val_id->can_mult) {
+                problems.push_back(
+                    string_format("\nenchantment value %s cannot be added to", ench_val_id.str()));
+            }
+
+            for (const auto& cond_type : ench_val_id->unsupported_conditions) {
+                if (cond_types.contains(cond_type)) {
+                    problems.push_back(string_format(
+                        "\nenchantment value %s does not support condition type %s",
+                        ench_val_id.str(), io::enum_to_string(cond_type))
+
+                    );
+                }
+            }
         }
     }
     if (!problems.empty()) {

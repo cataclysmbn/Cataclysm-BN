@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "test_lua_conditions",
+    "name": "Test Lua Enhantment Conditions",
+    "authors": [ "Test" ],
+    "description": "Test mod for Lua enchantment conditions",
+    "category": "misc",
+    "dependencies": [ "bn" ],
+    "obsolete": true,
+    "lua_api_version": 2
+  }
+]

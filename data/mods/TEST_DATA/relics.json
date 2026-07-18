@@ -72,9 +72,7 @@
     "cutting": 32,
     "price": "75 USD",
     "price_postapoc": "3 USD",
-    "relic_data": {
-      "passive_effects": [ { "has": "HELD", "condition": "ALWAYS", "values": [ { "value": "ITEM_ATTACK_COST", "add": -15 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "condition": "ALWAYS", "values": [ { "value": "ITEM_ATTACK_COST", "add": -15 } ] } ] }
   },
   {
     "type": "GENERIC",
@@ -152,7 +150,7 @@
     "copy-from": "test_balanced_sword",
     "name": "TEST relic mods cut dmg",
     "relic_data": {
-      "passive_effects": [ { "has": "HELD", "condition": "ALWAYS", "values": [ { "value": "ITEM_DAMAGE_CUT", "multiply": -0.5, "add": 1 } ] } ]
+      "passive_effects": [ { "condition": "ALWAYS", "values": [ { "value": "ITEM_DAMAGE_CUT", "multiply": -0.5, "add": 1 } ] } ]
     }
   },
   {
@@ -161,7 +159,7 @@
     "copy-from": "test_screwdriver",
     "name": "TEST relic mods stab dmg",
     "relic_data": {
-      "passive_effects": [ { "has": "HELD", "condition": "ALWAYS", "values": [ { "value": "ITEM_DAMAGE_STAB", "multiply": -0.5, "add": 1 } ] } ]
+      "passive_effects": [ { "condition": "ALWAYS", "values": [ { "value": "ITEM_DAMAGE_STAB", "multiply": -0.5, "add": 1 } ] } ]
     }
   },
   {
@@ -170,7 +168,7 @@
     "copy-from": "test_halligan",
     "name": "TEST relic mods bash dmg",
     "relic_data": {
-      "passive_effects": [ { "has": "HELD", "condition": "ALWAYS", "values": [ { "value": "ITEM_DAMAGE_BASH", "multiply": -0.5, "add": 1 } ] } ]
+      "passive_effects": [ { "condition": "ALWAYS", "values": [ { "value": "ITEM_DAMAGE_BASH", "multiply": -0.5, "add": 1 } ] } ]
     }
   },
   {
@@ -201,12 +199,8 @@
     "name": "TEST relic item armor mod",
     "relic_data": {
       "passive_effects": [
-        { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "ITEM_ARMOR_CUT", "multiply": -0.5, "add": 3 } ] },
-        {
-          "has": "WORN",
-          "condition": "ALWAYS",
-          "values": [ { "value": "ITEM_ARMOR_BASH", "multiply": 0.5, "add": -3 } ]
-        }
+        { "condition": "ALWAYS", "values": [ { "value": "ITEM_ARMOR_CUT", "multiply": -0.5, "add": 3 } ] },
+        { "condition": "ALWAYS", "values": [ { "value": "ITEM_ARMOR_BASH", "multiply": 0.5, "add": -3 } ] }
       ]
     }
   },

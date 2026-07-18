@@ -632,7 +632,7 @@
     "flags": [ "VARSIZE", "SKINTIGHT", "TRADER_AVOID", "ONLY_ONE", "THERMOMETER" ],
     "weight": "1652 g",
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "CLIMATE_CONTROL", "add": 1250 } ] } ]
+      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 1250 } ] } ]
     },
     "use_action": {
       "type": "transform",
@@ -936,8 +936,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "NOISE", "add": -30 },
@@ -1088,8 +1087,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [ { "value": "ARMOR_PSI", "add": -25 }, { "value": "CLIMATE_CONTROL", "add": 1250 } ]
         }
       ]

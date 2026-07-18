@@ -1598,6 +1598,13 @@ int throw_cost( const Character &c, const item &to_throw )
     move_cost -= dexbonus;
     move_cost *= c.mutation_value( "attackcost_modifier" );
 
+    // First apply weapon enchant
+    move_cost += to_throw.bonus_from_enchantments( c, move_cost,
+                 enchantment_value_id( "ITEM_THROW_ATTACK_COST" ), true );
+    // Then apply character enchant
+    move_cost += c.bonus_from_enchantments( move_cost, enchantment_value_id( "THROW_ATTACK_COST" ),
+                                            true );
+
     return std::max( 25, move_cost );
 }
 
@@ -2682,9 +2689,6 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     dispersion.add_range( dispersion_from_skill( avgSkill, weapon_dispersion ) );
 
-    if( who.has_bionic( bio_targeting ) ) {
-        dispersion.add_multiplier( 0.75 );
-    }
     // If we're crouched, it's easier to steady our aim.
     if( who.movement_mode_is( CMM_CROUCH ) ) {
         dispersion.add_multiplier( 0.75 );
