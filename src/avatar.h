@@ -194,6 +194,10 @@ class avatar : public player
          */
         int time_to_read( const item &book, const Character &reader,
                           const Character *learner = nullptr ) const;
+        auto can_read_book_type( const itype_id &book_id ) const -> bool;
+        auto read_book_type_denials( const itype_id &book_id ) const -> std::vector<std::string>;
+        auto time_to_read_book_type( const itype_id &book_id ) const -> time_duration;
+        auto finish_reading_book_type( const itype_id &book_id ) -> void;
         /** Handles reading effects and returns true if activity started */
         bool read( item *loc, bool continuous = false );
         /** Completes book reading action. **/

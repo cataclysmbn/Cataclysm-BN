@@ -19,6 +19,8 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "crafting.h"
 #include "character.h"
@@ -64,7 +66,6 @@
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "salvage.h"
-#include "inventory_ui.h"
 
 static const activity_id ACT_EAT_MENU( "ACT_EAT_MENU" );
 static const activity_id ACT_CONSUME_FOOD_MENU( "ACT_CONSUME_FOOD_MENU" );
@@ -173,7 +174,8 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
                            const std::string &title, int radius,
                            const std::string &none_message,
                            const std::string &hint = std::string(),
-                           bool include_fake_bionics = false )
+                           bool include_fake_bionics = false,
+                           const std::vector<item *> *extra_items = nullptr )
 {
     inventory_pick_selector inv_s( u, preset );
 
@@ -218,6 +220,11 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
 
         if( include_fake_bionics ) {
             inv_s.add_bionics_items( u );
+        }
+        if( extra_items != nullptr ) {
+            for( auto *extra_item : *extra_items ) {
+                inv_s.add_custom_item( extra_item );
+            }
         }
         if( has_init_filter ) {
             inv_s.set_filter( init_filter );
@@ -999,15 +1006,76 @@ item *game_menus::inv::gun_to_modify( player &p, const item &gunmod )
                          _( "You don't have any guns to modify." ) );
 }
 
+struct virtual_read_item_caption {
+    std::string prefix;
+    std::string suffix;
+};
+
+struct virtual_read_item {
+    itype_id book_id;
+    detached_ptr<item> book;
+    virtual_read_item_caption caption;
+};
+
+auto virtual_read_items( const player &reader ) -> std::vector<virtual_read_item>
+{
+    auto result = std::vector<virtual_read_item>();
+    const auto add_virtual_book = [&]( const sol::table & hook_entry ) {
+        const auto book_object = hook_entry.get<sol::object>( "book_id" );
+        auto book_id = itype_id::NULL_ID();
+        if( book_object.is<itype_id>() ) {
+            book_id = book_object.as<itype_id>();
+        } else if( book_object.is<std::string>() ) {
+            book_id = itype_id( book_object.as<std::string>() );
+        }
+        if( book_id.is_valid() && book_id->book ) {
+            result.push_back( { .book_id = book_id,
+                                .book = item::spawn( book_id ),
+                                .caption = { .prefix = hook_entry.get_or<std::string>( "caption_prefix", "" ),
+                                             .suffix = hook_entry.get_or<std::string>( "caption_suffix", "" )
+                                           } } );
+        }
+    };
+    const auto add_virtual_books = [&]( const sol::table & hook_entries ) {
+        for( const auto &hook_entry : hook_entries ) {
+            if( hook_entry.second.is<sol::table>() ) {
+                add_virtual_book( hook_entry.second.as<sol::table>() );
+            }
+        }
+    };
+
+    const auto hook_results = cata::run_hooks( "on_read_inventory_virtual_books", [&]( auto & params ) {
+        params["reader"] = &reader;
+    } );
+    for( const auto &hook_result : hook_results ) {
+        if( !hook_result.second.is<sol::table>() ) {
+            continue;
+        }
+        const auto hook_entry = hook_result.second.as<sol::table>();
+        const auto result_object = hook_entry.get<sol::object>( "result" );
+        if( result_object.is<sol::table>() ) {
+            const auto result_table = result_object.as<sol::table>();
+            add_virtual_book( result_table );
+            add_virtual_books( result_table );
+        }
+    }
+    return result;
+}
+
 class read_inventory_preset final: public inventory_selector_preset
 {
     public:
-        read_inventory_preset( const player &p ) : p( p ) {
+        read_inventory_preset( const player &p,
+                               const std::map<const item *, virtual_read_item_caption> &custom_captions ) :
+            p( p ), custom_captions( custom_captions ) {
             const std::string unknown = _( "<color_dark_gray>?</color>" );
 
             append_cell( [ this, &p ]( const item * loc ) -> std::string {
                 if( loc->type->can_use( "MA_MANUAL" ) ) {
                     return _( "martial arts" );
+                }
+                if( !loc->is_book() ) {
+                    return std::string();
                 }
                 const islot_book &book = get_book( loc );
                 if( !book.skill ) {
@@ -1030,16 +1098,25 @@ class read_inventory_preset final: public inventory_selector_preset
             }, _( "TRAINS (CURRENT)" ), unknown );
 
             append_cell( [ this ]( const item * loc ) -> std::string {
+                if( !loc->is_book() ) {
+                    return std::string();
+                }
                 const islot_book &book = get_book( loc );
                 const int unlearned = book.recipes.size() - get_known_recipes( book );
 
                 return unlearned > 0 ? std::to_string( unlearned ) : std::string();
             }, _( "RECIPES" ), unknown );
             append_cell( [ &p ]( const item * loc ) -> std::string {
+                if( !loc->is_book() ) {
+                    return std::string();
+                }
                 return good_bad_none( character_funcs::get_book_fun_for( p, *loc ) );
             }, _( "FUN" ), unknown );
 
             append_cell( [ this, &p, unknown ]( const item * loc ) -> std::string {
+                if( !loc->is_book() ) {
+                    return std::string();
+                }
                 std::vector<std::string> dummy;
 
                 // This is terrible and needs to be removed asap when this entire file is refactored
@@ -1083,11 +1160,25 @@ class read_inventory_preset final: public inventory_selector_preset
             return loc->is_book();
         }
 
+        std::string get_caption( const inventory_entry &entry ) const override {
+            const auto caption = inventory_selector_preset::get_caption( entry );
+            const auto iter = custom_captions.find( entry.any_item() );
+            if( iter == custom_captions.end() ) {
+                return caption;
+            }
+            const auto prefix = iter->second.prefix.empty() ? "" : string_format( "%s ", iter->second.prefix );
+            return string_format( "%s%s%s", prefix, caption, iter->second.suffix );
+        }
+
         std::string get_denial( const item *loc ) const override {
             // This is terrible and needs to be removed asap when this entire file is refactored
             // to use the new avatar class
             const avatar *u = p.as_avatar();
             if( !u ) {
+                return std::string();
+            }
+
+            if( !loc->is_book() ) {
                 return std::string();
             }
 
@@ -1115,6 +1206,9 @@ class read_inventory_preset final: public inventory_selector_preset
         */
         bool sort_compare( const inventory_entry &lhs, const inventory_entry &rhs ) const override {
             const bool base_sort = inventory_selector_preset::sort_compare( lhs, rhs );
+            if( !lhs.any_item()->is_book() || !rhs.any_item()->is_book() ) {
+                return base_sort;
+            }
 
             // Player doesn't really interested if NPC knows about book.
             if( p.is_avatar() ) {
@@ -1241,13 +1335,28 @@ class read_inventory_preset final: public inventory_selector_preset
         }
 
         const player &p;
+        const std::map<const item *, virtual_read_item_caption> &custom_captions;
 };
 
-item *game_menus::inv::read( player &pl )
+game_menus::inv::read_selection game_menus::inv::read( player &pl )
 {
     const std::string none_msg = pl.is_player() ? _( "You have nothing to read." ) :
                                  string_format( _( "%s has nothing to read." ), pl.disp_name() );
-    return inv_internal( pl, read_inventory_preset( pl ), _( "Read" ), 1, none_msg );
+    auto virtual_books = virtual_read_items( pl );
+    auto extra_items = std::vector<item *>();
+    auto custom_captions = std::map<const item *, virtual_read_item_caption>();
+    for( const auto &virtual_book : virtual_books ) {
+        extra_items.push_back( virtual_book.book.get() );
+        custom_captions.emplace( virtual_book.book.get(), virtual_book.caption );
+    }
+    auto *selected = inv_internal( pl, read_inventory_preset( pl, custom_captions ), _( "Read" ),
+                                   1, none_msg, std::string(), false, &extra_items );
+    for( const auto &virtual_book : virtual_books ) {
+        if( selected == virtual_book.book.get() ) {
+            return { .stored_book = virtual_book.book_id };
+        }
+    }
+    return { .loc = selected };
 }
 
 class steal_inventory_preset : public pickup_inventory_preset

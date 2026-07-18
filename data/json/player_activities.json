@@ -28,6 +28,30 @@
     "bubble_size_effect": "idle"
   },
   {
+    "id": "ACT_READ_EBOOK",
+    "type": "activity_type",
+    "verb": "reading",
+    "rooted": true,
+    "refuel_fires": true,
+    "auto_needs": true,
+    "morale_blocked": true,
+    "complex_moves": { "light": true, "speed": true, "stats": [ [ "INT" ] ], "morale": true },
+    "verbose_tooltip": false,
+    "bubble_size_effect": "idle"
+  },
+  {
+    "id": "ACT_SCAN_EBOOK",
+    "type": "activity_type",
+    "verb": "scanning",
+    "rooted": true,
+    "refuel_fires": true,
+    "auto_needs": true,
+    "morale_blocked": true,
+    "complex_moves": { "light": true, "speed": true, "stats": [ [ "INT" ] ], "morale": true },
+    "verbose_tooltip": false,
+    "bubble_size_effect": "idle"
+  },
+  {
     "id": "ACT_MULTIPLE_CONSTRUCTION",
     "type": "activity_type",
     "verb": "constructing",

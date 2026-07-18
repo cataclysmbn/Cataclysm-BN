@@ -1062,6 +1062,12 @@ void cata::detail::reg_character( sol::state &lua )
         DOC( "Gets all items" );
         SET_FX_T( all_items, std::vector<item *>( bool need_charges ) const );
 
+        DOC( "Checks whether this character has at least quantity charges of item id" );
+        luna::set_fx( ut, "has_charges",
+        []( const UT_CLASS & c, const itype_id & id, const int quantity ) -> bool {
+            return c.has_charges( id, quantity );
+        } );
+
         DOC( "Filters items" );
         luna::set_fx( ut, "items_with", &Character::items_with );
 
@@ -1562,6 +1568,10 @@ void cata::detail::reg_avatar( sol::state &lua )
         SET_FX_T( get_active_missions, std::vector<mission *>() const );
         SET_FX_T( get_completed_missions, std::vector<mission *>() const );
         SET_FX_T( get_failed_missions, std::vector<mission *>() const );
+        SET_FX_T( can_read_book_type, bool( const itype_id & ) const );
+        SET_FX_T( read_book_type_denials, std::vector<std::string>( const itype_id & ) const );
+        SET_FX_T( time_to_read_book_type, time_duration( const itype_id & ) const );
+        SET_FX_T( finish_reading_book_type, void( const itype_id & ) );
 
     }
 #undef UT_CLASS // #define UT_CLASS npc_opinion
