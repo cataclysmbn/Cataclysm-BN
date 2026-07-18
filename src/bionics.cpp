@@ -2035,7 +2035,7 @@ void Character::process_bionic( bionic &bio )
             if( !cbms.empty() ) {
                 corpse->set_flag( flag_CBM_SCANNED );
                 auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
-                []( const auto entry ) { return entry->display_name(); }, enumeration_conjunction::none );
+                []( const auto entry ) { return entry->type_name(); }, enumeration_conjunction::none );
                 //~ %1 is corpse name, %2 is direction, %3 is bionic name
                 add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
                                    corpse->display_name().c_str(),
