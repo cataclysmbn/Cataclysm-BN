@@ -496,7 +496,17 @@
     "warmth": 0,
     "material_thickness": 2,
     "environmental_protection": 2,
-    "flags": [ "ONLY_ONE", "OVERSIZE", "PERSONAL", "POWERARMOR_COMPATIBLE", "UNBREAKABLE", "ALLOWS_HOOVES","ALLOWS_CLAWS_FOOT", "ALLOWS_TAIL_SNAKE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [
+      "ONLY_ONE",
+      "OVERSIZE",
+      "PERSONAL",
+      "POWERARMOR_COMPATIBLE",
+      "UNBREAKABLE",
+      "ALLOWS_HOOVES",
+      "ALLOWS_CLAWS_FOOT",
+      "ALLOWS_TAIL_SNAKE",
+      "ALLOWS_NATURAL_ATTACKS"
+    ]
   },
   {
     "id": "aura_stoneskin",
@@ -516,7 +526,17 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 2,
-    "flags": [ "ONLY_ONE", "OVERSIZE", "PERSONAL", "POWERARMOR_COMPATIBLE", "UNBREAKABLE", "ALLOWS_HOOVES","ALLOWS_CLAWS_FOOT", "ALLOWS_TAIL_SNAKE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [
+      "ONLY_ONE",
+      "OVERSIZE",
+      "PERSONAL",
+      "POWERARMOR_COMPATIBLE",
+      "UNBREAKABLE",
+      "ALLOWS_HOOVES",
+      "ALLOWS_CLAWS_FOOT",
+      "ALLOWS_TAIL_SNAKE",
+      "ALLOWS_NATURAL_ATTACKS"
+    ]
   },
   {
     "id": "overcharge_burn_scar",
@@ -683,6 +703,20 @@
         }
       ]
     },
-    "flags": [ "RAINPROOF","OVERSIZE", "STURDY", "RAD_RESIST", "AURA", "POWERARMOR_COMPATIBLE", "NO_SALVAGE", "ONLY_ONE", "PSYSHIELD_PARTIAL", "ALLOWS_HOOVES","ALLOWS_CLAWS_FOOT", "ALLOWS_TAIL_SNAKE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [
+      "RAINPROOF",
+      "OVERSIZE",
+      "STURDY",
+      "RAD_RESIST",
+      "AURA",
+      "POWERARMOR_COMPATIBLE",
+      "NO_SALVAGE",
+      "ONLY_ONE",
+      "PSYSHIELD_PARTIAL",
+      "ALLOWS_HOOVES",
+      "ALLOWS_CLAWS_FOOT",
+      "ALLOWS_TAIL_SNAKE",
+      "ALLOWS_NATURAL_ATTACKS"
+    ]
   }
 ]
