@@ -189,9 +189,10 @@ static void InitSDL()
 static bool SetupRenderTarget()
 {
     SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
-    display_buffer.reset( SDL_CreateTexture( renderer.get(), SDL_PIXELFORMAT_ARGB8888,
+    display_buffer.reset( SDL_CreateTexture( renderer.get(), sdl_color_pixel_format,
                           SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
     SDL_SetTextureScaleMode( display_buffer.get(), SDL_SCALEMODE_NEAREST );
+    SDL_SetTextureBlendMode( display_buffer.get(), SDL_BLENDMODE_NONE );
     if( printErrorIf( !display_buffer, "Failed to create window buffer" ) ) {
         return false;
     }
