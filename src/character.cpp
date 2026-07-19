@@ -5218,7 +5218,7 @@ std::pair<std::string, nc_color> Character::get_thirst_description() const
         hydration_string = _( "Dehydrated" );
     } else if( thirst > thirst_levels::very_thirsty ) {
         hydration_color = c_yellow;
-        hydration_string = _( "Very thirsty" );
+        hydration_string = _( "Very Thirsty" );
     } else if( thirst > thirst_levels::thirsty ) {
         hydration_color = c_yellow;
         hydration_string = _( "Thirsty" );
