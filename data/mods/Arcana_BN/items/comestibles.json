@@ -214,13 +214,7 @@
     "color": "red",
     "healthy": -6,
     "fun": -4,
-    "use_action": {
-      "type": "cast_spell",
-      "spell_id": "arcana_item_sacramental_heart",
-      "no_fail": true,
-      "need_wielding": true,
-      "level": 0
-    },
+    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_sacramental_heart", "no_fail": true, "level": 0 },
     "flags": [ "NO_INGEST", "NPC_SAFE", "NUTRIENT_OVERRIDE" ]
   },
   {
