@@ -98,7 +98,7 @@
         "gun",
         "unarmed"
       ],
-      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP", "SHEATH_SPEAR" ]
+      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP", "SHEATH_SPEAR", "SHEATH_AXE", "SHEATH_GOLF" ]
     }
   },
   {
