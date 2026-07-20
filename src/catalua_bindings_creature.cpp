@@ -7,6 +7,8 @@
 #include <sstream>
 #include <string_view>
 
+#include <ranges>
+
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"

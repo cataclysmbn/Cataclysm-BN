@@ -7,6 +7,18 @@
     "tools": [ [ [ "soldering_iron", 3 ], [ "soldering_ethanol", 30 ], [ "toolset", 1 ] ] ]
   },
   {
+    "id": "cloning_vat_womb",
+    "type": "requirement",
+    "//": "Sterilized artificial womb used by the cloning vat.",
+    "components": [ [ [ "embryo_empty", 1 ] ] ]
+  },
+  {
+    "id": "genome_workstation_biomaterial",
+    "type": "requirement",
+    "//": "Biomaterial sample needed to synthesize DNA from a genome workstation.",
+    "components": [ [ [ "biomaterial", 1 ] ] ]
+  },
+  {
     "id": "add_fluid_grid_connection",
     "type": "requirement",
     "//": "Connect two fluid grid tiles. Cost is multiplied by number of elements in resulting grid.",
