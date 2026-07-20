@@ -677,10 +677,28 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "speedloaders_357_detective_scen",
+    "entries": [
+      { "item": "38_speedloader6", "ammo-item": "357mag_fmj", "charges": 6 },
+      { "item": "38_speedloader6", "ammo-item": "357mag_fmj", "charges": 6 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "speedloaders_38_archaeologist",
     "entries": [
       { "item": "38_speedloader", "ammo-item": "38_special", "charges": 7 },
       { "item": "38_speedloader", "ammo-item": "38_special", "charges": 7 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "speedloaders_38_archaeologist_scen",
+    "entries": [
+      { "item": "38_speedloader6", "ammo-item": "38_special", "charges": 6 },
+      { "item": "38_speedloader6", "ammo-item": "38_special", "charges": 6 }
     ]
   },
   {
@@ -727,6 +745,18 @@
     "subtype": "collection",
     "id": "bandolier_rifle_hunter",
     "entries": [ { "item": "3006", "charges": 16 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "ammopouch_shotgun_big_game_hunter",
+    "entries": [ { "item": "shot_00", "charges": 20 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "bandolier_rifle_big_game_hunter",
+    "entries": [ { "item": "3006", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -1489,6 +1519,46 @@
     "//2": "Technically they might be recent enough to have a recognizable modern carry permit but it wouldn't be most of the guns in the default selection.",
     "forbidden_traits": [ "CARRY_PERMIT" ],
     "flags": [ "VEH_GROUNDED" ]
+  },
+  {
+    "type": "profession",
+    "id": "big_game_hunter",
+    "name": "Big Game Hunter",
+    "description": "You've bagged dangerous game on every continent, and had just set out on your latest expedition.  When you woke up in the morning, your campsite was gone.  At least you still have your trusty rifle by your side.",
+    "//": "One more point over normal hunter professions due to starting with extra ammo and skills.",
+    "points": 3,
+    "starting_cash": 0,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "survival" },
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "rifle" },
+      { "level": 1, "name": "shotgun" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "hat_boonie",
+          "dress_shirt",
+          "jacket_flannel",
+          "pants",
+          "socks",
+          "knee_high_boots",
+          "backpack_leather",
+          "waterskin",
+          "pocketwatch"
+        ],
+        "entries": [
+          { "item": "combination_gun", "ammo-item": "3006", "charges": 1, "contents-item": "shoulder_strap" },
+          { "item": "bandolier_rifle", "contents-group": "bandolier_rifle_big_game_hunter" },
+          { "item": "ammo_satchel_leg", "contents-group": "ammopouch_shotgun_big_game_hunter" },
+          { "item": "sheath", "contents-item": "knife_hunting" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "bra", "panties" ]
+    },
+    "forbidden_traits": [ "CARRY_PERMIT" ]
   },
   {
     "type": "profession",
@@ -3320,6 +3390,42 @@
     },
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 3, "name": "gun" }, { "level": 3, "name": "pistol" } ],
     "addictions": [ { "intensity": 10, "type": "nicotine" } ]
+  },
+  {
+    "type": "profession",
+    "id": "detective_scen",
+    "copy-from": "detective",
+    "//": "Removes modern phone, watch, and radio; swaps gun for a less modern one, also disallows Carry Permit due to most of the guns being more modern.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
+    "items": {
+      "both": {
+        "items": [
+          "pants",
+          "dress_shirt",
+          "tie_skinny",
+          "waistcoat",
+          "trenchcoat",
+          "police_belt",
+          "badge_detective",
+          "gloves_leather",
+          "knit_scarf",
+          "fedora",
+          "silver_watch",
+          "socks",
+          "dress_shoes",
+          "cig",
+          "ref_lighter"
+        ],
+        "entries": [
+          { "item": "colt_python", "ammo-item": "357mag_fmj", "charges": 6, "container-item": "shoulder_holster" },
+          { "item": "shoulder_pouch", "contents-group": "speedloaders_357_detective_scen" },
+          { "item": "357mag_fmj", "charges": 12 }
+        ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "bra", "panties" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
   },
   {
     "type": "profession",
@@ -5371,6 +5477,40 @@
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "archaeologist_scen",
+    "copy-from": "archaeologist",
+    "//": "Removes smartphone and modern watch, swaps gun for a less modern one, disallow Carry Permit since most of the guns would be too modern.",
+    "forbidden_traits": [ "CARRY_PERMIT" ],
+    "items": {
+      "both": {
+        "items": [
+          "undershirt",
+          "leather_belt",
+          "socks",
+          "boots",
+          "pants",
+          "jacket_leather",
+          "knit_scarf",
+          "bullwhip",
+          "mbag",
+          "fedora",
+          "silver_watch",
+          "cavemap",
+          "spiral_stone"
+        ],
+        "entries": [
+          { "item": "model_10_revolver", "ammo-item": "38_special", "charges": 6, "container-item": "holster" },
+          { "item": "legpouch_large", "contents-group": "speedloaders_38_archaeologist_scen" },
+          { "item": "38_special", "charges": 22 }
+        ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "bra", "panties" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
   },
   {
     "type": "profession",
