@@ -9,6 +9,7 @@ local east_edge = 23
 local see = 12
 
 local t_floor = TerId.new("t_floor"):int_id()
+local t_floor_olight = TerId.new("t_floor_olight"):int_id()
 local t_thconc_floor = TerId.new("t_thconc_floor"):int_id()
 local t_thconc_floor_olight = TerId.new("t_thconc_floor_olight"):int_id()
 local t_strconc_floor = TerId.new("t_strconc_floor"):int_id()
@@ -178,6 +179,8 @@ draw_lights = function(data, map)
           if map:get_ter_at( PointOmtMs.new(i, j)) == t_thconc_floor or
              map:get_ter_at( PointOmtMs.new(i, j)) == t_strconc_floor then
             map:set_ter_at( PointOmtMs.new(i, j), t_thconc_floor_olight)
+          elseif map:get_ter_at( PointOmtMs.new(i, j)) == t_floor then
+            map:set_ter_at( PointOmtMs.new(i, j), t_floor_olight)
           end
         end
       end
