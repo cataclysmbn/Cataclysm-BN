@@ -3564,9 +3564,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 const int &y = temp_y;
                 const auto queue_draw_point = [&]( tile_render_info info ) {
                     info.screen_row = row + ( tile_iso && info.pos.z() != center.z() && tile_width > 0
-                        ? ( center.z() - info.pos.z() )
-                          * tileset_ptr->get_zlevel_height() * 4 / tile_width
-                        : 0 );
+                                              ? ( center.z() - info.pos.z() )
+                                              * tileset_ptr->get_zlevel_height() * 4 / tile_width
+                                              : 0 );
                     draw_points.push_back( info );
                 };
 

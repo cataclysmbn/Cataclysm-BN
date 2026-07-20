@@ -190,10 +190,12 @@ static bool SetupRenderTarget()
 {
     fprintf( stderr, "DBG: SetupRenderTarget entry\n" );
     SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
-    fprintf( stderr, "DBG: SetupRenderTarget — before CreateTexture, fmt=%d\n", sdl_color_pixel_format );
+    fprintf( stderr, "DBG: SetupRenderTarget — before CreateTexture, fmt=%d\n",
+             sdl_color_pixel_format );
     display_buffer.reset( SDL_CreateTexture( renderer.get(), sdl_color_pixel_format,
                           SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
-    fprintf( stderr, "DBG: SetupRenderTarget — after CreateTexture, ptr=%p\n", ( void * )display_buffer.get() );
+    fprintf( stderr, "DBG: SetupRenderTarget — after CreateTexture, ptr=%p\n",
+             ( void * )display_buffer.get() );
     SDL_SetTextureScaleMode( display_buffer.get(), SDL_SCALEMODE_NEAREST );
     fprintf( stderr, "DBG: SetupRenderTarget — after ScaleMode\n" );
     SDL_SetTextureBlendMode( display_buffer.get(), SDL_BLENDMODE_NONE );
@@ -336,7 +338,8 @@ static void WinCreate()
             fprintf( stderr, "DBG: WinCreate — accelerated renderer FAILED\n" );
             software_renderer = true;
         } else {
-            fprintf( stderr, "DBG: WinCreate — accelerated renderer OK: %s\n", SDL_GetRendererName( renderer.get() ) );
+            fprintf( stderr, "DBG: WinCreate — accelerated renderer OK: %s\n",
+                     SDL_GetRendererName( renderer.get() ) );
             dbg( DL::Info ) << "Initialized SDL with Renderer: " << SDL_GetRendererName( renderer.get() );
             if( get_option<bool>( "VSYNC" ) ) {
                 SDL_SetRenderVSync( renderer.get(), 1 );
