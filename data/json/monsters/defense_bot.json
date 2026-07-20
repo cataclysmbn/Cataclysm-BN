@@ -237,6 +237,7 @@
     "revert_to_itype": "bot_talon_m249",
     "starting_ammo": { "556": 200 },
     "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
       {
         "type": "gun",
         "cooldown": 3,
