@@ -157,10 +157,10 @@
       { "item": "wristrocket", "prob": 5 },
       { "item": "powered_earmuffs", "prob": 80 },
       { "item": "bandolier_wrist", "prob": 100 },
-          { "item": "bb", "prob": 8 },
-          { "item": "bbgun", "prob": 10 },
-          { "item": "paintball", "prob": 4 },
-          { "item": "paintballgun", "prob": 5 }
+      { "item": "bb", "prob": 8 },
+      { "item": "bbgun", "prob": 10 },
+      { "item": "paintball", "prob": 4 },
+      { "item": "paintballgun", "prob": 5 }
     ]
   },
   {
