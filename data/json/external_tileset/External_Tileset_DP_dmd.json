@@ -107,7 +107,20 @@
           { "id": [ "pants_tacticool", "overlay_wielded_pants_tacticool" ], "fg": 80 },
           { "id": "overlay_worn_pants_tacticool", "fg": 81 },
           { "id": [ "jacket_tacticool", "overlay_wielded_jacket_tacticool" ], "fg": 82 },
-          { "id": "overlay_worn_jacket_tacticool", "fg": 83 }
+          { "id": "overlay_worn_jacket_tacticool", "fg": 83 },
+          { "id": [ "modularvest", "overlay_wielded_modularvest", "modularvestsuper", "overlay_wielded_modularvestsuper", "modularvesthard", "overlay_wielded_modularvesthard", "modularveststeel", "overlay_wielded_modularveststeel", "modularvestceramic", "overlay_wielded_modularvestceramic" ], "fg": 84 },
+          { "id": [ "overlay_male_worn_modularvest", "overlay_male_worn_modularvestsuper", "overlay_male_worn_modularvesthard", "overlay_male_worn_modularveststeel", "overlay_male_worn_modularvestceramic" ], "fg": 85 },
+          { "id": [ "overlay_female_worn_modularvest", "overlay_female_worn_modularvestsuper", "overlay_female_worn_modularvesthard", "overlay_female_worn_modularveststeel", "overlay_female_worn_modularvestceramic" ], "fg": 86 },
+          {
+            "id": [ "exosuit_military", "overlay_wielded_exosuit_military", "exosuit_military_on", "overlay_wielded_exosuit_military_on" ],
+            "fg": 87
+          },
+          { "id": [ "overlay_worn_exosuit_military", "overlay_worn_exosuit_military_on" ], "fg": 88 },
+          {
+            "id": [ "exosuit_industrial", "overlay_wielded_exosuit_industrial", "exosuit_industrial_on", "overlay_wielded_exosuit_industrial_on" ],
+            "fg": 89
+          },
+          { "id": [ "overlay_worn_exosuit_industrial", "overlay_worn_exosuit_industrial_on" ], "fg": 90 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
