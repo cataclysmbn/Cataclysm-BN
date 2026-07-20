@@ -190,7 +190,11 @@
       {
         "distribution": [
           { "group": "survivorzed_suits", "prob": 25, "damage": [ 1, 4 ] },
-          { "item": "oldguard_armor", "prob": 10, "damage": [ 1, 4 ] },
+          { "item": "oldguard_armor", "prob": 5, "damage": [ 1, 4 ] },
+          { "item": "oldguard_armor_ceramic", "prob": 2, "damage": [ 1, 4 ] },
+          { "item": "oldguard_armor_hardsteel", "prob": 1, "damage": [ 1, 4 ] },
+          { "item": "oldguard_armor_steel", "prob": 1, "damage": [ 1, 4 ] },
+          { "item": "oldguard_armor_superalloy", "prob": 1, "damage": [ 1, 4 ] },
           {
             "collection": [ { "group": "survivorzed_tops", "damage": [ 1, 4 ] }, { "group": "survivorzed_bottoms", "damage": [ 1, 4 ] } ],
             "prob": 75
