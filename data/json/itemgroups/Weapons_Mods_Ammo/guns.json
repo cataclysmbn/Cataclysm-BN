@@ -707,6 +707,7 @@
       { "group": "nested_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "nested_longrifle_flintlock", "prob": 90 },
       { "group": "nested_rifle_flintlock", "prob": 90 },
+      { "group": "everyday_combination_gun", "prob": 150 },
       { "group": "nested_steyr_aug", "prob": 40 },
       { "group": "nested_m7", "prob": 20 }
     ]
@@ -727,6 +728,7 @@
       { "group": "everyday_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "everyday_longrifle_flintlock", "prob": 90 },
       { "group": "everyday_rifle_flintlock", "prob": 90 },
+      { "group": "everyday_combination_gun", "prob": 150 },
       { "group": "everyday_steyr_aug", "prob": 40 },
       { "group": "everyday_m7", "prob": 20 }
     ]
@@ -1169,6 +1171,7 @@
       { "group": "nested_win70", "prob": 20 },
       { "group": "nested_1895sbl", "prob": 20 },
       { "group": "nested_sharps", "prob": 5 },
+      { "group": "everyday_combination_gun", "prob": 50 },
       { "group": "nested_sks", "prob": 10 },
       { "group": "nested_browning_a5", "prob": 20 },
       { "group": "nested_mossberg_500", "prob": 20 },

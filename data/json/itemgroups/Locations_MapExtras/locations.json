@@ -1836,6 +1836,8 @@
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
       [ "bb", 8 ],
       [ "bbgun", 10 ],
+      [ "paintball", 4 ],
+      [ "paintballgun", 5 ],
       [ "fan", 10 ],
       [ "file", 30 ],
       [ "photo_album", 5 ],

@@ -1989,6 +1989,18 @@
     ]
   },
   {
+    "id": "everyday_combination_gun",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "combination_gun", "ammo-group": "on_hand_3006", "charges": [ 0, 1 ] },
+      { "group": "on_hand_3006" },
+      { "group": "on_hand_shot" }
+    ]
+  },
+  {
     "id": "everyday_mosin44_ebr",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

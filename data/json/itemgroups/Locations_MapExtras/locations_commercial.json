@@ -841,6 +841,8 @@
       { "group": "softdrinks_canned", "prob": 244 },
       { "item": "bbgun", "prob": 30 },
       { "item": "bb", "prob": 30 },
+      { "item": "paintballgun", "prob": 15 },
+      { "item": "paintball", "prob": 15 },
       { "item": "portable_game", "prob": 60 },
       { "item": "game_watch", "prob": 15 },
       { "item": "deck_of_cards", "prob": 25 },

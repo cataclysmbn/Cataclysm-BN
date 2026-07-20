@@ -124,7 +124,11 @@
       [ "radio_car_box", 10 ],
       [ "RPG_die", 5 ],
       [ "metal_RPG_die", 1 ],
-      [ "shark_plush", 5 ]
+      [ "shark_plush", 5 ],
+      [ "bb", 8 ],
+      [ "bbgun", 10 ],
+      [ "paintball", 4 ],
+      [ "paintballgun", 5 ]
     ]
   },
   {
