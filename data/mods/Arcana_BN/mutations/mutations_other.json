@@ -5,6 +5,36 @@
   },
   {
     "type": "mutation",
+    "id": "ARCANA_SPELL_CLASS_MAGIC_SIGN",
+    "name": "Magic Signs",
+    "points": 0,
+    "description": "Through exploring the mysteries of the Beyond, you have learned one or more spells that draw from the body and mind.",
+    "player_display": false,
+    "purifiable": false,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "ARCANA_SPELL_CLASS_ARCANE_BLESSING",
+    "name": "Arcane Blessings",
+    "points": 0,
+    "description": "Through pact with otherworldly divinity, you have learned one or more spells that draw from the innermost spirit.",
+    "player_display": false,
+    "purifiable": false,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "ARCANA_SPELL_CLASS_SANGUINE_MARK",
+    "name": "Sanguine Marks",
+    "points": 0,
+    "description": "Through changing your very being, you have learned one or more spells that draw from your own life force.",
+    "player_display": false,
+    "purifiable": false,
+    "valid": false
+  },
+  {
+    "type": "mutation",
     "id": "MARTIAL_ARTS_CF",
     "name": { "str": "Path of Sword and Hammer" },
     "points": 3,

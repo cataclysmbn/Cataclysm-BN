@@ -1,16 +1,6 @@
 [
   {
     "type": "mutation",
-    "id": "ARCANA_SPELL_CLASS_ARCANE_BLESSING",
-    "name": "Arcane Blessings",
-    "points": 0,
-    "description": "Through pact with otherworldly divinity, you have learned one or more spells that draw from the innermost spirit.",
-    "player_display": false,
-    "purifiable": false,
-    "valid": false
-  },
-  {
-    "type": "mutation",
     "id": "THRESH_VEIL",
     "name": { "str": "Paragon of The Veil" },
     "points": 1,

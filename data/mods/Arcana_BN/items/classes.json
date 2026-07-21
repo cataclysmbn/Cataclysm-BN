@@ -22,6 +22,20 @@
     "flags": [ "NO_SALVAGE", "TRADER_AVOID", "UNBREAKABLE_MELEE", "POWERARMOR_COMPATIBLE", "SEMITANGIBLE" ]
   },
   {
+    "abstract": "scroll_pattern_base",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str": "pattern scroll base" },
+    "weight": "415 g",
+    "volume": "250 ml",
+    "material": [ "paper" ],
+    "symbol": "!",
+    "looks_like": "recipe_creepy",
+    "color": "white",
+    "stackable": true,
+    "flags": [ "NO_SALVAGE" ]
+  },
+  {
     "abstract": "scroll_magic_base",
     "type": "COMESTIBLE",
     "comestible_type": "MED",

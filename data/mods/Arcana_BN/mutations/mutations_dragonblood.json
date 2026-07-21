@@ -1,16 +1,6 @@
 [
   {
     "type": "mutation",
-    "id": "ARCANA_SPELL_CLASS_SANGUINE_MARK",
-    "name": "Sanguine Marks",
-    "points": 0,
-    "description": "Through changing your very being, you have learned one or more spells that draw from your own life force.",
-    "player_display": false,
-    "purifiable": false,
-    "valid": false
-  },
-  {
-    "type": "mutation",
     "id": "THRESH_DRAGONBLOOD",
     "name": { "str": "Dragonblood" },
     "points": 1,
