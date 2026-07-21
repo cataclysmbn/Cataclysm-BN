@@ -237,8 +237,8 @@ gapi.place_player_dimension_at({
   target_ms = overworld_pos,
 })
 ```
-```
 
+````
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기
@@ -249,7 +249,7 @@ gapi.place_player_dimension_at({
 local mod = game.mod_runtime[game.current_mod]
 game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
 game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
-```
+````
 
 그 다음 main.lua에서 핸들러를 정의합니다:
 
