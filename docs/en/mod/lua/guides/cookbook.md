@@ -237,8 +237,8 @@ gapi.place_player_dimension_at({
   target_ms = overworld_pos,
 })
 ```
-```
 
+````
 ## Weather Hooks
 
 ### Reacting to weather changes
@@ -249,7 +249,7 @@ First, set up the hook in your preload.lua:
 local mod = game.mod_runtime[game.current_mod]
 game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
 game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
-```
+````
 
 Then define the handlers in your main.lua:
 
