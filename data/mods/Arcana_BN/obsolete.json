@@ -1508,8 +1508,7 @@
     "flags": [ "NO_EXPLOSION_VFX", "SILENT", "MUTATE_TRAIT" ],
     "valid_targets": [ "self" ],
     "extra_effects": [ { "id": "arcana_item_scroll_leftover", "hit_self": false } ]
-  }
-
+  },
   {
     "type": "mutation",
     "id": "SPELL_AGILE",
