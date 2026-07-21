@@ -1144,6 +1144,42 @@ static std::string move_mode_string( avatar &u )
     }
 }
 
+static std::string get_sound( const avatar &u )
+{
+    std::string snd;
+    const std::string sound_option = get_option<std::string>( "SOUND_DISPLAY_TYPE" );
+    if( sound_option == "decibels" ) {
+        snd = std::to_string( u.volume );
+    } else if( sound_option == "relative_decibels" ) {
+        // Stolen from sounds::process_sounds
+        const weather_manager &weather = get_weather();
+        // Weather sound attenuation * 2, which we add to ambient noise. sound_attn ranges from 0-8
+        const short weather_vol = ( weather.weather_id->sound_attn );
+        const short wind_volume = ( std::min( 150, weather.windspeed ) );
+        const short INDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                           2 * weather_vol ) ) / 100;
+        // We also use this as the base ambient to measure horde signals against.
+        const short OUTDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                            wind_volume + weather_vol ) ) / 100;
+        snd = std::to_string( u.volume - ( !get_map().is_outside( u.bub_pos() ) ? INDOOR_AMBIENT :
+                                           OUTDOOR_AMBIENT ) );
+    } else if( sound_option == "tiles" ) {
+        // Stolen from sounds::process_sounds
+        const weather_manager &weather = get_weather();
+        // Weather sound attenuation * 2, which we add to ambient noise. sound_attn ranges from 0-8
+        const int weather_vol = ( weather.weather_id->sound_attn );
+        const int wind_volume = ( std::min( 150, weather.windspeed ) );
+        const int INDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                         2 * weather_vol ) ) / 1000;
+        // We also use this as the base ambient to measure horde signals against.
+        const int OUTDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                          wind_volume + weather_vol ) ) / 1000;
+        snd = std::to_string( average_minvol_distance( -3,
+                              u.volume - ( !get_map().is_outside( u.bub_pos() ) ? INDOOR_AMBIENT : OUTDOOR_AMBIENT ) ) );
+
+    }
+    return snd;
+}
 static void draw_stealth( avatar &u, const catacurses::window &w )
 {
     werase( w );
@@ -1156,7 +1192,7 @@ static void draw_stealth( avatar &u, const catacurses::window &w )
         mvwprintz( w, point( 22, 0 ), c_red, _( "DEAF" ) );
     } else {
         mvwprintz( w, point( 20, 0 ), c_light_gray, _( "Sound:" ) );
-        const std::string snd = std::to_string( u.volume );
+        std::string snd = get_sound( u );
         mvwprintz( w, point( 30 - utf8_width( snd ), 0 ), u.volume != 0 ? c_yellow : c_light_gray, snd );
     }
 
@@ -1402,7 +1438,7 @@ static void draw_char_narrow( avatar &u, const catacurses::window &w )
     std::string movecost = std::to_string( u.movecounter ) + "(" + move_char + ")";
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
-    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, get_sound( u ) );
 
     // print stamina
     auto needs_pair = std::make_pair( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second,
@@ -1447,7 +1483,7 @@ static void draw_char_wide( avatar &u, const catacurses::window &w )
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
 
-    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, get_sound( u ) );
     mvwprintz( w, point( 23, 0 ), morale_pair.first, "%s", smiley );
     mvwprintz( w, point( 38, 0 ), focus_color( u.focus_pool ), "%s", u.focus_pool );
 
@@ -1711,7 +1747,7 @@ static void draw_sound_labels( const avatar &u, const catacurses::window &w )
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Sound:" ) );
     if( !u.is_deaf() ) {
-        mvwprintz( w, point( 8, 0 ), c_yellow, std::to_string( u.volume ) );
+        mvwprintz( w, point( 8, 0 ), c_yellow, get_sound( u ) );
     } else {
         mvwprintz( w, point( 8, 0 ), c_red, _( "Deaf!" ) );
     }
@@ -1724,7 +1760,7 @@ static void draw_sound_narrow( const avatar &u, const catacurses::window &w )
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Sound:" ) );
     if( !u.is_deaf() ) {
-        mvwprintz( w, point( 8, 0 ), c_yellow, std::to_string( u.volume ) );
+        mvwprintz( w, point( 8, 0 ), c_yellow, get_sound( u ) );
     } else {
         mvwprintz( w, point( 8, 0 ), c_red, _( "Deaf!" ) );
     }
@@ -2226,7 +2262,7 @@ static void draw_lighting_classic( const avatar &u, const catacurses::window &w 
 
     if( !u.is_deaf() ) {
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Sound:" ) );
-        mvwprintz( w, point( 38, 0 ), c_yellow, std::to_string( u.volume ) );
+        mvwprintz( w, point( 38, 0 ), c_yellow, get_sound( u ) );
     } else {
         mvwprintz( w, point( 31, 0 ), c_red, _( "Deaf!" ) );
     }
