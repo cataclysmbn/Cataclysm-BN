@@ -55,6 +55,7 @@
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
+#include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "tileray.h"
@@ -1170,13 +1171,15 @@ static std::string get_sound( const avatar &u )
         const int weather_vol = ( weather.weather_id->sound_attn );
         const int wind_volume = ( std::min( 150, weather.windspeed ) );
         const int INDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
-                                         2 * weather_vol ) ) / 1000;
+                                         2 * weather_vol ) );
         // We also use this as the base ambient to measure horde signals against.
         const int OUTDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
-                                          wind_volume + weather_vol ) ) / 1000;
-        snd = std::to_string( average_minvol_distance( -3,
-                              u.volume - ( !get_map().is_outside( u.bub_pos() ) ? INDOOR_AMBIENT : OUTDOOR_AMBIENT ) ) );
-
+                                          wind_volume + weather_vol ) );
+        const int AMBIENT = ( get_map().is_outside( u.bub_pos() ) ?
+                              OUTDOOR_AMBIENT :
+                              INDOOR_AMBIENT ) / 100;
+        const int dist_to_ambient = std::pow( 10, ( u.volume - AMBIENT ) / 20 );
+        snd = std::to_string( dist_to_ambient );
     }
     return snd;
 }
