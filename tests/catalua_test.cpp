@@ -908,6 +908,11 @@ test_data["overmap_terrain"] = {
              zone_target_ms);
     CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
     REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->reset_dimension(zone_dimension_id));
+    REQUIRE(g->travel_to_dimension(
+        zone_dimension_id, world_type_id("pocket_dimension"), zone_pocket_data, zone_load_pos));
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
     REQUIRE(g->delete_dimension(zone_dimension_id));
     REQUIRE(g->travel_to_dimension(
         zone_dimension_id, world_type_id("pocket_dimension"), zone_pocket_data, zone_load_pos));

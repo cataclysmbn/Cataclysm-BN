@@ -256,6 +256,7 @@ class game : public submap_load_listener
     private:
         bool is_looking = false;
         std::vector<weak_ptr_fast<draw_callback_t>> draw_callbacks;
+        auto delete_dimension( const dimension_id &dim_id, bool remove_zones ) -> bool;
 
     public:
         // when force_redraw is true, redraw all panel instead of just animated panels

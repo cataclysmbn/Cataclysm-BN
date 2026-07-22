@@ -14556,6 +14556,11 @@ std::string game::get_dimension_prefix() const
 
 auto game::delete_dimension( const dimension_id &dim_id ) -> bool
 {
+    return delete_dimension( dim_id, true );
+}
+
+auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones ) -> bool
+{
     if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
         return false;
     }
@@ -14576,7 +14581,7 @@ auto game::delete_dimension( const dimension_id &dim_id ) -> bool
     }
 
     auto &zones = zone_manager::get_manager();
-    if( zones.remove_dimension_zones( dim_id ) && !zones.save_zones() ) {
+    if( remove_zones && zones.remove_dimension_zones( dim_id ) && !zones.save_zones() ) {
         return false;
     }
 
@@ -14607,7 +14612,7 @@ auto game::reset_dimension( const dimension_id &dim_id ) -> bool
         preserved_info = it->second;
     }
 
-    if( !delete_dimension( dim_id ) ) {
+    if( !delete_dimension( dim_id, false ) ) {
         if( preserved_info ) {
             loaded_dimensions_[dim_id] = *preserved_info;
         }
