@@ -999,6 +999,19 @@ std::string world::get_player_path() const
     return base64_encode( g->u.get_save_id() );
 }
 
+auto world::get_player_paths() const -> std::vector<std::string>
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+    auto paths = info->world_saves | transform( &save_t::base_path ) |
+                 ranges::to<std::vector>();
+    const auto current_path = get_player_path();
+    if( !ranges::contains( paths, current_path ) ) {
+        paths.push_back( current_path );
+    }
+    return paths;
+}
+
 sqlite3 *world::get_player_db()
 {
     if( !save_db ) {
@@ -1084,14 +1097,29 @@ auto world::has_dimension_data( const std::string &dim_id ) -> bool
         return true;
     }
 
+    const auto player_paths = get_player_paths();
+    const auto current_player_path = get_player_path();
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        return map_db->exists_prefix( dim_prefix ) ||
-               file_prefix_exists_in_db( get_player_db(), dim_prefix );
+        const auto has_player_data = std::ranges::any_of( player_paths, [&]( const std::string & path ) {
+            const auto db_path = info->folder_path() + "/" + path + ".sqlite3";
+            if( !::file_exist( db_path ) ) {
+                return false;
+            }
+            if( path == current_player_path ) {
+                return file_prefix_exists_in_db( get_player_db(), dim_prefix );
+            }
+            auto db = std::unique_ptr<sqlite3, decltype( &sqlite3_close )>(
+                          open_read_db( db_path ), &sqlite3_close );
+            return file_prefix_exists_in_db( db.get(), dim_prefix );
+        } );
+        return map_db->exists_prefix( dim_prefix ) || has_player_data;
     }
 
     return ::dir_exist( info->folder_path() + "/" + dim_prefix ) ||
-           ::dir_exist( info->folder_path() + "/" + get_player_path() + dim_prefix ) ||
-           ::dir_exist( info->folder_path() + "/" + get_player_path() + ".mm1/" + dim_prefix );
+    std::ranges::any_of( player_paths, [&]( const std::string & path ) {
+        return ::dir_exist( info->folder_path() + "/" + path + dim_prefix ) ||
+               ::dir_exist( info->folder_path() + "/" + path + ".mm1/" + dim_prefix );
+    } );
 }
 
 auto world::delete_dimension_data( const std::string &dim_id ) -> bool
@@ -1101,15 +1129,30 @@ auto world::delete_dimension_data( const std::string &dim_id ) -> bool
     }
 
     const auto dim_prefix = dim_prefix_path( dim_id );
+    const auto player_paths = get_player_paths();
+    const auto current_player_path = get_player_path();
     auto success = true;
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
         map_db->delete_prefix( dim_prefix );
-        delete_from_db_by_prefix( get_player_db(), dim_prefix );
+        std::ranges::for_each( player_paths, [&]( const std::string & path ) {
+            const auto db_path = info->folder_path() + "/" + path + ".sqlite3";
+            if( !::file_exist( db_path ) ) {
+                return;
+            }
+            if( path == current_player_path ) {
+                delete_from_db_by_prefix( get_player_db(), dim_prefix );
+                return;
+            }
+            auto db = std::unique_ptr<sqlite3, decltype( &sqlite3_close )>(
+                          open_db( db_path ), &sqlite3_close );
+            delete_from_db_by_prefix( db.get(), dim_prefix );
+        } );
     } else {
         success = remove_tree( info->folder_path() + "/" + dim_prefix ) && success;
-        success = remove_tree( info->folder_path() + "/" + get_player_path() + dim_prefix ) && success;
-        success = remove_tree( info->folder_path() + "/" + get_player_path() + ".mm1/" + dim_prefix ) &&
-                  success;
+        std::ranges::for_each( player_paths, [&]( const std::string & path ) {
+            success = remove_tree( info->folder_path() + "/" + path + dim_prefix ) && success;
+            success = remove_tree( info->folder_path() + "/" + path + ".mm1/" + dim_prefix ) && success;
+        } );
     }
 
     const auto dimension_data_path = info->folder_path() + "/dimension_data_" + dim_id + ".gsav";
