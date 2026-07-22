@@ -220,11 +220,6 @@ local entered = gapi.place_player_dimension_at({
 if entered then
   gapi.add_msg("Pocket home loaded.")
 end
-
-local reentered = gapi.place_player_dimension_at({
-  dimension_id = home_dimension,
-  target_omt = home_omt,
-})
 ```
 
 ### Returning to the overworld
@@ -238,7 +233,15 @@ gapi.place_player_dimension_at({
 })
 ```
 
-````
+After returning, re-enter the loaded pocket dimension with its ID and destination.
+
+```lua
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
 ## Weather Hooks
 
 ### Reacting to weather changes
@@ -249,7 +252,7 @@ First, set up the hook in your preload.lua:
 local mod = game.mod_runtime[game.current_mod]
 game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
 game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
-````
+```
 
 Then define the handlers in your main.lua:
 
