@@ -215,6 +215,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 class computer;
 
 #if defined(TILES)
@@ -317,10 +318,6 @@ auto fling_bash_damage( const Creature &c, const float flvel ) -> int
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_AUTODRIVE( "ACT_AUTODRIVE" );
-static const activity_id ACT_CRAFT( "ACT_CRAFT" );
-static const activity_id ACT_VEHICLE_DECONSTRUCTION( "ACT_VEHICLE_DECONSTRUCTION" );
-static const activity_id ACT_VEHICLE_REPAIR( "ACT_VEHICLE_REPAIR" );
-
 
 static const skill_id skill_melee( "melee" );
 static const skill_id skill_dodge( "dodge" );
@@ -2687,25 +2684,13 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
             }
             return false;
         }
-        const auto act_id = u.activity->id();
-        // It should be given autodrive does not
-        if( act_id == ACT_AUTODRIVE ) {
+        if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
+            !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
+            !u.activity->assistants().empty() ) {
+            if( log_activity_skip_state ) {
+                add_msg( "The activity does not support skip state, or you have assistants" );
+            }
             return false;
-        }
-        // Craft has special turns but is safe.
-        if( act_id != ACT_CRAFT && act_id != ACT_VEHICLE_DECONSTRUCTION &&
-            act_id != ACT_VEHICLE_REPAIR ) {
-            if( !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ) {
-                if( log_activity_skip_state ) {
-                    add_msg( "Activity cannot be time skipped" );
-                }
-                return false;
-            }
-            if( !u.activity->assistants().empty() ) {
-                if( log_activity_skip_state ) {
-                    add_msg( "Assistants prevent time skip" );
-                }
-            }
         }
     }
     if( u.in_vehicle && u.controlling_vehicle ) {
@@ -2932,7 +2917,7 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     }
 
     {
-        u.update_body( time_duration::from_turns( skipped_turns ) );
+        u.update_body( action_time_scale::calendar_duration_this_tick() * skipped_turns );
     }
 
     {
@@ -11994,14 +11979,12 @@ static void butcher_submenu( const std::vector<item *> &corpses, int corpse = -1
     avatar &you = get_avatar();
     const inventory &inv = you.crafting_inventory();
 
-    const int factor = std::max( you.max_quality( quality_id( "BUTCHER" ) ),
-                                 inv.max_quality( quality_id( "BUTCHER" ) ) );
+    const int factor = inv.max_quality( quality_id( "BUTCHER" ) );
     const std::string msg_inv = factor > INT_MIN
                                 ? string_format( _( "Your best tool has <color_cyan>%d butchering</color>." ), factor )
                                 :  _( "You have no butchering tool." );
 
-    const int factor_diss = std::max( you.max_quality( quality_id( "CUT_FINE" ) ),
-                                      inv.max_quality( quality_id( "CUT_FINE" ) ) );
+    const int factor_diss = inv.max_quality( quality_id( "CUT_FINE" ) );
     const std::string msg_inv_diss = factor_diss > INT_MIN
                                      ? string_format( _( "Your best tool has <color_cyan>%d fine cutting</color>." ), factor_diss )
                                      :  _( "You have no fine cutting tool." );
@@ -12940,19 +12923,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
     if( !u.has_artifact_with( AEP_STEALTH ) &&
         !u.has_enchantment_flag( enchantment_flag_id( "SILENT" ) ) ) {
-        int volume = u.is_stealthy() ? 40 : 60;
-        // Used to be a multiplier on tile distance, this approximates that
-        double noisemod = u.mutation_value( "noise_modifier" );
-        if( noisemod < 1 ) {
-            // Just in case someone goes below 0...
-            if( noisemod == 0 ) {
-                volume = 0;
-            } else if( noisemod > 0 ) {
-                volume -= ( 3.0 / noisemod );
-            }
-        } else {
-            volume += ( ( noisemod - 1 ) * 6.0 );
-        }
+        int volume = u.is_stealthy() ? 30 : 50;
+        volume *= u.mutation_value( "noise_modifier" );
         volume += u.bonus_from_enchantments( volume, enchantment_value_id( "NOISE" ) );
         if( volume > 0 ) {
             if( u.movement_mode_is( CMM_RUN ) ) {
@@ -14792,6 +14764,77 @@ const dimension_info *game::get_current_dimension_info() const
 std::string game::get_dimension_prefix() const
 {
     return current_dimension_id_.str();
+}
+
+auto game::delete_dimension( const dimension_id &dim_id ) -> bool
+{
+    return delete_dimension( dim_id, true );
+}
+
+auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    auto *active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+
+    const auto is_loaded = loaded_dimensions_.contains( dim_id );
+    if( !is_loaded && !active_world->has_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    submap_loader.drain_lazy_loads();
+    if( !active_world->delete_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    auto &zones = zone_manager::get_manager();
+    if( remove_zones && zones.remove_dimension_zones( dim_id ) && !zones.save_zones() ) {
+        return false;
+    }
+
+    if( auto tracker_it = grid_trackers_.find( dim_id ); tracker_it != grid_trackers_.end() ) {
+        submap_loader.remove_listener( tracker_it->second.get() );
+        grid_trackers_.erase( tracker_it );
+    }
+
+    if( kept_pocket_dimension_id_ == dim_id ) {
+        kept_pocket_dimension_id_ = dimension_id();
+    }
+
+    loaded_dimensions_.erase( dim_id );
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    unload_overmapbuffer_dimension( dim_id );
+
+    return true;
+}
+
+auto game::reset_dimension( const dimension_id &dim_id ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+
+    if( !delete_dimension( dim_id, false ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        return false;
+    }
+
+    if( preserved_info ) {
+        loaded_dimensions_[dim_id] = *preserved_info;
+    }
+    return true;
 }
 
 auto game::set_active_dimension_id( const dimension_id &dim_id ) -> void
