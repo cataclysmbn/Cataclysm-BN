@@ -157,7 +157,10 @@
             ],
             "fg": 89
           },
-          { "id": [ "overlay_worn_exosuit_industrial", "overlay_worn_exosuit_industrial_on" ], "fg": 90 }
+          { "id": [ "overlay_worn_exosuit_industrial", "overlay_worn_exosuit_industrial_on" ], "fg": 90 },
+          { "id": [ "gloves_tactical", "overlay_wielded_gloves_tactical" ], "fg": 91 },
+          { "id": "overlay_worn_boots_combat", "fg": 92 },
+          { "id": "overlay_worn_winter_gloves_army", "fg": 93 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
