@@ -220,11 +220,6 @@ local entered = gapi.place_player_dimension_at({
 if entered then
   gapi.add_msg("Pocket home loaded.")
 end
-
-local reentered = gapi.place_player_dimension_at({
-  dimension_id = home_dimension,
-  target_omt = home_omt,
-})
 ```
 
 ### オーバーワールドへ戻る
@@ -235,6 +230,15 @@ local reentered = gapi.place_player_dimension_at({
 gapi.place_player_dimension_at({
   dimension_id = "",
   target_ms = overworld_pos,
+})
+```
+
+帰還後は、ロード済みポケットディメンションの ID と目的地だけで再入場できます。
+
+```lua
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
 })
 ```
 

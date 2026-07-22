@@ -220,11 +220,6 @@ local entered = gapi.place_player_dimension_at({
 if entered then
   gapi.add_msg("Pocket home loaded.")
 end
-
-local reentered = gapi.place_player_dimension_at({
-  dimension_id = home_dimension,
-  target_omt = home_omt,
-})
 ```
 
 ### 오버월드로 돌아가기
@@ -238,7 +233,15 @@ gapi.place_player_dimension_at({
 })
 ```
 
-````
+돌아온 뒤에는 로드된 포켓 디멘션의 ID와 목적지만 지정해서 다시 들어갑니다.
+
+```lua
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기
@@ -249,7 +252,7 @@ gapi.place_player_dimension_at({
 local mod = game.mod_runtime[game.current_mod]
 game.add_hook("on_weather_changed", function(...) mod.weather_changed_alert(...) end)
 game.add_hook("on_weather_updated", function(...) mod.weather_report(...) end)
-````
+```
 
 그 다음 main.lua에서 핸들러를 정의합니다:
 
