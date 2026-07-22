@@ -210,6 +210,7 @@ class world
         std::string overmap_terrain_filename( const point_abs_om &p ) const;
         std::string overmap_player_filename( const point_abs_om &p ) const;
         std::string get_player_path() const;
+        auto get_player_paths() const -> std::vector<std::string>;
 
         std::unique_ptr<sqlite_map_db> map_db;
 
