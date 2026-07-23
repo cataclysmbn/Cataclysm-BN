@@ -3711,6 +3711,7 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
                 repoint_overmap_tilecontext();
                 std::vector<mod_id> dummy;
 
+                const auto saved_tile_iso = tile_iso;
                 overmap_tilecontext->load_tileset(
                     omTilesName,
                     ingame ? world_generator->active_world->info->active_mod_order : dummy,
@@ -3718,6 +3719,7 @@ static void refresh_tiles( bool used_tiles_changed, bool pixel_minimap_height_ch
                     /*force=*/force_tile_change,
                     /*pump_events=*/true
                 );
+                tile_iso = saved_tile_iso;
                 //game_ui::init_ui is called when zoom is changed
                 g->reset_zoom();
                 g->mark_main_ui_adaptor_resize();

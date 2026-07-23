@@ -190,7 +190,7 @@ static bool SetupRenderTarget()
 {
     SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
     display_buffer.reset( SDL_CreateTexture( renderer.get(), SDL_PIXELFORMAT_ARGB8888,
-                          SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
+            SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
     SDL_SetTextureScaleMode( display_buffer.get(), SDL_SCALEMODE_NEAREST );
     if( printErrorIf( !display_buffer, "Failed to create window buffer" ) ) {
         return false;
@@ -329,7 +329,7 @@ static void WinCreate()
             }
             if( !SetupRenderTarget() ) {
                 dbg( DL::Error ) << "Failed to initialize display buffer under accelerated rendering, "
-                                 "falling back to software rendering.";
+                                    "falling back to software rendering.";
                 software_renderer = true;
                 display_buffer.reset();
                 renderer.reset();
@@ -374,7 +374,7 @@ static void WinCreate()
     if( get_option<bool>( "ENABLE_JOYSTICK" ) && numjoy >= 1 ) {
         if( numjoy > 1 ) {
             dbg( DL::Warn ) << "You have more than one gamepads/joysticks plugged in, "
-                            "only the first will be used.";
+                               "only the first will be used.";
         }
         joystick = SDL_OpenJoystick( joystick_ids[0] );
         printErrorIf( joystick == nullptr, "SDL_OpenJoystick failed" );
@@ -514,7 +514,7 @@ void refresh_display()
     ClearScreen();
 #if defined(__ANDROID__)
     SDL_FRect dstrect = get_android_render_rect( TERMINAL_WIDTH * fontwidth,
-                        TERMINAL_HEIGHT * fontheight );
+        TERMINAL_HEIGHT * fontheight );
     RenderCopy( renderer, display_buffer, nullptr, &dstrect );
 #else
     RenderCopy( renderer, display_buffer, nullptr, nullptr );
@@ -588,9 +588,9 @@ void reinitialize_framebuffer( const bool force_invalidate )
 static void invalidate_framebuffer_proportion( cata_cursesport::WINDOW *win )
 {
     const int oversized_width = std::max( TERMX, std::max( OVERMAP_WINDOW_WIDTH,
-                                          TERRAIN_WINDOW_WIDTH ) );
+        TERRAIN_WINDOW_WIDTH ) );
     const int oversized_height = std::max( TERMY, std::max( OVERMAP_WINDOW_HEIGHT,
-                                           TERRAIN_WINDOW_HEIGHT ) );
+        TERRAIN_WINDOW_HEIGHT ) );
 
     // check if the framebuffers/windows have been prepared yet
     if( oversized_height == 0 || oversized_width == 0 ) {
@@ -652,7 +652,7 @@ void clear_window_area( const catacurses::window &win_ )
 }
 
 static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow(
-            const inclusive_cuboid<tripoint_abs_omt> &overmap_area, const tripoint_abs_omt &center )
+    const inclusive_cuboid<tripoint_abs_omt> &overmap_area, const tripoint_abs_omt &center )
 {
     const auto *mission = get_avatar().get_active_mission();
     const bool custom_waypoint_valid = get_avatar().get_custom_mission_target() !=
@@ -685,7 +685,7 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
     }
 
     const std::vector<tripoint_abs_omt> traj = line_to( center,
-            tripoint_abs_omt( mission_target.xy(), center.z() ) );
+        tripoint_abs_omt( mission_target.xy(), center.z() ) );
 
     if( traj.empty() ) {
         debugmsg( "Failed to gen overmap mission trajectory %s %s",
@@ -833,6 +833,13 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     }
 #endif
 
+    // Overmap uses its own tileset (e.g. ASCIITiles) which is never iso.
+    // tile_iso is global and may be true from the main tileset (e.g. Ultica_iso).
+    // Reset from the overmap tileset so get_window_tile_counts, draw_from_id_string,
+    // and highlight rendering all use orthographic math.
+    const auto saved_tile_iso = tile_iso;
+    tile_iso = tileset_ptr ? tileset_ptr->get_tile_iso() : false;
+
     int width = OVERMAP_WINDOW_TERM_WIDTH * font->width;
     int height = OVERMAP_WINDOW_TERM_HEIGHT * font->height;
 
@@ -902,7 +909,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
     // Cache display_oter substitution strings for the active region.
     const regional_settings &active_region_settings = ACTIVE_OVERMAP_BUFFER.get_settings(
-                center_abs_omt );
+            center_abs_omt );
     const bool om_has_display_oter = !active_region_settings.display_oter.is_empty();
     const std::string om_default_oter_str = active_region_settings.default_oter.str();
     const std::string om_display_oter_str = om_has_display_oter
@@ -1009,15 +1016,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                     const mongroup *mgp = *horde_it;
                     const MonsterGroup &group = mgp->type.obj();
                     const auto default_id = group.defaultMonster.is_valid()
-                    ? group.defaultMonster.str()
-                    : std::string( "mon_zombie" );
+                        ? group.defaultMonster.str()
+                        : std::string( "mon_zombie" );
                     if( group.monsters.empty() )
                     {
                         return default_id;
                     }
 
                     const auto best_entry = std::ranges::max_element( group.monsters, []( const auto & lhs,
-                            const auto & rhs )
+                        const auto & rhs )
                     {
                         return lhs.frequency < rhs.frequency;
                     } );
@@ -1189,7 +1196,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         inclusive_cuboid<tripoint_abs_omt> map_cursor_area = overmap_area;
         map_cursor_area.p_max.y()--;
         const std::optional<std::pair<tripoint_abs_omt, std::string>> mission_arrow =
-                    get_mission_arrow( map_cursor_area, center_abs_omt );
+            get_mission_arrow( map_cursor_area, center_abs_omt );
         if( mission_arrow ) {
             const tile_search_params tile { mission_arrow->second, C_NONE, empty_string, 0, 0 };
             draw_from_id_string(
@@ -1201,7 +1208,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     if( !viewing_weather && uistate.overmap_show_city_labels ) {
         const auto abs_sm_to_draw_label = [&]( const tripoint_abs_sm & city_pos, const int label_length ) {
             const auto tile_draw_pos = global_omt_to_draw_position( project_to<coords::omt>
-                                       ( city_pos ) ) - o;
+                ( city_pos ) ) - o;
             point draw_point( tile_draw_pos.x() * tile_width + dest.x,
                               tile_draw_pos.y() * tile_height + dest.y );
             // center text on the tile
@@ -1249,7 +1256,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         // the tiles on the overmap are overmap tiles, so we need to use
         // coordinate conversions to make sure we're in the right place.
         const int radius = coords::project_to<coords::sm>( tripoint_abs_omt( std::min( max_col, max_row ),
-                           0, 0 ) ).x() / 2;
+            0, 0 ) ).x() / 2;
 
         for( const city_reference &city : ACTIVE_OVERMAP_BUFFER.get_cities_near(
                  coords::project_to<coords::sm>( center_abs_omt ), radius ) ) {
@@ -1294,7 +1301,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         const std::string &note_text = ACTIVE_OVERMAP_BUFFER.note( center_abs_omt );
         if( !note_text.empty() && !overmap_label_note::is_label_only( note_text ) ) {
             const std::tuple<char, nc_color, size_t> note_info = overmap_ui::get_note_display_info(
-                        note_text );
+                    note_text );
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
                 const auto display_note_text =
@@ -1333,9 +1340,9 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
         // Find screen coordinates to the right of the center tile
         auto center_sm = coords::project_to<coords::sm>( tripoint_abs_omt( center_abs_omt.x() + 1,
-                         center_abs_omt.y(), center_abs_omt.z() ) );
+            center_abs_omt.y(), center_abs_omt.z() ) );
         const auto tile_draw_pos = global_omt_to_draw_position( project_to<coords::omt>
-                                   ( center_sm ) ) - o;
+            ( center_sm ) ) - o;
         point draw_point( tile_draw_pos.x() * tile_width + dest.x,
                           tile_draw_pos.y() * tile_height + dest.y );
         draw_point += point( padding, padding );
@@ -1373,7 +1380,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
                 if( seg[0] == '<' ) {
                     const color_tag_parse_result::tag_type type = update_color_stack(
-                                color_stack, seg, report_color_error::no );
+                            color_stack, seg, report_color_error::no );
                     if( type != color_tag_parse_result::non_color_tag ) {
                         seg = rm_prefix( seg );
                     }
@@ -1406,6 +1413,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
     printErrorIf( !SDL_SetRenderClipRect( renderer.get(), nullptr ),
                   "SDL_SetRenderClipRect failed" );
+
+    tile_iso = saved_tile_iso;
 }
 
 static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offset )
@@ -1418,7 +1427,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w, point offs
     cata_cursesport::WINDOW *const win = w.get<cata_cursesport::WINDOW>();
     //Keeping track of the last drawn window
     const cata_cursesport::WINDOW *winBuffer = static_cast<cata_cursesport::WINDOW *>
-            ( ::winBuffer.lock().get() );
+        ( ::winBuffer.lock().get() );
     if( !fontScaleBuffer ) {
         fontScaleBuffer = tilecontext->get_tile_width();
     }
@@ -2250,7 +2259,7 @@ input_event *get_quick_shortcut_under_finger( bool down = false )
     }
 
     quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
-                                 touch_input_context.get_category() )];
+            touch_input_context.get_category() )];
 
     float border, width, height;
     get_quick_shortcut_dimensions( qsl, border, width, height );
@@ -2300,7 +2309,7 @@ bool ignore_action_for_quick_shortcuts( const std::string &action )
              || action == "MOVE_ARMOR" // maps to ENTER
              || action == "ANY_INPUT"
              || action ==
-             "DELETE_TEMPLATE" // strictly we shouldn't have this one, but I don't like seeing the "d" on the main menu by default. :)
+                       "DELETE_TEMPLATE" // strictly we shouldn't have this one, but I don't like seeing the "d" on the main menu by default. :)
            );
 }
 
@@ -2576,7 +2585,7 @@ void draw_quick_shortcuts()
         std::string text = event.text;
         int key = event.get_first_input();
         float default_text_scale = std::floor( 0.75f * ( height /
-                                               font->height ) ); // default for single character strings
+            font->height ) ); // default for single character strings
         float text_scale = default_text_scale;
         if( text.empty() || text == " " ) {
             text = inp_mngr.get_keyname( key, event.type );
@@ -2651,7 +2660,7 @@ void draw_quick_shortcuts()
         int text_x, text_y;
         if( shortcut_right ) {
             text_x = ( WindowWidth - ( i + 0.5f ) * width - ( font->width * utf8_width(
-                           text ) ) * text_scale * 0.5f ) / text_scale;
+                    text ) ) * text_scale * 0.5f ) / text_scale;
         } else {
             text_x = ( ( i + 0.5f ) * width - ( font->width * utf8_width( text ) ) * text_scale * 0.5f ) /
                      text_scale;
@@ -2677,7 +2686,7 @@ void draw_quick_shortcuts()
                 int hint_length = utf8_width( hint_text );
                 if( WindowWidth * safe_margin < font->width * text_scale * hint_length ) {
                     text_scale *= ( WindowWidth * safe_margin ) / ( font->width * text_scale *
-                                  hint_length );    // scale to fit comfortably
+                        hint_length );    // scale to fit comfortably
                 }
                 SDL_SetRenderScale( renderer.get(), text_scale, text_scale );
                 text_x = ( WindowWidth - ( ( font->width  * hint_length ) * text_scale ) ) * 0.5f / text_scale;
@@ -2758,9 +2767,9 @@ void update_finger_repeat_delay()
                     0.0f, 1.0f );
     finger_repeat_delay = lerp( std::pow( t, get_option<float>( "ANDROID_SENSITIVITY_POWER" ) ),
                                 static_cast<Uint64>( std::max( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
-                                        get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ),
+                                    get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ),
                                 static_cast<Uint64>( std::min( get_option<int>( "ANDROID_REPEAT_DELAY_MIN" ),
-                                        get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ) );
+                                    get_option<int>( "ANDROID_REPEAT_DELAY_MAX" ) ) ) );
 }
 
 // TODO: Is there a better way to detect when string entry is allowed?
@@ -2792,7 +2801,7 @@ void handle_finger_input( Uint64 ticks )
     bool handle_diagonals = touch_input_context.is_action_registered( "LEFTUP" );
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
     if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" ) * std::max( WindowWidth,
-                 WindowHeight ) ) ) {
+            WindowHeight ) ) ) {
         if( !handle_diagonals ) {
             if( delta_x >= 0 && delta_y >= 0 ) {
                 last_input = input_event( delta_x > delta_y ? KEY_RIGHT : KEY_DOWN, input_event_t::keyboard );
@@ -2958,7 +2967,7 @@ static void CheckMessages()
 
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
     quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
-                                 touch_input_context.get_category() )];
+            touch_input_context.get_category() )];
 
     // Don't do this logic if we already need an update, otherwise we're likely to overload the game with too much input on hold repeat events
     if( !needupdate ) {
@@ -3161,7 +3170,7 @@ static void CheckMessages()
                     jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
                     jclass clazz( env->GetObjectClass( activity ) );
                     jstring toast_message = env->NewStringUTF( quick_shortcuts_enabled ? "Shortcuts visible" :
-                                            "Shortcuts hidden" );
+                        "Shortcuts hidden" );
                     jmethodID method_id = env->GetMethodID( clazz, "toast", "(Ljava/lang/String;)V" );
                     env->CallVoidMethod( activity, method_id, toast_message );
                     env->DeleteLocalRef( activity );
@@ -3354,7 +3363,7 @@ static void CheckMessages()
                                 }
 
                                 quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
-                                                             touch_input_context.get_category() )];
+                                        touch_input_context.get_category() )];
                                 qsl.remove( last_input );
                                 add_quick_shortcut( qsl, last_input, false, true );
                                 refresh_display();
@@ -3484,7 +3493,7 @@ static void CheckMessages()
                             last_input = *quick_shortcut;
                             if( get_option<bool>( "ANDROID_SHORTCUT_MOVE_FRONT" ) ) {
                                 quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
-                                                             touch_input_context.get_category() )];
+                                        touch_input_context.get_category() )];
                                 reorder_quick_shortcut( qsl, quick_shortcut->get_first_input(), false );
                             }
                             quick_shortcut->shortcut_last_used_action_counter = g->get_user_action_counter();
@@ -3498,7 +3507,7 @@ static void CheckMessages()
                                 finger_down_y - finger_curr_y > std::abs( finger_down_x - finger_curr_x ) ) {
                                 // a flick up was detected, remove the quick shortcut!
                                 quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
-                                                             touch_input_context.get_category() )];
+                                        touch_input_context.get_category() )];
                                 qsl.remove( *quick_shortcut );
                             }
                         }
@@ -3682,8 +3691,8 @@ static void init_term_size_and_scaling_factor()
         int display_count = 0;
         SDL_DisplayID *display_list = SDL_GetDisplays( &display_count );
         const SDL_DisplayID current_display_id = ( display_list && current_display_idx < display_count )
-                ? display_list[current_display_idx]
-                : SDL_GetPrimaryDisplay();
+            ? display_list[current_display_idx]
+            : SDL_GetPrimaryDisplay();
         SDL_free( display_list );
 
         const SDL_DisplayMode *current_display = SDL_GetDesktopDisplayMode( current_display_id );
@@ -3824,6 +3833,7 @@ void catacurses::init_interface()
         try {
             overmap_tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
             std::vector<mod_id> dummy;
+            const auto saved_tile_iso = tile_iso;
             overmap_tilecontext->load_tileset(
                 omTilesName,
                 dummy,
@@ -3831,6 +3841,7 @@ void catacurses::init_interface()
                 /*force=*/false,
                 /*pump_events=*/true
             );
+            tile_iso = saved_tile_iso;
         } catch( const std::exception &err ) {
             dbg( DL::Error ) << "failed to check for overmap tileset: " << err.what();
             // use_tiles is the cached value of the USE_TILES option.
@@ -3847,13 +3858,13 @@ void catacurses::init_interface()
 
     try {
         font = std::make_unique<FontFallbackList>( renderer, format, fl.fontwidth, fl.fontheight,
-                windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );
+            windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );
         map_font = std::make_unique<FontFallbackList>( renderer, format, fl.map_fontwidth,
-                   fl.map_fontheight,
-                   windowsPalette, fl.map_typeface, fl.map_fontsize, fl.fontblending );
+            fl.map_fontheight,
+            windowsPalette, fl.map_typeface, fl.map_fontsize, fl.fontblending );
         overmap_font = std::make_unique<FontFallbackList>( renderer, format, fl.overmap_fontwidth,
-                       fl.overmap_fontheight,
-                       windowsPalette, fl.overmap_typeface, fl.overmap_fontsize, fl.fontblending );
+            fl.overmap_fontheight,
+            windowsPalette, fl.overmap_typeface, fl.overmap_fontsize, fl.fontblending );
     } catch( std::exception &e ) {
         font.reset();
         map_font.reset();
@@ -3895,6 +3906,7 @@ void load_tileset()
     } else {
         if( overmap_tilecontext ) {
             overmap_tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
+            const auto saved_tile_iso = tile_iso;
             overmap_tilecontext->load_tileset(
                 omTilesName,
                 world_generator->active_world->info->active_mod_order,
@@ -3902,6 +3914,7 @@ void load_tileset()
                 /*force=*/false,
                 /*pump_events=*/true
             );
+            tile_iso = saved_tile_iso;
             overmap_tilecontext->do_tile_loading_report( []( const std::string & str ) {
                 DebugLog( DL::Info, DC::Main ) << str;
             } );
@@ -4104,7 +4117,7 @@ auto get_sdl_display_buffer_size() -> point
 auto get_sdl_window_size() -> point
 {
     return point( std::max( 1, WindowWidth / scaling_factor ),
-                  std::max( 1, WindowHeight / scaling_factor ) );
+    std::max( 1, WindowHeight / scaling_factor ) );
 }
 
 auto get_sdl_font_size() -> point
@@ -4266,7 +4279,7 @@ bool save_screenshot( const std::string &file_path )
     // Save screenshot as PNG file
     const bool ok = !printErrorIf( !IMG_SavePNG( readback.get(), file_path.c_str() ),
                                    std::string( "save_screenshot: cannot save screenshot file: " +
-                                           file_path ).c_str() );
+                                       file_path ).c_str() );
     return ok;
 }
 

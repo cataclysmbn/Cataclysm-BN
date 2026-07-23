@@ -1,5 +1,7 @@
 #include "enchantment.h"
 
+#define dbg(x) DebugLogFL((x), DC::Main)
+
 #include "bodypart.h"
 #include "calendar.h"
 #include "character.h"
@@ -429,7 +431,7 @@ void enchantment::force_add(const enchantment& rhs) {
 }
 
 bool enchantment::has_flag(const enchantment_flag_id flag) const {
-    if (!flag.is_valid()) { debugmsg("Tried to get invalid enchantment flag \"%s\".", flag); }
+    if (!flag.is_valid()) { return false; }
     if (flags.contains(flag)) {
         if (flags.at(flag) <= 0) {
             debugmsg("Flag \"%s\" was canceled but remains in the list", flag);
@@ -627,8 +629,8 @@ void enchantment::finalize() {
     }
 
     if (!problems.empty()) {
-        debugmsg("%s %s has: %s", ench_desc, id.c_str(),
-                 enumerate_as_string(problems, enumeration_conjunction::none));
+        dbg(DL::Error) << ench_desc << " " << id.c_str()
+                       << " has: " << enumerate_as_string(problems, enumeration_conjunction::none);
     }
 }
 
@@ -678,7 +680,8 @@ void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_t
     }
     for (const trait_id& mut : mutations) {
         if (!mut.is_valid()) {
-            debugmsg("%s %s has invalid mutation %s", ench_desc, id.c_str(), mut.c_str());
+            dbg(DL::Error) << ench_desc << " " << id.c_str() << " has invalid mutation "
+                           << mut.c_str();
         }
 
         if (!nested_enchant_check(*this, id, std::set<trait_id>())) {
@@ -758,8 +761,8 @@ void enchantment::check(std::set<enchantment_condition_type> incompatible_cond_t
         }
     }
     if (!problems.empty()) {
-        debugmsg("%s %s has: %s", ench_desc, id.c_str(),
-                 enumerate_as_string(problems, enumeration_conjunction::none));
+        dbg(DL::Error) << ench_desc << " " << id.c_str()
+                       << " has: " << enumerate_as_string(problems, enumeration_conjunction::none);
     }
 }
 

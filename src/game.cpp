@@ -630,6 +630,7 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
         try {
             repoint_overmap_tilecontext();
             std::vector<mod_id> dummy;
+            const auto saved_tile_iso = tile_iso;
             overmap_tilecontext->load_tileset(
                 omTilesName,
                 world_generator->active_world ? world_generator->active_world->info->active_mod_order : dummy,
@@ -637,6 +638,7 @@ void game::reload_tileset( [[maybe_unused]] const std::function<void( std::strin
                 /*force=*/true,
                 /*pump_events=*/true
             );
+            tile_iso = saved_tile_iso;
             overmap_tilecontext->do_tile_loading_report( out );
         } catch( const std::exception &err ) {
             popup( _( "Loading the overmap tileset failed: %s" ), err.what() );
