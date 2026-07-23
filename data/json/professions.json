@@ -1338,7 +1338,7 @@
     "type": "profession",
     "id": "chef",
     "name": "Chef",
-    "description": "Bork bork!  Years in the kitchen have left you carrying a prodigious bulk, but you managed to escape the carnage with your trusty butcher knife and only a small collection of stains on your uniform.",
+    "description": "Bork bork!  Years in the kitchen have left you carrying a prodigious bulk, but you managed to escape the carnage with a butchers knife and only a small collection of stains on your uniform.",
     "points": 1,
     "skills": [ { "name": "cooking", "level": 6 } ],
     "items": {
