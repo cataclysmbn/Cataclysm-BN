@@ -7237,7 +7237,7 @@
     "type": "profession",
     "id": "bionic_game_master",
     "name": "Bionic Game Master",
-    "description": "You came into a large fortune, through luck or will, and hosted games for people that most of the world knew on a first-name basis.  You could afford to spoil your players, and so you did.  You invested in bionics to make you smarter, and to allow you to bear the stench of the room, and now you've memorized the entire handbook.  Let's hope that knowledge helps you now.",
+    "description": "You came into a large fortune, through luck or will, and hosted games for people that most of the world knew on a first-name basis.  You could afford to spoil your players, and so you did.  You invested in bionics to make you smarter, and now you've memorized the entire handbook.  Let's hope that knowledge helps you now.",
     "points": 3,
     "traits": [ "PROF_DICEMASTER" ],
     "CBMs": [ "bio_batteries", "bio_power_storage", "bio_memory", "bio_int_enhancer", "bio_purifier" ],
