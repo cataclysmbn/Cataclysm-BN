@@ -18750,6 +18750,13 @@
           "additional_tiles": [ { "id": "broken", "fg": 9861 } ]
         },
         {
+          "id": "vp_mounted_gatling_mech_laser_rebuilt",
+          "fg": 9860,
+          "rotates": true,
+          "multitile": true,
+          "additional_tiles": [ { "id": "broken", "fg": 9861 } ]
+        },
+        {
           "id": "vp_mounted_launcher_simple",
           "fg": 9862,
           "rotates": true,
