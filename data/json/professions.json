@@ -1314,7 +1314,20 @@
     "skills": [ { "level": 6, "name": "tailor" } ],
     "items": {
       "both": {
-        "items": [ "mbag", "smart_phone", "tailor_portfolio", "polo_shirt", "blazer", "pants", "smart_phone", "socks", "dress_shoes", "knit_scarf", "scissors", "sf_watch" ],
+        "items": [
+          "mbag",
+          "smart_phone",
+          "tailor_portfolio",
+          "polo_shirt",
+          "blazer",
+          "pants",
+          "smart_phone",
+          "socks",
+          "dress_shoes",
+          "knit_scarf",
+          "scissors",
+          "sf_watch"
+        ],
         "entries": [ { "item": "tailors_kit", "ammo-item": "thread", "charges": 100 } ]
       },
       "male": [ "briefs" ],
@@ -2903,10 +2916,25 @@
     "//": "A simple class for players who want to try some basic crafting immediately, or who want a machete because it's in-genre.",
     "description": "You used to mow lawns and trim hedges for the wealthy.  Contract work was getting scarce even before the zombies came, but now you've got nothing left but your tools and expertise.",
     "points": 1,
-    "skills": [ { "level": 2, "name": "swimming" }, { "level": 3, "name": "fabrication" }, { "level": 3, "name": "survival" }, { "level": 2, "name": "cutting" } ],
+    "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 3, "name": "fabrication" },
+      { "level": 3, "name": "survival" },
+      { "level": 2, "name": "cutting" }
+    ],
     "items": {
       "both": {
-        "items": [ "tank_top", "jacket_windbreaker", "hat_ball", "gloves_work", "glasses_safety", "socks", "sneakers", "pants_cargo", "smart_phone" ],
+        "items": [
+          "tank_top",
+          "jacket_windbreaker",
+          "hat_ball",
+          "gloves_work",
+          "glasses_safety",
+          "socks",
+          "sneakers",
+          "pants_cargo",
+          "smart_phone"
+        ],
         "entries": [ { "item": "g_shovel" }, { "item": "scabbard", "contents-item": "machete" } ]
       },
       "male": [ "boxer_shorts" ],
@@ -3316,12 +3344,7 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          {
-            "item": "usp_45",
-            "ammo-item": "45_acp",
-            "charges": 12,
-            "container-item": "holster"
-          },
+          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
           { "group": "charged_tazer" }
         ]
@@ -3382,7 +3405,7 @@
     "name": "Police Officer",
     "description": "Just a small-town deputy when you got the call, you were still ready to come to the rescue.  Except that soon it was you who needed rescuing - you were lucky to escape with your life.  Who's going to respect your authority when the government this badge represents might not even exist anymore?",
     "points": 3,
-    "skills": [ 
+    "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 3, "name": "gun" },
       { "level": 3, "name": "pistol" },
@@ -3409,12 +3432,7 @@
           { "group": "charged_two_way_radio" },
           { "group": "charged_flashlight" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          {
-            "item": "usp_45",
-            "ammo-item": "45_acp",
-            "charges": 12,
-            "container-item": "holster"
-          },
+          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
           { "group": "charged_tazer" }
         ]
@@ -3461,13 +3479,13 @@
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     },
-    "skills": [       
+    "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 4, "name": "gun" },
       { "level": 4, "name": "pistol" },
       { "level": 2, "name": "melee" },
       { "level": 2, "name": "bashing" },
-      { "level": 5, "name": "speech" } 
+      { "level": 5, "name": "speech" }
     ],
     "addictions": [ { "intensity": 10, "type": "nicotine" } ]
   },
@@ -3527,17 +3545,24 @@
     "traits": [ "PROF_SWAT" ],
     "items": {
       "both": {
-        "items": [ "socks", "swat_armor", "police_belt", "tac_helmet", "boots_combat", "gloves_tactical", "badge_swat", "wristwatch", "knee_pads", "elbow_pads", "smart_phone" ],
+        "items": [
+          "socks",
+          "swat_armor",
+          "police_belt",
+          "tac_helmet",
+          "boots_combat",
+          "gloves_tactical",
+          "badge_swat",
+          "wristwatch",
+          "knee_pads",
+          "elbow_pads",
+          "smart_phone"
+        ],
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "tacvest", "contents-group": [ "army_mags_m4", "army_mags_usp9" ] },
           { "item": "grenadebandolier", "contents-item": [ "flashbang", "gasbomb" ] },
-          {
-            "item": "usp_9mm",
-            "ammo-item": "9mm",
-            "charges": 15,
-            "container-item": "holster"
-          },
+          { "item": "usp_9mm", "ammo-item": "9mm", "charges": 15, "container-item": "holster" },
           {
             "item": "ar15",
             "ammo-item": "556",
@@ -3579,8 +3604,8 @@
           "gloves_tactical",
           "badge_swat",
           "wristwatch",
-          "knee_pads", 
-          "elbow_pads", 
+          "knee_pads",
+          "elbow_pads",
           "smart_phone",
           "shield_ballistic"
         ],
@@ -3726,7 +3751,12 @@
     "name": "Bow Hunter",
     "description": "Ever since you were a child you loved hunting, and you soon took a liking to the challenge of hunting with a bow.  Why, if the world ended there's nothing you'd want at your side more than your trusty bow.  So when it did, you made sure to bring it along.",
     "points": 2,
-    "skills": [ { "level": 2, "name": "swimming" }, { "level": 3, "name": "gun" }, { "level": 3, "name": "archery" }, { "level": 2, "name": "survival" } ],
+    "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "archery" },
+      { "level": 2, "name": "survival" }
+    ],
     "items": {
       "both": {
         "items": [
@@ -3753,7 +3783,12 @@
     "name": "Crossbow Hunter",
     "description": "Ever since you were a child you loved hunting, and you soon took a liking to the challenge of hunting with a crossbow.  Why, if the world ended there's nothing you'd want at your side more than your trusty crossbow.  So when it did, you made sure to bring it along.",
     "points": 2,
-    "skills": [ { "level": 2, "name": "swimming" }, { "level": 3, "name": "gun" }, { "level": 3, "name": "rifle" }, { "level": 2, "name": "survival" } ],
+    "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "rifle" },
+      { "level": 2, "name": "survival" }
+    ],
     "items": {
       "both": {
         "items": [
@@ -3881,10 +3916,7 @@
     "name": "Lumberjack",
     "description": "You're a lumberjack, and you're okay.  You felled trees before the world ended, but suspect the undead aren't nearly as tough.",
     "points": 1,
-    "skills": [     
-      { "level": 3, "name": "cutting" },
-      { "level": 3, "name": "swimming" } 
-    ],
+    "skills": [ { "level": 3, "name": "cutting" }, { "level": 3, "name": "swimming" } ],
     "items": {
       "both": {
         "items": [
@@ -4117,7 +4149,12 @@
     "description": "You have done many high profile heists, but your gains mean nothing in this world.  All you have left are the tools of your trade and your impeccable style.",
     "points": 4,
     "CBMs": [ "bio_batteries", "bio_storage", "bio_lockpick", "bio_fingerhack", "bio_power_storage_mkII" ],
-    "skills": [ { "level": 3, "name": "gun" }, { "level": 3, "name": "smg" }, { "level": 3, "name": "dodge" }, { "level": 3, "name": "speech" } ],
+    "skills": [
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "smg" },
+      { "level": 3, "name": "dodge" },
+      { "level": 3, "name": "speech" }
+    ],
     "items": {
       "both": {
         "items": [ "waistcoat", "pants", "dress_shirt", "socks", "dress_shoes", "knit_scarf", "gold_watch", "smart_phone" ],
@@ -4335,7 +4372,7 @@
       "bio_power_storage_mkII"
     ],
     "traits": [ "PROF_CYBERCOP" ],
-    "skills": [ 
+    "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 3, "name": "gun" },
       { "level": 3, "name": "pistol" },
@@ -4631,7 +4668,12 @@
       "bio_minirose",
       "bio_power_storage_mkII"
     ],
-    "skills": [ { "level": 8, "name": "speech" }, { "level": 2, "name": "survival" }, { "level": 4, "name": "computer" }, { "level": 4, "name": "traps" } ],
+    "skills": [
+      { "level": 8, "name": "speech" },
+      { "level": 2, "name": "survival" },
+      { "level": 4, "name": "computer" },
+      { "level": 4, "name": "traps" }
+    ],
     "items": { "both": [ "dress_shoes", "socks", "knit_scarf", "suit" ], "male": [ "briefs" ], "female": [ "bra", "panties" ] }
   },
   {
@@ -4653,7 +4695,7 @@
       "bio_minirose",
       "bio_power_storage_mkII"
     ],
-    "skills": [ 
+    "skills": [
       { "level": 8, "name": "melee" },
       { "level": 8, "name": "cutting" },
       { "level": 8, "name": "dodge" },
@@ -4692,7 +4734,19 @@
     ],
     "items": {
       "both": {
-        "items": [ "suit", "bowhat", "socks", "dress_shoes", "knit_scarf", "cig", "switchblade", "mag_porn", "sunglasses", "shot_00", "smart_phone" ],
+        "items": [
+          "suit",
+          "bowhat",
+          "socks",
+          "dress_shoes",
+          "knit_scarf",
+          "cig",
+          "switchblade",
+          "mag_porn",
+          "sunglasses",
+          "shot_00",
+          "smart_phone"
+        ],
         "entries": [
           { "item": "glock_19", "ammo-item": "9mm", "container-item": "holster", "charges": 15 },
           { "item": "glockmag", "ammo-item": "9mm", "charges": 15 },
@@ -5739,8 +5793,8 @@
     "name": "Farmer",
     "description": "You were making a living by raising crops, when the Cataclysm struck.  Now, with your trusty hoe and some seeds it's time to rebuild the Earth, one plant at a time.",
     "points": 1,
-    "skills": [ 
-      { "level": 1, "name": "swimming" },       
+    "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 3, "name": "survival" },
       { "level": 2, "name": "fabrication" },
       { "level": 1, "name": "melee" },
@@ -5780,7 +5834,7 @@
     "age": { "min": 17, "max": 35 },
     "points": 3,
     "traits": [ "PROF_MILITARY" ],
-    "skills": [ 
+    "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 2, "name": "firstaid" },
       { "level": 2, "name": "gun" },
@@ -6188,10 +6242,7 @@
     "name": "Mall Security",
     "description": "A mall security guard.  You don't have any useful skills, other than some basic training for your job.  You do however have your trusty tazer, baton, and pocket knife.",
     "points": 0,
-    "skills": [
-      { "level": 1, "name": "melee" },
-      { "level": 1, "name": "bashing" }
-    ],
+    "skills": [ { "level": 1, "name": "melee" }, { "level": 1, "name": "bashing" } ],
     "items": {
       "both": {
         "items": [ "pants", "socks", "boots", "longshirt", "smart_phone", "jacket_light", "baton", "pockknife", "wristwatch" ],
@@ -6575,7 +6626,7 @@
     "description": "You had a job programming machines such as automatic street cleaners, newsbots and pizza delivery drones, and you were bionically augmented to do so hands-free.  Now all the drones carry guns instead of pizza.",
     "points": 4,
     "CBMs": [ "bio_batteries", "bio_power_storage", "bio_remote", "bio_infolink" ],
-    "skills": [ 
+    "skills": [
       { "level": 6, "name": "computer" },
       { "level": 4, "name": "electronics" },
       { "level": 4, "name": "mechanics" },
@@ -6703,7 +6754,12 @@
     "description": "Your parents were crazy preppers who thought some \"Cataclysm\" was coming, and insisted on preparing you for it.  Turns out they were right.  You didn't get a chance to thank them.  The only thing you can do for them now is what they always hoped you would do in the dark days ahead: survive to see bright nights again.",
     "points": 1,
     "age": { "min": 14, "max": 18 },
-    "skills": [ { "level": 3, "name": "survival" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "firstaid" }, { "level": 2, "name": "traps" } ],
+    "skills": [
+      { "level": 3, "name": "survival" },
+      { "level": 2, "name": "fabrication" },
+      { "level": 2, "name": "firstaid" },
+      { "level": 2, "name": "traps" }
+    ],
     "items": {
       "both": {
         "items": [
@@ -6889,7 +6945,12 @@
     "name": "Gym Teacher",
     "description": "After a career of teaching kids the art of sports they mostly hate, the zombies around you refuse to do laps, even at the blow of your whistle.",
     "points": 3,
-    "skills": [ { "level": 3, "name": "dodge" }, { "level": 2, "name": "speech" }, { "level": 3, "name": "throw" }, { "level": 2, "name": "swimming" } ],
+    "skills": [
+      { "level": 3, "name": "dodge" },
+      { "level": 2, "name": "speech" },
+      { "level": 3, "name": "throw" },
+      { "level": 2, "name": "swimming" }
+    ],
     "items": {
       "both": {
         "items": [ "bat", "whistle", "tank_top", "smart_phone", "shorts", "socks_ankle", "sneakers", "runner_bag", "wristwatch" ]
@@ -7032,7 +7093,12 @@
     "id": "demolition_expert",
     "name": "Demolition Expert",
     "description": "Before this all began you were having the time of your life at your dream job, blowing things up.  Now you're finally allowed to do it full time. ",
-    "skills": [ { "level": 4, "name": "fabrication" }, { "level": 3, "name": "cooking" }, { "level": 2, "name": "throw" }, { "level": 1, "name": "launcher" } ],
+    "skills": [
+      { "level": 4, "name": "fabrication" },
+      { "level": 3, "name": "cooking" },
+      { "level": 2, "name": "throw" },
+      { "level": 1, "name": "launcher" }
+    ],
     "points": 2,
     "items": {
       "both": {
@@ -7500,7 +7566,7 @@
     "age": { "min": 20, "max": 40 },
     "points": 5,
     "traits": [ "PROF_MILITARY" ],
-    "skills": [   
+    "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 2, "name": "firstaid" },
       { "level": 2, "name": "gun" },
@@ -7554,7 +7620,7 @@
     "age": { "min": 20, "max": 40 },
     "points": 6,
     "traits": [ "PROF_MILITARY" ],
-    "skills": [ 
+    "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 2, "name": "firstaid" },
       { "level": 2, "name": "gun" },
@@ -7764,9 +7830,7 @@
           "wristwatch",
           "pen"
         ],
-        "entries": [
-          { "item": "scalpel", "custom-flags": [ "auto_wield" ] }
-        ]
+        "entries": [ { "item": "scalpel", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
@@ -7779,7 +7843,7 @@
     "name": "Feral Police Officer",
     "//": "Contains a Judge Dredd reference.",
     "description": "You were just a small-town deputy.  You got caught up in the riots, and now you're the only law left in this town.  The crime is life.  The sentence is death.",
-    "skills": [ 
+    "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 3, "name": "gun" },
       { "level": 3, "name": "pistol" },
@@ -7806,12 +7870,7 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          {
-            "item": "usp_45",
-            "ammo-item": "45_acp",
-            "charges": 12,
-            "container-item": "holster"
-          },
+          { "item": "usp_45", "ammo-item": "45_acp", "charges": 12, "container-item": "holster" },
           { "item": "legpouch_large", "contents-group": "army_mags_usp45" },
           {
             "item": "light_battery_cell",
@@ -7834,7 +7893,7 @@
     "//": "Contains a Fahrenheit 451 reference.",
     "description": "As a first responder you were direct witness to the gut-wrenching horrors of the apocalypse.  You still feel the fire, burning the pit of your stomach.  It was a pleasure to burn.",
     "points": 3,
-    "skills": [ 
+    "skills": [
       { "level": 3, "name": "swimming" },
       { "level": 4, "name": "melee" },
       { "level": 4, "name": "bashing" },
@@ -8187,10 +8246,7 @@
     "//": "Contains a reference to The Texas Chainsaw Massacre.  One higher point cost due to included chainsaw and safety gear.",
     "description": "You felled trees before the world ended, but now there's so much more you could be doing.  When your work's finally finished, who will survive, and what will be left of them?",
     "points": 1,
-    "skills": [       
-      { "level": 3, "name": "cutting" },
-      { "level": 3, "name": "swimming" }  
-    ],
+    "skills": [ { "level": 3, "name": "cutting" }, { "level": 3, "name": "swimming" } ],
     "items": {
       "both": {
         "items": [
@@ -8404,11 +8460,7 @@
     "name": "Exterminator",
     "description": "Before the world fell apart, you were the first line of defense against roaches, rats, and worse. Armed with sprays, traps, and a healthy dose of stubbornness, you knew every trick in the book for clearing infestations. Now, your skills have never been more relevant - the pests are bigger, meaner, and sometimes hungry for you.",
     "points": 4,
-    "skills": [
-      { "level": 4, "name": "cooking" },
-      { "level": 2, "name": "launcher" },
-      { "level": 4, "name": "traps" }
-    ],
+    "skills": [ { "level": 4, "name": "cooking" }, { "level": 2, "name": "launcher" }, { "level": 4, "name": "traps" } ],
     "vehicle": "cube_van_cheap",
     "items": {
       "both": {
@@ -8591,7 +8643,7 @@
       { "level": 2, "name": "throw" },
       { "level": 2, "name": "survival" },
       { "level": 4, "name": "computer" },
-      { "level": 4, "name": "electronics" },
+      { "level": 4, "name": "electronics" }
     ],
     "traits": [ "PROF_MILITARY" ],
     "items": {
@@ -8774,7 +8826,18 @@
     ],
     "items": {
       "both": {
-        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_liner", "gloves_tactical", "helmet_liner", "helmet_army", "jacket_army", "webbing_belt" ],
+        "items": [
+          "pants_army",
+          "socks",
+          "boots_combat",
+          "wristwatch",
+          "gloves_liner",
+          "gloves_tactical",
+          "helmet_liner",
+          "helmet_army",
+          "jacket_army",
+          "webbing_belt"
+        ],
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "legpouch_large", "contents-group": "army_mags_m4" },
@@ -8804,7 +8867,18 @@
     ],
     "items": {
       "both": {
-        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_liner", "gloves_tactical", "helmet_liner", "helmet_army", "jacket_army", "webbing_belt" ],
+        "items": [
+          "pants_army",
+          "socks",
+          "boots_combat",
+          "wristwatch",
+          "gloves_liner",
+          "gloves_tactical",
+          "helmet_liner",
+          "helmet_army",
+          "jacket_army",
+          "webbing_belt"
+        ],
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "legpouch_large", "contents-group": "army_mags_m4" },
@@ -8834,7 +8908,18 @@
     ],
     "items": {
       "both": {
-        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_liner", "gloves_tactical", "helmet_liner", "helmet_army", "jacket_army", "webbing_belt" ],
+        "items": [
+          "pants_army",
+          "socks",
+          "boots_combat",
+          "wristwatch",
+          "gloves_liner",
+          "gloves_tactical",
+          "helmet_liner",
+          "helmet_army",
+          "jacket_army",
+          "webbing_belt"
+        ],
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
@@ -8860,7 +8945,7 @@
       { "level": 2, "name": "firstaid" },
       { "level": 4, "name": "driving" },
       { "level": 4, "name": "mechanics" },
-      { "level": 4, "name": "launcher" }, 
+      { "level": 4, "name": "launcher" },
       { "level": 2, "name": "gun" },
       { "level": 2, "name": "pistol" }
     ],
