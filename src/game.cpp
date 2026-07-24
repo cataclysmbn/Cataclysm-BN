@@ -14575,6 +14575,12 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
         return false;
     }
 
+    // Persist the player's current dimension before deleting any destination data.  If the
+    // process stops during cleanup, the save must never place the player in the removed dimension.
+    if( active_world->is_save_tx_active() || !save( false ) ) {
+        return false;
+    }
+
     submap_loader.drain_lazy_loads();
     if( !active_world->delete_dimension_data( dim_id.str() ) ) {
         return false;

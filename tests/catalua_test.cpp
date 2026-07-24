@@ -801,6 +801,13 @@ test_data["overmap_terrain"] = {
     };
     auto* const active_world = g->get_active_world();
     REQUIRE(active_world != nullptr);
+    auto& global_lua = DynamicDataLoader::get_instance().lua->lua;
+    auto mod_storage = global_lua["game"]["cata_internal"]["mod_storage"].get<sol::table>();
+    for (const auto& mod : active_world->info->active_mod_order) {
+        if (!mod_storage[mod.str()].is<sol::table>()) {
+            mod_storage[mod.str()] = global_lua.create_table();
+        }
+    }
     REQUIRE(active_world->write_map_omt(
         unloaded_delete_dimension_id, unloaded_delete_omt, write_empty_array));
     REQUIRE(active_world->write_map_omt(
@@ -907,8 +914,22 @@ test_data["overmap_terrain"] = {
         .add("dimension zone", zone_type_no_auto_pickup, your_fac, false, true, zone_target_ms,
              zone_target_ms);
     CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->save(false));
     REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
     REQUIRE(g->reset_dimension(zone_dimension_id));
+    auto saved_dimension_id = std::string{};
+    REQUIRE(active_world->read_from_player_file(
+        SAVE_EXTENSION,
+        [&](std::istream& input) {
+            auto version_header = std::string{};
+            std::getline(input, version_header);
+            auto jsin = JsonIn(input);
+            auto save_data = jsin.get_object();
+            save_data.allow_omitted_members();
+            save_data.read("current_dimension_id", saved_dimension_id);
+        },
+        false));
+    CHECK(saved_dimension_id.empty());
     REQUIRE(g->travel_to_dimension(
         zone_dimension_id, world_type_id("pocket_dimension"), zone_pocket_data, zone_load_pos));
     CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
