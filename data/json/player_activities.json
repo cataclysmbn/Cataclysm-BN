@@ -99,6 +99,17 @@
     "bubble_size_effect": "mobile"
   },
   {
+    "id": "ACT_MULTIPLE_DISSECT",
+    "type": "activity_type",
+    "verb": "dissecting",
+    "special": true,
+    "suspendable": false,
+    "no_resume": true,
+    "multi_activity": true,
+    "auto_needs": true,
+    "bubble_size_effect": "mobile"
+  },
+  {
     "id": "ACT_MULTIPLE_CHOP_TREES",
     "type": "activity_type",
     "verb": "chopping trees",
