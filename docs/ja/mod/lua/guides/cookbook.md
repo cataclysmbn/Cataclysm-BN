@@ -242,6 +242,34 @@ local reentered = gapi.place_player_dimension_at({
 })
 ```
 
+### 遠征ディメンションをリセットまたは削除する
+
+統合対象の
+[CBN-Sky-Island 遠征フロー](https://github.com/graysonchao/CBN-Sky-Island/blob/main/teleport.lua)では、
+[issue #9589](https://github.com/cataclysmbn/Cataclysm-BN/issues/9589)を解決するために
+遠征地形を新しく生成する必要があります。遠征にプライマリ以外のディメンション ID を割り当て、
+オーバーワールドへ戻って mod の状態を更新してから、生成データをリセットします。
+
+```lua
+local expedition_dimension = "sky_island_expedition"
+local storage = game.mod_storage[game.current_mod]
+local returned = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+
+if returned then
+  storage.is_away_from_home = false
+  gapi.reset_dimension(expedition_dimension)
+end
+```
+
+プライマリのオーバーワールドは削除できないため、どちらのクリーンアップ関数も `""` を拒否します。
+`reset_dimension` は再入場に必要なディメンションメタデータを維持しますが、
+`delete_dimension` を使った場合、次の入場時に生成オプションをすべて再指定する必要があります。
+クリーンアップはディメンションデータを削除する前に完全な保存を行うため、
+永続 Lua 状態を先に更新してください。
+
 ## 天気フック
 
 ### 天気の変化に反応する

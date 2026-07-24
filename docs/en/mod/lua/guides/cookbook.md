@@ -242,6 +242,35 @@ local reentered = gapi.place_player_dimension_at({
 })
 ```
 
+### Resetting or deleting an expedition dimension
+
+The integration target is the
+[CBN-Sky-Island expedition flow](https://github.com/graysonchao/CBN-Sky-Island/blob/main/teleport.lua),
+which needs fresh expedition terrain for
+[issue #9589](https://github.com/cataclysmbn/Cataclysm-BN/issues/9589).
+Give the expedition a non-primary dimension ID, return to the overworld, update
+mod state, and then reset its generated data:
+
+```lua
+local expedition_dimension = "sky_island_expedition"
+local storage = game.mod_storage[game.current_mod]
+local returned = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+
+if returned then
+  storage.is_away_from_home = false
+  gapi.reset_dimension(expedition_dimension)
+end
+```
+
+Both cleanup functions reject `""` because the primary overworld cannot be
+removed. `reset_dimension` keeps the dimension metadata for re-entry, while
+`delete_dimension` requires the full generation options on the next entry.
+Cleanup makes a full save before removing dimension data, so update persistent
+Lua state before calling it.
+
 ## Weather Hooks
 
 ### Reacting to weather changes
