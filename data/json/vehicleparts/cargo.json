@@ -362,6 +362,26 @@
     "breaks_into": "ig_vp_sheet_metal"
   },
   {
+    "copy-from": "trunk_floor",
+    "id": "trunk_floor_carbon",
+    "type": "vehicle_part",
+    "name": { "str": "carbon fiber floor trunk" },
+    "durability": 420,
+    "damage_reduction": { "all": 34 },
+    "description": "An aisle.  A hatch lets you access a cargo space beneath it.",
+    "size": "100 L",
+    "item": "cargo_aisle_carbon",
+    "breaks_into": "ig_vp_carbon",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "15 m",
+        "using": [ [ "welding_standard", 1 ], [ "vehicle_repair_carbon", 2 ] ]
+      }
+    },
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] }
+  },
+  {
     "copy-from": "trunk_abstract",
     "type": "vehicle_part",
     "id": "trunk_flat",

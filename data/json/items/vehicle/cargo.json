@@ -96,6 +96,17 @@
     "price_postapoc": "5 USD"
   },
   {
+    "copy-from": "cargo_aisle",
+    "id": "cargo_aisle_carbon",
+    "type": "GENERIC",
+    "name": { "str": "carbon floor trunk" },
+    "description": "A section of carbon flooring with a cargo-space beneath, and a hinged door for access.",
+    "weight": "2 kg",
+    "material": [ "carbon_fiber" ],
+    "price": "500 USD",
+    "price_postapoc": "10 USD"
+  },
+  {
     "id": "livestock_carrier",
     "type": "GENERIC",
     "name": { "str": "livestock carrier" },
