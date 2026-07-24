@@ -242,6 +242,33 @@ local reentered = gapi.place_player_dimension_at({
 })
 ```
 
+### 원정 디멘션 초기화 또는 삭제하기
+
+통합 대상인
+[CBN-Sky-Island 원정 흐름](https://github.com/graysonchao/CBN-Sky-Island/blob/main/teleport.lua)은
+[이슈 #9589](https://github.com/cataclysmbn/Cataclysm-BN/issues/9589)를 해결하려면
+원정 지형을 새로 생성해야 합니다. 원정에 기본 디멘션이 아닌 ID를 지정하고,
+오버월드로 돌아와 모드 상태를 갱신한 다음 생성 데이터를 초기화합니다.
+
+```lua
+local expedition_dimension = "sky_island_expedition"
+local storage = game.mod_storage[game.current_mod]
+local returned = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+
+if returned then
+  storage.is_away_from_home = false
+  gapi.reset_dimension(expedition_dimension)
+end
+```
+
+기본 오버월드는 제거할 수 없으므로 두 정리 함수 모두 `""`를 거부합니다.
+`reset_dimension`은 재진입에 필요한 디멘션 메타데이터를 유지하지만,
+`delete_dimension`을 사용하면 다음 진입 시 생성 옵션을 모두 다시 넘겨야 합니다.
+정리하기 전에 전체 저장을 수행하므로, 영구 Lua 상태를 먼저 갱신해야 합니다.
+
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기
