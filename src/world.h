@@ -103,6 +103,7 @@ class world
         /**@{*/
         void start_save_tx();
         int64_t commit_save_tx();
+        auto is_save_tx_active() const -> bool { return save_tx_start_ts != 0; }
         void release_player_db();
         /**@}*/
 
