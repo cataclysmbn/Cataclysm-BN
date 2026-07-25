@@ -654,3 +654,36 @@ print( "Are you sheltered?: " .. tostring(map:is_sheltered(u_pos)) )
 print( "Today moon phase is: " .. moon )
 print( "Sunset time is: " .. now:sunset():to_string_time_of_day() )
 ```
+
+## Localized Weather Overrides
+
+### Spawn a local lightning storm around the player
+
+`gapi.set_omt_weather_override` applies a weather type to every overmap terrain tile in a radius
+around a center point. The radius is measured in OMTs, so even a small value affects a noticeable
+area.
+
+```lua
+local avatar = gapi.get_avatar()
+local center_omt = gapi.bub_to_abs(avatar:get_pos_ms()):to_omt()
+
+-- Radius is in OMT tiles.
+gapi.set_omt_weather_override(center_omt, 2, "lightning")
+```
+
+### Check and clear a local weather override
+
+```lua
+local avatar = gapi.get_avatar()
+local center_omt = gapi.bub_to_abs(avatar:get_pos_ms()):to_omt()
+
+print("Override active: " .. tostring(gapi.has_omt_weather_override(center_omt)))
+print("Current override: " .. tostring(gapi.get_omt_weather_override(center_omt)))
+
+gapi.clear_omt_weather_override(center_omt, 2)
+-- or clear everything:
+-- gapi.clear_all_omt_weather_overrides()
+```
+
+Use `"thunder"` instead of `"lightning"` if you want thunderstorm weather without the stronger
+lightning-storm variant.

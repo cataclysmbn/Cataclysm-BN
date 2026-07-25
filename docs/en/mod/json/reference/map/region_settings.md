@@ -14,7 +14,7 @@ follows:
 | `forest_trail_settings`         | Defines the overmap and local structure of forest trails.             |
 | `city`                          | Defines the structural compositions of cities.                        |
 | `map_extras`                    | Defines the map extra groups referenced by overmap terrains.          |
-| `weather`                       | Defines the base weather attributes for the region.                   |
+| `base_weather`                  | References the base weather definition used by the region.            |
 | `overmap_feature_flag_settings` | Defines operations on overmap features based on their flags.          |
 
 Note that for the default region, all attributes and sections are required.
@@ -24,9 +24,10 @@ Note that for the default region, all attributes and sections are required.
 | Identifier            | Description                                                        |
 | --------------------- | ------------------------------------------------------------------ |
 | `type`                | Type identifier. Must be "region_settings".                        |
-| `id`                  | Unique identfier for this region.                                  |
+| `id`                  | Unique identifier for this region.                                 |
 | `default_oter`        | Default overmap terrain for this region.                           |
 | `default_groundcover` | List of terrain types and weights applied as default ground cover. |
+| `base_weather`        | Id of the `base_weather` definition used by this region.           |
 
 ### Example
 
@@ -35,6 +36,7 @@ Note that for the default region, all attributes and sections are required.
   "type": "region_settings",
   "id": "default",
   "default_oter": "field",
+  "base_weather": "default",
   "default_groundcover": [
     ["t_grass", 4],
     ["t_dirt", 1]
@@ -479,60 +481,94 @@ terrain. This includes both the chance of an extra occurring as well as the weig
 }
 ```
 
-## Weather
+## Base Weather
 
-The **weather** section defines the base weather attributes used for the region.
+`region_settings` and `region_overlay` now select weather with a `base_weather` id that points to
+JSON objects of type `base_weather`.
 
-### Fields
+New content should prefer:
 
-| Identifier                   | Description                                                                                                                                                                                      |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `spring_temp`                | Mid spring temperature for the region in degrees Celsius                                                                                                                                         |
-| `summer_temp`                | Mid summer temperature for the region in degrees Celsius                                                                                                                                         |
-| `autumn_temp`                | Mid autumn temperature for the region in degrees Celsius                                                                                                                                         |
-| `winter_temp`                | Mid winter temperature for the region in degrees Celsius                                                                                                                                         |
-| `base_humidity`              | Base humidity for the region in relative humidity %                                                                                                                                              |
-| `base_pressure`              | Base pressure for the region in millibars.                                                                                                                                                       |
-| `base_acid`                  | Base acid for the region in ? units. Value >= 1 is considered acidic.                                                                                                                            |
-| `base_wind`                  | Base wind for the region in mph units. Roughly the yearly average.                                                                                                                               |
-| `base_wind_distrib_peaks`    | How high the wind peaks can go. Higher values produce windier days.                                                                                                                              |
-| `base_wind_season_variation` | How the wind varies with season. Lower values produce more variation                                                                                                                             |
-| `weather_types`              | Ids of the weather types allowed in this region. First value will be the default weather type. Declaration order will affect weather selection, see [WEATHER_TYPE.md](weather_type) for details. |
+```json
+{
+  "base_weather": "default"
+}
+```
+
+For compatibility, the loader also accepts these legacy forms:
+
+- `"weather": "default"` as an alias for `"base_weather": "default"`
+- `"weather": { ... }` as an inline weather definition
+
+### `base_weather` fields
+
+| Identifier                       | Description                                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`                             | Unique identifier for this `base_weather` definition.                                                                                                                                            |
+| `spring_temp`                    | Average spring temperature for the region.                                                                                                                                                       |
+| `summer_temp`                    | Average summer temperature for the region.                                                                                                                                                       |
+| `autumn_temp`                    | Average autumn temperature for the region.                                                                                                                                                       |
+| `winter_temp`                    | Average winter temperature for the region.                                                                                                                                                       |
+| `spring_humidity_manual_mod`     | Humidity modifier applied during spring.                                                                                                                                                         |
+| `summer_humidity_manual_mod`     | Humidity modifier applied during summer.                                                                                                                                                         |
+| `autumn_humidity_manual_mod`     | Humidity modifier applied during autumn.                                                                                                                                                         |
+| `winter_humidity_manual_mod`     | Humidity modifier applied during winter.                                                                                                                                                         |
+| `base_humidity`                  | Base humidity for the region in relative humidity %.                                                                                                                                             |
+| `base_pressure`                  | Base pressure for the region in millibars.                                                                                                                                                       |
+| `base_acid`                      | Base acid value for the region. Value >= 1 is considered acidic.                                                                                                                                 |
+| `base_wind`                      | Base wind for the region in mph. Roughly the yearly average.                                                                                                                                     |
+| `base_wind_distrib_peaks`        | How high the wind peaks can go. Higher values produce windier days.                                                                                                                              |
+| `base_wind_season_variation`     | How wind varies with season. Lower values produce more variation.                                                                                                                                |
+| `temperature_daily_amplitude`    | Half the difference between the coldest and warmest parts of the day.                                                                                                                            |
+| `temperature_noise_amplitude`    | Half the difference contributed by 3D weather noise.                                                                                                                                             |
+| `weather_types`                  | Ids of the weather types allowed in this region. The first entry is the default weather type. Declaration order affects weather selection; see [WEATHER_TYPE.md](weather_type) for details.     |
+| `weather_patterns`               | Optional list of `weather_pattern` ids applied on top of the base weather.                                                                                                                       |
 
 ### Example
 
 ```json
-{
-	"weather": {
-		"spring_temp": 7,
-		"summer_temp": 16,
-		"autumn_temp": 6,
-		"winter_temp": -14,
-		"base_humidity": 66.0,
-		"base_pressure": 1015.0,
-		"base_acid": 0.0,
-		"base_wind": 5.7,
-		"base_wind_distrib_peaks": 30,
-		"base_wind_season_variation": 64,
-		"base_acid": 0.0,
-		"weather_types": [
-			"clear",
-			"sunny",
-			"cloudy",
-			"light_drizzle",
-			"drizzle",
-			"rain",
-			"thunder",
-			"lightning",
-			"acid_drizzle",
-			"acid_rain",
-			"flurries",
-			"snowing",
-			"snowstorm"
-      	]
-    	},
-	}
-}
+[
+  {
+    "type": "base_weather",
+    "id": "example_weather",
+    "spring_temp": 7,
+    "summer_temp": 16,
+    "autumn_temp": 6,
+    "winter_temp": -14,
+    "base_humidity": 66.0,
+    "summer_humidity_manual_mod": -10,
+    "winter_humidity_manual_mod": 12,
+    "base_pressure": 1015.0,
+    "base_acid": 0.0,
+    "base_wind": 5.7,
+    "base_wind_distrib_peaks": 30,
+    "base_wind_season_variation": 64,
+    "weather_types": [
+      "clear",
+      "sunny",
+      "cloudy",
+      "light_drizzle",
+      "drizzle",
+      "rain",
+      "thunder",
+      "lightning",
+      "acid_drizzle",
+      "acid_rain",
+      "flurries",
+      "snowing",
+      "snowstorm"
+    ]
+  },
+  {
+    "type": "region_settings",
+    "id": "example_region",
+    "default_oter": "field",
+    "default_groundcover": [
+      [ "t_grass", 4 ],
+      [ "t_dirt", 1 ]
+    ],
+    "base_weather": "example_weather"
+  }
+]
 ```
 
 ## Overmap Feature Flag Settings
@@ -569,27 +605,39 @@ A **region_overlay** allows the specification of `region_settings` values which 
 specified regions, merging with or overwriting the existing values. It is only necessary to specify
 those values which should be changed.
 
+For weather changes, overlays should normally set `base_weather` to another loaded
+`base_weather` id instead of embedding a new inline `weather` object.
+
 ### Fields
 
 | Identifier | Description                                                                                 |
 | ---------- | ------------------------------------------------------------------------------------------- |
 | `type`     | Type identifier. Must be "region_overlay".                                                  |
-| `id`       | Unique identfier for this region overlay.                                                   |
+| `id`       | Unique identifier for this region overlay.                                                  |
 | `regions`  | A list of regions to which this overlay should be applied. "all" will apply to all regions. |
 
-All additional fields and sections are as defined for a `region_overlay`.
+All additional fields and sections are the same as for `region_settings`. Scalar values such as
+`base_weather` replace the current value, while nested sections merge into the existing region.
 
 ### Example
 
 ```json
-[{
-  "type": "region_overlay",
-  "id": "example_overlay",
-  "regions": ["all"],
-  "city": {
-    "parks": {
-      "examplepark": 1
+[
+  {
+    "type": "region_overlay",
+    "id": "example_overlay",
+    "regions": [ "all" ],
+    "city": {
+      "parks": {
+        "examplepark": 1
+      }
     }
+  },
+  {
+    "type": "region_overlay",
+    "id": "example_weather_overlay",
+    "regions": [ "default" ],
+    "base_weather": "example_weather"
   }
-}]
+]
 ```

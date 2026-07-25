@@ -268,6 +268,47 @@ spawning, though.
 ]
 ```
 
+### Changing regional weather
+
+Region overlays can also patch weather by switching the target region to a different
+`base_weather` definition. This is the preferred modern approach for weather mods because it keeps
+the weather generator reusable and lets the overlay stay small.
+
+```json
+[
+  {
+    "type": "base_weather",
+    "id": "my_stormy_weather",
+    "spring_temp": 8,
+    "summer_temp": 16,
+    "autumn_temp": 7,
+    "winter_temp": -14,
+    "base_humidity": 75,
+    "base_pressure": 1008,
+    "base_wind": 14,
+    "base_wind_distrib_peaks": 120,
+    "base_wind_season_variation": 30,
+    "weather_types": [
+      "clear",
+      "cloudy",
+      "drizzle",
+      "rain",
+      "heavy_rain",
+      "thunder",
+      "lightning"
+    ]
+  },
+  {
+    "type": "region_overlay",
+    "regions": [ "default" ],
+    "base_weather": "my_stormy_weather"
+  }
+]
+```
+
+The older `"weather"` field is still accepted for compatibility, but new content should use
+`"base_weather": "id"`.
+
 ### Disabling certain scenarios
 
 The `SCENARIO_BLACKLIST` can be either a blacklist or a whitelist. When it is a whitelist, it
