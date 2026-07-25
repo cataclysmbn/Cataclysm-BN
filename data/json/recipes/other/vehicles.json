@@ -2304,7 +2304,6 @@
     "subcategory": "CSC_OTHER_VEHICLE",
     "skill_used": "computer",
     "difficulty": 4,
-    "reversible": true,
     "autolearn": true,
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
