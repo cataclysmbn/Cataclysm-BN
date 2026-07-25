@@ -63,7 +63,7 @@
     "min_damage": 1,
     "max_damage": 1,
     "effect": "spawn_item",
-    "effect_str": "armor_lightplate",
+    "effect_str": "spirit_armor",
     "spell_class": "ANIMIST",
     "energy_source": "MANA",
     "difficulty": 5,

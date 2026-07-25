@@ -702,7 +702,7 @@
       {
         "distribution": [
           { "item": "hardtack", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 50 },
-          { "item": "flour", "charges": [ 1, 20 ], "container-item": "bag_canvas_small", "prob": 25 },
+          { "item": "flour", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 25 },
           { "item": "dry_beans", "charges": [ 1, 12 ], "container-item": "bag_canvas_small", "prob": 25 }
         ],
         "prob": 75

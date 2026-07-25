@@ -14,7 +14,7 @@ struct point;
 struct tripoint;
 class mission;
 struct regional_settings;
-class map;
+class mapgen_constructor;
 class overmapbuffer;
 namespace om_direction
 {
@@ -94,7 +94,7 @@ class mapgendata
         const tripoint_abs_omt pos;
         const regional_settings &region;
 
-        map &m;
+        mapgen_constructor &m;
 
         weighted_int_list<ter_id> default_groundcover;
 
@@ -106,10 +106,10 @@ class mapgendata
             return omapbuf_;
         }
 
-        mapgendata( map &, dummy_settings_t );
+        mapgendata( mapgen_constructor &, dummy_settings_t );
 
-        mapgendata( const tripoint_abs_omt &over, map &m, float density, const time_point &when,
-                    ::mission *miss, overmapbuffer &omap );
+        mapgendata( const tripoint_abs_omt &over, mapgen_constructor &m, float density,
+                    const time_point &when, ::mission *miss, overmapbuffer &omap );
 
         /**
          * Creates a copy of this mapgen data, but stores a different @ref terrain_type.
@@ -182,7 +182,7 @@ class mapgendata
         const oter_id &neighbor_at( om_direction::type dir ) const;
         const oter_id &neighbor_at( direction ) const;
         void fill_groundcover() const;
-        void square_groundcover( const point_bub_ms &p1, const point_bub_ms &p2 ) const;
+        void square_groundcover( const point_omt_ms &p1, const point_omt_ms &p2 ) const;
         ter_id groundcover() const;
         bool is_groundcover( const ter_id &iid ) const;
 
@@ -207,5 +207,4 @@ class mapgendata
             return mapgendata_detail::extract_variant_value<Result>( it->second );
         }
 };
-
 

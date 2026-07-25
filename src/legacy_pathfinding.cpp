@@ -148,23 +148,31 @@ struct pathfinder {
 template<ter_bitflags flag>
 bool vertical_move_destination( const map &m, tripoint_abs_ms &t )
 {
-    if( !m.has_zlevels() ) {
+    const auto omt = project_to<coords::omt>( t );
+    auto &buffer = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() );
+    const auto omt_view = buffer.get_abs_omt_view( omt );
+    if( !omt_view ) {
         return false;
     }
 
-    // Align to OMT boundaries
-    const auto omt_origin = project_to<coords::ms>( project_to<coords::omt>( t ) );
-    const auto end = omt_origin + point_rel_ms( SEEX * 2, SEEY * 2 );
-    auto &buffer = MAPBUFFER_REGISTRY.get( m.get_bound_dimension() );
+    const auto submap_offsets = std::array {
+        point_omt_sm::zero(),
+        point_omt_sm( 1, 0 ),
+        point_omt_sm( 0, 1 ),
+        point_omt_sm( 1, 1 ),
+    };
+    for( const auto &local_sm : submap_offsets ) {
+        const auto submap_view = omt_view->get_submap_view( local_sm );
+        if( !submap_view ) {
+            continue;
+        }
 
-    for( const auto [x, y] : cata::views::cartesian_product(
-             std::views::iota( omt_origin.x(), end.x() ),
-             std::views::iota( omt_origin.y(), end.y() ) ) ) {
-        const auto p = tripoint_abs_ms( x, y, t.z() );
-        const auto terrain = buffer.get_ter( p );
-        if( terrain && terrain->obj().has_flag( flag ) ) {
-            t = p;
-            return true;
+        for( const auto tile_pos : submap_view->tiles() ) {
+            const auto tile = submap_view->tile( tile_pos );
+            if( tile.get_ter_t().has_flag( flag ) ) {
+                t = tile.abs_pos();
+                return true;
+            }
         }
     }
 
@@ -344,7 +352,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
                                 std::min( f.z(), t.z() ) );
     auto max = tripoint_abs_ms( std::max( f.x(), t.x() ) + pad, std::max( f.y(), t.y() ) + pad,
                                 std::max( f.z(), t.z() ) );
-    const auto origin = project_to<coords::ms>( get_abs_sub() ).xy();
+    const auto origin = project_to<coords::ms>( get_abs_sub() );
     const auto bounds_max = origin + point_rel_ms( g_mapsize_x - 1, g_mapsize_y - 1 );
     min.x() = std::max( min.x(), origin.x() );
     min.y() = std::max( min.y(), origin.y() );
@@ -530,13 +538,13 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
                     const auto &trp = ter_trp.is_benign() ? p_tile->trap.obj() : ter_trp;
                     if( !trp.is_benign() ) {
                         // For now make them detect all traps
-                        if( has_zlevels() && terrain.has_flag( TFLAG_NO_FLOOR ) ) {
+                        if( terrain.has_flag( TFLAG_NO_FLOOR ) ) {
                             // Special case - ledge in z-levels
                             // Warning: really expensive, needs a cache
                             const auto below = p + tripoint_rel_ms::below();
-                            if( buffer.valid_move( p, below, { .flying = true, .zlevels = has_zlevels() } ) ) {
-                                const auto below_terrain = buffer.get_ter( below );
-                                if( below_terrain && !below_terrain->obj().has_flag( TFLAG_NO_FLOOR ) ) {
+                            if( buffer.valid_move( p, below, { .flying = true } ) ) {
+                                const auto below_tile = buffer.get_abs_tile( below );
+                                if( below_tile && !below_tile->get_ter_t().has_flag( TFLAG_NO_FLOOR ) ) {
                                     // Otherwise this would have been a huge fall
                                     auto &layer = pf.get_layer( p.z() - 1 );
                                     // From cur, not p, because we won't be walking on air
@@ -569,7 +577,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
             }
         }
 
-        if( !has_zlevels() || !( cur_special & PF_UPDOWN ) || !settings.allow_climb_stairs ) {
+        if( !( cur_special & PF_UPDOWN ) || !settings.allow_climb_stairs ) {
             // The part below is only for z-level pathing
             continue;
         }
@@ -599,7 +607,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
         }
         if( cur.z() < max.z() && parent_terrain.has_flag( TFLAG_RAMP ) &&
             buffer.valid_move( cur, cur + tripoint_rel_ms::above(),
-        { .flying = true, .zlevels = has_zlevels() } ) ) {
+        { .flying = true } ) ) {
             auto &layer = pf.get_layer( cur.z() + 1 );
             for( size_t it = 0; it < 8; it++ ) {
                 const tripoint_abs_ms above( cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() + 1 );
@@ -610,7 +618,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
         }
         if( cur.z() < max.z() && parent_terrain.has_flag( TFLAG_RAMP_UP ) &&
             buffer.valid_move( cur, cur + tripoint_rel_ms::above(),
-        { .flying = true, .via_ramp = true, .zlevels = has_zlevels() } ) ) {
+        { .flying = true, .via_ramp = true } ) ) {
             auto &layer = pf.get_layer( cur.z() + 1 );
             for( size_t it = 0; it < 8; it++ ) {
                 const tripoint_abs_ms above( cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() + 1 );
@@ -621,7 +629,7 @@ std::vector<tripoint_abs_ms> map::route( const tripoint_abs_ms &f, const tripoin
         }
         if( cur.z() > min.z() && parent_terrain.has_flag( TFLAG_RAMP_DOWN ) &&
             buffer.valid_move( cur, cur + tripoint_rel_ms::below(),
-        { .flying = true, .via_ramp = true, .zlevels = has_zlevels() } ) ) {
+        { .flying = true, .via_ramp = true } ) ) {
             auto &layer = pf.get_layer( cur.z() - 1 );
             for( size_t it = 0; it < 8; it++ ) {
                 const tripoint_abs_ms below( cur.x() + x_offset[it], cur.y() + y_offset[it], cur.z() - 1 );

@@ -23,6 +23,7 @@
 #include "units.h"
 #include "catalua_type_operators.h"
 
+class lua_monster_callback_actor;
 class Creature;
 class monster;
 struct dealt_projectile_attack;
@@ -80,6 +81,7 @@ enum m_flag : int {
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
+    MF_GRAB_IMMUNE,         // Cannot be grabbed by another creature
     MF_BASHES,              // Bashes down doors
     MF_DESTROYS,            // Bashes down walls and more
     MF_BORES,               // Tunnels through just about anything
@@ -158,6 +160,7 @@ enum m_flag : int {
     MF_INTERIOR_AMMO,       // Monster contain's its ammo inside itself, no need to load on launch. Prevents ammo from being dropped on disable.
     MF_CLIMBS,              // Monsters that can climb certain terrain and furniture
     MF_PACIFIST,            // Monsters that will never use melee attack, useful for having them use grab without attacking the player
+    MF_KEEP_DISTANCE,       // Attempts to keep tracking_distance between itself and its current target.
     MF_PUSH_MON,            // Monsters that can push creatures out of their way
     MF_PUSH_VEH,            // Monsters that can push vehicles out of their way
     MF_NIGHT_INVISIBILITY,  // Monsters that are invisible in poor light conditions
@@ -173,7 +176,8 @@ enum m_flag : int {
     MF_PET_MOUNTABLE,       // This monster can be mounted and ridden when tamed.
     MF_PET_HARNESSABLE,     // This monster can be harnessed when tamed.
     MF_CAN_FETCH,           // This monster can fetch items for its tamer when tamed.
-    MF_DOGFOOD,             // This monster will respond to the `dog whistle` item.
+    MF_DOGFOOD,             // DEPRECATED This monster will respond to the `dog whistle` item.
+    MF_DOG_WHISTLE,         // This monster will respond to the `dog whistle` item.
     MF_MILKABLE,            // This monster is milkable.
     MF_SHEARABLE,           // This monster is shearable.
     MF_NO_BREED,            // This monster doesn't breed, even though it has breed data
@@ -208,6 +212,7 @@ enum m_flag : int {
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
     MF_COMBAT_MOUNT,        // This monster is trained for combat
     MF_CANT_TRAIN,            // This monster can't be trained for combat
+    MF_POLICE_EYEBOT,            // A drone capable of summoning reinforcements, see mattack::photograph
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
@@ -286,8 +291,8 @@ struct mtype {
         mtype_id id;
 
         std::map<itype_id, int> starting_ammo; // Amount of ammo the monster spawns with.
-        // Name of item group that is used to create item dropped upon death, or empty.
-        item_group_id death_drops;
+        // Names of item groups used to create items dropped upon death.
+        std::vector<item_group_id> death_drops;
 
         /** Stores effect data for effects placed on attack */
         std::vector<mon_effect_data> atk_effs;
@@ -317,6 +322,8 @@ struct mtype {
         int speed = 0;          /** e.g. human = 100 */
         int agro = 0;           /** chance will attack [-100,100] */
         int morale = 0;         /** initial morale level at spawn */
+        // How close the monster is willing to approach its target when following or keeping distance.
+        int tracking_distance = 8;
         std::optional<int> preferred_z;
 
         // Number of hitpoints regenerated per turn.
@@ -466,6 +473,10 @@ struct mtype {
 
         pathfinding_settings legacy_path_settings;
         pathfinding_settings legacy_path_settings_buffed;
+
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+        *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_monster_callback_actor *lua_callbacks = nullptr;
 
         PathfindingSettings path_settings;
         RouteSettings route_settings;

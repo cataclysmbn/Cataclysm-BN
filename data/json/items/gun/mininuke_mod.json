@@ -3,7 +3,7 @@
     "id": "mininuke_launcher",
     "looks_like": "m79",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "weapon_category": [ "ROCKET_LAUNCHERS" ],
     "symbol": "(",
     "color": "dark_gray",

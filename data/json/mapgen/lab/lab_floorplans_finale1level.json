@@ -227,6 +227,15 @@
       "fields": { "Q": { "field": "fd_fatigue", "intensity": 3 } },
       "mapping": {
         "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] },
+        "r": { "items": [ { "item": "portal_room_gear", "chance": 100 } ] },
+        "l": {
+          "items": [
+            { "item": "lab_shoes", "chance": 100 },
+            { "item": "lab_torso", "chance": 100 },
+            { "item": "lab_pants", "chance": 100 },
+            { "item": "underwear", "chance": 100 }
+          ]
+        },
         "D": {
           "item": [
             { "item": "sample_t_substrate" },
@@ -278,6 +287,7 @@
       "palettes": [ "lab_palette" ],
       "monster": { "?": { "monster": "mon_shade_boss" } },
       "terrain": { "o": "t_radio_tower" },
+      "mapping": { "r": { "items": [ { "item": "portal_room_gear", "chance": 100 } ] } },
       "computers": {
         "6": {
           "name": "Sub-prime Contact Console",
@@ -312,7 +322,7 @@
         ".....?...|..oooo.hx|....",
         "....|--|M|..oooo..C|....",
         "....|r.M....Oooo..C|....",
-        "....|r*|xh..oooo..C|....",
+        "....|r.|xh..oooo..C|....",
         "....|rY|ttt......YC|....",
         "....|--|-----------|....",
         "........................",
@@ -330,7 +340,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 5, "y": 8 } ],
-      "monster": { "?": { "monster": "mon_turret_light" }, "*": { "monster": "mon_shade_boss", "chance": 50 } },
+      "monster": { "?": { "monster": "mon_turret_light" } },
       "terrain": { "o": "t_cvdbody", "O": "t_cvdmachine" },
       "place_loot": [ { "item": "id_science", "x": [ 8, 10 ], "y": 10 } ]
     }

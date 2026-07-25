@@ -1,0 +1,498 @@
+[
+  {
+    "id": "STRENGTH",
+    "type": "enchantment_value",
+    "desc": "Affects Strength"
+  },
+  {
+    "id": "DEXTERITY",
+    "type": "enchantment_value",
+    "desc": "Affects Dexterity"
+  },
+  {
+    "id": "PERCEPTION",
+    "type": "enchantment_value",
+    "desc": "Affects Perception"
+  },
+  {
+    "id": "INTELLIGENCE",
+    "type": "enchantment_value",
+    "desc": "Affects Intelligence"
+  },
+  {
+    "id": "HEALTH_POINTS",
+    "type": "enchantment_value",
+    "desc": "Affects HP"
+  },
+  {
+    "id": "SPEED",
+    "type": "enchantment_value",
+    "desc": "Affects Speed"
+  },
+  {
+    "id": "ATTACK_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Attack Speed",
+    "increase_good": false
+  },
+  {
+    "id": "THROW_ATTACK_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Throwing Attack Speed",
+    "increase_good": false
+  },
+  {
+    "id": "MOVE_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Movement Speed",
+    "increase_good": false
+  },
+  {
+    "id": "FLAT_MOVE_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Movement Speed on flat ground",
+    "increase_good": false
+  },
+  {
+    "id": "OBSTACLE_MOVE_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Movement Speed on Obstacles",
+    "increase_good": false
+  },
+  {
+    "id": "SWIM_MOVE_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Swimming Movement Speed",
+    "increase_good": false
+  },
+  {
+    "id": "READING_SPEED",
+    "type": "enchantment_value",
+    "desc": "Affects Reading Speed",
+    "increase_good": false
+  },
+  {
+    "id": "CRAFTING_SPEED",
+    "type": "enchantment_value",
+    "desc": "Affects Crafting Speed"
+  },
+  {
+    "id": "CONSTRUCTION_SPEED",
+    "type": "enchantment_value",
+    "desc": "Affects Construction Speed ( Construction and Vehicle )",
+    "suffixes": [ [ "CON", "Affects Construction Speed ( Construction )" ], [ "VEH", "Affects Construction Speed ( Vehicle )" ] ]
+  },
+  {
+    "id": "METABOLISM",
+    "type": "enchantment_value",
+    "can_add": false,
+    "desc": "Affects Metabolism",
+    "increase_good": false
+  },
+  {
+    "id": "MANA_CAP",
+    "type": "enchantment_value",
+    "desc": "Affects Maximum Mana"
+  },
+  {
+    "id": "MANA_REGEN",
+    "type": "enchantment_value",
+    "can_add": false,
+    "desc": "Affects Mana Regen"
+  },
+  {
+    "id": "STAMINA_CAP",
+    "type": "enchantment_value",
+    "can_add": false,
+    "desc": "Affects Maximum Stamina"
+  },
+  {
+    "id": "STAMINA_REGEN",
+    "type": "enchantment_value",
+    "can_add": false,
+    "desc": "Affects Stamina Regen"
+  },
+  {
+    "id": "THIRST",
+    "type": "enchantment_value",
+    "desc": "Affects Thirst Rates",
+    "increase_good": false
+  },
+  {
+    "id": "FATIGUE",
+    "type": "enchantment_value",
+    "desc": "Affects Fatigue Rates",
+    "increase_good": false
+  },
+  {
+    "id": "MENDING_MULT",
+    "type": "enchantment_value",
+    "desc": "Affects Broken Bone Healing Rates"
+  },
+  {
+    "id": "HEARING",
+    "type": "enchantment_value",
+    "desc": "Affects Hearing Ability"
+  },
+  {
+    "id": "NOISE",
+    "type": "enchantment_value",
+    "desc": "Affects Created Noise",
+    "increase_good": false
+  },
+  {
+    "id": "SCENT",
+    "type": "enchantment_value",
+    "desc": "Affects Created Scent",
+    "increase_good": false
+  },
+  {
+    "id": "STEALTH",
+    "type": "enchantment_value",
+    "desc": "Affects Visibility"
+  },
+  {
+    "id": "BODYTEMP_MIN",
+    "type": "enchantment_value",
+    "desc": "Affects Minimum Survivable Temperatures",
+    "increase_good": false
+  },
+  {
+    "id": "BODYTEMP_MAX",
+    "type": "enchantment_value",
+    "desc": "Affects Maximum Survivable Temperatures"
+  },
+  {
+    "id": "BODYTEMP_SLEEP",
+    "type": "enchantment_value",
+    "desc": "Affects Sleeping Bodytemp"
+  },
+  {
+    "id": "BODYTEMP_SPEED",
+    "type": "enchantment_value",
+    "desc": "Affects Cold Blooded Speed"
+  },
+  {
+    "id": "SLEEP_PAIN_THRESH",
+    "type": "enchantment_value",
+    "desc": "Affects Pain To Wake Up",
+    "increase_good": false
+  },
+  {
+    "id": "SLEEP_DB_RESIST",
+    "type": "enchantment_value",
+    "desc": "Affects Noise To Wake Up",
+    "increase_good": false
+  },
+  {
+    "id": "CLIMATE_CONTROL",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "COOLING", "Keeps you comfortable against hot temperatures" ],
+      [ "HEATING", "Keeps you comfortable against cold temperatures" ]
+    ],
+    "desc": "Grants climate control, which keeps you at a comfortable temperature"
+  },
+  {
+    "id": "LIE",
+    "type": "enchantment_value",
+    "desc": "Affects lying ability"
+  },
+  {
+    "id": "PERSUADE",
+    "type": "enchantment_value",
+    "desc": "Affects persuasion ability"
+  },
+  {
+    "id": "INTIMIDATE",
+    "type": "enchantment_value",
+    "desc": "Affects intimidation ability"
+  },
+  {
+    "id": "HEALTHY_MULT",
+    "type": "enchantment_value",
+    "desc": "Affects Health Gain"
+  },
+  {
+    "id": "FALL_DAMAGE_MULT",
+    "type": "enchantment_value",
+    "desc": "Affects Fall Damage",
+    "increase_good": false
+  },
+  {
+    "id": "CARRY_STORAGE",
+    "type": "enchantment_value",
+    "desc": "Affects Carrying Capacity ( Storage )"
+  },
+  {
+    "id": "CARRY_WEIGHT",
+    "type": "enchantment_value",
+    "desc": "Affects Carrying Capacity ( Weight )"
+  },
+  {
+    "id": "OVERMAP_SIGHT",
+    "type": "enchantment_value",
+    "desc": "Affects Long Range Vision"
+  },
+  {
+    "id": "EFFECTIVE_FOCUS",
+    "type": "enchantment_value",
+    "desc": "Affects Focus"
+  },
+  {
+    "id": "FOOD_FUN",
+    "type": "enchantment_value",
+    "desc": "Affects Food Taste"
+  },
+  {
+    "id": "BONUS_DODGE",
+    "type": "enchantment_value",
+    "desc": "Affects Dodging Ability"
+  },
+  {
+    "id": "BLISTER_COUNT",
+    "type": "enchantment_value",
+    "desc": "Affects Fire Resistance",
+    "increase_good": false
+  },
+  {
+    "id": "LUMINATION",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true,
+    "desc": "Grants Light Source"
+  },
+  {
+    "id": "NIGHT_VISION",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true,
+    "desc": "Grants Night Vision"
+  },
+  {
+    "id": "CLAIRVOYANCE",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true,
+    "desc": "Grants Clairvoyance"
+  },
+  {
+    "id": "ARMOR",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "BASH", "Affects Incoming Bash Damage" ],
+      [ "CUT", "Affects Incoming Cut Damage" ],
+      [ "DARK", "Affects Incoming Dark Damage" ],
+      [ "LIGHT", "Affects Incoming Light Damage" ],
+      [ "PSI", "Affects Incoming Psi Damage" ],
+      [ "STAB", "Affects Incoming Stab Damage" ],
+      [ "BULLET", "Affects Incoming Ballistic Damage" ],
+      [ "HEAT", "Affects Incoming Heat Damage" ],
+      [ "COLD", "Affects Incoming Cold Damage" ],
+      [ "ELECTRIC", "Affects Incoming Electric Damage" ],
+      [ "ACID", "Affects Incoming Acidic Damage" ],
+      [ "BIOLOGICAL", "Affects Incoming Biological Damage" ],
+      [ "TRUE", "Affects Incoming True Damage" ]
+    ],
+    "desc": "Affects Against All Damage",
+    "increase_good": false
+  },
+  {
+    "id": "RANGED_DISPERSION",
+    "type": "enchantment_value",
+    "desc": "Affects Ranged Dispersion",
+    "increase_good": false
+  },
+  {
+    "id": "RANGED_DAMAGE",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "BASH", "Affects Outgoing Ranged Bash Damage" ],
+      [ "CUT", "Affects Outgoing Ranged Cut Damage" ],
+      [ "DARK", "Affects Outgoing Ranged Dark Damage" ],
+      [ "LIGHT", "Affects Outgoing Ranged Light Damage" ],
+      [ "PSI", "Affects Outgoing Ranged Psi Damage" ],
+      [ "STAB", "Affects Outgoing Ranged Stab Damage" ],
+      [ "BULLET", "Affects Outgoing Ranged Ballistic Damage" ],
+      [ "HEAT", "Affects Outgoing Ranged Heat Damage" ],
+      [ "COLD", "Affects Outgoing Ranged Cold Damage" ],
+      [ "ELECTRIC", "Affects Outgoing Ranged Electric Damage" ],
+      [ "ACID", "Affects Outgoing Ranged Acid Damage" ],
+      [ "BIOLOGICAL", "Affects Outgoing Ranged Biological Damage" ],
+      [ "TRUE", "Affects Outgoing Ranged True Damage" ]
+    ],
+    "desc": "Affects Outgoing Ranged Damage"
+  },
+  {
+    "id": "RANGED_ARMOR_PENETRATION",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "BASH", "Affects Outgoing Ranged Bash Armor Penetration" ],
+      [ "CUT", "Affects Outgoing Ranged Cut Armor Penetration" ],
+      [ "DARK", "Affects Outgoing Ranged Dark Armor Penetration" ],
+      [ "LIGHT", "Affects Outgoing Ranged Light Armor Penetration" ],
+      [ "PSI", "Affects Outgoing Ranged Psi Armor Penetration" ],
+      [ "STAB", "Affects Outgoing Ranged Stab Armor Penetration" ],
+      [ "BULLET", "Affects Outgoing Ranged Bullet Armor Penetration" ],
+      [ "HEAT", "Affects Outgoing Ranged Heat Armor Penetration" ],
+      [ "COLD", "Affects Outgoing Ranged Cold Armor Penetration" ],
+      [ "ELECTRIC", "Affects Outgoing Ranged Electric Armor Penetration" ],
+      [ "ACID", "Affects Outgoing Ranged Acid Armor Penetration" ],
+      [ "BIOLOGICAL", "Affects Outgoing Ranged Biological Armor Penetration" ],
+      [ "TRUE", "Affects Outgoing Ranged True Armor Penetration" ]
+    ],
+    "desc": "Affects Outgoing Ranged Armor Penetration"
+  },
+  {
+    "id": "RANGED_RANGE",
+    "type": "enchantment_value",
+    "desc": "Affects Ranged Attack Range"
+  },
+  {
+    "id": "RANGED_RECOIL",
+    "type": "enchantment_value",
+    "desc": "Affects Recoil",
+    "increase_good": false
+  },
+  {
+    "id": "RANGED_RELOAD_TIME",
+    "type": "enchantment_value",
+    "desc": "Affects Ranged Weapon Reload Time"
+  },
+  {
+    "id": "RANGED_AIM_SPEED",
+    "type": "enchantment_value",
+    "desc": "Affects Ranged Weapon Aim Speed",
+    "increase_good": false
+  },
+  {
+    "id": "SKILL_LEVEL",
+    "type": "enchantment_value",
+    "can_add": true,
+    "can_mult": true,
+    "suffixes": [
+      [ "BARTER", "Affects Barter Skill Level" ],
+      [ "SPEECH", "Affects Speech Skill Level" ],
+      [ "COMPUTER", "Affects Computer Skill Level" ],
+      [ "FIRSTAID", "Affects First Aid Skill Level" ],
+      [ "MECHANICS", "Affects Mechanics Skill Level" ],
+      [ "TRAPS", "Affects Traps Skill Level" ],
+      [ "DRIVING", "Affects Driving Skill Level" ],
+      [ "SWIMMING", "Affects Swimming Skill Level" ],
+      [ "FABRICATION", "Affects Fabrication Skill Level" ],
+      [ "COOKING", "Affects Cooking Skill Level" ],
+      [ "TAILOR", "Affects Tailor Skill Level" ],
+      [ "SURVIVAL", "Affects Survival Skill Level" ],
+      [ "ELECTRONICS", "Affects Electronics Skill Level" ],
+      [ "ARCHERY", "Affects Archery Skill Level" ],
+      [ "GUN", "Affects Gun Skill Level" ],
+      [ "LAUNCHER", "Affects Launcher Skill Level" ],
+      [ "PISTOL", "Affects Pistol Skill Level" ],
+      [ "RIFLE", "Affects Rifle Skill Level" ],
+      [ "SHOTGUN", "Affects Shotgun Skill Level" ],
+      [ "SMG", "Affects Sub Machine Gun Skill Level" ],
+      [ "THROW", "Affects Throwing Skill Level" ],
+      [ "MELEE", "Affects Melee Skill Level" ],
+      [ "BASHING", "Affects Bashing Skill Level" ],
+      [ "CUTTING", "Affects Cutting Skill Level" ],
+      [ "DODGE", "Affects Dodging Skill Level" ],
+      [ "STABBING", "Affects Stabbing Skill Level" ],
+      [ "UNARMED", "Affects Unarmed Skill Level" ]
+    ],
+    "desc": "Affects All Skill Levels"
+  },
+  {
+    "id": "SKILL_EXP",
+    "type": "enchantment_value",
+    "//": "Cant add EXP due to the fact that it doesn't quite work well",
+    "can_add": false,
+    "can_mult": true,
+    "suffixes": [
+      [ "BARTER", "Affects Barter Skill Exp Gain" ],
+      [ "SPEECH", "Affects Speech Skill Exp Gain" ],
+      [ "COMPUTER", "Affects Computer Skill Exp Gain" ],
+      [ "FIRSTAID", "Affects First Aid Skill Exp Gain" ],
+      [ "MECHANICS", "Affects Mechanics Skill Exp Gain" ],
+      [ "TRAPS", "Affects Traps Skill Exp Gain" ],
+      [ "DRIVING", "Affects Driving Skill Exp Gain" ],
+      [ "SWIMMING", "Affects Swimming Skill Exp Gain" ],
+      [ "FABRICATION", "Affects Fabrication Skill Exp Gain" ],
+      [ "COOKING", "Affects Cooking Skill Exp Gain" ],
+      [ "TAILOR", "Affects Tailor Skill Exp Gain" ],
+      [ "SURVIVAL", "Affects Survival Skill Exp Gain" ],
+      [ "ELECTRONICS", "Affects Electronics Skill Exp Gain" ],
+      [ "ARCHERY", "Affects Archery Skill Exp Gain" ],
+      [ "GUN", "Affects Gun Skill Exp Gain" ],
+      [ "LAUNCHER", "Affects Launcher Skill Exp Gain" ],
+      [ "PISTOL", "Affects Pistol Skill Exp Gain" ],
+      [ "RIFLE", "Affects Rifle Skill Exp Gain" ],
+      [ "SHOTGUN", "Affects Shotgun Skill Exp Gain" ],
+      [ "SMG", "Affects Sub Machine Gun Skill Exp Gain" ],
+      [ "THROW", "Affects Throwing Skill Exp Gain" ],
+      [ "MELEE", "Affects Melee Skill Exp Gain" ],
+      [ "BASHING", "Affects Bashing Skill Exp Gain" ],
+      [ "CUTTING", "Affects Cutting Skill Exp Gain" ],
+      [ "DODGE", "Affects Dodging Skill Exp Gain" ],
+      [ "STABBING", "Affects Stabbing Skill Exp Gain" ],
+      [ "UNARMED", "Affects Unarmed Skill Exp Gain" ]
+    ],
+    "desc": "Affects All Exp Gain"
+  },
+  {
+    "id": "ITEM_DAMAGE",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "BASH", "Affects Outgoing Bash Damage ( This Item Only )" ],
+      [ "CUT", "Affects Outgoing Cut Damage ( This Item Only )" ],
+      [ "DARK", "Affects Outgoing Dark Damage ( This Item Only )" ],
+      [ "LIGHT", "Affects Outgoing Light Damage ( This Item Only )" ],
+      [ "PSI", "Affects Outgoing Psi Damage ( This Item Only )" ],
+      [ "STAB", "Affects Outgoing Stab Damage ( This Item Only )" ],
+      [ "BULLET", "Affects Outgoing Ballistic Damage ( This Item Only )" ],
+      [ "HEAT", "Affects Outgoing Heat Damage ( This Item Only )" ],
+      [ "COLD", "Affects Outgoing Cold Damage ( This Item Only )" ],
+      [ "ELECTRIC", "Affects Outgoing Electric Damage ( This Item Only )" ],
+      [ "ACID", "Affects Outgoing Acidic Damage ( This Item Only )" ],
+      [ "BIOLOGICAL", "Affects Outgoing Biological Damage ( This Item Only )" ],
+      [ "TRUE", "Affects Outgoing True Damage ( This Item Only )" ]
+    ],
+    "desc": "Affects All Outgoing Damage ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
+  },
+  {
+    "id": "ITEM_ARMOR",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "BASH", "Affects Incoming Bash Damage ( This Item Only )" ],
+      [ "CUT", "Affects Incoming Cut Damage ( This Item Only )" ],
+      [ "DARK", "Affects Incoming Dark Damage ( This Item Only )" ],
+      [ "LIGHT", "Affects Incoming Light Damage ( This Item Only )" ],
+      [ "PSI", "Affects Incoming Psi Damage ( This Item Only )" ],
+      [ "STAB", "Affects Incoming Stab Damage ( This Item Only )" ],
+      [ "BULLET", "Affects Incoming Ballistic Damage ( This Item Only )" ],
+      [ "HEAT", "Affects Incoming Heat Damage ( This Item Only )" ],
+      [ "COLD", "Affects Incoming Cold Damage ( This Item Only )" ],
+      [ "ELECTRIC", "Affects Incoming Electric Damage ( This Item Only )" ],
+      [ "ACID", "Affects Incoming Acidic Damage ( This Item Only )" ],
+      [ "BIOLOGICAL", "Affects Incoming Biological Damage ( This Item Only )" ],
+      [ "TRUE", "Affects Incoming True Damage ( This Item Only )" ]
+    ],
+    "desc": "Affects All Incoming Damage ( This Item Only )",
+    "increase_good": false
+  },
+  {
+    "id": "ITEM_ATTACK_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Attack Cost ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
+  },
+  {
+    "id": "ITEM_THROW_ATTACK_COST",
+    "type": "enchantment_value",
+    "desc": "Affects Throwing Attack Cost ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
+  }
+]

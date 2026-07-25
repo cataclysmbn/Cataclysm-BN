@@ -353,7 +353,6 @@ static const mtype_id mon_spore( "mon_spore" );
 static const mtype_id mon_vortex( "mon_vortex" );
 static const mtype_id mon_wasp( "mon_wasp" );
 
-static const bionic_id bio_digestion( "bio_digestion" );
 static const bionic_id bio_eye_optic( "bio_eye_optic" );
 static const bionic_id bio_shock( "bio_shock" );
 
@@ -945,7 +944,7 @@ int iuse::blech( player *p, item *it, bool, const tripoint_bub_ms & )
 
 int iuse::blech_because_unclean( player *p, item *it, bool, const tripoint_bub_ms & )
 {
-    if( !p->is_npc()  && !p->has_bionic( bio_digestion ) ) {
+    if( !p->is_npc()  && !p->has_enchantment_flag( enchantment_flag_id( "CONSUME_UNCLEAN" ) ) ) {
         if( it->made_of( LIQUID ) ) {
             if( !p->query_yn( _( "This looks unclean, sure you want to drink it?" ) ) ) {
                 return 0;
@@ -1564,7 +1563,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( petfood.feed ), mon.get_name() );
         }
 
-        mon.make_pet();
+        mon.make_pet( *p->as_character() );
 
         // Apply well_fed effect to improve monster productivity
         // This effect increases reproduction rate, milk production, growth speed, and HP recovery
@@ -2244,63 +2243,64 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     }
 
     // Try to minimize the use of has_enough_charges() because it's kind of expensive.
-    bool no_charges = false;
-    for( const tripoint_bub_ms &pt : here.points_in_radius( pos, PICKUP_RANGE ) ) {
-        if( !here.has_items( pt ) || !p->sees( pt ) ) {
+    auto no_charges = false;
+    auto visibility_cache_updated = false;
+    for( const auto corpse : here.get_active_items_in_radius( pos, PICKUP_RANGE,
+            special_item_type::bionic_scannable_corpse ) ) {
+        if( corpse == nullptr || !corpse->is_corpse() ||
+            corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
             continue;
         }
-        for( item * const &corpse : here.i_at( pt ) ) {
-            if( !corpse->is_corpse() ||
-                corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
+        const auto pt = corpse->bub_pos();
+        if( !visibility_cache_updated && here.visibility_caches_dirty() ) {
+            here.update_visibility_cache( p->bub_pos().z() );
+            visibility_cache_updated = true;
+        }
+        if( !p->sees( pt ) ) {
+            continue;
+        }
+
+        using namespace std::views;
+        namespace ranges = std::ranges;
+        auto cbms = corpse->get_components()
+                    | filter( &item::is_bionic )
+                    | ranges::to<std::vector>();
+
+        auto charges = std::max( 1, static_cast<int>( cbms.size() ) );
+        charges -= it->ammo_consume( charges, pos );
+        if( possess && it->has_flag( flag_USE_UPS ) ) {
+            if( p->use_charges_if_avail( itype_UPS, charges ) ) {
+                charges = 0;
+            }
+        }
+        if( charges ) {
+            p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
+                                  corpse->display_name().c_str() );
+            if( !p->has_enough_charges( *it, false ) ) {
+                no_charges = true;
+                break;
+            } else {
                 continue;
             }
-
-            std::vector<const item *> cbms;
-            for( const item * const &maybe_cbm : corpse->get_components() ) {
-                if( maybe_cbm->is_bionic() ) {
-                    cbms.push_back( maybe_cbm );
-                }
-            }
-
-            int charges = static_cast<int>( cbms.size() );
-            charges -= it->ammo_consume( charges, pos );
-            if( possess && it->has_flag( flag_USE_UPS ) ) {
-                if( p->use_charges_if_avail( itype_UPS, charges ) ) {
-                    charges = 0;
-                }
-            }
-            if( charges ) {
-                p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
-                                      corpse->display_name().c_str() );
-                if( !p->has_enough_charges( *it, false ) ) {
-                    no_charges = true;
-                    break;
-                } else {
-                    continue;
-                }
-            }
-
-            corpse->set_var( "bionics_scanned_by", p->getID().get_value() );
-            if( !cbms.empty() ) {
-                corpse->set_flag( flag_CBM_SCANNED );
-                std::string bionics_string =
-                    enumerate_as_string( cbms.begin(), cbms.end(),
-                []( const item * entry ) -> std::string {
-                    return entry->display_name();
-                }, enumeration_conjunction::none );
-                //~ %1 is corpse name, %2 is direction, %3 is bionic name
-                p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
-                                      corpse->display_name().c_str(),
-                                      direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
-                                      bionics_string.c_str()
-                                    );
-            }
         }
-        if( no_charges ) {
-            it->revert( p );
-            it->deactivate();
-            return 0;
+
+        corpse->set_var( "bionics_scanned_by", p->getID().get_value() );
+        if( !cbms.empty() ) {
+            corpse->set_flag( flag_CBM_SCANNED );
+            auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
+            []( const auto entry ) { return entry->type_name(); }, enumeration_conjunction::none );
+            //~ %1 is corpse name, %2 is direction, %3 is bionic name
+            p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
+                                  corpse->display_name().c_str(),
+                                  direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
+                                  bionics_string.c_str()
+                                );
         }
+    }
+    if( no_charges ) {
+        it->revert( p );
+        it->deactivate();
+        return 0;
     }
 
     return 0;
@@ -4303,7 +4303,8 @@ int iuse::dog_whistle( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     p->add_msg_if_player( _( "You blow your dog whistle." ) );
     for( monster &critter : g->all_monsters() ) {
-        if( critter.friendly != 0 && critter.has_flag( MF_DOGFOOD ) ) {
+        if( critter.friendly != 0 && ( critter.has_flag( MF_DOGFOOD ) ||
+                                       critter.has_flag( MF_DOG_WHISTLE ) ) ) {
             bool u_see = g->u.sees( critter );
             if( critter.has_effect( effect_docile ) ) {
                 if( u_see ) {
@@ -4349,7 +4350,7 @@ int iuse::blood_draw( player *p, item *it, bool, const tripoint_bub_ms & )
     const mtype *mt = nullptr;
     bool drew_blood = false;
     bool acid_blood = false;
-    for( auto &map_it : g->m.i_at( p->bub_pos().xy() ) ) {
+    for( auto &map_it : g->m.i_at( p->bub_pos() ) ) {
         if( map_it->is_corpse() ) {
             bool has_blood = false;
             mt = map_it->get_mtype();
@@ -4447,7 +4448,7 @@ int iuse::mind_splicer( player *p, item *it, bool, const tripoint_bub_ms & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    for( auto &map_it : g->m.i_at( p->bub_pos().xy() ) ) {
+    for( auto &map_it : g->m.i_at( p->bub_pos() ) ) {
         if( map_it->typeId() == itype_rmi2_corpse &&
             query_yn( _( "Use the mind splicer kit on the %s?" ), colorize( map_it->tname(),
                       map_it->color_in_inventory() ) ) ) {
@@ -7629,7 +7630,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     if( t ) {
 
-        if( g->m.has_flag( "SWIMMABLE", pos.xy() ) ) {
+        if( g->m.has_flag( TFLAG_SWIMMABLE, pos ) ) {
             it->unset_flag( flag_NO_UNWIELD );
             it->ammo_unset();
             it->deactivate();
@@ -7900,9 +7901,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
         return VisitResponse::NEXT;
     };
 
-    int z_min = g->m.has_zlevels() ? -OVERMAP_DEPTH : 0;
-    int z_max = g->m.has_zlevels() ? OVERMAP_HEIGHT : 0;
-    for( int zlev = z_min; zlev <= z_max; zlev++ ) {
+    for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; zlev++ ) {
         for( auto loc : g->m.points_on_zlevel( zlev ) ) {
             // Items on ground
             map_cursor mc( loc );
@@ -8926,10 +8925,6 @@ int iuse::capture_monster_act( player *p, item *it, bool, const tripoint_bub_ms 
 
 int iuse::ladder( player *p, item *, bool, const tripoint_bub_ms & )
 {
-    if( !g->m.has_zlevels() ) {
-        debugmsg( "Ladder can't be used in non-z-level mode" );
-        return 0;
-    }
     if( p->is_mounted() ) {
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;

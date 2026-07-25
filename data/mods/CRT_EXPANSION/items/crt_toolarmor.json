@@ -4,7 +4,7 @@
     "type": "TOOL_ARMOR",
     "category": "armor",
     "name": { "str": "C.R.I.T. gasmask (off)", "str_pl": "C.R.I.T. gasmasks (off)" },
-    "description": "This is the C.R.I.T. Spec Ops modified gasmask, fitted with top-of-the-line electronics and lined with Kevlar for extra protection in order to keep one's head where it should be.  Various filters and other high tech wizardry allow for enhanced oxygen intake and safety even under bombardment.  It has an integrated HUD and the option to turn it on for more features.",
+    "description": "This is the C.R.I.T. Spec Ops modified gasmask, fitted with top-of-the-line electronics and lined with Kevlar for extra protection in order to keep one's head where it should be.  Various filters and other high tech wizardry allow for enhanced oxygen intake and safety even under bombardment.  It has an integrated HUD that can receive targeting data from friendly drones, and the option to turn it on for more features.",
     "weight": "5 kg",
     "volume": "1 L",
     "price": "25 kUSD",
@@ -35,8 +35,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },
@@ -59,7 +58,8 @@
       "RECHARGE",
       "NO_UNLOAD",
       "SLEEP_IGNORE",
-      "COMBAT_NPC_USE"
+      "COMBAT_NPC_USE",
+      "DRONE_CAM"
     ]
   },
   {
@@ -90,8 +90,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },
@@ -118,7 +117,8 @@
       "NO_UNLOAD",
       "SLEEP_IGNORE",
       "COMBAT_NPC_USE",
-      "COMBAT_NPC_ON"
+      "COMBAT_NPC_ON",
+      "DRONE_CAM"
     ],
     "hearing_protection": 6,
     "adv_hearing_protection": 24
@@ -158,8 +158,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },
@@ -210,8 +209,7 @@
       "recharge_scheme": [ { "type": "solar", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "STRENGTH", "add": 2 },
             { "value": "DEXTERITY", "add": 2 },

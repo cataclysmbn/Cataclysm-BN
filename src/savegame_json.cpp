@@ -75,8 +75,8 @@
 #include "json.h"
 #include "kill_tracker.h"
 #include "lru_cache.h"
-#include "magic.h"
-#include "magic_teleporter_list.h"
+#include "magic/magic.h"
+#include "magic/magic_teleporter_list.h"
 #include "map.h"
 #include "map_memory.h"
 #include "mapdata.h"
@@ -536,10 +536,10 @@ void Character::load( const JsonObject &data )
 
     JsonObject vits = data.get_object( "vitamin_levels" );
     vits.allow_omitted_members();
-    for( const std::pair<const vitamin_id, vitamin> &v : vitamin::all() ) {
-        if( vits.has_member( v.first.str() ) ) {
-            int lvl = vits.get_int( v.first.str() );
-            vitamin_levels[v.first] = clamp( lvl, v.first->min(), v.first->max() );
+    for( const auto &v : vitamin::all() ) {
+        if( vits.has_member( v.id.str() ) ) {
+            int lvl = vits.get_int( v.id.str() );
+            vitamin_levels[v.id] = clamp( lvl, v.id->min(), v.id->max() );
         }
     }
     data.read( "consumption_history", consumption_history );
@@ -2517,7 +2517,7 @@ void split_deferred()
     auto &m = get_map();
 
     for( const auto& [it, cnt] : split_defer ) {
-        const auto pos = it->position();
+        const auto pos = it->bub_pos();
         for( auto n = 0; n < cnt; n++ ) {
             auto tmp = item::spawn( *it );
 
@@ -2751,7 +2751,13 @@ void item::io( Archive &archive )
     archive.io( "item_counter", item_counter, static_cast<decltype( item_counter )>( 0 ) );
     archive.io( "rot", rot, 0_turns );
     archive.io( "last_rot_check", last_rot_check, calendar::start_of_cataclysm );
+    if constexpr( !Archive::is_input::value ) {
+        erase_if( techniques, []( const matec_id & technique ) { return !technique.is_valid(); } );
+    }
     archive.io( "techniques", techniques, io::empty_default_tag() );
+    if constexpr( Archive::is_input::value ) {
+        erase_if( techniques, []( const matec_id & technique ) { return !technique.is_valid(); } );
+    }
     {
         auto serialized_melee = std::vector<damage_instance_serialization::serialized_damage_unit> {};
         auto serialized_ranged = std::vector<damage_instance_serialization::serialized_damage_unit> {};
@@ -4602,7 +4608,7 @@ void submap::store( JsonOut &jsout ) const
 }
 
 void submap::load( JsonIn &jsin, const std::string &member_name, int version,
-                   const tripoint_abs_ms offset )
+                   const tripoint_abs_ms offset, const dimension_id &dim )
 {
     if( member_name == "turn_last_touched" ) {
         last_touched = calendar::turn_zero + time_duration::from_turns( jsin.get_int() );
@@ -4817,7 +4823,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
             int k = jsin.get_int();
             auto sm_pt = tripoint_sm_ms( i, j, k );
             auto abs_pt = tripoint_abs_ms( offset.x() + i, offset.y() + j, k );
-            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt );
+            std::unique_ptr<partial_con> pc = std::make_unique<partial_con>( abs_pt, dim );
             pc->counter = jsin.get_int();
             if( jsin.test_int() ) {
                 // Oops, int id incorrectly saved by legacy code, just load it and hope for the best

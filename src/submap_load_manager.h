@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -79,11 +80,10 @@ using load_request_handle = uint64_t;
 struct submap_load_request {
     load_request_source source = load_request_source::reality_bubble;
     dimension_id dim_id;
-    tripoint_abs_sm center;
-    int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
-    ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
-    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); lazy-border
-    ///< preloading may stage individual z-level OMT jobs internally.
+    point_abs_sm begin;
+    point_abs_sm end;
+
+    auto operator==( const submap_load_request &rhs ) const -> bool = default;
 };
 
 /**
@@ -112,22 +112,16 @@ class submap_load_manager
          */
         auto request_load( load_request_source source,
                            const dimension_id &dim_id,
-                           const tripoint_abs_sm &center,
-                           int radius ) -> load_request_handle;
-
-        auto request_load( load_request_source source,
-                           const dimension_id &dim_id,
-                           const tripoint_abs_sm &center ) -> load_request_handle {
-            return request_load(
-                       source, dim_id, center, 0 );
-        }
+                           const point_abs_sm &begin,
+                           const point_abs_sm &end ) -> load_request_handle;
 
         /**
-         * Move the center of an existing request (e.g. on player movement).
+         * Move the bounds of an existing request (e.g. on player movement).
          * No-op if the handle is not found.
          */
-        void update_request( load_request_handle handle,
-                             const tripoint_abs_sm &new_center );
+        auto update_request( load_request_handle handle,
+                             const point_abs_sm &begin,
+                             const point_abs_sm &end ) -> void;
 
         /**
          * Release a load request.  The submaps it was keeping loaded may be
@@ -174,7 +168,10 @@ class submap_load_manager
          * Return true if the submap at @p pos in @p dim_id is covered by any
          * active load request.
          */
-        auto is_requested( const dimension_id &dim_id, const tripoint_abs_sm &pos ) const -> bool;
+        auto is_requested( const dimension_id &dim_id, const point_abs_sm &pos ) const -> bool;
+        auto is_requested( const dimension_id &dim_id, const tripoint_abs_sm &pos ) const -> bool {
+            return is_requested( dim_id, pos.xy() );
+        }
 
         /**
          * Return true if @p pos in @p dim_id is covered by a reality_bubble
@@ -186,7 +183,11 @@ class submap_load_manager
         * Return true if submap at @p pos in @p dim_id is loaded in memory.
         */
         auto is_loaded( const dimension_id &dim_id,
-                        const tripoint_abs_sm &pos ) const -> bool;
+                        const point_abs_sm &pos ) const -> bool;
+        auto is_loaded( const dimension_id &dim_id,
+                        const tripoint_abs_sm &pos ) const -> bool {
+            return is_loaded( dim_id, pos.xy() );
+        }
 
         /**
          * Return true if @p pos in @p dim_id is covered by any active load
@@ -198,7 +199,11 @@ class submap_load_manager
          * world_tick() and similar loops.
          */
         auto is_simulated( const dimension_id &dim_id,
-                           const tripoint_abs_sm &pos ) const -> bool;
+                           const point_abs_sm &pos ) const -> bool;
+        auto is_simulated( const dimension_id &dim_id,
+                           const tripoint_abs_sm &pos ) const -> bool {
+            return is_simulated( dim_id, pos.xy() );
+        }
 
         /**
          * O(1) alternative to is_simulated() for hot per-submap loops.
@@ -216,9 +221,21 @@ class submap_load_manager
          * update(), which runs after world_tick() in the same game turn.
          */
         auto is_in_simulated_set( const dimension_id &dim_id,
-                                  const tripoint_abs_sm &raw_pos ) const noexcept -> bool {
-            return prev_simulated_.contains( { dim_id, point_abs_sm{ raw_pos.xy() } } );
+                                  const point_abs_sm &pos ) const noexcept -> bool {
+            return prev_simulated_.contains( { dim_id, pos } );
         }
+        auto is_in_simulated_set( const dimension_id &dim_id,
+                                  const tripoint_abs_sm &pos ) const noexcept {
+            return is_in_simulated_set( dim_id, pos.xy() );
+        }
+
+        /**
+         * Return horizontal submap positions currently in the simulated set for
+         * @p dim_id. Load requests cover all z-levels, so callers that need
+         * concrete submap objects should expand these positions over the full
+         * z-level range.
+         */
+        auto simulated_submaps( const dimension_id &dim_id ) const -> std::span<const point_abs_sm>;
 
         /**
          * Return the set of dimension IDs that have at least one active request.
@@ -255,17 +272,6 @@ class submap_load_manager
          */
         auto is_fully_drained() const noexcept -> bool;
 
-        /**
-         * Precompute the set of (dx, dy) offsets that form a filled square of
-         * the given @p radius and cache them for use in compute_desired_set().
-         *
-         * Must be called whenever the reality-bubble radius changes (i.e. from
-         * map::resize()).  The square footprint means ALL submaps in the full
-         * (2*radius+1)×(2*radius+1) grid are tracked and protected from eviction,
-         * matching the square grid that map::loadn() loads.
-         */
-        auto update_load_shape( int radius ) -> void;
-
         /** Register a listener to receive load/unload notifications. */
         void add_listener( submap_load_listener *listener );
 
@@ -275,6 +281,7 @@ class submap_load_manager
     private:
         using desired_key = std::pair<dimension_id, point_abs_sm>;
         using omt_key    = std::pair<dimension_id, tripoint_abs_omt>;
+        using omt_column_key    = std::pair<dimension_id, point_abs_omt>;
 
         /** Hash for pair<dimension_id, CoordType> used by unordered containers.
          *  CoordType must be hashable via std::hash (all coord_point specializations are). */
@@ -289,10 +296,9 @@ class submap_load_manager
         };
 
         using key_set = std::unordered_set<desired_key, coord_pair_hash<point_abs_sm>>;
-        using retained_omt_key = std::pair<dimension_id, point_abs_omt>;
-        using horizontal_omt_set = std::unordered_set<retained_omt_key,
+        using horizontal_omt_set = std::unordered_set<omt_column_key,
               coord_pair_hash<point_abs_omt>>;
-        using retained_omt_list = std::list<retained_omt_key>;
+        using retained_omt_list = std::list<omt_column_key>;
         using lazy_omt_job_list = std::list<omt_key>;
         struct lazy_omt_focus {
             dimension_id dim_id;
@@ -305,6 +311,10 @@ class submap_load_manager
             auto generated() const -> bool {
                 return generation.is_generated();
             }
+        };
+        struct lazy_omt_start_result {
+            bool started = false;
+            bool generated = false;
         };
         struct lazy_omt_load_options {
             bool defer_postprocess_hooks = false;
@@ -327,7 +337,7 @@ class submap_load_manager
 
         /** Non-simulated OMT columns kept resident for short-term backtracking. */
         retained_omt_list retained_omts_;
-        std::unordered_map<retained_omt_key, retained_omt_list::iterator,
+        std::unordered_map<omt_column_key, retained_omt_list::iterator,
             coord_pair_hash<point_abs_omt>> retained_omt_index_;
 
         /** OMT z-levels waiting for amortized lazy-border preload. */
@@ -338,6 +348,7 @@ class submap_load_manager
 
         /** Compute the simulated desired set (excludes lazy_border). */
         key_set compute_desired_set() const;
+        auto rebuild_simulated_submaps_by_dimension( const key_set &simulated ) -> void;
 
         /** Compute OMT-space lazy-border columns. */
         auto compute_lazy_border_omts() const -> horizontal_omt_set;
@@ -346,17 +357,19 @@ class submap_load_manager
         auto add_lazy_border_into( key_set &target,
                                    const horizontal_omt_set &border_omts ) const -> void;
 
-        auto current_reality_bubble_radius() const -> int;
+        auto current_lazy_border_omt_count() const -> std::size_t;
         auto retained_omt_soft_cap() const -> std::size_t;
         auto retained_omt_hard_cap() const -> std::size_t;
         auto retained_omt_panic_cap() const -> std::size_t;
         auto retained_omt_base_budget() const -> std::size_t;
-        auto retain_omt( const retained_omt_key &key ) -> void;
-        auto erase_retained_omt( const retained_omt_key &key ) -> void;
+        auto retain_omt( const omt_column_key &key ) -> void;
+        auto erase_retained_omt( const omt_column_key &key ) -> void;
         auto erase_desired_retained_omts( const key_set &desired ) -> void;
-        auto evict_omt_column( const retained_omt_key &key ) -> void;
+        auto evict_omt_column( const omt_column_key &key ) -> void;
         auto evict_oldest_retained_omts( std::size_t count ) -> void;
         auto process_retained_omt_eviction() -> void;
+        auto run_deferred_mapgen_hooks_and_omt_post_passes(
+            const horizontal_omt_set &generated_omt_columns ) -> void;
         static auto load_lazy_omt_zlevel_data( mapbuffer &mb,
                                                const tripoint_abs_omt &omt_addr,
                                                const lazy_omt_load_options &options )
@@ -368,17 +381,13 @@ class submap_load_manager
                                     const lazy_omt_load_result &result ) -> bool;
         auto finish_lazy_omt_job( const omt_key &key ) -> bool;
         auto reap_lazy_omt_jobs() -> void;
-        auto start_lazy_omt_job( const omt_key &key ) -> bool;
-        auto lazy_omt_priority( const retained_omt_key &key ) const -> int;
-        auto lazy_omt_priority( const omt_key &key ) const -> int;
+        auto start_lazy_omt_job( const omt_key &key ) -> lazy_omt_start_result;
+        auto lazy_omt_priority( const omt_column_key &key ) const -> int;
         auto queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void;
         auto has_lazy_border_work_pending() const -> bool;
         auto process_or_defer_lazy_border_work( bool defer_lazy_border_work ) -> void;
         auto process_lazy_border_work() -> void;
         auto process_lazy_border_preload() -> void;
-
-        /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
-        std::vector<point> bubble_offsets_;
 
         /**
          * Omts that have entered the simulated zone at least once since they
@@ -388,11 +397,13 @@ class submap_load_manager
          * omts generated from scratch or restored from pending writes are marked
          * dirty so eviction preserves that data.
          */
-        std::unordered_set<omt_key, coord_pair_hash<tripoint_abs_omt>> dirty_omts_;
+        std::unordered_set<omt_column_key, coord_pair_hash<point_abs_omt>> dirty_omts_;
 
-        /** Snapshot of all request centers from the previous update().
+        /** Snapshot of all request bounds from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */
-        std::vector<std::pair<load_request_handle, tripoint>> prev_centers_;
+        std::vector<std::pair<load_request_handle, submap_load_request>> prev_requests_;
+
+        std::map<dimension_id, std::vector<point_abs_sm>> simulated_submaps_by_dimension_;
 
         point lazy_omt_preload_direction_ = point_zero;
         std::optional<lazy_omt_focus> lazy_omt_focus_;

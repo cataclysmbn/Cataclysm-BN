@@ -28,7 +28,7 @@ style violations, a commit will be pushed to fix them.
 
 ## C++ Formatting
 
-Top-level C++ files are formatted with [astyle](http://astyle.sourceforge.net/). C++ files in source subdirectories are formatted with [clang-format](https://clang.llvm.org/docs/ClangFormat.html).
+Top-level `src/*.cpp` and `src/*.h` files use [astyle](http://astyle.sourceforge.net/). Most other C++ files use [clang-format](https://clang.llvm.org/docs/ClangFormat.html). Formatter-sensitive fixtures such as `tools/clang-tidy-plugin/test/` are left unchanged.
 
 ```sh
 # Install formatters (Ubuntu/Debian)
@@ -41,15 +41,15 @@ sudo dnf install astyle clang-tools-extra
 brew install astyle clang-format
 ```
 
-### Using the script
+### Using the helper
 
 ```sh
 just fmt-cpp
-# or
-build-scripts/format-cpp.sh
+# or, for all staged file types
+just fmt
 ```
 
-The style configurations are in `.astylerc` and `.clang-format` at the repository root.
+If you already have a CMake build tree with `bash` available, `cmake --build <build-dir> --target format` calls the same C++ helper. The style configurations are in `.astylerc` and `.clang-format` at the repository root.
 
 ## JSON Formatting
 
@@ -155,12 +155,10 @@ pushing.
 
 ### VS Code
 
-Install these extensions for automatic formatting:
+Use the repository helper for C++ and the Deno extension for Markdown/TypeScript:
 
-- **C++**: [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) with
-  astyle integration
-- **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) for
-  Markdown/TypeScript
+- **C++**: run `just fmt-cpp`
+- **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno)
 
 ### Visual Studio
 
@@ -186,19 +184,15 @@ After installing the tools:
 3. Open **View > Other Windows > CMake Targets View**.
 4. Build the `format` target before committing.
 
-Visual Studio's normal **Format Document** command does not run this target. Use the `format` target
-for repository style: it runs `astyle` for top-level C++ files and `clang-format` for C++ files in
-`src/` subdirectories.
+Visual Studio's normal **Format Document** command does not run repository style. Run `just fmt-cpp`
+in a terminal; the CMake `format` target is a wrapper for environments with `bash` available.
 
 ### Vim/Neovim
 
-Add to your config:
+Use the helper instead of calling astyle or clang-format directly:
 
 ```vim
-" Format C++ with astyle on save
-autocmd BufWritePre *.cpp,*.h !astyle --options=.astylerc %
-
-" Format with deno
+autocmd BufWritePre *.cpp,*.h !just fmt-cpp %
 autocmd BufWritePre *.md,*.ts !deno fmt %
 ```
 
@@ -233,9 +227,8 @@ build-scripts/format-cpp.sh
 
 ### C++ formatters produce different results
 
-Make sure you're using the formatter configs from the repository root:
+Use the repository helper from the repository root so each file goes through the right formatter:
 
 ```sh
-astyle --options=.astylerc src/*.cpp
-clang-format -i src/utils/*.cpp src/utils/*.h
+just fmt-cpp
 ```

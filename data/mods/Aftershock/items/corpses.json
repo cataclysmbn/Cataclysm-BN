@@ -245,6 +245,22 @@
   },
   {
     "type": "GENERIC",
+    "id": "broken_wraitheon_isohypsa",
+    "copy-from": "broken_advbot_disarmed",
+    "color": "magenta",
+    "name": { "str_sp": "broken Isohypsa" },
+    "description": "The broken shell of an Isohypsa drone coordinator.  Most of its sensors and AI units are charred beyond any repair."
+  },
+  {
+    "type": "GENERIC",
+    "id": "broken_wraitheon_kaburaya",
+    "copy-from": "broken_bloodhound_drone",
+    "color": "magenta",
+    "name": { "str_sp": "broken Kabura-ya" },
+    "description": "A broken Kabura-ya drone.  Could be disassembled for a meager amount of parts."
+  },
+  {
+    "type": "GENERIC",
     "id": "broken_milbot_disarmed",
     "symbol": ",",
     "color": "green",

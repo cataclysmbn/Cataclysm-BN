@@ -84,11 +84,11 @@ class field_entry
         }
 
         //Returns true if this is an active field, false if it should be removed.
-        bool is_field_alive() {
+        bool is_field_alive() const {
             return is_alive;
         }
 
-        bool gas_can_spread() {
+        bool gas_can_spread() const {
             return is_field_alive() && type.obj().phase == GAS && type.obj().percent_spread > 0;
         }
 
@@ -198,5 +198,4 @@ class field
         //_displayed_field_type currently is equal to the last field added to the square. You can modify this behavior in the class functions if you wish.
         field_type_id _displayed_field_type;
 };
-
 

@@ -12,11 +12,11 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "catalua_type_operators.h"
+#include "enchantments/enchantment.h"
 #include "flat_set.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-#include "magic_enchantment.h"
 #include "enums.h"
 #include "color.h"
 
@@ -177,7 +177,7 @@ struct bionic_data {
     bool was_loaded = false;
     void load( const JsonObject &obj, const std::string & );
     void check() const;
-    void finalize() const;
+    void finalize();
 
     LUA_TYPE_OPS( bionic_data, id );
 };

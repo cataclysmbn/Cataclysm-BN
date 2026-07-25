@@ -14,6 +14,7 @@
 #include "json.h"
 #include "pldata.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "locations.h"
 
 const bodypart_str_id body_part_head( "head" );
@@ -108,6 +109,7 @@ namespace
 generic_factory<body_part_type> body_part_factory( "body part" );
 
 } // namespace
+IMPLEMENT_STRING_AND_INT_IDS( body_part_type, body_part_factory );
 
 bool is_legacy_bodypart_id( const std::string &id )
 {
@@ -170,52 +172,6 @@ static body_part legacy_id_to_enum( const std::string &legacy_id )
 
     return iter->second;
 }
-
-/**@relates string_id*/
-template<>
-bool string_id<body_part_type>::is_valid() const
-{
-    return body_part_factory.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-bool int_id<body_part_type>::is_valid() const
-{
-    return body_part_factory.is_valid( *this );
-}
-
-/**@relates string_id*/
-template<>
-const body_part_type &string_id<body_part_type>::obj() const
-{
-    return body_part_factory.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const body_part_type &int_id<body_part_type>::obj() const
-{
-    return body_part_factory.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const bodypart_str_id &int_id<body_part_type>::id() const
-{
-    return body_part_factory.convert( *this );
-}
-
-/**@relates string_id*/
-template<>
-bodypart_id string_id<body_part_type>::id() const
-{
-    return body_part_factory.convert( *this, bodypart_id( 0 ) );
-}
-
-/** @relates int_id */
-template<>
-int_id<body_part_type>::int_id( const string_id<body_part_type> &id ) : _id( id.id() ) {}
 
 body_part get_body_part_token( const std::string &id )
 {

@@ -30,7 +30,7 @@
     "description": "A highly specialized air-to-ground missile designed to eliminate high value targets while causing minimal collateral damage. Blades pop out of the missile after launch and devastate any single target.",
     "material": [ "steel" ],
     "volume": "18 L",
-    "weight": "45000 g",
+    "weight": "45 kg",
     "bashing": 1,
     "ammo_type": "hellfire",
     "damage": { "damage_type": "cut", "amount": 1500, "armor_multiplier": 0.1 },

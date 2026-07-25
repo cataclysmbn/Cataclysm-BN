@@ -1,9 +1,5 @@
-#include "catch/catch.hpp"
-
-#include <set>
-#include <vector>
-
 #include "avatar.h"
+#include "catch/catch.hpp"
 #include "coordinates.h"
 #include "int_id.h"
 #include "item.h"
@@ -16,69 +12,68 @@
 #include "state_helpers.h"
 #include "type_id.h"
 
+#include <set>
+#include <vector>
+
 // Destroying pavement with a pickaxe should not leave t_flat_roof.
 // See issue #24707:
 // https://github.com/CleverRaven/Cataclysm-DDA/issues/24707
-TEST_CASE( "pavement_destroy", "[.]" )
-{
+TEST_CASE("pavement_destroy", "[.]") {
     clear_all_state();
-    const ter_id flat_roof_id = ter_id( "t_flat_roof" );
-    REQUIRE( flat_roof_id != t_null );
+    const ter_id flat_roof_id = ter_id("t_flat_roof");
+    REQUIRE(flat_roof_id != t_null);
 
     move_player_out_of_the_way();
-    map &here = get_map();
+    map& here = get_map();
     // Populate the map with pavement.
-    here.ter_set( tripoint_bub_ms::zero(), ter_id( "t_pavement" ) );
+    here.ter_set(tripoint_bub_ms::zero(), ter_id("t_pavement"));
 
     // Destroy it
-    here.destroy( tripoint_bub_ms::zero(), true );
-    ter_id after_destroy = here.ter( tripoint_bub_ms::zero() );
-    if( after_destroy == flat_roof_id ) {
-        FAIL( flat_roof_id.obj().name() << " found after destroying pavement" );
+    here.destroy(tripoint_bub_ms::zero(), true);
+    ter_id after_destroy = here.ter(tripoint_bub_ms::zero());
+    if (after_destroy == flat_roof_id) {
+        FAIL(flat_roof_id.obj().name() << " found after destroying pavement");
     } else {
-        INFO( "After destroy, ground is " << after_destroy.obj().name() );
+        INFO("After destroy, ground is " << after_destroy.obj().name());
     }
 }
 
 // Ground-destroying explosions on dirt or grass shouldn't leave t_flat_roof.
 // See issue #23250:
 // https://github.com/CleverRaven/Cataclysm-DDA/issues/23250
-TEST_CASE( "explosion_on_ground", "[.]" )
-{
+TEST_CASE("explosion_on_ground", "[.]") {
     clear_all_state();
-    ter_id flat_roof_id = ter_id( "t_flat_roof" );
-    REQUIRE( flat_roof_id != t_null );
+    ter_id flat_roof_id = ter_id("t_flat_roof");
+    REQUIRE(flat_roof_id != t_null);
 
     move_player_out_of_the_way();
-    std::vector<ter_id> test_terrain_id = {
-        ter_id( "t_dirt" ), ter_id( "t_grass" )
-    };
-    map &here = get_map();
+    std::vector<ter_id> test_terrain_id = {ter_id("t_dirt"), ter_id("t_grass")};
+    map& here = get_map();
     int idx = 0;
     const int area_dim = 16;
     // Populate map with various test terrain.
-    for( int x = 0; x < area_dim; x++ ) {
-        for( int y = 0; y < area_dim; y++ ) {
-            here.ter_set( tripoint_bub_ms( x, y, 0 ), test_terrain_id[idx] );
-            idx = ( idx + 1 ) % test_terrain_id.size();
+    for (int x = 0; x < area_dim; x++) {
+        for (int y = 0; y < area_dim; y++) {
+            here.ter_set(tripoint_bub_ms(x, y, 0), test_terrain_id[idx]);
+            idx = (idx + 1) % test_terrain_id.size();
         }
     }
     // Detonate an RDX keg item in the middle of the populated map space
-    itype_id rdx_keg_typeid( "tool_rdx_charge_act" );
-    REQUIRE( rdx_keg_typeid.is_valid() );
+    itype_id rdx_keg_typeid("tool_rdx_charge_act");
+    REQUIRE(rdx_keg_typeid.is_valid());
 
-    const tripoint_bub_ms area_center( area_dim / 2, area_dim / 2, 0 );
-    item &rdx_keg = *item::spawn_temporary( rdx_keg_typeid );
+    const tripoint_bub_ms area_center(area_dim / 2, area_dim / 2, 0);
+    item& rdx_keg = *item::spawn_temporary(rdx_keg_typeid);
     rdx_keg.charges = 0;
-    rdx_keg.type->invoke( get_avatar(), rdx_keg, area_center );
+    rdx_keg.type->invoke(get_avatar(), rdx_keg, area_center);
 
     // Check area to see if any t_flat_roof is present.
-    for( int x = 0; x < area_dim; x++ ) {
-        for( int y = 0; y < area_dim; y++ ) {
-            tripoint_bub_ms pt( x, y, 0 );
-            ter_id t_id = here.ter( pt );
-            if( t_id == flat_roof_id ) {
-                FAIL( "After explosion, " << t_id.obj().name() << " found at " << x << "," << y );
+    for (int x = 0; x < area_dim; x++) {
+        for (int y = 0; y < area_dim; y++) {
+            tripoint_bub_ms pt(x, y, 0);
+            ter_id t_id = here.ter(pt);
+            if (t_id == flat_roof_id) {
+                FAIL("After explosion, " << t_id.obj().name() << " found at " << x << "," << y);
             }
         }
     }
@@ -87,156 +82,144 @@ TEST_CASE( "explosion_on_ground", "[.]" )
 // Ground-destroying explosions on t_floor with a t_rock_floor basement
 // below should create some t_open_air, not just t_flat_roof (which is
 // the defined roof of a t_rock-floor).
-TEST_CASE( "explosion_on_floor_with_rock_floor_basement", "[.]" )
-{
+TEST_CASE("explosion_on_floor_with_rock_floor_basement", "[.]") {
     clear_all_state();
-    ter_id flat_roof_id = ter_id( "t_flat_roof" );
-    ter_id floor_id = ter_id( "t_floor" );
-    ter_id rock_floor_id = ter_id( "t_rock_floor" );
-    ter_id open_air_id = ter_id( "t_open_air" );
+    ter_id flat_roof_id = ter_id("t_flat_roof");
+    ter_id floor_id = ter_id("t_floor");
+    ter_id rock_floor_id = ter_id("t_rock_floor");
+    ter_id open_air_id = ter_id("t_open_air");
 
-    REQUIRE( flat_roof_id != t_null );
-    REQUIRE( floor_id != t_null );
-    REQUIRE( rock_floor_id != t_null );
-    REQUIRE( open_air_id != t_null );
+    REQUIRE(flat_roof_id != t_null);
+    REQUIRE(floor_id != t_null);
+    REQUIRE(rock_floor_id != t_null);
+    REQUIRE(open_air_id != t_null);
 
     move_player_out_of_the_way();
 
-    map &here = get_map();
+    map& here = get_map();
     const int area_dim = 24;
-    for( int x = 0; x < area_dim; x++ ) {
-        for( int y = 0; y < area_dim; y++ ) {
-            here.ter_set( tripoint_bub_ms( x, y, 0 ), floor_id );
-            here.ter_set( tripoint_bub_ms( x, y, -1 ), rock_floor_id );
+    for (int x = 0; x < area_dim; x++) {
+        for (int y = 0; y < area_dim; y++) {
+            here.ter_set(tripoint_bub_ms(x, y, 0), floor_id);
+            here.ter_set(tripoint_bub_ms(x, y, -1), rock_floor_id);
         }
     }
     // Detonate an RDX keg item in the middle of the populated map space
-    itype_id rdx_keg_typeid( "tool_rdx_charge_act" );
-    REQUIRE( rdx_keg_typeid.is_valid() );
+    itype_id rdx_keg_typeid("tool_rdx_charge_act");
+    REQUIRE(rdx_keg_typeid.is_valid());
 
-    const tripoint_bub_ms area_center( area_dim / 2, area_dim / 2, 0 );
-    item &rdx_keg = *item::spawn_temporary( rdx_keg_typeid );
+    const tripoint_bub_ms area_center(area_dim / 2, area_dim / 2, 0);
+    item& rdx_keg = *item::spawn_temporary(rdx_keg_typeid);
     rdx_keg.charges = 0;
-    rdx_keg.type->invoke( get_avatar(), rdx_keg, area_center );
+    rdx_keg.type->invoke(get_avatar(), rdx_keg, area_center);
 
     // Check z0 for open air
     bool found_open_air = false;
-    for( int x = 0; x < area_dim; x++ ) {
-        for( int y = 0; y < area_dim; y++ ) {
-            tripoint_bub_ms pt( x, y, 0 );
-            ter_id t_id = here.ter( pt );
-            INFO( "t " << t_id.obj().name() << " at " << x << "," << y );
-            if( t_id == open_air_id ) {
+    for (int x = 0; x < area_dim; x++) {
+        for (int y = 0; y < area_dim; y++) {
+            tripoint_bub_ms pt(x, y, 0);
+            ter_id t_id = here.ter(pt);
+            INFO("t " << t_id.obj().name() << " at " << x << "," << y);
+            if (t_id == open_air_id) {
                 found_open_air = true;
                 break;
             }
         }
-        if( found_open_air ) {
-            break;
-        }
+        if (found_open_air) { break; }
     }
 
-    if( !found_open_air ) {
-        FAIL( "After explosion, no open air was found" );
-    }
+    if (!found_open_air) { FAIL("After explosion, no open air was found"); }
 }
 
 // Destroying interior floors shouldn't cause the roofs above to collapse.
 // Destroying supporting walls should cause the roofs above to collapse.
-TEST_CASE( "collapse_checks", "[.]" )
-{
+TEST_CASE("collapse_checks", "[.]") {
     clear_all_state();
     constexpr int wall_size = 5;
 
-    const ter_id floor_id = ter_id( "t_floor" );
-    const ter_id dirt_id = ter_id( "t_dirt" );
-    const ter_id wall_id = ter_id( "t_wall" );
-    const ter_id open_air_id = ter_id( "t_open_air" );
+    const ter_id floor_id = ter_id("t_floor");
+    const ter_id dirt_id = ter_id("t_dirt");
+    const ter_id wall_id = ter_id("t_wall");
+    const ter_id open_air_id = ter_id("t_open_air");
 
-    REQUIRE( floor_id != t_null );
-    REQUIRE( dirt_id != t_null );
-    REQUIRE( wall_id != t_null );
-    REQUIRE( open_air_id != t_null );
+    REQUIRE(floor_id != t_null);
+    REQUIRE(dirt_id != t_null);
+    REQUIRE(wall_id != t_null);
+    REQUIRE(open_air_id != t_null);
 
     move_player_out_of_the_way();
 
-    map &here = get_map();
+    map& here = get_map();
     // build a structure
-    const tripoint_bub_ms &midair = tripoint_bub_ms( tripoint_bub_ms::zero().xy(),
-                                    tripoint_bub_ms::zero().z() + 1 );
-    for( const tripoint_bub_ms &pt : here.points_in_radius( midair, wall_size, 1 ) ) {
-        here.ter_set( pt, floor_id );
+    const tripoint_bub_ms& midair =
+        tripoint_bub_ms(tripoint_bub_ms::zero().xy(), tripoint_bub_ms::zero().z() + 1);
+    for (const tripoint_bub_ms& pt : here.points_in_radius(midair, wall_size, 1)) {
+        here.ter_set(pt, floor_id);
     }
     std::set<tripoint_bub_ms> corners;
-    for( int delta_z = 0; delta_z < 3; delta_z++ ) {
-        for( int delta_x = 0; delta_x <= 1; delta_x++ ) {
-            for( int delta_y = 0; delta_y <= 1; delta_y++ ) {
-                const tripoint_bub_ms pt( delta_x * wall_size, delta_y * wall_size, delta_z );
-                corners.insert( pt );
-                here.ter_set( pt, wall_id );
+    for (int delta_z = 0; delta_z < 3; delta_z++) {
+        for (int delta_x = 0; delta_x <= 1; delta_x++) {
+            for (int delta_y = 0; delta_y <= 1; delta_y++) {
+                const tripoint_bub_ms pt(delta_x * wall_size, delta_y * wall_size, delta_z);
+                corners.insert(pt);
+                here.ter_set(pt, wall_id);
             }
         }
     }
 
     // make sure it's a valid structure
-    for( const tripoint_bub_ms &pt : here.points_in_radius( midair, wall_size, 1 ) ) {
-        if( corners.find( pt ) != corners.end() ) {
-            REQUIRE( here.ter( pt ) == wall_id );
+    for (const tripoint_bub_ms& pt : here.points_in_radius(midair, wall_size, 1)) {
+        if (corners.find(pt) != corners.end()) {
+            REQUIRE(here.ter(pt) == wall_id);
         } else {
-            REQUIRE( here.ter( pt ) == floor_id );
+            REQUIRE(here.ter(pt) == floor_id);
         }
     }
 
     // destroy the floor on the first floor; floor above should not collapse
-    for( const tripoint_bub_ms &pt : here.points_in_radius( tripoint_bub_ms::zero(), wall_size ) ) {
-        if( corners.find( pt ) == corners.end() ) {
-            here.destroy( pt, true );
-        }
+    for (const tripoint_bub_ms& pt : here.points_in_radius(tripoint_bub_ms::zero(), wall_size)) {
+        if (corners.find(pt) == corners.end()) { here.destroy(pt, true); }
     }
-    for( const tripoint_bub_ms &pt : here.points_in_radius( midair, wall_size ) ) {
-        if( corners.find( pt ) != corners.end() ) {
-            CHECK( here.ter( pt ) == wall_id );
+    for (const tripoint_bub_ms& pt : here.points_in_radius(midair, wall_size)) {
+        if (corners.find(pt) != corners.end()) {
+            CHECK(here.ter(pt) == wall_id);
         } else {
-            CHECK( here.ter( pt ) == floor_id );
+            CHECK(here.ter(pt) == floor_id);
         }
     }
 
     // destroy the walls on the first floor; upper floors should mostly collapse
-    for( int delta_x = 0; delta_x <= 1; delta_x++ ) {
-        for( int delta_y = 0; delta_y <= 1; delta_y++ ) {
-            const tripoint_bub_ms pt( delta_x * wall_size, delta_y * wall_size, 0 );
-            here.destroy( pt, true );
+    for (int delta_x = 0; delta_x <= 1; delta_x++) {
+        for (int delta_y = 0; delta_y <= 1; delta_y++) {
+            const tripoint_bub_ms pt(delta_x * wall_size, delta_y * wall_size, 0);
+            here.destroy(pt, true);
         }
     }
     int open_air_count = 0;
     int tile_count = 0;
     int no_wall_count = 0;
-    for( const tripoint_bub_ms &pt : here.points_in_radius( midair, wall_size, 1 ) ) {
-        if( pt.z() == 0 ) {
-            continue;
-        }
-        const ter_id t_id = here.ter( pt );
+    for (const tripoint_bub_ms& pt : here.points_in_radius(midair, wall_size, 1)) {
+        if (pt.z() == 0) { continue; }
+        const ter_id t_id = here.ter(pt);
         tile_count += 1;
-        if( t_id == t_open_air ) {
+        if (t_id == t_open_air) {
             open_air_count += 1;
-            if( corners.find( pt ) != corners.end() ) {
-                no_wall_count += 1;
-            }
+            if (corners.find(pt) != corners.end()) { no_wall_count += 1; }
         }
     }
     int partial_tiles = tile_count / 5;
-    CHECK( open_air_count > partial_tiles );
-    if( open_air_count < partial_tiles ) {
-        FAIL( open_air_count << " open air tiles were found on the upper floors after the walls "
-              "collapsed." );
+    CHECK(open_air_count > partial_tiles);
+    if (open_air_count < partial_tiles) {
+        FAIL(open_air_count << " open air tiles were found on the upper floors after the walls "
+                               "collapsed.");
     } else {
-        INFO( open_air_count << " open air tiles were found on the upper floors after the walls "
-              "collapsed." );
+        INFO(open_air_count << " open air tiles were found on the upper floors after the walls "
+                               "collapsed.");
     }
-    CHECK( no_wall_count == 8 );
-    if( no_wall_count != 8 ) {
-        FAIL( "Only " << no_wall_count << " walls on the upper floors collapsed." );
+    CHECK(no_wall_count == 8);
+    if (no_wall_count != 8) {
+        FAIL("Only " << no_wall_count << " walls on the upper floors collapsed.");
     } else {
-        INFO( "All " << no_wall_count << " walls on the upper floors collapsed." );
+        INFO("All " << no_wall_count << " walls on the upper floors collapsed.");
     }
 }

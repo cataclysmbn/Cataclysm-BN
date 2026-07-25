@@ -44,8 +44,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -154,8 +154,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -187,8 +187,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -220,8 +220,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -253,8 +253,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -286,8 +286,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -318,8 +318,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -351,8 +351,8 @@
       "sound_fail": "whump!",
       "ter_set": "t_null",
       "items": "wall_bash_results",
-      "//": "Variable reduction since might hit more or less material.",
-      "ranged": { "reduction": [ 20, 40 ], "destroy_threshold": 210 }
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
     }
   },
   {
@@ -1193,8 +1193,8 @@
       "str_max": 12,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 100,
-      "sound_fail_vol": 80,
+      "sound_vol": "100 dB",
+      "sound_fail_vol": "80 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] } ],
       "//": "reduction and destroy_threshold are lower for plain glass",
@@ -1218,8 +1218,8 @@
       "str_max": 12,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 100,
-      "sound_fail_vol": 80,
+      "sound_vol": "100 dB",
+      "sound_fail_vol": "80 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] } ],
       "//": "reduction and destroy_threshold are lower for plain glass",
@@ -1243,8 +1243,8 @@
       "str_max": 200,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 110,
-      "sound_fail_vol": 90,
+      "sound_vol": "110 dB",
+      "sound_fail_vol": "90 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] } ],
       "//": "reduction half str_min for ballistic-style glass, destroy_threshold equal to str_min for glass",
@@ -1268,8 +1268,8 @@
       "str_max": 400,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 110,
-      "sound_fail_vol": 90,
+      "sound_vol": "110 dB",
+      "sound_fail_vol": "90 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] } ],
       "//": "reduction half str_min for ballistic-style glass, destroy_threshold equal to str_min for glass",
@@ -1292,8 +1292,8 @@
       "str_max": 210,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 110,
-      "sound_fail_vol": 90,
+      "sound_vol": "110 dB",
+      "sound_fail_vol": "90 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "wire", "prob": 20 } ],
       "//": "reduction half str_min for ballistic-style glass, destroy_threshold equal to str_min for glass",
@@ -1316,8 +1316,8 @@
       "str_max": 210,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 110,
-      "sound_fail_vol": 90,
+      "sound_vol": "110 dB",
+      "sound_fail_vol": "90 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "wire", "prob": 20 }, { "item": "scrap", "count": [ 3, 5 ] } ],
       "//": "reduction half str_min for ballistic-style glass, destroy_threshold equal to str_min for glass",
@@ -1341,8 +1341,8 @@
       "str_max": 210,
       "sound": "glass breaking!",
       "sound_fail": "whack!",
-      "sound_vol": 110,
-      "sound_fail_vol": 90,
+      "sound_vol": "110 dB",
+      "sound_fail_vol": "90 dB",
       "ter_set": "t_floor",
       "items": [ { "item": "glass_shard", "count": [ 3, 6 ] }, { "item": "wire", "prob": 20 }, { "item": "scrap", "count": [ 3, 5 ] } ],
       "//": "reduction half str_min for ballistic-style glass, destroy_threshold equal to str_min for glass",
@@ -1395,8 +1395,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 50,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "50 dB",
       "ter_set": "t_floor_paper",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" }
@@ -1414,8 +1414,8 @@
       "str_max": 6,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 60,
-      "sound_fail_vol": 50,
+      "sound_vol": "60 dB",
+      "sound_fail_vol": "50 dB",
       "ter_set": "t_floor_paper_noroof",
       "//": "Go straight through without taking any damage.",
       "ranged": { "block_unaimed_chance": "100%" }
@@ -1436,8 +1436,8 @@
       "str_max": 150,
       "sound": "rrrrip!",
       "sound_fail": "slap!",
-      "sound_vol": 110,
-      "sound_fail_vol": 80,
+      "sound_vol": "110 dB",
+      "sound_fail_vol": "80 dB",
       "ter_set": "t_floor_paper_hard",
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 15, 30 ], "destroy_threshold": 150 }
@@ -2192,36 +2192,6 @@
     }
   },
   {
-    "id": "t_nuclear_reactor",
-    "type": "terrain",
-    "name": "nuclear reactor core",
-    "description": "",
-    "symbol": "R",
-    "color": "light_green",
-    "move_cost": 0,
-    "flags": [ "TRANSPARENT", "CONTAINER", "REDUCE_SCENT", "PERMEABLE", "PLACE_ITEM", "ADV_DECONSTRUCT" ],
-    "deconstruct": {
-      "ter_set": "t_concrete",
-      "items": [
-        { "item": "compact_reactor_assembly", "count": 2 },
-        { "item": "alloy_plate", "count": [ 4, 6 ] },
-        { "item": "plut_cell", "charges": [ 24, 32 ] },
-        { "item": "lead", "charges": [ 250, 400 ] },
-        { "item": "cable", "charges": [ 60, 90 ] },
-        { "item": "power_supply", "count": [ 16, 20 ] },
-        { "item": "circuit", "count": [ 22, 28 ] },
-        { "item": "amplifier", "count": [ 10, 14 ] },
-        { "item": "RAM", "count": 8 },
-        { "item": "small_lcd_screen", "count": 4 },
-        { "item": "large_lcd_screen", "count": 1 },
-        { "item": "e_scrap", "count": 24 },
-        { "item": "scrap", "count": [ 48, 80 ] },
-        { "item": "steel_lump", "count": [ 20, 35 ] },
-        { "item": "steel_chunk", "count": [ 30, 50 ] }
-      ]
-    }
-  },
-  {
     "type": "terrain",
     "id": "t_fortification_wood",
     "copy-from": "t_wall_wood",
@@ -2384,5 +2354,104 @@
     },
     "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
     "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic",
+    "copy-from": "t_wall",
+    "name": "plastered wooden fortification",
+    "description": "A wooden wall faced with plaster, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "coverage": 80,
+    "bash": {
+      "str_min": 40,
+      "str_max": 210,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "items": "wall_bash_results",
+      "//": "Reduction ranges from 1x to 2x the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_r",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered red fortification",
+    "description": "A plastered wooden wall painted red, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "red",
+    "looks_like": "t_wall_r",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_w",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered white fortification",
+    "description": "A plastered wooden wall painted white, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "white",
+    "looks_like": "t_wall_w",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_b",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered blue fortification",
+    "description": "A plastered wooden wall painted blue, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "blue",
+    "looks_like": "t_wall_b",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_g",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered green fortification",
+    "description": "A plastered wooden wall painted green, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "green",
+    "looks_like": "t_wall_g",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_y",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered yellow fortification",
+    "description": "A plastered wooden wall painted yellow, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "yellow",
+    "looks_like": "t_wall_y",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_P",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered pink fortification",
+    "description": "A plastered wooden wall painted pink, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "pink",
+    "looks_like": "t_wall_P",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_domestic_p",
+    "copy-from": "t_fortification_domestic",
+    "name": "plastered purple fortification",
+    "description": "A plastered wooden wall painted purple, with a firing hole punched into it.  You can fire through unimpeded if you're adjacent to it.  It might slow incoming fire down a bit if it hits the support beams, but don't count on it.",
+    "symbol": "LINE_OXOX",
+    "color": "magenta",
+    "looks_like": "t_wall_p",
+    "extend": { "flags": [ "CHIP_FORTIFICATION" ] }
   }
 ]

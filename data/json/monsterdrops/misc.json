@@ -47,15 +47,72 @@
     "subtype": "collection",
     "id": "mon_shade_boss_death_drops",
     "entries": [
-      { "item": "phase_immersion_suit", "count": 1, "prob": 100 },
       { "item": "armored_helmet_liner", "count": 1, "prob": 100 },
       { "item": "id_science", "count": 1, "prob": 100 },
       { "item": "sample_t_substrate", "count": 1, "prob": 100 },
       { "item": "plut_cell", "count": [ 1, 2 ], "prob": 100 },
-      { "item": "slime_scrap", "count": [ 12, 28 ], "prob": 100 },
       { "group": "mil_food_nodrugs", "count": [ 1, 2 ], "prob": 100 },
       { "group": "underwear", "damage": [ 1, 2 ] },
-      { "group": "rare", "count": 1, "prob": 100 }
+      { "group": "rare", "count": 1, "prob": 100 },
+      { "item": "phase_immersion_suit", "count": 1, "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_suspended_shade_death_drops",
+    "entries": [
+      { "group": "lab_shoes", "damage": [ 1, 2 ] },
+      { "group": "lab_torso", "damage": [ 1, 2 ] },
+      { "group": "lab_pants", "damage": [ 1, 2 ] },
+      { "group": "underwear", "damage": [ 1, 2 ] },
+      { "item": "coat_lab", "count": 1, "prob": 75, "damage": [ 1, 2 ] },
+      { "item": "id_science", "count": 1, "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_suspended_merc_death_drops",
+    "entries": [
+      { "item": "two_way_radio", "prob": 100 },
+      { "item": "army_powered_earmuffs", "prob": 100 },
+      { "item": "sheath", "contents-item": "knife_combat", "prob": 100 },
+      { "item": "mask_gas", "prob": 100 },
+      { "item": "holster" },
+      { "group": "military_specops_guns", "prob": 100, "dirt": [ 0, 500 ] },
+      { "group": "military_standard_grenades", "count": [ 1, 3 ], "prob": 20 },
+      { "group": "carried_guns_pistol_milspec", "prob": 100, "dirt": [ 0, 500 ] },
+      {
+        "distribution": [
+          { "collection": [ { "item": "sports_bra" }, { "item": "boy_shorts" } ] },
+          { "distribution": [ { "item": "briefs" }, { "item": "boxer_briefs" }, { "item": "boxer_shorts" } ] }
+        ]
+      },
+      { "item": "elbow_pads", "prob": 100 },
+      { "item": "knee_pads", "prob": 100 },
+      { "item": "tac_helmet", "prob": 100 },
+      { "item": "gloves_tactical", "prob": 100 },
+      { "item": "webbing_belt" },
+      { "distribution": [ { "item": "socks", "prob": 95 }, { "item": "socks_wool", "prob": 5 } ] },
+      { "item": "boots_combat" },
+      { "item": "modularvestsuper", "prob": 100 },
+      {
+        "distribution": [ { "item": "goggles_nv", "prob": 75 }, { "item": "goggles_nv_enhanced", "prob": 25 } ],
+        "prob": 100
+      },
+      { "group": "clothing_watch", "prob": 100 },
+      { "item": "anbc_suit", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_suspended_merc_summon_death_drops",
+    "entries": [
+      { "item": "cartridgebrass", "count": [ 15, 25 ], "prob": 100 },
+      { "item": "scrap", "count": [ 0, 2 ], "prob": 100 },
+      { "group": "mass_grave_casings", "count": [ 5, 10 ], "prob": 100 }
     ]
   },
   {

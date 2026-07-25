@@ -3,7 +3,7 @@
     "id": "arcana_mark_destructive_absorption",
     "type": "SPELL",
     "name": { "str": "Mark: Destructive Absorption" },
-    "description": "Sanguine Mark\nUsing this spell will drain energy from your surroundings, creating a void in reality that will heavily damage a single target, rapidly restoring your stamina afterward.  Beware the risk of tearing the fabric of reality.",
+    "description": "Using this spell will drain energy from your surroundings, creating a void in reality that will heavily damage a single target, rapidly restoring your stamina afterward.  Beware the risk of tearing the fabric of reality.",
     "sprite": "fd_fatigue",
     "message": "With a strange gesture, the fabric of the Veil warps and decays.  %s!",
     "effect": "target_attack",
@@ -21,7 +21,7 @@
     "range_increment": 0.6,
     "skill": "magic",
     "max_level": 5,
-    "difficulty": 100,
+    "difficulty": 10,
     "base_casting_time": 330,
     "final_casting_time": 165,
     "casting_time_increment": -33,
@@ -32,7 +32,8 @@
     "field_id": "fd_fatigue",
     "field_chance": 100,
     "min_field_intensity": 1,
-    "max_field_intensity": 1
+    "max_field_intensity": 1,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_displacing_slash",
@@ -50,7 +51,7 @@
     "effect": "target_attack",
     "effect_str": "downed",
     "energy_source": "HP",
-    "difficulty": 40,
+    "difficulty": 4,
     "skill": "magic",
     "max_level": 5,
     "damage_type": "cut",
@@ -74,13 +75,14 @@
     "min_field_intensity": 1,
     "max_field_intensity": 3,
     "field_intensity_increment": 0.2,
-    "field_intensity_variance": 0.5
+    "field_intensity_variance": 0.5,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_drain_life",
     "type": "SPELL",
     "name": { "str": "Mark: Drain Life" },
-    "description": "Sanguine Mark\nUsing this spell will anoint you with a horned halo, granting a life-draining effect.",
+    "description": "Using this spell will anoint you with a horned halo, granting a life-draining effect.",
     "valid_targets": [ "self" ],
     "message": "You gesture, and are filled with a yearning for the hunt.  %s!",
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "NO_FAIL", "BRAWL" ],
@@ -88,7 +90,7 @@
     "effect": "spawn_item",
     "effect_str": "halo_drainlife",
     "energy_source": "HP",
-    "difficulty": 60,
+    "difficulty": 6,
     "skill": "magic",
     "max_level": 5,
     "base_casting_time": 210,
@@ -99,13 +101,14 @@
     "energy_increment": -2.8,
     "min_duration": 216000,
     "max_duration": 540000,
-    "duration_increment": 64800
+    "duration_increment": 64800,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_elemental_sign",
     "type": "SPELL",
     "name": { "str": "Mark: Elemental Sign" },
-    "description": "Sanguine Mark\nUsing this spell will grant complete immunity to fire, spreading a deathly chill and driving away flames from your immediate area.",
+    "description": "Using this spell will grant complete immunity to fire, spreading a deathly chill and driving away flames from your immediate area.",
     "message": "With a gesture, your inner fire flares up.  %s!",
     "valid_targets": [ "self" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "NO_FAIL", "BRAWL" ],
@@ -118,7 +121,7 @@
     "effect": "target_attack",
     "effect_str": "heat_ward",
     "energy_source": "HP",
-    "difficulty": 50,
+    "difficulty": 5,
     "skill": "magic",
     "max_level": 5,
     "base_casting_time": 180,
@@ -129,13 +132,14 @@
     "energy_increment": -2.4,
     "min_duration": 30000,
     "max_duration": 150000,
-    "duration_increment": 24000
+    "duration_increment": 24000,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_infernal_flame",
     "type": "SPELL",
     "name": { "str": "Mark: Infernal Breath" },
-    "description": "Sanguine Mark\nUsing this spell will channel your inner fire into a devastating blast, inflicting horrific burns and leaving a permanent scar upon the land.  Be careful using it around allies, and beware the risk of damaging the fabric of reality.",
+    "description": "Using this spell will channel your inner fire into a devastating blast, inflicting horrific burns and leaving a permanent scar upon the land.  Be careful using it around allies, and beware the risk of damaging the fabric of reality.",
     "sprite": "fd_fire",
     "message": "A bolt of flame leaps from your mouth, shaped into unholy fire with a wave of the hand.  %s!",
     "effect": "line_attack",
@@ -159,7 +163,7 @@
     "max_range": 15,
     "range_increment": 1,
     "max_level": 5,
-    "difficulty": 70,
+    "difficulty": 7,
     "skill": "magic",
     "base_casting_time": 240,
     "final_casting_time": 120,
@@ -174,13 +178,14 @@
     "min_field_intensity": 1,
     "max_field_intensity": 3,
     "field_intensity_increment": 0.4,
-    "field_intensity_variance": 0.5
+    "field_intensity_variance": 0.5,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_malevolent_gaze",
     "type": "SPELL",
     "name": { "str": "Mark: Malevolent Gaze" },
-    "description": "Sanguine Mark\nUsing this spell will strike a single target with a powerful temporal effect.  It won't deal any damage, but it will freeze your prey in place momentarily, leaving them slowed for a while afterward.",
+    "description": "Using this spell will strike a single target with a powerful temporal effect.  It won't deal any damage, but it will freeze your prey in place momentarily, leaving them slowed for a while afterward.",
     "sprite": "fd_dazzling",
     "message": "Your pupils briefly narrow into thin slits as you focus your hatred.  %s!",
     "effect": "mod_moves",
@@ -197,7 +202,7 @@
     "max_range": 10,
     "range_increment": 1,
     "max_level": 5,
-    "difficulty": 50,
+    "difficulty": 5,
     "skill": "magic",
     "base_casting_time": 180,
     "final_casting_time": 90,
@@ -205,14 +210,15 @@
     "energy_source": "HP",
     "base_energy_cost": 24,
     "final_energy_cost": 12,
-    "energy_increment": -2.4
+    "energy_increment": -2.4,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_might",
     "//": "ID retained for save compatibility reasons.",
     "type": "SPELL",
     "name": { "str": "Mark: Manifestation of Strength" },
-    "description": "Sanguine Mark\nUsing this spell will imbue your body with an unnatural aura, greatly increasing your strength and damage resistance, and allowing you to use heavy weapons unsupported if otherwise unable to.  It can only be used on yourself.",
+    "description": "Using this spell will imbue your body with an unnatural aura, greatly increasing your strength and damage resistance, and allowing you to use heavy weapons unsupported if otherwise unable to.  It can only be used on yourself.",
     "message": "A lust for battle surges through you as you complete the ritual gesture.  %s!",
     "valid_targets": [ "self" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "NO_FAIL", "BRAWL" ],
@@ -220,7 +226,7 @@
     "effect": "spawn_item",
     "effect_str": "halo_draconic_might",
     "energy_source": "HP",
-    "difficulty": 50,
+    "difficulty": 5,
     "skill": "magic",
     "max_level": 5,
     "base_casting_time": 180,
@@ -231,13 +237,14 @@
     "energy_increment": -2.4,
     "min_duration": 60000,
     "max_duration": 150000,
-    "duration_increment": 18000
+    "duration_increment": 18000,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_revenant_blood",
     "type": "SPELL",
     "name": { "str": "Mark: Revenant Blood" },
-    "description": "Sanguine Mark\nUsing this spell will guard against poison, protect against pestilence in food and water, and burn out fungal influences or other parasites.",
+    "description": "Using this spell will guard against poison, protect against pestilence in food and water, and burn out fungal influences or other parasites.",
     "message": "With a sign, you feel your blood burning with magical power.  %s!",
     "valid_targets": [ "self" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "NO_FAIL", "BRAWL" ],
@@ -245,7 +252,7 @@
     "effect": "target_attack",
     "effect_str": "dragonblood_clarity",
     "energy_source": "HP",
-    "difficulty": 40,
+    "difficulty": 4,
     "skill": "magic",
     "max_level": 5,
     "base_casting_time": 150,
@@ -256,13 +263,14 @@
     "energy_increment": -2,
     "min_duration": 48000,
     "max_duration": 120000,
-    "duration_increment": 14400
+    "duration_increment": 14400,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_summon_dark_wyrm",
     "type": "SPELL",
     "name": { "str": "Mark: Summon Dark Wyrm" },
-    "description": "Sanguine Mark\nUsing this spell will summon a dark wyrm.  Whether it will obey you is completely up to chance.",
+    "description": "Using this spell will summon a dark wyrm.  Whether it will obey you is completely up to chance.",
     "message": "Your gesture causes the ground to shift and flow, a pitch-black form slithering out of the earth itself.  %s!",
     "valid_targets": [ "ground" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "HOSTILE_50", "NO_FAIL", "BRAWL" ],
@@ -270,7 +278,7 @@
     "effect": "summon",
     "effect_str": "mon_dark_wyrm_summoned",
     "energy_source": "HP",
-    "difficulty": 50,
+    "difficulty": 5,
     "skill": "magic",
     "max_level": 5,
     "min_damage": 1,
@@ -286,13 +294,14 @@
     "energy_increment": -2.4,
     "min_duration": 600000,
     "max_duration": 1500000,
-    "duration_increment": 180000
+    "duration_increment": 180000,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_summon_fiend",
     "type": "SPELL",
     "name": { "str": "Mark: Summon Fiend" },
-    "description": "Sanguine Mark\nUsing this spell will summon an ashen revenant.  Whether it will obey you is completely up to chance.",
+    "description": "Using this spell will summon an ashen revenant.  Whether it will obey you is completely up to chance.",
     "message": "With a hand sign, a plume of living flame erupts from the ground, solidifying into a scorched humanoid form.  %s!",
     "valid_targets": [ "ground" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "HOSTILE_50", "NO_FAIL", "BRAWL" ],
@@ -300,7 +309,7 @@
     "effect": "summon",
     "effect_str": "mon_zombie_fiend_summoned",
     "energy_source": "HP",
-    "difficulty": 40,
+    "difficulty": 4,
     "skill": "magic",
     "max_level": 5,
     "min_damage": 1,
@@ -316,13 +325,14 @@
     "energy_increment": -2,
     "min_duration": 480000,
     "max_duration": 1200000,
-    "duration_increment": 144000
+    "duration_increment": 144000,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_summon_jabberwock",
     "type": "SPELL",
     "name": { "str": "Mark: Summon Jabberwock" },
-    "description": "Sanguine Mark\nUsing this spell will summon a golem woven of flesh.  Whether it will obey you is completely up to chance.",
+    "description": "Using this spell will summon a golem woven of flesh.  Whether it will obey you is completely up to chance.",
     "message": "The ground warps at your command, a host of rotting bodies emerging from the disturbance, forms fusing together into an abomination.  %s!",
     "valid_targets": [ "ground" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "HOSTILE_50", "NO_FAIL", "BRAWL" ],
@@ -330,7 +340,7 @@
     "effect": "summon",
     "effect_str": "mon_jabberwock_summoned",
     "energy_source": "HP",
-    "difficulty": 60,
+    "difficulty": 6,
     "skill": "magic",
     "max_level": 5,
     "min_damage": 1,
@@ -346,13 +356,14 @@
     "energy_increment": -2.8,
     "min_duration": 720000,
     "max_duration": 1800000,
-    "duration_increment": 216000
+    "duration_increment": 216000,
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   },
   {
     "id": "arcana_mark_surge_adrenaline",
     "type": "SPELL",
     "name": { "str": "Mark: Surge of Fury" },
-    "description": "Sanguine Mark\nUsing this spell will provoke a rush of adrenaline for urgent situations, with none of the normal drawbacks.  It can only be used on yourself.",
+    "description": "Using this spell will provoke a rush of adrenaline for urgent situations, with none of the normal drawbacks.  It can only be used on yourself.",
     "message": "Your gesture provokes a rush of instinct, urging you to kill.  %s!",
     "valid_targets": [ "self" ],
     "flags": [ "NO_EXPLOSION_VFX", "SOMATIC", "NO_HANDS", "NO_FAIL", "BRAWL" ],
@@ -366,11 +377,12 @@
     "base_energy_cost": 12,
     "final_energy_cost": 6,
     "energy_increment": -1.2,
-    "difficulty": 20,
+    "difficulty": 2,
     "skill": "magic",
     "min_duration": 36000,
     "max_duration": 180000,
     "duration_increment": 28800,
-    "energy_source": "HP"
+    "energy_source": "HP",
+    "spell_class": "ARCANA_SPELL_CLASS_SANGUINE_MARK"
   }
 ]

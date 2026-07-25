@@ -1,12 +1,11 @@
 #include "catch/catch.hpp"
+#include "point.h"
 
-#include <unordered_set>
-#include <vector>
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
-
-#include "point.h"
+#include <unordered_set>
+#include <vector>
 
 // A larger number for this would be GREAT, but the test isn't efficient enough to make it larger.
 // Previously tried inserting into an unordered_set,
@@ -18,42 +17,39 @@ constexpr int MAX_COORDINATE = 30;
 #else
 constexpr int MAX_COORDINATE = 300;
 #endif
-constexpr int NUM_ENTRIES_2D = ( ( MAX_COORDINATE * 2 ) + 1 ) * ( ( MAX_COORDINATE * 2 ) + 1 );
-constexpr int NUM_ENTRIES_3D = NUM_ENTRIES_2D * ( 21 );
+constexpr int NUM_ENTRIES_2D = ((MAX_COORDINATE * 2) + 1) * ((MAX_COORDINATE * 2) + 1);
+constexpr int NUM_ENTRIES_3D = NUM_ENTRIES_2D * (21);
 
-static size_t count_unique_elements( std::vector<size_t> &found_elements )
-{
-    std::sort( found_elements.begin(), found_elements.end() );
-    const auto range_end = std::unique( found_elements.begin(), found_elements.end() );
-    return std::distance( found_elements.begin(), range_end );
+static size_t count_unique_elements(std::vector<size_t>& found_elements) {
+    std::sort(found_elements.begin(), found_elements.end());
+    const auto range_end = std::unique(found_elements.begin(), found_elements.end());
+    return std::distance(found_elements.begin(), range_end);
 }
 
-TEST_CASE( "point_hash_distribution", "[hash]" )
-{
+TEST_CASE("point_hash_distribution", "[hash]") {
     std::vector<size_t> found_hashes;
-    found_hashes.reserve( NUM_ENTRIES_2D );
+    found_hashes.reserve(NUM_ENTRIES_2D);
     size_t element_count = 0;
-    for( int x = -MAX_COORDINATE; x <= MAX_COORDINATE; ++x ) {
-        for( int y = -MAX_COORDINATE; y <= MAX_COORDINATE; ++y ) {
+    for (int x = -MAX_COORDINATE; x <= MAX_COORDINATE; ++x) {
+        for (int y = -MAX_COORDINATE; y <= MAX_COORDINATE; ++y) {
             element_count++;
-            found_hashes.push_back( std::hash<point> {}( point{ x, y } ) );
+            found_hashes.push_back(std::hash<point>{}(point{x, y}));
         }
     }
-    CHECK( count_unique_elements( found_hashes ) > element_count * 0.9 );
+    CHECK(count_unique_elements(found_hashes) > element_count * 0.9);
 }
 
-TEST_CASE( "tripoint_hash_distribution", "[hash]" )
-{
+TEST_CASE("tripoint_hash_distribution", "[hash]") {
     std::vector<size_t> found_hashes;
-    found_hashes.reserve( NUM_ENTRIES_3D );
+    found_hashes.reserve(NUM_ENTRIES_3D);
     size_t element_count = 0;
-    for( int x = -MAX_COORDINATE; x <= MAX_COORDINATE; ++x ) {
-        for( int y = -MAX_COORDINATE; y <= MAX_COORDINATE; ++y ) {
-            for( int z = -10; z <= 10; ++z ) {
+    for (int x = -MAX_COORDINATE; x <= MAX_COORDINATE; ++x) {
+        for (int y = -MAX_COORDINATE; y <= MAX_COORDINATE; ++y) {
+            for (int z = -10; z <= 10; ++z) {
                 element_count++;
-                found_hashes.push_back( std::hash<tripoint> {}( { x, y, z } ) );
+                found_hashes.push_back(std::hash<tripoint>{}({x, y, z}));
             }
         }
     }
-    CHECK( count_unique_elements( found_hashes ) > element_count * 0.9 );
+    CHECK(count_unique_elements(found_hashes) > element_count * 0.9);
 }

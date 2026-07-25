@@ -245,7 +245,7 @@ bool turret_data::can_unload() const
     if( !veh || !part || part->info().has_flag( "USE_TANKS" ) ) {
         return false;
     }
-    return part->base->ammo_remaining() || part->base->magazine_current();
+    return part->base->ammo_remaining() > 0;
 }
 
 turret_data::status turret_data::query() const

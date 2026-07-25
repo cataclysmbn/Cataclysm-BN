@@ -68,7 +68,7 @@
         "targeting_cost": 150,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "beep!"
       }
     ],
@@ -121,7 +121,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "pseudo_m203",
-        "ammo_type": "40x46mm_m1006",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_dex": 12,
         "ranges": [ [ 0, 30, "DEFAULT" ] ],
@@ -133,7 +132,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Universal curfew is in effect.  Please return to your home.  This unit is authorized to open fire.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -184,7 +183,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "ksub2000_turret_fake",
-        "ammo_type": "9mmfmj",
         "fake_skills": [ [ "gun", 5 ], [ "rifle", 5 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -197,7 +195,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 20,
+        "targeting_volume": "46 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -257,7 +255,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "m16a4_turret_fake",
-        "ammo_type": "556",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -270,7 +267,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 50,
+        "targeting_volume": "54 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -322,7 +319,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "m14ebr_turret_fake",
-        "ammo_type": "762_51",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -335,7 +331,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -387,7 +383,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "m2browning_turret_fake",
-        "ammo_type": "50bmg",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -400,7 +395,7 @@
         "targeting_cost": 600,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],
@@ -452,7 +447,6 @@
         "cooldown": 1,
         "move_cost": 150,
         "gun_type": "mark19_turret_fake",
-        "ammo_type": "40x53mm_m430a1",
         "fake_skills": [ [ "gun", 8 ], [ "rifle", 8 ] ],
         "fake_str": 16,
         "fake_dex": 12,
@@ -465,7 +459,7 @@
         "targeting_cost": 800,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 60,
+        "targeting_volume": "56 dB",
         "no_ammo_sound": "a chk!"
       }
     ],

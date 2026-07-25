@@ -79,7 +79,15 @@
               { "id": "t_connection", "fg": [ 62, 63, 64, 65 ], "bg": 68 },
               { "id": "unconnected", "fg": 66, "bg": 68 }
             ]
-          }
+          },
+          { "id": "t_fortification_domestic", "fg": 69 },
+          { "id": "t_fortification_domestic_r", "fg": 70 },
+          { "id": "t_fortification_domestic_w", "fg": 71 },
+          { "id": "t_fortification_domestic_b", "fg": 72 },
+          { "id": "t_fortification_domestic_g", "fg": 73 },
+          { "id": "t_fortification_domestic_y", "fg": 74 },
+          { "id": "t_fortification_domestic_P", "fg": 75 },
+          { "id": "t_fortification_domestic_p", "fg": 76 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

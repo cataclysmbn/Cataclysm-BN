@@ -1202,6 +1202,9 @@ autodrive_result vehicle::do_autodrive( Character &driver )
         stop_autodriving( false );
         return autodrive_result::abort;
     }
+    if( driver.is_avatar() ) {
+        g->refresh_player_visibility_cache_if_needed();
+    }
     const tripoint_abs_ms veh_pos = abs_ms_location();
     const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
     std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;

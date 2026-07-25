@@ -22,6 +22,7 @@ class JsonArray;
 class JsonMember;
 class JsonObject;
 class map;
+class mapgen_constructor;
 template <typename Id> class mapgen_value;
 class mapgendata;
 class mission;
@@ -552,19 +553,23 @@ enum room_type {
 
 // helpful functions
 bool connects_to( const oter_id &there, int dir );
-// wrappers for map:: functions
-void line( map *m, const ter_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
-void line_furn( map *m, const furn_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
-void fill_background( map *m, const ter_id &type );
-void fill_background( map *m, ter_id( *f )() );
-void square( map *m, const ter_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
-void square( map *m, ter_id( *f )(), const point_bub_ms &p1, const point_bub_ms &p2 );
-void square( map *m, const weighted_int_list<ter_id> &f, const point_bub_ms &p1,
-             const point_bub_ms &p2 );
-void square_furn( map *m, const furn_id &type, const point_bub_ms &p1, const point_bub_ms &p2 );
-void rough_circle( map *m, const ter_id &type, const point_bub_ms &, int rad );
-void rough_circle_furn( map *m, const furn_id &type, const point_bub_ms &, int rad );
-void circle( map *m, const ter_id &type, double x, double y, double rad );
-void circle( map *m, const ter_id &type, const point_bub_ms &, int rad );
-void circle_furn( map *m, const furn_id &type, const point_bub_ms &, int rad );
-void add_corpse( map *m, const point_bub_ms & );
+void line( mapgen_constructor *m, const ter_id &type, const point_omt_ms &p1,
+           const point_omt_ms &p2 );
+void line_furn( mapgen_constructor *m, const furn_id &type, const point_omt_ms &p1,
+                const point_omt_ms &p2 );
+void fill_background( mapgen_constructor *m, const ter_id &type );
+void fill_background( mapgen_constructor *m, ter_id( *f )() );
+void square( mapgen_constructor *m, const ter_id &type, const point_omt_ms &p1,
+             const point_omt_ms &p2 );
+void square( mapgen_constructor *m, ter_id( *f )(), const point_omt_ms &p1,
+             const point_omt_ms &p2 );
+void square( mapgen_constructor *m, const weighted_int_list<ter_id> &f, const point_omt_ms &p1,
+             const point_omt_ms &p2 );
+void square_furn( mapgen_constructor *m, const furn_id &type, const point_omt_ms &p1,
+                  const point_omt_ms &p2 );
+void rough_circle( mapgen_constructor *m, const ter_id &type, const point_omt_ms &, int rad );
+void rough_circle_furn( mapgen_constructor *m, const furn_id &type, const point_omt_ms &, int rad );
+void circle( mapgen_constructor *m, const ter_id &type, double x, double y, double rad );
+void circle( mapgen_constructor *m, const ter_id &type, const point_omt_ms &, int rad );
+void circle_furn( mapgen_constructor *m, const furn_id &type, const point_omt_ms &, int rad );
+void add_corpse( mapgen_constructor *m, const point_omt_ms & );

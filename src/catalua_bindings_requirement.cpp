@@ -65,10 +65,11 @@ void cata::detail::reg_requirement( sol::state &lua )
     }
 #undef UT_CLASS
 
-    // Global function to look up requirement by ID
+    DOC( "Requirement definitions and lookup helpers." );
+    luna::userlib lib = luna::begin_lib( lua, "requirements" );
+
     DOC( "Look up requirement_data by ID string. Returns nil if not found." );
-    lua.set_function( "get_requirement", []( const std::string & id_str ) ->
-    std::optional<requirement_data> {
+    luna::set_fx( lib, "get", []( const std::string & id_str ) -> std::optional<requirement_data> {
         requirement_id id( id_str );
         if( id.is_valid() )
         {
@@ -76,4 +77,6 @@ void cata::detail::reg_requirement( sol::state &lua )
         }
         return std::nullopt;
     } );
+
+    luna::finalize_lib( lib );
 }

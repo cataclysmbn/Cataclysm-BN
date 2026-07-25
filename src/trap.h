@@ -8,12 +8,13 @@
 #include <vector>
 
 #include "color.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
 #include "catalua_type_operators.h"
 
+class lua_itrap_actor;
 class Character;
 class Creature;
 class JsonObject;
@@ -62,6 +63,7 @@ bool map_regen( const tripoint_bub_ms &p, Creature *c, item *i );
 bool drain( const tripoint_bub_ms &p, Creature *c, item *i );
 bool snake( const tripoint_bub_ms &p, Creature *c, item *i );
 bool cast_spell( const tripoint_bub_ms &p, Creature *critter, item * );
+bool lua( const tripoint_bub_ms &p, Creature *target, item *trap );
 } // namespace trapfunc
 
 struct vehicle_handle_trap_data {
@@ -71,7 +73,7 @@ struct vehicle_handle_trap_data {
     int chance = 100;
     int damage = 0;
     int shrapnel = 0;
-    int sound_volume = 0;
+    units::sound sound_volume = 0_dB;
     translation sound;
     std::string sound_type;
     std::string sound_variant;
@@ -105,6 +107,8 @@ struct trap {
         // a valid overmap id, for map_regen action traps
         std::string map_regen;
         trap_function act;
+        // Need this so checks can be properly checked
+        std::string act_string;
         std::string name_;
         /**
          * If an item with this weight or more is thrown onto the trap, it triggers.
@@ -263,6 +267,17 @@ struct trap {
          * Checks internal consistency (reference to other things like item ids etc.)
          */
         static void check_consistency();
+        void check() const;
+
+        const std::map<trap_id, std::unique_ptr<lua_itrap_actor>> &get_itrap_callbacks();
+
+        static void resolve_lua_callbacks( const std::map<std::string, std::unique_ptr<lua_itrap_actor>>
+                                           &actors );
+
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_itrap_actor *lua_callbacks = nullptr;
+
         /*@}*/
         static size_t count();
 
@@ -314,5 +329,3 @@ tr_hum,
 tr_shadow,
 tr_drain,
 tr_snake;
-
-

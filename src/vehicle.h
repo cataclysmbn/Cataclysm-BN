@@ -28,6 +28,7 @@ class Creature;
 class JsonIn;
 class JsonOut;
 class map;
+class mapgen_constructor;
 class monster;
 class nc_color;
 class npc;
@@ -66,6 +67,12 @@ struct rider_data {
     int prt = -1;
     bool moved = false;
 };
+
+struct cargo_recharge_target {
+    safe_reference<item> target;
+    int cargo_part = -1;
+};
+
 //collision factor for vehicle-vehicle collision; delta_v in m/s
 float get_collision_factor( float delta_v );
 
@@ -549,6 +556,11 @@ class vehicle
         void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
                     float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
                     float damage_size = 0 );
+        auto smash( mapgen_constructor &m, float hp_percent_loss_min = 0.1f,
+                    float hp_percent_loss_max = 1.2f,
+                    float percent_of_parts_to_affect = 1.0f,
+                    tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
+                    float damage_size = 0 ) -> void;
 
         void serialize( JsonOut &json ) const;
         void deserialize( JsonIn &jsin );
@@ -864,6 +876,9 @@ class vehicle
 
         // get color for map
         nc_color part_color( int p, bool exact = false ) const;
+
+        // get text and color of damage summary (e.g. "like new" or "battered")
+        auto vehicle_damage_summary() const -> std::pair<std::string, nc_color>;
 
         // Get all printable fuel types
         std::vector<itype_id> get_printable_fuel_types() const;
@@ -1330,6 +1345,9 @@ class vehicle
          * hot or perishable liquid to a container.
          */
         void make_active( item &target );
+        /// Rebuild-on-demand cache for cargo recharge candidates.
+        auto get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>;
+        auto invalidate_cargo_recharge_cache() -> void;
         /**
          * Try to add an item to part's cargo.
          */
@@ -1658,6 +1676,7 @@ class vehicle
         void shift_zlevel();
 
         std::vector<int> alternators;      // List of alternator indices
+        std::vector<int> battery_parts;    // List of battery indices
         std::vector<int> engines;          // List of engine indices
         std::vector<int> reactors;         // List of reactor indices
         std::vector<int> solar_panels;     // List of solar panel indices
@@ -1720,6 +1739,8 @@ class vehicle
         std::map<itype_id, float> fuel_used_last_turn;
         std::unordered_multimap<tripoint_mnt_veh, zone_data> loot_zones;
         active_item_cache active_items;
+        std::vector<cargo_recharge_target> cargo_recharge_targets_;
+        bool cargo_recharge_targets_dirty = true;
         // a magic vehicle, powered by magic.gif
         bool magic = false;
         // when does the magic vehicle disappear?
@@ -1889,8 +1910,3 @@ class vehicle
         // Persisted across saves so cross-dimension processing survives reload.
         dimension_id dimension_id_;
 };
-
-namespace rot
-{
-temperature_flag temperature_flag_for_part( const vehicle &veh, size_t part );
-} // namespace rot

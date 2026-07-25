@@ -135,14 +135,12 @@
       "recharge_scheme": [ { "type": "time", "req": "none", "interval": "10 m", "rate": 1 } ],
       "passive_effects": [
         {
-          "has": "HELD",
-          "condition": "ALWAYS",
+          "conditions": [ "HELD" ],
           "mutations": [ "CARNIVORE" ],
           "intermittent_activation": { "effects": [ { "frequency": "5 minutes", "spell_effects": [ { "id": "AEA_HEAL" } ] } ] }
         },
         {
-          "has": "HELD",
-          "condition": "ACTIVE",
+          "conditions": [ "HELD", "ACTIVE" ],
           "values": [ { "value": "INTELLIGENCE", "add": -2 }, { "value": "PERCEPTION", "add": -2 } ],
           "ench_effects": [ { "effect": "debug_clairvoyance", "intensity": 1 } ]
         }
@@ -175,9 +173,7 @@
     "color": "blue",
     "weight": "400 g",
     "volume": "500 ml",
-    "relic_data": {
-      "passive_effects": [ { "has": "WIELD", "condition": "ALWAYS", "mutations": [ "CRAFTY", "WAKEFUL3", "NIGHTVISION3" ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WIELD" ], "mutations": [ "CRAFTY", "WAKEFUL3", "NIGHTVISION3" ] } ] }
   },
   {
     "id": "e_tool",
@@ -790,7 +786,7 @@
       "fields_radius": 3,
       "fields_min_intensity": 1,
       "fields_max_intensity": 3,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin, try throwing it instead."
     },

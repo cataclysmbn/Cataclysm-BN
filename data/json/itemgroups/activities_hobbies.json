@@ -156,7 +156,11 @@
       { "item": "slingshot", "prob": 10 },
       { "item": "wristrocket", "prob": 5 },
       { "item": "powered_earmuffs", "prob": 80 },
-      { "item": "bandolier_wrist", "prob": 100 }
+      { "item": "bandolier_wrist", "prob": 100 },
+      { "item": "bb", "prob": 8 },
+      { "item": "bbgun", "prob": 10 },
+      { "item": "paintball", "prob": 4 },
+      { "item": "paintballgun", "prob": 5 }
     ]
   },
   {
@@ -202,11 +206,13 @@
       [ "cowboy_hat", 4 ],
       [ "10gal_hat", 4 ],
       [ "bb", 8 ],
+      [ "paintball", 4 ],
       [ "bolt_steel", 7 ],
       [ "bolt_cf", 5 ],
       [ "bolt_steel_target", 5 ],
       [ "bolt_steel_bodkin", 5 ],
       [ "bbgun", 10 ],
+      [ "paintballgun", 5 ],
       [ "crossbow", 2 ],
       [ "compcrossbow", 2 ],
       [ "mag_survival", 40 ],

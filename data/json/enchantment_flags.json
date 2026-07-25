@@ -1,0 +1,132 @@
+[
+  {
+    "id": "UNDERWATER_SIGHT",
+    "type": "enchantment_flag",
+    "info": "<good>Permits underwater sight</good>"
+  },
+  {
+    "id": "SLEEP_SIGHT",
+    "type": "enchantment_flag",
+    "info": "<good>Permits sight while sleeping</good>"
+  },
+  {
+    "id": "NEARSIGHTED",
+    "type": "enchantment_flag",
+    "conflicts": [ "FIX_NEARSIGHTED" ],
+    "info": "<bad>Causes nearsightedness</bad>"
+  },
+  {
+    "id": "FIX_NEARSIGHTED",
+    "type": "enchantment_flag",
+    "conflicts": [ "NEARSIGHTED" ],
+    "info": "<good>Prevents nearsightedness</good>"
+  },
+  {
+    "id": "BLIND",
+    "type": "enchantment_flag",
+    "conflicts": [ "FIX_BLIND" ],
+    "info": "<bad>Causes blindness</bad>"
+  },
+  {
+    "id": "FIX_BLIND",
+    "type": "enchantment_flag",
+    "conflicts": [ "BLIND" ],
+    "info": "<good>Prevents blindness</good>"
+  },
+  {
+    "id": "INFRARED_VISION",
+    "type": "enchantment_flag",
+    "info": "<good>Allows seeing infrared light<bad>"
+  },
+  {
+    "id": "ELECTROSENSE",
+    "type": "enchantment_flag",
+    "info": "<good>Allows seeing electrical signals</good>"
+  },
+  {
+    "id": "SILENT",
+    "type": "enchantment_flag",
+    "info": "<good>Prevents sounds from movement</good>"
+  },
+  {
+    "id": "EAT_ROTTEN",
+    "type": "enchantment_flag",
+    "info": "<good>Permits eating rotten food</good>"
+  },
+  {
+    "id": "ONLY_EAT_ROTTEN",
+    "type": "enchantment_flag",
+    "info": "<bad>Prevents eating fresh food</bad>"
+  },
+  {
+    "id": "EAT_ROTTEN_MORALE",
+    "type": "enchantment_flag",
+    "info": "<good>Eating rotten food no longer has negative morale impacts</good>"
+  },
+  {
+    "id": "CONSUME_UNCLEAN",
+    "type": "enchantment_flag",
+    "info": "<good>Can drink and eat dirty foods</good>"
+  },
+  {
+    "id": "FOOD_PARASITE_IMMUNE",
+    "type": "enchantment_flag",
+    "info": "<good>Immune to food parasites</good>"
+  },
+  {
+    "id": "FOOD_POISON_IMMUNE",
+    "type": "enchantment_flag",
+    "info": "<good>Immune to food poison</good>"
+  },
+  {
+    "id": "ALARMCLOCK",
+    "type": "enchantment_flag",
+    "info": "<good>Gives an alarmclock</good>"
+  },
+  {
+    "id": "INTERNAL_ALARMCLOCK",
+    "type": "enchantment_flag",
+    "parents": [ "ALARMCLOCK" ],
+    "info": "<good>Gives a silent internal alarmclock</good>"
+  },
+  {
+    "id": "VIEW_DRONE_CAM",
+    "type": "enchantment_flag",
+    "info": "<good>Allows viewing the position of enemies marked by friendly drones</good>"
+  },
+  {
+    "id": "RADIO",
+    "type": "enchantment_flag",
+    "info": "<good>Provides a method of communication over radio waves</good>"
+  },
+  {
+    "id": "THERMOMETER",
+    "type": "enchantment_flag",
+    "info": "<good>Provides the temperature</good>"
+  },
+  {
+    "id": "WATCH",
+    "type": "enchantment_flag",
+    "info": "<good>Provides the time</good>"
+  },
+  {
+    "id": "FIRE_FIELD_IMMUNE",
+    "type": "enchantment_flag",
+    "info": "<good>Prevents damage from open fires</good>"
+  },
+  {
+    "id": "NO_THERMAL_WAKE",
+    "type": "enchantment_flag",
+    "info": "<bad>Prevents waking up from overheating</bad>"
+  },
+  {
+    "id": "NO_DAMAGE_WAKE",
+    "type": "enchantment_flag",
+    "info": "<bad>Prevents waking up from overheating</bad>"
+  },
+  {
+    "id": "NO_LIGHT_WAKE",
+    "type": "enchantment_flag",
+    "info": "<bad>Prevents waking up from seeing light</bad>"
+  }
+]

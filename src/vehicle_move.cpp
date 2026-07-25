@@ -851,6 +851,7 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
 
             if( critter->is_hallucination() ) {
                 critter->die( driver );
+                impulse_veh = 0;
                 smashed = true;
                 break;
             }
@@ -1022,6 +1023,9 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
     if( pwh < 0 ) {
         return;
     }
+    if( part_with_feature( part, VPFLAG_TRAP_PROOF, true ) >= 0 ) {
+        return;
+    }
     map &here = get_map();
     Character &player_character = get_player_character();
 
@@ -1050,10 +1054,10 @@ void vehicle::handle_trap( const tripoint_bub_ms &p, int part )
     }
 
     if( veh_data.chance >= rng( 1, 100 ) ) {
-        if( veh_data.sound_volume > 0 ) {
+        if( veh_data.sound_volume > 0_dB ) {
             sound_event se;
             se.origin = p;
-            se.volume = veh_data.sound_volume;
+            se.volume = units::to_decibel( veh_data.sound_volume );
             se.category = sounds::sound_t::combat;
             se.description = veh_data.sound.translated();
             se.id = veh_data.sound_type;
@@ -1189,8 +1193,7 @@ bool vehicle::check_heli_descend( Character &who )
         if( part_info( idx ).has_flag( VPFLAG_NOCOLLIDEBELOW ) ) {
             continue;
         }
-        if( here.has_zlevels() && ( pt.z() < -OVERMAP_DEPTH ||
-                                    !here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pt ) ) ) {
+        if( pt.z() < -OVERMAP_DEPTH || !here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, pt ) ) {
             who.add_msg_if_player( _( "You are already landed!" ) );
             return false;
         }
@@ -1757,7 +1760,8 @@ void vehicle::check_falling_or_floating()
     }
 
     map &here = get_map();
-    is_falling = here.has_zlevels();
+
+    is_falling = true;
 
     if( is_flying && is_aircraft() ) {
         is_falling = false;

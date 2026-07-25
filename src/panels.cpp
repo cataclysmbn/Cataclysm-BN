@@ -41,7 +41,7 @@
 #include "item.h"
 #include "json.h"
 #include "lua_sidebar_widgets.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "messages.h"
 #include "omdata.h"
@@ -543,7 +543,7 @@ static std::string get_temp( const avatar &u )
 {
     std::string temp;
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
-        u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
         temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
     }
     if( temp.empty() ) {
@@ -1124,6 +1124,8 @@ static nc_color move_mode_color( avatar &u )
         return c_red;
     } else if( u.movement_mode_is( CMM_CROUCH ) ) {
         return c_light_blue;
+    } else if( u.movement_mode_is( CMM_PRONE ) ) {
+        return c_brown;
     } else {
         return c_light_gray;
     }
@@ -1135,6 +1137,8 @@ static std::string move_mode_string( avatar &u )
         return pgettext( "movement-type", "R" );
     } else if( u.movement_mode_is( CMM_CROUCH ) ) {
         return pgettext( "movement-type", "C" );
+    } else if( u.movement_mode_is( CMM_PRONE ) ) {
+        return pgettext( "movement-type", "P" );
     } else {
         return pgettext( "movement-type", "W" );
     }
@@ -1760,7 +1764,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
-        u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
         std::string temp = print_temperature( weather.get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31 - utf8_width( temp ), 5 ), c_light_gray, temp );
     }
@@ -2292,7 +2296,7 @@ static void draw_time_classic( const avatar &u, const catacurses::window &w )
     }
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
-        u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
         std::string temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Temp : " ) + temp );
     }

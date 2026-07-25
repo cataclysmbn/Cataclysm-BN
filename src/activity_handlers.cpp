@@ -62,7 +62,8 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
+#include "material.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
@@ -86,6 +87,8 @@
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
+#include "units.h"
+#include "magic/spell_targeting.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
@@ -96,6 +99,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+#include "string_utils.h"
 
 enum creature_size : int;
 
@@ -432,6 +436,7 @@ void activity_handlers::burrow_finish( player_activity *act, player *p )
         p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 45_seconds ) ) );
         p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
         p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
+        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 5_seconds ) ) );
     }
     act->set_to_null();
     p->add_msg_if_player( m_good, _( "You finish burrowing." ) );
@@ -1911,6 +1916,7 @@ void activity_handlers::pickaxe_finish( player_activity *act, player *p )
         p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 45_seconds ) ) );
         p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
         p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
+        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 5_seconds ) ) );
     }
     act->set_to_null();
     p->add_msg_player_or_npc( m_good,
@@ -2083,10 +2089,10 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
                 msg = _( "You insert one %2$s into the %1$s." );
             }
         }
-        if( reloadable.type->gun->reload_noise_volume > 0 ) {
+        if( reloadable.type->gun->reload_noise_volume > 0_dB ) {
             sound_event se;
             se.origin = p->bub_pos();
-            se.volume = reloadable.type->gun->reload_noise_volume;
+            se.volume = units::to_decibel( reloadable.type->gun->reload_noise_volume );
             se.category = sounds::sound_t::activity;
             se.description = reloadable.type->gun->reload_noise;
             se.id = "reload";
@@ -2335,6 +2341,7 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
 
     if( action_time_scale::once_every_this_tick( charge_interval ) ) {
         p->mod_fatigue( fatigue_amount );
+        p->mod_stamina( -fatigue_amount * 36 );
         if( hand_crank_item.ammo_capacity() > hand_crank_item.ammo_remaining() ) {
             const auto current = hand_crank_item.ammo_remaining();
             const auto capacity = hand_crank_item.ammo_capacity();
@@ -2739,6 +2746,7 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
         int training_skill_fatigue = atoi( p->get_value( "training_iuse_skill_fatigue" ).c_str() );
 
         p->mod_fatigue( training_skill_fatigue );
+        p->mod_stamina( -training_skill_fatigue * 36 );
         if( skill_training_item.ammo_remaining() > 0 ) {
             skill_training_item.ammo_consume( 1, p->bub_pos() );
             if( hack_type.has_value() ) {
@@ -2843,7 +2851,7 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
         const repair_item_actor::attempt_hint attempt = actor->repair( *p, *used_tool, *fix_location );
         if( attempt != repair_item_actor::AS_CANT ) {
             if( ploc && ploc->where() == item_location_type::map ) {
-                used_tool->ammo_consume( used_tool->ammo_required(), ploc->position() );
+                used_tool->ammo_consume( used_tool->ammo_required(), ploc->bub_pos() );
             } else {
                 p->consume_charges( *used_tool, used_tool->ammo_required() );
             }
@@ -2924,6 +2932,32 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
             action_type = repair_item_actor::RT_PRACTICE;
         }
 
+        int items_needed = actor->get_material_amt_needed( fix, true );
+        const auto valid_materials = actor->get_valid_materials( fix );
+        const auto &crafting_inv = p->crafting_inventory();
+        auto listed_components = std::set<itype_id> {};
+        auto material_list = std::vector<std::string> {};
+
+        for( const auto &entry : valid_materials ) {
+            const itype_id &component_id = entry.obj().repaired_with();
+            if( listed_components.find( component_id ) != listed_components.end() ) {
+                continue;
+            }
+            listed_components.emplace( component_id );
+            int nearby_amount = 0;
+            if( item::count_by_charges( component_id ) ) {
+                if( crafting_inv.has_charges( component_id, 1 ) ) {
+                    nearby_amount = crafting_inv.charges_of( component_id );
+                }
+            } else if( crafting_inv.has_amount( component_id, 1, false, is_crafting_component ) ) {
+                nearby_amount = crafting_inv.amount_of( component_id, false );
+            }
+            std::string color = nearby_amount < items_needed ? "red" : "light_blue";
+            material_list.emplace_back( string_format( _( "%s (<color_%s>%d</color>)" ),
+                                        item::nname( component_id ), color, nearby_amount ) );
+        }
+        std::string material_list_string = join( material_list, ", " );
+
         std::string title = string_format( _( "%s %s\n" ),
                                            repair_item_actor::action_description( action_type ),
                                            fix.tname() );
@@ -2931,6 +2965,10 @@ void activity_handlers::repair_item_finish( player_activity *act, player *p )
                                 used_tool->ammo_remaining(), used_tool->ammo_capacity(),
                                 item::nname( used_tool->ammo_current() ),
                                 used_tool->ammo_required() );
+        title += string_format( _( "Materials available: %s\n" ),
+                                material_list_string );
+        title += string_format( _( "Materials needed: <color_light_blue>%d</color>\n" ),
+                                items_needed );
         title += string_format( _( "Skill used: <color_light_blue>%s (%s)</color>\n" ),
                                 actor->used_skill->name(), level );
         title += string_format( _( "Success chance: <color_light_blue>%.1f</color>%%\n" ),
@@ -4118,7 +4156,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     here.collapse_at( pos, false, true, false );
     // sound of falling tree
     sfx::play_variant_sound( "misc", "timber",
-                             sfx::get_heard_volume( pos, 95 ) );
+                             sfx::get_heard_volume( pos, 95 ), false );
     act->set_to_null();
 
     // Quality of tool used and assistants can together both reduce intensity of work.
@@ -4145,6 +4183,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
+    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
 
     resume_for_multi_activities( *p );
 }
@@ -4205,6 +4244,7 @@ void activity_handlers::chop_logs_finish( player_activity *act, player *p )
     p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 80_seconds ) ) );
     p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 12_minutes ) ) );
     p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
+    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 10_seconds ) ) );
 
     resume_for_multi_activities( *p );
 }
@@ -4278,6 +4318,7 @@ void activity_handlers::jackhammer_finish( player_activity *act, player *p )
         p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 45_seconds ) ) );
         p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 6_minutes ) ) );
         p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
+        p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 5_seconds ) ) );
     }
     p->add_msg_player_or_npc( m_good,
                               _( "You finish drilling." ),
@@ -4331,12 +4372,18 @@ void activity_handlers::fill_pit_finish( player_activity *act, player *p )
     p->mod_stored_kcal( std::min( -1, -act_exertion / to_moves<int>( 20_seconds ) ) );
     p->mod_thirst( std::max( 1, act_exertion / to_moves<int>( 3_minutes ) ) );
     p->mod_fatigue( std::max( 1, act_exertion / to_moves<int>( 90_seconds ) ) );
+    p->mod_stamina( std::min( -1, -act_exertion / to_moves<int>( 15_seconds ) ) );
     p->add_msg_if_player( m_good, _( "You finish filling up %s." ), old_ter->name() );
     act->set_to_null();
 }
 
 void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
 {
+    if( !act->monsters.empty() ) {
+        const auto mon = act->monsters[0].lock();
+        mon->remove_effect( effect_ai_waiting );
+    }
+
     p->add_morale( MORALE_PLAY_WITH_PET, rng( 3, 10 ), 10, 5_hours, 25_minutes );
     p->add_msg_if_player( m_good, _( "Playing with your %s has lifted your spirits a bit." ),
                           act->str_values[0] );
@@ -4725,18 +4772,17 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
     bool target_is_valid = false;
     if( spell_being_cast.range() > 0 && !spell_being_cast.is_valid_target( target_none ) &&
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {
+        g->refresh_player_visibility_cache_if_needed();
         do {
             avatar &you = *p->as_avatar();
             std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
                     no_fail,
                     no_mana );
+            g->refresh_player_visibility_cache_if_needed();
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();
-                target_is_valid = spell_being_cast.is_valid_target( *p, target );
-                if( !( spell_being_cast.is_valid_target( target_ground ) || p->sees( target ) ) ) {
-                    target_is_valid = false;
-                }
+                target_is_valid = spell_target_can_be_resolved( spell_being_cast, *p, target );
             } else {
                 target_is_valid = false;
             }

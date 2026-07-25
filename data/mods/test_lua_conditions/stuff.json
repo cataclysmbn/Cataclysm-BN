@@ -1,0 +1,27 @@
+[
+  {
+    "id": "RAINING",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "rain",
+    "condition_info": "While raining"
+  },
+  {
+    "id": "tinfoil_hat",
+    "type": "ARMOR",
+    "name": { "str": "tinfoil hat" },
+    "description": "A sheet of aluminum foil that has been molded into a form-fitting hat.  Perfect for protecting yourself from the government, Illuminati, aliens, and THEM.",
+    "weight": "16 g",
+    "volume": "250 ml",
+    "price": "16 cent",
+    "price_postapoc": "10 cent",
+    "material": [ "aluminum" ],
+    "symbol": "[",
+    "looks_like": "hat_cotton",
+    "color": "yellow",
+    "covers": [ "head" ],
+    "coverage": 90,
+    "relic_data": { "passive_effects": [ { "condition": "RAINING", "values": [ { "value": "STRENGTH", "add": 10 } ] } ] },
+    "flags": [ "OVERSIZE", "PSYSHIELD_PARTIAL", "SKINTIGHT", "TRADER_AVOID", "POWERARMOR_COMPATIBLE", "ALLOWS_NATURAL_ATTACKS" ]
+  }
+]

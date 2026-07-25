@@ -36,6 +36,7 @@
 #include "zone_draw_options.h"
 #include "type_id.h"
 #include "location_vector.h"
+#include "mapbuffer.h"
 
 class Character;
 class Creature_tracker;
@@ -325,7 +326,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        auto vertical_shift( int z_after ) -> void;
+        auto vertical_shift( const int z_before, const int z_after ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -534,6 +535,8 @@ class game : public submap_load_listener
          */
         std::vector<Creature *> get_creatures_if( const std::function<bool( const Creature & )> &pred );
         std::vector<npc *> get_npcs_if( const std::function<bool( const npc & )> &pred );
+        std::vector<weak_ptr_fast<npc>> get_npcs_pointers_if( const std::function<bool( const npc & )>
+                                     &pred );
         /**
          * Returns a creature matching a predicate. Only living (not dead) creatures
          * are checked. Returns `nullptr` if no creature matches the predicate.
@@ -740,10 +743,16 @@ class game : public submap_load_listener
         void reenter_fullscreen();
         void zoom_in_overmap();
         void zoom_out_overmap();
+        /// Applies the stored overmap zoom to the overmap tile context; call when the overmap opens.
+        auto reapply_overmap_zoom() -> void;
+        /// Resets the stored overmap zoom to the default and applies it to the overmap tile context.
+        auto reset_overmap_zoom() -> void;
         void zoom_in();
         void zoom_out();
         void reset_zoom();
         void set_zoom( float level );
+        /// Applies the stored main-view zoom to the tile context even when the value is unchanged.
+        auto reapply_zoom() -> void;
         float get_zoom() const;
         int get_moves_since_last_save() const;
         int get_user_action_counter() const;
@@ -775,7 +784,7 @@ class game : public submap_load_listener
          * this function returns (for example, UIs that draw the map should be
          * disabled).
          */
-        void load_map( const tripoint_abs_sm &pos_sm, bool pump_events = false );
+        void load_map( const point_abs_sm &pos_sm, bool pump_events = false );
         /**
          * The overmap which contains the center submap of the reality bubble.
          */
@@ -963,12 +972,13 @@ class game : public submap_load_listener
         void set_critter_died();
         void mon_info( const catacurses::window &,
                        int hor_padding = 0 ); // Prints a list of nearby monsters
-        void mon_info_update( );    //Update seen monsters information
+        auto mon_info_update() -> void;    //Update seen monsters information
         void cleanup_dead();     // Delete any dead NPCs/monsters
         bool is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         std::vector<std::string> get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
     private:
+        auto player_visibility_cache_current() const -> bool;
         void chat(); // Talk to a nearby NPC  'C'
 
         // Internal methods to show "look around" info
@@ -1144,7 +1154,7 @@ class game : public submap_load_listener
         memorial_logger &memorial();
         spell_events &spell_events_subscriber();
 
-        pimpl<Creature_tracker> critter_tracker;
+        Creature_tracker *critter_tracker = nullptr;
         pimpl<faction_manager> faction_manager_ptr;
         pimpl<drop_token_provider> token_provider_ptr;
 
@@ -1191,11 +1201,13 @@ class game : public submap_load_listener
         bool fullscreen = false;
         bool was_fullscreen = false;
         bool auto_travel_mode = false;
+        bool manual_combat_mode = false;
         bool queue_screenshot = false;
         safe_mode_type safe_mode;
         int turnssincelastmon = 0; // needed for auto run mode
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
+        bool mon_info_cache_dirty = true;
 
         auto clear_turn_los_blocker_cache() -> void;
         // True means terrain LOS is blocked between these two positions.
@@ -1308,14 +1320,19 @@ class game : public submap_load_listener
         /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
         /// Always use this instead of assigning the two fields separately.
         auto set_active_dimension_id( const dimension_id &dim_id ) -> void;
+        auto rebind_critter_tracker() -> void;
 
         /// Sequenced critical section of a dimension switch: drain all load-manager
-        /// work, release load handles, flush the desired set, update the active
+        /// work, release load requests, flush the desired set, update the active
         /// dimension ID, and clear the old dimension's distribution-grid tracker.
         /// Must only be called from travel_to_dimension() after swapping_dimensions
         /// is set and before bind_dimension().
         auto activate_dimension_state( const dimension_id &new_dim_id,
                                        const dimension_id &old_dim_id ) -> void;
+        auto release_active_load_regions() -> void;
+        auto update_active_load_regions( const dimension_id &dim_id,
+                                         const point_abs_sm &begin,
+                                         const point_abs_sm &end ) -> void;
 
         /// Dimension ID the player is currently in.  "" = overworld (primary).
         /// Always updated via set_active_dimension_id().
@@ -1330,13 +1347,7 @@ class game : public submap_load_listener
         /// slot is evicted (saved + removed from registry) and replaced with the new one.
         dimension_id kept_pocket_dimension_id_;
 
-        // Handle for the reality bubble's submap_load_manager request.
-        // 0 means no request has been issued yet.
-        load_request_handle reality_bubble_handle_ = 0;
-
-        // Handle for the lazy border around the reality bubble.
-        // Controlled by LAZY_BORDER cached option.
-        load_request_handle lazy_border_handle_ = 0;
+        mapbuffer_load_region lazy_border_region_;
 
         // True while the bubble is temporarily shrunk for an ongoing long activity.
         // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true

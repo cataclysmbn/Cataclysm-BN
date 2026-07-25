@@ -12,7 +12,7 @@
     "floor_bedding_warmth": -1500,
     "bonus_fire_warmth_feet": 1000,
     "required_str": 8,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "ORGANIC", "MOUNTABLE", "SHORT", "CAN_SIT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "ORGANIC", "MOUNTABLE", "SHORT", "CAN_SIT", "BASH_TRANSFORM" ],
     "deconstruct": { "items": [ { "item": "2x4", "count": 4 }, { "item": "nail", "charges": 10 } ] },
     "bash": {
       "str_min": 12,
@@ -50,7 +50,7 @@
     "transforms_into": "f_bench",
     "prompt": "Set bench upright",
     "message": "You set the bench back upright.",
-    "delete": { "flags": [ "CAN_SIT" ] }
+    "delete": { "flags": [ "CAN_SIT", "BASH_TRANSFORM" ] }
   },
   {
     "type": "furniture",
@@ -287,7 +287,7 @@
     "comfort": 1,
     "floor_bedding_warmth": -2000,
     "bonus_fire_warmth_feet": 1000,
-    "flags": [ "TRANSPARENT", "MOUNTABLE", "SHORT", "CAN_SIT" ],
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "SHORT", "CAN_SIT", "BASH_TRANSFORM" ],
     "bash": {
       "str_min": 15,
       "str_max": 200,
@@ -333,7 +333,7 @@
     "transforms_into": "f_metal_bench",
     "prompt": "Set metal bench upright",
     "message": "You set the metal bench back upright.",
-    "delete": { "flags": [ "CAN_SIT" ] }
+    "delete": { "flags": [ "CAN_SIT", "BASH_TRANSFORM" ] }
   },
   {
     "type": "furniture",

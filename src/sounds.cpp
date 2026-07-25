@@ -34,6 +34,7 @@
 #include "itype.h"
 #include "line.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -91,14 +92,25 @@ static const efftype_id effect_narcosis( "narcosis" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_slept_through_alarm( "slept_through_alarm" );
 
-static const trait_id trait_HEAVYSLEEPER2( "HEAVYSLEEPER2" );
-static const trait_id trait_HEAVYSLEEPER( "HEAVYSLEEPER" );
-
 static const itype_id fuel_type_muscle( "muscle" );
 static const itype_id fuel_type_wind( "wind" );
 static const itype_id fuel_type_battery( "battery" );
 
 static const itype_id itype_weapon_fire_suppressed( "weapon_fire_suppressed" );
+
+static const enchantment_value_id ench_val_SLEEP_DB_RESIST( "SLEEP_DB_RESIST" );
+
+static const std::unordered_set<sounds::sound_t> NO_STACK_SOUND_TYPES = {
+    sounds::sound_t::background,
+    sounds::sound_t::weather,
+    sounds::sound_t::music,
+    sounds::sound_t::movement,
+    sounds::sound_t::speech,
+    sounds::sound_t::electronic_speech,
+    sounds::sound_t::activity,
+    sounds::sound_t::destructive_activity,
+    sounds::sound_t::alarm,
+};
 
 // For use with the floodfill logic.
 static constexpr auto tile_structure_sound_absorption_tier = std::array<short, 4>
@@ -1718,7 +1730,8 @@ bool map::build_absorption_cache( const int zlev )
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
 
             const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
-            auto *cur_submap = get_submap_at_grid( sm_pos );
+            auto *cur_submap = get_mapbuffer().lookup_submap_in_memory(
+                                   map_local_to_abs( *this, sm_pos ) );
             const auto sm_offset = project_to<coords::ms>( sm_pos );
 
             if( cur_submap == nullptr ) {
@@ -2575,7 +2588,7 @@ void sounds::process_sound_markers( Character *who )
                                           static_cast<int>( std::floor( 1500 + 500 * volume_multiplier ) ) );
     // is the npc underground?
     const bool pcunderground = loc.z() < 0;
-    const bool pcoutdoors = map.is_outside( loc.xy() );
+    const bool pcoutdoors = map.is_outside( loc );
     const weather_manager &weather = get_weather();
     const short player_t_absorp = level_cache.absorption_cache[level_cache.idx( loc.x(), loc.y() )];
     const bool  player_indoors = !level_cache.outside_cache[level_cache.idx( loc.x(), loc.y() )];
@@ -2727,17 +2740,15 @@ void sounds::process_sound_markers( Character *who )
             const int db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening );
             // See if we need to wake someone up
             // Remember we are working with dB spl volumes instead of tile volumes and dB spl is a logarithmic unit. 60dB is normal conversation, 80-100 is a car horn, ~160 is a gunshot, 180+ can kill a human.
-            // We want somewhat less swingy results, so use d10s
-            // Noise past 60dB should automatically wake up not heavy sleepers.
-            // Noise past 100dB should automatically wake up heavy sleepers.
-            // Noise past 120dB will cause pain and should automatically wake up heavy sleeper 2.
+            // Noise past +10 dB should automatically wake up normal sleepers.
+            // Noise past +40 dB should automatically wake up heavy sleepers.
+            // Noise past +60 dB will cause pain and should automatically wake up heavy sleeper 2.
             if( who->has_effect( effect_sleep ) ) {
-                if( ( ( !( who->has_trait( trait_HEAVYSLEEPER ) ||
-                           who->has_trait( trait_HEAVYSLEEPER2 ) ) && dice( 6, 10 ) <= db_vol ) ||
-                      ( who->has_trait( trait_HEAVYSLEEPER ) && dice( 10, 10 ) <= db_vol ) ||
-                      ( who->has_trait( trait_HEAVYSLEEPER2 ) && dice( 12, 10 ) <= db_vol ) ) &&
-                    !who->has_effect( effect_narcosis ) ) {
-                    //Not kidding about sleep-through-firefight
+                const int diff_db_vol = mdBspl_to_dBspl( tile_vol - passive_sound_dampening - tile_vol );
+                int wake_up_vol = 10;
+                wake_up_vol += who->bonus_from_enchantments( wake_up_vol, ench_val_SLEEP_DB_RESIST );
+
+                if( rng( wake_up_vol / 2, wake_up_vol ) <= db_vol && !who->has_effect( effect_narcosis ) ) {
                     who->wake_up();
                     who->add_msg_if_player( m_warning, _( "Something is making noise." ) );
                 } else {
@@ -2748,14 +2759,16 @@ void sounds::process_sound_markers( Character *who )
                                              element.sound.description;
 
             // don't print our own noise or things without descriptions
-            if( ( element.sound.from_monster || element.sound.from_player || element.sound.from_npc ) &&
-                ( element.sound.origin != who->bub_pos() ) &&
-                !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
-                if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
-                    !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
-                    const std::string final_description = ensure_punctuation( description, '!' );
-                    const std::string query = string_format( _( "Heard %s!" ), final_description );
-                    g->cancel_activity_or_ignore_query( distraction_type::noise, query );
+            if( !element.sound.from_player ) {
+                if( ( element.sound.from_monster || element.sound.from_npc ) &&
+                    ( element.sound.origin != who->bub_pos() ) &&
+                    !get_map().pl_sees( element.sound.origin, distance_to_sound ) ) {
+                    if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
+                        !get_safemode().is_sound_safe( element.sound.description, distance_to_sound ) ) {
+                        const std::string final_description = ensure_punctuation( description, '!' );
+                        const std::string query = string_format( _( "Heard %s!" ), final_description );
+                        g->cancel_activity_or_ignore_query( distraction_type::noise, query );
+                    }
                 }
             }
 
@@ -2780,7 +2793,7 @@ void sounds::process_sound_markers( Character *who )
             }
 
             if( !who->has_effect( effect_sleep ) && who->has_effect( effect_alarm_clock ) &&
-                !who->has_bionic( bionic_id( "bio_infolink" ) ) ) {
+                !who->has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
                 // if we don't have effect_sleep but we're in_sleep_state, either
                 // we were trying to fall asleep for so long our alarm is now going
                 // off or something disturbed us while trying to sleep
@@ -2804,7 +2817,7 @@ void sounds::process_sound_markers( Character *who )
             const std::string &sfx_variant = element.sound.variant;
             if( !sfx_id.empty() ) {
                 sfx::play_variant_sound( sfx_id, sfx_variant, sfx::get_heard_volume( element.sound.origin,
-                                         element.sound.volume ) );
+                                         element.sound.volume ), !NO_STACK_SOUND_TYPES.contains( element.sound.category ) );
             }
 
             // Place footstep markers.
@@ -2970,7 +2983,9 @@ std::vector<tripoint_bub_ms> sounds::get_footstep_markers()
     std::vector<tripoint_bub_ms> footsteps;
     footsteps.reserve( sound_markers.size() );
     for( const auto &mark : sound_markers ) {
-        footsteps.push_back( mark.first );
+        if( !g->u.sees( mark.first ) ) {
+            footsteps.push_back( mark.first );
+        }
     }
     return footsteps;
 }
@@ -3390,29 +3405,6 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
     start_sfx_timestamp = std::chrono::high_resolution_clock::now();
 }
 
-namespace sfx
-{
-struct sound_thread {
-    sound_thread( const tripoint_bub_ms &source, const tripoint_bub_ms &target, bool hit, bool targ_mon,
-                  const std::string &material );
-
-    bool hit;
-    bool targ_mon;
-    std::string material;
-
-    skill_id weapon_skill;
-    int weapon_volume;
-    // volume and angle for calls to play_variant_sound
-    units::angle ang_src;
-    int vol_src;
-    int vol_targ;
-    units::angle ang_targ;
-
-    // Operator overload required for thread API.
-    void operator()() const;
-};
-} // namespace sfx
-
 void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bub_ms &target,
                                 bool hit,
                                 bool targ_mon,
@@ -3421,36 +3413,16 @@ void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bu
     if( test_mode ) {
         return;
     }
-    // If creating a new thread for each invocation is to much, we have to consider a thread
-    // pool or maybe a single thread that works continuously, but that requires a queue or similar
-    // to coordinate its work.
-    try {
-        std::thread the_thread( sound_thread( source, target, hit, targ_mon, material ) );
-        try {
-            if( the_thread.joinable() ) {
-                the_thread.detach();
-            }
-        } catch( std::system_error &err ) {
-            dbg( DL::Error ) << "Failed to detach melee sound thread: std::system_error: " << err.what();
-        }
-    } catch( std::system_error &err ) {
-        // not a big deal, just skip playing the sound.
-        dbg( DL::Error ) << "Failed to create melee sound thread: std::system_error: " << err.what();
-    }
-}
-
-sfx::sound_thread::sound_thread( const tripoint_bub_ms &source, const tripoint_bub_ms &target,
-                                 const bool hit,
-                                 const bool targ_mon, const std::string &material )
-    : hit( hit )
-    , targ_mon( targ_mon )
-    , material( material )
-{
-    // This is function is run in the main thread.
-    // Take melee strikes at 80dB
     const player *p = g->critter_at<npc>( source );
     const int heard_volume = get_heard_volume( source, 80 );
 
+    skill_id weapon_skill;
+    int weapon_volume;
+    // volume and angle for calls to play_variant_sound
+    units::angle ang_src;
+    int vol_src;
+    int vol_targ;
+    units::angle ang_targ;
     if( !p ) {
         p = &g->u;
         // sound comes from the same place as the player is, calculation of angle wouldn't work
@@ -3465,15 +3437,7 @@ sfx::sound_thread::sound_thread( const tripoint_bub_ms &source, const tripoint_b
     ang_targ = get_heard_angle( target );
     weapon_skill = p->primary_weapon().melee_skill();
     weapon_volume = p->primary_weapon().volume() / units::legacy_volume_factor;
-}
 
-// Operator overload required for thread API.
-void sfx::sound_thread::operator()() const
-{
-    // This is function is run in a separate thread. One must be careful and not access game data
-    // that might change (e.g. g->u.weapon, the character could switch weapons while this thread
-    // runs).
-    std::this_thread::sleep_for( std::chrono::milliseconds( rng( 1, 2 ) ) );
     std::string variant_used;
 
     static const skill_id skill_bashing( "bashing" );
@@ -3501,17 +3465,11 @@ void sfx::sound_thread::operator()() const
     if( hit ) {
         if( targ_mon ) {
             if( material == "steel" ) {
-                std::this_thread::sleep_for( std::chrono::milliseconds( rng( weapon_volume * 12,
-                                             weapon_volume * 16 ) ) );
                 play_variant_sound( "melee_hit_metal", variant_used, vol_targ, ang_targ, 0.8, 1.2 );
             } else {
-                std::this_thread::sleep_for( std::chrono::milliseconds( rng( weapon_volume * 12,
-                                             weapon_volume * 16 ) ) );
                 play_variant_sound( "melee_hit_flesh", variant_used, vol_targ, ang_targ, 0.8, 1.2 );
             }
         } else {
-            std::this_thread::sleep_for( std::chrono::milliseconds( rng( weapon_volume * 9,
-                                         weapon_volume * 12 ) ) );
             play_variant_sound( "melee_hit_flesh", variant_used, vol_targ, ang_targ, 0.8, 1.2 );
         }
     }
@@ -3938,7 +3896,7 @@ void sfx::load_sound_effect_preload( const JsonObject & ) { }
 void sfx::load_playlist( const JsonObject & ) { }
 void sfx::play_variant_sound( const std::string &, const std::string &, int, units::angle, double,
                               double ) { }
-void sfx::play_variant_sound( const std::string &, const std::string &, int ) { }
+void sfx::play_variant_sound( const std::string &, const std::string &, int, bool ) { }
 void sfx::play_ambient_variant_sound( const std::string &, const std::string &, int, channel, int,
                                       double, int ) { }
 void sfx::play_activity_sound( const std::string &, const std::string &, int ) { }

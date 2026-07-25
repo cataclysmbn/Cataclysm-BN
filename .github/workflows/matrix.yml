@@ -138,6 +138,11 @@ jobs:
         if: ${{ env.SKIP == 'false' }}
         run: clang++ --version
 
+      - name: Setup Deno
+        if: ${{ env.SKIP == 'false' }}
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
       #- name: Install SDL3 (ubuntu)
       #  if: ${{ env.SKIP == 'false' }}
       #  run: |
@@ -226,14 +231,16 @@ jobs:
           xvfb_pid=$!
           trap 'kill "$xvfb_pid" 2>/dev/null || true' EXIT
           export DISPLAY=:99
+          export LP_NUM_THREADS=2
           sleep 1
 
           test_bin="build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}"
-          test_opts="--min-duration 20 --use-colour yes --rng-seed time --error-format=github-action --gpu-backend=software"
-
-          parallel --verbose --linebuffer \
-            "$test_bin $test_opts --user-dir=test_user_dir_{#} {}" \
-            ::: "[slow] ~starting_items" "~[slow] ~[.],starting_items"
+          build-scripts/run-linux-test-shards.ts --mode file-tags --jobs 4 --non-slow-shards 8 "$test_bin" -- \
+            --min-duration 20 \
+            --use-colour yes \
+            --rng-seed time \
+            --error-format=github-action \
+            --gpu-backend=software
 
           # Run test with all mods (test-stage only)
           if [ "${{ env.TEST_STAGE }}" = "1" ]; then
@@ -266,7 +273,7 @@ jobs:
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
-          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" }
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "sound": true, "ext": "apk", "content-type": "application/apk" }
         ]
       download-translations: false
       bundle-tilesets: false
@@ -291,7 +298,7 @@ jobs:
           { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
           { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
           { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
-          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk", "upload-artifact": true }
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "sound": true, "ext": "apk", "content-type": "application/apk", "upload-artifact": true }
         ]
       download-translations: false
       bundle-tilesets: false

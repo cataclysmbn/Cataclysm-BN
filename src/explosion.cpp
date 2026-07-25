@@ -27,7 +27,7 @@
 #include "character.h"
 #include "catalua_coord.h"
 #include "cata_utility.h"
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "color.h"
 #include "creature.h"
 #include "damage.h"
@@ -1460,7 +1460,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
     static const int y_offset[10] = { 0, 0, -1, 1, -1,  1, -1, 1, 0, 0 };
     static const int z_offset[10] = { 0, 0,  0, 0,  0,  0,  0, 0, 1, -1 };
     map &here = get_map();
-    const size_t max_index = here.has_zlevels() ? 10 : 8;
+    const size_t max_index = 10;
 
     here.bash( p, fire ? power : ( 2 * power ), true, false, false );
 
@@ -1561,12 +1561,6 @@ static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, c
 
         if( fire ) {
             int intensity = 1 + ( force > 10.0f ) + ( force > 30.0f );
-
-            if( !here.has_zlevels() && here.is_outside( pt ) && intensity == 2 ) {
-                // In 3D mode, it would have fire fields above, which would then fall
-                // and fuel the fire on this tile
-                intensity++;
-            }
 
             here.add_field( pt, fd_fire, intensity );
         }
@@ -2147,8 +2141,22 @@ explosion_queue &get_explosion_queue()
 
 void explosion_queue::execute()
 {
+    // Drain deferral (issue #9696) -- the primary fix. An item being processed can
+    // be detached but still in the map stack; a re-entrant drain (e.g. an EMP
+    // bomb's blast killing a searchlight) would re-detonate it forever. Defer to
+    // the turn-loop drain, which runs after processing (same turn).
+    if( drains_deferred() ) {
+        deferred_drain_requested = true;
+        return;
+    }
+    // Any real drain satisfies a pending suppressed request.
+    deferred_drain_requested = false;
+
+    // Per-drain backstop (not the #9696 fix): cap one runaway drain that re-feeds
+    // its own queue. Per drain, not per turn, so it never drops a later,
+    // independently-queued explosion.
     explosion_count = 0;
-    while( !elems.empty() ) {
+    while( !elems.empty() && explosion_count < max_pending_explosions ) {
         queued_explosion exp = std::move( elems.front() );
         elems.pop_front();
         explosion_count++;
@@ -2169,6 +2177,14 @@ void explosion_queue::execute()
                 debugmsg( "Explosion type not implemented." );
                 break;
         }
+    }
+    if( !elems.empty() ) {
+        // Leftovers mean the loop stopped at the per-drain cap (a runaway): drop
+        // them to avoid an OOM/hang and report once.
+        const auto dropped = static_cast<int>( elems.size() );
+        elems.clear();
+        debugmsg( "Explosion queue exceeded the per-drain cap of %d; dropped %d "
+                  "queued explosions to avoid a hang.", max_pending_explosions, dropped );
     }
 }
 

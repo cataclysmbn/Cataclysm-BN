@@ -32,6 +32,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "type_id.h"
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
@@ -840,7 +841,7 @@ static void draw_skills_tab( ui_adaptor &ui, const catacurses::window &w_skills,
             const bool training = level.isTraining();
             const bool rusting = level.isRusting();
             int exercise = level.exercise();
-            int level_num = level.level();
+            int level_num = you.get_skill_level( aSkill->ident() );
             bool locked = false;
             if( you.has_active_bionic( bionic_id( "bio_cqb" ) ) && is_cqb_skill( aSkill->ident() ) ) {
                 level_num = 5;
@@ -982,7 +983,7 @@ static void draw_speed_tab( const catacurses::window &w_speed,
 
     float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
     temperature_speed_modifier += you.bonus_from_enchantments( temperature_speed_modifier,
-                                  enchant_vals::mod::BODYTEMP_SPEED );
+                                  enchantment_value_id( "BODYTEMP_SPEED" ) );
 
     if( temperature_speed_modifier != 0 ) {
         nc_color pen_color;
@@ -1015,7 +1016,8 @@ static void draw_speed_tab( const catacurses::window &w_speed,
                    left_justify( _( "Mutations" ), 20 ), pen_sign, std::abs( quick_bonus ) );
         ++line;
     }
-    const auto ench_speed = int( ceil( you.bonus_from_enchantments( 100, enchant_vals::mod::SPEED ) ) );
+    const auto ench_speed = int( ceil( you.bonus_from_enchantments( 100,
+                                       enchantment_value_id( "SPEED" ) ) ) );
     if( ench_speed > 0 ) {
         mvwprintz( w_speed, point( 1, line ), c_green,
                    pgettext( "speed bonus", "Misc Speed        +%2d%%" ), ench_speed );

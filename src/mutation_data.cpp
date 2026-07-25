@@ -12,15 +12,16 @@
 #include "bodypart.h"
 #include "color.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "generic_factory.h"
 #include "json.h"
-#include "magic_enchantment.h"
 #include "memory_fast.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "trait_group.h"
 #include "translations.h"
+#include "type_id_implement.h"
 
 using TraitGroupMap =
     std::map<trait_group::Trait_group_tag, shared_ptr_fast<Trait_group>>;
@@ -35,21 +36,11 @@ namespace
 generic_factory<mutation_branch> trait_factory( "trait" );
 } // namespace
 
+IMPLEMENT_STRING_AND_INT_IDS( mutation_branch, trait_factory );
+
 static std::vector<dream> all_dreams;
 std::map<mutation_category_id, std::vector<trait_id> > mutations_category;
 std::map<mutation_category_id, mutation_category_trait> mutation_category_traits;
-
-template<>
-const mutation_branch &string_id<mutation_branch>::obj() const
-{
-    return trait_factory.obj( *this );
-}
-
-template<>
-bool string_id<mutation_branch>::is_valid() const
-{
-    return trait_factory.is_valid( *this );
-}
 
 template<>
 bool string_id<Trait_group>::is_valid() const
@@ -302,6 +293,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "visibility", visibility, 0 );
     optional( jo, was_loaded, "ugliness", ugliness, 0 );
     optional( jo, was_loaded, "starting_trait", startingtrait, false );
+    optional( jo, was_loaded, "random_starting_trait", randomstartingtrait, startingtrait );
     optional( jo, was_loaded, "mixed_effect", mixed_effect, false );
     optional( jo, was_loaded, "active", activated, false );
     optional( jo, was_loaded, "starts_active", starts_active, false );
@@ -651,8 +643,12 @@ void mutation_branch::check_consistency()
         for( const enchantment_id &ench : mdata.enchantments ) {
             ench->check();
         }
+        std::set<enchantment_condition_type> incompatible_cond_types = {
+            enchantment_condition_type::ITEM,
+            enchantment_condition_type::ITEM_CHARACTER
+        };
         for( const auto &ench : mdata.mut_enchantments ) {
-            ench.check();
+            ench.check( incompatible_cond_types );
         }
         for( const auto &flag : mdata.flags ) {
             if( !flag.is_valid() ) {
@@ -777,6 +773,12 @@ bool mutation_branch::trait_is_blacklisted( const trait_id &tid )
 
 void mutation_branch::finalize()
 {
+    for( const auto &mdata : get_all() ) {
+        for( const auto &ench : mdata.mut_enchantments ) {
+            const_cast<enchantment &>( ench ).finalize();
+        }
+    }
+
     for( const mutation_branch &branch : get_all() ) {
         for( const mutation_category_id &cat : branch.category ) {
             mutations_category[cat].emplace_back( branch.id );

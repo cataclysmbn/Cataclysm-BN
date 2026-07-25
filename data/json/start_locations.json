@@ -659,5 +659,17 @@
     "id": "sloc_lab_concourse_area",
     "name": "Cargo area Trans-Coast Logistics",
     "terrain": [ { "om_terrain": "lab_CORE_2x1_1DN", "om_terrain_match_type": "TYPE" } ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_subway",
+    "name": "Subway Tunnels",
+    "terrain": [ "subway" ]
+  },
+  {
+    "type": "start_location",
+    "id": "nuclear_plant",
+    "name": "Nuclear Power Plant",
+    "terrain": [ "nuclear_plant_5_5_1", "nuclear_plant_10_5_1" ]
   }
 ]

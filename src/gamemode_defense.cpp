@@ -20,6 +20,8 @@
 #include "item_group.h"
 #include "iteminfo_query.h"
 #include "map.h"
+#include "mapbuffer_registry.h"
+#include "mapgen_constructor.h"
 #include "messages.h"
 #include "mongroup.h"
 #include "monster.h"
@@ -286,16 +288,18 @@ void defense_game::init_map()
             // Round down to the nearest even number
             mx -= mx % 2;
             my -= my % 2;
-            tinymap tm;
-            tm.generate( tripoint_abs_sm( mx, my, 0 ), calendar::turn );
-            tm.clear_spawns();
-            tm.clear_traps();
+            mapgen_constructor constructor( MAPBUFFER_REGISTRY.get(
+                                                mapbuffer_registry::primary_dimension_id() ) );
+            constructor.generate( project_to<coords::omt>( tripoint_abs_sm( mx, my, 0 ) ),
+                                  calendar::turn );
+            constructor.clear_spawns();
+            constructor.clear_traps();
         }
     }
 
     // For this mode assume we always want overmap zero.
     tripoint_abs_omt abs_defloc_pos = project_combine( point_abs_om(), defloc_pos );
-    g->load_map( project_to<coords::sm>( abs_defloc_pos ) );
+    g->load_map( project_to<coords::sm>( abs_defloc_pos.xy() ) );
     Character &player_character = get_player_character();
     const int z = player_character.bub_pos().z();
     player_character.setpos( tripoint_bub_ms( SEEX, SEEY, z ) );

@@ -1,26 +1,27 @@
 #if defined(CATA_SDL)
-#include "gpu_transparency.h"
+#    include "gpu_transparency.h"
 
-#include "coordinates.h"
-#include "debug.h"
-#include "field.h"
-#include "gpu_platform.h"
-#include "map.h"
-#include "mapdata.h"
-#include "path_info.h"
-#include "profile.h"
-#include "submap.h"
+#    include "coordinates.h"
+#    include "debug.h"
+#    include "field.h"
+#    include "gpu_platform.h"
+#    include "map.h"
+#    include "mapbuffer.h"
+#    include "mapdata.h"
+#    include "path_info.h"
+#    include "profile.h"
+#    include "submap.h"
 
-#include <SDL3/SDL_gpu.h>
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstring>
-#include <fstream>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <vector>
+#    include <SDL3/SDL_gpu.h>
+#    include <algorithm>
+#    include <array>
+#    include <cmath>
+#    include <cstring>
+#    include <fstream>
+#    include <ranges>
+#    include <string>
+#    include <string_view>
+#    include <vector>
 
 namespace cata_gpu {
 
@@ -293,7 +294,7 @@ auto gather_transparency_refs(map const& m, int const zlev)
     for (int smx = 0; smx < mapsize; ++smx) {
         for (int smy = 0; smy < mapsize; ++smy) {
             auto const sm_pos = tripoint_bub_sm{smx, smy, zlev};
-            auto* const sm = m.get_submap_at_grid(sm_pos);
+            auto* const sm = m.get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(m, sm_pos));
             if (sm == nullptr) { continue; }
             auto const sm_offset = project_to<coords::ms>(sm_pos);
             refs.push_back({sm, sm_offset.x(), sm_offset.y()});
@@ -610,7 +611,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     return true;
 }
 
-#if defined(CATA_GPU_VERIFY)
+#    if defined(CATA_GPU_VERIFY)
 
 auto verify_transparency_against_cpu(map const& m, int const zlev, float const sight_penalty)
     -> void {
@@ -709,7 +710,7 @@ auto verify_transparency_readback(
     // Legacy no-op hook retained for CATA_GPU_VERIFY call sites.
 }
 
-#endif // defined( CATA_GPU_VERIFY )
+#    endif // defined( CATA_GPU_VERIFY )
 
 } // namespace cata_gpu
 #endif // defined( CATA_SDL )

@@ -54,6 +54,9 @@ struct damage_unit {
 
     /** Return damage_type as a human-readable string */
     const std::string get_name() const;
+
+    /** Return damage_type as a string, designed for use with enchantment values */
+    const std::string get_internal_name() const;
 };
 
 // a single atomic unit of damage from an attack. Can include multiple types

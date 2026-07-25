@@ -531,6 +531,7 @@ class overmap
         void place_river( point_om_omt pa, point_om_omt pb );
         void place_forests();
         void place_lakes();
+        auto place_lake_columns() -> void;
         void place_rivers( const overmap *north, const overmap *east, const overmap *south,
                            const overmap *west );
         void place_swamps();
@@ -548,6 +549,7 @@ class overmap
                 bool attempt_finale_place ) const;
 
         void place_cities();
+        auto place_isolated_cities() -> void;
         bool place_building( const tripoint_om_omt &p, om_direction::type dir, city &town,
                              bool attempt_finale_place );
 

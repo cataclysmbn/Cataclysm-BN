@@ -28,6 +28,7 @@
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
+static const trait_id trait_DEBUG_HT( "DEBUG_HT" );
 static const trait_id trait_M_SKIN3( "M_SKIN3" );
 static const trait_id trait_SHELL2( "SHELL2" );
 static const trait_id trait_THRESH_SPIDER( "THRESH_SPIDER" );
@@ -451,7 +452,7 @@ void gunmod_add( avatar &you, item &gun, item &mod )
         actions[ prompt.ret ]();
     } while( requery );
 
-    const int moves = !you.has_trait( trait_DEBUG_HS ) ? mod.type->gunmod->install_time : 0;
+    const int moves = !you.has_trait( trait_DEBUG_HT ) ? mod.type->gunmod->install_time : 0;
 
     you.assign_activity( activity_id( "ACT_GUNMOD_ADD" ), moves, -1, 0, tool );
     you.activity->targets.emplace_back( &gun );
@@ -592,11 +593,11 @@ void use_item( avatar &you, item &used )
         if( used.has_flag( flag_TEMPORARY_ITEM ) ) {
             you.invoke_item( &used );
         } else {
-            you.invoke_item( &used, used.position() );
+            you.invoke_item( &used, used.bub_pos() );
         }
 
     } else if( is_pet_food( used ) ) {
-        you.invoke_item( &used, used.position() );
+        you.invoke_item( &used, used.bub_pos() );
 
     } else if( !used.is_container_empty() && is_pet_food( used.get_contained() ) ) {
         unload_item( you, used );
@@ -610,7 +611,7 @@ void use_item( avatar &you, item &used )
     } else if( used.is_book() ) {
         you.read( &used );
     } else if( used.type->has_use() ) {
-        you.invoke_item( &used, used.position() );
+        you.invoke_item( &used, used.bub_pos() );
     } else if( used.has_flag( flag_SPLINT ) ) {
         ret_val<bool> need_splint = you.can_wear( used );
         if( need_splint.success() ) {

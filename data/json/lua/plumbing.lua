@@ -90,6 +90,7 @@ local blood_field_ids = {
   FieldTypeId.new("fd_gibs_invertebrate"):int_id(),
 }
 
+---@type table<string, PlumbingModeData>
 local wash_mode_data = {
   shower = {
     duration_minutes = 15,
@@ -239,7 +240,7 @@ local consume_body_cleanser_candidate = function(opts)
   local label = opts.candidate.item:display_name(1)
   if opts.candidate.source == "inventory" then
     if opts.candidate.item.charges > 1 then
-      opts.user:use_charges(opts.candidate.item:get_type(), 1, function(_) return true end)
+      opts.user:use_charges(opts.candidate.item:get_type(), 1)
     else
       opts.user:remove_item(opts.candidate.item)
     end

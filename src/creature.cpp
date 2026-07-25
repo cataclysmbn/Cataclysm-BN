@@ -368,8 +368,6 @@ bool Creature::is_dangerous_field( const field_entry &entry ) const
 
 bool Creature::sees( const Creature &critter ) const
 {
-    ZoneScoped;
-
     // Creatures always see themselves (simplifies drawing).
     if( &critter == this ) {
         return true;
@@ -415,9 +413,10 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
     if( ch != nullptr ) {
-        if( ch->movement_mode_is( CMM_CROUCH ) ) {
+        if( ch->movement_mode_is( CMM_CROUCH ) || ch->movement_mode_is( CMM_PRONE ) ) {
             const int coverage = here.obstacle_coverage( bub_pos(), critter.bub_pos() );
-            if( coverage < 30 ) {
+            const int threshold = ch->movement_mode_is( CMM_PRONE ) ? 15 : 30;
+            if( coverage < threshold ) {
                 return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
             }
             float size_modifier = 1.0;
@@ -451,7 +450,6 @@ bool Creature::sees( const Creature &critter ) const
 
 bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
-    ZoneScoped;
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.
@@ -881,6 +879,9 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const double ammo_severity_bonus = proj.aimedcritbonus;
     const double ammo_severity_max_bonus = proj.aimedcritmaxbonus;
 
+    // Targeting UI teardown can dirty the SDL visibility cache just before a shot resolves.
+    // Ranged damage messages depend on the same visibility query, so refresh it here first.
+    g->refresh_player_visibility_cache_if_needed();
     const bool u_see_this = g->u.sees( *this );
 
     const int avoid_roll = dodge_roll();
@@ -1124,6 +1125,10 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
 
     // If we have a shield, it might passively block ranged impacts
     block_ranged_hit( source, bp_hit, impact );
+    // If the shield negated something like an acid splash, remove that here.
+    if( proj.has_effect( ammo_effect_BLINDS_EYES ) && impact.total_damage() <= 0 ) {
+        proj.remove_effect( ammo_effect_BLINDS_EYES );
+    }
     // If the projectile survives, both it and the launcher get credit for the kill.
     dealt_dam = deal_damage( source, bp_hit, impact, source_weapon, attack.proj.get_drop() );
     dealt_dam.bp_hit = bp_hit.id();
@@ -1182,15 +1187,16 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
 
     // at least `dealt_dam` doesn't get mutated after this point
     const int total_damage = dealt_dam.total_damage();
-    const int env_resist = get_env_resist( bp_hit );
 
-    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES );
-    const int blind_strength = should_blind ? total_damage - env_resist : 0;
+    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES ) &&
+                              ( bp_hit == bodypart_str_id( "head" ) || bp_hit == bodypart_str_id( "eyes" ) );
+    const int blind_strength = should_blind ? total_damage - get_env_resist( body_part_eyes ) : 0;
     if( should_blind ) {
         const auto blind_duration = blind_strength > 0 ? rng( 3_turns, 10_turns ) : rng( 1_turns, 3_turns );
         // TODO: Change this to require bp_eyes
         add_env_effect( effect_blind, body_part_eyes, 5, blind_duration );
     }
+    const int env_resist = get_env_resist( bp_hit );
 
     const int sap_strength = proj.has_effect( ammo_effect_APPLY_SAP ) ? total_damage - env_resist : 0;
     if( sap_strength > 0 ) {

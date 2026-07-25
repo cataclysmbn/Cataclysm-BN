@@ -455,6 +455,17 @@ void location_vector<T>::move_by( const tripoint_rel_ms &offset )
 }
 
 template<typename T>
+void location_vector<T>::set_dimension( const dimension_id &dim )
+{
+    auto tile_loc = dynamic_cast<tile_item_location *>( &*loc );
+    if( !tile_loc ) {
+        debugmsg( "Tried to set_dimension on a non-tile location" );
+        return;
+    }
+    tile_loc->set_dimension( dim );
+}
+
+template<typename T>
 void location_vector<T>::init_location( location<T> *new_loc )
 {
     loc = std::unique_ptr<location<T>>( new_loc );

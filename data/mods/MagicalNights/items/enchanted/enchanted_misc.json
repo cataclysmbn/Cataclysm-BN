@@ -19,7 +19,7 @@
     "max_charges": 60,
     "charges_per_use": 1,
     "sub": "hotplate",
-    "artifact_data": { "charge_type": "ARTC_TIME" },
+    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "1 h", "rate": 1 } ] },
     "use_action": [
       "HOTPLATE",
       "HEAT_FOOD",

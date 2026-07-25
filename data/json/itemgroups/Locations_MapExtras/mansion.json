@@ -890,7 +890,11 @@
       [ "creepy_doll", 3 ],
       [ "portable_game", 5 ],
       [ "whistle", 3 ],
-      [ "shark_plush", 4 ]
+      [ "shark_plush", 4 ],
+      [ "bb", 8 ],
+      [ "bbgun", 10 ],
+      [ "paintball", 4 ],
+      [ "paintballgun", 5 ]
     ]
   },
   {

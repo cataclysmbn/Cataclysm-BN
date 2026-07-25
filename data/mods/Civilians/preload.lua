@@ -1,7 +1,7 @@
 local mod = game.mod_runtime[game.current_mod]
 
 -- Register mapgen postprocess hook (responsible for randomly spawning civilians)
-table.insert(game.hooks.on_mapgen_postprocess, function(params)
+game.add_hook("on_mapgen_postprocess", function(params)
   if mod.on_mapgen_postprocess then return mod.on_mapgen_postprocess(params) end
 end)
 

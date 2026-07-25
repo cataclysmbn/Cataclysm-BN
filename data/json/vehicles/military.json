@@ -1722,6 +1722,144 @@
     "items": [  ]
   },
   {
+    "id": "tank_m60_patton_decoy",
+    "type": "vehicle",
+    "name": "M60 Patton Main Battle Tank",
+    "flags": [ "VEHICLE_LOCKED" ],
+    "//": "Variant with no armament, fuel, engine, items, or controls.  Used as a decoy in the military blacksite.",
+    "blueprint": [
+      [ "oooooooooo " ],
+      [ "|||-+-|+|| " ],
+      [ "=|--#--#|| " ],
+      [ "=|-=.#-----" ],
+      [ "=|--#--||| " ],
+      [ "|||-+-|||| " ],
+      [ "oooooooooo " ]
+    ],
+    "color_palette": "military_standard",
+    "parts": [
+      { "x": -5, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -4, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -3, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -2, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -1, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 0, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 1, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 2, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 3, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 4, "y": -3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -5, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      {
+        "x": -4,
+        "y": -2,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "omnicam", "plating_military" ]
+      },
+      { "x": -3, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -2, "y": -2, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
+      {
+        "x": -1,
+        "y": -2,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      { "x": 0, "y": -2, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
+      { "x": 1, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": 2, "y": -2, "parts": [ "hdframe_vertical_2", "hdhatch", "hdroof", "NBC_seal", "plating_military" ] },
+      {
+        "x": 3,
+        "y": -2,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "omnicam", "headlight_reinforced", "plating_military" ]
+      },
+      { "x": 4, "y": -2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -5, "y": -1, "parts": [ "hdframe_vertical_2", "trunk", "plating_military" ] },
+      { "x": -4, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
+      { "x": -1, "y": -1, "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "hdroof", "NBC_seal" ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "dashboard", "vehicle_clock", "horn_big", "hdroof", "NBC_seal" ]
+      },
+      { "x": 3, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": 4, "y": -1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -5, "y": 0, "parts": [ "hdframe_vertical_2", "trunk", "plating_military" ] },
+      {
+        "x": -4,
+        "y": 0,
+        "parts": [
+          "hdframe_vertical_2",
+          "hdhalfboard_horizontal_2",
+          "hdroof",
+          "NBC_seal",
+          "afs_small_roof_external_tank",
+          "plating_military"
+        ]
+      },
+      { "x": -3, "y": 0, "parts": [ "hdframe_vertical_2", "hdboard_horizontal", "plating_military" ] },
+      { "x": -2, "y": 0, "parts": [ "hdframe_vertical_2", "trunk", "hdroof", "NBC_seal" ] },
+      { "x": -1, "y": 0, "parts": [ "hdframe_vertical_2", "aisle_vertical", "hdroof", "NBC_seal" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "cam_control", "turret_mount_manual_steel", "hdroof", "NBC_seal" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
+      { "x": 2, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
+      { "x": 3, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
+      { "x": 4, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
+      { "x": 5, "y": 0, "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "plating_military" ] },
+      { "x": -5, "y": 1, "parts": [ "hdframe_vertical_2", "trunk", "plating_military" ] },
+      { "x": -4, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -3, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_nw", "plating_military" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "hdframe_vertical_2", "seat", "seatbelt_heavyduty", "cam_control", "turret_mount_manual_steel", "hdroof", "NBC_seal" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_sw", "plating_military" ] },
+      { "x": 1, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
+      { "x": 2, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": 3, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": 4, "y": 1, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -5, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      {
+        "x": -4,
+        "y": 2,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "omnicam", "plating_military" ]
+      },
+      { "x": -3, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -2, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_se", "plating_military" ] },
+      {
+        "x": -1,
+        "y": 2,
+        "parts": [ "hdframe_vertical_2", "hdhatch_opaque", "hdroof", "NBC_seal", "plating_military" ]
+      },
+      { "x": 0, "y": 2, "parts": [ "hdframe_vertical_2", "hdboard_ne", "plating_military" ] },
+      { "x": 1, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": 2, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      {
+        "x": 3,
+        "y": 2,
+        "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "omnicam", "headlight_reinforced", "plating_military" ]
+      },
+      { "x": 4, "y": 2, "parts": [ "hdframe_vertical_2", "hdhalfboard_horizontal_2", "plating_military" ] },
+      { "x": -5, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -4, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -2, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": -1, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 0, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 1, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 2, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 3, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] },
+      { "x": 4, "y": 3, "parts": [ "hdframe_vertical_2", "plating_military" ] }
+    ],
+    "items": [  ]
+  },
+  {
     "id": "tank_m1_abrams",
     "type": "vehicle",
     "name": "M1 Abrams Main Battle Tank",

@@ -7,6 +7,7 @@
 #include <optional>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "assign.h"
 #include "bodypart.h"
@@ -80,6 +81,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_NOHEAD: return "NOHEAD";
         case MF_HARDTOSHOOT: return "HARDTOSHOOT";
         case MF_GRABS: return "GRABS";
+        case MF_GRAB_IMMUNE: return "GRAB_IMMUNE";
         case MF_BASHES: return "BASHES";
         case MF_GROUP_BASH: return "GROUP_BASH";
         case MF_DESTROYS: return "DESTROYS";
@@ -162,6 +164,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_REVIVES_HEALTHY: return "REVIVES_HEALTHY";
         case MF_NO_NECRO: return "NO_NECRO";
         case MF_PACIFIST: return "PACIFIST";
+        case MF_KEEP_DISTANCE: return "KEEP_DISTANCE";
         case MF_PUSH_MON: return "PUSH_MON";
         case MF_PUSH_VEH: return "PUSH_VEH";
         case MF_AVOID_DANGER_1: return "PATH_AVOID_DANGER_1";
@@ -175,6 +178,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PET_HARNESSABLE: return "PET_HARNESSABLE";
         case MF_CAN_FETCH: return "CAN_FETCH";
         case MF_DOGFOOD: return "DOGFOOD";
+        case MF_DOG_WHISTLE: return "DOG_WHISTLE";
         case MF_MILKABLE: return "MILKABLE";
         case MF_SHEARABLE: return "SHEARABLE";
         case MF_NO_BREED: return "NO_BREED";
@@ -208,6 +212,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
         case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
         case MF_CANT_TRAIN: return "CANT_TRAIN";
+        case MF_POLICE_EYEBOT: return "POLICE_EYEBOT";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
@@ -218,6 +223,26 @@ std::string enum_to_string<m_flag>( m_flag data )
 
 } // namespace io
 
+namespace
+{
+
+auto add_death_drop_group( std::vector<item_group_id> &death_drops,
+                           const JsonObject &jo, const std::string &member_name ) -> void
+{
+    if( !jo.has_member( member_name ) ) {
+        return;
+    }
+
+    const auto death_drop = item_group::load_item_group( jo.get_member( member_name ),
+                            "distribution" );
+    if( death_drop ) {
+        death_drops.push_back( death_drop );
+    }
+}
+
+} // namespace
+
+// TODO: Make this like any other generic factory so we can use type_id_implement
 /** @relates string_id */
 template<>
 const mtype &string_id<mtype>::obj() const
@@ -775,6 +800,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
     assign( jo, "speed", speed, strict, 0 );
     assign( jo, "aggression", agro, strict, -100, 100 );
     assign( jo, "morale", morale, strict );
+    assign( jo, "tracking_distance", tracking_distance, strict, 0 );
 
     assign( jo, "mountable_weight_ratio", mountable_weight_ratio, strict );
 
@@ -889,8 +915,13 @@ void mtype::load( const JsonObject &jo, const std::string &src )
                          "distribution" );
     }
     if( jo.has_member( "death_drops" ) ) {
-        death_drops = item_group::load_item_group( jo.get_member( "death_drops" ),
-                      "distribution" );
+        death_drops.clear();
+        add_death_drop_group( death_drops, jo, "death_drops" );
+    }
+    if( jo.has_object( "extend" ) ) {
+        auto tmp = jo.get_object( "extend" );
+        tmp.allow_omitted_members();
+        add_death_drop_group( death_drops, tmp, "death_drops" );
     }
 
     assign( jo, "harvest", harvest );
@@ -1558,9 +1589,11 @@ void MonsterGenerator::check_monster_definitions() const
                 debugmsg( "monster %s has invalid species %s", mon.id.c_str(), spec.c_str() );
             }
         }
-        if( mon.death_drops && !item_group::group_is_defined( mon.death_drops ) ) {
-            debugmsg( "monster %s has unknown death drop item group: %s", mon.id.c_str(),
-                      mon.death_drops.c_str() );
+        for( const item_group_id &death_drop : mon.death_drops ) {
+            if( !item_group::group_is_defined( death_drop ) ) {
+                debugmsg( "monster %s has unknown death drop item group: %s", mon.id.c_str(),
+                          death_drop.c_str() );
+            }
         }
         for( auto &m : mon.mat ) {
             if( m.str() == "null" || !m.is_valid() ) {
@@ -1655,6 +1688,17 @@ void MonsterGenerator::check_monster_definitions() const
                 debugmsg( "item_id %s of monster %s is not a valid item id",
                           mon.baby_egg.c_str(), mon.id.c_str() );
             }
+        }
+    }
+}
+
+void MonsterGenerator::resolve_lua_monster_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_monster_callback_actor>> &actors )
+{
+    for( const mtype &mt : mon_templates->get_all() ) {
+        auto it = actors.find( mt.id.str() );
+        if( it != actors.end() ) {
+            mt.lua_callbacks = it->second.get();
         }
     }
 }

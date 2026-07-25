@@ -1,5 +1,20 @@
 [
   {
+    "id": "GRAB",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
+    "id": "GRAB_FILTER",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
+    "id": "NO_GRAB",
+    "type": "json_flag",
+    "context": [  ]
+  },
+  {
     "id": "ACTIVE_CLOAKING",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
@@ -1142,6 +1157,12 @@
     "info": "This item contains a nanofabricator recipe."
   },
   {
+    "id": "SECRET_ENCHANTMENTS",
+    "type": "json_flag",
+    "context": [ "generic" ],
+    "//": "Hides enchantments from info menu"
+  },
+  {
     "id": "BIONIC_FAULTY",
     "type": "json_flag",
     "context": [ "BIONIC" ],
@@ -1626,6 +1647,12 @@
     "id": "E_NO_POWER_DECAY",
     "type": "json_flag",
     "context": [  ]
+  },
+  {
+    "id": "DRONE_CAM",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This item <good>allows you to view</good> the position of enemies <info>marked by friendly drones</info>."
   },
   {
     "id": "FAKE_MILL",

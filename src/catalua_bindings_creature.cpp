@@ -33,7 +33,7 @@
 #include "game.h"
 #include "inventory.h"
 #include "json.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "monfaction.h"
 #include "monster.h"
@@ -231,19 +231,19 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint_bub_ms & ) );
 
-        SET_FX_N_T( setpos, "set_pos", void( const tripoint_bub_ms & ) );
-
-        SET_FX_N_T( setpos, "set_pos", void( const tripoint_abs_ms & ) );
+        luna::set_fx( ut, "set_pos",
+                      sol::overload(
+        []( Creature & cr, const tripoint_bub_ms & p ) -> void { cr.setpos( p ); },
+        []( Creature & cr, const tripoint_abs_ms & p ) -> void { cr.setpos( p ); }
+                      ) );
 
         luna::set_fx( ut, "has_effect", []( const Creature & cr, const efftype_id & eff,
         sol::optional<const bodypart_str_id &> bpid ) -> bool {
             if( bpid.has_value() )
             {
                 return cr.has_effect( eff, *bpid );
-            } else
-            {
-                return cr.has_effect( eff );
             }
+            return cr.has_effect( eff );
         } );
 
         luna::set_fx( ut, "get_effect", []( Creature & cr, const efftype_id & eff,
@@ -463,6 +463,22 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint_bub_ms & p, int f ) );
+        luna::set_fx( ut, "add_armor_item", []( monster & m, detached_ptr<item> &armor ) { return m.set_armor_item( std::move( armor ) ); } );
+        luna::set_fx( ut, "get_armor_item", []( monster & m ) { return m.get_armor_item(); } );
+        luna::set_fx( ut, "remove_armor_item", []( monster & m ) { return m.remove_armor_item(); } );
+
+        luna::set_fx( ut, "add_saddle_item", []( monster & m, detached_ptr<item> &saddle ) { return m.set_tack_item( std::move( saddle ) ); } );
+        luna::set_fx( ut, "get_saddle_item", []( monster & m ) { return m.get_tack_item() ; } );
+        luna::set_fx( ut, "remove_saddle_item", []( monster & m ) {return m.remove_tack_item();} );
+
+        luna::set_fx( ut, "add_storage_item", []( monster & m, detached_ptr<item> &storage ) { return m.set_storage_item( std::move( storage ) ) ;} );
+        luna::set_fx( ut, "get_storage_item", []( monster & m ) { return m.get_storage_item() ;} );
+        luna::set_fx( ut, "remove_storage_item", []( monster & m ) { return m.remove_storage_item() ;} );
+
+        luna::set_fx( ut, "add_battery_item", []( monster & m, detached_ptr<item> &storage ) { return m.set_battery_item( std::move( storage ) ) ;} );
+        luna::set_fx( ut, "get_battery_item", []( monster & m ) { return m.get_battery_item() ;} );
+        luna::set_fx( ut, "remove_battery_item", []( monster & m ) { return m.remove_battery_item() ;} );
+
         luna::set_fx( ut, "set_move_target", sol::overload(
         []( monster & mon, const tripoint_bub_ms & p ) -> void {
             mon.set_dest( p );
@@ -822,10 +838,6 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( mutation_ok, bool( const trait_id &, bool, bool ) const );
 
         SET_FX_T( mutate_category, void( const mutation_category_id & ) );
-
-        SET_FX_T( mutate_towards, bool( std::vector<trait_id>, int ) );
-
-        SET_FX_T( mutate_towards, bool( const trait_id & ) );
 
         luna::set_fx( ut, "mutate_towards", sol::overload(
                           sol::resolve<bool( std::vector<trait_id>, int )>( &UT_CLASS::mutate_towards ),
@@ -1217,9 +1229,12 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( is_wearing_helmet, bool() const );
 
         SET_FX_T( get_morale_level, int() const );
-        SET_FX_T( add_morale,
-                  void( const morale_type &, int, int, const time_duration &, const time_duration &,
-                        bool, const itype * ) );
+        luna::set_fx( ut, "add_morale", []( UT_CLASS & c, const morale_type & type, int bonus,
+                                            int max_bonus, const time_duration & duration,
+                                            const time_duration & decay_start, bool capped,
+        sol::optional<const itype *> item_type ) -> void {
+            c.add_morale( type, bonus, max_bonus, duration, decay_start, capped, item_type.value_or( nullptr ) );
+        } );
         SET_FX_T( has_morale, bool( const morale_type & ) const );
         SET_FX_T( get_morale, int( const morale_type & ) const );
         SET_FX_T( rem_morale, void( const morale_type & ) );
@@ -1238,7 +1253,6 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX( knows_trap );
 
         DOC( "Character learns that the given trap is on the given tripoint. If the trap is null, the character learns that there is no trap there." );
-        SET_FX( add_known_trap );
         luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint_bub_ms & p, const trap_id & tr )
         {
             c.add_known_trap( p, tr.obj() );
@@ -1273,7 +1287,14 @@ void cata::detail::reg_character( sol::state &lua )
             c.drench( saturation, drenched_parts, ignore_waterproof );
         } );
 
-        SET_FX( use_charges );
+        luna::set_fx( ut, "use_charges", sol::overload(
+        []( UT_CLASS & c, const itype_id & what, int qty ) -> std::vector<detached_ptr<item>> {
+            return c.use_charges( what, qty );
+        },
+        []( UT_CLASS & c, const itype_id & what, int qty,
+        const sol::function & filter ) -> std::vector<detached_ptr<item>> {
+            return c.use_charges( what, qty, [&filter]( const item & it ) { return filter( it ); } );
+        } ) );
         SET_FX( use_charges_if_avail );
 
         DOC( "Returns the crafting inventory for this character (includes nearby items)" );

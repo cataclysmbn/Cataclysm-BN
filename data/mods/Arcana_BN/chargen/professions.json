@@ -249,6 +249,7 @@
       "female": [ "bra", "panties", "skirt" ]
     },
     "traits": [ "PROF_SANGUINE" ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -292,6 +293,7 @@
     },
     "traits": [ "PROF_CLEANSINGFLAME" ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -417,6 +419,7 @@
       "ARCANA_DRAGONCLAWS",
       "ARCANA_INNERHEAT"
     ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -468,6 +471,7 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_SANGUINE" ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -531,6 +535,7 @@
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -595,6 +600,7 @@
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -723,7 +729,8 @@
       },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boy_shorts" ]
-    }
+    },
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ]
   },
   {
     "type": "profession",
@@ -754,7 +761,8 @@
       },
       "male": [ "boxer_briefs" ],
       "female": [ "bra", "panties" ]
-    }
+    },
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ]
   },
   {
     "type": "profession",

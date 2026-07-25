@@ -506,13 +506,21 @@
   {
     "type": "item_group",
     "id": "steel_mill_storage",
-    "subtype": "distribution",
-    "//": "storage locked behind industrial card reader",
+    "subtype": "collection",
+    "//": "storage locked behind industrial card reader.  Ensures you always get some superalloy, plus high chance of also getting hard hard steel.",
     "entries": [
-      { "item": "hard_plate", "prob": 50, "count": [ 1, 3 ] },
-      { "item": "alloy_plate", "prob": 25, "count": [ 1, 3 ] },
-      { "item": "alloy_sheet", "prob": 25, "count": [ 1, 10 ] },
-      { "item": "thermal_cooling_suit", "prob": 50, "count": [ 1, 3 ] }
+      { "distribution": [ { "item": "alloy_sheet", "prob": 50, "count": [ 5, 10 ] }, { "item": "alloy_plate", "prob": 50 } ] },
+      {
+        "distribution": [
+          { "item": "hard_steel_armor", "prob": 50, "count": [ 10, 30 ] },
+          { "item": "hard_plate", "prob": 50, "count": [ 1, 3 ] }
+        ],
+        "prob": 50
+      },
+      {
+        "distribution": [ { "item": "thermal_cooling_suit", "prob": 90 }, { "item": "exosuit_industrial", "prob": 10 } ],
+        "prob": 50
+      }
     ]
   },
   {
@@ -1589,7 +1597,8 @@
       { "group": "auto_sears", "prob": 20 },
       { "item": "survnote", "prob": 5 },
       { "item": "thermos", "prob": 25 },
-      { "item": "textbook_launcher", "prob": 3 }
+      { "item": "textbook_launcher", "prob": 3 },
+      { "group": "on_hand_762", "prob": 3, "charges": [ 1, 100 ] }
     ]
   },
   {
@@ -1827,6 +1836,8 @@
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
       [ "bb", 8 ],
       [ "bbgun", 10 ],
+      [ "paintball", 4 ],
+      [ "paintballgun", 5 ],
       [ "fan", 10 ],
       [ "file", 30 ],
       [ "photo_album", 5 ],

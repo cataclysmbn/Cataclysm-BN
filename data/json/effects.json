@@ -304,6 +304,15 @@
   },
   {
     "type": "effect_type",
+    "id": "eyebot_depleted",
+    "name": [ "Eyebot Depleted" ],
+    "permanent": true,
+    "desc": [
+      "Marks a non-friendly eyebot as having already summoned reinforcements, preventing it from doing so again.  This is a bug if you have it."
+    ]
+  },
+  {
+    "type": "effect_type",
     "id": "monster_disarmed",
     "name": [ "Disarmed" ],
     "desc": [ "AI tag for a monster's attacks being disabled due to disarming tecs.  This is a bug if you have it." ],
@@ -1794,8 +1803,9 @@
     "name": [ "Grabbed" ],
     "desc": [ "You have been grabbed by an attack.\nYou are being held in place, and dodging is harder." ],
     "rating": "bad",
-    "max_duration": "2 s",
-    "max_intensity": 2,
+    "max_duration": "1 d",
+    "max_intensity": 15,
+    "flags": [ "GRAB" ],
     "base_mods": { "speed_mod": [ -15 ] },
     "scaling_mods": { "speed_mod": [ -5 ] },
     "show_in_info": true
@@ -1805,8 +1815,9 @@
     "id": "grabbing",
     "name": [ "Grabbing" ],
     "desc": [ "Grabbing another creature and holding them in place." ],
-    "max_duration": "2 s",
+    "max_duration": "1 d",
     "max_intensity": 15,
+    "flags": [ "GRAB_FILTER" ],
     "show_in_info": true
   },
   {
@@ -2339,6 +2350,12 @@
     "max_intensity": 1000,
     "int_dur_factor": "1 s",
     "rating": "bad"
+  },
+  {
+    "type": "effect_type",
+    "id": "drone_marker",
+    "//": "Used by friendly eyebots to designate targets that become temporarily visible to the player if they have the right items or bionics.",
+    "max_duration": "1 m"
   },
   {
     "type": "effect_type",

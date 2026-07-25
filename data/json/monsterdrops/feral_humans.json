@@ -963,7 +963,9 @@
       { "group": "military_standard_grenades", "count": [ 3, 5 ], "prob": 100 },
       { "group": "mil_food", "count": [ 3, 5 ], "prob": 100 },
       { "group": "sopmod_2", "count": [ 1, 2 ], "prob": 100 },
-      { "group": "rare", "count": 2, "prob": 100 }
+      { "group": "rare", "count": 2, "prob": 100 },
+      { "item": "pants_tacticool", "prob": 100 },
+      { "item": "jacket_tacticool", "prob": 100 }
     ]
   },
   {

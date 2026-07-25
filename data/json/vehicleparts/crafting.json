@@ -577,6 +577,7 @@
   {
     "type": "vehicle_part",
     "id": "survivors_workbench",
+    "integrated_tools": [ "toolbox_workshop" ],
     "name": { "str": "survivors workbench" },
     "symbol": "#",
     "looks_like": "veh_table_wood",
@@ -593,7 +594,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH", "CRAFTER" ],
     "breaks_into": [
       { "item": "pipe", "count": [ 4, 6 ] },
       { "item": "sheet_metal", "count": [ 0, 1 ] },
@@ -607,6 +608,7 @@
   {
     "type": "vehicle_part",
     "id": "robobench",
+    "integrated_tools": [ "toolbox_workshop" ],
     "name": { "str": "robobench" },
     "symbol": "#",
     "looks_like": "machinery_heavy",
@@ -623,7 +625,7 @@
       "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
-    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH" ],
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WORKBENCH", "CRAFTER" ],
     "breaks_into": [
       { "item": "pipe", "count": [ 4, 6 ] },
       { "item": "sheet_metal", "count": [ 0, 1 ] },

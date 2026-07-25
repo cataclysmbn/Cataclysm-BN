@@ -41,8 +41,9 @@ void npc_trading::transfer_items( std::vector<item_pricing> &stuff, Character &,
 
             receiver.i_add( std::move( to_give ) );
         } else {
+            const auto count = npc_gives ? ip.u_has : ip.npc_has;
             gift.set_owner( receiver );
-            std::ranges::for_each( ip.locs, [&]( auto * it ) {
+            std::ranges::for_each( std::views::take( ip.locs, count ), [&]( auto * it ) {
                 receiver.i_add( it->detach() );
             } );
         }

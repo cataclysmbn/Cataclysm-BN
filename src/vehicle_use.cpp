@@ -1716,7 +1716,7 @@ void vehicle::alarm()
             sound_event se;
             se.origin = bub_ms_location();
             se.volume = rng( 80, 130 );
-            se.category = sounds::sound_t::combat;
+            se.category = sounds::sound_t::alarm;
             se.description = random_entry_ref( sound_msgs );
             se.id = "vehicle";
             se.variant = "car_alarm";
@@ -2008,6 +2008,18 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
     const bool items_are_sealed = here.has_flag( "SEALED", pos );
 
     auto turret = turret_query( bub_to_abs( pos ) );
+    const auto turret_menu_name = [&turret]() -> std::string {
+        if( !turret )
+        {
+            return {};
+        }
+        const auto *const ammo_data = turret.ammo_data();
+        if( ammo_data == nullptr )
+        {
+            return turret.base().tname();
+        }
+        return string_format( _( "%1$s (%2$s)" ), turret.base().tname(), ammo_data->nname( 1 ) );
+    }();
 
     const int curtain_part = avail_part_with_feature( interact_part, "CURTAIN", true );
     const bool curtain_closed = ( curtain_part == -1 ) ? false : !parts[curtain_part].open;
@@ -2076,10 +2088,10 @@ void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
         selectmenu.addentry( FOLD_VEHICLE, true, 'f', _( "Fold vehicle" ) );
     }
     if( turret.can_unload() ) {
-        selectmenu.addentry( UNLOAD_TURRET, true, 'u', _( "Unload %s" ), turret.name() );
+        selectmenu.addentry( UNLOAD_TURRET, true, 'u', _( "Unload %s" ), turret_menu_name );
     }
     if( turret.can_reload() ) {
-        selectmenu.addentry( RELOAD_TURRET, true, 'r', _( "Reload %s" ), turret.name() );
+        selectmenu.addentry( RELOAD_TURRET, true, 'r', _( "Reload %s" ), turret_menu_name );
     }
     if( curtain_part >= 0 && curtain_closed ) {
         selectmenu.addentry( PEEK_CURTAIN, true, 'p', _( "Peek through the closed curtains" ) );

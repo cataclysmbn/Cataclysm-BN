@@ -68,9 +68,9 @@ struct map_bash_info {
     // (DEPRECATED! TODO: explosion struct) Explosion on destruction
     int explosive = -1;
     // sound volume of breaking terrain/furniture
-    std::optional<int> sound_vol = std::nullopt;
+    std::optional<units::sound> sound_vol = std::nullopt;
     // sound volume on fail
-    std::optional<int> sound_fail_vol = std::nullopt;
+    std::optional<units::sound> sound_fail_vol = std::nullopt;
     // Radius of the tent supported by this tile
     int collapse_radius = 1;
     // cost to bash a field
@@ -330,6 +330,7 @@ enum ter_bitflags : int {
     TFLAG_ELEVATOR,
     TFLAG_NO_MEMORY,
     TFLAG_ROAD,
+    TFLAG_BASH_TRANSFORM,
     NUM_TERFLAGS
 };
 

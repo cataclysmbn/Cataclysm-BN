@@ -111,10 +111,10 @@
           "mre_veggy_box",
           "lighter",
           "knife_crt",
-          "pellet"
+          "crt_pellet"
         ],
         "entries": [
-          { "item": "pelletgun", "ammo-item": "pellet", "contents-item": "shoulder_strap" },
+          { "item": "crt_pelletgun", "ammo-item": "crt_pellet", "contents-item": "shoulder_strap" },
           { "item": "water_clean", "container-item": "crt_canteen" },
           { "item": "crt_etool", "container-item": "crt_belt" },
           { "item": "knife_crt", "container-item": "sheath" }

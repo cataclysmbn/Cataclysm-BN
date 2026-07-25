@@ -6,7 +6,7 @@
     "weapon_category": [ "FIST_WEAPONS", "ENERGY_WEAPONS" ],
     "name": { "str": "symbol of judgment", "str_pl": "symbols of judgment" },
     "description": "A golden band decorated with a trident motif, and inlaid with silver.  Just small enough to grasp the band in your palm, prongs between the fingers.  Holding it gives you the vague sense that this is a holy symbol, dedicated to something not of this world.  Firing it calls forth lightning.",
-    "weight": "1100 g",
+    "weight": "900 g",
     "volume": "750 ml",
     "price": "1500 USD",
     "price_postapoc": "100 USD",
@@ -82,8 +82,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_bloodscourge_fire",
@@ -113,10 +112,10 @@
     "type": "GUN",
     "category": "weapons",
     "weapon_category": [ "PISTOLS", "STILETTOS" ],
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": { "str": "shrike's misericorde (pistol)", "str_pl": "shrike's misericordes (pistol)" },
     "description": "An ornate silver weapon combining two flintlock barrels with a thin blade.  It's folded into its more compact pistol form, allowing it to be loaded and fired.  Its shots are imbued with a deathly chill.  The damage it adds to shots can ignore mundane armor, but robots and certain otherworldly monsters will only suffer the bullet's regular damage.  Activate it to revert back to blade form, making it better suited for melee but preventing you from being able to load or fire it.",
-    "weight": "2 kg",
+    "weight": "1250 g",
     "volume": "500 ml",
     "price": "1000 USD",
     "price_postapoc": "50 USD",
@@ -155,8 +154,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_shrike_misericorde_chill",
@@ -311,8 +309,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 3 } ],
           "intermittent_activation": { "effects": [ { "frequency": "25 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
@@ -368,8 +365,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_bane_staff_venom",
@@ -398,7 +394,7 @@
     "id": "electrothermal_arc_cannon",
     "looks_like": "plasma_rifle",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "weapon_category": [ "RIFLES", "ENERGY_WEAPONS" ],
     "name": { "str": "electrothermal arc cannon" },
     "description": "An advanced, though somewhat bulky, energy weapon exploiting exotic phenomenon.  Fires an anomalous bolt of energy that can jump from target to target, generating an electrothermal effect that leaves burning plasma and explosive bursts of electricity in its wake.  Highly indiscriminate, but equally destructive if used in a target-rich environment.",
@@ -437,7 +433,7 @@
     "looks_like": "laser_rifle",
     "type": "GUN",
     "weapon_category": [ "RIFLES", "ENERGY_WEAPONS" ],
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "light_blue",
     "name": { "str": "rift focus cannon" },
@@ -612,7 +608,7 @@
     "weapon_category": [ "ENERGY_WEAPONS" ],
     "looks_like": "ar15",
     "type": "GUN",
-    "reload_noise_volume": 2,
+    "reload_noise_volume": "26 dB",
     "name": { "str": "rift focus weapon system" },
     "description": "This is the integral weapon system for the Anomaly Recon Mech, focusing a small-scale hole in reality into a powerful beam.  Potent but useless against some anomalous monsters, and carries the risk of opening temporary holes in reality.  Activating this weapon will let you launch a dazzling ghostly flare, illuminating an area in exchange for draining fatigue.  This flare will inflict similar forms of supernatural harm on anything caught in its radius.",
     "weight": "12500 g",
@@ -635,8 +631,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "values": [
             { "value": "ARMOR_BASH", "add": -25 },
             { "value": "ARMOR_CUT", "add": -35 },

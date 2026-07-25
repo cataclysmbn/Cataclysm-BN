@@ -68,7 +68,8 @@
       [ "mechanism", 4 ],
       [ "muzzle", 1 ],
       [ "sights", 1 ],
-      [ "sling", 1 ]
+      [ "sling", 1 ],
+      [ "stock", 1 ]
     ],
     "magazines": [ [ "762R", [ "762R_clip" ] ] ],
     "flags": [ "RELOAD_ONE" ]

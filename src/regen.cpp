@@ -1,6 +1,7 @@
 #include "regen.h"
 #include "character.h"
 #include "rng.h"
+#include "type_id.h"
 
 const flag_id flag_SPLINT( "SPLINT" );
 
@@ -18,7 +19,7 @@ auto has_broken_limb_penalty( const Character &c, const bodypart_id &bp ) -> boo
 auto mending_modifier( const Character &c ) -> float
 {
     auto val = 0.25 + c.mutation_value( "mending_modifier" ) + c.bonus_from_enchantments( 0.25,
-               enchant_vals::mod::MENDING_MULT );
+               enchantment_value_id( "MENDING_MULT" ) );
     return clamp( val, 0.0, 1.0 );
 }
 

@@ -40,6 +40,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "type_id_implement.h"
 #include "ui.h"
 #include "value_ptr.h"
 #include "vehicle.h"
@@ -133,17 +134,7 @@ auto rectangle_points( const zone_bounds &bounds ) -> std::vector<tripoint_abs_m
 }
 } // namespace
 
-template<>
-const zone_type &string_id<zone_type>::obj() const
-{
-    return zone_type_factory.obj( *this );
-}
-
-template<>
-bool string_id<zone_type>::is_valid() const
-{
-    return zone_type_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( zone_type, zone_type_factory );
 
 const std::vector<zone_type> &zone_type::get_all()
 {

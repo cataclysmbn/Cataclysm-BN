@@ -26,6 +26,41 @@ bool damage_unit::operator==( const damage_unit &other ) const
            damage_multiplier == other.damage_multiplier;
 }
 
+const std::string damage_unit::get_internal_name() const
+{
+    switch( type ) {
+        case DT_NULL:
+            return "NULL";
+        case DT_TRUE:
+            return "TRUE";
+        case DT_BIOLOGICAL:
+            return "BIOLOGICAL";
+        case DT_BASH:
+            return "BASH";
+        case DT_CUT:
+            return "CUT";
+        case DT_ACID:
+            return "ACID";
+        case DT_STAB:
+            return "STAB";
+        case DT_HEAT:
+            return "HEAT";
+        case DT_COLD:
+            return "COLD";
+        case DT_DARK:
+            return "DARK";
+        case DT_LIGHT:
+            return "LIGHT";
+        case DT_PSI:
+            return "PSI";
+        case DT_ELECTRIC:
+            return "ELECTRIC";
+        case DT_BULLET:
+            return "BULLET";
+        case NUM_DT:
+            return std::to_string( NUM_DT );
+    }
+}
 const std::string damage_unit::get_name() const
 {
     switch( type ) {

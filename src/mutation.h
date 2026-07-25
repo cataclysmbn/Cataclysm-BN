@@ -92,6 +92,7 @@ struct mutation_branch {
         // Whether it has positive as well as negative effects.
         bool mixed_effect  = false;
         bool startingtrait = false;
+        bool randomstartingtrait = true;
         bool activated     = false;
         // Should it activate as soon as it is gained?
         bool starts_active = false;

@@ -958,8 +958,8 @@
   {
     "id": "survivor_pack",
     "type": "ARMOR",
-    "name": { "str": "survivor backpack" },
-    "description": "A custom-built backpack.  Durable and carefully crafted to hold as much stuff as possible.",
+    "name": { "str": "survivor MOLLE pack" },
+    "description": "A custom-built backpack.  Durable and carefully crafted to hold as much stuff as possible, as well as covered with equipment straps for quick access to weapons.",
     "weight": "600 g",
     "volume": "2500 ml",
     "price": "240 USD",
@@ -976,6 +976,17 @@
     "storage": "16 L",
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
+    "use_action": {
+      "type": "holster",
+      "holster_prompt": "Stow gear",
+      "holster_msg": "You stow your %s",
+      "min_volume": "250ml",
+      "max_volume": "2500ml",
+      "multi": 2,
+      "draw_cost": 120,
+      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "SHEATH_AXE", "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER", "BELT_CLIP" ],
+      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ]
+    },
     "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "ALLOWS_WINGS" ]
   },
   {

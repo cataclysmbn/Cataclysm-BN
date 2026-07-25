@@ -266,5 +266,23 @@
     "energy_source": "MANA",
     "min_duration": 400,
     "max_duration": 400
+  },
+  {
+    "id": "debug_longdesc_spell",
+    "type": "SPELL",
+    "name": "Debug Long Message spell",
+    "description": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBrawlers are allowed to spawn a sword.",
+    "message": "Not cowardly!",
+    "valid_targets": [ "self" ],
+    "flags": [ "BRAWL" ],
+    "effect": "spawn_item",
+    "effect_str": "jian",
+    "min_range": 1,
+    "max_range": 1,
+    "base_casting_time": 100,
+    "base_energy_cost": 100,
+    "energy_source": "MANA",
+    "min_duration": 400,
+    "max_duration": 400
   }
 ]

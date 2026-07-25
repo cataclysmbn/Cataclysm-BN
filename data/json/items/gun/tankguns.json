@@ -2,7 +2,7 @@
   {
     "id": "25mm_autocannon",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str_sp": "M242 Bushmaster autocannon" },
@@ -23,12 +23,13 @@
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "low auto", 2 ], [ "AUTO", "high auto", 4 ] ],
     "reload": 500,
     "ups_charges": 10,
+    "magazine_well": "75 ml",
     "magazines": [ [ "25mm", [ "belt25mm" ] ] ]
   },
   {
     "id": "25mm_autocannon_sawn",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str_sp": "stripped-down 25mm cannon" },
@@ -54,7 +55,7 @@
   {
     "id": "25mm_cannon_crude",
     "type": "GUN",
-    "reload_noise_volume": 20,
+    "reload_noise_volume": "46 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str_sp": "makeshift 25mm cannon" },
@@ -100,6 +101,7 @@
     "modes": [ [ "DEFAULT", "auto", 10 ] ],
     "reload": 500,
     "ups_charges": 12,
+    "magazine_well": "75 ml",
     "magazines": [ [ "25mm", [ "belt25mm" ] ] ],
     "extend": { "flags": [ "STR_RELOAD", "NEVER_JAMS" ] }
   },

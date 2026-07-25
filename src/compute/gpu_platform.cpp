@@ -1,27 +1,27 @@
 #if defined(CATA_SDL)
-#include "gpu_platform.h"
+#    include "gpu_platform.h"
 
-#include "debug.h"
-#include "filesystem.h"
-#include "gpu_lm.h"
-#include "gpu_transparency.h"
-#include "path_info.h"
-#include "preload_config.h"
-#include "string_utils.h"
+#    include "debug.h"
+#    include "filesystem.h"
+#    include "gpu_lm.h"
+#    include "gpu_transparency.h"
+#    include "path_info.h"
+#    include "preload_config.h"
+#    include "string_utils.h"
 
-#include <SDL3/SDL_gpu.h>
-#include <SDL3/SDL_properties.h>
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <ranges>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
+#    include <SDL3/SDL_gpu.h>
+#    include <SDL3/SDL_properties.h>
+#    include <algorithm>
+#    include <array>
+#    include <cstddef>
+#    include <cstdlib>
+#    include <filesystem>
+#    include <fstream>
+#    include <ranges>
+#    include <string>
+#    include <string_view>
+#    include <utility>
+#    include <vector>
 
 namespace cata_gpu {
 
@@ -54,14 +54,14 @@ auto env_is_set(char const* const name) -> bool {
 
 auto set_env_if_empty(char const* const name, std::string const& value) -> bool {
     if (env_is_set(name)) { return false; }
-#if defined(_WIN32)
+#    if defined(_WIN32)
     return _putenv_s(name, value.c_str()) == 0;
-#else
+#    else
     return setenv(name, value.c_str(), 0) == 0;
-#endif
+#    endif
 }
 
-#if defined(_WIN32)
+#    if defined(_WIN32)
 auto sibling_path(std::string const& path, std::string_view const filename) -> std::string {
     auto const separator = path.find_last_of("/\\");
     if (separator == std::string::npos) { return std::string{filename}; }
@@ -77,9 +77,9 @@ auto lavapipe_manifest_has_runtime(std::string const& manifest_path) -> bool {
                                  << manifest_path;
     return false;
 }
-#else
+#    else
 auto lavapipe_manifest_has_runtime(std::string const&) -> bool { return true; }
-#endif
+#    endif
 
 auto path_for_vulkan_icd_env(std::string const& path) -> std::string {
     try {
@@ -111,7 +111,7 @@ auto find_lavapipe_icd_manifest() -> std::string {
         "vulkan/icd.d/lvp_icd.json",
         "data/vulkan/icd.d/lvp_icd.x86_64.json",
         "data/vulkan/icd.d/lvp_icd.json",
-#if defined(_WIN32)
+#    if defined(_WIN32)
         PATH_INFO::base_path() + "lvp_icd.x86.json",
         PATH_INFO::base_path() + "mesa/x86/lvp_icd.x86.json",
         PATH_INFO::base_path() + "build-data/mesa/x86/lvp_icd.x86.json",
@@ -122,7 +122,7 @@ auto find_lavapipe_icd_manifest() -> std::string {
         "build-data/mesa/x86/lvp_icd.x86.json",
         "mesa/lvp_icd.x86.json",
         "vulkan/icd.d/lvp_icd.x86.json",
-#else
+#    else
         "/usr/share/vulkan/icd.d/lvp_icd.json",
         "/usr/local/share/vulkan/icd.d/lvp_icd.json",
         "/usr/share/vulkan/icd.d/lvp_icd.x86_64.json",
@@ -131,7 +131,7 @@ auto find_lavapipe_icd_manifest() -> std::string {
         "/usr/local/share/vulkan/icd.d/lvp_icd.aarch64.json",
         "/usr/share/vulkan/icd.d/lvp_icd.i686.json",
         "/usr/local/share/vulkan/icd.d/lvp_icd.i686.json",
-#endif
+#    endif
     };
 
     for (auto const& path : candidates) {
@@ -170,7 +170,7 @@ auto pin_lavapipe_icd_for_software_mode() -> void {
 }
 
 auto get_gpu_device_info(SDL_GPUDevice* const device) -> gpu_device_info {
-#if defined(SDL_PROP_GPU_DEVICE_NAME_STRING)
+#    if defined(SDL_PROP_GPU_DEVICE_NAME_STRING)
     auto const gpu_device_property_string =
         [](SDL_PropertiesID const props, char const* const name) -> std::string {
         auto const* const value = SDL_GetStringProperty(props, name, "");
@@ -185,10 +185,10 @@ auto get_gpu_device_info(SDL_GPUDevice* const device) -> gpu_device_info {
             gpu_device_property_string(props, SDL_PROP_GPU_DEVICE_DRIVER_VERSION_STRING),
         .driver_info = gpu_device_property_string(props, SDL_PROP_GPU_DEVICE_DRIVER_INFO_STRING),
     };
-#else
+#    else
     (void)device;
     return {};
-#endif
+#    endif
 }
 
 auto device_string_for_log(std::string value) -> std::string {
@@ -247,30 +247,30 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
     }
 
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, false);
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN)
-#if defined(__ANDROID__)
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN)
+#        if defined(__ANDROID__)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, true);
-#else
+#        else
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, false);
-#endif
-#endif
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN)
+#        endif
+#    endif
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN, false);
-#endif
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN)
+#    endif
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN, false);
-#endif
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN)
+#    endif
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN)
     SDL_SetBooleanProperty(
         props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN, false);
-#endif
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN)
+#    endif
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN)
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN, false);
-#endif
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN)
+#    endif
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN)
     SDL_SetBooleanProperty(
         props, SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN, true);
-#endif
+#    endif
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
@@ -280,13 +280,13 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
     if (!attempt.driver.empty()) {
         SDL_SetStringProperty(props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING, attempt.driver.c_str());
     }
-#if defined(SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN)
+#    if defined(SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN)
     if (attempt.driver.empty() || attempt.driver == "vulkan") {
         SDL_SetBooleanProperty(
             props, SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN,
             attempt.require_vulkan_hardware);
     }
-#endif
+#    endif
 
     auto* const device = SDL_CreateGPUDeviceWithProperties(props);
     auto const error = std::string{SDL_GetError()};
@@ -299,18 +299,18 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
 }
 
 auto software_attempts() -> std::vector<gpu_device_create_attempt> {
-#if defined(__ANDROID__)
+#    if defined(__ANDROID__)
     return {};
-#else
+#    else
     return {
-#if defined(_WIN32)
+#        if defined(_WIN32)
         {
             .label = "direct3d12 software-required",
             .driver = "direct3d12",
             .require_vulkan_hardware = false,
             .prefer_low_power = true,
         },
-#endif
+#        endif
         {
             .label = "vulkan software-required",
             .driver = "vulkan",
@@ -323,7 +323,7 @@ auto software_attempts() -> std::vector<gpu_device_create_attempt> {
             .prefer_low_power = true,
         },
     };
-#endif
+#    endif
 }
 
 auto add_attempt(
@@ -353,11 +353,11 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     if (accel == compute_accel::cpu) { return attempts; }
 
     if (accel == compute_accel::gpu_software) {
-#if defined(__ANDROID__)
+#    if defined(__ANDROID__)
         DebugLog(DL::Warn, DC::Main)
             << "SDL_GPU: software compute acceleration is not available on Android; "
                "hardware Vulkan 1.1 is required";
-#endif
+#    endif
         if (!backend.empty()) {
             add_attempt(
                 attempts,
@@ -373,7 +373,7 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     }
 
     if (backend.empty()) {
-#if defined(__ANDROID__)
+#    if defined(__ANDROID__)
         add_attempt(
             attempts,
             {
@@ -381,7 +381,7 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
                 .driver = "vulkan",
                 .require_vulkan_hardware = true,
             });
-#endif
+#    endif
         add_attempt(
             attempts,
             {
@@ -532,12 +532,12 @@ auto init() -> void {
     }
 
     if (device == nullptr) {
-#if defined(__ANDROID__)
+#    if defined(__ANDROID__)
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: device creation failed; Android builds require Vulkan 1.1-capable "
                "hardware and a working system Vulkan loader";
         return;
-#else
+#    else
         auto const require_gpu_device = accel == compute_accel::gpu || require_software_device;
         auto const level = require_gpu_device ? DL::Error : DL::Warn;
         DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; "
@@ -545,7 +545,7 @@ auto init() -> void {
                                                            "unavailable"
                                                          : "CPU compute fallback will be selected");
         return;
-#endif
+#    endif
     }
 
     const char* const driver = SDL_GetGPUDeviceDriver(device);

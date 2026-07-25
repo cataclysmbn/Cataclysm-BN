@@ -26,7 +26,7 @@
     "volume": "5 L",
     "bashing": 14,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 14 },
-    "reload_noise_volume": 2,
+    "reload_noise_volume": "26 dB",
     "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 40 },
     "range": 20,

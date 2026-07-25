@@ -28,18 +28,20 @@
       "ARCANA_DRAGONCLAWS",
       "ARCANA_DRAGONTEETH",
       "ARCANA_DRAGONHORNS",
-      "SPELL_HEAL",
-      "SPELL_SHADOWSNAKES",
-      "SPELL_CLERIC",
-      "SPELL_STRENGTH",
-      "SPELL_AGILE",
-      "SPELL_INSIGHT",
-      "SPELL_LIGHT",
-      "SPELL_FIRE",
-      "SPELL_DAMPENING",
-      "SPELL_SUMMONDOG",
       "MARTIAL_ARTS_SANGUINE",
       "MARTIAL_ARTS_CF"
+    ],
+    "spells": [
+      "arcana_magic_agility",
+      "arcana_magic_conjure_flame",
+      "arcana_magic_dampening",
+      "arcana_magic_healing",
+      "arcana_magic_insight",
+      "arcana_magic_light",
+      "arcana_magic_might",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_summon_skeletal_dog",
+      "arcana_magic_ward_against_evil"
     ]
   },
   {
@@ -71,20 +73,7 @@
       "arcanist_operator",
       "arcanist_mendicant"
     ],
-    "traits": [
-      "SPELL_CLAIRVOYANCE",
-      "SPELL_CLARITY",
-      "SPELL_CONFUSE",
-      "SPELL_STRENGTH",
-      "SPELL_AGILE",
-      "SPELL_INSIGHT",
-      "SPELL_LIGHT",
-      "SPELL_DAYLIGHT",
-      "SPELL_LOCKPICK",
-      "SPELL_POISONARMOR",
-      "MARTIAL_ARTS_SANGUINE",
-      "MARTIAL_ARTS_CF"
-    ],
+    "traits": [ "MARTIAL_ARTS_SANGUINE", "MARTIAL_ARTS_CF" ],
     "flags": [ "CITY_START", "LONE_START" ],
     "bionics": [
       "bio_electrothermal_arc_projector",
@@ -93,6 +82,18 @@
       "bio_temporal_stimulation",
       "bio_life_sign_suppression",
       "bio_kinetic_amplifier"
+    ],
+    "spells": [
+      "arcana_magic_agility",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_confuse_monster",
+      "arcana_magic_insight",
+      "arcana_magic_light",
+      "arcana_magic_might",
+      "arcana_magic_open_lock",
+      "arcana_magic_poison_armor",
+      "arcana_magic_surge_adrenaline"
     ]
   },
   {
@@ -203,24 +204,23 @@
         "arcanist_operator",
         "arcanist_mendicant"
       ],
-      "traits": [
-        "SPELL_ACID",
-        "SPELL_AGILE",
-        "SPELL_CLAIRVOYANCE",
-        "SPELL_CLARITY",
-        "SPELL_CLERIC",
-        "SPELL_CONFUSE",
-        "SPELL_ELECRESIST",
-        "SPELL_FLAMEARMOR",
-        "SPELL_FREEACTION",
-        "SPELL_HEAL",
-        "SPELL_INSIGHT",
-        "SPELL_LIGHTNING",
-        "SPELL_PLANTS",
-        "SPELL_SHADOWSNAKES",
-        "SPELL_STRENGTH",
-        "MARTIAL_ARTS_SANGUINE",
-        "MARTIAL_ARTS_CF"
+      "traits": [ "MARTIAL_ARTS_SANGUINE", "MARTIAL_ARTS_CF" ],
+      "spells": [
+        "arcana_magic_agility",
+        "arcana_magic_clairvoyance",
+        "arcana_magic_clarity_blood",
+        "arcana_magic_confuse_monster",
+        "arcana_magic_conjure_acid",
+        "arcana_magic_free_action",
+        "arcana_magic_healing",
+        "arcana_magic_heat_ward",
+        "arcana_magic_insight",
+        "arcana_magic_lightning_ward",
+        "arcana_magic_might",
+        "arcana_magic_overgrowth",
+        "arcana_magic_shockstorm",
+        "arcana_magic_serpentine_shield",
+        "arcana_magic_ward_against_evil"
       ]
     }
   },
@@ -239,24 +239,23 @@
         "arcanist_operator",
         "arcanist_mendicant"
       ],
-      "traits": [
-        "SPELL_ACID",
-        "SPELL_AGILE",
-        "SPELL_CLAIRVOYANCE",
-        "SPELL_CLARITY",
-        "SPELL_CLERIC",
-        "SPELL_CONFUSE",
-        "SPELL_ELECRESIST",
-        "SPELL_FLAMEARMOR",
-        "SPELL_FREEACTION",
-        "SPELL_HEAL",
-        "SPELL_INSIGHT",
-        "SPELL_LIGHTNING",
-        "SPELL_PLANTS",
-        "SPELL_SHADOWSNAKES",
-        "SPELL_STRENGTH",
-        "MARTIAL_ARTS_SANGUINE",
-        "MARTIAL_ARTS_CF"
+      "traits": [ "MARTIAL_ARTS_SANGUINE", "MARTIAL_ARTS_CF" ],
+      "spells": [
+        "arcana_magic_agility",
+        "arcana_magic_clairvoyance",
+        "arcana_magic_clarity_blood",
+        "arcana_magic_confuse_monster",
+        "arcana_magic_conjure_acid",
+        "arcana_magic_free_action",
+        "arcana_magic_healing",
+        "arcana_magic_heat_ward",
+        "arcana_magic_insight",
+        "arcana_magic_lightning_ward",
+        "arcana_magic_might",
+        "arcana_magic_overgrowth",
+        "arcana_magic_shockstorm",
+        "arcana_magic_serpentine_shield",
+        "arcana_magic_ward_against_evil"
       ]
     }
   },
@@ -331,6 +330,14 @@
         "SPELL_LOCKPICK",
         "MARTIAL_ARTS_SANGUINE",
         "MARTIAL_ARTS_CF"
+      ],
+      "spells": [
+        "arcana_magic_clarity_blood",
+        "arcana_magic_dampening",
+        "arcana_magic_open_lock",
+        "arcana_magic_serpentine_shield",
+        "arcana_magic_summon_skeletal_dog",
+        "arcana_magic_surge_adrenaline"
       ]
     }
   },

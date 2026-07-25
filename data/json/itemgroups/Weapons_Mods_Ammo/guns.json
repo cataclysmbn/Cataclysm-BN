@@ -268,8 +268,8 @@
     "//": "Makeshift or otherwise poor quality pistols.",
     "items": [
       { "item": "ashot", "prob": 100 },
-      { "item": "surv_hand_cannon", "prob": 100, "charges-min": 0, "charges-max": 5 },
-      { "item": "surv_six_shooter", "prob": 100, "charges-min": 0, "charges-max": 6 }
+      { "group": "nested_pipe_pistol", "prob": 100 },
+      { "group": "nested_handmade_revolver", "prob": 100 }
     ]
   },
   {
@@ -395,7 +395,7 @@
     "type": "item_group",
     "id": "guns_smg_improvised",
     "//": "Makeshift or otherwise poor quality SMGs.",
-    "items": [ [ "smg_40", 40 ], [ "smg_45", 40 ], [ "smg_9mm", 100 ] ]
+    "items": [ { "group": "nested_smg_luty", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -707,8 +707,10 @@
       { "group": "nested_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "nested_longrifle_flintlock", "prob": 90 },
       { "group": "nested_rifle_flintlock", "prob": 90 },
+      { "group": "everyday_combination_gun", "prob": 150 },
       { "group": "nested_steyr_aug", "prob": 40 },
-      { "group": "nested_m7", "prob": 20 }
+      { "group": "nested_m7", "prob": 20 },
+      { "group": "everyday_m6_asw", "prob": 10 }
     ]
   },
   {
@@ -727,20 +729,17 @@
       { "group": "everyday_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "everyday_longrifle_flintlock", "prob": 90 },
       { "group": "everyday_rifle_flintlock", "prob": 90 },
+      { "group": "everyday_combination_gun", "prob": 150 },
       { "group": "everyday_steyr_aug", "prob": 40 },
-      { "group": "everyday_m7", "prob": 20 }
+      { "group": "everyday_m7", "prob": 20 },
+      { "group": "everyday_m6_asw", "prob": 10 }
     ]
   },
   {
     "type": "item_group",
     "id": "guns_rifle_improvised",
     "//": "Makeshift or otherwise poor quality rifles.",
-    "items": [
-      { "item": "rifle_22", "prob": 60 },
-      { "item": "rifle_3006", "prob": 30 },
-      { "item": "rifle_9mm", "prob": 60 },
-      { "item": "surv_carbine_223", "prob": 120, "charges-min": 0, "charges-max": 5 }
-    ]
+    "items": [ { "group": "nested_pipe_rifle", "prob": 60 }, { "group": "nested_handmade_carbine", "prob": 120 } ]
   },
   {
     "type": "item_group",
@@ -1020,6 +1019,17 @@
   },
   {
     "type": "item_group",
+    "id": "carried_guns_obscure",
+    "//": "Imported or otherwise very obscure guns of all types. Can be found, rarely, on survivors and other gun nuts.",
+    "items": [
+      { "group": "carried_guns_pistol_obscure", "prob": 100 },
+      { "group": "carried_guns_smg_obscure", "prob": 30 },
+      { "group": "carried_guns_rifle_obscure", "prob": 50 },
+      { "group": "carried_guns_shotgun_obscure", "prob": 30 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "guns_improvised",
     "//": "Makeshift or otherwise poor quality guns of all types.",
     "items": [
@@ -1118,6 +1128,7 @@
       { "group": "carried_guns_archery", "prob": 200 },
       { "group": "guns_improvised", "prob": 200 },
       { "group": "carried_guns_rifle_common", "prob": 100 },
+      { "group": "everyday_m6_asw", "prob": 10 },
       { "group": "everyday_carbon_rifle", "prob": 5 },
       { "group": "everyday_carbon_pistol", "prob": 5 },
       { "group": "carried_guns_shotgun_common", "prob": 60 },
@@ -1154,6 +1165,7 @@
       { "group": "nested_savage_111f", "prob": 10 },
       { "group": "nested_marlin_9a", "prob": 20 },
       { "group": "nested_ruger_1022", "prob": 10 },
+      { "group": "everyday_m6_asw", "prob": 5 },
       { "group": "nested_colt_lightning", "prob": 10 },
       { "group": "nested_ar_357sig", "prob": 10 },
       { "group": "nested_hipoint_3895", "prob": 10 },
@@ -1163,6 +1175,7 @@
       { "group": "nested_win70", "prob": 20 },
       { "group": "nested_1895sbl", "prob": 20 },
       { "group": "nested_sharps", "prob": 5 },
+      { "group": "everyday_combination_gun", "prob": 50 },
       { "group": "nested_sks", "prob": 10 },
       { "group": "nested_browning_a5", "prob": 20 },
       { "group": "nested_mossberg_500", "prob": 20 },
@@ -1205,7 +1218,8 @@
       { "collection": [ { "item": "garand" }, { "item": "garandclip", "count": [ 1, 2 ] } ], "prob": 20 },
       { "collection": [ { "item": "m1903" }, { "item": "3006_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 15 },
       { "collection": [ { "item": "m1918" }, { "group": "display_m1918_mag", "count": [ 1, 2 ] } ], "prob": 15 },
-      { "item": "winchester_1897", "prob": 10 },
+      { "item": "winchester_1897", "prob": 8 },
+      { "item": "m6_asw", "prob": 2 },
       { "collection": [ { "item": "m60" }, { "item": "ammolink308", "count": [ 100, 200 ] } ], "prob": 10 },
       { "collection": [ { "item": "m2browning" }, { "item": "ammolink50", "count": [ 100, 200 ] } ], "prob": 5 },
       { "collection": [ { "item": "m1874_gatling" }, { "item": "gatlingdrum240", "count": [ 1, 2 ] } ], "prob": 5 },

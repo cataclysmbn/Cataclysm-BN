@@ -64,11 +64,11 @@
 #include "json.h"
 #include "line.h"
 #include "locations.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
-#include "map_utils.h"
+#include "map/utils/map_utils.h"
 #include "mapdata.h"
 #include "material.h"
 #include "memory_fast.h"
@@ -487,11 +487,16 @@ void unpack_actor::load( const JsonObject &obj )
 
 int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
+    detached_ptr<item> unpacked = it.detach();
+    if( !unpacked ) {
+        debugmsg( "Could not detach item for unpacking" );
+        return 0;
+    }
+
+    p.add_msg_if_player( _( "You unpack the %s." ), unpacked->tname() );
+
     std::vector<detached_ptr<item>> items = item_group::items_from( unpack_group, calendar::turn );
     item *last_armor = &null_item_reference();
-
-    p.add_msg_if_player( _( "You unpack the %s." ), it.tname() );
-
     map &here = get_map();
     for( detached_ptr<item> &content : items ) {
         if( content->is_armor() ) {
@@ -510,8 +515,6 @@ int unpack_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) cons
 
         here.add_item_or_charges( p.bub_pos(), std::move( content ) );
     }
-
-    it.detach( );
 
     return 0;
 }
@@ -636,7 +639,7 @@ void explosion_iuse::load( const JsonObject &obj )
     }
     obj.read( "emp_blast_radius", emp_blast_radius );
     obj.read( "scrambler_blast_radius", scrambler_blast_radius );
-    obj.read( "sound_volume", sound_volume );
+    assign( obj, "sound_volume", sound_volume );
     obj.read( "sound_msg", sound_msg );
     obj.read( "no_deactivate_msg", no_deactivate_msg );
 }
@@ -644,10 +647,10 @@ void explosion_iuse::load( const JsonObject &obj )
 int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
-        if( sound_volume >= 0 ) {
+        if( sound_volume >= 0_dB ) {
             sound_event se;
             se.origin = pos;
-            se.volume = sound_volume;
+            se.volume = units::to_decibel( sound_volume );
             se.category = sounds::sound_t::alarm;
             se.movement_noise = true;
             se.description = sound_msg.empty() ? _( "Tick." ) : _( sound_msg );
@@ -1291,25 +1294,40 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
         p.moves -= moves;
     }
     if( !newmon.has_flag( MF_INTERIOR_AMMO ) ) {
-        for( auto &amdef : newmon.ammo ) {
-            item &ammo_item = *item::spawn_temporary( amdef.first, calendar::start_of_cataclysm );
-            const int available = p.charges_of( amdef.first );
-            if( available == 0 ) {
-                amdef.second = 0;
+        for( const auto &[slot_ammo_id, max_ammo] : newmon.type->starting_ammo ) {
+            for( const auto &compatible_ammo_id : newmon.ammo_slot_items( slot_ammo_id ) ) {
+                newmon.ammo[compatible_ammo_id] = 0;
+            }
+
+            auto remaining_capacity = max_ammo;
+            auto loaded_any_ammo = false;
+            for( const auto &compatible_ammo_id : newmon.ammo_slot_items( slot_ammo_id ) ) {
+                if( remaining_capacity <= 0 ) {
+                    break;
+                }
+                item &ammo_item = *item::spawn_temporary( compatible_ammo_id, calendar::start_of_cataclysm );
+                const auto available = p.charges_of( compatible_ammo_id );
+                if( available <= 0 ) {
+                    continue;
+                }
+                ammo_item.charges = std::min( available, remaining_capacity );
+                p.use_charges( compatible_ammo_id, ammo_item.charges );
+                //~ First %s is the ammo item (with plural form and count included), second is the monster name
+                p.add_msg_if_player( vgettext( "You load %1$d x %2$s round into the %3$s.",
+                                               "You load %1$d x %2$s rounds into the %3$s.", ammo_item.charges ),
+                                     ammo_item.charges, ammo_item.type_name( ammo_item.charges ),
+                                     newmon.name() );
+                newmon.ammo[compatible_ammo_id] = ammo_item.charges;
+                remaining_capacity -= ammo_item.charges;
+                loaded_any_ammo = true;
+            }
+
+            if( !loaded_any_ammo ) {
+                item &slot_ammo_item = *item::spawn_temporary( slot_ammo_id, calendar::start_of_cataclysm );
                 p.add_msg_if_player( m_info,
                                      _( "If you had standard factory-built %1$s bullets, you could load the %2$s." ),
-                                     ammo_item.type_name( 2 ), newmon.name() );
-                continue;
+                                     slot_ammo_item.type_name( 2 ), newmon.name() );
             }
-            // Don't load more than the default from the monster definition.
-            ammo_item.charges = std::min( available, amdef.second );
-            p.use_charges( amdef.first, ammo_item.charges );
-            //~ First %s is the ammo item (with plural form and count included), second is the monster name
-            p.add_msg_if_player( vgettext( "You load %1$d x %2$s round into the %3$s.",
-                                           "You load %1$d x %2$s rounds into the %3$s.", ammo_item.charges ),
-                                 ammo_item.charges, ammo_item.type_name( ammo_item.charges ),
-                                 newmon.name() );
-            amdef.second = ammo_item.charges;
         }
     }
     int skill_offset = 0;
@@ -1389,7 +1407,7 @@ int place_npc_iuse::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         return 0;
     }
 
-    here.place_npc( target_pos.value().xy(), npc_class_id );
+    here.place_npc( target_pos.value(), npc_class_id );
     p.mod_moves( -moves );
     p.add_msg_if_player( m_info, "%s", _( summon_msg ) );
     return 1;
@@ -2191,7 +2209,7 @@ int enzlave_actor::use( player &p, item &it, bool t, const tripoint_bub_ms & ) c
         p.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    map_stack items = get_map().i_at( p.bub_pos().xy() );
+    map_stack items = get_map().i_at( p.bub_pos() );
     std::vector<const item *> corpses;
 
     for( item * const &corpse_candidate : items ) {
@@ -3298,8 +3316,18 @@ std::unique_ptr<iuse_actor> repair_item_actor::clone() const
     return std::make_unique<repair_item_actor>( *this );
 }
 
-bool repair_item_actor::handle_components( player &pl, const item &fix,
-        bool print_msg, bool just_check ) const
+int repair_item_actor::get_material_amt_needed( const item &fix, bool just_check ) const
+{
+    // Repairing or modifying items requires at least 1 repair item,
+    // otherwise number is related to size of item
+    // Round up if checking, but roll if actually consuming
+    // TODO: should 250_ml be part of the cost_scaling?
+    return std::max<int>( 1, just_check ?
+                          std::ceil( fix.volume() / 250_ml * cost_scaling ) :
+                          roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
+}
+
+std::set<material_id> repair_item_actor::get_valid_materials( const item &fix ) const
 {
     // Entries valid for repaired items
     std::set<material_id> valid_entries;
@@ -3308,6 +3336,13 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
             valid_entries.insert( mat );
         }
     }
+    return valid_entries;
+}
+
+bool repair_item_actor::handle_components( player &pl, const item &fix,
+        bool print_msg, bool just_check ) const
+{
+    std::set<material_id> valid_entries = get_valid_materials( fix );
 
     if( valid_entries.empty() ) {
         if( print_msg ) {
@@ -3324,15 +3359,7 @@ bool repair_item_actor::handle_components( player &pl, const item &fix,
     }
 
     const inventory &crafting_inv = pl.crafting_inventory();
-
-    // Repairing or modifying items requires at least 1 repair item,
-    //  otherwise number is related to size of item
-    // Round up if checking, but roll if actually consuming
-    // TODO: should 250_ml be part of the cost_scaling?
-    const int items_needed = std::max<int>( 1, just_check ?
-                                            std::ceil( fix.volume() / 250_ml * cost_scaling ) :
-                                            roll_remainder( fix.volume() / 250_ml * cost_scaling ) );
-
+    const int items_needed = get_material_amt_needed( fix, just_check );
 
     // Go through all discovered repair items and see if we have any of them available
     std::vector<item_comp> comps;
@@ -3613,7 +3640,7 @@ static bool damage_item( player &pl, item *fix )
             return std::move( mod );
         } );
 
-        fix->contents.spill_contents( fix->position() );
+        fix->contents.spill_contents( fix->bub_pos() );
 
         pl.add_msg_if_player( m_bad, _( "You destroy it!" ) );
         if( fix->where() == item_location_type::character ) {
@@ -3621,7 +3648,7 @@ static bool damage_item( player &pl, item *fix )
         } else {
             for( detached_ptr<item> &it : fix->contents.clear_items() ) {
                 put_into_vehicle_or_drop( pl, item_drop_reason::deliberate, std::move( it ),
-                                          fix->position() );
+                                          fix->bub_pos() );
             }
             fix->detach();
         }

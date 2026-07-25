@@ -209,12 +209,20 @@ void uilist::init()
     hotkeys = DEFAULT_HOTKEYS;
     input_category = "UILIST";
     additional_actions.clear();
+    categories.clear();
+    category_filter = {};
+    current_category = 0;
+    dynamic_categories = false;
 }
 
 input_context uilist::create_main_input_context() const
 {
     input_context ctxt( input_category );
     ctxt.register_updown();
+    if( categories.size() > 1 || dynamic_categories ) {
+        ctxt.register_action( "LEFT", to_translation( "Previous category" ) );
+        ctxt.register_action( "RIGHT", to_translation( "Next category" ) );
+    }
     ctxt.register_action( "PAGE_UP", to_translation( "Fast scroll up" ) );
     ctxt.register_action( "PAGE_DOWN", to_translation( "Fast scroll down" ) );
     ctxt.register_action( "HOME", to_translation( "Go to first entry" ) );
@@ -269,6 +277,10 @@ void uilist::filterlist()
 {
     bool filtering = ( this->filtering && !filter.empty() );
 
+    if( categories.empty() || current_category >= categories.size() ) {
+        current_category = 0;
+    }
+
     // TODO: && is_all_lc( filter )
     bool ignore_case = filtering_igncase;
     fentries.clear();
@@ -283,6 +295,9 @@ void uilist::filterlist()
     }
 
     for( int i = 0; i < num_entries; i++ ) {
+        if( !categories.empty() && !category_filter( entries[i], current_category ) ) {
+            continue;
+        }
         if( filtering ) {
             if( exact_match_only ) {
                 if( !( entries[i].txt == filter ) ) {
@@ -358,6 +373,76 @@ void uilist::set_filter( const std::string &fstr )
     filterlist();
 }
 
+auto uilist::set_categories(
+    std::vector<std::string> category_names,
+    std::function < auto( const uilist_entry &, std::size_t ) -> bool > filter,
+    const std::size_t requested_category ) -> void
+{
+    namespace ranges = std::ranges;
+    const auto previously_had_categories = !categories.empty();
+    const auto has_empty_name = ranges::any_of( category_names, &std::string::empty );
+    if( category_names.size() < 2 || has_empty_name || !filter ) {
+        categories.clear();
+        category_filter = {};
+        current_category = 0;
+    } else {
+        categories = std::move( category_names );
+        category_filter = std::move( filter );
+        current_category = requested_category < categories.size() ? requested_category : 0;
+    }
+
+    if( started ) {
+        refresh_category_filter();
+        if( previously_had_categories != !categories.empty() ) {
+            const auto current_ui = ui.lock();
+            if( current_ui ) {
+                current_ui->mark_resize();
+            }
+        }
+    }
+}
+
+auto uilist::enable_dynamic_categories() -> void
+{
+    dynamic_categories = true;
+}
+
+auto uilist::refresh_category_filter() -> void
+{
+    if( !started ) {
+        return;
+    }
+
+    const auto previously_selected = selected;
+    filterlist();
+    if( dynamic_categories && previously_selected >= 0 && !fentries.empty() &&
+        std::ranges::lower_bound( fentries, previously_selected ) == fentries.end() ) {
+        selected = fentries.back();
+        fselected = static_cast<int>( fentries.size() ) - 1;
+    }
+}
+
+auto uilist::get_current_category() const -> std::size_t
+{
+    return current_category;
+}
+
+auto uilist::cycle_category( const bool forward ) -> void
+{
+    if( categories.size() < 2 ) {
+        return;
+    }
+    if( current_category >= categories.size() ) {
+        current_category = 0;
+    }
+    if( forward ) {
+        current_category = current_category == categories.size() - 1 ? 0 : current_category + 1;
+    } else {
+        current_category = current_category == 0 ? categories.size() - 1 : current_category - 1;
+    }
+    filterlist();
+}
+
 void uilist::inputfilter()
 {
     input_context ctxt = create_filter_input_context();
@@ -400,6 +485,27 @@ bool uilist::set_selected( int sel )
     }
 
     return false;
+}
+
+auto uilist::set_entry_hotkey( const std::size_t entry_index, const int hotkey ) -> bool
+{
+    if( entry_index >= entries.size() || !std::in_range<int>( entry_index ) ) {
+        return false;
+    }
+
+    const auto entry = static_cast<int>( entry_index );
+    const auto existing = keymap.find( hotkey );
+    if( hotkey > 0 && existing != keymap.end() && existing->second != entry ) {
+        return false;
+    }
+
+    const auto has_entry = [entry]( const auto & mapping ) { return mapping.second == entry; };
+    std::erase_if( keymap, has_entry );
+    entries[entry_index].hotkey = hotkey;
+    if( hotkey > 0 && entries[entry_index].enabled ) {
+        keymap[hotkey] = entry;
+    }
+    return true;
 }
 
 /**
@@ -595,7 +701,8 @@ void uilist::setup()
     }
 
     vmax = entries.size();
-    int additional_lines = 2 + text_separator_line + // add two for top & bottom borders
+    const auto category_lines = categories.empty() ? 0 : 1;
+    int additional_lines = 2 + text_separator_line + category_lines +
                            static_cast<int>( textformatted.size() );
     if( desc_enabled ) {
         additional_lines += desc_lines + 1; // add one for description separator line
@@ -654,6 +761,9 @@ void uilist::apply_scrollbar()
     } else {
         estart = 1;
     }
+    if( !categories.empty() ) {
+        ++estart;
+    }
 
     scrollbar()
     .offset_x( sbside )
@@ -702,6 +812,16 @@ void uilist::show( ui_adaptor &ui )
         }
         mvwputch( window, point( w_width - 1, text_lines + 1 ), border_color, LINE_XOXX );
         estart += text_lines + 1; // +1 for the horizontal line.
+    }
+
+    if( !categories.empty() ) {
+        if( current_category >= categories.size() ) {
+            current_category = 0;
+        }
+        const auto category_label = "<< " + categories[current_category] + " >>";
+        const auto category_width = std::max( 1, w_width - pad_left - pad_right - 4 );
+        trim_and_print( window, point( pad_left + 2, estart++ ), category_width, c_yellow,
+                        _color_error, "%s", category_label );
     }
 
     calcStartPos( vshift, fselected, vmax, fentries.size() );
@@ -844,6 +964,12 @@ bool uilist::scrollby( const int scrollby )
     if( scrollby == 0 ) {
         return false;
     }
+    if( fentries.empty() ) {
+        fselected = -1;
+        selected = -1;
+        vshift = 0;
+        return true;
+    }
 
     bool looparound = ( scrollby == -1 || scrollby == 1 );
     bool backwards = ( scrollby < 0 );
@@ -951,6 +1077,8 @@ void uilist::query( bool loop, int timeout )
             /* nothing */
         } else if( filtering && ret_act == "FILTER" ) {
             inputfilter();
+        } else if( categories.size() > 1 && ( ret_act == "LEFT" || ret_act == "RIGHT" ) ) {
+            cycle_category( ret_act == "RIGHT" );
         } else if( ret_act == "ANY_INPUT" && iter != keymap.end() ) {
             // only handle "ANY_INPUT" since "HELP_KEYBINDINGS" is already
             // handled by the input context and the caller might want to handle

@@ -69,12 +69,12 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic_teleporter_list.h"
+#include "magic/magic_teleporter_list.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_selector.h"
-#include "map_functions.h"
-#include "map_utils.h"
+#include "map/utils/map_functions.h"
+#include "map/utils/map_utils.h"
 #include "mapdata.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -271,8 +271,9 @@ void iexamine::cvdmachine( player &p, const tripoint_bub_ms & )
     }
 
     // Require materials proportional to selected item volume
-    auto qty = loc->volume() / units::legacy_volume_factor;
-    qty = std::max( 1, qty );
+    const auto volume_ratio = loc->volume() / units::legacy_volume_factor;
+    const auto volume_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( volume_qty, decltype( volume_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "cvd_diamond" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -347,8 +348,12 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         menu.text = _( "Choose a recipe:" );
         for( size_t i = 0; i < recipe_ids.size(); ++i ) {
             itype_id item = itype_id( recipe_ids[i] );
+            const auto volume_ratio = item->volume / 250_ml;
+            const auto min_charge_units = decltype( volume_ratio ) { 1 };
+            const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+            const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
             auto button_text = string_format( "%s [%d]", item->nname( 1 ),
-                                              std::max( 1, item->volume / 250_ml ) * 5 );
+                                              static_cast<int>( charge_units * 5 ) );
             menu.addentry( i, true, -1, button_text );
         }
         menu.query();
@@ -380,7 +385,9 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    auto qty = std::max( 1, new_item->volume() / 250_ml );
+    const auto volume_ratio = new_item->volume() / 250_ml;
+    const auto requested_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( requested_qty, decltype( requested_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "nanofabricator" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -1416,7 +1423,7 @@ void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
     }
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
-    take_down_deployed_furniture( pos, pos );
+    map_funcs::take_down_deployed_furniture( pos, pos );
 }
 
 static std::pair<itype_id, const deploy_tent_actor *> find_tent_itype( const furn_str_id &id )
@@ -1950,7 +1957,7 @@ void iexamine::transform( player &p, const tripoint_bub_ms &pos )
             case 2: {
                 add_msg( m_info, _( "You take down the %s." ),
                          g->m.furnname( pos ) );
-                take_down_deployed_furniture( pos, pos );
+                map_funcs::take_down_deployed_furniture( pos, pos );
                 return;
             }
             case 3: {
@@ -3340,7 +3347,7 @@ void iexamine::fireplace( player &p, const tripoint_bub_ms &examp )
             }
             p.add_msg_if_player( m_info, _( "You take down the %s." ),
                                  here.furnname( examp ) );
-            take_down_deployed_furniture( examp, examp );
+            map_funcs::take_down_deployed_furniture( examp, examp );
             return;
         }
         case 4: {
@@ -5604,17 +5611,18 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         get_map().unboard_vehicle( p.bub_pos() );
     }
     auto &buffer = p.get_mapbuffer();
-    const auto player_terrain = buffer.get_ter( p.abs_pos() );
-    if( player_terrain && player_terrain->obj().id.str() == "t_open_air" &&
+    const auto tile_reader = buffer.make_abs_tile_reader();
+    const auto player_tile = tile_reader.get_tile( p.abs_pos() );
+    if( player_tile && player_tile->get_ter() == t_open_air &&
         !character_funcs::can_fly( p ) ) {
         auto where = p.abs_pos();
         auto below = where + tripoint_rel_ms::below();
 
         // Keep going down until we find a tile that is NOT open air
         while( true ) {
-            const auto below_terrain = buffer.get_ter( below );
-            if( !below_terrain || below_terrain->obj().id.str() != "t_open_air" ||
-                !buffer.valid_move( where, below, { .flying = true, .zlevels = get_map().has_zlevels() } ) ) {
+            const auto below_tile = tile_reader.get_tile( below );
+            if( !below_tile || below_tile->get_ter() != t_open_air ||
+                !buffer.valid_move( where, below, { .flying = true } ) ) {
                 break;
             }
             where += tripoint_rel_ms::below();
@@ -5636,9 +5644,12 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
     //if the tile below has a grappling hook, you can pull it up
     auto below_rope = examp;
     below_rope.z()--;
-    if( buffer.has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
+    const auto below_rope_tile = tile_reader.get_tile( below_rope );
+    std::optional<std::string> below_rope_name;
+    if( below_rope_tile && below_rope_tile->get_furn_t().has_flag( "REMOVE_FROM_ABOVE" ) ) {
+        below_rope_name = below_rope_tile->get_furn().obj().name();
         cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
-                        buffer.get_furn( below_rope )->obj().name() );
+                        *below_rope_name );
     }
     if( p.has_trait( trait_WEB_BRIDGE ) ) {
         cmenu.addentry( ledge_action::spin_web_bridge, true, 'w', _( "Spin Web Bridge." ) );
@@ -5655,11 +5666,11 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
                 add_msg( m_warning, _( "You are too burdened to jump over an obstacle." ) );
             } else if( !buffer.valid_move( examp, dest, { .flying = true } ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - something is blocking the way." ) );
-            } else if( g->critter_at( dest ) ) {
+            } else if( const auto blocking_creature = buffer.creature_at( dest ) ) {
                 add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
-                         g->critter_at( dest )->disp_name() );
-            } else if( const auto dest_terrain = buffer.get_ter( dest );
-                       dest_terrain && dest_terrain->obj().trap == tr_ledge ) {
+                         blocking_creature->disp_name() );
+            } else if( const auto dest_tile = tile_reader.get_tile( dest );
+                       dest_tile && dest_tile->get_ter_t().trap == tr_ledge ) {
                 add_msg( m_warning, _( "You are not going to jump over an obstacle only to fall down." ) );
             } else {
                 add_msg( m_info, _( "You jump over an obstacle." ) );
@@ -5754,8 +5765,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
         }
         case ledge_action::pull_up_rope: {
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
-                                 buffer.get_furn( below_rope )->obj().name() );
-            take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
+                                 below_rope_name.value_or( std::string{} ) );
+            map_funcs::take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {
@@ -5763,12 +5774,13 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             if( !can_use_mutation_warn( trait_WEB_BRIDGE, p ) ) {
                 break;
             }
-            const int range = 6; //this means we could web across a gap of 5.
-            int success_range = 0;
-            bool success = false;
-            for( int i = 2; i <= range; i++ ) {
+            static constexpr auto range = 6; //this means we could web across a gap of 5.
+            auto success_range = 0;
+            auto success = false;
+            for( const auto i : std::views::iota( 2, range + 1 ) ) {
                 //break at the first non empty space encountered
-                if( buffer.get_ter( p.abs_pos() + dir * i ) != t_open_air ) {
+                const auto tile = tile_reader.get_tile( p.abs_pos() + dir * i );
+                if( !tile || tile->get_ter() != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;
@@ -5777,7 +5789,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
             if( !success ) {
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
-                for( int i = 1; i < success_range; i++ ) {
+                for( const auto i : std::views::iota( 1, success_range ) ) {
                     buffer.set_ter( p.abs_pos() + dir * i, t_web_bridge );
                 }
                 p.mutation_spend_resources( trait_WEB_BRIDGE );

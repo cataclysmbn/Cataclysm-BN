@@ -8,8 +8,11 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "debug.h"
@@ -72,8 +75,326 @@ static const flag_id json_flag_TIE_UP( "TIE_UP" );
 static const flag_id json_flag_TACK( "TACK" );
 static const flag_id json_flag_MECH_BAT( "MECH_BAT" );
 
+static const int ITEM_RADIUS = 2;
+
 namespace
 {
+
+struct monster_ammo_option {
+    itype_id ammo_id;
+    int amount = 0;
+};
+
+struct monster_reload_option {
+    itype_id ammo_id;
+    int missing_ammo = 0;
+    std::vector<monster_ammo_option> compatible_ammo;
+};
+
+auto has_reloadable_ammo( const monster &z ) -> bool
+{
+    return z.has_flag( MF_DROPS_AMMO ) && !z.type->starting_ammo.empty();
+}
+
+auto compatible_reload_ammo( const avatar &you, const monster &z,
+                             const itype_id &ammo_id ) -> std::vector<monster_ammo_option>
+{
+    auto ammo_options = std::vector<monster_ammo_option> {};
+    for( const auto &compatible_ammo_id : z.ammo_slot_items( ammo_id ) ) {
+        const auto available_ammo = you.charges_of( compatible_ammo_id );
+        if( available_ammo <= 0 ) {
+            continue;
+        }
+        ammo_options.emplace_back( monster_ammo_option{
+            .ammo_id = compatible_ammo_id,
+            .amount = available_ammo,
+        } );
+    }
+    return ammo_options;
+}
+
+auto loaded_slot_ammo( const monster &z, const itype_id &ammo_id )
+-> std::vector<monster_ammo_option>
+{
+    auto ammo_options = std::vector<monster_ammo_option> {};
+    for( const auto &compatible_ammo_id : z.ammo_slot_items( ammo_id ) ) {
+        const auto available_ammo = z.ammo.contains( compatible_ammo_id ) ? z.ammo.at(
+                                        compatible_ammo_id ) : 0;
+        if( available_ammo <= 0 ) {
+            continue;
+        }
+        ammo_options.emplace_back( monster_ammo_option{
+            .ammo_id = compatible_ammo_id,
+            .amount = available_ammo,
+        } );
+    }
+    return ammo_options;
+}
+
+auto monster_reload_options( const avatar &you,
+                             const monster &z ) -> std::vector<monster_reload_option>
+{
+    auto reload_options = std::vector<monster_reload_option> {};
+    if( !has_reloadable_ammo( z ) ) {
+        return reload_options;
+    }
+
+    for( const auto &[ammo_id, max_ammo] : z.type->starting_ammo ) {
+        const auto current_ammo = z.ammo_count_for_slot( ammo_id );
+        const auto missing_ammo = max_ammo - current_ammo;
+        if( missing_ammo <= 0 ) {
+            continue;
+        }
+        auto reload_option = monster_reload_option{
+            .ammo_id = ammo_id,
+            .missing_ammo = missing_ammo,
+            .compatible_ammo = compatible_reload_ammo( you, z, ammo_id ),
+        };
+        reload_options.emplace_back( std::move( reload_option ) );
+    }
+
+    return reload_options;
+}
+
+auto needs_ammo_reload( const monster &z ) -> bool
+{
+    if( !has_reloadable_ammo( z ) ) {
+        return false;
+    }
+
+    for( const auto &[ammo_id, max_ammo] : z.type->starting_ammo ) {
+        const auto current_ammo = z.ammo_count_for_slot( ammo_id );
+        if( current_ammo < max_ammo ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+auto has_compatible_reload_ammo( const avatar &you, const monster &z ) -> bool
+{
+    for( const auto &reload_option : monster_reload_options( you, z ) ) {
+        if( !reload_option.compatible_ammo.empty() ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+auto has_loaded_ammo( const monster &z ) -> bool
+{
+    for( const auto &[ammo_id, max_ammo] : z.type->starting_ammo ) {
+        static_cast<void>( max_ammo );
+        if( z.ammo_count_for_slot( ammo_id ) > 0 ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+auto ammo_slot_name( const monster &z, const itype_id &ammo_id ) -> std::string
+{
+    const auto loaded_ammo = z.loaded_ammo_for_slot( ammo_id );
+    const auto display_ammo = loaded_ammo.is_empty() ? ammo_id : loaded_ammo;
+    return display_ammo->nname( 1 );
+}
+
+auto ammo_state_text( const monster &z ) -> std::string
+{
+    if( !has_reloadable_ammo( z ) ) {
+        return {};
+    }
+
+    return enumerate_as_string( z.type->starting_ammo.begin(), z.type->starting_ammo.end(),
+    [&z]( const auto & ammo_entry ) {
+        const auto &[ammo_id, max_ammo] = ammo_entry;
+        const auto current_ammo = z.ammo_count_for_slot( ammo_id );
+        return string_format( _( "%s %d/%d" ), ammo_slot_name( z, ammo_id ), current_ammo, max_ammo );
+    }, enumeration_conjunction::none );
+}
+
+auto reload_menu_text( const avatar &you, const monster &z ) -> std::string
+{
+    const auto ammo_text = ammo_state_text( z );
+    if( has_compatible_reload_ammo( you, z ) ) {
+        return string_format( _( "Reload weapons (%s)" ), ammo_text );
+    }
+    if( needs_ammo_reload( z ) ) {
+        return string_format( _( "Reload weapons (%s; need compatible ammo)" ), ammo_text );
+    }
+    return string_format( _( "Reload weapons (%s; already full)" ), ammo_text );
+}
+
+auto unload_menu_text( const monster &z ) -> std::string
+{
+    const auto ammo_text = ammo_state_text( z );
+    if( has_loaded_ammo( z ) ) {
+        return string_format( _( "Unload weapons (%s)" ), ammo_text );
+    }
+    return string_format( _( "Unload weapons (%s; already empty)" ), ammo_text );
+}
+
+auto select_ammo_slot( const std::string &prompt, const monster &z,
+                       const std::vector<itype_id> &ammo_slots ) -> itype_id
+{
+    if( ammo_slots.empty() ) {
+        return itype_id {};
+    }
+    if( ammo_slots.size() == 1 ) {
+        return ammo_slots.front();
+    }
+
+    uilist selection_menu;
+    selection_menu.text = prompt;
+    auto i = 0;
+    for( const auto &ammo_slot : ammo_slots ) {
+        selection_menu.addentry( i++, true, MENU_AUTOASSIGN, _( "%1$s (%2$d/%3$d)" ),
+                                 ammo_slot_name( z, ammo_slot ), z.ammo_count_for_slot( ammo_slot ),
+                                 z.ammo_capacity_for_slot( ammo_slot ) );
+    }
+    selection_menu.query();
+    if( selection_menu.ret < 0 || static_cast<size_t>( selection_menu.ret ) >= ammo_slots.size() ) {
+        return itype_id {};
+    }
+    return ammo_slots[selection_menu.ret];
+}
+
+auto select_ammo_variant( const std::string &prompt,
+                          const std::vector<monster_ammo_option> &ammo_options ) -> itype_id
+{
+    if( ammo_options.empty() ) {
+        return itype_id {};
+    }
+    if( ammo_options.size() == 1 ) {
+        return ammo_options.front().ammo_id;
+    }
+
+    uilist selection_menu;
+    selection_menu.text = prompt;
+    auto i = 0;
+    for( const auto &ammo_option : ammo_options ) {
+        selection_menu.addentry( i++, true, MENU_AUTOASSIGN, _( "%1$s (%2$d)" ),
+                                 ammo_option.ammo_id->nname( ammo_option.amount ),
+                                 ammo_option.amount );
+    }
+    selection_menu.query();
+    if( selection_menu.ret < 0 || static_cast<size_t>( selection_menu.ret ) >= ammo_options.size() ) {
+        return itype_id {};
+    }
+    return ammo_options[selection_menu.ret].ammo_id;
+}
+
+auto reload_monster_weapons( avatar &you, monster &z ) -> void
+{
+    const auto reload_options = monster_reload_options( you, z );
+    auto reloadable_slots = std::vector<itype_id> {};
+    for( const auto &reload_option : reload_options ) {
+        if( !reload_option.compatible_ammo.empty() ) {
+            reloadable_slots.push_back( reload_option.ammo_id );
+        }
+    }
+
+    if( reloadable_slots.empty() ) {
+        if( needs_ammo_reload( z ) ) {
+            add_msg( m_info, _( "You don't have compatible ammo to reload the %s." ), z.get_name() );
+        } else {
+            add_msg( m_info, _( "The %s's weapons are already fully loaded." ), z.get_name() );
+        }
+        return;
+    }
+
+    const auto selected_slot = select_ammo_slot( _( "Reload which weapon?" ), z, reloadable_slots );
+    if( selected_slot.is_empty() ) {
+        return;
+    }
+
+    const auto reload_option_iter = std::ranges::find_if( reload_options,
+    [&selected_slot]( const monster_reload_option & reload_option ) {
+        return reload_option.ammo_id == selected_slot;
+    } );
+    if( reload_option_iter == reload_options.end() ) {
+        return;
+    }
+
+    const auto selected_ammo = select_ammo_variant(
+                                   string_format( _( "Reload the %s with what?" ),
+                                           ammo_slot_name( z, selected_slot ) ),
+                                   reload_option_iter->compatible_ammo );
+    if( selected_ammo.is_empty() ) {
+        return;
+    }
+
+    const auto selected_ammo_iter = std::ranges::find_if( reload_option_iter->compatible_ammo,
+    [&selected_ammo]( const monster_ammo_option & ammo_option ) {
+        return ammo_option.ammo_id == selected_ammo;
+    } );
+    if( selected_ammo_iter == reload_option_iter->compatible_ammo.end() ) {
+        return;
+    }
+
+    const auto reload_amount = std::min( reload_option_iter->missing_ammo, selected_ammo_iter->amount );
+    z.ammo[selected_ammo] += reload_amount;
+    you.use_charges( selected_ammo, reload_amount );
+    add_msg( vgettext( "You load %1$d x %2$s round into the %3$s.",
+                       "You load %1$d x %2$s rounds into the %3$s.", reload_amount ),
+             reload_amount, selected_ammo->nname( reload_amount ), z.get_name() );
+    you.moves -= 100;
+}
+
+auto unload_monster_weapons( avatar &you, monster &z ) -> void
+{
+    auto loaded_slots = std::vector<itype_id> {};
+    for( const auto &[ammo_id, max_ammo] : z.type->starting_ammo ) {
+        static_cast<void>( max_ammo );
+        if( z.ammo_count_for_slot( ammo_id ) > 0 ) {
+            loaded_slots.push_back( ammo_id );
+        }
+    }
+
+    if( loaded_slots.empty() ) {
+        add_msg( m_info, _( "The %s's weapons are already empty." ), z.get_name() );
+        return;
+    }
+
+    const auto selected_slot = select_ammo_slot( _( "Unload which weapon?" ), z, loaded_slots );
+    if( selected_slot.is_empty() ) {
+        return;
+    }
+
+    const auto loaded_ammo = loaded_slot_ammo( z, selected_slot );
+    const auto selected_ammo = select_ammo_variant(
+                                   string_format( _( "Unload which ammo from the %s?" ),
+                                           ammo_slot_name( z, selected_slot ) ),
+                                   loaded_ammo );
+    if( selected_ammo.is_empty() ) {
+        return;
+    }
+
+    const auto loaded_ammo_iter = std::ranges::find_if( loaded_ammo,
+    [&selected_ammo]( const monster_ammo_option & ammo_option ) {
+        return ammo_option.ammo_id == selected_ammo;
+    } );
+    if( loaded_ammo_iter == loaded_ammo.end() ) {
+        return;
+    }
+
+    auto unloaded_ammo = item::spawn( selected_ammo, calendar::turn, loaded_ammo_iter->amount );
+    unloaded_ammo = you.i_add_or_drop( std::move( unloaded_ammo ) );
+    if( unloaded_ammo ) {
+        add_msg( m_info, _( "You can't unload the %s right now." ), z.get_name() );
+        return;
+    }
+
+    z.ammo.erase( selected_ammo );
+    add_msg( vgettext( "You unload %1$d x %2$s round from the %3$s.",
+                       "You unload %1$d x %2$s rounds from the %3$s.", loaded_ammo_iter->amount ),
+             loaded_ammo_iter->amount, selected_ammo->nname( loaded_ammo_iter->amount ),
+             z.get_name() );
+    you.moves -= 100;
+}
 
 } // namespace
 
@@ -108,9 +429,12 @@ bool monexamine::pet_menu( monster &z )
         remove_bat,
         insert_bat,
         check_bat,
+        reload_weapons,
+        unload_weapons,
         change_orders,
         disable_pet,
-        attack
+        attack,
+        COUNT
     };
 
     uilist amenu;
@@ -275,6 +599,12 @@ bool monexamine::pet_menu( monster &z )
             amenu.addentry( insert_bat, false, 'x', _( "You need a %s to power this mech" ), type.nname( 1 ) );
         }
     }
+    if( has_reloadable_ammo( z ) ) {
+        amenu.addentry( reload_weapons, true, 'R', reload_menu_text( you, z ) );
+        if( has_loaded_ammo( z ) ) {
+            amenu.addentry( unload_weapons, true, 'U', unload_menu_text( z ) );
+        }
+    }
     if( z.has_flag( MF_CAN_BE_ORDERED ) ) {
         if( z.has_effect( effect_docile ) ) {
             amenu.addentry( change_orders, true, 'O', _( "Order to engage targets" ), pet_name );
@@ -295,109 +625,206 @@ bool monexamine::pet_menu( monster &z )
     } else {
         amenu.addentry( attack, true, 'A', _( "Attack" ) );
     }
+
+    std::vector<lua_menu_entry> lua_entries {};
+    std::map<int, lua_menu_entry> lua_entries_map;
+    const auto cb_actor = z.get_lua_callbacks();
+    if( cb_actor ) {
+        const auto entries = cb_actor->call_get_examine_menu_entries( you, z );
+        for( const auto entry : entries ) {
+            if( entry.valid() ) {
+                lua_entries.push_back( entry );
+            }
+        }
+    }
+
+    const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
+    [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
+    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+        if( !result.is<sol::table>() ) { continue; }
+
+        const sol::table &entries_table = result.as<sol::table>();
+        const int size = entries_table.size();
+        for( int j = 1; j <= size; ++j ) {
+            sol::optional<sol::table> entry_opt = entries_table[j];
+            if( !entry_opt.has_value() ) {
+                debugmsg( "Empty entry at index %d", j );
+                continue;
+            }
+
+            const sol::table &entry = *entry_opt;
+            std::string id = entry.get<std::string>( "menu_id" );
+            std::string label = entry.get<std::string>( "menu_label" );
+            lua_entries.emplace_back( id, label );
+        }
+    }
+
+    std::ranges::sort( lua_entries, []( const lua_menu_entry & a, const lua_menu_entry & b ) {
+        return a.menu_label > b.menu_label;
+    } );
+
+    int last_int = COUNT - 1;
+    for( const auto entry : lua_entries ) {
+        last_int++;
+        lua_entries_map.emplace( last_int, entry );
+        amenu.addentry( last_int, true, ' ', entry.menu_label );
+    }
+
     amenu.query();
     int choice = amenu.ret;
+    std::string entry_str_id;
 
     switch( choice ) {
         case push_zlave:
+            entry_str_id = "push_zlave";
             push( z );
             break;
         case lead:
+            entry_str_id = "lead";
             start_leading( z );
             break;
         case stop_lead:
+            entry_str_id = "stop_lead";
             stop_leading( z );
             break;
         case rename:
+            entry_str_id = "rename";
             rename_pet( z );
             break;
         case attach_bag:
+            entry_str_id = "attach_bag";
             attach_bag_to( z );
             break;
         case remove_bag:
+            entry_str_id = "remove_bag";
             remove_bag_from( z );
             break;
         case drop_all:
+            entry_str_id = "drop_all";
             dump_items( z );
             break;
         case give_items:
+            entry_str_id = "give_items";
             return give_items_to( z );
         case take_items:
+            entry_str_id = "take_items";
             take_items_from( z );
             break;
         case mon_armor_add:
+            entry_str_id = "mon_armor_add";
             return add_armor( z );
         case mon_harness_remove:
+            entry_str_id = "mon_harness_remove";
             remove_harness( z );
             break;
         case mon_armor_remove:
+            entry_str_id = "mon_armor_remove";
             remove_armor( z );
             break;
         case play_with_pet:
             if( query_yn( _( "Spend a few minutes to play with your %s?" ), pet_name ) ) {
+                entry_str_id = "play_with_pet";
                 play_with( z );
             }
             break;
         case train_combat_pet:
+            entry_str_id = "train_combat_pet";
             train_pet( z );
             break;
         case slaughter:
             if( query_yn( _( "Really kill the %s?" ), pet_name ) ) {
+                entry_str_id = "slaughter";
                 kill_zslave( z );
             }
             break;
         case leash:
+            entry_str_id = "leash";
             add_leash( z );
             break;
         case unleash:
+            entry_str_id = "unleash";
             remove_leash( z );
             break;
         case attach_saddle:
+            entry_str_id = "attach_saddle";
+            attach_or_remove_saddle( z );
+            break;
         case remove_saddle:
+            entry_str_id = "remove_saddle";
             attach_or_remove_saddle( z );
             break;
         case mount:
+            entry_str_id = "mount";
             mount_pet( z );
             break;
         case tie:
+            entry_str_id = "tie";
             tie_pet( z );
             break;
         case untie:
+            entry_str_id = "untie";
             untie_pet( z );
             break;
         case milk:
+            entry_str_id = "milk";
             milk_source( z );
             break;
         case shear:
+            entry_str_id = "shear";
             shear_animal( z );
             break;
         case pay:
+            entry_str_id = "pay";
             pay_bot( z );
             break;
         case remove_bat:
+            entry_str_id = "remove_bat";
             remove_battery( z );
             break;
         case insert_bat:
+            entry_str_id = "insert_bat";
             insert_battery( z );
             break;
         case check_bat:
+            entry_str_id = "check_bat";
+            break;
+        case reload_weapons:
+            reload_monster_weapons( you, z );
+            break;
+        case unload_weapons:
+            entry_str_id = "unload_weapons";
+            unload_monster_weapons( you, z );
             break;
         case change_orders:
+            entry_str_id = "change_orders";
             toggle_ignore_targets( z );
             break;
         case disable_pet:
             if( query_yn( _( "Really deactivate your %s?" ), pet_name ) ) {
+                entry_str_id = "disable_pet";
                 deactivate_pet( z );
             }
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                entry_str_id = "attack";
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
+            if( choice >= COUNT ) {
+                entry_str_id = lua_entries_map[choice].menu_id;
+            }
             break;
     }
+    if( !entry_str_id.empty() ) {
+        if( cb_actor ) {
+            cb_actor->call_on_examine_menu_entry( you, z, entry_str_id );
+        }
+        cata::run_hooks( "on_monster_examine_menu_entry", [&](
+        auto & params ) { params["avatar"] = &you; params["monster"] = &z; params["entry"] = entry_str_id; } );
+    }
+
     return true;
 }
 
@@ -426,7 +853,8 @@ static item *pet_armor_loc( monster &z )
                z.get_volume() <= it.get_pet_armor_max_vol();
     };
 
-    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Pet armor" ) );
+    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Pet armor" ), "",
+            ITEM_RADIUS );
 }
 
 static item *tack_loc()
@@ -435,7 +863,7 @@ static item *tack_loc()
         return it.has_flag( json_flag_TACK );
     };
 
-    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Tack" ) );
+    return game_menus::inv::titled_filter_menu( filter, get_avatar(), _( "Tack" ), "", ITEM_RADIUS );
 }
 
 void monexamine::remove_battery( monster &z )
@@ -565,6 +993,8 @@ bool monexamine::mfriend_menu( monster &z )
     enum choices {
         push_monster = 0,
         rename,
+        reload_weapons,
+        unload_weapons,
         change_orders,
         disable_pet,
         attack
@@ -578,6 +1008,12 @@ bool monexamine::mfriend_menu( monster &z )
 
     amenu.addentry( push_monster, true, 'p', _( "Push %s" ), pet_name );
     amenu.addentry( rename, true, 'e', _( "Rename" ) );
+    if( has_reloadable_ammo( z ) ) {
+        amenu.addentry( reload_weapons, true, 'R', reload_menu_text( get_avatar(), z ) );
+        if( has_loaded_ammo( z ) ) {
+            amenu.addentry( unload_weapons, true, 'U', unload_menu_text( z ) );
+        }
+    }
     if( z.has_flag( MF_CAN_BE_ORDERED ) ) {
         if( z.has_effect( effect_docile ) ) {
             amenu.addentry( change_orders, true, 'O', _( "Order to engage targets" ), pet_name );
@@ -600,6 +1036,12 @@ bool monexamine::mfriend_menu( monster &z )
         case rename:
             rename_pet( z );
             break;
+        case reload_weapons:
+            reload_monster_weapons( get_avatar(), z );
+            break;
+        case unload_weapons:
+            unload_monster_weapons( get_avatar(), z );
+            break;
         case change_orders:
             toggle_ignore_targets( z );
             break;
@@ -610,7 +1052,7 @@ bool monexamine::mfriend_menu( monster &z )
             break;
         case attack:
             if( query_yn( _( "You may be attacked!  Proceed?" ) ) ) {
-                get_player_character().melee_attack( z, true );
+                avatar_action::melee_attack_while_handling_manual_combat_mode( get_avatar(), z );
             }
             break;
         default:
@@ -623,7 +1065,6 @@ bool monexamine::mfriend_menu( monster &z )
 void monexamine::attach_or_remove_saddle( monster &z )
 {
     if( z.has_effect( effect_saddled ) ) {
-        z.remove_effect( effect_saddled );
         get_avatar().i_add( z.remove_tack_item() );
     } else {
         item *loc = tack_loc();
@@ -632,7 +1073,6 @@ void monexamine::attach_or_remove_saddle( monster &z )
             add_msg( _( "Never mind." ) );
             return;
         }
-        z.add_effect( effect_saddled, 1_turns );
         z.set_tack_item( loc->detach() );
     }
 }
@@ -709,7 +1149,7 @@ void monexamine::attach_bag_to( monster &z )
     };
 
     avatar &you = get_avatar();
-    item *loc = game_menus::inv::titled_filter_menu( filter, you, _( "Bag item" ) );
+    item *loc = game_menus::inv::titled_filter_menu( filter, you, _( "Bag item" ), "", ITEM_RADIUS );
 
     if( !loc ) {
         add_msg( _( "Never mind." ) );
@@ -719,7 +1159,6 @@ void monexamine::attach_bag_to( monster &z )
     item &it = *loc;
     z.set_storage_item( it.detach( ) );
     add_msg( _( "You mount the %1$s on your %2$s." ), it.display_name(), pet_name );
-    z.add_effect( effect_has_bag, 1_turns );
     // Update encumbrance in case we were wearing it
     you.flag_encumbrance();
     you.moves -= 200;
@@ -739,7 +1178,6 @@ void monexamine::remove_bag_from( monster &z )
     } else {
         add_msg( m_bad, _( "Your %1$s doesn't have a bag!" ), pet_name );
     }
-    z.remove_effect( effect_has_bag );
 }
 
 void monexamine::dump_items( monster &z )
@@ -848,7 +1286,6 @@ bool monexamine::add_armor( monster &z )
     z.set_armor_item( loc->detach() );
     add_msg( pgettext( "pet armor", "You put the %1$s on your %2$s." ), armor.display_name(),
              pet_name );
-    z.add_effect( effect_monster_armor, 1_turns );
     // TODO: armoring a horse takes a lot longer than 2 seconds. This should be a long action.
     get_avatar().moves -= 200;
     return true;
@@ -863,10 +1300,8 @@ void monexamine::remove_harness( monster &z )
 void monexamine::remove_armor( monster &z )
 {
     std::string pet_name = z.get_name();
-    if( z.get_armor_item() ) {
-        z.get_armor_item()->erase_var( "pet_armor" );
-        item *armor = z.get_armor_item();
-        get_map().add_item_or_charges( z.bub_pos(), armor->detach() );
+    if( item *armor = z.get_armor_item() ) {
+        get_map().add_item_or_charges( z.bub_pos(), z.remove_armor_item() );
         add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
                  pet_name );
         // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
@@ -874,15 +1309,15 @@ void monexamine::remove_armor( monster &z )
     } else {
         add_msg( m_bad, _( "Your %1$s isn't wearing armor!" ), pet_name );
     }
-    z.remove_effect( effect_monster_armor );
 }
 
 void monexamine::play_with( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    int turns = rng( 50, 125 ) * 100;
+    const int turns = rng( 50, 125 ) * 100;
     you.assign_activity( ACT_PLAY_WITH_PET, turns );
+    you.activity->monsters.push_back( g->shared_from( z ) );
     you.activity->str_values.push_back( pet_name );
     z.add_effect( effect_ai_waiting, time_duration::from_turns( turns ) );
     z.on_pet_bonding( you.as_character() );

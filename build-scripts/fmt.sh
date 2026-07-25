@@ -6,7 +6,7 @@ cd "$repo_root"
 
 usage() {
     cat >&2 <<'USAGE'
-usage: build-scripts/fmt.sh [--all|cpp [files...]|json [files...]|docs|lua]
+usage: build-scripts/fmt.sh [--all|cpp [--all|files...]|json [--all|files...]|docs|lua]
 USAGE
 }
 
@@ -34,11 +34,17 @@ if (( $# > 0 )) && [[ "$mode" != cpp && "$mode" != json ]]; then
 fi
 
 if [[ "$mode" == cpp ]]; then
+    if (( $# == 1 )) && [[ "${1:-}" == "--all" ]]; then
+        shift
+    fi
     build-scripts/format-cpp.sh "$@"
     exit 0
 fi
 
 if [[ "$mode" == json ]]; then
+    if (( $# == 1 )) && [[ "${1:-}" == "--all" ]]; then
+        shift
+    fi
     build-scripts/format-json.sh "$@"
     exit 0
 fi
@@ -106,6 +112,6 @@ else
         build-scripts/format-json.sh "${json_files[@]}"
     fi
     if (( ${#stage_files[@]} > 0 )); then
-        git add -- "${stage_files[@]}"
+        git add -f -- "${stage_files[@]}"
     fi
 fi

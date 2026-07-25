@@ -251,8 +251,9 @@ void scent_map::update( const tripoint_bub_ms &center, map &m )
     const int scentmap_maxy = center.y() + SCENT_RADIUS;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( scent_transfer, st_sy, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
-                      point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
+    m.scent_blockers( scent_transfer, st_sy,
+                      tripoint_bub_ms( scentmap_minx - 1, scentmap_miny - 1, -OVERMAP_DEPTH ),
+                      tripoint_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1, OVERMAP_HEIGHT ) );
 
     for( int x = 0; x < SCENT_RADIUS * 2 + 3; ++x ) {
         sum_3_scent_y[0][x] = 0;

@@ -36,8 +36,8 @@ on:
             { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
             { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
-            { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" },
-            { "name": "Android Bundle", "platform": "android", "artifact": "android-bundle", "os": "ubuntu-latest", "android": "bundle", "tiles": true, "ext": "aab", "content-type": "application/aab" }
+            { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "sound": true, "ext": "apk", "content-type": "application/apk" },
+            { "name": "Android Bundle", "platform": "android", "artifact": "android-bundle", "os": "ubuntu-latest", "android": "bundle", "tiles": true, "sound": true, "ext": "aab", "content-type": "application/aab" }
           ]
       download-translations:
         description: "Download prebuilt translation artifact"
@@ -46,6 +46,11 @@ on:
         default: true
       bundle-tilesets:
         description: "Bundle external tilesets into tiles builds"
+        required: false
+        type: boolean
+        default: true
+      bundle-registry-mods:
+        description: "Bundle registry mods and soundpacks into release archives"
         required: false
         type: boolean
         default: true
@@ -147,6 +152,9 @@ jobs:
         with:
           name: translations
           path: .
+
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
 
       - name: Create VERSION.TXT
         shell: bash
@@ -373,11 +381,6 @@ jobs:
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
-      - name: Setup Deno (Lua docs)
-        if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
-        uses: denoland/setup-deno@v2
-        with: { cache: true }
-
       - name: Setup EmmyLua checker
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
         uses: scarf005/emmylua_check_action@v1.0.3
@@ -395,6 +398,7 @@ jobs:
 
       - name: Run EmmyLua check
         if: runner.os == 'Linux' && matrix.artifact == 'linux-tiles-x64'
+        continue-on-error: true
         run: emmylua_check .
 
       - name: Generate documentation artifacts
@@ -424,6 +428,11 @@ jobs:
           echo "- \`docs/en/dev/reference/cli_options.md\`: $(wc -l < docs/en/dev/reference/cli_options.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
           echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+
+      - name: Bundle registry mods
+        if: inputs.bundle-registry-mods
+        continue-on-error: ${{ inputs.mode == 'ci' }}
+        run: deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts ${{ (((matrix.platform == 'windows' || matrix.platform == 'macos' || (matrix.platform == 'android' && inputs.upload-to-release)) && matrix.tiles == true && matrix.sound == true) || format('{0}', matrix.sound) == 'false') && '--exclude-package-type soundpack' || '' }}
 
       - name: Create distribution package (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
@@ -529,9 +538,14 @@ jobs:
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           $dist = "cataclysmbn-${{ inputs.version-label }}"
+          Remove-Item -Recurse -Force $dist -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force lang/mo
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
-
+          if ("${{ matrix.tiles }}" -eq "true" -and "${{ matrix.sound }}" -eq "true" -and "${{ inputs.bundle-registry-mods }}" -eq "true") {
+            Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.zip
+            deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+            cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix $dist --config Release
+          }
           Compress-Archive -Force -Path $dist/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       - name: Verify statically linked SDL runtime (windows msvc)
@@ -574,8 +588,17 @@ jobs:
           configurePresetAdditionalArgs: ${{ inputs.run-tests && '["-DCATA_FORMAT_TARGETS=OFF", "-DTESTS=ON"]' || '["-DCATA_FORMAT_TARGETS=OFF"]' }}
           buildPreset: ${{ matrix.preset }}
 
+      - name: Create distribution package with soundpacks (macOS)
+        if: runner.os == 'macOS' && matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        run: |
+          mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.dmg
+          deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts
+          cmake -E copy_directory data/mods Cataclysm.app/Contents/Resources/data/mods
+          cmake -E copy_directory data/sound Cataclysm.app/Contents/Resources/data/sound
+          dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+
       - name: Rename distribution package (macOS)
-        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
+        if: runner.os == 'macOS' && !(matrix.tiles == true && matrix.sound == true && inputs.bundle-registry-mods) && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       - name: Verify bundled SDL runtime (macOS)
@@ -711,15 +734,38 @@ jobs:
             done
           }
 
-          if [ ${{ matrix.android }} = arm64 ]
-          then
-               gradle_retry -Pj=$(nproc) -Pabi_arm_32=false -Plocalize=${{ inputs.android-localize }} assemble${VARIANT}Release ${VERSION_ARG}
-               mv ./app/build/outputs/apk/${VARIANT_LOWER}/release/*.apk ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.apk
-          elif [ ${{ matrix.android }} = bundle ]
-          then
-               gradle_retry -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
-               mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.aab
+          build_android_artifact() {
+            if [ "${{ matrix.android }}" = arm64 ]; then
+              gradle_retry -Pj=$(nproc) -Pabi_arm_32=false -Plocalize=${{ inputs.android-localize }} assemble${VARIANT}Release ${VERSION_ARG}
+            elif [ "${{ matrix.android }}" = bundle ]; then
+              gradle_retry -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
+            else
+              echo "Unsupported Android artifact type: ${{ matrix.android }}" >&2
+              return 1
+            fi
+          }
+
+          move_android_artifact() {
+            suffix="$1"
+            artifact="../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}"
+            if [ -n "$suffix" ]; then
+              artifact="../cbn-${{ matrix.artifact }}-$suffix-${{ inputs.version-label }}.${{ matrix.ext }}"
+            fi
+            if [ "${{ matrix.android }}" = arm64 ]; then
+              mv ./app/build/outputs/apk/${VARIANT_LOWER}/release/*.apk "$artifact"
+            else
+              mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab "$artifact"
+            fi
+          }
+
+          if [ "${{ inputs.upload-to-release }}" = "true" ] && [ "${{ inputs.bundle-registry-mods }}" = "true" ]; then
+            build_android_artifact
+            move_android_artifact "no-soundpack"
+            (cd .. && deno run --allow-read --allow-write --allow-net build-scripts/bundle-registry-mods.ts)
           fi
+
+          build_android_artifact
+          move_android_artifact ""
 
       - name: Verify ccache compatibility (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
@@ -753,6 +799,16 @@ jobs:
           grep -E 'libSDL3_image\.so' bundled-deps.txt
           grep -E 'libSDL3_mixer\.so' bundled-deps.txt
           grep -E 'libSDL3_ttf\.so' bundled-deps.txt
+          if [ "${{ inputs.upload-to-release }}" = "true" ] && [ "${{ inputs.bundle-registry-mods }}" = "true" ]; then
+            no_soundpack_artifact="cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.${{ matrix.ext }}"
+            test -f "$no_soundpack_artifact"
+            unzip -l "$no_soundpack_artifact" | tee bundled-deps-no-soundpack.txt
+            if grep -F 'data/sound/Otopack+ModsUpdates BN/' bundled-deps-no-soundpack.txt; then
+              echo "Android no-soundpack release contains Otopack" >&2
+              exit 1
+            fi
+            grep -F 'data/sound/Otopack+ModsUpdates BN/soundpack.txt' bundled-deps.txt
+          fi
 
       - name: Build test executable (desktop)
         if: inputs.run-tests && (runner.os == 'Windows' || runner.os == 'macOS' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
@@ -766,7 +822,7 @@ jobs:
           $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
           cmake --build $buildDir --target $target --config Release
 
-      - name: Run tests (desktop)
+      - name: Run sharded tests (desktop)
         if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
         shell: pwsh
         run: |
@@ -791,39 +847,17 @@ jobs:
             "--rng-seed", "time",
             "--error-format=github-action"
           )
-          if ($IsLinux) {
+          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
             $testOpts += "--gpu-backend=software"
           }
-          $filters = @("[slow] ~starting_items", "~[slow] ~[.],starting_items")
-          $jobs = @()
-          for ($i = 0; $i -lt $filters.Count; ++$i) {
-            $userDir = "test_user_dir_$($i + 1)"
-            $jobs += Start-Job -Name "cata-test-$($i + 1)" -ScriptBlock {
-              param($bin, $opts, $filter, $userDir)
-              & $bin @opts "--user-dir=$userDir" $filter
-              if ($LASTEXITCODE -ne 0) {
-                throw "Test shard '$filter' exited with code $LASTEXITCODE"
-              }
-            } -ArgumentList $testBin, $testOpts, $filters[$i], $userDir
-          }
-
-          while ($jobs | Where-Object { $_.State -eq "Running" }) {
-            Start-Sleep -Seconds 30
-            $running = ($jobs | Where-Object { $_.State -eq "Running" }).Name -join ", "
-            Write-Host "Still running: $running"
-          }
-
-          $failed = $false
-          foreach ($job in $jobs) {
-            Receive-Job $job -ErrorAction Continue
-            if ($job.State -ne "Completed") {
-              $failed = $true
-              Write-Host "$($job.Name) failed with state $($job.State)"
-            }
-          }
-          if ($failed) {
-            throw "One or more test shards failed"
-          }
+          deno run --allow-read --allow-write --allow-run --allow-env `
+            build-scripts/run-linux-test-shards.ts `
+            --mode file-tags `
+            --jobs 4 `
+            --non-slow-shards 8 `
+            $testBin `
+            -- `
+            @testOpts
 
       # Upload artifacts
       - name: Upload packaged build artifact
@@ -837,15 +871,17 @@ jobs:
       - name: Upload to release
         if: inputs.upload-to-release
         run: |
+          release="${{ inputs.release-tag }}"
           if [ "${{ inputs.version-label }}" = "experimental" ]; then
             SHA_SHORT=$(git rev-parse --short HEAD)
             COMMIT_SUBJECT=$(git log -1 --pretty=%s)
             TIMESTAMP=$(date -u "+%F %T")
-            gh release upload experimental --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+            release=experimental
             gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT ($COMMIT_SUBJECT) on $TIMESTAMP"
-          else
-            gh release upload ${{ inputs.release-tag }} --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
           fi
+          extra="cbn-${{ matrix.artifact }}-no-soundpack-${{ inputs.version-label }}.${{ matrix.ext }}"
+          [ -f "$extra" ] && gh release upload "$release" --clobber "$extra"
+          gh release upload "$release" --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash

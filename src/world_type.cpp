@@ -4,6 +4,7 @@
 #include "generic_factory.h"
 #include "json.h"
 #include "mapdata.h"
+#include "type_id_implement.h"
 
 namespace
 {
@@ -11,17 +12,7 @@ generic_factory<world_type> world_type_factory( "world_type" );
 const world_type_id default_world_type_id( "default" );
 } // namespace
 
-template<>
-const world_type &world_type_id::obj() const
-{
-    return world_type_factory.obj( *this );
-}
-
-template<>
-bool string_id<world_type>::is_valid() const
-{
-    return world_type_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( world_type, world_type_factory );
 
 void world_type::load( const JsonObject &jo, const std::string & )
 {

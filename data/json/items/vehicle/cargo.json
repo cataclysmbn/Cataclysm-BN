@@ -74,7 +74,7 @@
     "type": "GENERIC",
     "name": { "str": "carbon cargo carrier" },
     "description": "A sturdy, yet lightweight carbon structure outfitted with tie-downs and attachment points for carrying cargo.",
-    "weight": "10000 g",
+    "weight": "9 kg",
     "to_hit": -3,
     "material": [ "carbon_fiber" ],
     "price": "1000 USD",

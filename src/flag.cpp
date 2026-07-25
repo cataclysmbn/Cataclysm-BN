@@ -5,6 +5,7 @@
 #include "debug.h"
 #include "json.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "generic_factory.h"
 
 const flag_id flag_NULL = flag_id( "null" ); // intentionally invalid flag
@@ -115,6 +116,7 @@ const flag_id flag_ELECTRIC_IMMUNE( "ELECTRIC_IMMUNE" );
 const flag_id flag_ETHEREAL_ITEM( "ETHEREAL_ITEM" );
 const flag_id flag_EXPLOSION_SMASHED( "EXPLOSION_SMASHED" );
 const flag_id flag_EXPLOSION_PROPELLED( "EXPLOSION_PROPELLED" );
+const flag_id flag_DRONE_CAM( "DRONE_CAM" );
 const flag_id flag_FAKE_MILL( "FAKE_MILL" );
 const flag_id flag_FAKE_CLONING_VAT( "FAKE_CLONING_VAT" );
 const flag_id flag_FAKE_SMOKE( "FAKE_SMOKE" );
@@ -303,6 +305,7 @@ const flag_id flag_ROLLER_ONE( "ROLLER_ONE" );
 const flag_id flag_ROLLER_QUAD( "ROLLER_QUAD" );
 const flag_id flag_SAFECRACK( "SAFECRACK" );
 const flag_id flag_SEMITANGIBLE( "SEMITANGIBLE" );
+const flag_id flag_SECRET_ENCHANTMENTS( "SECRET_ENCHANTMENTS" );
 const flag_id flag_SHATTERS( "SHATTERS" );
 const flag_id flag_SHOCKING( "SHOCKING" );
 const flag_id flag_ACIDIC( "ACIDIC" );
@@ -392,19 +395,7 @@ namespace
 generic_factory<json_flag> json_flags_all( "json_flags" );
 } // namespace
 
-/** @relates string_id */
-template<>
-bool flag_id ::is_valid() const
-{
-    return json_flags_all.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const json_flag &flag_id::obj() const
-{
-    return json_flags_all.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( json_flag, json_flags_all );
 
 json_flag::operator bool() const
 {

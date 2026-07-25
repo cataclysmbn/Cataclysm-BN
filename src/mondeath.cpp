@@ -704,8 +704,13 @@ void mdeath::broken( monster &z )
     g->m.add_item_or_charges( z.bub_pos(), std::move( broken_mon ) );
     //TODO!: push up these temporaries
     if( z.type->has_flag( MF_DROPS_AMMO ) ) {
+        auto processed_ammo_ids = std::set<itype_id> {};
         for( const std::pair<const itype_id, int> &ammo_entry : z.type->starting_ammo ) {
-            if( z.ammo[ammo_entry.first] > 0 ) {
+            for( const auto &slot_ammo_id : z.ammo_slot_items( ammo_entry.first ) ) {
+                if( processed_ammo_ids.contains( slot_ammo_id ) || z.ammo[slot_ammo_id] <= 0 ) {
+                    continue;
+                }
+                processed_ammo_ids.insert( slot_ammo_id );
                 bool spawned = false;
                 for( const std::pair<const std::string, mtype_special_attack> &attack : z.type->special_attacks ) {
                     if( attack.second->id == "gun" ) {
@@ -713,7 +718,7 @@ void mdeath::broken( monster &z )
                                                             ( attack.second.get() )->gun_type );
                         bool same_ammo = false;
                         for( const ammotype &at : gun.ammo_types() ) {
-                            if( at == item::spawn_temporary( ammo_entry.first )->ammo_type() ) {
+                            if( at == item::spawn_temporary( slot_ammo_id )->ammo_type() ) {
                                 same_ammo = true;
                                 break;
                             }
@@ -721,11 +726,11 @@ void mdeath::broken( monster &z )
                         const bool uses_mags = !gun.magazine_compatible().empty();
                         if( same_ammo && uses_mags ) {
                             std::vector<detached_ptr<item>> mags;
-                            int ammo_count = z.ammo[ammo_entry.first];
+                            int ammo_count = z.ammo[slot_ammo_id];
                             while( ammo_count > 0 ) {
                                 detached_ptr<item> mag = item::spawn( gun.type->magazine_default.find( item::spawn_temporary(
-                                        ammo_entry.first )->ammo_type() )->second );
-                                mag->ammo_set( ammo_entry.first,
+                                        slot_ammo_id )->ammo_type() )->second );
+                                mag->ammo_set( slot_ammo_id,
                                                std::min( ammo_count, mag->type->magazine->capacity ) );
                                 ammo_count -= mag->type->magazine->capacity;
                                 mags.push_back( std::move( mag ) );
@@ -737,7 +742,7 @@ void mdeath::broken( monster &z )
                     }
                 }
                 if( !spawned ) {
-                    g->m.spawn_item( z.bub_pos(), ammo_entry.first, z.ammo[ammo_entry.first], 1,
+                    g->m.spawn_item( z.bub_pos(), slot_ammo_id, z.ammo[slot_ammo_id], 1,
                                      calendar::turn );
                 }
             }

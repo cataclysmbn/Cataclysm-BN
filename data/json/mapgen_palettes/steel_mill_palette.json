@@ -77,7 +77,7 @@
       "L": "f_laser_cutter"
     },
     "items": {
-      "~": { "item": "steel_mill_storage", "chance": 50 },
+      "~": { "item": "steel_mill_storage", "chance": 100 },
       "T": { "item": "snacks", "chance": 30 },
       "d": { "item": "office", "chance": 30 },
       "y": { "item": "office", "chance": 30 },

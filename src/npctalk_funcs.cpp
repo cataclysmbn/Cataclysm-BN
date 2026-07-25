@@ -27,7 +27,7 @@
 #include "game_inventory.h"
 #include "item.h"
 #include "line.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "map.h"
 #include "messages.h"
 #include "mission.h"
@@ -374,6 +374,7 @@ void talk_function::wake_up( npc &p )
     p.remove_effect( effect_lying_down );
     p.remove_effect( effect_npc_suspend );
     p.remove_effect( effect_sleep );
+    p.sleep_at_this_pos = std::nullopt;
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
@@ -633,9 +634,9 @@ void talk_function::buy_10_logs( npc &p )
     }
 
     const tripoint_abs_omt site = random_entry( places_om );
-    tinymap bay;
-    bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 10 );
+    map bay( 2 );
+    bay.load( project_to<coords::sm>( site.xy() ), false );
+    bay.spawn_item( tripoint_bub_ms( 7, 15, site.z() ), "log", 10 );
 
     p.add_effect( effect_currently_busy, 1_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -665,9 +666,9 @@ void talk_function::buy_100_logs( npc &p )
     }
 
     const tripoint_abs_omt site = random_entry( places_om );
-    tinymap bay;
-    bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 100 );
+    map bay( 2 );
+    bay.load( project_to<coords::sm>( site.xy() ), false );
+    bay.spawn_item( tripoint_bub_ms( 7, 15, site.z() ), "log", 100 );
 
     p.add_effect( effect_currently_busy, 7_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -985,4 +986,9 @@ void talk_function::npc_thankful( npc &p )
 void talk_function::clear_overrides( npc &p )
 {
     p.rules.clear_overrides();
+}
+
+void talk_function::go_to_sleep( npc &p )
+{
+    p.execute_action( "npc_sleep" );
 }

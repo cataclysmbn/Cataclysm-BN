@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_icallback_actor.h"
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
@@ -64,11 +65,6 @@ template<typename T>
 class ret_val;
 class item_location;
 struct attack_statblock;
-
-namespace enchant_vals
-{
-enum class mod : int;
-} // namespace enchant_vals
 
 using bodytype_id = std::string;
 using faction_id = string_id<faction>;
@@ -366,7 +362,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param alert whether to display any messages
          * @return true if item reverted or false if no revert available.
          */
-        bool revert( const Character *ch, bool alert = true );
+        bool revert( Character *ch, bool alert = true );
 
         /**
          * Add or remove energy from a battery.
@@ -586,12 +582,16 @@ class item : public location_visitable<item>, public game_object<item>
                           bool debug ) const;
         void combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const;
+        void throw_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
+                         bool debug ) const;
         void damage_statblock_info( std::vector<iteminfo> &info, damage_instance attack,
                                     bool line_by_line ) const;
         void contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                             bool debug ) const;
         void final_info( std::vector<iteminfo> &info, const iteminfo_query &parts, int batch,
                          bool debug ) const;
+        void enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &parts, int batch,
+                               bool debug ) const;
 
         /**
          * Calculate all burning calculations, but don't actually apply them to item.
@@ -935,9 +935,18 @@ class item : public location_visitable<item>, public game_object<item>
          * @param weather Weather manager to supply temperature.
          * @return true if the item has rotten away and should be removed, false otherwise.
          */
-        static detached_ptr<item> actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
-                temperature_flag temperature,
-                const weather_manager &weather );
+        struct rot_context {
+            tripoint_abs_ms position;
+            temperature_flag temperature = temperature_flag::TEMP_NORMAL;
+            const weather_manager *weather = nullptr;
+            int local_temperature = 0;
+        };
+
+        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                                   temperature_flag temperature,
+                                   const weather_manager &weather ) -> detached_ptr<item>;
+        static auto actualize_rot( detached_ptr<item> &&self,
+                                   const rot_context &context ) -> detached_ptr<item>;
 
         /**
          * Returns rot of the item since last rot calculation.
@@ -974,11 +983,12 @@ class item : public location_visitable<item>, public game_object<item>
          * @return true if the item is fully rotten and is ready to be removed
          */
         /*@{*/
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_rot( detached_ptr<item> &&self,  bool seals,
-                                               const tripoint_bub_ms &pos,
-                                               player *carrier, temperature_flag flag,
-                                               const weather_manager &weather_generator );
+        static auto process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
+        -> detached_ptr<item>;
+        static auto process_rot( detached_ptr<item> &&self, bool seals,
+                                 const tripoint_bub_ms &pos,
+                                 player *carrier, temperature_flag flag,
+                                 const weather_manager &weather_generator ) -> detached_ptr<item>;
         /*@}*/
 
         int get_comestible_fun() const;
@@ -996,8 +1006,9 @@ class item : public location_visitable<item>, public game_object<item>
         void update_rot_from_location( temperature_flag temperature );
 
         /** Update @ref rot at the specified location without removing rotten-away items. */
-        void update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
-                         const weather_manager &weather_generator );
+        auto update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
+                         const weather_manager &weather_generator ) -> void;
+        auto update_rot( const rot_context &context ) -> void;
 
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
         double get_relative_rot() const;
@@ -1309,6 +1320,7 @@ class item : public location_visitable<item>, public game_object<item>
          * Whether the item should be processed (by calling @ref process).
          */
         bool needs_processing() const;
+        auto invalidate_processing_cache_upwards() -> void;
         /**
          * The rate at which an item should be processed, in number of turns between updates.
          */
@@ -1351,7 +1363,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool is_tool() const;
         bool is_transformable() const;
         bool is_artifact() const;
-        bool is_relic() const;
+        bool is_relic( bool not_itype = false ) const;
         bool is_pocket_dimension_key() const;
         bool is_bucket() const;
         bool is_bucket_nonempty() const;
@@ -1718,6 +1730,9 @@ class item : public location_visitable<item>, public game_object<item>
 
         /**If item made out of glass, or has the SHATTERS flag?*/
         bool can_shatter() const;
+
+        /** If the item is non-rigid: either has rigid = false or max_encumber higher than encumber */
+        bool is_non_rigid() const;
 
         /**
          * @name Item properties
@@ -2412,14 +2427,14 @@ class item : public location_visitable<item>, public game_object<item>
          * Calculate bonus from enchantments that affect this item only.
          */
         double bonus_from_enchantments( const Character &owner, double base,
-                                        enchant_vals::mod value, bool round = false ) const;
+                                        enchantment_value_id value, bool round = false ) const;
 
         /**
          * Calculate bonus from enchantments that affect this item only,
-         * assume it's wielded and all enchantments' conditions are satisfied.
+         * Only supports item only conditions.
          */
-        double bonus_from_enchantments_wielded( double base, enchant_vals::mod value,
-                                                bool round = false ) const;
+        double bonus_from_enchantments( double base, enchantment_value_id value,
+                                        bool round = false ) const;
 
         /** Returns the type of location where the item is found */
         item_location_type where() const;
@@ -2443,11 +2458,25 @@ class item : public location_visitable<item>, public game_object<item>
         const std::vector<relic_recharge> &get_relic_recharge_scheme() const;
 
     private:
+        struct absolute_rot_process_options {
+            bool seals = false;
+            player *carrier = nullptr;
+            const rot_context &context;
+        };
+
         const use_function *get_use_internal( const std::string &use_name ) const;
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
                 const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
+        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
+                                   temperature_flag temperature,
+                                   const weather_manager &weather, bool seals ) -> detached_ptr<item>;
+        static auto actualize_rot( detached_ptr<item> &&self,
+                                   const rot_context &context, bool seals ) -> detached_ptr<item>;
+        static auto process_rot( detached_ptr<item> &&self,
+                                 const absolute_rot_process_options &options ) -> detached_ptr<item>;
         auto is_in_preserving_container() const -> bool;
+        auto is_in_sealing_container() const -> bool;
         auto mark_rot_checked_now() -> void;
 
         /** Helper for checking reloadability. **/

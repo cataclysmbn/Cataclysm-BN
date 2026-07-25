@@ -13,8 +13,7 @@
 #include "translations.h"
 
 class JsonObject;
-class map;
-struct tripoint;
+class mapgen_constructor;
 template<typename T> struct enum_traits;
 template<typename T> class generic_factory;
 
@@ -31,7 +30,7 @@ struct enum_traits<map_extra_method> {
     static constexpr map_extra_method last = map_extra_method::num_map_extra_methods;
 };
 
-using map_extra_pointer = bool( * )( map &, const tripoint_abs_sm & );
+using map_extra_pointer = bool( * )( mapgen_constructor &, const tripoint_abs_omt & );
 
 class map_extra
 {
@@ -71,8 +70,10 @@ map_extra_pointer get_function( const std::string &name );
 FunctionMap all_functions();
 std::vector<std::string> get_all_function_names();
 
-void apply_function( const string_id<map_extra> &id, map &m, const tripoint_abs_sm &abs_sub );
-void apply_function( const std::string &id, map &m, const tripoint_abs_sm &abs_sub );
+void apply_function( const string_id<map_extra> &id, mapgen_constructor &m,
+                     const tripoint_abs_omt &abs_sub );
+void apply_function( const std::string &id, mapgen_constructor &m,
+                     const tripoint_abs_omt &abs_offset );
 
 void load( const JsonObject &jo, const std::string &src );
 void check_consistency();

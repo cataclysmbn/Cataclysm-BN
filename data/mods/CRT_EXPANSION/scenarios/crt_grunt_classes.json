@@ -246,11 +246,11 @@
           "crt_mess_kit",
           "id_military",
           "knife_crt",
-          "pellet"
+          "crt_pellet"
         ],
         "entries": [
           { "item": "crt_backpack", "contents-item": [ "crt_hatchet" ] },
-          { "item": "pelletgun", "ammo-item": "pellet", "contents-item": "shoulder_strap" },
+          { "item": "crt_pelletgun", "ammo-item": "crt_pellet", "contents-item": "shoulder_strap" },
           { "item": "water_clean", "container-item": "canteen" }
         ]
       },

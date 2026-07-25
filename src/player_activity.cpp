@@ -1,4 +1,5 @@
 #include "player_activity.h"
+#include "memory_fast.h"
 #include "player_activity_ptr.h"
 
 #include <algorithm>
@@ -38,6 +39,8 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
+#include "type_id.h"
+#include "memory_fast.h"
 
 using metric = std::pair<units::mass, units::volume>;
 
@@ -173,25 +176,28 @@ void player_activity::init_all_moves( Character &who )
     }
 }
 
-std::vector<npc *> &player_activity::assistants()
+std::vector<weak_ptr_fast<npc>> &player_activity::assistants()
 {
     if( !assistants_ids_.empty() && assistants_.empty() ) {
-        for( npc &guy : g->all_npcs() ) {
-            if( assistants_ids_.contains( guy.getID().get_value() ) ) {
-                assistants_.push_back( &guy );
+        for( weak_ptr_fast<npc> guy : * ( g->all_npcs().items ) ) {
+            if( auto true_guy = guy.lock() ) {
+                if( assistants_ids_.contains( true_guy->getID().get_value() ) ) {
+                    assistants_.push_back( guy );
+                }
             }
         }
     }
     return assistants_;
 }
 
-std::vector<npc *> player_activity::get_assistants( const Character &who, unsigned short max )
+std::vector<weak_ptr_fast<npc>> player_activity::get_assistants( const Character &who,
+                             unsigned short max )
 {
     if( max < 1 ) {
         return {};
     }
     int n = 0;
-    return g->get_npcs_if( [&]( const npc & guy ) {
+    return g->get_npcs_pointers_if( [&]( const npc & guy ) {
         if( n >= max ) {
             return false;
         }
@@ -199,7 +205,8 @@ std::vector<npc *> player_activity::get_assistants( const Character &who, unsign
         bool ok = guy.is_npc() && &guy != &who && !guy.in_sleep_state() && guy.is_obeying( who ) &&
                   guy.activity->id() != ACT_ASSIST &&
                   rl_dist( guy.bub_pos(), who.bub_pos() ) < PICKUP_RANGE &&
-                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
+                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 ) &&
+                  !guy.is_hallucination();
         if( ok ) {
             n++;
         }
@@ -216,10 +223,12 @@ void player_activity::get_assistants( const Character &who )
     }
 
     assistants_ = get_assistants( who, max );
-    for( Character *guy : assistants_ ) {
-        guy->assign_activity( std::make_unique<player_activity>
-                              ( std::make_unique<assist_activity_actor>() ) );
-        assistants_ids_.insert( guy->getID().get_value() );
+    for( weak_ptr_fast<npc> guy : assistants_ ) {
+        if( auto true_guy = guy.lock() ) {
+            true_guy->assign_activity( std::make_unique<player_activity>
+                                       ( std::make_unique<assist_activity_actor>() ) );
+            assistants_ids_.insert( true_guy->getID().get_value() );
+        }
     }
 }
 
@@ -259,7 +268,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
                                       mutation_mult * game_opt_mult;
 
     const auto enchant_mult_add = u.bonus_from_enchantments( total_mult_without_enchant,
-                                  enchant_vals::mod::CRAFTING_SPEED );
+                                  enchantment_value_id( "CRAFTING_SPEED" ) );
 
     const float total_mult = total_mult_without_enchant + enchant_mult_add;
 
@@ -642,8 +651,10 @@ void player_activity::do_turn( player &p )
                 set_to_null();
             }
         }
-        for( Character *npc : assistants() ) {
-            npc->cancel_activity();
+        for( weak_ptr_fast<npc> npc : assistants() ) {
+            if( auto true_npc = npc.lock() ) {
+                true_npc->cancel_activity();
+            }
         }
 
     }
@@ -663,8 +674,10 @@ void player_activity::canceled( Character &who )
     if( *this && actor ) {
         actor->canceled( *this, who );
     }
-    for( Character *npc : assistants() ) {
-        npc->cancel_activity();
+    for( weak_ptr_fast<npc> npc : assistants() ) {
+        if( auto true_npc = npc.lock() ) {
+            true_npc->cancel_activity();
+        }
     }
 }
 

@@ -67,8 +67,7 @@
     "id": "NC_HUNTER_rifle",
     "subtype": "distribution",
     "entries": [
-      { "item": "rifle_22", "prob": 5 },
-      { "item": "rifle_9mm", "prob": 5 },
+      { "item": "pipe_rifle", "prob": 10 },
       { "item": "ruger_1022", "prob": 10 },
       { "item": "hipoint_3895", "prob": 10 },
       { "item": "browning_blr", "prob": 10 },

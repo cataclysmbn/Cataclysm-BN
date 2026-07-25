@@ -63,6 +63,7 @@ In `data/json/debug_spells.json` there is a template spell, copied here for your
   "max_field_intensity": 10,
   "field_intensity_increment": 1,
   "field_intensity_variance": 0.1, // the field can range in intensity from -variance as a percent to +variance as a percent i.e. this spell would be 9-11
+  "volume": 90, // The volume of noise that the spell produces. This is a flat value that doesn't differ depending on level. Measured in decibels.
   "sound_type": "combat", // the type of sound. possible types are: background, weather, music, movement, speech, activity, destructive_activity, alarm, combat, alert, order
   "sound_description": "a whoosh", // the sound description. in the form of "You hear %s" by default it is "an explosion"
   "sound_ambient": true, // whether or not this is treated as an ambient sound or not

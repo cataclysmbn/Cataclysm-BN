@@ -29,6 +29,18 @@
   },
   {
     "type": "keybinding",
+    "id": "DESC_UP",
+    "name": "Pan description up",
+    "bindings": [ { "input_method": "keyboard", "key": "^" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "DESC_DOWN",
+    "name": "Pan description down",
+    "bindings": [ { "input_method": "keyboard", "key": "V" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "FILTER",
     "category": "UILIST",
     "name": "Filter",
@@ -40,6 +52,69 @@
     "category": "UILIST",
     "name": "Cancel menu",
     "bindings": [ { "input_method": "keyboard", "key": "ESC" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "UP",
+    "category": "SPELL_SELECT",
+    "name": "Select previous spell",
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "keyboard", "key": "NUMPAD_8" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "DOWN",
+    "category": "SPELL_SELECT",
+    "name": "Select next spell",
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "keyboard", "key": "NUMPAD_2" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "LEFT",
+    "category": "SPELL_SELECT",
+    "name": "Previous spell category",
+    "bindings": [ { "input_method": "keyboard", "key": "LEFT" }, { "input_method": "keyboard", "key": "NUMPAD_4" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "RIGHT",
+    "category": "SPELL_SELECT",
+    "name": "Next spell category",
+    "bindings": [ { "input_method": "keyboard", "key": "RIGHT" }, { "input_method": "keyboard", "key": "NUMPAD_6" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "FILTER",
+    "category": "SPELL_SELECT",
+    "name": "Filter spells",
+    "bindings": [ { "input_method": "keyboard", "key": "/" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "QUIT",
+    "category": "SPELL_SELECT",
+    "name": "Cancel spell selection",
+    "bindings": [ { "input_method": "keyboard", "key": "ESC" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_FAVORITE",
+    "category": "SPELL_SELECT",
+    "name": "Toggle spell favorite",
+    "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "TOGGLE_CASTING_DISTRACTIONS",
+    "category": "SPELL_SELECT",
+    "name": "Toggle casting distractions",
+    "bindings": [ { "input_method": "keyboard", "key": "I" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ASSIGN_SPELL_HOTKEY",
+    "category": "SPELL_SELECT",
+    "name": "Assign spell hotkey",
+    "bindings": [ { "input_method": "keyboard", "key": "=" } ]
   },
   {
     "type": "keybinding",
@@ -2484,6 +2559,13 @@
   },
   {
     "type": "keybinding",
+    "name": "Toggle manual combat mode",
+    "category": "DEFAULTMODE",
+    "id": "toggle_manual_combat_mode",
+    "bindings": [ { "input_method": "keyboard", "key": "BACKTAB" } ]
+  },
+  {
+    "type": "keybinding",
     "name": "Main Menu",
     "category": "DEFAULTMODE",
     "id": "main_menu",
@@ -2554,6 +2636,12 @@
     "name": "Toggle Crouch",
     "category": "DEFAULTMODE",
     "id": "toggle_crouch"
+  },
+  {
+    "type": "keybinding",
+    "name": "Toggle Prone",
+    "category": "DEFAULTMODE",
+    "id": "toggle_prone"
   },
   {
     "type": "keybinding",

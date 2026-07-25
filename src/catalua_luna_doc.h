@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "action.h"
 #include "coordinates.h"
 #include "calendar.h"
@@ -54,6 +56,7 @@ class item_stack;
 class ma_technique;
 class ma_buff;
 class map;
+class mapgen_constructor;
 class mapgendata;
 class map_stack;
 class material_type;
@@ -71,7 +74,6 @@ class spell;
 class string_input_popup;
 class time_duration;
 class time_point;
-class tinymap;
 class uilist;
 class relic;
 struct bionic;
@@ -126,7 +128,10 @@ class mass_in_milligram_tag;
 using mass = quantity<std::int64_t, mass_in_milligram_tag>;
 
 class volume_in_milliliter_tag;
-using volume = quantity<int, volume_in_milliliter_tag>;
+using volume = quantity<std::int64_t, volume_in_milliliter_tag>;
+
+class sound_in_decibel_tag;
+using sound = quantity<int, sound_in_decibel_tag>;
 } // namespace units
 
 struct islot_container;
@@ -189,6 +194,7 @@ LUNA_VAL( distribution_grid_tracker, "DistributionGridTracker" );
 LUNA_PTR_VAL( item, "Item" );
 LUNA_VAL( item_stack, "ItemStack" );
 LUNA_VAL( map, "Map" );
+LUNA_VAL( mapgen_constructor, "MapgenConstructor" );
 LUNA_VAL( mapgendata, "MapgenData" );
 LUNA_VAL( map_stack, "MapStack" );
 LUNA_VAL( mission, "Mission" );
@@ -212,7 +218,6 @@ LUNA_VAL( spell, "Spell" )
 LUNA_VAL( known_magic, "KnownMagic" )
 LUNA_VAL( time_duration, "TimeDuration" );
 LUNA_VAL( time_point, "TimePoint" );
-LUNA_VAL( tinymap, "Tinymap" );
 LUNA_VAL( tripoint, "Tripoint" );
 LUNA_VAL( uilist, "UiList" );
 LUNA_VAL( uilist_entry, "UiListEntry" );
@@ -220,6 +225,7 @@ LUNA_VAL( units::angle, "Angle" );
 LUNA_VAL( units::energy, "Energy" );
 LUNA_VAL( units::mass, "Mass" );
 LUNA_VAL( units::volume, "Volume" );
+LUNA_VAL( units::sound, "Sound" );
 LUNA_VAL( relic, "Relic" )
 LUNA_VAL( book_recipe, "BookRecipe" );
 LUNA_VAL( common_ranged_data, "RangedData" );
