@@ -27,6 +27,7 @@ eligible, invalid weather type `"none"` will be used.
 | sound_category | (_optional_) Sound effects to play. Valid values are: `silent`, `drizzle`, `rainy`, `thunder`, `flurries`, `snowstorm` and `snow`.           |
 | sun_intensity  | (_mandatory_) Sunlight intensity. Valid values are: `none`, `light`, `normal`, and `high`. Normal and high are considered "direct sunlight". |
 | animation      | (_optional_) Weather animation in reality bubble. [Details](#weather_animation)                                                              |
+| screen_color_overlay | (_optional_) Full-screen color overlay in tiles mode. Object with `color` (RGB hex string) and `alpha` (0-255).                       |
 | effects        | (_optional_) `[string, int]` pair array for the effects the weather causes. [Details](#effects)                                              |
 | requirements   | (_optional_) Conditions under which this weather type will be eligible to be selected. [Details](#requirements)                              |
 
@@ -168,6 +169,7 @@ All members are optional.
   "effects": [{ "name": "thunder", "intensity": 50 }, { "name": "lightning", "intensity": 600 }],
   "tiles_animation": "weather_rain_drop",
   "weather_animation": { "factor": 0.04, "color": "c_light_blue", "glyph": "," },
+  "screen_color_overlay": { "color": "#bfd6ff", "alpha": 24 },
   "sound_category": "thunder",
   "sun_intensity": "none",
   "requirements": { "pressure_max": 990, "required_weathers": ["thunder"] }

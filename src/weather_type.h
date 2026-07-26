@@ -2,14 +2,16 @@
 
 #include "catacharset.h"
 #include "color.h"
+#include "hsv_color.h"
 #include "translations.h"
 #include "type_id.h"
 
 #include <climits>
 #include <map>
+#include <optional>
 #include <string>
 
-using weather_effect_fn = std::function<void(int)>;
+using weather_effect_fn = std::function<void( int )>;
 
 template <typename E> struct enum_traits;
 template <typename T> class generic_factory;
@@ -56,7 +58,16 @@ struct weather_animation_t {
     nc_color color = c_white;
     std::string tile;
     uint32_t symbol = NULL_UNICODE;
-    std::string get_symbol() const { return utf32_to_utf8(symbol); }
+    std::string get_symbol() const { return utf32_to_utf8( symbol ); }
+};
+
+struct weather_screen_color_overlay {
+    std::optional<RGBColor> color = std::nullopt;
+    int alpha = 0;
+
+    auto has_value() const -> bool {
+        return color.has_value() && alpha > 0;
+    }
 };
 
 struct weather_requirements {
@@ -76,47 +87,49 @@ struct weather_requirements {
 };
 
 struct weather_type {
-private:
-    friend class generic_factory<weather_type>;
+    private:
+        friend class generic_factory<weather_type>;
 
-    bool was_loaded = false;
+        bool was_loaded = false;
 
-public:
-    weather_type_id id;
-    translation name;                       // UI name of weather type.
-    nc_color color = c_magenta;             // UI color of weather type.
-    nc_color map_color = c_magenta;         // Map color of weather type.
-    uint32_t symbol = PERCENT_SIGN_UNICODE; // Map glyph of weather type.
-    int ranged_penalty = 0;                 // Penalty to ranged attacks.
-    float sight_penalty = 1.0f; // Penalty to per-square visibility, applied in transparency map.
-    int light_modifier = 0;     // Modification to ambient light.
-    int sound_attn = 0;         // Sound attenuation of a given weather type.
-    bool dangerous = false;     // If true, our activity gets interrupted.
-    precip_class precip = precip_class::none; // Amount of associated precipitation.
-    bool rains = false;                       // Whether precipitation falls as rain.
-    bool acidic = false;                      // Whether precipitation is acidic.
-    std::vector<std::pair<weather_effect_fn, int>> effects;
-    weather_animation_t animation = {};
-    weather_sound_category sound_category = weather_sound_category::silent;
-    sun_intensity_type sun_intensity = sun_intensity_type::none;
-    weather_requirements requirements = {};
+    public:
+        weather_type_id id;
+        translation name;                       // UI name of weather type.
+        nc_color color = c_magenta;             // UI color of weather type.
+        nc_color map_color = c_magenta;         // Map color of weather type.
+        uint32_t symbol = PERCENT_SIGN_UNICODE; // Map glyph of weather type.
+        int ranged_penalty = 0;                 // Penalty to ranged attacks.
+        float sight_penalty = 1.0f; // Penalty to per-square visibility, applied in transparency map.
+        int light_modifier = 0;     // Modification to ambient light.
+        int sound_attn = 0;         // Sound attenuation of a given weather type.
+        bool dangerous = false;     // If true, our activity gets interrupted.
+        precip_class precip = precip_class::none; // Amount of associated precipitation.
+        bool rains = false;                       // Whether precipitation falls as rain.
+        bool acidic = false;                      // Whether precipitation is acidic.
+        std::vector<std::pair<weather_effect_fn, int>> effects;
+        weather_animation_t animation = {};
+        weather_screen_color_overlay screen_color_overlay = {};
+        weather_sound_category sound_category = weather_sound_category::silent;
+        sun_intensity_type sun_intensity = sun_intensity_type::none;
+        weather_requirements requirements = {};
 
-    weather_type() = default;
+        weather_type() = default;
 
-    void load(const JsonObject& jo, const std::string& src);
-    void check() const;
+        void load( const JsonObject &jo, const std::string &src );
+        void check() const;
 
-    std::string get_symbol() const { return utf32_to_utf8(symbol); }
+        std::string get_symbol() const { return utf32_to_utf8( symbol ); }
 };
-namespace weather_types {
+namespace weather_types
+{
 /** Get all currently loaded weather types */
-const std::vector<weather_type>& get_all();
+const std::vector<weather_type> &get_all();
 /** Finalize all loaded weather types */
 void finalize_all();
 /** Clear all loaded weather types (invalidating any pointers) */
 void reset();
 /** Load weather type from JSON definition */
-void load(const JsonObject& jo, const std::string& src);
+void load( const JsonObject &jo, const std::string &src );
 /** Checks all loaded from JSON are valid */
 void check_consistency();
 } // namespace weather_types

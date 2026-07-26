@@ -7,6 +7,7 @@
 #include "type_id_implement.h"
 #include "weather.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace
@@ -143,6 +144,17 @@ void weather_type::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "acidic", acidic, false );
     optional( jo, was_loaded, "sound_category", sound_category, weather_sound_category::silent );
     mandatory( jo, was_loaded, "sun_intensity", sun_intensity );
+    if( jo.has_object( "screen_color_overlay" ) ) {
+        const JsonObject overlay_jo = jo.get_object( "screen_color_overlay" );
+        const std::string color_string = overlay_jo.get_string( "color" );
+        const std::optional<RGBColor> color = RGBColor::try_parse( color_string );
+        if( !color ) {
+            overlay_jo.throw_error( string_format( "invalid screen color overlay color: %s",
+                                                   color_string ), "color" );
+        }
+        screen_color_overlay.color = color;
+        screen_color_overlay.alpha = std::clamp( overlay_jo.get_int( "alpha", 0 ), 0, 255 );
+    }
 
     for( const JsonObject weather_effect : jo.get_array( "effects" ) ) {
         std::string name = weather_effect.get_string( "name" );

@@ -96,6 +96,18 @@ struct weather_sum {
     int wind_amount = 0;
 };
 
+struct omt_weather_override {
+    weather_type_id weather = weather_type_id::NULL_ID();
+    std::optional<time_point> expires_at = std::nullopt;
+};
+
+struct omt_weather_override_options {
+    tripoint_abs_omt center = tripoint_abs_omt();
+    int radius = 0;
+    weather_type_id weather = weather_type_id::NULL_ID();
+    std::optional<time_point> expires_at = std::nullopt;
+};
+
 namespace weather
 {
 bool is_sheltered( const map &m, const tripoint_bub_ms &p );
@@ -204,11 +216,12 @@ class weather_manager
         weather_type_id weather_override;
         bool eternal_seasons = false;
 
-        auto get_omt_weather_override( const tripoint_abs_omt &location ) const
+        auto get_omt_weather_override( const tripoint_abs_omt &location,
+                                       const time_point &when = calendar::turn ) const
         -> const weather_type_id *; // *NOPAD*
-        auto has_omt_weather_override( const tripoint_abs_omt &location ) const -> bool;
-        auto set_omt_weather_override( const tripoint_abs_omt &center, int radius,
-                                       const weather_type_id &weather ) -> void;
+        auto has_omt_weather_override( const tripoint_abs_omt &location,
+                                       const time_point &when = calendar::turn ) const -> bool;
+        auto set_omt_weather_override( const omt_weather_override_options &opts ) -> void;
         auto clear_omt_weather_override( const tripoint_abs_omt &center, int radius ) -> void;
         auto clear_all_omt_weather_overrides() -> void;
 
@@ -241,7 +254,11 @@ class weather_manager
     private:
         // Cached weather data
         w_point weather_precise;
-        std::unordered_map<point_abs_omt, weather_type_id> omt_weather_overrides;
+        std::unordered_map<point_abs_omt, omt_weather_override> omt_weather_overrides;
+        auto is_omt_weather_override_expired( const omt_weather_override &override,
+                                              const time_point &when ) const -> bool;
+        auto get_next_omt_weather_override_expiration() const -> std::optional<time_point>;
+        auto prune_expired_omt_weather_overrides() -> void;
         auto needs_forced_position_refresh( const tripoint_abs_ms &current_pos ) const -> bool;
 };
 

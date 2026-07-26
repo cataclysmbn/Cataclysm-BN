@@ -671,6 +671,16 @@ local center_omt = gapi.bub_to_abs(avatar:get_pos_ms()):to_omt()
 gapi.set_omt_weather_override(center_omt, 2, "lightning")
 ```
 
+You can also give it an expiration time:
+
+```lua
+local avatar = gapi.get_avatar()
+local center_omt = gapi.bub_to_abs(avatar:get_pos_ms()):to_omt()
+local expires_at = gapi.current_turn() + TimeDuration.from_minutes(30)
+
+gapi.set_omt_weather_override(center_omt, 2, "lightning", expires_at)
+```
+
 ### Check and clear a local weather override
 
 ```lua
