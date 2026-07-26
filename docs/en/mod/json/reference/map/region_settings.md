@@ -501,27 +501,27 @@ For compatibility, the loader also accepts these legacy forms:
 
 ### `base_weather` fields
 
-| Identifier                       | Description                                                                                                                                                                                      |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `id`                             | Unique identifier for this `base_weather` definition.                                                                                                                                            |
-| `spring_temp`                    | Average spring temperature for the region.                                                                                                                                                       |
-| `summer_temp`                    | Average summer temperature for the region.                                                                                                                                                       |
-| `autumn_temp`                    | Average autumn temperature for the region.                                                                                                                                                       |
-| `winter_temp`                    | Average winter temperature for the region.                                                                                                                                                       |
-| `spring_humidity_manual_mod`     | Humidity modifier applied during spring.                                                                                                                                                         |
-| `summer_humidity_manual_mod`     | Humidity modifier applied during summer.                                                                                                                                                         |
-| `autumn_humidity_manual_mod`     | Humidity modifier applied during autumn.                                                                                                                                                         |
-| `winter_humidity_manual_mod`     | Humidity modifier applied during winter.                                                                                                                                                         |
-| `base_humidity`                  | Base humidity for the region in relative humidity %.                                                                                                                                             |
-| `base_pressure`                  | Base pressure for the region in millibars.                                                                                                                                                       |
-| `base_acid`                      | Base acid value for the region. Value >= 1 is considered acidic.                                                                                                                                 |
-| `base_wind`                      | Base wind for the region in mph. Roughly the yearly average.                                                                                                                                     |
-| `base_wind_distrib_peaks`        | How high the wind peaks can go. Higher values produce windier days.                                                                                                                              |
-| `base_wind_season_variation`     | How wind varies with season. Lower values produce more variation.                                                                                                                                |
-| `temperature_daily_amplitude`    | Half the difference between the coldest and warmest parts of the day.                                                                                                                            |
-| `temperature_noise_amplitude`    | Half the difference contributed by 3D weather noise.                                                                                                                                             |
-| `weather_types`                  | Ids of the weather types allowed in this region. The first entry is the default weather type. Declaration order affects weather selection; see [WEATHER_TYPE.md](weather_type) for details.     |
-| `weather_patterns`               | Optional list of `weather_pattern` ids applied on top of the base weather.                                                                                                                       |
+| Identifier                    | Description                                                                                                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                          | Unique identifier for this `base_weather` definition.                                                                                                                                       |
+| `spring_temp`                 | Average spring temperature for the region.                                                                                                                                                  |
+| `summer_temp`                 | Average summer temperature for the region.                                                                                                                                                  |
+| `autumn_temp`                 | Average autumn temperature for the region.                                                                                                                                                  |
+| `winter_temp`                 | Average winter temperature for the region.                                                                                                                                                  |
+| `spring_humidity_manual_mod`  | Humidity modifier applied during spring.                                                                                                                                                    |
+| `summer_humidity_manual_mod`  | Humidity modifier applied during summer.                                                                                                                                                    |
+| `autumn_humidity_manual_mod`  | Humidity modifier applied during autumn.                                                                                                                                                    |
+| `winter_humidity_manual_mod`  | Humidity modifier applied during winter.                                                                                                                                                    |
+| `base_humidity`               | Base humidity for the region in relative humidity %.                                                                                                                                        |
+| `base_pressure`               | Base pressure for the region in millibars.                                                                                                                                                  |
+| `base_acid`                   | Base acid value for the region. Value >= 1 is considered acidic.                                                                                                                            |
+| `base_wind`                   | Base wind for the region in mph. Roughly the yearly average.                                                                                                                                |
+| `base_wind_distrib_peaks`     | How high the wind peaks can go. Higher values produce windier days.                                                                                                                         |
+| `base_wind_season_variation`  | How wind varies with season. Lower values produce more variation.                                                                                                                           |
+| `temperature_daily_amplitude` | Half the difference between the coldest and warmest parts of the day.                                                                                                                       |
+| `temperature_noise_amplitude` | Half the difference contributed by 3D weather noise.                                                                                                                                        |
+| `weather_types`               | Ids of the weather types allowed in this region. The first entry is the default weather type. Declaration order affects weather selection; see [WEATHER_TYPE.md](weather_type) for details. |
+| `weather_patterns`            | Optional list of `weather_pattern` ids applied on top of the base weather.                                                                                                                  |
 
 ### Example
 
@@ -563,8 +563,8 @@ For compatibility, the loader also accepts these legacy forms:
     "id": "example_region",
     "default_oter": "field",
     "default_groundcover": [
-      [ "t_grass", 4 ],
-      [ "t_dirt", 1 ]
+      ["t_grass", 4],
+      ["t_dirt", 1]
     ],
     "base_weather": "example_weather"
   }
@@ -626,7 +626,7 @@ All additional fields and sections are the same as for `region_settings`. Scalar
   {
     "type": "region_overlay",
     "id": "example_overlay",
-    "regions": [ "all" ],
+    "regions": ["all"],
     "city": {
       "parks": {
         "examplepark": 1
@@ -636,7 +636,7 @@ All additional fields and sections are the same as for `region_settings`. Scalar
   {
     "type": "region_overlay",
     "id": "example_weather_overlay",
-    "regions": [ "default" ],
+    "regions": ["default"],
     "base_weather": "example_weather"
   }
 ]

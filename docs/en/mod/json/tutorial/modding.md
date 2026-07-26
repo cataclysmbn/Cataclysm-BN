@@ -300,7 +300,7 @@ the weather generator reusable and lets the overlay stay small.
   },
   {
     "type": "region_overlay",
-    "regions": [ "default" ],
+    "regions": ["default"],
     "base_weather": "my_stormy_weather"
   }
 ]

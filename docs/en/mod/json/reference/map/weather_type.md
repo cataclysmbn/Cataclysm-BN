@@ -9,27 +9,27 @@ eligible, invalid weather type `"none"` will be used.
 
 ### Fields
 
-| Identifier     | Description                                                                                                                                  |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| id             | (_mandatory_) Unique ID. Must be one continuous word, use underscores if necessary.                                                          |
-| name           | (_mandatory_) In-game name displayed.                                                                                                        |
-| glyph          | (_mandatory_) Glyph used on overmap.                                                                                                         |
-| color          | (_optional_) Color of in-game name.                                                                                                          |
-| map_color      | (_optional_) Color of overmap glyph.                                                                                                         |
-| ranged_penalty | (_mandatory_) Penalty to ranged attacks.                                                                                                     |
-| sight_penalty  | (_mandatory_) Sight penalty, aka multiplier to tile transparency.                                                                            |
-| light_modifier | (_mandatory_) Flat bonus to ambient light.                                                                                                   |
-| sound_attn     | (_mandatory_) Sound attenuation (flat reduction to volume).                                                                                  |
-| dangerous      | (_mandatory_) If true, prompts for activity interrupt.                                                                                       |
-| precip         | (_mandatory_) Amount of associated precipitation. Valid values are: `none`, `very_light`, `light` and `heavy`.                               |
-| rains          | (_mandatory_) Whether said precipitation falls as rain.                                                                                      |
-| acidic         | (_optional_) Whether said precipitation is acidic.                                                                                           |
-| sound_category | (_optional_) Sound effects to play. Valid values are: `silent`, `drizzle`, `rainy`, `thunder`, `flurries`, `snowstorm` and `snow`.           |
-| sun_intensity  | (_mandatory_) Sunlight intensity. Valid values are: `none`, `light`, `normal`, and `high`. Normal and high are considered "direct sunlight". |
-| animation      | (_optional_) Weather animation in reality bubble. [Details](#weather_animation)                                                              |
-| screen_color_overlay | (_optional_) Full-screen color overlay in tiles mode. Object with `color` (RGB hex string) and `alpha` (0-255).                       |
-| effects        | (_optional_) `[string, int]` pair array for the effects the weather causes. [Details](#effects)                                              |
-| requirements   | (_optional_) Conditions under which this weather type will be eligible to be selected. [Details](#requirements)                              |
+| Identifier           | Description                                                                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                   | (_mandatory_) Unique ID. Must be one continuous word, use underscores if necessary.                                                          |
+| name                 | (_mandatory_) In-game name displayed.                                                                                                        |
+| glyph                | (_mandatory_) Glyph used on overmap.                                                                                                         |
+| color                | (_optional_) Color of in-game name.                                                                                                          |
+| map_color            | (_optional_) Color of overmap glyph.                                                                                                         |
+| ranged_penalty       | (_mandatory_) Penalty to ranged attacks.                                                                                                     |
+| sight_penalty        | (_mandatory_) Sight penalty, aka multiplier to tile transparency.                                                                            |
+| light_modifier       | (_mandatory_) Flat bonus to ambient light.                                                                                                   |
+| sound_attn           | (_mandatory_) Sound attenuation (flat reduction to volume).                                                                                  |
+| dangerous            | (_mandatory_) If true, prompts for activity interrupt.                                                                                       |
+| precip               | (_mandatory_) Amount of associated precipitation. Valid values are: `none`, `very_light`, `light` and `heavy`.                               |
+| rains                | (_mandatory_) Whether said precipitation falls as rain.                                                                                      |
+| acidic               | (_optional_) Whether said precipitation is acidic.                                                                                           |
+| sound_category       | (_optional_) Sound effects to play. Valid values are: `silent`, `drizzle`, `rainy`, `thunder`, `flurries`, `snowstorm` and `snow`.           |
+| sun_intensity        | (_mandatory_) Sunlight intensity. Valid values are: `none`, `light`, `normal`, and `high`. Normal and high are considered "direct sunlight". |
+| animation            | (_optional_) Weather animation in reality bubble. [Details](#weather_animation)                                                              |
+| screen_color_overlay | (_optional_) Full-screen color overlay in tiles mode. Object with `color` (RGB hex string) and `alpha` (0-255).                              |
+| effects              | (_optional_) `[string, int]` pair array for the effects the weather causes. [Details](#effects)                                              |
+| requirements         | (_optional_) Conditions under which this weather type will be eligible to be selected. [Details](#requirements)                              |
 
 ### animation
 
