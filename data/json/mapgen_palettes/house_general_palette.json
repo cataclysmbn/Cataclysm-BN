@@ -110,7 +110,8 @@
         [ "t_curtains", 5 ]
       ],
       "<": "t_wood_stairs_up",
-      ">": "t_wood_stairs_down"
+      ">": "t_wood_stairs_down",
+      "ɱ": "t_console_broken"
     },
     "liquids": { "g": { "liquid": "water", "amount": [ 0, 100 ] } },
     "items": {
