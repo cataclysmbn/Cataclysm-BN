@@ -233,13 +233,7 @@
       }
     },
     "nested": {
-      "#": { 
-        "chunks": [ 
-          [ "shelter_graffiti", 1 ],
-          [ "general_graffiti", 1 ],
-          [ "null", 598 ]
-        ] 
-      },
+      "#": { "chunks": [ [ "shelter_graffiti", 1 ], [ "general_graffiti", 1 ], [ "null", 598 ] ] },
       "á": {
         "chunks": [
           [ "bedroom_4x4_adult_1_N", 20 ],

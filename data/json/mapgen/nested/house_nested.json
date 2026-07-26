@@ -812,7 +812,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "livingroom_4x4_N_S_1",
     "object": {
       "mapgensize": [ 4, 4 ],
@@ -827,7 +828,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "livingroom_4x4_N_S_1",
     "object": {
       "mapgensize": [ 4, 4 ],
@@ -848,11 +850,12 @@
           }
         }
       },
-      "terrain": { "=": { "param": "carpet_type", "fallback": "t_floor" } },
+      "terrain": { "=": { "param": "carpet_type", "fallback": "t_floor" } }
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "livingroom_4x4_N_S_1",
     "object": {
       "mapgensize": [ 4, 4 ],
@@ -873,11 +876,12 @@
           }
         }
       },
-      "terrain": { "=": { "param": "carpet_type", "fallback": "t_floor" } },
+      "terrain": { "=": { "param": "carpet_type", "fallback": "t_floor" } }
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "livingroom_4x4_N_S_1",
     "object": {
       "mapgensize": [ 4, 4 ],
@@ -892,7 +896,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "livingroom_4x4_N_S_1",
     "object": {
       "mapgensize": [ 4, 4 ],
@@ -907,7 +912,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "livingroom_4x4_N_S_1",
     "object": {
       "mapgensize": [ 4, 4 ],
@@ -922,7 +928,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -938,7 +945,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -954,7 +962,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -970,7 +979,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -995,7 +1005,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -1011,7 +1022,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -1027,7 +1039,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "//": "compass direction indicates furniture orientation",
     "nested_mapgen_id": "livingroom_4x4_N_1",
     "object": {
@@ -2050,7 +2063,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_1",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2068,7 +2082,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_1",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2086,7 +2101,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_1A",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2103,7 +2119,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_1A",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2120,7 +2137,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_1B",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2137,7 +2155,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_1C",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2154,7 +2173,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_2",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2171,7 +2191,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_2",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2188,7 +2209,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_3",
     "object": {
       "mapgensize": [ 5, 5 ],
@@ -2205,7 +2227,8 @@
     }
   },
   {
-    "type": "mapgen", "method": "json",
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "kitchen_5x5_N_3",
     "object": {
       "mapgensize": [ 5, 5 ],
