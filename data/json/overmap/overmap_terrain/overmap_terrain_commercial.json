@@ -1545,7 +1545,8 @@
     ],
     "copy-from": "generic_city_building",
     "name": "urban city block",
-    "color": "light_blue"
+    "color": "light_blue",
+    "spawns": { "group": "GROUP_ZOMBIE", "population": [ 16, 20 ], "chance": 90 }
   },
   {
     "type": "overmap_terrain",
