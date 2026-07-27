@@ -611,6 +611,8 @@
     "armor_cut": 40,
     "armor_bullet": 60,
 	  "armor_stab":20,
+    "armor_fire": 15,
+    "armor_acid": 10,
     "vision_day": 50,
     "vision_night": 35,
     "revert_to_itype": "bot_chickenbot",
@@ -629,11 +631,8 @@
 		"ELECTRONIC", 
 		"PRIORITIZE_TARGETS", 
 		"DROPS_AMMO", 
-		"FIREPROOF", 
 		"COLDPROOF", 
 		"LOUDMOVES",
-		"PATH_AVOID_DANGER_1",
-		"PATH_AVOID_DANGER_2",
     "KEEP_DISTANCE"
 		]
   },
