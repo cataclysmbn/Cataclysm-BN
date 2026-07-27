@@ -1352,8 +1352,8 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             break;
 
         case DT_CUT:
-            // Cause bleed if some damage goes through armor and enemy is made of flesh
-            if( adjusted_damage > 6 ) {
+            // Cause bleed if high damage goes through armor and enemy is made of flesh
+            if( adjusted_damage > 15 ) {
                 if( made_of_any( cmat_flesh ) ) {
                     add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
                 }
