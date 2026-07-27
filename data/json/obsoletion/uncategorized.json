@@ -2263,5 +2263,16 @@
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
     },
     "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "apartments_con_tower_001", "apartments_con_tower_101" ],
+    "object": { "fill_ter": "t_floor" }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "apartments_con_tower_001", "apartments_con_tower_101" ],
+    "copy-from": "apartments_tower_any"
   }
 ]
