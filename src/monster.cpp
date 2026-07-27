@@ -3783,11 +3783,10 @@ void monster::process_one_effect( effect &it, bool is_new )
         }
     } else if( id == effect_bleed ) {
         int intense = it.get_intensity();
-        if( one_in( 36 / intense ) {
+        if( one_in( 36 / intense ) ) {
         apply_damage( nullptr, bodypart_id( "torso" ), 1 );
             bleed();
         }
-    }
     } else if( id == effect_run ) {
         effect_cache[FLEEING] = true;
     } else if( id == effect_no_sight || id == effect_blind ) {
