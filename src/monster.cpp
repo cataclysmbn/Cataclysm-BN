@@ -3784,7 +3784,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     } else if( id == effect_bleed ) {
         int intense = it.get_intensity();
         if( one_in( 36 / intense ) ) {
-        apply_damage( nullptr, bodypart_id( "torso" ), 1 );
+            apply_damage( nullptr, bodypart_id( "torso" ), 1 );
             bleed();
         }
     } else if( id == effect_run ) {
