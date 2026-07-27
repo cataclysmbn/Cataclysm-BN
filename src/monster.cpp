@@ -3782,20 +3782,12 @@ void monster::process_one_effect( effect &it, bool is_new )
             it.set_duration( 0_turns );
         }
     } else if( id == effect_bleed ) {
-        int dam = 0;
         int intense = it.get_intensity();
-        if( made_of( material_id( "flesh" ) ) || made_of( material_id( "iflesh" ) ) ) {
-            dam = 1;
+        if( one_in( 36 / intense ) {
+        apply_damage( nullptr, bodypart_id( "torso" ), 1 );
+            bleed();
         }
-
-        if( dam > 0 ) {
-            if( one_in( 36 / intense ) {
-            apply_damage( nullptr, bodypart_id( "torso" ), dam );
-                bleed();
-            }
-        } else {
-            it.set_duration( 0_turns );
-        }
+    }
     } else if( id == effect_run ) {
         effect_cache[FLEEING] = true;
     } else if( id == effect_no_sight || id == effect_blind ) {
