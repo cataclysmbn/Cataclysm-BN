@@ -1,0 +1,30 @@
+[
+  {
+    "type": "base_weather",
+    "id": "innawoods_default",
+    "spring_temp": 8,
+    "summer_temp": 16,
+    "autumn_temp": 7,
+    "winter_temp": -14,
+    "base_humidity": 70,
+    "base_pressure": 1015,
+    "base_wind": 3.4,
+    "base_wind_distrib_peaks": 80,
+    "base_wind_season_variation": 50,
+    "weather_types": [
+      "clear",
+      "sunny",
+      "cloudy",
+      "light_drizzle",
+      "drizzle",
+      "rain",
+      "thunder",
+      "lightning",
+      "acid_drizzle",
+      "acid_rain",
+      "flurries",
+      "snowing",
+      "snowstorm"
+    ]
+  }
+]

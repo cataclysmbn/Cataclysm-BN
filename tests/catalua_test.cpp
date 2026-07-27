@@ -46,6 +46,7 @@
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "weather.h"
 
 #include <memory>
 #include <optional>
@@ -107,6 +108,37 @@ TEST_CASE("lua_global_functions", "[lua]") {
     REQUIRE(lua_monster_avatar_name == "nil");
     REQUIRE(lua_character_avatar_name == expected_name);
     REQUIRE(lua_npc_avatar_name == "nil");
+}
+
+TEST_CASE("lua_weather_override_can_expire", "[lua][weather]") {
+    clear_all_state();
+    sol::state lua = make_lua_state();
+
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
+
+    run_lua_test_script(lua, "weather_override_expiration_test.lua");
+
+    const auto center = test_data.get<tripoint_abs_omt>("center");
+    CHECK(test_data.get<bool>("has_before"));
+    CHECK(test_data.get<std::string>("weather_before") == "lightning");
+    CHECK(get_weather().has_omt_weather_override(center));
+
+    calendar::turn += 31_minutes;
+
+    const auto script_res = lua.safe_script(
+        R"(
+test_data["has_after"] = gapi.has_omt_weather_override(test_data["center"])
+test_data["weather_after"] = tostring(gapi.get_omt_weather_override(test_data["center"]))
+)",
+        sol::script_pass_on_error);
+    REQUIRE(script_res.valid());
+
+    CHECK_FALSE(test_data.get<bool>("has_after"));
+    CHECK(test_data.get<std::string>("weather_after") == "nil");
+    CHECK_FALSE(get_weather().has_omt_weather_override(center));
 }
 
 TEST_CASE("lua_map_create_item_at_places_without_returning_owned_item", "[lua][map]") {

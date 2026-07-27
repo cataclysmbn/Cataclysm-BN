@@ -166,6 +166,10 @@ const weather_type_id &current_weather( const tripoint_abs_ms &location, const t
 {
     const weather_manager &weather = get_weather();
     const auto wgen = weather.get_cur_weather_gen();
+    if( const weather_type_id *omt_override = weather.get_omt_weather_override(
+                project_to<coords::omt>( location ), t ) ) {
+        return *omt_override;
+    }
     if( weather.weather_override ) {
         return weather.weather_override;
     }
@@ -1119,6 +1123,11 @@ weather_manager::weather_manager()
 
 weather_manager::~weather_manager() = default;
 
+namespace
+{
+constexpr int weather_position_refresh_distance = 24;
+} // namespace
+
 const weather_generator &weather_manager::get_cur_weather_gen() const
 {
     const overmap &om = g->get_cur_om();
@@ -1126,31 +1135,126 @@ const weather_generator &weather_manager::get_cur_weather_gen() const
     return settings.weather;
 }
 
+auto weather_manager::get_omt_weather_override( const tripoint_abs_omt &location,
+        const time_point &when ) const
+-> const weather_type_id * // *NOPAD*
+{
+    const auto iter = omt_weather_overrides.find( location.xy() );
+    if( iter == omt_weather_overrides.end() ) {
+        return nullptr;
+    }
+    if( is_omt_weather_override_expired( iter->second, when ) ) {
+        return nullptr;
+    }
+    return &iter->second.weather;
+}
+
+auto weather_manager::has_omt_weather_override( const tripoint_abs_omt &location,
+        const time_point &when ) const -> bool
+{
+    return get_omt_weather_override( location, when ) != nullptr;
+}
+
+auto weather_manager::set_omt_weather_override( const omt_weather_override_options &opts ) -> void
+{
+    prune_expired_omt_weather_overrides();
+    for( const tripoint_abs_omt &location : points_in_radius( opts.center, opts.radius ) ) {
+        omt_weather_overrides.insert_or_assign( location.xy(), omt_weather_override{
+            .weather = opts.weather,
+            .expires_at = opts.expires_at,
+        } );
+    }
+}
+
+auto weather_manager::clear_omt_weather_override( const tripoint_abs_omt &center,
+        const int radius ) -> void
+{
+    prune_expired_omt_weather_overrides();
+    for( const tripoint_abs_omt &location : points_in_radius( center, radius ) ) {
+        omt_weather_overrides.erase( location.xy() );
+    }
+}
+
+auto weather_manager::clear_all_omt_weather_overrides() -> void
+{
+    omt_weather_overrides.clear();
+}
+
+auto weather_manager::is_omt_weather_override_expired( const omt_weather_override &override,
+        const time_point &when ) const -> bool
+{
+    return override.expires_at && when >= *override.expires_at;
+}
+
+auto weather_manager::get_next_omt_weather_override_expiration() const -> std::optional<time_point>
+{
+    std::optional<time_point> earliest_expiration = std::nullopt;
+    for( const auto &override : omt_weather_overrides | std::views::values ) {
+        if( !override.expires_at ) {
+            continue;
+        }
+        if( !earliest_expiration || *override.expires_at < *earliest_expiration ) {
+            earliest_expiration = override.expires_at;
+        }
+    }
+    return earliest_expiration;
+}
+
+auto weather_manager::prune_expired_omt_weather_overrides() -> void
+{
+    std::erase_if( omt_weather_overrides, [&]( const auto & entry ) {
+        return is_omt_weather_override_expired( entry.second, calendar::turn );
+    } );
+}
+
+auto weather_manager::needs_forced_position_refresh( const tripoint_abs_ms &current_pos ) const ->
+bool
+{
+    if( weather_id == weather_type_id::NULL_ID() ) {
+        return true;
+    }
+    return rl_dist( current_pos, last_weather_position ) >= weather_position_refresh_distance;
+}
+
 void weather_manager::update_weather()
 {
     ZoneScoped;
 
+    const tripoint_abs_ms current_pos = g->u.abs_pos();
+    prune_expired_omt_weather_overrides();
     w_point &w = weather_precise;
     winddirection = wind_direction_override.value_or( w.winddirection );
     windspeed = windspeed_override.value_or( w.windpower );
-    if( weather_id && calendar::turn < nextweather ) {
+    if( weather_id && calendar::turn < nextweather &&
+        !needs_forced_position_refresh( current_pos ) ) {
         return;
     }
 
     const weather_generator &weather_gen = get_cur_weather_gen();
-    w = weather_gen.get_weather( g->u.abs_pos(), calendar::turn, g->get_seed() );
+    w = weather_gen.get_weather( current_pos, calendar::turn, g->get_seed() );
     weather_type_id old_weather = weather_id;
-    weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
+    if( const weather_type_id *omt_override = get_omt_weather_override(
+                project_to<coords::omt>( current_pos ), calendar::turn ) ) {
+        weather_id = *omt_override;
+    } else {
+        weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
+    }
     if( !g->u.has_artifact_with( AEP_BAD_WEATHER ) ) {
         weather_override = weather_type_id::NULL_ID();
     }
 
     sfx::do_ambient();
     temperature = w.temperature;
+    last_weather_position = current_pos;
     lightning_active = false;
     // Check weather every few turns, instead of every turn.
     // TODO: predict when the weather changes and use that time.
     nextweather = calendar::turn + activity_time_cadence::weather_refresh();
+    if( const std::optional<time_point> earliest_expiration =
+            get_next_omt_weather_override_expiration();
+        earliest_expiration && *earliest_expiration < nextweather ) {
+        nextweather = *earliest_expiration;
+    }
     if( weather_id != old_weather && weather_id->dangerous &&
         g->get_levz() >= 0 && get_map().is_outside( g->u.bub_pos() )
         && !g->u.has_activity( ACT_WAIT_WEATHER ) ) {
@@ -1171,7 +1275,7 @@ void weather_manager::update_weather()
     }
 
     water_temperature = weather_gen.get_water_temperature(
-                            tripoint_abs_ms( g->u.abs_pos() ),
+                            current_pos,
                             calendar::turn, calendar::config, g->get_seed() ) ;
 
     // Only call on_weather_changed if old_weather was a valid weather type (not initial state)

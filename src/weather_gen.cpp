@@ -1,17 +1,11 @@
 #include "weather_gen.h"
 
-#include <algorithm>
-#include <cmath>
-#include <numeric>
-#include <ostream>
-#include <random>
-#include <string>
-
 #include "assign.h"
 #include "cached_options.h"
 #include "cata_utility.h"
 #include "fstream_utils.h"
 #include "game_constants.h"
+#include "generic_factory.h"
 #include "generic_readers.h"
 #include "json.h"
 #include "math_defines.h"
@@ -20,16 +14,46 @@
 #include "simplexnoise.h"
 #include "weather.h"
 
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+#include <ostream>
+#include <random>
+#include <string>
+
 namespace
 {
 constexpr double tau = M_PI * 2;
 // Out of 24 hours
 constexpr double coldest_hour = 5;
-} //namespace
+
+generic_factory<weather_pattern> weather_pattern_factory( "weather pattern" );
+generic_factory<weather_generator> base_weather_factory( "base weather" );
+} // namespace
 
 weather_generator::weather_generator() = default;
 // TODO: Remove this disgusting static variable!
 int weather_generator::current_winddir = 1000;
+
+template <> bool string_id<weather_pattern>::is_valid() const
+{
+    return weather_pattern_factory.is_valid( *this );
+}
+
+template <> const weather_pattern &string_id<weather_pattern>::obj() const
+{
+    return weather_pattern_factory.obj( *this );
+}
+
+template <> bool string_id<weather_generator>::is_valid() const
+{
+    return base_weather_factory.is_valid( *this );
+}
+
+template <> const weather_generator &string_id<weather_generator>::obj() const
+{
+    return base_weather_factory.obj( *this );
+}
 
 struct weather_gen_common {
     double x;
@@ -42,8 +66,9 @@ struct weather_gen_common {
     season_type season;
 };
 
-static weather_gen_common get_common_data( const point_abs_ms &location, const time_point &t,
-        const calendar_config &calendar_config, unsigned seed )
+static weather_gen_common get_common_data(
+    const point_abs_ms &location, const time_point &t, const calendar_config &calendar_config,
+    unsigned seed )
 {
     weather_gen_common result;
     // Integer x position / widening factor of the Perlin function.
@@ -52,13 +77,14 @@ static weather_gen_common get_common_data( const point_abs_ms &location, const t
     result.y = location.y() / 2000.0;
     // Integer turn / widening factor of the Perlin function.
     result.z = to_days<double>( t - calendar::turn_zero );
-    // Limit the random seed during noise calculation, a large value flattens the noise generator to zero
-    // Windows has a rand limit of 32768, other operating systems can have higher limits
+    // Limit the random seed during noise calculation, a large value flattens the noise generator to
+    // zero Windows has a rand limit of 32768, other operating systems can have higher limits
     result.modSEED = seed % SIMPLEX_NOISE_RANDOM_SEED_LIMIT;
     // Eternal season = midpoint of initial season all the time
-    const double year_fraction = calendar_config.eternal_season() ?
-                                 ( 0.25 * static_cast<double>( calendar_config.initial_season() ) + 0.125 ) :
-                                 ( time_past_new_year( t ) / calendar::year_length() );
+    const double year_fraction =
+        calendar_config.eternal_season()
+        ? ( 0.25 * static_cast<double>( calendar_config.initial_season() ) + 0.125 )
+        : ( time_past_new_year( t ) / calendar::year_length() );
 
     result.year_fraction = year_fraction;
     // We add one-eighth to line it up so that +1 is at
@@ -71,15 +97,34 @@ static weather_gen_common get_common_data( const point_abs_ms &location, const t
     return result;
 }
 
+static auto apply_weather_patterns(
+    const weather_generator &wg, const weather_gen_common &common, w_point &result ) -> void
+{
+    for( const weather_pattern_id &pattern_id : wg.weather_patterns ) {
+        const weather_pattern &pattern = weather_patterns::get( pattern_id );
+        const double noise = raw_noise_4d(
+                                 common.x * pattern.x_scale, common.y * pattern.y_scale, common.z * pattern.z_scale,
+                                 common.modSEED + pattern.seed_offset );
+        const double value = pattern.offset + noise * pattern.multiplier;
+        result.pattern_values[pattern.id] = value;
+        result.humidity += pattern.humidity_mod * value;
+        result.pressure += pattern.pressure_mod * value;
+        result.windpower += pattern.windpower_mod * value;
+        result.temperature += units::multiply_any_unit( pattern.temperature_mod, value );
+        if( pattern.acidic && value >= pattern.active_threshold ) { result.acidic = true; }
+    }
+}
+
 static units::temperature season_temp( const weather_generator &wg, double year_fraction )
 {
     // Interpolate seasons temperature
-    // Scale year_fraction [0, 1) to [0.0, 4.0). So [0.0, 1.0) - spring, [1.0, 2.0) - summer, [2.0, 3.0) - autumn, [3.0, 4.0) - winter.
+    // Scale year_fraction [0, 1) to [0.0, 4.0). So [0.0, 1.0) - spring, [1.0, 2.0) - summer,
+    // [2.0, 3.0) - autumn, [3.0, 4.0) - winter.
     const double quadrum = year_fraction * 4;
     const double season_midpoint_quadrum = quadrum - 0.5;
     constexpr auto num_seasons = static_cast<size_t>( season_type::NUM_SEASONS );
-    const size_t current_season = ( static_cast<size_t>( std::floor( season_midpoint_quadrum ) +
-                                    num_seasons ) ) % num_seasons;
+    const size_t current_season =
+        ( static_cast<size_t>( std::floor( season_midpoint_quadrum ) + num_seasons ) ) % num_seasons;
     const size_t next_season = ( current_season + 1 ) % num_seasons;
     // 0 - current season just started, 1 - season just ended (shouldn't actually happen)
     const double t = season_midpoint_quadrum - std::floor( season_midpoint_quadrum );
@@ -87,8 +132,8 @@ static units::temperature season_temp( const weather_generator &wg, double year_
            + units::multiply_any_unit( wg.season_stats[next_season].average_temperature, t );
 }
 
-static units::temperature weather_temperature_from_common_data( const weather_generator &wg,
-        const weather_gen_common &common, const time_point &t )
+static units::temperature weather_temperature_from_common_data(
+    const weather_generator &wg, const weather_gen_common &common, const time_point &t )
 {
     const double x( common.x );
     const double y( common.y );
@@ -101,28 +146,30 @@ static units::temperature weather_temperature_from_common_data( const weather_ge
 
     units::temperature season_factor = season_temp( wg, common.year_fraction );
     const double temperature_celsius =
-        units::to_celsius<double>( season_factor ) +
-        dayv * units::to_celsius<double>( wg.temperature_daily_amplitude ) +
-        raw_noise_4d( x, y, z, modSEED ) * units::to_celsius<double>( wg.temperature_noise_amplitude );
+        units::to_celsius<double>( season_factor )
+        + dayv * units::to_celsius<double>( wg.temperature_daily_amplitude )
+        + raw_noise_4d( x, y, z, modSEED ) * units::to_celsius<double>( wg.temperature_noise_amplitude );
 
     return units::from_celsius( temperature_celsius );
 }
 
-units::temperature weather_generator::get_weather_temperature( const tripoint_abs_ms &location,
-        const time_point &t, const calendar_config &calendar_config, unsigned seed ) const
+units::temperature weather_generator::get_weather_temperature(
+    const tripoint_abs_ms &location, const time_point &t, const calendar_config &calendar_config,
+    unsigned seed ) const
 {
-    return weather_temperature_from_common_data( *this, get_common_data( location.xy(), t,
-            calendar_config, seed ), t );
+    return weather_temperature_from_common_data(
+               *this, get_common_data( location.xy(), t, calendar_config, seed ), t );
 }
 
-w_point weather_generator::get_weather( const tripoint_abs_ms &location, const time_point &t,
-                                        unsigned seed ) const
+w_point weather_generator::get_weather(
+    const tripoint_abs_ms &location, const time_point &t, unsigned seed ) const
 {
     return get_weather( tripoint_abs_ms( location ), t, calendar::config, seed );
 }
 
-w_point weather_generator::get_weather( const tripoint_abs_ms &location, const time_point &t,
-                                        const calendar_config &calendar_config, unsigned seed ) const
+w_point weather_generator::get_weather(
+    const tripoint_abs_ms &location, const time_point &t, const calendar_config &calendar_config,
+    unsigned seed ) const
 {
     const weather_gen_common common = get_common_data( location.xy(), t, calendar_config, seed );
 
@@ -143,22 +190,22 @@ w_point weather_generator::get_weather( const tripoint_abs_ms &location, const t
     // Humidity variation
     double mod_h = season_stats[static_cast<size_t>( season )].humidity_mod;
     // Relative humidity, a percentage.
-    double H = std::min( 100., std::max( 0.,
-                                         base_humidity + mod_h + 100 * (
-                                                 .15 * -cgyf +
-                                                 raw_noise_4d( x, y, z, modSEED + 101 ) *
-                                                 .2 * ( cgyf + 2 ) ) ) );
+    double H = std::min(
+                   100.,
+                   std::max(
+                       0.,
+                       base_humidity + mod_h
+                       + 100 * ( .15 * -cgyf + raw_noise_4d( x, y, z, modSEED + 101 ) * .2 * ( cgyf + 2 ) ) ) );
 
     // Pressure
-    double P =
-        base_pressure +
-        raw_noise_4d( x, y, z, modSEED + 211 ) *
-        10 * ( cgyf + 2 );
+    double P = base_pressure + raw_noise_4d( x, y, z, modSEED + 211 ) * 10 * ( cgyf + 2 );
 
     // Wind power
-    W = std::max( 0, static_cast<int>( base_wind * rng( 1, 2 ) / std::pow( ( P + W ) / 1014.78, rng( 9,
-                                       base_wind_distrib_peaks ) ) +
-                                       -cgyf / base_wind_season_variation * rng( 1, 2 ) ) );
+    W = std::max(
+            0,
+            static_cast<int>(
+                base_wind * rng( 1, 2 ) / std::pow( ( P + W ) / 1014.78, rng( 9, base_wind_distrib_peaks ) )
+                + -cgyf / base_wind_season_variation * rng( 1, 2 ) ) );
     // Initial static variable
     if( current_winddir == 1000 ) {
         current_winddir = get_wind_direction( season );
@@ -172,24 +219,21 @@ w_point weather_generator::get_weather( const tripoint_abs_ms &location, const t
         }
     }
     std::string wind_desc = get_wind_desc( W );
-    // Acid rains
     const double acid_content = base_acid * A;
-    bool acid = acid_content >= 1.0;
-    return w_point{ T, H, P, W, wind_desc, current_winddir, acid };
+    auto result = w_point{T, H, P, W, wind_desc, current_winddir, acid_content >= 1.0, {}};
+    apply_weather_patterns( *this, common, result );
+    result.humidity = std::clamp( result.humidity, 0.0, 100.0 );
+    result.windpower = std::max( 0.0, result.windpower );
+    return result;
 }
 
-const weather_type_id &weather_generator::get_default_weather() const
-{
-    return weather_types[0];
-}
+const weather_type_id &weather_generator::get_default_weather() const { return weather_types[0]; }
 
 const weather_type_id &weather_generator::get_bad_weather() const
 {
     const weather_type_id *bad_weather = &get_default_weather();
     for( const weather_type_id &wt : weather_types ) {
-        if( wt->precip == precip_class::heavy ) {
-            bad_weather = &wt;
-        }
+        if( wt->precip == precip_class::heavy ) { bad_weather = &wt; }
     }
     return *bad_weather;
 }
@@ -197,14 +241,12 @@ const weather_type_id &weather_generator::get_bad_weather() const
 int weather_generator::forecast_priority( const weather_type_id &w ) const
 {
     auto it = std::ranges::find( weather_types, w );
-    if( it == weather_types.end() ) {
-        return -1;
-    }
+    if( it == weather_types.end() ) { return -1; }
     return std::distance( weather_types.begin(), it );
 }
 
-const weather_type_id &weather_generator::get_weather_conditions( const tripoint_abs_ms &location,
-        const time_point &t, unsigned seed ) const
+const weather_type_id &weather_generator::get_weather_conditions(
+    const tripoint_abs_ms &location, const time_point &t, unsigned seed ) const
 {
     w_point w( get_weather( location, t, seed ) );
     return get_weather_conditions( w );
@@ -218,37 +260,38 @@ const weather_type_id &weather_generator::get_weather_conditions( const w_point 
         const weather_requirements &wrequires = type->requirements;
         weather_requirements rq2 = wrequires;
         bool test_pressure =
-            wrequires.pressure_max > w.pressure &&
-            wrequires.pressure_min < w.pressure;
+            wrequires.pressure_max > w.pressure && wrequires.pressure_min < w.pressure;
         bool test_humidity =
-            wrequires.humidity_max > w.humidity &&
-            wrequires.humidity_min < w.humidity;
-        if( ( wrequires.humidity_and_pressure && !( test_pressure && test_humidity ) ) ||
-            ( !wrequires.humidity_and_pressure && !( test_pressure || test_humidity ) ) ) {
+            wrequires.humidity_max > w.humidity && wrequires.humidity_min < w.humidity;
+        if( ( wrequires.humidity_and_pressure && !( test_pressure && test_humidity ) )
+            || ( !wrequires.humidity_and_pressure && !( test_pressure || test_humidity ) ) ) {
             continue;
         }
         bool test_temperature =
-            wrequires.temperature_max > units::to_fahrenheit( w.temperature ) &&
-            wrequires.temperature_min < units::to_fahrenheit( w.temperature );
+            wrequires.temperature_max > units::to_fahrenheit( w.temperature )
+            && wrequires.temperature_min < units::to_fahrenheit( w.temperature );
         bool test_windspeed =
-            wrequires.windpower_max > w.windpower &&
-            wrequires.windpower_min < w.windpower;
+            wrequires.windpower_max > w.windpower && wrequires.windpower_min < w.windpower;
         bool test_acidic = !wrequires.acidic || w.acidic;
-        if( !( test_temperature && test_windspeed && test_acidic ) ) {
-            continue;
-        }
+        const bool test_patterns = std::ranges::all_of(
+                                       wrequires.required_weather_patterns,
+        [&w]( const std::pair<weather_pattern_id, double> &required_pattern ) {
+            const auto iter = w.pattern_values.find( required_pattern.first );
+            return iter != w.pattern_values.end() && iter->second >= required_pattern.second;
+        } );
+        if( !( test_temperature && test_windspeed && test_acidic && test_patterns ) ) { continue; }
 
         if( !wrequires.required_weathers.empty() ) {
-            if( std::ranges::find( wrequires.required_weathers,
-                                   *current_conditions ) == wrequires.required_weathers.end() ) {
+            if( std::ranges::find( wrequires.required_weathers, *current_conditions )
+                == wrequires.required_weathers.end() ) {
                 continue;
             }
         }
 
         if( wrequires.time != weather_time_requirement_type::both ) {
             bool day = is_day( calendar::turn );
-            if( ( wrequires.time == weather_time_requirement_type::day && !day ) ||
-                ( wrequires.time == weather_time_requirement_type::night && day ) ) {
+            if( ( wrequires.time == weather_time_requirement_type::day && !day )
+                || ( wrequires.time == weather_time_requirement_type::night && day ) ) {
                 continue;
             }
         }
@@ -262,16 +305,20 @@ int weather_generator::get_wind_direction( const season_type season ) const
     cata_default_random_engine &wind_dir_gen = rng_get_engine();
     // Assign chance to angle direction
     if( season == SPRING ) {
-        std::discrete_distribution<int> distribution {3, 3, 5, 8, 11, 10, 5, 2, 5, 6, 6, 5, 8, 10, 8, 6};
+        std::discrete_distribution<int>
+        distribution{3, 3, 5, 8, 11, 10, 5, 2, 5, 6, 6, 5, 8, 10, 8, 6};
         return distribution( wind_dir_gen );
     } else if( season == SUMMER ) {
-        std::discrete_distribution<int> distribution {3, 4, 4, 8, 8, 9, 8, 3, 7, 8, 10, 7, 7, 7, 5, 3};
+        std::discrete_distribution<int>
+        distribution{3, 4, 4, 8, 8, 9, 8, 3, 7, 8, 10, 7, 7, 7, 5, 3};
         return distribution( wind_dir_gen );
     } else if( season == AUTUMN ) {
-        std::discrete_distribution<int> distribution {4, 6, 6, 7, 6, 5, 4, 3, 5, 6, 8, 8, 10, 10, 8, 5};
+        std::discrete_distribution<int>
+        distribution{4, 6, 6, 7, 6, 5, 4, 3, 5, 6, 8, 8, 10, 10, 8, 5};
         return distribution( wind_dir_gen );
     } else if( season == WINTER ) {
-        std::discrete_distribution<int> distribution {5, 3, 2, 3, 2, 2, 2, 2, 4, 6, 10, 8, 12, 19, 13, 9};
+        std::discrete_distribution<int>
+        distribution{5, 3, 2, 3, 2, 2, 2, 2, 4, 6, 10, 8, 12, 19, 13, 9};
         return distribution( wind_dir_gen );
     } else {
         return 0;
@@ -286,29 +333,26 @@ int weather_generator::convert_winddir( const int inputdir ) const
 }
 
 units::temperature weather_generator::get_water_temperature(
-    const tripoint_abs_ms &location,
-    const time_point &time,
-    const calendar_config &calendar_config,
+    const tripoint_abs_ms &location, const time_point &time, const calendar_config &calendar_config,
     unsigned seed ) const
 {
     // Instead of using a realistic model, we'll just smooth out air temperature
     // Smooth out both in time and intensity
     // And add caps - it must stay liquid water
-    constexpr std::array<std::pair<time_duration, double>, 7> measurement_weights = {{
-            { 7_days, 0.1 },
-            { 7_days + 12_hours, 0.1 },
-            { 3_days, 0.2 },
-            { 3_days + 12_hours, 0.2 },
-            { 1_days, 0.2 },
-            { 0_days + 12_hours, 0.2 },
-            { 0_days, 0.1 }
+    constexpr std::array<std::pair<time_duration, double>, 7> measurement_weights = {
+        {   {7_days, 0.1},
+            {7_days + 12_hours, 0.1},
+            {3_days, 0.2},
+            {3_days + 12_hours, 0.2},
+            {1_days, 0.2},
+            {0_days + 12_hours, 0.2},
+            {0_days, 0.1}
         }
     };
-    const units::temperature weighted_avg = std::accumulate( measurement_weights.begin(),
-                                            measurement_weights.end(),
-                                            0_c,
-                                            [this, location, time, seed, calendar_config]( units::temperature acc,
-    const std::pair<time_duration, double> &pr ) {
+    const units::temperature weighted_avg = std::accumulate(
+            measurement_weights.begin(), measurement_weights.end(), 0_c,
+            [this, location, time, seed,
+          calendar_config]( units::temperature acc, const std::pair<time_duration, double> &pr ) {
         units::temperature weather_temperature =
             get_weather_temperature( location, time - pr.first, calendar_config, seed );
         return acc + multiply_any_unit( weather_temperature, pr.second );
@@ -320,9 +364,7 @@ units::temperature weather_generator::get_water_temperature(
     constexpr int lower_limit = units::to_millidegree_celsius( -10_c );
     constexpr int upper_limit = units::to_millidegree_celsius( 30_c );
     const int weighted_average_celsius = units::to_millidegree_celsius( weighted_avg );
-    const auto cold_factor = logarithmic_range( lower_limit,
-                             upper_limit,
-                             weighted_average_celsius );
+    const auto cold_factor = logarithmic_range( lower_limit, upper_limit, weighted_average_celsius );
     return multiply_any_unit( 0_c, cold_factor ) + multiply_any_unit( 30_c, 1 - cold_factor );
 }
 
@@ -332,9 +374,11 @@ void weather_generator::test_weather( unsigned seed = 1000 ) const
     // Usage:
     // weather_generator WEATHERGEN; // Instantiate the class.
     // WEATHERGEN.test_weather(); // Runs this test.
-    write_to_file( "weather.output", [&]( std::ostream & testfile ) {
-        testfile <<
-                 "|;year;season;day;hour;minute;temperature(F);humidity(%);pressure(mB);weatherdesc;windspeed(mph);winddirection"
+    write_to_file(
+        "weather.output",
+    [&]( std::ostream & testfile ) {
+        testfile << "|;year;season;day;hour;minute;temperature(F);humidity(%);pressure(mB);"
+                 "weatherdesc;windspeed(mph);winddirection"
                  << '\n';
 
         const time_point begin = calendar::turn;
@@ -343,8 +387,9 @@ void weather_generator::test_weather( unsigned seed = 1000 ) const
             w_point w = get_weather( tripoint_abs_ms::zero(), i, seed );
             const weather_type_id &conditions = get_weather_conditions( w );
 
-            int year = to_turns<int>( i - calendar::turn_zero ) / to_turns<int>
-                       ( calendar::year_length() ) + 1;
+            int year =
+                to_turns<int>( i - calendar::turn_zero ) / to_turns<int>( calendar::year_length() )
+                + 1;
             const int hour = hour_of_day<int>( i );
             const int minute = minute_of_hour<int>( i );
             int day;
@@ -353,30 +398,54 @@ void weather_generator::test_weather( unsigned seed = 1000 ) const
             } else {
                 day = day_of_season<int>( i );
             }
-            testfile << "|;" << year << ";" << season_of_year( i ) << ";" << day << ";" << hour << ";" << minute
-                     << ";" << w.temperature << ";" << w.humidity << ";" << w.pressure << ";" << conditions->name << ";"
-                     << w.windpower << ";" << w.winddirection << '\n';
+            testfile << "|;" << year << ";" << season_of_year( i ) << ";" << day << ";" << hour
+                     << ";" << minute << ";" << w.temperature << ";" << w.humidity << ";"
+                     << w.pressure << ";" << conditions->name << ";" << w.windpower << ";"
+                     << w.winddirection << '\n';
         }
-
-    }, "weather test file" );
+    },
+    "weather test file" );
 }
 
-inline bool maybe_temperature_reader( const JsonObject &jo, const std::string &member_name,
-                                      units::temperature &member, bool was_loaded )
+inline bool maybe_temperature_reader(
+    const JsonObject &jo, const std::string &member_name, units::temperature &member,
+    bool was_loaded )
 {
     try {
         return temperature_reader()( jo, member_name, member, was_loaded );
     } catch( const JsonError & ) {
         int legacy_value;
-        if( !jo.read( member_name, legacy_value ) ) {
-            return false;
-        }
+        if( !jo.read( member_name, legacy_value ) ) { return false; }
         member = units::from_celsius( legacy_value );
     }
     return true;
 }
 
-weather_generator weather_generator::load( const JsonObject &jo )
+void weather_pattern::load( const JsonObject &jo, const std::string & )
+{
+    mandatory( jo, was_loaded, "id", id );
+    optional( jo, was_loaded, "x_scale", x_scale, 1.0 );
+    optional( jo, was_loaded, "y_scale", y_scale, 1.0 );
+    optional( jo, was_loaded, "z_scale", z_scale, 1.0 );
+    optional( jo, was_loaded, "seed_offset", seed_offset, 0 );
+    optional( jo, was_loaded, "multiplier", multiplier, 1.0 );
+    optional( jo, was_loaded, "offset", offset, 0.0 );
+    optional( jo, was_loaded, "humidity_mod", humidity_mod, 0.0 );
+    optional( jo, was_loaded, "pressure_mod", pressure_mod, 0.0 );
+    optional( jo, was_loaded, "windpower_mod", windpower_mod, 0.0 );
+    assign( jo, "temperature_mod", temperature_mod );
+    optional( jo, was_loaded, "active_threshold", active_threshold, 0.0 );
+    optional( jo, was_loaded, "acidic", acidic, false );
+}
+
+void weather_pattern::check() const
+{
+    if( x_scale == 0.0 || y_scale == 0.0 || z_scale == 0.0 ) {
+        debugmsg( "Weather pattern %s has a zero noise scale", id.c_str() );
+    }
+}
+
+void weather_generator::load( const JsonObject &jo, const std::string & )
 {
     static const std::array<std::pair<std::string, int>, NUM_SEASONS> legacy_temp_id_values = {{
             {"spring_temp_manual_mod", 0},
@@ -385,52 +454,94 @@ weather_generator weather_generator::load( const JsonObject &jo )
             {"winter_temp_manual_mod", -15},
         }
     };
-    static const std::array<std::string, NUM_SEASONS> season_temp_ids = {
-        "spring_temp", "summer_temp", "autumn_temp", "winter_temp"
-    };
+    static const std::array<std::string, NUM_SEASONS> season_temp_ids =
+    {"spring_temp", "summer_temp", "autumn_temp", "winter_temp"};
     static const std::array<std::string, NUM_SEASONS> season_humidity_ids = {
-        "spring_humidity_manual_mod",
-        "summer_humidity_manual_mod",
-        "autumn_humidity_manual_mod",
+        "spring_humidity_manual_mod", "summer_humidity_manual_mod", "autumn_humidity_manual_mod",
         "winter_humidity_manual_mod"
     };
 
-    weather_generator ret;
+    mandatory( jo, was_loaded, "id", id );
 
-    float base_temp = jo.get_float( "base_temperature", 0.0 );
+    const float base_temp = jo.get_float( "base_temperature", 0.0 );
     // Handling legacy temperature settings
     // Don't handle legacy settings in strict mode, let it error
     if( !json_report_strict ) {
         for( size_t i = 0; i < season_temp_ids.size(); i++ ) {
-            ret.season_stats[i].average_temperature = units::from_celsius(
-                        base_temp +
-                        jo.get_int( legacy_temp_id_values[i].first, 0 ) +
-                        legacy_temp_id_values[i].second
-                    );
+            season_stats[i].average_temperature = units::from_celsius(
+                    base_temp + jo.get_int( legacy_temp_id_values[i].first, 0 )
+                    + legacy_temp_id_values[i].second );
         }
     }
     // Reading temperature settings
     for( size_t i = 0; i < season_temp_ids.size(); i++ ) {
-        maybe_temperature_reader( jo, season_temp_ids[i],
-                                  ret.season_stats[i].average_temperature, false );
-        assign( jo, season_humidity_ids[i], ret.season_stats[i].humidity_mod );
+        maybe_temperature_reader( jo, season_temp_ids[i], season_stats[i].average_temperature, false );
+        assign( jo, season_humidity_ids[i], season_stats[i].humidity_mod );
     }
 
     // Reading other weather settings.
-    ret.base_humidity = jo.get_float( "base_humidity", 50.0 );
-    ret.base_pressure = jo.get_float( "base_pressure", 0.0 );
-    ret.base_acid = jo.get_float( "base_acid", 0.0 );
-    ret.base_wind = jo.get_float( "base_wind", 0.0 );
-    ret.base_wind_distrib_peaks = jo.get_int( "base_wind_distrib_peaks", 0 );
-    ret.base_wind_season_variation = jo.get_int( "base_wind_season_variation", 0 );
+    base_humidity = jo.get_float( "base_humidity", 50.0 );
+    base_pressure = jo.get_float( "base_pressure", 0.0 );
+    base_acid = jo.get_float( "base_acid", 0.0 );
+    base_wind = jo.get_float( "base_wind", 0.0 );
+    base_wind_distrib_peaks = jo.get_int( "base_wind_distrib_peaks", 0 );
+    base_wind_season_variation = jo.get_int( "base_wind_season_variation", 0 );
 
-    assign( jo, "temperature_daily_amplitude", ret.temperature_daily_amplitude );
-    assign( jo, "temperature_noise_amplitude", ret.temperature_noise_amplitude );
+    assign( jo, "temperature_daily_amplitude", temperature_daily_amplitude );
+    assign( jo, "temperature_noise_amplitude", temperature_noise_amplitude );
 
     jo.get_member( "weather_types" ); // Throw if does not exist
-    jo.read( "weather_types", ret.weather_types );
-    if( ret.weather_types.empty() ) {
+    jo.read( "weather_types", weather_types );
+    if( weather_types.empty() ) {
         jo.throw_error( "expected at least 1 weather type", "weather_types" );
     }
-    return ret;
+    optional( jo, was_loaded, "weather_patterns", weather_patterns );
 }
+
+void weather_generator::check() const
+{
+    for( const weather_type_id &weather_type : weather_types ) {
+        if( !weather_type.is_valid() ) {
+            debugmsg( "Base weather %s references invalid weather type %s", id.c_str(),
+                      weather_type.c_str() );
+        }
+    }
+    for( const weather_pattern_id &weather_pattern : weather_patterns ) {
+        if( !weather_pattern.is_valid() ) {
+            debugmsg( "Base weather %s references invalid weather pattern %s", id.c_str(),
+                      weather_pattern.c_str() );
+        }
+    }
+}
+
+const weather_pattern &weather_patterns::get( const weather_pattern_id &id )
+{
+    return weather_pattern_factory.obj( id );
+}
+
+void weather_patterns::load( const JsonObject &jo, const std::string &src )
+{
+    weather_pattern_factory.load( jo, src );
+}
+
+void weather_patterns::finalize_all() { weather_pattern_factory.finalize(); }
+
+void weather_patterns::reset() { weather_pattern_factory.reset(); }
+
+void weather_patterns::check_consistency() { weather_pattern_factory.check(); }
+
+const weather_generator &base_weathers::get( const base_weather_id &id )
+{
+    return base_weather_factory.obj( id );
+}
+
+void base_weathers::load( const JsonObject &jo, const std::string &src )
+{
+    base_weather_factory.load( jo, src );
+}
+
+void base_weathers::finalize_all() { base_weather_factory.finalize(); }
+
+void base_weathers::reset() { base_weather_factory.reset(); }
+
+void base_weathers::check_consistency() { base_weather_factory.check(); }
