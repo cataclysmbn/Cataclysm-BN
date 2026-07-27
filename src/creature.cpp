@@ -1343,16 +1343,20 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
         case DT_BULLET:
             // Volatile enemies sometimes go up
             set_volatiles_on_fire( 16 );
-            // Cause bleed if high damage goes through armor
+            // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
-                add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                if( made_of_any( cmat_flesh ) ) {
+                    add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                }
             }
             break;
 
         case DT_CUT:
-            // Cause bleed if some damage goes through armor
+            // Cause bleed if some damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 6 ) {
-                add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                if( made_of_any( cmat_flesh ) ) {
+                    add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                }
             }
             break;
 
