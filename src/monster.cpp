@@ -147,7 +147,6 @@ static const efftype_id effect_monster_armor( "monster_armor" );
 static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_no_sight( "no_sight" );
 static const efftype_id effect_onfire( "onfire" );
-static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_pacified( "pacified" );
 static const efftype_id effect_pet( "pet" );
 static const efftype_id effect_pet_bonding( "pet_bonding" );
