@@ -3787,10 +3787,10 @@ void monster::process_one_effect( effect &it, bool is_new )
         if( made_of( material_id( "flesh" ) ) || made_of( material_id( "iflesh" ) ) ) {
             dam = 1;
         }
-        
+
         if( dam > 0 ) {
             if( one_in( 36 / intense ) {
-                apply_damage( nullptr, bodypart_id( "torso" ), dam );
+            apply_damage( nullptr, bodypart_id( "torso" ), dam );
                 bleed();
             }
         } else {
