@@ -610,7 +610,7 @@
     "armor_bash": 20,
     "armor_cut": 40,
     "armor_bullet": 60,
-	  "armor_stab":20,
+    "armor_stab": 20,
     "armor_fire": 15,
     "armor_acid": 10,
     "vision_day": 50,
@@ -622,19 +622,19 @@
     "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ] ],
     "death_function": [ "BROKEN" ],
-    "flags": [ 
-		"FACTION_MEMORY", 
-		"SEES", 
-		"HEARS", 
-		"BASHES", 
-		"NO_BREATHE", 
-		"ELECTRONIC", 
-		"PRIORITIZE_TARGETS", 
-		"DROPS_AMMO", 
-		"COLDPROOF", 
-		"LOUDMOVES",
-    "KEEP_DISTANCE"
-		]
+    "flags": [
+      "FACTION_MEMORY",
+      "SEES",
+      "HEARS",
+      "BASHES",
+      "NO_BREATHE",
+      "ELECTRONIC",
+      "PRIORITIZE_TARGETS",
+      "DROPS_AMMO",
+      "COLDPROOF",
+      "LOUDMOVES",
+      "KEEP_DISTANCE"
+    ]
   },
   {
     "id": "mon_uafv_xm246e1",
