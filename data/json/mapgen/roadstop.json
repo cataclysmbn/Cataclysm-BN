@@ -229,7 +229,7 @@
         "_": "t_concrete",
         "o": "t_concrete",
         "G": "t_concrete",
-        "#": "t_wall_w",
+        "#": "t_wall_w"
       },
       "furniture": {
         "4": "f_chair",
@@ -244,9 +244,7 @@
         "i": "f_oven",
         "o": [ "f_dumpster", "f_recycle_bin" ]
       },
-      "place_items": [
-        { "item": "SUS_appliances_cupboard", "x": [ 9, 11 ], "y": 14, "chance": 80 }
-      ],
+      "place_items": [ { "item": "SUS_appliances_cupboard", "x": [ 9, 11 ], "y": 14, "chance": 80 } ],
       "item": { "T": { "item": "toilet_paper", "chance": 15 } },
       "items": {
         "8": { "item": "trash", "chance": 33 },
