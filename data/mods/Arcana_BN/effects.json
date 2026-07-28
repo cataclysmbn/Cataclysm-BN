@@ -722,7 +722,7 @@
   {
     "type": "effect_type",
     "id": "arcana_aegis_mending",
-    "blocks_effects": [ "bleed" ],
+    "removes_effects": [ "bleed" ],
     "rating": "good"
   },
   {
