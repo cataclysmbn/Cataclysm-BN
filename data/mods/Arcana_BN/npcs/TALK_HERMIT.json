@@ -99,17 +99,9 @@
       { "text": "Who are you?", "topic": "TALK_HERMIT_WHO" },
       { "text": "What are you doing here?", "topic": "TALK_HERMIT_DOING" },
       {
-        "text": "Are there any spells you could teach me?",
-        "topic": "TALK_HERMIT_SPELL_MENU",
-        "condition": {
-          "and": [
-            { "u_has_effect": "hermit_earned_trust_2" },
-            { "u_has_trait_flag": "explorer_of_the_veil" },
-            {
-              "not": { "u_has_var": "hermit_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" }
-            }
-          ]
-        }
+        "text": "Is there anything you could teach me?",
+        "topic": "TALK_TRAIN",
+        "condition": { "and": [ { "u_has_effect": "hermit_earned_trust_2" }, { "u_has_trait_flag": "explorer_of_the_veil" } ] }
       },
       {
         "switch": true,
@@ -2378,102 +2370,6 @@
     "id": "TALK_HERMIT_DOING_ASKED",
     "dynamic_line": "You already pried about personal matters quite recently.  Please, it's fine.",
     "responses": [ { "text": "…", "topic": "TALK_HERMIT" } ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_HERMIT_SPELL_MENU",
-    "dynamic_line": "There are many secrets that He From Beyond The Veil will reward you with, if you make proper use of His relic.  I do know a few tricks from my youth that may compliment the tools He will give you, however.  I can pass onto you the Magic Signs of Free Action, Phase Shield, or Transcendent Aura.  I ask that you bring crystallized essence in exchange, as I can use it for these rituals and for other wards I maintain here.",
-    "responses": [
-      {
-        "text": "What can you tell me about Free Action?",
-        "condition": { "not": { "u_has_trait": "SPELL_FREEACTION" } },
-        "topic": "TALK_HERMIT_SPELL_MENU_1"
-      },
-      {
-        "text": "What can you tell me about Phase Shield?",
-        "condition": { "not": { "u_has_trait": "SPELL_PHASESHIELD" } },
-        "topic": "TALK_HERMIT_SPELL_MENU_2"
-      },
-      {
-        "text": "What can you tell me about Transcendent Aura?",
-        "condition": { "and": [ { "not": { "u_has_trait": "PROF_CHALICE2" } }, { "not": { "u_has_trait": "SPELL_TRANSCENDENTAURA" } } ] },
-        "topic": "TALK_HERMIT_SPELL_MENU_3"
-      },
-      {
-        "text": "I already know all of these.  Thanks anyway.",
-        "switch": true,
-        "condition": {
-          "and": [
-            { "u_has_trait": "SPELL_FREEACTION" },
-            { "u_has_trait": "SPELL_PHASESHIELD" },
-            { "u_has_any_trait": [ "PROF_CHALICE2", "SPELL_TRANSCENDENTAURA" ] }
-          ]
-        },
-        "effect": { "u_add_var": "hermit_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" },
-        "topic": "TALK_HERMIT"
-      },
-      { "text": "Maybe another time.", "switch": true, "default": true, "topic": "TALK_HERMIT" }
-    ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_HERMIT_SPELL_MENU_1",
-    "dynamic_line": "Though both it and Surging Force can halt time briefly, the main purpose of Free Action is in traversing rough terrain, slipping out of a monster's grasp, or negating other hazards that might slow you down.  I use it to traverse the woods when gathering firewood or hunting, I'm not as light on my feet as I used to be.  If you bring me 1 crystallized essence, I can imprint this knowledge upon you.",
-    "responses": [
-      {
-        "text": "Sure, here you go.",
-        "condition": { "u_has_item": "essence_pure" },
-        "effect": [ { "u_consume_item": "essence_pure" }, { "u_add_trait": "SPELL_FREEACTION" } ],
-        "topic": "TALK_DONE"
-      },
-      {
-        "text": "I'll need to obtain one.  Maybe later.",
-        "switch": true,
-        "condition": { "not": { "u_has_item": "essence_pure" } },
-        "topic": "TALK_HERMIT"
-      },
-      { "text": "Let me think about it.", "switch": true, "default": true, "topic": "TALK_HERMIT" }
-    ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_HERMIT_SPELL_MENU_2",
-    "dynamic_line": "It's a warding spell that lashes out against those who strike you, similar to the more well-known Shadowy Shield.  Rather than harming your attacker directly, it shunts them a short distance away from you.  It does the same to any other threats close enough, when it activates.  If you bring me 1 crystallized essence, I can imprint this knowledge upon you.",
-    "responses": [
-      {
-        "text": "Sure, here you go.",
-        "condition": { "u_has_item": "essence_pure" },
-        "effect": [ { "u_consume_item": "essence_pure" }, { "u_add_trait": "SPELL_PHASESHIELD" } ],
-        "topic": "TALK_DONE"
-      },
-      {
-        "text": "I'll need to obtain one.  Maybe later.",
-        "switch": true,
-        "condition": { "not": { "u_has_item": "essence_pure" } },
-        "topic": "TALK_HERMIT"
-      },
-      { "text": "Let me think about it.", "switch": true, "default": true, "topic": "TALK_HERMIT" }
-    ]
-  },
-  {
-    "type": "talk_topic",
-    "id": "TALK_HERMIT_SPELL_MENU_3",
-    "dynamic_line": "This secret has been passed down among a few of the more learned ascetics of my order.  It shrouds your aura against monsters from Beyond, blinding them to your presence.  It doesn't hide you from the undead I've found, earthly life in general seems to spot you more easily under its effect, but it has its uses.  If you bring me 1 crystallized essence, I can imprint this knowledge upon you.",
-    "responses": [
-      {
-        "text": "Sure, here you go.",
-        "condition": { "u_has_item": "essence_pure" },
-        "effect": [ { "u_consume_item": "essence_pure" }, { "u_add_trait": "SPELL_TRANSCENDENTAURA" } ],
-        "topic": "TALK_DONE"
-      },
-      {
-        "text": "I'll need to obtain one.  Maybe later.",
-        "switch": true,
-        "condition": { "not": { "u_has_item": "essence_pure" } },
-        "topic": "TALK_HERMIT"
-      },
-      { "text": "Let me think about it.", "switch": true, "default": true, "topic": "TALK_HERMIT" }
-    ]
   },
   {
     "type": "talk_topic",

@@ -25,6 +25,11 @@
       { "skill": "melee", "level": { "rng": [ 1, 3 ] } },
       { "skill": "stabbing", "level": { "rng": [ 2, 4 ] } }
     ],
+    "spells": [
+      { "id": "arcana_magic_free_action", "level": 5 },
+      { "id": "arcana_magic_phase_shield", "level": 5 },
+      { "id": "arcana_magic_temporal_aura", "level": 5 }
+    ],
     "worn_override": "NC_HERMIT_worn",
     "carry_override": "NC_HERMIT_misc",
     "weapon_override": "NC_HERMIT_weapon",
@@ -88,6 +93,11 @@
       { "skill": "bashing", "level": { "rng": [ 1, 2 ] } },
       { "skill": "dodge", "level": { "rng": [ 3, 6 ] } },
       { "skill": "melee", "level": { "rng": [ 1, 3 ] } }
+    ],
+    "spells": [
+      { "id": "arcana_magic_heat_ward", "level": 5 },
+      { "id": "arcana_magic_poison_armor", "level": 5 },
+      { "id": "arcana_magic_ward_against_evil", "level": 5 }
     ],
     "carry_override": "NC_CF_REP_misc",
     "worn_override": "NC_CF_REP_worn",
@@ -194,6 +204,11 @@
       { "skill": "dodge", "level": { "rng": [ 3, 6 ] } },
       { "skill": "gun", "level": { "rng": [ 1, 3 ] } },
       { "skill": "pistol", "level": { "rng": [ 1, 3 ] } }
+    ],
+    "spells": [
+      { "id": "arcana_magic_capacitance", "level": 5 },
+      { "id": "arcana_magic_consecrate", "level": 5 },
+      { "id": "arcana_magic_open_lock", "level": 5 }
     ],
     "bionics": [
       { "id": "bio_batteries", "chance": 100 },
@@ -461,6 +476,11 @@
       { "skill": "mechanics", "level": { "rng": [ 1, 4 ] } },
       { "skill": "dodge", "level": { "rng": [ 2, 5 ] } },
       { "skill": "gun", "level": { "rng": [ 2, 5 ] } }
+    ],
+    "spells": [
+      { "id": "arcana_magic_agility", "level": 5 },
+      { "id": "arcana_magic_conjure_flame", "level": 5 },
+      { "id": "arcana_magic_dampening", "level": 5 }
     ],
     "worn_override": "NC_CF_AUX_MAGE_worn",
     "carry_override": "NC_CF_AUX_MAGE_misc",
