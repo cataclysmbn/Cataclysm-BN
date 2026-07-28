@@ -186,6 +186,7 @@
     "type": "mapgen",
     "method": "json",
     "om_terrain": [ "roadstop_b" ],
+    "weight": 333,
     "object": {
       "fill_ter": "t_linoleum_gray",
       "rows": [
