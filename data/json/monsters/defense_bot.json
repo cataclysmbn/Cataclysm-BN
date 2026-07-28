@@ -618,10 +618,10 @@
     "revert_to_itype": "bot_chickenbot",
     "starting_ammo": { "556": 1000, "40x46mm_m433": 100 },
     "path_settings": { "max_dist": 10 },
-    "tracking_distance": 9,
     "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
-    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ] ],
-    "death_function": [ "BROKEN" ],
+    "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ], [ "SMASH", 20 ] ],
+    "death_function": [ "BROKEN" ],	
+    "anger_triggers": [ "HURT", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_CLOSE" ],
     "flags": [
       "FACTION_MEMORY",
       "SEES",
@@ -633,7 +633,6 @@
       "DROPS_AMMO",
       "COLDPROOF",
       "LOUDMOVES",
-      "KEEP_DISTANCE"
     ]
   },
   {
