@@ -254,7 +254,7 @@
         "i": { "item": "SUS_oven", "chance": 100 },
         "T": { "item": "SUS_toilet", "chance": 50 },
         "9": { "item": "fridgesnacks", "chance": 80, "repeat": [ 1, 4 ] },
-        "o": { "item": "trash_dumpster", "chance": 80 },
+        "o": { "item": "trash_dumpster", "chance": 80 }
       },
       "toilets": { "T": {  } },
       "vehicles": { "Á": { "vehicle": "parking_garage", "chance": 33, "rotation": 90 } }
