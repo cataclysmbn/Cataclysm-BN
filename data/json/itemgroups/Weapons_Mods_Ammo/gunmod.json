@@ -167,6 +167,18 @@
   },
   {
     "type": "item_group",
+    "id": "swat_accessories",
+    "subtype": "collection",
+    "//": "Standard attachments for swat miniboss rifle",
+    "entries": [
+      { "item": "holo_sight", "prob": 100 },
+      { "item": "muzzle_brake", "prob": 100 },
+      { "item": "rail_laser_sight", "prob": 100 },
+      { "item": "shoulder_strap", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "sights_all",
     "//": "All aftermarket sights.",
     "items": [
