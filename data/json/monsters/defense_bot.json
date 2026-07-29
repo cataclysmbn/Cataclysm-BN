@@ -622,7 +622,7 @@
     "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ] ],
     "special_when_hit": [ "ZAPBACK", 100 ],
     "death_function": [ "BROKEN" ],
-    "anger_triggers": [ "HURT", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_CLOSE" ],
+    "anger_triggers": [ "HURT", "FRIEND_ATTACKED", "FRIEND_DIED" ],
     "flags": [
       "FACTION_MEMORY",
       "SEES",
