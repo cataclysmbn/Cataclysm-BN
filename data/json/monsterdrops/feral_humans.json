@@ -1061,6 +1061,13 @@
       { "item": "badge_swat", "prob": 50 },
       {
         "distribution": [
+          { "item": "retool_mcx_223", "prob": 50 },
+          { "item": "retool_mcx_762", "prob": 50 }
+        ],
+        "prob": 100
+      },
+      {
+        "distribution": [
           { "item": "powered_earmuffs", "prob": 75, "damage": [ 0, 1 ] },
           { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 0, 1 ] }
         ],
@@ -1073,7 +1080,7 @@
     "type": "item_group",
     "id": "mon_feral_swat_boss_commander_monster_weapon",
     "subtype": "distribution",
-    "entries": [ { "group": "everyday_ar15_swat", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] } ]
+    "entries": [ { "group": "everyday_sig_mcx_swat", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] } ]
   },
   {
     "type": "item_group",
@@ -1132,6 +1139,31 @@
       { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 },
       { "item": "gasbomb", "prob": 100, "count": [ 2, 4 ] },
       { "item": "bot_flashbang_hack", "prob": 100, "count": [ 1, 3 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_cloaker_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "group": "swat_zombie_gear", "prob": 100, "damage": [ 0, 1 ] },
+      { "group": "swat_gloves", "damage": [ 0, 2 ] },
+      { "group": "swat_helmet", "damage": [ 0, 2 ] },
+      { "group": "swat_pants", "damage": [ 0, 2 ] },
+      { "group": "swat_shoes", "damage": [ 0, 2 ] },
+      { "group": "swat_torso", "damage": [ 0, 2 ] },
+      { "group": "underwear", "damage": [ 0, 4 ] },
+      { "group": "clothing_glasses", "prob": 5 },
+      { "group": "clothing_watch", "prob": 100 },
+      { "item": "badge_swat", "prob": 50 },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 0, 1 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 0, 1 ] }
+        ],
+        "prob": 50
+      },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 }
     ]
   },
   {
