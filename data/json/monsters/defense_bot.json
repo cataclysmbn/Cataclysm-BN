@@ -620,8 +620,8 @@
     "path_settings": { "max_dist": 10 },
     "//": "Marks targets for you if friendly, does nothing else otherwise since lacks POLICE_EYEBOT flag.",
     "special_attacks": [ [ "PHOTOGRAPH", 60 ], [ "CHICKENBOT", 4 ], [ "SMASH", 20 ] ],
-     "special_when_hit": [ "ZAPBACK", 100 ],
-    "death_function": [ "BROKEN" ],	
+    "special_when_hit": [ "ZAPBACK", 100 ],
+    "death_function": [ "BROKEN" ],
     "anger_triggers": [ "HURT", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_CLOSE" ],
     "flags": [
       "FACTION_MEMORY",
