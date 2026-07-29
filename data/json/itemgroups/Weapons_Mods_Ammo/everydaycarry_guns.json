@@ -888,6 +888,23 @@
     ]
   },
   {
+    "id": "everyday_ar15_swat",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "ar15",
+        "ammo-group": "on_hand_223",
+        "charges": [ 0, 30 ],
+        "contents-group": "swat_accessories"
+      },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_cx4",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
