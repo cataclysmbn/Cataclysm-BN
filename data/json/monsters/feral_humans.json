@@ -1449,7 +1449,7 @@
     "vision_night": 4,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "harvest": "zombie_maybe_mil_bionics",
-    "starting_ammo": { "223": 120 },
+    "starting_ammo": { "300blk": 120 },
     "monster_weapon": "mon_feral_swat_boss_commander_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
@@ -1457,12 +1457,12 @@
         "type": "gun",
         "cooldown": 10,
         "move_cost": 100,
-        "gun_type": "ar15",
-        "ammo_type": "223",
+        "gun_type": "sig_mcx",
+        "ammo_type": "300blk",
         "fake_skills": [ [ "gun", 5 ], [ "rifle", 5 ] ],
         "fake_dex": 8,
         "fake_per": 10,
-        "ranges": [ [ 0, 24, "DEFAULT" ] ],
+        "ranges": [ [ 0, 24, "semi" ] ],
         "require_targeting_player": false,
         "description": "The feral SWAT officer fires their rifle!",
         "no_crits": true
@@ -1669,7 +1669,7 @@
     "emit_fields": [ { "emit_id": "emit_shadow_field", "delay": "1 s" } ],
     "special_attacks": [ [ "PARROT_AT_DANGER", 5 ], [ "BIO_OP_TAKEDOWN", 15 ] ],
     "death_function": [ "NORMAL" ],
-    "death_drops": "mon_feral_swat_boss_commander_death_drops",
+    "death_drops": "mon_feral_swat_boss_cloaker_death_drops",
     "zombify_into": "mon_zombie_swat_boss",
     "flags": [
       "SEES",
