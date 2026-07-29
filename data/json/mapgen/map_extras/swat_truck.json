@@ -5,12 +5,12 @@
     "update_mapgen_id": "mx_swat_truck",
     "object": {
       "place_vehicles": [ { "vehicle": "truck_swat_mapextra", "x": 17, "y": 6, "chance": 100, "rotation": 270 } ],
-      "place_monster": [
-        { "monster": "mon_zombie_swat_boss", "x": 18, "y": 9, "repeat": [ 1, 2 ] },
-        { "monster": "mon_feral_swat_boss_commander", "x": 18, "y": 9 },
-        { "monster": "mon_feral_swat_boss_shieldman", "x": 18, "y": 9 },
-        { "monster": "mon_feral_swat_boss_grenadier", "x": 18, "y": 9 },
-        { "monster": "mon_feral_swat_boss_cloaker", "x": 18, "y": 9 }
+      "place_nested": [
+        {
+          "chunks": [ [ "swat_truck_chunk_zombies", 50 ], [ "swat_truck_chunk_miniboss", 50 ] ],
+          "x": 18,
+          "y": 9
+        }
       ]
     }
   },
@@ -20,12 +20,12 @@
     "update_mapgen_id": "mx_swat_truck",
     "object": {
       "place_vehicles": [ { "vehicle": "truck_swat_mapextra", "x": 5, "y": 15, "chance": 100, "rotation": 180 } ],
-      "place_monster": [
-        { "monster": "mon_zombie_swat_boss", "x": 6, "y": 18, "repeat": [ 1, 2 ] },
-        { "monster": "mon_feral_swat_boss_commander", "x": 6, "y": 18 },
-        { "monster": "mon_feral_swat_boss_shieldman", "x": 6, "y": 18 },
-        { "monster": "mon_feral_swat_boss_grenadier", "x": 6, "y": 18 },
-        { "monster": "mon_feral_swat_boss_cloaker", "x": 6, "y": 18 }
+      "place_nested": [
+        {
+          "chunks": [ [ "swat_truck_chunk_zombies", 50 ], [ "swat_truck_chunk_miniboss", 50 ] ],
+          "x": 6,
+          "y": 18
+        }
       ]
     }
   },
@@ -39,12 +39,37 @@
         { "vehicle": "highway", "x": 11, "y": 11, "chance": 100, "rotation": 90 }
       ],
       "place_monsters": [ { "monster": "GROUP_ZOMBIE", "x": [ 0, 23 ], "y": [ 0, 23 ], "density": 0.1 } ],
+      "place_nested": [
+        {
+          "chunks": [ [ "swat_truck_chunk_zombies", 50 ], [ "swat_truck_chunk_miniboss", 50 ] ],
+          "x": 13,
+          "y": 15
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "swat_truck_chunk_zombies",
+    "object": {
+      "mapgensize": [ 1, 1 ],
       "place_monster": [
-        { "monster": "mon_zombie_swat_boss", "x": 13, "y": 15, "repeat": [ 1, 2 ] },
-        { "monster": "mon_feral_swat_boss_commander", "x": 13, "y": 15 },
-        { "monster": "mon_feral_swat_boss_shieldman", "x": 13, "y": 15 },
-        { "monster": "mon_feral_swat_boss_grenadier", "x": 13, "y": 15 },
-        { "monster": "mon_feral_swat_boss_cloaker", "x": 13, "y": 15 }
+        { "monster": "mon_zombie_swat_boss", "x": 0, "y": 0, "repeat": [ 5, 6 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "swat_truck_chunk_miniboss",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "place_monster": [
+        { "monster": "mon_feral_swat_boss_commander", "x": 0, "y": 0 },
+        { "monster": "mon_feral_swat_boss_shieldman", "x": 0, "y": 0 },
+        { "monster": "mon_feral_swat_boss_grenadier", "x": 0, "y": 0 },
+        { "monster": "mon_feral_swat_boss_cloaker", "x": 0, "y": 0 }
       ]
     }
   }
