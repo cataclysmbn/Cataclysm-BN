@@ -3295,41 +3295,25 @@
   },
   {
     "type": "speech",
-    "speaker": [
-      "mon_feral_swat_boss_commander",
-      "mon_feral_swat_boss_shieldman",
-      "mon_feral_swat_boss_grenadier"
-    ],
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
     "sound": "\"Suspect in sight!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [
-      "mon_feral_swat_boss_commander",
-      "mon_feral_swat_boss_shieldman",
-      "mon_feral_swat_boss_grenadier"
-    ],
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
     "sound": "\"You're going down, dead or alive!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [
-      "mon_feral_swat_boss_commander",
-      "mon_feral_swat_boss_shieldman",
-      "mon_feral_swat_boss_grenadier"
-    ],
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
     "sound": "\"Stop resisting!\"",
     "volume": 70
   },
   {
     "type": "speech",
-    "speaker": [
-      "mon_feral_swat_boss_commander",
-      "mon_feral_swat_boss_shieldman",
-      "mon_feral_swat_boss_grenadier"
-    ],
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
     "sound": "\"Watch your crossfire!\"",
     "volume": 70
   },
