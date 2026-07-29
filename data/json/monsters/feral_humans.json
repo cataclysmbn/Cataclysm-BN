@@ -1423,7 +1423,7 @@
     "type": "MONSTER",
     "name": { "str": "feral SWAT officer" },
     "description": "Wearing a black uniform with heavy armor adorned with a silver badge, this person was a member of an elite police team turned feral.  Their hands grip a rifle.",
-    "default_faction": "zombie",
+    "default_faction": "cop_zombie",
     "bodytype": "human",
     "species": [ "HUMAN" ],
     "volume": "62500 ml",
@@ -1434,7 +1434,7 @@
     "material": [ "flesh" ],
     "symbol": "@",
     "color": "light_blue",
-    "aggression": 75,
+    "aggression": 5,
     "morale": 100,
     "melee_skill": 7,
     "melee_dice": 4,
@@ -1484,7 +1484,8 @@
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
       "PRIORITIZE_TARGETS",
-      "NO_BREATHE"
+      "NO_BREATHE",
+      "FACTION_MEMORY"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
   },
@@ -1493,7 +1494,7 @@
     "type": "MONSTER",
     "name": { "str": "feral SWAT shieldbearer" },
     "description": "Wearing a black uniform with heavy armor adorned with a silver badge, this person was a member of an elite police team turned feral.  They hold a heavy ballistic shield in one hand and a pistol in the other.  It looks like you won't be able to smack this shield away like the others though.",
-    "default_faction": "zombie",
+    "default_faction": "cop_zombie",
     "bodytype": "human",
     "species": [ "HUMAN" ],
     "volume": "62500 ml",
@@ -1504,7 +1505,7 @@
     "material": [ "flesh" ],
     "symbol": "@",
     "color": "light_blue",
-    "aggression": 75,
+    "aggression": 5,
     "morale": 100,
     "melee_skill": 7,
     "melee_dice": 4,
@@ -1523,7 +1524,9 @@
     "monster_weapon": "mon_feral_swat_boss_shieldman_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 5 ],
-      { "id": "slam" },
+      {
+        "id": "slam"
+      },
       {
         "type": "gun",
         "cooldown": 6,
@@ -1555,7 +1558,8 @@
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
       "PRIORITIZE_TARGETS",
-      "NO_BREATHE"
+      "NO_BREATHE",
+      "FACTION_MEMORY"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
   },
@@ -1564,7 +1568,7 @@
     "type": "MONSTER",
     "name": { "str": "feral SWAT grenadier" },
     "description": "Wearing a black uniform with heavy armor adorned with a silver badge and a belt of tear gas grenades, this person was a member of an elite police team turned feral.  They hold a tear gas grenade at the ready.",
-    "default_faction": "zombie",
+    "default_faction": "cop_zombie",
     "bodytype": "human",
     "species": [ "HUMAN" ],
     "volume": "62500 ml",
@@ -1575,7 +1579,7 @@
     "material": [ "flesh" ],
     "symbol": "@",
     "color": "light_blue",
-    "aggression": 50,
+    "aggression": 5,
     "morale": 100,
     "melee_skill": 7,
     "melee_dice": 4,
@@ -1626,7 +1630,8 @@
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
       "PRIORITIZE_TARGETS",
-      "NO_BREATHE"
+      "NO_BREATHE",
+      "FACTION_MEMORY"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
   },
@@ -1636,7 +1641,7 @@
     "name": { "str": "feral SWAT cloaker" },
     "//2": "payday cloaker reference :)",
     "description": "Wearing a black uniform with heavy armor adorned with a silver badge, this person was a member of an elite police team turned feral.  Darkness shrouds their fast approach, and a shrill, electronic wailing emanates from the figure.",
-    "default_faction": "zombie",
+    "default_faction": "cop_zombie",
     "bodytype": "human",
     "species": [ "HUMAN" ],
     "volume": "62500 ml",
@@ -1647,7 +1652,7 @@
     "material": [ "flesh" ],
     "symbol": "@",
     "color": "light_blue",
-    "aggression": 100,
+    "aggression": 5,
     "morale": 100,
     "melee_skill": 8,
     "melee_dice": 6,
@@ -1664,7 +1669,10 @@
     "harvest": "zombie_maybe_mil_bionics",
     "monster_weapon": "mon_feral_swat_boss_cloaker_monster_weapon",
     "emit_fields": [ { "emit_id": "emit_shadow_field", "delay": "1 s" } ],
-    "special_attacks": [ [ "PARROT_AT_DANGER", 5 ], [ "BIO_OP_TAKEDOWN", 15 ] ],
+    "special_attacks": [
+      [ "PARROT_AT_DANGER", 5 ],
+      [ "BIO_OP_TAKEDOWN", 15 ],
+    ],
     "death_function": [ "NORMAL" ],
     "death_drops": "mon_feral_swat_boss_commander_death_drops",
     "zombify_into": "mon_zombie_swat_boss",
@@ -1681,7 +1689,8 @@
       "PUSH_MON",
       "PATH_AVOID_DANGER_1",
       "PRIORITIZE_TARGETS",
-      "NO_BREATHE"
+      "NO_BREATHE",
+      "FACTION_MEMORY"
     ],
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "HURT" ]
   }
