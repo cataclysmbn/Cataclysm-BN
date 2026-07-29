@@ -175,7 +175,9 @@
           { "id": "mon_feral_swat_boss_commander", "fg": 105, "bg": 30 },
           { "id": "mon_feral_swat_boss_shieldman", "fg": 106, "bg": 30 },
           { "id": "mon_feral_swat_boss_grenadier", "fg": 107, "bg": 30 },
-          { "id": "mon_feral_swat_boss_cloaker", "fg": 108, "bg": 30 }
+          { "id": "mon_feral_swat_boss_cloaker", "fg": 108, "bg": 30 },
+          { "id": "sig_mcx", "fg": 109 },
+          { "id": "overlay_wielded_sig_mcx", "fg": 110 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
