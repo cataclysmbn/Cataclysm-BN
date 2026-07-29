@@ -536,7 +536,8 @@
       { "group": "nested_m27iar", "prob": 5 },
       { "group": "nested_m4a1", "prob": 45 },
       { "group": "nested_sig552", "prob": 10 },
-      { "group": "nested_m7", "prob": 15 }
+      { "group": "nested_m7", "prob": 15 },
+      { "group": "nested_sig_mcx", "prob": 25 }
     ]
   },
   {
@@ -558,7 +559,8 @@
       { "group": "everyday_m27iar", "prob": 5 },
       { "group": "everyday_m4a1", "prob": 45 },
       { "group": "everyday_sig552", "prob": 10 },
-      { "group": "everyday_m7", "prob": 15 }
+      { "group": "everyday_m7", "prob": 15 },
+      { "group": "everyday_sig_mcx", "prob": 25 }
     ]
   },
   {
@@ -588,7 +590,8 @@
       { "group": "nested_m110a1", "prob": 50 },
       { "group": "nested_acr_300blk", "prob": 15 },
       { "group": "nested_m7", "prob": 15 },
-      { "group": "nested_m250", "prob": 10 }
+      { "group": "nested_m250", "prob": 10 },
+      { "group": "nested_sig_mcx", "prob": 25 }
     ]
   },
   {
@@ -618,7 +621,8 @@
       { "group": "everyday_m110a1", "prob": 50 },
       { "group": "everyday_acr_300blk", "prob": 15 },
       { "group": "everyday_m7", "prob": 15 },
-      { "group": "everyday_m250", "prob": 10 }
+      { "group": "everyday_m250", "prob": 10 },
+      { "group": "everyday_sig_mcx", "prob": 25 }
     ]
   },
   {
@@ -1100,7 +1104,8 @@
       { "group": "nested_m4a1", "prob": 35 },
       { "group": "nested_as50", "prob": 5 },
       { "group": "nested_USAS_12", "prob": 1 },
-      { "group": "nested_hk417_13", "prob": 30 }
+      { "group": "nested_hk417_13", "prob": 30 },
+      { "group": "nested_sig_mcx", "prob": 15 }
     ]
   },
   {
@@ -1117,7 +1122,8 @@
       { "group": "everyday_m4a1", "prob": 35 },
       { "group": "everyday_as50", "prob": 5 },
       { "group": "everyday_USAS_12", "prob": 1 },
-      { "group": "everyday_hk417_13", "prob": 30 }
+      { "group": "everyday_hk417_13", "prob": 30 },
+      { "group": "everyday_sig_mcx", "prob": 15 }
     ]
   },
   {
