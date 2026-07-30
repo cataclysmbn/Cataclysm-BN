@@ -691,6 +691,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `DANGEROUS` ... NPCs will not accept this item. Explosion iuse actor implies this flag. Implies
   "NPC_THROW_NOW".
 - `DESTROY_ON_DECHARGE` ... This item should be destroyed if loses charges.
+- `DESTROY_ON_DROP` ... When dropped on the ground, it will be destroyed.
 - `DURABLE_MELEE` ... Item is made to hit stuff and it does it well, so it's considered to be a lot
   tougher than other weapons made of the same materials.
 - `FAKE_MILL` ... Item is a fake item, to denote a partially milled product by @ref
@@ -1386,6 +1387,12 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `GENERIC_LOOT` This is a place that may contain any of the above, but at a lower frequency -
   usually a house.
 - `IS_BRIDGE` Will be expanded to a bridge in mapgen, terrains with the id of this object followed by _under, _road, head_ground and head_ramp must be defined, and _center_under may also be defined.
+
+## Mapgen
+
+#### Flags
+
+- `ERASE_ALL_BEFORE_PLACING_TERRAIN` In the name, removes vehicles fields furniture and items before placing terrain down
 
 ## Recipes
 

@@ -880,7 +880,7 @@
     "id": "bio_painkiller",
     "type": "bionic",
     "name": { "str": "Sensory Dulling" },
-    "description": "Your nervous system is wired to allow you to inhibit the signals of pain, allowing you to dull your senses at will.  However, the use of this system may cause delayed reaction time and drowsiness.",
+    "description": "Your nervous system is wired to allow you to inhibit the signals of pain, allowing you to dull your senses at will.  This also means you do not need anesthesia when undergoing bionic surgery with an Autodoc.  However, the use of this system may cause delayed reaction time and drowsiness.",
     "occupied_bodyparts": [ [ "head", 2 ] ],
     "points": 2,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE" ],

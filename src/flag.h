@@ -81,6 +81,7 @@ extern const flag_id flag_DANGEROUS;
 extern const flag_id flag_DARK_IMMUNE;
 extern const flag_id flag_DEAF;
 extern const flag_id flag_DESTROY_ON_DECHARGE;
+extern const flag_id flag_DESTROY_ON_DROP;
 extern const flag_id flag_DIAMOND;
 extern const flag_id flag_DIG_TOOL;
 extern const flag_id flag_DIMENSIONAL_ANCHOR;

@@ -110,12 +110,7 @@
       "need_dry": true
     },
     "flags": [ "SHEATH_SWORD", "NONCONDUCTIVE", "COMBAT_NPC_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -268,12 +263,7 @@
     "charges_per_use": 10,
     "qualities": [ [ "BOIL", 1 ] ],
     "use_action": "HOTPLATE",
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -293,12 +283,7 @@
     "color": "blue",
     "ammo": "battery",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -624,12 +609,7 @@
     "color": "white",
     "ammo": "battery",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -650,12 +630,7 @@
     "color": "white",
     "ammo": "battery",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -735,12 +710,7 @@
     "ammo": "battery",
     "charges_per_use": 5,
     "use_action": "HOTPLATE",
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -847,12 +817,7 @@
     "color": "white",
     "ammo": "battery",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ]
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ]
   },
   {
     "id": "mess_kit",
@@ -874,12 +839,7 @@
     "charges_per_use": 5,
     "qualities": [ [ "COOK", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ] ],
     "use_action": [ "HOTPLATE", "HEAT_FOOD" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -920,12 +880,7 @@
     "charges_per_use": 5,
     "qualities": [ [ "COOK", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ] ],
     "use_action": [ "HOTPLATE", "HEAT_FOOD" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_plus_battery_cell", "medium_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -972,12 +927,7 @@
         "temporary_tools": [ "tongs", "toolset", "pot" ]
       }
     ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -1249,12 +1199,7 @@
     "color": "white",
     "ammo": "battery",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -1293,20 +1238,7 @@
     "charges_per_use": 1,
     "use_action": "WATER_PURIFIER",
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {

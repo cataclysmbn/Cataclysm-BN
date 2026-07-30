@@ -74,7 +74,7 @@
         "damage_max_instance": [ { "damage_type": "stab", "amount": 8, "armor_multiplier": 0.8 } ]
       }
     ],
-    "death_drops": "mon_zombie_soldier_death_drops",
+    "death_drops": "mon_zombie_bio_op_death_drops",
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 38, "into": "mon_zombie_soldier_blackops_2" },
     "burn_into": "mon_zombie_scorched",

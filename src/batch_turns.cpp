@@ -144,7 +144,9 @@ void run_submap_batch_turns( submap &sm, int n )
         return;
     }
     batch_turns_field( sm, n );
-    batch_turns_items( sm, n );
+    // Currently processing items does not work for all types ( charge reducers do not work )
+    // Thus this is currently disfunctional
+    // batch_turns_items( sm, n );
     for( const auto &veh_ptr : sm.vehicles ) {
         if( veh_ptr ) {
             veh_ptr->update_time( calendar::turn );

@@ -73,6 +73,7 @@
 #include "crafting.h"
 #include "creature_throw.h"
 #include "creature_tracker.h"
+#include "monster_hallucination.h"
 #include "monster.h"
 #include "monster_action.h"
 #include "monster_plan.h"
@@ -2814,9 +2815,10 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     }
 
     {
-        ZoneScopedN( "activity_fixed_window_flush_items" );
-        m.process_items();
+        ZoneScopedN( "do_map_process_items" );
+        m.process_items( skipped_turns );
     }
+
     explosion_handler::get_explosion_queue().execute();
     cleanup_dead();
     Pathfinding::clear_d_maps();
@@ -6147,6 +6149,12 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
 
             if( !critter.is_dead() ) {
                 critter.process_turn();
+            }
+
+            if( monster_hallucination::needs_lifecycle_expiry( critter ) &&
+                one_in( monster_hallucination::expiry_one_in ) ) {
+                critter.die( nullptr );
+                continue;
             }
 
             m.creature_in_field( critter );

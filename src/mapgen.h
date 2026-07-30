@@ -147,6 +147,7 @@ struct spawn_data {
 /** Mapgen pieces will be applied in order of phases.  The phases are as
  * follows: */
 enum class mapgen_phase {
+    removal,
     terrain,
     furniture,
     default_,
@@ -422,6 +423,7 @@ class mapgen_function_json_base
 
         mapgen_arguments get_args( const mapgendata &md, mapgen_parameter_scope ) const;
 
+        std::set<flag_id> flags;
         bool is_ready;
 
         point_rel_ms m_offset;

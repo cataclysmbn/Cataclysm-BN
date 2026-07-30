@@ -274,16 +274,33 @@ static auto marlossify_mapgen( mapgen_constructor &m, const point_omt_ms &loc ) 
     }
 }
 
+namespace
+{
+void clear_tile( mapgen_constructor &m, const point_omt_ms &p )
+{
+    m.furn_set( p, f_null );
+    m.i_clear( p );
+    m.remove_trap( p );
+    m.remove_all_fields( p );
+    m.delete_graffiti( p );
+    if( optional_vpart_position vp = m.veh_at( p ) ) {
+        m.destroy_vehicle( &vp->vehicle() );
+    }
+}
+}
 static bool mx_house_wasp( mapgen_constructor &m, const tripoint_abs_omt &loc )
 {
     std::ranges::for_each( overmap_terrain_tiles(), [&]( const point_omt_ms p ) {
         if( m.ter( p ) == t_door_c || m.ter( p ) == t_door_locked ) {
+            clear_tile( m, p );
             m.ter_set( p, t_door_frame );
         }
         if( m.ter( p ) == t_window_domestic && !one_in( 3 ) ) {
+            clear_tile( m, p );
             m.ter_set( p, t_window_frame );
         }
         if( m.ter( p ) == t_wall && one_in( 8 ) ) {
+            clear_tile( m, p );
             m.ter_set( p, t_paper );
         }
     } );
@@ -298,6 +315,7 @@ static bool mx_house_wasp( mapgen_constructor &m, const tripoint_abs_omt &loc )
         for( int x = -1; x <= 1; x++ ) {
             for( int y = -1; y <= 1; y++ ) {
                 if( ( x != non.x || y != non.y ) && ( x != 0 || y != 0 ) ) {
+                    clear_tile( m, pod + point_rel_ms( x, y ) );
                     m.ter_set( pod + point_rel_ms( x, y ), t_paper );
                 }
             }

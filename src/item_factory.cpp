@@ -41,6 +41,7 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "sounds.h"
+#include "type_id.h"
 
 class player;
 #include "material.h"
@@ -688,6 +689,26 @@ void Item_factory::finalize_post( itype &obj )
                 obj.repair.insert( tool );
             }
         }
+    }
+
+    if( !obj.magazines.empty() ) {
+        for( const auto &[mag, mags_like] : magazines_like ) {
+            for( const auto [ammotype, mags] : obj.magazines ) {
+                if( mags.contains( mag ) ) {
+                    obj.magazines[ammotype].insert( mags_like.begin(), mags_like.end() );
+                }
+            }
+        }
+    }
+    if( obj.mod && !obj.mod->magazine_adaptor.empty() ) {
+        for( const auto &[mag, mags_like] : magazines_like ) {
+            for( const auto [ammotype, mags] : obj.mod->magazine_adaptor ) {
+                if( mags.contains( mag ) ) {
+                    obj.mod->magazine_adaptor[ammotype].insert( mags_like.begin(), mags_like.end() );
+                }
+            }
+        }
+
     }
 
     if( obj.comestible ) {
@@ -2512,6 +2533,16 @@ void Item_factory::load( islot_magazine &slot, const JsonObject &jo, const std::
     assign( jo, "reliability", slot.reliability, strict, 0, 10 );
     assign( jo, "reload_time", slot.reload_time, strict, 0 );
     assign( jo, "linkage", slot.linkage, strict );
+
+    if( jo.has_string( "reloads_like" ) ) {
+        itype_id source = itype_id( jo.get_string( "reloads_like" ) );
+        if( magazines_like.contains( source ) ) {
+            magazines_like[source].insert( itype_id( jo.get_string( "id" ) ) );
+        } else {
+            magazines_like[source] = { itype_id( jo.get_string( "id" ) ) };
+
+        }
+    }
 }
 
 void Item_factory::load_magazine( const JsonObject &jo, const std::string &src )
@@ -3062,6 +3093,7 @@ void Item_factory::clear()
     gun_tools.clear();
     repair_actions.clear();
     repair_tools.clear();
+    magazines_like.clear();
     tool_subtypes.clear();
 
     item_blacklist.clear();

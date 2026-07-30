@@ -123,20 +123,7 @@
     "ammo": "battery",
     "charges_per_use": 25,
     "use_action": "TAZER",
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml",
     "flags": [ "BELT_CLIP" ]
   }

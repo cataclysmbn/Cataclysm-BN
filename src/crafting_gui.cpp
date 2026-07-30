@@ -74,12 +74,12 @@ std::map<std::string, std::vector<std::string> > craft_subcat_list;
 std::map<std::string, std::string> normalized_names;
 
 static bool query_is_yes( const std::string &query );
-static void draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe );
+static int draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe );
 static void draw_can_craft_indicator( const catacurses::window &w, const recipe &rec,
                                       const Character &crafter );
 static void draw_recipe_tabs( const catacurses::window &w, const std::string &tab,
                               TAB_MODE mode, const bool filtered_unread,
-                              std::map<std::string, bool> &unread );
+                              std::map<std::string, bool> &unread, int width_for_tabs );
 static void draw_recipe_subtabs( const catacurses::window &w, const std::string &tab,
                                  const std::string &subtab,
                                  const recipe_subset &available_recipes, TAB_MODE mode,
@@ -919,8 +919,16 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
     int recipe_scroll_window_min = 0;
     ui.on_redraw( [&]( ui_adaptor & ui ) {
+        int lost_width = 0;
+        // Need to do this to get the width
+        // But draw tabs removes the text
+        if( !show_hidden ) {
+            lost_width = 5  + draw_hidden_amount( w_head, num_hidden, num_recipe );
+        }
+
         const TAB_MODE m = ( batch ) ? BATCH : ( filterstring.empty() ) ? NORMAL : FILTERED;
-        draw_recipe_tabs( w_head, tab.cur(), m, is_filtered_unread, is_cat_unread );
+        draw_recipe_tabs( w_head, tab.cur(), m, is_filtered_unread, is_cat_unread,
+                          getmaxx( w_head ) - lost_width );
         const auto &shown_recipes = show_unavailable ? all_recipes : available_recipes;
         draw_recipe_subtabs( w_subhead, tab.cur(), subtab.cur(), shown_recipes, m,
                              is_subcat_unread[tab.cur()] );
@@ -1986,18 +1994,20 @@ static bool query_is_yes( const std::string &query )
            query == pgettext( "memorized recipe search term", "yes" );
 }
 
-static void draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe )
+static int draw_hidden_amount( const catacurses::window &w, int amount, int num_recipe )
 {
+    std::string str = "";
     if( amount == 1 ) {
-        right_print( w, 1, 1, c_red, string_format( _( "* %s hidden recipe - %s in category *" ), amount,
-                     num_recipe ) );
+        str = string_format( _( "* %s hidden recipe - %s in category *" ), amount, num_recipe );
+        right_print( w, 1, 1, c_red,  str );
     } else if( amount >= 2 ) {
-        right_print( w, 1, 1, c_red, string_format( _( "* %s hidden recipes - %s in category *" ), amount,
-                     num_recipe ) );
+        str = string_format( _( "* %s hidden recipes - %s in category *" ), amount, num_recipe );
+        right_print( w, 1, 1, c_red,  str );
     } else if( amount == 0 ) {
-        right_print( w, 1, 1, c_green, string_format( _( "* No hidden recipe - %s in category *" ),
-                     num_recipe ) );
+        str = string_format( _( "* No hidden recipe - %s in category *" ), num_recipe );
+        right_print( w, 1, 1, c_green,  str );
     }
+    return utf8_width( str );
 }
 
 // Anchors top-right
@@ -2019,20 +2029,30 @@ static void draw_can_craft_indicator( const catacurses::window &w, const recipe 
 }
 
 static void draw_recipe_tabs( const catacurses::window &w, const std::string &tab, TAB_MODE mode,
-                              const bool filtered_unread, std::map<std::string, bool> &unread )
+                              const bool filtered_unread, std::map<std::string, bool> &unread, int width_for_tabs )
 {
     werase( w );
 
     switch( mode ) {
         case NORMAL: {
-            draw_tabs( w, normalized_names, craft_cat_list, tab );
-            int pos_x = 2;
-            for( const std::string &cat : craft_cat_list ) {
-                pos_x += utf8_width( normalized_names[cat] ) + 3;
-                if( unread[cat] ) {
-                    mvwprintz( w, point( pos_x - 2, 1 ), c_light_green, "⁺" );
+            std::string real_tab;
+            std::vector<std::string> tabs;
+
+            for( const auto tab_val : craft_cat_list ) {
+                if( unread[tab_val] ) {
+                    tabs.push_back( normalized_names[tab_val] + " ⁺" );
+                    if( tab_val == tab ) {
+                        real_tab = normalized_names[tab_val] + " ⁺";
+                    }
+                } else {
+                    tabs.push_back( normalized_names[tab_val] );
+                    if( tab_val == tab ) {
+                        real_tab = normalized_names[tab_val];
+                    }
                 }
             }
+
+            draw_tabs( w, tabs, real_tab, width_for_tabs );
             break;
         }
         case FILTERED: {

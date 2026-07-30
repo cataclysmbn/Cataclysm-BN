@@ -572,6 +572,17 @@ auto mapgen_constructor::remove_field( const point_omt_ms &p,
     }
 }
 
+auto mapgen_constructor::remove_all_fields( const point_omt_ms &p ) -> void
+{
+    const auto [sm, local] = tile_at( p );
+    if( sm != nullptr ) {
+        field field = sm->get_field( local );
+        for( auto iter = field.begin(); iter != field.end(); iter++ ) {
+            remove_field( p, iter->first );
+        }
+    }
+}
+
 auto mapgen_constructor::add_splatter_trail( const field_type_id &type, const point_omt_ms &from,
         const point_omt_ms &to ) -> void
 {
@@ -607,6 +618,14 @@ auto mapgen_constructor::set_graffiti( const point_omt_ms &p,
     const auto [sm, local] = tile_at( p );
     if( sm != nullptr ) {
         sm->set_graffiti( local, contents );
+    }
+}
+
+auto mapgen_constructor::delete_graffiti( const point_omt_ms &p ) -> void
+{
+    const auto [sm, local] = tile_at( p );
+    if( sm != nullptr ) {
+        sm->delete_graffiti( local );
     }
 }
 
@@ -764,10 +783,44 @@ auto mapgen_constructor::put_items_from_loc( const item_group_id &loc, const poi
     return ret;
 }
 
+auto mapgen_constructor::edit_item_for_spawn_rate( item &itm ) -> int
+{
+    const auto cat_rate = item_category_spawn_rate( itm );
+    if( !itm.count_by_charges() ) {
+        float rng = rng_float( 0.0f, 1.0f );
+        if( cat_rate <= 1.0f && ( rng > cat_rate || cat_rate == 0.0f ) ) {
+            return 0;
+        } else if( cat_rate > 1.0f ) {
+            const int new_count = roll_remainder( cat_rate );
+            return new_count;
+        }
+    } else if( cat_rate != 0 ) {
+        const float initial_charges = itm.charges;
+        const int new_charges = roll_remainder( initial_charges * cat_rate );
+        if( new_charges == 0 ) {
+            return 0;
+        }
+        itm.set_charges( new_charges );
+        return 1;
+    }
+    return 1;
+}
+
 auto mapgen_constructor::item_category_spawn_rate( const item &itm ) -> float
 {
-    const auto cat_id = item_category_id( itm.get_category_id() );
-    return cat_id.is_valid() ? cat_id->get_spawn_rate() : 1.0f;
+    const std::string &cat = itm.get_category().id.c_str();
+    float spawn_rate = get_option<float>( "SPAWN_RATE_" + cat );
+
+    // strictly search for canned foods only in the first check
+    if( itm.goes_bad_after_opening( true ) ) {
+        float spawn_rate_mod = get_option<float>( "SPAWN_RATE_perishables_canned" );
+        spawn_rate *= spawn_rate_mod;
+    } else if( itm.goes_bad() ) {
+        float spawn_rate_mod = get_option<float>( "SPAWN_RATE_perishables" );
+        spawn_rate *= spawn_rate_mod;
+    }
+
+    return spawn_rate;
 }
 
 auto mapgen_constructor::flammable_items_at( const point_omt_ms &p, const int threshold ) -> bool
@@ -829,9 +882,15 @@ auto mapgen_constructor::place_items( const item_group_id &loc, const int chance
         }
         auto initial = item_group::items_from( loc, turn );
         std::ranges::for_each( initial, [&]( detached_ptr<item> &itm ) {
-            const auto cat_rate = item_category_spawn_rate( *itm );
-            if( cat_rate <= 1.0f && rng_float( 0.1f, 1.0f ) > cat_rate ) {
+            const auto new_count = edit_item_for_spawn_rate( *itm );
+            if( new_count == 0 ) {
                 return;
+            }
+            for( int iter = 1; iter < new_count; iter++ ) {
+                auto placed = add_item_or_charges( p, item::spawn( *itm ) );
+                if( placed ) {
+                    res.push_back( &*placed );
+                }
             }
             auto placed = add_item_or_charges( p, std::move( itm ) );
             if( placed ) {

@@ -138,6 +138,7 @@ static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
 static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
 
 static const efftype_id effect_badpoison( "badpoison" );
+static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_blind( "blind" );
 static const efftype_id effect_bounced( "bounced" );
 static const efftype_id effect_downed( "downed" );
@@ -1342,6 +1343,22 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
         case DT_BULLET:
             // Volatile enemies sometimes go up
             set_volatiles_on_fire( 16 );
+            // Cause bleed if high damage goes through armor and enemy is made of flesh
+            if( adjusted_damage > 15 ) {
+                if( !is_immune_effect( effect_bleed ) ) {
+                    add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                }
+            }
+            break;
+
+        case DT_CUT:
+        case DT_STAB:
+            // Cause bleed if high damage goes through armor and enemy is made of flesh
+            if( adjusted_damage > 15 ) {
+                if( !is_immune_effect( effect_bleed ) ) {
+                    add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                }
+            }
             break;
 
         case DT_ACID:

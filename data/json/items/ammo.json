@@ -508,7 +508,7 @@
       "explosion_data": { "chance_hot": 2, "chance_cold": 2, "factor": 0.5, "fiery": true, "size_factor": 0.1 }
     },
     "effects": [ "INCENDIARY" ],
-    "flags": [ "NO_DROP", "IRREMOVABLE" ]
+    "flags": [ "DESTROY_ON_DROP", "IRREMOVABLE" ]
   },
   {
     "type": "AMMO",

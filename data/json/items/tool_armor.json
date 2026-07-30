@@ -168,20 +168,7 @@
     "encumbrance": 15,
     "coverage": 80,
     "material_thickness": 4,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -419,20 +406,7 @@
     "warmth": 10,
     "coverage": 100,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -477,20 +451,7 @@
     "warmth": 10,
     "coverage": 100,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -535,20 +496,7 @@
     "warmth": 10,
     "coverage": 100,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -593,20 +541,7 @@
     "warmth": 10,
     "coverage": 100,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -704,20 +639,7 @@
     "covers": [ "head" ],
     "coverage": 15,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -753,20 +675,7 @@
       "need_charges": 1,
       "need_charges_msg": "The fursuit's batteries are dead."
     },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml",
     "extend": { "flags": [ "FANCY" ] }
   },
@@ -809,20 +718,7 @@
     "covers": [ "head" ],
     "coverage": 20,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1519,20 +1415,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1588,20 +1471,7 @@
     "encumbrance": 5,
     "coverage": 15,
     "material_thickness": 2,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1656,20 +1526,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1880,7 +1737,7 @@
     "coverage": 5,
     "material_thickness": 1,
     "flags": [ "BELTED", "COMPACT", "FRAGILE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "OVERSIZE" ],
-    "magazines": [ [ "battery", [ "light_minus_battery_cell", "light_minus_atomic_battery_cell", "light_minus_disposable_cell" ] ] ]
+    "magazines": [ [ "battery", [ "light_minus_battery_cell" ] ] ]
   },
   {
     "id": "hairpin",
@@ -2413,12 +2270,7 @@
     "warmth": 10,
     "coverage": 100,
     "material_thickness": 1,
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -2776,20 +2628,7 @@
     "coverage": 10,
     "material_thickness": 2,
     "hearing_protection": 40,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -2837,20 +2676,7 @@
     "coverage": 10,
     "material_thickness": 2,
     "hearing_protection": 40,
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -3154,12 +2980,7 @@
     },
     "qualities": [ [ "SLEEP_AID", 2 ] ],
     "flags": [ "OVERSIZE", "OUTER", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_TAIL_SNAKE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -3208,12 +3029,7 @@
       "need_charges": 1,
       "need_charges_msg": "The mask's batteries are dead."
     },
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml",
     "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "OUTER", "SUN_GLASSES" ]

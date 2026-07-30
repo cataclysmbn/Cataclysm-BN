@@ -2384,21 +2384,28 @@ class jmapgen_spawn_item : public jmapgen_piece
 
             // 100% chance = exactly 1 item, otherwise scale by item spawn rate.
             const float spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
-            const int spawn_count = ( c == 100 ) ? 1 : roll_remainder( c * spawn_rate / 100.0f );
-            const int quantity = amount.get();
+            const int spawn_count = ( ( c == 100 ) ? 1 : roll_remainder( c * spawn_rate / 100.0f ) ) *
+                                    amount.get();
 
             const point_omt_ms p = { x.get(), y.get() };
 
-            for( int i = 0; i < spawn_count; i++ ) {
-                for( int j = 0; j < quantity; j++ ) {
-                    detached_ptr<item> new_item = item::spawn( chosen_id, calendar::start_of_cataclysm );
-                    if( activate_on_spawn ) {
-                        new_item->activate();
-                    }
+            detached_ptr<item> itm = item::in_its_container( item::spawn( chosen_id,
+                                     calendar::start_of_cataclysm ) );
 
-                    dat.m.spawn_an_item( p, std::move( new_item ), 0, 0 );
-                }
+            const int spawns = dat.m.edit_item_for_spawn_rate( *itm );
+            const int total_spawns = spawn_count * spawns;
+            if( total_spawns == 0 ) {
+                return;
             }
+
+            for( int i = 1; i < total_spawns; i++ ) {
+                detached_ptr<item> tmp = item::spawn( *itm );
+                if( activate_on_spawn ) {
+                    tmp->activate();
+                }
+                dat.m.add_item_or_charges( p, std::move( tmp ) );
+            }
+            dat.m.add_item_or_charges( p, std::move( itm ) );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters &parameters
@@ -2544,6 +2551,19 @@ class jmapgen_terrain : public jmapgen_piece
             if( chosen_id.id().is_null() ) {
                 return;
             }
+            point_omt_ms pnt( x.get(), y.get() );
+
+            if( dat.has_flag( flag_id( "ERASE_ALL_BEFORE_PLACING_TERRAIN" ) ) ) {
+                dat.m.furn_set( pnt, f_null );
+                dat.m.i_clear( pnt );
+                dat.m.remove_trap( pnt );
+                dat.m.remove_all_fields( pnt );
+                dat.m.delete_graffiti( pnt );
+                if( optional_vpart_position vp = dat.m.veh_at( pnt ) ) {
+                    dat.m.destroy_vehicle( &vp->vehicle() );
+                }
+            }
+
             dat.m.ter_set( point_omt_ms( x.get(), y.get() ), chosen_id );
             // Delete furniture if a wall was just placed over it. TODO: need to do anything for fluid, monsters?
             if( dat.m.has_flag_ter( TFLAG_WALL, point_omt_ms( x.get(), y.get() ) ) ) {
@@ -2880,6 +2900,31 @@ class jmapgen_zone : public jmapgen_piece
                   ) const override {
             zone_type.check( oter_name, parameters );
             faction.check( oter_name, parameters );
+        }
+};
+
+class jmapgen_remove_all : public jmapgen_piece
+{
+    public:
+        jmapgen_remove_all( const JsonObject &/*jo*/ ) {
+        }
+        mapgen_phase phase() const override {
+            return mapgen_phase::removal;
+        }
+        void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y ) const override {
+
+            const point_omt_ms start = point_omt_ms( x.val, y.val );
+            const point_omt_ms end = point_omt_ms( x.valmax, y.valmax );
+            for( const point_omt_ms &p : point_range<point_omt_ms>( start, end ) ) {
+                dat.m.furn_set( p, f_null );
+                dat.m.i_clear( p );
+                dat.m.remove_trap( p );
+                dat.m.remove_all_fields( p );
+                dat.m.delete_graffiti( p );
+                if( optional_vpart_position vp = dat.m.veh_at( p ) ) {
+                    dat.m.destroy_vehicle( &vp->vehicle() );
+                }
+            }
         }
 };
 
@@ -3620,6 +3665,7 @@ mapgen_palette mapgen_palette::load_internal( const JsonObject &jo, const std::s
     new_pal.load_place_mapings<jmapgen_ter_furn_transform>( jo, "ter_furn_transforms",
             format_placings );
     new_pal.load_place_mapings<jmapgen_faction>( jo, "faction_owner_character", format_placings );
+    new_pal.load_place_mapings<jmapgen_remove_all>( jo, "remove_all", format_placings );
 
     for( mapgen_palette::placing_map::value_type &p : format_placings ) {
         p.second.erase(
@@ -3749,6 +3795,7 @@ bool mapgen_function_json_base::setup_common( const JsonObject &jo )
     JsonArray sparray;
     JsonObject pjo;
 
+    jo.read( "flags", flags );
     // just like mapf::basic_bind("stuff",blargle("foo", etc) ), only json input and faster when applying
     if( jo.has_array( "rows" ) ) {
         // TODO: forward correct 'src' parameter
@@ -3873,6 +3920,7 @@ bool mapgen_function_json_base::setup_common( const JsonObject &jo )
     objects.load_objects<jmapgen_ter_furn_transform>( jo, "place_ter_furn_transforms" );
     // Needs to be last as it affects other placed items
     objects.load_objects<jmapgen_faction>( jo, "faction_owner" );
+    objects.load_objects<jmapgen_remove_all>( jo, "place_remove_all" );
 
     objects.finalize();
 
@@ -3920,6 +3968,11 @@ void mapgen_function_json_base::check_common( const std::string &oter_name ) con
         }
     }
 
+    for( const auto &flag : flags ) {
+        if( !flag.is_valid() ) {
+            debugmsg( "Oter %s has onvalid mapgen flag id %s", oter_name, flag.str() );
+        }
+    }
     objects.check( oter_name, parameters );
 }
 
@@ -3996,7 +4049,7 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
             }
             break;
             case JMAPGEN_SETMAP_BASH: {
-                m.bash( point_omt_ms( x_get(), y_get() ), 9999 );
+                m.bash( point_omt_ms( x_get(), y_get() ), 9999, true );
             }
             break;
 
@@ -4196,7 +4249,7 @@ void mapgen_function_json::generate( mapgendata &md )
         auto md_with_params = std::optional<mapgendata> {};
         {
             ZoneScopedN( "mapgen_json_make_param_data" );
-            md_with_params.emplace( md, args );
+            md_with_params.emplace( md, args, flags );
         }
         apply_contents( *md_with_params );
     }
@@ -4254,7 +4307,7 @@ void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms
         auto md_with_params = std::optional<mapgendata> {};
         {
             ZoneScopedN( "mapgen_json_nested_make_param_data" );
-            md_with_params.emplace( md, args );
+            md_with_params.emplace( md, args, flags );
         }
         apply_contents( *md_with_params );
     }
@@ -6550,7 +6603,7 @@ bool update_mapgen_function_json::update_map( const tripoint_abs_omt &omt_pos,
 bool update_mapgen_function_json::update_map( const mapgendata &md, const point_rel_ms &offset,
         const bool verify ) const
 {
-    mapgendata md_with_params( md, get_args( md, mapgen_parameter_scope::omt ) );
+    mapgendata md_with_params( md, get_args( md, mapgen_parameter_scope::omt ), flags );
 
     class rotation_guard
     {

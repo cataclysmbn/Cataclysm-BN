@@ -1055,6 +1055,17 @@ The code excerpt above will place chunks as follows:
 - `"concrete_wall_ns"`if the north west neighbor is neither a field nor any of the microlab
   overmaps.
 
+## Clear an area before placing it
+
+If it's the entire nested section
+
+```json
+"flags": [ "ERASE_ALL_BEFORE_PLACING_TERRAIN" ]
+```
+
+Otherwise give xy coordinates with `place_remove_all`, or use palette with `remove_all` on a character
+This always runs before anything else
+
 ## Mapgen values
 
 A _mapgen value_ can be used in various places where a specific id is expected. For example, the

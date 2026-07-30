@@ -9025,6 +9025,14 @@ void Character::recalculate_enchantment_cache()
         }
     }
 
+    for( const auto &[eff_type, eff_by_part] : get_effects() ) {
+        const effect &eff = eff_by_part.begin()->second;
+        for( const enchantment &ench : eff.get_enchantments() ) {
+            if( ench.is_active( *this, true ) ) {
+                enchantment_cache->force_add( ench );
+            }
+        }
+    }
     enchantment_cache->activate_effects( *this );
     enchantment_cache->deactivate_removed_effects( *this, old_ench_sources );
 

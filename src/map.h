@@ -2311,13 +2311,13 @@ class map : public submap_load_listener
         // or can just return air because we bashed down an entire floor tile
         ter_id get_roof( const tripoint_bub_ms &p, bool allow_air ) const;
 
-        void process_items();
+        void process_items( int turns = 1 );
     private:
         // Iterates over every item on the map, passing each item to the provided function.
         auto process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
-                                      std::vector<item *> &active_items ) -> void;
-        void process_items_in_vehicles( submap &current_submap );
-        void process_items_in_vehicle( vehicle &cur_veh, submap &current_submap );
+                                      std::vector<item *> &active_items, int turns = 1 ) -> void;
+        void process_items_in_vehicles( submap &current_submap, int turns = 1 );
+        void process_items_in_vehicle( vehicle &cur_veh, submap &current_submap, int turns = 1 );
 
         /** Enum used by functors in `function_over` to control execution. */
         enum iteration_state {

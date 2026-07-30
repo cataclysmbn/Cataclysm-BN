@@ -3405,29 +3405,6 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
     start_sfx_timestamp = std::chrono::high_resolution_clock::now();
 }
 
-namespace sfx
-{
-struct sound_thread {
-    sound_thread( const tripoint_bub_ms &source, const tripoint_bub_ms &target, bool hit, bool targ_mon,
-                  const std::string &material );
-
-    bool hit;
-    bool targ_mon;
-    std::string material;
-
-    skill_id weapon_skill;
-    int weapon_volume;
-    // volume and angle for calls to play_variant_sound
-    units::angle ang_src;
-    int vol_src;
-    int vol_targ;
-    units::angle ang_targ;
-
-    // Operator overload required for thread API.
-    void operator()() const;
-};
-} // namespace sfx
-
 void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bub_ms &target,
                                 bool hit,
                                 bool targ_mon,
@@ -3436,36 +3413,16 @@ void sfx::generate_melee_sound( const tripoint_bub_ms &source, const tripoint_bu
     if( test_mode ) {
         return;
     }
-    // If creating a new thread for each invocation is to much, we have to consider a thread
-    // pool or maybe a single thread that works continuously, but that requires a queue or similar
-    // to coordinate its work.
-    try {
-        std::thread the_thread( sound_thread( source, target, hit, targ_mon, material ) );
-        try {
-            if( the_thread.joinable() ) {
-                the_thread.detach();
-            }
-        } catch( std::system_error &err ) {
-            dbg( DL::Error ) << "Failed to detach melee sound thread: std::system_error: " << err.what();
-        }
-    } catch( std::system_error &err ) {
-        // not a big deal, just skip playing the sound.
-        dbg( DL::Error ) << "Failed to create melee sound thread: std::system_error: " << err.what();
-    }
-}
-
-sfx::sound_thread::sound_thread( const tripoint_bub_ms &source, const tripoint_bub_ms &target,
-                                 const bool hit,
-                                 const bool targ_mon, const std::string &material )
-    : hit( hit )
-    , targ_mon( targ_mon )
-    , material( material )
-{
-    // This is function is run in the main thread.
-    // Take melee strikes at 80dB
     const player *p = g->critter_at<npc>( source );
     const int heard_volume = get_heard_volume( source, 80 );
 
+    skill_id weapon_skill;
+    int weapon_volume;
+    // volume and angle for calls to play_variant_sound
+    units::angle ang_src;
+    int vol_src;
+    int vol_targ;
+    units::angle ang_targ;
     if( !p ) {
         p = &g->u;
         // sound comes from the same place as the player is, calculation of angle wouldn't work
@@ -3480,15 +3437,7 @@ sfx::sound_thread::sound_thread( const tripoint_bub_ms &source, const tripoint_b
     ang_targ = get_heard_angle( target );
     weapon_skill = p->primary_weapon().melee_skill();
     weapon_volume = p->primary_weapon().volume() / units::legacy_volume_factor;
-}
 
-// Operator overload required for thread API.
-void sfx::sound_thread::operator()() const
-{
-    // This is function is run in a separate thread. One must be careful and not access game data
-    // that might change (e.g. g->u.weapon, the character could switch weapons while this thread
-    // runs).
-    std::this_thread::sleep_for( std::chrono::milliseconds( rng( 1, 2 ) ) );
     std::string variant_used;
 
     static const skill_id skill_bashing( "bashing" );
@@ -3516,17 +3465,11 @@ void sfx::sound_thread::operator()() const
     if( hit ) {
         if( targ_mon ) {
             if( material == "steel" ) {
-                std::this_thread::sleep_for( std::chrono::milliseconds( rng( weapon_volume * 12,
-                                             weapon_volume * 16 ) ) );
                 play_variant_sound( "melee_hit_metal", variant_used, vol_targ, ang_targ, 0.8, 1.2 );
             } else {
-                std::this_thread::sleep_for( std::chrono::milliseconds( rng( weapon_volume * 12,
-                                             weapon_volume * 16 ) ) );
                 play_variant_sound( "melee_hit_flesh", variant_used, vol_targ, ang_targ, 0.8, 1.2 );
             }
         } else {
-            std::this_thread::sleep_for( std::chrono::milliseconds( rng( weapon_volume * 9,
-                                         weapon_volume * 12 ) ) );
             play_variant_sound( "melee_hit_flesh", variant_used, vol_targ, ang_targ, 0.8, 1.2 );
         }
     }

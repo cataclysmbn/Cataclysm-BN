@@ -78,12 +78,7 @@
     "price_postapoc": "1 USD",
     "material": "plastic",
     "ammo": "battery",
-    "magazines": [
-      [
-        "battery",
-        [ "light_minus_battery_cell", "light_minus_disposable_cell", "light_battery_cell", "light_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_minus_battery_cell" ] ] ],
     "charges_per_use": 1,
     "max_charges": 100,
     "use_action": {
@@ -116,20 +111,7 @@
       "need_charges": 1,
       "need_charges_msg": "Batteries not included."
     },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml",
     "relic_data": {
       "recharge_scheme": [ { "type": "time", "req": "none", "interval": "10 m", "rate": 1 } ],
@@ -412,9 +394,7 @@
       "menu_text": "Turn on",
       "type": "transform"
     },
-    "magazines": [
-      [ "battery", [ "heavy_battery_cell", "heavy_plus_battery_cell", "heavy_atomic_battery_cell", "heavy_disposable_cell" ] ]
-    ],
+    "magazines": [ [ "battery", [ "heavy_battery_cell" ] ] ],
     "magazine_well": "1000 ml"
   },
   {
@@ -624,12 +604,7 @@
       "menu_text": "Turn on",
       "type": "transform"
     },
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -682,20 +657,7 @@
     "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
     "flags": [ "WRITE_MESSAGE", "NO_PAINT" ],
     "ammo": "battery",
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ]
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ]
   },
   {
     "id": "stepladder",

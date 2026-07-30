@@ -1427,6 +1427,30 @@
     ]
   },
   {
+    "id": "everyday_sig_mcx",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "sig_mcx", "charges": [ 0, 30 ] },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_300BLK", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_sig_mcx_swat",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "sig_mcx", "charges": [ 0, 30 ], "contents-group": "swat_accessories" },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag_300", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_300BLK", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_ak47",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

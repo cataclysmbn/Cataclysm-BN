@@ -13,6 +13,7 @@
 #include "overmapbuffer_registry.h"
 #include "point.h"
 #include "regional_settings.h"
+#include "type_id.h"
 
 static const regional_settings dummy_regional_settings;
 
@@ -98,6 +99,15 @@ mapgendata::mapgendata( const mapgendata &other,
     mapgendata( other )
 {
     mapgen_args_.merge( mapgen_args );
+}
+
+mapgendata::mapgendata( const mapgendata &other,
+                        const mapgen_arguments &mapgen_args,
+                        const std::set<flag_id> &other_flags ) :
+    mapgendata( other )
+{
+    mapgen_args_.merge( mapgen_args );
+    flags = other_flags;
 }
 
 void mapgendata::set_dir( int dir_in, int val )
@@ -254,4 +264,9 @@ const oter_id &mapgendata::neighbor_at( direction dir ) const
 
     debugmsg( "Neighbor not supported for direction %d", io::enum_to_string( dir ) );
     return north();
+}
+
+bool mapgendata::has_flag( const flag_id &id ) const
+{
+    return flags.contains( id );
 }
