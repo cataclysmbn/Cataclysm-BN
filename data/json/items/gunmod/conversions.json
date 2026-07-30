@@ -60,7 +60,7 @@
     "install_time": "5 m",
     "ammo_modifier": [ "223" ],
     "magazine_adaptor": [
-      [         
+      [
         "223",
         [
           "stanag30",
@@ -77,7 +77,7 @@
           "stanag150",
           "survivor223mag",
           "carbonmag_223"
-        ] 
+        ]
       ]
     ],
     "min_skills": [ [ "weapon", 1 ], [ "mechanics", 1 ] ]

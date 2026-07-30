@@ -1060,10 +1060,7 @@
       { "group": "clothing_watch", "prob": 100 },
       { "item": "badge_swat", "prob": 50 },
       {
-        "distribution": [
-          { "item": "retool_mcx_223", "prob": 50 },
-          { "item": "retool_mcx_762", "prob": 50 }
-        ],
+        "distribution": [ { "item": "retool_mcx_223", "prob": 50 }, { "item": "retool_mcx_762", "prob": 50 } ],
         "prob": 100
       },
       {
