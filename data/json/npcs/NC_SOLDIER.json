@@ -131,6 +131,7 @@
       { "item": "grenade", "prob": 10 },
       { "item": "flashbang", "prob": 2 },
       { "item": "c4", "prob": 5 },
+      { "item": "c4_breaching", "prob": 10 },
       { "item": "goggles_nv", "prob": 1 },
       { "item": "goggles_ir", "prob": 1 },
       { "item": "optical_cloak", "prob": 1 },

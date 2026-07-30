@@ -177,7 +177,11 @@
           { "id": "mon_feral_swat_boss_grenadier", "fg": 107, "bg": 30 },
           { "id": "mon_feral_swat_boss_cloaker", "fg": 108, "bg": 30 },
           { "id": "sig_mcx", "fg": 109 },
-          { "id": "overlay_wielded_sig_mcx", "fg": 110 }
+          { "id": "overlay_wielded_sig_mcx", "fg": 110 },
+          { "id": "c4_breaching", "fg": 111 },
+          { "id": "overlay_wielded_c4_breaching", "fg": 112 },
+          { "id": "c4_breaching_armed", "fg": 113 },
+          { "id": "overlay_wielded_c4_breaching_armed", "fg": 114 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

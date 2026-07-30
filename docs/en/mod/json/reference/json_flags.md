@@ -272,6 +272,7 @@ to find which flags work elsewhere.
 - `BOLTCUTTERS` Use your town key to gain access anywhere.
 - `BREAK_STICK` Breaks long stick into two.
 - `C4` Arm the C4.
+- 'C4_BREACHING' Arm the C4 breaching charge.
 - `CABLE_ATTACH` This item is a cable spool. Use it to try to attach to a vehicle.
 - `CAN_GOO` Release a little blob buddy.
 - `CAPTURE_MONSTER_ACT` Capture and encapsulate a monster. The associated action is also used for
