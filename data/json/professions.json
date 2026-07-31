@@ -8417,6 +8417,7 @@
       { "level": 2, "name": "driving" },
       { "level": 2, "name": "mechanics" },
       { "level": 3, "name": "gun" },
+      { "level": 3, "name": "pistol" },
       { "level": 2, "name": "melee" }
     ],
     "vehicle": "pickup",
