@@ -2645,5 +2645,10 @@
     "id": "NO_PAINT",
     "type": "json_flag",
     "context": [  ]
+  },
+  {
+    "id": "ERASE_ALL_BEFORE_PLACING_TERRAIN",
+    "type": "json_flag",
+    "context": [ "mapgen" ]
   }
 ]

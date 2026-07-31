@@ -147,6 +147,37 @@ struct furn_workbench_info {
 
     bool operator==( const furn_workbench_info &rhs ) const = default;
 };
+struct enchant_info {
+    // Internal id referenced for use in saveload
+    std::string id;
+    // Name to display
+    std::string name;
+    // Resulting enchantment applied
+    enchantment_id to_enchant_with;
+    // Requirements and requirement multiplier
+    std::vector<std::pair<requirement_id, int>> requirements;
+    units::volume volume_per_batch;
+    bool volume_batch_effect;
+    // Skills and levels to do the skill
+    std::map<skill_id, int> required_skills;
+    // Time to complete
+    time_duration time_to_enchant;
+    units::volume volume_per_time;
+    bool volume_time_effect;
+    // Flag to apply to take note it was applied
+    flag_id applied_flag_id;
+    // Data var to add to the item. Along with the max count of the counter for that var
+    std::string count_var;
+    int max_count;
+    // Callbacks
+    std::string can_make;
+    std::string can_use_on;
+
+    void deserialize( JsonIn &jsin );
+
+    bool operator==( const enchant_info &rhs ) const = default;
+};
+
 struct plant_data {
     // What the furniture turns into when it grows or you plant seeds in it
     furn_str_id transform;
@@ -665,6 +696,7 @@ struct furn_t : map_data_common_t {
     cata::value_ptr<activity_data_furn> oxytorch; // Oxytorch action data
 
     cata::value_ptr<furn_workbench_info> workbench;
+    std::vector<enchant_info> enchanter;
 
     cata::value_ptr<plant_data> plant;
 

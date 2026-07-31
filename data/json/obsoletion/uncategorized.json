@@ -2263,5 +2263,52 @@
       "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
     },
     "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
+  },
+  {
+    "method": "json",
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "***|------|-|-|-|---|......|---|-|-|-|------|***",
+        "***|.dBBd.+r|u+..e3u|......|u3e..+u|r+.dBBd.|***",
+        "***w..BB..|-|-|..ii2|......|2ii..|-|-|..BB..w***",
+        "***w......|STb|..iiO|......|Oii..|bTS|......w***",
+        "***|ooH...+iib|j.uu1|^.....|uu1.j|bii+...HX.|***",
+        "***|--|-+-|-+-|..lll|......|lll..|-+-|-+-|--|***",
+        "***R,,+...tn........|......|........nt...+,,R***",
+        "***R,,w.............D......D.............w,,R***",
+        "***R,,w..A....A..|+-|p....p|-+|I..htth...w,,R***",
+        "***R,Q|...FFFI..^|.Y|......|Y.|^..htth.oo|Q,R***",
+        "***|------|-|-|--|--|......|--|--|-|-|------|***",
+        "***|.dBBd.+r|u+..e3u|......|u3e..+u|r+.dBBd.|***",
+        "***w..BB..|-|-|..ii2|.....^|2ii..|-|-|..BB..w***",
+        "***w......|STb|..iiO|......|Oii..|bTS|......w***",
+        "***|.XH...+iib|j.uu1|......|uu1.j|bii+...HX.|***",
+        "***|--|-+-|-+-|^.lll|......|lll..|-+-|-+-|--|***",
+        "***R,,+...A..nt.....|p....p|........tn...+,,R***",
+        "***R,,w.............D......D...........A.w,,R***",
+        "***R,,w.........o|+-|-WWWW-|-+|..A...h...w,,R***",
+        "***R,Q|..A.FFFI.o|.Y|zzzzzz|Y.|o...ICxC.^|Q,R***",
+        "***|RR|--ww---ww-|--|zzzzzz|--|-ww---ww--|RR|***",
+        "************************************************",
+        "************************************************",
+        "************************************************"
+      ],
+      "palettes": [ "apartment_palette" ],
+      "place_monsters": [
+        { "monster": "GROUP_ZOMBIE", "x": [ 4, 23 ], "y": [ 2, 23 ], "repeat": [ 1, 2 ] },
+        { "monster": "GROUP_ZOMBIE", "x": [ 24, 43 ], "y": [ 2, 23 ], "repeat": [ 1, 2 ] },
+        { "monster": "GROUP_ZOMBIE", "x": [ 4, 23 ], "y": [ 24, 43 ], "repeat": [ 1, 2 ] },
+        { "monster": "GROUP_ZOMBIE", "x": [ 24, 43 ], "y": [ 24, 43 ], "repeat": [ 1, 2 ] }
+      ]
+    },
+    "om_terrain": [ [ "apartments_con_tower_101", "apartments_con_tower_001" ] ],
+    "type": "mapgen",
+    "weight": 250
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "apartments_con_tower_001", "apartments_con_tower_101" ],
+    "copy-from": "apartments_tower_any"
   }
 ]

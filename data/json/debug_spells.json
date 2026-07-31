@@ -135,6 +135,24 @@
     "energy_source": "MANA"
   },
   {
+    "id": "debug_effect",
+    "type": "SPELL",
+    "name": "Debug enchantment effect spell",
+    "description": "Adds an enchantment effect to the target",
+    "message": "Debug spell %s cast.",
+    "valid_targets": [ "self", "hostile", "ally" ],
+    "effect": "target_attack",
+    "effect_str": "debug_knowledge",
+    "min_range": 12,
+    "max_range": 12,
+    "base_casting_time": 100,
+    "base_energy_cost": 150,
+    "min_duration": 500,
+    "max_duration": 500,
+    "energy_source": "MANA",
+    "difficulty": 1
+  },
+  {
     "id": "test_area_pull_all",
     "type": "SPELL",
     "name": "Test Area Pull",

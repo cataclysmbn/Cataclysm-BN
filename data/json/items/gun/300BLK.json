@@ -100,5 +100,47 @@
     "type": "GUN",
     "name": { "str": "AR-15" },
     "default_mods": [ "retool_ar15_300blk" ]
+  },
+  {
+    "id": "sig_mcx",
+    "copy-from": "rifle_auto",
+    "type": "GUN",
+    "name": { "str": "SIG MCX" },
+    "description": "The SIG MCX was designed to deliver optimal performance with a suppressor and .300 AAC Blackout, though it features a system to use 5.56x45mm and 7.62x39mm with the proper conversion kit.  It is used by SWAT teams and special forces around the world.  This is the law enforcement and military version, featuring full auto capability.",
+    "weight": "2718 g",
+    "volume": "2 L",
+    "price": "3200 USD",
+    "price_postapoc": "55 USD",
+    "material": [ "steel", "plastic" ],
+    "color": "dark_gray",
+    "ammo": "300blk",
+    "ranged_damage": { "damage_type": "bullet", "amount": -2 },
+    "dispersion": 180,
+    "min_cycle_recoil": 1450,
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "barrel_volume": "250 ml",
+    "built_in_mods": [ "folding_stock" ],
+    "magazine_well": "150 ml",
+    "magazines": [
+      [
+        "300blk",
+        [
+          "stanag30",
+          "stanag5",
+          "stanag10",
+          "stanag20",
+          "stanag40",
+          "stanag50",
+          "stanag60",
+          "stanag60drum",
+          "stanag90",
+          "stanag100",
+          "stanag100drum",
+          "stanag150",
+          "survivor223mag",
+          "carbonmag_223"
+        ]
+      ]
+    ]
   }
 ]

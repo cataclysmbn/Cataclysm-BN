@@ -463,6 +463,27 @@
     "unsupported_conditions": [ "character", "item_and_character" ]
   },
   {
+    "id": "ITEM_ARMOR_PENETRATION",
+    "type": "enchantment_value",
+    "suffixes": [
+      [ "BASH", "Affects Bash Armor Penetration ( This Item Only )" ],
+      [ "CUT", "Affects Cut Armor Penetration ( This Item Only )" ],
+      [ "DARK", "Affects Dark Armor Penetration ( This Item Only )" ],
+      [ "LIGHT", "Affects Light Armor Penetration ( This Item Only )" ],
+      [ "PSI", "Affects Psi Armor Penetration ( This Item Only )" ],
+      [ "STAB", "Affects Stab Armor Penetration ( This Item Only )" ],
+      [ "BULLET", "Affects Ballistic Armor Penetration ( This Item Only )" ],
+      [ "HEAT", "Affects Heat Armor Penetration ( This Item Only )" ],
+      [ "COLD", "Affects Cold Armor Penetration ( This Item Only )" ],
+      [ "ELECTRIC", "Affects Electric Armor Penetration ( This Item Only )" ],
+      [ "ACID", "Affects Acidic Armor Penetration ( This Item Only )" ],
+      [ "BIOLOGICAL", "Affects Biological Armor Penetration ( This Item Only )" ],
+      [ "TRUE", "Affects True Armor Penetration ( This Item Only )" ]
+    ],
+    "desc": "Affects All Armor Penetration ( This Item Only )",
+    "unsupported_conditions": [ "character", "item_and_character" ]
+  },
+  {
     "id": "ITEM_ARMOR",
     "type": "enchantment_value",
     "suffixes": [

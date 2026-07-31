@@ -238,6 +238,7 @@ static const itype_id itype_arrow_flamming( "arrow_flamming" );
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_barometer( "barometer" );
 static const itype_id itype_c4armed( "c4armed" );
+static const itype_id itype_c4_breaching_armed( "c4_breaching_armed" );
 static const itype_id itype_canister_empty( "canister_empty" );
 static const itype_id itype_cig( "cig" );
 static const itype_id itype_cigar( "cigar" );
@@ -3510,6 +3511,21 @@ int iuse::c4( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     p->add_msg_if_player( _( "You set the timer to %d." ), time );
     it->convert( itype_c4armed );
+    it->charges = time;
+    it->activate();
+    return it->type->charges_to_use();
+}
+
+int iuse::c4_breaching( player *p, item *it, bool, const tripoint_bub_ms & )
+{
+    int time;
+    bool got_value = query_int( time, _( "Set the timer to (0 to cancel)?" ) );
+    if( !got_value || time <= 0 ) {
+        p->add_msg_if_player( _( "Never mind." ) );
+        return 0;
+    }
+    p->add_msg_if_player( _( "You set the timer to %d." ), time );
+    it->convert( itype_c4_breaching_armed );
     it->charges = time;
     it->activate();
     return it->type->charges_to_use();

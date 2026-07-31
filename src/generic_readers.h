@@ -366,6 +366,12 @@ class temperature_reader : public unit_reader<units::temperature>
         {}
 };
 
+class time_reader : public unit_reader<time_duration>
+{
+    public:
+        time_reader() : unit_reader( time_duration::units ) {};
+};
+
 /**
  * Uses a map (unordered or standard) to convert strings from JSON to some other type
  * (the mapped type of the map: `C::mapped_type`). It works for all mapped types, not just enums.

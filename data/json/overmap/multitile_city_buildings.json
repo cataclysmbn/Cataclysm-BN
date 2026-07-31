@@ -2904,8 +2904,8 @@
       { "point": [ 0, 0, 0 ], "overmap": "apartments_con_tower_000_south" },
       { "point": [ 1, 1, 1 ], "overmap": "apartments_con_tower_111_south" },
       { "point": [ 0, 1, 1 ], "overmap": "apartments_con_tower_011_south" },
-      { "point": [ 1, 0, 1 ], "overmap": "apartments_con_tower_101_south" },
-      { "point": [ 0, 0, 1 ], "overmap": "apartments_con_tower_001_south" },
+      { "point": [ 1, 0, 1 ], "overmap": "apartments_con_tower_102_south" },
+      { "point": [ 0, 0, 1 ], "overmap": "apartments_con_tower_002_south" },
       { "point": [ 1, 1, 2 ], "overmap": "apartments_con_tower_113_south" },
       { "point": [ 0, 1, 2 ], "overmap": "apartments_con_tower_013_south" },
       { "point": [ 1, 0, 2 ], "overmap": "apartments_con_tower_102_south" },
@@ -2924,6 +2924,7 @@
       { "point": [ 0, 0, 5 ], "overmap": "apartments_con_tower_002_south" },
       { "point": [ 1, 1, 6 ], "overmap": "apartments_con_tower_114_south" },
       { "point": [ 0, 1, 6 ], "overmap": "apartments_con_tower_014_south" },
+      { "point": [ 1, 1, 7 ], "overmap": "apartments_con_tower_115_south" },
       { "point": [ 0, 1, 7 ], "overmap": "apartments_con_tower_015_south" },
       { "point": [ 1, 0, 6 ], "overmap": "apartments_con_tower_104_south" },
       { "point": [ 0, 0, 6 ], "overmap": "apartments_con_tower_004_south" }
@@ -2957,7 +2958,8 @@
       { "point": [ 1, 1, 5 ], "overmap": "apartments_mod_tower_113_south" },
       { "point": [ 0, 1, 5 ], "overmap": "apartments_mod_tower_013_south" },
       { "point": [ 1, 0, 5 ], "overmap": "apartments_mod_tower_103_south" },
-      { "point": [ 0, 0, 5 ], "overmap": "apartments_mod_tower_003_south" }
+      { "point": [ 0, 0, 5 ], "overmap": "apartments_mod_tower_003_south" },
+      { "point": [ 1, 1, 6 ], "overmap": "apartments_mod_tower_shack_roof_south" }
     ]
   },
   {

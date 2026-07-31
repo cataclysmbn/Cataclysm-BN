@@ -1805,18 +1805,6 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     }
 
     const auto *np = u == nullptr ? nullptr : u->as_npc();
-    if( np != nullptr ) {
-        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
-        if( faction_att == MFA_FRIENDLY ) {
-            return MATT_FRIEND;
-        }
-        if( faction_att == MFA_NEUTRAL ) {
-            return MATT_IGNORE;
-        }
-        if( faction_att == MFA_HATE ) {
-            return MATT_ATTACK;
-        }
-    }
 
     int effective_anger  = anger;
     int effective_morale = morale;
@@ -1933,6 +1921,17 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     if( u != nullptr && u->is_player() ) {
         static const auto player_faction = mfaction_id( "player" );
         const auto faction_att = faction.obj().attitude( player_faction );
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+        if( effective_anger < 10 && faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
+    } else if( u != nullptr && u->is_npc() ) {
+        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
         if( faction_att == MFA_HATE ) {
             return MATT_ATTACK;
         }
@@ -3780,6 +3779,12 @@ void monster::process_one_effect( effect &it, bool is_new )
             apply_damage( nullptr, bodypart_id( "torso" ), dam );
         } else {
             it.set_duration( 0_turns );
+        }
+    } else if( id == effect_bleed ) {
+        int intense = it.get_intensity();
+        if( one_in( 36 / intense ) ) {
+            apply_damage( nullptr, bodypart_id( "torso" ), 1 );
+            bleed();
         }
     } else if( id == effect_run ) {
         effect_cache[FLEEING] = true;

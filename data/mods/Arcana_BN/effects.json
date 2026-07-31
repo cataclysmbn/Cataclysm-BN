@@ -531,7 +531,9 @@
     "type": "effect_type",
     "id": "spell_eclipse",
     "name": [ "Eclipse" ],
-    "desc": [ "Unholy power fuels you, strengthening your body with an unnatural adrenaline surge." ],
+    "desc": [
+      "Unholy power fuels you, strengthening your body with an unnatural adrenaline surge, life-draining touch, and night vision."
+    ],
     "remove_message": "You feel numb, hit with the sheer weight of the unnatural magic fading.",
     "decay_messages": [ [ "The blessing of the eclipse is waning.", "bad" ] ],
     "blocks_effects": [ "bleed", "winded", "lack_sleep", "sleep" ],
@@ -548,7 +550,9 @@
       "stamina_min": [ 20 ],
       "fatigue_min": [ 1 ],
       "fatigue_tick": [ 300 ]
-    }
+    },
+    "base_enchantments": [ { "hit_you_effect": [ { "id": "arcana_react_drain_life" } ] } ],
+    "flags": [ "EFFECT_NIGHT_VISION" ]
   },
   {
     "type": "effect_type",
@@ -718,7 +722,7 @@
   {
     "type": "effect_type",
     "id": "arcana_aegis_mending",
-    "blocks_effects": [ "bleed" ],
+    "removes_effects": [ "bleed" ],
     "rating": "good"
   },
   {
@@ -1135,5 +1139,91 @@
       "health_min": [ 1 ],
       "health_tick": [ 25 ]
     }
+  },
+  {
+    "type": "effect_type",
+    "id": "arcana_effect_draconic_might",
+    "name": [ "Manifestation of Strength" ],
+    "desc": [
+      "Increased strength and reduced physical damage: reduces bashing damage by 10, piercing and ballistic damage by 15, and cutting damage by 20."
+    ],
+    "remove_message": "Your Manifestation of Strength spell fades.",
+    "decay_messages": [ [ "You feel your Manifestation of Strength spell fading.", "bad" ] ],
+    "rating": "good",
+    "max_duration": "120 m",
+    "max_intensity": 120,
+    "int_dur_factor": "1 m",
+    "base_mods": { "str_mod": [ 5 ] },
+    "base_enchantments": [
+      {
+        "values": [
+          { "value": "ARMOR_BASH", "add": -10 },
+          { "value": "ARMOR_CUT", "add": -20 },
+          { "value": "ARMOR_STAB", "add": -15 },
+          { "value": "ARMOR_BULLET", "add": -15 }
+        ]
+      }
+    ],
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "arcana_effect_phase_shield",
+    "name": [ "Phase Shield" ],
+    "desc": [ "A strange radiance permeates your body, repelling nearby attackers away from you." ],
+    "remove_message": "Your Phase Shield spell fades.",
+    "decay_messages": [ [ "You feel your Phase Shield spell fading.", "bad" ] ],
+    "rating": "good",
+    "max_duration": "120 m",
+    "max_intensity": 120,
+    "int_dur_factor": "1 m",
+    "base_enchantments": [
+      {
+        "hit_me_effect": [
+          {
+            "id": "arcana_react_phase_shield",
+            "once_in": 10,
+            "message": "%2$s is suddenly forced back!",
+            "npc_message": "%2$s is suddenly forced away from %1$s!"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "effect_type",
+    "id": "arcana_effect_shadowy_shield",
+    "name": [ "Shadowy Shield" ],
+    "desc": [ "A strange radiance permeates your body, blinding attackers with otherworldly magic." ],
+    "remove_message": "Your Shadowy Shield spell fades.",
+    "decay_messages": [ [ "You feel your Shadowy Shield spell fading.", "bad" ] ],
+    "rating": "good",
+    "max_duration": "120 m",
+    "max_intensity": 120,
+    "int_dur_factor": "1 m",
+    "base_enchantments": [
+      {
+        "hit_me_effect": [
+          {
+            "id": "arcana_react_shadowy_shield",
+            "message": "Wisps of shadow lash out at %2$s",
+            "npc_message": "Wisps of shadow jump from %1$s to %2$s."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "effect_type",
+    "id": "arcana_effect_drain_life",
+    "name": [ "Drain Life" ],
+    "desc": [ "A strange radiance permeates your body, blinding attackers with otherworldly magic." ],
+    "remove_message": "You feel momentarily weak as your life-draining spell fades.",
+    "decay_messages": [ [ "You feel your lift-draining spell fading.", "bad" ] ],
+    "rating": "good",
+    "max_duration": "120 m",
+    "max_intensity": 120,
+    "int_dur_factor": "1 m",
+    "base_enchantments": [ { "hit_you_effect": [ { "id": "arcana_react_drain_life" } ] } ]
   }
 ]

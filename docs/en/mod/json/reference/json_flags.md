@@ -272,6 +272,7 @@ to find which flags work elsewhere.
 - `BOLTCUTTERS` Use your town key to gain access anywhere.
 - `BREAK_STICK` Breaks long stick into two.
 - `C4` Arm the C4.
+- 'C4_BREACHING' Arm the C4 breaching charge.
 - `CABLE_ATTACH` This item is a cable spool. Use it to try to attach to a vehicle.
 - `CAN_GOO` Release a little blob buddy.
 - `CAPTURE_MONSTER_ACT` Capture and encapsulate a monster. The associated action is also used for
@@ -1387,6 +1388,12 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `GENERIC_LOOT` This is a place that may contain any of the above, but at a lower frequency -
   usually a house.
 - `IS_BRIDGE` Will be expanded to a bridge in mapgen, terrains with the id of this object followed by _under, _road, head_ground and head_ramp must be defined, and _center_under may also be defined.
+
+## Mapgen
+
+#### Flags
+
+- `ERASE_ALL_BEFORE_PLACING_TERRAIN` In the name, removes vehicles fields furniture and items before placing terrain down
 
 ## Recipes
 

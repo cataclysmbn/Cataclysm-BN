@@ -10,6 +10,7 @@
 #include "assign.h"
 #include "color.h"
 #include "debug.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "json.h"
 #include "messages.h"
@@ -560,12 +561,23 @@ bool effect_type::load_decay_msgs( const JsonObject &jo, const std::string &memb
 }
 void effect_type::check_consistency()
 {
+    std::set<enchantment_condition_type> incompatible_cond_types = {
+        enchantment_condition_type::ITEM,
+        enchantment_condition_type::ITEM_CHARACTER
+    };
     for( const auto &pr : effect_types ) {
         const effect_type &et = pr.second;
         if( et.get_morale_type() && !et.get_morale_type().is_valid() ) {
             debugmsg( "Effect type %s has invalid morale type %s",
                       et.id.str(), et.get_morale_type().str() );
         }
+        for( const enchantment &ench : et.base_enchantments ) {
+            ench.check( incompatible_cond_types );
+        }
+        for( const enchantment &ench : et.scaling_enchantments ) {
+            ench.check( incompatible_cond_types );
+        }
+
     }
 }
 
@@ -927,6 +939,24 @@ std::vector<efftype_id> effect::get_blocks_effects() const
     std::vector<efftype_id> ret = eff_type->removes_effects;
     ret.insert( ret.end(), eff_type->blocks_effects.begin(), eff_type->blocks_effects.end() );
     return ret;
+}
+
+std::vector<enchantment> effect::get_enchantments() const
+{
+    std::vector<enchantment> result;
+    for( const enchantment &ench : eff_type->base_enchantments ) {
+        result.push_back( ench );
+    }
+    if( intensity > 1 ) {
+        for( const enchantment &ench : eff_type->scaling_enchantments ) {
+            enchantment final_ench = ench;
+            for( int i = 2; i < intensity; i++ ) {
+                final_ench.force_add( ench );
+            }
+            result.push_back( final_ench );
+        }
+    }
+    return result;
 }
 
 int effect::get_mod( const std::string &arg, bool reduced ) const
@@ -1432,6 +1462,38 @@ void load_effect_type( const JsonObject &jo )
         for( JsonObject jo_decay : jarr ) {
             new_etype.effects_on_remove.emplace_back();
             new_etype.effects_on_remove.back().load_decay( jo_decay );
+        }
+    }
+
+    if( jo.has_array( "base_enchantments" ) ) {
+        for( JsonObject jobj : jo.get_array( "base_enchantments" ) ) {
+            enchantment ench;
+            ench.load( jobj );
+            if( !ench.id.is_empty() ) {
+                ench = ench.id.obj();
+            }
+            for( enchantment &oench : new_etype.base_enchantments ) {
+                if( oench.add( ench ) ) {
+                    return;
+                }
+            }
+            new_etype.base_enchantments.emplace_back( ench );
+        }
+    }
+
+    if( jo.has_array( "scaling_enchantments" ) ) {
+        for( JsonObject jobj : jo.get_array( "scaling_enchantments" ) ) {
+            enchantment ench;
+            ench.load( jobj );
+            if( !ench.id.is_empty() ) {
+                ench = ench.id.obj();
+            }
+            for( enchantment &oench : new_etype.scaling_enchantments ) {
+                if( oench.add( ench ) ) {
+                    return;
+                }
+            }
+            new_etype.scaling_enchantments.emplace_back( ench );
         }
     }
 

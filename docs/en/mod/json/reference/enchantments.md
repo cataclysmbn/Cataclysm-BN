@@ -628,6 +628,26 @@ There is the global damage modifier `ITEM_DAMAGE` in addition to the supported d
 - `ITEM_DAMAGE_PSI`
 - `ITEM_DAMAGE_TRUE`
 
+##### ITEM_ARMOR_PENETRATION_X
+
+Armor penetration of this item. `base_value` here is base armor penetration of corresponding type.
+Note that the final value cannot go below 0.
+There is the global modifier `ITEM_ARMOR_PENTRATION` in addition to the supported damage types:
+
+- `ITEM_ARMOR_PENETRATION_BASH`
+- `ITEM_ARMOR_PENETRATION_CUT`
+- `ITEM_ARMOR_PENETRATION_STAB`
+- `ITEM_ARMOR_PENETRATION_BULLET`
+- `ITEM_ARMOR_PENETRATION_ACID`
+- `ITEM_ARMOR_PENETRATION_BIOLOGICAL`
+- `ITEM_ARMOR_PENETRATION_COLD`
+- `ITEM_ARMOR_PENETRATION_DARK`
+- `ITEM_ARMOR_PENETRATION_ELECTRIC`
+- `ITEM_ARMOR_PENETRATION_FIRE`
+- `ITEM_ARMOR_PENETRATION_LIGHT`
+- `ITEM_ARMOR_PENETRATION_PSI`
+- `ITEM_ARMOR_PENETRATION_TRUE`
+
 ##### ITEM_ARMOR_X
 
 Incoming damage modifier for this item, applied before the damage is absorbed by the item. Note that

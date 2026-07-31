@@ -895,6 +895,16 @@
   },
   {
     "type": "effect_type",
+    "id": "debug_knowledge",
+    "max_intensity": 100,
+    "int_add_val": 1,
+    "name": [ "Pure Insanity" ],
+    "desc": [ "This causes you to become more and more insane" ],
+    "base_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ],
+    "scaling_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ]
+  },
+  {
+    "type": "effect_type",
     "id": "took_xanax",
     "name": [ "Took Xanax" ],
     "desc": [ "You took Xanax some time ago and you might still be under its influence." ],

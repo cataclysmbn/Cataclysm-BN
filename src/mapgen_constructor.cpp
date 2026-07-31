@@ -572,6 +572,17 @@ auto mapgen_constructor::remove_field( const point_omt_ms &p,
     }
 }
 
+auto mapgen_constructor::remove_all_fields( const point_omt_ms &p ) -> void
+{
+    const auto [sm, local] = tile_at( p );
+    if( sm != nullptr ) {
+        field field = sm->get_field( local );
+        for( auto iter = field.begin(); iter != field.end(); iter++ ) {
+            remove_field( p, iter->first );
+        }
+    }
+}
+
 auto mapgen_constructor::add_splatter_trail( const field_type_id &type, const point_omt_ms &from,
         const point_omt_ms &to ) -> void
 {
@@ -607,6 +618,14 @@ auto mapgen_constructor::set_graffiti( const point_omt_ms &p,
     const auto [sm, local] = tile_at( p );
     if( sm != nullptr ) {
         sm->set_graffiti( local, contents );
+    }
+}
+
+auto mapgen_constructor::delete_graffiti( const point_omt_ms &p ) -> void
+{
+    const auto [sm, local] = tile_at( p );
+    if( sm != nullptr ) {
+        sm->delete_graffiti( local );
     }
 }
 

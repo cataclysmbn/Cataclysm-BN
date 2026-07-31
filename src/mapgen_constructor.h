@@ -99,12 +99,14 @@ class mapgen_constructor
                         int intensity = INT_MAX, const time_duration &age = 0_turns,
                         bool hit_player = true ) -> bool;
         auto remove_field( const point_omt_ms &p, const field_type_id &field_to_remove ) -> void;
+        auto remove_all_fields( const point_omt_ms &p ) -> void;
         auto add_splatter_trail( const field_type_id &type, const point_omt_ms &from,
                                  const point_omt_ms &to ) -> void;
         auto add_computer( const point_omt_ms &p, const std::string &name,
                            int security ) -> computer *;
         auto set_signage( const point_omt_ms &p, const std::string &message ) const -> void;
         auto set_graffiti( const point_omt_ms &p, const std::string &contents ) -> void;
+        auto delete_graffiti( const point_omt_ms &p ) -> void;
         auto i_at( const point_omt_ms &p ) -> map_stack;
         auto i_clear( const point_omt_ms &p ) -> std::vector<detached_ptr<item>>;
         auto add_item( const point_omt_ms &p, detached_ptr<item> &&new_item ) -> void;

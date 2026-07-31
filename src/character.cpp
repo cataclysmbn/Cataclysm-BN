@@ -8977,7 +8977,13 @@ void Character::recalculate_enchantment_cache()
     enchantment_sources.clear();
 
     visit_items( [&]( const item * it ) {
-        for( const enchantment &ench : it->get_enchantments() ) {
+        for( const enchantment &ench : it->get_enchantments( true ) ) {
+            if( ench.is_active( *this, *it ) ) {
+                enchantment_cache->force_add( ench );
+                enchantment_sources.emplace_back( &ench, it );
+            }
+        }
+        for( const enchantment &ench : it->get_enchantments( false ) ) {
             if( ench.is_active( *this, *it ) ) {
                 enchantment_cache->force_add( ench );
                 enchantment_sources.emplace_back( &ench, it );
@@ -9025,6 +9031,14 @@ void Character::recalculate_enchantment_cache()
         }
     }
 
+    for( const auto &[eff_type, eff_by_part] : get_effects() ) {
+        const effect &eff = eff_by_part.begin()->second;
+        for( const enchantment &ench : eff.get_enchantments() ) {
+            if( ench.is_active( *this, true ) ) {
+                enchantment_cache->force_add( ench );
+            }
+        }
+    }
     enchantment_cache->activate_effects( *this );
     enchantment_cache->deactivate_removed_effects( *this, old_ench_sources );
 

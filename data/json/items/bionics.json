@@ -702,7 +702,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Sensory Dulling CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "This module lets the user's nervous system inhibit pain signals, allowing them to dull their senses at will.  However, the use of this system may cause delayed reaction times and drowsiness.",
+    "description": "This module lets the user's nervous system inhibit pain signals, allowing them to dull their senses at will.  This also means the user does not need anesthesia when undergoing bionic surgery with an Autodoc.  However, the use of this system may cause delayed reaction times and drowsiness.",
     "price": "2 kUSD",
     "weight": "300 g",
     "difficulty": 4

@@ -53,6 +53,8 @@ auto get_lua_activity_on_finish( const player_activity &act ) -> std::string;
 auto get_lua_activity_on_turn( const player_activity &act ) -> std::string;
 auto run_lua_activity_callback( const std::string &callback_id, player &who,
                                 player_activity &act ) -> void;
+auto get_lua_callback( lua_state &state, const std::string table_name,
+                       const std::string &callback_id ) -> sol::protected_function;
 void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
                                       const tripoint_abs_omt &p,
                                       const time_point &when );

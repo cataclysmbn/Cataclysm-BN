@@ -1764,7 +1764,11 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         params["target"] = &t;
         params["success"] = attack_hit;
     } );
-
+    cata::run_hooks( "on_creature_attacked_by_character", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["target"] = &t;
+        params["success"] = attack_hit;
+    } );
 }
 
 void Character::reach_attack( const tripoint_bub_ms &p )
@@ -2132,6 +2136,10 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
 
     float armor_mult = attack.damage.get_armor_mult( DT_BASH );
     int arpen = attack.damage.get_armor_pen( DT_BASH );
+
+    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_BASH" ),
+                                           true );
+
     arpen += c.mabuff_arpen_bonus( DT_BASH );
     armor_mult *= c.mabuff_tg_armor_mult( DT_BASH );
 
@@ -2198,9 +2206,10 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     }
 
     int arpen = attack.damage.get_armor_pen( DT_CUT );
-    if( weap.has_flag( flag_DIAMOND ) ) {
-        arpen += cut_dam * 0.35 + 10;
-    }
+
+    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_CUT" ),
+                                           true );
+
     float armor_mult = attack.damage.get_armor_mult( DT_CUT );
 
     // 80%, 88%, 96%, 104%, 112%, 116%, 120%, 124%, 128%, 132%
@@ -2282,9 +2291,10 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     float armor_mult = attack.damage.get_armor_mult( DT_STAB );
     int arpen = attack.damage.get_armor_pen( DT_STAB );
     arpen += c.mabuff_arpen_bonus( DT_STAB );
-    if( weap.has_flag( flag_DIAMOND ) ) {
-        arpen += stab_dam * 0.35 + 10;
-    }
+
+    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_STAB" ),
+                                           true );
+
     armor_mult *= c.mabuff_tg_armor_mult( DT_STAB );
 
     if( crit ) {
@@ -2313,9 +2323,12 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
     float type_mul = 1.0f;
     type_mul *= c.mabuff_damage_mult( dt );
 
+    const auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
     float armor_mult = attack.damage.get_armor_mult( dt );
     int arpen = attack.damage.get_armor_pen( dt );
     arpen += c.mabuff_arpen_bonus( dt );
+    arpen += weap.bonus_from_enchantments( arpen,
+                                           enchantment_value_id( "ITEM_ARMOR_PENETRATION_" + internal_name ), true );
     armor_mult *= c.mabuff_tg_armor_mult( dt );
 
     if( crit ) {

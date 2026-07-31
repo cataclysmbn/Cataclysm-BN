@@ -877,6 +877,128 @@
     "id": "truck_swat",
     "type": "vehicle",
     "name": "SWAT Truck",
+    "flags": [ "VEHICLE_LOCKED" ],
+    "blueprint": [
+      [ "     o " ],
+      [ "O----+-O" ],
+      [ "|###|#'|" ],
+      [ "+====='>" ],
+      [ "|#==|#'|" ],
+      [ "O--+-+-O" ],
+      [ "     o " ]
+    ],
+    "color_palette": "swat_standard",
+    "parts": [
+      { "x": 0, "y": 1, "parts": [ "hdframe_vertical", "aisle_horizontal", "hdroof" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "hdframe_vertical_2",
+          "seat",
+          "seatbelt",
+          "controls",
+          "dashboard",
+          "light_blue",
+          "vehicle_alarm",
+          "horn_car",
+          "hdroof"
+        ]
+      },
+      { "x": 0, "y": 2, "parts": [ "hdframe_vertical_2", "seat", "seatbelt", "light_red", "hdroof" ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe_vertical", "hddoor_left", "plating_steel" ] },
+      { "x": 0, "y": 3, "parts": [ "hdframe_vertical", "hddoor_right", "plating_steel" ] },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [
+          "hdframe_horizontal",
+          "reinforced_windshield",
+          "plating_steel",
+          "diesel_engine_v6",
+          "alternator_truck",
+          "battery_car"
+        ]
+      },
+      { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "reinforced_windshield", "plating_steel" ] },
+      { "x": 1, "y": 2, "parts": [ "hdframe_horizontal", "reinforced_windshield", "plating_steel" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "reinforced_windshield", "plating_steel" ] },
+      { "x": 1, "y": -2, "parts": [ "wing_mirror_left" ] },
+      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "reinforced_windshield", "plating_steel" ] },
+      { "x": 1, "y": 4, "parts": [ "wing_mirror_right" ] },
+      { "x": 2, "y": 0, "parts": [ "hdframe_horizontal", "halfboard_horizontal_2", "plating_steel" ] },
+      { "x": 2, "y": 1, "parts": [ "hdframe_cover", "halfboard_horizontal_2", "plating_steel" ] },
+      { "x": 2, "y": 2, "parts": [ "hdframe_horizontal", "halfboard_horizontal_2", "plating_steel" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "hdframe_nw", "halfboard_nw", "headlight_reinforced", "wheel_mount_medium_steerable", "wheel_wide", "plating_steel" ]
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "parts": [ "hdframe_ne", "halfboard_ne", "headlight_reinforced", "wheel_mount_medium_steerable", "wheel_wide", "plating_steel" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "hdframe_horizontal", "hdboard_horizontal", "hdroof", "plating_steel" ] },
+      { "x": -1, "y": 1, "parts": [ "hdframe_horizontal", "aisle_horizontal", "hdroof" ] },
+      { "x": -1, "y": 2, "parts": [ "hdframe_horizontal", "hdboard_horizontal", "hdroof", "plating_steel" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "hdframe_sw", "hdboard_sw", { "part": "tank", "fuel": "diesel" }, "hdroof", "plating_steel" ]
+      },
+      {
+        "x": -1,
+        "y": 3,
+        "parts": [ "hdframe_se", "hdboard_se", { "part": "tank", "fuel": "diesel" }, "hdroof", "plating_steel" ]
+      },
+      { "x": -2, "y": 0, "parts": [ "hdframe_vertical", "seat", "seatbelt", "hdroof" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe_vertical", "aisle_horizontal", "hdroof" ] },
+      { "x": -2, "y": 2, "parts": [ "hdframe_vertical", "seat", "seatbelt", "hdroof" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "hdboard_vertical", "hdroof", "plating_steel" ] },
+      { "x": -2, "y": 3, "parts": [ "hdframe_vertical", "hddoor_opaque_right", "hdroof", "plating_steel" ] },
+      { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "seat", "seatbelt", "hdroof" ] },
+      { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "aisle_horizontal", "hdroof" ] },
+      { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "seat", "seatbelt", "hdroof" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_vertical", "hdboard_vertical", "hdroof", "plating_steel" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_vertical", "hdboard_vertical", "hdroof", "plating_steel" ] },
+      { "x": -4, "y": 0, "parts": [ "hdframe_horizontal", "seat", "seatbelt", "hdroof" ] },
+      { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "aisle_horizontal", "hdroof" ] },
+      { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "seat", "seatbelt", "hdroof" ] },
+      { "x": -4, "y": -1, "parts": [ "hdframe_vertical", "hdboard_vertical", "hdroof", "plating_steel" ] },
+      { "x": -4, "y": 3, "parts": [ "hdframe_vertical", "hdboard_vertical", "hdroof", "plating_steel" ] },
+      { "x": -5, "y": 0, "parts": [ "hdframe_horizontal", "hdboard_horizontal", "hdroof", "plating_steel" ] },
+      { "x": -5, "y": 1, "parts": [ "hdframe_horizontal", "hddoor_opaque", "hdroof", "plating_steel" ] },
+      { "x": -5, "y": 2, "parts": [ "hdframe_horizontal", "hdboard_horizontal", "hdroof", "plating_steel" ] },
+      {
+        "x": -5,
+        "y": -1,
+        "parts": [ "hdframe_sw", "hdboard_sw", "wheel_mount_medium", "wheel_wide", "hdroof", "plating_steel" ]
+      },
+      {
+        "x": -5,
+        "y": 3,
+        "parts": [ "hdframe_se", "hdboard_se", "wheel_mount_medium", "wheel_wide", "hdroof", "plating_steel" ]
+      }
+    ],
+    "items": [
+      { "x": -2, "y": 0, "chance": 50, "item_groups": [ "swat_gear" ] },
+      { "x": -2, "y": 2, "chance": 50, "magazine": 100, "ammo": 50, "item_groups": [ "guns_swat" ] },
+      { "x": -2, "y": 2, "chance": 50, "item_groups": [ "ammo_swat" ] },
+      { "x": -3, "y": 0, "chance": 50, "magazine": 100, "ammo": 50, "item_groups": [ "guns_swat" ] },
+      { "x": -3, "y": 0, "chance": 50, "item_groups": [ "mags_swat" ] },
+      { "x": -3, "y": 2, "chance": 50, "item_groups": [ "swat_gear" ] },
+      { "x": -4, "y": 0, "chance": 50, "magazine": 100, "ammo": 50, "item_groups": [ "guns_swat" ] },
+      { "x": -4, "y": 0, "chance": 50, "item_groups": [ "ammo_swat" ] },
+      { "x": -4, "y": 2, "chance": 50, "item_groups": [ "swat_gear" ] }
+    ]
+  },
+  {
+    "id": "truck_swat_mapextra",
+    "//": "this version is identical to the other swat truck but is spawned always unlocked for the feral swat team miniboss",
+    "type": "vehicle",
+    "name": "SWAT Truck",
+    "flags": [ "VEHICLE_UNLOCKED" ],
     "blueprint": [
       [ "     o " ],
       [ "O----+-O" ],

@@ -1681,6 +1681,7 @@ void furn_t::load( const JsonObject &jo, const std::string &src )
 
     optional( jo, was_loaded, "workbench", workbench );
     optional( jo, was_loaded, "plant_data", plant );
+    optional( jo, was_loaded, "enchanter_info", enchanter );
     assign( jo, "surgery_skill_multiplier", surgery_skill_multiplier );
 
     if( jo.has_member( "active" ) ) {

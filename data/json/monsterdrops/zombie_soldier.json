@@ -78,9 +78,9 @@
         ]
       },
       { "group": "infantry_common_gear" },
-      { "group": "military_specops_guns", "prob": 10, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
+      { "group": "military_specops_guns", "prob": 40, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
       { "item": "holster" },
-      { "group": "carried_guns_pistol_milspec", "prob": 30, "damage": [ 0, 2 ], "dirt": [ 0, 1500 ] },
+      { "group": "carried_guns_pistol_milspec", "prob": 100, "damage": [ 0, 2 ], "dirt": [ 0, 1500 ] },
       { "group": "military_standard_grenades", "count": [ 1, 3 ], "prob": 20 },
       { "group": "military_patrol_food" },
       {

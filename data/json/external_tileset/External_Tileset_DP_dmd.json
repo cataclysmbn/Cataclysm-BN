@@ -171,7 +171,17 @@
           { "id": [ "stanag50", "overlay_wielded_stanag50" ], "fg": 101 },
           { "id": [ "stanag60drum", "overlay_wielded_stanag60drum" ], "fg": 102 },
           { "id": [ "stanag60", "overlay_wielded_stanag60" ], "fg": 103 },
-          { "id": [ "stanag90", "overlay_wielded_stanag90" ], "fg": 104 }
+          { "id": [ "stanag90", "overlay_wielded_stanag90" ], "fg": 104 },
+          { "id": "mon_feral_swat_boss_commander", "fg": 105, "bg": 30 },
+          { "id": "mon_feral_swat_boss_shieldman", "fg": 106, "bg": 30 },
+          { "id": "mon_feral_swat_boss_grenadier", "fg": 107, "bg": 30 },
+          { "id": "mon_feral_swat_boss_cloaker", "fg": 108, "bg": 30 },
+          { "id": "sig_mcx", "fg": 109 },
+          { "id": "overlay_wielded_sig_mcx", "fg": 110 },
+          { "id": "c4_breaching", "fg": 111 },
+          { "id": "overlay_wielded_c4_breaching", "fg": 112 },
+          { "id": "c4_breaching_armed", "fg": 113 },
+          { "id": "overlay_wielded_c4_breaching_armed", "fg": 114 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

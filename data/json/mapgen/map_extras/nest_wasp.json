@@ -38,7 +38,8 @@
         "*": [ "t_floor_paper" ]
       },
       "monster": { "*": { "group": "GROUP_WASP_QUEEN" } },
-      "place_monster": [ { "group": "GROUP_WASP_NEST", "x": [ 0, 23 ], "y": [ 0, 23 ], "repeat": [ 5, 15 ] } ]
+      "place_monster": [ { "group": "GROUP_WASP_NEST", "x": [ 0, 23 ], "y": [ 0, 23 ], "repeat": [ 5, 15 ] } ],
+      "flags": [ "ERASE_ALL_BEFORE_PLACING_TERRAIN" ]
     }
   }
 ]

@@ -467,7 +467,7 @@ bool vehicle_part::can_reload( const item *obj ) const
     return ammo_remaining() < ammo_capacity();
 }
 
-void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_heater )
+void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_heater, int turns )
 {
     // for now we only care about processing food containers since things like
     // fuel don't care about temperature yet
@@ -484,7 +484,9 @@ void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_he
             flag = temperature_flag::TEMP_FREEZER;
         }
 
-        base = item::process( base.release(), nullptr, pos, false, flag );
+        for( int i = 0; i < turns; i++ ) {
+            base = item::process( base.release(), nullptr, pos, false, flag );
+        }
     }
 }
 

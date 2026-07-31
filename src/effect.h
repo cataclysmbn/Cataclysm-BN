@@ -214,6 +214,9 @@ class effect_type
         /** Key tuple order is:("base_mods"/"scaling_mods", reduced: bool, type of mod: "STR", desired argument: "tick") */
         std::unordered_map <
         std::tuple<std::string, bool, std::string, std::string>, double, cata::tuple_hash > mod_data;
+
+        std::vector<enchantment> base_enchantments;
+        std::vector<enchantment> scaling_enchantments;
 };
 
 class effect
@@ -365,6 +368,7 @@ class effect
         /** Create a set of effects that should replace this one when it is removed prematurely. */
         std::vector<effect> create_removal_effects() const;
 
+        std::vector<enchantment> get_enchantments() const;
         /** Returns the effect's matching effect_type id. */
         const efftype_id &get_id() const {
             return eff_type->id;

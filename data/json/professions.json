@@ -2234,7 +2234,7 @@
           { "item": "goggles_welding", "custom-flags": [ "no_auto_equip" ] },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": [ "shoulder_strap", "holo_sight" ] },
-          { "item": "grenadebandolier", "contents-item": [ "c4", "c4", "c4", "c4" ] }
+          { "item": "grenadebandolier", "contents-item": [ "c4_breaching", "c4_breaching", "c4", "c4" ] }
         ]
       },
       "male": [ "boxer_shorts" ],

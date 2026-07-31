@@ -8139,6 +8139,7 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
         }
     }
 }
+
 /**
  * Given then name of one of the above functions, returns the matching function
  * pointer. If no match is found, defaults to iexamine::none but prints out a
@@ -8245,6 +8246,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "migo_nerve_cluster", &iexamine::migo_nerve_cluster },
             { "cardreader_plutgen", &iexamine::cardreader_plutgen },
             { "multicooker", &iexamine::multicooker },
+            { "enchanter", &iexamine::enchanter },
         }
     };
 
