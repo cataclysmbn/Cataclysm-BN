@@ -8902,7 +8902,7 @@
     "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 2, "name": "firstaid" },
-      { "level": 6, "name": "mechanics" },
+      { "level": 5, "name": "mechanics" },
       { "level": 4, "name": "launcher" },
       { "level": 2, "name": "gun" },
       { "level": 2, "name": "pistol" }
