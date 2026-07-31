@@ -71,8 +71,8 @@ These are general breakpoints for skill starting values when adding professions.
 The default level of knowledge obtained through interaction with society and general day to day tasks.
 Example: An average US high school graduate, without regard for hobbies, advanced courses, jobs, etc, would have 0 in all skills.
 
-1: HOBBYIST
-You have extremely rudimentary training in the topic, or are a hobbyist with a small amount of real experience.
+1: MINIMAL EXPERIENCE
+You have extremely rudimentary training in the topic, or are somewhat interested in the topic with a small amount of real experience.
 Example: A person who reads magazines about guns and has gone to the range once or twice would have 1 in marksmanship.
 
 2: BASIC TRAINING
