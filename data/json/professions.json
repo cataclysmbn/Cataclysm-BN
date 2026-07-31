@@ -2250,9 +2250,7 @@
           "molle_pack",
           "hatchet",
           "boltcutters",
-          "multitool",
-          "c4_breaching",
-          "c4_breaching"
+          "multitool"
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
