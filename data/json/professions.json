@@ -4424,6 +4424,7 @@
       { "level": 3, "name": "swimming" },
       { "level": 4, "name": "melee" },
       { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "cutting" },
       { "level": 4, "name": "firstaid" }
     ],
     "items": {
@@ -5018,6 +5019,7 @@
       { "level": 3, "name": "swimming" },
       { "level": 4, "name": "melee" },
       { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "cutting" },
       { "level": 4, "name": "firstaid" }
     ],
     "items": {
@@ -7898,6 +7900,7 @@
       { "level": 3, "name": "swimming" },
       { "level": 4, "name": "melee" },
       { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "cutting" },
       { "level": 4, "name": "firstaid" }
     ],
     "items": {
