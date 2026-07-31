@@ -7834,7 +7834,10 @@
           "wristwatch",
           "pen"
         ],
-        "entries": [ { "item": "scalpel", "custom-flags": [ "auto_wield" ] } ]
+        "entries": [
+          { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "chemistry_set" },
+          { "item": "scalpel", "custom-flags": [ "auto_wield" ] } 
+        ]
       },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
