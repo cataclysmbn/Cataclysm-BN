@@ -72,7 +72,7 @@ The default level of knowledge obtained through interaction with society and gen
 Example: An average US high school graduate, without regard for hobbies, advanced courses, jobs, etc, would have 0 in all skills.
 
 1: HOBBYIST
-You are a hobbyist with a small amount of experience.
+You are a hobbyist with a small amount of real experience.
 Example: A person who reads magazines about guns and has gone to the range once or twice would have 1 in marksmanship.
 
 2: BASIC TRAINING
@@ -80,26 +80,26 @@ You have basic training in the topic, or are a dedicated hobbyist.
 Example: A person who visits the range somewhat frequently would have 2 in marksmanship. A soldier just finished with basic training would have 2 first aid, as they are trained but it is not their specialty, vs something like a combat medic who would have higher first aid.
 
 3: ENTHUSIAST
-You have basic training in the topic and some experience, or are an enthusiast.
+You have basic training in the topic and some real experience, or are an enthusiast.
 Example: A person who takes classes at the range and has a decent amount of experience shooting would have 3 in marksmanship.
 
 4: TRAINED
 You are trained in that skill as a specialization to an average degree. About the level of an associate's degree.
 Example: A soldier just finished with infantry training would have 4 in marksmanship.
 
-5: Previous, but with some experience
+5: Previous, but with some real experience
 
 6: HIGHLY TRAINED
 You are trained in that skill as a specialization to an advanced degree. About the level of a bachelor's degree.
 Example: A soldier just finished with marksman training would have 6 in marksmanship.
 
-7: Previous, but with some experience
+7: Previous, but with some real experience
 
 8: EXPERT
 You are trained in that skill as a specialization to an expert degree. About the level of a graduate degree.
 Example: A soldier just finished with sniper training would have 8 in marksmanship.
 
-9: Previous, but with some experience
+9: Previous, but with some real experience
 
 10: VETERAN
 You are trained to an expert degree and have years of experience as well as talent surpassing others in the field.
