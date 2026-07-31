@@ -88,6 +88,7 @@ You are trained in that skill as a specialization to an average degree. About th
 Example: A soldier just finished with infantry training would have 4 in marksmanship.
 
 5: Previous, but with some real experience
+Example: A veteran would have 5 marksmanship as opposed to 4 due to having some experience applying those skills in real life scenarios outside of training.
 
 6: HIGHLY TRAINED
 You are trained in that skill as a specialization to an advanced degree. About the level of a bachelor's degree.
