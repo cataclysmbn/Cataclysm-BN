@@ -8685,7 +8685,7 @@
     "description": "Chivalry! Daring! Honor! All traits that are useless in the Cataclysm. But you know how to fight with a sword and you have this armor so it could be worse.",
     "points": 4,
     "starting_cash": 0,
-    "skills": [ { "level": 3, "name": "swimming" }, { "level": 5, "name": "melee" }, { "level": 5, "name": "cutting" } ],
+    "skills": [ { "level": 5, "name": "swimming" }, { "level": 5, "name": "melee" }, { "level": 5, "name": "cutting" } ],
     "traits": [ "PROF_KNIGHT", "ANTIJUNK" ],
     "//": "But my liege, my handgonne permit is only 700 years out of date!",
     "forbidden_traits": [ "CARRY_PERMIT" ],
