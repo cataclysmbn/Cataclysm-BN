@@ -8,12 +8,14 @@
 
 #include "coordinates.h"
 #include "enums.h"
+#include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 
 class JsonObject;
 class map;
 class player;
+class map_extra;
 struct tripoint;
 
 class start_location
@@ -57,7 +59,7 @@ class start_location
         /**
          * Adds a map extra, see map_extras.h and map_extras.cpp. Look at the namespace MapExtras and class map_extras.
          */
-        void add_map_extra( const tripoint_abs_omt &omtstart, const std::string &map_extra ) const;
+        void add_map_extra( const tripoint_abs_omt &omtstart, const string_id<map_extra> &map_extra ) const;
 
         void handle_heli_crash( player &u ) const;
 
