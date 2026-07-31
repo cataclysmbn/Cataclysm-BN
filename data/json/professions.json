@@ -4108,7 +4108,7 @@
     "name": "Biker",
     "description": "You spent most of your life on a Harley, out on the open road with your club.  Now they're all dead.  Time to ride or die.",
     "points": 3,
-    "skills": [ { "level": 6, "name": "driving" }, { "level": 3, "name": "mechanics" } ],
+    "skills": [ { "level": 6, "name": "driving" }, { "level": 3, "name": "mechanics" }, { "level": 2, "name": "melee" } ],
     "vehicle": "motorcycle",
     "items": {
       "both": {
@@ -7965,7 +7965,7 @@
     "description": "You lived on the open road with your motorcycle club.  They're dead and you're not.  Any bastard that tries to touch your ride will join them.",
     "//": "One point higher since starts with more gear.",
     "points": 4,
-    "skills": [ { "level": 6, "name": "driving" }, { "level": 3, "name": "mechanics" } ],
+    "skills": [ { "level": 6, "name": "driving" }, { "level": 3, "name": "mechanics" }, { "level": 2, "name": "melee" } ],
     "vehicle": "motorcycle",
     "items": {
       "both": {
