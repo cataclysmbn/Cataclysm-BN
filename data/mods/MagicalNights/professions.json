@@ -42,7 +42,17 @@
     "flags": [ "SCEN_ONLY" ],
     "items": {
       "both": {
-        "items": [ "pants", "longshirt", "socks", "cassock", "smart_phone", "dress_shoes", "holy_symbol", "holybook_bible4", "priest_beginner" ]
+        "items": [
+          "pants",
+          "longshirt",
+          "socks",
+          "cassock",
+          "smart_phone",
+          "dress_shoes",
+          "holy_symbol",
+          "holybook_bible4",
+          "priest_beginner"
+        ]
       },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
@@ -54,7 +64,19 @@
     "copy-from": "shinto_priest",
     "flags": [ "SCEN_ONLY" ],
     "items": {
-      "both": { "items": [ "kariginu", "eboshi", "pants", "smart_phone", "tabi_dress", "geta", "holy_symbol", "holybook_kojiki", "priest_beginner" ] },
+      "both": {
+        "items": [
+          "kariginu",
+          "eboshi",
+          "pants",
+          "smart_phone",
+          "tabi_dress",
+          "geta",
+          "holy_symbol",
+          "holybook_kojiki",
+          "priest_beginner"
+        ]
+      },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
