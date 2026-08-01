@@ -97,7 +97,7 @@
   {
     "type": "profession",
     "id": "rabbi_magic2",
-    "id": "rabbi",
+    "copy-from": "rabbi",
     "flags": [ "SCEN_ONLY" ],
     "items": {
       "both": {
