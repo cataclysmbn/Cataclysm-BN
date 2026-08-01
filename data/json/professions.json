@@ -1794,7 +1794,7 @@
     "traits": [ "PROF_SWIMMER" ],
     "description": "You spent a large part of your time exploring lakes and diving in the New England region, giving you lots of knowledge about the waters in the local area.",
     "points": 2,
-    "skills": [ { "level": 5, "name": "swimming" } ],
+    "skills": [ { "level": 5, "name": "swimming" }, { "level": 2, "name": "survival" } ],
     "items": {
       "both": {
         "items": [
