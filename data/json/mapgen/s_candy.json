@@ -213,16 +213,16 @@
         "U": "f_dumpster",
         "{": "f_rack",
         "}": "f_rack",
-        "l": "f_locker",
+        "l": "f_locker"
       },
       "items": {
-		"U": { "item": "trash_dumpster", "chance": 80 },
+        "U": { "item": "trash_dumpster", "chance": 80 },
         "l": { "item": "SUS_janitors_closet", "chance": 100 },
         "&": { "item": "trash_cart", "chance": 50, "repeat": 3 },
         "t": { "item": "trash_cart", "chance": 50, "repeat": 3 },
         "{": { "item": "candy_shop", "chance": 65, "repeat": [ 1, 6 ] },
         "}": { "item": "toy_store", "chance": 65, "repeat": [ 1, 6 ] }
-	},
+      },
       "toilets": { "T": {  } }
     }
   },
