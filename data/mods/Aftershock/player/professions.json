@@ -98,7 +98,7 @@
         "items": [ "suit", "socks", "dress_shoes" ],
         "entries": [ { "item": "ceramic_knife", "container-item": "bootsheath" } ]
       },
-      "male": [ "briefs", "undershirt"  ],
+      "male": [ "briefs", "undershirt" ],
       "female": [ "boy_shorts", "bra" ]
     }
   },
@@ -250,6 +250,14 @@
     "name": "Bionic Merc",
     "description": "You worked as a mercenary across six continents for a dozen corps.  A VP at the last corp decided he wanted to put you on retainer and you agreed to a three month gig in return for some additional bionics.  You woke up with an extra bionic, a cranial bomb that needed to be reset every month or so or it blows up.  Now you're free until the bomb goes off.  Maybe you'll find someone who can remove it.",
     "points": 4,
-    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII", "afs_bio_cranialbomb" ]
+    "CBMs": [
+      "bio_cqb",
+      "bio_carbon",
+      "bio_night_vision",
+      "bio_torsionratchet",
+      "bio_claws",
+      "bio_power_storage_mkII",
+      "afs_bio_cranialbomb"
+    ]
   }
 ]
