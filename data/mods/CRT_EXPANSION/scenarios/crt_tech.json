@@ -50,8 +50,8 @@
     "points": 4,
     "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
     "skills": [
-      { "level": 1, "name": "gun" },
-      { "level": 1, "name": "pistol" },
+      { "level": 2, "name": "gun" },
+      { "level": 2, "name": "pistol" },
       { "level": 4, "name": "fabrication" },
       { "level": 4, "name": "mechanics" }
     ],

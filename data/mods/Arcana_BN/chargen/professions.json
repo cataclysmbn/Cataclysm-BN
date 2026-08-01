@@ -81,8 +81,8 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "starting_mana_gem_520_dull_essence",
-    "entries": [ { "item": "essence_dull", "charges": 520 } ]
+    "id": "starting_mana_gem_540_dull_essence",
+    "entries": [ { "item": "essence_dull", "charges": 540 } ]
   },
   {
     "type": "item_group",
@@ -223,8 +223,8 @@
       { "level": 2, "name": "firstaid" },
       { "level": 3, "name": "gun" },
       { "level": 3, "name": "melee" },
-      { "level": 2, "name": "stabbing" },
-      { "level": 2, "name": "dodge" }
+      { "level": 3, "name": "stabbing" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -263,8 +263,8 @@
       { "level": 2, "name": "swimming" },
       { "level": 4, "name": "magic" },
       { "level": 4, "name": "melee" },
-      { "level": 3, "name": "bashing" },
-      { "level": 3, "name": "dodge" }
+      { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -307,8 +307,8 @@
     "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 5, "name": "magic" },
-      { "level": 3, "name": "gun" },
-      { "level": 2, "name": "dodge" }
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -351,7 +351,7 @@
       { "level": 3, "name": "survival" },
       { "level": 2, "name": "cooking" },
       { "level": 2, "name": "melee" },
-      { "level": 1, "name": "bashing" },
+      { "level": 2, "name": "bashing" },
       { "level": 3, "name": "dodge" }
     ],
     "items": {
@@ -401,8 +401,8 @@
       { "level": 2, "name": "firstaid" },
       { "level": 1, "name": "survival" },
       { "level": 3, "name": "melee" },
-      { "level": 2, "name": "unarmed" },
-      { "level": 2, "name": "dodge" }
+      { "level": 3, "name": "unarmed" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -447,15 +447,15 @@
     "skills": [
       { "level": 3, "name": "swimming" },
       { "level": 3, "name": "fabrication" },
-      { "level": 4, "name": "gun" },
-      { "level": 4, "name": "magic" },
-      { "level": 4, "name": "melee" },
-      { "level": 3, "name": "throw" },
-      { "level": 3, "name": "stabbing" },
-      { "level": 3, "name": "dodge" },
-      { "level": 3, "name": "pistol" },
+      { "level": 5, "name": "gun" },
+      { "level": 5, "name": "magic" },
+      { "level": 5, "name": "melee" },
+      { "level": 5, "name": "throw" },
+      { "level": 5, "name": "stabbing" },
+      { "level": 5, "name": "dodge" },
+      { "level": 5, "name": "pistol" },
       { "level": 1, "name": "mechanics" },
-      { "level": 1, "name": "survival" },
+      { "level": 2, "name": "survival" },
       { "level": 2, "name": "firstaid" }
     ],
     "items": {
@@ -512,10 +512,10 @@
       { "level": 3, "name": "cooking" },
       { "level": 4, "name": "gun" },
       { "level": 4, "name": "melee" },
-      { "level": 3, "name": "pistol" },
+      { "level": 4, "name": "pistol" },
       { "level": 4, "name": "computer" },
       { "level": 3, "name": "electronics" },
-      { "level": 3, "name": "cutting" },
+      { "level": 4, "name": "cutting" },
       { "level": 2, "name": "fabrication" }
     ],
     "items": {
@@ -577,12 +577,11 @@
       { "level": 3, "name": "swimming" },
       { "level": 5, "name": "magic" },
       { "level": 5, "name": "gun" },
-      { "level": 3, "name": "melee" },
-      { "level": 4, "name": "dodge" },
-      { "level": 4, "name": "pistol" },
-      { "level": 4, "name": "rifle" },
-      { "level": 4, "name": "shotgun" },
-      { "level": 3, "name": "unarmed" },
+      { "level": 5, "name": "melee" },
+      { "level": 5, "name": "dodge" },
+      { "level": 5, "name": "pistol" },
+      { "level": 5, "name": "shotgun" },
+      { "level": 5, "name": "unarmed" },
       { "level": 4, "name": "computer" }
     ],
     "items": {
@@ -601,10 +600,10 @@
           "book_hexenhammer"
         ],
         "entries": [
-          { "item": "ethereal_crossbow", "charges": 80, "contents-item": "shoulder_strap" },
+          { "item": "ethereal_hand_crossbow", "container-item": "holster", "charges": 40 },
           { "item": "holster", "contents-group": "1911_gun_arcane_purifier" },
           { "item": "legpouch_large", "contents-group": "1911_mags_arcane_purifier" },
-          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_520_dull_essence" },
+          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_540_dull_essence" },
           { "item": "45_acp", "charges": 9 },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_shotgun_shot_00_arcana" }
         ]
@@ -630,10 +629,10 @@
       { "level": 3, "name": "tailor" },
       { "level": 2, "name": "cooking" },
       { "level": 6, "name": "magic" },
-      { "level": 2, "name": "gun" },
+      { "level": 4, "name": "gun" },
       { "level": 4, "name": "melee" },
-      { "level": 3, "name": "stabbing" },
-      { "level": 3, "name": "dodge" },
+      { "level": 4, "name": "stabbing" },
+      { "level": 4, "name": "dodge" },
       { "level": 3, "name": "survival" }
     ],
     "items": {
@@ -712,10 +711,10 @@
       { "level": 2, "name": "swimming" },
       { "level": 4, "name": "magic" },
       { "level": 4, "name": "melee" },
-      { "level": 3, "name": "gun" },
-      { "level": 2, "name": "pistol" },
-      { "level": 3, "name": "bashing" },
-      { "level": 3, "name": "dodge" }
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "pistol" },
+      { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -760,10 +759,10 @@
       { "level": 3, "name": "magic" },
       { "level": 2, "name": "firstaid" },
       { "level": 3, "name": "gun" },
-      { "level": 2, "name": "throw" },
+      { "level": 3, "name": "throw" },
       { "level": 3, "name": "melee" },
-      { "level": 2, "name": "stabbing" },
-      { "level": 2, "name": "dodge" }
+      { "level": 3, "name": "stabbing" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -791,10 +790,10 @@
     "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 5, "name": "magic" },
-      { "level": 3, "name": "gun" },
-      { "level": 2, "name": "dodge" },
-      { "level": 3, "name": "melee" },
-      { "level": 2, "name": "stabbing" }
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "dodge" },
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "stabbing" }
     ],
     "items": {
       "both": {
@@ -838,7 +837,7 @@
       { "level": 3, "name": "survival" },
       { "level": 2, "name": "cooking" },
       { "level": 2, "name": "melee" },
-      { "level": 1, "name": "bashing" },
+      { "level": 2, "name": "bashing" },
       { "level": 3, "name": "dodge" }
     ],
     "items": {

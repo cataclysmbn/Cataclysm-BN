@@ -1807,10 +1807,9 @@
           "goggles_swim",
           "scuba_tank",
           "swim_fins",
-          "diveknife",
           "rebreather"
         ],
-        "entries": [ { "group": "charged_flashlight" } ]
+        "entries": [ { "group": "charged_flashlight" }, { "item": "diveknife", "container-item": "wristsheath" } ]
       }
     }
   },
@@ -1835,11 +1834,11 @@
           "goggles_swim",
           "small_scuba_tank",
           "swim_fins",
-          "diveknife",
           "rebreather"
         ],
         "entries": [
           { "group": "charged_flashlight" },
+          { "item": "diveknife", "container-item": "wristsheath" },
           { "item": "sea_scooter", "custom-flags": [ "auto_wield" ] },
           { "item": "tinyweldtank", "ammo-item": "oxyacetylene", "charges": 60, "container-item": "oxy_torch" }
         ]
@@ -1878,11 +1877,11 @@
           "goggles_swim",
           "small_scuba_tank",
           "swim_fins",
-          "diveknife",
           "rebreather"
         ],
         "entries": [
           { "item": "sea_scooter", "custom-flags": [ "auto_wield" ] },
+          { "item": "diveknife", "container-item": "wristsheath" },
           { "item": "airspeargun", "ammo-item": "c_fishspear", "charges": 4 },
           { "item": "c_fishspear", "count": 4 }
         ]
@@ -1910,8 +1909,8 @@
     "skills": [ { "level": 5, "name": "swimming" } ],
     "items": {
       "both": {
-        "items": [ "wetsuit", "wetsuit_gloves", "wetsuit_booties", "bandana_head", "dive_bag", "diving_watch", "diveknife" ],
-        "entries": [ { "group": "charged_flashlight" } ]
+        "items": [ "wetsuit", "wetsuit_gloves", "wetsuit_booties", "bandana_head", "dive_bag", "diving_watch" ],
+        "entries": [ { "group": "charged_flashlight" }, { "item": "diveknife", "container-item": "wristsheath" } ]
       }
     },
     "flags": [ "SCEN_ONLY" ]
@@ -2425,7 +2424,7 @@
         ],
         "entries": [
           { "group": "charged_two_way_radio" },
-          { "item": "diveknife", "container-item": "sheath" },
+          { "item": "diveknife", "container-item": "wristsheath" },
           { "item": "chestrig", "contents-group": "army_mags_mp5" },
           {
             "item": "hk_mp5sd",
