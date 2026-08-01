@@ -4576,18 +4576,16 @@
           "mask_ski",
           "socks",
           "boots_combat",
-          "webbing_belt",
           "canteen",
           "wristwatch",
           "tent_kit",
-          "rollmat",
-          "e_tool"
+          "rollmat"
         ],
         "entries": [
           { "item": "medium_plus_battery_cell", "ammo-item": "battery", "charges": 750, "container-item": "mil_mess_kit" },
           { "group": "charged_two_way_radio" },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "knife_hunting", "container-item": "sheath" },
+          { "item": "e_tool", "container-item": "webbing_belt" },
           {
             "item": "rm11b_sniper_rifle",
             "ammo-item": "8mm_caseless",
@@ -4645,7 +4643,6 @@
         ],
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "winter_jacket_army" },
           { "item": "modularvestsuper", "contents-group": "army_mags_rm216" },
           { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50, "container-item": "needlegun" }
         ]
