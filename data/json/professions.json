@@ -2877,7 +2877,7 @@
     "type": "profession",
     "id": "security",
     "name": "Security Guard",
-    "description": "A low paid security guard, things have suddenly gotten a lot more dangerous than patrolling the grounds warding off potential thieves.  You don't have any particularly useful skills, but you do have some useful equipment since you were on the job when things started going south.",
+    "description": "A low paid security guard, things have suddenly gotten a lot more dangerous than patrolling the grounds warding off potential thieves.  You don't have many particularly useful skills, but you do have some useful equipment since you were on the job when things started going south.",
     "points": 1,
     "skills": [
       { "level": 1, "name": "gun" },
@@ -4628,7 +4628,7 @@
         "items": [
           "winter_pants_army",
           "undershirt",
-          "jacket_army",
+          "winter_jacket_army",
           "gloves_liner",
           "gloves_tactical",
           "mask_ski",
