@@ -232,7 +232,10 @@
   },
   {
     "type": "monstergroup",
-    "id": "GROUP_STREAM",
+    "name": "GROUP_STREAM",
+    "default": "mon_null",
+    "//": "Note that 'freq' units are tenth of a percent, with default filling in the gap.",
+    "is_animal": true,
     "monsters": [
       {
         "monster": "mon_coelophysis",
