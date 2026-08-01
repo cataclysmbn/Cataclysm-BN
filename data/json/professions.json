@@ -4960,7 +4960,6 @@
     "description": "You had plans to attend a local convention after your custom order finally arrived, only to find the world is ending.  You're starting to wish the company you bought this from made something armored and scaly instead.",
     "points": 1,
     "skills": [ { "level": 2, "name": "fabrication" }, { "level": 2, "name": "tailor" } ],
-    "traits": [ "SMELLY2" ],
     "items": {
       "both": {
         "items": [ "socks", "tank_top", "wolfsuit", "mbag", "sewing_kit", "water_clean", "smart_phone" ],
