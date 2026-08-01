@@ -234,6 +234,7 @@
           "socks",
           "boots",
           "backpack",
+          "spearsling",
           "revenant_crown",
           "waterskin",
           "matches",
@@ -279,6 +280,7 @@
           "somen_clairvoyance",
           "holy_symbol",
           "backpack",
+          "axe_ring",
           "waterskin",
           "matches",
           "bowl_clay",
@@ -364,6 +366,7 @@
           "gloves_leather",
           "knit_scarf",
           "backpack",
+          "spearsling",
           "waterskin",
           "triffid_garland",
           "matches",
@@ -729,6 +732,7 @@
           "somen_clairvoyance_xl",
           "holy_symbol",
           "backpack",
+          "spearsling",
           "waterskin",
           "matches",
           "bowl_clay",
@@ -766,7 +770,17 @@
     ],
     "items": {
       "both": {
-        "items": [ "socks", "armor_wyrm", "backpack", "revenant_crown", "waterskin", "matches", "bowl_clay", "book_bloodmagic" ],
+        "items": [
+          "socks",
+          "armor_wyrm",
+          "backpack",
+          "spearsling",
+          "revenant_crown",
+          "waterskin",
+          "matches",
+          "bowl_clay",
+          "book_bloodmagic"
+        ],
         "entries": [
           { "item": "bloodscourge", "charges": 15, "custom-flags": [ "auto_wield" ] },
           { "item": "bloodaxe", "container-item": "axe_ring" },
@@ -850,6 +864,7 @@
           "gloves_leather",
           "knit_scarf",
           "backpack",
+          "spearsling",
           "waterskin",
           "triffid_garland_empowered",
           "matches",
