@@ -251,6 +251,7 @@
       "female": [ "bra", "panties", "skirt" ]
     },
     "traits": [ "PROF_SANGUINE" ],
+    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -296,6 +297,7 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME" ],
+    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
@@ -337,6 +339,7 @@
       "female": [ "chestwrap" ]
     },
     "traits": [ "PROF_CHALICE" ],
+    "allowed_spells": [ "arcana_magic_free_action", "arcana_magic_insight", "arcana_magic_lightning_ward", "arcana_magic_shockstorm", "arcana_magic_might" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -389,6 +392,7 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST2" ],
+    "allowed_spells": [ "arcana_magic_summon_giant_centipedes", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -437,6 +441,7 @@
       "ARCANA_DRAGONCLAWS",
       "ARCANA_INNERHEAT"
     ],
+    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -488,6 +493,7 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_SANGUINE" ],
+    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -551,6 +557,7 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
+    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
@@ -615,6 +622,7 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
+    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
@@ -669,6 +677,7 @@
       },
       "female": [ "chestwrap" ]
     },
+    "allowed_spells": [ "arcana_magic_free_action", "arcana_magic_insight", "arcana_magic_lightning_ward", "arcana_magic_shockstorm", "arcana_magic_might" ],
     "traits": [ "PROF_CHALICE2" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -748,6 +757,7 @@
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boy_shorts" ]
     },
+    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ]
   },
   {
@@ -791,6 +801,7 @@
       "male": [ "boxer_briefs" ],
       "female": [ "bra", "panties" ]
     },
+    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ]
   },
   {
@@ -833,7 +844,8 @@
         ]
       },
       "female": [ "chestwrap" ]
-    }
+    },
+    "allowed_spells": [ "arcana_magic_free_action", "arcana_magic_insight", "arcana_magic_lightning_ward", "arcana_magic_shockstorm", "arcana_magic_might" ]
   },
   {
     "type": "profession",
@@ -885,6 +897,7 @@
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
-    }
+    },
+    "allowed_spells": [ "arcana_magic_summon_giant_centipedes", "arcana_magic_summon_skeletal_dog" ]
   }
 ]

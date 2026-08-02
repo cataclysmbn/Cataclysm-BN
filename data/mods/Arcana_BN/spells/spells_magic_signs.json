@@ -1062,6 +1062,9 @@
     "min_duration": 720000,
     "max_duration": 1440000,
     "duration_increment": 72000,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
