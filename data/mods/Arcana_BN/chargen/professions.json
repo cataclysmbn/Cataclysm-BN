@@ -175,6 +175,15 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST" ],
+    "//": "Allow spells that can be learned from History of Alchemy, plus a couple thematic scenario spells.",
+    "allowed_spells": [
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_healing",
+      "arcana_magic_might",
+      "arcana_magic_poison_armor",
+      "arcana_magic_surge_adrenaline"
+    ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -209,6 +218,18 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST" ],
+    "//": "Allow spells that can be learned from The Six Pillars.",
+    "allowed_spells": [
+      "arcana_magic_cold_ward",
+      "arcana_magic_consecrate",
+      "arcana_magic_dark_lance",
+      "arcana_magic_earthweaving",
+      "arcana_magic_eclipse",
+      "arcana_magic_elemental_burst",
+      "arcana_magic_phase_shield",
+      "arcana_magic_summon_giant_centipedes",
+      "arcana_magic_sundering_quake"
+    ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -251,7 +272,15 @@
       "female": [ "bra", "panties", "skirt" ]
     },
     "traits": [ "PROF_SANGUINE" ],
-    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
+    "//": "Sanguinist characters in general gain access to any spell that can be learned in Sanguine Codex.",
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -297,7 +326,16 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME" ],
-    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
+    "//": "Cleansing Flame characters in general gain access to any spell that can be learned in The Cleansing Flame.",
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
@@ -339,7 +377,15 @@
       "female": [ "chestwrap" ]
     },
     "traits": [ "PROF_CHALICE" ],
-    "allowed_spells": [ "arcana_magic_free_action", "arcana_magic_insight", "arcana_magic_lightning_ward", "arcana_magic_shockstorm", "arcana_magic_might" ],
+    "//": "Keeper characters in general gain access to any spell that can be learned in Oaths to The Chalice.",
+    "allowed_spells": [
+      "arcana_magic_free_action",
+      "arcana_magic_insight",
+      "arcana_magic_lightning_ward",
+      "arcana_magic_shockstorm",
+      "arcana_magic_might",
+      "arcana_magic_phase_shield"
+    ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -392,6 +438,7 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST2" ],
+    "//": "Summoners can opt to start with any summoning Magic Sign they don't already get for free.",
     "allowed_spells": [ "arcana_magic_summon_giant_centipedes", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -441,7 +488,14 @@
       "ARCANA_DRAGONCLAWS",
       "ARCANA_INNERHEAT"
     ],
-    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -493,7 +547,14 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_SANGUINE" ],
-    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -557,7 +618,15 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
-    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
@@ -622,7 +691,15 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
-    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
@@ -677,7 +754,14 @@
       },
       "female": [ "chestwrap" ]
     },
-    "allowed_spells": [ "arcana_magic_free_action", "arcana_magic_insight", "arcana_magic_lightning_ward", "arcana_magic_shockstorm", "arcana_magic_might" ],
+    "allowed_spells": [
+      "arcana_magic_free_action",
+      "arcana_magic_insight",
+      "arcana_magic_lightning_ward",
+      "arcana_magic_shockstorm",
+      "arcana_magic_might",
+      "arcana_magic_phase_shield"
+    ],
     "traits": [ "PROF_CHALICE2" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -757,7 +841,15 @@
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boy_shorts" ]
     },
-    "allowed_spells": [ "arcana_magic_overgrowth", "arcana_magic_heat_ward", "arcana_magic_ward_against_evil", "arcana_magic_clairvoyance", "arcana_magic_healing" ],
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ]
   },
   {
@@ -801,7 +893,14 @@
       "male": [ "boxer_briefs" ],
       "female": [ "bra", "panties" ]
     },
-    "allowed_spells": [ "arcana_magic_confuse_monster", "arcana_magic_conjure_acid", "arcana_magic_agility", "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield" ],
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
     "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ]
   },
   {
@@ -845,7 +944,14 @@
       },
       "female": [ "chestwrap" ]
     },
-    "allowed_spells": [ "arcana_magic_free_action", "arcana_magic_insight", "arcana_magic_lightning_ward", "arcana_magic_shockstorm", "arcana_magic_might" ]
+    "allowed_spells": [
+      "arcana_magic_free_action",
+      "arcana_magic_insight",
+      "arcana_magic_lightning_ward",
+      "arcana_magic_shockstorm",
+      "arcana_magic_might",
+      "arcana_magic_phase_shield"
+    ]
   },
   {
     "type": "profession",

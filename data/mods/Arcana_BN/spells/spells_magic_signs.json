@@ -151,6 +151,9 @@
     "min_duration": 60000,
     "max_duration": 120000,
     "duration_increment": 6000,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -321,6 +324,9 @@
     "base_energy_cost": 3500,
     "final_energy_cost": 1750,
     "energy_increment": -175,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -362,6 +368,9 @@
     "field_chance": 3,
     "min_field_intensity": 1,
     "max_field_intensity": 1,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -436,6 +445,9 @@
     "base_energy_cost": 2500,
     "final_energy_cost": 1250,
     "energy_increment": -125,
+    "starting_points": 2,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -467,6 +479,9 @@
     "min_duration": 324000,
     "max_duration": 648000,
     "duration_increment": 32400,
+    "starting_points": 5,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -502,6 +517,9 @@
     "base_energy_cost": 4000,
     "final_energy_cost": 2000,
     "energy_increment": -200,
+    "starting_points": 4,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -873,6 +891,9 @@
     "min_duration": 84000,
     "max_duration": 168000,
     "duration_increment": 8400,
+    "starting_points": 4,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -1028,6 +1049,9 @@
     "base_energy_cost": 4500,
     "final_energy_cost": 2250,
     "energy_increment": -225,
+    "starting_points": 4,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
