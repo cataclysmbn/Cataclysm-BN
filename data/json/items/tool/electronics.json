@@ -41,7 +41,7 @@
     "ammo": "battery",
     "charges_per_use": 5,
     "use_action": "CAMERA",
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -90,7 +90,7 @@
       "type": "transform"
     },
     "flags": [ "WATCH", "ALARMCLOCK" ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ],
     "magazine_well": "100 ml"
   },
   {
@@ -874,7 +874,7 @@
     "symbol": ";",
     "color": "light_gray",
     "ammo": "battery",
-    "magazines": [ [ "battery", [ "heavy_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "heavy_plus_battery_cell", "heavy_battery_cell" ] ] ],
     "magazine_well": "2000 ml",
     "flags": [ "IS_UPS" ]
   },
@@ -949,7 +949,7 @@
     "color": "yellow",
     "ammo": "battery",
     "use_action": { "type": "gps_device", "radius": 40, "additional_charges_per_tile": 0.1 },
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ]
+    "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ]
   },
   {
     "id": "mil_gps_device",
@@ -982,7 +982,7 @@
       "need_charges_msg": "The scanner doesn't have enough power.",
       "type": "transform"
     },
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ]
+    "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ]
   },
   {
     "id": "bionic_scanner_on",
@@ -1016,7 +1016,7 @@
     "color": "light_cyan",
     "ammo": "battery",
     "use_action": [ { "type": "cloning_syringe", "moves": 250, "charges_to_use": 25 } ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ]
+    "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ]
   },
   {
     "id": "dna_editor",
@@ -1038,7 +1038,7 @@
     "charges_per_use": 5,
     "use_action": { "type": "dna_editor", "charges_to_use": 5 },
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {

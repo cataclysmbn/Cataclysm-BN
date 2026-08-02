@@ -450,7 +450,7 @@
       "type": "transform"
     },
     "flags": [ "DURABLE_MELEE", "SHEATH_SPEAR" ],
-    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "medium_plus_battery_cell", "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
