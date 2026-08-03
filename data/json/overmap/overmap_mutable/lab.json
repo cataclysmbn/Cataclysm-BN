@@ -32,6 +32,13 @@
         "south": { "id": "lab_to_lab", "type": "optional" },
         "west": { "id": "lab_to_lab", "type": "optional" }
       },
+      "lab_filler": {
+        "overmap": "lab_filler",
+        "north": { "id": "lab_to_lab", "type": "optional" },
+        "east": { "id": "lab_to_lab", "type": "optional" },
+        "south": { "id": "lab_to_lab", "type": "optional" },
+        "west": { "id": "lab_to_lab", "type": "optional" }
+      },
       "lab_finale": {
         "overmap": "lab_finale",
         "north": { "id": "lab_to_lab", "type": "optional" },
@@ -84,6 +91,7 @@
           "max": { "chance": 0.2 }
         }
       ],
+      [ { "overmap": "lab_filler", "max": 4 } ],
       [ { "overmap": "lab_train_depot", "z": -2, "scale": "size", "max": { "chance": 1 } } ],
       [ { "overmap": "lab_train_depot", "z": -4, "scale": "size", "max": { "chance": 1 } } ],
       [ { "overmap": "lab", "z": "bottom", "scale": "size", "max": { "poisson": 2 } } ],
@@ -128,6 +136,13 @@
       },
       "ice_lab": {
         "overmap": "ice_lab",
+        "north": { "id": "lab_to_lab", "type": "optional" },
+        "east": { "id": "lab_to_lab", "type": "optional" },
+        "south": { "id": "lab_to_lab", "type": "optional" },
+        "west": { "id": "lab_to_lab", "type": "optional" }
+      },
+      "ice_lab_filler": {
+        "overmap": "ice_lab_filler",
         "north": { "id": "lab_to_lab", "type": "optional" },
         "east": { "id": "lab_to_lab", "type": "optional" },
         "south": { "id": "lab_to_lab", "type": "optional" },
@@ -186,6 +201,7 @@
           "max": { "chance": 0.2 }
         }
       ],
+      [ { "overmap": "ice_lab_filler", "max": 4 } ],
       [ { "overmap": "lab_train_depot", "z": -2, "scale": "size", "max": { "chance": 1 } } ],
       [ { "overmap": "lab_train_depot", "z": -4, "scale": "size", "max": { "chance": 1 } } ],
       [ { "overmap": "ice_lab", "z": "bottom", "scale": "size", "max": { "poisson": 2 } } ],
