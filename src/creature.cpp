@@ -1306,7 +1306,7 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
     int adjusted_damage = du.amount * du.damage_multiplier;
     // Bullets cause pain even if fully resisted by armor to simulate force still applying through ballistic protection
     if ( du.type == DT_BULLET && adjusted_damage <= 0 ) {
-        pain += roll_remainder( adjusted_damage * 2 / 4.0f );
+        pain += roll_remainder( du.amount * 2 / 4.0f );
     }
     if( adjusted_damage <= 0 ) {
         return;
