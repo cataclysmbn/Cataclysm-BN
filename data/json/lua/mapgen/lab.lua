@@ -274,6 +274,8 @@ draw_normal_room = function(data, map)
       elseif walls.left == 2 then
         map:rotate( 3 )
       end
+    elseif map.is_ot_match( "filler", data:id(), ot_match_contains ) then
+      data:generate("lab_4side_filler")
     else
       data:generate("lab_4side")
     end
@@ -289,6 +291,8 @@ draw_normal_room = function(data, map)
       elseif walls.left == 2 then
         map:rotate( 3 )
       end
+    elseif map.is_ot_match( "filler", data:id(), ot_match_contains ) then
+      data:generate("lab_4side_filler")
     else
       data:generate("lab_4side")
     end
