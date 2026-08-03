@@ -11,6 +11,17 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "lab_filler",
+    "name": "science lab",
+    "sym": "L",
+    "color": "light_blue",
+    "spawns": { "group": "GROUP_LAB", "population": [ 1, 10 ], "chance": 50 },
+    "see_cost": 5,
+    "looks_like": "lab",
+    "flags": [ "NO_ROTATE", "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
     "id": "lab_stairs",
     "name": "science lab",
     "sym": "L",
@@ -93,6 +104,17 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "ice_lab_filler",
+    "name": "science lab",
+    "sym": "L",
+    "color": "light_blue",
+    "spawns": { "group": "GROUP_LAB", "population": [ 1, 10 ], "chance": 50 },
+    "see_cost": 5,
+    "looks_like": "lab",
+    "flags": [ "NO_ROTATE", "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
     "id": "ice_lab_stairs",
     "name": "science lab",
     "sym": "L",
@@ -127,6 +149,16 @@
   {
     "type": "overmap_terrain",
     "id": "tower_lab",
+    "name": "science lab tower",
+    "sym": "L",
+    "color": "light_blue",
+    "see_cost": 5,
+    "spawns": { "group": "GROUP_LAB", "population": [ 1, 10 ], "chance": 50 },
+    "flags": [ "NO_ROTATE", "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "tower_lab_filler",
     "name": "science lab tower",
     "sym": "L",
     "color": "light_blue",
