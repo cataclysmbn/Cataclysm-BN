@@ -1055,13 +1055,13 @@
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Defines the other parts that activate simultaneously with the exo.",
-    "info": "This is integrates with a power armor exoskeleton."
+    "info": "This integrates with a power armor exoskeleton."
   },
   {
     "id": "POWERARMOR_PLATING",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "//": "Defines the other parts that activate simultaneously with the exo.",
+    "//": "Defines the plating that can be worn simultaneously with the exo.",
     "info": "This is a set of armor plating for a power armor exoskeleton."
   },
   {
