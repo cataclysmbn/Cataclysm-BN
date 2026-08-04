@@ -255,6 +255,7 @@ extern const flag_id flag_POLEARM;
 extern const flag_id flag_POWERARMOR_COMPATIBLE;
 extern const flag_id flag_POWERARMOR_EXO;
 extern const flag_id flag_POWERARMOR_EXTERNAL;
+extern const flag_id flag_POWERARMOR_PLATING;
 extern const flag_id flag_POWERARMOR_MOD;
 extern const flag_id flag_POWERED;
 extern const flag_id flag_PRIMITIVE_RANGED_WEAPON;
