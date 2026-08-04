@@ -2518,7 +2518,8 @@
     "items": {
       "both": {
         "items": [
-          "power_armor_light",
+          "power_armor_exo_2",
+          "power_armor_plating_3",
           "power_armor_helmet_light",
           "power_armor_frame",
           "power_armor_back_hardpoint",
