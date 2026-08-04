@@ -1048,14 +1048,21 @@
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Defines the main exo that all other parts attach to.",
-    "info": "This is a suit of power armor."
+    "info": "This is a power armor exoskeleton."
   },
   {
     "id": "POWERARMOR_EXTERNAL",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Defines the other parts that activate simultaneously with the exo.",
-    "info": "This is a piece of power armor."
+    "info": "This is integrates with a power armor exoskeleton."
+  },
+  {
+    "id": "POWERARMOR_EXTERNAL",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "//": "Defines the other parts that activate simultaneously with the exo.",
+    "info": "This is a set of armor plating for a power armor exoskeleton."
   },
   {
     "id": "POWERARMOR_MOD",
