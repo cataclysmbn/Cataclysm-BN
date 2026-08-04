@@ -3410,7 +3410,8 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
                 // To check if there's an external/exoskeleton for the mod to attach to.
                 for( std::pair< bodypart_str_id, bool > &attachment : attachments ) {
                     if( elem->get_covered_body_parts().test( attachment.first ) &&
-                        ( elem->has_flag( flag_POWERARMOR_EXO ) || elem->has_flag( flag_POWERARMOR_EXTERNAL ) ) && !elem->has_flag( flag_POWERARMOR_PLATING ) ) {
+                        ( elem->has_flag( flag_POWERARMOR_EXO ) || elem->has_flag( flag_POWERARMOR_EXTERNAL ) ) &&
+                        !elem->has_flag( flag_POWERARMOR_PLATING ) ) {
                         if( elem->is_sided() && elem->get_side() == attachment.first->part_side ) {
                             attachment.second = true;
                         } else {

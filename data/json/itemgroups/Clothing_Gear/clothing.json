@@ -2012,10 +2012,21 @@
     "id": "pwr_armor",
     "subtype": "distribution",
     "entries": [
-      { "collection": [ { "item": "power_armor_exo_2" }, { "item": "power_armor_plating_2" }, { "item": "power_armor_helmet_basic", "prob": 75 } ], "prob": 40 },
+      {
+        "collection": [
+          { "item": "power_armor_exo_2" },
+          { "item": "power_armor_plating_2" },
+          { "item": "power_armor_helmet_basic", "prob": 75 }
+        ],
+        "prob": 40
+      },
       { "item": "power_armor_helmet_basic", "prob": 10 },
       {
-        "collection": [ { "item": "power_armor_exo_2" }, { "item": "power_armor_plating_3" }, { "item": "power_armor_helmet_light", "prob": 75 } ],
+        "collection": [
+          { "item": "power_armor_exo_2" },
+          { "item": "power_armor_plating_3" },
+          { "item": "power_armor_helmet_light", "prob": 75 }
+        ],
         "prob": 20
       },
       { "item": "power_armor_helmet_light", "prob": 5 },
@@ -2031,10 +2042,21 @@
     "id": "pwr_armor_basic",
     "subtype": "distribution",
     "entries": [
-      { "collection": [ { "item": "power_armor_exo_1" }, { "item": "power_armor_plating_2" }, { "item": "power_armor_helmet_basic", "prob": 75 } ], "prob": 40 },
+      {
+        "collection": [
+          { "item": "power_armor_exo_1" },
+          { "item": "power_armor_plating_2" },
+          { "item": "power_armor_helmet_basic", "prob": 75 }
+        ],
+        "prob": 40
+      },
       { "item": "power_armor_helmet_basic", "prob": 10 },
       {
-        "collection": [ { "item": "power_armor_exo_1" }, { "item": "power_armor_plating_3" }, { "item": "power_armor_helmet_light", "prob": 75 } ],
+        "collection": [
+          { "item": "power_armor_exo_1" },
+          { "item": "power_armor_plating_3" },
+          { "item": "power_armor_helmet_light", "prob": 75 }
+        ],
         "prob": 20
       },
       { "item": "power_armor_helmet_light", "prob": 5 },
