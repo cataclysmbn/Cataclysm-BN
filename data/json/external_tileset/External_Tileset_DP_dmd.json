@@ -182,11 +182,35 @@
           { "id": "overlay_wielded_c4_breaching", "fg": 112 },
           { "id": "c4_breaching_armed", "fg": 113 },
           { "id": "overlay_wielded_c4_breaching_armed", "fg": 114 },
-          { "id": [ "power_armor_exo_1", "power_armor_exo_1_on", "overlay_wielded_power_armor_exo_1", "overlay_wielded_power_armor_exo_1_on" ], "fg": 115 },
+          {
+            "id": [
+              "power_armor_exo_1",
+              "power_armor_exo_1_on",
+              "overlay_wielded_power_armor_exo_1",
+              "overlay_wielded_power_armor_exo_1_on"
+            ],
+            "fg": 115
+          },
           { "id": [ "overlay_worn_power_armor_exo_1", "overlay_worn_power_armor_exo_1_on" ], "fg": 116 },
-          { "id": [ "power_armor_exo_2", "power_armor_exo_2_on", "overlay_wielded_power_armor_exo_2", "overlay_wielded_power_armor_exo_2_on" ], "fg": 117 },
+          {
+            "id": [
+              "power_armor_exo_2",
+              "power_armor_exo_2_on",
+              "overlay_wielded_power_armor_exo_2",
+              "overlay_wielded_power_armor_exo_2_on"
+            ],
+            "fg": 117
+          },
           { "id": [ "overlay_worn_power_armor_exo_2", "overlay_worn_power_armor_exo_2_on" ], "fg": 118 },
-          { "id": [ "power_armor_exo_3", "power_armor_exo_3_on", "overlay_wielded_power_armor_exo_3", "overlay_wielded_power_armor_exo_3_on" ], "fg": 119 },
+          {
+            "id": [
+              "power_armor_exo_3",
+              "power_armor_exo_3_on",
+              "overlay_wielded_power_armor_exo_3",
+              "overlay_wielded_power_armor_exo_3_on"
+            ],
+            "fg": 119
+          },
           { "id": [ "overlay_worn_power_armor_exo_3", "overlay_worn_power_armor_exo_3_on" ], "fg": 120 }
         ],
         "sprite_width": 32,
