@@ -1058,7 +1058,7 @@
     "info": "This is integrates with a power armor exoskeleton."
   },
   {
-    "id": "POWERARMOR_EXTERNAL",
+    "id": "POWERARMOR_PLATING",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
     "//": "Defines the other parts that activate simultaneously with the exo.",
