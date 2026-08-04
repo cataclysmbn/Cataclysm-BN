@@ -55,7 +55,7 @@
   {
     "id": "power_armor_exo_1",
     "type": "TOOL_ARMOR",
-    "name": { "str": "prototype power armor exoskeleton", "str_pl": "prototype power armor exoskeletons" },
+    "name": { "str": "prototype power armor exoskeleton" },
     "description": "Colloquially known as a 'tank suit' in the media, these bulky exoskeletons, complete with a similarly bulky chemical resistant bodyglove, were tested in military service a few years back and determined to be too heavy and expensive for regular use. It doubles your effective weight, and it's almost impossible not to bump into things.  This exoskeleton features the required attachment points to equip power armor plating, helmets, and attachments.  The bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "//": "Armor makes up 90% the weight and volume of the combined set, helm the other 10%",
     "weight": "27 kg",
@@ -180,7 +180,7 @@
   {
     "id": "power_armor_exo_2",
     "type": "TOOL_ARMOR",
-    "name": { "str": "power armor exoskeleton", "str_pl": "power armor exoskeletons" },
+    "name": { "str": "power armor exoskeleton" },
     "description": "These were the second wave of military combat exoskeleton, and got a lot of media attention, with popular Navy commercials featuring them heavily.  It consists of a muscle-boosting exoskeleton frame with an integrated chemical resistant bodyglove.  Despite advancements over the original bulky 'tank suits', it's still highly cumbersome when inactive.  This exoskeleton features the required attachment points to equip power armor plating, helmets, and attachments.  The bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "//": "Armor makes up 90% the weight and volume of the combined set, helm the other 10%",
     "weight": "18 kg",
@@ -305,7 +305,7 @@
   {
     "id": "power_armor_exo_3",
     "type": "TOOL_ARMOR",
-    "name": { "str": "advanced power armor exoskeleton", "str_pl": "advanced power armor exoskeletons" },
+    "name": { "str": "advanced power armor exoskeleton" },
     "description": "The final iteration of military combat exoskeletons before the fall of civilization, this type - a powered strength-boosting exoskeleton made with lightweight high-tech materials and a slimmed-down integrated chemical resistant bodyglove - was designed for actual widespread combat use and was seen on the front lines during the last days of the cataclysm.  Much more light, maneuverable, and powerful than the heavier suits.  Unfortunately, the world ended before it could roll out in significant numbers.  This exoskeleton features the required attachment points to equip power armor plating, helmets, and attachments.  The bodyglove precludes wearing other clothing, aside from most undergarments or handheld equipment like shields.",
     "//": "Armor makes up 90% the weight and volume of the combined set, helm the other 10%",
     "weight": "9 kg",
