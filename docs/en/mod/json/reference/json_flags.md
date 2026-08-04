@@ -194,6 +194,7 @@ to find which flags work elsewhere.
 - `POWERARMOR_EXO` Marks the item as the main exoskeleton for power armor.
 - `POWERARMOR_EXTERNAL` Marks the item as external pieces that cover body parts the exoskeleton
   doesn't.
+- `POWERARMOR_PLATING` Marks the item as external armor plates that are worn over the exoskeleton.
 - `POWERARMOR_MOD` Marks the item as a power armour mod that is worn onto an exoskeleton/external
   piece.
 - `POWERARMOR_COMPATIBLE` Makes item compatible with power armor despite other parameters causing
