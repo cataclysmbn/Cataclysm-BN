@@ -154,7 +154,7 @@
       "active": true
     },
     "resistance": { "bullet": 104 },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "POWERARMOR_PLATING", "WATERPROOF", "STURDY" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "POWERARMOR_PLATING", "WATERPROOF", "STURDY", "OUTER" ]
   },
   {
     "id": "power_armor_plating_1_on",
@@ -279,7 +279,7 @@
       "active": true
     },
     "resistance": { "bullet": 90 },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "POWERARMOR_PLATING", "WATERPROOF", "STURDY" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "POWERARMOR_PLATING", "WATERPROOF", "STURDY", "OUTER" ]
   },
   {
     "id": "power_armor_plating_2_on",
@@ -404,7 +404,7 @@
       "active": true
     },
     "resistance": { "bullet": 70 },
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "POWERARMOR_PLATING", "WATERPROOF", "STURDY" ]
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "POWERARMOR_PLATING", "WATERPROOF", "STURDY", "OUTER" ]
   },
   {
     "id": "power_armor_plating_3_on",
