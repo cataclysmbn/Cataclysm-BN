@@ -3389,7 +3389,7 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
             for( auto &elem : worn ) {
                 if( elem->has_flag( flag_POWERARMOR_PLATING ) &&
                     elem->get_covered_body_parts().make_intersection( it.get_covered_body_parts() ).any() ) {
-                    return ret_val<bool>::make_failure( _( "Can't wear multiple sets of plating!" ) );
+                    return ret_val<bool>::make_failure( _( "Can't wear overlapping sets of plating!" ) );
                 }
             }
         }
