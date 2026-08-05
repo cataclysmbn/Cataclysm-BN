@@ -2754,10 +2754,7 @@
       { "id": "WRENCH", "level": 1 },
       { "id": "CUT_M", "level": 2 }
     ],
-    "components": [
-      [ [ "depowered_plating", 1 ] ],
-      [ [ "steel_armor", 8 ] ]
-    ]
+    "components": [ [ [ "depowered_plating", 1 ] ], [ [ "steel_armor", 8 ] ] ]
   },
   {
     "result": "power_armor_helmet_basic",
@@ -2817,10 +2814,7 @@
       { "id": "WRENCH", "level": 1 },
       { "id": "CUT_M", "level": 2 }
     ],
-    "components": [
-      [ [ "depowered_plating", 1 ] ],
-      [ [ "alloy_sheet", 5 ] ]
-    ]
+    "components": [ [ [ "depowered_plating", 1 ] ], [ [ "alloy_sheet", 5 ] ] ]
   },
   {
     "result": "power_armor_helmet_light",
@@ -2878,11 +2872,7 @@
       { "id": "WRENCH", "level": 1 },
       { "id": "CUT_M", "level": 2 }
     ],
-    "components": [
-      [ [ "depowered_plating", 1 ] ],
-      [ [ "hard_steel_armor", 12 ] ],
-      [ [ "steel_armor", 6 ] ]
-    ]
+    "components": [ [ [ "depowered_plating", 1 ] ], [ [ "hard_steel_armor", 12 ] ], [ [ "steel_armor", 6 ] ] ]
   },
   {
     "result": "power_armor_helmet_heavy",

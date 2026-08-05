@@ -1203,9 +1203,6 @@
     "reversible": true,
     "autolearn": true,
     "flags": [ "NO_RESIZE" ],
-    "components": [
-      [ [ "depowered_exo", 1 ] ],
-      [ [ "depowered_plating", 1 ] ]
-    ]
+    "components": [ [ [ "depowered_exo", 1 ] ], [ [ "depowered_plating", 1 ] ] ]
   }
 ]
