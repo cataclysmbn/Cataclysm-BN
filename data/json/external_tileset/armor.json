@@ -23,7 +23,6 @@
           { "id": "overlay_worn_rm13_armor_on", "fg": 25, "bg": 9, "rotates": true },
           { "id": "goggles_ir", "fg": 10, "masks": [ { "type": "tint", "fg": 26 } ], "rotates": true },
           { "id": "overlay_wielded_goggles_ir", "fg": 10, "masks": [ { "type": "tint", "fg": 26 } ], "rotates": true },
-          { "id": "overlay_worn_goggles_ir", "fg": 11, "masks": [ { "type": "tint", "fg": 27 } ], "rotates": true },
           { "id": "goggles_ir_on", "fg": 12, "masks": [ { "type": "tint", "fg": 28 } ], "rotates": true },
           {
             "id": "overlay_wielded_goggles_ir_on",
@@ -34,7 +33,6 @@
           { "id": "overlay_worn_goggles_ir_on", "fg": 13, "masks": [ { "type": "tint", "fg": 29 } ], "rotates": true },
           { "id": "goggles_nv", "fg": 14, "masks": [ { "type": "tint", "fg": 30 } ], "rotates": true },
           { "id": "overlay_wielded_goggles_nv", "fg": 14, "masks": [ { "type": "tint", "fg": 30 } ], "rotates": true },
-          { "id": "overlay_worn_goggles_nv", "fg": 15, "masks": [ { "type": "tint", "fg": 31 } ], "rotates": true },
           { "id": "goggles_nv_on", "fg": 32, "masks": [ { "type": "tint", "fg": 48 } ], "rotates": true },
           {
             "id": "overlay_wielded_goggles_nv_on",
@@ -50,12 +48,6 @@
             "masks": [ { "type": "tint", "fg": 50 } ],
             "rotates": true
           },
-          {
-            "id": "overlay_worn_goggles_nv_enhanced",
-            "fg": 35,
-            "masks": [ { "type": "tint", "fg": 51 } ],
-            "rotates": true
-          },
           { "id": "goggles_nv_enhanced_on", "fg": 36, "masks": [ { "type": "tint", "fg": 52 } ], "rotates": true },
           {
             "id": "overlay_wielded_goggles_nv_enhanced_on",
@@ -67,6 +59,22 @@
             "id": "overlay_worn_goggles_nv_enhanced_on",
             "fg": 37,
             "masks": [ { "type": "tint", "fg": 53 } ],
+            "rotates": true
+          }
+        ]
+      },
+      {
+        "file": "external_tileset/armor.png",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_y": -4,
+        "tiles": [ 
+          { "id": "overlay_worn_goggles_ir", "fg": 11, "masks": [ { "type": "tint", "fg": 27 } ], "rotates": true },
+          { "id": "overlay_worn_goggles_nv", "fg": 15, "masks": [ { "type": "tint", "fg": 31 } ], "rotates": true },
+          {
+            "id": "overlay_worn_goggles_nv_enhanced",
+            "fg": 35,
+            "masks": [ { "type": "tint", "fg": 51 } ],
             "rotates": true
           }
         ]
