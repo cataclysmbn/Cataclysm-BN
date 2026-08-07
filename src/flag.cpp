@@ -85,7 +85,6 @@ const flag_id flag_DESTROY_ON_DROP( "DESTROY_ON_DROP" );
 const flag_id flag_DIAMOND( "DIAMOND" );
 const flag_id flag_DIG_TOOL( "DIG_TOOL" );
 const flag_id flag_DIMENSIONAL_ANCHOR( "DIMENSIONAL_ANCHOR" );
-const flag_id flag_DIRTY( "DIRTY" );
 const flag_id flag_DISABLE_SIGHTS( "DISABLE_SIGHTS" );
 const flag_id flag_DROP_ACTION_ONLY_IF_LIQUID( "DROP_ACTION_ONLY_IF_LIQUID" );
 const flag_id flag_DURABLE_MELEE( "DURABLE_MELEE" );

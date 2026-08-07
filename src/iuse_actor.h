@@ -1689,3 +1689,19 @@ class iuse_paint_stuff : public iuse_actor
         static std::optional<RGBColor> try_get_paint_color( const item &it );
         static RGBColor get_paint_color( item &it );
 };
+
+class fluid_pickup_actor : public iuse_actor
+{
+    public:
+        units::volume max_volume = 250_ml;
+        int moves = 100;
+        int charges_to_use = 0;
+        float retention_rate = 1.0f;
+
+        fluid_pickup_actor( const std::string &type = "fluid_pickup" ) : iuse_actor( type ) {}
+        ~fluid_pickup_actor() override = default;
+        void load( const JsonObject &jo ) override;
+        int use( player &p, item &it, bool, const tripoint_bub_ms & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+        void info( const item &, std::vector<iteminfo> & ) const override;
+};

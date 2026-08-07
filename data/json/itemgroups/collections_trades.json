@@ -8,7 +8,11 @@
       { "group": "supplies_hardware", "prob": 50 },
       { "group": "hardware_clothing", "prob": 10 },
       [ "survnote", 1 ],
-      [ "atomic_butterchurn", 1 ]
+      [ "atomic_butterchurn", 1 ],
+      [ "pump_fluid", 10 ],
+      [ "pump_gas", 5 ],
+      [ "pump_electric", 3 ],
+      [ "fuel_filter_funnel", 15 ]
     ]
   },
   {

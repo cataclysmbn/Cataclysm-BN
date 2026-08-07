@@ -1170,6 +1170,7 @@ void Item_factory::init()
     add_actor( std::make_unique<iuse_portal_link>() );
     add_actor( std::make_unique<iuse_paint_stuff>() );
     add_actor( std::make_unique<iuse_paint_stuff_config>() );
+    add_actor( std::make_unique<fluid_pickup_actor>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -2717,6 +2718,25 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "repair_difficulty", def.repair_difficulty );
     assign( jo, "ascii_picture", def.picture_id );
     assign( jo, "item_vars", def.item_vars );
+
+    if( jo.has_member( "reacts_into" ) ) {
+        std::vector<fluid_reaction> reactions;
+        if( jo.has_array( "reacts_into" ) ) {
+            for( const JsonObject &r : jo.get_array( "reacts_into" ) ) {
+                reactions.push_back( {
+                    .result = itype_id( r.get_string( "result" ) ),
+                    .cause = r.get_string( "cause" ),
+                } );
+            }
+        } else {
+            const JsonObject r = jo.get_object( "reacts_into" );
+            reactions.push_back( {
+                .result = itype_id( r.get_string( "result" ) ),
+                .cause = r.get_string( "cause" ),
+            } );
+        }
+        def.reacts_into = reactions;
+    }
 
     if( jo.has_member( "thrown_damage" ) ) {
         def.thrown_damage = load_damage_instance( jo.get_array( "thrown_damage" ) );

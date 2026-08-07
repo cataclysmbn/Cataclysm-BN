@@ -197,5 +197,83 @@
     ],
     "qualities": [ { "id": "CUT_FINE", "level": 1 }, { "id": "PRESSURIZATION", "level": 1 } ],
     "components": [ [ [ "mutant_bug_hydrogen_sacs", 5 ] ] ]
+  },
+  {
+    "result": "gasoline",
+    "type": "recipe",
+    "id_suffix": "filtered",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_FUEL",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "tools": [ [ [ "fuel_filter_funnel", -1 ] ] ],
+    "components": [ [ [ "dirty_gasoline", 200 ] ] ]
+  },
+  {
+    "result": "diesel",
+    "type": "recipe",
+    "id_suffix": "filtered",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_FUEL",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "tools": [ [ [ "fuel_filter_funnel", -1 ] ] ],
+    "components": [ [ [ "dirty_diesel", 200 ] ] ]
+  },
+  {
+    "result": "biodiesel",
+    "type": "recipe",
+    "id_suffix": "filtered",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_FUEL",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "tools": [ [ [ "fuel_filter_funnel", -1 ] ] ],
+    "components": [ [ [ "dirty_biodiesel", 200 ] ] ]
+  },
+  {
+    "result": "jp8",
+    "type": "recipe",
+    "id_suffix": "filtered",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_FUEL",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "tools": [ [ [ "fuel_filter_funnel", -1 ] ] ],
+    "components": [ [ [ "dirty_jp8", 200 ] ] ]
+  },
+  {
+    "result": "avgas",
+    "type": "recipe",
+    "id_suffix": "filtered",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_FUEL",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "tools": [ [ [ "fuel_filter_funnel", -1 ] ] ],
+    "components": [ [ [ "dirty_avgas", 200 ] ] ]
+  },
+  {
+    "result": "lamp_oil",
+    "type": "recipe",
+    "id_suffix": "filtered",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_FUEL",
+    "skill_used": "mechanics",
+    "difficulty": 1,
+    "time": "30 s",
+    "autolearn": true,
+    "tools": [ [ [ "fuel_filter_funnel", -1 ] ] ],
+    "components": [ [ [ "dirty_lamp_oil", 200 ] ] ]
   }
 ]

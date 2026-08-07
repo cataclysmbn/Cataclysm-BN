@@ -8504,3 +8504,177 @@ auto iuse_paint_stuff_config::clone() const -> std::unique_ptr<iuse_actor>
 {
     return std::make_unique<iuse_paint_stuff_config>( *this );
 }
+
+void fluid_pickup_actor::load( const JsonObject &jo )
+{
+    assign( jo, "max_volume", max_volume );
+    assign( jo, "moves", moves );
+    assign( jo, "charges_to_use", charges_to_use );
+    assign( jo, "retention_rate", retention_rate );
+}
+
+int fluid_pickup_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
+{
+    if( p.is_blind() ) {
+        p.add_msg_if_player( m_info, _( "You can't see anything!" ) );
+        return 0;
+    }
+    if( p.is_underwater() ) {
+        p.add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
+        return 0;
+    }
+
+    map &here = get_map();
+
+    struct candidate {
+        tripoint_bub_ms pos;
+        item *ref = nullptr;
+        std::string name;
+        bool is_vehicle = false;
+    };
+    std::vector<candidate> candidates;
+
+    for( const tripoint_bub_ms &pos : here.points_in_radius( p.bub_pos(), 1 ) ) {
+        if( here.has_flag( "SEALED", pos ) ) {
+            continue;
+        }
+
+        for( item *mapped : here.i_at( pos ) ) {
+            if( mapped->made_of( LIQUID ) ) {
+                candidates.emplace_back( pos, mapped, mapped->tname(), false );
+            }
+        }
+
+        const optional_vpart_position veh = here.veh_at( pos );
+        if( veh ) {
+            vehicle &v = veh->vehicle();
+            for( const vpart_reference &vp : v.get_all_parts() ) {
+                if( vp.has_feature( VPFLAG_CARGO ) ) {
+                    for( item *veh_item : vp.part().get_items() ) {
+                        if( veh_item->made_of( LIQUID ) ) {
+                            candidates.emplace_back( pos, veh_item, veh_item->tname(), true );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if( candidates.empty() ) {
+        p.add_msg_if_player( m_info, _( "There are no liquids nearby to pick up." ) );
+        return 0;
+    }
+
+    int sel = 0;
+    if( candidates.size() > 1 && !test_mode ) {
+        uilist menu;
+        menu.title = _( "Pick up which liquid?" );
+        for( size_t i = 0; i < candidates.size(); ++i ) {
+            const std::string dir = direction_name(
+                                        direction_from( p.bub_pos(), candidates[i].pos ) );
+            menu.addentry( -1, true, MENU_AUTOASSIGN,
+                           //~ %1$s: liquid name, %2$s: direction
+                           _( "%1$s (%2$s)" ), candidates[i].name, dir );
+        }
+        menu.query();
+        if( menu.ret < 0 ) {
+            return 0;
+        }
+        sel = menu.ret;
+    }
+
+    const candidate &chosen = candidates[sel];
+    item &target_item = *chosen.ref;
+
+    // Apply max_volume limit by splitting off excess
+    detached_ptr<item> excess;
+    const int max_ch = target_item.charges_per_volume( max_volume );
+    if( max_ch > 0 && target_item.charges > max_ch ) {
+        excess = target_item.split( target_item.charges - max_ch );
+    }
+
+    // Apply retention loss: discard (1 - retention_rate) of charges
+    if( retention_rate < 1.0f && target_item.charges > 1 ) {
+        const int keep = std::max( 1, static_cast<int>( target_item.charges * retention_rate ) );
+        const int discard = target_item.charges - keep;
+        if( discard > 0 ) {
+            auto waste = target_item.split( discard );
+            p.add_msg_if_player( m_info, _( "You discard some of the %s as waste." ),
+                                 target_item.tname() );
+        }
+    }
+
+    // Open the standard handle_liquid menu (item stays on map, cancel-safe)
+    // In test mode, UI menus auto-cancel, so skip the call entirely
+    if( !test_mode ) {
+        liquid_handler::handle_liquid( target_item, 1 );
+    }
+
+    // After the transfer, merge excess back or clean up empty item
+    if( target_item.charges == 0 ) {
+        // Liquid was fully consumed; remove empty item from its stack
+        auto erase_from_stack = [&]( auto &&stack ) {
+            for( auto it = stack.begin(); it != stack.end(); ++it ) {
+                if( *it == &target_item ) {
+                    stack.erase( it );
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        bool erased = false;
+        if( chosen.is_vehicle ) {
+            const optional_vpart_position veh = here.veh_at( chosen.pos );
+            if( veh ) {
+                for( const vpart_reference &vp : veh->vehicle().get_all_parts() ) {
+                    if( vp.has_feature( VPFLAG_CARGO ) && !erased ) {
+                        vehicle_stack vs = veh->vehicle().get_items( vp.part_index() );
+                        erased = erase_from_stack( vs );
+                    }
+                }
+            }
+        } else {
+            erased = erase_from_stack( here.i_at( chosen.pos ) );
+        }
+        if( !erased ) {
+            debugmsg( "Failed to remove emptied liquid item from stack" );
+        }
+
+        // Put excess back as a new stack
+        if( excess ) {
+            here.add_item_or_charges( chosen.pos, std::move( excess ) );
+        }
+    } else if( excess ) {
+        // Some liquid remains on the map; merge excess charges back
+        if( target_item.has_position() ) {
+            target_item.charges += excess->charges;
+        } else {
+            // Item was detached (e.g., poured on ground); add excess as new item
+            here.add_item_or_charges( chosen.pos, std::move( excess ) );
+        }
+    }
+
+    p.mod_moves( -moves );
+    return charges_to_use > 0 ? charges_to_use : 1;
+}
+
+auto fluid_pickup_actor::clone() const -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<fluid_pickup_actor>( *this );
+}
+
+void fluid_pickup_actor::info( const item &, std::vector<iteminfo> &info ) const
+{
+    info.emplace_back( "TOOL", _( "Max volume: " ) + format_volume( max_volume ) );
+    info.emplace_back( "TOOL", _( "Moves: " ) + std::to_string( moves ) );
+    if( retention_rate < 1.0f ) {
+        info.emplace_back( "TOOL", _( "Retention: " ) + std::to_string( static_cast<int>
+                           ( retention_rate * 100 ) ) + "%" );
+    }
+    if( charges_to_use > 0 ) {
+        info.emplace_back( "TOOL", _( "Charges per use: " ) + std::to_string( charges_to_use ) );
+    }
+}
+
+

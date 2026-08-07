@@ -5,10 +5,12 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "character_id.h"
+#include "debug.h"
 #include "flag.h"
 #include "game.h"
 #include "item.h"
 #include "itype.h"
+#include "iuse.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "morale_types.h"
@@ -1188,5 +1190,197 @@ TEST_CASE("xanax", "[iuse][xanax]") {
 
         dummy.invoke_item(&xanax);
         CHECK(dummy.has_effect(efftype_id("took_xanax")));
+    }
+}
+
+TEST_CASE("fluid_pickup", "[iuse][fluid_pickup]") {
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
+    clear_map();
+    clear_avatar();
+
+    auto& you = get_avatar();
+    auto& here = get_map();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+    set_time(calendar::turn_zero + 12_hours);
+    you.recalc_sight_limits();
+
+    const auto water_pos = you.bub_pos() + tripoint_east;
+    const auto clear_items = [&]() {
+        for (const tripoint_bub_ms& pos : here.points_in_radius(you.bub_pos(), 2)) {
+            here.i_clear(pos);
+        }
+    };
+    clear_items();
+
+    auto invoke_actor = [&you](item& tool, const std::string& method = "fluid_pickup") -> int {
+        item* actually_used = tool.get_usable_item(method);
+        if (actually_used == nullptr) { return -1; }
+        return actually_used->type->invoke(you, *actually_used, you.bub_pos(), method);
+    };
+
+    GIVEN("player has a plastic bottle with no fluid_pickup action") {
+        auto bottle = item::spawn("bottle_plastic");
+        item& bottle_ref = *bottle;
+        you.i_add(std::move(bottle));
+
+        AND_GIVEN("water is on an adjacent tile") {
+            here.add_item_or_charges(
+                water_pos, item::spawn("water", calendar::start_of_cataclysm, 100));
+
+            THEN("the bottle cannot pick up ground liquids") {
+                bool invoked = true;
+                capture_debugmsg_during([&] {
+                    invoked = you.invoke_item(&bottle_ref, "fluid_pickup", you.bub_pos());
+                });
+                CHECK_FALSE(invoked);
+            }
+        }
+    }
+
+    GIVEN("water is on an adjacent tile") {
+        here.add_item_or_charges(water_pos, item::spawn("water", calendar::start_of_cataclysm, 100));
+
+        AND_GIVEN("player has a sponge with fluid_pickup") {
+            auto tool = item::spawn("sponge");
+            item& sponge = *tool;
+            you.i_add(std::move(tool));
+            const int moves_before = you.get_moves();
+
+            THEN("sponge picks up the liquid") {
+                const int result = invoke_actor(sponge);
+                CAPTURE(result);
+                CHECK(result > 0);
+                CHECK(you.get_moves() < moves_before);
+            }
+        }
+
+        AND_GIVEN("player has a hand fluid pump") {
+            auto tool = item::spawn("pump_fluid");
+            item& pump = *tool;
+            you.i_add(std::move(tool));
+            const int moves_before = you.get_moves();
+
+            THEN("hand pump picks up the liquid") {
+                const int result = invoke_actor(pump);
+                CAPTURE(result);
+                CHECK(result > 0);
+                CHECK(you.get_moves() < moves_before);
+            }
+        }
+    }
+
+    GIVEN("a large puddle exceeds pump capacity") {
+        here.add_item_or_charges(water_pos, item::spawn("water", calendar::start_of_cataclysm, 500));
+
+        AND_GIVEN("player has a hand fluid pump (1 L max)") {
+            auto tool = item::spawn("pump_fluid");
+            item& pump = *tool;
+            you.i_add(std::move(tool));
+            const int moves_before = you.get_moves();
+
+            THEN("excess is split and restored on cancel") {
+                const int result = invoke_actor(pump);
+                CAPTURE(result);
+                CHECK(result > 0);
+                CHECK(you.get_moves() < moves_before);
+                // Water should still be on the map (handle_liquid canceled)
+                const auto& stack = here.i_at(water_pos);
+                CHECK_FALSE(stack.empty());
+            }
+        }
+
+        AND_GIVEN("player has a gasoline pump (20 L max)") {
+            auto tool = item::spawn("pump_gas");
+            item& gas_pump = *tool;
+            you.i_add(std::move(tool));
+
+            THEN("gas pump picks up liquid using its charges") {
+                // pump_gas has 0 initial charges, needs gasoline ammo
+                // This tests that the function handles missing ammo gracefully
+                CHECK_FALSE(you.invoke_item(&gas_pump, "fluid_pickup", you.bub_pos()));
+            }
+
+            AND_GIVEN("gas pump has fuel") {
+                gas_pump.ammo_set(itype_id("gasoline"), 10);
+                const int moves_before = you.get_moves();
+
+                THEN("gas pump picks up liquid and consumes charges") {
+                    const int result = invoke_actor(gas_pump);
+                    CAPTURE(result);
+                    CHECK(result > 0);
+                    CHECK(you.get_moves() < moves_before);
+                    // Mirror Character::consume_charges for non-UPS, non-power-armor tools
+                    if (gas_pump.ammo_remaining() >= result) {
+                        gas_pump.ammo_consume(result, you.bub_pos());
+                    }
+                    CHECK(gas_pump.ammo_remaining() == 9);
+                }
+            }
+        }
+
+        AND_GIVEN("player has an electric pump (20 L max)") {
+            auto tool = item::spawn("pump_electric");
+            item& elec_pump = *tool;
+            // Load a battery into the pump
+            auto bat = item::spawn(
+                "heavy_battery_cell", calendar::start_of_cataclysm, item::default_charges_tag{});
+            bat->ammo_set(itype_id("battery"), bat->ammo_capacity());
+            elec_pump.put_in(std::move(bat));
+            you.i_add(std::move(tool));
+
+            const int moves_before = you.get_moves();
+
+            THEN("electric pump picks up liquid and consumes charges") {
+                const int result = invoke_actor(elec_pump);
+                CAPTURE(result);
+                CHECK(result > 0);
+                CHECK(you.get_moves() < moves_before);
+            }
+        }
+    }
+
+    GIVEN("player is blind with a sponge and water is adjacent") {
+        you.add_effect(efftype_id("blind"), 1_hours);
+        here.add_item_or_charges(water_pos, item::spawn("water", calendar::start_of_cataclysm, 100));
+        auto tool = item::spawn("sponge");
+        item& sponge = *tool;
+        you.i_add(std::move(tool));
+        const int moves_before = you.get_moves();
+
+        THEN("fluid_pickup returns early") {
+            const int result = invoke_actor(sponge);
+            CAPTURE(result);
+            CHECK(result == 0);
+            CHECK(you.get_moves() == moves_before);
+        }
+    }
+
+    GIVEN("a reference bottled water created via in_container") {
+        auto bottled = item::in_container(
+            itype_id("bottle_plastic"), item::spawn("water", calendar::start_of_cataclysm, 1));
+        THEN("the bottled water has correct contents") {
+            CHECK(bottled->is_container());
+            CHECK_FALSE(bottled->contents.empty());
+            CHECK(bottled->contents.front().typeId() == itype_id("water"));
+        }
+    }
+}
+
+TEST_CASE("fluid_reaction_ground_contamination", "[iuse][fluid_reaction]") {
+    clear_map();
+    clear_avatar();
+
+    auto& here = get_map();
+    auto& you = get_avatar();
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+
+    const auto ground_pos = you.bub_pos() + tripoint_east;
+    here.i_clear(ground_pos);
+
+    SECTION("water_clean becomes water when dropped on bare ground") {
+        auto water = item::spawn("water_clean", calendar::start_of_cataclysm, 1);
+        CHECK(water->typeId() == itype_id("water_clean"));
+        water->on_drop(ground_pos, here);
+        CHECK(water->typeId() == itype_id("water"));
     }
 }

@@ -69,7 +69,8 @@
       "energy": 35.8,
       "pump_terrain": "t_diesel_pump",
       "explosion_data": { "chance_hot": 20, "chance_cold": 1000, "factor": 0.2, "fiery": false, "size_factor": 0.1 }
-    }
+    },
+    "reacts_into": { "result": "dirty_diesel", "cause": "ground_contamination" }
   },
   {
     "id": "jp8",
@@ -96,7 +97,8 @@
     "fuel": {
       "energy": 34.7,
       "explosion_data": { "chance_hot": 20, "chance_cold": 1000, "factor": 0.2, "fiery": false, "size_factor": 0.1 }
-    }
+    },
+    "reacts_into": { "result": "dirty_jp8", "cause": "ground_contamination" }
   },
   {
     "id": "avgas",
@@ -123,7 +125,8 @@
     "fuel": {
       "energy": 45.8,
       "explosion_data": { "chance_hot": 20, "chance_cold": 1000, "factor": 0.2, "fiery": false, "size_factor": 0.1 }
-    }
+    },
+    "reacts_into": { "result": "dirty_avgas", "cause": "ground_contamination" }
   },
   {
     "id": "biodiesel",
@@ -136,7 +139,8 @@
     "fuel": {
       "energy": 29.6,
       "explosion_data": { "chance_hot": 20, "chance_cold": 1000, "factor": 0.2, "fiery": false, "size_factor": 0.1 }
-    }
+    },
+    "reacts_into": { "result": "dirty_biodiesel", "cause": "ground_contamination" }
   },
   {
     "id": "gasoline",
@@ -163,7 +167,8 @@
       "energy": 34.2,
       "pump_terrain": "t_gas_pump",
       "explosion_data": { "chance_hot": 2, "chance_cold": 5, "factor": 1, "fiery": true, "size_factor": 0.1 }
-    }
+    },
+    "reacts_into": { "result": "dirty_gasoline", "cause": "ground_contamination" }
   },
   {
     "id": "lamp_oil",
@@ -190,7 +195,8 @@
     },
     "range": 6,
     "damage": { "damage_type": "heat", "amount": 2, "armor_penetration": 2 },
-    "effects": [ "FLAME", "STREAM" ]
+    "effects": [ "FLAME", "STREAM" ],
+    "reacts_into": { "result": "dirty_lamp_oil", "cause": "ground_contamination" }
   },
   {
     "id": "motor_oil",
@@ -287,5 +293,59 @@
       "energy": 27.76,
       "explosion_data": { "chance_hot": 5, "chance_cold": 10, "factor": 0.2, "fiery": true, "size_factor": 0.1 }
     }
+  },
+  {
+    "id": "dirty_diesel",
+    "copy-from": "diesel",
+    "type": "AMMO",
+    "name": { "str_sp": "dirty diesel" },
+    "description": "Diesel fuel contaminated with ground debris.  It cannot be used as engine fuel.",
+    "ammo_type": "dirty_diesel",
+    "fuel": { "energy": 17.9 }
+  },
+  {
+    "id": "dirty_gasoline",
+    "copy-from": "gasoline",
+    "type": "AMMO",
+    "name": { "str_sp": "dirty gasoline" },
+    "description": "Gasoline contaminated with ground debris.  It cannot be used as engine fuel.",
+    "ammo_type": "dirty_gasoline",
+    "fuel": { "energy": 17.1 }
+  },
+  {
+    "id": "dirty_biodiesel",
+    "copy-from": "biodiesel",
+    "type": "AMMO",
+    "name": { "str_sp": "dirty biodiesel" },
+    "description": "Biodiesel contaminated with ground debris.  It cannot be used as engine fuel.",
+    "ammo_type": "dirty_biodiesel",
+    "fuel": { "energy": 14.8 }
+  },
+  {
+    "id": "dirty_jp8",
+    "copy-from": "jp8",
+    "type": "AMMO",
+    "name": { "str_sp": "dirty JP8 fuel" },
+    "description": "JP8 fuel contaminated with ground debris.  It cannot be used as engine fuel.",
+    "ammo_type": "dirty_jp8",
+    "fuel": { "energy": 17.35 }
+  },
+  {
+    "id": "dirty_avgas",
+    "copy-from": "avgas",
+    "type": "AMMO",
+    "name": { "str_sp": "dirty avgas fuel" },
+    "description": "Avgas fuel contaminated with ground debris.  It cannot be used as engine fuel.",
+    "ammo_type": "dirty_avgas",
+    "fuel": { "energy": 22.9 }
+  },
+  {
+    "id": "dirty_lamp_oil",
+    "copy-from": "lamp_oil",
+    "type": "AMMO",
+    "name": { "str_sp": "dirty lamp oil" },
+    "description": "Lamp oil contaminated with ground debris.  It cannot be used as fuel.",
+    "ammo_type": "dirty_lamp_oil",
+    "fuel": { "energy": 13.0 }
   }
 ]
