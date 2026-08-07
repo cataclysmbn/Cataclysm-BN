@@ -49,6 +49,7 @@
     "material_thickness": 5,
     "environmental_protection": 0,
     "resistance": { "bullet": 60 },
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transformed",
       "dependencies": "POWERARMOR_EXO",
@@ -227,6 +228,7 @@
     "warmth": 30,
     "material_thickness": 11,
     "environmental_protection": 0,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transformed",
       "dependencies": "POWERARMOR_EXO",
@@ -352,6 +354,7 @@
     "warmth": 30,
     "material_thickness": 9,
     "environmental_protection": 0,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transformed",
       "dependencies": "POWERARMOR_EXO",
@@ -477,6 +480,7 @@
     "warmth": 30,
     "material_thickness": 7,
     "environmental_protection": 0,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transformed",
       "dependencies": "POWERARMOR_EXO",
