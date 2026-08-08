@@ -96,7 +96,7 @@ struct vehicle_external_light_cache_scope {
     vehicle_external_light_cache_scope( level_cache &cache, vehicle &veh, const int zlev ) :
         cache( cache ) {
         for( const auto &part : veh.get_all_parts() ) {
-            const auto pos = part.pos();
+            const auto pos = part.bub_pos();
             if( pos.z() != zlev || !cache.inbounds( pos.xy() ) ) {
                 continue;
             }
@@ -595,12 +595,14 @@ bool map::build_transparency_cache( const int zlev )
                     continue;
                 }
 
-                cur_submap->transparency_dirty = true;
-                if( cur_submap->outside_dirty ) {
-                    const level_cache *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
-                    cur_submap->rebuild_outside_cache( above, sm_pos );
-                }
-                refs.push_back( { cur_submap, sm_offset.x(), sm_offset.y() } );
+                refs.push_back( {
+                    .sm = cur_submap,
+                    .offset_x = sm_offset.x(),
+                    .offset_y = sm_offset.y(),
+                    .outside_cache = map_cache.outside_cache.data() +
+                    map_cache.idx( sm_offset.x(), sm_offset.y() ),
+                    .outside_cache_y = map_cache.cache_y,
+                } );
             }
         }
 
@@ -868,15 +870,13 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
                         continue;
                     }
 
-                    cur_submap->transparency_dirty = true;
-                    if( cur_submap->outside_dirty ) {
-                        const auto *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
-                        cur_submap->rebuild_outside_cache( above, sm_pos );
-                    }
                     refs.push_back( {
                         .sm = cur_submap,
                         .offset_x = sm_offset.x(),
                         .offset_y = sm_offset.y(),
+                        .outside_cache = map_cache.outside_cache.data() +
+                        map_cache.idx( sm_offset.x(), sm_offset.y() ),
+                        .outside_cache_y = map_cache.cache_y,
                         .output_offset = resident_output.output_offset,
                     } );
                     ref_levels.push_back( zlev );
@@ -1671,7 +1671,7 @@ void map::generate_lightmap_worker( const int zlev )
             for( const auto &part : lights ) {
                 const auto &vp = part.info();
                 const auto &vehicle_part = part.part();
-                const auto src = part.pos();
+                const auto src = part.bub_pos();
 
                 if( !inbounds( src ) ) {
                     continue;
@@ -1755,7 +1755,7 @@ void map::generate_lightmap_worker( const int zlev )
 
             for( const vpart_reference &vp : v->get_all_parts() ) {
                 const size_t p = vp.part_index();
-                tripoint_bub_ms pp = vp.pos();
+                const auto pp = vp.bub_pos();
                 if( !inbounds( pp ) ) {
                     continue;
                 }
@@ -2713,7 +2713,7 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
     // Cameras are also handled here, so that we only need to get through all vehicle parts once.
     int cam_control = -1;
     for( const vpart_reference &vp : veh->get_avail_parts( VPFLAG_EXTENDS_VISION ) ) {
-        const tripoint_bub_ms mirror_pos = vp.pos();
+        const auto mirror_pos = vp.bub_pos();
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
         // Use g_visible_threshold for consistency with apparent_light_helper.

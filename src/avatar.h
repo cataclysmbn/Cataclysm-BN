@@ -195,9 +195,11 @@ class avatar : public player
         int time_to_read( const item &book, const Character &reader,
                           const Character *learner = nullptr ) const;
         /** Handles reading effects and returns true if activity started */
-        bool read( item *loc, bool continuous = false );
+        bool read( item *loc, bool continuous = false, int continuous_reader = 0 );
         /** Completes book reading action. **/
-        void do_read( item *loc );
+        void do_read( item *loc,
+        const std::vector<std::pair<character_id, float>> &learners = {},
+        int continuous_reader = 0 );
         /** Note that we've read a book at least once. **/
         bool has_identified( const itype_id &item_id ) const;
 
@@ -261,9 +263,9 @@ class avatar : public player
         bool add_faction_warning( const faction_id &id );
 
         using Character::invoke_item;
-        bool invoke_item( item *, const tripoint_bub_ms &pt ) override;
+        bool invoke_item( item *, const tripoint_abs_ms &pt ) override;
         bool invoke_item( item * ) override;
-        bool invoke_item( item *, const std::string &, const tripoint_bub_ms &pt ) override;
+        bool invoke_item( item *, const std::string &, const tripoint_abs_ms &pt ) override;
         bool invoke_item( item *, const std::string & ) override;
 
         monster_visible_info &get_mon_visible() {

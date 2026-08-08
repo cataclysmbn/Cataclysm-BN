@@ -39,7 +39,7 @@ struct monster_action_t {
     monster_action_kind kind           = monster_action_kind::idle;
 
     /// Destination tile for move / attack / bash / open_door / push.
-    tripoint_bub_ms     dest           = tripoint_bub_ms::zero();
+    tripoint_abs_ms     dest           = tripoint_abs_ms::zero();
 
     /// Creature at dest when kind == attack.  Pointer is valid at decide time;
     /// execute_action re-validates before attacking.

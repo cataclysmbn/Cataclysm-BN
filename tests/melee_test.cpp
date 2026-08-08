@@ -7,6 +7,7 @@
 #include "game_constants.h"
 #include "item.h"
 #include "itype.h"
+#include "map_helpers.h"
 #include "melee.h"
 #include "monattack.h"
 #include "monster.h"
@@ -82,21 +83,19 @@ static void check_near(float prob, const float expected, const float tolerance) 
 
 static const int num_iters = 10000;
 
-static const tripoint_bub_ms dude_pos(g_half_mapsize_x, g_half_mapsize_y, 0);
-
 TEST_CASE("Character attacking a zombie", "[.melee]") {
     monster zed(mtype_id("mon_zombie"));
     INFO("Zombie has get_dodge() == " + std::to_string(zed.get_dodge()));
 
     SECTION("8/8/8/8, no skills, unarmed") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         const float prob = brute_probability(dude, zed, num_iters);
         INFO(full_attack_details(dude));
         check_near(prob, 0.6f, 0.1f);
     }
 
     SECTION("8/8/8/8, 3 all skills, two-by-four") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 3, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 3, 8, 8, 8, 8);
         dude.set_primary_weapon(item::spawn("2x4"));
         const float prob = brute_probability(dude, zed, num_iters);
         INFO(full_attack_details(dude));
@@ -104,7 +103,7 @@ TEST_CASE("Character attacking a zombie", "[.melee]") {
     }
 
     SECTION("10/10/10/10, 8 all skills, katana") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 8, 10, 10, 10, 10);
+        standard_npc dude("TestCharacter", test_origin, {}, 8, 10, 10, 10, 10);
         dude.set_primary_weapon(item::spawn("katana"));
         const float prob = brute_probability(dude, zed, num_iters);
         INFO(full_attack_details(dude));
@@ -147,7 +146,7 @@ TEST_CASE("manual technique queries include counter techniques", "[melee]") {
     clear_all_state();
 
     auto target = monster(mtype_id("mon_zombie"));
-    auto dude = standard_npc("TestCharacter", dude_pos, {}, 5, 8, 8, 8, 8);
+    auto dude = standard_npc("TestCharacter", test_origin, {}, 5, 8, 8, 8, 8);
     const auto style_brawling = matype_id("style_brawling");
     const auto counter = matec_id("tec_brawl_counter_melee");
     const auto defensive = matec_id("tec_brawl_feint_melee");
@@ -180,7 +179,7 @@ TEST_CASE("manual technique queries require enough moves", "[melee]") {
     clear_all_state();
 
     auto target = monster(mtype_id("mon_zombie"));
-    auto dude = standard_npc("TestCharacter", dude_pos, {}, 5, 8, 8, 8, 8);
+    auto dude = standard_npc("TestCharacter", test_origin, {}, 5, 8, 8, 8, 8);
     const auto style_brawling = matype_id("style_brawling");
     const auto defensive = matec_id("tec_brawl_feint_melee");
 
@@ -214,7 +213,7 @@ TEST_CASE("manual technique prompt includes mutation attacks", "[melee]") {
 
     const auto fangs = trait_id("FANGS");
     auto target = monster(mtype_id("mon_zombie"));
-    auto dude = standard_npc("TestCharacter", dude_pos, {}, 5, 8, 8, 8, 8);
+    auto dude = standard_npc("TestCharacter", test_origin, {}, 5, 8, 8, 8, 8);
 
     dude.set_mutation(fangs);
 
@@ -229,14 +228,14 @@ TEST_CASE("Character attacking a manhack", "[.melee]") {
     INFO("Manhack has get_dodge() == " + std::to_string(manhack.get_dodge()));
 
     SECTION("8/8/8/8, no skills, unarmed") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         const float prob = brute_probability(dude, manhack, num_iters);
         INFO(full_attack_details(dude));
         check_near(prob, 0.2f, 0.05f);
     }
 
     SECTION("8/8/8/8, 3 all skills, two-by-four") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 3, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 3, 8, 8, 8, 8);
         dude.set_primary_weapon(item::spawn("2x4"));
         const float prob = brute_probability(dude, manhack, num_iters);
         INFO(full_attack_details(dude));
@@ -244,7 +243,7 @@ TEST_CASE("Character attacking a manhack", "[.melee]") {
     }
 
     SECTION("10/10/10/10, 8 all skills, katana") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 8, 10, 10, 10, 10);
+        standard_npc dude("TestCharacter", test_origin, {}, 8, 10, 10, 10, 10);
         dude.set_primary_weapon(item::spawn("katana"));
         const float prob = brute_probability(dude, manhack, num_iters);
         INFO(full_attack_details(dude));
@@ -257,7 +256,7 @@ TEST_CASE("Zombie attacking a character", "[.melee]") {
     INFO("Zombie has get_hit() == " + std::to_string(zed.get_hit()));
 
     SECTION("8/8/8/8, no skills, unencumbered") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         const float prob = brute_probability(zed, dude, num_iters);
         INFO("Has get_dodge() == " + std::to_string(dude.get_dodge()));
         THEN("Character has no significant dodge bonus or penalty") {
@@ -275,7 +274,7 @@ TEST_CASE("Zombie attacking a character", "[.melee]") {
 
     SECTION("10/10/10/10, 3 all skills, good cotton armor") {
         standard_npc dude(
-            "TestCharacter", dude_pos,
+            "TestCharacter", test_origin,
             {"hoodie", "jeans", "long_underpants", "long_undertop", "longshirt"}, 3, 10, 10, 10,
             10);
         const float prob = brute_probability(zed, dude, num_iters);
@@ -284,7 +283,7 @@ TEST_CASE("Zombie attacking a character", "[.melee]") {
     }
 
     SECTION("10/10/10/10, 8 all skills, survivor suit") {
-        standard_npc dude("TestCharacter", dude_pos, {"survivor_suit"}, 8, 10, 10, 10, 10);
+        standard_npc dude("TestCharacter", test_origin, {"survivor_suit"}, 8, 10, 10, 10, 10);
         const float prob = brute_probability(zed, dude, num_iters);
         INFO("Has get_dodge() == " + std::to_string(dude.get_dodge()));
         check_near(prob, 0.025f, 0.0125f);
@@ -296,7 +295,7 @@ TEST_CASE("Manhack attacking a character", "[.melee]") {
     INFO("Manhack has get_hit() == " + std::to_string(manhack.get_hit()));
 
     SECTION("8/8/8/8, no skills, unencumbered") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         const float prob = brute_probability(manhack, dude, num_iters);
         INFO("Has get_dodge() == " + std::to_string(dude.get_dodge()));
         THEN("Character has no significant dodge bonus or penalty") {
@@ -309,7 +308,7 @@ TEST_CASE("Manhack attacking a character", "[.melee]") {
 
     SECTION("10/10/10/10, 3 all skills, good cotton armor") {
         standard_npc dude(
-            "TestCharacter", dude_pos,
+            "TestCharacter", test_origin,
             {"hoodie", "jeans", "long_underpants", "long_undertop", "longshirt"}, 3, 10, 10, 10,
             10);
         const float prob = brute_probability(manhack, dude, num_iters);
@@ -318,7 +317,7 @@ TEST_CASE("Manhack attacking a character", "[.melee]") {
     }
 
     SECTION("10/10/10/10, 8 all skills, survivor suit") {
-        standard_npc dude("TestCharacter", dude_pos, {"survivor_suit"}, 8, 10, 10, 10, 10);
+        standard_npc dude("TestCharacter", test_origin, {"survivor_suit"}, 8, 10, 10, 10, 10);
         const float prob = brute_probability(manhack, dude, num_iters);
         INFO("Has get_dodge() == " + std::to_string(dude.get_dodge()));
         check_near(prob, 0.25f, 0.05f);
@@ -330,7 +329,7 @@ TEST_CASE("Hulk smashing a character", "[.], [melee], [monattack]") {
     INFO("Hulk has get_hit() == " + std::to_string(zed.get_hit()));
 
     SECTION("8/8/8/8, no skills, unencumbered") {
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         const float prob = brute_special_probability(zed, dude, num_iters);
         INFO("Has get_dodge() == " + std::to_string(dude.get_dodge()));
         THEN("Character has no significant dodge bonus or penalty") {
@@ -343,7 +342,7 @@ TEST_CASE("Hulk smashing a character", "[.], [melee], [monattack]") {
 
     SECTION("10/10/10/10, 3 all skills, good cotton armor") {
         standard_npc dude(
-            "TestCharacter", dude_pos,
+            "TestCharacter", test_origin,
             {"hoodie", "jeans", "long_underpants", "long_undertop", "longshirt"}, 3, 10, 10, 10,
             10);
         const float prob = brute_special_probability(zed, dude, num_iters);
@@ -352,7 +351,7 @@ TEST_CASE("Hulk smashing a character", "[.], [melee], [monattack]") {
     }
 
     SECTION("10/10/10/10, 8 all skills, survivor suit") {
-        standard_npc dude("TestCharacter", dude_pos, {"survivor_suit"}, 8, 10, 10, 10, 10);
+        standard_npc dude("TestCharacter", test_origin, {"survivor_suit"}, 8, 10, 10, 10, 10);
         const float prob = brute_special_probability(zed, dude, num_iters);
         INFO("Has get_dodge() == " + std::to_string(dude.get_dodge()));
         check_near(prob, 0.2f, 0.05f);
@@ -362,7 +361,7 @@ TEST_CASE("Hulk smashing a character", "[.], [melee], [monattack]") {
 TEST_CASE("Character selects best attack against creature", "[melee]") {
     SECTION("Monster with huge bash armor") {
         monster target(mtype_id("mon_test_bash"));
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         dude.set_primary_weapon(item::spawn("test_lucern_hammer"));
         const item& weapon = dude.primary_weapon();
         const attack_statblock& attack = melee::pick_attack(dude, weapon, target);
@@ -372,7 +371,7 @@ TEST_CASE("Character selects best attack against creature", "[melee]") {
 
     SECTION("Monster with huge stab armor") {
         monster target(mtype_id("mon_test_stab"));
-        standard_npc dude("TestCharacter", dude_pos, {}, 0, 8, 8, 8, 8);
+        standard_npc dude("TestCharacter", test_origin, {}, 0, 8, 8, 8, 8);
         dude.set_primary_weapon(item::spawn("test_lucern_hammer"));
         const item& weapon = dude.primary_weapon();
         const attack_statblock& attack = melee::pick_attack(dude, weapon, target);

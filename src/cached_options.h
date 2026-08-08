@@ -124,6 +124,7 @@ enum class visibility_scaling_mode {
 extern visibility_scaling_mode visibility_scaling;
 
 extern bool lazy_border_enabled;
+extern bool vehicle_footprint_simulation_enabled;
 extern int retained_omt_cache_length;
 
 /**

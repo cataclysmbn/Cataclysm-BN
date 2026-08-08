@@ -470,58 +470,26 @@ void submap::rotate( int turns )
 }
 
 
-auto submap::rebuild_outside_cache( const level_cache *above,
-                                    const tripoint_bub_sm &grid_pos ) -> void
+
+auto submap::rebuild_roof_above_cache( const submap *above ) -> void
 {
-    if( !outside_dirty ) {
+    if( !roof_above_dirty ) {
         return;
     }
-    // Base case: OVERMAP_HEIGHT — everything is open sky.
-    if( above == nullptr ) {
-        std::ranges::fill( std::span( &outside_cache[0][0], SEEX * SEEY ), true );
-        std::ranges::fill( std::span( &sheltered_cache[0][0], SEEX * SEEY ), false );
-        outside_dirty = false;
-        return;
-    }
-    const auto abs_p = project_to<coords::ms>( grid_pos ).xy();
+
     for( const auto &p : submap_tiles() ) {
-        // A tile is outside if any tile in the 3×3 at z+1 satisfies:
-        // (outside at z+1) AND (no floor at z+1 blocking the path).
-        // Out-of-bounds neighbours (edge of loaded map) are treated as inside.
-        const auto ap = abs_p + p.raw(); // avoid projection cost of project_combine
-        bool result = false;
-        for( int dx = -1; dx <= 1 && !result; ++dx ) {
-            for( int dy = -1; dy <= 1 && !result; ++dy ) {
-                const auto nb = ap + point{ dx, dy };
-                if( !above->inbounds( nb ) ) {
-                    continue; // out of bounds = inside
-                }
-                const int idx = above->idx( nb.x(), nb.y() );
-                if( above->outside_cache[idx] && !above->floor_cache[idx] ) {
-                    result = true;
-                }
-            }
+        auto has_roof = false;
+        if( above != nullptr ) {
+            const auto &terrain = above->get_ter( p ).obj();
+            has_roof = !terrain.has_flag( TFLAG_NO_FLOOR ) &&
+                       !terrain.has_flag( TFLAG_Z_TRANSPARENT );
         }
-        outside_cache[p.x()][p.y()] = result;
-        // A tile is sheltered if any tile in the 3×3 at z+1 has a floor,
-        // or is itself sheltered (coverage propagates downward with a 1-tile overhang).
-        // Out-of-bounds neighbours are treated as sheltered (edge of loaded map).
-        result = false;
-        for( int dx = -1; dx <= 1 && !result; ++dx ) {
-            for( int dy = -1; dy <= 1 && !result; ++dy ) {
-                const auto nb = ap + point{ dx, dy };
-                if( !above->inbounds( nb ) ) {
-                    continue;
-                }
-                const int idx = above->idx( nb.x(), nb.y() );
-                if( above->floor_cache[idx] || above->sheltered_cache[idx] ) {
-                    result = true;
-                }
-            }
+        if( above != nullptr && get_furn( p ).obj().has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
+            has_roof = true;
         }
-        sheltered_cache[p.x()][p.y()] = result;
+        roof_above_cache[p.x()][p.y()] = has_roof;
     }
-    outside_dirty = false;
+    roof_above_dirty = false;
 }
 
 auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
@@ -548,80 +516,20 @@ auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos 
     floor_dirty = false;
 }
 
-auto submap::rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
-{
-    if( !pf_dirty ) {
-        return;
-    }
-    for( const auto &sp : submap_tiles() ) {
-        const tripoint_bub_ms p = project_combine( grid_pos, sp );
-        auto cur_value = PF_NORMAL;
-
-        const auto &terrain   = get_ter( sp ).obj();
-        const auto &furniture = get_furn( sp ).obj();
-        int vpart = -1;
-        const vehicle *veh = m.veh_at_internal( p, vpart );
-        const int cost = m.move_cost_internal( furniture, terrain, veh, vpart );
-
-        if( cost > 2 ) {
-            cur_value |= PF_SLOW;
-        } else if( cost <= 0 ) {
-            cur_value |= PF_WALL;
-            if( terrain.has_flag( TFLAG_CLIMBABLE ) ) {
-                cur_value |= PF_CLIMBABLE;
-            }
-        }
-
-        if( veh != nullptr ) {
-            cur_value |= PF_VEHICLE;
-        }
-
-        for( const auto &fld : get_field( sp ) ) {
-            const auto &cur_fld = fld.second;
-            if( cur_fld.get_field_type().obj().get_dangerous(
-                    cur_fld.get_field_intensity() - 1 ) ) {
-                cur_value |= PF_FIELD;
-            }
-        }
-
-        if( !get_trap( sp ).obj().is_benign() || !terrain.trap.obj().is_benign() ) {
-            cur_value |= PF_TRAP;
-        }
-
-        if( terrain.has_flag( TFLAG_GOES_DOWN ) || terrain.has_flag( TFLAG_GOES_UP ) ||
-            terrain.has_flag( TFLAG_RAMP )      || terrain.has_flag( TFLAG_RAMP_UP ) ||
-            terrain.has_flag( TFLAG_RAMP_DOWN ) ) {
-            cur_value |= PF_UPDOWN;
-        }
-
-        if( terrain.has_flag( TFLAG_SHARP ) ) {
-            cur_value |= PF_SHARP;
-        }
-
-        pf_special_cache[sp.x()][sp.y()] = cur_value;
-    }
-    pf_dirty = false;
-}
-
 auto submap::rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !transparency_dirty ) {
         return;
     }
-    // outside_cache must be current before applying the weather sight penalty.
-    if( outside_dirty ) {
-        const level_cache *above = ( grid_pos.z() < OVERMAP_HEIGHT )
-                                   ? &m.get_cache_ref( grid_pos.z() + 1 )
-                                   : nullptr;
-        rebuild_outside_cache( above, grid_pos );
-    }
-
     const float sight_penalty = get_weather().weather_id->sight_penalty;
+    const auto &cache = m.get_cache_ref( grid_pos.z() );
+    const auto cache_origin = project_to<coords::ms>( grid_pos );
 
     for( const auto &sp : submap_tiles() ) {
         if( ( get_ter( sp ).obj().transparent && get_furn( sp ).obj().transparent ) ) {
             auto value = LIGHT_TRANSPARENCY_OPEN_AIR;
-            if( outside_cache[sp.x()][sp.y()] ) {
+            if( cache.outside_cache[cache.idx( cache_origin.x() + sp.x(),
+                                               cache_origin.y() + sp.y() )] ) {
                 value *= sight_penalty;
             }
 

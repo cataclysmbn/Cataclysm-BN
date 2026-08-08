@@ -23,6 +23,7 @@
 #include <variant>
 #include <vector>
 
+#include "bash.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "coordinates.h"
@@ -33,7 +34,6 @@
 #include "hash_utils.h"
 #include "item.h"
 #include "item_stack.h"
-#include "legacy_pathfinding.h"
 #include "lightmap.h"
 #include "line.h"
 #include "lru_cache.h"
@@ -99,7 +99,6 @@ using VehicleList = std::vector<wrapped_vehicle>;
 class map;
 
 enum ter_bitflags : int;
-struct pathfinding_settings;
 template<typename T>
 struct weighted_int_list;
 struct rl_vec2d;
@@ -163,55 +162,6 @@ struct visibility_variables {
     float visibility_range = 60.0f;
     float detail_range = 60.0f;
     float visibility_scale_factor = 1.0f;
-};
-
-struct bash_params {
-    // Initial strength
-    int strength;
-    // Make a sound?
-    bool silent;
-    // Essentially infinite bash strength + some
-    bool destroy;
-    // Do we want to bash floor if no furn/wall exists?
-    bool bash_floor;
-    /**
-     * Value from 0.0 to 1.0 that affects interpolation between str_min and str_max
-     * At 0.0, the bash is against str_min of targeted objects
-     * This is required for proper "piercing" bashing, so that one strong hit
-     * can destroy a wall and a floor under it rather than only one at a time.
-     */
-    float roll;
-    /*
-     * Are we bashing this location from above?
-     * Used in determining what sort of terrain the location will turn into,
-     * since if we bashed from above and destroyed it, it probably shouldn't
-     * have a roof either.
-    */
-    bool bashing_from_above;
-    /**
-     * Hack to prevent infinite recursion.
-     * TODO: Remove, properly unwrap the calls instead
-     */
-    bool do_recurse = true;
-    // Was this bash action directly caused by the avatar?
-    bool caused_by_player = false;
-};
-
-struct bash_results {
-    bash_results( bool did_bash, bool success, bool bashed_solid )
-        : did_bash( did_bash ), success( success ), bashed_solid( bashed_solid )
-    {}
-    bash_results() = default;
-    // Was anything hit?
-    bool did_bash = false;
-    // Was anything destroyed?
-    bool success = false;
-    // Did we bash furniture, terrain or vehicle
-    bool bashed_solid = false;
-    // If there was recurrent bashing, it will be here
-    std::vector<bash_results> subresults;
-
-    bash_results &operator|=( const bash_results &other );
 };
 
 /** Draw parameters used by map::drawsq() and similar methods. */
@@ -398,12 +348,13 @@ struct level_cache {
     // Source tiles touched in light_source_buffer.
     std::vector<point_bub_ms>        light_source_points;
 
-    // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
-    // False means fully enclosed — protected from rain, wind, weather effects.
+    // Reality-bubble cache: true when the tile has sky access via the 3×3
+    // overhang rule.  This is not the final outside/sheltered answer;
+    // predicate functions layer vehicle state on top.
     std::vector<char>               outside_cache;
 
-    // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
-    // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
+    // Reality-bubble cache: true when at least one tile within 3×3 above
+    // provides overhead coverage.  This is not the final predicate answer.
     std::vector<char>               sheltered_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
@@ -450,6 +401,7 @@ struct level_cache {
     bool                            map_memory_seen_cache_dirty_all = true;
 
     bool veh_in_active_range = false;
+    bool vehicle_obstruction_cache_dirty = true;
     std::vector<bool>               veh_exists_at;
     std::map<tripoint_bub_ms, std::pair<vehicle *, int>> veh_cached_parts;
     std::set<vehicle *> vehicle_list;
@@ -494,19 +446,16 @@ struct sound_instance_cache {
     // our bounds are actually radius * 2, radius * 2
     int flood_radius = 3;
 
-    // Normal tripoint origin of the sound instance.
-    tripoint_bub_ms origin;
+    // The offset from the sound origin to the bottom-left corner of the
+    // floodfill envelope (in relative ms).  Added to
+    // abs_to_bub(sound.origin) at processing time to get the current
+    // bubble-space envelope position, which keeps it consistent even if
+    // the player moves between sound creation and processing.
+    point_rel_ms envelope_offset;
 
-    // The tripoint that corresponds to index location 0.
-    // Calculated off the origin point - flood radius to x and y.
-    tripoint_bub_ms envelope_index_point;
-
-    // Offsets are used to get the right envelope index when using bubble tripoints.
-
-    // The numerical offset between index_point.x and 0. Must be calced on sound instance creation.
-    int offset_x;
-    // the numerical offset between index_point.y and 0. Must be calced on sound instance creation.
-    int offset_y;
+    // Returns the bubble-space bottom-left corner of the flood envelope,
+    // computed from the current player position via abs_to_bub.
+    tripoint_bub_ms envelope_index_point() const;
 
     // Volume in 100ths of a dB (mdB) of the sound in question
     // Indexed as: vec[x * (flood_radius * 2) + y]
@@ -532,29 +481,32 @@ struct sound_instance_cache {
     auto env_index( const point_rel_ms &p ) const -> int { return ( ( p.x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() ) ); }
 
     // Returns the corresponding flood envelope volume index provided a bubble point.
-    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - envelope_index_point().x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - envelope_index_point().y() ) ); }
     // Returns the corresponding flood envelope volume index provided a bubble tripoint.
-    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - envelope_index_point().x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - envelope_index_point().y() ) ); }
 
     // Returns true if a given bubble tripoint is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const tripoint_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( tp.x() - env_pt.x() ) >= 0 && ( tp.y() - env_pt.y() ) >= 0 &&
+               ( tp.x() - env_pt.x() ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - env_pt.y() ) < get_flood_envelope_by_enum( dist_enum );
     }
     // Returns true if a given bubble point is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const point_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( tp.x() - env_pt.x() ) >= 0 && ( tp.y() - env_pt.y() ) >= 0 &&
+               ( tp.x() - env_pt.x() ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - env_pt.y() ) < get_flood_envelope_by_enum( dist_enum );
     }
 
     // Returns true if a given point is on the border of the flood envelope.
     bool on_envelope_border( const point_bub_ms &p ) const {
-        return ( p.x() - offset_x ) == 0 || ( p.x() - offset_x ) == ( flood_radius * 2 ) ||
-               ( p.y() - offset_y ) == 0 || ( p.y() - offset_y ) == ( flood_radius * 2 );
+        const tripoint_bub_ms env_pt = envelope_index_point();
+        return ( p.x() - env_pt.x() ) == 0 || ( p.x() - env_pt.x() ) == ( flood_radius * 2 ) ||
+               ( p.y() - env_pt.y() ) == 0 || ( p.y() - env_pt.y() ) == ( flood_radius * 2 );
     }
 
     // Checks if a bubble tripoint is within the floodfill envelope. Returns the volume if true, -1 if not.
@@ -724,7 +676,7 @@ struct sound_cache {
  * When the player moves between submaps, the whole map is shifted, so that if the player moves one submap to the right,
  * (0, 0) now points to a tile one submap to the right from before
  */
-class map : public submap_load_listener
+class map
 {
         friend class editmap;
         friend class mapbuffer;
@@ -785,11 +737,7 @@ class map : public submap_load_listener
          */
         bool contains_abs_sm( const tripoint_abs_sm &p ) const;
 
-        // submap_load_listener implementation
-        void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const dimension_id &dim_id ) override;
-        void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const dimension_id &dim_id ) override;
+
 
         /**
          * Sets a dirty flag on the a given cache.
@@ -1050,14 +998,13 @@ class map : public submap_load_listener
                          int cost_min, int cost_max ) const;
 
         /**
-         * Checks if a rotated vehicle is blocking diagonal movement, tripoints must be adjacent
-         */
-        bool obstructed_by_vehicle_rotation( const tripoint_bub_ms &from, const tripoint_bub_ms &to ) const;
-
-        /**
          * Checks if a rotated vehicle is blocking diagonal vision, tripoints must be adjacent
          */
         bool obscured_by_vehicle_rotation( const tripoint_bub_ms &from, const tripoint_bub_ms &to ) const;
+
+        /** Delegates to mapbuffer — converts to absolute coords. */
+        bool obstructed_by_vehicle_rotation( const tripoint_bub_ms &from,
+                                             const tripoint_bub_ms &to ) const;
 
         /**
          * Populates a vector of points that are reachable within a number of steps from a
@@ -1093,22 +1040,6 @@ class map : public submap_load_listener
         std::vector<tripoint_bub_ms> get_dir_circle( const tripoint_bub_ms &f,
                 const tripoint_bub_ms &t ) const;
 
-        /**
-         * Calculate the best path using A*
-         *
-         * @param f The source location from which to path.
-         * @param t The destination to which to path.
-         * @param settings Structure describing pathfinding parameters.
-         * @param pre_closed Never path through those points. They can still be the source or the destination.
-         */
-        std::vector<tripoint_bub_ms> route( const tripoint_bub_ms &f, const tripoint_bub_ms &t,
-                                            const pathfinding_settings &settings,
-        const std::set<tripoint_bub_ms> &pre_closed = {{ }} ) const;
-        std::vector<tripoint_abs_ms> route( const tripoint_abs_ms &f, const tripoint_abs_ms &t,
-                                            const pathfinding_settings &settings,
-        const std::set<tripoint_abs_ms> &pre_closed = {{ }} ) const;
-
-        // Vehicles: Common to 2D and 3D
         VehicleList get_vehicles();
         void add_vehicle_to_cache( vehicle * );
         void clear_vehicle_point_from_cache( vehicle *veh, const tripoint_bub_ms &pt );
@@ -1153,28 +1084,8 @@ class map : public submap_load_listener
         // WARNING: not checking collisions!
         bool displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp );
 
-        // Shift the vehicle's z-level without moving any parts
-        void shift_vehicle_z( vehicle &veh, int z_shift );
         // move water under wheels. true if moved
         bool displace_water( const tripoint_bub_ms &dp );
-
-        // Returns the wheel area of the vehicle multiplied by traction of the surface
-        // When ignore_movement_modifiers is set to true, it returns the area of the wheels touching the ground
-        // TODO: Remove the ugly sinking vehicle hack
-        float vehicle_wheel_traction( const vehicle &veh, bool ignore_movement_modifiers = false ) const;
-
-        // Executes vehicle-vehicle collision based on vehicle::collision results
-        // Returns impulse of the executed collision
-        // If vector contains collisions with vehicles other than veh2, they will be ignored
-        float vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
-                                         const std::vector<veh_collision> &collisions );
-        // Throws vehicle passengers about the vehicle, possibly out of it
-        // Returns change in vehicle orientation due to lost control
-        units::angle shake_vehicle( vehicle &veh, int velocity_before, units::angle direction );
-
-        // Actually moves the vehicle
-        // Unlike displace_vehicle, this one handles collisions
-        vehicle *move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tileray &facing );
 
         // Furniture
         void set( const tripoint_bub_ms &p, const ter_id &new_terrain, const furn_id &new_furniture );
@@ -1344,6 +1255,7 @@ class map : public submap_load_listener
         }
 
         bool is_outside( const tripoint_bub_ms &p ) const;
+        bool is_outside( const tripoint_abs_ms &p ) const;
         // True when the tile has some overhead coverage within 3×3 (floor or sheltered tile
         // at z+1).  A tile can be outside yet sheltered (building overhang).
         bool is_sheltered( const tripoint_bub_ms &p ) const;
@@ -1962,18 +1874,18 @@ class map : public submap_load_listener
             return abs_sub;
         }
 
-        auto active_submap_views() const -> std::span<const mapbuffer_abs_submap_view> {
-            return active_submaps_.submaps();
+        auto active_submap_views() const -> std::span<const submap_ref> {
+            return active_load_region_.view().submaps();
         }
 
         auto active_submap_views( const int zlev ) const
-        -> std::span<const mapbuffer_abs_submap_view> {
-            return active_submaps_.submaps( zlev );
+        -> std::span<const submap_ref> {
+            return active_load_region_.view().submaps( zlev );
         }
 
         auto active_submap_view( const tripoint_abs_sm &pos ) const
-        -> std::optional<mapbuffer_abs_submap_view> {
-            return active_submaps_.get_submap_view( pos );
+        -> std::optional<submap_ref> {
+            return active_load_region_.view().get_submap_view( pos );
         }
 
         auto has_active_load_region() const -> bool {
@@ -1982,6 +1894,11 @@ class map : public submap_load_listener
         auto update_active_load_region( const point_abs_sm &begin,
                                         const point_abs_sm &end ) -> void;
         auto release_active_load_region() -> void;
+
+        void set_abs_sub( const point_abs_sm &p ) {
+            abs_sub = p;
+            refresh_active_submap_view();
+        }
 
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
@@ -2207,13 +2124,7 @@ class map : public submap_load_listener
          * anchor.
          */
         point_abs_sm abs_sub;
-        mapbuffer_bounds_view active_submaps_;
         mapbuffer_load_region active_load_region_;
-
-        auto set_abs_sub( const point_abs_sm &p ) -> void {
-            abs_sub = p;
-            refresh_active_submap_view();
-        }
 
         auto refresh_active_submap_view() -> void;
         auto validate_active_submap_view_complete( const char *context ) const -> void;
@@ -2293,7 +2204,6 @@ class map : public submap_load_listener
         auto apply_light_ray( const apply_light_ray_options &opt ) -> void;
         void add_light_from_items( const tripoint_bub_ms &p, const item_stack::iterator &begin,
                                    const item_stack::iterator &end );
-        std::unique_ptr<vehicle> add_vehicle_to_map( std::unique_ptr<vehicle> veh, bool merge_wrecks );
 
         // Internal methods used to bash just the selected features
         // "Externaled" for testing, because the interface to bashing is rng dependent
@@ -2412,10 +2322,6 @@ class map : public submap_load_listener
         */
         sound_cache m_sound_cache;
         //std::vector< sound_instance_cache > sound_instance_caches;
-
-        /// Return the pathfinding flags for a single tile, rebuilding the per-submap
-        /// pf_cache if it has been marked dirty.  Works for any loaded position.
-        auto get_pf_special( const tripoint_bub_ms &p ) const -> pf_special;
 
         auto update_visibility_cache( int zlev,
         const std::function<void()> &while_gpu_pending = {} ) -> void;

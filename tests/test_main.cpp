@@ -30,6 +30,7 @@
 #include "language.h"
 #include "loading_ui.h"
 #include "map.h"
+#include "map_helpers.h"
 #include "mod_manager.h"
 #include "options.h"
 #include "output.h"
@@ -162,6 +163,25 @@ static std::vector<mod_id> extract_mod_selection(std::vector<const char*>& arg_v
     return ret;
 }
 
+// Copy from game
+static void init_bubble_config(int size) {
+    g_reality_bubble_size = size;
+    // g_half_mapsize = size + 1 (the center submap is the implied +1).
+    // Formula: radius = size+1, grid = (2*radius+1)^2 submaps.
+    g_half_mapsize = size + 1;
+    g_mapsize = 2 * g_half_mapsize + 1;
+    g_mapsize_x = SEEX * g_mapsize;
+    g_mapsize_y = SEEY * g_mapsize;
+    g_half_mapsize_x = SEEX * g_half_mapsize;
+    g_half_mapsize_y = SEEY * g_half_mapsize;
+    g_max_view_distance = SEEX * g_half_mapsize;
+    // Compute visibility threshold so the "obstructed" cutoff scales with view distance.
+    // At g_max_view_distance tiles through clear air, visibility = 1/exp(t*d) =
+    // g_visible_threshold. This replaces the old hardcoded 0.1 threshold (which assumed
+    // g_max_view_distance=60).
+    g_visible_threshold = 1.0f / std::exp(LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance);
+}
+
 static void init_global_game_state(
     const std::vector<mod_id>& mods, option_overrides_t& option_overrides,
     const std::string& user_dir) {
@@ -231,10 +251,11 @@ static void init_global_game_state(
     g->u = avatar();
     g->u.create(character_type::NOW);
 
+    init_bubble_config(T_BUBBLE_SIZE);
     g->m = map();
+    g->m.resize(g_mapsize);
     disable_mapgen = true;
-
-    g->m.load(g->m.get_abs_sub(), false);
+    g->load_map(bub_abs_sub(), false);
 
     get_weather().update_weather();
 }

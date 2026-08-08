@@ -1,4 +1,4 @@
-#include "magic/magic_teleporter_list.h"
+#include "magic_teleporter_list.h"
 
 #include "avatar.h"
 #include "bodypart.h"
@@ -82,7 +82,7 @@ bool teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_om
     return true;
 }
 
-void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
+void teleporter_list::translocate(const std::set<tripoint_abs_ms>& targets) {
     if (known_teleporters.empty()) {
         // we can't go somewhere if we don't know how to get there!
         add_msg(m_bad, _("No translocator target known."));
@@ -95,14 +95,14 @@ void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
     }
 
     bool valid_targets = false;
-    for (const tripoint_bub_ms& pt : targets) {
+    for (const tripoint_abs_ms& pt : targets) {
         Character* you = g->critter_at<Character>(pt);
 
         if (you && you->is_avatar()) {
             valid_targets = true;
             if (!place_avatar_overmap(*you, *omt_dest)) {
                 add_msg(_("Failed to teleport.  Teleporter obstructed or destroyed."));
-                deactivate_teleporter(*omt_dest, pt);
+                deactivate_teleporter(*omt_dest, abs_to_bub(pt));
             }
         }
     }

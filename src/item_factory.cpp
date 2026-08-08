@@ -880,8 +880,8 @@ class iuse_function_wrapper : public iuse_actor
             : iuse_actor( type ), cpp_function( f ) { }
 
         ~iuse_function_wrapper() override = default;
-        int use( player &p, item &it, bool a, const tripoint_bub_ms &pos ) const override {
-            return ( *cpp_function )( &p, &it, a, pos );
+        int use( Character &p, item &it, bool a, const tripoint_abs_ms &pos ) const override {
+            return ( *cpp_function )( &p, &it, a, &pos );
         }
         std::unique_ptr<iuse_actor> clone() const override {
             return std::make_unique<iuse_function_wrapper>( *this );

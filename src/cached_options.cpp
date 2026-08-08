@@ -37,9 +37,10 @@ int  lod_coarse_scent_interval = 3;
 int  lod_group_morale_max_tier = 0;
 int  activity_skip_monster_lod_gate = 1;
 
-bool reality_bubble_fire_spread = false;
+bool reality_bubble_fire_spread = true;
 visibility_scaling_mode visibility_scaling = visibility_scaling_mode::smart;
 bool lazy_border_enabled        = false;
+bool vehicle_footprint_simulation_enabled = true;
 int  retained_omt_cache_length = 3;
 int  fire_spread_submap_cap    = 25;
 pocket_sim_level pocket_simulation_level = pocket_sim_level::off;

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <climits>
 #include <memory>
+#include <optional>
+#include <ranges>
 
 #include "avatar.h"
 #include "bodypart.h"
@@ -17,6 +19,7 @@
 #include "int_id.h"
 #include "json.h"
 #include "map.h"
+#include "mapbuffer.h"
 #include "mapbuffer_registry.h"
 #include "map_extras.h"
 #include "map_iterator.h"
@@ -267,31 +270,50 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
  * Maybe TODO: Allow "picking up" items or parts of bashable furniture
  *             and using them to help with bash attempts.
  */
-static int rate_location( map &m, const tripoint_bub_ms &p, const bool must_be_inside,
-                          const int bash_str, const int attempt,
-                          std::vector<int> &checked, int checked_sy )
+struct rate_location_options {
+    mapbuffer &buffer;
+    tripoint_abs_ms map_min;
+    tripoint_abs_ms map_max;
+    bool must_be_inside;
+    int bash_str;
+    int attempt;
+    std::vector<int> &checked;
+    int checked_sy;
+};
+
+static auto rate_location( const rate_location_options &options,
+                           const tripoint_abs_ms &p ) -> int
 {
-    if( ( must_be_inside && m.is_outside( p ) ) ||
-        m.impassable( p ) ||
-        checked[p.x() * checked_sy + p.y()] > 0 ) {
+    const auto in_bounds = [&]( const tripoint_abs_ms & pt ) {
+        return pt.x() >= options.map_min.x() && pt.x() <= options.map_max.x() &&
+               pt.y() >= options.map_min.y() && pt.y() <= options.map_max.y() &&
+               pt.z() == options.map_min.z();
+    };
+    const auto checked_index = [&]( const tripoint_abs_ms & pt ) {
+        return ( pt.x() - options.map_min.x() ) * options.checked_sy +
+               ( pt.y() - options.map_min.y() );
+    };
+
+    if( !in_bounds( p ) || ( options.must_be_inside && options.buffer.is_outside( p ) ) ||
+        !options.buffer.passable( p ) || options.checked[checked_index( p )] > 0 ) {
         return 0;
     }
 
     // Vector that will be used as a stack
-    std::vector<tripoint_bub_ms> st;
-    st.reserve( checked.size() );
+    std::vector<tripoint_abs_ms> st;
+    st.reserve( options.checked.size() );
     st.push_back( p );
 
     // If not checked yet and either can be moved into, can be bashed down or opened,
     // add it on the top of the stack.
-    const auto maybe_add = [&]( const tripoint_bub_ms & pt, const tripoint_bub_ms & from ) {
-        if( checked[pt.x() * checked_sy + pt.y()] >= attempt ) {
+    const auto maybe_add = [&]( const tripoint_abs_ms & pt, const tripoint_abs_ms & from ) {
+        if( !in_bounds( pt ) || options.checked[checked_index( pt )] >= options.attempt ) {
             return;
         }
 
-        if( m.passable( pt ) ||
-            m.bash_resistance( pt ) <= bash_str ||
-            m.can_open_door( &get_avatar(), pt, !m.is_outside( from ) ) ) {
+        if( options.buffer.passable( pt ) ||
+            options.buffer.bash_resistance( pt ) <= options.bash_str ||
+            options.buffer.can_open_door( pt, !options.buffer.is_outside( from ) ) ) {
             st.push_back( pt );
         }
     };
@@ -302,10 +324,10 @@ static int rate_location( map &m, const tripoint_bub_ms &p, const bool must_be_i
         const auto cur = st.back();
         st.pop_back();
 
-        checked[cur.x() * checked_sy + cur.y()] = attempt;
-        if( cur.x() == 0 || cur.x() == g_mapsize_x - 1 ||
-            cur.y() == 0 || cur.y() == g_mapsize_y - 1 ||
-            m.has_flag( "GOES_UP", cur ) ) {
+        options.checked[checked_index( cur )] = options.attempt;
+        if( cur.x() == options.map_min.x() || cur.x() == options.map_max.x() ||
+            cur.y() == options.map_min.y() || cur.y() == options.map_max.y() ||
+            options.buffer.has_flag( "GOES_UP", cur ) ) {
             return INT_MAX;
         }
 
@@ -319,14 +341,16 @@ static int rate_location( map &m, const tripoint_bub_ms &p, const bool must_be_i
     return area;
 }
 
-void start_location::place_player( player &u, const int &z ) const
+void start_location::place_player( player &u, const tripoint_abs_omt &omtstart ) const
 {
     // Need the "real" map with it's inside/outside cache and the like.
     map &m = g->m;
-    // Start us off somewhere in the center of the map
-    u.setpos( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, z ) );
-    m.invalidate_map_cache( z );
-    m.build_map_cache( z );
+    auto &buffer = m.get_mapbuffer();
+    const auto anchor = project_to<coords::ms>( omtstart );
+
+    u.setpos( anchor );
+    m.invalidate_map_cache( anchor.z() );
+    m.build_map_cache( anchor.z() );
     const bool must_be_inside = !flags().contains( "ALLOW_OUTSIDE" );
     ///\EFFECT_STR allows player to start behind less-bashable furniture and terrain
     // TODO: Allow using items here
@@ -336,22 +360,34 @@ void start_location::place_player( player &u, const int &z ) const
     // Sometimes it may be impossible to automatically found an ideal location
     // but the player may be more creative than this algorithm and do away with just "good"
     int best_rate = 0;
+    std::optional<tripoint_abs_ms> best_position;
     // In which attempt did this area get checked?
     // We can overwrite earlier attempts, but not start in them
-    auto &start_lc = m.access_cache( z );
+    auto &start_lc = m.access_cache( anchor.z() );
     const int checked_sy = start_lc.cache_y;
     auto checked = std::vector<int>( static_cast<size_t>( start_lc.cache_x ) * checked_sy, 0 );
+    const auto map_min = tripoint_abs_ms( project_to<coords::ms>( m.get_abs_sub() ), anchor.z() );
+    const auto map_max = map_min + tripoint_rel_ms( start_lc.cache_x - 1, start_lc.cache_y - 1, 0 );
 
     bool found_good_spot = false;
     // Try some random points at start
 
     int tries = 0;
-    const auto check_spot = [&]( const tripoint_bub_ms & pt ) {
+    const auto check_spot = [&]( const tripoint_abs_ms & pt ) {
         tries++;
-        const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked, checked_sy );
+        const int rate = rate_location( {
+            .buffer = buffer,
+            .map_min = map_min,
+            .map_max = map_max,
+            .must_be_inside = must_be_inside,
+            .bash_str = bash,
+            .attempt = tries,
+            .checked = checked,
+            .checked_sy = checked_sy,
+        }, pt );
         if( best_rate < rate ) {
             best_rate = rate;
-            u.setpos( pt );
+            best_position = pt;
             if( rate == INT_MAX ) {
                 found_good_spot = true;
             }
@@ -359,26 +395,25 @@ void start_location::place_player( player &u, const int &z ) const
     };
 
     while( !found_good_spot && tries < 100 ) {
-        tripoint_bub_ms rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
-                                    g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
-                                    u.bub_pos().z() );
+        const auto rand_point = anchor + tripoint_rel_ms( rng( 0, SEEX * 2 - 1 ),
+                                rng( 0, SEEY * 2 - 1 ), 0 );
         check_spot( rand_point );
     }
     // If we haven't got a good location by now, screw it and brute force it
     // This only happens in exotic locations (deep of a science lab), but it does happen
     if( !found_good_spot ) {
-        tripoint_bub_ms tmp = u.bub_pos();
-        int &x = tmp.x();
-        int &y = tmp.y();
-        for( x = 0; x < g_mapsize_x; x++ ) {
-            for( y = 0; y < g_mapsize_y; y++ ) {
-                check_spot( tmp );
+        for( const auto x : std::views::iota( map_min.x(), map_max.x() + 1 ) ) {
+            for( const auto y : std::views::iota( map_min.y(), map_max.y() + 1 ) ) {
+                check_spot( tripoint_abs_ms( x, y, anchor.z() ) );
             }
         }
     }
 
     if( !found_good_spot ) {
         debugmsg( "Could not find a good starting place for character" );
+    }
+    if( best_position.has_value() ) {
+        u.setpos( *best_position );
     }
 }
 

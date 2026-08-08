@@ -80,6 +80,7 @@ class item_contents
         size_t num_item_stacks() const;
 
         bool spill_contents( const tripoint_bub_ms &pos );
+        bool spill_contents( const tripoint_abs_ms &pos );
         std::vector<detached_ptr<item>> clear_items();
 
         /**

@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 #include "character.h"
 #include "map.h"
+#include "map_helpers.h"
 #include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -15,17 +16,18 @@
 
 TEST_CASE("vehicle_split_section") {
     clear_all_state();
-    map& here = get_map();
     Character& player_character = get_player_character();
+    player_character.in_vehicle = false;
+    player_character.controlling_vehicle = false;
+    auto& here = player_character.get_mapbuffer();
     for (units::angle dir = 0_degrees; dir < 360_degrees; dir += 15_degrees) {
         CHECK(!player_character.in_vehicle);
-        const tripoint_bub_ms test_origin(15, 15, 0);
         player_character.setpos(test_origin);
-        auto vehicle_origin = tripoint_bub_ms(10, 10, 0);
-        VehicleList vehs = here.get_vehicles();
+        auto vehicle_origin = tripoint_abs_ms(-5, -5, 0);
+        auto vehs = here.get_vehicles();
         vehicle* veh_ptr;
         for (auto& vehs_v : vehs) {
-            veh_ptr = vehs_v.v;
+            veh_ptr = vehs_v;
             here.destroy_vehicle(veh_ptr);
         }
         REQUIRE(here.get_vehicles().empty());
@@ -37,18 +39,23 @@ TEST_CASE("vehicle_split_section") {
         veh_ptr->part_removal_cleanup();
         REQUIRE(veh_ptr->get_parts_at(vehicle_origin, "", part_status_flag::available).empty());
         vehs = here.get_vehicles();
+        std::vector<vehicle*> vehs_copy;
+        for (auto& vehs_v : vehs) { vehs_copy.push_back(vehs_v); }
         // destroying the center frame results in 4 new vehicles
         CHECK(vehs.size() == 4);
         if (vehs.size() == 4) {
+            std::ranges::sort(vehs_copy, [](const vehicle* lhs, const vehicle* rhs) {
+                return lhs->part_count() > rhs->part_count();
+            });
             // correct number of parts
-            CHECK(vehs[0].v->part_count() == 12);
-            CHECK(vehs[1].v->part_count() == 12);
-            CHECK(vehs[2].v->part_count() == 2 + 1); // 1 Extra part for auto generated door lock (
-                                                     // 2 + 1 )
-            CHECK(vehs[3].v->part_count() == 3);
+            CHECK(vehs_copy[0]->part_count() == 12);
+            CHECK(vehs_copy[1]->part_count() == 12);
+            // 1 Extra part for auto generated door lock ( 2 + 1 )
+            CHECK(vehs_copy[2]->part_count() == 2 + 1);
+            CHECK(vehs_copy[3]->part_count() == 3);
             std::vector<std::set<tripoint_abs_ms>> all_points;
             for (int i = 0; i < 4; i++) {
-                std::set<tripoint_abs_ms>& veh_points = vehs[i].v->get_points(true);
+                std::set<tripoint_abs_ms>& veh_points = vehs_copy[i]->get_points(true);
                 all_points.push_back(veh_points);
             }
             for (int i = 0; i < 4; i++) {
@@ -65,22 +72,25 @@ TEST_CASE("vehicle_split_section") {
                     }
                 }
             }
-            here.destroy_vehicle(vehs[3].v);
-            here.destroy_vehicle(vehs[2].v);
-            here.destroy_vehicle(vehs[1].v);
-            here.destroy_vehicle(vehs[0].v);
+            here.destroy_vehicle(vehs_copy[3]);
+            here.destroy_vehicle(vehs_copy[2]);
+            here.destroy_vehicle(vehs_copy[1]);
+            here.destroy_vehicle(vehs_copy[0]);
         }
         REQUIRE(here.get_vehicles().empty());
-        vehicle_origin = tripoint_bub_ms(20, 20, 0);
+        vehicle_origin = tripoint_abs_ms(20, 20, 0);
         veh_ptr = here.add_vehicle(vproto_id("circle_split_test"), vehicle_origin, dir, 0, 0);
         REQUIRE(veh_ptr != nullptr);
         here.destroy(vehicle_origin);
         veh_ptr->part_removal_cleanup();
         REQUIRE(veh_ptr->get_parts_at(vehicle_origin, "", part_status_flag::available).empty());
         vehs = here.get_vehicles();
-        CHECK(vehs.size() == 1);
-        if (vehs.size() == 1) {
-            CHECK(vehs[0].v->part_count() == 38 + 3); // 3 Extra part for auto generated door lock
+        vehs_copy.clear();
+        for (auto& vehs_v : vehs) { vehs_copy.push_back(vehs_v); }
+        CHECK(vehs_copy.size() == 1);
+        if (vehs_copy.size() == 1) {
+            CHECK(vehs_copy[0]->part_count() == 38 + 3); // 3 Extra part for auto generated door
+                                                         // lock
         }
         break;
     }
@@ -89,8 +99,9 @@ TEST_CASE("vehicle_split_section") {
 TEST_CASE("split vehicle keeps selected structure part at origin") {
     clear_all_state();
     auto& here = get_map();
-    const auto vehicle_origin = tripoint_bub_ms(10, 10, 0);
-    auto* veh_ptr = here.add_vehicle(vproto_id("none"), vehicle_origin, 0_degrees, 0, 0);
+    const auto vehicle_origin = tripoint_abs_ms(10, 10, 0);
+    auto* veh_ptr =
+        here.add_vehicle(vproto_id("none"), abs_to_bub(vehicle_origin), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     const auto anchor_frame =

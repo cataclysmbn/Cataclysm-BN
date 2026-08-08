@@ -10,6 +10,8 @@
 #include <unordered_set>
 
 #include "avatar_action.h"
+#include "activity_actor.h"
+#include "activity_actor_definitions.h"
 #include "bionics.h"
 #include "catalua_icallback_actor.h"
 #include "character.h"
@@ -644,16 +646,16 @@ void Character::activate_mutation( const trait_id &mut )
                 _( "You lay next to the trees letting your hair roots tangle with the trees." ) );
         }
 
-        assign_activity( ACT_TREE_COMMUNION );
-
         if( has_trait( trait_ROOTS2 ) || has_trait( trait_ROOTS3 ) ) {
             const time_duration startup_time = has_trait( trait_ROOTS3 ) ? rng( 15_minutes,
                                                30_minutes ) : rng( 60_minutes, 90_minutes );
-            activity->values.push_back( to_turns<int>( startup_time ) );
+            assign_activity( std::make_unique<player_activity>(
+                                 std::make_unique<tree_communion_actor>( to_turns<int>( startup_time ) ) ) );
             return;
         } else {
             const time_duration startup_time = rng( 120_minutes, 180_minutes );
-            activity->values.push_back( to_turns<int>( startup_time ) );
+            assign_activity( std::make_unique<player_activity>(
+                                 std::make_unique<tree_communion_actor>( to_turns<int>( startup_time ) ) ) );
             return;
         }
     } else if( !mdata.spawn_item.is_empty() ) {

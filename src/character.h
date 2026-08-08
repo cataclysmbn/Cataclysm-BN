@@ -75,7 +75,6 @@ struct dealt_projectile_attack;
 struct islot_comestible;
 struct itype;
 struct mutation_branch;
-struct pathfinding_settings;
 struct points_left;
 struct trap;
 template <typename E> struct enum_traits;
@@ -489,11 +488,11 @@ class Character : public Creature, public location_visitable<Character>
          */
         std::string get_miss_reason();
         /** Knocks the character to a specified tile */
-        void knock_back_to( const tripoint_bub_ms &to ) override;
+        void knock_back_to( const tripoint_abs_ms &to ) override;
         /** Returns multiplier on fall damage at low velocity (knockback/pit/1 z-level, not 5 z-levels) */
         float fall_damage_mod() const override;
         /** Deals falling/collision damage with terrain/creature at pos */
-        int impact( int force, const tripoint_bub_ms &pos ) override;
+        int impact( int force, const tripoint_abs_ms &pos ) override;
         /** Returns overall % of HP remaining */
         int hp_percentage() const override;
 
@@ -522,7 +521,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns if the player has hibernation mutation and is asleep and well fed */
         bool is_hibernating() const;
         /** Maintains body temperature */
-        void update_bodytemp( const map &m, const weather_manager &weather );
+        void update_bodytemp( const weather_manager &weather );
 
         /** Getters/setters for body part temperature.
          *  This could go under Creature, but Character is the class with update_bodytemp. */
@@ -715,7 +714,7 @@ class Character : public Creature, public location_visitable<Character>
         void perform_special_attacks( Creature &t, dealt_damage_instance &dealt_dam );
 
         /** Handles reach melee attack on point p */
-        void reach_attack( const tripoint_bub_ms &p );
+        void reach_attack( const tripoint_abs_ms &p );
         // HACK for mdefense::zapback
         bool reach_attacking = false;
 
@@ -1199,9 +1198,9 @@ class Character : public Creature, public location_visitable<Character>
          * Returns true if it destroys the item. Consumes charges from the item.
          * Multi-use items are ONLY supported when all use_methods are iuse_actor!
          */
-        virtual bool invoke_item( item *, const tripoint_bub_ms &pt );
+        virtual bool invoke_item( item *, const tripoint_abs_ms &pt );
         /** As above, but with a pre-selected method. Debugmsg if this item doesn't have this method. */
-        virtual bool invoke_item( item *, const std::string &, const tripoint_bub_ms &pt );
+        virtual bool invoke_item( item *, const std::string &, const tripoint_abs_ms &pt );
         /** As above two, but with position equal to current position */
         virtual bool invoke_item( item * );
         virtual bool invoke_item( item *, const std::string & );
@@ -1935,7 +1934,7 @@ class Character : public Creature, public location_visitable<Character>
         void set_stamina( int new_stamina );
         void mod_stamina( int mod );
         void mod_stamina( int mod, bool skill );
-        void burn_move_stamina( int moves );
+        void burn_move_stamina( int moves, bool train_skill = true );
         float stamina_burn_cost_modifier() const;
         float running_move_cost_modifier() const;
         /** Regenerates stamina */
@@ -2029,9 +2028,6 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Returns the player's modified base movement cost */
         int  run_cost( int base_cost, bool diag = false ) const;
-
-        const pathfinding_settings &get_legacy_pathfinding_settings() const override;
-        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override;
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
 
@@ -2242,7 +2238,7 @@ class Character : public Creature, public location_visitable<Character>
         bool has_morale_to_read() const;
         bool has_morale_to_craft() const;
         const inventory &crafting_inventory( bool clear_path );
-        const inventory &crafting_inventory( const tripoint_bub_ms &src_pos = tripoint_bub_ms::zero(),
+        const inventory &crafting_inventory( const tripoint_abs_ms &src_pos = tripoint_abs_ms::zero(),
                                              int radius = PICKUP_RANGE, bool clear_path = true );
         void invalidate_crafting_inventory();
 
@@ -2276,18 +2272,19 @@ class Character : public Creature, public location_visitable<Character>
         int print_info( const catacurses::window &w, int vStart, int vLines, int column ) const override;
         // Checks whether a player can hear a sound at a given volume and location.
         bool can_hear( const tripoint_bub_ms &source, int volume ) const;
+        bool can_hear( const tripoint_abs_ms &source, int volume ) const;
         // Returns a multiplier indicating the keenness of a player's hearing.
         float hearing_ability() const;
 
         using trap_map = std::map<tripoint_abs_ms, std::string>;
-        bool knows_trap( const tripoint_bub_ms &pos ) const;
-        void add_known_trap( const tripoint_bub_ms &pos, const trap &t );
+        bool knows_trap( const tripoint_abs_ms &pos ) const;
+        void add_known_trap( const tripoint_abs_ms &pos, const trap &t );
 
         /** Called when character triggers a trap, returns true if they don't set it off */
-        bool avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const override;
+        bool avoid_trap( const tripoint_abs_ms &pos, const trap &tr ) const override;
 
         // see Creature::sees
-        bool sees( const tripoint_bub_ms &t, bool is_player = false, int range_mod = 0 ) const override;
+        bool sees( const tripoint_abs_ms &t, bool is_player = false, int range_mod = 0 ) const override;
         // see Creature::sees
         bool sees( const Creature &critter ) const override;
         Attitude attitude_to( const Creature &other ) const override;
@@ -2297,8 +2294,8 @@ class Character : public Creature, public location_visitable<Character>
         bool has_weapon() const override;
         void shift_destination( point_rel_ms shift );
         // Auto move methods
-        void set_destination( const std::vector<tripoint_bub_ms> &route );
-        void set_destination( const std::vector<tripoint_bub_ms> &route,
+        void set_destination( const std::vector<tripoint_abs_ms> &route );
+        void set_destination( const std::vector<tripoint_abs_ms> &route,
                               std::unique_ptr<player_activity> new_destination_activity );
         std::unique_ptr<player_activity> clear_destination();
         bool has_distant_destination() const;
@@ -2312,9 +2309,9 @@ class Character : public Creature, public location_visitable<Character>
         bool has_destination_activity() const;
         // starts destination activity and cleans up to ensure it is called only once
         void start_destination_activity();
-        std::vector<tripoint_bub_ms> &get_auto_move_route();
+        std::vector<tripoint_abs_ms> &get_auto_move_route();
         action_id get_next_auto_move_direction();
-        bool defer_move( const tripoint_bub_ms &next );
+        bool defer_move( const tripoint_abs_ms &next );
 
     protected:
         Character();
@@ -2386,7 +2383,7 @@ class Character : public Creature, public location_visitable<Character>
          * Cache for pathfinding settings.
          * Most of it isn't changed too often, hence mutable.
          */
-        mutable pimpl<pathfinding_settings> path_settings;
+        mutable pimpl<PathfindingSettings> path_settings;
 
         // faction API versions
         // 2 - allies are in your_followers faction; NPCATT_FOLLOW is follower but not an ally
@@ -2460,15 +2457,15 @@ class Character : public Creature, public location_visitable<Character>
 
         int radiation = 0;
 
-        std::vector<tripoint_bub_ms> auto_move_route;
+        std::vector<tripoint_abs_ms> auto_move_route;
         // Used to make sure auto move is canceled if we stumble off course
-        std::optional<tripoint_bub_ms> next_expected_position;
+        std::optional<tripoint_abs_ms> next_expected_position;
         scenttype_id type_of_scent;
 
         struct weighted_int_list<std::string> melee_miss_reasons;
 
         int cached_moves = 0;
-        tripoint_bub_ms cached_position;
+        tripoint_abs_ms cached_position;
         inventory cached_crafting_inventory;
 
         mutable std::array<double, npc_ai_info::num_npc_ai_info> npc_ai_info_cache;

@@ -18,7 +18,6 @@ class player;
 class JsonIn;
 
 struct quality;
-struct tripoint;
 
 
 namespace salvage

@@ -3454,13 +3454,13 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         SDL_Color block_color;
                         std::string label;
                         if( outside && !sheltered ) {
-                            block_color = { 0, 200, 0, 100 };   // green - fully open
+                            block_color = { 0, 200, 0, 80 };   // green - fully open
                             label = "O";
                         } else if( outside && sheltered ) {
-                            block_color = { 200, 200, 0, 100 };  // yellow - overhang
+                            block_color = { 200, 200, 0, 80 };  // yellow - overhang
                             label = "S";
                         } else {
-                            block_color = { 200, 0, 0, 100 };    // red - indoors
+                            block_color = { 200, 0, 0, 80 };    // red - indoors
                             label = "I";
                         }
                         color_blocks.first = SDL_BLENDMODE_BLEND;
@@ -3890,7 +3890,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
         const auto &tr = here.tr_at( p );
         const auto &tr_id = tr.loadid;
-        if( !tr_id || !tr_id.obj().can_see( p, g->u ) || tr_id == tr_ledge ) {
+        if( !tr_id || !tr_id.obj().can_see( bub_to_abs( p ), g->u ) || tr_id == tr_ledge ) {
             return;
         }
         const auto neighborhood_ids = std::array{
@@ -5428,7 +5428,7 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
     auto [bgCol, fgCol] = get_trap_color( tr, here, p );
 
     // first memorize the actual trap
-    if( tr_id && !invisible[0] && tr_id.obj().can_see( p, g->u ) ) {
+    if( tr_id && !invisible[0] && tr_id.obj().can_see( bub_to_abs( p ), g->u ) ) {
         const int neighborhood[4] = {
             static_cast<int>( here.tr_at( p + point_south ).loadid ),
             static_cast<int>( here.tr_at( p + point_east ).loadid ),
@@ -5450,7 +5450,8 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
                        ll, true, z_drop, false, height_3d );
         }
     }
-    if( overridden || ( !invisible[0] && neighborhood_overridden && tr_id.obj().can_see( p, g->u ) ) ) {
+    if( overridden || ( !invisible[0] && neighborhood_overridden &&
+                        tr_id.obj().can_see( bub_to_abs( p ), g->u ) ) ) {
         // and then draw the override trap
         const trap_id &tr2 = overridden ? override->second : tr_id;
         if( tr2 ) {
@@ -5899,7 +5900,7 @@ bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &h
                      tile, p, std::nullopt, std::nullopt,
                      lit_level::LIT, false, z_drop, false, height_3d );
     } else if( !invisible[0] ) {
-        const Creature *pcritter = g->critter_at( p, true );
+        const Creature *pcritter = g->u.get_mapbuffer().creature_at( bub_to_abs( p ), true );
         if( pcritter == nullptr ) {
             return false;
         }

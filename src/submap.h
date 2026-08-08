@@ -18,7 +18,6 @@
 #include "field.h"
 #include "game_constants.h"
 #include "item.h"
-#include "legacy_pathfinding.h"
 #include "type_id.h"
 #include "monster.h"
 #include "point.h"
@@ -221,8 +220,8 @@ class submap : maptile_soa<SEEX, SEEY>
         };
 
         const data_vars::data_set &get_furn_vars( const point_sm_ms &p ) const {
-            const auto it = ter_vars.find( p );
-            if( it == ter_vars.end() ) {
+            const auto it = frn_vars.find( p );
+            if( it == frn_vars.end() ) {
                 return EMPTY_VARS;
             }
             return it->second;
@@ -315,10 +314,8 @@ class submap : maptile_soa<SEEX, SEEY>
         // scent_values is serialized; the other caches are rebuilt on load.
 
         float  transparency_cache[SEEX][SEEY] = {};
-        bool   outside_cache[SEEX][SEEY]      = {};
-        bool   sheltered_cache[SEEX][SEEY]    = {};
+        bool   roof_above_cache[SEEX][SEEY]       = {};
         char   floor_cache[SEEX][SEEY]        = {};
-        pf_special pf_special_cache[SEEX][SEEY]  = {};
         int    scent_values[SEEX][SEEY]       = {};
         short  absorption_cache[SEEX][SEEY]   = {};
         bool   sound_wall_cache[SEEX][SEEY]   = {};
@@ -327,7 +324,7 @@ class submap : maptile_soa<SEEX, SEEY>
         bool has_scent = false;
 
         bool transparency_dirty = true;
-        bool outside_dirty      = true;
+        bool roof_above_dirty = true;
         bool floor_dirty        = true;
         bool pf_dirty           = true;
         bool absorption_dirty   = true;
@@ -338,12 +335,10 @@ class submap : maptile_soa<SEEX, SEEY>
         // Rebuild per-submap caches from terrain/furniture/field data.
         // grid_pos = submap grid coordinates within map m (x,y = submap index, z = z-level).
         // above: the level_cache for z+1 (nullptr at OVERMAP_HEIGHT — base case).
-        // outside_cache: true when the tile has sky access via the 3×3 overhang rule.
-        // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
-        auto rebuild_outside_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
+        // This cache records only structural cover directly above the tile.
+        // Vehicle state is deliberately handled by mapbuffer predicates.
+        auto rebuild_roof_above_cache( const submap *above ) -> void;
         auto rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
-        auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
-        // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
         auto rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
 
         // Rebuilds the per-submap sound absorption cache from terrain and furniture data.

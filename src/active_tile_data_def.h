@@ -24,8 +24,8 @@ class battery_tile : public active_tile_data
 {
     public:
         /* In kJ */
-        int stored;
-        int max_stored;
+        int stored = 0;
+        int max_stored = 0;
 
         void update_internal( time_point to, const tripoint_abs_ms &p, distribution_grid &grid ) override;
         active_tile_data *clone() const override;

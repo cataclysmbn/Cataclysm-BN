@@ -393,6 +393,11 @@ struct lighting_resource_cache {
     std::vector<uint32_t> vehicle_floor_staging;
     std::vector<uint32_t> vehicle_obscured_staging;
     std::vector<float> source_map_staging;
+    std::vector<int> transparency_staging_levels;
+    std::vector<int> floor_staging_levels;
+    std::vector<int> vehicle_floor_staging_levels;
+    std::vector<int> vehicle_obscured_staging_levels;
+    std::vector<int> source_map_staging_levels;
     lighting_input_residency inputs;
     std::vector<int> camera_nonzero_levels;
     std::vector<char> seen_valid_levels;
@@ -407,8 +412,6 @@ struct lighting_resource_cache {
     std::size_t static_ambient_signature = 0;
     bool static_source_signature_valid = false;
     std::size_t static_source_signature = 0;
-    std::vector<char> static_structural_level_signature_valid;
-    std::vector<std::size_t> static_structural_level_signatures;
     bool lighting_outputs_valid = false;
 };
 
@@ -594,7 +597,6 @@ struct pending_gpu_lighting_work {
     std::vector<int> all_levels;
     std::vector<int> seen_download_levels;
     std::vector<int> colored_light_download_levels;
-    std::vector<std::pair<int, std::size_t>> checked_structural_signatures;
     std::size_t current_ambient_signature = 0;
     std::size_t current_static_source_signature = 0;
     int cache_xy = 0;
@@ -722,6 +724,11 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.vehicle_floor_staging = {};
     s_lighting_resources.vehicle_obscured_staging = {};
     s_lighting_resources.source_map_staging = {};
+    s_lighting_resources.transparency_staging_levels = {};
+    s_lighting_resources.floor_staging_levels = {};
+    s_lighting_resources.vehicle_floor_staging_levels = {};
+    s_lighting_resources.vehicle_obscured_staging_levels = {};
+    s_lighting_resources.source_map_staging_levels = {};
     s_lighting_resources.inputs = {};
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.seen_valid = false;
@@ -734,8 +741,6 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.static_ambient_signature = 0;
     s_lighting_resources.static_source_signature_valid = false;
     s_lighting_resources.static_source_signature = 0;
-    s_lighting_resources.static_structural_level_signature_valid = {};
-    s_lighting_resources.static_structural_level_signatures = {};
     s_lighting_resources.lighting_outputs_valid = false;
     s_lighting_resources.device = nullptr;
 }
@@ -1335,33 +1340,6 @@ auto source_signature(std::vector<GpuLightSource> const& sources) -> std::size_t
     return seed;
 }
 
-auto structural_level_signature(map const& m, int const z, int const cache_x, int const cache_y)
-    -> std::size_t {
-    auto seed = std::size_t{0};
-    mix_signature(seed, static_cast<std::size_t>(cache_x));
-    mix_signature(seed, static_cast<std::size_t>(cache_y));
-    mix_signature(seed, static_cast<std::size_t>(z + OVERMAP_DEPTH));
-
-    auto const& lc = m.get_cache_ref(z);
-    for (auto const value : lc.transparency_cache) {
-        mix_signature(seed, static_cast<std::size_t>(std::bit_cast<uint32_t>(value)));
-    }
-    for (auto const value : lc.floor_cache) {
-        mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
-    }
-    for (auto const value : lc.vehicle_floor_cache) {
-        mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
-    }
-    for (auto const& value : lc.vehicle_obscured_cache) {
-        auto const packed =
-            (value.nw ? std::size_t{1} : std::size_t{0})
-            | (value.ne ? std::size_t{2} : std::size_t{0});
-        mix_signature(seed, packed);
-    }
-
-    return seed;
-}
-
 auto dirty_level_index(source_accumulator const& acc, int const zlev) -> int {
     auto const iter = std::ranges::find(acc.dirty_levels, zlev);
     if (iter == acc.dirty_levels.end()) { return -1; }
@@ -1506,8 +1484,8 @@ auto add_static_emitter_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_static_emitters");
     for (auto const z : acc.dirty_levels) {
         for (auto const& view : acc.m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const grid = abs_to_bub(view.pos);
+            auto const& sm = *view.sm;
 
             for (auto const sm_ms : sm.static_emitter_tiles()) {
                 auto const pos = project_combine(grid, sm_ms);
@@ -1539,8 +1517,8 @@ auto add_field_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_field_sources");
     for (auto const z : acc.dirty_levels) {
         for (auto const& view : acc.m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const grid = abs_to_bub(view.pos);
+            auto const& sm = *view.sm;
             if (sm.field_count == 0) { continue; }
 
             for (auto const sm_ms : sm.field_cache) {
@@ -1635,7 +1613,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         for (vpart_reference const& part : lights) {
             auto const& info = part.info();
             auto const& vehicle_part = part.part();
-            auto const pos = part.pos();
+            auto const pos = part.bub_pos();
             if (!acc.m.inbounds(pos)) { continue; }
 
             auto const flags = vehicle_light_flags(part);
@@ -1691,7 +1669,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         for (vpart_reference const& part : veh->get_all_parts()) {
             if (!part.has_feature(VPFLAG_CARGO) || part.has_feature("COVERED")) { continue; }
 
-            auto const pos = part.pos();
+            auto const pos = part.bub_pos();
             if (!acc.m.inbounds(pos)) { continue; }
 
             auto const part_index = static_cast<int>(part.part_index());
@@ -1826,8 +1804,8 @@ auto write_field_light_overrides_to_source_map(map const& m, std::vector<int> co
     -> void {
     for (auto const z : dirty_levels) {
         for (auto const& view : m.active_submap_views(z)) {
-            auto const grid = abs_to_bub(view.abs_pos());
-            auto const& sm = view.get_submap();
+            auto const grid = abs_to_bub(view.pos);
+            auto const& sm = *view.sm;
             if (sm.field_count == 0) { continue; }
 
             for (auto const sm_ms : sm.field_cache) {
@@ -1893,10 +1871,6 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.static_lighting_valid = false;
-    s_lighting_resources.static_structural_level_signature_valid =
-        std::vector<char>(static_cast<std::size_t>(z_count), '\0');
-    s_lighting_resources.static_structural_level_signatures =
-        std::vector<std::size_t>(static_cast<std::size_t>(z_count), std::size_t{0});
     s_lighting_resources.lighting_outputs_valid = false;
 }
 
@@ -2205,7 +2179,7 @@ auto collect_vehicle_optics(map const& m, tripoint_bub_ms const& origin, int con
     auto cam_control = -1;
 
     for (vpart_reference const& part_ref : veh->get_avail_parts(VPFLAG_EXTENDS_VISION)) {
-        auto const optic_pos = part_ref.pos();
+        auto const optic_pos = part_ref.bub_pos();
         if (!target_cache.inbounds(optic_pos.xy())) { continue; }
         auto const is_camera_control = part_ref.info().has_flag("CAMERA_CONTROL");
         auto const part_index = static_cast<int>(part_ref.part_index());
@@ -2261,48 +2235,79 @@ auto collect_vehicle_optics(map const& m, tripoint_bub_ms const& origin, int con
 // each packed level into its resident 3D-buffer slice.
 auto pack_float_cache(
     map const& m, std::vector<int> const& levels, int const cache_xy, auto const cache_accessor,
-    std::vector<float>& out) -> void {
-    out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
+    std::vector<int>& packed_levels, std::vector<float>& out) -> bool {
+    const auto new_size = levels.size() * static_cast<std::size_t>(cache_xy);
+    const bool same_shape = out.size() == new_size && packed_levels == levels;
+    if (!same_shape) { out.resize(new_size); }
+    auto changed = !same_shape;
     auto level_index = std::size_t{0};
     for (auto const z : levels) {
         auto const& lc = m.get_cache_ref(z);
         auto const& src = cache_accessor(lc);
         auto* dst = out.data() + level_index * cache_xy;
-        std::ranges::copy(src, dst);
+        auto* previous = dst;
+        std::ranges::transform(src, dst, [&, previous](const float value) mutable {
+            if (!same_shape || *previous != value) { changed = true; }
+            ++previous;
+            return value;
+        });
         ++level_index;
     }
+    packed_levels = levels;
+    return changed;
 }
 
 // Pack selected z-levels into a compact uint upload buffer.
 // Non-zero char → uint 1; zero → uint 0.
 auto pack_char_cache_uint(
     map const& m, std::vector<int> const& levels, int const cache_xy, auto const cache_accessor,
-    std::vector<uint32_t>& out) -> void {
-    out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
+    std::vector<int>& packed_levels, std::vector<uint32_t>& out) -> bool {
+    const auto new_size = levels.size() * static_cast<std::size_t>(cache_xy);
+    const bool same_shape = out.size() == new_size && packed_levels == levels;
+    if (!same_shape) { out.resize(new_size); }
+    auto changed = !same_shape;
     auto level_index = std::size_t{0};
     for (auto const z : levels) {
         auto const& lc = m.get_cache_ref(z);
         auto const& src = cache_accessor(lc);
         auto* dst = out.data() + level_index * cache_xy;
-        std::ranges::transform(src, dst, [](char const c) -> uint32_t { return c != 0 ? 1u : 0u; });
+        auto* previous = dst;
+        std::ranges::transform(src, dst, [&, previous](const char c) mutable -> uint32_t {
+            const auto value = c != 0 ? 1u : 0u;
+            if (!same_shape || *previous != value) { changed = true; }
+            ++previous;
+            return value;
+        });
         ++level_index;
     }
+    packed_levels = levels;
+    return changed;
 }
 
 auto pack_vehicle_obscured_cache_uint(
-    map const& m, std::vector<int> const& levels, int const cache_xy, std::vector<uint32_t>& out)
-    -> void {
-    out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
+    map const& m, std::vector<int> const& levels, int const cache_xy,
+    std::vector<int>& packed_levels, std::vector<uint32_t>& out) -> bool {
+    const auto new_size = levels.size() * static_cast<std::size_t>(cache_xy);
+    const bool same_shape = out.size() == new_size && packed_levels == levels;
+    if (!same_shape) { out.resize(new_size); }
+    auto changed = !same_shape;
     auto level_index = std::size_t{0};
     for (auto const z : levels) {
         auto const& lc = m.get_cache_ref(z);
         auto* dst = out.data() + level_index * cache_xy;
-        std::ranges::
-            transform(lc.vehicle_obscured_cache, dst, [](diagonal_blocks const& value) -> uint32_t {
-                return (value.nw ? 1u : 0u) | (value.ne ? 2u : 0u);
+        auto* previous = dst;
+        std::ranges::transform(
+            lc.vehicle_obscured_cache, dst,
+            [&, previous](const diagonal_blocks& value) mutable -> uint32_t {
+                const auto packed = (value.nw ? 1u : 0u) | (value.ne ? 2u : 0u);
+                if (!same_shape || *previous != packed) { changed = true; }
+                ++previous;
+                return packed;
             });
         ++level_index;
     }
+    packed_levels = levels;
+    return changed;
 }
 
 struct record_seen_rebuild_params {
@@ -2485,6 +2490,29 @@ auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> 
         }
     }
     refresh_transparency_valid_flag();
+}
+
+auto invalidate_lighting_floor_inputs() -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    inputs.floor_valid = false;
+    inputs.vehicle_floor_valid = false;
+    inputs.vehicle_obscured_valid = false;
+}
+
+auto invalidate_lighting_residency() -> void {
+    s_lighting_resources.inputs = {};
+    s_lighting_resources.seen_valid = false;
+    s_lighting_resources.seen_origin_valid = false;
+    s_lighting_resources.seen_origin_x = 0;
+    s_lighting_resources.seen_origin_y = 0;
+    s_lighting_resources.seen_valid_levels = {};
+    s_lighting_resources.camera_valid = false;
+    s_lighting_resources.camera_nonzero_levels = {};
+    s_lighting_resources.source_map_valid = false;
+    s_lighting_resources.static_lighting_valid = false;
+    s_lighting_resources.static_ambient_signature_valid = false;
+    s_lighting_resources.static_source_signature_valid = false;
+    s_lighting_resources.lighting_outputs_valid = false;
 }
 
 auto resident_lighting_ready_for_visibility(resident_lighting_visibility_params const& p) -> bool {
@@ -2829,34 +2857,42 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto& vehicle_floor_cpu = s_lighting_resources.vehicle_floor_staging;
     auto& vehicle_obscured_cpu = s_lighting_resources.vehicle_obscured_staging;
     auto& source_map_cpu = s_lighting_resources.source_map_staging;
+    auto& transparency_staging_levels = s_lighting_resources.transparency_staging_levels;
+    auto& floor_staging_levels = s_lighting_resources.floor_staging_levels;
+    auto& vehicle_floor_staging_levels = s_lighting_resources.vehicle_floor_staging_levels;
+    auto& vehicle_obscured_staging_levels = s_lighting_resources.vehicle_obscured_staging_levels;
+    auto& source_map_staging_levels = s_lighting_resources.source_map_staging_levels;
+    auto const structural_upload = has_structural_upload(input_uploads);
+    auto structural_data_changed = false;
 
-    if (has_structural_upload(input_uploads)) {
+    if (structural_upload) {
         ZoneScopedN("gpu_lm_pack_inputs");
         if (!input_uploads.transparency_levels.empty()) {
-            pack_float_cache(
+            structural_data_changed |= pack_float_cache(
                 *p.m, input_uploads.transparency_levels, cache_xy,
                 [](level_cache const& lc) -> std::vector<float> const& {
                     return lc.transparency_cache;
                 },
-                transparency_cpu);
+                transparency_staging_levels, transparency_cpu);
         }
         if (!input_uploads.floor_levels.empty()) {
-            pack_char_cache_uint(
+            structural_data_changed |= pack_char_cache_uint(
                 *p.m, input_uploads.floor_levels, cache_xy,
                 [](level_cache const& lc) -> std::vector<char> const& { return lc.floor_cache; },
-                floor_cpu);
+                floor_staging_levels, floor_cpu);
         }
         if (!input_uploads.vehicle_floor_levels.empty()) {
-            pack_char_cache_uint(
+            structural_data_changed |= pack_char_cache_uint(
                 *p.m, input_uploads.vehicle_floor_levels, cache_xy,
                 [](level_cache const& lc) -> std::vector<char> const& {
                     return lc.vehicle_floor_cache;
                 },
-                vehicle_floor_cpu);
+                vehicle_floor_staging_levels, vehicle_floor_cpu);
         }
         if (!input_uploads.vehicle_obscured_levels.empty()) {
-            pack_vehicle_obscured_cache_uint(
-                *p.m, input_uploads.vehicle_obscured_levels, cache_xy, vehicle_obscured_cpu);
+            structural_data_changed |= pack_vehicle_obscured_cache_uint(
+                *p.m, input_uploads.vehicle_obscured_levels, cache_xy,
+                vehicle_obscured_staging_levels, vehicle_obscured_cpu);
         }
     }
     {
@@ -2864,7 +2900,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         pack_float_cache(
             *p.m, source_map_upload_levels, cache_xy,
             [](level_cache const& lc) -> std::vector<float> const& { return lc.sm; },
-            source_map_cpu);
+            source_map_staging_levels, source_map_cpu);
     }
 
     // ── Compute ambient constants per z-level ────────────────────────────────
@@ -2894,41 +2930,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const ambient_changed =
         !s_lighting_resources.static_ambient_signature_valid
         || s_lighting_resources.static_ambient_signature != current_ambient_signature;
-    auto const structural_upload = has_structural_upload(input_uploads);
-    auto structural_upload_levels = std::vector<int>{};
-    if (structural_upload) {
-        std::ranges::
-            copy(input_uploads.transparency_levels, std::back_inserter(structural_upload_levels));
-        std::ranges::copy(input_uploads.floor_levels, std::back_inserter(structural_upload_levels));
-        std::ranges::
-            copy(input_uploads.vehicle_floor_levels, std::back_inserter(structural_upload_levels));
-        std::ranges::copy(
-            input_uploads.vehicle_obscured_levels, std::back_inserter(structural_upload_levels));
-        structural_upload_levels = sorted_unique(std::move(structural_upload_levels));
-    }
-    auto checked_structural_signatures = std::vector<std::pair<int, std::size_t>>{};
-    auto structural_changed = false;
-    if (!lightmap_levels.empty() && s_lighting_resources.static_lighting_valid
-        && !structural_upload_levels.empty()) {
-        ZoneScopedN("gpu_lm_structural_signature");
-        checked_structural_signatures.reserve(structural_upload_levels.size());
-        for (auto const z : structural_upload_levels) {
-            auto const signature = structural_level_signature(*p.m, z, cache_x, cache_y);
-            checked_structural_signatures.emplace_back(z, signature);
-            auto const zi = z_to_resident_index(z);
-            auto const valid_idx = resident_index_is_valid(
-                zi, s_lighting_resources.static_structural_level_signature_valid);
-            if (!valid_idx
-                || s_lighting_resources.static_structural_level_signature_valid[static_cast<
-                       std::size_t>(zi)]
-                       == '\0'
-                || s_lighting_resources.static_structural_level_signatures[static_cast<std::size_t>(
-                       zi)]
-                       != signature) {
-                structural_changed = true;
-            }
-        }
-    }
+    auto const structural_changed = !lightmap_levels.empty() && structural_data_changed;
     auto const current_static_source_signature = source_signature(static_sources);
     auto const static_sources_changed =
         !lightmap_levels.empty()
@@ -3053,10 +3055,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     TracyPlot("GPU LM Ambient Changed", ambient_changed ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Static Sources Changed", static_sources_changed ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Structural Upload", structural_upload ? int64_t{1} : int64_t{0});
-    TracyPlot("GPU LM Structural Signature Checked",
-              checked_structural_signatures.empty() ? int64_t{0} : int64_t{1});
-    TracyPlot("GPU LM Structural Signature Levels",
-              static_cast<int64_t>(checked_structural_signatures.size()));
+    TracyPlot("GPU LM Structural Data Changed", structural_data_changed ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Structural Changed", structural_changed ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Sources Static", static_cast<int64_t>(source_stats.static_sources));
     TracyPlot("GPU LM Sources Static Local",
@@ -3622,7 +3621,6 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         .all_levels = std::move(all_levels),
         .seen_download_levels = std::move(seen_download_levels),
         .colored_light_download_levels = std::move(colored_light_download_levels),
-        .checked_structural_signatures = std::move(checked_structural_signatures),
         .current_ambient_signature = current_ambient_signature,
         .current_static_source_signature = current_static_source_signature,
         .cache_xy = cache_xy,
@@ -3772,17 +3770,6 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
         s_lighting_resources.static_lighting_valid = true;
         s_lighting_resources.static_source_signature_valid = true;
         s_lighting_resources.static_source_signature = pending.current_static_source_signature;
-        for (auto const& [z, signature] : pending.checked_structural_signatures) {
-            auto const zi = z_to_resident_index(z);
-            if (!resident_index_is_valid(
-                    zi, s_lighting_resources.static_structural_level_signature_valid)) {
-                continue;
-            }
-            s_lighting_resources
-                .static_structural_level_signature_valid[static_cast<std::size_t>(zi)] = '\1';
-            s_lighting_resources.static_structural_level_signatures[static_cast<std::size_t>(zi)] =
-                signature;
-        }
     }
     if (pending.rebuild_seen) {
         mark_seen_rebuild_success(pending.all_levels, pending.player_x, pending.player_y, true);

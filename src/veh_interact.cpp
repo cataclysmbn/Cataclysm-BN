@@ -13,6 +13,7 @@
 #include <string>
 #include <utility>
 
+#include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "avatar_functions.h"
@@ -162,24 +163,26 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
     if( you.has_trait( trait_DEBUG_HT ) ) {
         time = 1;
     }
-    std::unique_ptr<player_activity> res = std::make_unique<player_activity>( ACT_VEHICLE, time,
-                                           static_cast<int>( sel_cmd ) );
-
     // if we're working on an existing part, use that part as the reference point
     // otherwise (e.g. installing a new frame), just use part 0
     const vehicle_part *vpt = pt ? pt : &veh->part( 0 );
-    const auto q = bub_to_abs( veh->bub_part_location( *vpt ) );
+    const auto q = veh->abs_part_location( *vpt );
+    std::unordered_set<tripoint_abs_ms> veh_points;
     for( const tripoint_abs_ms &p : veh->get_points( true ) ) {
-        res->coord_set.insert( p );
+        veh_points.insert( p );
     }
-    res->values.push_back( q.x() );   // values[0]
-    res->values.push_back( q.y() );   // values[1]
-    res->values.push_back( q.z() );   // values[2]
-    res->values.push_back( vehicle_cursor.x() );   // values[3]
-    res->values.push_back( vehicle_cursor.y() );   // values[4]
-    res->values.push_back( vehicle_cursor.z() );   // values[5]
-    res->values.push_back( veh->index_of_part( vpt ) ); // values[6]
-    res->str_values.push_back( vp->get_id().str() );
+
+    std::unique_ptr<player_activity> res = std::make_unique<player_activity>(
+    std::make_unique<vehicle_work_actor>( vehicle_work_actor_options{
+        .command = static_cast<char>( sel_cmd ),
+        .part_pos = q,
+        .cursor_mount = vehicle_cursor,
+        .part_type = vp->get_id(),
+        .part_index = veh->index_of_part( vpt ),
+        .moves_total = time,
+        .vehicle_points = std::move( veh_points ),
+    } )
+                                           );
     if( target ) {
         res->targets.emplace_back( target );
     }
@@ -3233,7 +3236,7 @@ void veh_interact::complete_vehicle( Character &who )
         // check the vehicle points that were stored at beginning of activity.
         if( !who.activity->coord_set.empty() ) {
             for( const auto pt : who.activity->coord_set ) {
-                vp = here.veh_at( abs_to_bub( pt ) );
+                vp = here.veh_at( pt );
                 if( vp ) {
                     break;
                 }

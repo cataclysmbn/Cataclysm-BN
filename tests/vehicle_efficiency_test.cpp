@@ -48,7 +48,7 @@ static auto reset_efficiency_state() -> void {
 
     // Move player somewhere safe
     REQUIRE_FALSE(g->u.in_vehicle);
-    g->u.setpos(tripoint_bub_ms(g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, -2));
+    put_player_underground();
     // Blind the player to avoid needless drawing-related overhead
     g->u.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
 }
@@ -178,9 +178,9 @@ static int test_efficiency(
     int max_dist = target_distance * 1.01;
     prepare_efficiency_map(terrain);
 
-    const tripoint_bub_ms map_starting_point(60, 60, 0);
-    map& here = get_map();
-    vehicle* veh_ptr = here.add_vehicle(veh_id, map_starting_point, -90_degrees, 0, 0);
+    auto& map = get_map();
+    auto& here = map.get_mapbuffer();
+    vehicle* veh_ptr = here.add_vehicle(veh_id, test_origin, -90_degrees, 0, 0);
 
     REQUIRE(veh_ptr != nullptr);
     if (veh_ptr == nullptr) { return 0; }
@@ -190,7 +190,7 @@ static int test_efficiency(
     // Remove all items from cargo to normalize weight.
     for (const vpart_reference vp : veh.get_all_parts()) {
         veh_ptr->get_items(vp.part_index()).clear();
-        vp.part().ammo_consume(vp.part().ammo_remaining(), vp.pos());
+        vp.part().ammo_consume(vp.part().ammo_remaining(), vp.bub_pos());
     }
     for (const vpart_reference vp : veh.get_avail_parts("OPENABLE")) { veh.close(vp.part_index()); }
 
@@ -206,7 +206,7 @@ static int test_efficiency(
     const float starting_fuel_per = fuel_percentage_left(veh, starting_fuel);
     REQUIRE(std::abs(starting_fuel_per - 1.0f) < 0.001f);
 
-    const auto starting_point = veh.bub_ms_location();
+    const auto starting_point = veh.abs_ms_location();
     veh.tags.insert("IN_CONTROL_OVERRIDE");
     veh.engine_on = true;
 
@@ -223,15 +223,15 @@ static int test_efficiency(
     CHECK(veh.safe_velocity() > 0);
     while (veh.engine_on && veh.safe_velocity() > 0 && cycles_left > 0) {
         cycles_left--;
-        here.vehmove();
+        map.vehmove();
         veh.idle(true);
         // If the vehicle starts skidding, the effects become random and test is RUINED
         REQUIRE(!veh.skidding);
         // How much it moved
-        tiles_travelled += square_dist(starting_point, veh.bub_ms_location());
+        tiles_travelled += square_dist(starting_point, veh.abs_ms_location());
         // Bring it back to starting point to prevent it from leaving the map
-        const tripoint_rel_ms displacement = starting_point - veh.bub_ms_location();
-        here.displace_vehicle(veh, tripoint_rel_ms(displacement));
+        const tripoint_rel_ms displacement = starting_point - veh.abs_ms_location();
+        map.displace_vehicle(veh, tripoint_rel_ms(displacement));
         if (reset_velocity_turn < 0) { continue; }
 
         reset_counter++;
@@ -248,7 +248,7 @@ static int test_efficiency(
         }
     }
 
-    assert_vehicle_on_valid_terrain(here, veh);
+    assert_vehicle_on_valid_terrain(map, veh);
 
     float fuel_left = fuel_percentage_left(veh, starting_fuel);
     REQUIRE(starting_fuel_per - fuel_left > 0.0001f);
@@ -269,10 +269,10 @@ TEST_CASE("vehicle_efficiency_movement_keeps_vehicle_on_valid_terrain", "[vehicl
     reset_efficiency_state();
     prepare_efficiency_map(ter_id("t_pavement"));
 
-    const tripoint_bub_ms map_starting_point(60, 60, 0);
-    map& here = get_map();
+    auto& map = get_map();
+    auto& here = map.get_mapbuffer();
     vehicle* veh_ptr =
-        here.add_vehicle(vproto_id("fire_truck_test"), map_starting_point, -90_degrees, 0, 0);
+        here.add_vehicle(vproto_id("fire_truck_test"), test_origin, -90_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     vehicle& veh = *veh_ptr;
     veh.tags.insert("IN_CONTROL_OVERRIDE");
@@ -281,11 +281,11 @@ TEST_CASE("vehicle_efficiency_movement_keeps_vehicle_on_valid_terrain", "[vehicl
     veh.velocity = veh.cruise_velocity;
 
     for (auto cycle = 0; cycle < 10; ++cycle) {
-        here.vehmove();
+        map.vehmove();
         veh.idle(true);
         REQUIRE(!veh.skidding);
-        assert_vehicle_on_valid_terrain(here, veh);
-        here.displace_vehicle(veh, map_starting_point - veh.bub_ms_location());
+        assert_vehicle_on_valid_terrain(map, veh);
+        map.displace_vehicle(veh, test_origin - veh.abs_ms_location());
     }
 
     here.destroy_vehicle(veh_ptr);

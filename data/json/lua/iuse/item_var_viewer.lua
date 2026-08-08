@@ -217,7 +217,7 @@ end
 viewer.menu = function(params)
   local who = params.user
   local item = params.item
-  local pos = params.pos
+  local abs_pos = params.pos
   local inventory = who:all_items(false)
   local menu = UiList.new()
   menu:title(color_text(locale.gettext("Item var viewer"), "yellow"))
@@ -272,7 +272,7 @@ viewer.menu = function(params)
 
   local map = gapi.get_map()
   ---@type TripointBubMs[]
-  local points = map:points_in_radius(pos, 5)
+  local points = map:points_in_radius(map:abs_to_bub( abs_pos ), 5)
   ---@type table<string, boolean>
   local seen_monsters = {}
   ---@type table<string, boolean>

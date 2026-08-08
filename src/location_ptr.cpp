@@ -41,6 +41,9 @@ location_ptr<T, error_if_null> &location_ptr<T, error_if_null>::operator=
     }
 
     if( &*loc == source->saved_loc ) {
+        if( !ptr ) {
+            ptr = source.ptr;
+        }
         update_location();
         source->saved_loc = nullptr;
         source.release();

@@ -18,6 +18,7 @@
 #include "game_constants.h"
 #include "item.h"
 #include "item_stack.h"
+#include "mapbuffer_registry.h"
 #include "point.h"
 #include "tileray.h"
 #include "type_id.h"
@@ -553,7 +554,7 @@ class vehicle
                          std::optional<bool> has_keys );
 
         // damages all parts of a vehicle by a random amount
-        void smash( map &m, float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
+        void smash( float hp_percent_loss_min = 0.1f, float hp_percent_loss_max = 1.2f,
                     float percent_of_parts_to_affect = 1.0f, tripoint_rel_ms damage_origin = tripoint_rel_ms::zero(),
                     float damage_size = 0 );
         auto smash( mapgen_constructor &m, float hp_percent_loss_min = 0.1f,
@@ -621,7 +622,7 @@ class vehicle
          *  Operate vehicle controls
          *  @param pos location of physical controls to operate (ignored during remote operation)
          */
-        void use_controls( const tripoint_bub_ms &pos );
+        void use_controls( const tripoint_abs_ms &pos );
 
         // Fold up the vehicle
         bool fold_up();
@@ -784,6 +785,9 @@ class vehicle
          *  @param enabled if set part must also be enabled to be considered
          */
         bool has_part( const tripoint_bub_ms &pos, const std::string &flag, bool enabled = false ) const;
+        bool has_part( const tripoint_abs_ms &pos, const std::string &flag, bool enabled = false ) const;
+        bool has_part( const tripoint_bub_ms &pos, const vpart_bitflags &flag, bool enabled = false ) const;
+        bool has_part( const tripoint_abs_ms &pos, const vpart_bitflags &flag, bool enabled = false ) const;
 
         /**
          *  Get all enabled, available, unbroken vehicle parts at specified position
@@ -793,7 +797,11 @@ class vehicle
          */
         std::vector<vehicle_part *> get_parts_at( const tripoint_bub_ms &pos, const std::string &flag,
                 part_status_flag condition );
+        std::vector<vehicle_part *> get_parts_at( const tripoint_abs_ms &pos, const std::string &flag,
+                part_status_flag condition );
         std::vector<const vehicle_part *> get_parts_at( const tripoint_bub_ms &pos,
+                const std::string &flag, part_status_flag condition ) const;
+        std::vector<const vehicle_part *> get_parts_at( const tripoint_abs_ms &pos,
                 const std::string &flag, part_status_flag condition ) const;
 
         /** Test if part can be enabled (unbroken, sufficient fuel etc), optionally displaying failures to user */
@@ -907,6 +915,7 @@ class vehicle
         monster *get_pet( int p ) const;
 
         bool enclosed_at( const tripoint_bub_ms &pos ); // not const because it calls refresh_insides
+        bool enclosed_at( const tripoint_abs_ms &pos );
         // Returns the location of the vehicle in global map square coordinates.
         tripoint_abs_ms abs_ms_location() const;
         // Returns the coordinates (in map squares) of the vehicle relative to the local map.
@@ -1311,7 +1320,7 @@ class vehicle
         auto part_collision( const vehicle_part_collision_options &options ) -> veh_collision;
 
         // Process the trap beneath
-        void handle_trap( const tripoint_bub_ms &p, int part );
+        void handle_trap( const tripoint_abs_ms &p, int part );
         void activate_magical_follow();
         void activate_animal_follow();
         /**
@@ -1792,6 +1801,9 @@ class vehicle
         }
         auto set_dimension( const dimension_id &dim_id ) -> void {
             dimension_id_ = dim_id;
+        }
+        auto get_mapbuffer() const -> mapbuffer& {  // *NOPAD*
+            return MAPBUFFER_REGISTRY.get( get_dimension() );
         }
         // direction, to which vehicle is turning (player control). will rotate frame on next move
         // must be a multiple of 15 degrees

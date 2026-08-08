@@ -950,7 +950,7 @@ bool advanced_inventory::move_all_items( bool nested_call )
                         quantities );
                 g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
                                           targets,
-                                          panes[src].in_vehicle() ? std::nullopt : std::optional<tripoint_bub_ms>( g->u.bub_pos() )
+                                          panes[src].in_vehicle() ? std::nullopt : std::optional<tripoint_abs_ms>( g->u.abs_pos() )
                                       ) ) );
             } else {
                 g->u.assign_activity( std::make_unique<player_activity>
@@ -1135,19 +1135,19 @@ void advanced_inventory::start_activity( const aim_location destarea,
     const bool by_charges = sitem->items.front()->count_by_charges();
 
     if( destarea == AIM_WORN ) {
-        g->u.assign_activity( ACT_WEAR );
-
+        std::vector<wear_actor::wear_target> to_wear;
         if( by_charges ) {
-            g->u.activity->targets.emplace_back( sitem->items.front() );
-            g->u.activity->values.push_back( amount_to_move );
+            to_wear.push_back( { safe_reference<item>( sitem->items.front() ), amount_to_move } );
         } else {
             for( std::list<item *>::iterator it = sitem->items.begin(); amount_to_move > 0 &&
                  it != sitem->items.end(); ++it ) {
-                g->u.activity->targets.emplace_back( *it );
-                g->u.activity->values.push_back( 0 );
+                to_wear.push_back( { safe_reference<item>( *it ), 0 } );
                 --amount_to_move;
             }
         }
+        g->u.assign_activity( std::make_unique<player_activity>(
+                                  std::make_unique<wear_actor>( std::move( to_wear ) )
+                              ) );
     } else {
         // Find target items and quantities thereof for the new activity
         std::vector<item *> target_items;
@@ -1169,7 +1169,7 @@ void advanced_inventory::start_activity( const aim_location destarea,
                     quantities );
             g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
                                       targets,
-                                      from_vehicle ? std::nullopt : std::optional<tripoint_bub_ms>( g->u.bub_pos() )
+                                      from_vehicle ? std::nullopt : std::optional<tripoint_abs_ms>( g->u.abs_pos() )
                                   ) ) );
         } else {
             // Stash the destination
@@ -1235,10 +1235,11 @@ bool advanced_inventory::action_move_item( advanced_inv_listitem *sitem,
         do_return_entry();
 
         if( destarea == AIM_WORN ) {
-            g->u.assign_activity( ACT_WEAR );
-
-            g->u.activity->targets.emplace_back( sitem->items.front() );
-            g->u.activity->values.push_back( amount_to_move );
+            std::vector<wear_actor::wear_target> to_wear;
+            to_wear.push_back( { safe_reference<item>( sitem->items.front() ), amount_to_move } );
+            g->u.assign_activity( std::make_unique<player_activity>(
+                                      std::make_unique<wear_actor>( std::move( to_wear ) )
+                                  ) );
         } else {
             item *itm = &g->u.i_at( sitem->idx );
 

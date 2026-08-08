@@ -443,16 +443,16 @@ TEST_CASE("active night vision tiers allow fine detail vision in darkness", "[re
     get_weather().weather_id = weather_type_id("clear");
 
     auto& dummy = get_avatar();
-    constexpr auto pos = tripoint_bub_ms(60, 60, 0);
-    g->place_player(pos);
+    g->place_player(test_origin);
 
-    auto& here = get_map();
-    here.ter_set(pos, ter_id("t_floor"));
-    here.furn_set(pos, furn_id("f_null"));
-    here.ter_set(pos + tripoint_above, ter_id("t_flat_roof"));
-    here.invalidate_map_cache(pos.z());
-    here.build_map_cache(pos.z());
-    here.update_visibility_cache(pos.z());
+    auto& here = dummy.get_mapbuffer();
+    auto& map = get_map();
+    here.set_ter(test_origin, ter_id("t_floor"));
+    here.set_furn(test_origin, furn_id("f_null"));
+    here.set_ter(test_origin + tripoint_above, ter_id("t_flat_roof"));
+    map.invalidate_map_cache(test_origin.z());
+    map.build_map_cache(test_origin.z());
+    map.update_visibility_cache(test_origin.z());
 
     REQUIRE_FALSE(character_funcs::can_see_fine_details(dummy));
 
@@ -477,6 +477,7 @@ TEST_CASE("Losing book during reading", "[reading][book]") {
     clear_all_state();
     set_time(calendar::turn_zero + 12_hours);
     avatar& u = get_avatar();
+    auto& here = u.get_mapbuffer();
     SECTION("Book in inventory") {
         detached_ptr<item> det = item::spawn("novel_western");
         item& western = *det;
@@ -487,7 +488,7 @@ TEST_CASE("Losing book during reading", "[reading][book]") {
     SECTION("Book below player") {
         detached_ptr<item> det = item::spawn("novel_western");
         item& western = *det;
-        get_map().add_item(u.bub_pos(), std::move(det));
+        here.add_item(u.abs_pos(), std::move(det));
         destroyed_book_test_helper(u, &western);
     }
 

@@ -106,6 +106,9 @@ class player_activity
 
         int get_moves_left() const {
             if( actor ) {
+                if( actor->progress.invalid() ) {
+                    return moves_left;
+                }
                 return actor->progress.get_moves_left();
             }
             return moves_left;
@@ -113,6 +116,9 @@ class player_activity
 
         bool complete() const {
             if( actor ) {
+                if( actor->progress.invalid() ) {
+                    return moves_left <= 0;
+                }
                 return actor->progress.complete();
             }
             return moves_left <= 0;
@@ -139,6 +145,16 @@ class player_activity
 
         /** This replaces the former usage `act.type = ACT_NULL` */
         void set_to_null();
+
+        bool has_actor() const {
+            return actor != nullptr;
+        }
+        const activity_actor *get_actor() const {
+            return actor.get();
+        }
+        activity_actor *get_actor() {
+            return actor.get();
+        }
 
         const activity_id &id() const {
             return type;

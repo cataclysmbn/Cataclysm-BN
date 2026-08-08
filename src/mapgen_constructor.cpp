@@ -473,7 +473,10 @@ auto mapgen_constructor::get_vehicles() const -> std::vector<vehicle *>
 auto mapgen_constructor::ter_set( const point_omt_ms &p, const ter_id &terrain ) -> bool
 {
     const auto [sm, local] = tile_at( p );
-    if( sm == nullptr || sm->get_ter( local ) == terrain ) {
+    if( sm == nullptr ) {
+        return false;
+    }
+    if( sm->get_ter( local ) == terrain ) {
         return false;
     }
     sm->set_ter( local, terrain );

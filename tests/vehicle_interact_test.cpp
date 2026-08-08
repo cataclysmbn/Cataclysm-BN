@@ -1,3 +1,4 @@
+#include "activity_actor_definitions.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -29,14 +30,13 @@ static const trait_id trait_DEBUG_HS("DEBUG_HS");
 
 static void test_repair(std::vector<detached_ptr<item>>& tools, bool expect_craftable) {
 
-    const tripoint_bub_ms test_origin(60, 60, 0);
     g->u.setpos(test_origin);
     g->u.wear_item(item::spawn("backpack"), false);
     for (detached_ptr<item>& gear : tools) { g->u.i_add(std::move(gear)); }
 
-    const tripoint_bub_ms vehicle_origin = test_origin + tripoint_rel_ms::south_east();
+    const auto vehicle_origin = test_origin + tripoint_rel_ms::south_east();
     vehicle* veh_ptr =
-        get_map().add_vehicle(vproto_id("bicycle"), vehicle_origin, -90_degrees, 0, 0);
+        get_map().add_vehicle(vproto_id("bicycle"), abs_to_bub(vehicle_origin), -90_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
     // Find the frame at the origin.
     vehicle_part* origin_frame = nullptr;
@@ -117,16 +117,16 @@ TEST_CASE("debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_inte
     you.toggle_trait(trait_DEBUG_HS);
     you.set_body();
 
-    const tripoint_bub_ms vehicle_origin(60, 60, 0);
-    you.setpos(vehicle_origin + point_south);
+    you.setpos(test_origin + point_south);
 
-    vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    vehicle* veh_ptr =
+        here.add_vehicle(vproto_id("bicycle"), you.bub_pos() + point_north, 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
     const auto install_part_id = vpart_id("storage_battery");
     const auto reference_part_index = 0;
     const auto reference_part = &veh_ptr->part(reference_part_index);
-    const auto reference_pos = map_local_to_abs(here, veh_ptr->bub_part_location(*reference_part));
+    const auto reference_pos = veh_ptr->abs_part_location(*reference_part);
 
     you.assign_activity(ACT_VEHICLE, 1, static_cast<int>('i'));
     you.activity->values =
@@ -146,4 +146,56 @@ TEST_CASE("debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_inte
 
     REQUIRE(installed_battery != all_parts.end());
     CHECK(installed_battery->part().ammo_remaining() == installed_battery->part().ammo_capacity());
+}
+
+TEST_CASE("vehicle_activity_progress_message_handles_empty_actor_progress", "[activity][vehicle]") {
+    clear_all_state();
+
+    auto activity = std::make_unique<
+        player_activity>(std::make_unique<vehicle_work_actor>(vehicle_work_actor_options{
+        .command = 'o',
+        .part_pos = test_origin,
+        .cursor_mount = tripoint_mnt_veh::zero(),
+        .part_type = vpart_id("frame"),
+        .part_index = 0,
+    }));
+
+    const auto progress_message = activity->get_progress_message(get_avatar());
+
+    CHECK(progress_message.has_value());
+}
+
+TEST_CASE("vehicle_activity_initializes_actor_progress", "[activity][vehicle]") {
+    clear_all_state();
+
+    auto activity = std::make_unique<
+        player_activity>(std::make_unique<vehicle_work_actor>(vehicle_work_actor_options{
+        .command = 'o',
+        .part_pos = test_origin,
+        .cursor_mount = tripoint_mnt_veh::zero(),
+        .part_type = vpart_id("frame"),
+        .part_index = 0,
+        .moves_total = 100,
+    }));
+
+    activity->start_or_resume(get_avatar(), false);
+
+    CHECK(activity->get_moves_left() == 100);
+    CHECK_FALSE(activity->complete());
+}
+
+TEST_CASE("vehicle_start_actors_initialize_progress", "[activity][vehicle]") {
+    clear_all_state();
+
+    auto start_engines = std::make_unique<player_activity>(
+        std::make_unique<start_engines_actor>(1, test_origin, 100));
+    start_engines->start_or_resume(get_avatar(), false);
+    CHECK(start_engines->get_moves_left() == 100);
+    CHECK_FALSE(start_engines->complete());
+
+    auto hotwire = std::make_unique<player_activity>(
+        std::make_unique<hotwire_car_actor>(test_origin, 4, 200));
+    hotwire->start_or_resume(get_avatar(), false);
+    CHECK(hotwire->get_moves_left() == 200);
+    CHECK_FALSE(hotwire->complete());
 }

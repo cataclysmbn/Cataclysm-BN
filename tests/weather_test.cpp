@@ -1,6 +1,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
+#include "map_helpers.h"
 #include "weather.h"
 #include "weather_gen.h"
 
@@ -91,11 +92,10 @@ TEST_CASE("eternal seasons", "[weather]") {
             bool is_initial_season = j == i;
             CAPTURE(initial_season);
             CAPTURE(i);
-            CHECK(generator.get_weather_temperature(tripoint_abs_ms(), mid_season, no_eternal, seed)
+            CHECK(generator.get_weather_temperature(test_origin, mid_season, no_eternal, seed)
                   == (is_initial_season ? 100_c : 0_c));
-            CHECK(
-                generator.get_weather_temperature(tripoint_abs_ms(), mid_season, yes_eternal, seed)
-                == 100_c);
+            CHECK(generator.get_weather_temperature(test_origin, mid_season, yes_eternal, seed)
+                  == 100_c);
         }
     }
 }
@@ -119,11 +119,11 @@ TEST_CASE("water temperatures track season temperatures", "[weather]") {
         calendar_config(calendar::turn_zero, calendar::turn_zero, WINTER, true);
 
     const auto spring_water_temperature =
-        generator.get_water_temperature(tripoint_abs_ms(), current_time, spring_calendar, 0);
+        generator.get_water_temperature(test_origin, current_time, spring_calendar, 0);
     const auto summer_water_temperature =
-        generator.get_water_temperature(tripoint_abs_ms(), current_time, summer_calendar, 0);
+        generator.get_water_temperature(test_origin, current_time, summer_calendar, 0);
     const auto winter_water_temperature =
-        generator.get_water_temperature(tripoint_abs_ms(), current_time, winter_calendar, 0);
+        generator.get_water_temperature(test_origin, current_time, winter_calendar, 0);
 
     CHECK(winter_water_temperature == 0_c);
     CHECK(spring_water_temperature > winter_water_temperature);
@@ -156,7 +156,7 @@ TEST_CASE("weather realism", "[.]")
 
         // Collect generated weather data for a single year.
         for (time_point i = begin; i < end; i += 1_minutes) {
-            w_point w = wgen.get_weather(tripoint_abs_ms::zero(), i, seed);
+            w_point w = wgen.get_weather(test_origin, i, seed);
             int day = to_days<int>(time_past_new_year(i));
             int minute = to_minutes<int>(time_past_midnight(i));
             temperature[day][minute] = units::to_fahrenheit(w.temperature);

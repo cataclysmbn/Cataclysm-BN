@@ -29,9 +29,9 @@ class lua_iuse_actor : public iuse_actor
                         sol::protected_function &&can_use_func );
         ~lua_iuse_actor() override;
         void load( const JsonObject &obj ) override;
-        int use( player &who, item &itm, bool tick, const tripoint_bub_ms &pos ) const override;
+        int use( Character &, item &, bool, const tripoint_abs_ms & ) const override;
         ret_val<bool> can_use( const Character &, const item &, bool,
-                               const tripoint_bub_ms & ) const override;
+                               const tripoint_abs_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
@@ -131,9 +131,9 @@ class lua_istate_actor : public lua_icallback_actor_base
                           sol::protected_function &&on_drop );
 
         bool has_on_tick() const;
-        auto call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const -> void;
+        auto call_on_tick( Character &who, item &it ) const -> void;
         void call_on_pickup( Character &who, item &it ) const;
-        bool call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const;
+        bool call_on_drop( Character &who, item &it ) const;
 };
 
 /** Lua callbacks for melee combat events. */
@@ -179,7 +179,7 @@ class lua_iranged_actor : public lua_icallback_actor_base
 
         /** Called after firing. Returns false to force all shots to miss. */
         bool call_on_fire( Character &who, item &gun,
-                           const tripoint_bub_ms &target, int shots ) const;
+                           const tripoint_abs_ms &target, int shots ) const;
         void call_on_reload( Character &who, item &it ) const;
         /** Returns false to block firing entirely (before any ammo is consumed). */
         bool call_can_fire( const Character &who, const item &gun ) const;
@@ -251,11 +251,11 @@ class lua_itrap_actor : public lua_icallback_actor_base
                        );
 
         /** Returns false to prevent triggering the trap. */
-        bool call_can_trigger( const Character &who, const trap &trap, const tripoint_bub_ms &loc ) const;
+        bool call_can_trigger( const Character &who, const trap &trap, const tripoint_abs_ms &loc ) const;
         /** Called after triggering. */
-        void call_on_trigger( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        void call_on_trigger( Character &who, trap &trap, const tripoint_abs_ms &loc ) const;
         /** Called after trap aftermath. */
-        void call_on_trigger_aftermath( Character &who, trap &trap, const tripoint_bub_ms &loc ) const;
+        void call_on_trigger_aftermath( Character &who, trap &trap, const tripoint_abs_ms &loc ) const;
 
 };
 

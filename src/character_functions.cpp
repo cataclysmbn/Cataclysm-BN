@@ -274,7 +274,7 @@ bool can_see_fine_details( const Character &who, const tripoint_bub_ms &p )
     return fine_detail_vision_mod( who, p ) <= FINE_VISION_THRESHOLD;
 }
 
-comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_ms &p )
+comfort_response_t base_comfort_value( const Character &who, const tripoint_abs_ms &p )
 {
     // Comfort of sleeping spots is "objective", while sleep_spot( p ) is "subjective"
     // As in the latter also checks for fatigue and other variables while this function
@@ -293,14 +293,14 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_
     bool watersleep = who.has_trait( trait_WATERSLEEP );
     bool music = who.has_active_item_with_action( "MP3_ON" );
 
-    map &here = get_map();
+    auto &here = who.get_mapbuffer();
     const optional_vpart_position vp = here.veh_at( p );
-    const maptile tile = here.maptile_at( tripoint_bub_ms( p ) );
-    const trap &trap_at_pos = tile.get_trap_t();
-    const ter_id ter_at_pos = tile.get_ter();
-    const furn_id furn_at_pos = tile.get_furn();
+    const auto &tile = *abs_tile_handle::fetch( here, p );
+    const trap &trap_at_pos = tile.trap_obj();
+    const ter_id ter_at_pos = tile.ter();
+    const furn_id furn_at_pos = tile.furn();
 
-    int web = here.get_field_intensity( p, fd_web );
+    int web = tile.get_field_intensity( fd_web );
 
     // Some mutants have different comfort needs
     if( !plantsleep && !webforce ) {
@@ -348,9 +348,9 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_
             comfort -= here.move_cost( p );
         }
 
-        if( comfort_response.aid.empty() ) {
-            const map_stack items = here.i_at( p );
-            for( item *items_it : items ) {
+        if( comfort_response.aid.empty() && tile.has_items() ) {
+            const auto items = &tile.items();
+            for( item *items_it : *items ) {
                 int sleep_quality = items_it->get_quality( qual_SLEEP_AID );
                 if( sleep_quality >= 0 ) {
                     // Note: BED + LEVEL 2 SLEEP_AID = 7 pts, or 3 pt below very_comfortable
@@ -438,7 +438,7 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_
     return comfort_response;
 }
 
-int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
+int rate_sleep_spot( const Character &who, const tripoint_abs_ms &p )
 {
     const int current_stim = who.get_stim();
     const comfort_response_t comfort_info = base_comfort_value( who, p );
@@ -468,7 +468,7 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         // At this point, the only limit to sleep is tiredness
         sleepy += 100;
     }
-    if( watersleep && get_map().has_flag_ter( "SWIMMABLE", p ) ) {
+    if( watersleep && who.get_mapbuffer().has_flag_ter( "SWIMMABLE", p ) ) {
         sleepy += 10; //comfy water!
     }
 
@@ -522,7 +522,7 @@ bool roll_can_sleep( Character &who )
     }
     who.last_sleep_check = now;
 
-    int sleepy = character_funcs::rate_sleep_spot( who, who.bub_pos() );
+    int sleepy = character_funcs::rate_sleep_spot( who, who.abs_pos() );
     sleepy += rng( -8, 8 );
     bool result = sleepy > 0;
 

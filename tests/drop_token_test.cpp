@@ -305,7 +305,7 @@ TEST_CASE("full backpack drop", "[activity][drop_token]") {
 
 TEST_CASE("full backpack pickup", "[drop_token]") {
     clear_all_state();
-    constexpr tripoint_bub_ms pos = tripoint_bub_ms(60, 60, 0);
+    const tripoint_bub_ms pos = bub_test_origin();
     avatar& dummy = get_avatar();
     item& an_item = *item::spawn_temporary("bottle_glass");
     item& backpack = *item::spawn_temporary("backpack");

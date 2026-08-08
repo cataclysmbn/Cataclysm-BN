@@ -4,7 +4,6 @@
 #include "color.h"
 #include "coordinates.h"
 #include "pimpl.h"
-#include "point.h"
 #include "type_id.h"
 #include "units_temperature.h"
 #include "weather_gen.h"
@@ -43,6 +42,7 @@ static constexpr int BODYTEMP_SCORCHING = 9500;
 class Character;
 class item;
 class map;
+class mapbuffer;
 struct trap;
 struct rl_vec2d;
 
@@ -98,8 +98,9 @@ struct weather_sum {
 
 namespace weather
 {
-bool is_sheltered( const map &m, const tripoint_bub_ms &p );
-bool is_in_sunlight( const map &m, const tripoint_bub_ms &p, const weather_type_id &weather );
+bool is_sheltered( mapbuffer &m, const tripoint_abs_ms &p );
+bool is_outside( mapbuffer &m, const tripoint_abs_ms &p );
+bool is_in_sunlight( mapbuffer &m, const tripoint_abs_ms &p, const weather_type_id &weather );
 } // namespace weather
 
 std::string get_shortdirstring( int angle );

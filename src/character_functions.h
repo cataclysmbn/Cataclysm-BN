@@ -107,10 +107,10 @@ struct comfort_response_t {
 };
 
 /** Rate point's ability to serve as a bed. Only takes certain mutations into account, and not fatigue nor stimulants. */
-comfort_response_t base_comfort_value( const Character &who, const tripoint_bub_ms &p );
+comfort_response_t base_comfort_value( const Character &who, const tripoint_abs_ms &p );
 
 /** Rate point's ability to serve as a bed. Takes all mutations, fatigue and stimulants into account. */
-int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p );
+int rate_sleep_spot( const Character &who, const tripoint_abs_ms &p );
 
 /** Checked each turn during "lying_down", returns true if the avatar falls asleep */
 bool roll_can_sleep( Character &who );

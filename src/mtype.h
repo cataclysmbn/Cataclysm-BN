@@ -16,7 +16,6 @@
 #include "enum_bitset.h"
 #include "enums.h"
 #include "mattack_common.h"
-#include "legacy_pathfinding.h"
 #include "pathfinding.h"
 #include "translations.h"
 #include "type_id.h"
@@ -470,9 +469,6 @@ struct mtype {
 
         /** Emission sources that cycle each turn the monster remains alive */
         std::map<emit_id, time_duration> emit_fields;
-
-        pathfinding_settings legacy_path_settings;
-        pathfinding_settings legacy_path_settings_buffed;
 
         /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
         *  Mutable because it is wired post-construction through const factory references. */

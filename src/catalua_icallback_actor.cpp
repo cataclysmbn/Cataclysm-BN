@@ -28,7 +28,7 @@ void lua_iuse_actor::load( const JsonObject & )
     // TODO: custom data
 }
 
-int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint_bub_ms &pos ) const
+int lua_iuse_actor::use( Character &who, item &itm, bool tick, const tripoint_abs_ms & ) const
 {
     if( tick ) {
         // Legacy tick is no longer supported; use game.istate_functions on_tick instead.
@@ -39,7 +39,7 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint_bub_m
         auto params = lua.create_table();
         params["user"] = who.as_character();
         params["item"] = &itm;
-        params["pos"] = cata::detail::lua_coords::to_lua( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( itm.abs_pos() );
         sol::protected_function_result res = use_func( params );
         check_func_result( res );
         int ret = res;
@@ -50,15 +50,15 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint_bub_m
     return 1;
 }
 
-ret_val<bool> lua_iuse_actor::can_use( const Character &who, const item &item, bool,
-                                       const tripoint_bub_ms &pos ) const
+ret_val<bool> lua_iuse_actor::can_use( const Character &who, const item &it, bool,
+                                       const tripoint_abs_ms & ) const
 {
     if( can_use_func != sol::lua_nil ) {
         sol::state_view lua( can_use_func.lua_state() );
         auto params = lua.create_table();
         params["user"] = who.as_character();
-        params["item"] = &item;
-        params["pos"] = cata::detail::lua_coords::to_lua( pos );
+        params["item"] = &it;
+        params["pos"] = cata::detail::lua_coords::to_lua( it.abs_pos() );
         sol::protected_function_result res = can_use_func( params );
         check_func_result( res );
         const bool ret = res;
@@ -335,8 +335,7 @@ bool lua_istate_actor::has_on_tick() const
     return on_tick_func != sol::lua_nil;
 }
 
-auto lua_istate_actor::call_on_tick( Character &who, item &it,
-                                     const tripoint_bub_ms &pos ) const -> void
+auto lua_istate_actor::call_on_tick( Character &who, item &it ) const -> void
 {
     if( on_tick_func == sol::lua_nil ) {
         return;
@@ -346,7 +345,7 @@ auto lua_istate_actor::call_on_tick( Character &who, item &it,
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &it;
-        params["pos"] = cata::detail::lua_coords::to_lua( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( it.abs_pos() );
         sol::protected_function_result res = on_tick_func( params );
         check_func_result( res );
     } catch( std::runtime_error &e ) {
@@ -371,7 +370,7 @@ void lua_istate_actor::call_on_pickup( Character &who, item &it ) const
     }
 }
 
-bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const
+bool lua_istate_actor::call_on_drop( Character &who, item &it ) const
 {
     if( on_drop_func == sol::lua_nil ) {
         return false;
@@ -381,7 +380,7 @@ bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint_bu
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &it;
-        params["pos"] = cata::detail::lua_coords::to_lua( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( it.abs_pos() );
         sol::protected_function_result res = on_drop_func( params );
         check_func_result( res );
         bool ret = res;
@@ -498,7 +497,7 @@ lua_iranged_actor::lua_iranged_actor( const std::string &item_id,
       can_reload_func( std::move( can_reload ) ) {}
 
 bool lua_iranged_actor::call_on_fire( Character &who, item &gun,
-                                      const tripoint_bub_ms &target, int shots ) const
+                                      const tripoint_abs_ms &target, int shots ) const
 {
     if( on_fire_func == sol::lua_nil ) {
         return true;
@@ -751,7 +750,7 @@ lua_itrap_actor::lua_itrap_actor( const std::string &trap_id,
       on_trigger_aftermath_func( std::move( on_trigger_aftermath ) ) {}
 
 void lua_itrap_actor::call_on_trigger( Character &who, trap &trap,
-                                       const tripoint_bub_ms &loc ) const
+                                       const tripoint_abs_ms &loc ) const
 {
     if( on_trigger_func == sol::lua_nil ) {
         return;
@@ -770,7 +769,7 @@ void lua_itrap_actor::call_on_trigger( Character &who, trap &trap,
 }
 
 void lua_itrap_actor::call_on_trigger_aftermath( Character &who, trap &trap,
-        const tripoint_bub_ms &loc ) const
+        const tripoint_abs_ms &loc ) const
 {
     if( on_trigger_aftermath_func == sol::lua_nil ) {
         return;
@@ -789,7 +788,7 @@ void lua_itrap_actor::call_on_trigger_aftermath( Character &who, trap &trap,
 }
 
 bool lua_itrap_actor::call_can_trigger( const Character &who, const trap &trap,
-                                        const tripoint_bub_ms &loc ) const
+                                        const tripoint_abs_ms &loc ) const
 {
     if( can_trigger_func == sol::lua_nil ) {
         return true;

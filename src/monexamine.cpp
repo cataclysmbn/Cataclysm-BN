@@ -7,6 +7,9 @@
 #include <utility>
 #include <vector>
 
+#include "pathfinding.h"
+#include "activity_actor.h"
+#include "activity_actor_definitions.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
@@ -834,14 +837,16 @@ void monexamine::shear_animal( monster &z )
     const int moves = to_moves<int>( time_duration::from_minutes( 30 / you.max_quality(
                                          qual_shear ) ) );
 
-    you.assign_activity( activity_id( "ACT_SHEAR" ), moves, -1 );
-    you.activity->coords.push_back( z.abs_pos() );
-    // pin the sheep in place if it isn't already
+    // Determine if we need to temp-tie the animal
+    std::string tied;
     if( !z.has_effect( effect_tied ) ) {
         z.add_effect( effect_tied, 1_turns );
-        you.activity->str_values.emplace_back( "temp_tie" );
+        tied = "temp_tie";
     }
-    you.activity->targets.emplace_back( you.best_quality_item( qual_shear ) );
+    safe_reference<item> best_shears( you.best_quality_item( qual_shear ) );
+    you.assign_activity( std::make_unique<player_activity>(
+                             std::make_unique<shear_actor>( z.abs_pos(), tied, best_shears ) ) );
+    you.activity->get_actor()->progress.emplace( "shearing", moves );
     add_msg( _( "You start shearing the %s." ), z.get_name() );
 }
 
@@ -1085,11 +1090,14 @@ bool Character::can_mount( const monster &critter ) const
 
 mountable_status Character::get_mountable_status( const monster &critter ) const
 {
-    const auto &avoid = get_legacy_path_avoid();
-    auto route = get_map().route( bub_pos(), critter.bub_pos(), get_legacy_pathfinding_settings(),
-                                  avoid );
-
-    if( route.empty() ) {
+    if( get_dimension() != critter.get_dimension() ) {
+        return {};
+    }
+    auto &here = get_mapbuffer();
+    const auto pair = get_pathfinding_pair();
+    auto abs_route = Pathfinding::route( here, abs_pos(), critter.abs_pos(),
+                                         pair.first, pair.second );
+    if( abs_route.empty() ) {
         return {};
     }
 
@@ -1125,8 +1133,8 @@ void monexamine::push( monster &z )
 
     add_msg( _( "You pushed the %s." ), pet_name );
 
-    auto delta = z.bub_pos().xy() - you.bub_pos().xy();
-    z.move_to( z.bub_pos() + delta );
+    auto delta = z.abs_pos().xy() - you.abs_pos().xy();
+    z.move_to( z.abs_pos() + delta );
 }
 
 void monexamine::rename_pet( monster &z )
@@ -1316,9 +1324,10 @@ void monexamine::play_with( monster &z )
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
     const int turns = rng( 50, 125 ) * 100;
-    you.assign_activity( ACT_PLAY_WITH_PET, turns );
-    you.activity->monsters.push_back( g->shared_from( z ) );
-    you.activity->str_values.push_back( pet_name );
+    you.assign_activity( std::make_unique<player_activity>(
+                             std::make_unique<play_with_pet_actor>( g->shared_from( z ), pet_name ) ) );
+    you.activity->get_actor()->progress.emplace( "playing with pet",
+            to_moves<int>( time_duration::from_turns( turns ) ) );
     z.add_effect( effect_ai_waiting, time_duration::from_turns( turns ) );
     z.on_pet_bonding( you.as_character() );
 }
@@ -1327,9 +1336,9 @@ void monexamine::train_pet( monster &z )
 {
     avatar &you = get_avatar();
     std::string pet_name = z.get_name();
-    you.assign_activity( ACT_TRAIN_PET, to_moves<int>( 60_minutes ) );
-    you.activity->monsters.push_back( g->shared_from( z ) );
-    you.activity->str_values.push_back( pet_name );
+    you.assign_activity( std::make_unique<player_activity>(
+                             std::make_unique<train_pet_actor>( g->shared_from( z ), pet_name ) ) );
+    you.activity->get_actor()->progress.emplace( "training pet", to_moves<int>( 60_minutes ) );
     z.add_effect( effect_ai_waiting, 60_minutes );
 }
 
@@ -1497,14 +1506,15 @@ void monexamine::milk_source( monster &source_mon )
     avatar &you = get_avatar();
     if( milkable_ammo->second > 0 ) {
         const int moves = to_moves<int>( time_duration::from_minutes( milkable_ammo->second / 2 ) );
-        you.assign_activity( ACT_MILK, moves, -1 );
-        you.activity->coords.push_back( source_mon.abs_pos() );
-        // pin the cow in place if it isn't already
-        bool temp_tie = !source_mon.has_effect( effect_tied );
-        if( temp_tie ) {
+        // Determine if we need to temp-tie the animal
+        std::string tied;
+        if( !source_mon.has_effect( effect_tied ) ) {
             source_mon.add_effect( effect_tied, 1_turns );
-            you.activity->str_values.emplace_back( "temp_tie" );
+            tied = "temp_tie";
         }
+        you.assign_activity( std::make_unique<player_activity>(
+                                 std::make_unique<milk_actor>( source_mon.abs_pos(), tied ) ) );
+        you.activity->get_actor()->progress.emplace( "milking", moves );
         add_msg( _( "You milk the %s." ), source_mon.get_name() );
     } else {
         add_msg( _( "The %s has no more milk." ), source_mon.get_name() );

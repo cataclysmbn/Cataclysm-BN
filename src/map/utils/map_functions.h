@@ -10,9 +10,9 @@ class mapbuffer;
 namespace map_funcs {
 
 struct physical_clear_path_opts {
-    const map& m;
-    tripoint_bub_ms from;
-    tripoint_bub_ms to;
+    mapbuffer& here;
+    tripoint_abs_ms from;
+    tripoint_abs_ms to;
     int range = -1;
     int cost_min = 1;
     int cost_max = 100;

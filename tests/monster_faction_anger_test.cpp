@@ -99,9 +99,10 @@ TEST_CASE("authorized_robofac_turrets_alert_visible_security", "[monster][factio
 TEST_CASE("authorized_robofac_turrets_defend_hub_guards", "[monster][faction][npc]") {
     clear_all_state();
 
-    const auto turret_pos = tripoint_bub_ms(5, 5, 0);
-    const auto guard_pos = tripoint_bub_ms(6, 5, 0);
-    auto& authorized_turret = spawn_test_monster("mon_robofac_turret_light", turret_pos);
+    const auto turret_pos = tripoint_abs_ms(5, 5, 0);
+    const auto guard_pos = tripoint_abs_ms(6, 5, 0);
+    auto& authorized_turret =
+        spawn_test_monster("mon_robofac_turret_light", abs_to_bub(turret_pos));
     authorized_turret.faction = mfaction_id("robofac_authorized");
     authorized_turret.friendly = 0;
 

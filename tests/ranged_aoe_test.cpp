@@ -1,3 +1,4 @@
+#include "avatar.h"
 #include "ballistics.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -13,6 +14,7 @@
 #include "rng.h"
 #include "shape.h"
 #include "shape_impl.h"
+#include "simulated_island_helpers.h"
 #include "skill.h"
 #include "state_helpers.h"
 
@@ -44,8 +46,8 @@ static auto fire_shell_at_target(
     clear_all_state();
     rng_set_engine_seed(seed);
 
-    const auto shooter_pos = tripoint_bub_ms(60, 60, 0);
-    const auto target_pos = tripoint_bub_ms(62, 60, 0);
+    const auto shooter_pos = test_origin;
+    const auto target_pos = test_origin + point_rel_ms(2, 0);
     auto& target = get_player_character();
     target.set_body();
     target.setpos(target_pos);
@@ -93,15 +95,15 @@ static auto fire_shells_at_target(const itype_id& ammo_id, const std::vector<ity
     return total_damage;
 }
 
-static auto reachable_shape_points_no_obstacle(const shape& s, const map& here)
-    -> std::set<tripoint_bub_ms> {
-    const auto origin = tripoint_bub_ms(s.get_origin());
-    auto queue = std::queue<tripoint_bub_ms>();
-    auto reachable = std::set<tripoint_bub_ms>();
+static auto reachable_shape_points_no_obstacle(const shape& s, mapbuffer& here)
+    -> std::set<tripoint_abs_ms> {
+    const auto origin = tripoint_abs_ms(s.get_origin());
+    auto queue = std::queue<tripoint_abs_ms>();
+    auto reachable = std::set<tripoint_abs_ms>();
 
-    const auto try_enqueue =
+    auto try_enqueue =
         [&s, &here, &queue,
-         &reachable](const tripoint_bub_ms& from, const tripoint_bub_ms& candidate) {
+         &reachable](const tripoint_abs_ms& from, const tripoint_abs_ms& candidate) {
             if (reachable.contains(candidate) || s.distance_at(candidate.raw()) >= 0.0
                 || here.obstructed_by_vehicle_rotation(from, candidate)) {
                 return;
@@ -110,17 +112,16 @@ static auto reachable_shape_points_no_obstacle(const shape& s, const map& here)
             queue.push(candidate);
         };
 
-    std::ranges::for_each(
-        here.points_in_radius(origin, 1),
-        [&try_enqueue, &origin](const tripoint_bub_ms& child) { try_enqueue(origin, child); });
+    for (const auto& tile : simulated_tiles_in_radius(here, origin, 1)) {
+        try_enqueue(origin, tile.abs_pos());
+    };
 
     while (!queue.empty()) {
         const auto p = queue.front();
         queue.pop();
-        std::ranges::
-            for_each(here.points_in_radius(p, 1), [&try_enqueue, &p](const tripoint_bub_ms& child) {
-                try_enqueue(p, child);
-            });
+        for (const auto& tile : simulated_tiles_in_radius(here, p, 1)) {
+            try_enqueue(p, tile.abs_pos());
+        };
     }
 
     reachable.erase(origin);
@@ -128,13 +129,14 @@ static auto reachable_shape_points_no_obstacle(const shape& s, const map& here)
 }
 
 static void shape_coverage_vs_distance_no_obstacle(
-    const shape_factory_impl& c, const tripoint_bub_ms& origin, const tripoint_bub_ms& end) {
+    const shape_factory_impl& c, const tripoint_abs_ms& origin, const tripoint_abs_ms& end) {
     std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
     projectile p;
     p.impact = damage_instance();
     p.impact.add_damage(DT_STAB, 10);
-    auto cov = ranged::expected_coverage(*s, get_map(), 200);
-    const auto reachable_shape_points = reachable_shape_points_no_obstacle(*s, get_map());
+    auto cov = ranged::expected_coverage(*s, get_map().get_mapbuffer(), 200);
+    const auto reachable_shape_points =
+        reachable_shape_points_no_obstacle(*s, get_map().get_mapbuffer());
 
     inclusive_cuboid<tripoint> bb = s->bounding_box();
     REQUIRE(bb.p_min != bb.p_max);
@@ -148,7 +150,7 @@ static void shape_coverage_vs_distance_no_obstacle(
 
     std::ranges::for_each(
         cov,
-        [&bb, &reachable_shape_points, &s](const std::pair<const tripoint_bub_ms, double>& entry) {
+        [&bb, &reachable_shape_points, &s](const std::pair<const tripoint_abs_ms, double>& entry) {
             const auto& p = entry.first;
             const auto coverage = entry.second;
             const auto signed_distance = s->distance_at(p.raw());
@@ -161,7 +163,7 @@ static void shape_coverage_vs_distance_no_obstacle(
             CHECK(bb.contains(p.raw()));
         });
 
-    std::ranges::for_each(reachable_shape_points, [&cov](const tripoint_bub_ms& p) {
+    std::ranges::for_each(reachable_shape_points, [&cov](const tripoint_abs_ms& p) {
         CAPTURE(p);
         CHECK(cov.contains(p));
     });
@@ -170,63 +172,65 @@ static void shape_coverage_vs_distance_no_obstacle(
 TEST_CASE("expected shape coverage mass test", "[shape]") {
     clear_all_state();
     cone_factory c(15_degrees, 10.0);
-    const tripoint_bub_ms origin(60, 60, 0);
-    for (const tripoint_bub_ms& end : points_in_radius<tripoint_bub_ms>(origin, 5)) {
-        shape_coverage_vs_distance_no_obstacle(c, origin, end);
+    for (const tripoint_abs_ms& end : points_in_radius<tripoint_abs_ms>(test_origin, 5)) {
+        shape_coverage_vs_distance_no_obstacle(c, test_origin, end);
     }
 
     // Hard case
     shape_coverage_vs_distance_no_obstacle(
-        c, {65, 65, 0}, tripoint_bub_ms{65, 65, 0} + point_rel_ms(2, 1));
+        c, {5, 5, 0}, tripoint_abs_ms{5, 5, 0} + point_rel_ms(2, 1));
 }
 
 TEST_CASE("expected shape coverage without obstacles", "[shape]") {
     clear_all_state();
+    g->place_player(test_origin);
+    ensure_simulated_islands_for(g->u.abs_pos());
     cone_factory c(22.5_degrees, 10.0);
-    const tripoint_bub_ms origin(60, 60, 0);
     const tripoint_rel_ms offset(5, 5, 0);
-    const tripoint_bub_ms end = origin + offset;
-    std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
-    auto cov = ranged::expected_coverage(*s, get_map(), 3);
+    const tripoint_abs_ms end = test_origin + offset;
+    std::shared_ptr<shape> s = c.create(rl_vec3d(test_origin), rl_vec3d(end));
+    auto cov = ranged::expected_coverage(*s, get_map().get_mapbuffer(), 3);
 
-    for (size_t i = 1; i <= 4; i++) { CHECK(cov[origin + point(i, i)] == 1.0); }
+    for (size_t i = 1; i <= 4; i++) { CHECK(cov[test_origin + point(i, i)] == 1.0); }
 
-    CHECK(cov[origin + point(2, 1)] == 1.0);
-    CHECK(cov[origin + point(1, 2)] == 1.0);
+    CHECK(cov[test_origin + point(2, 1)] == 1.0);
+    CHECK(cov[test_origin + point(1, 2)] == 1.0);
 }
 
 TEST_CASE("expected shape coverage through windows", "[shape]") {
     clear_all_state();
+    g->place_player(test_origin);
+    ensure_simulated_islands_for(g->u.abs_pos());
     cone_factory c(22.5_degrees, 10.0);
-    const tripoint_bub_ms origin(60, 60, 0);
     const tripoint_rel_ms offset(5, 0, 0);
-    const tripoint_bub_ms end = origin + offset;
-    map& here = get_map();
+    const auto end = test_origin + offset;
+    auto& here = get_map().get_mapbuffer();
     for (int wall_offset = -10; wall_offset <= 10; wall_offset++) {
-        here.ter_set(tripoint_bub_ms(62, 60 + wall_offset, 0), ter_id("test_t_window"));
+        here.set_ter(test_origin + tripoint_rel_ms(2, wall_offset, 0), ter_id("test_t_window"));
     }
 
-    std::shared_ptr<shape> s = c.create(rl_vec3d(origin), rl_vec3d(end));
+    std::shared_ptr<shape> s = c.create(rl_vec3d(test_origin), rl_vec3d(end));
     auto cov = ranged::expected_coverage(*s, here, 3);
-    CHECK(cov[origin + point_east] == 1.0);
+    CHECK(cov[test_origin + point_east] == 1.0);
 
-    CHECK(cov[origin + 2 * point_east] == Approx(0.25));
-    CHECK(cov[origin + 3 * point_east] == Approx(0.25));
-    CHECK(cov[origin + 4 * point_east] == Approx(0.25));
+    CHECK(cov[test_origin + 2 * point_east] == Approx(0.25));
+    CHECK(cov[test_origin + 3 * point_east] == Approx(0.25));
+    CHECK(cov[test_origin + 4 * point_east] == Approx(0.25));
 }
 
 TEST_CASE("shaped attacks apply trail ammo effects", "[ranged][projectile]") {
     clear_all_state();
+    g->place_player(test_origin);
+    ensure_simulated_islands_for(g->u.abs_pos());
 
-    map& here = get_map();
     auto& attacker = get_player_character();
-    const auto origin = tripoint_bub_ms(60, 60, 0);
-    const auto target = origin + 5 * point_east;
+    auto& here = attacker.get_mapbuffer();
+    const auto target = test_origin + 5 * point_east;
     attacker.set_body();
-    attacker.setpos(origin);
+    attacker.setpos(test_origin);
 
     const auto shape_factory = cone_factory(15_degrees, 6.0);
-    const auto attack_shape = shape_factory.create(rl_vec3d(origin), rl_vec3d(target));
+    const auto attack_shape = shape_factory.create(rl_vec3d(test_origin), rl_vec3d(target));
     auto proj = projectile{};
     proj.speed = 1000;
     proj.range = 6;
@@ -236,8 +240,8 @@ TEST_CASE("shaped attacks apply trail ammo effects", "[ranged][projectile]") {
     ranged::execute_shaped_attack(*attack_shape, proj, attacker, nullptr);
 
     const auto trail_field = field_type_id("test_fd_trail");
-    CHECK(here.get_field(origin + point_east, trail_field) != nullptr);
-    CHECK(here.get_field(origin + 2 * point_east, trail_field) != nullptr);
+    CHECK(here.get_field_entry(test_origin + point_east, trail_field));
+    CHECK(here.get_field_entry(test_origin + 2 * point_east, trail_field));
 }
 
 TEST_CASE("character using birdshot against another character", "[ranged]") {
@@ -248,28 +252,20 @@ TEST_CASE("character using birdshot against another character", "[ranged]") {
 
 TEST_CASE("birdshot pellets are much worse against armor", "[ranged][balance]") {
     const auto unarmored_damage = fire_shells_at_target(itype_id("test_birdshot"), {});
-    const auto armored_damage = fire_shells_at_target(
-        itype_id("test_birdshot"),
-        {itype_id(
-            "test_"
-            "overrid"
-            "e_"
-            "armo"
-            "r")});
+    const auto armored_damage =
+        fire_shells_at_target(itype_id("test_birdshot"), {itype_id("test_override_armor")});
 
     CHECK(unarmored_damage > armored_damage);
     CHECK(unarmored_damage >= armored_damage * 2);
 }
 
 TEST_CASE(
-    "pellet projectile keeps last hit critter after overpenetration",
-    "[ranged]["
-    "projectile]") {
+    "pellet projectile keeps last hit critter after overpenetration", "[ranged][projectile]") {
     clear_all_state();
     rng_set_engine_seed(deterministic_rng_seeds.front());
 
-    const auto shooter_pos = tripoint_bub_ms(60, 60, 0);
-    const auto target_pos = tripoint_bub_ms(62, 60, 0);
+    const auto shooter_pos = test_origin;
+    const auto target_pos = test_origin + point_rel_ms(2, 0);
     auto& target = get_player_character();
     target.set_body();
     target.setpos(target_pos);

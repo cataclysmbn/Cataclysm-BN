@@ -1,4 +1,5 @@
 #include "active_item_cache.h"
+#include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
@@ -7,6 +8,7 @@
 #include "game_constants.h"
 #include "item.h"
 #include "map.h"
+#include "map_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -41,32 +43,29 @@ TEST_CASE("active_item_cache_tracks_bionic_scannable_corpses", "[item]") {
 
 TEST_CASE("nonperishable_food_does_not_enter_active_item_cache", "[item]") {
     clear_all_state();
-    const auto loc = tripoint_bub_ms{60, 60, 0};
-    g->m.i_clear(loc);
-    const auto abs_loc =
-        g->m.get_abs_sub() + tripoint_rel_sm(loc.x() / SEEX, loc.y() / SEEY, loc.z());
-    const auto baseline_active_submaps = g->m.get_submaps_with_active_items();
+    auto& here = g->m.get_mapbuffer();
+    here.clear_items(test_origin);
+    const auto baseline_active_submaps = here.get_submaps_with_active_items();
 
     auto sugar = item::spawn("sugar");
     REQUIRE(sugar->is_food());
     REQUIRE_FALSE(sugar->goes_bad());
     REQUIRE_FALSE(sugar->needs_processing());
-    g->m.add_item(loc, std::move(sugar));
-    CHECK(g->m.get_submaps_with_active_items() == baseline_active_submaps);
+    here.add_item(test_origin, std::move(sugar));
+    CHECK(here.get_submaps_with_active_items() == baseline_active_submaps);
 
     auto sashimi = item::spawn("sashimi");
     REQUIRE(sashimi->is_food());
     REQUIRE(sashimi->goes_bad());
     REQUIRE(sashimi->needs_processing());
-    g->m.add_item(loc, std::move(sashimi));
-    CHECK(g->m.get_submaps_with_active_items().contains(abs_loc));
+    here.add_item(test_origin, std::move(sashimi));
+    CHECK(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
 }
 
 TEST_CASE("pointer_item_removal_updates_active_item_cache", "[item]") {
     clear_all_state();
-    const auto loc = tripoint_bub_ms{60, 60, 0};
-    g->m.i_clear(loc);
-    const auto abs_loc = project_to<coords::sm>(map_local_to_abs(g->m, loc));
+    auto& here = g->m.get_mapbuffer();
+    here.clear_items(test_origin);
 
     auto active =
         item::spawn("firecracker_act", calendar::start_of_cataclysm, item::default_charges_tag());
@@ -74,57 +73,52 @@ TEST_CASE("pointer_item_removal_updates_active_item_cache", "[item]") {
     REQUIRE(active->needs_processing());
     auto* const active_ptr = &*active;
 
-    g->m.add_item(loc, std::move(active));
-    REQUIRE(g->m.get_submaps_with_active_items().contains(abs_loc));
+    here.add_item(test_origin, std::move(active));
+    CHECK(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
 
-    auto removed = g->m.i_rem(loc, active_ptr);
+    auto removed = here.remove_item(test_origin, active_ptr);
     REQUIRE(removed != nullptr);
-    CHECK_FALSE(g->m.get_submaps_with_active_items().contains(abs_loc));
-    CHECK(g->m.check_submap_active_item_consistency().empty());
+    CHECK_FALSE(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
+    CHECK(get_map().check_submap_active_item_consistency().empty());
 }
 
 TEST_CASE("stack_iterator_item_removal_updates_active_item_cache", "[item]") {
     clear_all_state();
-    const auto loc = tripoint_bub_ms{60, 60, 0};
-    g->m.i_clear(loc);
-    const auto abs_loc = project_to<coords::sm>(map_local_to_abs(g->m, loc));
+    auto& here = g->m.get_mapbuffer();
+    here.clear_items(test_origin);
 
     auto active =
         item::spawn("firecracker_act", calendar::start_of_cataclysm, item::default_charges_tag());
     active->activate();
     REQUIRE(active->needs_processing());
+    auto* const active_ptr = &*active;
 
-    g->m.add_item(loc, std::move(active));
-    REQUIRE(g->m.get_submaps_with_active_items().contains(abs_loc));
+    here.add_item(test_origin, std::move(active));
+    REQUIRE(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
 
-    auto stack = g->m.i_at(loc);
-    detached_ptr<item> removed;
-    const auto next = stack.erase(stack.begin(), &removed);
+    auto removed = here.remove_item(test_origin, active_ptr);
     REQUIRE(removed != nullptr);
-    CHECK(next == stack.end());
-    CHECK_FALSE(g->m.get_submaps_with_active_items().contains(abs_loc));
-    CHECK(g->m.check_submap_active_item_consistency().empty());
+    CHECK_FALSE(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
+    CHECK(get_map().check_submap_active_item_consistency().empty());
 }
 
 TEST_CASE("stack_clear_updates_active_item_cache", "[item]") {
     clear_all_state();
-    const auto loc = tripoint_bub_ms{60, 60, 0};
-    g->m.i_clear(loc);
-    const auto abs_loc = project_to<coords::sm>(map_local_to_abs(g->m, loc));
+    auto& here = g->m.get_mapbuffer();
+    here.clear_items(test_origin);
 
     auto active =
         item::spawn("firecracker_act", calendar::start_of_cataclysm, item::default_charges_tag());
     active->activate();
     REQUIRE(active->needs_processing());
 
-    g->m.add_item(loc, std::move(active));
-    REQUIRE(g->m.get_submaps_with_active_items().contains(abs_loc));
+    here.add_item(test_origin, std::move(active));
+    REQUIRE(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
 
-    auto stack = g->m.i_at(loc);
-    auto removed = stack.clear();
+    auto removed = here.clear_items(test_origin);
     REQUIRE(removed.size() == 1);
-    CHECK_FALSE(g->m.get_submaps_with_active_items().contains(abs_loc));
-    CHECK(g->m.check_submap_active_item_consistency().empty());
+    CHECK_FALSE(here.get_submaps_with_active_items().contains(project_to<coords::sm>(test_origin)));
+    CHECK(get_map().check_submap_active_item_consistency().empty());
 }
 
 TEST_CASE("nested_processing_flag_changes_invalidate_container_cache", "[item]") {
@@ -151,6 +145,7 @@ TEST_CASE("nested_processing_flag_changes_invalidate_container_cache", "[item]")
 
 TEST_CASE("nested_processing_food_flag_changes_invalidate_container_cache", "[item]") {
     clear_all_state();
+    auto& here = g->m.get_mapbuffer();
 
     auto backpack = item::spawn("backpack");
     backpack->put_in(item::spawn("bread"));
@@ -198,8 +193,8 @@ TEST_CASE("active_item_cache_moves_items_when_processing_speed_changes", "[item]
 
 TEST_CASE("content_removal_helpers_invalidate_processing_cache", "[item]") {
     clear_all_state();
-    const auto loc = tripoint_bub_ms{60, 60, 0};
-    g->m.i_clear(loc);
+    auto& here = g->m.get_mapbuffer();
+    here.clear_items(test_origin);
 
     SECTION("spill contents") {
         auto backpack = item::spawn("backpack");
@@ -208,9 +203,10 @@ TEST_CASE("content_removal_helpers_invalidate_processing_cache", "[item]") {
         active->activate();
         backpack->put_in(std::move(active));
 
-        REQUIRE(backpack->needs_processing());
-        backpack->contents.spill_contents(loc);
-        CHECK_FALSE(backpack->needs_processing());
+        auto& carried_backpack = get_avatar().i_add(std::move(backpack));
+        REQUIRE(carried_backpack.needs_processing());
+        carried_backpack.contents.spill_contents(test_origin);
+        CHECK_FALSE(carried_backpack.needs_processing());
     }
 
     SECTION("handle casings") {
@@ -282,12 +278,15 @@ TEST_CASE("active_item_cache_slow_items_accrue_elapsed_time", "[item]") {
 
 TEST_CASE("place_active_item_at_various_coordinates", "[item]") {
     clear_all_state();
+    auto& here = g->m.get_mapbuffer();
     for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) {
-        for (auto x = 0; x < g_mapsize_x; ++x) {
-            for (auto y = 0; y < g_mapsize_y; ++y) { g->m.i_clear(tripoint_bub_ms{x, y, z}); }
+        for (auto x = 0; x < T_MAPSIZE_X; ++x) {
+            for (auto y = 0; y < T_MAPSIZE_Y; ++y) {
+                here.clear_items(bub_to_abs(tripoint_bub_ms{x, y, z}));
+            }
         }
     }
-    const auto baseline_active_submaps = g->m.get_submaps_with_active_items();
+    const auto baseline_active_submaps = here.get_submaps_with_active_items();
     // An arbitrary active item.
     auto& active = *item::spawn_temporary(
         "firecracker_act", calendar::start_of_cataclysm, item::default_charges_tag());
@@ -295,27 +294,28 @@ TEST_CASE("place_active_item_at_various_coordinates", "[item]") {
 
     // For each space in a wide area place the item and check if the cache has been updated.
     const auto z = 0;
-    for (auto x = 0; x < g_mapsize_x; ++x) {
-        for (auto y = 0; y < g_mapsize_y; ++y) {
-            REQUIRE(g->m.i_at(tripoint_bub_ms{x, y, z}).empty());
+    for (auto x = 0; x < T_MAPSIZE_X; ++x) {
+        for (auto y = 0; y < T_MAPSIZE_Y; ++y) {
+            auto pos = bub_to_abs(tripoint_bub_ms{x, y, z});
+            auto sm_pos = project_to<coords::sm>(pos);
+            REQUIRE(here.get_items(pos)->empty());
             CAPTURE(x, y, z);
-            const auto abs_loc = g->m.get_abs_sub() + tripoint_rel_sm(x / SEEX, y / SEEY, z);
-            CAPTURE(abs_loc.x(), abs_loc.y(), abs_loc.z());
-            REQUIRE(g->m.get_submaps_with_active_items() == baseline_active_submaps);
-            REQUIRE(g->m.get_submaps_with_active_items().find(abs_loc)
-                    == g->m.get_submaps_with_active_items().end());
+            CAPTURE(pos.x(), pos.y(), pos.z());
+            REQUIRE(here.get_submaps_with_active_items() == baseline_active_submaps);
+            REQUIRE(here.get_submaps_with_active_items().find(sm_pos)
+                    == here.get_submaps_with_active_items().end());
             auto n = item::spawn(active);
             auto& item_ref = *n;
-            g->m.add_item(tripoint_bub_ms{x, y, z}, std::move(n));
+            here.add_item(pos, std::move(n));
             REQUIRE(item_ref.is_active());
             auto expected_active_submaps = baseline_active_submaps;
-            expected_active_submaps.insert(abs_loc);
-            REQUIRE(g->m.get_submaps_with_active_items() == expected_active_submaps);
-            REQUIRE(g->m.get_submaps_with_active_items().find(abs_loc)
-                    != g->m.get_submaps_with_active_items().end());
-            REQUIRE_FALSE(g->m.i_at(tripoint_bub_ms{x, y, z}).empty());
-            g->m.i_clear(tripoint_bub_ms{x, y, z});
-            REQUIRE(g->m.get_submaps_with_active_items() == baseline_active_submaps);
+            expected_active_submaps.insert(sm_pos);
+            REQUIRE(here.get_submaps_with_active_items() == expected_active_submaps);
+            REQUIRE(here.get_submaps_with_active_items().find(sm_pos)
+                    != here.get_submaps_with_active_items().end());
+            REQUIRE_FALSE(here.get_items(pos)->empty());
+            here.clear_items(pos);
+            REQUIRE(here.get_submaps_with_active_items() == baseline_active_submaps);
         }
     }
 }

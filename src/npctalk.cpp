@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "activity_actor_definitions.h"
 #include "activity_type.h"
 #include "auto_pickup.h"
 #include "avatar.h"
@@ -431,8 +432,8 @@ void game::chat()
 
     const std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
         // TODO: Get rid of the z-level check when z-level vision gets "better"
-        return u.bub_pos().z() == guy.bub_pos().z() && u.sees( guy.bub_pos() ) &&
-               rl_dist( u.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
+        return u.abs_pos().z() == guy.abs_pos().z() && u.sees( guy.abs_pos() ) &&
+               rl_dist( u.abs_pos(), guy.abs_pos() ) <= SEEX * 2;
     } );
     const int available_count = available.size();
     const std::vector<npc *> followers = get_npcs_if( [&]( const npc & guy ) {
@@ -868,10 +869,9 @@ void game::chat()
 
 void npc::handle_sound( const short heard_vol, sound_event sound )
 {
-
     // Remember that our heard volume is in milli-decibels spl
     // Only sounds that are marked as being from a monster/npc/the player are passed to handle_sound, so we have a source creature.
-    map &here = get_map();
+    auto &here = get_mapbuffer();
     const auto &spos = sound.origin;
 
     // What entity is the source of the sound? We effectively have two logic cases, source is a monster or source is a "player" i.e., the player character or an npc.
@@ -882,7 +882,6 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
         return;
     }
 
-    const auto s_abs_pos = bub_to_abs( sound.origin );
     const std::string &description = sound.description.empty() ? _( "a noise" ) : sound.description;
 
     const auto &source_monster = sound.from_monster;
@@ -891,7 +890,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
 
     add_msg( m_debug, "%s heard '%s', priority %d at volume %d mdB from %d:%d, my pos %d:%d",
              disp_name(), description, static_cast<int>( sound.category ), heard_vol,
-             s_abs_pos.x(), s_abs_pos.y(), abs_pos().x(), abs_pos().y() );
+             sound.origin.x(), sound.origin.y(), abs_pos().x(), abs_pos().y() );
 
     // bool player_ally = get_player_character().bub_pos() == spos && is_player_ally();
     player *const sound_source = g->critter_at<player>( spos );
@@ -899,7 +898,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
 
     // Is the player the source of the sound, and is the NPC an ally of the player?
     const bool player_ally = ( ( source_player ||
-                                 ( get_player_character().bub_pos() == sound.origin ) ) &&
+                                 ( get_player_character().abs_pos() == sound.origin ) ) &&
                                is_player_ally() ) ;
 
     // ONLY reference this in cases where we know the sound source is an NPC
@@ -976,13 +975,13 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
     }
     if( ai_cache.total_danger < 1.0f ) {
         if( sound.category == sounds::sound_t::movement && !in_vehicle ) {
-            bool should_check = rl_dist( bub_pos(), sound.origin ) < investigate_dist;
+            bool should_check = rl_dist( abs_pos(), sound.origin ) < investigate_dist;
             if( should_check ) {
                 const zone_manager &mgr = zone_manager::get_manager();
-                if( mgr.has( zone_type_npc_no_investigate, s_abs_pos, fac_id ) ) {
+                if( mgr.has( zone_type_npc_no_investigate, sound.origin, fac_id ) ) {
                     should_check = false;
                 } else if( mgr.has( zone_type_npc_investigate_only, abs_pos(), fac_id ) &&
-                           !mgr.has( zone_type_npc_investigate_only, s_abs_pos, fac_id ) ) {
+                           !mgr.has( zone_type_npc_investigate_only, sound.origin, fac_id ) ) {
                     should_check = false;
                 }
             }
@@ -1004,14 +1003,14 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
                     temp_warning.type = "combat_noise";
                     temp_warning.duration = rng( 1, 10 ) * 1_minutes;
                     ai_cache.warn_about_queue.push_back( temp_warning );
-                    add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x(), s_abs_pos.y() );
+                    add_msg( m_debug, "%s added noise at pos %d:%d", name, sound.origin.x(), sound.origin.y() );
                     dangerous_sound temp_sound;
-                    temp_sound.abs_pos = s_abs_pos;
+                    temp_sound.abs_pos = sound.origin;
                     // Convert out of mdB spl to dB spl
                     temp_sound.volume = std::floor( 0.01 * heard_vol );
                     temp_sound.type = sound.category;
                     if( !ai_cache.sound_alerts.empty() ) {
-                        if( ai_cache.sound_alerts.back().abs_pos != s_abs_pos ) {
+                        if( ai_cache.sound_alerts.back().abs_pos != sound.origin ) {
                             ai_cache.sound_alerts.push_back( temp_sound );
                         }
                     } else {
@@ -1055,16 +1054,16 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
                     }
 
                     if( should_check ) {
-                        add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x(), s_abs_pos.y() );
+                        add_msg( m_debug, "%s added noise at pos %d:%d", name, sound.origin.x(), sound.origin.y() );
                         dangerous_sound temp_sound;
 
-                        temp_sound.abs_pos = s_abs_pos;
+                        temp_sound.abs_pos = sound.origin;
                         // Convert out of mdB spl to dB spl
                         temp_sound.volume = std::floor( 0.01 * heard_vol );
                         temp_sound.type = sound.category;
                         if( !ai_cache.sound_alerts.empty() ) {
 
-                            if( ai_cache.sound_alerts.back().abs_pos != s_abs_pos ) {
+                            if( ai_cache.sound_alerts.back().abs_pos != sound.origin ) {
 
                                 ai_cache.sound_alerts.push_back( temp_sound );
                             }
@@ -1675,28 +1674,37 @@ void dialogue::gen_responses( const talk_topic &the_topic )
             }
         }
     } else if( topic == "TALK_TRAIN" ) {
-        if( !you.backlog.empty() && you.backlog.front()->id() == ACT_TRAIN &&
-            you.backlog.front()->index == p->getID().get_value() ) {
+        if( !you.backlog.empty() && you.backlog.front()->id() == ACT_TRAIN ) {
             player_activity &backlog = *you.backlog.front();
-            const skill_id skillt( backlog.name );
-            // TODO: This is potentially dangerous. A skill and a martial art
-            // could have the same ident!
-            if( !skillt.is_valid() ) {
-                const matype_id styleid = matype_id( backlog.name );
-                if( !styleid.is_valid() ) {
-                    const spell_id &sp_id = spell_id( backlog.name );
-                    if( p->magic->knows_spell( sp_id ) ) {
-                        add_response( string_format( _( "Yes, let's resume training %s" ), sp_id->name ),
-                                      "TALK_TRAIN_START", sp_id );
+            // Resolve trainer name: prefer actor fields, fall back to legacy
+            std::string backlog_name = backlog.name;
+            int backlog_trainer_id = backlog.index;
+            if( backlog.has_actor() ) {
+                auto *ta = static_cast<train_actor *>( backlog.get_actor() );
+                backlog_name = ta->get_name();
+                backlog_trainer_id = ta->get_trainer_id();
+            }
+            if( backlog_trainer_id == p->getID().get_value() ) {
+                const skill_id skillt( backlog_name );
+                // TODO: This is potentially dangerous. A skill and a martial art
+                // could have the same ident!
+                if( !skillt.is_valid() ) {
+                    const matype_id styleid = matype_id( backlog_name );
+                    if( !styleid.is_valid() ) {
+                        const spell_id &sp_id = spell_id( backlog_name );
+                        if( p->magic->knows_spell( sp_id ) ) {
+                            add_response( string_format( _( "Yes, let's resume training %s" ), sp_id->name ),
+                                          "TALK_TRAIN_START", sp_id );
+                        }
+                    } else {
+                        const martialart &style = styleid.obj();
+                        add_response( string_format( _( "Yes, let's resume training %s" ), style.name ), "TALK_TRAIN_START",
+                                      style );
                     }
                 } else {
-                    const martialart &style = styleid.obj();
-                    add_response( string_format( _( "Yes, let's resume training %s" ), style.name ), "TALK_TRAIN_START",
-                                  style );
+                    add_response( string_format( _( "Yes, let's resume training %s" ), skillt->name() ),
+                                  "TALK_TRAIN_START", skillt );
                 }
-            } else {
-                add_response( string_format( _( "Yes, let's resume training %s" ), skillt->name() ),
-                              "TALK_TRAIN_START", skillt );
             }
         }
         std::vector<matype_id> styles = p->styles_offered_to( you );
@@ -3773,7 +3781,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             reason = _( "Thanks, I feel better already." );
         }
         if( to_eat.type->has_use() ) {
-            amount_used = to_eat.type->invoke( p, to_eat, p.bub_pos() );
+            amount_used = to_eat.type->invoke( p, to_eat, p.abs_pos() );
             if( amount_used <= 0 ) {
                 reason = _( "It doesn't look like a good idea to consume this…" );
                 return REFUSED;

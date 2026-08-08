@@ -412,49 +412,29 @@ void cata::detail::reg_map( sol::state &lua )
             m.add_item_or_charges( p, std::move( new_corpse ) );
         } );
 
-        luna::set_fx( ut, "has_items_at", sol::overload(
-        []( const map & m, const tripoint_bub_ms & p ) -> bool {
+        luna::set_fx( ut, "has_items_at", []( const map & m, const tripoint_bub_ms & p ) -> bool {
             return m.has_items( p );
-        },
-        []( const map & m, const tripoint & p ) -> bool {
-            return m.has_items( tripoint_bub_ms( p ) );
-        } ) );
-        luna::set_fx( ut, "remove_item_at", sol::overload(
-        []( map & m, const tripoint_bub_ms & p, item * it ) -> void {
+        } );
+        luna::set_fx( ut, "remove_item_at", []( map & m, const tripoint_bub_ms & p, item * it ) -> void {
             m.i_rem( p, it );
-        },
-        []( map & m, const tripoint & p, item * it ) -> void {
-            m.i_rem( tripoint_bub_ms( p ), it );
-        } ) );
+        } );
 
         DOC( "Removes an item from the map and returns it as a detached_ptr. The item is now owned by Lua - store it in a table to keep it alive, or let it be GC'd to destroy it. Use add_item to place it back on a map." );
-        luna::set_fx( ut, "detach_item_at", sol::overload(
-        []( map & m, const tripoint_bub_ms & p, item * it ) -> detached_ptr<item> {
+        luna::set_fx( ut, "detach_item_at", []( map & m, const tripoint_bub_ms & p,
+        item * it ) -> detached_ptr<item> {
             return m.i_rem( p, it );
-        },
-        []( map & m, const tripoint & p, item * it ) -> detached_ptr<item> {
-            return m.i_rem( tripoint_bub_ms( p ), it );
-        } ) );
+        } );
 
         DOC( "Places a detached item onto the map. Returns nil on success (item now owned by map), or returns the item back if placement failed." );
-        luna::set_fx( ut, "add_item", sol::overload(
-        []( map & m, const tripoint_bub_ms & p, detached_ptr<item> &it ) -> detached_ptr<item> {
+        luna::set_fx( ut, "add_item", []( map & m, const tripoint_bub_ms & p,
+        detached_ptr<item> &it ) -> detached_ptr<item> {
             return m.add_item_or_charges( p, std::move( it ) );
-        },
-        []( map & m, const tripoint & p, detached_ptr<item> &it ) -> detached_ptr<item> {
-            return m.add_item_or_charges( tripoint_bub_ms( p ), std::move( it ) );
-        } ) );
-        luna::set_fx( ut, "clear_items_at", sol::overload(
-                          []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); },
-                          []( map & m, const tripoint & p ) -> void { m.i_clear( tripoint_bub_ms( p ) ); } ) );
+        } );
+        luna::set_fx( ut, "clear_items_at", []( map & m, const tripoint_bub_ms & p ) -> void { m.i_clear( p ); } );
 
-        luna::set_fx( ut, "get_items_at", sol::overload(
-        []( map & m, const tripoint_bub_ms & p ) {
+        luna::set_fx( ut, "get_items_at", []( map & m, const tripoint_bub_ms & p ) {
             return m.i_at( p );
-        },
-        []( map & m, const tripoint & p ) {
-            return m.i_at( tripoint_bub_ms( p ) );
-        } ) );
+        } );
         luna::set_fx( ut, "get_items_in_radius", []( map & m, const tripoint_bub_ms & p,
         int radius ) -> std::vector<map_stack> {
             std::vector<map_stack> items;
@@ -573,8 +553,10 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "Simpler version of `set_trap_at` with `trap_null`." );
         luna::set_fx( ut, "remove_trap_at", &map::remove_trap );
 
-        luna::set_fx( ut, "is_outside",
-                      sol::resolve<bool( const tripoint_bub_ms & ) const>( &map::is_outside ) );
+        luna::set_fx( ut, "is_outside", sol::overload(
+                          sol::resolve<bool( const tripoint_bub_ms & ) const>( &map::is_outside ),
+                          sol::resolve<bool( const tripoint_abs_ms & ) const>( &map::is_outside )
+                      ) );
         // Actually sheltered or in sunlight doesn't need map, but it's convenient to have it here
         luna::set_fx( ut, "is_sheltered", []( map &, const tripoint_bub_ms & pos ) -> bool { return g->is_sheltered( pos ); } );
 

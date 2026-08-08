@@ -262,7 +262,7 @@ TEST_CASE("crafting_with_a_companion", "[.]") {
         g->load_npcs();
 
         CHECK(!dummy.in_vehicle);
-        dummy.setpos(who.bub_pos());
+        dummy.setpos(who.abs_pos());
         const auto helpers(character_funcs::get_crafting_helpers(dummy));
 
         REQUIRE(std::find(helpers.begin(), helpers.end(), &who) != helpers.end());
@@ -301,7 +301,6 @@ TEST_CASE("crafting_with_a_companion", "[.]") {
 static void prep_craft(
     const recipe_id& rid, std::vector<detached_ptr<item>>& tools, bool expect_craftable) {
     clear_avatar();
-    const tripoint_bub_ms test_origin(60, 60, 0);
     g->u.setpos(test_origin);
     g->u.wear_item(item::spawn("backpack"), false);
     for (detached_ptr<item>& gear : tools) { g->u.i_add(std::move(gear)); }
@@ -594,8 +593,9 @@ static auto in_progress_crafts(Character& you) -> std::vector<item*> {
 static auto assign_completed_craft_activity(
     Character& you, const recipe& recipe_to_make, item* target = nullptr) -> void {
     auto actor = std::make_unique<craft_activity_actor>(
-        &recipe_to_make, 1, 10'000'000, you.abs_pos(), std::vector<comp_selection<item_comp>>{},
-        std::vector<comp_selection<tool_comp>>{}, true, false);
+        &recipe_to_make, 1, 10'000'000, you.abs_pos(), bench_type::ground, 100, you.abs_pos(),
+        std::vector<comp_selection<item_comp>>{}, std::vector<comp_selection<tool_comp>>{}, true,
+        false);
     auto act = std::make_unique<player_activity>(std::move(actor));
     if (target != nullptr) { act->targets.emplace_back(*target); }
     you.assign_activity(std::move(act));
@@ -609,7 +609,8 @@ static auto finish_craft_activity(avatar& you) -> void {
 }
 
 static auto resume_and_finish_craft(avatar& you, item& target) -> void {
-    REQUIRE(iuse::craft(&you, &target, false, target.bub_pos()) == 0);
+    const tripoint_abs_ms abs = target.abs_pos();
+    REQUIRE(iuse::craft(&you, &target, false, &abs) == 0);
     REQUIRE(you.activity);
     finish_craft_activity(you);
 }
@@ -639,8 +640,9 @@ TEST_CASE(
         you.i_add(make_woods_soup_craft(woods_soup_recipe, false));
         here.add_item(you.bub_pos(), make_woods_soup_craft(woods_soup_recipe, true));
         auto& target_craft = here.i_at(you.bub_pos()).only_item();
+        const tripoint_abs_ms craft_abs = target_craft.abs_pos();
 
-        REQUIRE(iuse::craft(&you, &target_craft, false, target_craft.bub_pos()) == 0);
+        REQUIRE(iuse::craft(&you, &target_craft, false, &craft_abs) == 0);
 
         REQUIRE(you.activity);
         REQUIRE(you.activity->id() == activity_id("ACT_CRAFT"));
@@ -923,9 +925,8 @@ TEST_CASE("oven electric grid", "[crafting][overmap][grids][slow]") {
     clear_all_state();
     map& m = get_map();
     avatar& u = get_avatar();
-    constexpr tripoint_bub_ms start_pos = tripoint_bub_ms(60, 60, 0);
-    const tripoint_abs_ms start_pos_abs(map_local_to_abs(m, start_pos));
-    u.setpos(start_pos);
+    const tripoint_bub_ms start_pos = bub_test_origin();
+    u.setpos(test_origin);
     clear_avatar();
     GIVEN("player is near an oven on an electric grid with a battery on it") {
         // TODO: clear_grids()
@@ -936,10 +937,10 @@ TEST_CASE("oven electric grid", "[crafting][overmap][grids][slow]") {
         m.furn_set(start_pos + point_east, furn_str_id("f_oven"));
 
         distribution_grid_tracker& grid_tracker = get_distribution_grid_tracker();
-        distribution_grid& grid = grid_tracker.grid_at(start_pos_abs + point(10, 0));
+        distribution_grid& grid = grid_tracker.grid_at(test_origin + point(10, 0));
         REQUIRE(!grid.empty());
         // We need the grid to be the same for both the oven and the battery
-        REQUIRE(&grid == &grid_tracker.grid_at(start_pos_abs + point_east));
+        REQUIRE(&grid == &grid_tracker.grid_at(test_origin + point_east));
         WHEN("the grid is charged with 10 units of power") {
             grid.mod_resource(10);
             REQUIRE(grid.get_resource() == 10);
@@ -1094,9 +1095,10 @@ auto install_part_on_frame(vehicle& veh, const tripoint_mnt_veh& mount, const vp
 auto make_vehicle_craft_fixture(const vehicle_craft_fixture_options& opts)
     -> vehicle_craft_fixture {
     auto& you = get_avatar();
-    auto& here = get_map();
-    const auto vehicle_pos = tripoint_bub_ms(60, 60, 0);
-    auto* veh = here.add_vehicle(vproto_id("none"), vehicle_pos, 0_degrees, 0, 0);
+    auto& map = get_map();
+    auto& here = you.get_mapbuffer();
+    const auto vehicle_pos = bub_test_origin();
+    auto* veh = map.add_vehicle(vproto_id("none"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
     const auto work_part = install_part_on_frame(*veh, tripoint_mnt_veh::zero(), opts.work_part);
@@ -1112,22 +1114,22 @@ auto make_vehicle_craft_fixture(const vehicle_craft_fixture_options& opts)
         veh->part(freezer_part).enabled = true;
     }
 
-    here.add_vehicle_to_cache(veh);
-    here.build_map_cache(vehicle_pos.z(), true);
-    REQUIRE(here.veh_at(vehicle_pos));
+    map.add_vehicle_to_cache(veh);
+    map.build_map_cache(test_origin.z(), true);
+    REQUIRE(here.veh_at(test_origin));
 
-    const auto stand_pos = vehicle_pos + tripoint(0, 1, 0);
+    const auto stand_pos = test_origin + tripoint(0, 1, 0);
     you.setpos(stand_pos);
     REQUIRE_FALSE(here.veh_at(stand_pos));
 
     return vehicle_craft_fixture{
         .you = &you,
-        .here = &here,
+        .here = &map,
         .veh = veh,
         .work_part = work_part,
         .freezer_part = freezer_part,
         .vehicle_pos = vehicle_pos,
-        .stand_pos = stand_pos,
+        .stand_pos = abs_to_bub(stand_pos),
     };
 }
 

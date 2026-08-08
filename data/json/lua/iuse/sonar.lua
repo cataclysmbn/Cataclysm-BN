@@ -31,11 +31,10 @@ sonar.register = function(mod)
   ---@type fun(params: ItemUseParams): integer
   mod.sonar_scan = function(params)
     local who = params.user
-    local pos = params.pos
+    local abs_ms = params.pos
     local item = params.item
-    if pos == nil and who then pos = who:get_pos_ms() end
-    if pos == nil then return 0 end
-    local abs_ms = gapi.bub_to_abs(pos)
+    if abs_ms == nil and who then abs_ms = who:get_pos_ms() end
+    if abs_ms == nil then return 0 end
     local center_omt = abs_ms:to_omt()
     if center_omt == nil then return 0 end
     local radius = 7

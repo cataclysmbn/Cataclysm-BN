@@ -8,7 +8,7 @@
 namespace {
 
 auto spell_target_is_visible(
-    const spell& casting, const Character& caster, const tripoint_bub_ms& target) -> bool {
+    const spell& casting, const Character& caster, const tripoint_abs_ms& target) -> bool {
     if (casting.is_valid_target(target_ground) || caster.sees(target)) { return true; }
 
     const auto* const target_critter = g->critter_at<Creature>(target, true);
@@ -20,7 +20,7 @@ auto spell_target_is_visible(
 } // namespace
 
 auto spell_target_can_be_resolved(
-    const spell& casting, const Character& caster, const tripoint_bub_ms& target) -> bool {
+    const spell& casting, const Character& caster, const tripoint_abs_ms& target) -> bool {
     return casting.is_valid_target(caster, target)
         && spell_target_is_visible(casting, caster, target);
 }

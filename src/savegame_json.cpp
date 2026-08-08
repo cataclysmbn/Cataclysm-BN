@@ -207,19 +207,27 @@ void player_activity::serialize( JsonOut &json ) const
         json.member( "actor", actor );
         json.member( "index", index );
         json.member( "position", position );
-        json.member( "coords", coords );
-        json.member( "coord_set", coord_set );
-        json.member( "name", name );
-        json.member( "targets", targets );
-        json.member( "placement", placement );
-        json.member( "values", values );
-        json.member( "str_values", str_values );
-        json.member( "auto_resume", auto_resume );
-        json.member( "monsters", monsters );
-        json.member( "tools", tools_ );
-        json.member( "moves_total", moves_total );
-        json.member( "moves_left", moves_left );
-        json.member( "assistants_ids", assistants_ids_ );
+        // Legacy fields — only written for non-actor activities (actor handles its own data)
+        if( !actor ) {
+            json.member( "coords", coords );
+            json.member( "coord_set", coord_set );
+            json.member( "name", name );
+            json.member( "targets", targets );
+            json.member( "placement", placement );
+            json.member( "values", values );
+            json.member( "str_values", str_values );
+            json.member( "monsters", monsters );
+            json.member( "tools", tools_ );
+            json.member( "moves_total", moves_total );
+            json.member( "moves_left", moves_left );
+            json.member( "assistants_ids", assistants_ids_ );
+        } else if( actor->progress.invalid() ) {
+            // Transitional actors that still use the legacy countdown need
+            // these values for compatibility.  Actors with a valid progress
+            // counter serialize their timing in actor_data instead.
+            json.member( "moves_total", moves_total );
+            json.member( "moves_left", moves_left );
+        }
     }
     json.end_object();
 }
@@ -242,7 +250,24 @@ void player_activity::deserialize( JsonIn &jsin )
     // this may cause inconvenience but should avoid any lasting damage to npcs
     if( has_actor && type != ACT_MIGRATION_CANCEL ) {
         if( !data.has_member( "actor" ) || data.has_null( "actor" ) ) {
-            type = ACT_MIGRATION_CANCEL;
+            // Try legacy deserialization: construct actor from player_activity-level fields
+            bool migrated = false;
+            auto legacy_des = activity_actors::legacy_deserialize_functions.find( type );
+            if( legacy_des != activity_actors::legacy_deserialize_functions.end() ) {
+                // Read moves for progress tracking before constructing actor
+                data.read( "moves_total", moves_total );
+                int ml = data.get_int( "moves_left" );
+                if( ml > 0 ) {
+                    moves_left = ml;
+                    actor = legacy_des->second( data );
+                    if( actor ) {
+                        migrated = true;
+                    }
+                }
+            }
+            if( !migrated ) {
+                type = ACT_MIGRATION_CANCEL;
+            }
         } else {
             auto actor = data.get_object( "actor" );
             actor.allow_omitted_members();
@@ -776,7 +801,7 @@ void Character::load( const JsonObject &data )
     }
 
     _skills->clear();
-    for( const JsonMember member : data.get_object( "skills" ) ) {
+    for( const JsonMember &member : data.get_object( "skills" ) ) {
         member.read( ( *_skills )[skill_id( member.name() )] );
     }
 
@@ -1143,7 +1168,7 @@ void avatar::store( JsonOut &json ) const
 
     json.member( "assigned_invlet" );
     json.start_array();
-    for( auto iter : inv.assigned_invlet ) {
+    for( auto &iter : inv.assigned_invlet ) {
         json.start_array();
         json.write( iter.first );
         json.write( iter.second );
@@ -1650,7 +1675,7 @@ void npc::load( const JsonObject &data )
             last_player_seen_pos->z() = bub_pos().z();
         }
         // old code used tripoint_min to indicate "not a valid point"
-        if( *last_player_seen_pos == tripoint_bub_ms::zero() ) {
+        if( *last_player_seen_pos == tripoint_abs_ms::zero() ) {
             last_player_seen_pos.reset();
         }
     } else {
@@ -1671,16 +1696,30 @@ void npc::load( const JsonObject &data )
     }
 
     if( data.has_member( "pulp_locationx" ) ) {
-        pulp_location.emplace();
-        data.read( "pulp_locationx", pulp_location->x() );
-        data.read( "pulp_locationy", pulp_location->y() );
-        data.read( "pulp_locationz", pulp_location->z() );
+        tripoint_bub_ms loc;
+        pulp_position.emplace();
+        data.read( "pulp_locationx", loc.x() );
+        data.read( "pulp_locationy", loc.y() );
+        data.read( "pulp_locationz", loc.z() );
         // old code used tripoint_min to indicate "not a valid point"
-        if( *pulp_location == tripoint_bub_ms::zero() ) {
-            pulp_location.reset();
+        if( loc == tripoint_bub_ms::zero() ) {
+            pulp_position.reset();
+        } else {
+            pulp_position.emplace();
+            pulp_position = bub_to_abs( loc );
+        }
+    } else if( data.has_member( "pulp_location" ) ) {
+        // absolute migration
+        std::optional<tripoint_bub_ms> loc;
+        loc.emplace();
+        data.read( "pulp_location", loc );
+        if( loc ) {
+            pulp_position.emplace();
+            pulp_position = bub_to_abs( *loc );
         }
     } else {
-        data.read( "pulp_location", pulp_location );
+        pulp_position.emplace();
+        data.read( "pulp_position", pulp_position );
     }
     data.read( "chair_pos", chair_pos );
     data.read( "wander_pos", wander_pos );
@@ -1853,7 +1892,7 @@ void npc::store( JsonOut &json ) const
     json.member( "guardy", guard_pos.y() );
     json.member( "guardz", guard_pos.z() );
     json.member( "current_activity_id", current_activity_id.str() );
-    json.member( "pulp_location", pulp_location );
+    json.member( "pulp_position", pulp_position );
     json.member( "chair_pos", chair_pos );
     json.member( "wander_pos", wander_pos );
     // TODO: stringid
@@ -1926,7 +1965,7 @@ void location_inventory::json_load_invcache( JsonIn &jsin )
         std::unordered_map<itype_id, std::string> map;
         for( JsonObject jo : jsin.get_array() ) {
             jo.allow_omitted_members();
-            for( const JsonMember member : jo ) {
+            for( const JsonMember &member : jo ) {
                 std::string invlets;
                 for( const int i : member.get_array() ) {
                     invlets.push_back( i );
@@ -2013,12 +2052,12 @@ auto monster::load( const JsonObject &data,
     }
 
     wandf = 0;
-    wander_pos = abs_to_bub( pos_abs );
+    wander_pos = pos_abs;
     if( !legacy_context ) {
         auto stored_wander_pos_abs = tripoint_abs_ms::zero();
         if( data.read( "wander_pos_abs", stored_wander_pos_abs ) ) {
             data.read( "wandf", wandf );
-            wander_pos = abs_to_bub( stored_wander_pos_abs );
+            wander_pos = stored_wander_pos_abs;
         } else {
             const auto has_legacy_wander_x = data.read( "wandx", wander_pos.x() );
             const auto has_legacy_wander_y = data.read( "wandy", wander_pos.y() );
@@ -2074,7 +2113,7 @@ auto monster::load( const JsonObject &data,
 
     // special_attacks indicates a save after the special_attacks refactor
     if( data.has_object( "special_attacks" ) ) {
-        for( const JsonMember member : data.get_object( "special_attacks" ) ) {
+        for( const JsonMember &member : data.get_object( "special_attacks" ) ) {
             JsonObject saobject = member.get_object();
             saobject.allow_omitted_members();
             auto &entry = special_attacks[member.name()];
@@ -2114,21 +2153,15 @@ auto monster::load( const JsonObject &data,
     data.read( "aggro_character", aggro_character );
     data.read( "stairscount", staircount ); // really?
     data.read( "fish_population", fish_population );
-    // Load legacy plans.
+    // Load legacy plans, but just discard them.
     std::vector<tripoint> plans;
     data.read( "plans", plans );
-    if( !plans.empty() ) {
-        goal = tripoint_bub_ms( plans.back() );
-    }
 
     data.read( "summon_time_limit", summon_time_limit );
 
-    // This is relative to the monster so it isn't invalidated by map shifting.
-    tripoint destination;
+    tripoint_abs_ms destination;
     data.read( "destination", destination );
-    const auto load_bub_pos = has_legacy_x &&
-                              has_legacy_y ? legacy_bub_pos : abs_to_bub( pos_abs );
-    goal = load_bub_pos + destination;
+    goal = destination;
 
     upgrades = data.get_bool( "upgrades", type->upgrades );
     upgrade_time = data.get_int( "upgrade_time", -1 );
@@ -2201,7 +2234,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "unique_name", unique_name );
     json.member( "pos_abs", pos_abs );
     if( include_local_state ) {
-        json.member( "wander_pos_abs", bub_to_abs( wander_pos ) );
+        json.member( "wander_pos_abs", wander_pos );
         json.member( "wandf", wandf );
     }
     json.member( "hp", hp );
@@ -2245,8 +2278,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     if( battery_item ) {
         json.member( "battery_item", *battery_item );
     }
-    // Store the relative position of the goal so it loads correctly after a map shift.
-    json.member( "destination", goal - bub_pos() );
+    json.member( "destination", goal );
     json.member( "ammo", ammo );
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );
@@ -3058,7 +3090,6 @@ void vehicle_part::deserialize( JsonIn &jsin )
         // handle legacy format which didn't include the base item
         set_base( item::spawn( id.obj().item ) );
     }
-
     data.read( "mount_dx", mount.x() );
     data.read( "mount_dy", mount.y() );
     data.read( "open", open );
@@ -4282,7 +4313,7 @@ void kill_tracker::deserialize( JsonIn &jsin )
 {
     JsonObject data = jsin.get_object();
     data.allow_omitted_members();
-    for( const JsonMember member : data.get_object( "kills" ) ) {
+    for( const JsonMember &member : data.get_object( "kills" ) ) {
         kills[mtype_id( member.name() )] = member.get_int();
     }
 
@@ -5067,7 +5098,7 @@ void uistatedata::deserialize( const JsonObject &jo )
     jo.read( "list_item_downvote_active", list_item_downvote_active );
     jo.read( "list_item_priority_active", list_item_priority_active );
 
-    for( const JsonMember member : jo.get_object( "input_history" ) ) {
+    for( const JsonMember &member : jo.get_object( "input_history" ) ) {
         std::vector<std::string> &v = gethistory( member.name() );
         v.clear();
         for( const std::string line : member.get_array() ) {

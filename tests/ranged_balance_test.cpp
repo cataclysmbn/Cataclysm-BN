@@ -199,11 +199,10 @@ static void assert_encumbrance(npc& shooter, int encumbrance) {
     }
 }
 
-static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
 
 TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
     clear_all_state();
-    standard_npc shooter("Shooter", shooter_pos, {}, 0, 8, 8, 8, 7);
+    standard_npc shooter("Shooter", test_origin, {}, 0, 8, 8, 8, 7);
     equip_shooter(
         shooter,
         {"bastsandals", "armguard_chitin", "armor_chitin", "beekeeping_gloves", "fencing_mask"});
@@ -223,7 +222,7 @@ TEST_CASE("unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]") {
 
 TEST_CASE("competent_shooter_accuracy", "[ranged] [balance]") {
     clear_all_state();
-    standard_npc shooter("Shooter", shooter_pos, {}, 5, 10, 10, 10, 10);
+    standard_npc shooter("Shooter", test_origin, {}, 5, 10, 10, 10, 10);
     equip_shooter(shooter, {"cloak_wool", "footrags_wool", "footrags_leather", "gloves_wraps_wool",
                             "gloves_wraps_leather", "glasses_safety", "balclava"});
     assert_encumbrance(shooter, 5);
@@ -242,7 +241,7 @@ TEST_CASE("competent_shooter_accuracy", "[ranged] [balance]") {
 
 TEST_CASE("expert_shooter_accuracy", "[ranged] [balance]") {
     clear_all_state();
-    standard_npc shooter("Shooter", shooter_pos, {}, 10, 20, 20, 20, 20);
+    standard_npc shooter("Shooter", test_origin, {}, 10, 20, 20, 20, 20);
     equip_shooter(shooter, {});
     assert_encumbrance(shooter, 0);
 

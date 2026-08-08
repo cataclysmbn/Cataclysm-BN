@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <memory>
+#include <ranges>
 #include <set>
 
 #include "avatar.h"
@@ -106,10 +107,12 @@ void vehicle_part::copy_static_from( const vehicle_part &source )
 vehicle_part::vehicle_part( const vehicle_part &source, vehicle *veh ) : vehicle_part( veh )
 {
     copy_static_from( source );
+    hack_id = veh->get_next_hack_id();
     base = item::spawn( *source.base );
     for( const item * const &it : source.items ) {
         items.push_back( item::spawn( *it ) );
     }
+    refresh_locations_hack( veh );
 }
 
 vehicle_part::vehicle_part( vehicle_part &&source ) : vehicle_part()
@@ -396,7 +399,7 @@ int vehicle_part::ammo_consume( int qty, const tripoint_bub_ms &pos )
         }
         return res;
     }
-    return base->ammo_consume( qty, pos );
+    return base->ammo_consume( qty );
 }
 
 double vehicle_part::consume_energy( const itype_id &ftype, double energy_j )
@@ -467,7 +470,7 @@ bool vehicle_part::can_reload( const item *obj ) const
     return ammo_remaining() < ammo_capacity();
 }
 
-void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_heater, int turns )
+void vehicle_part::process_contents( const bool e_heater, const int turns )
 {
     // for now we only care about processing food containers since things like
     // fuel don't care about temperature yet
@@ -484,9 +487,12 @@ void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_he
             flag = temperature_flag::TEMP_FREEZER;
         }
 
-        for( int i = 0; i < turns; i++ ) {
-            base = item::process( base.release(), nullptr, pos, false, flag );
-        }
+        std::ranges::for_each( std::views::iota( 0, turns ), [&]( const auto ) {
+            auto *const base_location = base.get_loc_hack();
+            detached_ptr<item> detached_base = base.release();
+            detached_base->saved_loc = base_location;
+            base = item::process( std::move( detached_base ), nullptr, false, flag );
+        } );
     }
 }
 

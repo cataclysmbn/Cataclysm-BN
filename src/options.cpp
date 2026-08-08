@@ -2625,6 +2625,12 @@ void options_manager::add_options_performance()
                                "This reduces map-shift hitches at the cost of extra per-turn loading work and    "
                                "some additional memory usage." ),
              !is_android );
+        add( "VEHICLE_FOOTPRINT_SIMULATION", page_id,
+             translate_marker( "Simulate Partial Vehicles" ),
+             translate_marker( "Simulate a vehicle's complete footprint when any part of it touches a stable "
+                               "simulation area.  Disable to require the entire vehicle to remain in a "
+                               "stable area." ),
+             true );
         add( "ACTIVITY_MOBILE_BUBBLE_SIZE", page_id,
              translate_marker( "Mobile Activity Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
@@ -2676,26 +2682,24 @@ void options_manager::add_options_performance()
                                           to_translation( "Configure how submaps are loaded and "
                                                   "processed outside of the reality bubble." ) ),
     [&]( auto & page_id ) {
-        // Temporary fix for #8726: disable out-of-bubble fire spread until
-        // fire-loaded submaps can safely handle vehicle state.
-        // add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
-        //      translate_marker( "Out-of-Bubble Fire Spread" ),
-        //      translate_marker( "Controls whether fire can keep areas loaded outside of render "
-        //                        "distance. 'None': fire burns out in place. "
-        //                        "'Adjacent': fire can spread into unloaded areas, and keeps "
-        //                        "close enough." ), {
-        //     { "none", translate_marker( "None (pause spread)" ) },
-        //     { "adjacent", translate_marker( "Adjacent (one layer)" ) }
-        // },
-        // is_android ? "none" : "adjacent"
-        //    );
-        // add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
-        //      translate_marker( "Fire Spread Submap Cap" ),
-        //      translate_marker( "Maximum number of submaps that fire spread may keep loaded "
-        //                        "simultaneously across all dimensions. Higher values allow larger "
-        //                        "fires to be simulated correctly. "
-        //                        "0 disables out-of-bubble fire spread loading entirely. " ),
-        //      0, 250, 25 );
+        add( "REALITY_BUBBLE_FIRE_SPREAD", page_id,
+             translate_marker( "Out-of-Bubble Fire Spread" ),
+             translate_marker( "Controls whether fire can keep areas loaded outside of render "
+                               "distance. 'None': fire burns out in place. "
+                               "'Adjacent': fire can spread into unloaded areas, and keeps "
+        "close enough." ), {
+            { "none", translate_marker( "None (pause spread)" ) },
+            { "adjacent", translate_marker( "Adjacent (one layer)" ) }
+        },
+        is_android ? "none" : "adjacent"
+           );
+        add( "FIRE_SPREAD_SUBMAP_CAP", page_id,
+             translate_marker( "Fire Spread Submap Cap" ),
+             translate_marker( "Maximum number of submaps that fire spread may keep loaded "
+                               "simultaneously across all dimensions. Higher values allow larger "
+                               "fires to be simulated correctly. "
+                               "0 disables out-of-bubble fire spread loading entirely. " ),
+             0, 250, 25 );
         add( "RETAINED_OMT_CACHE_LENGTH", page_id,
              translate_marker( "Retained Map Cache" ),
              translate_marker( "Side length of the extra overmap-terrain MRU cache. "
@@ -2710,7 +2714,7 @@ void options_manager::add_options_performance()
            );
     } );
 
-    // get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
+    get_option( "FIRE_SPREAD_SUBMAP_CAP" ).setPrerequisite( "REALITY_BUBBLE_FIRE_SPREAD", "adjacent" );
 }
 
 void options_manager::add_options_debug()
@@ -2854,20 +2858,6 @@ void options_manager::add_options_debug()
          true );
 
     add_empty_line();
-
-    add( "USE_LEGACY_PATHFINDING", debug,
-         translate_marker( "Use legacy pathfinding" ),
-         translate_marker( "If true, opt out of new pathfinding in favor of legacy one. This makes pathfinding mods not work." ),
-         false );
-    add( "PATHFINDING_MAX_DIST", debug,
-         translate_marker( "Legacy Pathfinder Distance Cap" ),
-         translate_marker( "Hard cap on straight-line pathfinding distance (in tiles) for the legacy pathfinder.  "
-                           "Monsters and NPCs whose configured range exceeds this value are limited to it.  "
-                           "The old fixed map allowed at most 120 tiles end-to-end; "
-                           "the default of 96 is 50%% larger than the old per-side maximum of 60.  "
-                           "Raise this if mods require longer paths; lower it to reduce pathfinding cost at large bubble sizes." ),
-         16, 1000, 96 );
-    get_option( "PATHFINDING_MAX_DIST" ).setPrerequisite( "USE_LEGACY_PATHFINDING" );
 }
 
 void options_manager::add_options_world_default()
@@ -4453,10 +4443,8 @@ void options_manager::cache_to_globals()
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
     activity_skip_monster_lod_gate = ::get_option<int>( "ACTIVITY_SKIP_MONSTER_LOD_GATE" );
 
-    // Temporary fix for #8726: force out-of-bubble fire spread off while the
-    // corresponding options are commented out above.
-    reality_bubble_fire_spread = false;
-    fire_spread_submap_cap = 0;
+    reality_bubble_fire_spread = ::get_option<std::string>( "REALITY_BUBBLE_FIRE_SPREAD" ) != "none";
+    fire_spread_submap_cap = ::get_option<int>( "FIRE_SPREAD_SUBMAP_CAP" );
     {
         const auto opt = ::get_option<std::string>( "VISIBILITY_SCALING" );
         visibility_scaling = opt == "perfect" ? visibility_scaling_mode::perfect
@@ -4487,6 +4475,8 @@ void options_manager::cache_to_globals()
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
     lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    vehicle_footprint_simulation_enabled =
+        ::get_option<bool>( "VEHICLE_FOOTPRINT_SIMULATION" );
     retained_omt_cache_length = ::get_option<int>( "RETAINED_OMT_CACHE_LENGTH" );
 
     merge_comestible_mode = ( [] {

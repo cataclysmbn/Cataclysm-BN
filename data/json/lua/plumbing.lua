@@ -29,7 +29,7 @@
 ---@class PlumbingWashContext
 ---@field user Character
 ---@field map Map
----@field pos TripointBubMs
+---@field pos TripointAbsMs
 ---@field mode string
 ---@field mode_data PlumbingModeData
 ---@field resources PlumbingFixtureResources
@@ -150,7 +150,7 @@ local charges_to_liters = function(opts)
   return round_to_tenth(opts.charges / charges_per_liter)
 end
 
----@param opts { user: Character, pos: TripointBubMs, mode: string }
+---@param opts { user: Character, pos: TripointAbsMs, mode: string }
 ---@return boolean
 local ensure_player_on_fixture = function(opts)
   local user_pos = opts.user:get_pos_ms()
@@ -161,10 +161,10 @@ local ensure_player_on_fixture = function(opts)
   return false
 end
 
----@param opts { map: Map, pos: TripointBubMs }
+---@param opts { map: Map, pos: TripointAbsMs }
 ---@return PlumbingFixtureResources
 local get_fixture_resources = function(opts)
-  local pos_abs_ms = opts.map:bub_to_abs(opts.pos)
+  local pos_abs_ms = opts.pos
   local pos_abs_omt = pos_abs_ms:to_omt()
   local source = resource_source.grid
   local clean_charges = overmapbuffer.fluid_grid_liquid_charges_at(pos_abs_omt, item_water_clean)
@@ -172,10 +172,11 @@ local get_fixture_resources = function(opts)
   local liquid = nil
   local liquid_charges = 0
 
-  if opts.map:has_vehicle_part_with_feature_at(opts.pos, vehicle_shower_feature, true) then
+  local pos_bub = opts.map:abs_to_bub(opts.pos)
+  if opts.map:has_vehicle_part_with_feature_at(pos_bub, vehicle_shower_feature, true) then
     source = resource_source.vehicle
-    clean_charges = opts.map:get_vehicle_fuel_left_at(opts.pos, vehicle_shower_feature, item_water_clean, false)
-    dirty_charges = opts.map:get_vehicle_fuel_left_at(opts.pos, vehicle_shower_feature, item_water, false)
+    clean_charges = opts.map:get_vehicle_fuel_left_at(pos_bub, vehicle_shower_feature, item_water_clean, false)
+    dirty_charges = opts.map:get_vehicle_fuel_left_at(pos_bub, vehicle_shower_feature, item_water, false)
   end
 
   if clean_charges > 0 then
@@ -197,11 +198,11 @@ local get_fixture_resources = function(opts)
   }
 end
 
----@param opts { map: Map, center: TripointBubMs }
+---@param opts { map: Map, center: TripointAbsMs }
 ---@return integer
 local count_bloody_tiles = function(opts)
   local bloody_tiles = 0
-  for _, tile in pairs(opts.map:points_in_radius(opts.center, 1, 0)) do
+  for _, tile in pairs(opts.map:points_in_radius(opts.map:abs_to_bub(opts.center), 1, 0)) do
     local has_blood = false
     for _, field_id in ipairs(blood_field_ids) do
       if opts.map:get_field_int_at(tile, field_id) > 0 then
@@ -214,7 +215,7 @@ local count_bloody_tiles = function(opts)
   return bloody_tiles
 end
 
----@param opts { user: Character, map: Map, center: TripointBubMs }
+---@param opts { user: Character, map: Map, center: TripointAbsMs }
 ---@return PlumbingConsumableCandidate[]
 local collect_body_cleanser_candidates = function(opts)
   local candidates = {}
@@ -223,7 +224,7 @@ local collect_body_cleanser_candidates = function(opts)
     table.insert(candidates, { item = item, source = "inventory" })
   end
 
-  for _, tile in pairs(opts.map:points_in_radius(opts.center, 1, 0)) do
+  for _, tile in pairs(opts.map:points_in_radius(opts.map:abs_to_bub(opts.center), 1, 0)) do
     for _, item in pairs(opts.map:get_items_at(tile):items()) do
       if item:has_flag(flag_body_cleanser) then
         table.insert(candidates, { item = item, source = "map", pos = tile })
@@ -254,7 +255,7 @@ local consume_body_cleanser_candidate = function(opts)
   return label
 end
 
----@param opts { user: Character, map: Map, center: TripointBubMs }
+---@param opts { user: Character, map: Map, center: TripointAbsMs }
 ---@return PlumbingTowelCandidate[]
 local collect_dry_towel_candidates = function(opts)
   local candidates = {}
@@ -263,7 +264,7 @@ local collect_dry_towel_candidates = function(opts)
     if item:get_type() == item_towel then table.insert(candidates, { item = item, label = item:display_name(1) }) end
   end
 
-  for _, tile in pairs(opts.map:points_in_radius(opts.center, 1, 0)) do
+  for _, tile in pairs(opts.map:points_in_radius(opts.map:abs_to_bub(opts.center), 1, 0)) do
     for _, item in pairs(opts.map:get_items_at(tile):items()) do
       if item:get_type() == item_towel then table.insert(candidates, { item = item, label = item:display_name(1) }) end
     end
@@ -284,7 +285,7 @@ local refresh_morale = function(opts)
   opts.user:add_morale(opts.morale_type, delta, opts.bonus, opts.duration, opts.decay_start, true, nil)
 end
 
----@param opts { user: Character, map: Map, center: TripointBubMs }
+---@param opts { user: Character, map: Map, center: TripointAbsMs }
 ---@return string
 local wet_dry_towel = function(opts)
   local candidate = collect_dry_towel_candidates({ user = opts.user, map = opts.map, center = opts.center })[1]
@@ -331,7 +332,8 @@ end
 local clean_bloody_room = function(opts)
   if opts.context.bloody_tile_count == 0 then return true end
 
-  for _, tile in pairs(opts.context.map:points_in_radius(opts.context.pos, 1, 0)) do
+  local pos_bub = opts.context.map:abs_to_bub(opts.context.pos)
+  for _, tile in pairs(opts.context.map:points_in_radius(pos_bub, 1, 0)) do
     for _, field_id in ipairs(blood_field_ids) do
       opts.context.map:remove_field_at(tile, field_id)
     end
@@ -383,10 +385,11 @@ local start_wash_activity = function(opts)
     return false
   end
 
+  local pos_bub = opts.context.map:abs_to_bub(opts.context.pos)
   if opts.is_warm then
     if opts.context.resources.source == resource_source.vehicle then
       local available_power = opts.context.map:get_vehicle_fuel_left_at(
-        opts.context.pos,
+        pos_bub,
         vehicle_shower_feature,
         item_battery,
         true
@@ -405,7 +408,7 @@ local start_wash_activity = function(opts)
       end
 
       opts.context.map:drain_vehicle_fuel_at(
-        opts.context.pos,
+        pos_bub,
         vehicle_shower_feature,
         item_battery,
         opts.context.mode_data.power_cost
@@ -462,7 +465,7 @@ local start_wash_activity = function(opts)
 
   if opts.context.resources.source == resource_source.vehicle then
     opts.context.map:drain_vehicle_fuel_at(
-      opts.context.pos,
+      pos_bub,
       vehicle_shower_feature,
       opts.context.resources.liquid,
       opts.context.mode_data.water_charges
@@ -479,7 +482,7 @@ local start_wash_activity = function(opts)
     type = ACT_WASH_SELF,
     duration = TimeDuration.from_minutes(opts.context.mode_data.duration_minutes),
     on_finish = "PLUMBING_FINISH_WASH",
-    pos = opts.context.pos,
+    pos = opts.context.map:abs_to_bub(opts.context.pos),
     name = opts.context.mode,
     data = {
       mode = opts.context.mode,
@@ -520,7 +523,7 @@ local choose_wash = function(opts)
 
   local choice_id = menu:query()
   if choice_id == 9 then
-    gapi.call_builtin_examine("keg", gapi.get_avatar(), opts.context.pos)
+    gapi.call_builtin_examine("keg", gapi.get_avatar(), opts.context.map:abs_to_bub(opts.context.pos))
     return
   end
 
@@ -555,7 +558,7 @@ local examine_context = function(opts)
     if choice_id == 1 then
       clean_bloody_room({ context = opts.context })
     elseif choice_id == 9 then
-      gapi.call_builtin_examine("keg", gapi.get_avatar(), opts.context.pos)
+      gapi.call_builtin_examine("keg", gapi.get_avatar(), opts.context.map:abs_to_bub(opts.context.pos))
     end
     return
   end
@@ -563,7 +566,7 @@ local examine_context = function(opts)
   choose_wash({ context = opts.context })
 end
 
----@param params { user: Character, pos: TripointBubMs }
+---@param params { user: Character, pos: TripointAbsMs }
 ---@param mode string
 ---@return nil
 local examine = function(params, mode)
@@ -575,17 +578,17 @@ local examine = function(params, mode)
     mode = mode,
     mode_data = wash_mode_data[mode],
     resources = get_fixture_resources({ map = map, pos = params.pos }),
-    is_cold_weather = map:get_temperature_c(params.pos) < warm_temperature_threshold_c,
+    is_cold_weather = map:get_temperature_c(map:abs_to_bub(params.pos)) < warm_temperature_threshold_c,
     bloody_tile_count = count_bloody_tiles({ map = map, center = params.pos }),
   }
   examine_context({ context = context })
 end
 
----@param params { user: Character, pos: TripointBubMs }
+---@param params { user: Character, pos: TripointAbsMs }
 ---@return nil
 plumbing.examine_shower = function(params) examine(params, wash_mode.shower) end
 
----@param params { user: Character, pos: TripointBubMs }
+---@param params { user: Character, pos: TripointAbsMs }
 ---@return nil
 plumbing.examine_bathtub = function(params) examine(params, wash_mode.bath) end
 

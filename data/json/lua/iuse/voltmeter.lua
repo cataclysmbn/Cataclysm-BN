@@ -31,10 +31,9 @@ voltmeter.menu = function(params)
   return 0
 end
 
----@type fun(who: Character, item: Item, pos: TripointBubMs): string
-voltmeter.get_grid_charge_info = function(_who, _item, pos)
-  local pos_abs = gapi.bub_to_abs(pos)
-  local grid = gapi.get_distribution_grid_tracker():grid_at(pos_abs)
+---@type fun(who: Character, item: Item, pos: TripointAbsMs): string
+voltmeter.get_grid_charge_info = function(_who, _item, pos_abs_ms)
+  local grid = gapi.get_distribution_grid_tracker():grid_at(pos_abs_ms)
   local amt = grid:get_resource()
   if not amt then return "" end
   local stat = grid:get_power_stat()
@@ -50,9 +49,8 @@ voltmeter.get_grid_charge_info = function(_who, _item, pos)
   return msg
 end
 
----@type fun(who: Character, item: Item, pos: TripointBubMs): string
-voltmeter.get_grid_connections_info = function(_who, _item, pos)
-  local pos_abs_ms = gapi.bub_to_abs(pos)
+---@type fun(who: Character, item: Item, pos: TripointAbsMs): string
+voltmeter.get_grid_connections_info = function(_who, _item, pos_abs_ms)
   local pos_abs_omt = pos_abs_ms:to_omt()
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
@@ -79,9 +77,8 @@ voltmeter.get_grid_connections_info = function(_who, _item, pos)
   return msg
 end
 
----@type fun(who: Character, item: Item, pos: TripointBubMs): integer
-voltmeter.modify_grid_connections = function(who, item, pos)
-  local pos_abs_ms = gapi.bub_to_abs(pos)
+---@type fun(who: Character, item: Item, pos: TripointAbsMs): integer
+voltmeter.modify_grid_connections = function(who, item, pos_abs_ms)
   local pos_abs_omt = pos_abs_ms:to_omt()
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
@@ -106,7 +103,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
     local format_str = found and locale.gettext("Remove connection in direction: %s")
       or locale.gettext("Add connection in direction: %s")
 
-    local new_z = pos.z + delta.z
+    local new_z = pos_abs_ms.z + delta.z
     local enabled = new_z >= -10 and new_z <= 10
 
     menu:add(i - 1, string.format(format_str, name))

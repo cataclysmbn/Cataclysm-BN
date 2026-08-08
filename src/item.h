@@ -26,6 +26,7 @@
 #include "kill_tracker.h"
 #include "location_vector.h"
 #include "overmapbuffer.h"
+#include "mapbuffer.h"
 #include "pimpl.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -78,6 +79,7 @@ enum body_part : int;
 enum class side : int;
 class body_part_set;
 class map;
+class mapbuffer;
 struct damage_instance;
 struct damage_unit;
 struct fire_data;
@@ -108,7 +110,6 @@ static const std::string p1_name = "p1";
 static const std::string p2_name = "p2";
 static const std::string source_p1_name = "source_" + p1_name;
 static const std::string source_p2_name = "source_" + p2_name;
-static const tripoint_abs_ms tripoint_abs_ms_min( tripoint_min );
 
 static const std::string TINT_VAR_PREFIX( "tint_" );
 
@@ -220,10 +221,10 @@ class item_reload_option
         item_reload_option( const item_reload_option & );
         item_reload_option &operator=( const item_reload_option & );
 
-        item_reload_option( const player *who, item *target, const item *parent,
+        item_reload_option( const Character *who, item *target, const item *parent,
                             item &ammo );
 
-        const player *who = nullptr;
+        const Character *who = nullptr;
         item *target = nullptr;
         item *ammo;
 
@@ -468,7 +469,7 @@ class item : public location_visitable<item>, public game_object<item>
          * the return value can differ on successive calls.
          * @param pos The location of the item (see REVIVE_SPECIAL flag).
          */
-        bool ready_to_revive( const tripoint_bub_ms &pos ) const;
+        bool ready_to_revive() const;
 
         bool is_money() const;
 
@@ -792,25 +793,9 @@ class item : public location_visitable<item>, public game_object<item>
          */
         static detached_ptr<item> use_charges( detached_ptr<item> &&self, const itype_id &what, int &qty,
                                                std::vector<detached_ptr<item>> &used,
-                                               const tripoint_bub_ms &pos,
                                                const std::function<bool( const item & )> &filter = return_true<item> );
 
-        /**
-         * Invokes item type's @ref itype::drop_action.
-         * This function can change the item.
-         * @param pos Where is the item being placed. Note: the item isn't there yet.
-         * @return true if the item was destroyed during placement.
-         */
-        bool on_drop( const tripoint_bub_ms &pos );
-
-        /**
-         * Invokes item type's @ref itype::drop_action.
-         * This function can change the item.
-         * @param pos Where is the item being placed. Note: the item isn't there yet.
-         * @param map A map object associated with that position.
-         * @return true if the item was destroyed during placement.
-         */
-        bool on_drop( const tripoint_bub_ms &pos, map &map );
+        bool on_drop();
 
         /**
          * Consume a specific amount of items of a specific type.
@@ -942,8 +927,7 @@ class item : public location_visitable<item>, public game_object<item>
             int local_temperature = 0;
         };
 
-        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
-                                   temperature_flag temperature,
+        static auto actualize_rot( detached_ptr<item> &&self, temperature_flag temperature,
                                    const weather_manager &weather ) -> detached_ptr<item>;
         static auto actualize_rot( detached_ptr<item> &&self,
                                    const rot_context &context ) -> detached_ptr<item>;
@@ -983,11 +967,10 @@ class item : public location_visitable<item>, public game_object<item>
          * @return true if the item is fully rotten and is ready to be removed
          */
         /*@{*/
-        static auto process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
+        static auto process_rot( detached_ptr<item> &&self )
         -> detached_ptr<item>;
         static auto process_rot( detached_ptr<item> &&self, bool seals,
-                                 const tripoint_bub_ms &pos,
-                                 player *carrier, temperature_flag flag,
+                                 Character *carrier, temperature_flag flag,
                                  const weather_manager &weather_generator ) -> detached_ptr<item>;
         /*@}*/
 
@@ -1006,8 +989,7 @@ class item : public location_visitable<item>, public game_object<item>
         void update_rot_from_location( temperature_flag temperature );
 
         /** Update @ref rot at the specified location without removing rotten-away items. */
-        auto update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
-                         const weather_manager &weather_generator ) -> void;
+        auto update_rot( temperature_flag temperature, const weather_manager &weather_generator ) -> void;
         auto update_rot( const rot_context &context ) -> void;
 
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
@@ -1070,7 +1052,7 @@ class item : public location_visitable<item>, public game_object<item>
          * potentially destroying other items and invalidating iterators.
          * Should NOT be called on an item on the map, but on a local copy.
          */
-        static detached_ptr<item> detonate( detached_ptr<item> &&self, const tripoint_bub_ms &p,
+        static detached_ptr<item> detonate( detached_ptr<item> &&self,
                                             std::vector<detached_ptr<item>> &drops );
 
         bool will_explode_in_fire() const;
@@ -1278,23 +1260,20 @@ class item : public location_visitable<item>, public game_object<item>
 
         /**
          * Check whether the item has been marked (by calling mark_as_used_by_player)
-         * as used by this specific player.
+         * as used by this specific Character.
          */
-        bool already_used_by_player( const player &p ) const;
+        bool already_used_by_character( const Character &p ) const;
         /**
          * Marks the item as being used by this specific player, it remains unmarked
-         * for other players. The player is identified by its id.
+         * for other Characters. The Character is identified by its id.
          */
-        void mark_as_used_by_player( const player &p );
+        void mark_as_used_by_character( const Character &p );
         /**
          * This is called once each turn. It's usually only useful for active items,
          * but can be called for inactive items without problems.
          * It is recursive, and calls process on any contained items.
-         * @param carrier The player / npc that carries the item. This can be null when
+         * @param carrier The Character that carries the item. This can be null when
          * the item is not carried by anyone (laying on ground)!
-         * @param pos The location of the item on the map, same system as
-         * @ref player::pos used. If the item is carried, it should be the
-         * location of the carrier.
          * @param activate Whether the item should be activated (true), or
          * processed as an active item.
          * @return true if the item has been destroyed by the processing. The caller
@@ -1302,12 +1281,10 @@ class item : public location_visitable<item>, public game_object<item>
          * Returns false if the item is not destroyed.
          */
         /*@{*/
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
-                                           const tripoint_bub_ms &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, Character *carrier,
                                            bool activate,
                                            temperature_flag flag = temperature_flag::TEMP_NORMAL );
-        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
-                                           const tripoint_bub_ms &pos,
+        static detached_ptr<item> process( detached_ptr<item> &&self, Character *carrier,
                                            bool activate,
                                            temperature_flag flag, const weather_manager &weather_generator );
         /*@}*/
@@ -1331,7 +1308,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param carrier The character carrying the artifact, can be null.
          * @param pos The location of the artifact (should be the player location if carried).
          */
-        void process_artifact( player *carrier, const tripoint_bub_ms &pos );
+        void process_artifact( Character *carrier );
         void process_relic( Character *carrier );
 
         bool destroyed_at_zero_charges() const;
@@ -1499,7 +1476,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos Position to dump the contents on.
          * @return If the item is now empty.
          */
-        bool spill_contents( const tripoint_bub_ms &pos );
+        bool spill_contents();
 
         /** Checks if item is a holster and currently capable of storing obj
          *  @param obj object that we want to holster
@@ -1554,11 +1531,9 @@ class item : public location_visitable<item>, public game_object<item>
         void on_damage( int qty, damage_type dt );
 
         /**
-         * Callback after an item is placed on the map, for any reason
-         * @param m The Map
-         * @param p Where in the map
+         * Callback after an item is placed, for any reason
          */
-        void on_map_placement( const map &m, const tripoint_bub_ms &p );
+        void on_placement();
 
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 
@@ -2061,7 +2036,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param pos current location of item, used for ejecting magazines and similar effects
          * @return amount of ammo consumed which will be between 0 and qty
          */
-        int ammo_consume( int qty, const tripoint_bub_ms &pos );
+        int ammo_consume( int qty );
 
         /** Specific ammo data, returns nullptr if item is neither ammo nor loaded with any */
         const itype *ammo_data() const;
@@ -2178,7 +2153,7 @@ class item : public location_visitable<item>, public game_object<item>
          * @param p The player that uses the weapon, their strength might affect this.
          * It's optional and can be null.
          */
-        int gun_range( const player *p ) const;
+        int gun_range( const Character *p ) const;
         /**
          * Summed range value of a gun, including values from mods. Returns 0 on non-gun items.
          */
@@ -2327,9 +2302,9 @@ class item : public location_visitable<item>, public game_object<item>
          * See @game::place_critter for meaning of @p target and @p pos.
          * @return Whether the monster has been spawned (may fail if no space available).
          */
-        bool release_monster( const tripoint_bub_ms &target, int radius = 0 );
+        bool release_monster( const tripoint_abs_ms &target, int radius = 0 );
         /* add the monster at target to this item, despawning it */
-        int contain_monster( const tripoint_bub_ms &target );
+        int contain_monster( const tripoint_abs_ms &target );
 
         time_duration age() const;
         void set_age( const time_duration &age );
@@ -2462,16 +2437,15 @@ class item : public location_visitable<item>, public game_object<item>
     private:
         struct absolute_rot_process_options {
             bool seals = false;
-            player *carrier = nullptr;
+            Character *carrier = nullptr;
             const rot_context &context;
         };
 
         const use_function *get_use_internal( const std::string &use_name ) const;
-        static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos, bool activate,
+        static detached_ptr<item> process_internal( detached_ptr<item> &&self, Character *carrier,
+                bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
-        static auto actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
-                                   temperature_flag temperature,
+        static auto actualize_rot( detached_ptr<item> &&self, temperature_flag temperature,
                                    const weather_manager &weather, bool seals ) -> detached_ptr<item>;
         static auto actualize_rot( detached_ptr<item> &&self,
                                    const rot_context &context, bool seals ) -> detached_ptr<item>;
@@ -2519,29 +2493,21 @@ class item : public location_visitable<item>, public game_object<item>
         // Sub-functions of @ref process, they handle the processing for different
         // processing types, just to make the process function cleaner.
         // The interface is the same as for @ref process.
-        static detached_ptr<item> process_corpse( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_litcig( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_extinguish( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
+        static detached_ptr<item> process_corpse( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_litcig( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_extinguish( detached_ptr<item> &&self, Character *carrier );
         // Place conditions that should remove fake smoke item in this sub-function
-        static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_cable( detached_ptr<item> &&self, player *carrier,
-                const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_UPS( detached_ptr<item> &&self, player *carrier,
-                                               const tripoint_bub_ms &pos );
-        static detached_ptr<item> process_blackpowder_fouling( detached_ptr<item> &&self, player *carrier );
-        static detached_ptr<item> process_tool( detached_ptr<item> &&self, player *carrier,
-                                                const tripoint_bub_ms &pos );
+        static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_cable( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_UPS( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_blackpowder_fouling( detached_ptr<item> &&self,
+                Character *carrier );
+        static detached_ptr<item> process_tool( detached_ptr<item> &&self, Character *carrier );
 
         //Process wet is built different because sigh
-        bool process_wet( player *carrier, const tripoint_bub_ms &pos );
+        bool process_wet( Character *carrier );
     public:
         static const int INFINITE_CHARGES;
 
@@ -2653,7 +2619,7 @@ class item : public location_visitable<item>, public game_object<item>
     public:
         char invlet = 0;      // Inventory letter
         //TODO! old safe reference type here
-        player *activated_by = nullptr;
+        Character *activated_by = nullptr;
         bool is_favorite = false;
 
         void set_favorite( bool favorite );
@@ -2715,7 +2681,7 @@ void reset();
 struct cable_connection_data {
     struct connection {
         cable_state state = state_none;
-        tripoint_abs_ms point = tripoint_abs_ms_min;
+        tripoint_abs_ms point = tripoint_abs_ms::min();
 
         bool is_character() const {
             return state == state_self;
@@ -2730,7 +2696,7 @@ struct cable_connection_data {
         }
 
         bool point_valid() {
-            return point != tripoint_abs_ms_min;
+            return point != tripoint_abs_ms::min();
         }
 
         bool operator==( const connection &other ) const {
@@ -2790,13 +2756,13 @@ struct cable_connection_data {
         }
         if( !con1.empty() ) {
             cable->set_var( p1_name, con1.state );
-            if( con1.point != tripoint_abs_ms_min ) {
+            if( con1.point != tripoint_abs_ms::min() ) {
                 cable->set_var( source_p1_name, con1.point.raw() );
             }
         }
         if( !con2.empty() ) {
             cable->set_var( p2_name, con2.state );
-            if( con2.point != tripoint_abs_ms_min ) {
+            if( con2.point != tripoint_abs_ms::min() ) {
                 cable->set_var( source_p2_name, con2.point.raw() );
             }
         }

@@ -1843,7 +1843,7 @@ void debug()
                 return;
             }
             sound_event se;
-            se.origin = *where;
+            se.origin = bub_to_abs( *where );
             se.volume = volume;
             se.category = sounds::sound_t::order;
             se.description = string_format( _( "DEBUG SOUND ( %d )" ), volume );

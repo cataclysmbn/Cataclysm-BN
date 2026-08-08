@@ -10,7 +10,6 @@
 #include "distribution_grid.h"
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
-#include "map.h"
 #include "mapbuffer.h"
 #include "messages.h"
 #include "submap.h"
@@ -185,9 +184,8 @@ int distribution_grid::get_resource( bool recurse ) const
         }
     }
 
-    // TODO: Giga ugly. We only charge the first vehicle to get it to use its recursive graph traversal because it's inaccessible from here due to being a template method
     if( !connected_vehicles.empty() ) {
-        res = connected_vehicles.front()->fuel_left( itype_battery, true );
+        res += connected_vehicles.front()->fuel_left( itype_battery, false );
     }
     if( !recurse ) {
         cached_amount_here = res;
@@ -329,7 +327,7 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
         const auto target_begin = target_sm.xy() - point_rel_sm( radius, radius );
         const auto target_end = target_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         node.far_load_handle = submap_loader.request_load(
-                                   load_request_source::player_base,
+                                   load_request_source::power_portal,
                                    node.target_dim_id,
                                    target_begin,
                                    target_end );
@@ -342,7 +340,7 @@ void distribution_grid_tracker::add_export_node( cross_dimension_export_node nod
         const auto source_begin = source_sm.xy() - point_rel_sm( radius, radius );
         const auto source_end = source_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         node.local_load_handle = submap_loader.request_load(
-                                     load_request_source::player_base,
+                                     load_request_source::power_portal,
                                      dimension_id_,
                                      source_begin,
                                      source_end );
@@ -443,7 +441,7 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         const auto target_begin = target_sm.xy() - point_rel_sm( radius, radius );
         const auto target_end = target_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         it->far_load_handle = submap_loader.request_load(
-                                  load_request_source::player_base,
+                                  load_request_source::power_portal,
                                   it->target_dim_id,
                                   target_begin,
                                   target_end );
@@ -452,7 +450,7 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         const auto source_begin = source_sm.xy() - point_rel_sm( radius, radius );
         const auto source_end = source_sm.xy() + point_rel_sm( radius + 1, radius + 1 );
         it->local_load_handle = submap_loader.request_load(
-                                    load_request_source::player_base,
+                                    load_request_source::power_portal,
                                     dimension_id_,
                                     source_begin,
                                     source_end );
@@ -731,49 +729,15 @@ std::uintptr_t distribution_grid_tracker::debug_grid_id( const tripoint_abs_omt 
 }
 
 void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker &grid_tracker,
-                                       Character &u, map &m )
+                                       Character &u )
 {
     for( const auto &qt : queue ) {
-        tripoint_abs_sm p_abs_sm;
-        point_sm_ms p_within_sm;
-        std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( qt.p );
-
-        submap *sm = mb.lookup_submap( p_abs_sm );
-        if( sm == nullptr ) {
-            // Something transforming on a non-existant map...?
-            return;
-        }
-
-        const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
-        const furn_t &new_t = qt.id.obj();
-        const auto pos_player = abs_to_bub( qt.p );
-        const auto pos_local = abs_to_map_local( m, qt.p );
-
-        if( !qt.msg.empty() ) {
-            if( u.sees( pos_player ) ) {
-                add_msg( "%s", _( qt.msg ) );
-            }
-        }
-
-        if( m.inbounds( pos_local ) ) {
-            m.furn_set( pos_local, qt.id );
+        if( !mb.set_furn( qt.p, qt.id ) ) {
             continue;
         }
 
-        // Something is transforming from an unloaded map...?
-
-        // TODO: this is copy-pasted from map.cpp
-        sm->set_furn( p_within_sm, qt.id );
-        if( old_t.active ) {
-            sm->active_furniture.erase( p_within_sm );
-            // TODO: Only for g->m? Observer pattern?
-            grid_tracker.on_changed( qt.p );
-        }
-        if( new_t.active ) {
-            active_tile_data *atd = new_t.active->clone();
-            atd->set_last_updated( calendar::turn );
-            sm->active_furniture[p_within_sm].reset( atd );
-            grid_tracker.on_changed( qt.p );
+        if( !qt.msg.empty() && u.sees( qt.p ) ) {
+            add_msg( "%s", _( qt.msg ) );
         }
     }
 }
@@ -796,6 +760,6 @@ void distribution_grid_tracker::update( time_point to )
     for( const shared_ptr_fast<distribution_grid> &grid : grids_requiring_updates ) {
         grid->update( to );
     }
-    transform_queue.apply( mb, *this, get_player_character(), get_map() );
+    transform_queue.apply( mb, *this, get_player_character() );
     transform_queue.clear();
 }

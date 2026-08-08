@@ -12,6 +12,8 @@
 #include <sstream>
 #include <utility>
 
+#include "pathfinding.h"
+#include "activity_actor_definitions.h"
 #include "action.h"
 #include "advanced_inv.h"
 #include "animation.h"
@@ -275,6 +277,7 @@ static bool init_weather_anim( const weather_type_id &wtype, weather_printable &
 static void generate_weather_anim_frame( const weather_type_id &wtype, weather_printable &wPrint )
 {
     map &m = get_map();
+    mapbuffer &mb = m.get_mapbuffer();
     avatar &u = get_avatar();
 
     const visibility_variables &cache = m.get_visibility_variables_cache();
@@ -327,7 +330,8 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
 
         const lit_level lighting = visibility_cache[map_cache.idx( mapp.x(), mapp.y() )];
 
-        if( m.is_outside( mapp ) && m.get_visibility( lighting, cache ) == VIS_CLEAR &&
+        if( !weather::is_sheltered( mb, bub_to_abs( mapp ) ) &&
+            m.get_visibility( lighting, cache ) == VIS_CLEAR &&
             !g->critter_at( mapp, true ) ) {
             // Suppress if a critter is there
             wPrint.vdrops.emplace_back( iRand.x, iRand.y );
@@ -571,7 +575,7 @@ inline static void rcdrive( point_rel_ms d )
     if( here.impassable( dest ) || !here.can_put_items_ter_furn( dest ) ||
         here.has_furn( dest ) ) {
         sound_event se;
-        se.origin = dest;
+        se.origin = bub_to_abs( dest );
         se.volume = 65;
         se.category = sounds::sound_t::combat;
         se.description = _( "sound of a collision with an obstacle." );
@@ -586,7 +590,7 @@ inline static void rcdrive( point_rel_ms d )
         here.add_item_or_charges( dest, std::move( det_car ) );
         //~ Sound of moving a remote controlled car
         sound_event se;
-        se.origin = src;
+        se.origin = bub_to_abs( src );
         se.volume = 50;
         se.category = sounds::sound_t::movement;
         se.movement_noise = true;
@@ -720,7 +724,7 @@ static void close()
     if( const std::optional<tripoint_bub_ms> pnt = choose_adjacent_highlight( _( "Close where?" ),
             pgettext( "no door, gate, etc.", "There is nothing that can be closed nearby." ),
             ACTION_CLOSE, false ) ) {
-        doors::close_door( get_map(), g->u, *pnt );
+        doors::close_door( g->u, bub_to_abs( *pnt ) );
     }
 }
 
@@ -728,17 +732,17 @@ static void close()
 static void grab()
 {
     avatar &you = g->u;
-    map &here = get_map();
+    auto &here = you.get_mapbuffer();
 
     if( release_grabbed_creature( you ) ) {
         return;
     }
 
     if( you.get_grab_type() != OBJECT_NONE ) {
-        if( const auto target = vehicle_grab_target_at( here, you.bub_pos() + you.grab_point ) ) {
+        if( const auto target = vehicle_grab_target_at( here, you.abs_pos() + you.grab_point ) ) {
             add_msg( _( "You release the %s." ), target->vp.vehicle().name );
-        } else if( here.has_furn( you.bub_pos() + you.grab_point ) ) {
-            add_msg( _( "You release the %s." ), here.furnname( you.bub_pos() + you.grab_point ) );
+        } else if( here.furn( you.abs_pos() + you.grab_point ) ) {
+            add_msg( _( "You release the %s." ), here.furnname( you.abs_pos() + you.grab_point ) );
         }
 
         you.grab( OBJECT_NONE );
@@ -750,9 +754,9 @@ static void grab()
         add_msg( _( "Never mind." ) );
         return;
     }
-    const auto grabp = *grabp_;
+    const auto grabp = bub_to_abs( *grabp_ );
 
-    if( grabp == you.bub_pos() ) {
+    if( grabp == you.abs_pos() ) {
         add_msg( _( "You get a hold of yourself." ) );
         you.grab( OBJECT_NONE );
         return;
@@ -763,15 +767,15 @@ static void grab()
         if( !target->vp.vehicle().handle_potential_theft( get_avatar() ) ) {
             return;
         }
-        you.grab( OBJECT_VEHICLE, target->pos - you.bub_pos() );
+        you.grab( OBJECT_VEHICLE, target->pos - you.abs_pos() );
         add_msg( _( "You grab the %s." ), target->vp.vehicle().name );
-    } else if( here.has_furn( grabp ) ) { // If not, grab furniture if present
-        if( !here.furn( grabp ).obj().is_movable() ) {
+    } else if( here.furn( grabp ) ) { // If not, grab furniture if present
+        if( !here.furn( grabp )->obj().is_movable() ) {
             add_msg( _( "You can not grab the %s" ), here.furnname( grabp ) );
             return;
         }
-        you.grab( OBJECT_FURNITURE, grabp - you.bub_pos() );
-        if( !here.can_move_furniture( grabp, &you ) ) {
+        you.grab( OBJECT_FURNITURE, grabp - you.abs_pos() );
+        if( !g->m.can_move_furniture( *grabp_, &you ) ) {
             add_msg( _( "You grab the %s. It feels really heavy." ), here.furnname( grabp ) );
         } else {
             add_msg( _( "You grab the %s." ), here.furnname( grabp ) );
@@ -868,7 +872,7 @@ static void smash()
             return;
         } else if( smashskill >= rng( bash_info.str_min, bash_info.str_max ) ) {
             sound_event se;
-            se.origin = smashp;
+            se.origin = bub_to_abs( smashp );
             se.volume = units::to_decibel( bash_info.sound_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound.translated();
@@ -883,7 +887,7 @@ static void smash()
             return;
         } else {
             sound_event se;
-            se.origin = smashp;
+            se.origin = bub_to_abs( smashp );
             se.volume = units::to_decibel( bash_info.sound_fail_vol.value_or( 0_dB ) );
             se.category = sounds::sound_t::combat;
             se.description = bash_info.sound_fail.translated();
@@ -913,8 +917,8 @@ static void smash()
 
     if( should_pulp ) {
         // do activity forever. ACT_PULP stops itself
-        u.assign_activity( std::make_unique<player_activity>( ACT_PULP, calendar::INDEFINITELY_LONG, 0 ) );
-        u.activity->placement = bub_to_abs( smashp );
+        u.assign_activity( std::make_unique<player_activity>(
+                               std::make_unique<pulp_actor>( bub_to_abs( smashp ) ) ) );
         return; // don't smash terrain if we've smashed a corpse
     }
 
@@ -948,9 +952,9 @@ static void smash()
             if( weapon.can_shatter() &&
                 rng( 0, vol + 3 ) < vol ) {
                 add_msg( m_bad, _( "Your %s shatters!" ), weapon.tname() );
-                weapon.spill_contents( u.bub_pos() );
+                weapon.spill_contents();
                 sound_event se;
-                se.origin = u.bub_pos();
+                se.origin = u.abs_pos();
                 se.volume = 70;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "CRACK!" );
@@ -992,10 +996,10 @@ static void smash()
                 }
 
                 if( to_safety ) {
-                    auto oldpos = u.bub_pos();
-                    auto newpos = u.bub_pos() + *to_safety;
+                    auto oldpos = u.abs_pos();
+                    auto newpos = u.abs_pos() + *to_safety;
                     // game::walk_move will return true even if you don't move
-                    if( g->walk_move( newpos ) && u.bub_pos() != oldpos ) {
+                    if( g->walk_move( newpos ) && u.abs_pos() != oldpos ) {
                         break;
                     }
                 }
@@ -1396,22 +1400,22 @@ static void loot()
     // but with a stale cache we never get that far.
     mgr.cache_vzones();
 
-    flags |= g->check_near_zone( zone_type_id( "LOOT_UNSORTED" ), u.bub_pos() ) ? SortLoot : 0;
-    if( g->check_near_zone( zone_type_id( "FARM_PLOT" ), u.bub_pos() ) ) {
+    flags |= g->check_near_zone( zone_type_id( "LOOT_UNSORTED" ), u.abs_pos() ) ? SortLoot : 0;
+    if( g->check_near_zone( zone_type_id( "FARM_PLOT" ), u.abs_pos() ) ) {
         flags |= FertilizePlots;
         flags |= MultiFarmPlots;
     }
     flags |= g->check_near_zone( zone_type_id( "CONSTRUCTION_BLUEPRINT" ),
-                                 u.bub_pos() ) ? ConstructPlots : 0;
+                                 u.abs_pos() ) ? ConstructPlots : 0;
 
-    flags |= g->check_near_zone( zone_type_id( "CHOP_TREES" ), u.bub_pos() ) ? Multichoptrees : 0;
-    flags |= g->check_near_zone( zone_type_id( "LOOT_WOOD" ), u.bub_pos() ) ? Multichopplanks : 0;
+    flags |= g->check_near_zone( zone_type_id( "CHOP_TREES" ), u.abs_pos() ) ? Multichoptrees : 0;
+    flags |= g->check_near_zone( zone_type_id( "LOOT_WOOD" ), u.abs_pos() ) ? Multichopplanks : 0;
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_DECONSTRUCT" ),
-                                 u.bub_pos() ) ? Multideconvehicle : 0;
+                                 u.abs_pos() ) ? Multideconvehicle : 0;
     flags |= g->check_near_zone( zone_type_id( "VEHICLE_REPAIR" ),
-                                 u.bub_pos() ) ? Multirepairvehicle : 0;
-    flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.bub_pos() ) ? MultiButchery : 0;
-    flags |= g->check_near_zone( zone_type_id( "MINING" ), u.bub_pos() ) ? MultiMining : 0;
+                                 u.abs_pos() ) ? Multirepairvehicle : 0;
+    flags |= g->check_near_zone( zone_type_id( "LOOT_CORPSE" ), u.abs_pos() ) ? MultiButchery : 0;
+    flags |= g->check_near_zone( zone_type_id( "MINING" ), u.abs_pos() ) ? MultiMining : 0;
     if( flags == 0 ) {
         add_msg( m_info, _( "There is no compatible zone nearby." ) );
         add_msg( m_info, _( "Compatible zones are %s and %s" ),
@@ -1476,7 +1480,9 @@ static void loot()
             add_msg( _( "Never mind." ) );
             break;
         case SortLoot:
-            u.assign_activity( ACT_MOVE_LOOT );
+            u.assign_activity( std::make_unique<player_activity>(
+                                   std::make_unique<move_loot_activity_actor>()
+                               ) );
             break;
         case FertilizePlots:
             u.assign_activity( ACT_FERTILIZE_PLOT );
@@ -1546,7 +1552,7 @@ static void read()
     if( loc ) {
         if( loc->type->can_use( "learn_spell" ) ) {
             item &spell_book = *loc;
-            spell_book.get_use( "learn_spell" )->call( u, spell_book, spell_book.is_active(), u.bub_pos() );
+            spell_book.get_use( "learn_spell" )->call( u, spell_book, spell_book.is_active(), u.abs_pos() );
         } else {
             u.read( loc );
         }
@@ -1571,7 +1577,7 @@ static void reach_attack( avatar &you )
 static void fire()
 {
     avatar &u = g->u;
-    map &here = get_map();
+    auto &here = u.get_mapbuffer();
 
     // Use vehicle turret or draw a pistol from a holster if unarmed
     if( !u.is_armed() ) {
@@ -1580,7 +1586,7 @@ static void fire()
 
         turret_data turret;
         if( vp && ( turret = vp->vehicle().turret_query( u.abs_pos() ) ) ) {
-            avatar_action::fire_turret_manual( u, here, turret );
+            avatar_action::fire_turret_manual( u, turret );
             return;
         }
 
@@ -1957,6 +1963,7 @@ bool game::handle_action()
             const std::optional<tripoint_bub_ms> mouse_pos = ctxt.get_coordinates( w_terrain );
             if( !mouse_pos ) {
                 return false;
+
             }
             mouse_target = mouse_pos;
 
@@ -1971,7 +1978,7 @@ bool game::handle_action()
                     return false;
                 }
             } else if( act == ACTION_SEC_SELECT ) {
-                if( !u.sees( *mouse_target ) ) {
+                if( !u.sees( bub_to_abs( *mouse_target ) ) ) {
                     // Right-click actions examine or target current terrain and creatures.
                     return false;
                 }
@@ -2150,15 +2157,22 @@ bool game::handle_action()
                     ();
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         ZoneScopedN( "handle_action_auto_travel_route" );
+                        auto &pf_buffer = MAPBUFFER_REGISTRY.get( u.get_dimension() );
+                        const auto pair = u.get_pathfinding_pair();
                         for( int i = 0; i < SEEX; i++ ) {
-                            tripoint_bub_ms auto_travel_destination( u.bub_pos().x() + dest_delta.x() * ( SEEX - i ),
-                                    u.bub_pos().y() + dest_delta.y() * ( SEEX - i ),
-                                    u.bub_pos().z() );
-                            destination_preview = m.route( u.bub_pos(),
-                                                           auto_travel_destination,
-                                                           u.get_legacy_pathfinding_settings(),
-                                                           u.get_legacy_path_avoid() );
-                            if( !destination_preview.empty() ) {
+                            const tripoint_bub_ms auto_travel_dest_bub(
+                                u.bub_pos().x() + dest_delta.x() * ( SEEX - i ),
+                                u.bub_pos().y() + dest_delta.y() * ( SEEX - i ),
+                                u.bub_pos().z() );
+                            auto abs_route = Pathfinding::route( pf_buffer, u.abs_pos(),
+                                                                 bub_to_abs( auto_travel_dest_bub ),
+                                                                 pair.first, pair.second );
+                            if( !abs_route.empty() ) {
+                                destination_preview.clear();
+                                destination_preview.reserve( abs_route.size() );
+                                for( const tripoint_abs_ms &pt : abs_route ) {
+                                    destination_preview.push_back( pt );
+                                }
                                 destination_preview.erase( destination_preview.begin() + 1, destination_preview.end() );
                                 u.set_destination( destination_preview );
                                 break;
@@ -2174,7 +2188,7 @@ bool game::handle_action()
                     auto moved = false;
                     {
                         ZoneScopedN( "handle_action_call_avatar_move" );
-                        moved = avatar_action::move( u, m, dest_delta );
+                        moved = avatar_action::move( u, dest_delta );
                     }
                     if( !moved ) {
                         ZoneScopedN( "handle_action_clear_failed_move" );
@@ -2342,7 +2356,7 @@ bool game::handle_action()
                         close();
                     }
                 } else if( mouse_target ) {
-                    doors::close_door( m, u, *mouse_target );
+                    doors::close_door( u, bub_to_abs( *mouse_target ) );
                 } else {
                     close();
                 }
@@ -3093,7 +3107,7 @@ bool game::handle_action()
                 break;
 
             case ACTION_AUTOATTACK:
-                avatar_action::autoattack( u, m );
+                avatar_action::autoattack( u );
                 break;
 
             case ACTION_TOGGLE_MANUAL_COMBAT_MODE:

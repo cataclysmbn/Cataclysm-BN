@@ -1,5 +1,5 @@
 if (BUILD_TESTING)
-    file(GLOB CATACLYSM_BN_TEST_SOURCES
+    file(GLOB CATACLYSM_BN_TEST_SOURCES CONFIGURE_DEPENDS
             ${CMAKE_SOURCE_DIR}/tests/*.cpp)
 
     # Enabling benchmarks

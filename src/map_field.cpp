@@ -968,7 +968,8 @@ void map::propagate_field( const tripoint_bub_ms &center, const field_type_id &t
                     closed.insert( pt );
                     continue;
                 }
-                if( !obstructed_by_vehicle_rotation( gp.second, pt ) ) {
+                if( !get_mapbuffer().obstructed_by_vehicle_rotation(
+                        bub_to_abs( gp.second ), bub_to_abs( pt ) ) ) {
                     open.emplace( static_cast<float>( rl_dist( center, pt ) ), pt );
                 }
             }

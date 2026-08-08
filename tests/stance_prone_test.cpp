@@ -15,12 +15,11 @@
 
 #include <vector>
 
-static constexpr tripoint_bub_ms shooter_pos(60, 60, 0);
 
 TEST_CASE("prone_stance_movement_costs", "[stance][prone][movement]") {
     clear_all_state();
     avatar& shooter = g->u;
-    g->place_player(shooter_pos);
+    g->place_player(test_origin);
 
     GIVEN("character standing") {
         shooter.set_movement_mode(character_movemode::CMM_WALK);
@@ -96,7 +95,7 @@ TEST_CASE("prone_stance_movement_costs", "[stance][prone][movement]") {
 TEST_CASE("prone_stance_ranged_effects", "[stance][prone][ranged]") {
     clear_all_state();
     avatar& shooter = g->u;
-    g->place_player(shooter_pos);
+    g->place_player(test_origin);
     build_test_map(ter_id("t_dirt"));
 
     GIVEN("a rifle with bipod") {
@@ -132,21 +131,21 @@ TEST_CASE("prone_stance_ranged_effects", "[stance][prone][ranged]") {
         WHEN("standing without mountable terrain nearby") {
             shooter.set_movement_mode(character_movemode::CMM_WALK);
             THEN("can_use_heavy_weapon returns false") {
-                REQUIRE_FALSE(ranged::can_use_heavy_weapon(shooter, get_map(), shooter.bub_pos()));
+                REQUIRE_FALSE(ranged::can_use_heavy_weapon(shooter, shooter.abs_pos()));
             }
         }
 
         WHEN("crouching without mountable terrain nearby") {
             shooter.set_movement_mode(character_movemode::CMM_CROUCH);
             THEN("can_use_heavy_weapon returns false") {
-                REQUIRE_FALSE(ranged::can_use_heavy_weapon(shooter, get_map(), shooter.bub_pos()));
+                REQUIRE_FALSE(ranged::can_use_heavy_weapon(shooter, shooter.abs_pos()));
             }
         }
 
         WHEN("prone") {
             shooter.set_movement_mode(character_movemode::CMM_PRONE);
             THEN("can_use_heavy_weapon returns true") {
-                REQUIRE(ranged::can_use_heavy_weapon(shooter, get_map(), shooter.bub_pos()));
+                REQUIRE(ranged::can_use_heavy_weapon(shooter, shooter.abs_pos()));
             }
         }
     }

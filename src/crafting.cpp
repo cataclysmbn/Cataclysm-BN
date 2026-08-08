@@ -600,22 +600,22 @@ bool Character::can_start_craft( const recipe *rec, recipe_filter_flags flags, i
 
 const inventory &Character::crafting_inventory( bool clear_path )
 {
-    return crafting_inventory( tripoint_bub_ms::zero(), PICKUP_RANGE, clear_path );
+    return crafting_inventory( abs_pos(), PICKUP_RANGE, clear_path );
 }
 
-const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, int radius,
+const inventory &Character::crafting_inventory( const tripoint_abs_ms &src_pos, int radius,
         bool clear_path )
 {
     auto inv_pos = src_pos;
-    if( src_pos == tripoint_bub_ms::zero() ) {
-        inv_pos = bub_pos();
+    if( inv_pos == tripoint_abs_ms::zero() ) {
+        inv_pos = abs_pos();
     }
     const auto cache_hit = cached_time == calendar::turn
                            && cached_position == inv_pos;
     if( cache_hit ) {
         return cached_crafting_inventory;
     }
-    cached_crafting_inventory.form_from_map( inv_pos, radius, this, false, clear_path );
+    cached_crafting_inventory.form_from_map( abs_to_bub( inv_pos ), radius, this, false, clear_path );
     cached_crafting_inventory.add_items( inv, true );
     cached_crafting_inventory.add_item( primary_weapon(), true );
     cached_crafting_inventory.add_items( worn, true );
@@ -643,7 +643,7 @@ const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, 
 void Character::invalidate_crafting_inventory()
 {
     cached_time = calendar::before_time_starts;
-    cached_position = tripoint_bub_ms::min();
+    cached_position = tripoint_abs_ms::min();
 }
 
 void Character::make_craft( const recipe_id &id_to_make, int batch_size,
@@ -826,13 +826,15 @@ item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
                      command.get_batch_size(),
                      craft_in_world->get_counter(),
                      bench.position,
+                     bench.type,
+                     100,
+                     bench.position,
                      command.get_item_selections(),
                      command.get_tool_selections(),
                      craft_in_world->get_var( "craft_tools_fully_prepaid", 0 ) == 1,
                      command.is_long()
                  );
     auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
-    craft_activity->targets.emplace_back( craft_in_world );
     assign_activity( std::move( craft_activity ) );
 
     add_msg_player_or_npc(

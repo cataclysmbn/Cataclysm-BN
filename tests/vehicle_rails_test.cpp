@@ -92,7 +92,7 @@ static void clear_game(const ter_id& terrain) {
     avatar& u = get_avatar();
     // Move player somewhere safe
     REQUIRE_FALSE(u.in_vehicle);
-    u.setpos(tripoint_bub_ms(g_half_mapsize_x + SEEX - 1, g_half_mapsize_y + SEEY - 1, -2));
+    put_player_underground();
     // Blind the player to avoid needless drawing-related overhead
     u.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
 

@@ -34,28 +34,36 @@ TEST_CASE(
     const ter_str_id floor_primitive("t_floor_primitive"); // interior floor, FLAMMABLE_ASH
     const ter_str_id floor_roof("t_floor");                // used as a roof on z+1
 
+    // Establish the player's map frame before painting the absolute fixture.  setpos() may
+    // load/shift the reality bubble, so doing this afterward would leave the cache and the
+    // fixture referring to different bubble-local tiles.
+    const auto center = test_origin;
+    get_avatar().setpos(center);
+
     // Build an 11x11 flammable interior at z=0 with a roof one tile larger at z=1,
     // so the 3x3-above check marks every interior tile as "inside".
-    for (int x = 54; x <= 66; ++x) {
-        for (int y = 54; y <= 66; ++y) {
-            here.ter_set(tripoint_bub_ms(x, y, 1), floor_roof);
-            if (x >= 55 && x <= 65 && y >= 55 && y <= 65) {
-                here.ter_set(tripoint_bub_ms(x, y, 0), floor_primitive);
+    for (int x = -6; x <= 6; ++x) {
+        for (int y = -6; y <= 6; ++y) {
+            const auto pos = center + tripoint_rel_ms(x, y, 0);
+            here.get_mapbuffer().set_ter(pos + tripoint_rel_ms::above(), floor_roof);
+            if (x >= -5 && x <= 5 && y >= -5 && y <= 5) {
+                here.get_mapbuffer().set_ter(pos, floor_primitive);
             }
         }
     }
+    here.set_outside_cache_dirty(0);
+    here.set_outside_cache_dirty(1);
     here.invalidate_map_cache(0);
     here.build_map_cache(0, true);
-
-    // Place the avatar inside the building.
-    const tripoint_bub_ms center(60, 60, 0);
-    get_avatar().setpos(center);
+    here.invalidate_map_cache(1);
+    here.build_map_cache(1, true);
 
     // Preconditions: a flammable interior tile, inside, beyond burn()'s safe radius (3).
-    const tripoint_bub_ms interior_far(64, 60, 0);
-    REQUIRE_FALSE(here.is_outside(interior_far));
-    REQUIRE(
-        (here.has_flag("FLAMMABLE", interior_far) || here.has_flag("FLAMMABLE_ASH", interior_far)));
+    const auto interior_far = center + tripoint_rel_ms(4, 0, 0);
+    REQUIRE_FALSE(here.is_outside(abs_to_bub(interior_far)));
+    REQUIRE((
+        here.get_mapbuffer().has_flag("FLAMMABLE", interior_far)
+        || here.get_mapbuffer().has_flag("FLAMMABLE_ASH", interior_far)));
 
     // bad_day passes the player's OMT to burn().
     const tripoint_abs_omt omtstart = project_to<coords::omt>(get_avatar().abs_pos());
@@ -64,9 +72,10 @@ TEST_CASE(
     sl.burn(omtstart, /*count=*/3, /*rad=*/3);
 
     int fires = 0;
-    for (const tripoint_bub_ms& p :
-         here.points_in_rectangle(tripoint_bub_ms(55, 55, 0), tripoint_bub_ms(65, 65, 0))) {
-        if (here.get_field(p, fd_fire) != nullptr) { ++fires; }
+    for (const auto& handle : simulated_tiles_in_rectangle(
+             here.get_mapbuffer(), center + tripoint_rel_ms(-5, -5, 0),
+             center + tripoint_rel_ms(5, 5, 0))) {
+        if (here.get_mapbuffer().get_field_entry(handle.abs_pos(), fd_fire) != nullptr) { ++fires; }
     }
     INFO("fd_fire fields placed inside the building: " << fires);
     CHECK(fires > 0);

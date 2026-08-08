@@ -1692,13 +1692,13 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
         debugmsg( "complete_construction called before finalization" );
         return;
     }
-    map &here = get_map();
-    auto local = abs_to_bub( where );
-    partial_con *pc = here.partial_con_at( tripoint_bub_ms( local ) );
+    auto &here = who.get_mapbuffer();
+    partial_con *pc = here.partial_con_at( where );
     if( !pc ) {
         debugmsg( "No partial construction found at activity placement in complete_construction()" );
-        if( here.tr_at( local ).loadid == tr_unfinished_construction ) {
-            here.remove_trap( local );
+        auto trp = here.get_trap( where );
+        if( trp && trp->obj().loadid == tr_unfinished_construction ) {
+            here.remove_trap( where );
         }
         if( who.is_npc() ) {
             npc *guy = who.as_npc();
@@ -1734,25 +1734,23 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
             award_xp( *elem );
         }
     }
-    if( here.tr_at( local ).loadid == tr_unfinished_construction ) {
-        here.remove_trap( local );
+    auto trp = here.get_trap( where );
+    if( trp && trp->obj().loadid == tr_unfinished_construction ) {
+        here.remove_trap( where );
     }
-    here.partial_con_remove( local );
+    here.partial_con_remove( where );
     // Some constructions are allowed to have items left on the tile.
     if( !built.post_flags.contains( "keep_items" ) ) {
         // Move any items that have found their way onto the construction site.
-        std::vector<tripoint_bub_ms> dump_spots;
-        for( const tripoint_bub_ms &pt : here.points_in_radius( local, 1 ) ) {
-            if( here.can_put_items( pt ) && pt != local ) {
-                dump_spots.push_back( pt );
+        std::vector<tripoint_abs_ms> dump_spots;
+        for( const auto &pt : simulated_tiles_in_radius( here, where, 1 ) ) {
+            if( pt.abs_pos() != where && pt.can_put_items_ter_furn() ) {
+                dump_spots.push_back( pt.abs_pos() );
             }
         }
         if( !dump_spots.empty() ) {
-            tripoint_bub_ms dump_spot = random_entry( dump_spots );
-            map_stack items = here.i_at( local );
-            for( map_stack::iterator it = items.begin(); it != items.end(); ) {
-                detached_ptr<item> dumped;
-                it = items.erase( it, &dumped );
+            tripoint_abs_ms dump_spot = random_entry( dump_spots );
+            for( auto &dumped : here.clear_items( where ) ) {
                 here.add_item_or_charges( dump_spot, std::move( dumped ) );
             }
         } else {
@@ -1762,15 +1760,18 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
     // Make the terrain change
     if( !built.post_terrain.is_empty() ) {
         const ter_id new_ter = built.post_terrain;
-        here.ter_set( local, new_ter );
-        const auto above = local + tripoint_above;
+        here.set_ter( where, new_ter );
+        if( const auto trap = who.get_mapbuffer().get_trap( where ); trap && !trap->obj().is_null() ) {
+            who.add_known_trap( where, trap->obj() );
+        }
+        const auto above = where + tripoint_above;
         // TODO: What to do if tile above has no floor, but isn't open air?
         if( new_ter->roof && here.ter( above ) == t_open_air ) {
-            here.ter_set( above, new_ter->roof );
+            here.set_ter( above, new_ter->roof );
         }
     }
     if( !built.post_furniture.is_empty() ) {
-        here.furn_set( local, built.post_furniture );
+        here.set_furn( where, built.post_furniture );
         active_tile_data *active = active_tiles::furn_at<active_tile_data>( where );
         if( active != nullptr ) {
             active->set_last_updated( calendar::turn );
@@ -1781,7 +1782,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
     if( built.byproduct_item_group ) {
         std::vector<detached_ptr<item>> items_list = item_group::items_from( built.byproduct_item_group,
                                      calendar::turn );
-        here.spawn_items( who.bub_pos(), std::move( items_list ) );
+        here.spawn_items( who.abs_pos(), std::move( items_list ) );
     }
 
     add_msg( m_info, _( "%s finished construction: %s." ), who.disp_name(), built.group->name() );
@@ -1790,7 +1791,7 @@ void complete_construction( Character &who, tripoint_abs_ms &where )
 
     // This comes after clearing the activity, in case the function interrupts
     // activities
-    built.post_special( local );
+    built.post_special( abs_to_bub( where ) );
     // npcs will automatically resume backlog, players wont.
     if( who.is_avatar() && !who.backlog.empty() &&
         who.backlog.front()->id() == ACT_MULTIPLE_CONSTRUCTION ) {
@@ -1948,7 +1949,8 @@ void construct::done_grave( const tripoint_bub_ms &p )
         }
     }
     if( g->u.has_quality( qual_CUT ) ) {
-        iuse::handle_ground_graffiti( g->u, nullptr, _( "Inscribe something on the grave?" ), p );
+        iuse::handle_ground_graffiti( g->u, nullptr, _( "Inscribe something on the grave?" ),
+                                      bub_to_abs( p ) );
     } else {
         add_msg( m_neutral,
                  _( "Unfortunately you don't have anything sharp to place an inscription on the grave." ) );

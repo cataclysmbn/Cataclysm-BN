@@ -297,7 +297,13 @@ auto gather_transparency_refs(map const& m, int const zlev)
             auto* const sm = m.get_mapbuffer().lookup_submap_in_memory(map_local_to_abs(m, sm_pos));
             if (sm == nullptr) { continue; }
             auto const sm_offset = project_to<coords::ms>(sm_pos);
-            refs.push_back({sm, sm_offset.x(), sm_offset.y()});
+            refs.push_back({
+                .sm = sm,
+                .offset_x = sm_offset.x(),
+                .offset_y = sm_offset.y(),
+                .outside_cache = lc.outside_cache.data() + lc.idx(sm_offset.x(), sm_offset.y()),
+                .outside_cache_y = lc.cache_y,
+            });
         }
     }
     return refs;
@@ -322,7 +328,8 @@ auto prepare_transparency_inputs(
 
             rec.ter_ids[tile] = static_cast<uint32_t>(sm->get_ter(p).to_i());
             rec.furn_ids[tile] = static_cast<uint32_t>(sm->get_furn(p).to_i());
-            rec.outside_flags[tile] = sm->outside_cache[p.x()][p.y()] ? 1u : 0u;
+            rec.outside_flags[tile] =
+                ref.outside_cache[p.x() * ref.outside_cache_y + p.y()] ? 1u : 0u;
 
             auto opacity = 1.0f;
             for (auto const& [ftype, fentry] : sm->get_field(p)) {

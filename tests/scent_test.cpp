@@ -128,6 +128,8 @@ void old_scent_map_update(
 TEST_CASE("scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]") {
     clear_all_state();
 
+    g->place_player(test_origin);
+
     auto& here = get_map();
     auto* const veh = here.add_vehicle(vproto_id("none"), tripoint_bub_ms::zero(), 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
@@ -143,34 +145,33 @@ TEST_CASE("scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]") {
 
 TEST_CASE("scent_matches_old", "[.]") {
     clear_all_state();
-    tripoint_bub_ms origin(60, 60, 0);
 
-    g->place_player(origin);
+    g->place_player(test_origin);
 
-    map& here = get_map();
+    auto& here = get_map().get_mapbuffer();
 
-    here.ter_set(origin + tripoint_south_west, t_brick_wall);
-    here.ter_set(origin + tripoint_west, t_brick_wall);
-    here.ter_set(origin + tripoint_north, t_rock_wall_half);
-    here.ter_set(origin, t_rock_wall_half);
+    here.set_ter(test_origin + tripoint_south_west, t_brick_wall);
+    here.set_ter(test_origin + tripoint_west, t_brick_wall);
+    here.set_ter(test_origin + tripoint_north, t_rock_wall_half);
+    here.set_ter(test_origin, t_rock_wall_half);
     g->scent.reset();
 
-    g->scent.set(origin, 1000, scenttype_id("sc_human"));
+    g->scent.set(bub_test_origin(), 1000, scenttype_id("sc_human"));
 
-    g->scent.update(origin, here);
-    g->scent.update(origin, here);
-    g->scent.update(origin, here);
+    g->scent.update(bub_test_origin(), g->m);
+    g->scent.update(bub_test_origin(), g->m);
+    g->scent.update(bub_test_origin(), g->m);
 
     std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> old_scent;
     for (auto& elem : old_scent) {
         for (auto& val : elem) { val = 0; }
     }
 
-    old_scent[origin.x()][origin.y()] = 1000;
+    old_scent[bub_test_origin().x()][bub_test_origin().y()] = 1000;
 
-    old_scent_map_update(origin, here, old_scent);
-    old_scent_map_update(origin, here, old_scent);
-    old_scent_map_update(origin, here, old_scent);
+    old_scent_map_update(bub_test_origin(), g->m, old_scent);
+    old_scent_map_update(bub_test_origin(), g->m, old_scent);
+    old_scent_map_update(bub_test_origin(), g->m, old_scent);
     int x = 0;
     for (auto& elem : old_scent) {
         int y = 0;

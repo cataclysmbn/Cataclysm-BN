@@ -6085,7 +6085,9 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     veh->set_facing_and_pivot( dir, tripoint_mnt_veh::zero(), false );
     //debugmsg("adding veh: %d, sm: %d,%d,%d, pos: %d, %d", veh, veh->smx, veh->smy, veh->smz, veh->posx, veh->posy);
     std::unique_ptr<vehicle> placed_vehicle_up =
-        add_vehicle_to_map( std::move( veh ), merge_wrecks );
+        get_mapbuffer().add_vehicle_to_mapbuffer(
+            std::move( veh ), merge_wrecks,
+            mapbuffer_lookup_options{ .mode = mapbuffer_lookup_mode::resident_only } );
     vehicle *placed_vehicle = placed_vehicle_up.get();
 
     if( placed_vehicle != nullptr ) {
@@ -6093,6 +6095,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         auto *place_on_submap = get_mapbuffer().lookup_submap_in_memory( placed_vehicle->abs_sm_pos );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
+        get_mapbuffer().invalidate_vehicle_footprint( *placed_vehicle );
         invalidate_max_populated_zlev( placed_vehicle_sm.z() );
 
         auto &ch = get_cache( placed_vehicle_sm.z() );
@@ -6103,117 +6106,6 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
     }
     return placed_vehicle;
-}
-
-/**
- * Takes a vehicle already created with new and attempts to place it on the map,
- * checking for collisions. If the vehicle can't be placed, returns NULL,
- * otherwise returns a pointer to the placed vehicle, which may not necessarily
- * be the one passed in (if wreckage is created by fusing cars).
- * @param veh The vehicle to place on the map.
- * @param merge_wrecks Whether crashed vehicles become part of each other
- * @return The vehicle that was finally placed.
- */
-std::unique_ptr<vehicle> map::add_vehicle_to_map(
-    std::unique_ptr<vehicle> veh, const bool merge_wrecks )
-{
-    //We only want to check once per square, so loop over all structural parts
-    std::vector<int> frame_indices = veh->all_standalone_parts();
-
-    //Check for boat type vehicles that should be placeable in deep water
-    //WARNING: CURSED CODE
-    //If changed to veh->can_float mass calculations are messed up
-    const bool can_float = !veh->get_avail_parts( "FLOATS" ).empty();
-
-    //When hitting a wall, only smash the vehicle once (but walls many times)
-    bool needs_smashing = false;
-
-    veh->attach();
-    veh->refresh_position();
-
-    for( std::vector<int>::const_iterator part = frame_indices.begin();
-         part != frame_indices.end(); part++ ) {
-        // Use abs_part_location + explicit map-local conversion so that during mapgen
-        // (where get_map() is the player map, not this mapgen constructor) the position
-        // checks reference the correct submap grid.
-        const auto abs_pos = veh->abs_part_location( *part );
-        const auto bub_pos = abs_to_map_local( *this, abs_pos );
-
-        //Don't spawn anything in water
-        if( has_flag_ter( TFLAG_DEEP_WATER, bub_pos ) && !can_float ) {
-            return nullptr;
-        }
-
-        // Don't spawn shopping carts on top of another vehicle or other obstacle.
-        if( veh->type == vproto_id( "shopping_cart" ) ) {
-            if( veh_at( abs_pos ) || impassable( bub_pos ) ) {
-                return nullptr;
-            }
-        }
-
-        //For other vehicles, simulate collisions with (non-shopping cart) stuff
-        vehicle *const other_veh = veh_pointer_or_null( veh_at( abs_pos ) );
-        if( other_veh != nullptr && other_veh->type != vproto_id( "shopping_cart" ) ) {
-            if( !merge_wrecks ) {
-                return nullptr;
-            }
-
-            // Hard wreck-merging limit: 250 tiles
-            // Merging is slow for big vehicles which lags the mapgen
-            if( frame_indices.size() + other_veh->all_standalone_parts().size() > 250 ) {
-                return nullptr;
-            }
-
-            // We must remove the vehicle from the map before we move away its parts
-            std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
-            if( old_veh == nullptr ) {
-                return nullptr;
-            }
-
-            for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
-                const auto part_pos = veh->abs_to_mount( old_veh->abs_part_location( vpr.part() ) );
-                auto transferred_part = vehicle_part{ vpr.part(), & *veh };
-                transferred_part.direction = normalize( old_veh->face.dir() + transferred_part.direction -
-                                                        veh->face.dir() );
-                veh->install_part( part_pos, std::move( transferred_part ) );
-            }
-
-            veh->name = _( "Wreckage" );
-
-
-            // Try again with the wreckage
-            std::unique_ptr<vehicle> new_veh = add_vehicle_to_map( std::move( veh ), true );
-            if( new_veh != nullptr ) {
-                new_veh->smash( *this );
-                return new_veh;
-            }
-
-            // If adding the wreck failed, we want to restore the vehicle we tried to merge with
-            add_vehicle_to_map( std::move( old_veh ), false );
-            return nullptr;
-
-        } else if( impassable( bub_pos ) ) {
-            if( !merge_wrecks ) {
-                return nullptr;
-            }
-
-            // There's a wall or other obstacle here; destroy it
-            destroy( bub_pos, true );
-
-            // Some weird terrain, don't place the vehicle
-            if( impassable( bub_pos ) ) {
-                return nullptr;
-            }
-
-            needs_smashing = true;
-        }
-    }
-
-    if( needs_smashing ) {
-        veh->smash( *this );
-    }
-
-    return veh;
 }
 
 computer *map::add_computer( const tripoint_bub_ms &p, const std::string &name, int security )

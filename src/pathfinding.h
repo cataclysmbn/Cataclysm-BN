@@ -4,6 +4,7 @@
 #include <cstring>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <unordered_map>
@@ -12,6 +13,9 @@
 
 #include "coordinates.h"
 #include "game_constants.h"
+#include "type_id.h"
+
+class mapbuffer;
 #include "point.h"
 #include "rng.h"
 
@@ -219,20 +223,31 @@ class Pathfinding
         // Global state: memoized dijikstra d_maps. Transfer to `d_maps_store` every game turn.
         static std::vector<std::unique_ptr<Pathfinding>> d_maps;
 
-        // Top-left absolute map square of the last loaded area scanned for Z-level transitions.
-        static point_abs_ms z_area;
-        static bool z_caches_dirty;
-        static bool z_caches_include_open_air;
+        // Guards d_maps and d_maps_store against concurrent access from
+        // parallel monster planning (monmove parallel_for_chunked).
+        static std::recursive_mutex d_maps_mutex;
 
-        // Global state: Z-level transitions for each z-level (does not include OPEN_AIR due to being numerous, requiring a different approach)
-        static std::array<std::vector<ZLevelChange>, OVERMAP_LAYERS> z_caches;
-        // Global state: OPEN_AIR type z-level transitions for each z-level
-        static std::array<std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair>, OVERMAP_LAYERS>
-        z_caches_open_air;
-        // Global state: We cache `z_path` information taken to prevent multiple iterations for the same target
-        static std::map<std::tuple<bool, int, tripoint_abs_ms>, ZLevelChange> cached_closest_z_changes;
+        // Per-dimension z-level transition caches.
+        struct dimension_z_cache {
+            point_abs_ms z_area;
+            bool z_caches_dirty = true;
+            bool z_caches_include_open_air = false;
+
+            // Z-level transitions for each z-level (does not include OPEN_AIR)
+            std::array<std::vector<ZLevelChange>, OVERMAP_LAYERS> caches;
+            // OPEN_AIR type z-level transitions for each z-level
+            std::array<std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair>, OVERMAP_LAYERS>
+            caches_open_air;
+            // Cached z_path information to prevent multiple iterations for the same target
+            std::map<std::tuple<bool, int, tripoint_abs_ms>, ZLevelChange> cached_closest_z_changes;
+        };
+
+        static std::map<dimension_id, dimension_z_cache> z_caches_by_dimension;
+
+        static dimension_z_cache &get_z_cache_for_dim( const dimension_id &dim );
 
         // Runtime map dimensions (default MAPSIZE_X / MAPSIZE_Y; updated when bubble size changes)
+        mapbuffer &buffer_;
         int map_x_;
         int map_y_;
 
@@ -274,14 +289,19 @@ class Pathfinding
         //   and scan for new changes.
         // Only process OPEN_AIR changes if `update_open_air` is true. OPEN_AIR tiles are numerous on higher Z levels
         //   so they're expensive to go over and update. Do only for fliers.
-        static void update_z_caches( bool update_open_air );
+        // Update z-caches for the given dimension, scanning its simulated tiles.
+        static void update_z_caches( mapbuffer &buffer, const dimension_id &dim,
+                                     bool update_open_air );
 
-        // Get a reference to ZCache for this level
-        static std::vector<ZLevelChange> &get_z_cache( const int z );
+        // Get a reference to ZCache for a given dimension and level
+        static std::vector<ZLevelChange> &get_z_cache( const dimension_id &dim, const int z );
         static std::unordered_map<point_abs_ms, ZLevelChangeOpenAirPair> &get_z_cache_open_air(
-            const int z );
+            const dimension_id &dim, const int z );
 
-        static void produce_d_map( point_abs_ms dest, int z, PathfindingSettings settings );
+        static void produce_d_map( mapbuffer &buffer,
+                                   point_abs_ms from, point_abs_ms dest, int z,
+                                   PathfindingSettings settings,
+                                   const RouteSettings &route_settings );
 
         // Get `p`-value at `p`
         float &p_at( const point_abs_ms &p );
@@ -310,11 +330,13 @@ class Pathfinding
 
         // See `Pathfinding::route`
         static std::vector<tripoint_abs_ms> get_route_2d(
+            mapbuffer &buffer,
             const point_abs_ms from, const point_abs_ms to, const int z,
             const PathfindingSettings path_settings,
             const RouteSettings route_settings );
         // See `Pathfinding::route`
         static std::vector<tripoint_abs_ms> get_route_3d(
+            mapbuffer &buffer,
             const tripoint_abs_ms from, const tripoint_abs_ms to,
             const PathfindingSettings path_settings,
             const RouteSettings route_settings
@@ -324,14 +346,12 @@ class Pathfinding
         ExpansionOutcome expand_2d_up_to( const point_abs_ms &start, const RouteSettings &route_settings );
     public:
         // Allocates flat arrays for a map of size mx × my.
-        explicit Pathfinding( int mx, int my );
+        explicit Pathfinding( mapbuffer &buffer, int mx, int my );
 
         // get `route` from `from` to `to` if available in accordance to `route_settings` while `path_settings` defines our capabilities, otherwise empty vector.
         // Found route will include `from` and `to`.
-        static std::vector<tripoint_abs_ms> route( tripoint_abs_ms from, tripoint_abs_ms to,
-                const std::optional<PathfindingSettings> path_settings = std::nullopt,
-                const std::optional<RouteSettings> route_settings = std::nullopt );
-        static std::vector<tripoint_bub_ms> route( tripoint_bub_ms from, tripoint_bub_ms to,
+        static std::vector<tripoint_abs_ms> route( mapbuffer &buffer,
+                tripoint_abs_ms from, tripoint_abs_ms to,
                 const std::optional<PathfindingSettings> path_settings = std::nullopt,
                 const std::optional<RouteSettings> route_settings = std::nullopt );
 
@@ -343,7 +363,10 @@ class Pathfinding
         // objects sized for the old g_mapsize_x/y are not reused.
         static void clear_pool();
 
-        // Reset Z-level information. Should only be done when new Z-level changes could have appeared
-        //   such as change in terrain
+        // Reset Z-level information for all dimensions. Should only be done when new Z-level
+        // changes could have appeared such as change in terrain.
         static void mark_dirty_z_cache();
+
+        // Reset Z-level information for a specific dimension.
+        static void mark_dirty_z_cache( const dimension_id &dim );
 };
