@@ -1,5 +1,5 @@
 if (BUILD_TESTING)
-    file(GLOB CATACLYSM_BN_TEST_SOURCES
+    file(GLOB_RECURSE CATACLYSM_BN_TEST_SOURCES CONFIGURE_DEPENDS
             ${CMAKE_SOURCE_DIR}/tests/*.cpp)
 
     # Enabling benchmarks
@@ -16,6 +16,7 @@ if (BUILD_TESTING)
     if (TILES)
         add_executable(cata_test-tiles ${CATACLYSM_BN_TEST_SOURCES})
         target_link_libraries(cata_test-tiles PRIVATE cataclysm-bn-tiles-common)
+        target_include_directories(cata_test-tiles PRIVATE ${CMAKE_SOURCE_DIR}/tests)
         target_compile_options(cata_test-tiles PRIVATE ${CATCH2_COMPILE_OPTIONS})
 
         add_test(
@@ -37,6 +38,7 @@ if (BUILD_TESTING)
     if (CURSES)
         add_executable(cata_test ${CATACLYSM_BN_TEST_SOURCES})
         target_link_libraries(cata_test PRIVATE cataclysm-bn-common)
+        target_include_directories(cata_test PRIVATE ${CMAKE_SOURCE_DIR}/tests)
         target_compile_options(cata_test PRIVATE ${CATCH2_COMPILE_OPTIONS})
 
         add_test(
