@@ -791,9 +791,10 @@
     "damage_modifier": 50,
     "description": "A section of continuous track, the kind mounted on construction vehicles and military fighting vehicles.  It acts as a wheel, and the broad surface provides plenty of traction to move heavy vehicles off-road, but at the cost of speed due to the heavy weight.",
     "breaks_into": [
-      { "item": "steel_lump", "count": [ 8, 16 ] },
-      { "item": "steel_chunk", "count": [ 20, 40 ] },
-      { "item": "scrap", "count": [ 50, 75 ] },
+      { "item": "steel_lump", "count": [ 4, 8 ] },
+      { "item": "steel_chunk", "count": [ 10, 20 ] },
+      { "item": "scrap", "count": [ 25, 50 ] },
+      { "item": "steel_armor", "count": [ 9, 18 ] },
       { "item": "chain", "count": [ 0, 1 ] }
     ],
     "rolling_resistance": 3,
@@ -820,9 +821,10 @@
     "damage_modifier": 50,
     "description": "A section of continuous track, the kind mounted on construction vehicles and military fighting vehicles.  It acts as a wheel, and the broad surface provides plenty of traction to move heavy vehicles off-road, but at the cost of speed due to the heavy weight.",
     "breaks_into": [
-      { "item": "steel_lump", "count": [ 12, 30 ] },
-      { "item": "steel_chunk", "count": [ 25, 60 ] },
-      { "item": "scrap", "count": [ 60, 120 ] },
+      { "item": "steel_lump", "count": [ 7, 15 ] },
+      { "item": "steel_chunk", "count": [ 15, 30 ] },
+      { "item": "scrap", "count": [ 30, 60 ] },
+      { "item": "hard_steel_armor", "count": [ 15, 30 ] },
       { "item": "chain", "count": [ 0, 1 ] }
     ],
     "rolling_resistance": 3,
