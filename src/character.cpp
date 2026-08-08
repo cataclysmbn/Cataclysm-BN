@@ -9334,10 +9334,11 @@ bool Character::armor_absorb( damage_unit &du, item &armor, const bodypart_id &b
         if( !one_in( num_parts_covered ) ) {
             return false;
         }
-        const int dmg_percent = std::max( raw_dmg - armor.chip_resistance( !armor.has_flag( flag_STURDY ) ),
-                                          1 );
-        // Chance to avoid armor damage is 50/67% (if sturdy) + 100 - ( raw_dmg - chip_resist )%
-        if( !one_in( armor.has_flag( flag_STURDY ) ? 3 : 2 ) || !x_in_y( dmg_percent, 100 ) ) {
+        const int armor_chip_resist = armor.chip_resistance( !armor.has_flag( flag_STURDY ) );
+        const bool armor_resisted = raw_dmg >= armor_chip_resist ? rng( 1,
+                                    raw_dmg ) <= armor_chip_resist : !one_in( 100 );
+        // Base chance to avoid armor damage is 50/67% (if sturdy), or if chip resist exceeds 1d<damage> (floor of 1%)
+        if( !one_in( armor.has_flag( flag_STURDY ) ? 3 : 2 ) || armor_resisted ) {
             return false;
         }
     }
