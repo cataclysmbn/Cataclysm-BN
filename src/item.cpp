@@ -10659,6 +10659,9 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
             duration = 30_seconds;
         }
         carrier->add_msg_if_player( m_neutral, _( "You take a puff of your %s." ), it.tname() );
+        if( it.type->istate_callbacks ) {
+            it.type->istate_callbacks->call_on_puff( *carrier, it );
+        }
 
         // we need to figure out a way to get the item before this got converted,
         // but i don't think that's going to be very easy...
