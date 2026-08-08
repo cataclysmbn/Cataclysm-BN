@@ -1,0 +1,271 @@
+local map = gapi.get_map()
+
+local dimension_id = test_data["target_dimension_id"]
+local target_omt = test_data["target_omt"]
+local return_ms = test_data["return_ms"]
+local bounds_min_omt = test_data["bounds_min_omt"]
+local bounds_max_omt = test_data["bounds_max_omt"]
+local overmap_terrain = test_data["overmap_terrain"]
+
+test_data["before_dim"] = gapi.get_current_dimension_id()
+test_data["before_map_dim"] = map:get_bound_dimension()
+
+test_data["missing_target_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_omt = nil,
+})
+
+test_data["noop_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+
+test_data["invalid_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+})
+
+test_data["invalid_special_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  pregen_special_id = "lua_test_missing_special",
+})
+
+test_data["invalid_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = { { { "lua_test_missing_omt" } } },
+})
+
+test_data["overmap_terrain_without_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  overmap_terrain = { { { "forest" } } },
+})
+
+test_data["overmap_terrain_out_of_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_min_omt,
+  overmap_terrain = { { { "forest", "field" } } },
+})
+
+test_data["non_array_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = { label = { { "forest" } } },
+})
+
+test_data["sparse_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = { [2] = { { "forest" } } },
+})
+
+test_data["unsafe_dimension_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "lua/test",
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+})
+
+test_data["dot_dimension_travel"] = gapi.place_player_dimension_at({
+  dimension_id = ".",
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+})
+
+test_data["reversed_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_max_omt,
+  bounds_max_omt = bounds_min_omt,
+})
+
+test_data["target_out_of_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = test_data["outside_omt"],
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+})
+
+test_data["target_ms_mismatch_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  target_ms = test_data["outside_ms"],
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+})
+
+test_data["overworld_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+})
+
+test_data["invalid_boundary_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  boundary_terrain = "t_lua_test_missing_border",
+})
+
+test_data["invalid_boundary_overmap_terrain_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  boundary_overmap_terrain = "lua_test_missing_border",
+})
+
+test_data["pregen_special_out_of_bounds_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  pregen_special_id = "Riverside Dwelling",
+  pregen_special_omt = test_data["outside_omt"],
+})
+
+test_data["pregen_special_overlap_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = overmap_terrain,
+  pregen_special_id = "Riverside Dwelling",
+  pregen_special_omt = target_omt,
+})
+
+test_data["after_invalid_dim"] = gapi.get_current_dimension_id()
+test_data["after_invalid_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["delete_missing_dimension"] = gapi.delete_dimension("lua_missing_pocket")
+test_data["reset_missing_dimension"] = gapi.reset_dimension("lua_missing_pocket")
+test_data["delete_dot_dimension"] = gapi.delete_dimension(".")
+test_data["reset_dotdot_dimension"] = gapi.reset_dimension("..")
+test_data["delete_unloaded_dimension"] = gapi.delete_dimension("lua_test_unloaded_delete")
+test_data["reset_unloaded_dimension"] = gapi.reset_dimension("lua_test_unloaded_reset")
+
+test_data["pregen_special_entered"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id .. "_special",
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  pregen_special_id = "Riverside Dwelling",
+  pregen_special_omt = target_omt,
+})
+test_data["pregen_special_return"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+
+test_data["entered_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = overmap_terrain,
+})
+
+local dimension_map = gapi.get_map()
+test_data["entered_dim"] = gapi.get_current_dimension_id()
+test_data["entered_map_dim"] = dimension_map:get_bound_dimension()
+test_data["entry_is_oob"] = dimension_map:is_out_of_bounds(gapi.get_avatar():bub_pos())
+test_data["outside_is_oob"] = dimension_map:is_out_of_bounds(test_data["outside_local"])
+
+test_data["return_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+
+test_data["after_return_dim"] = gapi.get_current_dimension_id()
+test_data["after_return_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["after_return_pos"] = gapi.get_avatar():abs_pos()
+test_data["after_return_outside_is_oob"] = gapi.get_map():is_out_of_bounds(test_data["outside_local"])
+
+test_data["reentered_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+})
+
+test_data["reentered_dim"] = gapi.get_current_dimension_id()
+test_data["reentered_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["reentered_outside_is_oob"] = gapi.get_map():is_out_of_bounds(test_data["outside_local"])
+test_data["same_dimension_before_pos"] = gapi.get_avatar():abs_pos()
+test_data["same_dimension_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_ms = return_ms,
+})
+test_data["same_dimension_after_pos"] = gapi.get_avatar():abs_pos()
+test_data["same_dimension_dim"] = gapi.get_current_dimension_id()
+test_data["delete_current_dimension"] = gapi.delete_dimension(dimension_id)
+test_data["reset_current_dimension"] = gapi.reset_dimension(dimension_id)
+
+test_data["return_before_reset"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+test_data["reset_dimension"] = gapi.reset_dimension(dimension_id)
+test_data["reentered_after_reset"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+})
+test_data["reentered_after_reset_dim"] = gapi.get_current_dimension_id()
+test_data["reentered_after_reset_outside_is_oob"] = gapi.get_map():is_out_of_bounds(test_data["outside_local"])
+
+test_data["return_before_delete"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+test_data["delete_dimension"] = gapi.delete_dimension(dimension_id)
+test_data["after_delete_dim"] = gapi.get_current_dimension_id()
+test_data["after_delete_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["recreated_after_delete"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = target_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = bounds_min_omt,
+  bounds_max_omt = bounds_max_omt,
+  overmap_terrain = overmap_terrain,
+})
+test_data["recreated_after_delete_dim"] = gapi.get_current_dimension_id()
+
+test_data["final_return_travel"] = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = return_ms,
+})
+
+test_data["final_dim"] = gapi.get_current_dimension_id()
+test_data["final_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["final_pos"] = gapi.get_avatar():abs_pos()

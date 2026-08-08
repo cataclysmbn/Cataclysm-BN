@@ -20,6 +20,7 @@
 #include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "game_constants.h"
 #include "iexamine.h"
 #include "init.h"
 #include "json.h"
@@ -32,6 +33,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
+#include "overmapbuffer.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
@@ -46,6 +48,7 @@
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "world.h"
 
 #include <memory>
 #include <optional>
@@ -738,6 +741,185 @@ TEST_CASE("plumbing_lua_data_hooks", "[lua]") {
     const auto& vehicle_shower = vpart_id("vehicle_shower").obj();
     REQUIRE(vehicle_shower.has_flag("SHOWER"));
     REQUIRE(vehicle_shower.has_flag("FAUCET"));
+}
+
+TEST_CASE("lua_pocket_dimension_api", "[lua]") {
+    clear_all_state();
+    const auto cleanup_test_state = on_out_of_scope([]() {
+        if (g != nullptr) {
+            if (!g->get_current_dimension_id().is_empty()) {
+                g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt);
+            }
+            g->delete_dimension(dimension_id("lua_test_pocket"));
+            g->delete_dimension(dimension_id("lua_test_pocket_special"));
+            g->delete_dimension(dimension_id("lua_test_zone_pocket"));
+        }
+        clear_all_state();
+    });
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto original_pos = tripoint_abs_ms(3, 5, 0);
+    get_avatar().setpos(original_pos);
+    g->update_map(get_avatar());
+    const auto zone_type_no_auto_pickup = zone_type_id("NO_AUTO_PICKUP");
+    zone_manager::get_manager()
+        .add("overworld zone", zone_type_no_auto_pickup, your_fac, false, true, original_pos,
+             original_pos);
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, original_pos));
+
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    test_data["target_dimension_id"] = "lua_test_pocket";
+    test_data["target_omt"] = tripoint_abs_omt(16, 16, 0);
+    test_data["return_ms"] = original_pos;
+    test_data["bounds_min_omt"] = tripoint_abs_omt(16, 16, 0);
+    test_data["bounds_max_omt"] = tripoint_abs_omt(24, 24, 0);
+    test_data["outside_omt"] = tripoint_abs_omt(25, 16, 0);
+    test_data["outside_ms"] =
+        project_combine(tripoint_abs_omt(25, 16, 0), point_omt_ms(SEEX, SEEY));
+    test_data["outside_local"] = tripoint_bub_ms(500, 500, 0);
+    const auto layout_res = lua.safe_script(R"(
+test_data["overmap_terrain"] = {
+  {
+    { "forest", "field" },
+    { "field", "forest" },
+  },
+}
+)");
+    REQUIRE(layout_res.valid());
+
+    const auto unloaded_delete_dimension_id = std::string("lua_test_unloaded_delete");
+    const auto unloaded_reset_dimension_id = std::string("lua_test_unloaded_reset");
+    const auto unloaded_delete_omt = tripoint_abs_omt(32, 32, 0);
+    const auto unloaded_reset_omt = tripoint_abs_omt(40, 40, 0);
+    const auto write_empty_array = [](std::ostream& out) { out << "[]"; };
+    const auto read_empty_array = [](JsonIn& jsin) {
+        jsin.start_array();
+        jsin.end_array();
+    };
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    REQUIRE(active_world->write_map_omt(
+        unloaded_delete_dimension_id, unloaded_delete_omt, write_empty_array));
+    REQUIRE(active_world->write_map_omt(
+        unloaded_reset_dimension_id, unloaded_reset_omt, write_empty_array));
+
+    run_lua_test_script(lua, "pocket_dimension_api_test.lua");
+
+    CHECK(test_data["before_dim"].get<std::string>() == "");
+    CHECK(test_data["before_map_dim"].get<std::string>() == "");
+    CHECK_FALSE(test_data["missing_target_travel"].get<bool>());
+    CHECK(test_data["noop_travel"].get<bool>());
+    CHECK_FALSE(test_data["invalid_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["invalid_special_travel"].get<bool>());
+    CHECK_FALSE(test_data["invalid_overmap_terrain_travel"].get<bool>());
+    CHECK_FALSE(test_data["overmap_terrain_without_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["overmap_terrain_out_of_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["non_array_overmap_terrain_travel"].get<bool>());
+    CHECK_FALSE(test_data["sparse_overmap_terrain_travel"].get<bool>());
+    CHECK_FALSE(test_data["unsafe_dimension_travel"].get<bool>());
+    CHECK_FALSE(test_data["dot_dimension_travel"].get<bool>());
+    CHECK_FALSE(test_data["reversed_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["target_out_of_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["target_ms_mismatch_travel"].get<bool>());
+    CHECK_FALSE(test_data["overworld_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["invalid_boundary_terrain_travel"].get<bool>());
+    CHECK_FALSE(test_data["invalid_boundary_overmap_terrain_travel"].get<bool>());
+    CHECK_FALSE(test_data["pregen_special_out_of_bounds_travel"].get<bool>());
+    CHECK_FALSE(test_data["pregen_special_overlap_travel"].get<bool>());
+    CHECK(test_data["after_invalid_dim"].get<std::string>() == "");
+    CHECK(test_data["after_invalid_map_dim"].get<std::string>() == "");
+    CHECK_FALSE(test_data["delete_missing_dimension"].get<bool>());
+    CHECK_FALSE(test_data["reset_missing_dimension"].get<bool>());
+    CHECK_FALSE(test_data["delete_dot_dimension"].get<bool>());
+    CHECK_FALSE(test_data["reset_dotdot_dimension"].get<bool>());
+    CHECK(test_data["delete_unloaded_dimension"].get<bool>());
+    CHECK(test_data["reset_unloaded_dimension"].get<bool>());
+    CHECK_FALSE(active_world->read_map_omt(
+        unloaded_delete_dimension_id, unloaded_delete_omt, read_empty_array));
+    CHECK_FALSE(active_world->read_map_omt(
+        unloaded_reset_dimension_id, unloaded_reset_omt, read_empty_array));
+    CHECK(test_data["pregen_special_entered"].get<bool>());
+    CHECK(test_data["pregen_special_return"].get<bool>());
+    auto& special_overmap = get_overmapbuffer(dimension_id("lua_test_pocket_special"));
+    CHECK(special_overmap.ter(tripoint_abs_omt(16, 16, 0))
+          == oter_str_id("riverside_dwelling_north").id());
+    CHECK(test_data["entered_travel"].get<bool>());
+    CHECK(test_data["entered_dim"].get<std::string>() == "lua_test_pocket");
+    CHECK(test_data["entered_map_dim"].get<std::string>() == "lua_test_pocket");
+    auto& pocket_overmap = get_overmapbuffer(dimension_id("lua_test_pocket"));
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(16, 16, 0)) == oter_str_id("forest").id());
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(17, 16, 0)) == oter_str_id("field").id());
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(16, 17, 0)) == oter_str_id("field").id());
+    CHECK(pocket_overmap.ter(tripoint_abs_omt(17, 17, 0)) == oter_str_id("forest").id());
+    CHECK_FALSE(test_data["entry_is_oob"].get<bool>());
+    CHECK(test_data["outside_is_oob"].get<bool>());
+    CHECK(test_data["return_travel"].get<bool>());
+    CHECK(test_data["after_return_dim"].get<std::string>() == "");
+    CHECK(test_data["after_return_map_dim"].get<std::string>() == "");
+    CHECK(test_data["after_return_pos"].get<tripoint_abs_ms>() == original_pos);
+    CHECK_FALSE(test_data["after_return_outside_is_oob"].get<bool>());
+    CHECK(test_data["reentered_travel"].get<bool>());
+    CHECK(test_data["reentered_dim"].get<std::string>() == "lua_test_pocket");
+    CHECK(test_data["reentered_map_dim"].get<std::string>() == "lua_test_pocket");
+    CHECK(test_data["reentered_outside_is_oob"].get<bool>());
+    CHECK(test_data["same_dimension_travel"].get<bool>());
+    CHECK(test_data["same_dimension_dim"].get<std::string>() == "lua_test_pocket");
+    CHECK(test_data["same_dimension_after_pos"].get<tripoint_abs_ms>()
+          == test_data["same_dimension_before_pos"].get<tripoint_abs_ms>());
+    CHECK_FALSE(test_data["delete_current_dimension"].get<bool>());
+    CHECK_FALSE(test_data["reset_current_dimension"].get<bool>());
+    CHECK(test_data["return_before_reset"].get<bool>());
+    CHECK(test_data["reset_dimension"].get<bool>());
+    CHECK(test_data["reentered_after_reset"].get<bool>());
+    CHECK(test_data["reentered_after_reset_dim"].get<std::string>() == "lua_test_pocket");
+    CHECK(test_data["reentered_after_reset_outside_is_oob"].get<bool>());
+    CHECK(test_data["return_before_delete"].get<bool>());
+    CHECK(test_data["delete_dimension"].get<bool>());
+    CHECK(test_data["after_delete_dim"].get<std::string>() == "");
+    CHECK(test_data["after_delete_map_dim"].get<std::string>() == "");
+    CHECK(test_data["recreated_after_delete"].get<bool>());
+    CHECK(test_data["recreated_after_delete_dim"].get<std::string>() == "lua_test_pocket");
+    CHECK(test_data["final_return_travel"].get<bool>());
+    CHECK(test_data["final_dim"].get<std::string>() == "");
+    CHECK(test_data["final_map_dim"].get<std::string>() == "");
+    CHECK(test_data["final_pos"].get<tripoint_abs_ms>() == original_pos);
+
+    const auto zone_dimension_id = dimension_id("lua_test_zone_pocket");
+    const auto zone_target_omt = tripoint_abs_omt(48, 48, 0);
+    const auto zone_target_ms = project_combine(zone_target_omt, point_omt_ms(SEEX, SEEY));
+    const auto zone_load_pos =
+        project_to<coords::sm>(zone_target_ms) - tripoint_rel_sm(g_half_mapsize, g_half_mapsize, 0);
+    auto zone_pocket_data = pocket_dimension_data{};
+    zone_pocket_data.entry_point = zone_target_ms;
+    zone_pocket_data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>(zone_target_omt),
+        .max_bound = project_to<coords::sm>(zone_target_omt) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id("t_pd_border"),
+        .boundary_overmap_terrain = oter_str_id("pd_border"),
+    };
+
+    REQUIRE(g->travel_to_dimension(
+        zone_dimension_id, world_type_id("pocket_dimension"), zone_pocket_data, zone_load_pos));
+    zone_manager::get_manager()
+        .add("dimension zone", zone_type_no_auto_pickup, your_fac, false, true, zone_target_ms,
+             zone_target_ms);
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->reset_dimension(zone_dimension_id));
+    REQUIRE(g->travel_to_dimension(
+        zone_dimension_id, world_type_id("pocket_dimension"), zone_pocket_data, zone_load_pos));
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->delete_dimension(zone_dimension_id));
+    REQUIRE(g->travel_to_dimension(
+        zone_dimension_id, world_type_id("pocket_dimension"), zone_pocket_data, zone_load_pos));
+    CHECK_FALSE(zone_manager::get_manager().has(zone_type_no_auto_pickup, zone_target_ms));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(g->delete_dimension(zone_dimension_id));
+    CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, original_pos));
 }
 
 TEST_CASE("lua_called_from_cpp", "[lua]") {
