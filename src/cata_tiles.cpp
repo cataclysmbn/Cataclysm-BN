@@ -492,6 +492,8 @@ void cata_tiles::load_tileset(
     tileset_ptr = std::move( new_tileset_ptr );
     tileset_mod_list_stamp = mod_list;
 
+    tile_iso = tileset_ptr->get_tile_iso();
+
     set_draw_scale( 16 );
 
     minimap->set_type( tile_iso ? pixel_minimap_type::iso : pixel_minimap_type::ortho );
@@ -2220,13 +2222,11 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         ts.tile_height = curr_info.get_int( "height" );
         ts.tile_width = curr_info.get_int( "width" );
         ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
-        ts.zlevel_height = 0;
         tile_iso = curr_info.get_bool( "iso", false );
+        ts.is_iso = tile_iso;
         ts.tile_pixelscale = curr_info.get_float( "pixelscale", 1.0f );
         ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
-        ts.prevent_occlusion_min_dist = -1.0f;
         ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
-        ts.prevent_occlusion_max_dist = 0.0f;
     }
 
     if( precheck ) {
@@ -3058,6 +3058,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     init_light();
     map &here = get_map();
 
+    tile_iso = tileset_ptr ? tileset_ptr->get_tile_iso() : false;
     const bool iso_mode = tile_iso;
 
     const bool show_zones_overlay = g->show_zone_overlay && !iso_mode;
@@ -3137,9 +3138,16 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     o = iso_mode ? center.xy() : center.xy() - point( POSX, POSY );
 
     op = dest;
-    // Rounding up to include incomplete tiles at the bottom/right edges
-    screentile_width = divide_round_up( width, tile_width );
-    screentile_height = divide_round_up( height, tile_height );
+    viewport_width = width;
+    viewport_height = height;
+    if( iso_mode ) {
+        // In iso, tile grid spacing uses tile_width for both axes
+        screentile_width = divide_round_up( width * 2, tile_width ) + 1;
+        screentile_height = divide_round_up( height * 4, tile_width ) + 1;
+    } else {
+        screentile_width = divide_round_up( width, tile_width );
+        screentile_height = divide_round_up( height, tile_height );
+    }
 
     const int min_col = 0;
     const int max_col = s.x;
@@ -3555,7 +3563,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 const int &x = temp_x;
                 const int &y = temp_y;
                 const auto queue_draw_point = [&]( tile_render_info info ) {
-                    info.screen_row = row;
+                    info.screen_row = row + ( tile_iso && info.pos.z() != center.z() && tile_width > 0
+                                              ? ( center.z() - info.pos.z() )
+                                              * tileset_ptr->get_zlevel_height() * 4 / tile_width
+                                              : 0 );
                     draw_points.push_back( info );
                 };
 
@@ -4280,8 +4291,8 @@ void cata_tiles::get_window_tile_counts( const int width, const int height, int 
         int &rows ) const
 {
     if( tile_iso ) {
-        columns = std::ceil( static_cast<double>( width ) / tile_width ) * 2 + 4;
-        rows = std::ceil( static_cast<double>( height ) / ( tile_width / 2.0 - 1 ) ) * 2 + 4;
+        columns = divide_round_up( width * 2, tile_width ) + 1;
+        rows = divide_round_up( height * 4, tile_width ) + 1;
     } else {
         columns = std::ceil( static_cast<double>( width ) / tile_width );
         rows = std::ceil( static_cast<double>( height ) / tile_height );
@@ -5182,20 +5193,7 @@ bool cata_tiles::draw_block( const tripoint_bub_ms &p, SDL_Color color, int scal
         rect.h = ( rect.h * 2 ) / 3;
         rect.w = ( rect.w * 3 ) / 4;
     }
-    // translate from player-relative to screen relative tile position
-    point screen;
-    if( tile_iso ) {
-        screen.x = ( ( p.x() - o.x() ) - ( o.y() - p.y() ) + screentile_width - 2 ) * tile_width / 2 +
-                   op.x;
-        // y uses tile_width because width is definitive for iso tiles
-        // tile footprints are half as tall as wide, arbitrarily tall
-        screen.y = ( ( p.y() - o.y() ) - ( p.x() - o.x() ) - 4 ) * tile_width / 4 +
-                   screentile_height * tile_height / 2 + // TODO: more obvious centering math
-                   op.y;
-    } else {
-        screen.x = ( p.x() - o.x() ) * tile_width + op.x;
-        screen.y = ( p.y() - o.y() ) * tile_height + op.y;
-    }
+    const point screen = player_to_screen( p.xy() );
     rect.x = screen.x + ( tile_width - rect.w ) / 2;
     rect.y = screen.y + ( tile_height - rect.h ) / 2;
     if( tile_iso ) {
@@ -7373,22 +7371,27 @@ void cata_tiles::do_tile_loading_report( const std::function<void( std::string )
     tile_loading_report<field_type>( field_type::count(), C_FIELD, out, "" );
 }
 
+point cata_tiles::player_to_tile( point_bub_ms p ) const
+{
+    if( tile_iso ) {
+        return point{
+            p.y() + p.x() + screentile_width / 2 - o.y() - o.x(),
+            p.y() - p.x() + screentile_height / 2 - o.y() + o.x()
+        };
+    }
+    return point{ p.x() - o.x(), p.y() - o.y() };
+}
+
 point cata_tiles::player_to_screen( point_bub_ms p ) const
 {
-    point screen;
+    const point colrow = player_to_tile( p );
     if( tile_iso ) {
-        screen.x = ( ( p.x() - o.x() ) - ( o.y() - p.y() ) + screentile_width - 2 ) * tile_width / 2 +
-                   op.x;
-        // y uses tile_width because width is definitive for iso tiles
-        // tile footprints are half as tall as wide, arbitrarily tall
-        screen.y = ( ( p.y() - o.y() ) - ( p.x() - o.x() ) - 4 ) * tile_width / 4 +
-                   screentile_height * tile_height / 2 + // TODO: more obvious centering math
-                   op.y;
-    } else {
-        screen.x = ( p.x() - o.x() ) * tile_width + op.x;
-        screen.y = ( p.y() - o.y() ) * tile_height + op.y;
+        return op + point{
+            divide_round_down( ( colrow.x - 1 ) * tile_width, 2 ),
+            divide_round_down( ( colrow.y + 1 ) * tile_width, 4 ) - tile_height,
+        };
     }
-    return {screen};
+    return op + point{ colrow.x * tile_width, colrow.y * tile_height };
 }
 
 template<typename Iter, typename Func>
