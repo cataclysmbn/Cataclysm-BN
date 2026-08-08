@@ -1,0 +1,55 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Extractor Fixture Test\n"
+"POT-Creation-Date: <normalized>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. ~ item name note
+#: scripts/testdata/extract_json_strings/input/items.json
+msgid "fixture item"
+msgid_plural "fixture items"
+msgstr[0] ""
+msgstr[1] ""
+
+#. ~ Use action msg for fixture item.
+#: scripts/testdata/extract_json_strings/input/items.json
+msgid "Fixture use action."
+msgstr ""
+
+#. ~ Description for fixture item
+#: scripts/testdata/extract_json_strings/input/items.json
+msgid "A fixture item."
+msgstr ""
+
+#. ~ display name translator note
+#: scripts/testdata/extract_json_strings/input/modinfo.jsonc
+msgid "Extractor Fixture"
+msgstr ""
+
+#. ~ Description for Extractor Fixture
+#. description translator note
+#: scripts/testdata/extract_json_strings/input/modinfo.jsonc
+msgid "Fixture description"
+msgstr ""
+
+#. ~ lua gettext note
+#: scripts/testdata/extract_json_strings/input/sub/messages.lua
+msgid "Lua message"
+msgstr ""
+
+#. ~ lua context note
+#: scripts/testdata/extract_json_strings/input/sub/messages.lua
+msgctxt "menu"
+msgid "Lua context message"
+msgstr ""
+
+#. ~ lua plural note
+#: scripts/testdata/extract_json_strings/input/sub/messages.lua
+msgid "Lua apple"
+msgid_plural "Lua apples"
+msgstr[0] ""
+msgstr[1] ""
