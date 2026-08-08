@@ -61,7 +61,7 @@
 #include "point.h"
 #include "posix_time.h"
 #include "projectile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "shadowcasting.h"
 #include "sounds.h"
 #include "string_formatter.h"

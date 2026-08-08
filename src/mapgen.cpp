@@ -75,7 +75,7 @@
 #include "point.h"
 #include "point_float.h"
 #include "profile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"

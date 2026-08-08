@@ -83,7 +83,7 @@
 #include "popup.h"
 #include "profile.h"
 #include "ranged.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "safemode_ui.h"
 #include "salvage.h"
 #include "scores_ui.h"

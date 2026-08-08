@@ -26,7 +26,7 @@
 #include "morale_types.h"
 #include "options.h"
 #include "profile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "text_snippets.h"
 #include "translations.h"

@@ -12,7 +12,7 @@
 #include "item.h"
 #include "map.h"
 #include "map_iterator.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 
 projectile::projectile() : custom_explosion( nullptr )

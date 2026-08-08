@@ -41,7 +41,8 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
-#include "rng.h"
+#include "random/rng.h"
+#include "replay/replay.h"
 #include "type_id.h"
 #include "ui_manager.h"
 #include "path_display.h"
@@ -226,6 +227,7 @@ int main( int argc, char *argv[] )
 #endif
     init_crash_handlers();
     int seed = time( nullptr );
+    bool seed_set = false;
     bool verifyexit = false;
     bool check_mods = false;
     auto check_mods_mode = init::check_mods_mode::default_mods;
@@ -270,18 +272,19 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 17> first_pass_arguments = {{
+        const std::array<arg_handler, 19> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
                     section_default,
-                    [&seed]( int num_args, const char **params ) -> int {
+                    [&seed, &seed_set]( int num_args, const char **params ) -> int {
                         if( num_args < 1 )
                         {
                             return -1;
                         }
                         const unsigned char *hash_input = reinterpret_cast<const unsigned char *>( params[0] );
                         seed = djb2_hash( hash_input );
+                        seed_set = true;
                         return 1;
                     }
                 },
@@ -501,6 +504,32 @@ int main( int argc, char *argv[] )
 #if defined(CATA_SDL)
                         preload_config::set_gpu_backend_override( params[0] );
 #endif
+                        return 1;
+                    }
+                },
+                {
+                    "--replay-record", "<jsonl path>",
+                    "Record user input events to a JSON Lines replay file",
+                    section_default,
+                    []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
+                        replay::configure_recording( params[0] );
+                        return 1;
+                    }
+                },
+                {
+                    "--replay-play", "<jsonl path>",
+                    "Play user input events from a JSON Lines replay file",
+                    section_default,
+                    []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
+                        replay::configure_playback( params[0] );
                         return 1;
                     }
                 }
@@ -835,7 +864,21 @@ int main( int argc, char *argv[] )
     set_language();
 #endif
 
-    rng_set_engine_seed( seed );
+    if( replay::is_enabled() ) {
+        if( !seed_set ) {
+            seed = 1;
+        }
+        rng_set_deterministic_seed( seed );
+        try {
+            replay::start();
+            atexit( replay::stop );
+        } catch( const std::exception &err ) {
+            report_fatal_error( err.what() );
+            return 1;
+        }
+    } else {
+        rng_set_engine_seed( seed );
+    }
 
     g = std::make_unique<game>();
     // First load and initialize everything that does not

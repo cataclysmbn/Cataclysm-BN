@@ -31,7 +31,7 @@
 #include "output.h"
 #include "player.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "teleport.h"
 #include "timed_event.h"

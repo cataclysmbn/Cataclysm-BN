@@ -12,7 +12,7 @@
 #include "enums.h"
 #include "enum_conversions.h"
 #include "morale_types.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 
 static const efftype_id effect_hallu( "hallu" );

@@ -12,7 +12,7 @@
 #include "input.h"
 #include "output.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 #include "ui_manager.h"
 

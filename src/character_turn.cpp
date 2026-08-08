@@ -30,7 +30,7 @@
 #include "morale.h"
 #include "player.h"
 #include "player_activity.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "submap.h"
 #include "trap.h"
 #include "type_id.h"

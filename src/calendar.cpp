@@ -11,7 +11,7 @@
 
 #include "debug.h"
 #include "options.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 

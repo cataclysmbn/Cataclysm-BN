@@ -1,6 +1,6 @@
 #include "cata_utility.h"
 #include "catch/catch.hpp"
-#include "rng.h"
+#include "random/rng.h"
 
 #include <cmath>
 #include <cstddef>

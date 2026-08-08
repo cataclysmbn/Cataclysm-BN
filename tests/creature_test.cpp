@@ -3,7 +3,7 @@
 #include "creature.h"
 #include "monster.h"
 #include "mtype.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "test_statistics.h"
 
 #include <cstdlib>

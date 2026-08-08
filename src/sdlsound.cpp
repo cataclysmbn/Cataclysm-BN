@@ -20,7 +20,7 @@
 #include "messages.h"
 #include "options.h"
 #include "path_info.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sdl_wrappers.h"
 #include "sounds.h"
 #include "units_angle.h"
