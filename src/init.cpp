@@ -72,6 +72,7 @@
 #include "mapdata.h"
 #include "mapgen.h"
 #include "mapgen_async.h"
+#include "mapgen_color_palette.h"
 #include "martialarts.h"
 #include "material.h"
 #include "mission.h"
@@ -419,6 +420,7 @@ void DynamicDataLoader::initialize()
     add( "construction_category", &construction_categories::load );
     add( "construction_group", &construction_groups::load );
     add( "construction", &constructions::load );
+    add( "mapgen_color_palette",  &MapgenColorPalette::load_palette );
     add( "mapgen", &load_mapgen );
     add( "overmap_land_use_code", &overmap_land_use_codes::load );
     add( "overmap_connection", &overmap_connections::load );
@@ -602,6 +604,7 @@ void DynamicDataLoader::unload_data()
     json_trait_flag::reset();
     MapExtras::reset();
     map_feature_descriptions::reset_map_feature_descriptions();
+    MapgenColorPalette::reset();
     mapgen_palette::reset();
     materials::reset();
     mission_type::reset();
@@ -792,6 +795,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Vehicle palettes" ), &VehiclePalette::check_definitions },
             { _( "Vehicle groups" ), &VehicleGroup::check },
             { _( "Mapgen definitions" ), &check_mapgen_definitions },
+            { _( "Mapgen Color palettes" ), &MapgenColorPalette::check_definitions },
             { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
             {
                 _( "Monster types" ), []()
