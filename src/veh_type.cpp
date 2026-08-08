@@ -491,7 +491,9 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
     load_rotating_light( jo, rotating_light );
 
     assign( jo, "comfort", comfort );
-    assign( jo, "floor_bedding_warmth", floor_bedding_warmth );
+    auto legacy_floor_bedding_warmth = units::to_legacy_bodypart_temp_delta( floor_bedding_warmth );
+    assign( jo, "floor_bedding_warmth", legacy_floor_bedding_warmth );
+    floor_bedding_warmth = units::from_legacy_bodypart_temp_delta( legacy_floor_bedding_warmth );
     assign( jo, "bonus_fire_warmth_feet", bonus_fire_warmth_feet );
     assign( jo, "default_color", default_color );
     assign( jo, "light_color", light_color );

@@ -650,37 +650,37 @@ static std::pair<nc_color, int> morale_stat( const avatar &u )
 
 struct temp_delta_extremes {
     temp_delta_extremes( bodypart_str_id extreme_cur_bp,
-                         int extreme_cur_temp,
+                         units::temperature extreme_cur_temp,
                          bodypart_str_id extreme_conv_bp,
-                         int extreme_conv_temp ) :
+                         units::temperature extreme_conv_temp ) :
         extreme_cur_bp( extreme_cur_bp ),
         extreme_cur_temp( extreme_cur_temp ),
         extreme_conv_bp( extreme_conv_bp ),
         extreme_conv_temp( extreme_conv_temp )
     {}
     bodypart_str_id extreme_cur_bp;
-    int extreme_cur_temp;
+    units::temperature extreme_cur_temp;
     bodypart_str_id extreme_conv_bp;
-    int extreme_conv_temp;
+    units::temperature extreme_conv_temp;
 };
 
-static temp_delta_extremes temp_delta( const avatar &u )
+static auto temp_delta( const avatar &u ) -> temp_delta_extremes
 {
-    bodypart_str_id extreme_cur_bp;
-    int current_bp_extreme = BODYTEMP_NORM;
-    bodypart_str_id extreme_conv_bp;
-    int conv_bp_extreme = BODYTEMP_NORM;
+    auto extreme_cur_bp = bodypart_str_id{};
+    auto current_bp_extreme = BODYTEMP_NORM;
+    auto extreme_conv_bp = bodypart_str_id{};
+    auto conv_bp_extreme = BODYTEMP_NORM;
     for( const auto &pr : u.get_body() ) {
-        int temp_cur = pr.second.get_temp_cur();
-        if( std::abs( temp_cur - BODYTEMP_NORM ) >
-            std::abs( current_bp_extreme - BODYTEMP_NORM ) ) {
+        const auto temp_cur = pr.second.get_temp_cur();
+        if( units::abs( temp_cur - BODYTEMP_NORM ) >
+            units::abs( current_bp_extreme - BODYTEMP_NORM ) ) {
             extreme_cur_bp = pr.first;
             current_bp_extreme = temp_cur;
         }
 
-        int temp_conv = pr.second.get_temp_conv();
-        if( std::abs( temp_conv - BODYTEMP_NORM ) >
-            std::abs( conv_bp_extreme - BODYTEMP_NORM ) ) {
+        const auto temp_conv = pr.second.get_temp_conv();
+        if( units::abs( temp_conv - BODYTEMP_NORM ) >
+            units::abs( conv_bp_extreme - BODYTEMP_NORM ) ) {
             extreme_conv_bp = pr.first;
             conv_bp_extreme = temp_conv;
         }
@@ -688,7 +688,7 @@ static temp_delta_extremes temp_delta( const avatar &u )
     return temp_delta_extremes( extreme_cur_bp, current_bp_extreme, extreme_conv_bp, conv_bp_extreme );
 }
 
-static int define_temp_level( const int lvl )
+static auto define_temp_level( const units::temperature lvl ) -> int
 {
     if( lvl > BODYTEMP_SCORCHING ) {
         return 7;
@@ -709,7 +709,7 @@ static int define_temp_level( const int lvl )
 static std::string temp_delta_string( const avatar &u )
 {
     std::string temp_message;
-    temp_delta_extremes temp_struct = temp_delta( u );
+    const auto temp_struct = temp_delta( u );
     // Assign zones for comparisons
     const int cur_zone = define_temp_level( temp_struct.extreme_cur_temp );
     const int conv_zone = define_temp_level( temp_struct.extreme_conv_temp );
@@ -739,7 +739,7 @@ static std::pair<nc_color, std::string> temp_delta_arrows( const avatar &u )
 {
     std::string temp_message;
     nc_color temp_color = c_white;
-    temp_delta_extremes temp_struct = temp_delta( u );
+    const auto temp_struct = temp_delta( u );
     // Assign zones for comparisons
     const int cur_zone = define_temp_level( temp_struct.extreme_cur_temp );
     const int conv_zone = define_temp_level( temp_struct.extreme_conv_temp );
@@ -776,8 +776,8 @@ static std::pair<nc_color, std::string> temp_stat( const avatar &u )
 {
     /// Find hottest/coldest bodypart
     // Calculate the most extreme body temperatures
-    temp_delta_extremes temp_struct = temp_delta( u );
-    int extreme_cur_temp = temp_struct.extreme_cur_temp;
+    const auto temp_struct = temp_delta( u );
+    const auto extreme_cur_temp = temp_struct.extreme_cur_temp;
 
     // printCur the hottest/coldest bodypart
     std::string temp_string;
