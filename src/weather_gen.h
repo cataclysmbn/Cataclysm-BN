@@ -5,6 +5,7 @@
 #include "units_temperature.h"
 #include "weather_type.h"
 
+#include <map>
 #include <string>
 #include <unordered_map>
 
@@ -66,6 +67,8 @@ class weather_generator
         const weather_type_id &get_default_weather() const;
 
         int forecast_priority( const weather_type_id &w ) const;
+        auto choose_representative_weather(
+            const std::map<weather_type_id, int> &sample_counts ) const -> const weather_type_id &; // *NOPAD*
 
         /**
          * TODO: Remove the regular tripoint overload, replace with *_abs_ms one.
