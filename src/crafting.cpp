@@ -680,6 +680,7 @@ static void set_components( item &of, const std::vector<item *> &used,
     if( batch_size <= 1 ) {
         for( item * const &it : used ) {
             components.push_back( item::spawn( *it ) );
+            components.back()->set_flag( flag_id( "COMPONENT" ) );
         }
         return;
     }
@@ -691,9 +692,11 @@ static void set_components( item &of, const std::vector<item *> &used,
             // This assumes all (count-by-charges) items of the same type have been merged into one,
             // which has a charges value that can be evenly divided by batch_size.
             components.back()->charges = tmp->charges / batch_size;
+            components.back()->set_flag( flag_id( "COMPONENT" ) );
         } else {
             if( ( non_charges_counter + offset ) % batch_size == 0 ) {
                 components.push_back( item::spawn( *tmp ) );
+                components.back()->set_flag( flag_id( "COMPONENT" ) );
             }
             non_charges_counter++;
         }
@@ -1194,6 +1197,7 @@ void complete_craft( Character &who, item &craft )
             params["batch_size"] = batch_size;
             params["hot_result"] = should_heat;
             params["dehydrated_result"] = is_dehydrated;
+            params["crafting_menu"] = false;
         } );
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
@@ -1257,6 +1261,9 @@ void complete_craft( Character &who, item &craft )
         // If we created a tool that spawns empty, don't preset its ammotype.
         if( !newit->ammo_remaining() ) {
             newit->ammo_unset();
+        }
+        if( newit->has_flag( flag_id( "CRAFT_WITH_FULL_MAG" ) ) ) {
+            newit->ammo_set( newit->ammo_default(), newit->ammo_capacity() );
         }
         if( newit->made_of( LIQUID ) ) {
             liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );

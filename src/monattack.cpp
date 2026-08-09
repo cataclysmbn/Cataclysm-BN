@@ -826,7 +826,8 @@ bool mattack::shockstorm( monster *z )
         add_msg( msg_type, _( "A bolt of electricity arcs towards %s!" ), target->disp_name() );
     }
     if( !g->u.is_deaf() ) {
-        sfx::play_variant_sound( "fire_gun", "bio_lightning", sfx::get_heard_volume( z->bub_pos(), 95 ) );
+        sfx::play_variant_sound( "fire_gun", "bio_lightning", sfx::get_heard_volume( z->bub_pos(), 95 ),
+                                 true );
     }
     tripoint_bub_ms tarp( target->bub_pos().x() + rng( -1, 1 ) + rng( -1, 1 ),
                           target->bub_pos().y() + rng( -1, 1 ) + rng( -1, 1 ),

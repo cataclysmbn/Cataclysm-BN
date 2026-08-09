@@ -611,7 +611,7 @@
     "charges_per_use": 0,
     "ammo": "spray_paint",
     "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": false } ],
-    "flags": [ "WRITE_MESSAGE", "NO_UNLOAD", "NO_PAINT" ]
+    "flags": [ "WRITE_MESSAGE", "NO_UNLOAD", "NO_PAINT", "CRAFT_WITH_FULL_MAG" ]
   },
   {
     "id": "super_spray_can",

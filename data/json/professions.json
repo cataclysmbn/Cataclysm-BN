@@ -2496,7 +2496,7 @@
     "type": "profession",
     "id": "power_armor_soldier",
     "name": "Power Armor Soldier",
-    "description": "Your unit received the latest generation of powered armor, running off those new plutonium power banks they were rolling out and equipped with experimental energy weapons.  The rest of your squad has fallen, but your gear might see you through.",
+    "description": "Your unit received the latest generation of power armor plating, running off those new plutonium power banks they were rolling out and equipped with experimental energy weapons.  The rest of your squad has fallen, and your exoskeleton might be a bit out of date, but your gear might see you through.",
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
@@ -2518,7 +2518,8 @@
     "items": {
       "both": {
         "items": [
-          "power_armor_light",
+          "power_armor_exo_2",
+          "power_armor_plating_3",
           "power_armor_helmet_light",
           "power_armor_frame",
           "power_armor_back_hardpoint",

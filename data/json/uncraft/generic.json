@@ -2720,7 +2720,7 @@
     "components": [ [ [ "plastic_chunk", 8 ] ], [ [ "motor_small", 1 ] ], [ [ "scrap", 4 ] ] ]
   },
   {
-    "result": "power_armor_basic",
+    "result": "power_armor_exo_2",
     "type": "uncraft",
     "skill_used": "fabrication",
     "difficulty": 7,
@@ -2733,14 +2733,28 @@
       { "id": "CUT_M", "level": 2 }
     ],
     "components": [
-      [ [ "depowered_armor", 1 ] ],
-      [ [ "steel_armor", 8 ] ],
+      [ [ "depowered_exo", 1 ] ],
       [ [ "power_supply", 6 ] ],
       [ [ "element", 2 ] ],
       [ [ "cable", 12 ] ],
       [ [ "circuit", 6 ] ],
       [ [ "transponder", 1 ] ]
     ]
+  },
+  {
+    "result": "power_armor_plating_2",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "skills_required": [ "electronics", 5 ],
+    "time": "1 h 20 m",
+    "qualities": [
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "CUT_M", "level": 2 }
+    ],
+    "components": [ [ [ "depowered_plating", 1 ] ], [ [ "steel_armor", 8 ] ] ]
   },
   {
     "result": "power_armor_helmet_basic",
@@ -2766,7 +2780,7 @@
     ]
   },
   {
-    "result": "power_armor_light",
+    "result": "power_armor_exo_3",
     "type": "uncraft",
     "skill_used": "fabrication",
     "difficulty": 6,
@@ -2779,14 +2793,28 @@
       { "id": "CUT_M", "level": 2 }
     ],
     "components": [
-      [ [ "depowered_armor", 1 ] ],
-      [ [ "alloy_sheet", 5 ] ],
+      [ [ "depowered_exo", 1 ] ],
       [ [ "power_supply", 4 ] ],
       [ [ "element", 2 ] ],
       [ [ "cable", 12 ] ],
       [ [ "circuit", 6 ] ],
       [ [ "transponder", 1 ] ]
     ]
+  },
+  {
+    "result": "power_armor_plating_3",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "skills_required": [ "electronics", 4 ],
+    "time": "1 h",
+    "qualities": [
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "CUT_M", "level": 2 }
+    ],
+    "components": [ [ [ "depowered_plating", 1 ] ], [ [ "alloy_sheet", 5 ] ] ]
   },
   {
     "result": "power_armor_helmet_light",
@@ -2810,7 +2838,7 @@
     ]
   },
   {
-    "result": "power_armor_heavy",
+    "result": "power_armor_exo_1",
     "type": "uncraft",
     "skill_used": "fabrication",
     "difficulty": 8,
@@ -2823,15 +2851,28 @@
       { "id": "CUT_M", "level": 2 }
     ],
     "components": [
-      [ [ "depowered_armor", 1 ] ],
-      [ [ "hard_steel_armor", 12 ] ],
-      [ [ "steel_armor", 6 ] ],
+      [ [ "depowered_exo", 1 ] ],
       [ [ "power_supply", 9 ] ],
       [ [ "element", 2 ] ],
       [ [ "cable", 12 ] ],
       [ [ "circuit", 6 ] ],
       [ [ "transponder", 1 ] ]
     ]
+  },
+  {
+    "result": "power_armor_plating_1",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 8,
+    "skills_required": [ "electronics", 6 ],
+    "time": "1 h 40 m",
+    "qualities": [
+      { "id": "SAW_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 },
+      { "id": "CUT_M", "level": 2 }
+    ],
+    "components": [ [ [ "depowered_plating", 1 ] ], [ [ "hard_steel_armor", 12 ] ], [ [ "steel_armor", 6 ] ] ]
   },
   {
     "result": "power_armor_helmet_heavy",

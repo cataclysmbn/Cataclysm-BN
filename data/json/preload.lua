@@ -31,9 +31,15 @@ game.add_hook("on_npc_spawn", function(...) return mod.robofac.authorize_hub01_s
 game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
-game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
+game.add_hook("on_craft_result", function(...)
+  mod.cooking.on_craft_result(...)
+  mod.spray_can.on_craft_result(...)
+end)
 game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
 game.add_hook("on_character_death", function(...) return mod.minirose.on_character_death(...) end)
+
+-- Itemgroup Modifiers
+game.itemgroup_postprocessors["genome_drive"] = function(...) return mod.genome.postprocess(...) end
 
 -- Mapgen
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end

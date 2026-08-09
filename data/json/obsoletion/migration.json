@@ -868,5 +868,15 @@
     "type": "MIGRATION",
     "replace": "smg_luty",
     "contents": [ "retool_luty_45" ]
+  },
+  {
+    "id": "genome_drive_black_rat",
+    "type": "MIGRATION",
+    "replace": "genome_drive"
+  },
+  {
+    "id": "genome_drive_wolf_mutant_huge",
+    "type": "MIGRATION",
+    "replace": "genome_drive"
   }
 ]

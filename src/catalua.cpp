@@ -357,6 +357,9 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     // mapgen functions
     gt["mapgen_functions"] = lua.create_table();
 
+    // Itemgroup modification functions
+    gt["itemgroup_postprocessors"] = lua.create_table();
+
     // monster / npc functions
     gt["monster_ai_functions"] = lua.create_table();
     gt["monster_attitude_functions"] = lua.create_table();
@@ -918,11 +921,12 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 auto on_tick = tbl.get_or<sol::function>( "on_tick", sol::lua_nil );
                 auto on_pickup = tbl.get_or<sol::function>( "on_pickup", sol::lua_nil );
                 auto on_drop = tbl.get_or<sol::function>( "on_drop", sol::lua_nil );
+                auto on_puff = tbl.get_or<sol::function>( "on_puff", sol::lua_nil );
                 ifactory.add_istate_actor(
                     itype_id( key ),
                     std::make_unique<lua_istate_actor>(
                         key, std::move( on_tick ), std::move( on_pickup ),
-                        std::move( on_drop ) ) );
+                        std::move( on_drop ), std::move( on_puff ) ) );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract istate_functions k='%s': %s", key, e.what() );
                 break;

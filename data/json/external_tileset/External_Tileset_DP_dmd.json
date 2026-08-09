@@ -48,9 +48,7 @@
           { "id": [ "hellfire_ninja", "overlay_wielded_hellfire_ninja" ], "fg": 40 },
           { "id": "vp_hellfire_turret", "fg": 41 },
           { "id": "tac_fullhelmet", "fg": 42 },
-          { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
           { "id": "tac_helmet", "fg": 44 },
-          { "id": "overlay_worn_tac_helmet", "fg": 45 },
           { "id": [ "clam", "overlay_wielded_clam" ], "fg": 46 },
           { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 },
           { "id": "mon_zombie_swat", "fg": 48, "bg": 30 },
@@ -181,10 +179,53 @@
           { "id": "c4_breaching", "fg": 111 },
           { "id": "overlay_wielded_c4_breaching", "fg": 112 },
           { "id": "c4_breaching_armed", "fg": 113 },
-          { "id": "overlay_wielded_c4_breaching_armed", "fg": 114 }
+          { "id": "overlay_wielded_c4_breaching_armed", "fg": 114 },
+          {
+            "id": [
+              "power_armor_exo_1",
+              "power_armor_exo_1_on",
+              "overlay_wielded_power_armor_exo_1",
+              "overlay_wielded_power_armor_exo_1_on"
+            ],
+            "fg": 115
+          },
+          { "id": [ "overlay_worn_power_armor_exo_1", "overlay_worn_power_armor_exo_1_on" ], "fg": 116 },
+          {
+            "id": [
+              "power_armor_exo_2",
+              "power_armor_exo_2_on",
+              "overlay_wielded_power_armor_exo_2",
+              "overlay_wielded_power_armor_exo_2_on"
+            ],
+            "fg": 117
+          },
+          { "id": [ "overlay_worn_power_armor_exo_2", "overlay_worn_power_armor_exo_2_on" ], "fg": 118 },
+          {
+            "id": [
+              "power_armor_exo_3",
+              "power_armor_exo_3_on",
+              "overlay_wielded_power_armor_exo_3",
+              "overlay_wielded_power_armor_exo_3_on"
+            ],
+            "fg": 119
+          },
+          { "id": [ "overlay_worn_power_armor_exo_3", "overlay_worn_power_armor_exo_3_on" ], "fg": 120 },
+          { "id": [ "depowered_exo", "overlay_wielded_depowered_exo" ], "fg": 121 },
+          { "id": "overlay_worn_depowered_exo", "fg": 122 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/External_Tileset_DP_dmd.png",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_y": -16,
+        "tiles": [
+          { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
+          { "id": "overlay_worn_tac_helmet", "fg": 45 },
+          { "id": "overlay_worn_helmet_army", "fg": 123 }
+        ]
       }
     ]
   }

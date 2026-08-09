@@ -624,7 +624,7 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
 
 auto sfx::play_variant_sound( const std::string &id, const std::string &variant, const int volume,
                               const units::angle angle,
-                              double /*pitch_min*/, double /*pitch_max*/ ) -> void
+                              double /*pitch_min*/, double /*pitch_max*/, const bool stacks ) -> void
 {
     if( test_mode ) {
         return;
@@ -641,7 +641,7 @@ auto sfx::play_variant_sound( const std::string &id, const std::string &variant,
 
     const auto res_id = eff->resource_id;
     auto *audio = get_sfx_resource( res_id );
-    if( !valid_last_time_played( audio, res_id, id + "_" + variant ) ) {
+    if( !stacks && !valid_last_time_played( audio, res_id, id + "_" + variant ) ) {
         return;
     }
 

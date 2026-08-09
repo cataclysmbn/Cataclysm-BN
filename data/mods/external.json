@@ -17,12 +17,14 @@
   {
     "id": "overhaul",
     "version": "0.0.2",
-    "url": "https://github.com/scarf005/Overhaul/archive/refs/tags/v0.0.2.zip"
+    "url": "https://github.com/scarf005/Overhaul/archive/9180c5a2b93c07908c7b5dd714bf92bb3d7a4e20.zip",
+    "extract_path": "overhaul"
   },
   {
     "id": "overhaul_additions",
     "version": "0.0.2",
-    "url": "https://github.com/scarf005/Overhaul/archive/refs/tags/v0.0.2.zip"
+    "url": "https://github.com/scarf005/Overhaul/archive/9180c5a2b93c07908c7b5dd714bf92bb3d7a4e20.zip",
+    "extract_path": "overhaul_additions"
   },
   {
     "id": "otopack_bn_mk_2",

@@ -324,11 +324,13 @@ void lua_iequippable_actor::call_on_break( Character &who, item &it ) const
 lua_istate_actor::lua_istate_actor( const std::string &item_id,
                                     sol::protected_function &&on_tick,
                                     sol::protected_function &&on_pickup,
-                                    sol::protected_function &&on_drop )
+                                    sol::protected_function &&on_drop,
+                                    sol::protected_function &&on_puff )
     : lua_icallback_actor_base( item_id ),
       on_tick_func( std::move( on_tick ) ),
       on_pickup_func( std::move( on_pickup ) ),
-      on_drop_func( std::move( on_drop ) ) {}
+      on_drop_func( std::move( on_drop ) ),
+      on_puff_func( std::move( on_puff ) ) {}
 
 bool lua_istate_actor::has_on_tick() const
 {
@@ -390,6 +392,23 @@ bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint_bu
         debugmsg( "Failed to run istate on_drop for '%s': %s", item_id, e.what() );
     }
     return false;
+}
+
+void lua_istate_actor::call_on_puff( Character &who, item &it ) const
+{
+    if( on_puff_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::state_view lua( on_puff_func.lua_state() );
+        auto params = lua.create_table();
+        params["user"] = &who;
+        params["item"] = &it;
+        sol::protected_function_result res = on_puff_func( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run istate on_puff for '%s': %s", item_id, e.what() );
+    }
 }
 
 // --- lua_imelee_actor ---

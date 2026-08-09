@@ -325,6 +325,7 @@ auto apply_craft_result_hooks( const craft_result_hook_options &opts ) -> void
         params["batch_size"] = opts.batch_size;
         params["hot_result"] = opts.rec.hot_result();
         params["dehydrated_result"] = opts.rec.dehydrate_result();
+        params["crafting_menu"] = true;
     } );
 }
 

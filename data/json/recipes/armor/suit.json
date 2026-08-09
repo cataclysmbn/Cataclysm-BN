@@ -1190,5 +1190,19 @@
     "book_learn": [ [ "recipe_oldguard", 3 ] ],
     "components": [ [ [ "oldguard_armor", 1 ] ], [ [ "alloy_sheet", 12 ] ] ],
     "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "depowered_armor",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "fabrication",
+    "//": "No fabrication increase since we're just putting already-made pieces together",
+    "difficulty": 3,
+    "time": "20 m",
+    "reversible": true,
+    "autolearn": true,
+    "flags": [ "NO_RESIZE" ],
+    "components": [ [ [ "depowered_exo", 1 ] ], [ [ "depowered_plating", 1 ] ] ]
   }
 ]

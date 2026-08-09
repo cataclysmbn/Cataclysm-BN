@@ -29,6 +29,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
+#include "calendar.h"
 #include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -6454,6 +6455,10 @@ time_duration item::get_shelf_life() const
 
 double item::get_relative_rot() const
 {
+    // Components are frozen in time, when they are returned they are new items
+    if( has_flag( flag_id( "COMPONENT" ) ) ) {
+        return rot / get_shelf_life();
+    }
     if( goes_bad() ) {
         const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
         return rot / get_shelf_life();
@@ -10654,6 +10659,9 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
             duration = 30_seconds;
         }
         carrier->add_msg_if_player( m_neutral, _( "You take a puff of your %s." ), it.tname() );
+        if( it.type->istate_callbacks ) {
+            it.type->istate_callbacks->call_on_puff( *carrier, it );
+        }
 
         // we need to figure out a way to get the item before this got converted,
         // but i don't think that's going to be very easy...
