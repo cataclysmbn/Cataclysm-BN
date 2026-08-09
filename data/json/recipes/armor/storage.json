@@ -61,6 +61,18 @@
     "components": [ [ [ "fabric_hides_any", 15, "LIST" ] ] ]
   },
   {
+    "result": "belt_magazine",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "time": "40 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 15 ] ],
+    "components": [ [ [ "fabric_hides_any", 8, "LIST" ] ] ]
+  },
+  {
     "result": "axe_ring",
     "type": "recipe",
     "category": "CC_ARMOR",

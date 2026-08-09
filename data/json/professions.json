@@ -2036,7 +2036,7 @@
           "rucksack"
         ],
         "entries": [
-          { "item": "chestrig", "contents-group": "temporal_soldier_garand" },
+          { "item": "belt_magazine", "contents-group": "temporal_soldier_garand" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
           { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": [ "shoulder_strap" ] }
