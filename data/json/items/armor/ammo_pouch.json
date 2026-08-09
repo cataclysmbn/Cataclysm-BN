@@ -529,7 +529,7 @@
       "type": "holster",
       "holster_prompt": "Stash ammo",
       "holster_msg": "You stash your %s.",
-      "multi": 6,
+      "multi": 8,
       "min_volume": "25 ml",
       "max_volume": "250 ml",
       "draw_cost": 40,
