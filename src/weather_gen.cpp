@@ -231,12 +231,23 @@ int weather_generator::forecast_priority(const weather_type_id& w) const {
     return std::distance(weather_types.begin(), it);
 }
 
+auto weather_generator::choose_representative_weather(
+    const std::map<weather_type_id, int>& sample_counts) const -> const weather_type_id& {
+    if (sample_counts.empty()) { return get_default_weather(); }
+
+    namespace ranges = std::ranges;
+    const auto best_sample = ranges::max_element(
+        sample_counts, {}, [this](const auto& entry) {
+            return std::pair{entry.second, forecast_priority(entry.first)};
+        });
+    return best_sample->first;
+}
+
 const weather_type_id& weather_generator::get_weather_conditions(
     const tripoint_abs_ms& location, const time_point& t, unsigned seed) const {
     w_point w(get_weather(location, t, seed));
     return get_weather_conditions(w);
 }
-
 const weather_type_id& weather_generator::get_weather_conditions(const w_point& w) const {
     w_point wp2 = w;
     const weather_type_id* current_conditions = &weather_type_id::NULL_ID();
@@ -409,7 +420,7 @@ void weather_pattern::load(const JsonObject& jo, const std::string&) {
     optional(jo, was_loaded, "humidity_mod", humidity_mod, 0.0);
     optional(jo, was_loaded, "pressure_mod", pressure_mod, 0.0);
     optional(jo, was_loaded, "windpower_mod", windpower_mod, 0.0);
-    assign( jo, "temperature_mod", temperature_mod );
+    assign(jo, "temperature_mod", temperature_mod);
     optional(jo, was_loaded, "active_threshold", active_threshold, 0.0);
     optional(jo, was_loaded, "acidic", acidic, false);
 }
@@ -435,10 +446,15 @@ void weather_generator::load(const JsonObject& jo, const std::string&) {
 
     mandatory(jo, was_loaded, "id", id);
 
-    const float base_temp = jo.get_float("base_temperature", 0.0);
+    const bool has_legacy_temperature_settings =
+        jo.has_member("base_temperature")
+        || std::ranges::any_of(legacy_temp_id_values, [&jo](const auto& member) {
+               return jo.has_member(member.first);
+           });
     // Handling legacy temperature settings
     // Don't handle legacy settings in strict mode, let it error
-    if (!json_report_strict) {
+    if (!json_report_strict && has_legacy_temperature_settings) {
+        const float base_temp = jo.get_float("base_temperature", 0.0);
         for (size_t i = 0; i < season_temp_ids.size(); i++) {
             season_stats[i].average_temperature = units::from_celsius(
                 base_temp + jo.get_int(legacy_temp_id_values[i].first, 0)
@@ -452,22 +468,26 @@ void weather_generator::load(const JsonObject& jo, const std::string&) {
     }
 
     // Reading other weather settings.
-    base_humidity = jo.get_float("base_humidity", 50.0);
-    base_pressure = jo.get_float("base_pressure", 0.0);
-    base_acid = jo.get_float("base_acid", 0.0);
-    base_wind = jo.get_float("base_wind", 0.0);
-    base_wind_distrib_peaks = jo.get_int("base_wind_distrib_peaks", 0);
-    base_wind_season_variation = jo.get_int("base_wind_season_variation", 0);
+    optional(jo, was_loaded, "base_humidity", base_humidity, 50.0);
+    optional(jo, was_loaded, "base_pressure", base_pressure, 0.0);
+    optional(jo, was_loaded, "base_acid", base_acid, 0.0);
+    optional(jo, was_loaded, "base_wind", base_wind, 0.0);
+    optional(jo, was_loaded, "base_wind_distrib_peaks", base_wind_distrib_peaks, 0);
+    optional(jo, was_loaded, "base_wind_season_variation", base_wind_season_variation, 0);
 
-    assign(jo, "temperature_daily_amplitude", temperature_daily_amplitude);
-    assign(jo, "temperature_noise_amplitude", temperature_noise_amplitude);
+    if (!assign(jo, "temperature_daily_amplitude", temperature_daily_amplitude) && !was_loaded) {
+        temperature_daily_amplitude = 5_c;
+    }
+    if (!assign(jo, "temperature_noise_amplitude", temperature_noise_amplitude) && !was_loaded) {
+        temperature_noise_amplitude = 8_c;
+    }
 
-    jo.get_member("weather_types"); // Throw if does not exist
-    jo.read("weather_types", weather_types);
+    optional(jo, was_loaded, "weather_types", weather_types, auto_flags_reader<weather_type_id>{});
     if (weather_types.empty()) {
         jo.throw_error("expected at least 1 weather type", "weather_types");
     }
-    optional(jo, was_loaded, "weather_patterns", weather_patterns);
+    optional(jo, was_loaded, "weather_patterns", weather_patterns,
+             auto_flags_reader<weather_pattern_id>{});
 }
 
 void weather_generator::check() const {

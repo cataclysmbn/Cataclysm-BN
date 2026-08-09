@@ -3,8 +3,7 @@
     "type": "weather_pattern",
     "id": "acidic",
     "multiplier": 8.0,
-    "active_threshold": 1.0,
-    "acidic": true
+    "active_threshold": 1.0
   },
   {
     "type": "base_weather",

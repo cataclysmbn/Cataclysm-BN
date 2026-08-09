@@ -277,26 +277,36 @@ the weather generator reusable and lets the overlay stay small.
 ```json
 [
   {
+    "type": "weather_pattern",
+    "id": "storm_front",
+    "multiplier": 4.0,
+    "humidity_mod": 6.0,
+    "pressure_mod": -10.0,
+    "windpower_mod": 8.0
+  },
+  {
     "type": "base_weather",
     "id": "my_stormy_weather",
-    "spring_temp": 8,
-    "summer_temp": 16,
-    "autumn_temp": 7,
-    "winter_temp": -14,
+    "copy-from": "default",
     "base_humidity": 75,
     "base_pressure": 1008,
     "base_wind": 14,
     "base_wind_distrib_peaks": 120,
-    "base_wind_season_variation": 30,
-    "weather_types": [
-      "clear",
-      "cloudy",
-      "drizzle",
-      "rain",
-      "heavy_rain",
-      "thunder",
-      "lightning"
-    ]
+    "extend": {
+      "weather_patterns": [ "storm_front" ]
+    },
+    "delete": {
+      "weather_types": [
+        "sunny",
+        "light_drizzle",
+        "acid_drizzle",
+        "acid_rain",
+        "light_flurries",
+        "flurries",
+        "snowing",
+        "snowstorm"
+      ]
+    }
   },
   {
     "type": "region_overlay",
@@ -308,6 +318,8 @@ the weather generator reusable and lets the overlay stay small.
 
 The older `"weather"` field is still accepted for compatibility, but new content should use
 `"base_weather": "id"`.
+When you are starting from an existing weather setup, prefer `"copy-from"` with `"extend"` and
+`"delete"` over duplicating the whole `base_weather` object.
 
 ### Disabling certain scenarios
 
