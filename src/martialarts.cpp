@@ -1024,7 +1024,8 @@ bool character_martial_arts::can_leg_block( const Character &owner ) const
 {
     const martialart &ma = style_selected.obj();
     ///\EFFECT_UNARMED increases ability to perform leg block
-    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? std::max( owner.get_skill_level( skill_unarmed ), 5 ) : owner.get_skill_level(
+    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? std::max( owner.get_skill_level(
+                            skill_unarmed ), 5 ) : owner.get_skill_level(
                             skill_unarmed );
 
     // Success conditions.
@@ -1043,7 +1044,8 @@ bool character_martial_arts::can_arm_block( const Character &owner ) const
 {
     const martialart &ma = style_selected.obj();
     ///\EFFECT_UNARMED increases ability to perform arm block
-    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? std::max( owner.get_skill_level( skill_unarmed ), 5 ) : owner.get_skill_level(
+    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? std::max( owner.get_skill_level(
+                            skill_unarmed ), 5 ) : owner.get_skill_level(
                             skill_unarmed );
 
     // Success conditions.

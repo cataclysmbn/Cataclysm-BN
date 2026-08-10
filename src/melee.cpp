@@ -3522,7 +3522,8 @@ void player_hit_message( Character *attacker, const std::string &message,
 int Character::attack_cost( const item &weap ) const
 {
     const int base_move_cost = weap.attack_cost() / 2;
-    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? std::max( get_skill_level( skill_melee ), BIO_CQB_LEVEL ) : get_skill_level(
+    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? std::max( get_skill_level(
+                                skill_melee ), BIO_CQB_LEVEL ) : get_skill_level(
                                 skill_melee );
     /** @EFFECT_MELEE increases melee attack speed */
     const int skill_cost = ( base_move_cost * ( 15 - melee_skill ) / 15 );
