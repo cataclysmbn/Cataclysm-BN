@@ -744,8 +744,9 @@ struct HeaderSkill {
 
 int character_display::display_empty_handed_base_damage( const Character &you )
 {
-    int empty_hand_base_damage = you.has_active_bionic( bionic_id( "bio_cqb" ) ) ? std::max( you.get_skill_level(
-                                     skill_unarmed ), BIO_CQB_LEVEL ) : you.get_skill_level(
+    int empty_hand_base_damage = you.has_active_bionic( bionic_id( "bio_cqb" ) ) ? std::max(
+                                     you.get_skill_level(
+                                         skill_unarmed ), BIO_CQB_LEVEL ) : you.get_skill_level(
                                      skill_unarmed );
     const bool left_empty = !you.natural_attack_restricted_on( bodypart_id( "hand_l" ) );
     const bool right_empty = !you.natural_attack_restricted_on( bodypart_id( "hand_r" ) );
