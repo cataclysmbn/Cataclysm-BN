@@ -2036,7 +2036,7 @@
           "rucksack"
         ],
         "entries": [
-          { "item": "chestrig", "contents-group": "temporal_soldier_garand" },
+          { "item": "belt_magazine", "contents-group": "temporal_soldier_garand" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
           { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": [ "shoulder_strap" ] }
@@ -4610,7 +4610,16 @@
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
-    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
+    "CBMs": [
+      "bio_cqb",
+      "bio_carbon",
+      "bio_night_vision",
+      "bio_torsionratchet",
+      "bio_claws",
+      "bio_ups",
+      "bio_uncanny_dodge",
+      "bio_power_storage_mkII"
+    ],
     "skills": [
       { "level": 5, "name": "swimming" },
       { "level": 6, "name": "gun" },
@@ -4643,6 +4652,7 @@
           "molle_pack"
         ],
         "entries": [
+          { "item": "exosuit_military", "charges": 500 },
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "winter_jacket_army" },
           { "item": "modularvestsuper", "contents-group": "army_mags_rm216" },

@@ -358,9 +358,9 @@ static bool is_cqb_skill( const skill_id &id )
     // TODO: this skill list here is used in other places as well. Useless redundancy and
     // dependency. Maybe change it into a flag of the skill that indicates it's a skill used
     // by the bionic?
-    static const std::array<skill_id, 5> cqb_skills = { {
+    static const std::array<skill_id, 6> cqb_skills = { {
             skill_id( "melee" ), skill_id( "unarmed" ), skill_id( "cutting" ),
-            skill_id( "bashing" ), skill_id( "stabbing" ),
+            skill_id( "bashing" ), skill_id( "stabbing" ), skill_id( "dodge" ),
         }
     };
     return std::ranges::contains( cqb_skills, id );
@@ -744,7 +744,10 @@ struct HeaderSkill {
 
 int character_display::display_empty_handed_base_damage( const Character &you )
 {
-    int empty_hand_base_damage = you.get_skill_level( skill_unarmed );
+    int empty_hand_base_damage = you.has_active_bionic( bionic_id( "bio_cqb" ) ) ? std::max(
+                                     you.get_skill_level(
+                                         skill_unarmed ), BIO_CQB_LEVEL ) : you.get_skill_level(
+                                     skill_unarmed );
     const bool left_empty = !you.natural_attack_restricted_on( bodypart_id( "hand_l" ) );
     const bool right_empty = !you.natural_attack_restricted_on( bodypart_id( "hand_r" ) );
 
@@ -844,7 +847,7 @@ static void draw_skills_tab( ui_adaptor &ui, const catacurses::window &w_skills,
             int level_num = you.get_skill_level( aSkill->ident() );
             bool locked = false;
             if( you.has_active_bionic( bionic_id( "bio_cqb" ) ) && is_cqb_skill( aSkill->ident() ) ) {
-                level_num = 5;
+                level_num = std::max( level_num, BIO_CQB_LEVEL );
                 exercise = 0;
                 locked = true;
             }

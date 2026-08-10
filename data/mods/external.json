@@ -30,5 +30,29 @@
     "id": "otopack_bn_mk_2",
     "version": "2026.2.12",
     "url": "https://github.com/NarandBD/Otopack-BN-Mk-2/archive/refs/tags/sorrynotsorry.zip"
+  },
+  {
+    "id": "cata",
+    "version": "0.0.0",
+    "url": "https://github.com/Noctifer-de-Mortem/nocts_cata_mod/archive/refs/heads/master.zip",
+    "extract_path": "nocts_cata_mod_BN"
+  },
+  {
+    "id": "arcana_cata_patch",
+    "version": "0.0.0",
+    "url": "https://github.com/Noctifer-de-Mortem/nocts_cata_mod/archive/refs/heads/master.zip",
+    "extract_path": "Patchmods/BN_Arcana_Cata++_Patch"
+  },
+  {
+    "id": "cata_exotic_ammo_patch",
+    "version": "0.0.0",
+    "url": "https://github.com/Noctifer-de-Mortem/nocts_cata_mod/archive/refs/heads/master.zip",
+    "extract_path": "Patchmods/BN_Cata++_ExoticAmmo_Patch"
+  },
+  {
+    "id": "mst_extra",
+    "version": "0.0.0",
+    "url": "https://github.com/chaosvolt/MST_Extra_Mod/archive/refs/heads/master.zip",
+    "extract_path": "MST_Extra_BN"
   }
 ]

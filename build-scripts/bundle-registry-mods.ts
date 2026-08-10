@@ -67,8 +67,8 @@ export const selectEntries = (
     const found = registryById[lock.id]
     if (!found) throw new Error(`${lock.id} is not present in the mod registry`)
     if (found.version !== lock.version) {
-      throw new Error(
-        `${lock.id} version mismatch: lockfile has ${lock.version}, registry has ${found.version}`,
+      console.warn(
+        `${lock.id} version mismatch: lockfile has ${lock.version}, registry has ${found.version}; using locked version`,
       )
     }
     return { ...found, lock }

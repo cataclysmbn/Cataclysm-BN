@@ -2238,7 +2238,9 @@
       [ "apron_leather", 2 ],
       [ "tool_belt", 5 ],
       [ "bootsheath", 8 ],
-      [ "sheath", 5 ]
+      [ "sheath", 5 ],
+      [ "chestrig", 5 ],
+      [ "belt_magazine", 5 ]
     ]
   },
   {
@@ -3148,7 +3150,8 @@
           { "item": "quiver_large", "prob": 15 },
           { "item": "solarpack", "prob": 5 },
           { "item": "ammo_satchel", "prob": 10 },
-          { "item": "chestrig", "prob": 20 },
+          { "item": "chestrig", "prob": 10 },
+          { "item": "belt_magazine", "prob": 10 },
           { "item": "dive_bag", "prob": 50 },
           { "item": "petpack", "prob": 50 }
         ],
