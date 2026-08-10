@@ -597,7 +597,8 @@ auto character_requirement_reason( const Character &self, const ma_technique &te
     if( !tec.reqs.min_skill.empty() ) {
         auto missing_skills = std::vector<std::string>();
         for( const auto &req : tec.reqs.min_skill ) {
-            const auto current_skill = cqb ? 5 : self.get_skill_level( req.first );
+            const auto current_skill = cqb ? std::max( self.get_skill_level(
+                                           req.first ), BIO_CQB_LEVEL ) : self.get_skill_level( req.first );
             if( current_skill < req.second ) {
                 missing_skills.push_back( string_format( _( "%s %d+ (have %d)" ),
                                           req.first->name(), req.second,
