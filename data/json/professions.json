@@ -4610,7 +4610,16 @@
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
-    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_ups", "bio_power_storage_mkII" ],
+    "CBMs": [
+      "bio_cqb",
+      "bio_carbon",
+      "bio_night_vision",
+      "bio_torsionratchet",
+      "bio_claws",
+      "bio_ups",
+      "bio_uncanny_dodge",
+      "bio_power_storage_mkII"
+    ],
     "skills": [
       { "level": 5, "name": "swimming" },
       { "level": 6, "name": "gun" },
