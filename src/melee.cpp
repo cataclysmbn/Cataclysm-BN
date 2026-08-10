@@ -2040,7 +2040,7 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     const bool unarmed = weap.is_unarmed_weapon();
     int skill = c.get_skill_level( unarmed ? skill_unarmed : skill_bashing );
     if( c.has_active_bionic( bio_cqb ) ) {
-        skill = BIO_CQB_LEVEL;
+        skill = std::max( skill, BIO_CQB_LEVEL );
     }
 
     const int stat = c.get_str();
@@ -2162,7 +2162,7 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     int cutting_skill = c.get_skill_level( skill_cutting );
 
     if( c.has_active_bionic( bio_cqb ) ) {
-        cutting_skill = BIO_CQB_LEVEL;
+        cutting_skill = std::max( cutting_skill, BIO_CQB_LEVEL );
     }
 
     if( weap.is_unarmed_weapon() ) {
@@ -2242,7 +2242,7 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     int stabbing_skill = c.get_skill_level( skill_stabbing );
 
     if( c.has_active_bionic( bio_cqb ) ) {
-        stabbing_skill = BIO_CQB_LEVEL;
+        stabbing_skill = std::max( stabbing_skill, BIO_CQB_LEVEL );
     }
 
     if( weap.is_unarmed_weapon() ) {
@@ -3522,7 +3522,7 @@ void player_hit_message( Character *attacker, const std::string &message,
 int Character::attack_cost( const item &weap ) const
 {
     const int base_move_cost = weap.attack_cost() / 2;
-    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? BIO_CQB_LEVEL : get_skill_level(
+    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? std::max( get_skill_level( skill_melee ), BIO_CQB_LEVEL ) : get_skill_level(
                                 skill_melee );
     /** @EFFECT_MELEE increases melee attack speed */
     const int skill_cost = ( base_move_cost * ( 15 - melee_skill ) / 15 );
