@@ -4610,7 +4610,7 @@
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
-    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
+    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_ups", "bio_power_storage_mkII" ],
     "skills": [
       { "level": 5, "name": "swimming" },
       { "level": 6, "name": "gun" },
@@ -4643,6 +4643,7 @@
           "molle_pack"
         ],
         "entries": [
+          { "item": "exosuit_military", "charges": 500 },
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "winter_jacket_army" },
           { "item": "modularvestsuper", "contents-group": "army_mags_rm216" },
