@@ -844,7 +844,7 @@ static void draw_skills_tab( ui_adaptor &ui, const catacurses::window &w_skills,
             int level_num = you.get_skill_level( aSkill->ident() );
             bool locked = false;
             if( you.has_active_bionic( bionic_id( "bio_cqb" ) ) && is_cqb_skill( aSkill->ident() ) ) {
-                level_num = 5;
+                level_num = std::max( level_num, 5 );
                 exercise = 0;
                 locked = true;
             }
