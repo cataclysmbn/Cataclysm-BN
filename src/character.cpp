@@ -8181,7 +8181,7 @@ void Character::mod_stamina( int mod, bool skill )
         // Athletics skill also reduces stamina drain for relevant activities.
         const int skill = get_skill_level( skill_swimming );
         const float skill_cost = std::max( 0.667f, ( ( 30.0f - skill ) / 30.0f ) );
-        lost_stamina *= skill_cost;
+        mod *= skill_cost;
     }
     stamina += mod;
     if( mod < 0 ) {
