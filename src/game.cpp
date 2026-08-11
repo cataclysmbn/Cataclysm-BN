@@ -14575,14 +14575,46 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
         return false;
     }
 
-    // Persist the player's current dimension before deleting any destination data.  If the
-    // process stops during cleanup, the save must never place the player in the removed dimension.
-    if( active_world->is_save_tx_active() || !save( false ) ) {
+    if( active_world->is_save_tx_active() ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+    const auto was_kept = kept_pocket_dimension_id_ == dim_id;
+
+    // A deleted dimension must not reappear from persisted metadata after restart.  A reset keeps
+    // that metadata so callers can re-enter without repeating the generation options.
+    if( remove_zones ) {
+        loaded_dimensions_.erase( dim_id );
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dimension_id();
+        }
+    }
+
+    // Persist the player's current dimension and the cleanup's final metadata before deleting any
+    // destination data.  If the process stops during cleanup, the save must never place the player
+    // in the removed dimension.
+    if( !save( false ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dim_id;
+        }
         return false;
     }
 
     submap_loader.drain_lazy_loads();
     if( !active_world->delete_dimension_data( dim_id.str() ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dim_id;
+        }
         return false;
     }
 
@@ -14617,16 +14649,23 @@ auto game::reset_dimension( const dimension_id &dim_id ) -> bool
     if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
         preserved_info = it->second;
     }
+    const auto was_kept = kept_pocket_dimension_id_ == dim_id;
 
     if( !delete_dimension( dim_id, false ) ) {
         if( preserved_info ) {
             loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dim_id;
         }
         return false;
     }
 
     if( preserved_info ) {
         loaded_dimensions_[dim_id] = *preserved_info;
+    }
+    if( was_kept ) {
+        kept_pocket_dimension_id_ = dim_id;
     }
     return true;
 }
