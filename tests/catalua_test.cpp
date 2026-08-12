@@ -36,6 +36,7 @@
 #include "overmapbuffer.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "sqlite3.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
@@ -51,6 +52,7 @@
 #include "world.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -74,6 +76,29 @@ struct saved_player_dimension_state {
     tripoint_abs_ms player_pos = tripoint_abs_ms::zero();
     std::vector<std::string> loaded_dimension_ids;
 };
+
+auto sqlite_dimension_record_count(const std::string& db_path, const std::string& dimension)
+    -> int64_t {
+    auto* db = static_cast<sqlite3*>(nullptr);
+    const auto close_db = on_out_of_scope([&db]() { sqlite3_close(db); });
+    REQUIRE(sqlite3_open_v2(db_path.c_str(), &db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
+
+    auto* statement = static_cast<sqlite3_stmt*>(nullptr);
+    const auto finalize_statement = on_out_of_scope([&statement]() {
+        sqlite3_finalize(statement);
+    });
+    constexpr auto* query = "SELECT count(*) FROM files WHERE substr(path, 1, ?1) = ?2";
+    REQUIRE(sqlite3_prepare_v2(db, query, -1, &statement, nullptr) == SQLITE_OK);
+
+    const auto prefix = "dimensions/" + dimension + "/";
+    REQUIRE(sqlite3_bind_int(statement, 1, static_cast<int>(prefix.size())) == SQLITE_OK);
+    REQUIRE(
+        sqlite3_bind_text(
+            statement, 2, prefix.c_str(), static_cast<int>(prefix.size()), SQLITE_TRANSIENT)
+        == SQLITE_OK);
+    REQUIRE(sqlite3_step(statement) == SQLITE_ROW);
+    return sqlite3_column_int64(statement, 0);
+}
 
 auto read_saved_player_dimension_state(world& active_world)
     -> std::optional<saved_player_dimension_state> {
@@ -1005,7 +1030,7 @@ test_data["overmap_terrain"] = {
     CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, original_pos));
 }
 
-TEST_CASE("lua dimension cleanup fully saves a safe player state", "[lua]") {
+TEST_CASE("lua dimension cleanup replaces records in temporary sqlite world", "[lua][sqlite]") {
     auto cleanup_function = std::string{};
     SECTION("reset inactive dimension") { cleanup_function = "reset_dimension"; }
     SECTION("delete inactive dimension") { cleanup_function = "delete_dimension"; }
@@ -1054,6 +1079,21 @@ TEST_CASE("lua dimension cleanup fully saves a safe player state", "[lua]") {
 
     REQUIRE(test_data["entered"].get<bool>());
     const auto entered_pos = test_data["entered_pos"].get<tripoint_abs_ms>();
+    const auto write_empty_array = [](std::ostream& output) { output << "[]"; };
+    const auto sqlite_test_omt = tripoint_abs_omt(65, 65, 0);
+    const auto sqlite_test_mmr = tripoint_abs_mmr::zero();
+    REQUIRE(
+        active_world->write_map_omt(target_dimension_id.str(), sqlite_test_omt, write_empty_array));
+    REQUIRE(active_world->write_player_mm_omt(
+        target_dimension_id.str(), sqlite_test_mmr, write_empty_array));
+
+    const auto sqlite_prefix = target_dimension_id.str();
+    const auto map_db_path = active_world->info->folder_path() + "/map.sqlite3";
+    const auto player_db_path =
+        active_world->info->folder_path() + "/" + base64_encode(get_avatar().get_save_id())
+        + ".sqlite3";
+    REQUIRE(sqlite_dimension_record_count(map_db_path, sqlite_prefix) > 0);
+    REQUIRE(sqlite_dimension_record_count(player_db_path, sqlite_prefix) > 0);
     REQUIRE(g->save(false));
     const auto saved_in_dimension = read_saved_player_dimension_state(*active_world);
     REQUIRE(saved_in_dimension.has_value());
@@ -1078,6 +1118,9 @@ TEST_CASE("lua dimension cleanup fully saves a safe player state", "[lua]") {
     CHECK(get_map().get_bound_dimension().is_empty());
     CHECK(get_avatar().abs_pos() == return_pos);
     CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+    CHECK(sqlite_dimension_record_count(map_db_path, sqlite_prefix) == 0);
+    active_world->release_player_db();
+    CHECK(sqlite_dimension_record_count(player_db_path, sqlite_prefix) == 0);
 
     const auto saved_after_cleanup = read_saved_player_dimension_state(*active_world);
     REQUIRE(saved_after_cleanup.has_value());
@@ -1092,6 +1135,9 @@ TEST_CASE("lua dimension cleanup fully saves a safe player state", "[lua]") {
 
     REQUIRE(g->save(false));
     CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+    CHECK(sqlite_dimension_record_count(map_db_path, sqlite_prefix) == 0);
+    active_world->release_player_db();
+    CHECK(sqlite_dimension_record_count(player_db_path, sqlite_prefix) == 0);
     const auto saved_after_follow_up = read_saved_player_dimension_state(*active_world);
     REQUIRE(saved_after_follow_up.has_value());
     CHECK(saved_after_follow_up->dimension_id.empty());
@@ -1116,6 +1162,23 @@ TEST_CASE("lua dimension cleanup fully saves a safe player state", "[lua]") {
         },
         false));
     CHECK(saved_mod_storage[storage_key].get<std::string>() == cleanup_function);
+
+    test_data["phase"] = "recreate";
+    test_data["include_generation_options"] = !resets_dimension;
+    run_lua_test_script(lua, "pocket_dimension_cleanup_save_test.lua");
+    REQUIRE(test_data["recreated"].get<bool>());
+
+    REQUIRE(
+        active_world->write_map_omt(target_dimension_id.str(), sqlite_test_omt, write_empty_array));
+    REQUIRE(active_world->write_player_mm_omt(
+        target_dimension_id.str(), sqlite_test_mmr, write_empty_array));
+    CHECK(sqlite_dimension_record_count(map_db_path, sqlite_prefix) > 0);
+    active_world->release_player_db();
+    CHECK(sqlite_dimension_record_count(player_db_path, sqlite_prefix) > 0);
+
+    test_data["phase"] = "return";
+    run_lua_test_script(lua, "pocket_dimension_cleanup_save_test.lua");
+    REQUIRE(test_data["final_return"].get<bool>());
 
     test_mod_storage[storage_key] = previous_storage_value;
     REQUIRE(cata::save_world_lua_state(active_world, "lua_state.json"));
