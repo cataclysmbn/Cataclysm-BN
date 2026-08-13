@@ -1162,6 +1162,7 @@
     "repairs_like": "candle_warding",
     "symbol": ",",
     "color": "white",
+    "light_color": "#b8ffc0",
     "use_action": [
       {
         "target": "candle_warding",
@@ -1238,8 +1239,8 @@
         {
           "conditions": [ "WIELD" ],
           "mutations": [ "SCHIZOPHRENIC" ],
-          "ench_effects": [ { "effect": "arcana_clairvoyance_hidden", "intensity": 1 } ],
           "values": [
+            { "value": "CLAIRVOYANCE", "max": 40 },
             { "value": "INTELLIGENCE", "add": 4 },
             { "value": "PERCEPTION", "add": 2 },
             { "value": "MANA_REGEN", "multiply": 0.25 }
@@ -1412,6 +1413,26 @@
         "tool_quality": 20,
         "cost_scaling": 0,
         "move_cost": 1000
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "bronze",
+          "brass",
+          "silver",
+          "gold",
+          "platinum",
+          "superalloy",
+          "glass"
+        ],
+        "skill": "fabrication",
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ]
       }
     ],
     "flags": [ "ALLOWS_REMOTE_USE", "NO_SALVAGE" ]

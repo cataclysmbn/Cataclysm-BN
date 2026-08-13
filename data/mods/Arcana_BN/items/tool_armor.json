@@ -93,8 +93,11 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
-          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+          "values": [
+            { "value": "BONUS_DODGE", "add": 2 },
+            { "value": "CLAIRVOYANCE", "max": 20 },
+            { "value": "FLASH_PROTECTION", "max": 20 }
+          ]
         }
       ]
     },
@@ -154,8 +157,11 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
-          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+          "values": [
+            { "value": "BONUS_DODGE", "add": 2 },
+            { "value": "CLAIRVOYANCE", "max": 20 },
+            { "value": "FLASH_PROTECTION", "max": 20 }
+          ]
         }
       ]
     },

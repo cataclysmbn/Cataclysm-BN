@@ -312,11 +312,6 @@
   },
   {
     "type": "effect_type",
-    "id": "mask_blind_immunity",
-    "blocks_effects": [ "blind" ]
-  },
-  {
-    "type": "effect_type",
     "id": "heat_ward_dragonblood",
     "name": [ "Elemental Affinity" ],
     "desc": [
@@ -1016,19 +1011,7 @@
     "max_duration": "120 m",
     "max_intensity": 120,
     "int_dur_factor": "1 m",
-    "flags": [ "EFFECT_CLAIRVOYANCE" ]
-  },
-  {
-    "type": "effect_type",
-    "id": "arcana_clairvoyance_plus_hidden",
-    "//": "This version is used by the mask of insight.",
-    "flags": [ "EFFECT_CLAIRVOYANCE_PLUS" ]
-  },
-  {
-    "type": "effect_type",
-    "id": "arcana_clairvoyance_hidden",
-    "//": "This version is used by the orb of the veil.",
-    "flags": [ "EFFECT_CLAIRVOYANCE" ]
+    "base_enchantments": [ { "values": [ { "value": "CLAIRVOYANCE", "max": 10 } ] } ]
   },
   {
     "type": "effect_type",
