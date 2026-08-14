@@ -206,7 +206,7 @@
   {
     "type": "overmap_terrain",
     "id": "central_lab_entrance",
-    "name": "forest?",
+    "name": "forest",
     "sym": "F",
     "color": "green",
     "looks_like": "forest",
@@ -372,7 +372,7 @@
     "color": "i_blue",
     "sym": "+",
     "see_cost": 5,
-    "looks_like": "apartments_con_tower_000"
+    "looks_like": "generic_city_building"
   },
   {
     "type": "overmap_terrain",
