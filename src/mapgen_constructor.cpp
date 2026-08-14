@@ -10,6 +10,7 @@
 #include "catalua_sol.h"
 #include "computer.h"
 #include "coordinates.h"
+#include "data_vars.h"
 #include "debug.h"
 #include "field.h"
 #include "field_type.h"
@@ -391,6 +392,29 @@ auto mapgen_constructor::has_flag_furn( const ter_bitflags flag,
 {
     const auto [sm, local] = tile_at( p );
     return sm != nullptr && sm->get_furn( local ).obj().has_flag( flag );
+}
+
+auto mapgen_constructor::ter_vars( const point_omt_ms &p ) const -> data_vars::data_set *
+{
+    const auto [sm, local] = tile_at( p );
+
+    if( sm != nullptr ) {
+        return &sm->get_ter_vars( local );
+    }
+
+    return nullptr;
+}
+
+
+auto mapgen_constructor::furn_vars( const point_omt_ms &p ) const -> data_vars::data_set *
+{
+    const auto [sm, local] = tile_at( p );
+
+    if( sm != nullptr ) {
+        return &sm->get_furn_vars( local );
+    }
+
+    return nullptr;
 }
 
 auto mapgen_constructor::passable( const point_omt_ms &p ) const -> bool

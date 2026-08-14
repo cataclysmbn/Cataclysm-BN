@@ -12,6 +12,7 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "data_vars.h"
 #include "map.h"
 #include "mapgen_functions.h"
 #include "point.h"
@@ -80,6 +81,8 @@ class mapgen_constructor
         auto has_flag_ter( const ter_bitflags flag, const point_omt_ms &p ) const -> bool;
         auto has_flag_furn( const std::string &flag, const point_omt_ms &p ) const -> bool;
         auto has_flag_furn( ter_bitflags flag, const point_omt_ms &p ) const -> bool;
+        auto ter_vars( const point_omt_ms &p ) const -> data_vars::data_set*;
+        auto furn_vars( const point_omt_ms &p ) const -> data_vars::data_set*;
         auto passable( const point_omt_ms &p ) const -> bool;
         auto impassable( const point_omt_ms &p ) const -> bool;
         auto move_cost( const point_omt_ms &p, const vehicle *ignored_vehicle = nullptr ) const -> int;

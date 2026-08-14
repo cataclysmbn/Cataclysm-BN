@@ -87,7 +87,29 @@
           { "id": "t_fortification_domestic_g", "fg": 73 },
           { "id": "t_fortification_domestic_y", "fg": 74 },
           { "id": "t_fortification_domestic_P", "fg": 75 },
-          { "id": "t_fortification_domestic_p", "fg": 76 }
+          { "id": "t_fortification_domestic_p", "fg": 76 },
+          {
+            "id": "t_wall_paintable",
+            "fg": 77,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 78, "masks": [ { "type": "tint", "fg": 94 } ] },
+              { "id": "corner", "fg": [ 79, 80, 81, 82 ], "masks": [ { "type": "tint", "fg": [ 94, 94, 94, 94 ] } ] },
+              {
+                "id": "t_connection",
+                "fg": [ 89, 90, 91, 92 ],
+                "masks": [ { "type": "tint", "fg": [ 94, 94, 94, 94 ] } ]
+              },
+              { "id": "edge", "fg": [ 83, 84 ], "masks": [ { "type": "tint", "fg": [ 94, 94 ] } ] },
+              {
+                "id": "end_piece",
+                "fg": [ 85, 86, 87, 88 ],
+                "masks": [ { "type": "tint", "fg": [ 94, 94, 94, 94 ] } ]
+              },
+              { "id": "unconnected", "fg": 93, "masks": [ { "type": "tint", "fg": 94 } ] }
+            ]
+          }
         ],
         "sprite_width": 32,
         "sprite_height": 32

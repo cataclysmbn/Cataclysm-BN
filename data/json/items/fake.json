@@ -334,7 +334,7 @@
           "glass"
         ],
         "skill": "fabrication",
-        "clothing_mods": [ "resized_large", "resized_small" ]
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ]
       }
     ],
     "flags": [ "USES_GRID_POWER" ]

@@ -18,6 +18,7 @@
 #include "advanced_inv_listitem.h"
 #include "artifact_enum_traits.h"
 #include "all_enum_values.h"
+#include "assign.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catacharset.h"
@@ -27,6 +28,8 @@
 #include "catalua_sol.h"
 #include "character_id.h"
 #include "clzones.h"
+#include "color.h"
+#include "hsv_color.h"
 #include "numeric_interval.h"
 #include "computer.h"
 #include "coordinates.h"
@@ -54,6 +57,7 @@
 #include "mapbuffer_registry.h"
 #include "mapdata.h"
 #include "mapgen_async.h"
+#include "mapgen_color_palette.h"
 #include "mapgen_constructor.h"
 #include "mapgen_functions.h"
 #include "mapgendata.h"
@@ -2504,9 +2508,30 @@ class jmapgen_furniture : public jmapgen_piece
 {
     public:
         mapgen_value<furn_id> id;
-        jmapgen_furniture( const JsonObject &jsi ) :
-            jmapgen_furniture( jsi.get_member( "furn" ) ) {}
-        explicit jmapgen_furniture( const JsonValue &fid ) : id( fid ) {}
+        mpalette_id palette = mpalette_id::NULL_ID();
+
+        jmapgen_furniture( const JsonObject &jsi ) : id( jsi.get_member( "furn" ) ) {
+            // Used in simple cases
+            assign( jsi, "palette", palette );
+        }
+
+        jmapgen_furniture( const JsonValue &jsv ) {
+            // Okay so we have an object
+            if( jsv.test_object() ) {
+                const JsonObject jsi = jsv.get_object();
+                // If this object is using colors in a palette
+                if( jsi.has_member( "furn" ) ) {
+                    id = mapgen_value<furn_id>( jsi.get_member( "furn" ) );
+                    assign( jsi, "palette", palette );
+                } else {
+                    // If this object is using parameters distributions etc
+                    id = mapgen_value<furn_id>( jsi );
+                }
+            } else {
+                // Pass the value because it can be a not-string
+                id = mapgen_value<furn_id>( jsv );
+            }
+        }
         mapgen_phase phase() const override {
             return mapgen_phase::furniture;
         }
@@ -2517,6 +2542,18 @@ class jmapgen_furniture : public jmapgen_piece
                 return;
             }
             dat.m.furn_set( point_omt_ms( x.get(), y.get() ), chosen_id );
+
+            if( palette.is_valid() ) {
+                unsigned int rand_seed = ( dat.pos.x() % 256 ) + ( dat.pos.y() % 256 ) * 256 +
+                                         ( dat.pos.z() % 256 ) * 256 * 256;
+                std::optional<RGBColor> paint = palette->pick_color( rand_seed );
+                if( paint ) {
+                    auto *vars = dat.m.furn_vars( point_omt_ms( x.get(), y.get() ) );
+
+                    vars->set<RGBColor>( TINT_COLOR_FG_VAR_NAME, paint.value() );
+                    vars->set<RGBColor>( TINT_COLOR_BG_VAR_NAME, paint.value() );
+                }
+            }
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
             return dat.m.veh_at( point_omt_ms( p.x(), p.y() ) ).has_value();
@@ -2525,6 +2562,11 @@ class jmapgen_furniture : public jmapgen_piece
         void check( const std::string &oter_name, const mapgen_parameters &parameters
                   ) const override {
             id.check( oter_name, parameters );
+            for( const auto &ter_id : id.all_possible_results( parameters ) ) {
+                if( ter_id->has_flag( "NO_PAINT" ) && palette.is_valid() ) {
+                    debugmsg( "mapgen %s uses paint on %s when it has flag `NO_PAINT`", oter_name, ter_id );
+                }
+            }
         }
 };
 /**
@@ -2535,8 +2577,29 @@ class jmapgen_terrain : public jmapgen_piece
 {
     public:
         mapgen_value<ter_id> id;
-        jmapgen_terrain( const JsonObject &jsi ) : jmapgen_terrain( jsi.get_member( "ter" ) ) {}
-        explicit jmapgen_terrain( const JsonValue &tid ) : id( mapgen_value<ter_id>( tid ) ) {}
+        mpalette_id palette = mpalette_id::NULL_ID();
+
+        jmapgen_terrain( const JsonObject &jsi ) : jmapgen_terrain( jsi.get_member( "ter" ) ) {
+            // Used in simple cases
+            assign( jsi, "palette", palette );
+        }
+        jmapgen_terrain( const JsonValue &jsv ) {
+            // Okay so we have an object
+            if( jsv.test_object() ) {
+                const JsonObject jsi = jsv.get_object();
+                // If this object is using colors in a palette
+                if( jsi.has_member( "ter" ) ) {
+                    id = mapgen_value<ter_id>( jsi.get_member( "ter" ) );
+                    assign( jsi, "palette", palette );
+                } else {
+                    // If this object is using parameters distributions etc
+                    id = mapgen_value<ter_id>( jsi );
+                }
+            } else {
+                // Pass the value because it can be a not-string
+                id = mapgen_value<ter_id>( jsv );
+            }
+        }
 
         bool is_nop() const override {
             return id.is_null();
@@ -2573,6 +2636,18 @@ class jmapgen_terrain : public jmapgen_piece
                     dat.m.i_clear( point_omt_ms( x.get(), y.get() ) );
                 }
             }
+
+            if( palette.is_valid() ) {
+                unsigned int rand_seed = ( dat.pos.x() % 256 ) + ( dat.pos.y() % 256 ) * 256 +
+                                         ( dat.pos.z() % 256 ) * 256 * 256;
+                std::optional<RGBColor> paint = palette->pick_color( rand_seed );
+                if( paint ) {
+                    auto *vars = dat.m.ter_vars( point_omt_ms( x.get(), y.get() ) );
+
+                    vars->set<RGBColor>( TINT_COLOR_FG_VAR_NAME, paint.value() );
+                    vars->set<RGBColor>( TINT_COLOR_BG_VAR_NAME, paint.value() );
+                }
+            }
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
             return dat.m.veh_at( point_omt_ms( p.x(), p.y() ) ).has_value();
@@ -2581,6 +2656,11 @@ class jmapgen_terrain : public jmapgen_piece
         void check( const std::string &oter_name, const mapgen_parameters &parameters
                   ) const override {
             id.check( oter_name, parameters );
+            for( const auto &ter_id : id.all_possible_results( parameters ) ) {
+                if( ter_id->has_flag( "NO_PAINT" ) && palette.is_valid() ) {
+                    debugmsg( "mapgen %s uses paint on %s when it has flag `NO_PAINT`", oter_name, ter_id );
+                }
+            }
         }
 };
 /**
