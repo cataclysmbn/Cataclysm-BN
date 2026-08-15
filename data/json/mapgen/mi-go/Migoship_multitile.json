@@ -679,9 +679,9 @@
             ],
             "place_monster": [
                 {
-                    "chance": 50,
+                    "chance": 100,
                     "group": "GROUP_MI-GO_BASE_CAPTORS",
-                    "pack_size": [ 10, 15 ],
+                    "pack_size": [ 5, 10 ],
                     "x": [
                         15,
                         23
@@ -720,7 +720,6 @@
         "sym": "M",
         "color": "red",
         "see_cost": 5,
-        "extras": "build",
         "mondensity": 2
     }, 
   {
