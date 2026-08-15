@@ -1567,7 +1567,12 @@
     "max_charges": 24,
     "ammo": "essence_blood_type",
     "relic_data": {
-      "passive_effects": [ { "conditions": [ "WIELD", "ACTIVE" ], "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 } ] } ]
+      "passive_effects": [
+        {
+          "conditions": [ "WIELD", "ACTIVE" ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5, "hit_self": true } ]
+        }
+      ]
     },
     "use_action": [
       {
@@ -1624,7 +1629,10 @@
       "passive_effects": [
         {
           "conditions": [ "WIELD" ],
-          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 }, { "id": "arcana_react_moonstone_touch", "once_in": 10 } ],
+          "hit_you_effect": [
+            { "id": "arcana_react_drain_life", "once_in": 5, "hit_self": true },
+            { "id": "arcana_react_moonstone_touch", "once_in": 10 }
+          ],
           "hit_me_effect": [
             {
               "id": "arcana_react_shadowy_shield",
@@ -1771,7 +1779,7 @@
         {
           "conditions": [ "WIELD" ],
           "mutations": [ "ARCANA_STAFF_EFFECT" ],
-          "hit_you_effect": [ { "id": "arcana_react_sanguine_staff_drain" } ]
+          "hit_you_effect": [ { "id": "arcana_react_sanguine_staff_drain", "hit_self": true }, { "id": "arcana_react_sanguine_staff_drain_2" } ]
         }
       ],
       "recharge_scheme": [
@@ -1829,7 +1837,7 @@
           "conditions": [ "WIELD", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_EFFECT" ],
           "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
-          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved", "hit_self": true }, { "id": "arcana_react_drain_life_improved_2" } ],
           "intermittent_activation": { "effects": [ { "frequency": "3 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
         }
@@ -1892,7 +1900,7 @@
           "conditions": [ "WIELD", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_EFFECT" ],
           "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
-          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved", "hit_self": true }, { "id": "arcana_react_drain_life_improved_2" } ],
           "intermittent_activation": { "effects": [ { "frequency": "3 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
         }
