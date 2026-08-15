@@ -28,8 +28,7 @@
       { "text": "What do you do here?", "topic": "TALK_CF_AUX_MAGE_DO" },
       {
         "text": "Can you teach me any spells?",
-        "topic": "TALK_CF_AUX_MAGE_SPELL_MENU",
-        "condition": { "not": { "u_has_var": "celine_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" } }
+        "topic": "TALK_TRAIN"
       },
       {
         "text": "Do you have anything to trade?",
@@ -80,8 +79,7 @@
       },
       {
         "text": "Can you teach me anything?",
-        "topic": "TALK_TRAIN",
-        "condition": { "not": { "u_has_var": "celine_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" } }
+        "topic": "TALK_TRAIN"
       },
       { "text": "I see.", "topic": "TALK_CF_AUX_MAGE" }
     ]
