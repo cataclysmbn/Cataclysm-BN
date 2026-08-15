@@ -27,7 +27,7 @@
       { "text": "What can you tell me about this place?", "topic": "TALK_CF_AUX_MAGE_WHERE" },
       { "text": "What do you do here?", "topic": "TALK_CF_AUX_MAGE_DO" },
       {
-        "text": "Can you teach me any spells?",
+        "text": "Can you teach me anything?",
         "topic": "TALK_TRAIN"
       },
       {
