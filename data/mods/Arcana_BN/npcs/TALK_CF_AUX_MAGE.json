@@ -26,10 +26,7 @@
       { "text": "Who are you?", "topic": "TALK_CF_AUX_MAGE_WHO" },
       { "text": "What can you tell me about this place?", "topic": "TALK_CF_AUX_MAGE_WHERE" },
       { "text": "What do you do here?", "topic": "TALK_CF_AUX_MAGE_DO" },
-      {
-        "text": "Can you teach me anything?",
-        "topic": "TALK_TRAIN"
-      },
+      { "text": "Can you teach me anything?", "topic": "TALK_TRAIN" },
       {
         "text": "Do you have anything to trade?",
         "effect": "start_trade",
@@ -77,10 +74,7 @@
         "text": "The people here hoard knowledge?",
         "topic": "TALK_CF_AUX_MAGE_HOARD"
       },
-      {
-        "text": "Can you teach me anything?",
-        "topic": "TALK_TRAIN"
-      },
+      { "text": "Can you teach me anything?", "topic": "TALK_TRAIN" },
       { "text": "I see.", "topic": "TALK_CF_AUX_MAGE" }
     ]
   },
