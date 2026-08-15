@@ -23,6 +23,7 @@
 #include "npc.h"
 #include "monster.h"
 #include "overmapbuffer.h"
+#include "units_temperature.h"
 #include "weather.h"
 #include "line.h"
 #include "lua_action_menu.h"
@@ -85,9 +86,12 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
-    luna::set_fx( lib, "bodytemp_cold", []() -> int { return BODYTEMP_COLD; } );
-    luna::set_fx( lib, "bodytemp_norm", []() -> int { return BODYTEMP_NORM; } );
-    luna::set_fx( lib, "bodytemp_hot", []() -> int { return BODYTEMP_HOT; } );
+    luna::set_fx( lib, "bodytemp_cold",
+                  []() -> int { return units::to_legacy_bodypart_temp( BODYTEMP_COLD ); } );
+    luna::set_fx( lib, "bodytemp_norm",
+                  []() -> int { return units::to_legacy_bodypart_temp( BODYTEMP_NORM ); } );
+    luna::set_fx( lib, "bodytemp_hot",
+                  []() -> int { return units::to_legacy_bodypart_temp( BODYTEMP_HOT ); } );
     luna::set_fx( lib, "rng", sol::resolve<int( int, int )>( &rng ) );
     DOC( "Get recent player message log entries. Returns array of { time=string, text=string }." );
     luna::set_fx( lib, "get_messages", []( sol::this_state lua_this, const int count ) {
