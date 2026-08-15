@@ -77,7 +77,8 @@
             "mapgen_update": "arcana_hermit_spawn_npcs",
             "om_terrain": "cf_church_1",
             "om_special": "cf_rural_church",
-            "must_see": true
+            "must_see": true,
+            "z": 0
           }
         ]
       },
@@ -433,7 +434,8 @@
             "mapgen_update": "arcana_hermit_spawn_npcs",
             "om_terrain": "cf_church_1",
             "om_special": "cf_rural_church",
-            "must_see": true
+            "must_see": true,
+            "z": 0
           }
         ],
         "topic": "TALK_HERMIT_CF_REP_MISSION_ALLIES_DEAL"
