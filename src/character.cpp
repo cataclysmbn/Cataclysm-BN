@@ -231,7 +231,7 @@ static const skill_id skill_throw( "throw" );
 
 static const species_id HUMAN( "HUMAN" );
 static const species_id ROBOT( "ROBOT" );
-static const species_id ROBOT( "ROBOT_FLYING" );
+static const species_id ROBOT_FLYING( "ROBOT_FLYING" );
 
 namespace
 {
