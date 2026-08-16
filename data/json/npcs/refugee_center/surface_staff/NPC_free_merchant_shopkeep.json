@@ -452,8 +452,7 @@
       {
         "text": "...",
         "topic": "TALK_EVAC_MERCHANT_BEGGARS2_Reward2",
-        "condition": { "not": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" } },
-        "effect": { "npc_add_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" }
+        "condition": { "not": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" } }
       },
       {
         "text": "...",
@@ -467,7 +466,12 @@
     "id": "TALK_EVAC_MERCHANT_BEGGARS2_Reward2",
     "type": "talk_topic",
     "dynamic_line": "You didn't do the full job, but we're fair people here.  Here's five merch a head for the folks you found a new home for.",
-    "speaker_effect": { "effect": { "u_buy_item": "FMCNote", "count": 20 } },
+    "speaker_effect": {
+      "effect": [
+        { "u_buy_item": "FMCNote", "count": 20 },
+        { "npc_add_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" }
+      ]
+    },
     "responses": [ { "text": "Thanks.", "topic": "TALK_EVAC_MERCHANT" } ]
   },
   {
