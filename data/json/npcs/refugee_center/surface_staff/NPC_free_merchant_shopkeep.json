@@ -453,12 +453,12 @@
         "text": "...",
         "topic": "TALK_EVAC_MERCHANT_BEGGARS2_Reward2",
         "condition": { "not": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" } },
-        "effect": { "npc_add_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" },
+        "effect": { "npc_add_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" }
       },
       {
         "text": "...",
         "topic": "TALK_EVAC_MERCHANT_BEGGARS2_RewardNo",
-        "condition": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes"  }
+        "condition": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" }
       },
       { "text": "Nevermind.", "topic": "TALK_EVAC_MERCHANT" }
     ]
