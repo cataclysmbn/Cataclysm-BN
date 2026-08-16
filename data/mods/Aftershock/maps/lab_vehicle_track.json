@@ -50,7 +50,7 @@
         "6": {
           "name": "Vehicle Testing Track",
           "security": 1,
-          "options": [ 
+          "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 5 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
