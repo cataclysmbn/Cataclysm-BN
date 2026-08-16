@@ -7393,7 +7393,7 @@ bool Character::sees_with_specials( const Creature &critter ) const
 
     // electroreceptors grants vision of robots and electric monsters through walls
     if( has_enchantment_flag( ench_flag_ELECTROSENSE ) &&
-        ( critter.in_species( ROBOT ) || critter.has_flag( MF_ELECTRIC ) ) ) {
+        ( critter.in_species( ROBOT ) || critter.in_species( ROBOT_FLYING ) || critter.has_flag( MF_ELECTRIC ) || critter.has_flag( MF_ELECTRONIC ) ) ) {
         return true;
     }
 
