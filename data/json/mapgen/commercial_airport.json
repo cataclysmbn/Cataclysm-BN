@@ -6,7 +6,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -15,7 +15,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -24,7 +24,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -33,7 +33,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -42,7 +42,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -51,7 +51,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -60,7 +60,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -69,7 +69,7 @@
     "looks_like": "megastore_parking",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -78,7 +78,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -87,7 +87,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -96,7 +96,7 @@
     "looks_like": "megastore_parking",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -105,7 +105,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -114,7 +114,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -123,7 +123,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -132,7 +132,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -141,7 +141,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -150,7 +150,7 @@
     "sym": "#",
     "looks_like": "generic_mansion",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -159,7 +159,7 @@
     "looks_like": "field",
     "sym": ".",
     "color": "green",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -168,7 +168,7 @@
     "looks_like": "field",
     "sym": ".",
     "color": "green",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -177,7 +177,7 @@
     "looks_like": "field",
     "sym": ".",
     "color": "green",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -186,7 +186,7 @@
     "looks_like": "field",
     "sym": ".",
     "color": "green",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -195,7 +195,7 @@
     "looks_like": "field",
     "sym": ".",
     "color": "green",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -204,84 +204,85 @@
     "sym": ".",
     "looks_like": "field",
     "color": "green",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_special",
-    "id": "COMMERCIAL_AIRPORT",
-    "subtype": "fixed",
+    "id": "commercial_airport",
     "overmaps": [
-      { "point": [ -1, -1, 0 ], "overmap": "airport_runway_buffer_north_west" },
-      { "point": [ 0, -1, 0 ], "overmap": "airport_runway_buffer_north_center" },
-      { "point": [ 1, -1, 0 ], "overmap": "airport_runway_buffer_north_east" },
-      { "point": [ -1, 0, 0 ], "overmap": "airport_runway_west_marked_0" },
-      { "point": [ 0, 0, 0 ], "overmap": "airport_runway_center_marked_0" },
-      { "point": [ 1, 0, 0 ], "overmap": "airport_runway_east_marked_0" },
-      { "point": [ -1, 1, 0 ], "overmap": "airport_runway_west_marked_1" },
-      { "point": [ 0, 1, 0 ], "overmap": "airport_runway_center_marked_1" },
-      { "point": [ 1, 1, 0 ], "overmap": "airport_runway_east_marked_1" },
-      { "point": [ -1, 2, 0 ], "overmap": "airport_runway_west_marked_2" },
-      { "point": [ 0, 2, 0 ], "overmap": "airport_runway_center_marked_2" },
-      { "point": [ 1, 2, 0 ], "overmap": "airport_runway_east_marked_2" },
-      { "point": [ -1, 3, 0 ], "overmap": "airport_runway_west_marked_3" },
-      { "point": [ 0, 3, 0 ], "overmap": "airport_runway_center_marked_3" },
-      { "point": [ 1, 3, 0 ], "overmap": "airport_runway_east_marked_3" },
-      { "point": [ -1, 4, 0 ], "overmap": "airport_runway_west_marked_4" },
-      { "point": [ 0, 4, 0 ], "overmap": "airport_runway_center_marked_4" },
-      { "point": [ 1, 4, 0 ], "overmap": "airport_runway_east_marked_4" },
-      { "point": [ -1, 5, 0 ], "overmap": "airport_runway_west_marked_5" },
-      { "point": [ 0, 5, 0 ], "overmap": "airport_runway_center_marked_5" },
-      { "point": [ 1, 5, 0 ], "overmap": "airport_runway_east_marked_5" },
-      { "point": [ -1, 6, 0 ], "overmap": "airport_runway_west_marked_6" },
-      { "point": [ 0, 6, 0 ], "overmap": "airport_runway_center_marked_6" },
-      { "point": [ 1, 6, 0 ], "overmap": "airport_runway_east_marked_6" },
-      { "point": [ -1, 7, 0 ], "overmap": "airport_runway_west_marked_7" },
-      { "point": [ 0, 7, 0 ], "overmap": "airport_runway_center_marked_7" },
-      { "point": [ 1, 7, 0 ], "overmap": "airport_runway_east_marked_7" },
-      { "point": [ 2, 2, 0 ], "overmap": "airport_apron" },
-      { "point": [ 3, 2, 0 ], "overmap": "airport_apron_2" },
-      { "point": [ 4, 2, 0 ], "overmap": "airport_apron_3" },
-      { "point": [ 2, 3, 0 ], "overmap": "airport_apron_4" },
-      { "point": [ 3, 3, 0 ], "overmap": "airport_apron_5" },
-      { "point": [ 4, 3, 0 ], "overmap": "airport_apron_6" },
-      { "point": [ 2, 4, 0 ], "overmap": "airport_apron_7" },
-      { "point": [ 3, 4, 0 ], "overmap": "airport_apron_8" },
-      { "point": [ 4, 4, 0 ], "overmap": "airport_apron_9" },
-      { "point": [ 2, 5, 0 ], "overmap": "airport_apron_10" },
-      { "point": [ 3, 5, 0 ], "overmap": "airport_apron_11" },
-      { "point": [ 4, 5, 0 ], "overmap": "airport_apron_12" },
-      { "point": [ -2, 2, 0 ], "overmap": "airport_support_1" },
-      { "point": [ -3, 3, 0 ], "overmap": "airport_support_2_west" },
-      { "point": [ -3, 4, 0 ], "overmap": "airport_support_3_west" },
-      { "point": [ -2, 3, 0 ], "overmap": "airport_support_2" },
-      { "point": [ -2, 4, 0 ], "overmap": "airport_support_3" },
-      { "point": [ -3, 5, 0 ], "overmap": "airport_support_4_west" },
-      { "point": [ -2, 5, 0 ], "overmap": "airport_support_4" },
-      { "point": [ -3, 3, 1 ], "overmap": "airport_hangar_roof_2_west" },
-      { "point": [ -2, 3, 1 ], "overmap": "airport_hangar_roof_2" },
-      { "point": [ -3, 4, 1 ], "overmap": "airport_hangar_roof_3_west" },
-      { "point": [ -2, 4, 1 ], "overmap": "airport_hangar_roof_3" },
-      { "point": [ -2, 2, 1 ], "overmap": "airport_support_1_z1" },
-      { "point": [ -2, 2, 2 ], "overmap": "airport_support_1_z2" },
-      { "point": [ -2, 2, 3 ], "overmap": "airport_support_1_z3" },
-      { "point": [ 2, 2, 1 ], "overmap": "airport_roof_1" },
-      { "point": [ 3, 2, 1 ], "overmap": "airport_roof_2" },
-      { "point": [ 2, 3, 1 ], "overmap": "airport_roof_4" },
-      { "point": [ 3, 3, 1 ], "overmap": "airport_roof_5" },
-      { "point": [ 2, 4, 1 ], "overmap": "airport_roof_7" },
-      { "point": [ 3, 4, 1 ], "overmap": "airport_roof_8" },
-      { "point": [ 4, 4, 1 ], "overmap": "airport_roof_9" },
-      { "point": [ 2, 5, 1 ], "overmap": "airport_roof_10" },
-      { "point": [ 3, 5, 1 ], "overmap": "airport_roof_11" },
-      { "point": [ 4, 5, 1 ], "overmap": "airport_roof_12" },
-      { "point": [ -1, 8, 0 ], "overmap": "airport_runway_buffer_south_west" },
-      { "point": [ 0, 8, 0 ], "overmap": "airport_runway_buffer_south_center" },
-      { "point": [ 1, 8, 0 ], "overmap": "airport_runway_buffer_south_east" }
+      { "point": [ -1, -1, 0 ], "overmap": "airport_runway_buffer_north_west_north" },
+      { "point": [ 0, -1, 0 ], "overmap": "airport_runway_buffer_north_center_north" },
+      { "point": [ 1, -1, 0 ], "overmap": "airport_runway_buffer_north_east_north" },
+      { "point": [ -1, 0, 0 ], "overmap": "airport_runway_west_marked_0_north" },
+      { "point": [ 0, 0, 0 ], "overmap": "airport_runway_center_marked_0_north" },
+      { "point": [ 1, 0, 0 ], "overmap": "airport_runway_east_marked_0_north" },
+      { "point": [ -1, 1, 0 ], "overmap": "airport_runway_west_marked_1_north" },
+      { "point": [ 0, 1, 0 ], "overmap": "airport_runway_center_marked_1_north" },
+      { "point": [ 1, 1, 0 ], "overmap": "airport_runway_east_marked_1_north" },
+      { "point": [ -1, 2, 0 ], "overmap": "airport_runway_west_marked_2_north" },
+      { "point": [ 0, 2, 0 ], "overmap": "airport_runway_center_marked_2_north" },
+      { "point": [ 1, 2, 0 ], "overmap": "airport_runway_east_marked_2_north" },
+      { "point": [ -1, 3, 0 ], "overmap": "airport_runway_west_marked_3_north" },
+      { "point": [ 0, 3, 0 ], "overmap": "airport_runway_center_marked_3_north" },
+      { "point": [ 1, 3, 0 ], "overmap": "airport_runway_east_marked_3_north" },
+      { "point": [ -1, 4, 0 ], "overmap": "airport_runway_west_marked_4_north" },
+      { "point": [ 0, 4, 0 ], "overmap": "airport_runway_center_marked_4_north" },
+      { "point": [ 1, 4, 0 ], "overmap": "airport_runway_east_marked_4_north" },
+      { "point": [ -1, 5, 0 ], "overmap": "airport_runway_west_marked_5_north" },
+      { "point": [ 0, 5, 0 ], "overmap": "airport_runway_center_marked_5_north" },
+      { "point": [ 1, 5, 0 ], "overmap": "airport_runway_east_marked_5_north" },
+      { "point": [ -1, 6, 0 ], "overmap": "airport_runway_west_marked_6_north" },
+      { "point": [ 0, 6, 0 ], "overmap": "airport_runway_center_marked_6_north" },
+      { "point": [ 1, 6, 0 ], "overmap": "airport_runway_east_marked_6_north" },
+      { "point": [ -1, 7, 0 ], "overmap": "airport_runway_west_marked_7_north" },
+      { "point": [ 0, 7, 0 ], "overmap": "airport_runway_center_marked_7_north" },
+      { "point": [ 1, 7, 0 ], "overmap": "airport_runway_east_marked_7_north" },
+      { "point": [ 2, 2, 0 ], "overmap": "airport_apron_north" },
+      { "point": [ 3, 2, 0 ], "overmap": "airport_apron_2_north" },
+      { "point": [ 4, 2, 0 ], "overmap": "airport_apron_3_north" },
+      { "point": [ 2, 3, 0 ], "overmap": "airport_apron_4_north" },
+      { "point": [ 3, 3, 0 ], "overmap": "airport_apron_5_north" },
+      { "point": [ 4, 3, 0 ], "overmap": "airport_apron_6_north" },
+      { "point": [ 2, 4, 0 ], "overmap": "airport_apron_7_north" },
+      { "point": [ 3, 4, 0 ], "overmap": "airport_apron_8_north" },
+      { "point": [ 4, 4, 0 ], "overmap": "airport_apron_9_north" },
+      { "point": [ 2, 5, 0 ], "overmap": "airport_apron_10_north" },
+      { "point": [ 3, 5, 0 ], "overmap": "airport_apron_11_north" },
+      { "point": [ 4, 5, 0 ], "overmap": "airport_apron_12_north" },
+      { "point": [ -2, 2, 0 ], "overmap": "airport_support_1_north" },
+      { "point": [ -3, 3, 0 ], "overmap": "airport_support_2_west_north" },
+      { "point": [ -3, 4, 0 ], "overmap": "airport_support_3_west_north" },
+      { "point": [ -2, 3, 0 ], "overmap": "airport_support_2_north" },
+      { "point": [ -2, 4, 0 ], "overmap": "airport_support_3_north" },
+      { "point": [ -3, 5, 0 ], "overmap": "airport_support_4_west_north" },
+      { "point": [ -2, 5, 0 ], "overmap": "airport_support_4_north" },
+      { "point": [ -3, 3, 1 ], "overmap": "airport_hangar_roof_2_west_north" },
+      { "point": [ -2, 3, 1 ], "overmap": "airport_hangar_roof_2_north" },
+      { "point": [ -3, 4, 1 ], "overmap": "airport_hangar_roof_3_west_north" },
+      { "point": [ -2, 4, 1 ], "overmap": "airport_hangar_roof_3_north" },
+      { "point": [ -2, 2, 1 ], "overmap": "airport_support_1_z1_north" },
+      { "point": [ -2, 2, 2 ], "overmap": "airport_support_1_z2_north" },
+      { "point": [ -2, 2, 3 ], "overmap": "airport_support_1_z3_north" },
+      { "point": [ 2, 2, 1 ], "overmap": "airport_roof_1_north" },
+      { "point": [ 3, 2, 1 ], "overmap": "airport_roof_2_north" },
+      { "point": [ 2, 3, 1 ], "overmap": "airport_roof_4_north" },
+      { "point": [ 3, 3, 1 ], "overmap": "airport_roof_5_north" },
+      { "point": [ 2, 4, 1 ], "overmap": "airport_roof_7_north" },
+      { "point": [ 3, 4, 1 ], "overmap": "airport_roof_8_north" },
+      { "point": [ 4, 4, 1 ], "overmap": "airport_roof_9_north" },
+      { "point": [ 2, 5, 1 ], "overmap": "airport_roof_10_north" },
+      { "point": [ 3, 5, 1 ], "overmap": "airport_roof_11_north" },
+      { "point": [ 4, 5, 1 ], "overmap": "airport_roof_12_north" },
+      { "point": [ -1, 8, 0 ], "overmap": "airport_runway_buffer_south_west_north" },
+      { "point": [ 0, 8, 0 ], "overmap": "airport_runway_buffer_south_center_north" },
+      { "point": [ 1, 8, 0 ], "overmap": "airport_runway_buffer_south_east_north" }
     ],
     "connections": [ { "point": [ 5, 3, 0 ], "connection": "local_road", "from": [ 4, 3, 0 ] } ],
     "locations": [ "land" ],
+    "city_distance": [ 2, 6 ],
+    "city_sizes": [ 4, -1 ],
     "occurrences": [ 25, 100 ],
-    "rotate": false,
+    "rotate": true,
     "flags": [ "ELECTRIC_GRID", "UNIQUE" ]
   },
   {
@@ -675,7 +676,7 @@
     "om_terrain": "airport_apron",
     "object": {
       "rows": [
-        "_#######################",
+        "c#######################",
         "##......................",
         "#.......................",
         "#.......................",
@@ -703,25 +704,14 @@
       "terrain": {
         ".": "t_thconc_floor",
         "_": "t_pavement",
+        "c": "t_chainfence",
         "#": { "ter": "t_brick_wall", "palette": "airport_wall_grayblue" },
         "0": "t_gates_mech_control",
         "1": "t_mdoor_lab_frame"
       },
       "furniture": {  },
       "toilets": {  },
-      "place_vehicles": [
-        {
-          "vehicle": "commercial_airliner",
-          "x": 0,
-          "y": 13,
-          "rotation": 0,
-          "status": 0,
-          "fuel": 0,
-          "chance": 100,
-          "place_beyond_bounds": true
-        }
-      ],
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 1, 4 ], "chance": 100, "repeat": [ 23, 29 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 1, 4 ], "chance": 100, "repeat": [ 8, 15 ] } ]
     }
   },
   {
@@ -775,7 +765,7 @@
       "toilets": {  },
       "vendingmachines": { "b": { "item_group": "vending_food" } },
       "items": { "9": { "item": "traveler", "chance": 2 } },
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 30, 38 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 22, 30 ] } ]
     }
   },
   {
@@ -818,7 +808,7 @@
         { "vehicle": "parkinglotbasic", "x": 2, "y": 14, "rotation": 180, "status": -1, "fuel": -1, "chance": 35 },
         { "vehicle": "parkinglotbasic", "x": 12, "y": 20, "rotation": 0, "status": -1, "fuel": -1, "chance": 35 }
       ],
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 18 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 5, 8 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 18 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 8, 15 ] } ]
     }
   },
   {
@@ -861,7 +851,7 @@
       },
       "furniture": {  },
       "toilets": {  },
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 7, 10 ], "chance": 100, "repeat": [ 23, 29 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 7, 10 ], "chance": 100, "repeat": [ 8, 12 ] } ]
     }
   },
   {
@@ -916,7 +906,7 @@
       "toilets": {  },
       "vendingmachines": { "f": { "item_group": "vending_drink" } },
       "items": { "b": { "item": "traveler", "chance": 2 } },
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 30, 38 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 20, 32 ] } ]
     }
   },
   {
@@ -1029,6 +1019,13 @@
       "toilets": {  },
       "place_vehicles": [ { "vehicle": "forklift", "x": 10, "y": 16, "rotation": 0, "status": -1, "fuel": -1, "chance": 40 } ],
       "items": {
+        "U": [
+          { "item": "home_hw", "chance": 25, "repeat": [ 1, 2 ] },
+          { "item": "mechanics", "chance": 20, "repeat": [ 1, 2 ] },
+          { "item": "traveler", "chance": 15, "repeat": [ 1, 2 ] },
+          { "item": "cleaning", "chance": 20, "repeat": [ 1, 2 ] }
+        ],
+        "Z": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] },
         "d": { "item": "traveler", "chance": 12 },
         "h": { "item": "behindcounter", "chance": 75, "repeat": [ 2, 4 ] },
         "O": { "item": "traveler", "chance": 75 },
@@ -1155,8 +1152,8 @@
       },
       "vendingmachines": { "h": { "item_group": "vending_drink" } },
       "place_monster": [
-        { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 0, 11 ], "chance": 100, "repeat": [ 32, 40 ] },
-        { "group": "GROUP_ZOMBIE_COP", "x": [ 4, 23 ], "y": [ 13, 18 ], "chance": 100, "repeat": [ 14, 18 ] },
+        { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 0, 11 ], "chance": 100, "repeat": [ 18, 28 ] },
+        { "group": "GROUP_ZOMBIE_COP", "x": [ 4, 23 ], "y": [ 13, 18 ], "chance": 100, "repeat": [ 7, 15 ] },
         { "group": "GROUP_ZOMBIE", "x": [ 0, 2 ], "y": [ 13, 16 ], "chance": 50, "repeat": 2 }
       ]
     }
@@ -1172,25 +1169,25 @@
         "___________________ggggg",
         "___________________ggggg",
         "___________________ggggg",
-        "___________________ggggg",
-        "___________________ggggg",
-        "___________________ggggg",
-        "___________________ggggg",
-        "___________________ggggg",
-        "sssssssssssssssssssggggg",
-        "sssssssssssssssssssggggg",
-        "J#JJ#sssss#JJ#JJ###ggggg",
-        "....#YYJYY#......V#ggggg",
-        "..................#ggggg",
-        ".......@..........#ggggg",
-        "......III......KKK#ggggg",
-        "......$$$.....KK..#ggggg",
-        "......III.....$..$#ggggg",
-        "..............K..$#ggggg",
-        "..............KK..#ggggg",
-        "....RK$K$K$....KK.#ggggg",
-        ".......@..........#ggggg",
-        "B.aaaaa.BI.I.IIIII#ggggg"
+        "______________________gg",
+        "_______________________g",
+        "_______________________g",
+        "_______________________g",
+        "_______________________g",
+        "sssssssssssssssssss____g",
+        "sssssssssssssssssss____g",
+        "J#JJ#sssss#JJ#JJ###____g",
+        "....#YYJYY#......V#____g",
+        "..................#____g",
+        ".......@..........#____g",
+        "......III......KKK#____g",
+        "......$$$.....KK..#____g",
+        "......III.....$..$#____g",
+        "..............K..$#____g",
+        "..............KK..#____g",
+        "....RK$K$K$....KK.#____g",
+        ".......@..........#____g",
+        "B.aaaaa.BI.I.IIIII#____g"
       ],
       "terrain": {
         ".": "t_thconc_floor",
@@ -1213,7 +1210,7 @@
       "toilets": {  },
       "vendingmachines": { "V": { "item_group": "vending_food" } },
       "items": { "B": { "item": "traveler", "chance": 2 } },
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 0, 17 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 46, 56 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 0, 17 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 32, 48 ] } ]
     }
   },
   {
@@ -1242,10 +1239,10 @@
         "_____#d...........@.....",
         "_____#dddddddddddddddddd",
         "_____###################",
-        "____gggggggggggggggggggg",
-        "___ggggggggggggggggggggg",
-        "__gggggggggggggggggggggg",
-        "_ggggggggggggggggggggggg"
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________"
       ],
       "terrain": {
         ".": "t_thconc_floor",
@@ -1292,6 +1289,12 @@
       },
       "toilets": {  },
       "items": {
+        "U": [
+          { "item": "home_hw", "chance": 25, "repeat": [ 1, 2 ] },
+          { "item": "mechanics", "chance": 20, "repeat": [ 1, 2 ] },
+          { "item": "traveler", "chance": 15, "repeat": [ 1, 2 ] },
+          { "item": "cleaning", "chance": 20, "repeat": [ 1, 2 ] }
+        ],
         "d": { "item": "traveler", "chance": 12 },
         "2": { "item": "SUS_fridge", "chance": 100, "repeat": [ 2, 5 ] },
         "7": { "item": "office_paper", "chance": 70, "repeat": [ 1, 3 ] },
@@ -1330,12 +1333,13 @@
         ".......@...............@",
         "dddddddddddddddddddddddd",
         "########################",
-        "gggggggggggggggggggggggg",
-        "gggggggggggggggggggggggg",
-        "gggggggggggggggggggggggg",
-        "gggggggggggggggggggggggg"
+        "________________________",
+        "________________________",
+        "________________________",
+        "________________________"
       ],
       "terrain": {
+        "_": "t_pavement",
         ".": "t_thconc_floor",
         "B": "t_linoleum_white",
         ",": "t_linoleum_white",
@@ -1403,7 +1407,7 @@
         "L": { "item": "cop_evidence", "chance": 95, "repeat": [ 2, 4 ] },
         "B": { "item": "traveler", "chance": 2 }
       },
-      "place_monster": [ { "group": "GROUP_ZOMBIE_COP", "x": [ 0, 12 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 6, 9 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE_COP", "x": [ 0, 12 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 2, 5 ] } ]
     }
   },
   {
@@ -1412,34 +1416,35 @@
     "om_terrain": "airport_apron_12",
     "object": {
       "rows": [
-        "B.aaaaa.BI.I......#ggggg",
-        "B.aaaaa.BI.IIIIII.#ggggg",
-        "..aaaaa..I.I..@...#ggggg",
-        "..aaaaa..I.I.IIIII#ggggg",
-        "B.aaaaa.B#........#ggggg",
-        "B.aaaaa.B#bb?bb?bb#ggggg",
-        "B.aaaaa.B#eeeeeeee#ggggg",
-        "....@....Zeeeddddd#ggggg",
-        "..ddddd..##Z#####!#ggggg",
-        ".ddIIIdd.#feeeeeed#ggggg",
-        ".dII.IId.#feeeehId#ggggg",
-        ".dI...Id.#feeeihId#ggggg",
-        ".dI.@.Id.#feeeehId#ggggg",
-        ".dI...Id.#feeeeeed#ggggg",
-        "#=##Z##=###Z#####=#ggggg",
-        ".d.....d.#.......d#ggggg",
-        "dddddddd.Z...@@..d#ggggg",
-        ".....@...#.......d#ggggg",
-        "ddddddddd=dddddddd#ggggg",
-        "###################ggggg",
-        "gggggggggggggggggggggggg",
-        "gggggggggggggggggggggggg",
-        "gggggggggggggggggggggggg",
-        "gggggggggggggggggggggggg"
+        "B.aaaaa.BI.I......#____g",
+        "B.aaaaa.BI.IIIIII.#____g",
+        "..aaaaa..I.I..@...#____g",
+        "..aaaaa..I.I.IIIII#____g",
+        "B.aaaaa.B#........#____g",
+        "B.aaaaa.B#bb?bb?bb#____g",
+        "B.aaaaa.B#eeeeeeee#____g",
+        "....@....Zeeeddddd#____g",
+        "..ddddd..##Z#####!#____g",
+        ".ddIIIdd.#feeeeeed#____g",
+        ".dII.IId.#feeeehId#____g",
+        ".dI...Id.#feeeihId#____g",
+        ".dI.@.Id.#feeeehId#____g",
+        ".dI...Id.#feeeeeed#____g",
+        "#=##Z##=###Z#####=#____g",
+        ".d.....d.#.......d#____g",
+        "dddddddd.Z...@@..d#____g",
+        ".....@...#.......d#____g",
+        "ddddddddd=dddddddd#____g",
+        "###################____g",
+        "_______________________g",
+        "_______________________g",
+        "_______________________g",
+        "_______________________g"
       ],
       "terrain": {
         ".": "t_thconc_floor",
         "I": "t_metal_railing",
+        "_": "t_pavement",
         "B": "t_thconc_floor",
         "#": { "ter": "t_brick_wall", "palette": "airport_wall_grayblue" },
         "+": "t_door_c",
@@ -1459,8 +1464,17 @@
       },
       "furniture": { "B": "f_bench", "b": "f_counter", "@": "f_olight", "f": "f_utility_shelf", "h": "f_table", "i": "f_chair" },
       "toilets": {  },
-      "items": { "d": { "item": "traveler", "chance": 12 }, "B": { "item": "traveler", "chance": 2 } },
-      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 0, 18 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 10, 16 ] } ]
+      "items": {
+        "d": { "item": "traveler", "chance": 12 },
+        "B": { "item": "traveler", "chance": 2 },
+        "f": [
+          { "item": "home_hw", "chance": 25, "repeat": [ 1, 2 ] },
+          { "item": "mechanics", "chance": 20, "repeat": [ 1, 2 ] },
+          { "item": "traveler", "chance": 15, "repeat": [ 1, 2 ] },
+          { "item": "cleaning", "chance": 20, "repeat": [ 1, 2 ] }
+        ]
+      },
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 0, 18 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 8, 16 ] } ]
     }
   },
   {
@@ -1470,7 +1484,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1514,7 +1528,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1558,7 +1572,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1602,7 +1616,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1646,7 +1660,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1680,6 +1694,18 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
+      "place_vehicles": [
+        {
+          "vehicle": "commercial_airliner",
+          "x": 12,
+          "y": 12,
+          "rotation": 90,
+          "status": 0,
+          "fuel": 0,
+          "chance": 100,
+          "place_beyond_bounds": true
+        }
+      ],
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1690,7 +1716,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1720,8 +1746,8 @@
         "______________W_gggggggc",
         "______________W_gggggggc",
         "______________W_gggggggc",
-        "______________W_gggggggg",
-        "______________W_gggggggg"
+        "______________W_gggggggc",
+        "______________W_gggggggc"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
@@ -1734,7 +1760,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1742,7 +1768,7 @@
     "om_terrain": "airport_runway_west_marked_2",
     "object": {
       "rows": [
-        "gggggggg________________",
+        "cggggggg________________",
         "gggggggg_W______________",
         "gggggggg_W______________",
         "gggggggg_W______________",
@@ -1767,7 +1793,7 @@
         "_________W______________",
         "_________W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
+      "terrain": { "c": "t_chainfence", "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1778,7 +1804,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1822,7 +1848,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1830,7 +1856,7 @@
     "om_terrain": "airport_runway_east_marked_2",
     "object": {
       "rows": [
-        "________________________",
+        "_______________________c",
         "______________W_________",
         "______________W_________",
         "______________W_________",
@@ -1855,7 +1881,7 @@
         "______________W_________",
         "______________W_________"
       ],
-      "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
+      "terrain": { "_": "t_pavement", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1866,7 +1892,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1910,7 +1936,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1954,7 +1980,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -1998,7 +2024,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2042,7 +2068,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2086,7 +2112,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2130,7 +2156,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2174,7 +2200,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2218,7 +2244,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2262,7 +2288,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2306,7 +2332,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2350,7 +2376,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2394,7 +2420,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2438,7 +2464,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2482,7 +2508,7 @@
     "looks_like": [ "road_ns", "road" ],
     "sym": "=",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -2512,8 +2538,8 @@
         "___WW____WW___W_gggggggc",
         "___WW____WW___W_gggggggc",
         "______________W_gggggggc",
-        "______________W_gggggggg",
-        "______________W_gggggggg"
+        "______________W_gggggggc",
+        "______________W_gggggggc"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
@@ -2526,7 +2552,7 @@
     "looks_like": "radio_tower",
     "sym": "T",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2535,7 +2561,7 @@
     "looks_like": "generic_mansion",
     "sym": "H",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2544,7 +2570,7 @@
     "looks_like": "generic_mansion",
     "sym": "H",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2553,7 +2579,7 @@
     "looks_like": "generic_mansion",
     "sym": "H",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2562,7 +2588,7 @@
     "sym": "H",
     "looks_like": "generic_mansion",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2570,7 +2596,7 @@
     "name": "commercial airport helipad",
     "sym": "H",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ],
+    "flags": [  ],
     "looks_like": "megastore_parking"
   },
   {
@@ -2579,7 +2605,7 @@
     "name": "commercial airport fuel yard",
     "sym": "F",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ],
+    "flags": [  ],
     "looks_like": "megastore_parking"
   },
   {
@@ -2589,7 +2615,7 @@
     "looks_like": "radio_tower",
     "sym": "T",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2598,7 +2624,7 @@
     "looks_like": "radio_tower",
     "sym": "T",
     "color": "light_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2607,7 +2633,7 @@
     "looks_like": "radio_tower",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2616,7 +2642,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2625,7 +2651,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2634,7 +2660,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "overmap_terrain",
@@ -2643,7 +2669,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3083,6 +3109,14 @@
         "R": "t_thconc_floor"
       },
       "furniture": { "U": "f_utility_shelf", "O": "f_crate_o", "Q": "f_crate_c", "R": "f_rack" },
+      "items": {
+        "U": [
+          { "item": "home_hw", "chance": 25, "repeat": [ 1, 2 ] },
+          { "item": "mechanics", "chance": 20, "repeat": [ 1, 2 ] },
+          { "item": "traveler", "chance": 15, "repeat": [ 1, 2 ] },
+          { "item": "cleaning", "chance": 20, "repeat": [ 1, 2 ] }
+        ]
+      },
       "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 0, 20 ], "y": [ 4, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
   },
@@ -3135,8 +3169,8 @@
           "y": 3,
           "rotation": 0,
           "status": 0,
-          "fuel": 0,
-          "chance": 55,
+          "fuel": -1,
+          "chance": 65,
           "place_beyond_bounds": true
         }
       ],
@@ -3249,7 +3283,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3293,7 +3327,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3337,7 +3371,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3381,7 +3415,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3425,7 +3459,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3469,7 +3503,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3513,7 +3547,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3557,7 +3591,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3601,7 +3635,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
@@ -3652,7 +3686,7 @@
     "looks_like": "generic_mansion",
     "sym": "#",
     "color": "dark_gray",
-    "flags": [ "NO_ROTATE" ]
+    "flags": [  ]
   },
   {
     "type": "mapgen",
