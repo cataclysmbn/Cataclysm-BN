@@ -290,328 +290,6 @@
     "colors": [ "#74889a" ]
   },
   {
-    "type": "item_group",
-    "id": "airport_knife_mix",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "knife_combat", "prob": 1 },
-      { "item": "knife_chef", "prob": 1 },
-      { "item": "knife_steak", "prob": 1 },
-      { "item": "knife_paring", "prob": 1 },
-      { "item": "knife_folding", "prob": 1 },
-      { "item": "knife_rambo", "prob": 1 },
-      { "item": "throwing_knife", "prob": 1 },
-      { "item": "pockknife", "prob": 1 },
-      { "item": "xacto", "prob": 1 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "tsa_noncompliant_discard",
-    "subtype": "collection",
-    "entries": [
-      { "group": "vending_drink", "prob": 100, "count": [ 0, 2 ] },
-      { "group": "cleaning", "prob": 45, "count": [ 0, 2 ] },
-      { "item": "soap", "prob": 35 },
-      { "item": "spray_can", "prob": 30 },
-      { "item": "beer", "prob": 20 },
-      { "item": "whiskey", "prob": 8 },
-      { "item": "vodka", "prob": 7 },
-      { "item": "scissors", "prob": 8 },
-      { "group": "airport_knife_mix", "prob": 2 },
-      { "item": "9mm", "prob": 1, "charges": [ 1, 4 ] }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "tsa_noncompliant_discard_secondary",
-    "subtype": "collection",
-    "entries": [
-      { "group": "vending_drink", "prob": 100, "count": [ 0, 2 ] },
-      { "group": "cleaning", "prob": 45, "count": [ 0, 2 ] },
-      { "item": "soap", "prob": 35 },
-      { "item": "spray_can", "prob": 30 },
-      { "item": "beer", "prob": 20 },
-      { "item": "whiskey", "prob": 8 },
-      { "item": "vodka", "prob": 7 },
-      { "item": "scissors", "prob": 8 },
-      { "group": "airport_knife_mix", "prob": 2 },
-      { "item": "9mm", "prob": 1, "charges": [ 1, 4 ] }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_traveler_clothes",
-    "subtype": "distribution",
-    "entries": [ { "group": "SUS_dresser_mens", "prob": 50 }, { "group": "SUS_dresser_womens", "prob": 50 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_luggage_contents",
-    "subtype": "collection",
-    "entries": [
-      { "group": "airport_traveler_clothes", "prob": 100 },
-      { "item": "soap", "prob": 40 },
-      { "group": "cleaning", "prob": 12 },
-      { "item": "scissors", "prob": 5 },
-      { "item": "beer", "prob": 4 },
-      { "item": "whiskey", "prob": 2 },
-      { "item": "survivormap", "prob": 2 },
-      { "group": "airport_knife_mix", "prob": 1 },
-      { "group": "consumer_electronics", "prob": 20 },
-      { "item": "laptop", "prob": 5 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_luggage_container",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "suitcase_m", "prob": 28 },
-      { "item": "suitcase_l", "prob": 22 },
-      { "item": "duffelbag", "prob": 20 },
-      { "item": "backpack", "prob": 12 },
-      { "item": "briefcase", "prob": 6 },
-      { "item": "box_medium", "prob": 8 },
-      { "item": "box_large", "prob": 4 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_luggage_loot",
-    "subtype": "distribution",
-    "entries": [ { "group": "airport_luggage_filled_loose", "prob": 85 }, { "group": "airport_empty_suitcase", "prob": 15 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_bookstore_reading",
-    "subtype": "distribution",
-    "entries": [ { "group": "coffee_newsstand", "prob": 95 }, { "group": "office", "prob": 5 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_deli_fridge",
-    "subtype": "distribution",
-    "entries": [ { "group": "coffee_fridge", "prob": 100 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_bar_fridge",
-    "subtype": "distribution",
-    "entries": [ { "item": "beer", "prob": 65 }, { "item": "whiskey", "prob": 18 }, { "item": "vodka", "prob": 17 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_office_file_loot",
-    "subtype": "collection",
-    "entries": [ { "group": "office", "prob": 100 }, { "item": "survivormap", "prob": 5 }, { "group": "coffee_newsstand", "prob": 8 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_bar_rack_alcohol",
-    "subtype": "distribution",
-    "entries": [ { "item": "whiskey", "prob": 45 }, { "item": "vodka", "prob": 35 }, { "item": "beer", "prob": 20 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_dry_goods",
-    "subtype": "distribution",
-    "entries": [
-      { "group": "SUS_pantry", "prob": 45 },
-      { "group": "cannedfood", "prob": 30 },
-      { "group": "groce_condiment", "prob": 15 },
-      { "group": "vending_food", "prob": 10 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_fastfood_fridge",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "cheeseburger", "prob": 30 },
-      { "item": "fries", "prob": 25 },
-      { "item": "hotdogs_frozen", "prob": 20 },
-      { "item": "sandwich_cucumber", "prob": 15 },
-      { "item": "brioche", "prob": 10 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_fresh_ingredient_fridge",
-    "subtype": "distribution",
-    "entries": [
-      { "group": "SUS_fridge", "prob": 75 },
-      { "group": "coffee_prep", "prob": 20 },
-      { "group": "groce_condiment", "prob": 5 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_store_cold_snacks",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "cheeseburger", "prob": 22 },
-      { "item": "fries", "prob": 18 },
-      { "item": "sandwich_cucumber", "prob": 25 },
-      { "item": "brioche", "prob": 15 },
-      { "group": "coffee_fridge", "prob": 20 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_store_cold_drinks",
-    "subtype": "distribution",
-    "entries": [ { "item": "milk", "prob": 55 }, { "item": "oj", "prob": 35 }, { "item": "cola", "prob": 10 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_store_niceties",
-    "subtype": "distribution",
-    "entries": [
-      { "group": "consumer_electronics", "prob": 28 },
-      { "item": "sunglasses", "prob": 14 },
-      { "item": "hat_ball", "prob": 14 },
-      { "item": "pillow", "prob": 10 },
-      { "item": "aspirin", "prob": 10 },
-      { "item": "laptop", "prob": 4 },
-      { "group": "office", "prob": 5 },
-      { "item": "survivormap", "prob": 5 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_empty_suitcase",
-    "subtype": "distribution",
-    "entries": [ { "item": "suitcase_m", "prob": 55 }, { "item": "suitcase_l", "prob": 45 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_luggage_filled_loose",
-    "subtype": "collection",
-    "entries": [ { "group": "airport_luggage_container", "prob": 100 }, { "group": "airport_luggage_contents", "prob": 100 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_warehouse_crate_luggage",
-    "subtype": "collection",
-    "entries": [ { "group": "airport_luggage_container", "prob": 100 }, { "group": "airport_luggage_container", "prob": 35 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_warehouse_crate_industrial",
-    "subtype": "collection",
-    "entries": [ { "group": "mechanics", "prob": 100 }, { "group": "tools_home", "prob": 95 }, { "group": "cleaning", "prob": 35 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_warehouse_crate_transit",
-    "subtype": "collection",
-    "entries": [
-      { "group": "office", "prob": 75 },
-      { "group": "consumer_electronics", "prob": 70 },
-      { "group": "camping", "prob": 55 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_warehouse_crate_loot",
-    "subtype": "distribution",
-    "entries": [
-      { "group": "airport_warehouse_crate_luggage", "prob": 25 },
-      { "group": "airport_warehouse_crate_industrial", "prob": 35 },
-      { "group": "airport_warehouse_crate_transit", "prob": 40 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_tsa_minor_contraband",
-    "subtype": "distribution",
-    "entries": [
-      { "group": "airport_knife_mix", "prob": 45 },
-      { "item": "scissors", "prob": 15 },
-      { "item": "spray_can", "prob": 10 },
-      { "item": "beer", "prob": 8 },
-      { "item": "whiskey", "prob": 12 },
-      { "item": "vodka", "prob": 10 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "airport_tsa_locker_contraband",
-    "subtype": "collection",
-    "entries": [
-      { "group": "airport_tsa_minor_contraband", "prob": 100 },
-      { "group": "airport_tsa_minor_contraband", "prob": 70 },
-      { "group": "airport_knife_mix", "prob": 55 },
-      { "group": "guns_pistol_common", "prob": 30 },
-      { "group": "guns_pistol_common", "prob": 12 },
-      { "item": "9mm", "prob": 50, "charges": [ 10, 40 ] },
-      { "item": "grenade", "prob": 10 }
-    ]
-  },
-  {
-    "type": "monstergroup",
-    "name": "AIRPORT_PUBLIC_ZOMBIES",
-    "default": "mon_zombie",
-    "monsters": [
-      { "monster": "mon_zombie", "freq": 650, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_fat", "freq": 120, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_tough", "freq": 120, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_crawler", "freq": 60, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_runner", "freq": 50, "cost_multiplier": 1 }
-    ]
-  },
-  {
-    "type": "monstergroup",
-    "name": "AIRPORT_TSA_CHECKPOINT_ZOMBIES",
-    "default": "mon_zombie",
-    "monsters": [
-      { "monster": "mon_zombie", "freq": 700, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_fat", "freq": 100, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_tough", "freq": 100, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_crawler", "freq": 50, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_cop", "freq": 50, "cost_multiplier": 1 }
-    ]
-  },
-  {
-    "type": "monstergroup",
-    "name": "AIRPORT_RUNWAY_ZOMBIES",
-    "default": "mon_zombie",
-    "monsters": [
-      { "monster": "mon_zombie", "freq": 620, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_tough", "freq": 120, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_fat", "freq": 100, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_crawler", "freq": 50, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_runner", "freq": 40, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_technician", "freq": 50, "cost_multiplier": 5 },
-      { "monster": "mon_zombie_static", "freq": 20, "cost_multiplier": 5 }
-    ]
-  },
-  {
-    "type": "monstergroup",
-    "name": "AIRPORT_UTILITY_ZOMBIES",
-    "default": "mon_zombie_technician",
-    "monsters": [
-      { "monster": "mon_zombie_technician", "freq": 550, "cost_multiplier": 5 },
-      { "monster": "mon_zombie_static", "freq": 200, "cost_multiplier": 5 },
-      { "monster": "mon_zombie", "freq": 150, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_tough", "freq": 50, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_electric", "freq": 50, "cost_multiplier": 5 }
-    ]
-  },
-  {
-    "type": "monstergroup",
-    "name": "AIRPORT_TSA_OFFICE_COPS",
-    "default": "mon_zombie_cop",
-    "monsters": [ { "monster": "mon_zombie_cop", "freq": 1000, "cost_multiplier": 1 } ]
-  },
-  {
-    "type": "monstergroup",
-    "name": "AIRPORT_TSA_CAGE_CIVILIANS",
-    "default": "mon_zombie",
-    "monsters": [ { "monster": "mon_zombie", "freq": 1000, "cost_multiplier": 1 } ]
-  },
-  {
     "type": "mapgen",
     "method": "json",
     "om_terrain": "airport_runway_buffer_north_west",
@@ -1042,7 +720,7 @@
           "chance": 100
         }
       ],
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 2, 22 ], "y": [ 1, 4 ], "chance": 100, "repeat": [ 23, 29 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 1, 4 ], "chance": 100, "repeat": [ 23, 29 ] } ]
     }
   },
   {
@@ -1095,8 +773,8 @@
       "furniture": { "7": "f_counter", "9": "f_bench", "f": "f_trashcan" },
       "toilets": {  },
       "vendingmachines": { "b": { "item_group": "vending_food" } },
-      "items": { "9": { "item": "airport_luggage_loot", "chance": 2 } },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 30, 38 ] } ]
+      "items": { "9": { "item": "traveler", "chance": 2 } },
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 30, 38 ] } ]
     }
   },
   {
@@ -1139,7 +817,7 @@
         { "vehicle": "parkinglotbasic", "x": 2, "y": 14, "rotation": 180, "status": -1, "fuel": -1, "chance": 35 },
         { "vehicle": "parkinglotbasic", "x": 12, "y": 20, "rotation": 0, "status": -1, "fuel": -1, "chance": 35 }
       ],
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 1, 18 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 5, 8 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 18 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 5, 8 ] } ]
     }
   },
   {
@@ -1182,7 +860,7 @@
       },
       "furniture": {  },
       "toilets": {  },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 2, 22 ], "y": [ 7, 10 ], "chance": 100, "repeat": [ 23, 29 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 7, 10 ], "chance": 100, "repeat": [ 23, 29 ] } ]
     }
   },
   {
@@ -1236,8 +914,8 @@
       "furniture": { "9": "f_trashcan", "a": "f_counter", "b": "f_bench" },
       "toilets": {  },
       "vendingmachines": { "f": { "item_group": "vending_drink" } },
-      "items": { "b": { "item": "airport_luggage_loot", "chance": 2 } },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 30, 38 ] } ]
+      "items": { "b": { "item": "traveler", "chance": 2 } },
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 30, 38 ] } ]
     }
   },
   {
@@ -1278,7 +956,7 @@
         { "vehicle": "parkinglotbasic", "x": 2, "y": 9, "rotation": 180, "status": -1, "fuel": -1, "chance": 35 },
         { "vehicle": "parkinglotbasic", "x": 12, "y": 15, "rotation": 0, "status": -1, "fuel": -1, "chance": 35 }
       ],
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 1, 18 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 5, 8 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 18 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 5, 8 ] } ]
     }
   },
   {
@@ -1350,14 +1028,14 @@
       "toilets": {  },
       "place_vehicles": [ { "vehicle": "forklift", "x": 10, "y": 16, "rotation": 0, "status": -1, "fuel": -1, "chance": 40 } ],
       "items": {
-        "d": { "item": "airport_luggage_loot", "chance": 12 },
-        "h": { "item": "airport_store_niceties", "chance": 75, "repeat": [ 2, 4 ] },
-        "O": { "item": "airport_warehouse_crate_loot", "chance": 75 },
-        "Q": { "item": "airport_warehouse_crate_loot", "chance": 75 }
+        "d": { "item": "traveler", "chance": 12 },
+        "h": { "item": "behindcounter", "chance": 75, "repeat": [ 2, 4 ] },
+        "O": { "item": "traveler", "chance": 75 },
+        "Q": { "item": "traveler", "chance": 75 }
       },
       "place_monster": [
-        { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 6, 15 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 10, 14 ] },
-        { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 17, 23 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 10, 14 ] }
+        { "group": "GROUP_LARGE_STATION", "x": [ 6, 15 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 10, 14 ] },
+        { "group": "GROUP_ZOMBIE", "x": [ 17, 23 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 10, 14 ] }
       ]
     }
   },
@@ -1464,27 +1142,27 @@
       },
       "toilets": {  },
       "items": {
-        "&": { "item": "tsa_noncompliant_discard_secondary", "chance": 100 },
-        "d": { "item": "airport_luggage_loot", "chance": 24 },
-        "k": { "item": "airport_bookstore_reading", "chance": 100, "repeat": [ 4, 9 ] },
-        "z": { "item": "airport_bar_rack_alcohol", "chance": 85, "repeat": [ 1, 4 ] },
-        "m": { "item": "airport_store_cold_snacks", "chance": 100, "repeat": [ 2, 5 ] },
-        "n": { "item": "airport_store_cold_drinks", "chance": 100, "repeat": [ 2, 5 ] },
-        "j": { "item": "airport_store_niceties", "chance": 75, "repeat": [ 2, 4 ] },
-        "r": { "item": "airport_luggage_loot", "chance": 24 },
-        "B": { "item": "airport_luggage_loot", "chance": 2 }
+        "&": { "item": "contraband", "chance": 100 },
+        "d": { "item": "traveler", "chance": 24 },
+        "k": { "item": "coffee_newsstand", "chance": 100, "repeat": [ 4, 9 ] },
+        "z": { "item": "bar_alcohol", "chance": 85, "repeat": [ 1, 4 ] },
+        "m": { "item": "coffee_freezer", "chance": 100, "repeat": [ 2, 5 ] },
+        "n": { "item": "vending_drink", "chance": 100, "repeat": [ 2, 5 ] },
+        "j": { "item": "behindcounter", "chance": 75, "repeat": [ 2, 4 ] },
+        "r": { "item": "traveler", "chance": 24 },
+        "B": { "item": "traveler", "chance": 2 }
       },
       "vendingmachines": { "h": { "item_group": "vending_drink" } },
       "place_monster": [
-        { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 4, 19 ], "y": [ 0, 11 ], "chance": 100, "repeat": [ 32, 40 ] },
+        { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 0, 11 ], "chance": 100, "repeat": [ 32, 40 ] },
         {
-          "group": "AIRPORT_TSA_CHECKPOINT_ZOMBIES",
+          "group": "GROUP_ZOMBIE_COP",
           "x": [ 4, 23 ],
           "y": [ 13, 18 ],
           "chance": 100,
           "repeat": [ 14, 18 ]
         },
-        { "group": "AIRPORT_TSA_CAGE_CIVILIANS", "x": [ 0, 2 ], "y": [ 13, 16 ], "chance": 50, "repeat": 2 }
+        { "group": "GROUP_ZOMBIE", "x": [ 0, 2 ], "y": [ 13, 16 ], "chance": 50, "repeat": 2 }
       ]
     }
   },
@@ -1539,8 +1217,8 @@
       "furniture": { "B": "f_bench", "@": "f_olight", "K": "f_counter" },
       "toilets": {  },
       "vendingmachines": { "V": { "item_group": "vending_food" } },
-      "items": { "B": { "item": "airport_luggage_loot", "chance": 2 } },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 0, 17 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 46, 56 ] } ]
+      "items": { "B": { "item": "traveler", "chance": 2 } },
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 0, 17 ], "y": [ 13, 23 ], "chance": 100, "repeat": [ 46, 56 ] } ]
     }
   },
   {
@@ -1619,16 +1297,16 @@
       },
       "toilets": {  },
       "items": {
-        "d": { "item": "airport_luggage_loot", "chance": 12 },
-        "2": { "item": "airport_fresh_ingredient_fridge", "chance": 100, "repeat": [ 2, 5 ] },
-        "7": { "item": "airport_office_file_loot", "chance": 70, "repeat": [ 1, 3 ] },
-        "R": { "item": "airport_dry_goods", "chance": 80, "repeat": [ 1, 4 ] },
-        "f": { "item": "airport_dry_goods", "chance": 80, "repeat": [ 1, 4 ] },
-        "1": { "item": "airport_fastfood_fridge", "chance": 100, "repeat": [ 2, 5 ] },
-        "O": { "item": "airport_warehouse_crate_loot", "chance": 75 },
-        "Q": { "item": "airport_warehouse_crate_loot", "chance": 75 }
+        "d": { "item": "traveler", "chance": 12 },
+        "2": { "item": "SUS_fridge", "chance": 100, "repeat": [ 2, 5 ] },
+        "7": { "item": "office_paper", "chance": 70, "repeat": [ 1, 3 ] },
+        "R": { "item": "SUS_pantry", "chance": 80, "repeat": [ 1, 4 ] },
+        "f": { "item": "SUS_pantry", "chance": 80, "repeat": [ 1, 4 ] },
+        "1": { "item": "fast_table", "chance": 100, "repeat": [ 2, 5 ] },
+        "O": { "item": "home_hw", "chance": 75 },
+        "Q": { "item": "consumer_electronics", "chance": 75 }
       },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 6, 23 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 12, 18 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 6, 23 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 12, 18 ] } ]
     }
   },
   {
@@ -1723,14 +1401,14 @@
       "toilets": { "t": {  } },
       "vendingmachines": { "V": { "item_group": "vending_food" }, "q": { "item_group": "vending_drink" } },
       "items": {
-        "d": { "item": "airport_luggage_loot", "chance": 12 },
-        "h": { "item": "airport_deli_fridge", "chance": 100, "repeat": [ 2, 5 ] },
-        "1": { "item": "airport_bar_fridge", "chance": 100, "repeat": [ 3, 7 ] },
-        "F": { "item": "airport_office_file_loot", "chance": 70, "repeat": [ 1, 3 ] },
-        "L": { "item": "airport_tsa_locker_contraband", "chance": 95, "repeat": [ 2, 4 ] },
-        "B": { "item": "airport_luggage_loot", "chance": 2 }
+        "d": { "item": "traveler", "chance": 12 },
+        "h": { "item": "coffee_freezer", "chance": 100, "repeat": [ 2, 5 ] },
+        "1": { "item": "bar_alcohol", "chance": 100, "repeat": [ 3, 7 ] },
+        "F": { "item": "office_paper", "chance": 70, "repeat": [ 1, 3 ] },
+        "L": { "item": "cop_evidence", "chance": 95, "repeat": [ 2, 4 ] },
+        "B": { "item": "traveler", "chance": 2 }
       },
-      "place_monster": [ { "group": "AIRPORT_TSA_OFFICE_COPS", "x": [ 0, 12 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 6, 9 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE_COP", "x": [ 0, 12 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 6, 9 ] } ]
     }
   },
   {
@@ -1786,8 +1464,8 @@
       },
       "furniture": { "B": "f_bench", "b": "f_counter", "@": "f_olight", "f": "f_utility_shelf", "h": "f_table", "i": "f_chair" },
       "toilets": {  },
-      "items": { "d": { "item": "airport_luggage_loot", "chance": 12 }, "B": { "item": "airport_luggage_loot", "chance": 2 } },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 0, 18 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 10, 16 ] } ]
+      "items": { "d": { "item": "traveler", "chance": 12 }, "B": { "item": "traveler", "chance": 2 } },
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 0, 18 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 10, 16 ] } ]
     }
   },
   {
@@ -1831,7 +1509,7 @@
         "cggggggg_W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -1875,7 +1553,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -1919,7 +1597,7 @@
         "______________W_gggggggc"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -1963,7 +1641,7 @@
         "cggggggg_W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2007,7 +1685,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2051,7 +1729,7 @@
         "______________W_gggggggg"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2095,7 +1773,7 @@
         "_________W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2139,7 +1817,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2183,7 +1861,7 @@
         "______________W_________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2227,7 +1905,7 @@
         "_________W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2271,7 +1949,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2315,7 +1993,7 @@
         "______________W_________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2359,7 +2037,7 @@
         "_________W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2403,7 +2081,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2447,7 +2125,7 @@
         "______________W_________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2491,7 +2169,7 @@
         "cggggggg________________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2535,7 +2213,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2579,7 +2257,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2623,7 +2301,7 @@
         "cggggggg_W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2667,7 +2345,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2711,7 +2389,7 @@
         "______________W_gggggggc"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2755,7 +2433,7 @@
         "cggggggg_W______________"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2799,7 +2477,7 @@
         "________________________"
       ],
       "terrain": { "_": "t_pavement", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -2843,7 +2521,7 @@
         "______________W_gggggggg"
       ],
       "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
-      "place_monster": [ { "group": "AIRPORT_RUNWAY_ZOMBIES", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
   {
@@ -3116,8 +2794,8 @@
           "options": [ { "name": "Download Map Data", "action": "maps", "security": 0 } ]
         }
       },
-      "items": { "f": { "item": "airport_office_file_loot", "chance": 70, "repeat": [ 1, 3 ] } },
-      "place_monster": [ { "group": "AIRPORT_PUBLIC_ZOMBIES", "x": [ 10, 14 ], "y": [ 8, 12 ], "chance": 50, "repeat": 3 } ]
+      "items": { "f": { "item": "office_paper", "chance": 70, "repeat": [ 1, 3 ] } },
+      "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 10, 14 ], "y": [ 8, 12 ], "chance": 50, "repeat": 3 } ]
     }
   },
   {
@@ -3328,7 +3006,7 @@
       ],
       "terrain": { ".": "t_thconc_floor", "g": "t_grass", "|": "t_wall_metal", "c": "t_chainfence" },
       "furniture": {  },
-      "place_monster": [ { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 3, 23 ], "y": [ 4, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
+      "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 3, 23 ], "y": [ 4, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
   },
   {
@@ -3364,7 +3042,7 @@
       ],
       "terrain": { ".": "t_thconc_floor", "g": "t_grass", "@": "t_thconc_floor", "|": "t_wall_metal", "c": "t_chainfence" },
       "furniture": { "@": "f_olight" },
-      "place_monster": [ { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 3, 23 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
+      "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 3, 23 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
   },
   {
@@ -3410,7 +3088,7 @@
         "R": "t_thconc_floor"
       },
       "furniture": { "U": "f_utility_shelf", "O": "f_crate_o", "Q": "f_crate_c", "R": "f_rack" },
-      "place_monster": [ { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 0, 20 ], "y": [ 4, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
+      "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 0, 20 ], "y": [ 4, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
   },
   {
@@ -3456,7 +3134,7 @@
       },
       "furniture": { "U": "f_utility_shelf", "O": "f_crate_o", "Q": "f_crate_c", "R": "f_rack" },
       "place_vehicles": [ { "vehicle": "airport_hangar_aircraft_group", "x": 11, "y": 3, "rotation": 0, "status": 0, "fuel": 0, "chance": 55 } ],
-      "place_monster": [ { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 0, 20 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
+      "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 0, 20 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
   },
   {
@@ -3500,8 +3178,8 @@
       },
       "furniture": {  },
       "place_monster": [
-        { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 3, 23 ], "y": [ 0, 2 ], "chance": 100, "repeat": [ 1, 2 ] },
-        { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 6, 16 ], "y": [ 8, 18 ], "chance": 100, "repeat": [ 2, 4 ] }
+        { "group": "GROUP_LARGE_STATION", "x": [ 3, 23 ], "y": [ 0, 2 ], "chance": 100, "repeat": [ 1, 2 ] },
+        { "group": "GROUP_LARGE_STATION", "x": [ 6, 16 ], "y": [ 8, 18 ], "chance": 100, "repeat": [ 2, 4 ] }
       ]
     }
   },
@@ -3553,8 +3231,8 @@
         { "vehicle": "afs_avgas_tanker", "x": 14, "y": 16, "rotation": 0, "status": -1, "fuel": -1, "chance": 100 }
       ],
       "place_monster": [
-        { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 0, 19 ], "y": [ 0, 2 ], "chance": 100, "repeat": [ 1, 2 ] },
-        { "group": "AIRPORT_UTILITY_ZOMBIES", "x": [ 2, 20 ], "y": [ 8, 13 ], "chance": 100, "repeat": [ 2, 4 ] }
+        { "group": "GROUP_LARGE_STATION", "x": [ 0, 19 ], "y": [ 0, 2 ], "chance": 100, "repeat": [ 1, 2 ] },
+        { "group": "GROUP_LARGE_STATION", "x": [ 2, 20 ], "y": [ 8, 13 ], "chance": 100, "repeat": [ 2, 4 ] }
       ]
     }
   },
