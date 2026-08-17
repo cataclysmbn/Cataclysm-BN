@@ -1701,7 +1701,7 @@
           "y": 12,
           "rotation": 90,
           "status": 0,
-          "fuel": 0,
+          "fuel": -1,
           "chance": 100,
           "place_beyond_bounds": true
         }
