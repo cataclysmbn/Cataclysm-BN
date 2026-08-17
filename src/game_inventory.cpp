@@ -1562,7 +1562,7 @@ class repair_inventory_preset: public inventory_selector_preset
             return loc->made_of_any( actor->materials ) && ( !loc->count_by_charges() ||
                     loc->is_stackable() ) && ( loc->damage() > -1 ||
                                                ( loc->has_flag( flag_VARSIZE ) && !loc->has_flag( flag_FIT ) ) ) && !loc->count_by_charges() &&
-                   !loc->is_firearm() &&
+                   !loc->is_firearm() && !loc->has_flag( flag_NO_REPAIR ) &&
                    &*loc != main_tool;
         }
 

@@ -23,31 +23,23 @@
     "id": "HEALTH_POINTS",
     "type": "enchantment_value",
     "suffixes": [
-      [ "TORSO", "Affects Torso HP" ],
-      [ "HEAD", "Affects Head HP" ],
-      [ "ARM", "Affects Arm HP" ],
-      [ "HAND", "Affects Hand HP" ],
-      [ "LEG", "Affects Leg HP" ]
+      [
+        { "suffix": "TORSO", "desc_insert": [ "Torso" ] },
+        { "suffix": "HEAD", "desc_insert": [ "Head" ] },
+        {
+          "suffix": "ARM",
+          "desc_insert": [ "Arm" ],
+          "suffixes": [ { "suffix": "L", "desc_insert": [ "Left Arm" ] }, { "suffix": "R", "desc_insert": [ "Right Arm" ] } ]
+        },
+        {
+          "suffix": "LEG",
+          "desc_insert": [ "Leg" ],
+          "suffixes": [ { "suffix": "L", "desc_insert": [ "Left Leg" ] }, { "suffix": "R", "desc_insert": [ "Right Leg" ] } ]
+        }
+      ]
     ],
-    "desc": "Affects All Maximum HP Values"
-  },
-  {
-    "id": "HEALTH_POINTS_ARM",
-    "type": "enchantment_value",
-    "copy-from": "HEALTH_POINTS_ARM",
-    "suffixes": [ [ "L", "Affects Left Arm Maximum HP" ], [ "R", "Affects Right Arm Maximum HP" ] ]
-  },
-  {
-    "id": "HEALTH_POINTS_HAND",
-    "type": "enchantment_value",
-    "copy-from": "HEALTH_POINTS_HAND",
-    "suffixes": [ [ "L", "Affects Left Hand Maximum HP" ], [ "R", "Affects Right Hand Maximum HP" ] ]
-  },
-  {
-    "id": "HEALTH_POINTS_LEG",
-    "type": "enchantment_value",
-    "copy-from": "HEALTH_POINTS_LEG",
-    "suffixes": [ [ "L", "Affects Left Leg Maximum HP" ], [ "R", "Affects Right Leg Maximum HP" ] ]
+    "desc": "Affects %s Maximum HP Values",
+    "desc_insert": [ "All" ]
   },
   {
     "id": "SPEED",
@@ -104,8 +96,11 @@
   {
     "id": "CONSTRUCTION_SPEED",
     "type": "enchantment_value",
-    "desc": "Affects Construction Speed ( Construction and Vehicle )",
-    "suffixes": [ [ "CON", "Affects Construction Speed ( Construction )" ], [ "VEH", "Affects Construction Speed ( Vehicle )" ] ]
+    "desc": "Affects Construction Speed %s",
+    "desc_insert": [ "( Construction and Vehicle )" ],
+    "suffixes": [
+      [ { "suffix": "CON", "desc_insert": [ "( Construction )" ] }, { "suffix": "VEH", "desc_insert": [ "( Vehicle )" ] } ]
+    ]
   },
   {
     "id": "METABOLISM",
@@ -213,10 +208,48 @@
     "id": "CLIMATE_CONTROL",
     "type": "enchantment_value",
     "suffixes": [
-      [ "COOLING", "Keeps you comfortable against hot temperatures" ],
-      [ "HEATING", "Keeps you comfortable against cold temperatures" ]
+      [ { "suffix": "COOLING", "desc_insert": [ "hot", "" ] }, { "suffix": "HEATING", "desc_insert": [ "cold", "" ] } ],
+      [
+        { "suffix": "TORSO", "replace": { "desc_insert": { "idx": 1, "val": "Torse" } } },
+        { "suffix": "HEAD", "replace": { "desc_insert": { "idx": 1, "val": "Head" } } },
+        { "suffix": "EYES", "replace": { "desc_insert": { "idx": 1, "val": "Eyes" } } },
+        { "suffix": "MOUTH", "replace": { "desc_insert": { "idx": 1, "val": "Mouth" } } },
+        {
+          "suffix": "ARM",
+          "replace": { "desc_insert": { "idx": 1, "val": "Arm" } },
+          "suffixes": [
+            { "suffix": "L", "replace": { "desc_insert": { "idx": 1, "val": "Left Arm" } } },
+            { "suffix": "R", "replace": { "desc_insert": { "idx": 1, "val": "Right Arm" } } }
+          ]
+        },
+        {
+          "suffix": "HAND",
+          "replace": { "desc_insert": { "idx": 1, "val": "Hand" } },
+          "suffixes": [
+            { "suffix": "L", "replace": { "desc_insert": { "idx": 1, "val": "Left Hand" } } },
+            { "suffix": "R", "replace": { "desc_insert": { "idx": 1, "val": "Right Hand" } } }
+          ]
+        },
+        {
+          "suffix": "LEG",
+          "replace": { "desc_insert": { "idx": 1, "val": "Leg" } },
+          "suffixes": [
+            { "suffix": "L", "replace": { "desc_insert": { "idx": 1, "val": "Left Leg" } } },
+            { "suffix": "R", "replace": { "desc_insert": { "idx": 1, "val": "Right Leg" } } }
+          ]
+        },
+        {
+          "suffix": "FOOT",
+          "replace": { "desc_insert": { "idx": 1, "val": "Foot" } },
+          "suffixes": [
+            { "suffix": "L", "replace": { "desc_insert": { "idx": 1, "val": "Left Foot" } } },
+            { "suffix": "R", "replace": { "desc_insert": { "idx": 1, "val": "Right Foot" } } }
+          ]
+        }
+      ]
     ],
-    "desc": "Grants climate control, which keeps you at a comfortable temperature"
+    "desc": "Keeps you comfortable against %1s temperatures ( %2s )",
+    "desc_insert": [ "All", "All Bodyparts" ]
   },
   {
     "id": "LIE",
@@ -346,21 +379,23 @@
     "id": "ARMOR",
     "type": "enchantment_value",
     "suffixes": [
-      [ "BASH", "Affects Incoming Bash Damage" ],
-      [ "CUT", "Affects Incoming Cut Damage" ],
-      [ "DARK", "Affects Incoming Dark Damage" ],
-      [ "LIGHT", "Affects Incoming Light Damage" ],
-      [ "PSI", "Affects Incoming Psi Damage" ],
-      [ "STAB", "Affects Incoming Stab Damage" ],
-      [ "BULLET", "Affects Incoming Ballistic Damage" ],
-      [ "HEAT", "Affects Incoming Heat Damage" ],
-      [ "COLD", "Affects Incoming Cold Damage" ],
-      [ "ELECTRIC", "Affects Incoming Electric Damage" ],
-      [ "ACID", "Affects Incoming Acidic Damage" ],
-      [ "BIOLOGICAL", "Affects Incoming Biological Damage" ],
-      [ "TRUE", "Affects Incoming True Damage" ]
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
     ],
-    "desc": "Affects Against All Damage",
+    "desc": "Affects Incoming %s Damage",
     "increase_good": false
   },
   {
@@ -373,41 +408,45 @@
     "id": "RANGED_DAMAGE",
     "type": "enchantment_value",
     "suffixes": [
-      [ "BASH", "Affects Outgoing Ranged Bash Damage" ],
-      [ "CUT", "Affects Outgoing Ranged Cut Damage" ],
-      [ "DARK", "Affects Outgoing Ranged Dark Damage" ],
-      [ "LIGHT", "Affects Outgoing Ranged Light Damage" ],
-      [ "PSI", "Affects Outgoing Ranged Psi Damage" ],
-      [ "STAB", "Affects Outgoing Ranged Stab Damage" ],
-      [ "BULLET", "Affects Outgoing Ranged Ballistic Damage" ],
-      [ "HEAT", "Affects Outgoing Ranged Heat Damage" ],
-      [ "COLD", "Affects Outgoing Ranged Cold Damage" ],
-      [ "ELECTRIC", "Affects Outgoing Ranged Electric Damage" ],
-      [ "ACID", "Affects Outgoing Ranged Acid Damage" ],
-      [ "BIOLOGICAL", "Affects Outgoing Ranged Biological Damage" ],
-      [ "TRUE", "Affects Outgoing Ranged True Damage" ]
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
     ],
-    "desc": "Affects Outgoing Ranged Damage"
+    "desc": "Affects Outgoing Ranged %s Damage"
   },
   {
     "id": "RANGED_ARMOR_PENETRATION",
     "type": "enchantment_value",
     "suffixes": [
-      [ "BASH", "Affects Outgoing Ranged Bash Armor Penetration" ],
-      [ "CUT", "Affects Outgoing Ranged Cut Armor Penetration" ],
-      [ "DARK", "Affects Outgoing Ranged Dark Armor Penetration" ],
-      [ "LIGHT", "Affects Outgoing Ranged Light Armor Penetration" ],
-      [ "PSI", "Affects Outgoing Ranged Psi Armor Penetration" ],
-      [ "STAB", "Affects Outgoing Ranged Stab Armor Penetration" ],
-      [ "BULLET", "Affects Outgoing Ranged Bullet Armor Penetration" ],
-      [ "HEAT", "Affects Outgoing Ranged Heat Armor Penetration" ],
-      [ "COLD", "Affects Outgoing Ranged Cold Armor Penetration" ],
-      [ "ELECTRIC", "Affects Outgoing Ranged Electric Armor Penetration" ],
-      [ "ACID", "Affects Outgoing Ranged Acid Armor Penetration" ],
-      [ "BIOLOGICAL", "Affects Outgoing Ranged Biological Armor Penetration" ],
-      [ "TRUE", "Affects Outgoing Ranged True Armor Penetration" ]
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
     ],
-    "desc": "Affects Outgoing Ranged Armor Penetration"
+    "desc": "Affects Outgoing Ranged %s Armor Penetration"
   },
   {
     "id": "RANGED_RANGE",
@@ -437,35 +476,38 @@
     "can_add": true,
     "can_mult": true,
     "suffixes": [
-      [ "BARTER", "Affects Barter Skill Level" ],
-      [ "SPEECH", "Affects Speech Skill Level" ],
-      [ "COMPUTER", "Affects Computer Skill Level" ],
-      [ "FIRSTAID", "Affects First Aid Skill Level" ],
-      [ "MECHANICS", "Affects Mechanics Skill Level" ],
-      [ "TRAPS", "Affects Traps Skill Level" ],
-      [ "DRIVING", "Affects Driving Skill Level" ],
-      [ "SWIMMING", "Affects Swimming Skill Level" ],
-      [ "FABRICATION", "Affects Fabrication Skill Level" ],
-      [ "COOKING", "Affects Cooking Skill Level" ],
-      [ "TAILOR", "Affects Tailor Skill Level" ],
-      [ "SURVIVAL", "Affects Survival Skill Level" ],
-      [ "ELECTRONICS", "Affects Electronics Skill Level" ],
-      [ "ARCHERY", "Affects Archery Skill Level" ],
-      [ "GUN", "Affects Gun Skill Level" ],
-      [ "LAUNCHER", "Affects Launcher Skill Level" ],
-      [ "PISTOL", "Affects Pistol Skill Level" ],
-      [ "RIFLE", "Affects Rifle Skill Level" ],
-      [ "SHOTGUN", "Affects Shotgun Skill Level" ],
-      [ "SMG", "Affects Sub Machine Gun Skill Level" ],
-      [ "THROW", "Affects Throwing Skill Level" ],
-      [ "MELEE", "Affects Melee Skill Level" ],
-      [ "BASHING", "Affects Bashing Skill Level" ],
-      [ "CUTTING", "Affects Cutting Skill Level" ],
-      [ "DODGE", "Affects Dodging Skill Level" ],
-      [ "STABBING", "Affects Stabbing Skill Level" ],
-      [ "UNARMED", "Affects Unarmed Skill Level" ]
+      [
+        { "suffix": "BARTER", "desc_insert": [ "Barter" ] },
+        { "suffix": "SPEECH", "desc_insert": [ "Speech" ] },
+        { "suffix": "COMPUTER", "desc_insert": [ "Computer" ] },
+        { "suffix": "FIRSTAID", "desc_insert": [ "First Aid" ] },
+        { "suffix": "MECHANICS", "desc_insert": [ "Mechanics" ] },
+        { "suffix": "TRAPS", "desc_insert": [ "Traps" ] },
+        { "suffix": "DRIVING", "desc_insert": [ "Driving" ] },
+        { "suffix": "SWIMMING", "desc_insert": [ "Swimming" ] },
+        { "suffix": "FABRICATION", "desc_insert": [ "Fabrication" ] },
+        { "suffix": "COOKING", "desc_insert": [ "Cooking" ] },
+        { "suffix": "TAILOR", "desc_insert": [ "Tailor" ] },
+        { "suffix": "SURVIVAL", "desc_insert": [ "Survival" ] },
+        { "suffix": "ELECTRONICS", "desc_insert": [ "Electronics" ] },
+        { "suffix": "ARCHERY", "desc_insert": [ "Archery" ] },
+        { "suffix": "GUN", "desc_insert": [ "Gun" ] },
+        { "suffix": "LAUNCHER", "desc_insert": [ "Launcher" ] },
+        { "suffix": "PISTOL", "desc_insert": [ "Pistol" ] },
+        { "suffix": "RIFLE", "desc_insert": [ "Rifle" ] },
+        { "suffix": "SHOTGUN", "desc_insert": [ "Shotgun" ] },
+        { "suffix": "SMG", "desc_insert": [ "Sub Machine Gun" ] },
+        { "suffix": "THROW", "desc_insert": [ "Throwing" ] },
+        { "suffix": "MELEE", "desc_insert": [ "Melee" ] },
+        { "suffix": "BASHING", "desc_insert": [ "Bashing" ] },
+        { "suffix": "CUTTING", "desc_insert": [ "Cutting" ] },
+        { "suffix": "DODGE", "desc_insert": [ "Dodging" ] },
+        { "suffix": "STABBING", "desc_insert": [ "Stabbing" ] },
+        { "suffix": "UNARMED", "desc_insert": [ "Unarmed" ] }
+      ]
     ],
-    "desc": "Affects All Skill Levels"
+    "desc": "Affects %s Skill Level",
+    "desc_insert": [ "All" ]
   },
   {
     "id": "SKILL_EXP",
@@ -474,137 +516,143 @@
     "can_add": false,
     "can_mult": true,
     "suffixes": [
-      [ "BARTER", "Affects Barter Skill Exp Gain" ],
-      [ "SPEECH", "Affects Speech Skill Exp Gain" ],
-      [ "COMPUTER", "Affects Computer Skill Exp Gain" ],
-      [ "FIRSTAID", "Affects First Aid Skill Exp Gain" ],
-      [ "MECHANICS", "Affects Mechanics Skill Exp Gain" ],
-      [ "TRAPS", "Affects Traps Skill Exp Gain" ],
-      [ "DRIVING", "Affects Driving Skill Exp Gain" ],
-      [ "SWIMMING", "Affects Swimming Skill Exp Gain" ],
-      [ "FABRICATION", "Affects Fabrication Skill Exp Gain" ],
-      [ "COOKING", "Affects Cooking Skill Exp Gain" ],
-      [ "TAILOR", "Affects Tailor Skill Exp Gain" ],
-      [ "SURVIVAL", "Affects Survival Skill Exp Gain" ],
-      [ "ELECTRONICS", "Affects Electronics Skill Exp Gain" ],
-      [ "ARCHERY", "Affects Archery Skill Exp Gain" ],
-      [ "GUN", "Affects Gun Skill Exp Gain" ],
-      [ "LAUNCHER", "Affects Launcher Skill Exp Gain" ],
-      [ "PISTOL", "Affects Pistol Skill Exp Gain" ],
-      [ "RIFLE", "Affects Rifle Skill Exp Gain" ],
-      [ "SHOTGUN", "Affects Shotgun Skill Exp Gain" ],
-      [ "SMG", "Affects Sub Machine Gun Skill Exp Gain" ],
-      [ "THROW", "Affects Throwing Skill Exp Gain" ],
-      [ "MELEE", "Affects Melee Skill Exp Gain" ],
-      [ "BASHING", "Affects Bashing Skill Exp Gain" ],
-      [ "CUTTING", "Affects Cutting Skill Exp Gain" ],
-      [ "DODGE", "Affects Dodging Skill Exp Gain" ],
-      [ "STABBING", "Affects Stabbing Skill Exp Gain" ],
-      [ "UNARMED", "Affects Unarmed Skill Exp Gain" ]
+      [
+        { "suffix": "BARTER", "desc_insert": [ "Barter" ] },
+        { "suffix": "SPEECH", "desc_insert": [ "Speech" ] },
+        { "suffix": "COMPUTER", "desc_insert": [ "Computer" ] },
+        { "suffix": "FIRSTAID", "desc_insert": [ "First Aid" ] },
+        { "suffix": "MECHANICS", "desc_insert": [ "Mechanics" ] },
+        { "suffix": "TRAPS", "desc_insert": [ "Traps" ] },
+        { "suffix": "DRIVING", "desc_insert": [ "Driving" ] },
+        { "suffix": "SWIMMING", "desc_insert": [ "Swimming" ] },
+        { "suffix": "FABRICATION", "desc_insert": [ "Fabrication" ] },
+        { "suffix": "COOKING", "desc_insert": [ "Cooking" ] },
+        { "suffix": "TAILOR", "desc_insert": [ "Tailor" ] },
+        { "suffix": "SURVIVAL", "desc_insert": [ "Survival" ] },
+        { "suffix": "ELECTRONICS", "desc_insert": [ "Electronics" ] },
+        { "suffix": "ARCHERY", "desc_insert": [ "Archery" ] },
+        { "suffix": "GUN", "desc_insert": [ "Gun" ] },
+        { "suffix": "LAUNCHER", "desc_insert": [ "Launcher" ] },
+        { "suffix": "PISTOL", "desc_insert": [ "Pistol" ] },
+        { "suffix": "RIFLE", "desc_insert": [ "Rifle" ] },
+        { "suffix": "SHOTGUN", "desc_insert": [ "Shotgun" ] },
+        { "suffix": "SMG", "desc_insert": [ "Sub Machine Gun" ] },
+        { "suffix": "THROW", "desc_insert": [ "Throwing" ] },
+        { "suffix": "MELEE", "desc_insert": [ "Melee" ] },
+        { "suffix": "BASHING", "desc_insert": [ "Bashing" ] },
+        { "suffix": "CUTTING", "desc_insert": [ "Cutting" ] },
+        { "suffix": "DODGE", "desc_insert": [ "Dodging" ] },
+        { "suffix": "STABBING", "desc_insert": [ "Stabbing" ] },
+        { "suffix": "UNARMED", "desc_insert": [ "Unarmed" ] }
+      ]
     ],
-    "desc": "Affects All Exp Gain"
+    "desc": "Affects %s Exp Gain",
+    "desc_insert": [ "All" ]
   },
   {
     "id": "ENCUMBRANCE",
     "type": "enchantment_value",
     "increase_good": false,
     "suffixes": [
-      [ "TORSO", "Affects Torso Encumbrance" ],
-      [ "HEAD", "Affects Head Encumbrance" ],
-      [ "EYES", "Affects Eyes Encumbrance" ],
-      [ "MOUTH", "Affects Mouth Encumbrance" ],
-      [ "ARM", "Affects Arm Encumbrance" ],
-      [ "HAND", "Affects Hand Encumbrance" ],
-      [ "LEG", "Affects Leg Encumbrance" ],
-      [ "FOOT", "Affects Foot Encumbrance" ]
+      [
+        { "suffix": "TORSO", "desc_insert": [ "Torse" ] },
+        { "suffix": "HEAD", "desc_insert": [ "Head" ] },
+        { "suffix": "EYES", "desc_insert": [ "Eyes" ] },
+        { "suffix": "MOUTH", "desc_insert": [ "Mouth" ] },
+        {
+          "suffix": "ARM",
+          "desc_insert": [ "Arm" ],
+          "suffixes": [ { "suffix": "L", "desc_insert": [ "Left Arm" ] }, { "suffix": "R", "desc_insert": [ "Right Arm" ] } ]
+        },
+        {
+          "suffix": "HAND",
+          "desc_insert": [ "Hand" ],
+          "suffixes": [ { "suffix": "L", "desc_insert": [ "Left Hand" ] }, { "suffix": "R", "desc_insert": [ "Right Hand" ] } ]
+        },
+        {
+          "suffix": "LEG",
+          "desc_insert": [ "Leg" ],
+          "suffixes": [ { "suffix": "L", "desc_insert": [ "Left Leg" ] }, { "suffix": "R", "desc_insert": [ "Right Leg" ] } ]
+        },
+        {
+          "suffix": "FOOT",
+          "desc_insert": [ "Foot" ],
+          "suffixes": [ { "suffix": "L", "desc_insert": [ "Left Foot" ] }, { "suffix": "R", "desc_insert": [ "Right Foot" ] } ]
+        }
+      ]
     ],
-    "desc": "Affects All Encumbrance Values"
-  },
-  {
-    "id": "ENCUMBRANCE_ARM",
-    "type": "enchantment_value",
-    "copy-from": "ENCUMBRANCE_ARM",
-    "suffixes": [ [ "L", "Affects Left Arm Encumbrance" ], [ "R", "Affects Right Arm Encumbrance" ] ]
-  },
-  {
-    "id": "ENCUMBRANCE_HAND",
-    "type": "enchantment_value",
-    "copy-from": "ENCUMBRANCE_HAND",
-    "suffixes": [ [ "L", "Affects Left Hand Encumbrance" ], [ "R", "Affects Right Hand Encumbrance" ] ]
-  },
-  {
-    "id": "ENCUMBRANCE_LEG",
-    "type": "enchantment_value",
-    "copy-from": "ENCUMBRANCE_LEG",
-    "suffixes": [ [ "L", "Affects Left Leg Encumbrance" ], [ "R", "Affects Right Leg Encumbrance" ] ]
-  },
-  {
-    "id": "ENCUMBRANCE_FOOT",
-    "type": "enchantment_value",
-    "copy-from": "ENCUMBRANCE_FOOT",
-    "suffixes": [ [ "L", "Affects Left Foot Encumbrance" ], [ "R", "Affects Right Foot Encumbrance" ] ]
+    "desc": "Affects %s Encumbrance Values",
+    "desc_insert": [ "All" ]
   },
   {
     "id": "ITEM_DAMAGE",
     "type": "enchantment_value",
     "suffixes": [
-      [ "BASH", "Affects Outgoing Bash Damage ( This Item Only )" ],
-      [ "CUT", "Affects Outgoing Cut Damage ( This Item Only )" ],
-      [ "DARK", "Affects Outgoing Dark Damage ( This Item Only )" ],
-      [ "LIGHT", "Affects Outgoing Light Damage ( This Item Only )" ],
-      [ "PSI", "Affects Outgoing Psi Damage ( This Item Only )" ],
-      [ "STAB", "Affects Outgoing Stab Damage ( This Item Only )" ],
-      [ "BULLET", "Affects Outgoing Ballistic Damage ( This Item Only )" ],
-      [ "HEAT", "Affects Outgoing Heat Damage ( This Item Only )" ],
-      [ "COLD", "Affects Outgoing Cold Damage ( This Item Only )" ],
-      [ "ELECTRIC", "Affects Outgoing Electric Damage ( This Item Only )" ],
-      [ "ACID", "Affects Outgoing Acidic Damage ( This Item Only )" ],
-      [ "BIOLOGICAL", "Affects Outgoing Biological Damage ( This Item Only )" ],
-      [ "TRUE", "Affects Outgoing True Damage ( This Item Only )" ]
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
     ],
-    "desc": "Affects All Outgoing Damage ( This Item Only )",
+    "desc": "Affects Outgoing %s Damage ( This Item Only )",
+    "desc_insert": [ "" ],
     "unsupported_conditions": [ "character", "item_and_character" ]
   },
   {
     "id": "ITEM_ARMOR_PENETRATION",
     "type": "enchantment_value",
     "suffixes": [
-      [ "BASH", "Affects Bash Armor Penetration ( This Item Only )" ],
-      [ "CUT", "Affects Cut Armor Penetration ( This Item Only )" ],
-      [ "DARK", "Affects Dark Armor Penetration ( This Item Only )" ],
-      [ "LIGHT", "Affects Light Armor Penetration ( This Item Only )" ],
-      [ "PSI", "Affects Psi Armor Penetration ( This Item Only )" ],
-      [ "STAB", "Affects Stab Armor Penetration ( This Item Only )" ],
-      [ "BULLET", "Affects Ballistic Armor Penetration ( This Item Only )" ],
-      [ "HEAT", "Affects Heat Armor Penetration ( This Item Only )" ],
-      [ "COLD", "Affects Cold Armor Penetration ( This Item Only )" ],
-      [ "ELECTRIC", "Affects Electric Armor Penetration ( This Item Only )" ],
-      [ "ACID", "Affects Acidic Armor Penetration ( This Item Only )" ],
-      [ "BIOLOGICAL", "Affects Biological Armor Penetration ( This Item Only )" ],
-      [ "TRUE", "Affects True Armor Penetration ( This Item Only )" ]
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
     ],
-    "desc": "Affects All Armor Penetration ( This Item Only )",
+    "desc": "Affects %s Armor Penetration ( This Item Only )",
+    "desc_insert": [ "All" ],
     "unsupported_conditions": [ "character", "item_and_character" ]
   },
   {
     "id": "ITEM_ARMOR",
     "type": "enchantment_value",
     "suffixes": [
-      [ "BASH", "Affects Incoming Bash Damage ( This Item Only )" ],
-      [ "CUT", "Affects Incoming Cut Damage ( This Item Only )" ],
-      [ "DARK", "Affects Incoming Dark Damage ( This Item Only )" ],
-      [ "LIGHT", "Affects Incoming Light Damage ( This Item Only )" ],
-      [ "PSI", "Affects Incoming Psi Damage ( This Item Only )" ],
-      [ "STAB", "Affects Incoming Stab Damage ( This Item Only )" ],
-      [ "BULLET", "Affects Incoming Ballistic Damage ( This Item Only )" ],
-      [ "HEAT", "Affects Incoming Heat Damage ( This Item Only )" ],
-      [ "COLD", "Affects Incoming Cold Damage ( This Item Only )" ],
-      [ "ELECTRIC", "Affects Incoming Electric Damage ( This Item Only )" ],
-      [ "ACID", "Affects Incoming Acidic Damage ( This Item Only )" ],
-      [ "BIOLOGICAL", "Affects Incoming Biological Damage ( This Item Only )" ],
-      [ "TRUE", "Affects Incoming True Damage ( This Item Only )" ]
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
     ],
-    "desc": "Affects All Incoming Damage ( This Item Only )",
+    "desc": "Affects Incoming %s Damage ( This Item Only )",
     "increase_good": false
   },
   {

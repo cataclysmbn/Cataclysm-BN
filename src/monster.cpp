@@ -391,7 +391,6 @@ monster::monster( const mtype_id &id ) : monster()
     if( monster::has_flag( MF_AQUATIC ) ) {
         fish_population = dice( 1, 20 );
     }
-    upgrade_time = next_upgrade_time() + to_days<int>( calendar::turn - calendar::turn_zero );
 }
 
 monster::monster( const mtype_id &id, const tripoint_bub_ms &p ) : monster( id )

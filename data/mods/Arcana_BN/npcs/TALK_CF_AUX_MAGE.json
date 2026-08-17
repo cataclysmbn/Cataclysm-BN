@@ -26,11 +26,7 @@
       { "text": "Who are you?", "topic": "TALK_CF_AUX_MAGE_WHO" },
       { "text": "What can you tell me about this place?", "topic": "TALK_CF_AUX_MAGE_WHERE" },
       { "text": "What do you do here?", "topic": "TALK_CF_AUX_MAGE_DO" },
-      {
-        "text": "Can you teach me any spells?",
-        "topic": "TALK_CF_AUX_MAGE_SPELL_MENU",
-        "condition": { "not": { "u_has_var": "celine_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" } }
-      },
+      { "text": "Can you teach me anything?", "topic": "TALK_TRAIN" },
       {
         "text": "Do you have anything to trade?",
         "effect": "start_trade",
@@ -78,11 +74,7 @@
         "text": "The people here hoard knowledge?",
         "topic": "TALK_CF_AUX_MAGE_HOARD"
       },
-      {
-        "text": "Can you teach me anything?",
-        "topic": "TALK_TRAIN",
-        "condition": { "not": { "u_has_var": "celine_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" } }
-      },
+      { "text": "Can you teach me anything?", "topic": "TALK_TRAIN" },
       { "text": "I see.", "topic": "TALK_CF_AUX_MAGE" }
     ]
   },

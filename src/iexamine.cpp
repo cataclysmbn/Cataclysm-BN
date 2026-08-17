@@ -1651,7 +1651,8 @@ void iexamine::safe( player &p, const tripoint_bub_ms &examp )
     auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
-    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
+    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) &&
+        !p.movement_mode_is( CMM_PRONE ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
             apply_prying_tool( p, prying_tool, examp );
@@ -1715,7 +1716,8 @@ void iexamine::gunsafe_el( player &p, const tripoint_bub_ms &examp )
     auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
-    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
+    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) &&
+        !p.movement_mode_is( CMM_PRONE ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
             apply_prying_tool( p, prying_tool, examp );
@@ -1806,7 +1808,8 @@ void iexamine::locked_object( player &p, const tripoint_bub_ms &examp )
 
     // if the furniture/terrain is also lockpickable
     // try lockpicking first if we're crouched
-    if( lockpick_activity_actor::is_pickable( examp ) && p.movement_mode_is( CMM_CROUCH ) ) {
+    if( lockpick_activity_actor::is_pickable( examp ) && ( p.movement_mode_is( CMM_CROUCH ) ||
+            p.movement_mode_is( CMM_PRONE ) ) ) {
         if( pick_lock( p, examp ) ) {
             return;
         }

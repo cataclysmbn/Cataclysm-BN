@@ -751,7 +751,7 @@
     "id": "bio_lockpick",
     "type": "bionic",
     "name": { "str": "Fingerpick" },
-    "description": "One of your fingers has an electronic lockpick surgically embedded in it.  This automatic system will quickly unlock all but the most advanced key locks without any skill required on the part of the user.  If you're crouched, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
+    "description": "One of your fingers has an electronic lockpick surgically embedded in it.  This automatic system will quickly unlock all but the most advanced key locks without any skill required on the part of the user.  If you're crouched or prone, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
     "occupied_bodyparts": [ [ "hand_r", 2 ] ],
     "fake_item": "pseudo_bio_picklock",
     "act_cost": "50 J",

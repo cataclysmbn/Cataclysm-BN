@@ -310,7 +310,7 @@
       "passive_effects": [
         {
           "conditions": [ "WIELD" ],
-          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 3 } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 3, "hit_self": true } ],
           "intermittent_activation": { "effects": [ { "frequency": "25 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
         }

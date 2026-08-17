@@ -546,7 +546,7 @@
       "fatigue_min": [ 1 ],
       "fatigue_tick": [ 300 ]
     },
-    "base_enchantments": [ { "hit_you_effect": [ { "id": "arcana_react_drain_life" } ] } ],
+    "base_enchantments": [ { "hit_you_effect": [ { "id": "arcana_react_drain_life", "hit_self": true } ] } ],
     "flags": [ "EFFECT_NIGHT_VISION" ]
   },
   {
@@ -1200,13 +1200,13 @@
     "type": "effect_type",
     "id": "arcana_effect_drain_life",
     "name": [ "Drain Life" ],
-    "desc": [ "A strange radiance permeates your body, blinding attackers with otherworldly magic." ],
+    "desc": [ "A strange radiance permeates your body, draining life from your foes with each strike." ],
     "remove_message": "You feel momentarily weak as your life-draining spell fades.",
     "decay_messages": [ [ "You feel your lift-draining spell fading.", "bad" ] ],
     "rating": "good",
     "max_duration": "120 m",
     "max_intensity": 120,
     "int_dur_factor": "1 m",
-    "base_enchantments": [ { "hit_you_effect": [ { "id": "arcana_react_drain_life" } ] } ]
+    "base_enchantments": [ { "hit_you_effect": [ { "id": "arcana_react_drain_life", "hit_self": true } ] } ]
   }
 ]

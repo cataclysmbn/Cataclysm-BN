@@ -1018,6 +1018,54 @@
     "components": [ [ [ "scute_piece", 15 ] ], [ [ "fabric_hides_proper", 15, "LIST" ] ] ]
   },
   {
+    "result": "thermal_cooling",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "electronics",
+    "difficulty": 5,
+    "skills_required": [ "tailor", 4 ],
+    "time": "1 h 20 m",
+    "reversible": true,
+    "book_learn": [ [ "textbook_fabrication", 4 ], [ "tailor_portfolio", 5 ], [ "textbook_tailor", 4 ], [ "atomic_survival", 4 ] ],
+    "using": [ [ "sewing_standard", 30 ], [ "soldering_standard", 60 ] ],
+    "components": [
+      [ [ "rag", 30 ], [ "union_suit", 1 ] ],
+      [ [ "element", 6 ] ],
+      [ [ "hose", 3 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "processor", 3 ] ],
+      [ [ "amplifier", 3 ] ],
+      [ [ "condensor_coil", 1 ] ],
+      [ [ "thermometer", 1 ] ],
+      [ [ "water", 6 ], [ "water_clean", 6 ] ]
+    ]
+  },
+  {
+    "result": "thermal_cooling",
+    "type": "recipe",
+    "id_suffix": "thermal_outfit_from_bits",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "electronics",
+    "difficulty": 5,
+    "skills_required": [ "tailor", 4 ],
+    "time": "1 h 20 m",
+    "reversible": true,
+    "book_learn": [ [ "textbook_fabrication", 4 ], [ "tailor_portfolio", 5 ], [ "textbook_tailor", 4 ], [ "atomic_survival", 4 ] ],
+    "using": [ [ "sewing_standard", 15 ], [ "soldering_standard", 10 ] ],
+    "components": [
+      [ [ "thermal_outfit", 1 ] ],
+      [ [ "hose", 3 ] ],
+      [ [ "processor", 3 ] ],
+      [ [ "amplifier", 3 ] ],
+      [ [ "condensor_coil", 1 ] ],
+      [ [ "thermometer", 1 ] ],
+      [ [ "water", 6 ], [ "water_clean", 6 ] ]
+    ]
+  },
+  {
     "result": "thermal_cooling_suit",
     "type": "recipe",
     "category": "CC_ARMOR",

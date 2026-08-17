@@ -447,9 +447,38 @@
   {
     "id": "TALK_EVAC_MERCHANT_BEGGARS2_Reward",
     "type": "talk_topic",
-    "dynamic_line": "And so we did.  You didn't do the full job, but we're fair people here.  Here's five merch a head for the folks you found a new home for.",
-    "speaker_effect": { "effect": { "u_buy_item": "FMCNote", "count": 20 } },
+    "dynamic_line": "And so we did...",
+    "responses": [
+      {
+        "text": "...",
+        "topic": "TALK_EVAC_MERCHANT_BEGGARS2_Reward2",
+        "condition": { "not": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" } }
+      },
+      {
+        "text": "...",
+        "topic": "TALK_EVAC_MERCHANT_BEGGARS2_RewardNo",
+        "condition": { "npc_has_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" }
+      },
+      { "text": "Nevermind.", "topic": "TALK_EVAC_MERCHANT" }
+    ]
+  },
+  {
+    "id": "TALK_EVAC_MERCHANT_BEGGARS2_Reward2",
+    "type": "talk_topic",
+    "dynamic_line": "You didn't do the full job, but we're fair people here.  Here's five merch a head for the folks you found a new home for.",
+    "speaker_effect": {
+      "effect": [
+        { "u_buy_item": "FMCNote", "count": 20 },
+        { "npc_add_var": "beggars_reward_collected", "type": "general", "context": "recruit", "value": "yes" }
+      ]
+    },
     "responses": [ { "text": "Thanks.", "topic": "TALK_EVAC_MERCHANT" } ]
+  },
+  {
+    "id": "TALK_EVAC_MERCHANT_BEGGARS2_RewardNo",
+    "type": "talk_topic",
+    "dynamic_line": "Did you hit your head?  I already paid you.",
+    "responses": [ { "text": "Oh, my bad.", "topic": "TALK_EVAC_MERCHANT" } ]
   },
   {
     "id": "TALK_EVAC_MERCHANT_RANCH",
