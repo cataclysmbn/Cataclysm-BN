@@ -52,6 +52,7 @@
 static const activity_id ACT_FIND_MOUNT( "ACT_FIND_MOUNT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
 static const activity_id ACT_MULTIPLE_BUTCHER( "ACT_MULTIPLE_BUTCHER" );
+static const activity_id ACT_MULTIPLE_DISSECT( "ACT_MULTIPLE_DISSECT" );
 static const activity_id ACT_MULTIPLE_CHOP_PLANKS( "ACT_MULTIPLE_CHOP_PLANKS" );
 static const activity_id ACT_MULTIPLE_CHOP_TREES( "ACT_MULTIPLE_CHOP_TREES" );
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
@@ -255,6 +256,11 @@ void talk_function::find_mount( npc &p )
 void talk_function::do_butcher( npc &p )
 {
     p.assign_activity( ACT_MULTIPLE_BUTCHER );
+}
+
+void talk_function::do_dissect( npc &p )
+{
+    p.assign_activity( ACT_MULTIPLE_DISSECT );
 }
 
 void talk_function::do_chop_plank( npc &p )
