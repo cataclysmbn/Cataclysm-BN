@@ -282,7 +282,7 @@
     "locations": [ "land" ],
     "occurrences": [ 0, 1 ],
     "rotate": false,
-    "flags": [ "ELECTRIC_GRID" ]
+    "flags": [ "ELECTRIC_GRID", "UNIQUE" ]
   },
   {
     "type": "mapgen_color_palette",
