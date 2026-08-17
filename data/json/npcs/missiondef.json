@@ -445,10 +445,9 @@
     "monster_kill_goal": 100,
     "difficulty": 5,
     "value": 250000,
-    "start": { "effect": "follow_only" },
-    "end": { "effect": "stop_following" },
+    "start": { "effect": "follow" },
     "origins": [ "ORIGIN_SECONDARY" ],
-    "followup": "MISSION_KILL_HORDE_MASTER",
+    "followup": "MISSION_RECRUIT_TRACKER",
     "dialogue": {
       "describe": "You seem to know this new world better than most…",
       "offer": "You're kitted out better than most… would you be interested in making this world a little better for the rest of us?  The towns have enough supplies for us survivors to start securing a foothold but we don't have anyone with the skills and equipment to thin the masses of undead.  I'll lend you a hand to the best of my ability but you really showed promise taking out that other beast.  You, I, and a 100 zombies laid to rest, what do you say?",
@@ -462,6 +461,32 @@
     }
   },
   {
+    "id": "MISSION_RECRUIT_TRACKER",
+    "type": "mission_definition",
+    "name": { "str": "Recruit Tracker" },
+    "goal": "MGOAL_RECRUIT_NPC",
+    "difficulty": 5,
+    "value": 70000,
+    "start": {
+      "assign_mission_target": { "om_terrain": "cabin", "reveal_radius": 2, "z": 0 },
+      "effect": "follow",
+      "update_mapgen": { "place_npcs": [ { "class": "tracker_gunslinger", "x": 11, "y": 11, "target": true } ] }
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_KILL_HORDE_MASTER",
+    "dialogue": {
+      "describe": "You seem to know this new world better than most…",
+      "offer": "We've got another problem to deal with but I don't think we can handle it on our own.  So, I sent word out and found us a volunteer… of sorts.  He's vain as hell but has a little skill with firearms.  He was supposed to collect whatever he had of value and is going to meet us at a cabin in the woods.  Wasn't sure how long we were going to be so I told him to just camp there until we picked him up.",
+      "accepted": "Rodger, if he's a no-show then any other gunslinger will do… but I doubt he'll quit before we even begin.",
+      "rejected": "Hey, I know I wouldn't volunteer for it either… but then I remember that most of us survivors won't make it unless someone decides to take the initiative.",
+      "advice": "I hope the bastard is packing heat… else we'll need to grab him a gun before we hit our next target.",
+      "inquire": "Found a gunslinger?",
+      "success": "Great, just let me know when you are ready to wade knee-deep in an ocean of blood.",
+      "success_lie": "I don't think so…",
+      "failure": "Quitting already?"
+    }
+  },
+  {
     "id": "MISSION_KILL_HORDE_MASTER",
     "type": "mission_definition",
     "name": { "str": "Kill Horde Master" },
@@ -469,16 +494,24 @@
     "difficulty": 5,
     "value": 250000,
     "urgent": true,
-    "start": "kill_horde_master",
-    "end": { "effect": "stop_following" },
+    "start": {
+      "assign_mission_target": { "om_terrain": "forest", "random": true, "search_range": 60, "reveal_radius": 1, "min_distance": 10, "z": 0 },
+      "effect": "follow",
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie_master", "name": "Demonic Soul", "x": [ 11, 12 ], "y": [ 11, 12 ], "target": true },
+          { "group": "GROUP_ZOMBIE_BRUTE", "x": [ 9, 14 ], "y": [ 9, 14 ], "repeat": [ 3, 6 ] },
+          { "group": "GROUP_BLACK_ROAD", "x": [ 2, 21 ], "y": [ 2, 21 ], "repeat": [ 30, 60 ] }
+        ]
+      }
+    },
     "origins": [ "ORIGIN_SECONDARY" ],
-    "followup": "MISSION_RECRUIT_TRACKER",
     "dialogue": {
       "describe": "I've heard some bad rumors so I hope you are up for another challenge…",
-      "offer": "Apparently one of the other survivors picked up on an unusually dense horde of undead moving into the area.  At the center of this throng there was a 'leader' of some sort.  The short of it is, kill the son of a bitch.  We don't know what it is capable of or why it is surrounded by other zombies but this thing reeks of trouble.  Do whatever it takes but we can't risk it getting away.",
+      "offer": "From what I overheard from your new deputy, an unusually dense horde of undead recently moving into the area.  At the center of this throng there was a 'leader' of some sort.  The short of it is, kill the son of a bitch.  We don't know what it is capable of or why it is surrounded by other zombies but this thing reeks of trouble.  Do whatever it takes but we can't risk it getting away.",
       "accepted": "I'll lend you a hand but I'd try and recruit another gunslinger if you can.",
       "rejected": "What's the use of walking away, they'll track you down eventually.",
-      "advice": "Don't risk torching the building it may be hiding in if it has a basement.  The sucker may still be alive under the rubble and ash.",
+      "advice": "Don't risk torching the area it may be hiding in.  The sucker may still be alive under the rubble and ash.",
       "inquire": "Got this knocked out?",
       "success": "May that bastard never get up again.",
       "success_lie": "I don't think we got it yet.",
@@ -669,31 +702,6 @@
       "success": "Thank you, a diary is exactly what I was looking for.",
       "success_lie": "What good does this do us?",
       "failure": "It was a lost cause anyways…"
-    }
-  },
-  {
-    "id": "MISSION_RECRUIT_TRACKER",
-    "type": "mission_definition",
-    "name": { "str": "Recruit Tracker" },
-    "goal": "MGOAL_RECRUIT_NPC",
-    "difficulty": 5,
-    "value": 70000,
-    "start": {
-      "assign_mission_target": { "om_terrain": "cabin", "reveal_radius": 2, "random": true, "search_range": 80, "z": 0 },
-      "effect": "follow",
-      "update_mapgen": { "place_npcs": [ { "class": "tracker_gunslinger", "x": 11, "y": 11, "target": true } ] }
-    },
-    "origins": [ "ORIGIN_SECONDARY" ],
-    "dialogue": {
-      "describe": "You seem to know this new world better than most…",
-      "offer": "We've got another problem to deal with but I don't think we can handle it on our own.  So, I sent word out and found us a volunteer… of sorts.  He's vain as hell but has a little skill with firearms.  He was supposed to collect whatever he had of value and is going to meet us at a cabin in the woods.  Wasn't sure how long we were going to be so I told him to just camp there until we picked him up.",
-      "accepted": "Rodger, if he's a no-show then any other gunslinger will do… but I doubt he'll quit before we even begin.",
-      "rejected": "Hey, I know I wouldn't volunteer for it either… but then I remember that most of us survivors won't make it unless someone decides to take the initiative.",
-      "advice": "I hope the bastard is packing heat… else we'll need to grab him a gun before we hit our next target.",
-      "inquire": "Found a gunslinger?",
-      "success": "Great, just let me know when you are ready to wade knee-deep in an ocean of blood.",
-      "success_lie": "I don't think so…",
-      "failure": "Quitting already?"
     }
   },
   {
