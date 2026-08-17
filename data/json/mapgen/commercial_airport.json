@@ -321,7 +321,7 @@
         "cggggggggggggggggggggggg",
         "cggggggggggggggggggggggg"
       ],
-      "terrain": { "g": "t_grass", "c": "t_chainfence" },
+      "terrain": { "g": "t_region_groundcover", "c": "t_chainfence" },
       "furniture": {  }
     }
   },
@@ -356,7 +356,7 @@
         "gggggggggggggggggggggggg",
         "gggggggggggggggggggggggg"
       ],
-      "terrain": { "g": "t_grass", "c": "t_chainfence" },
+      "terrain": { "g": "t_region_groundcover", "c": "t_chainfence" },
       "furniture": {  }
     }
   },
@@ -391,7 +391,7 @@
         "gggggggggggggggggggggggc",
         "gggggggggggggggggggggggc"
       ],
-      "terrain": { "g": "t_grass", "c": "t_chainfence" },
+      "terrain": { "g": "t_region_groundcover", "c": "t_chainfence" },
       "furniture": {  }
     }
   },
@@ -426,7 +426,7 @@
         "cggggggggggggggggggggggg",
         "cccccccccccccccccccccccc"
       ],
-      "terrain": { "g": "t_grass", "c": "t_chainfence" },
+      "terrain": { "g": "t_region_groundcover", "c": "t_chainfence" },
       "furniture": {  }
     }
   },
@@ -461,7 +461,7 @@
         "gggggggggggggggggggggggg",
         "cccccccccccccccccccccccc"
       ],
-      "terrain": { "g": "t_grass", "c": "t_chainfence" },
+      "terrain": { "g": "t_region_groundcover", "c": "t_chainfence" },
       "furniture": {  }
     }
   },
@@ -496,7 +496,7 @@
         "gggggggggggggggggggggggc",
         "cccccccccccccccccccccccc"
       ],
-      "terrain": { "g": "t_grass", "c": "t_chainfence" },
+      "terrain": { "g": "t_region_groundcover", "c": "t_chainfence" },
       "furniture": {  }
     }
   },
@@ -531,7 +531,7 @@
         "........________________",
         "........________________"
       ],
-      "terrain": { ".": "t_grass", "_": "t_pavement" }
+      "terrain": { ".": "t_region_groundcover", "_": "t_pavement" }
     }
   },
   {
@@ -633,7 +633,7 @@
         "________________........",
         "________________........"
       ],
-      "terrain": { ".": "t_grass", "_": "t_pavement" }
+      "terrain": { ".": "t_region_groundcover", "_": "t_pavement" }
     }
   },
   {
@@ -758,7 +758,7 @@
         "7": "t_linoleum_gray",
         "9": "t_linoleum_gray",
         "b": "t_linoleum_gray",
-        "e": "t_grass_tall",
+        "e": "t_region_groundcover_tall",
         "f": "t_linoleum_gray"
       },
       "furniture": { "7": "f_counter", "9": "f_bench", "f": "f_trashcan" },
@@ -799,7 +799,7 @@
         "___________________ggggg",
         "YYYYYY______YYYYYYYggggg"
       ],
-      "terrain": { "_": "t_pavement", "Y": "t_pavement_y", "g": "t_grass" },
+      "terrain": { "_": "t_pavement", "Y": "t_pavement_y", "g": "t_region_groundcover" },
       "furniture": {  },
       "toilets": {  },
       "place_vehicles": [
@@ -900,7 +900,7 @@
         "b": "t_linoleum_gray",
         "f": "t_linoleum_gray",
         "i": "t_atm",
-        "j": "t_grass_tall"
+        "j": "t_region_groundcover_tall"
       },
       "furniture": { "9": "f_trashcan", "a": "f_counter", "b": "f_bench" },
       "toilets": {  },
@@ -940,7 +940,7 @@
         "_____________________ggg",
         "____________________gggg"
       ],
-      "terrain": { "_": "t_pavement", "Y": "t_pavement_y", "g": "t_grass" },
+      "terrain": { "_": "t_pavement", "Y": "t_pavement_y", "g": "t_region_groundcover" },
       "furniture": {  },
       "toilets": {  },
       "place_vehicles": [
@@ -1202,7 +1202,7 @@
         "@": "t_thconc_floor",
         "Y": "t_door_glass_lab_c",
         "R": "t_atm",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "a": "t_carpet_purple",
         "B": "t_thconc_floor"
       },
@@ -1256,7 +1256,7 @@
         "I": "t_door_metal_pickable",
         "=": "t_door_metal_locked",
         "d": "t_conveyor",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "a": "t_metal_floor",
         "e": "t_linoleum_white",
         "f": "t_linoleum_white",
@@ -1353,7 +1353,7 @@
         "d": "t_conveyor",
         "?": "t_console_broken",
         "F": "t_floor",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "P": "t_floor",
         "p": "t_floor",
         "t": "t_linoleum_white",
@@ -1454,7 +1454,7 @@
         "@": "t_thconc_floor",
         "?": "t_console_broken",
         "!": "t_machinery_light",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "a": "t_carpet_purple",
         "b": "t_linoleum_white",
         "e": "t_linoleum_white",
@@ -1517,7 +1517,7 @@
         "cggggggg_W______________",
         "cggggggg_W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1605,7 +1605,7 @@
         "______________W_gggggggc",
         "______________W_gggggggc"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1649,7 +1649,7 @@
         "cggggggg_W______________",
         "cggggggg_W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1749,7 +1749,7 @@
         "______________W_gggggggc",
         "______________W_gggggggc"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "c": "t_chainfence", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1793,7 +1793,7 @@
         "_________W______________",
         "_________W______________"
       ],
-      "terrain": { "c": "t_chainfence", "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
+      "terrain": { "c": "t_chainfence", "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -1925,7 +1925,7 @@
         "_________W______________",
         "_________W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2057,7 +2057,7 @@
         "_________W______________",
         "_________W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2189,7 +2189,7 @@
         "gggggggg_W______________",
         "cggggggg________________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "c": "t_chainfence", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2321,7 +2321,7 @@
         "cggggggg_W______________",
         "cggggggg_W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2409,7 +2409,7 @@
         "______________W_gggggggc",
         "______________W_gggggggc"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "c": "t_chainfence", "W": "t_pavement_y" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "c": "t_chainfence", "W": "t_pavement_y" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2453,7 +2453,7 @@
         "cggggggg_W______________",
         "cggggggg_W______________"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2541,7 +2541,7 @@
         "______________W_gggggggc",
         "______________W_gggggggc"
       ],
-      "terrain": { "_": "t_pavement", "g": "t_grass", "W": "t_pavement_y", "c": "t_chainfence" },
+      "terrain": { "_": "t_pavement", "g": "t_region_groundcover", "W": "t_pavement_y", "c": "t_chainfence" },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 1, 22 ], "y": [ 1, 22 ], "chance": 100, "repeat": [ 3, 4 ] } ]
     }
   },
@@ -2705,7 +2705,7 @@
       "terrain": {
         ".": "t_thconc_floor",
         "_": "t_pavement",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "Y": "t_pavement_y",
         "#": { "ter": "t_brick_wall", "palette": "airport_wall_grayblue" },
         "+": "t_door_c",
@@ -3025,7 +3025,7 @@
         "cg|.....................",
         "cg|....................."
       ],
-      "terrain": { ".": "t_thconc_floor", "g": "t_grass", "|": "t_wall_metal", "c": "t_chainfence" },
+      "terrain": { ".": "t_thconc_floor", "g": "t_region_groundcover", "|": "t_wall_metal", "c": "t_chainfence" },
       "furniture": {  },
       "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 3, 23 ], "y": [ 4, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
@@ -3061,7 +3061,7 @@
         "cg|.....................",
         "cg|....................."
       ],
-      "terrain": { ".": "t_thconc_floor", "g": "t_grass", "@": "t_thconc_floor", "|": "t_wall_metal", "c": "t_chainfence" },
+      "terrain": { ".": "t_thconc_floor", "g": "t_region_groundcover", "@": "t_thconc_floor", "|": "t_wall_metal", "c": "t_chainfence" },
       "furniture": { "@": "f_olight" },
       "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 3, 23 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
@@ -3100,7 +3100,7 @@
       "terrain": {
         ".": "t_thconc_floor",
         "_": "t_pavement",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "|": "t_wall_metal",
         "c": "t_chainfence",
         "U": "t_thconc_floor",
@@ -3154,7 +3154,7 @@
       "terrain": {
         ".": "t_thconc_floor",
         "_": "t_pavement",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "|": "t_wall_metal",
         "U": "t_thconc_floor",
         "O": "t_thconc_floor",
@@ -3210,7 +3210,7 @@
       ],
       "terrain": {
         ".": "t_thconc_floor",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "|": "t_wall_metal",
         "_": "t_pavement",
         "y": "t_pavement_y",
@@ -3257,7 +3257,7 @@
       "terrain": {
         "_": "t_pavement",
         "y": "t_pavement_y",
-        "g": "t_grass",
+        "g": "t_region_groundcover",
         "|": "t_wall_metal",
         "=": "t_door_metal_locked",
         "c": "t_chainfence",
