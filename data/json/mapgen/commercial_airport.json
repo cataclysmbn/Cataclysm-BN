@@ -1155,13 +1155,7 @@
       "vendingmachines": { "h": { "item_group": "vending_drink" } },
       "place_monster": [
         { "group": "GROUP_ZOMBIE", "x": [ 4, 19 ], "y": [ 0, 11 ], "chance": 100, "repeat": [ 32, 40 ] },
-        {
-          "group": "GROUP_ZOMBIE_COP",
-          "x": [ 4, 23 ],
-          "y": [ 13, 18 ],
-          "chance": 100,
-          "repeat": [ 14, 18 ]
-        },
+        { "group": "GROUP_ZOMBIE_COP", "x": [ 4, 23 ], "y": [ 13, 18 ], "chance": 100, "repeat": [ 14, 18 ] },
         { "group": "GROUP_ZOMBIE", "x": [ 0, 2 ], "y": [ 13, 16 ], "chance": 50, "repeat": 2 }
       ]
     }
