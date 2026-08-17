@@ -74,7 +74,7 @@ sqlite-devel zlib-devel
 > These libraries will be build automatically when compiling
 
 - For Arch based distros:
- 
+
 ```sh
 sudo pacman -S sdl3 sdl3_image sdl3_ttf sdl3_mixer zip sqlite
 ```

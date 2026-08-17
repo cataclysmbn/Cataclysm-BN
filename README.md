@@ -36,7 +36,7 @@ Find a way to stop the Cataclysm ... or become one of its strongest monsters.
 
 [![Stable][stable-releases-badge]][stable-releases] [![Flatpak][flathub-badge]][flathub-releases]
 
-[![Recent][all-releases-badge]][all-releases] [![Experiemental][experimental-badge]][experimental-releases] 
+[![Recent][all-releases-badge]][all-releases] [![Experiemental][experimental-badge]][experimental-releases]
 
 ### Launchers
 
