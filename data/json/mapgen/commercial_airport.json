@@ -711,13 +711,14 @@
       "toilets": {  },
       "place_vehicles": [
         {
-          "vehicle": "airport_commercial_airliner_marker",
+          "vehicle": "commercial_airliner",
           "x": 0,
           "y": 13,
           "rotation": 0,
           "status": 0,
           "fuel": 0,
-          "chance": 100
+          "chance": 100,
+          "place_beyond_bounds": true
         }
       ],
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 2, 22 ], "y": [ 1, 4 ], "chance": 100, "repeat": [ 23, 29 ] } ]
@@ -3127,7 +3128,18 @@
         "R": "t_thconc_floor"
       },
       "furniture": { "U": "f_utility_shelf", "O": "f_crate_o", "Q": "f_crate_c", "R": "f_rack" },
-      "place_vehicles": [ { "vehicle": "airport_hangar_aircraft_group", "x": 11, "y": 3, "rotation": 0, "status": 0, "fuel": 0, "chance": 55 } ],
+      "place_vehicles": [
+        {
+          "vehicle": "airport_hangar_aircraft_group",
+          "x": 11,
+          "y": 3,
+          "rotation": 0,
+          "status": 0,
+          "fuel": 0,
+          "chance": 55,
+          "place_beyond_bounds": true
+        }
+      ],
       "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 0, 20 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 4, 6 ] } ]
     }
   },

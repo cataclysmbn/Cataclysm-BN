@@ -38,17 +38,6 @@ end)
 game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
 game.add_hook("on_character_death", function(...) return mod.minirose.on_character_death(...) end)
 
--- Commercial airport oversized-aircraft placeholder replacement
-game.add_hook("on_game_started", function(...) return mod.commercial_airport.try_replace_airport_airliners(...) end)
-game.add_hook("on_game_load", function(...) return mod.commercial_airport.try_replace_airport_airliners(...) end)
-game.add_hook("on_player_try_move", {
-  priority = -100,
-  fn = function(params)
-    mod.commercial_airport.try_replace_airport_airliners(params)
-    return true
-  end,
-})
-
 -- Itemgroup Modifiers
 game.itemgroup_postprocessors["genome_drive"] = function(...) return mod.genome.postprocess(...) end
 

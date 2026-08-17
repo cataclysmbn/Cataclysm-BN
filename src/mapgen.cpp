@@ -2302,6 +2302,7 @@ class jmapgen_vehicle : public jmapgen_piece
         int fuel;
         int status;
         std::optional<bool> locked;
+        bool place_beyond_bounds;
 
         jmapgen_vehicle( const JsonObject &jsi )
             : type( jsi.get_member( "vehicle" ) )
@@ -2313,6 +2314,7 @@ class jmapgen_vehicle : public jmapgen_piece
             if( jsi.has_bool( "locked" ) ) {
                 locked = jsi.get_bool( "locked" );
             }
+            optional( jsi, false, "place_beyond_bounds", place_beyond_bounds, false );
             if( jsi.has_array( "rotation" ) ) {
                 for( const JsonValue &elt : jsi.get_array( "rotation" ) ) {
                     rotation.push_back( units::from_degrees( elt.get_int() ) );
@@ -2343,7 +2345,7 @@ class jmapgen_vehicle : public jmapgen_piece
                                                  : std::nullopt;
             dat.m.add_vehicle(
                 chosen_id, point_omt_ms( x.get(), y.get() ),
-                random_entry( rotation ), fuel, status, true, locked, has_keys );
+                random_entry( rotation ), fuel, status, true, locked, has_keys, place_beyond_bounds );
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
             return dat.m.veh_at( point_omt_ms( p.x(), p.y() ) ).has_value();

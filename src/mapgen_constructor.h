@@ -182,7 +182,8 @@ class mapgen_constructor
                           units::angle dir, int init_veh_fuel = -1,
                           int init_veh_status = -1, bool merge_wrecks = true,
                           std::optional<bool> locked = std::nullopt,
-                          std::optional<bool> has_keys = std::nullopt ) -> vehicle *;
+                          std::optional<bool> has_keys = std::nullopt,
+                          bool place_beyond_bounds = false ) -> vehicle *;
         auto add_vehicle( std::unique_ptr<vehicle> veh,
                           const bool merge_wrecks ) -> std::unique_ptr<vehicle>;
         auto detach_vehicle( vehicle *veh ) -> std::unique_ptr<vehicle>;
