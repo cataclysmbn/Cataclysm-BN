@@ -1322,7 +1322,8 @@
         "f": { "item": "SUS_pantry", "chance": 80, "repeat": [ 1, 4 ] },
         "1": { "item": "fast_table", "chance": 100, "repeat": [ 2, 5 ] },
         "O": { "item": "hardware", "chance": 75 },
-        "Q": { "item": "consumer_electronics", "chance": 75 }
+        "Q": { "item": "consumer_electronics", "chance": 75 },
+        "5": { "item": "SUS_office_desk", "chance": 50 }
       },
       "place_monster": [ { "group": "GROUP_ZOMBIE", "x": [ 6, 23 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 11, 16 ] } ]
     }
