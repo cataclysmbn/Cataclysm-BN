@@ -4162,14 +4162,12 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     // Quality of tool used and assistants can together both reduce intensity of work.
     if( act->get_tools().empty() ) {
         debugmsg( "woodcutting item location not set" );
-        resume_for_multi_activities( *p );
         return;
     }
 
     safe_reference<item> &loc = act->get_tools_mut()[ 0 ];
     if( !loc ) {
         debugmsg( "woodcutting item location lost" );
-        resume_for_multi_activities( *p );
         return;
     }
 

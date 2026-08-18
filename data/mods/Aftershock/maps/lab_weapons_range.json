@@ -13,7 +13,7 @@
         "|........|...6|........|",
         "|x......S|....|htth...&|",
         "|x......S|-LL-|htth....|",
-        "|........|....|........|",
+        "|........|%...|........|",
         "|......................|",
         "|-----|................|",
         "|rrrrr|................|",
@@ -55,14 +55,20 @@
       "computers": {
         "6": {
           "name": "Weapons Testing Range",
-          "security": 3,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 5 } ],
+          "security": 1,
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 5 },
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "Armory Entrance",
-          "security": 6,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 } ],
+          "security": 1,
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       }

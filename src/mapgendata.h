@@ -69,6 +69,7 @@ class mapgendata
         time_point when_;
         ::mission *mission_;
         mapgen_arguments mapgen_args_;
+        std::set<flag_id> flags;
         // Explicit overmapbuffer for this generation context.
         // Stored as a reference so worker threads use the dimension-specific
         // buffer (get_overmapbuffer(dim)) rather than the active-dimension global.
@@ -130,6 +131,11 @@ class mapgendata
          */
         mapgendata( const mapgendata &other, const mapgen_arguments & );
 
+        /**
+         * Creates a copy of this mapgendata, but stores new parameter values.
+         */
+        mapgendata( const mapgendata &other, const mapgen_arguments &, const std::set<flag_id> & );
+
         const oter_id &terrain_type() const {
             return terrain_type_;
         }
@@ -187,6 +193,8 @@ class mapgendata
         bool is_groundcover( const ter_id &iid ) const;
 
         bool has_join( const cube_direction, const std::string &join_id ) const;
+
+        bool has_flag( const flag_id &id ) const;
 
         template<typename Result>
         Result get_arg( const std::string &name ) const {

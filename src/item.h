@@ -2421,7 +2421,9 @@ class item : public location_visitable<item>, public game_object<item>
 
         std::optional<dimension_info> pocket_dim;
 
-        const std::vector<enchantment> &get_enchantments() const;
+        bool add_enchantment( const enchantment_id &ench );
+
+        const std::vector<enchantment> &get_enchantments( bool dynamic ) const;
 
         /**
          * Calculate bonus from enchantments that affect this item only.
@@ -2569,6 +2571,8 @@ class item : public location_visitable<item>, public game_object<item>
         auto set_dispersion_bonus( int bonus ) -> void;
         auto get_recoil_bonus() const -> int;
         auto set_recoil_bonus( int bonus ) -> void;
+        // any relic data specific to this item
+        cata::value_ptr<relic> relic_data;
     private:
         location_vector<item> components;
         const itype *curammo = nullptr;
@@ -2605,8 +2609,6 @@ class item : public location_visitable<item>, public game_object<item>
 
         cata::value_ptr<craft_data> craft_data_;
 
-        // any relic data specific to this item
-        cata::value_ptr<relic> relic_data;
     public:
         int charges;
         units::energy energy;      // Amount of energy currently stored in a battery

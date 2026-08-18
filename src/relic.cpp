@@ -154,7 +154,7 @@ void relic::add_passive_effect( const enchantment &nench )
             return;
         }
     }
-    passive_effects.emplace_back( nench );
+    passive_effects.emplace_back( enchantment( nench ) );
 }
 
 void relic::add_recharge_scheme( const relic_recharge &r )

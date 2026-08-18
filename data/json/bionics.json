@@ -592,7 +592,7 @@
     "flags": [ "BIONIC_FAULTY" ],
     "points": -1,
     "starting_bionic": true,
-    "bio_enchantments": [ { "condition": "ALWAYS", "values": [ { "value": "FOOD_FUN", "add": -4 } ] } ]
+    "bio_enchantments": [ { "values": [ { "value": "FOOD_FUN", "add": -4 } ] } ]
   },
   {
     "id": "bio_ground_sonar",
@@ -604,7 +604,8 @@
     "act_cost": "200 J",
     "react_cost": "200 J",
     "time": 1,
-    "points": 2
+    "points": 2,
+    "bio_enchantments": [ { "condition": "ACTIVE", "flags": [ "SONAR" ], "values": [ { "value": "GROUNDED_CREATURE_SIGHT", "max": 5 } ] } ]
   },
   {
     "id": "bio_heat_absorb",
@@ -750,7 +751,7 @@
     "id": "bio_lockpick",
     "type": "bionic",
     "name": { "str": "Fingerpick" },
-    "description": "One of your fingers has an electronic lockpick surgically embedded in it.  This automatic system will quickly unlock all but the most advanced key locks without any skill required on the part of the user.  If you're crouched, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
+    "description": "One of your fingers has an electronic lockpick surgically embedded in it.  This automatic system will quickly unlock all but the most advanced key locks without any skill required on the part of the user.  If you're crouched or prone, examining a locked door will have you prioritize picking the lock instead of using a crowbar on it.",
     "occupied_bodyparts": [ [ "hand_r", 2 ] ],
     "fake_item": "pseudo_bio_picklock",
     "act_cost": "50 J",
@@ -880,7 +881,7 @@
     "id": "bio_painkiller",
     "type": "bionic",
     "name": { "str": "Sensory Dulling" },
-    "description": "Your nervous system is wired to allow you to inhibit the signals of pain, allowing you to dull your senses at will.  However, the use of this system may cause delayed reaction time and drowsiness.",
+    "description": "Your nervous system is wired to allow you to inhibit the signals of pain, allowing you to dull your senses at will.  This also means you do not need anesthesia when undergoing bionic surgery with an Autodoc.  However, the use of this system may cause delayed reaction time and drowsiness.",
     "occupied_bodyparts": [ [ "head", 2 ] ],
     "points": 2,
     "flags": [ "BIONIC_TOGGLED", "BIONIC_NPC_USABLE" ],
@@ -1206,7 +1207,8 @@
     "flags": [ "BIONIC_NPC_USABLE" ],
     "fake_item": "fake_goggles",
     "starting_bionic": true,
-    "points": 1
+    "points": 1,
+    "bio_enchantments": [ { "flags": [ "ANTIGLARE" ], "values": [ { "value": "FLASH_PROTECTION", "max": 6 } ] } ]
   },
   {
     "id": "bio_targeting",
@@ -1485,7 +1487,13 @@
     "description": "Most of the flesh in your arms, legs, and upper torso has been replaced with industrial-strength springs and protective padding.  Clenching your fist allows you to fold and unfold this padding; while active, the hydraulic absorbers will prevent damage to your body from severe impacts, at the cost of impaired movement.",
     "occupied_bodyparts": [ [ "torso", 1 ], [ "arm_l", 1 ], [ "arm_r", 1 ], [ "leg_l", 1 ], [ "leg_r", 1 ] ],
     "points": 2,
-    "flags": [ "BIONIC_TOGGLED" ]
+    "flags": [ "BIONIC_TOGGLED" ],
+    "bio_enchantments": [
+      {
+        "condition": "ACTIVE",
+        "values": [ { "value": "ENCUMBRANCE", "add": 3 }, { "value": "ENCUMBRANCE_EYES", "add": -3 } ]
+      }
+    ]
   },
   {
     "id": "bio_taste_blocker",

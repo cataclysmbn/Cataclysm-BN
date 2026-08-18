@@ -194,6 +194,7 @@ to find which flags work elsewhere.
 - `POWERARMOR_EXO` Marks the item as the main exoskeleton for power armor.
 - `POWERARMOR_EXTERNAL` Marks the item as external pieces that cover body parts the exoskeleton
   doesn't.
+- `POWERARMOR_PLATING` Marks the item as external armor plates that are worn over the exoskeleton.
 - `POWERARMOR_MOD` Marks the item as a power armour mod that is worn onto an exoskeleton/external
   piece.
 - `POWERARMOR_COMPATIBLE` Makes item compatible with power armor despite other parameters causing
@@ -272,6 +273,7 @@ to find which flags work elsewhere.
 - `BOLTCUTTERS` Use your town key to gain access anywhere.
 - `BREAK_STICK` Breaks long stick into two.
 - `C4` Arm the C4.
+- 'C4_BREACHING' Arm the C4 breaching charge.
 - `CABLE_ATTACH` This item is a cable spool. Use it to try to attach to a vehicle.
 - `CAN_GOO` Release a little blob buddy.
 - `CAPTURE_MONSTER_ACT` Capture and encapsulate a monster. The associated action is also used for
@@ -685,12 +687,14 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   it's active.
 - `BIONIC_GUN` ... This bionic is a gun bionic and activating it will fire it. Prevents all other
   activation effects.
+- `CRAFT_WITH_FULL_MAG` ... This item crafts with a full set of ammo
 - `COMBAT_NPC_ON` ... The "on" state for Items that NPCs will use in combat
 - `COMBAT_NPC_USE` ... Items and CBMs that NPCs will activate when in combat
 - `CORPSE` ... Flag used to spawn various human corpses during the mapgen.
 - `DANGEROUS` ... NPCs will not accept this item. Explosion iuse actor implies this flag. Implies
   "NPC_THROW_NOW".
 - `DESTROY_ON_DECHARGE` ... This item should be destroyed if loses charges.
+- `DESTROY_ON_DROP` ... When dropped on the ground, it will be destroyed.
 - `DURABLE_MELEE` ... Item is made to hit stuff and it does it well, so it's considered to be a lot
   tougher than other weapons made of the same materials.
 - `FAKE_MILL` ... Item is a fake item, to denote a partially milled product by @ref
@@ -1386,6 +1390,12 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `GENERIC_LOOT` This is a place that may contain any of the above, but at a lower frequency -
   usually a house.
 - `IS_BRIDGE` Will be expanded to a bridge in mapgen, terrains with the id of this object followed by _under, _road, head_ground and head_ramp must be defined, and _center_under may also be defined.
+
+## Mapgen
+
+#### Flags
+
+- `ERASE_ALL_BEFORE_PLACING_TERRAIN` In the name, removes vehicles fields furniture and items before placing terrain down
 
 ## Recipes
 

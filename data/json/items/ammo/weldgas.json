@@ -18,6 +18,6 @@
     "effects": [ "COOKOFF" ],
     "explode_in_fire": true,
     "explosion": { "power": 20, "shrapnel": 0 },
-    "flags": [ "NO_DROP", "IRREMOVABLE" ]
+    "flags": [ "DESTROY_ON_DROP", "IRREMOVABLE" ]
   }
 ]

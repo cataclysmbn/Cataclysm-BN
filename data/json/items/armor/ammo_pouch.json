@@ -505,5 +505,37 @@
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
     "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "COMPACT" ]
+  },
+  {
+    "id": "belt_magazine",
+    "type": "ARMOR",
+    "name": { "str_sp": "magazine belt" },
+    "description": "A belt worn across the waist, with pouches that can hold up to eight small magazines or speedloaders.",
+    "weight": "300 g",
+    "volume": "500 ml",
+    "price": "80 USD",
+    "price_postapoc": "25 USD",
+    "rigid": false,
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "looks_like": "tool_belt",
+    "color": "dark_gray",
+    "covers": [ "torso" ],
+    "coverage": 15,
+    "encumbrance": 1,
+    "max_encumbrance": 5,
+    "material_thickness": 2,
+    "use_action": {
+      "type": "holster",
+      "holster_prompt": "Stash ammo",
+      "holster_msg": "You stash your %s.",
+      "multi": 8,
+      "min_volume": "25 ml",
+      "max_volume": "250 ml",
+      "draw_cost": 40,
+      "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
+    },
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
   }
 ]

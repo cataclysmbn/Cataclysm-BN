@@ -825,7 +825,7 @@
     "species": [ "NETHER" ],
     "volume": "2500000 ml",
     "weight": "1800 kg",
-    "hp": 2000,
+    "hp": 5000,
     "speed": 120,
     "attack_cost": 120,
     "material": [ "flesh" ],

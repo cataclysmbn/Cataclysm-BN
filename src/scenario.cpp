@@ -11,6 +11,7 @@
 #include "mission.h"
 #include "mutation.h"
 #include "profession.h"
+#include "string_id.h"
 #include "translations.h"
 #include "type_id_implement.h"
 #include "rng.h"
@@ -85,7 +86,7 @@ void scenario::load( const JsonObject &jo, const std::string & )
         jo.throw_error( "at least one starting location (member \"allowed_locs\") must be defined" );
     }
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<> {} );
-    optional( jo, was_loaded, "map_extra", _map_extra, "mx_null" );
+    optional( jo, was_loaded, "map_extra", _map_extra, string_id<map_extra>::NULL_ID() );
     optional( jo, was_loaded, "missions", _missions, auto_flags_reader<mission_type_id> {} );
 
     if( jo.has_string( "vehicle" ) ) {
@@ -202,7 +203,9 @@ void scenario::check_definition() const
     check_bionics( _forbidden_bionics, id );
     check_spells( _allowed_spells, id );
     check_spells( _forbidden_spells, id );
-    MapExtras::get_function( _map_extra ); // triggers a debug message upon invalid input
+    if( has_map_extra() && !_map_extra.is_valid() ) {
+        debugmsg( "map extra %s for scenario %s does not exist", _map_extra.c_str(), id.c_str() );
+    }
 
     for( auto &m : _missions ) {
         if( !m.is_valid() ) {
@@ -513,9 +516,9 @@ bool scenario::can_pick( const scenario &current_scenario, const int points ) co
 }
 bool scenario::has_map_extra() const
 {
-    return _map_extra != "mx_null";
+    return _map_extra != string_id<map_extra>::NULL_ID();
 }
-const std::string &scenario::get_map_extra() const
+const string_id<map_extra> &scenario::get_map_extra() const
 {
     return _map_extra;
 }

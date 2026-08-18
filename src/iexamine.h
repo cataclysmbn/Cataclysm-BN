@@ -120,6 +120,7 @@ void check_power( player &p, const tripoint_bub_ms &examp );
 void migo_nerve_cluster( player &p, const tripoint_bub_ms &examp );
 void cardreader_plutgen( player &p, const tripoint_bub_ms &examp );
 void multicooker( player &p, const tripoint_bub_ms &pos );
+void enchanter( player &p, const tripoint_bub_ms &pos );
 
 detached_ptr<item> pour_into_keg( const tripoint_bub_ms &pos, detached_ptr<item> &&liquid );
 std::optional<tripoint_bub_ms> getGasPumpByNumber( const tripoint_bub_ms &p, int number );

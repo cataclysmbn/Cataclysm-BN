@@ -355,7 +355,7 @@ Example:
   "O": "f_oven",
   "r": "f_rack",
   "^": "f_indoor_plant",
-  "t": "f_table",
+  "t": { "furn": "f_table" "palette": "wooden_furniture_palette" },
   "T": "f_toilet",
   "S": "f_sink",
   "e": "f_fridge",
@@ -364,6 +364,11 @@ Example:
   "l": "f_locker"
 },
 ```
+
+The palette causes the furniture to be default painted based off the palette
+The palette randomly chooses a color based of the position on the global overmap
+
+Can also defined an inline palette as a seperate option
 
 ## Set terrain, furniture, or traps with a "set" array
 
@@ -657,13 +662,23 @@ times):
 }
 ```
 
+It is also possible to specify a color palette to apply
+The palette is a `mapgen_color_palette`
+
+Can also defined an inline palette as a seperate option
+
+````json
+"terrain": {
+  "|": { "ter": "t_wall_paintable", "palette": "plaster_wall_palette" }
+}
+
 Example (places a blood and a bile field on each '.' square):
 
 ```json
 "fields" : {
     ".": [ { "field": "fd_blood" }, { "field": "fd_bile" } ]
 }
-```
+````
 
 Or define the mappings for one character at once:
 
@@ -1054,6 +1069,17 @@ The code excerpt above will place chunks as follows:
   placement.
 - `"concrete_wall_ns"`if the north west neighbor is neither a field nor any of the microlab
   overmaps.
+
+## Clear an area before placing it
+
+If it's the entire nested section
+
+```json
+"flags": [ "ERASE_ALL_BEFORE_PLACING_TERRAIN" ]
+```
+
+Otherwise give xy coordinates with `place_remove_all`, or use palette with `remove_all` on a character
+This always runs before anything else
 
 ## Mapgen values
 

@@ -1063,7 +1063,12 @@ enchantment inventory::get_active_enchantment_cache( const Character &owner ) co
     enchantment temp_cache;
     for( const std::vector<item *> &elem : items ) {
         for( const item * const &check_item : elem ) {
-            for( const enchantment &ench : check_item->get_enchantments() ) {
+            for( const enchantment &ench : check_item->get_enchantments( true ) ) {
+                if( ench.is_active( owner, *check_item ) ) {
+                    temp_cache.force_add( ench );
+                }
+            }
+            for( const enchantment &ench : check_item->get_enchantments( false ) ) {
                 if( ench.is_active( owner, *check_item ) ) {
                     temp_cache.force_add( ench );
                 }

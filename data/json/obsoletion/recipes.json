@@ -1995,22 +1995,6 @@
     "obsolete": true
   },
   {
-    "type": "recipe",
-    "result": "thermal_cooling_mask",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "thermal_cooling",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "thermal_cooling",
-    "id_suffix": "thermal_outfit_from_bits",
-    "obsolete": true
-  },
-  {
     "result": "bp_9x18mm",
     "type": "recipe",
     "obsolete": true

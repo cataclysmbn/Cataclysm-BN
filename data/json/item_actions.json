@@ -301,6 +301,11 @@
   },
   {
     "type": "item_action",
+    "id": "C4_BREACHING",
+    "name": { "str": "Activate" }
+  },
+  {
+    "type": "item_action",
     "id": "CABLE_ATTACH",
     "name": { "str": "Attach" }
   },

@@ -10,6 +10,7 @@
 #include "catalua_sol.h"
 #include "computer.h"
 #include "coordinates.h"
+#include "data_vars.h"
 #include "debug.h"
 #include "field.h"
 #include "field_type.h"
@@ -393,6 +394,29 @@ auto mapgen_constructor::has_flag_furn( const ter_bitflags flag,
     return sm != nullptr && sm->get_furn( local ).obj().has_flag( flag );
 }
 
+auto mapgen_constructor::ter_vars( const point_omt_ms &p ) const -> data_vars::data_set *
+{
+    const auto [sm, local] = tile_at( p );
+
+    if( sm != nullptr ) {
+        return &sm->get_ter_vars( local );
+    }
+
+    return nullptr;
+}
+
+
+auto mapgen_constructor::furn_vars( const point_omt_ms &p ) const -> data_vars::data_set *
+{
+    const auto [sm, local] = tile_at( p );
+
+    if( sm != nullptr ) {
+        return &sm->get_furn_vars( local );
+    }
+
+    return nullptr;
+}
+
 auto mapgen_constructor::passable( const point_omt_ms &p ) const -> bool
 {
     return move_cost( p ) > 0;
@@ -572,6 +596,17 @@ auto mapgen_constructor::remove_field( const point_omt_ms &p,
     }
 }
 
+auto mapgen_constructor::remove_all_fields( const point_omt_ms &p ) -> void
+{
+    const auto [sm, local] = tile_at( p );
+    if( sm != nullptr ) {
+        field field = sm->get_field( local );
+        for( auto iter = field.begin(); iter != field.end(); iter++ ) {
+            remove_field( p, iter->first );
+        }
+    }
+}
+
 auto mapgen_constructor::add_splatter_trail( const field_type_id &type, const point_omt_ms &from,
         const point_omt_ms &to ) -> void
 {
@@ -607,6 +642,14 @@ auto mapgen_constructor::set_graffiti( const point_omt_ms &p,
     const auto [sm, local] = tile_at( p );
     if( sm != nullptr ) {
         sm->set_graffiti( local, contents );
+    }
+}
+
+auto mapgen_constructor::delete_graffiti( const point_omt_ms &p ) -> void
+{
+    const auto [sm, local] = tile_at( p );
+    if( sm != nullptr ) {
+        sm->delete_graffiti( local );
     }
 }
 

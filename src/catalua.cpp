@@ -180,7 +180,7 @@ auto get_active_lua_state() -> lua_state * // *NOPAD*
     return DynamicDataLoader::get_instance().lua.get();
 }
 
-auto get_lua_callback( lua_state &state, const char *table_name,
+auto get_lua_callback( lua_state &state, const std::string table_name,
                        const std::string &callback_id ) -> sol::protected_function
 {
     const auto maybe_table = state.lua.globals()["game"][table_name].get<sol::optional<sol::table>>();
@@ -192,7 +192,7 @@ auto get_lua_callback( lua_state &state, const char *table_name,
     return maybe_table->get_or<sol::protected_function>( callback_id, sol::lua_nil );
 }
 
-auto run_lua_callback( const char *table_name, const std::string &callback_id,
+auto run_lua_callback( const std::string table_name, const std::string &callback_id,
                        const std::function<void( sol::table & )> &fill_params ) -> void
 {
     lua_state *state = get_active_lua_state();
@@ -357,11 +357,18 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     // mapgen functions
     gt["mapgen_functions"] = lua.create_table();
 
+    // Itemgroup modification functions
+    gt["itemgroup_postprocessors"] = lua.create_table();
+
     // monster / npc functions
     gt["monster_ai_functions"] = lua.create_table();
     gt["monster_attitude_functions"] = lua.create_table();
     gt["monster_functions"] = lua.create_table();
     gt["npc_ai_functions"] = lua.create_table();
+
+    // enchanter functions
+    gt["enchanter_can_make"] = lua.create_table();
+    gt["enchanter_can_use_on"] = lua.create_table();
 
     // hooks
     cata::define_hooks( state );
@@ -914,11 +921,12 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
                 auto on_tick = tbl.get_or<sol::function>( "on_tick", sol::lua_nil );
                 auto on_pickup = tbl.get_or<sol::function>( "on_pickup", sol::lua_nil );
                 auto on_drop = tbl.get_or<sol::function>( "on_drop", sol::lua_nil );
+                auto on_puff = tbl.get_or<sol::function>( "on_puff", sol::lua_nil );
                 ifactory.add_istate_actor(
                     itype_id( key ),
                     std::make_unique<lua_istate_actor>(
                         key, std::move( on_tick ), std::move( on_pickup ),
-                        std::move( on_drop ) ) );
+                        std::move( on_drop ), std::move( on_puff ) ) );
             } catch( std::runtime_error &e ) {
                 debugmsg( "Failed to extract istate_functions k='%s': %s", key, e.what() );
                 break;

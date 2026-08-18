@@ -47,6 +47,7 @@ enum class cata_variant_type : int {
     item_group_id,
     itype_id,
     matype_id,
+    mpalette_id,
     mtype_id,
     mongroup_id,
     mutagen_technique,
@@ -173,7 +174,7 @@ struct convert_enum {
 };
 
 // These are the specializations of convert for each value type.
-static_assert( static_cast<int>( cata_variant_type::num_types ) == 40,
+static_assert( static_cast<int>( cata_variant_type::num_types ) == 41,
                "This assert is a reminder to add conversion support for any new types to the "
                "below specializations" );
 
@@ -280,6 +281,9 @@ struct convert<cata_variant_type::itype_id> : convert_string_id<itype_id> {};
 
 template<>
 struct convert<cata_variant_type::matype_id> : convert_string_id<matype_id> {};
+
+template<>
+struct convert<cata_variant_type::mpalette_id> : convert_string_id<mpalette_id> {};
 
 template<>
 struct convert<cata_variant_type::mtype_id> : convert_string_id<mtype_id> {};

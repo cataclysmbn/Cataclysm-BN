@@ -46,11 +46,9 @@
           { "id": [ "hellfire_launcher", "overlay_wielded_hellfire_launcher" ], "fg": 38 },
           { "id": [ "hellfire_heat", "overlay_wielded_hellfire_heat" ], "fg": 39 },
           { "id": [ "hellfire_ninja", "overlay_wielded_hellfire_ninja" ], "fg": 40 },
-          { "id": "vp_hellfire_turret", "fg": 41 },
+          { "id": "vp_hellfire_turret", "fg": 41, "rotates": true },
           { "id": "tac_fullhelmet", "fg": 42 },
-          { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
           { "id": "tac_helmet", "fg": 44 },
-          { "id": "overlay_worn_tac_helmet", "fg": 45 },
           { "id": [ "clam", "overlay_wielded_clam" ], "fg": 46 },
           { "id": [ "clam_fried", "overlay_wielded_clam_fried" ], "fg": 47 },
           { "id": "mon_zombie_swat", "fg": 48, "bg": 30 },
@@ -160,10 +158,74 @@
           { "id": [ "overlay_worn_exosuit_industrial", "overlay_worn_exosuit_industrial_on" ], "fg": 90 },
           { "id": [ "gloves_tactical", "overlay_wielded_gloves_tactical" ], "fg": 91 },
           { "id": "overlay_worn_boots_combat", "fg": 92 },
-          { "id": "overlay_worn_winter_gloves_army", "fg": 93 }
+          { "id": "overlay_worn_winter_gloves_army", "fg": 93 },
+          { "id": [ "stanag10", "overlay_wielded_stanag10" ], "fg": 94 },
+          { "id": [ "stanag100drum", "overlay_wielded_stanag100drum" ], "fg": 95 },
+          { "id": [ "stanag100", "overlay_wielded_stanag100" ], "fg": 96 },
+          { "id": [ "stanag150", "overlay_wielded_stanag150" ], "fg": 97 },
+          { "id": [ "stanag20", "overlay_wielded_stanag20" ], "fg": 98 },
+          { "id": [ "stanag40", "overlay_wielded_stanag40" ], "fg": 99 },
+          { "id": [ "stanag5", "overlay_wielded_stanag5" ], "fg": 100 },
+          { "id": [ "stanag50", "overlay_wielded_stanag50" ], "fg": 101 },
+          { "id": [ "stanag60drum", "overlay_wielded_stanag60drum" ], "fg": 102 },
+          { "id": [ "stanag60", "overlay_wielded_stanag60" ], "fg": 103 },
+          { "id": [ "stanag90", "overlay_wielded_stanag90" ], "fg": 104 },
+          { "id": "mon_feral_swat_boss_commander", "fg": 105, "bg": 30 },
+          { "id": "mon_feral_swat_boss_shieldman", "fg": 106, "bg": 30 },
+          { "id": "mon_feral_swat_boss_grenadier", "fg": 107, "bg": 30 },
+          { "id": "mon_feral_swat_boss_cloaker", "fg": 108, "bg": 30 },
+          { "id": "sig_mcx", "fg": 109 },
+          { "id": "overlay_wielded_sig_mcx", "fg": 110 },
+          { "id": "c4_breaching", "fg": 111 },
+          { "id": "overlay_wielded_c4_breaching", "fg": 112 },
+          { "id": "c4_breaching_armed", "fg": 113 },
+          { "id": "overlay_wielded_c4_breaching_armed", "fg": 114 },
+          {
+            "id": [
+              "power_armor_exo_1",
+              "power_armor_exo_1_on",
+              "overlay_wielded_power_armor_exo_1",
+              "overlay_wielded_power_armor_exo_1_on"
+            ],
+            "fg": 115
+          },
+          { "id": [ "overlay_worn_power_armor_exo_1", "overlay_worn_power_armor_exo_1_on" ], "fg": 116 },
+          {
+            "id": [
+              "power_armor_exo_2",
+              "power_armor_exo_2_on",
+              "overlay_wielded_power_armor_exo_2",
+              "overlay_wielded_power_armor_exo_2_on"
+            ],
+            "fg": 117
+          },
+          { "id": [ "overlay_worn_power_armor_exo_2", "overlay_worn_power_armor_exo_2_on" ], "fg": 118 },
+          {
+            "id": [
+              "power_armor_exo_3",
+              "power_armor_exo_3_on",
+              "overlay_wielded_power_armor_exo_3",
+              "overlay_wielded_power_armor_exo_3_on"
+            ],
+            "fg": 119
+          },
+          { "id": [ "overlay_worn_power_armor_exo_3", "overlay_worn_power_armor_exo_3_on" ], "fg": 120 },
+          { "id": [ "depowered_exo", "overlay_wielded_depowered_exo" ], "fg": 121 },
+          { "id": "overlay_worn_depowered_exo", "fg": 122 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
+      },
+      {
+        "file": "external_tileset/External_Tileset_DP_dmd.png",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_y": -16,
+        "tiles": [
+          { "id": "overlay_worn_tac_fullhelmet", "fg": 43 },
+          { "id": "overlay_worn_tac_helmet", "fg": 45 },
+          { "id": "overlay_worn_helmet_army", "fg": 123 }
+        ]
       }
     ]
   }

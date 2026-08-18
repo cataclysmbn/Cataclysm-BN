@@ -597,7 +597,8 @@ auto character_requirement_reason( const Character &self, const ma_technique &te
     if( !tec.reqs.min_skill.empty() ) {
         auto missing_skills = std::vector<std::string>();
         for( const auto &req : tec.reqs.min_skill ) {
-            const auto current_skill = cqb ? 5 : self.get_skill_level( req.first );
+            const auto current_skill = cqb ? std::max( self.get_skill_level(
+                                           req.first ), BIO_CQB_LEVEL ) : self.get_skill_level( req.first );
             if( current_skill < req.second ) {
                 missing_skills.push_back( string_format( _( "%s %d+ (have %d)" ),
                                           req.first->name(), req.second,
@@ -1764,7 +1765,11 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         params["target"] = &t;
         params["success"] = attack_hit;
     } );
-
+    cata::run_hooks( "on_creature_attacked_by_character", [ &, this]( auto & params ) {
+        params["char"] = this;
+        params["target"] = &t;
+        params["success"] = attack_hit;
+    } );
 }
 
 void Character::reach_attack( const tripoint_bub_ms &p )
@@ -2036,7 +2041,7 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     const bool unarmed = weap.is_unarmed_weapon();
     int skill = c.get_skill_level( unarmed ? skill_unarmed : skill_bashing );
     if( c.has_active_bionic( bio_cqb ) ) {
-        skill = BIO_CQB_LEVEL;
+        skill = std::max( skill, BIO_CQB_LEVEL );
     }
 
     const int stat = c.get_str();
@@ -2132,6 +2137,10 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
 
     float armor_mult = attack.damage.get_armor_mult( DT_BASH );
     int arpen = attack.damage.get_armor_pen( DT_BASH );
+
+    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_BASH" ),
+                                           true );
+
     arpen += c.mabuff_arpen_bonus( DT_BASH );
     armor_mult *= c.mabuff_tg_armor_mult( DT_BASH );
 
@@ -2154,7 +2163,7 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     int cutting_skill = c.get_skill_level( skill_cutting );
 
     if( c.has_active_bionic( bio_cqb ) ) {
-        cutting_skill = BIO_CQB_LEVEL;
+        cutting_skill = std::max( cutting_skill, BIO_CQB_LEVEL );
     }
 
     if( weap.is_unarmed_weapon() ) {
@@ -2198,9 +2207,10 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     }
 
     int arpen = attack.damage.get_armor_pen( DT_CUT );
-    if( weap.has_flag( flag_DIAMOND ) ) {
-        arpen += cut_dam * 0.35 + 10;
-    }
+
+    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_CUT" ),
+                                           true );
+
     float armor_mult = attack.damage.get_armor_mult( DT_CUT );
 
     // 80%, 88%, 96%, 104%, 112%, 116%, 120%, 124%, 128%, 132%
@@ -2233,7 +2243,7 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     int stabbing_skill = c.get_skill_level( skill_stabbing );
 
     if( c.has_active_bionic( bio_cqb ) ) {
-        stabbing_skill = BIO_CQB_LEVEL;
+        stabbing_skill = std::max( stabbing_skill, BIO_CQB_LEVEL );
     }
 
     if( weap.is_unarmed_weapon() ) {
@@ -2282,9 +2292,10 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     float armor_mult = attack.damage.get_armor_mult( DT_STAB );
     int arpen = attack.damage.get_armor_pen( DT_STAB );
     arpen += c.mabuff_arpen_bonus( DT_STAB );
-    if( weap.has_flag( flag_DIAMOND ) ) {
-        arpen += stab_dam * 0.35 + 10;
-    }
+
+    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_STAB" ),
+                                           true );
+
     armor_mult *= c.mabuff_tg_armor_mult( DT_STAB );
 
     if( crit ) {
@@ -2313,9 +2324,12 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
     float type_mul = 1.0f;
     type_mul *= c.mabuff_damage_mult( dt );
 
+    const auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
     float armor_mult = attack.damage.get_armor_mult( dt );
     int arpen = attack.damage.get_armor_pen( dt );
     arpen += c.mabuff_arpen_bonus( dt );
+    arpen += weap.bonus_from_enchantments( arpen,
+                                           enchantment_value_id( "ITEM_ARMOR_PENETRATION_" + internal_name ), true );
     armor_mult *= c.mabuff_tg_armor_mult( dt );
 
     if( crit ) {
@@ -3509,7 +3523,8 @@ void player_hit_message( Character *attacker, const std::string &message,
 int Character::attack_cost( const item &weap ) const
 {
     const int base_move_cost = weap.attack_cost() / 2;
-    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? BIO_CQB_LEVEL : get_skill_level(
+    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? std::max( get_skill_level(
+                                skill_melee ), BIO_CQB_LEVEL ) : get_skill_level(
                                 skill_melee );
     /** @EFFECT_MELEE increases melee attack speed */
     const int skill_cost = ( base_move_cost * ( 15 - melee_skill ) / 15 );

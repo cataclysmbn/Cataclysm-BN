@@ -151,6 +151,9 @@
     "min_duration": 60000,
     "max_duration": 120000,
     "duration_increment": 6000,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -321,6 +324,9 @@
     "base_energy_cost": 3500,
     "final_energy_cost": 1750,
     "energy_increment": -175,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -362,6 +368,9 @@
     "field_chance": 3,
     "min_field_intensity": 1,
     "max_field_intensity": 1,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -436,6 +445,9 @@
     "base_energy_cost": 2500,
     "final_energy_cost": 1250,
     "energy_increment": -125,
+    "starting_points": 2,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -450,7 +462,6 @@
     "effect_str": "spell_eclipse",
     "extra_effects": [
       { "id": "arcana_aftermath_eclipse_darkness", "hit_self": false, "max_level": 10 },
-      { "id": "arcana_aftermath_eclipse_halo", "hit_self": false, "max_level": 10 },
       { "id": "arcana_aftermath_eclipse_wonder", "hit_self": false },
       { "id": "arcana_aftermath_eclipse_fatigue", "hit_self": false },
       { "id": "arcana_aftermath_magic_sign_exertion_9", "hit_self": true, "max_level": 10 }
@@ -468,6 +479,9 @@
     "min_duration": 324000,
     "max_duration": 648000,
     "duration_increment": 32400,
+    "starting_points": 5,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -503,6 +517,9 @@
     "base_energy_cost": 4000,
     "final_energy_cost": 2000,
     "energy_increment": -200,
+    "starting_points": 4,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -851,13 +868,16 @@
     "id": "arcana_magic_phase_shield",
     "type": "SPELL",
     "name": { "str": "Sign: Phase Shield" },
-    "description": "Using this spell will anoint you with a sunstone halo, granting a temporary defensive effect that will push any nearby attackers away from you in random directions, activating at random when you're struck.",
+    "description": "Using this spell will grant a temporary defensive effect that can push any nearby attackers away in random directions, activating at random when struck.  It can be used on yourself or an ally.",
     "message": "\"Turn aside not the blade, but the hand that wields it…\"  You cast %s!",
-    "valid_targets": [ "self" ],
+    "valid_targets": [ "self", "ally" ],
     "flags": [ "NO_EXPLOSION_VFX", "NO_HANDS", "NO_LEGS", "VERBAL", "NO_FAIL", "BRAWL" ],
     "extra_effects": [ { "id": "arcana_aftermath_magic_sign_exertion_7", "hit_self": true, "max_level": 10 } ],
-    "effect": "spawn_item",
-    "effect_str": "halo_phase_shield",
+    "effect": "target_attack",
+    "effect_str": "arcana_effect_phase_shield",
+    "min_range": 1,
+    "max_range": 10,
+    "range_increment": 0.9,
     "energy_source": "STAMINA",
     "difficulty": 7,
     "skill": "magic",
@@ -871,6 +891,9 @@
     "min_duration": 84000,
     "max_duration": 168000,
     "duration_increment": 8400,
+    "starting_points": 4,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -910,13 +933,16 @@
     "//": "ID retained to avoid breaking saves.",
     "type": "SPELL",
     "name": { "str": "Sign: Shadowy Shield" },
-    "description": "Using this spell will anoint you with an obsidian halo, granting a temporary defensive effect that will strike attackers blind with otherworldly darkness.",
+    "description": "Using this spell will grant a temporary defensive effect that strikes attackers blind with otherworldly darkness.  It can be used on yourself or an ally.",
     "message": "\"Fear not the darkness, but those who lure you into it…\"  You cast %s!",
-    "valid_targets": [ "self" ],
+    "valid_targets": [ "self", "ally" ],
     "flags": [ "NO_EXPLOSION_VFX", "NO_HANDS", "NO_LEGS", "VERBAL", "NO_FAIL", "BRAWL" ],
     "extra_effects": [ { "id": "arcana_aftermath_magic_sign_exertion_6", "hit_self": true, "max_level": 10 } ],
-    "effect": "spawn_item",
-    "effect_str": "halo_shadowsnakes",
+    "effect": "target_attack",
+    "effect_str": "arcana_effect_shadowy_shield",
+    "min_range": 1,
+    "max_range": 10,
+    "range_increment": 0.9,
     "energy_source": "STAMINA",
     "difficulty": 6,
     "skill": "magic",
@@ -1023,6 +1049,9 @@
     "base_energy_cost": 4500,
     "final_energy_cost": 2250,
     "energy_increment": -225,
+    "starting_points": 4,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {
@@ -1057,6 +1086,9 @@
     "min_duration": 720000,
     "max_duration": 1440000,
     "duration_increment": 72000,
+    "starting_points": 3,
+    "increase_points": 1,
+    "max_starting_level": 10,
     "spell_class": "ARCANA_SPELL_CLASS_MAGIC_SIGN"
   },
   {

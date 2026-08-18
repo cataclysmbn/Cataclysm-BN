@@ -90,6 +90,7 @@ int capture_monster_act( player *, item *, bool, const tripoint_bub_ms & );
 int debug_grenade( player *, item *, bool, const tripoint_bub_ms & );
 int debug_grenade_act( player *, item *, bool, const tripoint_bub_ms & );
 int c4( player *, item *, bool, const tripoint_bub_ms & );
+int c4_breaching( player *, item *, bool, const tripoint_bub_ms & );
 int arrow_flammable( player *, item *, bool, const tripoint_bub_ms & );
 int acidbomb_act( player *, item *, bool, const tripoint_bub_ms & );
 int grenade_inc_act( player *, item *, bool, const tripoint_bub_ms & );

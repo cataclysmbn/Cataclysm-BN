@@ -79,6 +79,7 @@
 #include "trap.h"
 #include "weather.h"
 #include "profile.h"
+#include "units_utility.h"
 
 static const ammo_effect_str_id ammo_effect_WHIP( "WHIP" );
 
@@ -428,6 +429,7 @@ monster::monster( const monster &source ) : Creature( source ),
     lastseen_turn = source.lastseen_turn;
     staircount = source.staircount;
     ammo = source.ammo;
+    upgrade_time = source.upgrade_time;
 
     for( const item * const &it : source.corpse_components ) {
         corpse_components.push_back( item::spawn( *it ) );
@@ -1267,6 +1269,9 @@ std::string monster::extended_description() const
         } else {
             ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
         }
+        ss += string_format( _( "It carries %s / %s\n" ),
+                             static_cast<int>( convert_weight( get_carried_weight() ) ),
+                             static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
 
     if( training_level > 0 && type->pet_training ) {
@@ -1805,18 +1810,6 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     }
 
     const auto *np = u == nullptr ? nullptr : u->as_npc();
-    if( np != nullptr ) {
-        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
-        if( faction_att == MFA_FRIENDLY ) {
-            return MATT_FRIEND;
-        }
-        if( faction_att == MFA_NEUTRAL ) {
-            return MATT_IGNORE;
-        }
-        if( faction_att == MFA_HATE ) {
-            return MATT_ATTACK;
-        }
-    }
 
     int effective_anger  = anger;
     int effective_morale = morale;
@@ -1933,6 +1926,17 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     if( u != nullptr && u->is_player() ) {
         static const auto player_faction = mfaction_id( "player" );
         const auto faction_att = faction.obj().attitude( player_faction );
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+        if( effective_anger < 10 && faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
+    } else if( u != nullptr && u->is_npc() ) {
+        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
         if( faction_att == MFA_HATE ) {
             return MATT_ATTACK;
         }
@@ -3287,7 +3291,10 @@ void monster::process_turn()
             }
         }
     }
-
+    if( is_pet() ) {
+        // Only pets can upgrade in range of the player, monsters only upgrade on load.
+        try_upgrade( false );
+    }
     Creature::process_turn();
 }
 
@@ -3780,6 +3787,12 @@ void monster::process_one_effect( effect &it, bool is_new )
             apply_damage( nullptr, bodypart_id( "torso" ), dam );
         } else {
             it.set_duration( 0_turns );
+        }
+    } else if( id == effect_bleed ) {
+        int intense = it.get_intensity();
+        if( one_in( 36 / intense ) ) {
+            apply_damage( nullptr, bodypart_id( "torso" ), 1 );
+            bleed();
         }
     } else if( id == effect_run ) {
         effect_cache[FLEEING] = true;

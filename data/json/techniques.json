@@ -128,6 +128,7 @@
     "id": "SWEEP",
     "name": "Sweep Attack",
     "unarmed_allowed": true,
+    "melee_allowed": true,
     "down_dur": 2,
     "messages": [ "You sweep %s", "<npcname> sweeps %s" ],
     "description": "Down 2 turns"

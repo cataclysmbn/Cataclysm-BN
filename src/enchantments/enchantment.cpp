@@ -51,9 +51,9 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
         }
     }
     for (const auto [ench_id, effect] : values_multiply) {
-        if (effect > 1) {
+        if (effect > 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? 1 : -1;
-        } else if (effect < 1) {
+        } else if (effect < 0) {
             value_effects[ench_id] += (ench_id->increase_good) ? -1 : 1;
         }
     }
@@ -66,7 +66,7 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
     result.push_back(cond_string);
     for (const auto [ench_id, goodbad] : value_effects) {
         const std::string color = goodbad > 0 ? "green" : goodbad < 0 ? "red" : "magenta";
-        result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->desc));
+        result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->get_desc()));
         describe = true;
     }
     for (const auto [eff_id, intense] : ench_effects) {
@@ -374,6 +374,9 @@ bool enchantment::stacks_with(const enchantment& rhs) const { return conditions 
 bool enchantment::add(const enchantment& rhs) {
     if (!stacks_with(rhs)) { return false; }
     force_add(rhs);
+    // Because it is no longer a default enchantment
+    // We must make it "" so that it saves properly
+    if (id.str() != "") { id = enchantment_id(""); }
     return true;
 }
 
@@ -450,8 +453,11 @@ int enchantment::get_value_add(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
     if (values_add.contains(value)) { result += values_add.at(value); }
-    if (value->has_parent()) { result += get_value_add(value->get_parent()); }
-
+    if (value->has_parent()) {
+        for (enchantment_value_id ench_id : value->get_parents()) {
+            result += get_value_add(ench_id);
+        }
+    }
     return result;
 }
 
@@ -459,7 +465,11 @@ double enchantment::get_value_multiply(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     double result = 0;
     if (values_multiply.contains(value)) { result += values_multiply.at(value); }
-    if (value->has_parent()) { result += get_value_multiply(value->get_parent()); }
+    if (value->has_parent()) {
+        for (enchantment_value_id ench_id : value->get_parents()) {
+            result += get_value_multiply(ench_id);
+        }
+    }
 
     return result;
 }
@@ -468,7 +478,11 @@ int enchantment::get_value_max(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
     if (values_max.contains(value)) { result = values_max.at(value); }
-    if (value->has_parent()) { result = std::max(result, get_value_max(value->get_parent())); }
+    if (value->has_parent()) {
+        for (enchantment_value_id ench_id : value->get_parents()) {
+            result = std::max(result, get_value_max(ench_id));
+        }
+    }
 
     return result;
 }

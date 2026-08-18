@@ -532,13 +532,13 @@
     "color": "light_green",
     "see_cost": 5,
     "mondensity": 2,
+    "spawns": { "group": "GROUP_ZOMBIE", "population": [ 8, 10 ], "chance": 80 },
     "flags": [ "SIDEWALK", "GENERIC_LOOT" ]
   },
   {
     "type": "overmap_terrain",
     "id": [
       "apartments_con_tower_000",
-      "apartments_con_tower_001",
       "apartments_con_tower_002",
       "apartments_con_tower_004",
       "apartments_con_tower_010",
@@ -547,7 +547,6 @@
       "apartments_con_tower_013",
       "apartments_con_tower_014",
       "apartments_con_tower_100",
-      "apartments_con_tower_101",
       "apartments_con_tower_102",
       "apartments_con_tower_104",
       "apartments_con_tower_110",
@@ -555,6 +554,7 @@
       "apartments_con_tower_112",
       "apartments_con_tower_113",
       "apartments_con_tower_114",
+      "apartments_con_tower_115",
       "apartments_con_tower_NE",
       "apartments_con_tower_NW",
       "apartments_con_tower_SE",
@@ -576,7 +576,8 @@
       "apartments_mod_tower_NE",
       "apartments_mod_tower_NW",
       "apartments_mod_tower_SE",
-      "apartments_mod_tower_SW"
+      "apartments_mod_tower_SW",
+      "apartments_mod_tower_shack_roof"
     ],
     "copy-from": "apartments_tower_any"
   },

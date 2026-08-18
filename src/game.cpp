@@ -73,6 +73,7 @@
 #include "crafting.h"
 #include "creature_throw.h"
 #include "creature_tracker.h"
+#include "monster_hallucination.h"
 #include "monster.h"
 #include "monster_action.h"
 #include "monster_plan.h"
@@ -2814,9 +2815,10 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     }
 
     {
-        ZoneScopedN( "activity_fixed_window_flush_items" );
-        m.process_items();
+        ZoneScopedN( "do_map_process_items" );
+        m.process_items( skipped_turns );
     }
+
     explosion_handler::get_explosion_queue().execute();
     cleanup_dead();
     Pathfinding::clear_d_maps();
@@ -6149,6 +6151,12 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                 critter.process_turn();
             }
 
+            if( monster_hallucination::needs_lifecycle_expiry( critter ) &&
+                one_in( monster_hallucination::expiry_one_in ) ) {
+                critter.die( nullptr );
+                continue;
+            }
+
             m.creature_in_field( critter );
             if( action_time_scale::once_every_this_tick( 1_days ) ) {
                 if( critter.has_flag( MF_MILKABLE ) ) {
@@ -8888,8 +8896,9 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
     const std::string tile = m.tername( lp );
-    const auto coverage = m.coverage( lp );
-    const auto block_chance = m.obstacle_coverage( u.bub_pos(), lp );
+    const auto concealment = m.coverage( lp );
+    const auto cover = m.has_furn( lp ) ? m.furn( lp ).obj().bash.ranged->block_unaimed_chance : m.ter(
+                           lp ).obj().bash.ranged->block_unaimed_chance;
     const auto move_cost = m.move_cost( lp );
     const auto move_cost_is_zero = move_cost == 0;
     const auto move_cost_str = move_cost_is_zero ? _( "Impassable " ) :
@@ -8926,13 +8935,13 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
         }
     }
 
-    if( coverage > 0 ) {
+    if( concealment > 0 ) {
         fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
-                        _( "Cover: %d%%" ), coverage );
+                        _( "Concealment: %d%%" ), concealment );
     }
-    if( block_chance > 0 ) {
+    if( cover > 0_pct ) {
         fold_and_print( w_look, point( column, ++line ), max_width, c_dark_gray,
-                        _( "Block: %d%%" ), block_chance );
+                        _( "Cover: %d%%" ), cover / 1_pct );
     }
 
     std::vector<std::string> feature_lines = foldstring( m.features( lp ), max_width );

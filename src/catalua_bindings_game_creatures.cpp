@@ -1,8 +1,12 @@
+#include <algorithm>
+#include <print>
+
 #include "catalua_bindings_game_internal.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna_doc.h"
 
 #include "avatar.h"
+#include "catalua_creature_filters.h"
 #include "creature_tracker.h"
 #include "game.h"
 #include "monster.h"
@@ -73,6 +77,20 @@ auto reg_game_api_creature_queries( luna::userlib &lib ) -> void
                 if( sp && !sp->is_dead() ) {
                     out[idx++] = sp.get();
                 }
+            }
+        }
+        return out;
+    } );
+
+    DOC( "Returns creatures satisfying filter as a Lua array." );
+    luna::set_fx( lib, "get_monsters_if", []( sol::this_state s, sol::table filters ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        const auto monsters = filter_monsters_from_lua( filters );
+        if( !monsters.empty() )
+        {
+            for( std::size_t i = 0; i < monsters.size(); ++i ) {
+                out[i + 1] = monsters[i];
             }
         }
         return out;

@@ -46,6 +46,7 @@
 #include "mattack_common.h"
 #include "messages.h"
 #include "monfaction.h"
+#include "monster_hallucination.h"
 #include "monster_oracle.h"
 #include "mtype.h"
 #include "npc.h"
@@ -1112,7 +1113,7 @@ monster_action_t monster::decide_action() const
     const auto wandering = goal == pos;
 
     // (1) Hallucination: chance to vanish each tick.
-    if( hallucination && one_in( 25 ) ) {
+    if( hallucination && one_in( monster_hallucination::expiry_one_in ) ) {
         action.kind = monster_action_kind::die;
         return action;
     }

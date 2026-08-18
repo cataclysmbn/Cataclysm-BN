@@ -7,6 +7,7 @@
 #include "calendar.h"
 #include "catalua_coord.h"
 #include "catalua_luna.h"
+#include "hsv_color.h"
 #include "mission.h"
 #include "type_id.h"
 #include "concepts_utility.h"
@@ -112,6 +113,7 @@ struct explosion_data;
 struct requirement_data;
 class inventory;
 class known_magic;
+struct RGBColor;
 
 namespace units
 {
@@ -236,7 +238,7 @@ LUNA_VAL( explosion_data, "ExplosionData" );
 LUNA_VAL( requirement_data, "RequirementData" );
 LUNA_VAL( inventory, "Inventory" );
 LUNA_VAL( bionic, "Bionic" );
-
+LUNA_VAL( RGBColor, "RGBColor" )
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )
 LUNA_ID( ammo_effect, "AmmunitionEffect" )

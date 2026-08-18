@@ -9,6 +9,7 @@
     "difficulty": 8,
     "time": 100000,
     "decomp_learn": 3,
+    "autolearn": true,
     "reversible": true,
     "using": [ [ "soldering_standard", 150 ], [ "welding_standard", 500 ] ],
     "components": [

@@ -164,7 +164,7 @@
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL", "CHIMERA" ],
+    "category": [ "MEDICAL" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5
@@ -428,7 +428,17 @@
     "description": "Whether due to a lifetime of exposure or through simple willpower, it's harder for you to become addicted to substances, and easier to rid yourself of these addictions.",
     "starting_trait": true,
     "valid": false,
-    "cancels": [ "ADDICTIVE" ]
+    "cancels": [ "ADDICTIVE" ],
+    "//": "10800 == 3 hours shorter per intensity, 14400 == 4 hours longer per addition",
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "ADDICTION_STRENGTH", "multiply": -0.5 },
+          { "value": "ADDICTION_TIME_PER_ADDITION", "add": 14400 },
+          { "value": "ADDICTION_TIME_PER_INTENSITY", "add": 10800 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1003,7 +1013,8 @@
     "starting_trait": true,
     "social_modifiers": { "intimidate": -2 },
     "category": [ "BIRD", "RAPTOR" ],
-    "cancels": [ "TOUGH" ]
+    "cancels": [ "TOUGH" ],
+    "mut_enchantments": [ { "values": [ { "value": "HEALTH_POINTS_HEAD", "multiply": -0.2 } ] } ]
   },
   {
     "type": "mutation",
@@ -1023,7 +1034,17 @@
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL", "MOUSE", "RABBIT" ],
-    "cancels": [ "NONADDICTIVE" ]
+    "cancels": [ "NONADDICTIVE" ],
+    "//": "-14400 == 4 hours longer per intensity, -3600 == 1 hours shorter per addition",
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "ADDICTION_STRENGTH", "multiply": 1 },
+          { "value": "ADDICTION_TIME_PER_ADDITION", "add": -3600 },
+          { "value": "ADDICTION_TIME_PER_INTENSITY", "add": -14400 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1150,7 +1171,7 @@
     "description": "You make more noise while walking.",
     "starting_trait": true,
     "cancels": [ "LIGHTSTEP" ],
-    "noise_modifier": 2
+    "mut_enchantments": [ { "values": [ { "value": "NOISE", "add": 12 } ] } ]
   },
   {
     "type": "mutation",
@@ -2356,7 +2377,8 @@
     "prereqs": [ "PLANTSKIN", "BARK" ],
     "prereqs2": [ "LEAVES" ],
     "threshreq": [ "THRESH_PLANT" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "mut_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 4 } ] } ]
   },
   {
     "type": "mutation",
@@ -3167,7 +3189,8 @@
     "starts_active": true,
     "restricts_gear": [ "head" ],
     "allowed_items": [ "ALLOWS_HORNS" ],
-    "allow_soft_gear": true
+    "allow_soft_gear": true,
+    "mut_enchantments": [ { "values": [ { "value": "GROUNDED_CREATURE_SIGHT", "max": 5 } ] } ]
   },
   {
     "type": "mutation",
@@ -4279,7 +4302,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "passive_mods": { "per_mod": -8 }
+    "passive_mods": { "per_mod": -8 },
+    "mut_enchantments": [ { "values": [ { "value": "FLASH_PROTECTION", "max": 3 } ] } ]
   },
   {
     "type": "mutation",
@@ -4297,7 +4321,7 @@
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
     "passive_mods": { "per_mod": 5 },
-    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ], "values": [ { "value": "FLASH_PROTECTION", "max": 8 } ] } ]
   },
   {
     "type": "mutation",
@@ -5314,7 +5338,8 @@
     "active": true,
     "cost": 40,
     "hunger": true,
-    "thirst": true
+    "thirst": true,
+    "mut_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 8 } ] } ]
   },
   {
     "type": "mutation",
@@ -5892,7 +5917,10 @@
     "active": true,
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
-    "mut_enchantments": [ { "conditions": [ "INACTIVE" ], "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
+    "mut_enchantments": [
+      { "conditions": [ "INACTIVE" ], "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] },
+      { "conditions": [ "ACTIVE" ], "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 8 } ] }
+    ]
   },
   {
     "type": "mutation",

@@ -21,6 +21,7 @@
 #include "enums.h"
 #include "field_type.h"
 #include "game.h"
+#include "hsv_color.h"
 #include "itype.h"
 #include "line.h"
 #include "map.h"
@@ -475,6 +476,28 @@ void cata::detail::reg_colors( sol::state &lua )
     }
 
     luna::finalize_enum( et );
+    {
+        sol::usertype<RGBColor> ut =
+            luna::new_usertype<RGBColor>(
+                lua,
+                luna::no_bases,
+                luna::no_constructor
+            );
+
+        luna::set( ut, "name", &RGBColor::friendly_name );
+
+        DOC( "RGB Color Getters." );
+        luna::userlib lib = luna::begin_lib( lua, "rgb_colors" );
+
+        DOC( "Get RGB Color from string" );
+        luna::set_fx( lib, "try_parse", &RGBColor::try_parse );
+        DOC( "Get random RGB Color from fuzzy match string" );
+        luna::set_fx( lib, "get_random", &RGBColor::random_named );
+        DOC( "Get RGBColor -> string mapping" );
+        luna::set_fx( lib, "get_all_named_colors", &RGBColor::get_all_named_colors );
+
+        luna::finalize_lib( lib );
+    }
 }
 
 void cata::detail::reg_enums( sol::state &lua )

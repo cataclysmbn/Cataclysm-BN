@@ -69,6 +69,8 @@ static const flag_id json_flag_RAIN_PROTECT("RAIN_PROTECT");
 static const flag_id json_flag_RAINPROOF("RAINPROOF");
 static const flag_id json_flag_SUN_GLASSES("SUN_GLASSES");
 
+static const enchantment_flag_id ench_flag_ANTIGLARE( "ANTIGLARE" );
+
 /**
  * \defgroup Weather "Weather and its implications."
  * @{
@@ -87,7 +89,8 @@ static bool is_player_outside() {
 void glare(const weather_type_id& w) {
     // General prepequisites for glare
     if (!is_player_outside() || !g->is_in_sunlight(g->u.bub_pos()) || g->u.in_sleep_state()
-        || g->u.worn_with_flag(json_flag_SUN_GLASSES) || g->u.has_bionic(bio_sunglasses)
+        || g->u.worn_with_flag(json_flag_SUN_GLASSES)
+        || g->u.has_enchantment_flag(ench_flag_ANTIGLARE) || g->u.has_bionic(bio_sunglasses)
         || g->u.is_blind()) {
         return;
     }

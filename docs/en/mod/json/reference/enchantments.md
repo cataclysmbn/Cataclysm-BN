@@ -2,13 +2,13 @@
 
 Enchantments make it possible to specify custom effects provided by item, bionic or mutation.
 
-## Fields
+### Fields
 
-### id
+#### id
 
 (string) Unique identifier for this enchantment.
 
-### conditions
+#### conditions
 
 (string array) How an enchantment determines if it should be active
 
@@ -16,12 +16,12 @@ All conditions must pass for it to be valid, if there are no conditions it is au
 
 For all basegame values see [here](#Basegame-Enchantment-Condition-ID-List)
 
-### emitter
+#### emitter
 
 (string) Identifier of an emitter that's active as long as this enchantment is active. Default: no
 emitter.
 
-### ench_effects
+#### ench_effects
 
 (array) Grants effects of specified intensity as long as this enchantment is active.
 
@@ -37,7 +37,7 @@ Syntax for single entry:
 }
 ```
 
-### hit_you_effect
+#### hit_you_effect
 
 (array) List of spells that may be cast when enchantment is active and character melee attacks a
 creature.
@@ -76,18 +76,18 @@ Syntax for single entry:
 }
 ```
 
-### hit_me_effect
+#### hit_me_effect
 
 (array) List of spells that may be cast when enchantment is active and character gets melee attacked
 by a creature.
 
 Same syntax as for `hit_you_effect`.
 
-### mutations
+#### mutations
 
 (array) List of mutations temporarily granted while enchantment is active.
 
-### intermittent_activation
+#### intermittent_activation
 
 (object) Rules that specify random effects which occur while enchantment is active.
 
@@ -121,7 +121,7 @@ Syntax:
 }
 ```
 
-### values
+#### values
 
 (array) List of miscellaneous character/item values to modify.
 
@@ -160,25 +160,25 @@ calculated values have hardcoded bounds to prevent unintended behavior.
 
 For all basegame values see [here](#Basegame-Enchantment-Value-ID-List)
 
-### Flags
+#### Flags
 
 (array) of enchantment_flag_id values
 
 For all basegame values see [here](#Basegame-Enchantment-Flag-ID-List)
 
-### Immune Effects
+#### Immune Effects
 
 (array) of effect_type_id values
 
 Prevents recieving these effects, but any present effects will persist
 
-### Immune Fields
+#### Immune Fields
 
 (array) of field_type_id values
 
 Prevents environmental effects of fields from being applied
 
-## Examples
+### Examples
 
 ```json
 [
@@ -188,7 +188,7 @@ Prevents environmental effects of fields from being applied
     "id": "MEP_INK_GLAND_SPRAY",
     "hit_me_effect": [
       {
-        "id": "generic_blinding_spray_1",
+       "id": "generic_blinding_spray_1",
         "hit_self": false,
         "once_in": 15,
         "message": "Your ink glands spray some ink into %2$s's eyes.",
@@ -225,37 +225,131 @@ Prevents environmental effects of fields from being applied
 ]
 ```
 
-# Enchantment Values
+## Enchantment Values
 
 ```jsonc
 {
-  "id": "RANGED_DAMAGE", // Id of enchantment
+  "id": "CLIMATE_CONTROL", // Id of enchantment
   "type": "enchantment_value", // Needed type
   "can_add": true, // Weather adding to the enchantment value will do anything; Default true
   "can_mult": true, // Weather multiplying to the enchantment value will do anything; Default true
   "can_max": false, // Weather getting the maximum value of this type will do anything; Default false
-  "desc": "Affects Outgoing Ranged Damage", // Description of the enchantment used in some menus
-  "increase_good": true, // Color for enchantment descriptions, if true > 0 or > 1 == green else == red
-  "suffixes": [ // All the suffixes. These appear as `RANGED_DAMAGE_XXX` in this case
-    ["BASH", "Affects Outgoing Ranged Bash Damage"], // Suffixes reference the value of the parent in calculations automatically
-    ["CUT", "Affects Outgoing Ranged Cut Damage"], // The second value here is the description of the enchantment
-    ["DARK", "Affects Outgoing Ranged Dark Damage"],
-    ["LIGHT", "Affects Outgoing Ranged Light Damage"],
-    ["PSI", "Affects Outgoing Ranged Psi Damage"],
-    ["STAB", "Affects Outgoing Ranged Stab Damage"],
-    ["BULLET", "Affects Outgoing Ranged Ballistic Damage"],
-    ["HEAT", "Affects Outgoing Ranged Heat Damage"],
-    ["COLD", "Affects Outgoing Ranged Cold Damage"],
-    ["ELECTRIC", "Affects Outgoing Ranged Electric Damage"],
-    ["ACID", "Affects Outgoing Ranged Acid Damage"],
-    ["BIOLOGICAL", "Affects Outgoing Ranged Biological Damage"],
-    ["TRUE", "Affects Outgoing Ranged True Damage"],
+  "suffixes": [ // All of the suffixes this is quite literally the most complicated part
+    [
+      { "suffix": "COOLING", "desc_insert": [ "hot", "" ] }, // These show up as `CLIMATE_CONTROL_XXX`
+      { "suffix": "HEATING", "desc_insert": [ "cold", "" ] } // Desc insert overwrites the below `desc_insert`, desc can also be replaced
+    ],
+    [ // Then you can define a second set, there can be as many sets as you want
+      { "suffix": "TORSO", "replace": { "desc_insert": { "idx": 1, "val": "Torse" } } }, // Replace replaces based off starting at 0 index, so this replaces "" with "Torso"
+      {
+        "suffix": "ARM", 
+        "replace": { "desc_insert": { "idx": 1, "val": "Arm" } },
+        "suffixes": [ // These are a list of further suffix specific suffixes
+          { "suffix": "L", "replace": { "desc_insert": { "idx": 1, "val": "Left Arm" } } }, // These suffixes could have additional nested suffixes too
+          { "suffix": "R", "replace": { "desc_insert": { "idx": 1, "val": "Right Arm" } } } // These only show up as `CLIMATE_CONTROL_XXX_ARM_XXX`, never will they be applied to another type
+        ]
+      },
+    ] // See below for further explination on why there are multiple sets
   ],
-  "unsupported_conditions": ["character", "item_and_character"], // These values are called where these conditions cannot ever be used
-}
+  "desc": "Keeps you comfortable against %1$s temperatures ( %2$s )", // Description, with support for formatting in additional strings
+  "desc_insert": [ "all bodyparts", "" ], // The additional strings to format in
+  "unsupported_conditions": ["character", "item_and_character"] // These values are called where these conditions cannot ever be used
+},
 ```
 
-## Basegame Enchantment Value ID List
+### Suffixes Explination
+
+Start by examining the above tree
+There are two groups:
+
+- COOLING and HEATING
+- TORSO and ARM ( With Arm's children )
+
+Order matters here, because COOLING came first, whenever you need the COOLING specifier, it must be first
+I.E.
+`CLIMATE_CONTROL_COOLING_ARM` works, but `CLIMATE_CONTROL_ARM_COOLING` is invalid.
+
+The chain produced from the above json is as follows
+
+- CLIMATE_CONTROL
+  - CLIMATE_CONTROL_COOLING
+    - CLIMATE_CONTROL_COOLING_ARM
+      - CLIMATE_CONTROL_COOLING_ARM_L -> References CLIMATE_CONTROL_ARM_L
+      - CLIMATE_CONTROL_COOLING_ARM_R -> References CLIMATE_CONTROL_ARM_R
+  - CLIMATE_CONTROL_HEATING
+    - CLIMATE_CONTROL_HEATING_ARM
+      - CLIMATE_CONTROL_HEATING_ARM_L -> References CLIMATE_CONTROL_ARM_L
+      - CLIMATE_CONTROL_HEATING_ARM_R -> References CLIMATE_CONTROL_ARM_R
+  - CLIMATE_CONTROL_ARM -> Does not reference CLIMATE_CONTROL to prevent stacking effects
+    - CLIMATE_CONTROL_ARM_L
+    - CLIMATE_CONTROL_ARM_R
+
+This can be done with as many chains as wanted, but it gets increasingly complicated as more chains are added
+
+In the docs, only the chain groups will be referenced, not the full list of enchantment values, due to the increasing number of enchantment children
+
+When referencing these values in c++ or lua you always want to use the most specific value, the lower tiers are autofilled.
+I.E. `CLIMATE_CONTROL_COOLING_ARM_R` should be what you reference, never `CLIMATE_CONTROL_ARM_R`, or `CLIMATE_CONTROL_ARM` when getting a value
+
+### Standard suffixes
+
+#### Bodyparts
+
+This is a standard set of suffixes for all bodyparts
+Includes
+
+- HEAD
+- TORSO
+- EYES
+- MOUTH
+- ARM
+  - L
+  - R
+- LEG
+  - L
+  - R
+- HAND
+  - L
+  - R
+- FOOT
+  - L
+  - R
+
+#### Skills
+
+Used for all skill levels
+
+- `BARTER`
+- `SPEECH`
+- `COMPUTER`
+- `FIRSTAID`
+- `MECHANICS`
+- `TRAPS`
+- `DRIVING`
+- `SWIMMING`
+- `FABRICATION`
+- `COOKING`
+- `TAILOR`
+- `SURVIVAL`
+- `ELECTRONICS`
+- `ARCHERY`
+- `GUN`
+- `LAUNCHER`
+- `PISTOL`
+- `RIFLE`
+- `SHOTGUN`
+- `SMG`
+- `THROW`
+- `MELEE`
+- `BASHING`
+- `CUTTING`
+- `DODGE`
+- `STABBING`
+- `UNARMED`
+
+#### Damage Types
+
+### Basegame Enchantment Value ID List
 
 #### Character values
 
@@ -278,6 +372,12 @@ Intelligence stat. `base_value` here is the base stat value. The final value can
 ##### HEALTH_POINTS
 
 Hit points stat. `base_value` here is the base health value, The final value cannot go below 1.
+
+These are the children.
+
+| Set       | Values                                  | Use                                    |
+| --------- | --------------------------------------- | -------------------------------------- |
+| Bodyparts | TORSO, HEAD, ARM ( L, R ), LEG ( L, R ) | The specific bodypart that is affected |
 
 ##### SPEED
 
@@ -327,12 +427,9 @@ Calculated after all other multipliers
 Construction speed. `base_value` is a multiplier of construction speed for vehicles and furniture/terrain.
 Calculated after all other multipliers
 
-It has two children:
-
-- `CONSTRUCTION_SPEED_CON`
-- `CONSTRUCTION_SPEED_VEH`
-
-That would only work for furniture/terrain or vehicles respectively
+| Set               | Values   | Use                                                            |
+| ----------------- | -------- | -------------------------------------------------------------- |
+| Construction Type | CON, VEH | Weather construction or vehicle construction speed is affected |
 
 ##### METABOLISM
 
@@ -432,8 +529,10 @@ Moves temperature felt by the player towards a point.
 It will increase or decrease based off if it is below or above normal temperature ( including mutations )
 It has two children:
 
-- `CLIMATE_CONTROL_COOLING`
-- `CLIMATE_CONTROL_HEATING`
+| Set         | Values                                               | Use                                                                        |
+| ----------- | ---------------------------------------------------- | -------------------------------------------------------------------------- |
+| Temperature | COOLING, HEATING                                     | Weather it applies increase in heat or decrease in heat towards ideal temp |
+| Bodypart    | See general bodypart enchantments [here](#bodyparts) | Bodypart that it applies to                                                |
 
 That would only heat or cool respectively
 
@@ -484,11 +583,34 @@ There is no limit
 Modifier to food morale. `base_value` is current food morale
 There is no limit.
 
+##### ADDICTION_STRENGTH
+
+Modifier to likelyhood to gain another addiction intensity.
+`base_value` is the strength of the added addiction.
+There is no limit.
+
+##### ADDICTION_TIME_PER_ADDITION
+
+Modifier to how long addiction applications increase addition time. `base_value` is base time added each time additions are applied in seconds.
+There is no limit.
+
+##### ADDICTION_TIME_PER_INTENSITY
+
+Modifier to how long addictions last. `base_value` is time to remove one addiction stack.
+Reducing _increases_ addiction time, adding _reduces_ addiction time
+There is no limit.
+
 ##### BONUS_DODGE
 
 Additional dodges per turn before dodge penalty kicks in. `base_value` here is character's base
 dodges per turn before penalty (usually 1). The final value can go below 0, which results in penalty
 to dodge roll.
+
+##### CROWD_CRUSH_RESIST
+
+Modifier to how likely it is to get crowd crushed `base_value` is 5, it is always 5.
+Increasing it reduces the chance to get crowd crushed
+From 0 ( no chance to resist ) to 95 ( 5% chance to not resist )
 
 ##### BLISTER_COUNT
 
@@ -511,95 +633,52 @@ Clairvoyance value for the player. `CLAIRVOYANCE_SUPER` is 40.0 while `CLAIRVOYA
 And `CLAIRVOYANCE` is 3
 Only `max` works, and it will take the highest of enchantment and other clairvoyance effects
 
+##### FLASH_PROTECTION
+
+Flash protection value for the player. Item and effect flags give 3.
+Only `max` works, and it will take the highest of enchantment, item and effect effects.
+
+##### GROUNDED_CREATURE_SIGHT
+
+Sight that passes through walls of grounded creatures in the form of infrared.
+Number of tiles it works on. Only `max` works.
+
 ##### ARMOR_X
 
 Incoming damage modifier. Applied after Active Defense System bionic but before the damage is
 absorbed by items. Note that `base_value` here is incoming damage value of corresponding type, so
-positive `add` and greater than 1 `mul` will **increase** damage received by the character. Each
-damage type has its own enchant value in addition to the globally applied value `ARMOR`:
+positive `add` and greater than 1 `mul` will **increase** damage received by the character.
 
-- `ARMOR_ACID`
-- `ARMOR_BASH`
-- `ARMOR_BIOLOGICAL`
-- `ARMOR_BULLET`
-- `ARMOR_COLD`
-- `ARMOR_CUT`
-- `ARMOR_LIGHT`
-- `ARMOR_DARK`
-- `ARMOR_PSI`
-- `ARMOR_ELECTRIC`
-- `ARMOR_HEAT`
-- `ARMOR_STAB`
-- `ARMOR_TRUE`
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
 
 ##### SKILL_LEVEL
 
 Character wide skill level modifier.
 `base_value` is the current skill level of the player
-In addition there are the following children of this enchantment
 
-- `SKILL_LEVEL_BARTER`
-- `SKILL_LEVEL_SPEECH`
-- `SKILL_LEVEL_COMPUTER`
-- `SKILL_LEVEL_FIRSTAID`
-- `SKILL_LEVEL_MECHANICS`
-- `SKILL_LEVEL_TRAPS`
-- `SKILL_LEVEL_DRIVING`
-- `SKILL_LEVEL_SWIMMING`
-- `SKILL_LEVEL_FABRICATION`
-- `SKILL_LEVEL_COOKING`
-- `SKILL_LEVEL_TAILOR`
-- `SKILL_LEVEL_SURVIVAL`
-- `SKILL_LEVEL_ELECTRONICS`
-- `SKILL_LEVEL_ARCHERY`
-- `SKILL_LEVEL_GUN`
-- `SKILL_LEVEL_LAUNCHER`
-- `SKILL_LEVEL_PISTOL`
-- `SKILL_LEVEL_RIFLE`
-- `SKILL_LEVEL_SHOTGUN`
-- `SKILL_LEVEL_SMG`
-- `SKILL_LEVEL_THROW`
-- `SKILL_LEVEL_MELEE`
-- `SKILL_LEVEL_BASHING`
-- `SKILL_LEVEL_CUTTING`
-- `SKILL_LEVEL_DODGE`
-- `SKILL_LEVEL_STABBING`
-- `SKILL_LEVEL_UNARMED`
+| Set        | Values                                     | Use                      |
+| ---------- | ------------------------------------------ | ------------------------ |
+| Skill Type | See general skill suffixes [here](#skills) | Skill that it applies to |
 
 ##### SKILL_EXP
 
 Character wide skill exp gain modifier.
 `base_value` is the exp gained by whatever is being done
 Warning: this value can only be multiplied, not added
-In addition there are the following children of this enchantment
 
-- `SKILL_EXP_BARTER`
-- `SKILL_EXP_SPEECH`
-- `SKILL_EXP_COMPUTER`
-- `SKILL_EXP_FIRSTAID`
-- `SKILL_EXP_MECHANICS`
-- `SKILL_EXP_TRAPS`
-- `SKILL_EXP_DRIVING`
-- `SKILL_EXP_SWIMMING`
-- `SKILL_EXP_FABRICATION`
-- `SKILL_EXP_COOKING`
-- `SKILL_EXP_TAILOR`
-- `SKILL_EXP_SURVIVAL`
-- `SKILL_EXP_ELECTRONICS`
-- `SKILL_EXP_ARCHERY`
-- `SKILL_EXP_GUN`
-- `SKILL_EXP_LAUNCHER`
-- `SKILL_EXP_PISTOL`
-- `SKILL_EXP_RIFLE`
-- `SKILL_EXP_SHOTGUN`
-- `SKILL_EXP_SMG`
-- `SKILL_EXP_THROW`
-- `SKILL_EXP_MELEE`
-- `SKILL_EXP_BASHING`
-- `SKILL_EXP_CUTTING`
-- `SKILL_EXP_DODGE`
-- `SKILL_EXP_STABBING`
-- `SKILL_EXP_UNARMED`
+| Set        | Values                                     | Use                      |
+| ---------- | ------------------------------------------ | ------------------------ |
+| Skill Type | See general skill suffixes [here](#skills) | Skill that it applies to |
+
+##### Encumbrance
+
+Character wide encumbrance modifier, children modify certain bodyparts.
+
+| Set      | Values                                               | Use                         |
+| -------- | ---------------------------------------------------- | --------------------------- |
+| Bodypart | See general bodypart enchantments [here](#bodyparts) | Bodypart that it applies to |
 
 #### Item values
 
@@ -614,19 +693,19 @@ Melee damage of this item. Ignores condition / location, and is always active. `
 base item damage of corresponding type. Note that the final value cannot go below 0.
 There is the global damage modifier `ITEM_DAMAGE` in addition to the supported damage types:
 
-- `ITEM_DAMAGE_BASH`
-- `ITEM_DAMAGE_CUT`
-- `ITEM_DAMAGE_STAB`
-- `ITEM_DAMAGE_BULLET`
-- `ITEM_DAMAGE_ACID`
-- `ITEM_DAMAGE_BIOLOGICAL`
-- `ITEM_DAMAGE_COLD`
-- `ITEM_DAMAGE_DARK`
-- `ITEM_DAMAGE_ELECTRIC`
-- `ITEM_DAMAGE_FIRE`
-- `ITEM_DAMAGE_LIGHT`
-- `ITEM_DAMAGE_PSI`
-- `ITEM_DAMAGE_TRUE`
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
+
+##### ITEM_ARMOR_PENETRATION_X
+
+Armor penetration of this item. `base_value` here is base armor penetration of corresponding type.
+Note that the final value cannot go below 0.
+There is the global modifier `ITEM_ARMOR_PENTRATION` in addition to the supported damage types:
+
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
 
 ##### ITEM_ARMOR_X
 
@@ -635,21 +714,11 @@ Incoming damage modifier for this item, applied before the damage is absorbed by
 1 `mul` will **increase** damage received by the character. Each damage type has its own enchant
 value, in addition to the global `ITEM_ARMOR`:
 
-- `ITEM_ARMOR_ACID`
-- `ITEM_ARMOR_BASH`
-- `ITEM_ARMOR_BIOLOGICAL`
-- `ITEM_ARMOR_BULLET`
-- `ITEM_ARMOR_COLD`
-- `ITEM_ARMOR_CUT`
-- `ITEM_ARMOR_LIGHT`
-- `ITEM_ARMOR_DARK`
-- `ITEM_ARMOR_PSI`
-- `ITEM_ARMOR_ELECTRIC`
-- `ITEM_ARMOR_HEAT`
-- `ITEM_ARMOR_STAB`
-- `ITEM_ARMOR_TRUE`
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
 
-# Enchantment Flag
+## Enchantment Flag
 
 ```jsonc
 {
@@ -663,9 +732,9 @@ value, in addition to the global `ITEM_ARMOR`:
 
 All noted effects apply to the character in possession of the enchantment granting thing
 
-## Basegame Enchantment Flag ID List
+### Basegame Enchantment Flag ID List
 
-### Sight
+#### Sight
 
 ##### UNDERWATER_SIGHT
 
@@ -699,7 +768,15 @@ Gain infrared vision
 
 Can see robots and electrical creatures through walls
 
-### Consumption
+##### SONAR
+
+Can see burrowing creatures with the INFRARED_VISION sprite
+
+##### ANTIGLARE
+
+Prevents glare effects from sunlight and such
+
+#### Consumption
 
 ##### EAT_ROTTEN
 
@@ -725,7 +802,7 @@ Prevents gaining parasites from consuming food
 
 Prevents gaining poison from consuming food
 
-### Miscellaneous
+#### Miscellaneous
 
 ##### ALARMCLOCK
 
@@ -772,7 +849,7 @@ Taking damage will not wake up the player
 
 Lights will not wake up the player
 
-# Enchantment Condition
+## Enchantment Condition
 
 ```jsonc
 {
@@ -784,7 +861,7 @@ Lights will not wake up the player
 }
 ```
 
-## Basegame Enchantment Condition ID List
+### Basegame Enchantment Condition ID List
 
 #### Item and Character
 

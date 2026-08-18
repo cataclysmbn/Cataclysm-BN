@@ -874,21 +874,24 @@
         "distribution": [
           {
             "collection": [
-              { "item": "power_armor_basic", "damage": [ 1, 4 ] },
+              { "item": "power_armor_exo_2", "damage": [ 1, 4 ] },
+              { "item": "power_armor_plating_2", "damage": [ 1, 4 ] },
               { "item": "power_armor_helmet_basic", "damage": [ 1, 4 ], "prob": 75 }
             ],
             "prob": 15
           },
           {
             "collection": [
-              { "item": "power_armor_light", "damage": [ 1, 4 ] },
+              { "item": "power_armor_exo_2", "damage": [ 1, 4 ] },
+              { "item": "power_armor_plating_3", "damage": [ 1, 4 ] },
               { "item": "power_armor_helmet_light", "damage": [ 1, 4 ], "prob": 75 }
             ],
             "prob": 15
           },
           {
             "collection": [
-              { "item": "power_armor_heavy", "damage": [ 1, 4 ] },
+              { "item": "power_armor_exo_1", "damage": [ 1, 4 ] },
+              { "item": "power_armor_plating_1", "damage": [ 1, 4 ] },
               { "item": "power_armor_helmet_heavy", "damage": [ 1, 4 ], "prob": 75 }
             ],
             "prob": 8
@@ -940,7 +943,7 @@
           }
         ]
       },
-      { "group": "military_specops_guns", "prob": 70, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
+      { "group": "military_specops_guns", "prob": 100, "damage": [ 0, 3 ], "dirt": [ 1500, 7050 ] },
       { "group": "pwr_armor_acc", "count": [ 1, 2 ], "damage": [ 1, 4 ], "prob": 90 },
       { "item": "heavy_power_armor_frame", "damage": [ 1, 3 ], "prob": 100 }
     ]
@@ -1043,5 +1046,130 @@
     "id": "mon_feral_blackops_boss_sniper_monster_weapon",
     "subtype": "distribution",
     "entries": [ { "group": "nested_rm11b_sniper_rifle", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_commander_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "group": "swat_zombie_gear", "prob": 100, "damage": [ 0, 1 ] },
+      { "group": "swat_gloves", "damage": [ 0, 2 ] },
+      { "group": "swat_helmet", "damage": [ 0, 2 ] },
+      { "group": "swat_pants", "damage": [ 0, 2 ] },
+      { "group": "swat_shoes", "damage": [ 0, 2 ] },
+      { "group": "swat_torso", "damage": [ 0, 2 ] },
+      { "group": "underwear", "damage": [ 0, 4 ] },
+      { "group": "clothing_glasses", "prob": 5 },
+      { "group": "clothing_watch", "prob": 100 },
+      { "item": "badge_swat", "prob": 50 },
+      {
+        "distribution": [ { "item": "retool_mcx_223", "prob": 50 }, { "item": "retool_mcx_762", "prob": 50 } ],
+        "prob": 100
+      },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 0, 1 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 0, 1 ] }
+        ],
+        "prob": 50
+      },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_commander_monster_weapon",
+    "subtype": "distribution",
+    "entries": [ { "group": "everyday_sig_mcx_swat", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_shieldman_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "group": "swat_zombie_gear", "prob": 100, "damage": [ 0, 1 ] },
+      { "group": "swat_gloves", "damage": [ 0, 2 ] },
+      { "group": "swat_helmet", "damage": [ 0, 2 ] },
+      { "group": "swat_pants", "damage": [ 0, 2 ] },
+      { "group": "swat_shoes", "damage": [ 0, 2 ] },
+      { "group": "swat_torso", "damage": [ 0, 2 ] },
+      { "group": "underwear", "damage": [ 0, 4 ] },
+      { "group": "clothing_glasses", "prob": 5 },
+      { "group": "clothing_watch", "prob": 100 },
+      { "item": "badge_swat", "prob": 50 },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 0, 1 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 0, 1 ] }
+        ],
+        "prob": 50
+      },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 },
+      { "item": "shield_ballistic_large", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_shieldman_monster_weapon",
+    "subtype": "distribution",
+    "entries": [ { "group": "everyday_usp_45", "prob": 100, "damage": 0, "dirt": [ 0, 1500 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_grenadier_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "group": "swat_zombie_gear", "prob": 100, "damage": [ 0, 1 ] },
+      { "group": "swat_gloves", "damage": [ 0, 2 ] },
+      { "group": "swat_helmet", "damage": [ 0, 2 ] },
+      { "group": "swat_pants", "damage": [ 0, 2 ] },
+      { "group": "swat_shoes", "damage": [ 0, 2 ] },
+      { "group": "swat_torso", "damage": [ 0, 2 ] },
+      { "group": "underwear", "damage": [ 0, 4 ] },
+      { "group": "clothing_glasses", "prob": 5 },
+      { "group": "clothing_watch", "prob": 100 },
+      { "item": "badge_swat", "prob": 50 },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 0, 1 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 0, 1 ] }
+        ],
+        "prob": 50
+      },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 },
+      { "item": "gasbomb", "prob": 100, "count": [ 2, 4 ] },
+      { "item": "bot_flashbang_hack", "prob": 100, "count": [ 1, 3 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_cloaker_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "group": "swat_zombie_gear", "prob": 100, "damage": [ 0, 1 ] },
+      { "group": "swat_gloves", "damage": [ 0, 2 ] },
+      { "group": "swat_helmet", "damage": [ 0, 2 ] },
+      { "group": "swat_pants", "damage": [ 0, 2 ] },
+      { "group": "swat_shoes", "damage": [ 0, 2 ] },
+      { "group": "swat_torso", "damage": [ 0, 2 ] },
+      { "group": "underwear", "damage": [ 0, 4 ] },
+      { "group": "clothing_glasses", "prob": 5 },
+      { "group": "clothing_watch", "prob": 100 },
+      { "item": "badge_swat", "prob": 50 },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 0, 1 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 0, 1 ] }
+        ],
+        "prob": 50
+      },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_feral_swat_boss_cloaker_monster_weapon",
+    "subtype": "distribution",
+    "entries": [ { "item": "shocktonfa_off", "prob": 100, "damage": 0 } ]
   }
 ]

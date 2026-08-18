@@ -1440,6 +1440,31 @@
     "components": [ [ [ "rag", 4 ], [ "scarf", 2 ], [ "scarf_long", 1 ], [ "balclava", 1 ] ], [ [ "element", 2 ] ], [ [ "cable", 6 ] ] ]
   },
   {
+    "result": "thermal_cooling_mask",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "electronics",
+    "difficulty": 5,
+    "skills_required": [ "tailor", 4 ],
+    "time": "1 h 20 m",
+    "reversible": true,
+    "book_learn": [ [ "textbook_fabrication", 4 ], [ "tailor_portfolio", 5 ], [ "textbook_tailor", 4 ], [ "atomic_survival", 4 ] ],
+    "using": [ [ "sewing_standard", 30 ], [ "soldering_standard", 60 ] ],
+    "components": [
+      [ [ "rag", 4 ], [ "scarf", 2 ], [ "scarf_long", 1 ], [ "balclava", 1 ] ],
+      [ [ "element", 2 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "cable", 6 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "amplifier", 1 ] ],
+      [ [ "condensor_coil", 1 ] ],
+      [ [ "thermometer", 1 ] ],
+      [ [ "water", 3 ], [ "water_clean", 3 ] ]
+    ]
+  },
+  {
     "result": "tinfoil_hat",
     "type": "recipe",
     "category": "CC_ARMOR",

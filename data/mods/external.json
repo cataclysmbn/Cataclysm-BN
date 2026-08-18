@@ -17,16 +17,42 @@
   {
     "id": "overhaul",
     "version": "0.0.2",
-    "url": "https://github.com/scarf005/Overhaul/archive/refs/tags/v0.0.2.zip"
+    "url": "https://github.com/scarf005/Overhaul/archive/9180c5a2b93c07908c7b5dd714bf92bb3d7a4e20.zip",
+    "extract_path": "overhaul"
   },
   {
     "id": "overhaul_additions",
     "version": "0.0.2",
-    "url": "https://github.com/scarf005/Overhaul/archive/refs/tags/v0.0.2.zip"
+    "url": "https://github.com/scarf005/Overhaul/archive/9180c5a2b93c07908c7b5dd714bf92bb3d7a4e20.zip",
+    "extract_path": "overhaul_additions"
   },
   {
     "id": "otopack_bn_mk_2",
     "version": "2026.2.12",
     "url": "https://github.com/NarandBD/Otopack-BN-Mk-2/archive/refs/tags/sorrynotsorry.zip"
+  },
+  {
+    "id": "cata",
+    "version": "0.0.0",
+    "url": "https://github.com/Noctifer-de-Mortem/nocts_cata_mod/archive/refs/heads/master.zip",
+    "extract_path": "nocts_cata_mod_BN"
+  },
+  {
+    "id": "arcana_cata_patch",
+    "version": "0.0.0",
+    "url": "https://github.com/Noctifer-de-Mortem/nocts_cata_mod/archive/refs/heads/master.zip",
+    "extract_path": "Patchmods/BN_Arcana_Cata++_Patch"
+  },
+  {
+    "id": "cata_exotic_ammo_patch",
+    "version": "0.0.0",
+    "url": "https://github.com/Noctifer-de-Mortem/nocts_cata_mod/archive/refs/heads/master.zip",
+    "extract_path": "Patchmods/BN_Cata++_ExoticAmmo_Patch"
+  },
+  {
+    "id": "mst_extra",
+    "version": "0.0.0",
+    "url": "https://github.com/chaosvolt/MST_Extra_Mod/archive/refs/heads/master.zip",
+    "extract_path": "MST_Extra_BN"
   }
 ]

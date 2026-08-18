@@ -415,7 +415,7 @@ void start_location::burn( const tripoint_abs_omt &/*omtstart*/, const size_t co
 }
 
 void start_location::add_map_extra( const tripoint_abs_omt &omtstart,
-                                    const std::string &map_extra ) const
+                                    const string_id<map_extra> &map_extra ) const
 {
     mapgen_constructor m( MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() ) );
     m.load( omtstart );

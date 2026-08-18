@@ -849,21 +849,6 @@
     "flags": [ "NO_EXPLOSION_VFX", "RANDOM_TARGET" ]
   },
   {
-    "id": "arcana_aftermath_eclipse_halo",
-    "type": "SPELL",
-    "name": { "str": "Eclipse Halo" },
-    "description": "Adds a standard lifedrain halo.",
-    "valid_targets": [ "self" ],
-    "flags": [ "NO_EXPLOSION_VFX" ],
-    "message": "",
-    "effect": "spawn_item",
-    "effect_str": "halo_drainlife",
-    "max_level": 10,
-    "min_duration": 324000,
-    "max_duration": 648000,
-    "duration_increment": 32400
-  },
-  {
     "type": "SPELL",
     "id": "arcana_aftermath_eclipse_wonder",
     "name": { "str": "Eclipse Wonder" },

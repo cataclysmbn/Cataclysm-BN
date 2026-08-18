@@ -31,17 +31,28 @@ game.add_hook("on_npc_spawn", function(...) return mod.robofac.authorize_hub01_s
 game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
-game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
+game.add_hook("on_craft_result", function(...)
+  mod.cooking.on_craft_result(...)
+  mod.spray_can.on_craft_result(...)
+end)
 game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
 game.add_hook("on_character_death", function(...) return mod.minirose.on_character_death(...) end)
+
+-- Itemgroup Modifiers
+game.itemgroup_postprocessors["genome_drive"] = function(...) return mod.genome.postprocess(...) end
 
 -- Mapgen
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
 game.mapgen_functions["lab"] = function(...) return mod.lab.draw(...) end
 game.mapgen_functions["lab_ice"] = function(...) return mod.lab.ice_draw(...) end
+
+-- Enchanter
+game.enchanter_can_use_on["cvd_machine"] = function(...) return mod.cvd_machine.can_use_on(...) end
+
 game.add_hook("on_make_mapgen_factory_list", function(params)
   params.results:insert(#params.results + 1, "lab_1side")
   params.results:insert(#params.results + 1, "lab_4side")
+  params.results:insert(#params.results + 1, "lab_4side_filler")
   params.results:insert(#params.results + 1, "lab_finale_1level")
   params.results:insert(#params.results + 1, "lab_1side_ice")
   params.results:insert(#params.results + 1, "lab_finale_1level_ice")

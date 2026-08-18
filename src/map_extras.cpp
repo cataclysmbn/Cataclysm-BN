@@ -274,16 +274,33 @@ static auto marlossify_mapgen( mapgen_constructor &m, const point_omt_ms &loc ) 
     }
 }
 
+namespace
+{
+void clear_tile( mapgen_constructor &m, const point_omt_ms &p )
+{
+    m.furn_set( p, f_null );
+    m.i_clear( p );
+    m.remove_trap( p );
+    m.remove_all_fields( p );
+    m.delete_graffiti( p );
+    if( optional_vpart_position vp = m.veh_at( p ) ) {
+        m.destroy_vehicle( &vp->vehicle() );
+    }
+}
+}
 static bool mx_house_wasp( mapgen_constructor &m, const tripoint_abs_omt &loc )
 {
     std::ranges::for_each( overmap_terrain_tiles(), [&]( const point_omt_ms p ) {
         if( m.ter( p ) == t_door_c || m.ter( p ) == t_door_locked ) {
+            clear_tile( m, p );
             m.ter_set( p, t_door_frame );
         }
         if( m.ter( p ) == t_window_domestic && !one_in( 3 ) ) {
+            clear_tile( m, p );
             m.ter_set( p, t_window_frame );
         }
         if( m.ter( p ) == t_wall && one_in( 8 ) ) {
+            clear_tile( m, p );
             m.ter_set( p, t_paper );
         }
     } );
@@ -298,6 +315,7 @@ static bool mx_house_wasp( mapgen_constructor &m, const tripoint_abs_omt &loc )
         for( int x = -1; x <= 1; x++ ) {
             for( int y = -1; y <= 1; y++ ) {
                 if( ( x != non.x || y != non.y ) && ( x != 0 || y != 0 ) ) {
+                    clear_tile( m, pod + point_rel_ms( x, y ) );
                     m.ter_set( pod + point_rel_ms( x, y ), t_paper );
                 }
             }
@@ -418,8 +436,22 @@ static bool mx_helicopter( mapgen_constructor &m, const tripoint_abs_omt &abs_of
     int x1 = clamp( c.x() + x_offset, x_min, x_max );
     int y1 = clamp( c.y() + y_offset, y_min, y_max );
 
+    for( point_omt_ms pnt : point_range( point_omt_ms( x1, y1 ), point_omt_ms( x1 + x_length,
+                                         y1 + y_length ) ) ) {
+        if( m.impassable( pnt ) ) {
+            m.bash( pnt, 9999, true );
+        }
+        if( m.has_flag_ter( TFLAG_DEEP_WATER, pnt ) ) {
+            m.ter_set( pnt, t_dirtmound );
+        }
+    }
+
     vehicle *wreckage = m.add_vehicle(
                             crashed_hull, point_omt_ms( x1, y1 ), dir1, rng( 1, 33 ), 1 );
+
+    if( !wreckage ) {
+        debugmsg( "Map extra helicopter failed to spawn at ( %s, %s ).", x1, y1 );
+    }
 
     // During mapgen, m is the constructor surface while vpart_position::pos() uses get_map().
     const auto local_part_pos = [&m]( const vehicle & wreckage,
@@ -601,8 +633,22 @@ static bool mx_aircraft( mapgen_constructor &m, const tripoint_abs_omt &abs_offs
     int x1 = clamp( c.x() + x_offset, x_min, x_max );
     int y1 = clamp( c.y() + y_offset, y_min, y_max );
 
+    for( point_omt_ms pnt : point_range( point_omt_ms( x1, y1 ), point_omt_ms( x1 + x_length,
+                                         y1 + y_length ) ) ) {
+        if( m.impassable( pnt ) ) {
+            m.bash( pnt, 9999, true );
+        }
+        if( m.has_flag_ter( TFLAG_DEEP_WATER, pnt ) ) {
+            m.ter_set( pnt, t_dirtmound );
+        }
+    }
+
     vehicle *wreckage = m.add_vehicle(
                             crashed_hull, point_omt_ms( x1, y1 ), dir1, rng( 1, 33 ), 1 );
+
+    if( !wreckage ) {
+        debugmsg( "Map extra aircraft failed to spawn at ( %s, %s ).", x1, y1 );
+    }
 
     // During mapgen, m is the constructor surface while vpart_position::pos() uses get_map().
     const auto local_part_pos = [&m]( const vehicle & wreckage,

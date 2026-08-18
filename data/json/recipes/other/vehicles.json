@@ -1070,6 +1070,7 @@
     "skill_used": "fabrication",
     "skills_required": [ "mechanics", 1 ],
     "difficulty": 4,
+    "reversible": true,
     "autolearn": true,
     "time": "1 h",
     "using": [ [ "welding_standard", 5 ] ],
@@ -2297,6 +2298,19 @@
     "components": [ [ [ "carbon_fiber_filament", 300 ] ] ]
   },
   {
+    "result": "cargo_aisle_carbon",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "computer",
+    "difficulty": 4,
+    "autolearn": true,
+    "skills_required": [ [ "fabrication", 2 ] ],
+    "time": "10 m",
+    "using": [ [ "3d_printing_standard", 10 ] ],
+    "components": [ [ [ "sheet_carbon", 3 ] ], [ [ "carbon_fiber_filament", 50 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "cargo_rack_carbon",
     "category": "CC_OTHER",
@@ -2524,7 +2538,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "welding_book", 5 ], [ "textbook_carpentry", 4 ] ],
     "using": [ [ "blacksmithing_intermediate", 15 ], [ "steel_standard", 15 ] ],
-    "components": [ [ [ "steel_plate", 3 ] ], [ [ "chain", 2 ] ] ]
+    "components": [ [ [ "steel_plate", 3 ], [ "steel_armor", 36 ] ], [ [ "chain", 2 ] ] ]
   },
   {
     "result": "tread3",
@@ -2538,7 +2552,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 5 ], [ "welding_book", 6 ], [ "textbook_carpentry", 5 ] ],
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 20 ] ],
-    "components": [ [ [ "hard_plate", 5 ] ], [ [ "chain", 2 ] ] ]
+    "components": [ [ [ "hard_plate", 5 ], [ "hard_steel_armor", 60 ] ], [ [ "chain", 2 ] ] ]
   },
   {
     "result": "NBC_seal",

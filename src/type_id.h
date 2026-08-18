@@ -104,6 +104,10 @@ using matec_id = string_id<ma_technique>;
 class mapgen_palette;
 using palette_id = string_id<mapgen_palette>;
 
+class MapgenColorPalette;
+using mpalette_id = string_id<MapgenColorPalette>;
+
+
 class material_type;
 using material_id = string_id<material_type>;
 

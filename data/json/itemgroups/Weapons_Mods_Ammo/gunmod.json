@@ -47,6 +47,8 @@
       [ "u_shotgun", 60 ],
       [ "waterproof_gunmod", 40 ],
       [ "retool_ar15_300blk", 40 ],
+      [ "retool_mcx_223", 40 ],
+      [ "retool_mcx_762", 40 ],
       [ "g36_stanag_adapter", 40 ],
       [ "aug_nato_conversion", 40 ],
       [ "breacher_grip", 10 ],
@@ -164,6 +166,19 @@
     "subtype": "distribution",
     "//": "Standard military muzzle accessories mounted on rifles",
     "entries": [ { "item": "muzzle_brake", "prob": 70 }, { "item": "suppressor", "prob": 30 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "swat_accessories",
+    "subtype": "collection",
+    "//": "Standard attachments for swat miniboss SIG MCX",
+    "entries": [
+      { "item": "holo_sight", "prob": 100 },
+      { "item": "suppressor", "prob": 100 },
+      { "item": "rail_laser_sight", "prob": 100 },
+      { "item": "shoulder_strap", "prob": 100 },
+      { "item": "grip", "prob": 100 }
+    ]
   },
   {
     "type": "item_group",

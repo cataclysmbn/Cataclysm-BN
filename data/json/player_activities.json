@@ -957,6 +957,13 @@
     "verbose_tooltip": false
   },
   {
+    "id": "ACT_ENCHANT",
+    "type": "activity_type",
+    "verb": "enchanting",
+    "no_resume": true,
+    "complex_moves": { "speed": true }
+  },
+  {
     "id": "ACT_NULL",
     "type": "activity_type",
     "verb": "dummy activity",

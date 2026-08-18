@@ -123,16 +123,19 @@ class lua_istate_actor : public lua_icallback_actor_base
         sol::protected_function on_tick_func;
         sol::protected_function on_pickup_func;
         sol::protected_function on_drop_func;
+        sol::protected_function on_puff_func;
 
     public:
         lua_istate_actor( const std::string &item_id,
                           sol::protected_function &&on_tick,
                           sol::protected_function &&on_pickup,
-                          sol::protected_function &&on_drop );
+                          sol::protected_function &&on_drop,
+                          sol::protected_function &&on_puff );
 
         bool has_on_tick() const;
         auto call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const -> void;
         void call_on_pickup( Character &who, item &it ) const;
+        void call_on_puff( Character &who, item &it ) const;
         bool call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const;
 };
 

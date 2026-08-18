@@ -378,6 +378,7 @@
     "description": "Dehydrated fish flakes.  With proper storage, this dried food will remain edible for an incredibly long time.",
     "price": "5 USD",
     "price_postapoc": "250 cent",
+    "delete": { "flags": [ "SMOKABLE" ] },
     "volume": "125 ml"
   },
   {
@@ -1287,7 +1288,7 @@
     "description": "Dehydrated meat flakes.  With proper storage, this dried food will remain edible for an incredibly long time.",
     "price": "9 USD",
     "price_postapoc": "3 USD",
-    "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] },
+    "delete": { "flags": [ "NUTRIENT_OVERRIDE", "SMOKABLE" ] },
     "extend": { "flags": [ "SMOKED" ] },
     "material": [ "flesh" ],
     "primary_material": "cured_meat",
@@ -1414,7 +1415,7 @@
     "material": [ "flesh" ],
     "volume": "125 ml",
     "fun": -4,
-    "delete": { "flags": [ "RAW" ] },
+    "delete": { "flags": [ "RAW", "SMOKABLE" ] },
     "extend": { "flags": [ "SMOKED" ] },
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },

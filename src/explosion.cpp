@@ -87,17 +87,13 @@ static const efftype_id effect_teleglow( "teleglow" );
 static const species_id ROBOT( "ROBOT" );
 
 static const trait_id trait_LEG_TENT_BRACE( "LEG_TENT_BRACE" );
-static const trait_id trait_PER_SLIME( "PER_SLIME" );
-static const trait_id trait_PER_SLIME_OK( "PER_SLIME_OK" );
 
 static const mongroup_id GROUP_NETHER( "GROUP_NETHER" );
 
-static const bionic_id bio_ears( "bio_ears" );
-static const bionic_id bio_sunglasses( "bio_sunglasses" );
-
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_e_handcuffs( "e_handcuffs" );
-static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
+
+static const enchantment_value_id ench_val_FLASH_PROTECTION( "FLASH_PROTECTION" );
 
 namespace
 {
@@ -1757,18 +1753,10 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
         // Deafening is now handled by the sound code.
         if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
-            if( g->u.has_trait( trait_PER_SLIME ) ) {
-                if( one_in( 2 ) ) {
-                    flash_mod = 3; // Yay, you weren't looking!
-                }
-            } else if( g->u.has_trait( trait_PER_SLIME_OK ) ) {
-                flash_mod = 8; // Just retract those and extrude fresh eyes
-            } else if( g->u.has_bionic( bio_sunglasses ) ||
-                       g->u.is_wearing( itype_rm13_armor_on ) ) {
-                flash_mod = 6;
-            } else if( g->u.worn_with_flag( flag_BLIND ) ||
-                       g->u.worn_with_flag( flag_FLASH_PROTECTION ) ) {
-                flash_mod = 3; // Not really proper flash protection, but better than nothing
+            flash_mod = g->u.bonus_from_enchantments( 0, ench_val_FLASH_PROTECTION );
+            if( g->u.worn_with_flag( flag_BLIND ) ||  g->u.worn_with_flag( flag_FLASH_PROTECTION ) ) {
+                // Not really proper flash protection, but better than nothing
+                flash_mod = std::max( flash_mod, 3 );
             }
             g->u.add_env_effect( effect_blind, body_part_eyes, ( 12 - flash_mod - dist ) / 2,
                                  time_duration::from_turns( 10 - dist ) );

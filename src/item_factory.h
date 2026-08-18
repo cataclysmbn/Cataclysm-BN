@@ -407,4 +407,8 @@ class Item_factory
         std::set<itype_id> gun_tools;
 
         std::set<std::string> repair_actions;
+
+        // items who's magazines act like another magazine
+        // I.E. Heavy Battery -> [ Enhanced Heavy Battery, Disposable Heavy Battery ]
+        std::map<itype_id, std::set<itype_id>> magazines_like;
 };

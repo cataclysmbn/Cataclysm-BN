@@ -21,6 +21,7 @@
 #include "craft_command.h"
 #include "crafting.h"
 #include "debug.h"
+#include "enchantments/enchanter.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -2669,6 +2670,98 @@ std::unique_ptr<activity_actor> salvage_activity_actor::deserialize( JsonIn &jsi
     return actor;
 }
 
+// ---- enchant_activity_actor ----
+
+void enchant_activity_actor::start( player_activity &act, Character & )
+{
+    if( !target ) {
+        debugmsg( "Lost object being enchanted" );
+        act.set_to_null();
+        return;
+    }
+    const std::string name = string_format( "Enchant %s", target->display_name() );
+    progress.emplace( name, moves_total );
+}
+
+void enchant_activity_actor::do_turn( player_activity &act, Character & )
+{
+    if( !target ) {
+        debugmsg( "Lost object being enchanted" );
+        act.set_to_null();
+        return;
+    }
+
+    if( progress.front().complete() ) {
+        progress.pop();
+        return;
+    }
+}
+
+void enchant_activity_actor::finish( player_activity &act, Character &who )
+{
+    if( !target ) {
+        debugmsg( "Lost object being enchanted" );
+        act.set_to_null();
+        return;
+    }
+    if( !furn.is_valid() ) {
+        debugmsg( "The furniture that was used is invalid" );
+        act.set_to_null();
+        return;
+    }
+    enchant_info info;
+    bool found_info = false;
+    for( const enchant_info &ench_info : furn->enchanter ) {
+        if( ench_info.id == enchanter_id ) {
+            info = ench_info;
+            found_info = true;
+            break;
+        }
+    }
+    if( !found_info ) {
+        debugmsg( "The enchantment could not be found in furniture definition." );
+        act.set_to_null();
+        return;
+    }
+
+    auto total_reqs =
+        enchanter::total_requirements( info )
+        * std::max(
+            1, ( info.volume_batch_effect ? int( target->base_volume() / info.volume_per_batch ) : 1 ) );
+    for( const auto &comp : total_reqs.get_components() ) { who.consume_items( comp ); }
+    for( const auto &comp : total_reqs.get_tools() ) { who.consume_tools( comp ); }
+    target->add_enchantment( info.to_enchant_with );
+    target->set_var( info.count_var, target->get_var<int>( info.count_var, 0 ) + 1 );
+    if( info.applied_flag_id.is_valid() ) { target->set_flag( info.applied_flag_id ); }
+    act.set_to_null();
+}
+
+void enchant_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+
+    jsout.member( "progress", progress );
+    jsout.member( "target_obj", target );
+    jsout.member( "furn", furn );
+    jsout.member( "enchanter_id", enchanter_id );
+
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> enchant_activity_actor::deserialize( JsonIn &jsin )
+{
+    std::unique_ptr<enchant_activity_actor> actor( new enchant_activity_actor() );
+
+    JsonObject data = jsin.get_object();
+
+    data.read( "progress", actor->progress );
+    data.read( "target_obj", actor->target );
+    data.read( "furn", actor->furn );
+    data.read( "enchanter_id", actor->enchanter_id );
+
+    return actor;
+}
+
 namespace activity_actors
 {
 
@@ -2695,7 +2788,8 @@ deserialize_functions = {
     { activity_id( "ACT_STASH" ), &stash_activity_actor::deserialize },
     { activity_id( "ACT_THROW" ), &throw_activity_actor::deserialize },
     { activity_id( "ACT_ASSIST" ), &assist_activity_actor::deserialize },
-    { activity_id( "ACT_LONGSALVAGE" ), &salvage_activity_actor::deserialize }
+    { activity_id( "ACT_LONGSALVAGE" ), &salvage_activity_actor::deserialize },
+    { activity_id( "ACT_ENCHANT" ), &enchant_activity_actor::deserialize }
 };
 } // namespace activity_actors
 

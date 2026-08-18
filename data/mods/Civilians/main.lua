@@ -1,6 +1,8 @@
 gdebug.log_info("Civilians: Initializing mod...")
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
+local faction_civ_id = MonsterFactionId.new("civilians"):int_id()
+local faction_zombie_id = MonsterFactionId.new("zombie"):int_id()
 
 function merge_config(default_config, stored_config)
   if not stored_config then return default_config end
@@ -80,8 +82,9 @@ local _default_config = {
 
   -- List of civilians allowed to pulp corpses (excludes panic, stationary, parent, and normal child)
   PULPING_ENABLED = true,
-  PULPING_RADIUS = 2,
-  PULPING_CHANCE = 25,
+  PULPING_CIV_LIMIT = 25,
+  PULPING_RADIUS = 4,
+  PULPING_CHANCE = 50,
   CAN_PULP_CIVILIANS = {
     ["mon_civilian_zombiefighter"] = true,
     ["mon_civilian_police"] = true,
@@ -111,17 +114,10 @@ local FLAG_FIELD_DRESS_FAILED = JsonFlagId.new("FIELD_DRESS_FAILED")
 -- Corpse Pulping Function Area
 -- ============================================================================
 
---- Process civilian corpse pulping behavior
-local function process_civilian_corpse_pulping(monster, all_creatures, map)
-  -- 1. Check if in combat (If enemies are in sight, prioritize enemies, ignore corpses)
-  for _, cr in ipairs(all_creatures) do
-    if cr and cr ~= monster and not cr:is_dead() then
-      if monster:attitude_to(cr) == Attitude.Hostile and monster:sees(cr:get_pos_ms()) then
-        return -- In combat, terminate corpse pulping logic
-      end
-    end
-  end
+local function pos_as_key(tripoint) return string.format("%d:%d:%d", tripoint.x, tripoint.y, tripoint.z) end
 
+--- Process civilian corpse pulping behavior
+local function process_civilian_corpse_pulping(monster, map, checked_positions)
   local m_pos = monster:get_pos_ms()
   ---@type Item?
   local found_corpse = nil
@@ -131,18 +127,22 @@ local function process_civilian_corpse_pulping(monster, all_creatures, map)
   -- 2. Scan surroundings for unpulped corpses (radius 8 tiles)
   local points = map:points_in_radius(m_pos, CONFIG.PULPING_RADIUS, 0)
   for _, pt in ipairs(points) do
-    if map:has_items_at(pt) then
-      local map_stack = map:get_items_at(pt)
-      for _, item in ipairs(map_stack:items()) do
-        if item and not item:is_null() and item:is_corpse() then
-          -- Determine if the corpse has not been pulped yet
-          local is_pulped = item:has_flag(FLAG_PULPED) or item:has_flag(FLAG_FIELD_DRESS_FAILED)
-          local is_max_damage = item:get_damage() >= item:get_max_damage()
+    local pos_key = pos_as_key(pt)
+    if checked_positions[pos_key] == nil then
+      checked_positions[pos_key] = true -- Do not check same position twice
+      if map:has_items_at(pt) then
+        local map_stack = map:get_items_at(pt)
+        for _, item in ipairs(map_stack:items()) do
+          if item and not item:is_null() and item:is_corpse() then
+            -- Determine if the corpse has not been pulped yet
+            local is_pulped = item:has_flag(FLAG_PULPED) or item:has_flag(FLAG_FIELD_DRESS_FAILED)
+            local is_max_damage = item:get_damage() >= item:get_max_damage()
 
-          if not (is_pulped or is_max_damage) then
-            found_corpse = item
-            corpse_pos = pt
-            break
+            if not (is_pulped or is_max_damage) then
+              found_corpse = item
+              corpse_pos = pt
+              break
+            end
           end
         end
       end
@@ -150,7 +150,7 @@ local function process_civilian_corpse_pulping(monster, all_creatures, map)
     if found_corpse then break end
   end
 
-  if not found_corpse or corpse_pos == nil then return end
+  if not found_corpse or found_corpse == nil or not corpse_pos or corpse_pos == nil then return end
   ---@cast corpse_pos TripointBubMs
 
   -- 3. Determine distance and execute action
@@ -179,20 +179,30 @@ end
 -- Execute corpse pulping check for all civilians every 10 turns
 function mod.on_every_10_turns_civilian_update()
   if not CONFIG.PULPING_ENABLED then return end
-
   local map = gapi.get_map()
-  -- Ideally, we change the API to filter creatures/monsters in C++ first.
-  local all_creatures = gapi.get_all_creatures()
-  local monsters = gapi.get_all_monsters()
-  if not map or not all_creatures or not monsters then return end
+  local civilians = gapi.get_monsters_if({ ["faction_ids"] = { faction_civ_id }, ["limit"] = CONFIG.PULPING_CIV_LIMIT })
+  local hostiles = gapi.get_monsters_if({
+    ["faction_ids"] = { faction_zombie_id },
+    ["within_range_of"] = { ["range"] = 10, ["monsters"] = civilians },
+    ["sees"] = civilians,
+    ["hostile_to"] = civilians,
+    ["limit"] = 1,
+  })
 
-  for _, mon in ipairs(monsters) do
+  -- Dont process if no civilians or hostiles in sight
+  if not map or not civilians then return end
+  if hostiles and #hostiles > 0 then return end
+
+  local checked_positions = {}
+  for _, mon in ipairs(civilians) do
     if mon and not mon:is_dead() then
       local mon_id = mon:get_type():str()
       -- Only civilians in the whitelist will execute corpse pulping
       if CONFIG.CAN_PULP_CIVILIANS[mon_id] then
         -- This means not all civilians will be pulping at the same time
-        if gapi.rng(1, 100) <= CONFIG.PULPING_CHANCE then process_civilian_corpse_pulping(mon, all_creatures, map) end
+        if gapi.rng(1, 100) <= CONFIG.PULPING_CHANCE then
+          process_civilian_corpse_pulping(mon, map, checked_positions)
+        end
       end
     end
   end

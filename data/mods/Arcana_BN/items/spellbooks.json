@@ -174,8 +174,8 @@
     "copy-from": "scroll_pattern_base",
     "type": "GENERIC",
     "category": "spellbooks",
-    "name": { "str": "Pattern Scroll (Heat Ward)", "str_pl": "Pattern Scrolls (Heat Ward)" },
-    "description": "This is a scroll with ornate patterns written on the paper, depicting strange geometric designs with an unnatural order to them.  Activate it to explore its secrets.  (( Remember to bind the \"spellcasting\" key! ))\n\"This spell will grant temporary resistance to heat and smoke, but not direct contact with fire.\"",
+    "name": { "str": "Pattern Scroll (Flame Ward)", "str_pl": "Pattern Scrolls (Flame Ward)" },
+    "description": "This is a scroll with ornate patterns written on the paper, depicting strange geometric designs with an unnatural order to them.  Activate it to explore its secrets.  (( Remember to bind the \"spellcasting\" key! ))\n\"This spell will grant temporary immunity to fire, as well as negating the effects of heat and smoke.\"",
     "price": "3000 USD",
     "price_postapoc": "100 USD",
     "use_action": { "type": "learn_spell", "spells": [ "arcana_magic_heat_ward" ] }

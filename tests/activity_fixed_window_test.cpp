@@ -112,8 +112,7 @@ TEST_CASE(
     CHECK_FALSE(static_cast<bool>(g->u.activity));
 
     auto& timer_after = g->m.i_at(item_pos).only_item();
-    CHECK(timer_after.get_counter() <= starting_counter - to_turns<int>(duration));
-    CHECK(timer_after.get_counter() >= starting_counter - to_turns<int>(duration) - 1);
+    CHECK(timer_after.get_counter() == starting_counter - to_turns<int>(duration));
 }
 
 TEST_CASE(

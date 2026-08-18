@@ -666,8 +666,8 @@
     "//": "alien containment.",
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "lab_4side" ],
-    "weight": 100,
+    "om_terrain": [ "lab_4side_filler" ],
+    "weight": 50,
     "object": {
       "rotation": [ 0, 3 ],
       "fill_ter": "t_thconc_floor",
@@ -814,7 +814,7 @@
     "//": "Tribute",
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "lab_4side" ],
+    "om_terrain": [ "lab_4side_filler" ],
     "weight": 50,
     "object": {
       "rotation": [ 0, 3 ],
@@ -869,8 +869,8 @@
     "//": "analyzer",
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "lab_4side" ],
-    "weight": 100,
+    "om_terrain": [ "lab_4side_filler" ],
+    "weight": 50,
     "object": {
       "rotation": [ 0, 3 ],
       "fill_ter": "t_thconc_floor",

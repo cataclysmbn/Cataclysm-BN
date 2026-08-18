@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <bitset>
 #include <chrono>
 #include <cmath>
@@ -3401,7 +3402,7 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
         }
     }
 
-    play_variant_sound( selected_sound, weapon_id.str(), heard_volume, angle, 0.8, 1.2 );
+    play_variant_sound( selected_sound, weapon_id.str(), heard_volume, angle, 0.8, 1.2, true );
     start_sfx_timestamp = std::chrono::high_resolution_clock::now();
 }
 
@@ -3895,7 +3896,7 @@ void sfx::load_sound_effects( const JsonObject & ) { }
 void sfx::load_sound_effect_preload( const JsonObject & ) { }
 void sfx::load_playlist( const JsonObject & ) { }
 void sfx::play_variant_sound( const std::string &, const std::string &, int, units::angle, double,
-                              double ) { }
+                              double, const bool ) { }
 void sfx::play_variant_sound( const std::string &, const std::string &, int, bool ) { }
 void sfx::play_ambient_variant_sound( const std::string &, const std::string &, int, channel, int,
                                       double, int ) { }

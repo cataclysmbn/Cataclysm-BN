@@ -1,6 +1,8 @@
 #pragma once
 
+#include <complex>
 #include <cstddef>
+#include <exception>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -8,6 +10,7 @@
 #include <utility>
 
 #include "demangle.h"
+#include "reader_detail.h"
 
 class translation;
 
@@ -139,9 +142,8 @@ inline typename std::enable_if < std::is_same<RT, std::string_view>::value &&is_
     return value;
 }
 template<typename RT, typename T>
-inline typename std::enable_if < std::is_same<RT, std::string_view>::value
-&&is_translation<T>::value,
-std::string_view >::type convert( RT *, const string_formatter &sf, T &&value, int )
+requires( is_string_view<RT>::value &&is_translation<T>::value )
+inline std::string_view convert( RT *, const string_formatter &sf, T &&value, int )
 {
     return string_formatter_set_temp_buffer( sf, value.translated() );
 }
@@ -280,11 +282,25 @@ class string_formatter
                        );
         }
         template<typename RT, unsigned int current_index, typename T, typename ...Args>
-        RT get_nth_arg_as( const unsigned int requested, T &&head, Args &&... args ) const {
+        RT get_nth_arg_as( const unsigned int requested, T &&head,
+                           Args &&... args ) const requires(
+                               !reader_detail::handler<std::decay_t<T>>::is_indexable_container ) {
             if( requested > current_index ) {
                 return get_nth_arg_as < RT, current_index + 1 > ( requested, std::forward<Args>( args )... );
             } else {
                 return convert( static_cast<RT *>( nullptr ), *this, std::forward<T>( head ), 0 );
+            }
+        }
+
+        template<typename RT, unsigned int current_index, typename T, typename ...Args>
+        RT get_nth_arg_as( const unsigned int requested, T &&head,
+        Args &&... args ) const requires reader_detail::handler<std::decay_t<T>>::is_indexable_container {
+            if( requested <= current_index + head.size() ) {
+                return convert<RT, decltype( head.at( 0 ) )>( static_cast<RT *>( nullptr ), *this,
+                        head.at( requested - current_index ), 0 );
+            } else {
+                return get_nth_arg_as < RT, current_index + 1 > ( requested - head.size(),
+                        std::forward<Args>( args )... );
             }
         }
         /**@}*/

@@ -57,6 +57,7 @@
 #include "mapdata.h"
 #include "mapgen.h"
 #include "mapgen_async.h"
+#include "mapgen_color_palette.h"
 #include "martialarts.h"
 #include "material.h"
 #include "mission.h"
@@ -409,6 +410,7 @@ void DynamicDataLoader::initialize()
     add( "construction_category", &construction_categories::load );
     add( "construction_group", &construction_groups::load );
     add( "construction", &constructions::load );
+    add( "mapgen_color_palette",  &MapgenColorPalette::load_palette );
     add( "mapgen", &load_mapgen );
     add( "overmap_land_use_code", &overmap_land_use_codes::load );
     add( "overmap_connection", &overmap_connections::load );
@@ -583,6 +585,7 @@ void DynamicDataLoader::unload_data()
     json_trait_flag::reset();
     MapExtras::reset();
     map_feature_descriptions::reset_map_feature_descriptions();
+    MapgenColorPalette::reset();
     mapgen_palette::reset();
     materials::reset();
     mission_type::reset();
@@ -731,69 +734,90 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
 
     using named_entry = std::pair<std::string, std::function<void()>>;
     const std::vector<named_entry> entries = {{
-            {_( "Flags" ), &json_flag::check_consistency},
-            {_( "Mutation Flags" ), &json_trait_flag::check_consistency},
-            {_( "Crafting requirements" ), []() { requirement_data::check_consistency(); }},
-            {_( "Vitamins" ), &vitamin::check_consistency},
-            {_( "Weather types" ), &weather_types::check_consistency},
-            {_( "Weather patterns" ), &weather_patterns::check_consistency},
-            {_( "Base weather" ), &base_weathers::check_consistency},
-            {_( "World types" ), &world_types::check_consistency},
-            {_( "Field types" ), &field_types::check_consistency},
-            {_( "Ammo effects" ), &ammo_effects::check_consistency},
-            {_( "Emissions" ), &emit::check_consistency},
-            {_( "Activities" ), &activity_type::check_consistency},
-            {_( "Items" ), []() { item_controller->check_definitions(); }},
-            {_( "Materials" ), &materials::check},
-            {_( "Engine faults" ), &fault::check_consistency},
-            {_( "Vehicle parts" ), &vpart_info::check_consistency},
-            {_( "Vehicle palettes" ), &VehiclePalette::check_definitions},
-            {_( "Vehicle groups" ), &VehicleGroup::check},
-            {_( "Mapgen definitions" ), &check_mapgen_definitions},
-            {_( "Mapgen palettes" ), &mapgen_palette::check_definitions},
-            {_( "Monster types" ), []() { MonsterGenerator::generator().check_monster_definitions(); }},
-            {_( "Monster groups" ), &MonsterGroupManager::check_group_definitions},
-            {_( "Furniture and terrain" ), &check_furniture_and_terrain},
-            {_( "Constructions" ), &constructions::check_consistency},
-            {_( "Construction sequences" ), &constructions::check_consistency},
-            {_( "Professions" ), &profession::check_definitions},
-            {_( "Scenarios" ), &scenario::check_definitions},
-            {_( "Martial arts" ), &check_martialarts},
-            {_( "Mutations" ), &mutation_branch::check_consistency},
-            {_( "Mutation Categories" ), &mutation_category_trait::check_consistency},
-            {_( "Overmap land use codes" ), &overmap_land_use_codes::check_consistency},
-            {_( "Overmap connections" ), &overmap_connections::check_consistency},
-            {_( "Overmap terrain" ), &overmap_terrains::check_consistency},
-            {_( "Overmap locations" ), &overmap_locations::check_consistency},
-            {_( "Overmap specials" ), &overmap_specials::check_consistency},
-            {_( "Map extras" ), &MapExtras::check_consistency},
-            {_( "Start locations" ), &start_locations::check_consistency},
-            {_( "Regional settings" ), &check_regional_settings},
-            {_( "Ammunition types" ), &ammunition_type::check_consistency},
-            {_( "Traps" ), &trap::check_consistency},
-            {_( "Bionics" ), &bionic_data::check_consistency},
-            {_( "Gates" ), &gates::check},
-            {_( "NPC classes" ), &npc_class::check_consistency},
-            {_( "Behaviors" ), &behavior::check_consistency},
-            {_( "Mission types" ), &mission_type::check_consistency},
-            {_( "Item actions" ), []() { item_action_generator::generator().check_consistency(); }},
-            {_( "Harvest lists" ), &harvest_list::check_consistency},
-            {_( "NPC templates" ), &npc_template::check_consistency},
-            {_( "Body parts" ), &body_part_type::check_consistency},
-            {_( "Anatomies" ), &anatomy::check_consistency},
-            {_( "Spells" ), &spell_type::check_consistency},
-            {_( "Enchantments" ), &enchantment::check_consistency},
-            {_( "Enchantment Values" ), &enchantment_value::check_consistency},
-            {_( "Enchantment Flags" ), &enchantment_flag::check_consistency},
-            {_( "Enchantment Conditions" ), &enchantment_condition::check_consistency},
-            {_( "Transformations" ), &event_transformation::check_consistency},
-            {_( "Statistics" ), &event_statistic::check_consistency},
-            {_( "Scent types" ), &scent_type::check_scent_consistency},
-            {_( "Scores" ), &score::check_consistency},
-            {_( "Achievements" ), &achievement::check_consistency},
-            {_( "Disease types" ), &disease_type::check_disease_consistency},
-            {_( "Factions" ), &faction_template::check_consistency},
-            {_( "Effects" ), &effect_type::check_consistency},
+            { _( "Flags" ), &json_flag::check_consistency },
+            { _( "Mutation Flags" ), &json_trait_flag::check_consistency },
+            {
+                _( "Crafting requirements" ), []()
+                {
+                    requirement_data::check_consistency();
+                }
+            },
+            { _( "Vitamins" ), &vitamin::check_consistency },
+            { _( "Weather types" ), &weather_types::check_consistency },
+            { _( "Weather patterns" ), &weather_patterns::check_consistency },
+            { _( "Base weather" ), &base_weathers::check_consistency },
+            { _( "World types" ), &world_types::check_consistency },
+            { _( "Field types" ), &field_types::check_consistency },
+            { _( "Ammo effects" ), &ammo_effects::check_consistency },
+            { _( "Emissions" ), &emit::check_consistency },
+            { _( "Activities" ), &activity_type::check_consistency },
+            {
+                _( "Items" ), []()
+                {
+                    item_controller->check_definitions();
+                }
+            },
+            { _( "Materials" ), &materials::check },
+            { _( "Engine faults" ), &fault::check_consistency },
+            { _( "Vehicle parts" ), &vpart_info::check_consistency },
+            { _( "Vehicle palettes" ), &VehiclePalette::check_definitions },
+            { _( "Vehicle groups" ), &VehicleGroup::check },
+            { _( "Mapgen definitions" ), &check_mapgen_definitions },
+            { _( "Mapgen Color palettes" ), &MapgenColorPalette::check_definitions },
+            { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
+            {
+                _( "Monster types" ), []()
+                {
+                    MonsterGenerator::generator().check_monster_definitions();
+                }
+            },
+            { _( "Monster groups" ), &MonsterGroupManager::check_group_definitions },
+            { _( "Furniture and terrain" ), &check_furniture_and_terrain },
+            { _( "Constructions" ), &constructions::check_consistency },
+            { _( "Construction sequences" ), &constructions::check_consistency },
+            { _( "Professions" ), &profession::check_definitions },
+            { _( "Scenarios" ), &scenario::check_definitions },
+            { _( "Martial arts" ), &check_martialarts },
+            { _( "Mutations" ), &mutation_branch::check_consistency },
+            { _( "Mutation Categories" ), &mutation_category_trait::check_consistency },
+            { _( "Overmap land use codes" ), &overmap_land_use_codes::check_consistency },
+            { _( "Overmap connections" ), &overmap_connections::check_consistency },
+            { _( "Overmap terrain" ), &overmap_terrains::check_consistency },
+            { _( "Overmap locations" ), &overmap_locations::check_consistency },
+            { _( "Overmap specials" ), &overmap_specials::check_consistency },
+            { _( "Map extras" ), &MapExtras::check_consistency },
+            { _( "Start locations" ), &start_locations::check_consistency },
+            { _( "Regional settings" ), &check_regional_settings },
+            { _( "Ammunition types" ), &ammunition_type::check_consistency },
+            { _( "Traps" ), &trap::check_consistency },
+            { _( "Bionics" ), &bionic_data::check_consistency },
+            { _( "Gates" ), &gates::check },
+            { _( "NPC classes" ), &npc_class::check_consistency },
+            { _( "Behaviors" ), &behavior::check_consistency },
+            { _( "Mission types" ), &mission_type::check_consistency },
+            {
+                _( "Item actions" ), []()
+                {
+                    item_action_generator::generator().check_consistency();
+                }
+            },
+            { _( "Harvest lists" ), &harvest_list::check_consistency },
+            { _( "NPC templates" ), &npc_template::check_consistency },
+            { _( "Body parts" ), &body_part_type::check_consistency },
+            { _( "Anatomies" ), &anatomy::check_consistency },
+            { _( "Spells" ), &spell_type::check_consistency },
+            { _( "Enchantments" ), &enchantment::check_consistency },
+            { _( "Enchantment Values" ), &enchantment_value::check_consistency },
+            { _( "Enchantment Flags" ), &enchantment_flag::check_consistency },
+            { _( "Enchantment Conditions" ), &enchantment_condition::check_consistency },
+            { _( "Transformations" ), &event_transformation::check_consistency },
+            { _( "Statistics" ), &event_statistic::check_consistency },
+            { _( "Scent types" ), &scent_type::check_scent_consistency },
+            { _( "Scores" ), &score::check_consistency },
+            { _( "Achievements" ), &achievement::check_consistency },
+            { _( "Disease types" ), &disease_type::check_disease_consistency },
+            { _( "Factions" ), &faction_template::check_consistency },
+            { _( "Effects" ), &effect_type::check_consistency },
         }
     };
 

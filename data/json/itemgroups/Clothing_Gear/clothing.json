@@ -2012,15 +2012,56 @@
     "id": "pwr_armor",
     "subtype": "distribution",
     "entries": [
-      { "collection": [ { "item": "power_armor_basic" }, { "item": "power_armor_helmet_basic", "prob": 75 } ], "prob": 40 },
+      {
+        "collection": [
+          { "item": "power_armor_exo_2" },
+          { "item": "power_armor_plating_2" },
+          { "item": "power_armor_helmet_basic", "prob": 75 }
+        ],
+        "prob": 40
+      },
       { "item": "power_armor_helmet_basic", "prob": 10 },
       {
-        "collection": [ { "item": "power_armor_light" }, { "item": "power_armor_helmet_light", "prob": 75 } ],
+        "collection": [
+          { "item": "power_armor_exo_2" },
+          { "item": "power_armor_plating_3" },
+          { "item": "power_armor_helmet_light", "prob": 75 }
+        ],
         "prob": 20
       },
       { "item": "power_armor_helmet_light", "prob": 5 },
       {
-        "collection": [ { "item": "power_armor_heavy" }, { "item": "power_armor_helmet_heavy", "prob": 75 } ],
+        "collection": [ { "item": "power_armor_exo_1" }, { "item": "power_armor_plating_1", "prob": 75 } ],
+        "prob": 20
+      },
+      { "item": "power_armor_helmet_heavy", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "pwr_armor_basic",
+    "subtype": "distribution",
+    "entries": [
+      {
+        "collection": [
+          { "item": "power_armor_exo_1" },
+          { "item": "power_armor_plating_2" },
+          { "item": "power_armor_helmet_basic", "prob": 75 }
+        ],
+        "prob": 40
+      },
+      { "item": "power_armor_helmet_basic", "prob": 10 },
+      {
+        "collection": [
+          { "item": "power_armor_exo_1" },
+          { "item": "power_armor_plating_3" },
+          { "item": "power_armor_helmet_light", "prob": 75 }
+        ],
+        "prob": 20
+      },
+      { "item": "power_armor_helmet_light", "prob": 5 },
+      {
+        "collection": [ { "item": "power_armor_exo_1" }, { "item": "power_armor_plating_1", "prob": 75 } ],
         "prob": 20
       },
       { "item": "power_armor_helmet_heavy", "prob": 5 }
@@ -2197,7 +2238,9 @@
       [ "apron_leather", 2 ],
       [ "tool_belt", 5 ],
       [ "bootsheath", 8 ],
-      [ "sheath", 5 ]
+      [ "sheath", 5 ],
+      [ "chestrig", 5 ],
+      [ "belt_magazine", 5 ]
     ]
   },
   {
@@ -3107,7 +3150,8 @@
           { "item": "quiver_large", "prob": 15 },
           { "item": "solarpack", "prob": 5 },
           { "item": "ammo_satchel", "prob": 10 },
-          { "item": "chestrig", "prob": 20 },
+          { "item": "chestrig", "prob": 10 },
+          { "item": "belt_magazine", "prob": 10 },
           { "item": "dive_bag", "prob": 50 },
           { "item": "petpack", "prob": 50 }
         ],

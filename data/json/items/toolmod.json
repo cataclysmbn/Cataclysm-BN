@@ -61,20 +61,7 @@
     "description": "A battery compartment mod that allows the use of light batteries in tools that otherwise could not.",
     "color": "light_green",
     "acceptable_ammo": [ "battery" ],
-    "magazine_adaptor": [
-      [
-        "battery",
-        [
-          "light_minus_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ]
+    "magazine_adaptor": [ [ "battery", [ "light_battery_cell" ] ] ]
   },
   {
     "id": "magazine_battery_medium_mod",
@@ -85,12 +72,7 @@
     "description": "A battery compartment mod that allows the use of medium batteries in tools that otherwise could not.",
     "color": "light_green",
     "acceptable_ammo": [ "battery" ],
-    "magazine_adaptor": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ]
+    "magazine_adaptor": [ [ "battery", [ "medium_battery_cell" ] ] ]
   },
   {
     "id": "magazine_battery_heavy_mod",
@@ -101,8 +83,6 @@
     "description": "A battery compartment mod that allows the use of heavy batteries in tools that otherwise could not.",
     "color": "light_green",
     "acceptable_ammo": [ "battery" ],
-    "magazine_adaptor": [
-      [ "battery", [ "heavy_battery_cell", "heavy_plus_battery_cell", "heavy_atomic_battery_cell", "heavy_disposable_cell" ] ]
-    ]
+    "magazine_adaptor": [ [ "battery", [ "heavy_battery_cell" ] ] ]
   }
 ]

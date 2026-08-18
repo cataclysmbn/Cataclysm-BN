@@ -189,7 +189,7 @@
     "coverage": 5,
     "encumbrance": 1,
     "covers": [ "leg_either" ],
-    "flags": [ "WAIST", "COMPACT", "FRAGILE", "OVERSIZE", "IS_UPS", "POWERARMOR_COMPATIBLE", "ALLOWS_TAIL_SNAKE" ]
+    "extend": { "flags": [ "WAIST", "COMPACT", "FRAGILE", "OVERSIZE", "POWERARMOR_COMPATIBLE", "ALLOWS_TAIL_SNAKE" ] }
   },
   {
     "id": "bionic_maintenance_toolkit",

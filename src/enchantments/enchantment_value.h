@@ -39,12 +39,18 @@ public:
     bool can_mult = true;
     bool can_max = false;
 
-    translation desc;
     bool increase_good = true;
 
+    std::string get_desc() const;
     bool has_parent() const;
-    enchantment_value_id get_parent() const;
+    std::vector<enchantment_value_id> get_parents() const;
 
 private:
-    enchantment_value_id parent_id = enchantment_value_id::NULL_ID();
+    std::vector<enchantment_value_id> define_child_enchantments(
+        const enchantment_value& main, const std::vector<enchantment_value_id>& parents,
+        const JsonObject& obj, const bool first) const;
+
+    std::vector<enchantment_value_id> parent_ids;
+    translation desc;
+    std::vector<translation> desc_insert;
 };
