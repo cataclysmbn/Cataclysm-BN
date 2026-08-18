@@ -19,18 +19,17 @@ their appropriate fields is available in [JSON_INFO](./../reference/json_info.md
 ### Creating a barebones mod
 
 A mod is created by creating a folder within Cataclysm's `data/mods` directory. The mod's properties
-are set by the `modinfo.json` file that is present within that folder. In order for Cataclysm to
-recognize the folder as a mod, it **must** have a `modinfo.json` file present within it.
+are set by the `modinfo.json` or `modinfo.jsonc` file that is present within that folder. In order
+for Cataclysm to recognize the folder as a mod, it **must** have one of those files present within
+it.
 
-<!--I know this isn't strictly true. A mod will function as long as there's a JSON file with a MOD_INFO structure in it. The file doesn't need to be called "modinfo.json"-->
+### Modinfo
 
-### Modinfo.json
-
-The modinfo.json file is a file that contains metadata for your mod. Every mod must have a
-`modinfo.json` file in order for Cataclysm to find it. A barebones `modinfo.json` file looks like
+The modinfo file contains metadata for your mod. Every mod must have a `modinfo.json` or
+`modinfo.jsonc` file in order for Cataclysm to find it. A barebones `modinfo.jsonc` file looks like
 this:
 
-```json
+```jsonc
 [
   {
     "type": "MOD_INFO",
@@ -39,8 +38,8 @@ this:
     "authors": ["Your name here", "Your friend's name if you want"],
     "description": "Your description here",
     "category": "content",
-    "dependencies": ["bn"]
-  }
+    "dependencies": ["bn"],
+  },
 ]
 ```
 
@@ -78,9 +77,9 @@ Now that you have a basic mod, you can get around to actually putting some stuff
 
 ### File structure
 
-It's a good idea to put different categories of additions into different json files. Any json files
-that are present in the mod folder or its subfolders will be detected and read by Cataclysm, but
-otherwise, there are no restrictions on what you can put where.
+It's a good idea to put different categories of additions into different JSON or JSONC files. Any
+`.json` or `.jsonc` files that are present in the mod folder or its subfolders will be detected and
+read by Cataclysm, but otherwise, there are no restrictions on what you can put where.
 
 ### JSON_INFO.md
 
@@ -305,12 +304,13 @@ ids that you want to blacklist or whitelist.
   }
 ```
 
-## Important note on json files
+## Important note on JSON and JSONC files
 
 The following characters: `[ { , } ] : "` are _very_ important when adding or modifying JSON files.
-This means a single missing `,` or `[` or `}` can be the difference between a working file and a
-hanging game at startup. If you want to include these characters in whatever you are doing (for
-instance, if you want to put a quote inside an item's description), you can do so by putting a
+JSONC files may also include comments and trailing commas. A missing `,` or `[` or `}` can be the
+difference between a working file and a hanging game at startup. If you want to include these
+characters in whatever you are doing (for instance, if you want to put a quote inside an item's
+description), you can do so by putting a
 backslash before the relevant character. This is known as "escaping" that character. For instance, I
 can make an item's description contain a quote if I want by doing this:
 

@@ -4,7 +4,13 @@ on:
   pull_request:
     paths:
       - "src/**/*.cpp"
-      - "lang/extract_json_strings.py"
+      - "lang/bn_extract_json_strings.sh"
+      - "scripts/extract_json_strings.ts"
+      - "scripts/extract_json_strings_test.ts"
+      - "scripts/testdata/extract_json_strings/**"
+      - "deno.jsonc"
+      - "deno.lock"
+      - "build-scripts/requirements.sh"
 
 # We only care about the latest revision of a PR, so cancel previous instances.
 concurrency:
@@ -18,10 +24,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install gettext python3-pip
-          sudo pip3 install --break-system-packages polib luaparser
+          sudo apt-get install gettext
 
       - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
 
       - name: Check that translation template extraction works
         run: lang/update_pot.sh

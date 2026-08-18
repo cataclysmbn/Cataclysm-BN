@@ -203,7 +203,7 @@ jobs:
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
           build-scripts/format-json.sh
-          git diff --exit-code -- '*.json'
+          git diff --exit-code -- '*.json' '*.jsonc'
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
       - name: create Linux tiles playtest package
