@@ -1149,7 +1149,8 @@
         "r": "f_table",
         "z": "f_rack",
         "m": "f_glass_fridge",
-        "n": "f_glass_fridge"
+        "n": "f_glass_fridge",
+        "9": "f_trashcan"
       },
       "toilets": {  },
       "items": {
