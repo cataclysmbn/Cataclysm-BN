@@ -3,7 +3,7 @@
 #include <random>
 
 #include "json.h"
-#include "rng.h"
+#include "random/rng.h"
 
 struct int_distribution_impl {
     virtual ~int_distribution_impl() = default;

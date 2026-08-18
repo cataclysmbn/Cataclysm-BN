@@ -21,7 +21,7 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "debug.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "tileray.h"
 #include "translations.h"
 #include "units.h"

@@ -7,7 +7,7 @@
 #include "catacharset.h"
 #include "json.h"
 #include "language.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_utils.h"
 
 // int version/generation that is incremented each time language is changed

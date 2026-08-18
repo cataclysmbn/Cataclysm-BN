@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <sstream>
 
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 
 #if defined(TILES)

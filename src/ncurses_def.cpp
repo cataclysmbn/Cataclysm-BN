@@ -25,6 +25,7 @@
 #include "color.h"
 #include "game_ui.h"
 #include "output.h"
+#include "replay/replay.h"
 #include "ui_manager.h"
 
 #include "ncurses_def.h"
@@ -345,6 +346,14 @@ void input_manager::pump_events()
 
 input_event input_manager::get_input_event()
 {
+    if( replay::is_playing() && input_timeout == 0 ) {
+        return input_event();
+    }
+    if( const auto replay_input = replay::next_input_event() ) {
+        previously_pressed_key = replay_input->type == input_event_t::keyboard ?
+                                 replay_input->get_first_input() : 0;
+        return *replay_input;
+    }
     int key = ERR;
     input_event rval;
     do {
@@ -400,7 +409,9 @@ input_event input_manager::get_input_event()
         } else {
             if( key == 127 ) { // == Unicode DELETE
                 previously_pressed_key = KEY_BACKSPACE;
-                return input_event( KEY_BACKSPACE, input_event_t::keyboard );
+                const auto event = input_event( KEY_BACKSPACE, input_event_t::keyboard );
+                replay::record_input_event( event );
+                return event;
             }
             rval.type = input_event_t::keyboard;
             rval.text.append( 1, static_cast<char>( key ) );
@@ -420,7 +431,9 @@ input_event input_manager::get_input_event()
                 // Other control character, etc. - no text at all, return an event
                 // without the text property
                 previously_pressed_key = key;
-                return input_event( key, input_event_t::keyboard );
+                const auto event = input_event( key, input_event_t::keyboard );
+                replay::record_input_event( event );
+                return event;
             }
             // Now we have loaded an UTF-8 sequence (possibly several bytes)
             // but we should only return *one* key, so return the code point of it.
@@ -429,7 +442,9 @@ input_event input_manager::get_input_event()
                 // Invalid UTF-8 sequence, this should never happen, what now?
                 // Maybe return any error instead?
                 previously_pressed_key = key;
-                return input_event( key, input_event_t::keyboard );
+                const auto event = input_event( key, input_event_t::keyboard );
+                replay::record_input_event( event );
+                return event;
             }
             previously_pressed_key = cp;
             // for compatibility only add the first byte, not the code point
@@ -438,6 +453,7 @@ input_event input_manager::get_input_event()
         }
     } while( key == KEY_RESIZE );
 
+    replay::record_input_event( rval );
     return rval;
 }
 

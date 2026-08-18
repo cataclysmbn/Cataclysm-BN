@@ -16,7 +16,7 @@
 #include "generic_factory.h"
 #include "json.h"
 #include "memory_fast.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "trait_group.h"
