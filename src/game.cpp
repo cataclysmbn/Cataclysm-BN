@@ -14217,8 +14217,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
                         get_avatar().mutation_spend_resources( tid );
                     }
                 }
-                add_msg( m_info, _( "There is something above blocking your way." ) );
-                return;
+                if( dest.z() > OVERMAP_HEIGHT ) {
+                    add_msg( m_info, _( "It would be unsafe to try and ascend further." ) );
+                    return;
+                } else {
+                    add_msg( m_info, _( "There is something above blocking your way." ) );
+                    return;
+                }
             } else {
                 if( dest.z() > OVERMAP_HEIGHT ) {
                     add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
@@ -14395,7 +14400,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // Find the corresponding staircase
     bool rope_ladder = false;
     // TODO: Remove the stairfinding, make the mapgen gen aligned maps
-    const bool special_move = climbing || swimming || can_fly;
+    // Don't check can_fly here, flight was handled earlier and doing that would just embed you in a wall instead
+    const bool special_move = climbing || swimming;
 
     if( !force && !special_move ) {
         const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,
