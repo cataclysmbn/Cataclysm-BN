@@ -1123,7 +1123,8 @@
         "r": "t_thconc_floor",
         "z": "t_floor",
         "m": "t_carpet_green",
-        "n": "t_carpet_green"
+        "n": "t_carpet_green",
+        "9": "t_floor"
       },
       "furniture": {
         "B": "f_bench",
