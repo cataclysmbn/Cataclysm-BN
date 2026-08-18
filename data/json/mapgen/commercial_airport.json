@@ -1166,7 +1166,8 @@
         "B": { "item": "traveler", "chance": 2 },
         "X": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] },
         "u": { "item": "cop_evidence", "chance": 95, "repeat": [ 2, 4 ] },
-        "9": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] }
+        "9": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] },
+        "y": { "item": "cop_gear", "chance": 70, "repeat": [ 1, 2 ] }
       },
       "vendingmachines": { "h": { "item_group": "vending_drink" } },
       "place_item": [ { "item": "grenade", "x": 18, "y": 20, "chance": 100 } ],
