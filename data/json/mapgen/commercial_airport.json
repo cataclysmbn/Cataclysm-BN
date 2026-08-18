@@ -1426,7 +1426,9 @@
         "F": { "item": "office_paper", "chance": 70, "repeat": [ 1, 3 ] },
         "L": { "item": "cop_evidence", "chance": 95, "repeat": [ 2, 4 ] },
         "B": { "item": "traveler", "chance": 2 },
-        "T": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] }
+        "T": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] },
+        "p": { "item": "SUS_janitors_closet", "chance": 100 },
+        "*": { "item": "fridgesnacks", "chance": 100, "repeat": [ 1, 3 ] }
       },
       "place_monster": [ { "group": "GROUP_ZOMBIE_COP", "x": [ 0, 12 ], "y": [ 0, 13 ], "chance": 100, "repeat": [ 2, 5 ] } ]
     }
