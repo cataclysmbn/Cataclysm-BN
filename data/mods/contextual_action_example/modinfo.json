@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "contextual_action_example",
+    "name": "Contextual Action Example",
+    "authors": [ "Kota" ],
+    "description": "Example-only mod showing how JSON can add or reprioritize contextual right-click and action-menu entries.",
+    "category": "content",
+    "//": "Hidden from normal mod lists; copy this mod or remove obsolete when using it as a template.",
+    "obsolete": true,
+    "dependencies": [ "bn" ]
+  }
+]

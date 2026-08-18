@@ -1,5 +1,8 @@
+#include "action.h"
 #include "avatar.h"
 #include "avatar_action.h"
+#include "bodypart.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "computer.h"
@@ -19,6 +22,8 @@
 #include "monster.h"
 #include "npc.h"
 #include "options_helpers.h"
+#include "player_activity.h"
+#include "point.h"
 #include "state_helpers.h"
 #include "submap.h"
 #include "submap_load_manager.h"
@@ -30,6 +35,7 @@
 
 namespace {
 
+static const auto effect_blind = efftype_id("blind");
 static const auto effect_in_pit = efftype_id("in_pit");
 static const auto skill_dodge = skill_id("dodge");
 
@@ -230,6 +236,103 @@ TEST_CASE("place_player_can_safely_move_multiple_submaps") {
     g->place_player(tripoint_bub_ms::zero());
     CHECK(get_map().check_submap_active_item_consistency().empty());
     CHECK(get_map().get_abs_sub() == player_reality_bubble_origin().xy());
+}
+
+TEST_CASE("auto_stair_travel_finds_remembered_stairs", "[map][stair][autotravel]") {
+    clear_all_state();
+    g->u.clear_map_memory();
+
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    const auto remembered_stairs = origin + tripoint_rel_ms::east() * 5;
+    auto& here = get_map();
+
+    g->u.setpos(origin);
+    here.ter_set(remembered_stairs, ter_id("t_floor"));
+    g->u.memorize_terrain_tile(here.bub_to_abs(remembered_stairs), "t_stairs_up", 0, 0);
+
+    const auto found_stairs = g->find_local_stairs_leading_to(here, origin.z() + 1);
+
+    REQUIRE(found_stairs);
+    CHECK(*found_stairs == remembered_stairs);
+}
+
+TEST_CASE("auto_stair_travel_finds_unseen_loaded_stairs", "[map][stair][autotravel]") {
+    clear_all_state();
+    g->u.clear_map_memory();
+
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    const auto unseen_stairs = origin + tripoint_rel_ms::east() * 5;
+    auto& you = g->u;
+    auto& here = get_map();
+
+    you.setpos(origin);
+    you.add_effect(effect_blind, 1_days, bodypart_str_id::NULL_ID());
+    here.ter_set(unseen_stairs, ter_id("t_stairs_up"));
+
+    REQUIRE(!you.sees(unseen_stairs));
+    const auto found_stairs = g->find_local_stairs_leading_to(here, origin.z() + 1);
+
+    REQUIRE(found_stairs);
+    CHECK(*found_stairs == unseen_stairs);
+}
+
+TEST_CASE("auto_stair_travel_finds_ramp_transitions", "[map][stair][autotravel]") {
+    clear_all_state();
+
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    const auto ramp_down = origin + tripoint_rel_ms::east() * 5;
+    auto& you = g->u;
+    auto& here = get_map();
+
+    you.setpos(origin);
+    here.ter_set(ramp_down, ter_id("t_ramp_down_low"));
+
+    const auto found_stairs = g->find_local_stairs_leading_to(here, origin.z() - 1);
+
+    REQUIRE(found_stairs);
+    CHECK(*found_stairs == ramp_down);
+}
+
+TEST_CASE("current_ramp_transition_finds_vertical_destination", "[map][stair][autotravel]") {
+    clear_all_state();
+
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    auto& you = g->u;
+    auto& here = get_map();
+
+    you.setpos(origin);
+    here.ter_set(origin, ter_id("t_ramp_down_low"));
+    here.ter_set(origin + tripoint_rel_ms::below(), ter_id("t_thconc_floor"));
+
+    const auto found_stairs = g->find_stairs(here, origin.z() - 1, false);
+
+    REQUIRE(found_stairs);
+    CHECK(*found_stairs == origin + tripoint_rel_ms::below());
+}
+
+TEST_CASE("auto_stair_travel_route_continues_with_vertical_move", "[map][stair][autotravel]") {
+    clear_all_state();
+
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    const auto stairs = origin + tripoint_rel_ms::east();
+    auto& you = g->u;
+    auto& here = get_map();
+
+    you.setpos(origin);
+    here.ter_set(stairs, ter_id("t_stairs_up"));
+
+    auto route = here.route(
+        you.bub_pos(), stairs, you.get_legacy_pathfinding_settings(), you.get_legacy_path_avoid());
+    REQUIRE(!route.empty());
+    route.emplace_back(stairs.xy(), origin.z() + 1);
+    you.set_destination(route);
+
+    CHECK(you.get_next_auto_move_direction()
+          == get_movement_action_from_delta(stairs - origin, iso_rotate::yes));
+
+    you.setpos(stairs);
+    CHECK(you.get_next_auto_move_direction() == ACTION_MOVE_UP);
+    you.clear_destination();
 }
 
 TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
