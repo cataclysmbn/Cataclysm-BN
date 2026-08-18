@@ -1038,7 +1038,7 @@
           { "item": "traveler", "chance": 5, "repeat": [ 1, 2 ] },
           { "item": "cleaning", "chance": 10, "repeat": [ 1, 2 ] }
         ],
-        "Z": { "item": "trash", "chance": 80, "repeat": [ 1, 3 ] },
+        "Z": { "item": "trash_dumpster", "chance": 80 },
         "d": { "item": "traveler", "chance": 12 },
         "h": { "item": "behindcounter", "chance": 75, "repeat": [ 2, 4 ] },
         "O": { "item": "traveler", "chance": 75 },
