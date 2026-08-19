@@ -333,7 +333,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "central_lab_up_center" ],
+    "om_terrain": [ "central_lab_down_center" ],
     "object": {
       "fill_ter": "t_metal_floor",
       "rows": [
@@ -348,8 +348,8 @@
         "-|                    |-",
         "||                    ||",
         "                        ",
-        "           <<           ",
-        "           <<           ",
+        "           >>           ",
+        "           >>           ",
         "                        ",
         "||                    ||",
         "-|                    |-",
@@ -369,13 +369,53 @@
         "=": "t_door_metal_locked",
         "7": "t_card_science",
         "!": "t_floor_red",
-        "<": "t_stairs_up",
+        ">": "t_stairs_down",
         "u": [ "t_metal_floor", "t_metal_floor_olight" ]
       },
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_up_corner" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|u                  u|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    |-",
+        "                      |-",
+        "           <<         |-",
+        "           <<         |-",
+        "                      |-",
+        "||                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|u                  u|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_wall_metal", "-": "t_rock", "<": "t_stairs_up", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
       ]
     }
@@ -417,6 +457,46 @@
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_down_corner" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|u                  u|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "||                    |-",
+        "                      |-",
+        "           >>         |-",
+        "           >>         |-",
+        "                      |-",
+        "||                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|u                  u|-",
+        "-|||||||||    |||||||||-",
+        "---------|    |---------"
+      ],
+      "terrain": { "|": "t_wall_metal", "-": "t_rock", ">": "t_stairs_down", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "place_nested": [
+        { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
       ]
     }
@@ -707,7 +787,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "central_lab_melchior_up" ],
+    "om_terrain": [ "central_lab_melchior_down" ],
     "object": {
       "fill_ter": "t_metal_floor",
       "rows": [
@@ -722,9 +802,57 @@
         "-|u                  u|-",
         "|||||||||||++|||||||||||",
         "         |    |         ",
-        "         + << +         ",
-        "         + << +         ",
+        "         + >> +         ",
+        "         + >> +         ",
         "         |    |         ",
+        "|||||||||||++|||||||||||",
+        "-|u                  u|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-A                    A-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|u                  u|-",
+        "-||WWWWWWW|++|WWWWWWW||-",
+        "A|                    |A"
+      ],
+      "terrain": {
+        "|": "t_wall_metal",
+        "-": "t_rock",
+        "+": "t_door_metal_lab_c",
+        ">": "t_stairs_down",
+        "A": "t_wall_metal",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "W": "t_ballistic_glass"
+      },
+      "furniture": { "A": "f_metal_cold_vent" },
+      "place_nested": [
+        { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 2 },
+        { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 15 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_melchior_entry" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "-||||||||||||||||||||||-",
+        "-|u                  u|-",
+        "-|                    |-",
+        "-|                    |-",
+        "-A                    A-",
+        "-|                    |-",
+        "-|                    |-",
+        "-|u                  u|-",
+        "|||||||||||++|||||||||||",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
         "|||||||||||++|||||||||||",
         "-|u                  u|-",
         "-|                    |-",
@@ -740,7 +868,6 @@
         "|": "t_wall_metal",
         "-": "t_rock",
         "+": "t_door_metal_lab_c",
-        "<": "t_stairs_up",
         "A": "t_wall_metal",
         "u": [ "t_metal_floor", "t_metal_floor_olight" ],
         "W": "t_ballistic_glass"
@@ -753,7 +880,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "om_terrain": [ "central_lab_melchior_down" ],
+    "om_terrain": [ "central_lab_melchior_up" ],
     "object": {
       "fill_ter": "t_metal_floor",
       "rows": [
@@ -768,8 +895,8 @@
         "-|                    |-",
         "||                    |-",
         "                      |-",
-        "           >>         |-",
-        "           >>         |-",
+        "           <<         |-",
+        "           <<         |-",
         "                      |-",
         "||                    |-",
         "-|                    |-",
@@ -782,7 +909,7 @@
         "-|||||||||    |||||||||-",
         "|--------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", ">": "t_stairs_down", "+": "t_door_metal_lab_c" },
+      "terrain": { "|": "t_wall_metal", "-": "t_rock", "<": "t_stairs_up", "+": "t_door_metal_lab_c" },
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 25 ], [ "central_lab_locked_s_4x4", 75 ] ], "x": 10, "y": 20 },
@@ -794,7 +921,6 @@
     "type": "mapgen",
     "method": "json",
     "om_terrain": [ "central_lab_finale_access_edge" ],
-    "//": "Most of the below is a WIP skeletal framework of the last few floors.",
     "object": {
       "fill_ter": "t_metal_floor",
       "rows": [
@@ -880,8 +1006,73 @@
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 1, "y": 10 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 19, "y": 10 }
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 1,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 19,
+          "y": 10
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "central_lab_finale_observation_up" ],
+    "object": {
+      "fill_ter": "t_metal_floor",
+      "rows": [
+        "------------------------",
+        "||||||||||||||||||||||||",
+        "=       =      =       =",
+        "=       =      =       =",
+        "=       =      =       =",
+        "=       +      +       =",
+        "=       =      =       =",
+        "=       =      =       =",
+        "=       =      =       =",
+        "===========++===========",
+        "=    =u          u=    =",
+        "+    +     <<     +    +",
+        "+    +     <<     +    +",
+        "=    =u          u=    =",
+        "===========++===========",
+        "=  7777777u  u7777777  =",
+        "=   h h h      h h h   =",
+        "=                      =",
+        "=                      =",
+        "+  SSSSSSS    SSSSSSS  +",
+        "+  SSSSSSS    SSSSSSS  +",
+        "=                      =",
+        "=                      =",
+        "=   h h h      h h h   ="
+      ],
+      "terrain": {
+        "|": "t_wall_metal",
+        "=": "t_strconc_wall",
+        "-": "t_rock",
+        "+": "t_door_metal_lab_c",
+        "<": "t_stairs_up",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
+      },
+      "furniture": { "7": "f_control_station", "h": "f_chair", "S": "f_server" },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 1,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 19,
+          "y": 10
+        }
       ]
     }
   },
@@ -930,8 +1121,16 @@
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 1, "y": 10 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 19, "y": 10 }
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 1,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 19,
+          "y": 10
+        }
       ]
     }
   },
@@ -944,30 +1143,54 @@
       "rows": [
         "------------------------",
         "|||||||||||||||||||||||-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "+                     |-",
-        "+                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "+                     |-",
-        "+                     |-",
-        "=                     |-",
-        "=                     |-",
-        "===++====++===========|-"
+        "=       =hhehh=       |-",
+        "=       =     =       |-",
+        "=       =     =       |-",
+        "=       +     +       |-",
+        "=       =     =       |-",
+        "=       =     =       |-",
+        "=       =     =       |-",
+        "=========     ====+===|-",
+        "=    =               h|-",
+        "+    +     uu        h|-",
+        "+    +     uu        e|-",
+        "=    =               h|-",
+        "==WW==               h|-",
+        "=dddd=ccc     ====+===|-",
+        "= h  = hc     =       |-",
+        "=    =  g     =       |-",
+        "=    ======++==       |-",
+        "+       d=    =       |-",
+        "+       dW    =       |-",
+        "=      hdW    =       |-",
+        "=       d=    =       |-",
+        "===++======++=========|-"
       ],
-      "terrain": { "|": "t_wall_metal", "=": "t_strconc_wall", "-": "t_rock", "+": "t_door_metal_lab_c" }
+      "terrain": {
+        "|": "t_wall_metal",
+        "=": "t_strconc_wall",
+        "-": "t_rock",
+        "+": "t_door_metal_lab_c",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "W": "t_ballistic_glass"
+      },
+      "furniture": { "c": "f_counter", "d": "f_desk", "e": "f_table", "g": "f_counter_gate_c", "h": "f_chair" },
+      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 2 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 16 },
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
+          "x": 1,
+          "y": 10
+        },
+        {
+          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ns_4x4", 1 ] ],
+          "x": 10,
+          "y": 19
+        }
+      ]
     }
   },
   {
@@ -1081,19 +1304,19 @@
         "=                     |-",
         "=                     |-",
         "=                     |-",
-        "=          >>         |-",
-        "=          >>         |-",
+        "+          >>         |-",
+        "+          >>         |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
         "+                     |-",
         "+                     |-",
         "=                     |-",
         "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "+                     |-",
-        "+                     |-",
-        "=                     |-",
-        "=                     |-",
-        "===++====++===========|-"
+        "===++======++=========|-"
       ],
       "terrain": { "|": "t_wall_metal", "=": "t_strconc_wall", "-": "t_rock", "+": "t_door_metal_lab_c", ">": "t_stairs_down" },
       "place_nested": [ { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 } ]
@@ -1117,19 +1340,19 @@
         "=                     |-",
         "=                     |-",
         "=                     |-",
-        "=          <<         |-",
-        "=          <<         |-",
+        "+          <<         |-",
+        "+          <<         |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
+        "=                     |-",
         "+                     |-",
         "+                     |-",
         "=                     |-",
         "=                     |-",
-        "=                     |-",
-        "=                     |-",
-        "+                     |-",
-        "+                     |-",
-        "=                     |-",
-        "=                     |-",
-        "===++====++===========|-"
+        "===++======++=========|-"
       ],
       "terrain": { "|": "t_wall_metal", "=": "t_strconc_wall", "-": "t_rock", "+": "t_door_metal_lab_c", "<": "t_stairs_up" },
       "place_nested": [ { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 } ]

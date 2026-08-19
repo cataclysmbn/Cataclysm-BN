@@ -404,10 +404,13 @@
     "copy-from": "central_lab_core_center",
     "id": [
       "central_lab_down",
+      "central_lab_down_corner",
       "central_lab_up",
-      "central_lab_up_center",
+      "central_lab_down_center",
+      "central_lab_up_corner",
       "central_lab_finale_access_up",
       "central_lab_finale_access_down",
+      "central_lab_finale_observation_up",
       "central_lab_melchior_up",
       "central_lab_melchior_down"
     ],
@@ -417,7 +420,7 @@
   {
     "type": "overmap_terrain",
     "copy-from": "central_lab_core_center",
-    "id": [ "central_lab_melchior_edge", "central_lab_melchior_corner" ],
+    "id": [ "central_lab_melchior_entry", "central_lab_melchior_edge", "central_lab_melchior_corner" ],
     "name": "central lab - central processing",
     "color": "light_gray"
   },
