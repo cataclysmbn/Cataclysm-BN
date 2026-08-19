@@ -496,7 +496,8 @@
             { "value": "ARMOR_LIGHT", "multiply": -0.5 },
             { "value": "ARMOR_DARK", "multiply": -0.5 },
             { "value": "ARMOR_PSI", "multiply": -0.5 },
-            { "value": "ARMOR_ACID", "multiply": -0.5 }
+            { "value": "ARMOR_ACID", "multiply": -0.5 },
+            { "value": "CLIMATE_CONTROL", "add": 750 }
           ]
         }
       ]
@@ -545,9 +546,6 @@
         "COMBAT_NPC_ON"
       ]
     },
-    "relic_data": {
-      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
-    },
     "qualities": [ [ "HV_INSULATION", 1 ] ]
   },
   {
@@ -568,11 +566,7 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [
-            { "value": "ARMOR_HEAT", "multiply": -1.0 },
-            { "value": "ARMOR_STAB", "multiply": -1.0 },
-            { "value": "ARMOR_BULLET", "multiply": -0.9 }
-          ]
+          "values": [ { "value": "ARMOR_BULLET", "multiply": -0.9 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ]
         }
       ]
     },
@@ -613,9 +607,6 @@
     "qualities": [ [ "GLARE", 1 ] ],
     "extend": {
       "flags": [ "GAS_PROOF", "RAD_PROOF", "SUN_GLASSES", "CUT_IMMUNE", "STAB_IMMUNE", "HEAT_IMMUNE", "UNBREAKABLE", "COMBAT_NPC_ON" ]
-    },
-    "relic_data": {
-      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
     }
   },
   {
@@ -714,7 +705,7 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 } ],
+          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ],
           "ench_effects": [ { "effect": "heat_ward", "intensity": 1 } ]
         }
       ]
@@ -741,10 +732,7 @@
     "turns_per_charge": 150,
     "revert_to": "jade_wreath",
     "use_action": { "target": "jade_wreath", "msg": "The glowing carvings on the jade wreath fade.", "type": "transform" },
-    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] },
-    "relic_data": {
-      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
-    }
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
   },
   {
     "id": "meteoric_talisman",
