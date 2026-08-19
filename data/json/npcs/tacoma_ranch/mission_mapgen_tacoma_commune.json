@@ -3,41 +3,19 @@
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_west_wall_door",
-    "object": {
-      "mapgensize": [ 2, 2 ],
-      "rows": [
-        "q+",
-        "  "
-      ],
-      "terrain": { "q": "t_wall_wood", "+": "t_door_c" }
-    }
+    "object": { "mapgensize": [ 2, 1 ], "rows": [ "q+" ], "terrain": { "q": "t_wall_wood", "+": "t_door_c" } }
   },
   {
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_east_wall_door",
-    "object": {
-      "mapgensize": [ 2, 2 ],
-      "rows": [
-        "+q",
-        "  "
-      ],
-      "terrain": { "q": "t_wall_wood", "+": "t_door_c" }
-    }
+    "object": { "mapgensize": [ 2, 1 ], "rows": [ "+q" ], "terrain": { "q": "t_wall_wood", "+": "t_door_c" } }
   },
   {
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_makeshift_bed",
-    "object": {
-      "mapgensize": [ 2, 2 ],
-      "rows": [
-        "##",
-        "  "
-      ],
-      "terrain": { "#": "t_dirt" },
-      "furniture": { "#": "f_makeshift_bed" }
-    }
+    "object": { "mapgensize": [ 2, 1 ], "rows": [ "##" ], "furniture": { "#": "f_makeshift_bed" } }
   },
   {
     "type": "mapgen",
