@@ -3,6 +3,6 @@
     "type": "scenario",
     "id": "wilderness",
     "copy-from": "wilderness",
-    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp", "sloc_deserted_island" ]
+    "delete": { "allowed_locs": [ "sloc_campsite", "sloc_campground" ] }
   }
 ]
