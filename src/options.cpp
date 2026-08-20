@@ -1641,6 +1641,11 @@ void options_manager::add_options_interface()
          translate_marker( "Metric or Imperial" ),
     { { "metric", translate_marker( "Metric" ) }, { "imperial", translate_marker( "Imperial" ) } },
     "metric" );
+    add( "SOUND_DISPLAY_TYPE", interface, translate_marker( "Sound Display Type" ),
+         translate_marker( "Switch between decibles, relative decibels, and rough tile distance." ),
+    {  { "decibels", translate_marker( "Decibels" ) }, { "relative_decibels", translate_marker( "Relative Decibels" ) }, { "tiles", translate_marker( "Rough Tiles" ) } },
+    "decibels"
+       );
 
     add(
         "OVERMAP_COORDINATE_FORMAT",
