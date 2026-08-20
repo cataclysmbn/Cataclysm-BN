@@ -1021,7 +1021,6 @@
     "copy-from": "i_staff",
     "name": "spiked survivor staff",
     "description": "A wooden staff with metal bands or a length of wire wrapped onto both ends and various nails or spikes attached to it, including a single wicked spike at the top.  Makeshift weapons have a long history throughout warfare, from the trench clubs of World War 1 to the staffs used by medieval peasants, and hopefully it will help you survive too.",
-    "weapon_category": [ "QUARTERSTAVES" ],
     "bashing": 27,
     "cutting": 8,
     "weight": "1625 g",
