@@ -103,6 +103,7 @@ class world
         /**@{*/
         void start_save_tx();
         int64_t commit_save_tx();
+        auto is_save_tx_active() const -> bool { return save_tx_start_ts != 0; }
         void release_player_db();
         /**@}*/
 
@@ -194,6 +195,8 @@ class world
                              bool optional = true ) const;
         bool read_from_file_json( const std::string &path, file_read_json_fn reader,
                                   bool optional = true ) const;
+        auto has_dimension_data( const std::string &dim_id ) -> bool;
+        auto delete_dimension_data( const std::string &dim_id ) -> bool;
 
         /**
          * Convert (copy) the save data from the old format to the new format.
@@ -208,6 +211,7 @@ class world
         std::string overmap_terrain_filename( const point_abs_om &p ) const;
         std::string overmap_player_filename( const point_abs_om &p ) const;
         std::string get_player_path() const;
+        auto get_player_paths() const -> std::vector<std::string>;
 
         std::unique_ptr<sqlite_map_db> map_db;
 
