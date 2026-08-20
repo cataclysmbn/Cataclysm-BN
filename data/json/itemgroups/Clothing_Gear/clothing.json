@@ -111,6 +111,26 @@
     ]
   },
   {
+    "id": "clothing_military_bioop",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "Used by bio-operators, replaces the standard blouse and pants with tactical version.",
+    "items": [
+      { "group": "clothing_soldier_shirt" },
+      { "item": "jacket_tacticool" },
+      { "item": "pants_tacticool" },
+      { "item": "webbing_belt" },
+      { "distribution": [ { "item": "socks", "prob": 95 }, { "item": "socks_wool", "prob": 5 } ] },
+      { "item": "boots_combat" },
+      {
+        "distribution": [
+          { "collection": [ { "item": "sports_bra" }, { "item": "boy_shorts" } ] },
+          { "distribution": [ { "item": "briefs" }, { "item": "boxer_briefs" }, { "item": "boxer_shorts" } ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "clothing_military_distribution",
     "type": "item_group",
     "subtype": "distribution",
@@ -243,6 +263,124 @@
           { "item": "goggles_ir", "prob": 5 }
         ],
         "prob": 20
+      },
+      { "group": "clothing_watch", "prob": 5 }
+    ]
+  },
+  {
+    "id": "clothing_soldier_set_elite",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "Standard (non-winter) set of clothes and combat gear worn by elite soldiers and paramilitary forces.",
+    "items": [
+      { "distribution": [ { "group": "clothing_military", "prob": 80 }, { "group": "clothing_military_bioop", "prob": 20 } ] },
+      { "item": "elbow_pads", "prob": 10 },
+      { "item": "knee_pads", "prob": 85 },
+      {
+        "distribution": [
+          { "item": "beret", "prob": 25 },
+          { "collection": [ { "item": "helmet_army" }, { "item": "mask_bal", "prob": 25 } ], "prob": 50 },
+          { "collection": [ { "item": "tac_helmet" }, { "item": "mask_bal", "prob": 25 } ], "prob": 15 },
+          { "item": "tac_fullhelmet", "prob": 10 }
+        ],
+        "prob": 80
+      },
+      { "item": "gloves_tactical", "prob": 60 },
+      {
+        "distribution": [
+          { "item": "modularvestceramic", "prob": 25 },
+          { "item": "modularvest", "prob": 10 },
+          { "item": "modularveststeel", "prob": 5 },
+          { "item": "modularvesthard", "prob": 5 },
+          { "item": "modularvestsuper", "prob": 5 },
+          { "item": "dragonskin", "prob": 15 },
+          { "item": "dragonskinempty", "prob": 5 },
+          { "item": "exosuit_military", "prob": 5 }
+        ],
+        "prob": 90
+      },
+      {
+        "distribution": [ { "item": "nature_ghillie", "prob": 50 }, { "item": "urban_ghillie", "prob": 50 } ],
+        "prob": 10
+      },
+      { "distribution": [ { "item": "molle_pack", "prob": 75 }, { "item": "rucksack", "prob": 25 } ], "prob": 85 },
+      { "group": "clothing_tactical_leg", "prob": 15 },
+      {
+        "distribution": [
+          { "group": "clothing_glasses", "prob": 50 },
+          { "item": "glasses_bal", "prob": 25 },
+          { "item": "mil_scouter", "prob": 10 },
+          { "item": "goggles_nv", "prob": 5 },
+          { "item": "goggles_nv_enhanced", "prob": 5 },
+          { "item": "goggles_ir", "prob": 5 }
+        ],
+        "prob": 30
+      },
+      { "group": "clothing_watch", "prob": 5 }
+    ]
+  },
+  {
+    "id": "clothing_soldier_winter_set_elite",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "Winter set of clothes and combat gear worn by elite soldiers and paramilitary forces.",
+    "items": [
+      {
+        "distribution": [ { "group": "clothing_military_winter", "prob": 80 }, { "group": "clothing_military_bioop", "prob": 20 } ]
+      },
+      { "item": "elbow_pads", "prob": 10 },
+      { "item": "knee_pads", "prob": 85 },
+      {
+        "distribution": [
+          { "item": "beret_wool", "prob": 25 },
+          {
+            "collection": [ { "item": "helmet_army" }, { "item": "helmet_liner" }, { "item": "mask_bal", "prob": 25 } ],
+            "prob": 50
+          },
+          {
+            "collection": [ { "item": "tac_helmet" }, { "item": "helmet_liner" }, { "item": "mask_bal", "prob": 25 } ],
+            "prob": 15
+          },
+          { "collection": [ { "item": "tac_fullhelmet" }, { "item": "helmet_liner" } ], "prob": 10 }
+        ],
+        "prob": 80
+      },
+      {
+        "collection": [
+          { "distribution": [ { "item": "gloves_liner", "prob": 75 }, { "item": "gloves_liner_wool", "prob": 25 } ], "prob": 60 },
+          { "item": "winter_gloves_army" }
+        ],
+        "prob": 80
+      },
+      {
+        "distribution": [ { "item": "nature_ghillie", "prob": 50 }, { "item": "urban_ghillie", "prob": 50 } ],
+        "prob": 10
+      },
+      {
+        "distribution": [
+          { "item": "modularvestceramic", "prob": 25 },
+          { "item": "modularvest", "prob": 10 },
+          { "item": "modularveststeel", "prob": 5 },
+          { "item": "modularvesthard", "prob": 5 },
+          { "item": "modularvestsuper", "prob": 5 },
+          { "item": "dragonskin", "prob": 15 },
+          { "item": "dragonskinempty", "prob": 5 },
+          { "item": "exosuit_military", "prob": 5 }
+        ],
+        "prob": 90
+      },
+      { "distribution": [ { "item": "molle_pack", "prob": 75 }, { "item": "rucksack", "prob": 25 } ], "prob": 85 },
+      { "group": "clothing_tactical_leg", "prob": 15 },
+      {
+        "distribution": [
+          { "group": "clothing_glasses", "prob": 50 },
+          { "item": "glasses_bal", "prob": 25 },
+          { "item": "mil_scouter", "prob": 10 },
+          { "item": "goggles_nv", "prob": 5 },
+          { "item": "goggles_nv_enhanced", "prob": 5 },
+          { "item": "goggles_ir", "prob": 5 }
+        ],
+        "prob": 30
       },
       { "group": "clothing_watch", "prob": 5 }
     ]
