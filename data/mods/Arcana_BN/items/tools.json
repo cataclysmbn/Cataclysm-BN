@@ -1644,7 +1644,7 @@
         },
         {
           "conditions": [ "WIELD", "ACTIVE" ],
-          "values": [ { "value": "ARMOR_COLD", "multiply": -0.5 } ],
+          "values": [ { "value": "ARMOR_COLD", "multiply": -1.0 }, { "value": "CLIMATE_CONTROL_HEATING", "add": 1500 } ],
           "ench_effects": [ { "effect": "cold_ward", "intensity": 1 } ]
         }
       ]

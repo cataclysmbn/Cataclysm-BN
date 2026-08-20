@@ -37,6 +37,27 @@ void MapgenColorPalette::load_palette( const JsonObject &jo, const std::string &
     all_palettes.load( jo, src );
 }
 
+int MapgenColorPalette::next_id = 0;
+
+mpalette_id MapgenColorPalette::define_new_palette( const JsonObject &obj )
+{
+    MapgenColorPalette pal = MapgenColorPalette();
+    pal.load( obj, "" );
+    pal.id = get_unique_id();
+    all_palettes.insert( pal );
+    return pal.id;
+}
+
+mpalette_id MapgenColorPalette::get_unique_id()
+{
+    static const std::string unique_prefix = "\u01F7 ";
+    while( true ) {
+        const mpalette_id new_group = mpalette_id( unique_prefix + std::to_string( next_id++ ) );
+        if( !new_group.is_valid() ) {
+            return new_group;
+        }
+    }
+}
 void MapgenColorPalette::load( const JsonObject &jo, const std::string & )
 {
     if( jo.has_bool( "clear" ) && jo.get_bool( "clear" ) ) {

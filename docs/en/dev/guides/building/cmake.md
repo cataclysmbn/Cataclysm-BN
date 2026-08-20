@@ -73,6 +73,12 @@ sqlite-devel zlib-devel
 > Neither Ubuntu or Fedora ship SDL3_mixer or shadercross
 > These libraries will be build automatically when compiling
 
+- For Arch based distros:
+
+```sh
+sudo pacman -S sdl3 sdl3_image sdl3_ttf sdl3_mixer zip sqlite
+```
+
 #### Verifying Compiler Version
 
 You need Clang 22 or newer to build CataclysmBN. You can check your compiler version with:

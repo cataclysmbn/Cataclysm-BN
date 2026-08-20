@@ -333,6 +333,7 @@ static const efftype_id effect_adrenaline_mycus( "adrenaline_mycus" );
 static const efftype_id effect_ai_controlled( "ai_controlled" );
 static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_assisted( "assisted" );
+static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_blind( "blind" );
 static const efftype_id effect_bouldering( "bouldering" );
 static const efftype_id effect_contacts( "contacts" );
@@ -2122,6 +2123,7 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_pre_action_updates" );
         perhaps_add_random_npc();
+        refresh_player_visibility_cache_if_needed();
         process_voluntary_act_interrupt();
         process_activity();
         update_performance_bubble();
@@ -3407,6 +3409,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "smash" );
     ctxt.register_action( "loot" );
     ctxt.register_action( "examine" );
+    ctxt.register_action( "jump" );
     ctxt.register_action( "advinv" );
     ctxt.register_action( "pickup" );
     ctxt.register_action( "pickup_all" );
@@ -12302,6 +12305,13 @@ bool game::is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
 
 bool game::prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
 {
+    return prompt_dangerous_tile( dest_loc, _( "Really step into %s?" ), true );
+}
+
+bool game::prompt_dangerous_tile( const tripoint_bub_ms &dest_loc,
+                                  std::string_view query_message,
+                                  const bool allow_ledge_examine ) const
+{
     static const iexamine_function ledge_examine = iexamine_function_from_string( "ledge" );
     std::vector<std::string> harmful_stuff = get_dangerous_tile( dest_loc );
 
@@ -12309,8 +12319,9 @@ bool game::prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
         return true;
     }
 
-    if( !( harmful_stuff.size() == 1 && m.tr_at( dest_loc ).loadid == tr_ledge ) ) {
-        return query_yn( _( "Really step into %s?" ), enumerate_as_string( harmful_stuff ) ) ;
+    if( !allow_ledge_examine ||
+        !( harmful_stuff.size() == 1 && m.tr_at( dest_loc ).loadid == tr_ledge ) ) {
+        return query_yn( query_message.data(), enumerate_as_string( harmful_stuff ) );
     }
 
     if( !u.is_mounted() ) {
@@ -12322,8 +12333,8 @@ bool game::prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const
     } else {
         auto crit = u.mounted_creature.get();
         if( crit->has_flag( MF_MOUNTABLE_LEDGE ) ) {
-            return query_yn( _( "Really step into %s?" ),
-                             enumerate_as_string( harmful_stuff ) ) ; // mount can climb down ledges
+            return query_yn( query_message.data(),
+                             enumerate_as_string( harmful_stuff ) ); // mount can climb down ledges
         }
     }
 
@@ -12899,12 +12910,16 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
             u.mounted_creature->apply_damage( nullptr, bodypart_id( "torso" ), rng( 1, 10 ) );
         } else {
             const bodypart_id bp = u.get_random_body_part();
+            const auto damaged_bp = bp->main_part.id();
             if( u.deal_damage( nullptr, bp, damage_instance( DT_CUT, rng( 1, 10 ) ) ).total_damage() > 0 ) {
                 //~ 1$s - bodypart name in accusative, 2$s is terrain name.
                 add_msg( m_bad, _( "You cut your %1$s on the %2$s!" ),
-                         body_part_name_accusative( bp->token ),
+                         body_part_name_accusative( damaged_bp ),
                          m.has_flag_ter( "SHARP", dest_loc ) ? m.tername( dest_loc ) : m.furnname(
                              dest_loc ) );
+                if( one_in( 2 ) && !u.is_immune_effect( effect_bleed ) ) {
+                    u.add_effect( effect_bleed, rng( 2_minutes, 5_minutes ), bp.id() );
+                }
             }
         }
     }
@@ -14202,8 +14217,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
                         get_avatar().mutation_spend_resources( tid );
                     }
                 }
-                add_msg( m_info, _( "There is something above blocking your way." ) );
-                return;
+                if( dest.z() > OVERMAP_HEIGHT ) {
+                    add_msg( m_info, _( "It would be unsafe to try and ascend further." ) );
+                    return;
+                } else {
+                    add_msg( m_info, _( "There is something above blocking your way." ) );
+                    return;
+                }
             } else {
                 if( dest.z() > OVERMAP_HEIGHT ) {
                     add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
@@ -14380,7 +14400,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // Find the corresponding staircase
     bool rope_ladder = false;
     // TODO: Remove the stairfinding, make the mapgen gen aligned maps
-    const bool special_move = climbing || swimming || can_fly;
+    // Don't check can_fly here, flight was handled earlier and doing that would just embed you in a wall instead
+    const bool special_move = climbing || swimming;
 
     if( !force && !special_move ) {
         const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,

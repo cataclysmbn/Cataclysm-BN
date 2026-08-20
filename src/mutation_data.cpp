@@ -1,4 +1,5 @@
 #include "mutation_data.h" // IWYU pragma: associated
+#include "generic_readers.h"
 #include "mutation.h" // IWYU pragma: associated
 
 #include <array>
@@ -459,6 +460,8 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "changes_to", replacements, trait_reader{} );
     optional( jo, was_loaded, "leads_to", additions, trait_reader{} );
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<trait_flag_str_id> {} );
+    optional( jo, was_loaded, "allowed_items", allowed_items, auto_flags_reader<flag_id> {} );
+    optional( jo, was_loaded, "restricts_gear", restricts_gear, bodypart_reader{} );
     optional( jo, was_loaded, "types", types, string_reader{} );
     optional( jo, was_loaded, "enchantments", enchantments );
     if( jo.has_array( "mut_enchantments" ) ) {
@@ -534,14 +537,6 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         std::string part_id = ec.next_string();
         int enc = ec.next_int();
         encumbrance_covered[get_body_part_token( part_id )] = enc;
-    }
-
-    for( const std::string line : jo.get_array( "restricts_gear" ) ) {
-        restricts_gear.insert( get_body_part_token( line ) );
-    }
-
-    for( const std::string line : jo.get_array( "allowed_items" ) ) {
-        allowed_items.insert( flag_id( line ) );
     }
 
     for( JsonObject ao : jo.get_array( "armor" ) ) {

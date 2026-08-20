@@ -2302,6 +2302,7 @@ class jmapgen_vehicle : public jmapgen_piece
         int fuel;
         int status;
         std::optional<bool> locked;
+        bool place_beyond_bounds;
 
         jmapgen_vehicle( const JsonObject &jsi )
             : type( jsi.get_member( "vehicle" ) )
@@ -2313,6 +2314,7 @@ class jmapgen_vehicle : public jmapgen_piece
             if( jsi.has_bool( "locked" ) ) {
                 locked = jsi.get_bool( "locked" );
             }
+            optional( jsi, false, "place_beyond_bounds", place_beyond_bounds, false );
             if( jsi.has_array( "rotation" ) ) {
                 for( const JsonValue &elt : jsi.get_array( "rotation" ) ) {
                     rotation.push_back( units::from_degrees( elt.get_int() ) );
@@ -2343,7 +2345,7 @@ class jmapgen_vehicle : public jmapgen_piece
                                                  : std::nullopt;
             dat.m.add_vehicle(
                 chosen_id, point_omt_ms( x.get(), y.get() ),
-                random_entry( rotation ), fuel, status, true, locked, has_keys );
+                random_entry( rotation ), fuel, status, true, locked, has_keys, place_beyond_bounds );
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
             return dat.m.veh_at( point_omt_ms( p.x(), p.y() ) ).has_value();
@@ -2513,6 +2515,10 @@ class jmapgen_furniture : public jmapgen_piece
         jmapgen_furniture( const JsonObject &jsi ) : id( jsi.get_member( "furn" ) ) {
             // Used in simple cases
             assign( jsi, "palette", palette );
+
+            if( jsi.has_array( "colors" ) ) {
+                palette = MapgenColorPalette::define_new_palette( jsi );
+            }
         }
 
         jmapgen_furniture( const JsonValue &jsv ) {
@@ -2523,6 +2529,9 @@ class jmapgen_furniture : public jmapgen_piece
                 if( jsi.has_member( "furn" ) ) {
                     id = mapgen_value<furn_id>( jsi.get_member( "furn" ) );
                     assign( jsi, "palette", palette );
+                    if( jsi.has_array( "colors" ) ) {
+                        palette = MapgenColorPalette::define_new_palette( jsi );
+                    }
                 } else {
                     // If this object is using parameters distributions etc
                     id = mapgen_value<furn_id>( jsi );
@@ -2582,6 +2591,9 @@ class jmapgen_terrain : public jmapgen_piece
         jmapgen_terrain( const JsonObject &jsi ) : jmapgen_terrain( jsi.get_member( "ter" ) ) {
             // Used in simple cases
             assign( jsi, "palette", palette );
+            if( jsi.has_array( "colors" ) ) {
+                palette = MapgenColorPalette::define_new_palette( jsi );
+            }
         }
         jmapgen_terrain( const JsonValue &jsv ) {
             // Okay so we have an object
@@ -2591,6 +2603,9 @@ class jmapgen_terrain : public jmapgen_piece
                 if( jsi.has_member( "ter" ) ) {
                     id = mapgen_value<ter_id>( jsi.get_member( "ter" ) );
                     assign( jsi, "palette", palette );
+                    if( jsi.has_array( "colors" ) ) {
+                        palette = MapgenColorPalette::define_new_palette( jsi );
+                    }
                 } else {
                     // If this object is using parameters distributions etc
                     id = mapgen_value<ter_id>( jsi );

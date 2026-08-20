@@ -1007,7 +1007,7 @@
     "regenerates": 1,
     "mech_battery": "arcana_mech_power_cell",
     "mech_weapon": "arcana_mech_laser",
-    "revert_to_itype": "broken_mech_arcana",
+    "revert_to_itype": "bot_mech_arcana",
     "death_function": [ "BROKEN" ],
     "flags": [
       "SEES",

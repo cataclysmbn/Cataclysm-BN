@@ -18,6 +18,22 @@
   },
   {
     "type": "uncraft",
+    "result": "afs_bio_missiles",
+    "skill_used": "electronics",
+    "difficulty": 10,
+    "time": "50 m",
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "components": [
+      [ [ "mininuke", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ]
+    ]
+  },
+  {
+    "type": "uncraft",
     "result": "bio_armor_arms",
     "skill_used": "electronics",
     "difficulty": 6,

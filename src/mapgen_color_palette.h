@@ -39,6 +39,13 @@ class MapgenColorPalette
 
         bool was_loaded;
 
+        static mpalette_id define_new_palette( const JsonObject &obj );
+
     private:
         weighted_int_list<std::string> colors;
+
+        static mpalette_id get_unique_id();
+
+        static int next_id;
+
 };

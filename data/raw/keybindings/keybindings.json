@@ -1876,6 +1876,13 @@
   },
   {
     "type": "keybinding",
+    "name": "Jump across an adjacent tile",
+    "category": "DEFAULTMODE",
+    "id": "jump",
+    "bindings": [ { "input_method": "keyboard", "key": "SPACE" } ]
+  },
+  {
+    "type": "keybinding",
     "name": "Advanced Inventory management",
     "category": "DEFAULTMODE",
     "id": "advinv",

@@ -164,7 +164,7 @@
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL", "CHIMERA" ],
+    "category": [ "MEDICAL" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5

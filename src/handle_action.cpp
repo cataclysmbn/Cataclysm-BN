@@ -52,6 +52,7 @@
 #include "gates.h"
 #include "gun_mode.h"
 #include "help.h"
+#include "iexamine.h"
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
@@ -722,6 +723,27 @@ static void close()
             ACTION_CLOSE, false ) ) {
         doors::close_door( get_map(), g->u, *pnt );
     }
+}
+
+static auto jump() -> void
+{
+    auto &you = get_avatar();
+    if( !iexamine::can_start_jump_over_tile( you, true ) ) {
+        return;
+    }
+
+    const auto allowed = [&you]( const tripoint_bub_ms & pos ) {
+        return iexamine::can_jump_over_tile( you, pos );
+    };
+    const auto jump_target = choose_adjacent_highlight(
+                                 _( "Jump across where?" ),
+                                 _( "There is no adjacent tile you can jump across." ),
+                                 allowed );
+    if( !jump_target ) {
+        return;
+    }
+
+    iexamine::jump_over_tile( you, *jump_target );
 }
 
 // Establish or release a grab on a vehicle
@@ -2365,6 +2387,14 @@ bool game::handle_action()
                     examine( *mouse_target );
                 } else {
                     examine();
+                }
+                break;
+
+            case ACTION_JUMP:
+                if( mouse_target && iexamine::can_jump_over_tile( u, *mouse_target ) ) {
+                    iexamine::jump_over_tile( u, *mouse_target );
+                } else {
+                    jump();
                 }
                 break;
 

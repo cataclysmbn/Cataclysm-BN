@@ -1294,5 +1294,11 @@
       [ "Medevac1_Wreck", 25 ],
       [ "Medevac2_Wreck", 25 ]
     ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "airport_hangar_aircraft_group",
+    "//": "WARNING: These are massive and designed for the commercial airports special 6 OMT spawn hanger",
+    "vehicles": [ [ "commercial_airliner", 5 ], [ "minijet", 30 ], [ "commercial_airliner_cargo", 20 ] ]
   }
 ]

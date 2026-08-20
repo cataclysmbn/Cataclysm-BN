@@ -368,6 +368,8 @@ Example:
 The palette causes the furniture to be default painted based off the palette
 The palette randomly chooses a color based of the position on the global overmap
 
+Can also defined an inline palette as a seperate option
+
 ## Set terrain, furniture, or traps with a "set" array
 
 **optional** Specific commands to set terrain, furniture, traps, radiation, etc. Array is processed
@@ -663,6 +665,8 @@ times):
 It is also possible to specify a color palette to apply
 The palette is a `mapgen_color_palette`
 
+Can also defined an inline palette as a seperate option
+
 ````json
 "terrain": {
   "|": { "ter": "t_wall_paintable", "palette": "plaster_wall_palette" }
@@ -832,13 +836,14 @@ The actual monsters are spawned when the map is loaded. Fields:
 
 ### Place a vehicle by type or group with "vehicles"
 
-| Field    | Description                                                                                                                                                                                       |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| vehicle  | (required, string) type of the vehicle or id of a vehicle group.                                                                                                                                  |
-| chance   | (optional, integer or min/max array) x in 100 chance of the vehicle spawning at all. The default is 1 (which means 1% probability that the vehicle spawns, you probably want something larger).   |
-| rotation | (optional, integer) the direction the vehicle faces.                                                                                                                                              |
-| fuel     | (optional, integer) the fuel status. Default is -1 which makes the tanks 1-7% full. Positive values are interpreted as percentage of the vehicles tanks to fill (e.g. 100 means completely full). |
-| status   | (optional, integer) default is -1 (light damage), a value of 0 means perfect condition, 1 means heavily damaged.                                                                                  |
+| Field               | Description                                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| vehicle             | (required, string) type of the vehicle or id of a vehicle group.                                                                                                                                  |
+| chance              | (optional, integer or min/max array) x in 100 chance of the vehicle spawning at all. The default is 1 (which means 1% probability that the vehicle spawns, you probably want something larger).   |
+| rotation            | (optional, integer) the direction the vehicle faces.                                                                                                                                              |
+| fuel                | (optional, integer) the fuel status. Default is -1 which makes the tanks 1-7% full. Positive values are interpreted as percentage of the vehicles tanks to fill (e.g. 100 means completely full). |
+| status              | (optional, integer) default is -1 (light damage), a value of 0 means perfect condition, 1 means heavily damaged.                                                                                  |
+| place_beyond_bounds | (optional, integer) semi-dangerous value that allows for all collisions outside the 24x24 OMT to be ignored, allowing for larger vehicles to spawn                                                |
 
 ### Place a specific item with "item"
 

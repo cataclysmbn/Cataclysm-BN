@@ -977,6 +977,8 @@ class game : public submap_load_listener
         bool is_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         std::vector<std::string> get_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
         bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc ) const;
+        bool prompt_dangerous_tile( const tripoint_bub_ms &dest_loc, std::string_view query_message,
+                                    bool allow_ledge_examine ) const;
     private:
         auto player_visibility_cache_current() const -> bool;
         void chat(); // Talk to a nearby NPC  'C'
