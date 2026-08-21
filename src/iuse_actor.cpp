@@ -8504,3 +8504,134 @@ auto iuse_paint_stuff_config::clone() const -> std::unique_ptr<iuse_actor>
 {
     return std::make_unique<iuse_paint_stuff_config>( *this );
 }
+
+void fluid_pickup_actor::load( const JsonObject &jo )
+{
+    assign( jo, "max_volume", max_volume );
+    assign( jo, "moves", moves );
+    assign( jo, "charges_to_use", charges_to_use );
+    assign( jo, "retention_rate", retention_rate );
+}
+
+int fluid_pickup_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
+{
+    if( p.is_blind() ) {
+        p.add_msg_if_player( m_info, _( "You can't see anything!" ) );
+        return 0;
+    }
+    if( p.is_underwater() ) {
+        p.add_msg_if_player( m_info, _( "You can't do that while underwater." ) );
+        return 0;
+    }
+
+    map &here = get_map();
+
+    struct candidate {
+        tripoint_bub_ms pos;
+        item *ref = nullptr;
+        std::string name;
+        bool is_vehicle = false;
+    };
+    std::vector<candidate> candidates;
+
+    for( const tripoint_bub_ms &pos : here.points_in_radius( p.bub_pos(), 1 ) ) {
+        if( here.has_flag( "SEALED", pos ) ) {
+            continue;
+        }
+
+        for( item *mapped : here.i_at( pos ) ) {
+            if( mapped->made_of( LIQUID ) ) {
+                candidates.emplace_back( pos, mapped, mapped->tname(), false );
+            }
+        }
+
+        const optional_vpart_position veh = here.veh_at( pos );
+        if( veh ) {
+            vehicle &v = veh->vehicle();
+            for( const vpart_reference &vp : v.get_all_parts() ) {
+                if( vp.has_feature( VPFLAG_CARGO ) ) {
+                    for( item *veh_item : vp.part().get_items() ) {
+                        if( veh_item->made_of( LIQUID ) ) {
+                            candidates.emplace_back( pos, veh_item, veh_item->tname(), true );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if( candidates.empty() ) {
+        p.add_msg_if_player( m_info, _( "There are no liquids nearby to pick up." ) );
+        return 0;
+    }
+
+    int sel = 0;
+    if( candidates.size() > 1 && !test_mode ) {
+        uilist menu;
+        menu.title = _( "Pick up which liquid?" );
+        for( size_t i = 0; i < candidates.size(); ++i ) {
+            const std::string dir = direction_name(
+                                        direction_from( p.bub_pos(), candidates[i].pos ) );
+            menu.addentry( -1, true, MENU_AUTOASSIGN,
+                           //~ %1$s: liquid name, %2$s: direction
+                           _( "%1$s (%2$s)" ), candidates[i].name, dir );
+        }
+        menu.query();
+        if( menu.ret < 0 ) {
+            return 0;
+        }
+        sel = menu.ret;
+    }
+
+    const candidate &chosen = candidates[sel];
+    item &target_item = *chosen.ref;
+
+    // Apply max_volume limit by splitting off the excess and leaving it on the map.
+    // This must happen before handle_liquid so that only the pickable volume is offered.
+    const int max_ch = target_item.charges_per_volume( max_volume );
+    if( max_ch > 0 && target_item.charges > max_ch ) {
+        here.add_item_or_charges( chosen.pos, target_item.split( target_item.charges - max_ch ) );
+    }
+
+    // Apply retention loss: discard (1 - retention_rate) of charges
+    if( retention_rate < 1.0f && target_item.charges > 1 ) {
+        const int keep = std::max( 1, static_cast<int>( target_item.charges * retention_rate ) );
+        const int discard = target_item.charges - keep;
+        if( discard > 0 ) {
+            auto waste = target_item.split( discard );
+            p.add_msg_if_player( m_info, _( "You discard some of the %s as waste." ),
+                                 target_item.tname() );
+        }
+    }
+
+    // Open the standard handle_liquid menu (item stays on map, cancel-safe)
+    // In test mode, UI menus auto-cancel, so skip the call entirely.
+    // When the liquid is fully transferred, attempt_split detaches and removes the
+    // emptied item from its stack itself, so no manual cleanup is required here.
+    if( !test_mode ) {
+        liquid_handler::handle_liquid( target_item, 1 );
+    }
+
+    p.mod_moves( -moves );
+    return charges_to_use > 0 ? charges_to_use : 1;
+}
+
+auto fluid_pickup_actor::clone() const -> std::unique_ptr<iuse_actor>
+{
+    return std::make_unique<fluid_pickup_actor>( *this );
+}
+
+void fluid_pickup_actor::info( const item &, std::vector<iteminfo> &info ) const
+{
+    info.emplace_back( "TOOL", _( "Max volume: " ) + format_volume( max_volume ) );
+    info.emplace_back( "TOOL", _( "Moves: " ) + std::to_string( moves ) );
+    if( retention_rate < 1.0f ) {
+        info.emplace_back( "TOOL", _( "Retention: " ) + std::to_string( static_cast<int>
+                           ( retention_rate * 100 ) ) + "%" );
+    }
+    if( charges_to_use > 0 ) {
+        info.emplace_back( "TOOL", _( "Charges per use: " ) + std::to_string( charges_to_use ) );
+    }
+}
+
+

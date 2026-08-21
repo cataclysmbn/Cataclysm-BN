@@ -234,6 +234,7 @@
       { "item": "pipe", "prob": 20, "count": [ 5, 10 ] },
       { "item": "nail", "prob": 60, "count": [ 2, 4 ] },
       [ "hose", 15 ],
+      [ "fuel_filter_funnel", 10 ],
       [ "string_36", 40 ],
       [ "frame", 20 ],
       [ "hdframe", 10 ],

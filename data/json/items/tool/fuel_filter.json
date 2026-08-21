@@ -1,0 +1,17 @@
+[
+  {
+    "id": "fuel_filter_funnel",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str": "fuel filter funnel" },
+    "description": "A funnel with a fine stainless steel mesh screen built into the throat, designed to filter debris out of fuel as you pour.  The screen can be cleaned and reused.",
+    "weight": "300 g",
+    "volume": "750 ml",
+    "price": "20 USD",
+    "price_postapoc": "5 USD",
+    "material": [ "plastic", "steel" ],
+    "symbol": ";",
+    "color": "yellow",
+    "qualities": [ [ "FILTER", 1 ] ]
+  }
+]

@@ -28,7 +28,6 @@ static const skill_id skill_survival("survival");
 // - (UPS) for UPS tool
 // - (faulty) for faults
 // - "burnt" or "badly burnt"
-// - (dirty)
 // - (rotten)
 // - (old)
 // - (fresh)
