@@ -556,6 +556,12 @@ void bodypart::set_location( location<item> *loc )
     wielding.wielded.set_loc_hack( loc );
 }
 
+bool bodypart::is_affected_by_temperature() const
+{
+    // TODO This should be defined at json level
+    return bodypart_id( id ) != bodypart_id( "eyes" );
+}
+
 wield_status::wield_status( wield_status &&source ) noexcept : wielded(
         source.wielded.get_loc_hack() )
 {

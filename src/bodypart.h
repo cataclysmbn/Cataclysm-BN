@@ -287,6 +287,8 @@ class bodypart
         void deserialize( JsonIn &jsin );
 
         void set_location( location<item> *loc );
+
+        bool is_affected_by_temperature() const;
 };
 
 class body_part_set
