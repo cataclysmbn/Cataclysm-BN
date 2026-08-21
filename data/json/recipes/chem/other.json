@@ -97,12 +97,26 @@
     "subcategory": "CC_CHEM_OTHER",
     "id_suffix": "with food processor",
     "skill_used": "fabrication",
-    "time": "1 m",
+    "time": "30 s",
     "batch_time_factors": [ 90, 2 ],
-    "charges": 5,
+    "charges": 1,
     "autolearn": true,
     "flags": [ "BLIND_EASY" ],
-    "tools": [ [ [ "matches", 5 ] ], [ [ "food_processor", 10 ] ] ]
+    "tools": [ [ [ "matches", 1 ] ], [ [ "food_processor", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "chem_match_head_powder",
+    "category": "CC_CHEM",
+    "subcategory": "CC_CHEM_OTHER",
+    "id_suffix": "with food processor bulk",
+    "skill_used": "fabrication",
+    "time": "1 m",
+    "batch_time_factors": [ 90, 2 ],
+    "charges": 10,
+    "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
+    "tools": [ [ [ "matches", 10 ] ], [ [ "food_processor", 20 ] ] ]
   },
   {
     "result": "lye",
