@@ -74,6 +74,7 @@ enum spell_flag {
               // and is sort-of a replacement of martial arts.
     MOD_MELEE_MOVES, // Use melee attack cost as a base and add spell cost on top
     MOD_MELEE_STAM,  // Use melee stamina cost as a base and add spell cost on top
+    DAMAGE_TERRAIN,  // Enables the spell to damage the terrain
     LAST
 };
 
@@ -496,6 +497,9 @@ public:
     // difficulty of the level
     int get_difficulty() const;
 
+    // how much damage this spell should do to terrain
+    int terrain_damage(const int base_damage) const;
+
     // tries to create a field at the location specified
     void create_field(const tripoint_bub_ms& at) const;
 
@@ -646,6 +650,7 @@ void morale(const spell& sp, Creature& caster, const tripoint_bub_ms& target);
 void charm_monster(const spell& sp, Creature& caster, const tripoint_bub_ms& target);
 void mutate(const spell& sp, Creature& caster, const tripoint_bub_ms& target);
 void bash(const spell& sp, Creature& caster, const tripoint_bub_ms& target);
+void bash_area(const spell& sp, Creature& caster, const std::set<tripoint_bub_ms> area);
 void dash(const spell& sp, Creature& caster, const tripoint_bub_ms& target);
 void none(const spell& sp, Creature&, const tripoint_bub_ms& target);
 } // namespace spell_effect
