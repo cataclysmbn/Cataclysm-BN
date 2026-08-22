@@ -2740,15 +2740,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         if( m.has_field_at( u.bub_pos() ) ) {
             m.creature_in_field( u );
         }
-        for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
-            if( tracker_ptr ) {
-                tracker_ptr->update( calendar::turn );
-            }
-        }
         tick_portal_links();
         tick_temporary_pocket_dimensions();
         tick_vehicle_portal_taps();
-        fluid_grid::update( calendar::turn );
 
         const auto has_active_npcs = std::ranges::any_of( active_npc,
         []( const shared_ptr_fast<npc> &guy ) {
@@ -2822,6 +2816,19 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     {
         ZoneScopedN( "do_map_process_items" );
         m.process_items( skipped_turns );
+    }
+
+    {
+        ZoneScopedN( "activity_fixed_window_distribution_grid_update" );
+        for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
+            if( tracker_ptr ) {
+                tracker_ptr->update( calendar::turn );
+            }
+        }
+    }
+    {
+        ZoneScopedN( "activity_fixed_window_fluid_grid_update" );
+        fluid_grid::update( calendar::turn );
     }
 
     explosion_handler::get_explosion_queue().execute();

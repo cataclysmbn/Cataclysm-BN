@@ -791,11 +791,18 @@ std::string grid_furn_transform_queue::to_string() const
 
 void distribution_grid_tracker::update( time_point to )
 {
-    ZoneScoped;
-    flush_dirty_omts();
+    ZoneScopedN( "all_distribution_grid_update" );
+    {
+        ZoneScopedN( "flush_dirty_omt_distribution_grid_update" );
+        flush_dirty_omts();
+    }
     for( const shared_ptr_fast<distribution_grid> &grid : grids_requiring_updates ) {
+        ZoneScopedN( "individual_grid_update" );
         grid->update( to );
     }
-    transform_queue.apply( mb, *this, get_player_character(), get_map() );
-    transform_queue.clear();
+    {
+        ZoneScopedN( "apply_transformation_queue" );
+        transform_queue.apply( mb, *this, get_player_character(), get_map() );
+        transform_queue.clear();
+    }
 }
