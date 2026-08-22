@@ -201,6 +201,9 @@ static const activity_id ACT_PICKUP( "ACT_PICKUP" );
 
 static const matec_id rapid_strike( "RAPID" );
 
+static const enchantment_value_id ench_val_REACH_RANGE_ARMED( "REACH_RANGE_ARMED" );
+static const enchantment_value_id ench_val_ITEM_REACH_RANGE( "ITEM_REACH_RANGE" );
+
 class npc_class;
 
 using npc_class_id = string_id<npc_class>;
@@ -6092,12 +6095,9 @@ damage_instance item::base_damage_thrown() const
 
 int item::reach_range( const Character &guy ) const
 {
-    int res = 1;
+    int res = 1 + ( has_flag( flag_REACH_ATTACK ) ? has_flag( flag_REACH3 ) ? 2 : 1 : 0 );
 
-    if( has_flag( flag_REACH_ATTACK ) ) {
-        res = has_flag( flag_REACH3 ) ? 3 : 2;
-    }
-
+    res = std::max( res, int( 1 + bonus_from_enchantments( 0, ench_val_ITEM_REACH_RANGE, true ) ) );
     // for guns consider any attached gunmods
     if( is_gun() && !is_gunmod() ) {
         for( const std::pair<const gun_mode_id, gun_mode> &m : gun_all_modes() ) {
@@ -6109,6 +6109,8 @@ int item::reach_range( const Character &guy ) const
             }
         }
     }
+
+    res += guy.bonus_from_enchantments( 0, ench_val_REACH_RANGE_ARMED, true );
 
     return std::max( 1, res );
 }

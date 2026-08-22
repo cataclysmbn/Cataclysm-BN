@@ -126,6 +126,24 @@ static const auto skill_unarmed = skill_id( "unarmed" );
 static const auto skill_bashing = skill_id( "bashing" );
 static const auto skill_melee = skill_id( "melee" );
 
+static const enchantment_value_id ench_val_MELEE_DAMAGE_BASH( "MELEE_DAMAGE_BASH" );
+static const enchantment_value_id
+ench_val_ITEM_ARMOR_PENETRATION_BASH( "ITEM_ARMOR_PENETRATION_BASH" );
+static const enchantment_value_id
+ench_val_MELEE_ARMOR_PENETRATION_BASH( "MELEE_ARMOR_PENETRATION_BASH" );
+static const enchantment_value_id ench_val_MELEE_DAMAGE_CUT( "MELEE_DAMAGE_CUT" );
+static const enchantment_value_id
+ench_val_ITEM_ARMOR_PENETRATION_CUT( "ITEM_ARMOR_PENETRATION_CUT" );
+static const enchantment_value_id
+ench_val_MELEE_ARMOR_PENETRATION_CUT( "MELEE_ARMOR_PENETRATION_CUT" );
+static const enchantment_value_id ench_val_MELEE_DAMAGE_STAB( "MELEE_DAMAGE_STAB" );
+static const enchantment_value_id
+ench_val_ITEM_ARMOR_PENETRATION_STAB( "ITEM_ARMOR_PENETRATION_STAB" );
+static const enchantment_value_id
+ench_val_MELEE_ARMOR_PENETRATION_STAB( "MELEE_ARMOR_PENETRATION_STAB" );
+
+static const enchantment_value_id ench_val_MELEE_HIT( "MELEE_HIT" );
+
 static auto hardcoded_mutation_attack( const Character &u, const trait_id &id ) -> damage_instance;
 
 namespace
@@ -1369,12 +1387,9 @@ float Character::get_melee_hit( const item &weapon, const attack_statblock &atta
         hit -= 2.0f;
     }
 
-    //Unstable ground chance of failure
-    if( has_effect( effect_bouldering ) ) {
-        hit *= 0.75f;
-    }
-
     hit *= std::max( 0.25f, 1.0f - encumb( body_part_torso ) / 100.0f );
+
+    hit += bonus_from_enchantments( hit, ench_val_MELEE_HIT );
 
     return hit;
 }
@@ -2135,11 +2150,13 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     bash_dam += weap_dam;
     bash_mul *= c.mabuff_damage_mult( DT_BASH );
 
+    bash_dam += c.bonus_from_enchantments( bash_dam, ench_val_MELEE_DAMAGE_BASH, true );
+
     float armor_mult = attack.damage.get_armor_mult( DT_BASH );
     int arpen = attack.damage.get_armor_pen( DT_BASH );
 
-    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_BASH" ),
-                                           true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_ITEM_ARMOR_PENETRATION_BASH, true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_MELEE_ARMOR_PENETRATION_BASH, true );
 
     arpen += c.mabuff_arpen_bonus( DT_BASH );
     armor_mult *= c.mabuff_tg_armor_mult( DT_BASH );
@@ -2202,14 +2219,16 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
         }
     }
 
+    cut_dam += c.bonus_from_enchantments( cut_dam, ench_val_MELEE_DAMAGE_CUT, true );
+
     if( cut_dam <= 0.0f ) {
         return; // No negative damage!
     }
 
     int arpen = attack.damage.get_armor_pen( DT_CUT );
 
-    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_CUT" ),
-                                           true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_ITEM_ARMOR_PENETRATION_CUT, true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_MELEE_ARMOR_PENETRATION_CUT, true );
 
     float armor_mult = attack.damage.get_armor_mult( DT_CUT );
 
@@ -2275,6 +2294,8 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
         }
     }
 
+    stab_dam += c.bonus_from_enchantments( stab_dam, ench_val_MELEE_DAMAGE_STAB, true );
+
     if( stab_dam <= 0 ) {
         return; // No negative stabbing!
     }
@@ -2293,8 +2314,8 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     int arpen = attack.damage.get_armor_pen( DT_STAB );
     arpen += c.mabuff_arpen_bonus( DT_STAB );
 
-    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_STAB" ),
-                                           true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_ITEM_ARMOR_PENETRATION_STAB, true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_MELEE_ARMOR_PENETRATION_STAB, true );
 
     armor_mult *= c.mabuff_tg_armor_mult( DT_STAB );
 
@@ -2317,6 +2338,11 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
     }
     float type_dam = c.mabuff_damage_bonus( dt ) + weap.damage_melee( attack, dt );
 
+    const auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
+
+    type_dam += weap.bonus_from_enchantments( type_dam,
+                enchantment_value_id( "MELEE_DAMAGE_" + internal_name ), true );
+
     if( type_dam <= 0 ) {
         return; // No negative damage!
     }
@@ -2324,12 +2350,13 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
     float type_mul = 1.0f;
     type_mul *= c.mabuff_damage_mult( dt );
 
-    const auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
     float armor_mult = attack.damage.get_armor_mult( dt );
     int arpen = attack.damage.get_armor_pen( dt );
     arpen += c.mabuff_arpen_bonus( dt );
     arpen += weap.bonus_from_enchantments( arpen,
                                            enchantment_value_id( "ITEM_ARMOR_PENETRATION_" + internal_name ), true );
+    arpen += weap.bonus_from_enchantments( arpen,
+                                           enchantment_value_id( "MELEE_ARMOR_PENETRATION_" + internal_name ), true );
     armor_mult *= c.mabuff_tg_armor_mult( dt );
 
     if( crit ) {

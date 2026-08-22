@@ -59,6 +59,11 @@
     "info": "<good>Prevents sounds from movement</good>"
   },
   {
+    "id": "UNCANNY_DODGE",
+    "type": "enchantment_flag",
+    "info": "<good>Allows dodging of bullets</good>"
+  },
+  {
     "id": "EAT_ROTTEN",
     "type": "enchantment_flag",
     "info": "<good>Permits eating rotten food</good>"

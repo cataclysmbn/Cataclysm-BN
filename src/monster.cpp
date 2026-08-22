@@ -77,6 +77,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "weather.h"
 #include "profile.h"
 #include "units_utility.h"
@@ -178,6 +179,7 @@ static const species_id PLANT( "PLANT" );
 static const species_id ROBOT( "ROBOT" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
+static const enchantment_value_id ench_val_OVERKILL_DMG( "OVERKILL_DMG" );
 namespace
 {
 
@@ -3402,6 +3404,10 @@ void monster::die( Creature *nkiller )
         // We are already dead, don't die again, note that monster::dead is
         // *only* set to true in this function!
         return;
+    }
+
+    if( nkiller && ( nkiller->is_avatar() || nkiller->is_npc() ) ) {
+        hp -= nkiller->as_character()->bonus_from_enchantments( hp, ench_val_OVERKILL_DMG );
     }
     // We were carrying a creature, deposit the rider
     if( has_effect( effect_ridden ) && mounted_player ) {

@@ -219,6 +219,8 @@ static const std::string flag_LADDER( "LADDER" );
 
 static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
+static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNARMED" );
+
 namespace
 {
 
@@ -930,7 +932,10 @@ static float rate_critter( const Creature &c )
 
 static auto attack_best_hostile( avatar &you, map &m ) -> void
 {
-    const auto reach = you.primary_weapon().reach_range( you );
+    const auto reach = you.is_armed() ?
+                       you.primary_weapon().reach_range( you ) :
+                       ( 1 + you.bonus_from_enchantments( 0, ench_val_REACH_RANGE_UNARMED ) );
+
     auto critters = ranged::targetable_creatures( you, reach );
     critters.erase( std::remove_if( critters.begin(), critters.end(), []( const Creature * c ) {
         if( !c->is_npc() ) {

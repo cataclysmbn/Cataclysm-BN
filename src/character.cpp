@@ -394,6 +394,17 @@ static const enchantment_flag_id ench_flag_SONAR( "SONAR" );
 
 static const enchantment_value_id ench_val_GROUNDED_CREATURE_SIGHT( "GROUNDED_CREATURE_SIGHT" );
 
+static const enchantment_value_id ench_val_PAIN_MOD( "PAIN_MOD" );
+static const enchantment_value_id ench_val_PAIN_GAIN( "PAIN_GAIN" );
+static const enchantment_value_id ench_val_PAIN_LOSS( "PAIN_LOSS" );
+static const enchantment_value_id ench_val_CHRONIC_PAIN_MOD( "CHRONIC_PAIN_MOD" );
+static const enchantment_value_id ench_val_PERCEIVED_PAIN_MOD( "PERCEIVED_PAIN_MOD" );
+
+static const enchantment_value_id ench_val_WEIGHTMOD_WORN( "WEIGHTMOD_WORN" );
+static const enchantment_value_id ench_val_WEIGHTMOD_BODY( "WEIGHTMOD_BODY" );
+static const enchantment_value_id ench_val_WEIGHTMOD_INVENTORY( "WEIGHTMOD_INVENTORY" );
+static const enchantment_value_id ench_val_WEIGHTMOD_BIONICS( "WEIGHTMOD_BIONICS" );
+static const enchantment_value_id ench_val_WEIGHTMOD_WEAPON( "WEIGHTMOD_WEAPON" );
 namespace io
 {
 
@@ -1039,26 +1050,14 @@ void Character::react_to_felt_pain( int intensity )
 void Character::mod_pain( int npain )
 {
     if( npain > 0 ) {
+        // Technically mult of -1 can still apply
+        // Maybe one day should add `min` for these cases
         if( has_trait( trait_NOPAIN ) || has_effect( effect_narcosis ) ) {
             return;
         }
-        // always increase pain gained by one from these bad mutations
-        if( has_trait( trait_MOREPAIN ) ) {
-            npain += std::max( 1, roll_remainder( npain * 0.25 ) );
-        } else if( has_trait( trait_MOREPAIN2 ) ) {
-            npain += std::max( 1, roll_remainder( npain * 0.5 ) );
-        } else if( has_trait( trait_MOREPAIN3 ) ) {
-            npain += std::max( 1, roll_remainder( npain * 1.0 ) );
-        }
-
-        if( npain > 1 ) {
-            // if it's 1 it'll just become 0, which is bad
-            if( has_trait( trait_PAINRESIST_TROGLO ) ) {
-                npain = roll_remainder( npain * 0.5 );
-            } else if( has_trait( trait_PAINRESIST ) ) {
-                npain = roll_remainder( npain * 0.67 );
-            }
-        }
+        npain += bonus_from_enchantments( npain, ench_val_PAIN_GAIN );
+    } else if( npain < 0 ) {
+        npain += bonus_from_enchantments( npain, ench_val_PAIN_LOSS );
     }
     Creature::mod_pain( npain );
 }
@@ -1124,10 +1123,14 @@ int min_pain( const Character &c )
 
 int Character::get_pain() const
 {
+    int pain = Creature::get_pain();
+    pain += bonus_from_enchantments( pain, ench_val_PAIN_MOD );
     if( get_option<bool>( "CHRONIC_PAIN" ) ) {
-        return std::max( Creature::get_pain(), min_pain( *this ) );
+        pain =  std::max( pain, min_pain( *this ) );
+        pain += bonus_from_enchantments( pain, ench_val_CHRONIC_PAIN_MOD );
     }
-    return Creature::get_pain();
+    pain = std::max( pain, 0 );
+    return pain;
 }
 
 int Character::get_perceived_pain() const
@@ -1136,7 +1139,9 @@ int Character::get_perceived_pain() const
         return 0;
     }
 
-    return std::max( get_pain() - get_painkiller(), 0 );
+    int percieved_pain = get_pain() - get_painkiller();
+    percieved_pain += bonus_from_enchantments( percieved_pain, ench_val_PERCEIVED_PAIN_MOD );
+    return std::max( percieved_pain, 0 );
 }
 
 int Character::swim_speed() const
@@ -4535,15 +4540,22 @@ units::mass Character::get_weight() const
 {
     if( has_trait( trait_DEBUG_WEIGHTLESSNESS ) ) { return 0_gram; }
 
-    const auto worn_weight = std::ranges::fold_left( worn, 0_gram,
+    auto worn_weight = std::ranges::fold_left( worn, 0_gram,
     []( const auto sum, const auto * const itm ) { return sum + itm->weight(); } );
+    worn_weight += bonus_from_enchantments( worn_weight / 1_gram,
+                                            ench_val_WEIGHTMOD_WORN ) * 1_gram; // Weight of worn items
 
-    auto ret = bodyweight();                       // The base weight of the player's body
-    ret += inv.weight();                           // Weight of the stored inventory
-    ret += worn_weight;                            // Weight of worn items
-    ret += primary_weapon().weight();              // Weight of wielded item
-    ret += bionics_weight();                       // Weight of installed bionics
-    return ret;
+    auto weight = bodyweight();
+    weight += bonus_from_enchantments( weight / 1_gram, ench_val_WEIGHTMOD_BODY ) * 1_gram;
+    auto invweight = inv.weight();  // Weight of the stored inventory
+    invweight += bonus_from_enchantments( invweight / 1_gram, ench_val_WEIGHTMOD_INVENTORY ) * 1_gram;
+    auto weaponweight = primary_weapon().weight();
+    weaponweight += bonus_from_enchantments( weaponweight / 1_gram,
+                    ench_val_WEIGHTMOD_WEAPON ) * 1_gram;
+    auto bionicsweight = bionics_weight();
+    bionicsweight += bonus_from_enchantments( bionicsweight / 1_gram,
+                     ench_val_WEIGHTMOD_BIONICS ) * 1_gram;
+    return weight + invweight + weaponweight + bionicsweight + worn_weight;
 }
 
 char_encumbrance_data Character::get_encumbrance() const
@@ -9173,7 +9185,19 @@ void Character::absorb_hit( const bodypart_id &bp, damage_instance &dam )
     std::vector<detached_ptr<item>> worn_remains;
     bool armor_destroyed = false;
 
+    bool forcefield_message = false;
     for( damage_unit &elem : dam.damage_units ) {
+        float prot = bonus_from_enchantments( 0.0,
+                                              enchantment_value_id( "FORCEFIELD_" + elem.get_internal_name() ) ) * 100;
+        if( prot != 0 && prot > rng_float( 0.0, 100.0 ) ) {
+            elem.amount = 0;
+            if( !forcefield_message ) {
+                forcefield_message = true;
+                add_msg_if_player( _( "The incoming attack was deflected" ) );
+            }
+            continue;
+        }
+
         if( elem.amount < 0 ) {
             // Prevents 0 damage hits (like from hallucinations) from ripping armor
             elem.amount = 0;

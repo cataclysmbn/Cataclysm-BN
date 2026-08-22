@@ -23,6 +23,12 @@
     "qualities": [ [ "DIG", 3 ] ]
   },
   {
+    "id": "fake_hands",
+    "copy-from": "fake_item",
+    "type": "GENERIC",
+    "name": { "str_sp": "unarmed" }
+  },
+  {
     "id": "toolset",
     "copy-from": "fake_item",
     "type": "TOOL",
