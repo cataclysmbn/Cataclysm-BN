@@ -190,6 +190,42 @@ TEST_CASE("mutable_overmap_placement", "[overmap][slow]") {
     }
 }
 
+TEST_CASE("overmap_special_exact_origin_restricts_placement", "[overmap]") {
+    clear_all_state();
+    const auto& special = *overmap_special_id("test_exact_origin");
+    auto& om = ACTIVE_OVERMAP_BUFFER.get(point_abs_om::zero());
+
+    const auto blocked_a = tripoint_om_omt(7, 20, 0);
+    const auto allowed = tripoint_om_omt(10, 20, 0);
+    om.ter_set(blocked_a, oter_id("field"));
+    om.ter_set(allowed, oter_id("field"));
+
+    CHECK_FALSE(ACTIVE_OVERMAP_BUFFER.place_special(
+        special.id, project_combine(point_abs_om::zero(), blocked_a), 0, 0));
+    CHECK(ACTIVE_OVERMAP_BUFFER
+              .place_special(special.id, project_combine(point_abs_om::zero(), allowed), 0, 0));
+    CHECK(om.check_overmap_special_type(special.id, allowed));
+    CHECK_FALSE(om.check_overmap_special_type(special.id, blocked_a));
+}
+
+TEST_CASE("overmap_special_origin_range_restricts_placement", "[overmap]") {
+    clear_all_state();
+    const auto& special = *overmap_special_id("test_origin_range");
+    auto& om = ACTIVE_OVERMAP_BUFFER.get(point_abs_om::zero());
+
+    const auto blocked = tripoint_om_omt(28, 40, 0);
+    const auto allowed = tripoint_om_omt(30, 40, 0);
+    om.ter_set(blocked, oter_id("field"));
+    om.ter_set(allowed, oter_id("field"));
+
+    CHECK_FALSE(ACTIVE_OVERMAP_BUFFER.place_special(
+        special.id, project_combine(point_abs_om::zero(), blocked), 0, 0));
+    CHECK(ACTIVE_OVERMAP_BUFFER
+              .place_special(special.id, project_combine(point_abs_om::zero(), allowed), 0, 0));
+    CHECK(om.check_overmap_special_type(special.id, allowed));
+    CHECK_FALSE(om.check_overmap_special_type(special.id, blocked));
+}
+
 #if defined(TILES)
 
 // Regression tests for issue #9688: the main view and the (possibly shared) overmap
