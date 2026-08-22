@@ -13,6 +13,7 @@
 #include <locale>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <filesystem>
@@ -42,6 +43,7 @@
 #include "output.h"
 #include "path_info.h"
 #include "rng.h"
+#include "save/save_tools.h"
 #include "type_id.h"
 #include "ui_manager.h"
 #include "path_display.h"
@@ -235,6 +237,8 @@ int main( int argc, char *argv[] )
     dump_mode dmode = dump_mode::TSV;
     std::vector<std::string> opts;
     std::string world; /** if set try to load first save in this world on startup */
+    std::optional<save_tools::blob_compression_mode> save_blob_mode;
+    std::string save_blob_world;
 
 #if defined(__ANDROID__)
     // Start the standard output logging redirector
@@ -270,7 +274,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 17> first_pass_arguments = {{
+        const std::array<arg_handler, 20> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -360,6 +364,51 @@ int main( int argc, char *argv[] )
                             return -1;
                         }
                         world = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--save-compression-info", "<world>",
+                    "Print SQLite save blob compression statistics for a world and exit",
+                    section_default,
+                    [&save_blob_mode, &save_blob_world]( int n, const char *params[] ) -> int {
+                        if( n < 1 )
+                        {
+                            return -1;
+                        }
+                        test_mode = true;
+                        save_blob_mode = save_tools::blob_compression_mode::info;
+                        save_blob_world = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--save-compress", "<world>",
+                    "Compress uncompressed SQLite save blobs for a world and exit",
+                    section_default,
+                    [&save_blob_mode, &save_blob_world]( int n, const char *params[] ) -> int {
+                        if( n < 1 )
+                        {
+                            return -1;
+                        }
+                        test_mode = true;
+                        save_blob_mode = save_tools::blob_compression_mode::compress;
+                        save_blob_world = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--save-decompress", "<world>",
+                    "Decompress zlib SQLite save blobs for a world and exit",
+                    section_default,
+                    [&save_blob_mode, &save_blob_world]( int n, const char *params[] ) -> int {
+                        if( n < 1 )
+                        {
+                            return -1;
+                        }
+                        test_mode = true;
+                        save_blob_mode = save_tools::blob_compression_mode::decompress;
+                        save_blob_world = params[0];
                         return 1;
                     }
                 },
@@ -755,6 +804,25 @@ int main( int argc, char *argv[] )
     check_dir_good( PATH_INFO::savedir() );
 
     setupDebug( DebugOutput::file );
+
+    if( save_blob_mode ) {
+        try {
+            const auto world_path = std::filesystem::path( PATH_INFO::savedir() ) / save_blob_world;
+            const auto stats = save_tools::rewrite_world_blobs( world_path, *save_blob_mode );
+            cata_printf( "Databases: %zu\n", stats.databases );
+            cata_printf( "Rows: %zu\n", stats.rows );
+            cata_printf( "Compressed rows: %zu\n", stats.compressed_rows );
+            cata_printf( "Uncompressed rows: %zu\n", stats.uncompressed_rows );
+            cata_printf( "Unknown compression rows: %zu\n", stats.unknown_compression_rows );
+            cata_printf( "Changed rows: %zu\n", stats.changed_rows );
+            cata_printf( "Stored bytes: %llu\n", static_cast<unsigned long long>( stats.stored_bytes ) );
+            cata_printf( "Raw bytes: %llu\n", static_cast<unsigned long long>( stats.raw_bytes ) );
+            return stats.unknown_compression_rows == 0 ? 0 : 1;
+        } catch( const std::exception &err ) {
+            cata_printf( "Save blob operation failed: %s\n", err.what() );
+            return 1;
+        }
+    }
 
     if( !init_language_system() ) {
         exit_handler( -999 );
