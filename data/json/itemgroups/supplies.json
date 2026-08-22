@@ -538,7 +538,7 @@
   {
     "id": "anvils_any",
     "type": "item_group",
-    "//": "Level 3 anvil quality, used for the MISSION_LUMBERMILL_GET_6_BLANKETS quest",
+    "//": "Level 3 anvil quality, used for the MISSION_ISHERWOOD_CARLOS_1 quest",
     "items": [ [ "anvil", 100 ], [ "anvil_bronze", 100 ] ]
   },
   {
