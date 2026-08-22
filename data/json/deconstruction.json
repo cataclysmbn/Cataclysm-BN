@@ -1284,5 +1284,19 @@
     "post_flags": [ "keep_items" ],
     "post_special": "done_deconstruct",
     "group": "advanced_object_deconstruction"
+  },
+  {
+    "type": "construction",
+    "id": "constr_remove_supercomputer",
+    "//": "Removes a supercomputer",
+    "category": "OTHER",
+    "required_skills": [ [ "fabrication", 2 ], [ "electronics", 6 ] ],
+    "time": "120 m",
+    "using": [ [ "advanced_electronics_high_voltage", 1 ] ],
+    "pre_furniture": "f_supercomputer",
+    "pre_special": "check_deconstruct",
+    "post_flags": [ "keep_items" ],
+    "post_special": "done_deconstruct",
+    "group": "advanced_object_deconstruction"
   }
 ]

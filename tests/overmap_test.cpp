@@ -3,6 +3,7 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
+#include "map_helpers.h"
 #include "numeric_interval.h"
 #include "omdata.h"
 #include "overmap.h"
@@ -60,6 +61,7 @@ void do_lab_finale_test() {
     const oter_id labt_endgame("central_lab_endgame");
     const point_abs_om origin;
     auto batch = overmap_specials::get_default_batch(origin);
+    ACTIVE_OVERMAP_BUFFER.clear();
     ACTIVE_OVERMAP_BUFFER.create_custom_overmap(origin, batch);
     overmap* test_overmap = ACTIVE_OVERMAP_BUFFER.get_existing(origin);
     int endgame_count = 0;

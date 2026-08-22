@@ -1,0 +1,1645 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "//": "These chunks determine the overall layout of each individual cell of the core lab, dividing the space up in different ways and spawning rooms inside of different sizes.  This variant spawns the interesting stuff directly since it's just one big room, while other variants below are more deeply nested.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "ehhhhh        hhhhhe",
+        "h                  h",
+        "h                  h",
+        "h  ccccccggcccccc  h",
+        "h  ch h      h hc  h",
+        "h  c            c  h",
+        "   ch          hc   ",
+        "   c     FF     c   ",
+        "   c  d  SS  d  c   ",
+        "   g  6  SS hd  g   ",
+        "   g  dh SS  6  g   ",
+        "   c  d  SS  d  c   ",
+        "   c     FF     c   ",
+        "   ch          hc   ",
+        "h  c            c  h",
+        "h  ch h      h hc  h",
+        "h  ccccccggcccccc  h",
+        "h                  h",
+        "h                  h",
+        "ehhhhh        hhhhhe"
+      ],
+      "terrain": { "6": "t_console_broken" },
+      "furniture": {
+        "c": "f_counter",
+        "d": "f_desk",
+        "e": "f_table",
+        "F": "f_filing_cabinet",
+        "g": "f_counter_gate_c",
+        "h": "f_chair",
+        "S": "f_server"
+      },
+      "items": {
+        "e": { "item": "magazines", "chance": 50, "repeat": 4 },
+        "d": { "item": "office", "chance": 50, "repeat": 4 },
+        "F": { "item": "file_room", "chance": 75, "repeat": 6 }
+      },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "  ehhhhe    ehhhhe  ",
+        "                    ",
+        "e                  e",
+        "h  ||||||++||||||  h",
+        "h  |Vvt     bb L|  h",
+        "h  |           L|  h",
+        "h  |ccs     bb L|  h",
+        "e  ||||||  ||||||  e",
+        "   Wdh  |  |  hdW   ",
+        "   Wd   +  +   dW   ",
+        "   Wd   +  +   dW   ",
+        "   Wdh  |  |  hdW   ",
+        "e  ||||||  ||||||  e",
+        "h  |L bb     scc|  h",
+        "h  |L           |  h",
+        "h  |L bb     tvV|  h",
+        "h  ||||||++||||||  h",
+        "e                  e",
+        "                    ",
+        "  ehhhhe    ehhhhe  "
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_interior_locked", "W": "t_ballistic_glass" },
+      "furniture": {
+        "b": "f_bench",
+        "c": "f_counter",
+        "d": "f_desk",
+        "e": "f_table",
+        "h": "f_chair",
+        "L": "f_locker",
+        "s": "f_sink",
+        "t": "f_trashcan",
+        "V": "f_vending_c",
+        "v": "f_vending_c"
+      },
+      "items": {
+        "e": { "item": "magazines", "chance": 50, "repeat": 4 },
+        "L": { "item": "gear_labsecurity", "chance": 50, "repeat": 2 },
+        "t": { "item": "trash_cart", "chance": 50, "repeat": 6 },
+        "V": { "item": "vending_food", "chance": 80 },
+        "v": { "item": "vending_drink", "chance": 80 }
+      },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  ||||||||||||||||  ",
+        "  |--------------|  ",
+        "  |-||||||||||||-|  ",
+        "  |-|##########|-|  ",
+        "  |-| TTTTTTTT |-|  ",
+        "  |-|          |-|  ",
+        "  |-|          |-|  ",
+        "  |-|          |-|  ",
+        "  |-|          |-|  ",
+        "  |-|          |-|  ",
+        "  |-|          |-|  ",
+        "  |-|u        u|-|  ",
+        "  ||||7cccccc|||||  ",
+        "  |r =        +  +  ",
+        "  |r =        +  +  ",
+        "  |||||WWWWWW|||||  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "-": "t_wall_metal",
+        "+": "t_door_metal_interior_locked",
+        "=": "t_door_metal_locked",
+        "7": "t_card_science",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "W": "t_ballistic_glass"
+      },
+      "furniture": { "#": "f_sandbag_half", "c": "f_counter", "r": "f_rack", "T": "f_target" },
+      "items": { "c": { "item": "ear_protection", "chance": 25 }, "r": { "item": "energy_weapon_armory", "chance": 50, "repeat": 2 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 6, 13 ], "y": [ 7, 12 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "        u  u        ",
+        "                    ",
+        "  IEEEEEEEEEEEEEEI  ",
+        "   EEEEEEEEEEEEEE   ",
+        "   EEEEEEEEEEEEEE   ",
+        "   EEEEEEEEEEEEEE   ",
+        "   EEEEEEEEEEEEEE   ",
+        "   EEEEEEEEEEEEEE   ",
+        "u  EEEEEEEEEEEEEE  u",
+        "   EEEEEEEEEEEEEE   ",
+        "   EEEEEEEEEEEEEE   ",
+        "u rEEEEEEEEEEEEEEc u",
+        "  rEEEEEEEEEEEEEE6  ",
+        "  rEEEEEEEEEEEEEEj  ",
+        "  rEEEEEEEEEEEEEE   ",
+        "  rEEEEEEEEEEEEEE$  ",
+        "  rEEEEEEEEEEEEEE   ",
+        "  IEEEEEEEEEEEEEEI  ",
+        "                    ",
+        "        u  u        "
+      ],
+      "terrain": {
+        "6": "t_console_broken",
+        "$": "t_elevator_control_off",
+        "E": "t_elevator",
+        "I": "t_column",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
+      },
+      "furniture": { "c": "f_charger", "j": "f_cable_connector", "r": "f_utility_shelf" },
+      "items": { "c": { "item": "gas_charging_rack", "chance": 25 }, "r": { "item": "mechanics", "chance": 50, "repeat": 3 } },
+      "place_vehicles": [ { "vehicle": "experimental_military_vehicles", "x": 6, "y": 7, "chance": 75, "rotation": 270 } ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "//": "Todo: Potential room variants include: large storage area with classic sealed storage rooms containing spicier than normal goodies, ruined leftovers of an unidentified room with uncontained nether outbreak and portal",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "CC                CC",
+        "CC                CC",
+        "                    ",
+        "      |||++|||      ",
+        "     r|S    S|r     ",
+        "u    r|Y    Y|r    u",
+        "||++||||7==|||||++||",
+        "b     |~~gg~~|     b",
+        "b    L|~gggg~|L    b",
+        "     L|~gRRg~|L     ",
+        "     L|~gRRg~|L     ",
+        "b    L|~gggg~|L    b",
+        "b     |~~~~~~|     b",
+        "||++||||WWWW||||++||",
+        "u      888888      u",
+        "dh      h  h      hd",
+        "d      888888      d",
+        "d       h  h       d",
+        "dh                hd",
+        "                    "
+      ],
+      "set": [ { "square": "radiation", "amount": 50, "x": 7, "y": 7, "x2": 12, "y2": 12 } ],
+      "terrain": {
+        "~": "t_water_dp",
+        "|": "t_strconc_wall",
+        "+": "t_door_metal_interior_locked",
+        "=": "t_door_metal_locked",
+        "7": "t_card_science",
+        "g": "t_bridge",
+        "R": "t_nuclear_reactor",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "W": "t_ballistic_glass"
+      },
+      "furniture": {
+        "8": "f_control_station",
+        "b": "f_bench",
+        "d": "f_desk",
+        "h": "f_chair",
+        "L": "f_locker",
+        "r": "f_rack",
+        "S": "f_shower",
+        "Y": "f_eyewash"
+      },
+      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } },
+      "place_nested": [ { "chunks": [ [ "null", 50 ], [ "central_lab_reactor_meltdown_20x20", 50 ] ], "x": 0, "y": 0 } ],
+      "items": {
+        "d": { "item": "office", "chance": 50, "repeat": 4 },
+        "L": { "item": "reactor_gear", "chance": 25, "repeat": 3 },
+        "r": { "item": "gear_medical", "chance": 50, "repeat": 3 }
+      },
+      "place_loot": [
+        { "item": "eyedrops", "x": 7, "y": 5, "chance": 75, "repeat": 2 },
+        { "item": "eyedrops", "x": 12, "y": 5, "chance": 75, "repeat": 2 }
+      ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_reactor_meltdown_20x20",
+    "//": "Boom. :3",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "set": [
+        { "point": "bash", "x": [ 9, 10 ], "y": [ 9, 10 ], "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": 8, "y": 13 },
+        { "point": "bash", "x": 9, "y": 13 },
+        { "point": "bash", "x": 10, "y": 13 },
+        { "point": "bash", "x": 11, "y": 13 },
+        { "square": "radiation", "amount": 100, "x": 0, "y": 0, "x2": 19, "y2": 19 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_b_20x20",
+    "//": "The 4-way variant, which places 7x7 rooms within and additionally has a chance to block the intersection off with a small room or just solid wall, either way forcing the player to detour through the corner rooms to get past.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "       |    |       ",
+        "       |    |       ",
+        "       |    |       ",
+        "       +    +       ",
+        "       |    |       ",
+        "       |    |       ",
+        "       |    |       ",
+        "|||+||||    ||||+|||",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "|||+||||    ||||+|||",
+        "       |    |       ",
+        "       |    |       ",
+        "       |    |       ",
+        "       +    +       ",
+        "       |    |       ",
+        "       |    |       ",
+        "       |    |       "
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c" },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 0, "y": 0 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 13, "y": 0 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 0, "y": 13 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 13, "y": 13 },
+        {
+          "chunks": [
+            [ "null", 50 ],
+            [ "central_lab_center_blockage_6x6", 10 ],
+            [ "central_lab_mini_room_n_6x6", 10 ],
+            [ "central_lab_mini_room_s_6x6", 10 ],
+            [ "central_lab_mini_room_e_6x6", 10 ],
+            [ "central_lab_mini_room_w_6x6", 10 ]
+          ],
+          "x": 7,
+          "y": 7
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_c_20x20",
+    "//": "Basically variant A but with a smaller space nested inside it, breaking up the space a bit more than the purely open space would.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  |||||||++|||||||  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  +              +  ",
+        "  +              +  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |              |  ",
+        "  |||||||++|||||||  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c" },
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_14x14" ], "x": 3, "y": 3 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_d_20x20",
+    "//": "Effectively the inverse of the 4-way room, innately divided up by a cross of solid walls that might occasionally have small 4x4 rooms inserted into the ends, forcing the player to go through the 7x7 rooms.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "       +    +       ",
+        "       +    +       ",
+        "       ||||||       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "++||||||----||||||++",
+        "  |--------------|  ",
+        "  |--------------|  ",
+        "  |--------------|  ",
+        "  |--------------|  ",
+        "++||||||----||||||++",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       ||||||       ",
+        "       +    +       ",
+        "       +    +       "
+      ],
+      "terrain": { "|": "t_strconc_wall", "-": "t_wall_metal", "+": "t_door_metal_lab_c" },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 0, "y": 0 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 13, "y": 0 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 0, "y": 13 },
+        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 13, "y": 13 },
+        { "chunks": [ [ "null", 50 ], [ "central_lab_mini_room_n_6x6", 50 ] ], "x": 7, "y": 2 },
+        { "chunks": [ [ "null", 50 ], [ "central_lab_mini_room_s_6x6", 50 ] ], "x": 7, "y": 12 },
+        { "chunks": [ [ "null", 50 ], [ "central_lab_mini_room_e_6x6", 50 ] ], "x": 12, "y": 7 },
+        { "chunks": [ [ "null", 50 ], [ "central_lab_mini_room_w_6x6", 50 ] ], "x": 2, "y": 7 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_e_20x20",
+    "//": "Divides the room up into north and south halves, the dividing wall itself can contain up to 3 of the small 4x4 rooms inside it.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "++||||||||||||||||++",
+        "  |--------------|  ",
+        "  |--------------|  ",
+        "  |--------------|  ",
+        "  |--------------|  ",
+        "++||||||||||||||||++",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "|": "t_strconc_wall", "-": "t_wall_metal", "+": "t_door_metal_lab_c" },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_20x7" ], "x": 0, "y": 0 },
+        { "chunks": [ "central_lab_mini_room_20x7" ], "x": 0, "y": 13 },
+        {
+          "chunks": [
+            [ "null", 50 ],
+            [ "central_lab_mini_room_n_6x6", 15 ],
+            [ "central_lab_mini_room_s_6x6", 15 ],
+            [ "central_lab_mini_room_w_6x6", 20 ]
+          ],
+          "x": 2,
+          "y": 7
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_mini_room_n_6x6", 25 ], [ "central_lab_mini_room_s_6x6", 25 ] ],
+          "x": 7,
+          "y": 7
+        },
+        {
+          "chunks": [
+            [ "null", 50 ],
+            [ "central_lab_mini_room_n_6x6", 15 ],
+            [ "central_lab_mini_room_s_6x6", 15 ],
+            [ "central_lab_mini_room_e_6x6", 20 ]
+          ],
+          "x": 12,
+          "y": 7
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_f_20x20",
+    "//": "Vertical counterpart to variant E.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "       +    +       ",
+        "       +    +       ",
+        "       ||||||       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       |----|       ",
+        "       ||||||       ",
+        "       +    +       ",
+        "       +    +       "
+      ],
+      "terrain": { "|": "t_strconc_wall", "-": "t_wall_metal", "+": "t_door_metal_lab_c" },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_7x20" ], "x": 0, "y": 0 },
+        { "chunks": [ "central_lab_mini_room_7x20" ], "x": 13, "y": 0 },
+        {
+          "chunks": [
+            [ "null", 50 ],
+            [ "central_lab_mini_room_n_6x6", 20 ],
+            [ "central_lab_mini_room_e_6x6", 15 ],
+            [ "central_lab_mini_room_w_6x6", 15 ]
+          ],
+          "x": 7,
+          "y": 2
+        },
+        {
+          "chunks": [ [ "null", 50 ], [ "central_lab_mini_room_e_6x6", 25 ], [ "central_lab_mini_room_w_6x6", 25 ] ],
+          "x": 7,
+          "y": 7
+        },
+        {
+          "chunks": [
+            [ "null", 50 ],
+            [ "central_lab_mini_room_s_6x6", 20 ],
+            [ "central_lab_mini_room_e_6x6", 15 ],
+            [ "central_lab_mini_room_w_6x6", 15 ]
+          ],
+          "x": 7,
+          "y": 12
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_locked_n_4x4",
+    "//": "These provide a chance for connections between parts of the core lab to be either locked or blocked by debris, with variations based on intended facing.  Idea is random placement may force the player to either take a different route to progress or have to use available tools to break through.",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "    ",
+        "|==7",
+        "    ",
+        "    "
+      ],
+      "terrain": { "|": "t_strconc_wall", "=": "t_door_metal_locked", "7": "t_card_science" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_locked_s_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "    ",
+        "    ",
+        "|==7",
+        "    "
+      ],
+      "terrain": { "|": "t_strconc_wall", "=": "t_door_metal_locked", "7": "t_card_science" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_locked_e_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "  7 ",
+        "  = ",
+        "  = ",
+        "  | "
+      ],
+      "terrain": { "|": "t_strconc_wall", "=": "t_door_metal_locked", "7": "t_card_science" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_locked_w_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        " |  ",
+        " =  ",
+        " =  ",
+        " 7  "
+      ],
+      "terrain": { "|": "t_strconc_wall", "=": "t_door_metal_locked", "7": "t_card_science" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_center_blockage_6x6",
+    "//": "Sometimes the four-way hallway will be blocked off either by a small room as used elsewhere (defined below) or simply blocked off with this chunk.",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rows": [
+        "||||||",
+        "|----|",
+        "|----|",
+        "|----|",
+        "|----|",
+        "||||||"
+      ],
+      "terrain": { "|": "t_strconc_wall", "-": "t_wall_metal" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_n_6x6",
+    "//": "Smallest room that can be randomly placed in various parts of the core lab, with variations based on where the door needs to be.  These in turn place small 4x4 interiors in them.",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rows": [
+        "||++||",
+        "|....|",
+        "|....|",
+        "|....|",
+        "|....|",
+        "||||||"
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c", ".": "t_metal_floor" },
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 1, "y": 1 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_s_6x6",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rows": [
+        "||||||",
+        "|....|",
+        "|....|",
+        "|....|",
+        "|....|",
+        "||++||"
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c", ".": "t_metal_floor" },
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 1, "y": 1 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_e_6x6",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rows": [
+        "||||||",
+        "|....|",
+        "|....+",
+        "|....+",
+        "|....|",
+        "||||||"
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c", ".": "t_metal_floor" },
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 1, "y": 1 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_w_6x6",
+    "object": {
+      "mapgensize": [ 6, 6 ],
+      "rows": [
+        "||||||",
+        "|....|",
+        "+....|",
+        "+....|",
+        "|....|",
+        "||||||"
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c", ".": "t_metal_floor" },
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 1, "y": 1 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_4x4",
+    "//": "4x4 spaces used by the 6x6 rooms, usually minor stuff like storage, restrooms, etc.  Comes in variations based on whether the layout needs to keep the north/south spaces clear for a doorway, the east/west spaces, or if it doesn't really matter where the door might be.",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "CCCC",
+        "CCCC",
+        "CCCC",
+        "CCCC"
+      ],
+      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "u  u",
+        " VV ",
+        " VV ",
+        "u  u"
+      ],
+      "terrain": { "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "V": "f_cloning_vat" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "????",
+        "????",
+        "????",
+        "????"
+      ],
+      "terrain": {
+        "?": [
+          [ "t_metal_floor", 5 ],
+          "t_console_broken",
+          "t_machinery_light",
+          "t_machinery_heavy",
+          "t_machinery_old",
+          "t_machinery_electronic"
+        ]
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_ns_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "u  L",
+        "S bL",
+        "Y bL",
+        "u  L"
+      ],
+      "terrain": { "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "b": "f_bench", "L": "f_locker", "S": "f_shower", "Y": "f_eyewash" },
+      "items": { "L": [ { "item": "cleaning", "chance": 50, "repeat": 4 }, { "item": "rad_gear", "chance": 50, "repeat": 2 } ] },
+      "place_loot": [ { "item": "eyedrops", "x": 0, "y": 2, "chance": 75, "repeat": 2 } ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 2, 3 ], "y": [ 2, 3 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_ns_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "u  u",
+        "   s",
+        "T  t",
+        "u  u"
+      ],
+      "terrain": { "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "s": "f_sink", "t": "f_trashcan" },
+      "toilets": { "T": {  } },
+      "items": { "s": { "item": "cleaning", "chance": 50, "repeat": 2 }, "t": { "item": "trash_cart", "chance": 25, "repeat": 3 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 2, 3 ], "y": [ 2, 3 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_ew_4x4",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "uYSu",
+        "    ",
+        " b  ",
+        "LLLL"
+      ],
+      "terrain": { "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "b": "f_bench", "L": "f_locker", "S": "f_shower", "Y": "f_eyewash" },
+      "items": { "L": [ { "item": "cleaning", "chance": 50, "repeat": 4 }, { "item": "rad_gear", "chance": 50, "repeat": 2 } ] },
+      "place_loot": [ { "item": "eyedrops", "x": 1, "y": 0, "chance": 75, "repeat": 2 } ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 2, 3 ], "y": [ 2, 3 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_ew_4x4",
+    "//": "Todo: add more variants to 4x4 rooms: small medical exam room with possible autodoc, small autoclave room with recycling utilities for implied corpse disposal",
+    "object": {
+      "mapgensize": [ 4, 4 ],
+      "rows": [
+        "uT u",
+        "    ",
+        "    ",
+        "utsu"
+      ],
+      "terrain": { "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "s": "f_sink", "t": "f_trashcan" },
+      "toilets": { "T": {  } },
+      "items": { "s": { "item": "cleaning", "chance": 50, "repeat": 2 }, "t": { "item": "trash_cart", "chance": 25, "repeat": 3 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 2, 3 ], "y": [ 2, 3 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x7",
+    "//": "These 7x7 rooms are mainly used by the 4-way room variant and its inverse.  Enough space to contain some more interesting stuff, but confined by the fact the doorways have much more variation since it'd be a pain to make separate horizontal, vertical, AND corner doorway variants.",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "       ",
+        " c   r ",
+        " c   r ",
+        " c   r ",
+        " c   r ",
+        " c   r ",
+        "       "
+      ],
+      "furniture": { "c": "f_counter", "r": "f_rack" },
+      "items": { "c": { "item": "dissection", "chance": 25, "repeat": 2 }, "t": { "item": "chem_lab", "chance": 25, "repeat": 2 } },
+      "place_traps": [ { "trap": "tr_dissector", "x": [ 2, 4 ], "y": [ 1, 5 ] } ],
+      "place_monster": [ { "monster": "mon_broken_cyborg", "x": [ 0, 6 ], "y": [ 0, 6 ], "chance": 50, "pack_size": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x7",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "  C C  ",
+        " !!!!! ",
+        "C!###!C",
+        " !#u#! ",
+        "C!###!C",
+        " !!!!! ",
+        "  C C  "
+      ],
+      "terrain": { "!": "t_floor_red", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "#": "f_sandbag_half" },
+      "nested": { "C": { "chunks": [ [ "null", 75 ], [ "central_lab_ammo_rack_1x1", 25 ] ] } },
+      "place_monster": [ { "monster": "mon_turret_medium", "x": 3, "y": 3 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_ammo_rack_1x1",
+    "//": "Place a single shelf with military ammo storage.",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "C" ],
+      "furniture": { "C": "f_utility_shelf" },
+      "items": {
+        "C": [
+          { "item": "ammo_milspec", "chance": 75 },
+          { "item": "ammo_milspec", "chance": 50 },
+          { "item": "military", "chance": 25 }
+        ]
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x7",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "       ",
+        " SSSSS ",
+        " FFFFF ",
+        "       ",
+        " h h h ",
+        " dd6dd ",
+        "       "
+      ],
+      "furniture": { "d": "f_desk", "F": "f_filing_cabinet", "h": "f_chair", "S": "f_server" },
+      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "F": { "item": "file_room", "chance": 75, "repeat": 6 } },
+      "computers": {
+        "6": {
+          "name": "Log Console",
+          "security": 3,
+          "options": [
+            { "name": "View Research Logs", "action": "research", "security": 0 },
+            { "name": "Download Map Data", "action": "maps", "security": 0 }
+          ],
+          "failures": [ { "action": "damage" }, { "action": "alarm" }, { "action": "shutdown" } ]
+        }
+      },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 5 ], "y": [ 1, 5 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x7",
+    "//": "Todo: add more variations of 7x7 rooms: generator room with potential electrical anomaly, small reinforced glass cell containing a random nether monster, mini-anomaly with dimensional fatigue/fire vent/lava",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rows": [
+        "u     u",
+        " |fff| ",
+        " ||||| ",
+        " |fff| ",
+        "       ",
+        " FFFFF ",
+        "u     u"
+      ],
+      "terrain": { "|": "t_strconc_wall", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "F": "f_glass_fridge", "f": "f_fume_hood" },
+      "items": {
+        "F": [ { "item": "supplies_reagents_lab", "chance": 50, "repeat": 2 }, { "item": "supplies_samples_lab", "chance": 75 } ],
+        "f": [ { "item": "chem_lab", "chance": 25, "repeat": 2 }, { "item": "tools_science", "chance": 25 } ]
+      },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 5 ], "y": [ 1, 5 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_14x14",
+    "object": {
+      "mapgensize": [ 14, 14 ],
+      "rows": [
+        "u C# #!!# #C u",
+        "   ###  ###   ",
+        "C            C",
+        "##          ##",
+        " #  ||==7|  # ",
+        "##  |t   |  ##",
+        "!   |s   |   !",
+        "!   |   B|   !",
+        "##  |T  B|  ##",
+        " #  ||||||  # ",
+        "##          ##",
+        "C            C",
+        "   ###  ###   ",
+        "u C# #!!# #C u"
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "=": "t_door_metal_locked",
+        "!": "t_floor_red",
+        "7": "t_card_science",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
+      },
+      "furniture": { "#": "f_sandbag_half", "B": "f_bed", "s": "f_sink", "t": "f_trashcan" },
+      "toilets": { "T": {  } },
+      "place_monster": [ { "monster": [ "mon_mutant_alpha", "mon_mutant_medical" ], "x": [ 6, 7 ], "y": [ 6, 7 ] } ],
+      "place_nested": [
+        {
+          "chunks": [ [ "central_lab_miniboss_contained_14x14", 50 ], [ "central_lab_miniboss_escaped_14x14", 50 ] ],
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "nested": { "C": { "chunks": [ "central_lab_ammo_rack_1x1" ] } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_miniboss_contained_14x14",
+    "object": {
+      "mapgensize": [ 14, 14 ],
+      "place_monster": [
+        { "monster": "mon_turret_medium", "x": 4, "y": 0 },
+        { "monster": "mon_turret_medium", "x": 9, "y": 0 },
+        { "monster": "mon_turret_medium", "x": 0, "y": 4 },
+        { "monster": "mon_turret_medium", "x": 0, "y": 9 },
+        { "monster": "mon_turret_medium", "x": 13, "y": 4 },
+        { "monster": "mon_turret_medium", "x": 13, "y": 9 },
+        { "monster": "mon_turret_medium", "x": 4, "y": 13 },
+        { "monster": "mon_turret_medium", "x": 9, "y": 13 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_miniboss_escaped_14x14",
+    "object": {
+      "mapgensize": [ 14, 14 ],
+      "set": [
+        { "point": "bash", "x": [ 6, 7 ], "y": 4 },
+        { "point": "bash", "x": [ 3, 5 ], "y": 1, "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": [ 8, 10 ], "y": 1, "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": 1, "y": [ 3, 5 ], "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": 1, "y": [ 8, 10 ], "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": 12, "y": [ 3, 5 ], "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": 12, "y": [ 8, 10 ], "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": [ 3, 5 ], "y": 12, "repeat": [ 1, 2 ] },
+        { "point": "bash", "x": [ 8, 10 ], "y": 12, "repeat": [ 1, 2 ] }
+      ],
+      "place_loot": [
+        { "item": "broken_turret_medium", "x": 4, "y": 0 },
+        { "item": "broken_turret_medium", "x": 9, "y": 0 },
+        { "item": "broken_turret_medium", "x": 0, "y": 4 },
+        { "item": "broken_turret_medium", "x": 0, "y": 9 },
+        { "item": "broken_turret_medium", "x": 13, "y": 4 },
+        { "item": "broken_turret_medium", "x": 13, "y": 9 },
+        { "item": "broken_turret_medium", "x": 4, "y": 13 },
+        { "item": "broken_turret_medium", "x": 9, "y": 13 },
+        { "item": "223_casing", "x": 4, "y": 0, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 9, "y": 0, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 0, "y": 4, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 0, "y": 9, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 13, "y": 4, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 13, "y": 9, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 4, "y": 13, "chance": 75, "repeat": 50 },
+        { "item": "223_casing", "x": 9, "y": 13, "chance": 75, "repeat": 50 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_14x14",
+    "object": {
+      "mapgensize": [ 14, 14 ],
+      "rows": [
+        "ff|ff|  |ff|ff",
+        "              ",
+        "              ",
+        "ff|ff|  |ff|ff",
+        "||||||  ||||||",
+        "ff|ff|  |ff|ff",
+        "              ",
+        "              ",
+        "ff|ff|  |ff|ff",
+        "||||||  ||||||",
+        "ff|ff|  |ff|ff",
+        "              ",
+        "              ",
+        "ff|ff|  |ff|ff"
+      ],
+      "terrain": { "|": "t_strconc_wall", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "f": "f_fume_hood" },
+      "items": { "f": [ { "item": "chem_lab", "chance": 25, "repeat": 2 }, { "item": "tools_science", "chance": 25 } ] },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 12 ], "y": [ 1, 12 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_14x14",
+    "//": "Todo: Potential room variants include: large industrial space with conveyor belts, small military barracks, less-spicy prisoner containment with glass walls and no turrets",
+    "object": {
+      "mapgensize": [ 14, 14 ],
+      "rows": [
+        "u FFF    FFF u",
+        "              ",
+        "F   c    c   F",
+        "F   c    c   F",
+        "F ccc    ccc F",
+        "              ",
+        "              ",
+        "              ",
+        "              ",
+        "F ccc    ccc F",
+        "F   c    c   F",
+        "F   c    c   F",
+        "              ",
+        "u FFF    FFF u"
+      ],
+      "terrain": { "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "c": "f_counter", "F": "f_glass_fridge" },
+      "items": {
+        "c": { "item": "dissection", "chance": 25, "repeat": 2 },
+        "F": [
+          { "item": "supplies_reagents_lab", "chance": 50, "repeat": 3 },
+          { "item": "supplies_samples_lab", "chance": 50, "repeat": 3 }
+        ]
+      },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 12 ], "y": [ 1, 12 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_20x7",
+    "//": "These are hallway spaces used by the horizontal divided rooms.",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "        !  !        ",
+        "C       !!!!       C",
+        "##                ##",
+        "u#                #u",
+        "##                ##",
+        "C       !!!!       C",
+        "        !  !        "
+      ],
+      "terrain": { "!": "t_floor_red", "/": "t_floor_red", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "#": "f_sandbag_half" },
+      "monster": { "u": { "monster": "mon_turret_medium" } },
+      "signs": { "/": { "signage": "Warning!\nLive Fire Zone\nAvoid In Case of Lockdown!" } },
+      "nested": { "C": { "chunks": [ [ "null", 25 ], [ "central_lab_ammo_rack_1x1", 75 ] ] } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "  dddd  dddd  dddd  ",
+        "  dh h  h  h  h hd  ",
+        "  d              d  ",
+        "  dh h  h  h  h hd  ",
+        "  dddd  dddd  dddd  ",
+        "                    "
+      ],
+      "furniture": { "d": "f_desk", "h": "f_chair" },
+      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 18 ], "y": [ 1, 5 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "      tp    pt      ",
+        "  hh   p    p   hh  ",
+        " heeh          heeh ",
+        " heeh          heeh ",
+        " heeh          heeh ",
+        "  hh   p    p   hh  ",
+        "       p    pt      "
+      ],
+      "furniture": { "e": "f_table", "h": "f_chair", "p": [ "f_indoor_plant", "f_indoor_plant_y" ], "t": "f_trashcan" },
+      "items": { "t": { "item": "trash_cart", "chance": 25, "repeat": 3 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 18 ], "y": [ 1, 5 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "  SSSSSSS  SSSSSSS  ",
+        "  SSSSSSS  SSSSSSS  ",
+        "                    ",
+        "  SSSSSSS  SSSSSSS  ",
+        "  SSSSSSS  SSSSSSS  ",
+        "                    "
+      ],
+      "furniture": { "S": "f_server" },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 18 ], "y": [ 1, 5 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x20",
+    "//": "Vertical counterpart to the other divided room interior.",
+    "object": {
+      "mapgensize": [ 7, 20 ],
+      "rows": [
+        " C#u#C ",
+        "  ###  ",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "!!   /!",
+        " !   ! ",
+        " !   ! ",
+        "!/   !!",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "  ###  ",
+        " C#u#C "
+      ],
+      "terrain": { "!": "t_floor_red", "/": "t_floor_red", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "furniture": { "#": "f_sandbag_half" },
+      "monster": { "u": { "monster": "mon_turret_medium" } },
+      "signs": { "/": { "signage": "Warning!\nLive Fire Zone\nAvoid In Case of Lockdown!" } },
+      "nested": { "C": { "chunks": [ [ "null", 25 ], [ "central_lab_ammo_rack_1x1", 75 ] ] } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x20",
+    "object": {
+      "mapgensize": [ 7, 20 ],
+      "rows": [
+        "       ",
+        "       ",
+        " ddddd ",
+        " dh hd ",
+        " d   d ",
+        " dh hd ",
+        "       ",
+        "       ",
+        " dh hd ",
+        " d   d ",
+        " d   d ",
+        " dh hd ",
+        "       ",
+        "       ",
+        " dh hd ",
+        " d   d ",
+        " dh hd ",
+        " ddddd ",
+        "       ",
+        "       "
+      ],
+      "furniture": { "d": "f_desk", "h": "f_chair" },
+      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 5 ], "y": [ 1, 18 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x20",
+    "object": {
+      "mapgensize": [ 7, 20 ],
+      "rows": [
+        "       ",
+        "  hhh  ",
+        " heeeh ",
+        " heeeh ",
+        "  hhh  ",
+        "       ",
+        "t     t",
+        "pp   pp",
+        "       ",
+        "       ",
+        "       ",
+        "       ",
+        "pp   pp",
+        "t     t",
+        "       ",
+        "  hhh  ",
+        " heeeh ",
+        " heeeh ",
+        "  hhh  ",
+        "       "
+      ],
+      "furniture": { "e": "f_table", "h": "f_chair", "p": [ "f_indoor_plant", "f_indoor_plant_y" ], "t": "f_trashcan" },
+      "items": { "t": { "item": "trash_cart", "chance": 25, "repeat": 3 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 5 ], "y": [ 1, 18 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_7x20",
+    "//": "Todo: Potential room variants include: rows of chemical storage shelves, central conference table, bionic storage room",
+    "object": {
+      "mapgensize": [ 7, 20 ],
+      "rows": [
+        "       ",
+        "       ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        "       ",
+        "       ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        " SS SS ",
+        "       ",
+        "       "
+      ],
+      "furniture": { "S": "f_server" },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 5 ], "y": [ 1, 18 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_stairway_20x20",
+    "//": "These chunks provide a random variation on rooms surrounding stairs.",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  dddddd    dddddd  ",
+        "  dh h h    h h hd  ",
+        "  d              d  ",
+        "  dh            hd  ",
+        "  d   FF    FF   d  ",
+        "  dh  FF    FF  hd  ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "  dh  FF    FF  hd  ",
+        "  d   FF    FF   d  ",
+        "  dh            hd  ",
+        "  d              d  ",
+        "  dh h h    h h hd  ",
+        "  dddddd    dddddd  ",
+        "                    ",
+        "                    "
+      ],
+      "furniture": { "d": "f_desk", "e": "f_table", "F": "f_filing_cabinet", "h": "f_chair" },
+      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "F": { "item": "file_room", "chance": 75, "repeat": 6 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_stairway_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  |||||||++|||||||  ",
+        "  |Vvt       bb L|  ",
+        "  |             L|  ",
+        "  |             L|  ",
+        "  |ccs       bb L|  ",
+        "  ||||||    ||||||  ",
+        "  Wdh  |    |  hdW  ",
+        "  Wd   +    +   dW  ",
+        "  Wd   +    +   dW  ",
+        "  Wdh  |    |  hdW  ",
+        "  ||||||    ||||||  ",
+        "  |L bb       scc|  ",
+        "  |L             |  ",
+        "  |L             |  ",
+        "  |L bb       tvV|  ",
+        "  |||||||++|||||||  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_interior_locked", "W": "t_ballistic_glass" },
+      "furniture": {
+        "b": "f_bench",
+        "c": "f_counter",
+        "d": "f_desk",
+        "e": "f_table",
+        "h": "f_chair",
+        "L": "f_locker",
+        "s": "f_sink",
+        "t": "f_trashcan",
+        "V": "f_vending_c",
+        "v": "f_vending_c"
+      },
+      "items": {
+        "e": { "item": "magazines", "chance": 50, "repeat": 4 },
+        "L": { "item": "gear_labsecurity", "chance": 50, "repeat": 2 },
+        "t": { "item": "trash_cart", "chance": 50, "repeat": 6 },
+        "V": { "item": "vending_food", "chance": 80 },
+        "v": { "item": "vending_drink", "chance": 80 }
+      },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 4, 15 ], "y": [ 4, 15 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_stairway_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  ||++||    ||++||  ",
+        "  |    |    |    |  ",
+        "  |    |    |    |  ",
+        "  |    |    |    |  ",
+        "  |    |    |    |  ",
+        "  |||||||++|||||||  ",
+        "       |    |       ",
+        "       +    +       ",
+        "       +    +       ",
+        "       |    |       ",
+        "  |||||||++|||||||  ",
+        "  |    |    |    |  ",
+        "  |    |    |    |  ",
+        "  |    |    |    |  ",
+        "  |    |    |    |  ",
+        "  ||++||    ||++||  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_lab_c" },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 3, "y": 3 },
+        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 13, "y": 3 },
+        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 3, "y": 13 },
+        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 13, "y": 13 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_stairway_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "      RRRGGRRR      ",
+        "     RRGGGGGGRR     ",
+        "    RRGGGGGGGGRR    ",
+        "   RR7777GG7777RR   ",
+        "  RRG7h hGGh h7GRR  ",
+        "  RGG7   GG   7GGR  ",
+        "  RGG7h IGGI h7GGR  ",
+        "  GGGGGGG  GGGGGGG  ",
+        "  GGGGGGG  GGGGGGG  ",
+        "  RGG7h IGGI h7GGR  ",
+        "  RGG7   GG   7GGR  ",
+        "  RRG7h hGGh h7GRR  ",
+        "   RR7777GG7777RR   ",
+        "    RRGGGGGGGGRR    ",
+        "     RRGGGGGGRR     ",
+        "      RRRGGRRR      ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "G": "t_grate", "I": "t_column", "R": "t_concrete_railing" },
+      "furniture": { "7": "f_control_station", "h": "f_chair" },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_stairway_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  ||WWWW|++|WWWW||  ",
+        "  |u 77      77 u|  ",
+        "  W              W  ",
+        "  W7            7W  ",
+        "  W7  SS    SS  7W  ",
+        "  W   SS    SS   W  ",
+        "  |              |  ",
+        "  +              +  ",
+        "  +              +  ",
+        "  |              |  ",
+        "  W   SS    SS   W  ",
+        "  W7  SS    SS  7W  ",
+        "  W7            7W  ",
+        "  W              W  ",
+        "  |u 77      77 u|  ",
+        "  ||WWWW|++|WWWW||  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": {
+        "|": "t_strconc_wall",
+        "+": "t_door_metal_lab_c",
+        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+        "W": "t_ballistic_glass"
+      },
+      "furniture": { "7": "f_control_station", "S": "f_server" },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 4, 15 ], "y": [ 4, 15 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "//": "Additional room variations for the Melchior layer, with more focus on computer stuff.",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "  SSSSSSS  SSSSSSS  ",
+        "  SSSSSSS  SSSSSSS  ",
+        "                    ",
+        "  SSSSSSS  SSSSSSS  ",
+        "  SSSSSSS  SSSSSSS  ",
+        "                    "
+      ],
+      "furniture": { "S": "f_server" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "//": "Additional room variations for the Melchior layer, with more focus on computer stuff.",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "6h                h6",
+        "6   SS SS  SS SS   6",
+        "6h  SS SS  SS SS  h6",
+        "6   SS SS  SS SS   6",
+        "6h                h6",
+        "                    "
+      ],
+      "furniture": { "h": "f_chair", "S": "f_server", "6": "f_control_station" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "  RR         11 11  ",
+        "  RR 6       11 11  ",
+        "                    ",
+        "  RR 6       11 11  ",
+        "  RR         11 11  ",
+        "                    "
+      ],
+      "terrain": { "1": "t_machinery_electronic", "6": "t_radio_controls", "R": "t_radio_tower" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "6h  h6        6h  h6",
+        "6    6        6    6",
+        "6h  h6        6h  h6",
+        "6    6        6    6",
+        "6h  h6        6h  h6",
+        "                    "
+      ],
+      "terrain": { "6": "t_console_broken" },
+      "furniture": { "h": "f_chair" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "  6666666  6666666  ",
+        "   h h h    h h h   ",
+        "                    ",
+        "   h h h    h h h   ",
+        "  6666666  6666666  ",
+        "                    "
+      ],
+      "terrain": { "6": "t_console_broken" },
+      "furniture": { "h": "f_chair" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "  11  112  211  11  ",
+        "  11  112  211  11  ",
+        "                    ",
+        "  11  112  211  11  ",
+        "  11  112  211  11  ",
+        "                    "
+      ],
+      "furniture": { "1": "f_capacitor", "2": "f_control_station" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  1111111111111111  ",
+        "  2              2  ",
+        "  1111111111111111  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "1": "t_conveyor", "2": "t_conveyor" },
+      "furniture": {
+        "2": [
+          "f_hydraulic_press",
+          "f_arc_furnace",
+          "f_drill_press",
+          "f_laser_cutter",
+          "f_robotic_assembler",
+          "f_3d_printer",
+          "f_3d_printer_advanced"
+        ]
+      },
+      "items": { "1": { "item": "supplies_metal", "chance": 25 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_melchior_mini_room_20x7",
+    "object": {
+      "mapgensize": [ 20, 7 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "  CC 1111111111111  ",
+        "  CC 1           1  ",
+        "  CC 1111111111111  ",
+        "                    ",
+        "                    "
+      ],
+      "terrain": { "1": "t_conveyor" },
+      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } }
+    }
+  }
+]

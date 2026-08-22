@@ -206,9 +206,10 @@
   {
     "type": "overmap_terrain",
     "id": "central_lab_entrance",
-    "name": "access shaft",
-    "sym": "0",
-    "color": "light_gray",
+    "name": "forest",
+    "sym": "F",
+    "color": "green",
+    "looks_like": "forest",
     "see_cost": 3,
     "flags": [ "NO_ROTATE", "RISK_HIGH" ]
   },
@@ -223,47 +224,21 @@
   },
   {
     "type": "overmap_terrain",
+    "id": [ "central_lab_shaft_bottom", "central_lab_subway_entrance" ],
+    "name": "central lab",
+    "sym": "L",
+    "color": "blue",
+    "looks_like": "central_lab",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
     "abstract": "generic_central_lab",
     "name": "central lab",
     "sym": "L",
     "color": "cyan",
     "see_cost": 5,
     "flags": [ "RISK_HIGH" ],
-    "spawns": { "group": "GROUP_CENTRAL_LAB", "population": [ 1, 10 ], "chance": 50 }
-  },
-  {
-    "type": "overmap_terrain",
-    "id": [
-      "central_lab_hq_1",
-      "central_lab_hq_2",
-      "central_lab_hq_3",
-      "central_lab_hq_4",
-      "central_lab_hq_5",
-      "central_lab_hq_6",
-      "central_lab_hq_7",
-      "central_lab_hq_8",
-      "central_lab_hq_9"
-    ],
-    "copy-from": "generic_central_lab"
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "central_lab",
-    "name": "central lab",
-    "sym": "L",
-    "color": "light_blue",
-    "see_cost": 5,
-    "flags": [ "NO_ROTATE" ],
-    "spawns": { "group": "GROUP_CENTRAL_LAB", "population": [ 1, 10 ], "chance": 50 }
-  },
-  {
-    "type": "overmap_terrain",
-    "id": "central_lab_stairs",
-    "name": "central lab",
-    "sym": "L",
-    "color": "blue",
-    "see_cost": 5,
-    "flags": [ "NO_ROTATE" ],
     "spawns": { "group": "GROUP_CENTRAL_LAB", "population": [ 1, 10 ], "chance": 50 }
   },
   {
@@ -278,18 +253,220 @@
   },
   {
     "type": "overmap_terrain",
-    "id": "central_lab_finale",
-    "name": "central lab",
+    "id": [ "central_lab_perimeter_corner", "central_lab_perimeter_corner_2" ],
+    "name": "perimeter wall",
+    "color": "dark_gray",
+    "sym": "┐",
+    "looks_like": "mil_base_minefield_end",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_perimeter_edge", "central_lab_perimeter_edge_2" ],
+    "copy-from": "central_lab_perimeter_corner",
+    "sym": "─",
+    "looks_like": "mil_base_minefield_end"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "central_lab_surface_utilities",
+    "name": "utilities",
+    "color": "dark_gray",
+    "sym": "u",
+    "looks_like": "pwr_sub_s",
+    "see_cost": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "central_lab_surface_security_bunker",
+      "central_lab_surface_security_center",
+      "central_lab_surface_security_corner",
+      "central_lab_surface_security_edge",
+      "central_lab_surface_security_center_roof",
+      "central_lab_surface_security_corner_roof",
+      "central_lab_surface_security_edge_roof",
+      "central_lab_surface_security_edge_roof_2"
+    ],
+    "name": "security building",
+    "color": "i_dark_gray",
+    "sym": "s",
+    "looks_like": "bunker",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "central_lab_surface_security_helipad",
+    "copy-from": "central_lab_surface_security_edge_roof",
+    "name": "helipad",
+    "sym": "H",
+    "looks_like": "helipad2f_ne"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_loading_bay", "central_lab_surface_loading_bay_2", "central_lab_surface_loading_bay_roof" ],
+    "name": "loading bay",
+    "color": "light_blue",
+    "sym": "+",
+    "see_cost": 5,
+    "looks_like": "s_lightindustry_00"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_medical_center", "central_lab_surface_medical_center_roof" ],
+    "name": "medical center",
+    "color": "light_red",
+    "sym": "<",
+    "see_cost": 5,
+    "looks_like": "office_doctor"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_entrance", "central_lab_surface_entrance_2", "central_lab_surface_entrance_roof" ],
+    "name": "entrance gate",
+    "color": "light_blue",
+    "sym": "+",
+    "see_cost": 5,
+    "looks_like": "mil_base_road_entrance"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_warehouse", "central_lab_surface_warehouse_roof" ],
+    "name": "warehouse",
+    "color": "light_blue",
+    "sym": "w",
+    "see_cost": 5,
+    "looks_like": "warehouse"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_parking", "central_lab_surface_parking_center" ],
+    "name": "parking lot",
+    "color": "dark_gray",
+    "sym": "O",
+    "see_cost": 1,
+    "looks_like": "s_lot"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "central_lab_surface_plaza",
+    "name": "plaza",
+    "color": "green",
+    "sym": "O",
+    "see_cost": 2,
+    "looks_like": "park"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_cafeteria", "central_lab_surface_cafeteria_roof" ],
+    "name": "cafeteria",
+    "color": "i_light_blue",
+    "sym": "c",
+    "see_cost": 5,
+    "looks_like": "mall_a_29"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_dorms", "central_lab_surface_dorms_2", "central_lab_surface_dorms_roof" ],
+    "name": "dormitories",
+    "color": "i_blue",
+    "sym": "+",
+    "see_cost": 5,
+    "looks_like": "generic_city_building"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "central_lab_surface_office", "central_lab_surface_office_2", "central_lab_surface_office_roof" ],
+    "name": "office building",
+    "color": "i_light_gray",
+    "sym": "o",
+    "see_cost": 5,
+    "looks_like": "small_office"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "central_lab_core_center",
+      "central_lab_core_edge",
+      "central_lab_core_corner",
+      "central_lab_finale_access_edge",
+      "central_lab_finale_access_corner"
+    ],
+    "name": "central lab - core",
     "sym": "L",
     "color": "cyan",
+    "looks_like": "central_lab",
     "see_cost": 5,
-    "flags": [ "NO_ROTATE" ],
-    "spawns": { "group": "GROUP_CENTRAL_LAB", "population": [ 1, 10 ], "chance": 50 }
+    "flags": [ "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_core_center",
+    "id": [
+      "central_lab_down",
+      "central_lab_down_corner",
+      "central_lab_up",
+      "central_lab_down_center",
+      "central_lab_up_corner",
+      "central_lab_finale_access_up",
+      "central_lab_finale_access_down",
+      "central_lab_finale_observation_up",
+      "central_lab_melchior_up",
+      "central_lab_melchior_down"
+    ],
+    "name": "central lab - stairs",
+    "color": "blue"
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_core_center",
+    "id": [ "central_lab_melchior_entry", "central_lab_melchior_edge", "central_lab_melchior_corner" ],
+    "name": "central lab - central processing",
+    "color": "light_gray"
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_core_center",
+    "id": [
+      "central_lab_melchior_control_room",
+      "central_lab_melchior_core_center",
+      "central_lab_melchior_core_edge",
+      "central_lab_melchior_core_corner"
+    ],
+    "name": "central lab - Melchior",
+    "color": "dark_gray"
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_core_center",
+    "id": [ "central_lab_finale_access_bay" ],
+    "name": "central lab - access bay"
+  },
+  {
+    "type": "overmap_terrain",
+    "copy-from": "central_lab_core_center",
+    "id": [ "central_lab_finale_observation" ],
+    "name": "central lab - observation"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "central_lab_finale_edge",
+      "central_lab_finale_corner",
+      "central_lab_finale_2_center",
+      "central_lab_finale_2_edge",
+      "central_lab_finale_2_corner"
+    ],
+    "name": "central lab - superportal chamber",
+    "sym": "L",
+    "color": "red",
+    "looks_like": "central_lab_endgame",
+    "see_cost": 5
   },
   {
     "type": "overmap_terrain",
     "id": "central_lab_endgame",
-    "name": "central lab",
+    "name": "central lab - superportal",
     "sym": "L",
     "color": "red",
     "see_cost": 5,
