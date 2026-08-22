@@ -1,12 +1,5 @@
 #pragma once
 
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 #include "enums.h"
 #include "mapdata.h"
 #include "memory_fast.h"
@@ -15,12 +8,20 @@
 #include "weather_gen.h"
 #include "weighted_list.h"
 
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 class JsonObject;
 
 class building_bin
 {
     private:
         weighted_int_list<overmap_special_id> buildings;
+
     public:
         std::map<overmap_special_id, int> unfinalized_buildings;
         bool finalized = false;
@@ -34,7 +35,7 @@ class building_bin
 
 struct city_settings {
     // -1 means use CITY_SIZE / CITY_SPACING world options
-    int city_size    = -1;
+    int city_size = -1;
     int city_spacing = -1;
 
     // About the average US city non-residential, non-park land usage
@@ -135,16 +136,16 @@ struct ter_furn_id {
  */
 struct groundcover_extra {
     // TODO: make into something more generic for other stuff (maybe)
-    std::string                   default_ter_str;
+    std::string default_ter_str;
     std::map<std::string, double> percent_str;
     std::map<std::string, double> boosted_percent_str;
-    std::map<int, ter_furn_id>    weightlist;
-    std::map<int, ter_furn_id>    boosted_weightlist;
-    ter_id default_ter               = t_null;
-    int mpercent_coverage         = 0; // % coverage where this is applied (*10000)
-    int boost_chance              = 0;
+    std::map<int, ter_furn_id> weightlist;
+    std::map<int, ter_furn_id> boosted_weightlist;
+    ter_id default_ter = t_null;
+    int mpercent_coverage = 0; // % coverage where this is applied (*10000)
+    int boost_chance = 0;
     int boosted_mpercent_coverage = 0;
-    int boosted_other_mpercent    = 1;
+    int boosted_other_mpercent = 1;
 
     ter_furn_id pick( bool boosted = false ) const;
     void finalize();
@@ -268,8 +269,8 @@ struct map_extras {
     unsigned int chance;
     weighted_int_list<std::string> values;
 
-    map_extras() : chance( 0 ) {}
-    map_extras( const unsigned int embellished ) : chance( embellished ) {}
+    map_extras(): chance( 0 ) {}
+    map_extras( const unsigned int embellished ): chance( embellished ) {}
 };
 
 struct region_terrain_and_furniture_settings {
@@ -295,14 +296,14 @@ enum class region_effect_type : int {
     num_types
 };
 
-template<>
-struct enum_traits<region_effect_type> {
+template <> struct enum_traits<region_effect_type> {
     static constexpr auto last = region_effect_type::num_types;
 };
 
 /*
  * Spatially relevant overmap and mapgen variables grouped into a set of suggested defaults;
- * eventually region mapping will modify as required and allow for transitions of biomes / demographics in a smooth fashion
+ * eventually region mapping will modify as required and allow for transitions of biomes /
+ * demographics in a smooth fashion
  */
 struct regional_settings {
     std::string id;           //
@@ -318,11 +319,12 @@ struct regional_settings {
     weighted_int_list<ter_id> default_groundcover; // i.e., 'grass_or_dirt'
     shared_ptr_fast<weighted_int_list<ter_str_id>> default_groundcover_str;
 
-    city_settings     city_spec;      // put what where in a city of what kind
+    city_settings city_spec; // put what where in a city of what kind
     isolated_city_settings isolated_city;
     groundcover_extra field_coverage;
     forest_mapgen_settings forest_composition;
     forest_trail_settings forest_trail;
+    base_weather_id weather_base = base_weather_id( "default" );
     weather_generator weather;
     overmap_feature_flag_settings overmap_feature_flag;
     overmap_forest_settings overmap_forest;
@@ -332,9 +334,7 @@ struct regional_settings {
 
     std::unordered_map<std::string, map_extras> region_extras;
 
-    regional_settings() : id( "null" ), default_oter( "field" ) {
-        default_groundcover.add( t_null, 0 );
-    }
+    regional_settings(): id( "null" ), default_oter( "field" ) { default_groundcover.add( t_null, 0 ); }
     void finalize();
 };
 

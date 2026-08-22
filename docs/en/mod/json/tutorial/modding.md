@@ -268,6 +268,59 @@ spawning, though.
 ]
 ```
 
+### Changing regional weather
+
+Region overlays can also patch weather by switching the target region to a different
+`base_weather` definition. This is the preferred modern approach for weather mods because it keeps
+the weather generator reusable and lets the overlay stay small.
+
+```json
+[
+  {
+    "type": "weather_pattern",
+    "id": "storm_front",
+    "multiplier": 4.0,
+    "humidity_mod": 6.0,
+    "pressure_mod": -10.0,
+    "windpower_mod": 8.0
+  },
+  {
+    "type": "base_weather",
+    "id": "my_stormy_weather",
+    "copy-from": "default",
+    "base_humidity": 75,
+    "base_pressure": 1008,
+    "base_wind": 14,
+    "base_wind_distrib_peaks": 120,
+    "extend": {
+      "weather_patterns": [ "storm_front" ]
+    },
+    "delete": {
+      "weather_types": [
+        "sunny",
+        "light_drizzle",
+        "acid_drizzle",
+        "acid_rain",
+        "light_flurries",
+        "flurries",
+        "snowing",
+        "snowstorm"
+      ]
+    }
+  },
+  {
+    "type": "region_overlay",
+    "regions": ["default"],
+    "base_weather": "my_stormy_weather"
+  }
+]
+```
+
+The older `"weather"` field is still accepted for compatibility, but new content should use
+`"base_weather": "id"`.
+When you are starting from an existing weather setup, prefer `"copy-from"` with `"extend"` and
+`"delete"` over duplicating the whole `base_weather` object.
+
 ### Disabling certain scenarios
 
 The `SCENARIO_BLACKLIST` can be either a blacklist or a whitelist. When it is a whitelist, it

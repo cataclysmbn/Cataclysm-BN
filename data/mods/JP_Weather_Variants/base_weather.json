@@ -1,0 +1,21 @@
+[
+  {
+    "type": "base_weather",
+    "id": "jp_weather_variants_default",
+    "copy-from": "default",
+    "extend": {
+      "weather_patterns": [ "acidic" ],
+      "weather_types": [
+        "rainbow",
+        "sundog",
+        "geomagnetic_storm",
+        "northern_lights",
+        "acid_flurries",
+        "acid_snow",
+        "acid_snowstorm",
+        "clear_night",
+        "starry_night"
+      ]
+    }
+  }
+]

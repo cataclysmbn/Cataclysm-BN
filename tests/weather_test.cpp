@@ -1,6 +1,10 @@
+#include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
+#include "game.h"
+#include "map_helpers.h"
+#include "state_helpers.h"
 #include "weather.h"
 #include "weather_gen.h"
 
@@ -129,6 +133,52 @@ TEST_CASE("water temperatures track season temperatures", "[weather]") {
     CHECK(spring_water_temperature > winter_water_temperature);
     CHECK(summer_water_temperature > spring_water_temperature);
     CHECK(summer_water_temperature == 30_c);
+}
+
+TEST_CASE("weather refreshes when the player crosses a submap", "[weather]") {
+    clear_all_state();
+    build_test_map(ter_id("t_floor"));
+
+    auto& weather = get_weather();
+    auto& you = get_avatar();
+
+    const auto start_sm = you.abs_sm_pos();
+    const auto start_pos = project_combine(start_sm, point_sm_ms(SEEX - 2, 1));
+    const auto same_submap_pos = project_combine(start_sm, point_sm_ms(SEEX - 1, 1));
+    const auto next_sm = tripoint_abs_sm(start_sm.x() + 1, start_sm.y(), start_sm.z());
+    const auto next_submap_pos = project_combine(next_sm, point_sm_ms(0, 1));
+
+    REQUIRE(project_to<coords::sm>(start_pos) == project_to<coords::sm>(same_submap_pos));
+    REQUIRE(project_to<coords::sm>(start_pos) != project_to<coords::sm>(next_submap_pos));
+
+    you.setpos(start_pos);
+    weather.set_nextweather(calendar::turn);
+    const auto refreshed_pos = weather.last_weather_position;
+
+    weather.nextweather = calendar::turn + 1_hours;
+    you.setpos(same_submap_pos);
+    weather.update_weather();
+    CHECK(weather.last_weather_position == refreshed_pos);
+
+    you.setpos(next_submap_pos);
+    weather.update_weather();
+    CHECK(weather.last_weather_position == next_submap_pos);
+}
+
+TEST_CASE("forecast representative weather prefers the most common sample", "[weather]") {
+    const auto& wgen = get_weather().get_cur_weather_gen();
+    const auto representative = wgen.choose_representative_weather(
+    {{weather_type_id("cloudy"), 4}, {weather_type_id("rain"), 2}, {weather_type_id("thunder"), 1}});
+
+    CHECK(representative == weather_type_id("cloudy"));
+}
+
+TEST_CASE("forecast representative weather breaks ties by forecast priority", "[weather]") {
+    const auto& wgen = get_weather().get_cur_weather_gen();
+    const auto representative =
+        wgen.choose_representative_weather({{weather_type_id("rain"), 2}, {weather_type_id("thunder"), 2}});
+
+    CHECK(representative == weather_type_id("thunder"));
 }
 
 TEST_CASE("weather realism", "[.]")
