@@ -233,13 +233,13 @@ TEST_CASE("Rate of rotting") {
 
         normal_item = item::process(
             std::move(normal_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, weather);
+            temperature_flag::TEMP_NORMAL, weather, 1);
         sealed_item = item::process(
             std::move(sealed_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, weather);
+            temperature_flag::TEMP_NORMAL, weather, 1);
         freeze_item = item::process(
             std::move(freeze_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, weather);
+            temperature_flag::TEMP_NORMAL, weather, 1);
 
         // Item should exist with no rot when it is brand new
         CHECK(normal_item->get_rot() == 0_turns);
@@ -251,13 +251,13 @@ TEST_CASE("Rate of rotting") {
         calendar::turn += 20_minutes;
         normal_item = item::process(
             std::move(normal_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, weather);
+            temperature_flag::TEMP_NORMAL, weather, 1);
         sealed_item = item::process(
             std::move(sealed_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, weather);
+            temperature_flag::TEMP_NORMAL, weather, 1);
         freeze_item = item::process(
             std::move(freeze_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_FREEZER, weather);
+            temperature_flag::TEMP_FREEZER, weather, 1);
 
         // After 20 minutes the normal item should have 20 minutes of rot
         CHECK(to_turns<int>(normal_item->get_rot())
@@ -272,10 +272,10 @@ TEST_CASE("Rate of rotting") {
         // globals
         sealed_item = item::process(
             std::move(sealed_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, weather);
+            temperature_flag::TEMP_NORMAL, weather, 1);
         freeze_item = item::process(
             std::move(freeze_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_FREEZER, weather);
+            temperature_flag::TEMP_FREEZER, weather, 1);
         // In freezer and in preserving container still should be no rot
         CHECK(sealed_item->get_rot() == 0_turns);
         CHECK(freeze_item->get_rot() == 0_turns);
@@ -411,7 +411,7 @@ TEST_CASE("Preserving containers stop contained food rot") {
         calendar::turn += 25_hours;
         outer = item::process(
             std::move(outer), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_NORMAL, get_weather());
+            temperature_flag::TEMP_NORMAL, get_weather(), 1);
 
         namespace ranges = std::ranges;
         using namespace std::views;
@@ -438,7 +438,7 @@ TEST_CASE("Items rot away") {
         // Process item once to set all of its values.
         test_item = item::process(
             std::move(test_item), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_HEATER, weather);
+            temperature_flag::TEMP_HEATER, weather, 1);
 
         // Set rot to >2 days and process again. process_rot should destroy the item.
         calendar::turn += 20_minutes;
@@ -459,7 +459,7 @@ TEST_CASE("Items rot away") {
 
         detached_ptr<item> test_item = item::process(
             item::spawn("meat_cooked"), nullptr, tripoint_bub_ms::zero(), false,
-            temperature_flag::TEMP_HEATER, weather);
+            temperature_flag::TEMP_HEATER, weather, 1);
         map& m = get_map();
         m.add_item_or_charges(loc, std::move(test_item), false);
 

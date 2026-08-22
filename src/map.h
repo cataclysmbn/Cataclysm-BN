@@ -382,6 +382,7 @@ struct level_cache {
     bool visibility_cache_dirty = true;
     // Set by build_floor_cache; true when at least one tile has a floor.
     bool has_any_floor = true;
+    bool has_any_vehicle_floor = false;
     bool suspension_cache_initialized = false;
     bool suspension_cache_dirty = false;
     std::list<point_abs_ms> suspension_cache;

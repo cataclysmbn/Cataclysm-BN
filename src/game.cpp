@@ -2614,14 +2614,16 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     if( debug_infinite_speed_can_freeze_time() ) {
         return false;
     }
-    if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
-        u.is_mounted() ) {
-        return false;
-    }
-    if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
-        !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
-        !u.activity->assistants().empty() ) {
-        return false;
+    if( !u.in_sleep_state() ) {
+        if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
+            u.is_mounted() ) {
+            return false;
+        }
+        if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
+            !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
+            !u.activity->assistants().empty() ) {
+            return false;
+        }
     }
     if( u.in_vehicle && u.controlling_vehicle ) {
         return false;
@@ -2673,7 +2675,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     auto activity_monsters = activity_monmove_cache {};
     const auto requested_turns = to_turns<int>( duration );
     while( skipped_turns < requested_turns ) {
-        if( is_game_over() || !u.activity || !*u.activity ) {
+        if( is_game_over() || ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
             break;
         }
 
@@ -2719,7 +2721,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         debug_hour_timer.print_time();
         u.update_body( action_time_scale::calendar_duration_this_tick() );
         process_voluntary_act_interrupt();
-        if( !u.activity || !*u.activity ) {
+        if( ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
             break;
         }
 
@@ -2731,8 +2733,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             activity_fixed_window_force_normal_turn_ = true;
             break;
         }
-        const auto activity_continues = u.activity && *u.activity &&
-                                        u.activity->id() == starting_activity;
+        const auto activity_continues = ( u.activity && *u.activity &&
+                                          u.activity->id() == starting_activity ) ||
+                                        u.in_sleep_state();
 
         if( m.has_field_at( u.bub_pos() ) ) {
             m.creature_in_field( u );
@@ -2789,7 +2792,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         u.apply_wetness_morale( weather.temperature );
         u.volume = 0;
 
-        if( !activity_continues || u.activity->complete() ) {
+        if( !activity_continues || ( !u.in_sleep_state() && u.activity->complete() ) ) {
             break;
         }
     }
@@ -2850,7 +2853,10 @@ auto game::try_activity_fixed_window_skip() -> bool
         activity_fixed_window_force_normal_turn_ = false;
         return false;
     }
-    if( !u.activity || !*u.activity || calendar::turn < next_activity_fixed_window_check_ ) {
+    if( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) {
+        return false;
+    }
+    if( calendar::turn < next_activity_fixed_window_check_ ) {
         return false;
     }
     const auto duration = activity_fixed_window_duration();

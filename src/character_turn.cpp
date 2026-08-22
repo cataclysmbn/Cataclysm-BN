@@ -920,7 +920,7 @@ void Character::process_items()
     ZoneScoped;
 
     auto process_item = [this]( detached_ptr<item> &&ptr ) {
-        return item::process( std::move( ptr ), as_player(), bub_pos(), false );
+        return item::process( std::move( ptr ), as_player(), bub_pos(), false, 1 );
     };
     if( primary_weapon().needs_processing() ) {
         primary_weapon().attempt_detach( process_item );

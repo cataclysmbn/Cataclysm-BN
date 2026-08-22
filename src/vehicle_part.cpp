@@ -484,9 +484,7 @@ void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_he
             flag = temperature_flag::TEMP_FREEZER;
         }
 
-        for( int i = 0; i < turns; i++ ) {
-            base = item::process( base.release(), nullptr, pos, false, flag );
-        }
+        base = item::process( base.release(), nullptr, pos, false, turns, flag );
     }
 }
 

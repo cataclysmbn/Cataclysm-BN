@@ -8344,7 +8344,7 @@ static void set_cable_active( player *const who, item *const it,
     data.set_vars( it );
     it->activate();
     it->attempt_detach( [&who]( detached_ptr<item> &&e ) {
-        return item::process( std::move( e ), who, who->bub_pos(), false );
+        return item::process( std::move( e ), who, who->bub_pos(), false, 1 );
     } );
     who->mod_moves( -15 );
 };
