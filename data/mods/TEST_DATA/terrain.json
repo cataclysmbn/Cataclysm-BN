@@ -154,5 +154,17 @@
       "duration": "5 seconds",
       "byproducts": [ { "item": "test_rock", "count": 3 }, { "item": "test_2x4", "count": [ 7, 9 ] } ]
     }
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_bool",
+    "name": "json flammable test floor",
+    "description": "A test-only floor that is flammable through the dedicated JSON bool.",
+    "looks_like": "t_floor",
+    "symbol": ".",
+    "color": "yellow",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "flammable": true
   }
 ]

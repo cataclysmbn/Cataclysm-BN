@@ -1,0 +1,42 @@
+[
+  {
+    "id": "test_fd_slip",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "test slippery field",
+        "sym": "~",
+        "color": "light_gray",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "downed",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 turn",
+            "max_duration": "1 turn",
+            "chance_outside_vehicle": 1,
+            "chance_inside_vehicle": 1,
+            "chance_in_vehicle": 1,
+            "is_environmental": false,
+            "message": "You slip on the test field!",
+            "message_npc": "<npcname> slips on the test field!",
+            "message_type": "bad"
+          }
+        ]
+      }
+    ],
+    "half_life": "1 turn",
+    "phase": "liquid",
+    "display_field": true
+  },
+  {
+    "id": "test_fd_rgb_tint",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "test rgb tinted field", "sym": "~", "color": "light_gray" } ],
+    "half_life": "1 turn",
+    "phase": "liquid",
+    "display_field": true,
+    "tint": "#123456"
+  }
+]

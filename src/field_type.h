@@ -181,12 +181,20 @@ struct field_type {
         time_duration half_life = 0_turns;
         phase_id phase = PNULL;
         bool accelerated_decay = false;
+        bool conductive = false;
         bool display_items = true;
         bool display_field = false;
+        bool moppable = false;
+        nc_color tint = c_unset;
+        std::optional<RGBColor> tint_rgb;
         field_type_id wandering_field;
         std::string looks_like;
 
         fields::stacking_type stacking_type = fields::stacking_type::intensity;
+
+        auto is_conductive() const -> bool {
+            return conductive;
+        }
 
         LUA_TYPE_OPS( field_type, id );
 
@@ -209,6 +217,12 @@ struct field_type {
         }
         bool get_transparent( int level = 0 ) const {
             return get_intensity_level( level ).transparent;
+        }
+        nc_color get_tint() const {
+            return tint;
+        }
+        auto get_tint_rgb() const -> std::optional<RGBColor> {
+            return tint_rgb;
         }
         int get_move_cost( int level = 0 ) const {
             return get_intensity_level( level ).move_cost;
@@ -348,4 +362,3 @@ extern field_type_id fd_null,
        fd_smoke_vent,
        fd_tindalos_rift
        ;
-

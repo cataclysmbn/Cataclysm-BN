@@ -220,6 +220,16 @@
     "trail": { "field_type": "fd_fire", "intensity_min": 2, "intensity_max": 2, "chance": 75 }
   },
   {
+    "id": "STREAM_WATER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_water", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_SOAPY_WATER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_soapy_water", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
     "id": "STREAM_GAS_FUNGICIDAL",
     "type": "ammo_effect",
     "trail": { "field_type": "fd_fungicidal_gas", "intensity_min": 1, "intensity_max": 2, "chance": 66 }

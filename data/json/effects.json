@@ -1372,11 +1372,11 @@
     "type": "effect_type",
     "id": "sap",
     "name": [ "Sap-coated" ],
-    "desc": [ "You're coated in sap!" ],
-    "apply_message": "You're coated in sap!",
+    "desc": [ "You're coated in something sticky!" ],
+    "apply_message": "You're coated in something sticky!",
     "rating": "bad",
     "max_duration": "30 m",
-    "miss_messages": [ [ "The sap's too sticky for you to fight effectively.", 3 ] ],
+    "miss_messages": [ [ "The sticky coating is hindering you from fighting effectively.", 3 ] ],
     "base_mods": { "speed_mod": [ -25 ], "dex_mod": [ -3 ] }
   },
   {

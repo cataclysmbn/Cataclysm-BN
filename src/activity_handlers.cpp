@@ -1547,6 +1547,9 @@ void activity_handlers::milk_finish( player_activity *act, player *p )
 
 void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
 {
+    static constexpr size_t liquid_target_amount_index = 3;
+    static constexpr int liquid_transfer_all = -1;
+
     player_activity &act_ref = *act;
     map &here = get_map();
     try {
@@ -1557,31 +1560,55 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
                      &act_ref]( const std::function < detached_ptr<item>( detached_ptr<item> &&it ) > & cb ) {
             auto pos = act_ref.coords.at( 0 );
             static const units::volume volume_per_second = units::from_liter( 4.0F / 6.0F );
-            int charges;
-            detached_ptr<item> source;
+            const auto amount_index = act_ref.values.size() > liquid_target_amount_index ?
+                                      liquid_target_amount_index : act_ref.values.size();
+            const auto remaining_limit = amount_index < act_ref.values.size() ?
+                                         act_ref.values[ amount_index ] : liquid_transfer_all;
+            int transferred = 0;
+            bool finished = true;
             switch( source_type ) {
                 case LST_INFINITE_MAP:
-                    source = here.water_from( abs_to_bub( pos ) );
-                    charges = std::max( 1, source->charges_per_volume( volume_per_second ) );
-                    source->charges = charges;
-                    source = cb( std::move( source ) );
-                    return source && source->charges == charges;
-                case LST_VEHICLE:
-                    auto vp = here.veh_at( pos );
-                    if( !vp ) {
-                        debugmsg( "Lost track of vehicle source for fill_liquid activity" );
-                    }
-                    item &base = vp->vehicle().part( act_ref.values.at( 1 ) ).get_base();
-                    if( base.contents.empty() ) {
+                    if( remaining_limit == 0 ) {
                         return true;
+                    } else {
+                        detached_ptr<item> source = here.water_from( abs_to_bub( pos ) );
+                        const auto charges_per_turn = std::max( 1, source->charges_per_volume( volume_per_second ) );
+                        const auto charges = remaining_limit > 0 ? std::min( charges_per_turn, remaining_limit ) :
+                                             charges_per_turn;
+                        source->charges = charges;
+                        source = cb( std::move( source ) );
+                        transferred = charges - ( source ? source->charges : 0 );
+                        finished = transferred == 0;
                     }
-                    item &source_it = base.contents.back();
-                    charges = std::max( 1, source_it.charges_per_volume( volume_per_second ) );
-                    int orig = source_it.charges;
-                    source_it.attempt_split( charges, cb );
-                    return source_it.charges == 0 || source_it.charges == orig;
+                    break;
+                case LST_VEHICLE:
+                    if( remaining_limit == 0 ) {
+                        return true;
+                    } else {
+                        const auto vp = here.veh_at( pos );
+                        if( !vp ) {
+                            debugmsg( "Lost track of vehicle source for fill_liquid activity" );
+                        }
+                        item &base = vp->vehicle().part( act_ref.values.at( 1 ) ).get_base();
+                        if( base.contents.empty() ) {
+                            return true;
+                        }
+                        item &source_it = base.contents.back();
+                        const auto charges_per_turn = std::max( 1, source_it.charges_per_volume( volume_per_second ) );
+                        const auto charges = remaining_limit > 0 ? std::min( charges_per_turn, remaining_limit ) :
+                                             charges_per_turn;
+                        const auto original = source_it.charges;
+                        source_it.attempt_split( charges, cb );
+                        transferred = original - source_it.charges;
+                        finished = source_it.charges == 0 || transferred == 0;
+                    }
+                    break;
             }
-            return false;
+            if( amount_index < act_ref.values.size() && act_ref.values[ amount_index ] > 0 ) {
+                act_ref.values[ amount_index ] = std::max( 0, act_ref.values[ amount_index ] - transferred );
+                finished = finished || act_ref.values[ amount_index ] == 0;
+            }
+            return finished;
         };
         bool finished = true;
         // 2. Transfer charges.

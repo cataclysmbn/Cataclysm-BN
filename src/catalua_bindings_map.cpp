@@ -560,6 +560,17 @@ void cata::detail::reg_map( sol::state &lua )
             return m.add_field( p, fid, intensity, age );
         } );
         luna::set_fx( ut, "remove_field_at", &map::remove_field );
+        luna::set_fx( ut, "get_field_ids_at", []( const map & m,
+        const tripoint_bub_ms & p ) -> std::vector<field_type_id> {
+            auto field_ids = std::vector<field_type_id>{};
+            const auto &fields = m.field_at( p );
+            for( const auto &[field_id, entry] : fields )
+            {
+                static_cast<void>( entry );
+                field_ids.push_back( field_id );
+            }
+            return field_ids;
+        } );
         luna::set_fx( ut, "get_field_name_at", []( map & m, const tripoint_bub_ms & p,
         const field_type_id & fid ) -> std::string {
             field_entry *fe = m.get_field( p, fid );

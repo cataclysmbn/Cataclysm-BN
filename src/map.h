@@ -1813,6 +1813,7 @@ class map : public submap_load_listener
 
         void propagate_field( const tripoint_bub_ms &center, const field_type_id &type,
                               int amount, int max_intensity = 0 );
+        void spill_liquid_field( const tripoint_bub_ms &center, const item &liquid );
 
         /**
          * Runs one cycle of emission @ref src which **may** result in propagation of fields

@@ -2915,6 +2915,8 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
         }
     }
 
+    assign( jo, "spill_field", def.spill_field );
+
     jo.read( "looks_like", def.looks_like );
 
     if( jo.has_member( "conditional_names" ) ) {
