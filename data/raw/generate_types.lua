@@ -32,7 +32,7 @@ local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
   local params = {}
 
   local clean_arg_list = remove_hidden_args(arg_list)
-  local meta_args = get_meta_params(meta)
+  local meta_args = get_meta_param_specs(meta)
   local state = nil
 
   for i, arg_str in ipairs(clean_arg_list) do
@@ -41,11 +41,13 @@ local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
     if i == 1 and arg_str == class_name then
       arg_name = "self"
     else
-      state, arg_name = next(meta_args, state)
-      if not arg_name then
+      local param_spec
+      state, param_spec = next(meta_args, state)
+      if not param_spec then
         arg_name = "arg" .. i -- Generate placeholder name if needed
       else
-        arg_name = string.gsub(arg_name, "[^%w_]", "_")
+        arg_name = string.gsub(param_spec.name, "[^%w_]", "_")
+        lua_type = param_spec.type or lua_type
       end
     end
     table.insert(params, arg_name .. ": " .. lua_type)
@@ -211,11 +213,8 @@ local fmt_function_field = function(member, class_name)
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
   if member.comment and member.comment ~= "" then
     local op = function(m)
-      if string.match(m, "^@param") then
-        return nil
-      else
-        return m
-      end
+      if string.match(m, "^@param") or is_luals_metadata_line(m) then return nil end
+      return m
     end
     ret = ret .. " @" .. string_concat_matches(member.comment, "([^\r\n]+)", "<br />", op)
   end
@@ -229,6 +228,49 @@ end
 local add_class_annotation = function(annotations, class_name, annotation)
   local pattern = "(---@class " .. class_name .. " : [^\n]+\n)"
   return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
+end
+
+---@param comment string?
+---@return string[]
+local custom_luals_annotations_from_comment = function(comment)
+  local lines = {}
+  if not comment or comment == "" then return lines end
+  for line in string.gmatch(comment, "[^\r\n]+") do
+    if is_luals_metadata_line(line) then table.insert(lines, "---" .. line) end
+  end
+  return lines
+end
+
+---@param dt table
+---@return string
+local collect_custom_luals_annotations = function(dt)
+  local lines = {}
+  local seen = {}
+
+  local add_comment = function(comment)
+    for _, line in ipairs(custom_luals_annotations_from_comment(comment)) do
+      if not seen[line] then
+        seen[line] = true
+        table.insert(lines, line)
+      end
+    end
+  end
+
+  local add_section = function(section)
+    for _, item in ipairs(sort_by(wrapped(section))) do
+      local data = item.v or {}
+      add_comment(data.type_comment or data.lib_comment)
+      for _, member in ipairs(data["#member"] or {}) do
+        add_comment(member.comment)
+      end
+    end
+  end
+
+  add_section(dt["#types"] or {})
+  add_section(dt["#libs"] or {})
+
+  if #lines == 0 then return "" end
+  return table.concat(lines, "\n") .. "\n\n"
 end
 
 ---@class LuaCoordNamePart
@@ -813,7 +855,10 @@ on_npc_loaded = {}
 
       -- Class/Lib Annotation Start
       local bases_str = is_class and fmt_bases_luals(bases) or ""
-      local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+      local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m)
+        if is_luals_metadata_line(m) then return nil end
+        return "--- " .. m
+      end)
       if comment_annot ~= "" then ret = ret .. comment_annot .. "\n" end
       ret = ret .. "---@class " .. name .. bases_str .. "\n"
 
@@ -865,6 +910,8 @@ on_npc_loaded = {}
     return ret
   end
 
+  full_ret = full_ret .. collect_custom_luals_annotations(dt)
+
   -- Generate sections
   full_ret = full_ret .. process_section("Classes", wrapped(dt["#types"]), true)
   full_ret = full_ret .. process_section("Libraries", wrapped(dt["#libs"]), false)
@@ -877,7 +924,10 @@ on_npc_loaded = {}
     local dt_enum = item.v or {}
     local comment = dt_enum.enum_comment
 
-    local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+    local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m)
+      if is_luals_metadata_line(m) then return nil end
+      return "--- " .. m
+    end)
     if comment_annot ~= "" then full_ret = full_ret .. comment_annot .. "\n" end
 
     full_ret = full_ret .. "---@enum " .. enumname .. "\n"

@@ -7,22 +7,31 @@
 #include "catalua_luna_doc.h"
 
 #include <algorithm>
+#include <functional>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <vector>
 
 #include "avatar.h"
 #include "creature_tracker.h"
+#include "dimension_info.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "game_constants.h"
 #include "iexamine.h"
 #include "lightmap.h"
 #include "map.h"
+#include "map_iterator.h"
 #include "catalua_log.h"
 #include "messages.h"
 #include "npc.h"
 #include "monster.h"
+#include "overmap.h"
+#include "overmap_special.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
+#include "point.h"
 #include "weather.h"
 #include "line.h"
 #include "lua_action_menu.h"
@@ -30,7 +39,27 @@
 namespace
 {
 
-void add_msg_lua( game_message_type t, sol::variadic_args va )
+struct overmap_terrain_entry {
+    tripoint_rel_omt offset;
+    oter_str_id terrain;
+};
+
+struct dimension_travel_options {
+    dimension_id dim_id;
+    tripoint_abs_omt target_omt;
+    std::optional<tripoint_abs_ms> target_ms;
+    bool has_target = false;
+    std::optional<std::string> world_type;
+    std::optional<tripoint_abs_omt> bounds_min_omt;
+    std::optional<tripoint_abs_omt> bounds_max_omt;
+    std::optional<std::string> boundary_terrain;
+    std::optional<std::string> boundary_overmap_terrain;
+    std::optional<std::vector<overmap_terrain_entry>> overmap_terrain;
+    std::optional<std::string> pregen_special_id;
+    std::optional<tripoint_abs_omt> pregen_special_omt;
+};
+
+auto add_msg_lua( game_message_type t, sol::variadic_args va ) -> void
 {
     if( va.size() == 0 ) {
         // Nothing to print
@@ -52,6 +81,408 @@ auto place_lua_monster_around( const mtype_id &id, const tripoint_bub_ms &center
 }
 
 
+
+auto read_optional_string( const sol::table &opts, const char *key ) -> std::optional<std::string>
+{
+    const auto value = opts.get<sol::optional<std::string>>( key );
+    if( !value || value->empty() ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+auto read_optional_abs_omt( const sol::table &opts,
+                            const char *key ) -> std::optional<tripoint_abs_omt>
+{
+    const auto value = opts.get<sol::optional<tripoint_abs_omt>>( key );
+    if( !value ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+auto read_optional_abs_ms( const sol::table &opts,
+                           const char *key ) -> std::optional<tripoint_abs_ms>
+{
+    const auto value = opts.get<sol::optional<tripoint_abs_ms>>( key );
+    if( !value ) {
+        return std::nullopt;
+    }
+    return *value;
+}
+
+auto is_dense_lua_array( const sol::table &table ) -> bool
+{
+    const auto length = static_cast<int>( table.size() );
+    auto key_count = 0;
+    auto valid = true;
+    table.for_each( [&]( const sol::object & key, const sol::object & /*value*/ ) {
+        if( !valid ) {
+            return;
+        }
+        if( !key.is<int>() ) {
+            valid = false;
+            return;
+        }
+        const auto index = key.as<int>();
+        if( index < 1 || index > length ) {
+            valid = false;
+            return;
+        }
+        ++key_count;
+    } );
+    return valid && key_count == length;
+}
+
+auto read_optional_overmap_terrain_layout( const sol::table &opts ) ->
+std::optional<std::vector<overmap_terrain_entry>>
+{
+    const auto value = opts.get<sol::object>( "overmap_terrain" );
+    if( value == sol::nil ) {
+        return std::vector<overmap_terrain_entry> {};
+    }
+    if( !value.is<sol::table>() ) {
+        return std::nullopt;
+    }
+
+    const auto layers = value.as<sol::table>();
+    if( !is_dense_lua_array( layers ) ) {
+        return std::nullopt;
+    }
+    auto entries = std::vector<overmap_terrain_entry> {};
+    auto invalid = false;
+    const auto layer_count = static_cast<int>( layers.size() );
+    for( auto z_idx = 1; z_idx <= layer_count && !invalid; ++z_idx ) {
+        const auto layer_obj = layers.get<sol::object>( z_idx );
+        if( !layer_obj.is<sol::table>() ) {
+            invalid = true;
+            break;
+        }
+        const auto rows = layer_obj.as<sol::table>();
+        if( !is_dense_lua_array( rows ) ) {
+            invalid = true;
+            break;
+        }
+        const auto row_count = static_cast<int>( rows.size() );
+        for( auto y_idx = 1; y_idx <= row_count && !invalid; ++y_idx ) {
+            const auto row_obj = rows.get<sol::object>( y_idx );
+            if( !row_obj.is<sol::table>() ) {
+                invalid = true;
+                break;
+            }
+            const auto row = row_obj.as<sol::table>();
+            if( !is_dense_lua_array( row ) ) {
+                invalid = true;
+                break;
+            }
+            const auto column_count = static_cast<int>( row.size() );
+            for( auto x_idx = 1; x_idx <= column_count; ++x_idx ) {
+                const auto terrain_obj = row.get<sol::object>( x_idx );
+                if( !terrain_obj.is<std::string>() ) {
+                    invalid = true;
+                    break;
+                }
+                const auto terrain = oter_str_id( terrain_obj.as<std::string>() );
+                if( !terrain.is_valid() ) {
+                    invalid = true;
+                    break;
+                }
+                entries.push_back( overmap_terrain_entry{
+                    .offset = tripoint_rel_omt( x_idx - 1, y_idx - 1, z_idx - 1 ),
+                    .terrain = terrain,
+                } );
+            }
+        }
+    }
+
+    if( invalid || ( entries.empty() && layers.size() > 0 ) ) {
+        return std::nullopt;
+    }
+    return entries;
+}
+
+auto get_dimension_entry_point( const tripoint_abs_omt &target_omt ) -> tripoint_abs_ms
+{
+    return project_combine( target_omt, point_omt_ms( SEEX, SEEY ) );
+}
+
+auto get_dimension_entry_point( const dimension_travel_options &opts ) -> tripoint_abs_ms
+{
+    return opts.target_ms.value_or( get_dimension_entry_point( opts.target_omt ) );
+}
+
+auto is_safe_dimension_save_id( const dimension_id &dim_id ) -> bool
+{
+    const auto raw_dim_id = dim_id.str();
+    return raw_dim_id.empty() ||
+           ( raw_dim_id != "." && raw_dim_id != ".." &&
+             raw_dim_id.find_first_of( "/\\" ) == std::string::npos );
+}
+
+auto parse_dimension_travel_options( const sol::table &opts ) -> dimension_travel_options
+{
+    const auto target_ms = read_optional_abs_ms( opts, "target_ms" );
+    const auto target_omt = read_optional_abs_omt( opts, "target_omt" );
+    return {
+        .dim_id = dimension_id( opts.get_or( "dimension_id", std::string{} ) ),
+        .target_omt = target_omt.value_or(
+            target_ms ? project_to<coords::omt>( *target_ms ) : tripoint_abs_omt( tripoint_zero ) ),
+        .target_ms = target_ms,
+        .has_target = target_ms.has_value() || target_omt.has_value(),
+        .world_type = read_optional_string( opts, "world_type" ),
+        .bounds_min_omt = read_optional_abs_omt( opts, "bounds_min_omt" ),
+        .bounds_max_omt = read_optional_abs_omt( opts, "bounds_max_omt" ),
+        .boundary_terrain = read_optional_string( opts, "boundary_terrain" ),
+        .boundary_overmap_terrain = read_optional_string( opts, "boundary_overmap_terrain" ),
+        .overmap_terrain = read_optional_overmap_terrain_layout( opts ),
+        .pregen_special_id = read_optional_string( opts, "pregen_special_id" ),
+        .pregen_special_omt = read_optional_abs_omt( opts, "pregen_special_omt" ),
+    };
+}
+
+auto make_pocket_dimension_data( const dimension_travel_options &opts ) ->
+std::optional<pocket_dimension_data>
+{
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return std::nullopt;
+    }
+
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.entry_point = get_dimension_entry_point( opts );
+    pocket_data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>( *opts.bounds_min_omt ),
+        .max_bound = project_to<coords::sm>( *opts.bounds_max_omt ) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id( opts.boundary_terrain.value_or( "t_pd_border" ) ),
+        .boundary_overmap_terrain = oter_str_id( opts.boundary_overmap_terrain.value_or( "pd_border" ) ),
+    };
+    return pocket_data;
+}
+
+auto point_is_in_bounds( const tripoint_abs_omt &point, const tripoint_abs_omt &min_bound,
+                         const tripoint_abs_omt &max_bound ) -> bool
+{
+    return point.x() >= min_bound.x() && point.x() <= max_bound.x() &&
+           point.y() >= min_bound.y() && point.y() <= max_bound.y() &&
+           point.z() >= min_bound.z() && point.z() <= max_bound.z();
+}
+
+auto has_ordered_dimension_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    return opts.bounds_min_omt->x() <= opts.bounds_max_omt->x() &&
+           opts.bounds_min_omt->y() <= opts.bounds_max_omt->y() &&
+           opts.bounds_min_omt->z() <= opts.bounds_max_omt->z();
+}
+
+auto target_coordinates_match( const dimension_travel_options &opts ) -> bool
+{
+    return !opts.target_ms || project_to<coords::omt>( *opts.target_ms ) == opts.target_omt;
+}
+
+auto target_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    return point_is_in_bounds( opts.target_omt, *opts.bounds_min_omt, *opts.bounds_max_omt );
+}
+
+auto has_dimension_generation_config( const dimension_travel_options &opts ) -> bool
+{
+    return opts.world_type || opts.bounds_min_omt || opts.bounds_max_omt || opts.boundary_terrain ||
+           opts.boundary_overmap_terrain || ( opts.overmap_terrain && !opts.overmap_terrain->empty() ) ||
+           opts.pregen_special_id || opts.pregen_special_omt;
+}
+
+auto boundary_terrain_is_valid( const dimension_travel_options &opts ) -> bool
+{
+    if( opts.boundary_terrain && !ter_str_id( *opts.boundary_terrain ).is_valid() ) {
+        return false;
+    }
+
+    if( opts.boundary_overmap_terrain &&
+        !oter_str_id( *opts.boundary_overmap_terrain ).is_valid() ) {
+        return false;
+    }
+
+    return true;
+}
+
+auto pregen_special_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.pregen_special_id ) {
+        return true;
+    }
+
+    const auto special_id = overmap_special_id( *opts.pregen_special_id );
+    if( !special_id.is_valid() ) {
+        return false;
+    }
+
+    const auto &special = special_id.obj();
+    if( special.get_subtype() != overmap_special_subtype::fixed || special.has_flag( "BLOB" ) ||
+        !special.connections.empty() || !special.get_nested_specials().empty() ) {
+        return false;
+    }
+
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return true;
+    }
+
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto overmap_terrain_overlaps = [&]( const tripoint_abs_omt & pos ) {
+        const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
+        return opts.overmap_terrain &&
+        std::ranges::any_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            return overmap_terrain_origin + entry.offset == pos;
+        } );
+    };
+
+    if( overmap_terrain_overlaps( special_omt ) ) {
+        return false;
+    }
+
+    return point_is_in_bounds( special_omt, *opts.bounds_min_omt, *opts.bounds_max_omt ) &&
+    std::ranges::all_of( special.required_locations(), [&]( const auto & loc ) {
+        const auto pos = special_omt + loc.p;
+        return point_is_in_bounds( pos, *opts.bounds_min_omt, *opts.bounds_max_omt ) &&
+               !overmap_terrain_overlaps( pos );
+    } );
+}
+
+auto overmap_terrain_layout_fits_bounds( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.overmap_terrain || opts.overmap_terrain->empty() ) {
+        return true;
+    }
+    if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
+        return false;
+    }
+
+    return std::ranges::all_of( *opts.overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+        return point_is_in_bounds( *opts.bounds_min_omt + entry.offset, *opts.bounds_min_omt,
+                                   *opts.bounds_max_omt );
+    } );
+}
+
+auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) -> bool
+{
+    if( !opts.has_target || !is_safe_dimension_save_id( opts.dim_id ) ||
+        !target_coordinates_match( opts ) ) {
+        return false;
+    }
+
+    if( opts.dim_id.is_empty() && has_dimension_generation_config( opts ) ) {
+        return false;
+    }
+
+    if( opts.bounds_min_omt.has_value() != opts.bounds_max_omt.has_value() ||
+        !has_ordered_dimension_bounds( opts ) || !target_fits_bounds( opts ) ) {
+        return false;
+    }
+
+    if( !boundary_terrain_is_valid( opts ) ) {
+        return false;
+    }
+
+    if( !opts.overmap_terrain || !overmap_terrain_layout_fits_bounds( opts ) ) {
+        return false;
+    }
+
+    if( !pregen_special_fits_bounds( opts ) ) {
+        return false;
+    }
+
+    return true;
+}
+
+auto find_safe_spawn( const tripoint_bub_ms &target ) -> tripoint_bub_ms
+{
+    auto &here = get_map();
+
+    if( here.passable( target ) && !g->critter_at( target ) ) {
+        return target;
+    }
+
+    for( auto radius = 1; radius <= 10; radius++ ) {
+        for( const auto &point : here.points_in_radius( target, radius ) ) {
+            if( here.passable( point ) && !g->critter_at( point ) ) {
+                return point;
+            }
+        }
+    }
+
+    return target;
+}
+
+auto get_dimension_load_position( const dimension_travel_options &opts ) -> tripoint_abs_sm
+{
+    const auto target_sm = project_to<coords::sm>( get_dimension_entry_point( opts ) );
+    return target_sm - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+}
+
+auto build_dimension_preload_callback( const dimension_travel_options &opts ) ->
+std::function<void()>
+{
+    const auto has_overmap_terrain = opts.overmap_terrain && !opts.overmap_terrain->empty();
+    if( !opts.pregen_special_id && !has_overmap_terrain ) {
+        return {};
+    }
+
+    const auto special_id = opts.pregen_special_id ? std::optional<overmap_special_id>(
+                                *opts.pregen_special_id ) : std::nullopt;
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto dim_id = opts.dim_id;
+    const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
+    const auto overmap_terrain = opts.overmap_terrain.value_or( std::vector<overmap_terrain_entry> {} );
+
+    return [dim_id, special_id, special_omt, overmap_terrain_origin, overmap_terrain]() {
+        auto &dim_omb = get_overmapbuffer( dim_id );
+        std::ranges::for_each( overmap_terrain, [&]( const overmap_terrain_entry & entry ) {
+            dim_omb.ter_set( overmap_terrain_origin + entry.offset, entry.terrain.id() );
+        } );
+        if( special_id ) {
+            auto global_location = dim_omb.get_om_global( special_omt );
+            auto &om = *global_location.om;
+            om.place_special_forced( *special_id, global_location.local, om_direction::type::north );
+        }
+    };
+}
+
+auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
+{
+    if( !is_valid_dimension_travel_config( opts ) ) {
+        return false;
+    }
+
+    if( opts.dim_id == g->get_current_dimension_id() ) {
+        return true;
+    }
+
+    auto pocket_data = make_pocket_dimension_data( opts );
+
+    auto world_type = world_type_id{};
+    if( opts.world_type ) {
+        world_type = world_type_id( *opts.world_type );
+    }
+
+    const auto preload_callback = build_dimension_preload_callback( opts );
+    const auto load_pos = get_dimension_load_position( opts );
+    if( !g->travel_to_dimension( opts.dim_id, world_type, pocket_data, load_pos,
+                                 preload_callback ) ) {
+        return false;
+    }
+
+    auto &avatar = get_avatar();
+    const auto target_local = abs_to_bub( get_dimension_entry_point( opts ) );
+    avatar.setpos( find_safe_spawn( target_local ) );
+    g->update_map( avatar );
+    return true;
+}
 
 } // namespace
 
@@ -82,6 +513,36 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
+    DOC( "Returns the current dimension id. Empty string means the overworld." );
+    luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
+    DOC( "Moves the player into another dimension and loads the destination around required target_ms or target_omt." );
+    DOC( "@alias OvermapTerrainLayout string[][][]" );
+    DOC( "@class DimensionTravelOptions" );
+    DOC( "@field dimension_id? string Target dimension id. Empty string means the overworld." );
+    DOC( "@field target_ms? TripointAbsMs Absolute map-square destination. Required when target_omt is absent." );
+    DOC( "@field target_omt? TripointAbsOmt Absolute overmap-terrain destination. Required when target_ms is absent." );
+    DOC( "@field world_type? string World type for creating a new non-overworld dimension." );
+    DOC( "@field bounds_min_omt? TripointAbsOmt Inclusive pocket dimension minimum overmap-terrain bound." );
+    DOC( "@field bounds_max_omt? TripointAbsOmt Inclusive pocket dimension maximum overmap-terrain bound." );
+    DOC( "@field boundary_terrain? string Map terrain used outside pocket bounds." );
+    DOC( "@field boundary_overmap_terrain? string Overmap terrain used outside pocket bounds." );
+    DOC( "@field overmap_terrain? OvermapTerrainLayout Optional z/y/x table anchored at bounds_min_omt." );
+    DOC( "@field pregen_special_id? string Overmap special to force before loading the destination." );
+    DOC( "@field pregen_special_omt? TripointAbsOmt Overmap-terrain position for pregen_special_id; defaults to target_omt." );
+    DOC_PARAMS( "opts: DimensionTravelOptions" );
+    luna::set_fx( lib, "place_player_dimension_at", []( sol::table opts ) -> bool {
+        return place_player_dimension_at( parse_dimension_travel_options( opts ) );
+    } );
+    DOC( "Fully saves the game, then deletes an inactive, non-primary dimension from memory and save storage." );
+    DOC_PARAMS( "dim_id: string" );
+    luna::set_fx( lib, "delete_dimension", []( const std::string & dim_id ) -> bool {
+        return g->delete_dimension( dimension_id( dim_id ) );
+    } );
+    DOC( "Fully saves the game, then deletes generated data for an inactive, non-primary dimension while keeping its loaded metadata." );
+    DOC_PARAMS( "dim_id: string" );
+    luna::set_fx( lib, "reset_dimension", []( const std::string & dim_id ) -> bool {
+        return g->reset_dimension( dimension_id( dim_id ) );
+    } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );

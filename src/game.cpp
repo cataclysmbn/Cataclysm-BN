@@ -157,6 +157,7 @@
 #include "overmap.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "panels.h"
 #include "path_info.h"
 #include "pathfinding.h"
@@ -14701,6 +14702,122 @@ std::string game::get_dimension_prefix() const
     return current_dimension_id_.str();
 }
 
+auto game::delete_dimension( const dimension_id &dim_id ) -> bool
+{
+    return delete_dimension( dim_id, true );
+}
+
+auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    auto *active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+
+    const auto is_loaded = loaded_dimensions_.contains( dim_id );
+    if( !is_loaded && !active_world->has_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    if( active_world->is_save_tx_active() ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+    const auto was_kept = kept_pocket_dimension_id_ == dim_id;
+
+    // A deleted dimension must not reappear from persisted metadata after restart.  A reset keeps
+    // that metadata so callers can re-enter without repeating the generation options.
+    if( remove_zones ) {
+        loaded_dimensions_.erase( dim_id );
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dimension_id();
+        }
+    }
+
+    // Persist the player's current dimension and the cleanup's final metadata before deleting any
+    // destination data.  If the process stops during cleanup, the save must never place the player
+    // in the removed dimension.
+    if( !save( false ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dim_id;
+        }
+        return false;
+    }
+
+    submap_loader.drain_lazy_loads();
+    if( !active_world->delete_dimension_data( dim_id.str() ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dim_id;
+        }
+        return false;
+    }
+
+    auto &zones = zone_manager::get_manager();
+    if( remove_zones && zones.remove_dimension_zones( dim_id ) && !zones.save_zones() ) {
+        return false;
+    }
+
+    if( auto tracker_it = grid_trackers_.find( dim_id ); tracker_it != grid_trackers_.end() ) {
+        submap_loader.remove_listener( tracker_it->second.get() );
+        grid_trackers_.erase( tracker_it );
+    }
+
+    if( kept_pocket_dimension_id_ == dim_id ) {
+        kept_pocket_dimension_id_ = dimension_id();
+    }
+
+    loaded_dimensions_.erase( dim_id );
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    unload_overmapbuffer_dimension( dim_id );
+
+    return true;
+}
+
+auto game::reset_dimension( const dimension_id &dim_id ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+    const auto was_kept = kept_pocket_dimension_id_ == dim_id;
+
+    if( !delete_dimension( dim_id, false ) ) {
+        if( preserved_info ) {
+            loaded_dimensions_[dim_id] = *preserved_info;
+        }
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dim_id;
+        }
+        return false;
+    }
+
+    if( preserved_info ) {
+        loaded_dimensions_[dim_id] = *preserved_info;
+    }
+    if( was_kept ) {
+        kept_pocket_dimension_id_ = dim_id;
+    }
+    return true;
+}
+
 auto game::set_active_dimension_id( const dimension_id &dim_id ) -> void
 {
     current_dimension_id_ = dim_id;
@@ -14773,6 +14890,12 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
 
     // For the overworld, effective_wt may still be null; guard all uses below.
     const struct world_type *target_type = effective_wt.is_valid() ? &effective_wt.obj() : nullptr;
+    auto effective_pd_info = pd_info;
+    if( !effective_pd_info ) {
+        if( auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+            effective_pd_info = it->second.pocket_info;
+        }
+    }
     map &here = get_map();
     avatar &player = get_avatar();
 
@@ -14832,11 +14955,11 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         const bool old_is_bounded = !old_dim_id.is_empty() &&
                                     loaded_dimensions_.count( old_dim_id ) &&
                                     loaded_dimensions_.at( old_dim_id ).pocket_info.has_value();
-        if( old_is_bounded && !pd_info.has_value() ) {
+        if( old_is_bounded && !effective_pd_info.has_value() ) {
             // Exiting a bounded pocket → remember it.
             kept_pocket_dimension_id_ = old_dim_id;
             add_msg( m_debug, "[DIM] Marking pocket '%s' as kept", old_dim_id.c_str() );
-        } else if( pd_info.has_value() ) {
+        } else if( effective_pd_info.has_value() ) {
             // Entering any pocket → forget the previous kept marker.
             kept_pocket_dimension_id_ = dimension_id();
         }
@@ -14876,7 +14999,7 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
             .id                  = dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id.str(),
-            .pocket_info         = pd_info
+            .pocket_info         = effective_pd_info
         };
     }
 
@@ -14897,9 +15020,9 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.get_mapbuffer().clear_pocket_info();
     get_overmapbuffer( current_dimension_id_ ).clear_pocket_info();
-    if( pd_info ) {
-        here.get_mapbuffer().set_pocket_info( *pd_info );
-        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *pd_info );
+    if( effective_pd_info ) {
+        here.get_mapbuffer().set_pocket_info( *effective_pd_info );
+        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *effective_pd_info );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps
