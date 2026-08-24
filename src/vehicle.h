@@ -445,7 +445,7 @@ class vehicle
         void refresh();
 
         // Do stuff like clean up blood and produce smoke from broken parts. Returns false if nothing needs doing.
-        bool do_environmental_effects();
+        bool do_environmental_effects( const int turns = 1 );
 
         units::volume total_folded_volume() const;
 
@@ -983,7 +983,7 @@ class vehicle
         int max_reactor_epower_w() const;
         // Produce and consume electrical power, with excess power stored or
         // taken from batteries.
-        void power_parts();
+        void power_parts( const int turns = 1 );
 
         /**
          * Try to charge our (and, optionally, connected vehicles') batteries by the given amount.
@@ -1251,6 +1251,9 @@ class vehicle
                                         const std::set<vehicle *> &vehicle_list );
         // idle fuel consumption
         void idle( bool on_map = true );
+        // idle fuel consumption in bulk
+        // Called by update_time given the batched parameter
+        void idle_turns( const int turns );
         // continuous processing for running vehicle alarms
         void alarm();
         // leak from broken tanks
@@ -1639,7 +1642,8 @@ class vehicle
         bounding_box get_bounding_box();
         // Retroactively pass time spent outside bubble
         // Funnels, solar panels
-        void update_time( const time_point &update_to );
+        // If batched is used, it will also drain engines and batteries and use plutonium generators
+        void update_time( const time_point &update_to, const bool batched );
         // Process vehicle emitters
         void process_emitters();
 

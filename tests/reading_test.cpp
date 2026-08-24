@@ -428,6 +428,7 @@ static void destroyed_book_test_helper(avatar& u, item* loc) {
             loc->detach();
             AND_WHEN("A turn passes for you") {
                 u.process_turn();
+                u.process_items();
                 CHECK(!u.activity->is_null());
                 process_activity(u);
                 THEN("The reading job is cancelled") { CHECK(u.activity->is_null()); }

@@ -15,7 +15,7 @@
       "6": "t_palisade_pulley",
       ";": "t_dirtfloor",
       "=": "t_door_metal_locked",
-      "A": "t_door_bar_locked",
+      "A": "t_door_metal_pickable",
       "C": "t_region_groundcover",
       "G": "t_palisade_gate",
       "T": "t_tree",

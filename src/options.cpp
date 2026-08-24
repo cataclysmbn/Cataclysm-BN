@@ -2392,9 +2392,19 @@ void options_manager::add_options_performance()
 #else
     const static bool is_android = false;
 #endif
-    add_option_group( performance, Group( "rem_act_perf", to_translation( "Sleep Boost" ),
-                                          to_translation( "Skip expensive processing while the player sleeps." ) ),
+#if defined(__ANDROID__)
+    add( "LOAD_FROM_EXTERNAL", performance, translate_marker( "External Storage Saving" ),
+         translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
+         false );
+
+#endif
+    add_option_group( performance, Group( "rem_act_perf", to_translation( "Activity Boost" ),
+                                          to_translation( "Skip expensive processing while the player does activities ( slow path only )." ) ),
     [&]( auto & page_id ) {
+        add( "ACTIVITY_SKIP_VISIBILITY", page_id,
+             translate_marker( "Skip Activity Visibility Calculations" ),
+             translate_marker( "Turns recaclculation of visibility cache on or off during activity slow paths" ),
+             true );
         add( "SLEEP_SKIP_VEH", page_id, translate_marker( "Skip Vehicle Movement" ),
              translate_marker( "Turns off vehicle movement and autodrive while sleeping" ),
              true );
@@ -2403,19 +2413,13 @@ void options_manager::add_options_performance()
              false );
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Skip Monster Movement" ),
              translate_marker( "Monsters do not move while the player is sleeping" ),
-             is_android ? false : true );
+             is_android ? true : false );
         add( "SLEEP_SKIP_NPC", page_id, translate_marker( "Skip NPC Movement" ),
              translate_marker( "NPCs are forced to sleep alongside the player, skipping movement "
                                "but still processing rest recovery (fatigue reduction, healing, etc.).  "
                                "NPCs with non-interruptible activities (e.g. surgery) are frozen "
                                "for the turn instead." ),
-             is_android ? false : true );
-#if defined(__ANDROID__)
-        add( "LOAD_FROM_EXTERNAL", page_id, translate_marker( "External Storage Saving" ),
-             translate_marker( "Save in data/catalcysm... instead of Documents/..." ),
-             false );
-
-#endif
+             is_android ? true : false );
     } );
 
     add_empty_line();
@@ -2745,6 +2749,9 @@ void options_manager::add_options_debug()
          false
        );
 
+    add( "LOG_ACTIVITY_SKIP_STATE", debug, translate_marker( "Log Reason for No Activity Skip State" ),
+         translate_marker( "Logs the rough reason for when activity skip state returns, used for debugging slow activities." ),
+         false );
     add_empty_line();
 
     add_option_group( debug, Group( "debug_log", to_translation( "Logging" ),
@@ -4415,6 +4422,7 @@ void options_manager::cache_to_globals()
     setDebugLogClasses( classes );
 
     json_report_strict = test_mode || ::get_option<bool>( "STRICT_JSON_CHECKS" );
+    log_activity_skip_state = ::get_option<bool>( "LOG_ACTIVITY_SKIP_STATE" );
     display_mod_source = ::get_option<bool>( "MOD_SOURCE" );
     display_object_ids = ::get_option<bool>( "SHOW_IDS" );
     trigdist = ::get_option<bool>( "CIRCLEDIST" );

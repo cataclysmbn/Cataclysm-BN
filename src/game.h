@@ -232,7 +232,8 @@ class game : public submap_load_listener
         void draw_ter( bool draw_sounds = true );
         void draw_ter( const tripoint_bub_ms &center, bool looking = false, bool draw_sounds = true );
         auto visibility_cache_z() -> int;
-        auto refresh_player_visibility_cache_if_needed( bool player_map_cache_current = false ) -> void;
+        auto refresh_player_visibility_cache_if_needed( bool player_map_cache_current = false,
+                bool skip_lightmap = false ) -> void;
 
         class draw_callback_t
         {

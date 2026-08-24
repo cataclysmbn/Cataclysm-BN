@@ -221,7 +221,6 @@ void Character::process_turn()
     if( activity->targets.empty() ) {
         drop_invalid_inventory();
     }
-    process_items();
     // Didn't just pick something up
     last_item = itype_id( "null" );
 
@@ -915,12 +914,12 @@ static bool needs_elec_charges( item *it )
     }
 }
 
-void Character::process_items()
+void Character::process_items( int turns )
 {
     ZoneScoped;
 
-    auto process_item = [this]( detached_ptr<item> &&ptr ) {
-        return item::process( std::move( ptr ), as_player(), bub_pos(), false, 1 );
+    auto process_item = [this, &turns]( detached_ptr<item> &&ptr ) {
+        return item::process( std::move( ptr ), as_player(), bub_pos(), false, turns );
     };
     if( primary_weapon().needs_processing() ) {
         primary_weapon().attempt_detach( process_item );

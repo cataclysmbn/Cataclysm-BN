@@ -13,6 +13,7 @@ TEST_CASE("player_morale_from_effects_consistent", "[morale][effect][slow]") {
     // As in game::do_turn
     for (time_point t = start; t < end; t += tick_size) {
         dummy.process_turn();
+        dummy.process_items();
         if (to_turns<int>(t - start) % to_turns<int>(10_turns) == 0) { dummy.update_morale(); }
         if (to_turns<int>(t - start) % to_turns<int>(9_turns) == 0) {
             REQUIRE(dummy.check_and_recover_morale());

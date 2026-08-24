@@ -609,7 +609,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Processes human-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
         /** Process active items */
-        void process_items();
+        void process_items( int turns = 1 );
 
         /** Recalculates HP after a change to max strength */
         void recalc_hp();

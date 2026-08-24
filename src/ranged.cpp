@@ -2971,7 +2971,7 @@ target_handler::trajectory target_ui::run()
     map &here = get_map();
     // Target lists and saved-target reacquisition use Character::sees before
     // the targeting UI gets its first redraw.
-    g->refresh_player_visibility_cache_if_needed();
+    g->refresh_player_visibility_cache_if_needed( true );
     // Load settings
     snap_to_target = get_option<bool>( "SNAP_TO_TARGET" );
     if( mode == TargetMode::Turrets ) {

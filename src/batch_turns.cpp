@@ -149,7 +149,7 @@ void run_submap_batch_turns( submap &sm, int n )
     // batch_turns_items( sm, n );
     for( const auto &veh_ptr : sm.vehicles ) {
         if( veh_ptr ) {
-            veh_ptr->update_time( calendar::turn );
+            veh_ptr->update_time( calendar::turn, true );
         }
     }
 }

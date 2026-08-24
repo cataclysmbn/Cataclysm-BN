@@ -536,6 +536,12 @@
     ]
   },
   {
+    "id": "anvils_any",
+    "type": "item_group",
+    "//": "Level 3 anvil quality, used for the MISSION_ISHERWOOD_CARLOS_1 quest",
+    "items": [ [ "anvil", 100 ], [ "anvil_bronze", 100 ] ]
+  },
+  {
     "id": "file_room",
     "type": "item_group",
     "items": [
