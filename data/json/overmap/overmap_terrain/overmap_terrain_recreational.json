@@ -274,7 +274,7 @@
       "miniaturerailway_1_1_1"
     ],
     "copy-from": "generic_city_building_no_sidewalk",
-    "name": "roller coaster park",
+    "name": "miniature railway",
     "sym": "R",
     "color": "green",
     "spawns": { "group": "GROUP_SCHOOL", "population": [ 5, 7 ], "chance": 100 }
