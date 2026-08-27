@@ -4122,7 +4122,11 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 }
                 detached_ptr<item> tmp = item::spawn( drink.typeId(), calendar::turn, charges_held );
                 tmp = pour_into_keg( examp, std::move( tmp ) );
-                p.use_charges( drink.typeId(), charges_held - tmp->charges );
+                if (tmp) { // tmp->charges contains the charges left after pouring into the keg
+                    p.use_charges(drink.typeId(), charges_held - tmp->charges);
+                } else { // tmp being empty means all charges were used up
+                    p.use_charges(drink.typeId(), charges_held);
+                }
                 add_msg( _( "You fill the %1$s with %2$s." ), keg_name, drink_nname );
                 notify_contents_changed( examp );
                 p.moves -= to_moves<int>( 10_seconds );
