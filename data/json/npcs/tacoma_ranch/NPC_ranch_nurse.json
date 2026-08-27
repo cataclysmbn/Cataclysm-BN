@@ -152,10 +152,7 @@
       "update_mapgen": [
         {
           "om_terrain": "ranch_camp_59",
-          "place_item": [
-            { "item": "hotplate", "x": 15, "y": 7, "amount": 3 },
-            { "item": "manual_first_aid", "x": 15, "y": 7 }
-          ]
+          "place_item": [ { "item": "hotplate", "x": 15, "y": 7, "amount": 3 }, { "item": "manual_first_aid", "x": 15, "y": 7 } ]
         }
       ]
     }
@@ -184,10 +181,7 @@
     },
     "end": {
       "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_12" ], "x": 0, "y": 16 } ]
-        },
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_12" ], "x": 0, "y": 16 } ] },
         {
           "om_terrain": "ranch_camp_59",
           "place_nested": [ { "chunks": [ "tacoma_commune_clinic_13" ], "x": 0, "y": 0 } ],
@@ -220,10 +214,7 @@
     },
     "end": {
       "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_14" ], "x": 0, "y": 16 } ]
-        },
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_14" ], "x": 0, "y": 16 } ] },
         {
           "om_terrain": "ranch_camp_59",
           "place_nested": [ { "chunks": [ "tacoma_commune_clinic_15" ], "x": 0, "y": 0 } ],
@@ -255,14 +246,11 @@
     },
     "end": {
       "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_16" ], "x": 0, "y": 16 } ]
-        },
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_16" ], "x": 0, "y": 16 } ] },
         {
           "om_terrain": "ranch_camp_59",
           "place_nested": [ { "chunks": [ "tacoma_commune_clinic_17" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "chemistry_set", "x": 15, "y": 7, } ]
+          "place_item": [ { "item": "chemistry_set", "x": 15, "y": 7 } ]
         }
       ]
     }
@@ -293,7 +281,11 @@
       "update_mapgen": [
         {
           "om_terrain": "ranch_camp_59",
-          "place_furniture": [ { "furn": "f_rack_wood", "x": 15, "y": 0 }, { "furn": "f_rack_wood", "x": 15, "y": 1 }, { "furn": "f_rack_wood", "x": 15, "y": 2 } ],
+          "place_furniture": [
+            { "furn": "f_rack_wood", "x": 15, "y": 0 },
+            { "furn": "f_rack_wood", "x": 15, "y": 1 },
+            { "furn": "f_rack_wood", "x": 15, "y": 2 }
+          ],
           "place_item": [ { "item": "mask_filter", "x": 15, "y": 7, "amount": [ 2, 6 ] } ]
         }
       ]
@@ -355,14 +347,8 @@
     },
     "end": {
       "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_18" ], "x": 0, "y": 16 } ]
-        },
-        {
-          "om_terrain": "ranch_camp_59",
-          "place_item": [ { "item": "scalpel", "x": 15, "y": 7, "amount": 2 } ]
-        }
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_18" ], "x": 0, "y": 16 } ] },
+        { "om_terrain": "ranch_camp_59", "place_item": [ { "item": "scalpel", "x": 15, "y": 7, "amount": 2 } ] }
       ]
     }
   },
@@ -389,14 +375,8 @@
     },
     "end": {
       "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_50",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_19" ], "x": 0, "y": 16 } ]
-        },
-        {
-          "om_terrain": "ranch_camp_59",
-          "place_item": [ { "item": "emergency_book", "x": 15, "y": 7 } ]
-        }
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_19" ], "x": 0, "y": 16 } ] },
+        { "om_terrain": "ranch_camp_59", "place_item": [ { "item": "emergency_book", "x": 15, "y": 7 } ] }
       ]
     }
   },
@@ -423,12 +403,7 @@
       "failure": "It was a lost cause anyways…"
     },
     "end": {
-      "update_mapgen": [
-        {
-          "om_terrain": "ranch_camp_59",
-          "place_item": [ { "item": "syringe", "x": 15, "y": 7, "amount": [ 4, 8 ] } ]
-        }
-      ]
+      "update_mapgen": [ { "om_terrain": "ranch_camp_59", "place_item": [ { "item": "syringe", "x": 15, "y": 7, "amount": [ 4, 8 ] } ] } ]
     }
   }
 ]
