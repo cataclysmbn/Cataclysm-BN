@@ -490,10 +490,7 @@
         },
         {
           "om_terrain": "ranch_camp_59",
-          "place_nested": [
-            { "chunks": [ "tacoma_commune_toolshed_8" ], "x": 13, "y": 17 },
-            { "chunks": [ "tacoma_commune_clinic_8" ], "x": 0, "y": 0 }
-          ]
+          "place_nested": [ { "chunks": [ "tacoma_commune_toolshed_8" ], "x": 13, "y": 17 } ]
         },
         {
           "om_terrain": "ranch_camp_65",
@@ -536,12 +533,10 @@
     },
     "end": {
       "update_mapgen": [
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_9" ], "x": 0, "y": 0 } ] },
         {
           "om_terrain": "ranch_camp_59",
-          "place_nested": [
-            { "chunks": [ "tacoma_commune_toolshed_9_done" ], "x": 13, "y": 17 },
-            { "chunks": [ "tacoma_commune_clinic_9" ], "x": 0, "y": 0 }
-          ]
+          "place_nested": [ { "chunks": [ "tacoma_commune_toolshed_9_done" ], "x": 13, "y": 17 } ]
         },
         {
           "om_terrain": "ranch_camp_68",
@@ -574,7 +569,7 @@
     },
     "end": {
       "update_mapgen": [
-        { "om_terrain": "ranch_camp_59", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_10" ], "x": 0, "y": 0 } ] },
+        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_10" ], "x": 0, "y": 0 } ] },
         {
           "om_terrain": "ranch_camp_60",
           "place_nested": [ { "chunks": [ "tacoma_commune_chopshop_10" ], "x": 0, "y": 4 } ]
@@ -606,7 +601,11 @@
     },
     "end": {
       "update_mapgen": [
-        { "om_terrain": "ranch_camp_59", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_11" ], "x": 0, "y": 0 } ] },
+        {
+          "om_terrain": "ranch_camp_50",
+          "//": "finish the clinic",
+          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_11" ], "x": 0, "y": 0 } ]
+        },
         {
           "om_terrain": "ranch_camp_60",
           "place_nested": [ { "chunks": [ "tacoma_commune_chopshop_11" ], "x": 0, "y": 4 } ]
