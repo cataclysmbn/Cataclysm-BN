@@ -119,9 +119,9 @@
     "end": {
       "update_mapgen": [
         {
-          "om_terrain": "ranch_camp_59",
-          "place_furniture": [ { "furn": "f_rack_wood", "x": 15, "y": 7 } ],
-          "place_item": [ { "item": "aspirin", "x": 15, "y": 7, "amount": 2 }, { "item": "bandages", "x": 15, "y": 7, "amount": [ 1, 3 ] } ]
+          "om_terrain": "ranch_camp_50",
+          "place_furniture": [ { "furn": "f_rack_wood", "x": 13, "y": 21 } ],
+          "place_item": [ { "item": "bandages", "x": 13, "y": 21, "amount": [ 1, 3 ] }, { "item": "aspirin", "x": 13, "y": 21, "amount": 2 } ]
         }
       ]
     }
@@ -151,8 +151,8 @@
     "end": {
       "update_mapgen": [
         {
-          "om_terrain": "ranch_camp_59",
-          "place_item": [ { "item": "hotplate", "x": 15, "y": 7, "amount": 3 }, { "item": "manual_first_aid", "x": 15, "y": 7 } ]
+          "om_terrain": "ranch_camp_50",
+          "place_item": [ { "item": "hotplate", "x": 13, "y": 21, "amount": 3 }, { "item": "manual_first_aid", "x": 13, "y": 21 } ]
         }
       ]
     }
@@ -180,14 +180,7 @@
       "failure": "It was a lost cause anyways…"
     },
     "end": {
-      "update_mapgen": [
-        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_12" ], "x": 0, "y": 16 } ] },
-        {
-          "om_terrain": "ranch_camp_59",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_13" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "vitamins", "x": 15, "y": 7, "amount": 2 } ]
-        }
-      ]
+      "update_mapgen": [ { "om_terrain": "ranch_camp_50", "place_item": [ { "item": "vitamins", "x": 13, "y": 21, "amount": 2 } ] } ]
     }
   },
   {
@@ -214,11 +207,10 @@
     },
     "end": {
       "update_mapgen": [
-        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_14" ], "x": 0, "y": 16 } ] },
         {
-          "om_terrain": "ranch_camp_59",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_15" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "char_purifier", "x": 15, "y": 7, "amount": [ 1, 3 ] } ]
+          "om_terrain": "ranch_camp_50",
+          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_12" ], "x": 0, "y": 0 } ],
+          "place_item": [ { "item": "char_purifier", "x": 13, "y": 21, "amount": [ 1, 3 ] } ]
         }
       ]
     }
@@ -246,11 +238,10 @@
     },
     "end": {
       "update_mapgen": [
-        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_16" ], "x": 0, "y": 16 } ] },
         {
-          "om_terrain": "ranch_camp_59",
-          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_17" ], "x": 0, "y": 0 } ],
-          "place_item": [ { "item": "chemistry_set", "x": 15, "y": 7 } ]
+          "om_terrain": "ranch_camp_50",
+          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_13" ], "x": 0, "y": 0 } ],
+          "place_item": [ { "item": "chemistry_set", "x": 13, "y": 21 } ]
         }
       ]
     }
@@ -280,13 +271,13 @@
     "end": {
       "update_mapgen": [
         {
-          "om_terrain": "ranch_camp_59",
+          "om_terrain": "ranch_camp_50",
           "place_furniture": [
-            { "furn": "f_rack_wood", "x": 15, "y": 0 },
-            { "furn": "f_rack_wood", "x": 15, "y": 1 },
-            { "furn": "f_rack_wood", "x": 15, "y": 2 }
+            { "furn": "f_rack_wood", "x": 16, "y": 12 },
+            { "furn": "f_rack_wood", "x": 16, "y": 13 },
+            { "furn": "f_rack_wood", "x": 16, "y": 14 }
           ],
-          "place_item": [ { "item": "mask_filter", "x": 15, "y": 7, "amount": [ 2, 6 ] } ]
+          "place_item": [ { "item": "mask_filter", "x": 13, "y": 21, "amount": [ 2, 6 ] } ]
         }
       ]
     }
@@ -316,9 +307,13 @@
     "end": {
       "update_mapgen": [
         {
-          "om_terrain": "ranch_camp_59",
-          "place_items": [ { "chance": 100, "item": "cleaning", "x": 15, "y": [ 0, 2 ], "repeat": [ 3, 9 ] } ],
-          "place_item": [ { "item": "gloves_rubber", "x": 15, "y": 7, "amount": [ 2, 3 ] } ]
+          "om_terrain": "ranch_camp_50",
+          "place_items": [
+            { "chance": 100, "item": "cleaning", "x": 16, "y": 12, "repeat": [ 1, 3 ] },
+            { "chance": 100, "item": "cleaning", "x": 16, "y": 13, "repeat": [ 1, 3 ] },
+            { "chance": 100, "item": "cleaning", "x": 16, "y": 14, "repeat": [ 1, 3 ] }
+          ],
+          "place_item": [ { "item": "gloves_rubber", "x": 13, "y": 21, "amount": [ 2, 3 ] } ]
         }
       ]
     }
@@ -347,8 +342,11 @@
     },
     "end": {
       "update_mapgen": [
-        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_18" ], "x": 0, "y": 16 } ] },
-        { "om_terrain": "ranch_camp_59", "place_item": [ { "item": "scalpel", "x": 15, "y": 7, "amount": 2 } ] }
+        {
+          "om_terrain": "ranch_camp_50",
+          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_14" ], "x": 0, "y": 0 } ],
+          "place_item": [ { "item": "scalpel", "x": 13, "y": 21, "amount": 2 } ]
+        }
       ]
     }
   },
@@ -375,8 +373,11 @@
     },
     "end": {
       "update_mapgen": [
-        { "om_terrain": "ranch_camp_50", "place_nested": [ { "chunks": [ "tacoma_commune_clinic_19" ], "x": 0, "y": 16 } ] },
-        { "om_terrain": "ranch_camp_59", "place_item": [ { "item": "emergency_book", "x": 15, "y": 7 } ] }
+        {
+          "om_terrain": "ranch_camp_50",
+          "place_nested": [ { "chunks": [ "tacoma_commune_clinic_15" ], "x": 0, "y": 0 } ],
+          "place_item": [ { "item": "emergency_book", "x": 13, "y": 21 } ]
+        }
       ]
     }
   },
@@ -403,7 +404,7 @@
       "failure": "It was a lost cause anyways…"
     },
     "end": {
-      "update_mapgen": [ { "om_terrain": "ranch_camp_59", "place_item": [ { "item": "syringe", "x": 15, "y": 7, "amount": [ 4, 8 ] } ] } ]
+      "update_mapgen": [ { "om_terrain": "ranch_camp_50", "place_item": [ { "item": "syringe", "x": 13, "y": 21, "amount": [ 4, 8 ] } ] } ]
     }
   }
 ]
