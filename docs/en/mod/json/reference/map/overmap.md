@@ -323,9 +323,10 @@ Depending on the subtype, there are further relevant fields:
 
 #### Further fields for fixed overmap specials
 
-| Identifier | Description                                                                            |
-| ---------- | -------------------------------------------------------------------------------------- |
-| `overmaps` | List of overmap terrains and their relative `[ x, y, z ]` location within the special. |
+| Identifier           | Description                                                                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `overmaps`           | List of overmap terrains and their relative `[ x, y, z ]` location within the special.                                                                                            |
+| `absolute_spawn_loc` | Object of `{ "x": 0, "y": 0, "do_absolute_spawn_loc": bool }` which define the absolute overmap this will spawn in. Do absolute spawn loc is optional and is for overwriting mods |
 
 #### Further fields for mutable overmap specials
 

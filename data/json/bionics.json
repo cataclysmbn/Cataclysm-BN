@@ -680,7 +680,7 @@
     "react_cost": "5 J",
     "time": 1,
     "points": 1,
-    "bio_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "flags": [ "INFRARED_VISION" ] } ]
   },
   {
     "id": "bio_int_enhancer",

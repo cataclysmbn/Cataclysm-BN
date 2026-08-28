@@ -391,6 +391,9 @@ struct mtype {
         int vision_day = 40;    /** vision range in bright light */
         int vision_night = 1;   /** vision range in total darkness */
 
+        // Clairvoyance
+        int clairvoyance = 0;
+
         damage_instance melee_damage; // Basic melee attack damage
         harvest_id harvest;
         float luminance;           // 0 is default, >0 gives luminance to lightmap

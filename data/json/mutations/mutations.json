@@ -214,7 +214,8 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL", "CHIMERA" ]
+    "category": [ "MEDICAL", "CHIMERA" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.33 } ] } ]
   },
   {
     "type": "mutation",
@@ -365,7 +366,8 @@
     "description": "You are less likely to throw up from food poisoning, alcohol, etc.  If you throw up despite this, you won't suffer any residual nausea.",
     "starting_trait": true,
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "WEAKSTOMACH" ]
+    "cancels": [ "WEAKSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -1242,7 +1244,8 @@
     "points": -1,
     "description": "You are more likely to throw up from food poisoning, alcohol, etc.",
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "STRONGSTOMACH" ]
+    "cancels": [ "STRONGSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -2930,7 +2933,8 @@
     "prereqs": [ "PAINRESIST" ],
     "prereqs2": [ "STOCKY_TROGLO" ],
     "threshreq": [ "THRESH_TROGLOBITE" ],
-    "category": [ "TROGLOBITE" ]
+    "category": [ "TROGLOBITE" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3475,7 +3479,16 @@
     "purifiable": false,
     "prereqs": [ "MASOCHIST_MED" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "PAIN_PENALTY_STR", "multiply": -1 },
+          { "value": "PAIN_PENALTY_DEX", "multiply": -1 },
+          { "value": "PAIN_PENALTY_SPD", "multiply": -0.5 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -3489,7 +3502,8 @@
     "prereqs2": [ "PAINREC1" ],
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.1 } ] } ]
   },
   {
     "type": "mutation",
@@ -3500,7 +3514,8 @@
     "starting_trait": true,
     "//": "The MORE_PAIN mutations will always increase the pain you receive by at least 1.",
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN2" ]
+    "changes_to": [ "MORE_PAIN2" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.25 } ] } ]
   },
   {
     "type": "mutation",
@@ -3510,7 +3525,8 @@
     "description": "Your body experiences pain out of proportion to the physical causes.  Pain dealt to you is increased by 50%.",
     "prereqs": [ "MORE_PAIN" ],
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN3" ]
+    "changes_to": [ "MORE_PAIN3" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3519,7 +3535,8 @@
     "points": -5,
     "description": "Your body reacts cripplingly to any source of pain.  Pain dealt to you is doubled.",
     "prereqs": [ "MORE_PAIN2" ],
-    "cancels": [ "PAINRESIST", "NOPAIN" ]
+    "cancels": [ "PAINRESIST", "NOPAIN" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -4230,7 +4247,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "armor": [ { "parts": "ALL", "bash": -3 } ]
+    "armor": [ { "parts": "ALL", "bash": -3 } ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_PENALTY_INT", "multiply": -0.8 } ] } ]
   },
   {
     "type": "mutation",
@@ -4809,7 +4827,8 @@
     "prereqs": [ "WEAKSTOMACH" ],
     "changes_to": [ "VOMITOUS" ],
     "category": [ "ALPHA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4819,7 +4838,8 @@
     "description": "You have a major digestive disorder.  Though it causes you to vomit frequently, you have found that you can trigger your vomit reflex on demand, too.",
     "prereqs": [ "NAUSEA" ],
     "category": [ "SLIME", "RAT", "MEDICAL", "ELFA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",

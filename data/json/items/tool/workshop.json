@@ -162,7 +162,7 @@
   },
   {
     "id": "chipper",
-    "type": "GENERIC",
+    "type": "TOOL",
     "category": "tools_workshop",
     "name": { "str": "paint chipper" },
     "description": "A tool similar to a chisel, designed to remove paint.",
@@ -175,6 +175,8 @@
     "material": [ "steel", "wood" ],
     "symbol": ";",
     "color": "brown",
+    "item_vars": { "PAINT_COLOR": "#00000000" },
+    "use_action": { "type": "paint_stuff", "charge_cost": 0 },
     "flags": [ "BELT_CLIP" ]
   },
   {

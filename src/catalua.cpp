@@ -756,6 +756,11 @@ auto run_hooks( std::string_view hook_name,
                 if( opts.exit_early ) {
                     break;
                 }
+            } else if( result.is<sol::table>() && opts.exit_early ) {
+                results = result.as<sol::table>();
+                if( !results.get_or( "allowed", true ) ) {
+                    break;
+                }
             }
         } catch( const std::runtime_error &e_err ) {
             debugmsg( "Failed to run hook %s[%d](%s): %s", hook_name, static_cast<int>( i ), e.mod_id.c_str(),

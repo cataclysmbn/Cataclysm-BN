@@ -276,7 +276,8 @@
     "copy-from": "generic_city_building_no_sidewalk",
     "name": "miniature railway",
     "sym": "R",
-    "color": "green"
+    "color": "green",
+    "spawns": { "group": "GROUP_SCHOOL", "population": [ 5, 7 ], "chance": 100 }
   },
   {
     "type": "overmap_terrain",
@@ -297,7 +298,8 @@
     "copy-from": "generic_city_building_no_sidewalk",
     "name": "luna park",
     "sym": "P",
-    "color": "light_green"
+    "color": "light_green",
+    "spawns": { "group": "GROUP_SCHOOL", "population": [ 5, 7 ], "chance": 100 }
   },
   {
     "type": "overmap_terrain",

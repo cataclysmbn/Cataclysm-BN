@@ -491,6 +491,11 @@ Final value cannot go below 0
 Stealth modifier value higher value increases stealth, lower value decreases it. `base_value` is the post mutation value
 Clamped between 20 and 160. With 160 being 60% more visible and 20 being 80% less visible
 
+##### MOTION_ALARM
+
+From how far away will you be notified of approaching creatures. `base_value` is always 0.
+This is a maxed value for tile range of notification.
+
 ##### BODYTEMP_X
 
 Modifier to bodytemp accepted ranges
@@ -568,6 +573,15 @@ Cannot go below 0
 Modifier to carryable weight. `base_value` is current storage in mililiters
 Cannot go below 0
 
+##### WEIGHTMOD
+
+Modifier to the current weight of the player. `base_value` is the respective weight of one of the categories listed below.
+Minimum is 0, maximum is uncapped
+
+| Set      | Values                                 | Use                                         |
+| -------- | -------------------------------------- | ------------------------------------------- |
+| Category | BIONICS, WEAPON, INVENTORY, BODY, WORN | What part of player weight it is applied to |
+
 ##### OVERMAP_SIGHT
 
 Modifier to overmap sight. `base_value` is the best mutation value.
@@ -578,10 +592,57 @@ Maximum is 3
 Modifier to focus. `base_value` is current focus
 There is no limit
 
+##### MELEE_HIT
+
+Modifier to melee hit rating. `base_value` is the value after all modifiers.
+There are no limits.
+
+##### OVERKILL
+
+Modifier to after death damage on a zombie. `base_value` is the current overkill damage
+Minimum value of 0.
+
 ##### FOOD_FUN
 
 Modifier to food morale. `base_value` is current food morale
 There is no limit.
+
+##### VOMIT_MOD
+
+Modifier to chance to vomit. `base_value` is always 1.
+Minimum value of 0.
+
+##### PAIN
+
+Modifier to shifts in pain. `base_value` is the pain mod.
+
+| Set  | Values     | Use                                           |
+| ---- | ---------- | --------------------------------------------- |
+| Type | GAIN, LOSS | Apply specifically to increases or decreases. |
+
+##### PAIN_MOD
+
+Modifier to current amount of pain, constant shift. `base_value` is current pain.
+Minimum value of 0
+
+##### CHRONIC_PAIN_MOD
+
+Modifier to pain from the `CHRONIC_PAIN` option. `base_value` is the chronic pain.
+Minimum value of 0 after being added to value after `PAIN_MOD`
+
+##### PERCEIVED_PAIN_MOD
+
+Modifier to percieved pain. `base_value` is current pain after `PAIN_MOD`.
+Minimum value of 0
+
+| Set  | Values                  | Use                                                                                 |
+| ---- | ----------------------- | ----------------------------------------------------------------------------------- |
+| Stat | SPD, STR, DEX, INT, PER | Apply only to speed, strength, dexterity, intellegence and perception respectively. |
+
+##### PAIN_PENALTY
+
+Affects the stat penalty from high amounts of pain. `base_value` is the current penalty.
+Maximum value of 0 ( no effect )
 
 ##### ADDICTION_STRENGTH
 
@@ -600,11 +661,25 @@ Modifier to how long addictions last. `base_value` is time to remove one addicti
 Reducing _increases_ addiction time, adding _reduces_ addiction time
 There is no limit.
 
+##### UNCANNY_DODGE
+
+0-1 chance to dodge bullets. `base_value` is 0.
+Each uncanny dodge takes 100 stamina.
+Any values below 0 or above 1 will have the same effect as at 0 and at 1 respectively
+
 ##### BONUS_DODGE
 
 Additional dodges per turn before dodge penalty kicks in. `base_value` here is character's base
 dodges per turn before penalty (usually 1). The final value can go below 0, which results in penalty
 to dodge roll.
+
+##### FORCEFIELD
+
+0-1 chance to block damage of a damage type. `base_value` is 0.
+
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
 
 ##### CROWD_CRUSH_RESIST
 
@@ -643,6 +718,15 @@ Only `max` works, and it will take the highest of enchantment, item and effect e
 Sight that passes through walls of grounded creatures in the form of infrared.
 Number of tiles it works on. Only `max` works.
 
+##### REACH_RANGE
+
+Value that adds reach to all melee attacks ( unarmed or armed ).
+`base_value` is always 0. Only `max` works
+
+| Set  | Values         | Use                                     |
+| ---- | -------------- | --------------------------------------- |
+| Type | UNARMED, ARMED | Apply only to armed or unarmed attacks. |
+
 ##### ARMOR_X
 
 Incoming damage modifier. Applied after Active Defense System bionic but before the damage is
@@ -679,6 +763,22 @@ Character wide encumbrance modifier, children modify certain bodyparts.
 | Set      | Values                                               | Use                         |
 | -------- | ---------------------------------------------------- | --------------------------- |
 | Bodypart | See general bodypart enchantments [here](#bodyparts) | Bodypart that it applies to |
+
+##### MELEE_DAMAGE
+
+Character wide melee damage modifier ( reach attacks included ), children modify only certain damage types.
+
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
+
+##### MELEE_ARMOR_PENETRATION
+
+Character wide melee armor penetration modifier. Children modify certain damage types.
+
+| Set         | Values                                                 | Use                            |
+| ----------- | ------------------------------------------------------ | ------------------------------ |
+| Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
 
 #### Item values
 
@@ -717,6 +817,10 @@ value, in addition to the global `ITEM_ARMOR`:
 | Set         | Values                                                 | Use                            |
 | ----------- | ------------------------------------------------------ | ------------------------------ |
 | Damage Type | See general damage type suffixes [here](#damage-types) | Damage Type that it applies to |
+
+##### ITEM_REACH_RANGE
+
+Modifier to item reach range, `max` value between this and any item flags.
 
 ## Enchantment Flag
 

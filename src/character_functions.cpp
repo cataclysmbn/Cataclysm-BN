@@ -30,6 +30,7 @@
 #include "submap.h"
 #include "trap.h"
 #include "flag_trait.h"
+#include "type_id.h"
 #include "uistate.h"
 #include "veh_type.h"
 #include "vehicle.h"
@@ -81,6 +82,8 @@ static const itype_id itype_UPS( "UPS" );
 static const skill_id skill_throw( "throw" );
 
 static const quality_id qual_SLEEP_AID( "SLEEP_AID" );
+
+static const enchantment_value_id ench_val_UNCANNY_DODGE( "UNCANNY_DODGE" );
 
 namespace character_funcs
 {
@@ -721,11 +724,23 @@ bool try_wield_contents( Character &who, item &container, item *internal_item, b
 
 bool try_uncanny_dodge( Character &who )
 {
-    const units::energy trigger_cost = bio_uncanny_dodge->power_trigger;
-    if( who.get_power_level() < trigger_cost || !who.has_active_bionic( bio_uncanny_dodge ) ) {
+    if( who.has_active_bionic( bio_uncanny_dodge ) ) {
+        const units::energy trigger_cost = bio_uncanny_dodge->power_trigger;
+        if( who.get_power_level() < trigger_cost ) {
+            return false;
+        }
+        who.mod_power_level( -trigger_cost );
+    } else if( who.get_stamina() > 100 ) {
+        float ench_chance = who.bonus_from_enchantments( 0.0, ench_val_UNCANNY_DODGE );
+        if( ench_chance < rng_float( 0.0, 1.0 ) ) {
+            return false;
+        }
+        // NOTE: Potential improvement, allow lua hook to burn resources
+        who.mod_stamina( -100 );
+    } else {
         return false;
     }
-    who.mod_power_level( -trigger_cost );
+
     bool is_u = who.is_avatar();
     bool seen = is_u || get_player_character().sees( who );
     // If successful, dodge for free. If we already burned bonus dodges this turn then get_dodge fails and we're overwhelmed.

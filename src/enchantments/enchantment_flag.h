@@ -35,4 +35,8 @@ public:
     std::set<enchantment_flag_id> conflicts = std::set<enchantment_flag_id>();
 
     std::set<enchantment_flag_id> parents = std::set<enchantment_flag_id>();
+
+    // Needed for bindings
+    bool operator==(const enchantment_flag& rhs) const { return id == rhs.id; }
+    bool operator<(const enchantment_flag& rhs) const { return id < rhs.id; }
 };

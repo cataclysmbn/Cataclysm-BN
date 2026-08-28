@@ -160,6 +160,8 @@ static const trait_id trait_LASER_GUIDED( "LASER_GUIDED" );
 static const trait_id trait_PYROMANIA( "PYROMANIA" );
 static const trait_id trait_NORANGEDCRIT( "NO_RANGED_CRIT" );
 
+static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNARMED" );
+
 // not to confuse with item flags (json_flag)
 static const std::string flag_SHOOT_ME( "SHOOT_ME" );
 
@@ -724,6 +726,18 @@ target_handler::trajectory target_handler::mode_reach( avatar &you, item &weapon
     return ui.run();
 }
 
+target_handler::trajectory target_handler::mode_unarmed_reach( avatar &you )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::Reach;
+    ui.relevant = item::spawn_temporary( itype_id( "fake_hands" ) );
+    ui.range = 1 + you.bonus_from_enchantments( 1, ench_val_REACH_RANGE_UNARMED );
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
 target_handler::trajectory target_handler::mode_turret_manual( avatar &you, turret_data &turret )
 {
     target_ui ui = target_ui();
@@ -1242,7 +1256,7 @@ static int calc_gun_volume( const item &gun )
     int speed = parent.gun_speed( am_dat );
     bool suppressed = false;
     if( am_dat ) {
-        noise = parent.ammo_data()->ammo->loudness;
+        noise = gun.ammo_data()->ammo->loudness;
         // Speed of sound at sea level is around 343 meters per second.
         // While it would be ideal to be based on speed of sound
         // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs

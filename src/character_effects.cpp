@@ -15,6 +15,7 @@
 #include "skill.h"
 #include "submap.h"
 #include "trap.h"
+#include "type_id.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -33,6 +34,12 @@ static const efftype_id effect_drunk( "drunk" );
 static const efftype_id effect_nausea( "nausea" );
 static const efftype_id effect_weed_high( "weed_high" );
 
+static const enchantment_value_id ench_val_PAIN_PENALTY_STR( "PAIN_PENALTY_STR" );
+static const enchantment_value_id ench_val_PAIN_PENALTY_DEX( "PAIN_PENALTY_DEX" );
+static const enchantment_value_id ench_val_PAIN_PENALTY_INT( "PAIN_PENALTY_INT" );
+static const enchantment_value_id ench_val_PAIN_PENALTY_PER( "PAIN_PENALTY_PER" );
+static const enchantment_value_id ench_val_PAIN_PENALTY_SPD( "PAIN_PENALTY_SPD" );
+static const enchantment_value_id ench_val_VOMIT_MOD( "VOMIT_MOD" );
 
 namespace character_effects
 {
@@ -47,25 +54,22 @@ stat_mod get_pain_penalty( const Character &ch )
 
     int stat_penalty = std::floor( std::pow( pain, 0.8f ) / 10.0f );
 
-    bool ceno = ch.has_trait( trait_CENOBITE );
-    if( !ceno ) {
-        ret.strength = stat_penalty;
-        ret.dexterity = stat_penalty;
-    }
-
-    if( !ch.has_trait( trait_INT_SLIME ) ) {
-        ret.intelligence = stat_penalty;
-    } else {
-        ret.intelligence = pain / 5;
-    }
-
-    ret.perception = stat_penalty * 2 / 3;
-
     ret.speed = std::pow( pain, 0.7f );
-    if( ceno ) {
-        ret.speed /= 2;
-    }
 
+    bool ceno = ch.has_trait( trait_CENOBITE );
+    ret.strength = stat_penalty + ch.bonus_from_enchantments( stat_penalty, ench_val_PAIN_PENALTY_STR );
+    ret.dexterity = stat_penalty + ch.bonus_from_enchantments( stat_penalty,
+                    ench_val_PAIN_PENALTY_DEX );
+    ret.intelligence = stat_penalty + ch.bonus_from_enchantments( stat_penalty,
+                       ench_val_PAIN_PENALTY_INT );
+    ret.perception = stat_penalty + ch.bonus_from_enchantments( stat_penalty,
+                     ench_val_PAIN_PENALTY_PER );
+    ret.speed += ch.bonus_from_enchantments( ret.speed, ench_val_PAIN_PENALTY_SPD );
+
+    ret.strength = std::max( ret.strength, 0 );
+    ret.dexterity = std::max( ret.dexterity, 0 );
+    ret.intelligence = std::max( ret.intelligence, 0 );
+    ret.perception = std::max( ret.perception, 0 );
     ret.speed = std::min( ret.speed, 30 );
     return ret;
 }
@@ -117,27 +121,13 @@ int calc_morale_fatigue_cap( int fatigue )
 double vomit_mod( const Character &ch )
 {
     double mod = 1;
-    if( ch.has_effect( effect_weed_high ) ) {
-        mod *= .1;
-    }
-    if( ch.has_trait( trait_STRONGSTOMACH ) ) {
-        mod *= .5;
-    }
-    if( ch.has_trait( trait_WEAKSTOMACH ) ) {
-        mod *= 2;
-    }
-    if( ch.has_trait( trait_NAUSEA ) ) {
-        mod *= 3;
-    }
-    if( ch.has_trait( trait_VOMITOUS ) ) {
-        mod *= 3;
-    }
+    mod += ch.bonus_from_enchantments( mod, ench_val_VOMIT_MOD );
     // If you're already nauseous, any food in your stomach greatly
     // increases chance of vomiting. Water doesn't provoke vomiting, though.
     if( ch.stomach.get_calories() > 0 && ch.has_effect( effect_nausea ) ) {
         mod *= 5 * ch.get_effect_int( effect_nausea );
     }
-    return mod;
+    return std::max( 0.0, mod );
 }
 
 int talk_skill( const Character &ch )

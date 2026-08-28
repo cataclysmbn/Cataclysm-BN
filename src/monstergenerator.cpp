@@ -826,6 +826,8 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     assign( jo, "vision_day", vision_day, strict, 0 );
     assign( jo, "vision_night", vision_night, strict, 0 );
+    optional( jo, was_loaded, "clairvoyance", clairvoyance, 0 );
+
     optional( jo, was_loaded, "preferred_z", preferred_z );
 
     optional( jo, was_loaded, "regenerates", regenerates, 0 );

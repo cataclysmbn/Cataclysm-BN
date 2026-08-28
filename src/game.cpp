@@ -361,6 +361,7 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id dashing_effect( "dashing" );
 
+static const enchantment_value_id ench_val_MOTION_ALARM( "MOTION_ALARM" );
 namespace
 {
 
@@ -6441,12 +6442,22 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
     const auto check_bio_alarm = [&]( const monster & critter ) {
-        if( !critter.is_dead() &&
-            u.has_active_bionic( bio_alarm ) &&
-            u.get_power_level() >= bio_alarm->power_trigger &&
-            rl_dist( u.bub_pos(), critter.bub_pos() ) <= 5 &&
-            !critter.is_hallucination() ) {
-            u.mod_power_level( -bio_alarm->power_trigger );
+        bool do_alarm = false;
+        if( !critter.is_dead() && !critter.is_hallucination() ) {
+            if( u.has_active_bionic( bio_alarm ) &&
+                u.get_power_level() >= bio_alarm->power_trigger &&
+                rl_dist( u.bub_pos(), critter.bub_pos() ) <= 5 ) {
+                u.mod_power_level( -bio_alarm->power_trigger );
+                do_alarm = true;
+            } else {
+                int ench_range = u.bonus_from_enchantments( 0.0, ench_val_MOTION_ALARM );
+                if( ench_range >= 1 &&
+                    rl_dist( u.bub_pos(), critter.bub_pos() ) <= ench_range ) {
+                    do_alarm = true;
+                }
+            }
+        }
+        if( do_alarm ) {
             add_msg( m_warning, _( "Your motion alarm goes off!" ) );
             cancel_activity_or_ignore_query( distraction_type::alert,
                                              _( "Your motion alarm goes off!" ) );

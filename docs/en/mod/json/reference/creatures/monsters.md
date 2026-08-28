@@ -366,6 +366,12 @@ Monster protection from bashing, cutting, stabbing, acid, fire, cold and electri
 
 Vision range in full daylight and in total darkness.
 
+## "clairvoyance"
+
+(integer, optional)
+
+Clairvoyance vision range
+
 ## "luminance"
 
 (integer, optional)

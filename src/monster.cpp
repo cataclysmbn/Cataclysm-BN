@@ -21,6 +21,7 @@
 #include "catalua_sol.h"
 #include "character.h"
 #include "coordinates.h"
+#include "creature.h"
 #include "creature_tracker.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -77,6 +78,7 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "weather.h"
 #include "profile.h"
 #include "units_utility.h"
@@ -1392,6 +1394,30 @@ bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) co
 bool monster::has_flag( const m_flag f ) const
 {
     return type->has_flag( f ) || monster_flags.contains( f );
+}
+
+bool monster::sees( const Creature &ch ) const
+{
+    if( type->clairvoyance > 0 ) {
+        const int wanted_range = rl_dist( bub_pos(), ch.bub_pos() );
+        // Clairvoyance is now pretty cheap, so we can check it early
+        if( wanted_range < type->clairvoyance ) {
+            return true;
+        }
+    }
+    return Creature::sees( ch );
+}
+bool monster::sees( const tripoint_bub_ms &t, bool is_player, int range_mod ) const
+{
+    if( type->clairvoyance > 0 ) {
+        const int wanted_range = rl_dist( bub_pos(), t );
+
+        // Clairvoyance is now pretty cheap, so we can check it early
+        if( wanted_range < type->clairvoyance ) {
+            return true;
+        }
+    }
+    return Creature::sees( t, is_player, range_mod );
 }
 
 bool monster::can_see() const
@@ -3403,6 +3429,7 @@ void monster::die( Creature *nkiller )
         // *only* set to true in this function!
         return;
     }
+
     // We were carrying a creature, deposit the rider
     if( has_effect( effect_ridden ) && mounted_player ) {
         mounted_player->forced_dismount();

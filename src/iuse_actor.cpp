@@ -7795,8 +7795,12 @@ auto iuse_paint_stuff_do_paint( player &who, item &it,
             }
 
             if( painter.set_color( thing, n_col.value(), layer ) ) {
-                who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
-                                       target_color.friendly_name() );
+                if( target_color == RGBColor{} ) {
+                    who.add_msg_if_player( m_info, _( "You strip the paint from the %s." ), painter.describe( thing ) );
+                } else {
+                    who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
+                                           target_color.friendly_name() );
+                }
                 charges_used += iter_cost;
                 who.moves -= to_turns<int>( 30_seconds );
             }
@@ -8482,7 +8486,7 @@ void iuse_paint_stuff_config::set_color( item &it )
 ret_val<bool> iuse_paint_stuff::can_use( const Character &, const item &it, bool,
         const tripoint_bub_ms & ) const
 {
-    if( it.ammo_remaining() < 1 ) {
+    if( it.ammo_remaining() < charge_cost ) {
         return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ), it.tname() );
     }
 

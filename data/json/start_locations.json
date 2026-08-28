@@ -286,7 +286,8 @@
     "id": "sloc_hub_01",
     "name": "Hub 01",
     "terrain": [ "robofachq_surface_parking" ],
-    "flags": [ "ALLOW_OUTSIDE" ]
+    "flags": [ "ALLOW_OUTSIDE" ],
+    "absolute_place_location": { "x": 0, "y": 0 }
   },
   {
     "type": "start_location",

@@ -1,3 +1,4 @@
+#include "cached_options.h"
 #include "catalua_bindings.h"
 #include "catalua_coord.h"
 #include "catalua_bindings_utils.h"
@@ -14,6 +15,7 @@
 #include "avatar.h"
 #include "creature_tracker.h"
 #include "distribution_grid.h"
+#include "init.h"
 #include "game.h"
 #include "iexamine.h"
 #include "lightmap.h"
@@ -23,6 +25,7 @@
 #include "npc.h"
 #include "monster.h"
 #include "overmapbuffer.h"
+#include "sol/forward.hpp"
 #include "weather.h"
 #include "line.h"
 #include "lua_action_menu.h"
@@ -276,6 +279,28 @@ void cata::detail::reg_game_api( sol::state &lua )
 
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
+
+    DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
+    luna::set_fx( lib, "inv_map_splice", []( sol::table opts ) -> item* {
+        auto title = opts.get<std::string>( "title" );
+        auto failure = opts.get<std::string>( "failure" );
+        auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
+        auto fn = opts.get<sol::protected_function>( "check" );
+        auto &state = *DynamicDataLoader::get_instance().lua.get();
+        return g->inv_map_splice( [&]( const item & e )
+        {
+            auto params = state.lua.create_table();
+            params["item"] = &e;
+            sol::protected_function_result res = fn( params );
+
+            check_func_result( res );
+            if( res.get_type() != sol::type::boolean ) {
+                debugmsg( "Expected boolean result in `inv_map_splice` lua callback. Defaulting to false" );
+                return false;
+            }
+            return res.get<bool>();
+        }, title, radius, failure );
+    } );
 
     reg_game_api_creature_queries( lib );
     reg_game_api_world_helpers( lib );
