@@ -65,9 +65,12 @@
     "id": "magic_crafting",
     "type": "item_group",
     "items": [
+      [ "silver_glyph", 5 ],
+      [ "scroll_blank", 5 ],
       [ "holy_symbol", 5 ],
       [ "pot", 5 ],
       [ "bowl_clay", 15 ],
+      [ "retort_copper", 5 ],
       [ "candle", 10 ],
       [ "matches", 15 ],
       { "item": "copper", "prob": 5, "charges": [ 25, 100 ] },

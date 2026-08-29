@@ -1,5 +1,10 @@
 [
   {
+    "type": "profession_item_substitutions",
+    "trait": "ARCANA_DRAGONCLAWS",
+    "sub": [ { "item": "gloves_leather", "new": [ "gloves_fingerless" ] } ]
+  },
+  {
     "type": "item_group",
     "subtype": "collection",
     "//": "Arcanist professions start with a relevant essence holding the equivalent of two essence per profession point cost, minus any loaded into their primary weapon if any.",
@@ -160,7 +165,8 @@
           "gloves_fingerless",
           "mbag",
           "matches",
-          "chemistry_set_basic",
+          "pot",
+          "retort_copper",
           "strength_potion",
           "chem_ethanol",
           "bottle_glass",
@@ -573,7 +579,7 @@
       "bio_tools",
       "bio_batteries",
       "bio_infolink",
-      "bio_life_sign_suppression",
+      "bio_essence_surge_cell",
       "bio_power_storage_mkII"
     ],
     "skills": [

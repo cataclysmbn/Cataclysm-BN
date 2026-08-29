@@ -1179,7 +1179,7 @@
     "id": "transmutation_crucible",
     "type": "TOOL",
     "name": { "str": "transmutation crucible" },
-    "description": "A small container made out of a polished, glassy material resembling stone.  A shimmer of precious metal occasionally appears within the surface, as though its internal structure flowed like liquid.  Deploying it will create a temporary workspace of shifting earth, providing a hard surface usable as an anvil as well as shifting stones that can assist in metalworking and alchemy.  It can be examined afterward to reclaim it.\n\nWhen deployed it provides the following:\n* Level 3 anvil quality.\n* Level 2 boiling quality.\n* Level 2 chemical making quality.\n* Level 1 containing quality.\n* Level 1 hot containing quality.\n* Level 1 food cooking quality.",
+    "description": "A small container made out of a polished, glassy material resembling stone.  A shimmer of precious metal occasionally appears within the surface, as though its internal structure flowed like liquid.  Deploying it will create a temporary workspace of shifting earth, providing a hard surface usable as an anvil as well as shifting stones that can assist in metalworking and alchemy.  It can be examined afterward to reclaim it.\n\nWhen deployed it provides the following:\n* Level 3 anvil quality.\n* Level 2 boiling quality.\n* Level 2 chemical making quality.\n* Level 1 containing quality.\n* Level 1 hot containing quality.\n* Level 1 food cooking quality.\n* Level 1 distilling quality.",
     "weight": "1700 g",
     "volume": "1500 ml",
     "price": "6000 USD",
@@ -1198,7 +1198,7 @@
     "type": "TOOL",
     "copy-from": "fake_item",
     "name": { "str": "deployed transmutation crucible" },
-    "qualities": [ [ "ANVIL", 3 ], [ "COOK", 1 ], [ "CHEM", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 1 ] ]
+    "qualities": [ [ "ANVIL", 3 ], [ "COOK", 1 ], [ "CHEM", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 1 ], [ "DISTILL", 1 ] ]
   },
   {
     "id": "dimensional_warp_trap",
