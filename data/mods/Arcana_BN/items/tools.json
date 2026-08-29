@@ -1198,7 +1198,15 @@
     "type": "TOOL",
     "copy-from": "fake_item",
     "name": { "str": "deployed transmutation crucible" },
-    "qualities": [ [ "ANVIL", 3 ], [ "COOK", 1 ], [ "CHEM", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 1 ], [ "DISTILL", 1 ] ]
+    "qualities": [
+      [ "ANVIL", 3 ],
+      [ "COOK", 1 ],
+      [ "CHEM", 2 ],
+      [ "BOIL", 2 ],
+      [ "CONTAIN", 1 ],
+      [ "CONTAIN_HOT", 1 ],
+      [ "DISTILL", 1 ]
+    ]
   },
   {
     "id": "dimensional_warp_trap",
