@@ -137,7 +137,7 @@
     "copy-from": "survivor_holdout",
     "add_professions": true,
     "extend": {
-      "allowed_locs": [ "hermit_house" ],
+      "allowed_locs": [ "hermit_house", "sloc_rural_church" ],
       "professions": [
         "arcanist_alchemist",
         "arcanist_scribe",
