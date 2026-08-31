@@ -1912,6 +1912,7 @@
     "city_distance": [ 20, -1 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 80, 100 ],
+    "absolute_spawn_loc": { "x": 0, "y": 0 },
     "flags": [ "CLASSIC", "WILDERNESS", "UNIQUE", "ELECTRIC_GRID" ]
   },
   {
