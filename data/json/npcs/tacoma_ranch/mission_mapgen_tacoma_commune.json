@@ -982,16 +982,17 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_toolshed_8",
     "object": {
-      "mapgensize": [ 6, 6 ],
+      "mapgensize": [ 8, 7 ],
       "rows": [
-        "wwwwww",
-        "w....w",
-        ".....w",
-        "w....w",
-        "wwwwww",
-        "      "
+        "        ",
+        " wwwwww ",
+        " w....w ",
+        " f....[ ",
+        " w....w ",
+        " wwwwww ",
+        "        "
       ],
-      "terrain": { "w": "t_wall_half", ".": "t_dirtfloor" }
+      "terrain": { ".": "t_region_soil", "w": "t_wall_half", "f": "t_door_frame", "[": "t_window_empty" }
     }
   },
   {
@@ -999,16 +1000,17 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_toolshed_9_done",
     "object": {
-      "mapgensize": [ 6, 6 ],
+      "mapgensize": [ 8, 7 ],
       "rows": [
-        "wwwwww",
-        "wccccw",
-        "+....W",
-        "wccccw",
-        "wwwwww",
-        "      "
+        "        ",
+        " wwwwww ",
+        " wccccw ",
+        " +....[ ",
+        " wccccw ",
+        " wwwwww ",
+        "        "
       ],
-      "terrain": { "w": "t_wall", "+": "t_door_c", "W": "t_window_boarded_noglass", "c": "t_dirtfloor", ".": "t_dirtfloor" },
+      "terrain": { ".": "t_dirtfloor", "c": "t_dirtfloor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" },
       "furniture": { "c": "f_counter" }
     }
   }
