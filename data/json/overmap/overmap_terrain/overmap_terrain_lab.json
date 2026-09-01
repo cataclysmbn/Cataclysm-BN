@@ -224,7 +224,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [ "central_lab_shaft_bottom", "central_lab_subway_entrance" ],
+    "id": [ "central_lab_shaft_bottom", "secured_subway_entrance" ],
     "name": "central lab",
     "sym": "L",
     "color": "blue",
