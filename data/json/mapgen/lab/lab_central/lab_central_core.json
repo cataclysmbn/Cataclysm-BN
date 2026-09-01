@@ -85,8 +85,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "//": "ID specifically to prevent some lab tiles that're adjacent to it from trying to create improper connections",
-    "om_terrain": [ "secured_subway_entrance" ],
+    "om_terrain": [ "central_lab_subway_entrance" ],
     "object": {
       "fill_ter": "t_thconc_floor",
       "rows": [

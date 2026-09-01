@@ -332,7 +332,7 @@
       { "point": [ 2, 4, -4 ], "overmap": "central_lab_core" },
       { "point": [ 3, 4, -4 ], "overmap": "central_lab_core" },
       { "point": [ -1, 5, -4 ], "overmap": "central_lab_core" },
-      { "point": [ 0, 5, -4 ], "overmap": "secured_subway_entrance_south" },
+      { "point": [ 0, 5, -4 ], "overmap": "central_lab_subway_entrance_south" },
       { "point": [ 1, 5, -4 ], "overmap": "central_lab_core" },
       { "point": [ 0, 6, -4 ], "overmap": "central_lab_train_depot" },
       { "point": [ -2, -2, -5 ], "overmap": "central_lab_down_corner_west" },
