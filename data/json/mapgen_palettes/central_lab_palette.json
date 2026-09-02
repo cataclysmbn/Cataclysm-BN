@@ -1,0 +1,63 @@
+[
+  {
+    "type": "palette",
+    "id": "central_lab_palette",
+    "terrain": {
+      "|": "t_wall_metal",
+      "-": "t_rock",
+      ".": "t_metal_floor",
+      "!": "t_floor_red",
+      "/": "t_floor_red",
+      "+": "t_door_metal_lab_c",
+      "=": "t_door_metal_locked",
+      ">": "t_stairs_down",
+      "<": "t_stairs_up",
+      "6": "t_console_broken",
+      "7": "t_card_science",
+      "A": "t_wall_metal",
+      "G": "t_grate",
+      "I": "t_column",
+      "R": "t_concrete_railing",
+      "u": [ "t_metal_floor", "t_metal_floor_olight" ],
+      "W": "t_ballistic_glass"
+    },
+    "furniture": {
+      "#": "f_sandbag_half",
+      "9": "f_control_station",
+      "A": "f_metal_cold_vent",
+      "B": "f_bed",
+      "b": "f_bench",
+      "c": "f_counter",
+      "d": "f_desk",
+      "e": "f_table",
+      "F": "f_filing_cabinet",
+      "f": "f_glass_fridge",
+      "g": "f_counter_gate_c",
+      "H": "f_fume_hood",
+      "h": "f_chair",
+      "L": "f_locker",
+      "p": [ "f_indoor_plant", "f_indoor_plant_y" ],
+      "r": "f_rack",
+      "S": "f_server",
+      "s": "f_sink",
+      "t": "f_trashcan",
+      "V": "f_vending_c",
+      "v": "f_vending_c",
+      "Y": "f_eyewash"
+    },
+    "toilets": { "T": {  } },
+    "nested": {
+      "?": { "chunks": [ [ "null", 25 ], [ "central_lab_ammo_rack_1x1", 75 ] ] },
+      "C": { "chunks": [ "null", "central_lab_crate_1x1" ] }
+    },
+    "items": {
+      "d": { "item": "office", "chance": 50, "repeat": 4 },
+      "F": { "item": "file_room", "chance": 75, "repeat": 6 },
+      "f": [ { "item": "supplies_reagents_lab", "chance": 50, "repeat": 2 }, { "item": "supplies_samples_lab", "chance": 75 } ],
+      "H": [ { "item": "chem_lab", "chance": 25, "repeat": 2 }, { "item": "tools_science", "chance": 25 } ],
+      "t": { "item": "trash_cart", "chance": 25, "repeat": 3 },
+      "V": { "item": "vending_food", "chance": 80 },
+      "v": { "item": "vending_drink", "chance": 80 }
+    }
+  }
+]

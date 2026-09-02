@@ -32,7 +32,8 @@
         "                        ",
         "                        "
       ],
-      "terrain": { ".": "t_thconc_floor", ">": "t_stairs_down", "<": "t_stairs_up", "|": "t_concrete_wall" }
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { ".": "t_thconc_floor", "|": "t_concrete_wall" }
     }
   },
   {
@@ -67,17 +68,8 @@
         "         |....|         ",
         "|||||||||||++|||||||||||"
       ],
-      "terrain": {
-        "!": "t_floor_red",
-        "/": "t_floor_red",
-        ".": "t_thconc_floor",
-        "+": "t_door_metal_interior_locked",
-        "=": "t_door_metal_locked",
-        "<": "t_stairs_up",
-        "|": "t_concrete_wall",
-        "7": "t_card_science",
-        "u": [ "t_thconc_floor", "t_thconc_floor_olight" ]
-      },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "+": "t_door_metal_interior_locked", ".": "t_thconc_floor", "|": "t_concrete_wall" },
       "monster": { "u": { "monster": "mon_turret_antimateriel" } },
       "signs": { "/": { "signage": "Warning!\nLive Fire Zone\nAvoid In Case of Lockdown!" } }
     }
@@ -114,21 +106,9 @@
         "    |....=....=....|    ",
         "|||||||||||..|||||||||||"
       ],
-      "terrain": {
-        " ": "t_rock",
-        "!": "t_floor_red",
-        "/": "t_floor_red",
-        ".": "t_thconc_floor",
-        "+": "t_door_metal_lab_c",
-        "=": "t_door_metal_locked",
-        "<": "t_stairs_up",
-        "|": "t_concrete_wall",
-        "7": "t_card_science",
-        "u": [ "t_thconc_floor", "t_thconc_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": { "b": "f_bench", "d": "f_desk", "h": "f_chair", "L": "f_locker" },
-      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "L": { "item": "gear_labsecurity", "chance": 50, "repeat": 2 } },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { " ": "t_rock", ".": "t_thconc_floor", "|": "t_concrete_wall" },
+      "items": { "L": { "item": "gear_labsecurity", "chance": 50, "repeat": 2 } },
       "monster": { "u": { "monster": "mon_turret_antimateriel" } },
       "signs": { "/": { "signage": "Warning!\nLive Fire Zone\nAvoid In Case of Lockdown!" } }
     }
@@ -165,7 +145,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         {
           "chunks": [
@@ -218,7 +198,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         {
           "chunks": [
@@ -270,7 +250,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         {
           "chunks": [
@@ -321,7 +301,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "<": "t_stairs_up", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
@@ -362,16 +342,8 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": {
-        "_": "t_concrete_wall",
-        "|": "t_wall_metal",
-        "-": "t_rock",
-        "=": "t_door_metal_locked",
-        "7": "t_card_science",
-        "!": "t_floor_red",
-        ">": "t_stairs_down",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
-      },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "_": "t_concrete_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
@@ -412,7 +384,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "<": "t_stairs_up", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
@@ -452,7 +424,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", ">": "t_stairs_down", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
@@ -493,7 +465,7 @@
         "-|||||||||    |||||||||-",
         "---------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", ">": "t_stairs_down", "u": [ "t_metal_floor", "t_metal_floor_olight" ] },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
@@ -512,47 +484,37 @@
         "A|                    |A",
         "    GGGGGGGGGGGGGGGG    ",
         "    GGGGGGGGGGGGGGGG    ",
-        "  GGGGT2277777722TGGGG  ",
-        "  GGGGt2233113322tGGGG  ",
-        "  GGTt|AA|S44S|AA|tTGG  ",
+        "  GGGG722999999227GGGG  ",
+        "  GGGG822331133228GGGG  ",
+        "  GG78|AA|S44S|AA|87GG  ",
         "  GG22A--|S44S|--A22GG  ",
         "  GG22A--|SPPS|--A22GG  ",
-        "  GG73|||||AA|||||37GG  ",
-        "  GG73SSS|----|SSS37GG  ",
-        "  GG7144PA----AP4417GG  ",
-        "  GG7144PA----AP4417GG  ",
-        "  GG73SSS|----|SSS37GG  ",
-        "  GG73|||||AA|||||37GG  ",
+        "  GG93|||||AA|||||39GG  ",
+        "  GG93SSS|----|SSS39GG  ",
+        "  GG9144PA----AP4419GG  ",
+        "  GG9144PA----AP4419GG  ",
+        "  GG93SSS|----|SSS39GG  ",
+        "  GG93|||||AA|||||39GG  ",
         "  GG22A--|SPPS|--A22GG  ",
         "  GG22A--|S44S|--A22GG  ",
-        "  GGTt|AA|S44S|AA|tTGG  ",
-        "  GGGGt2233113322tGGGG  ",
-        "  GGGGT2277^^7722TGGGG  ",
+        "  GG78|AA|S44S|AA|87GG  ",
+        "  GGGG822331133228GGGG  ",
+        "  GGGG72299^^99227GGGG  ",
         "    GGGGGGGGGGGGGGGG    ",
         "    GGGGGGGGGGGGGGGG    ",
         "A|                    |A",
         "-A                    A-"
       ],
+      "palettes": [ "central_lab_palette" ],
       "terrain": {
-        "|": "t_wall_metal",
-        "-": "t_rock",
         "1": "t_machinery_light",
         "2": "t_machinery_heavy",
         "3": "t_machinery_electronic",
-        "4": "t_metal_floor",
-        "A": "t_wall_metal",
-        "G": "t_grate",
         "P": "t_plut_generator",
-        "T": "t_radio_tower",
-        "t": "t_radio_controls"
+        "7": "t_radio_tower",
+        "8": "t_radio_controls"
       },
-      "furniture": {
-        "^": "f_supercomputer",
-        "5": "f_electrical_conduit",
-        "7": "f_control_station",
-        "A": "f_metal_cold_vent",
-        "S": "f_server"
-      },
+      "furniture": { "^": "f_supercomputer", "4": "f_electrical_conduit" },
       "place_monster": [ { "group": "GROUP_LAB_ROBOTS", "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 1, 3 ] } ]
     }
   },
@@ -567,29 +529,28 @@
         "                        ",
         "                        ",
         "                        ",
-        "  SS  SS  7777  SS  SS  ",
+        "  SS  SS  9999  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
-        "  SS  SS  7777  SS  SS  ",
+        "  SS  SS  9999  SS  SS  ",
         "                        ",
         "                        ",
-        "  SS  SS  7777  SS  SS  ",
+        "  SS  SS  9999  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
         "  SS  SS  S||S  SS  SS  ",
-        "  SS  SS  7777  SS  SS  ",
+        "  SS  SS  9999  SS  SS  ",
         "                        ",
         "                        ",
         "A|                    |A",
         "-A                    A-"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "A": "t_wall_metal" },
-      "furniture": { "7": "f_control_station", "A": "f_metal_cold_vent", "S": "f_server" },
+      "palettes": [ "central_lab_palette" ],
       "place_monster": [ { "group": "GROUP_LAB_ROBOTS", "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 1, 3 ] } ]
     }
   },
@@ -606,13 +567,13 @@
         "                        ",
         "                        ",
         "||WWWWWWWWWWWWWWWWWWWW||",
-        "|u 777777777777777777 u|",
+        "|u 999999999999999999 u|",
         "W   h h h h  h h h h   W",
         "W6h                  h6W",
-        "W6   77777    77777   6W",
+        "W6   99999    99999   6W",
         "W6h   h h      h h   h6W",
         "W6                    6W",
-        "W    77777    77777    W",
+        "W    99999    99999    W",
         "|     h h      h h     |",
         "+                      +",
         "+                      +",
@@ -625,22 +586,7 @@
         "W     hh        hh     W",
         "|                      |"
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "A": "t_wall_metal",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": {
-        "6": "f_console_broken_table",
-        "7": "f_control_station",
-        "A": "f_metal_cold_vent",
-        "e": "f_table",
-        "F": "f_filing_cabinet",
-        "h": "f_chair"
-      }
+      "palettes": [ "central_lab_palette" ]
     }
   },
   {
@@ -659,38 +605,35 @@
         "                        ",
         "                        ",
         "     bb          bb     ",
-        "     bb T 7777 T bb     ",
+        "     bb I 9999 I bb     ",
         "          |AA|          ",
         "        GGA--AGG        ",
         "        GGA--AGG        ",
         "         E|AA|E         ",
         "         E 88 E         ",
-        "         ST88TS         ",
+        "         2I88I2         ",
         "                        ",
-        "    h  T  T             ",
-        "    s                   ",
-        "    T  {  h             ",
-        "    {  B  S             ",
-        "    B  T  T             ",
-        "A|  T                   ",
+        "    1  I  I             ",
+        "    3                   ",
+        "    I  {  1             ",
+        "    {  4  2             ",
+        "    4  I  I             ",
+        "A|  I                   ",
         "-A                      "
       ],
+      "palettes": [ "central_lab_palette" ],
       "terrain": {
-        "|": "t_wall_metal",
-        "-": "t_rock",
         "{": "t_current_trans",
         "8": "t_potential_trans",
-        "9": "t_potential_trans",
-        "A": "t_wall_metal",
-        "B": "t_oil_circ_brkr_l",
         "E": "t_machinery_electronic",
         "G": "t_generator_broken",
-        "h": "t_station_disc",
-        "S": "t_switchgear_l",
-        "s": "t_switchgear_s",
-        "T": "t_support_l"
+        "1": "t_station_disc",
+        "2": "t_switchgear_l",
+        "3": "t_switchgear_s",
+        "4": "t_oil_circ_brkr_l",
+        "I": "t_support_l"
       },
-      "furniture": { "7": "f_control_station", "A": "f_metal_cold_vent", "b": "f_battery_huge" },
+      "furniture": { "b": "f_battery_huge" },
       "place_monster": [ { "group": "GROUP_LAB_ROBOTS", "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 1, 3 ] } ]
     }
   },
@@ -726,15 +669,7 @@
         "-||WWWWWWW|++|WWWWWWW||-",
         "A|                    |A"
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "A": "t_wall_metal",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": { "A": "f_metal_cold_vent" },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 2 },
         { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 15 }
@@ -773,7 +708,7 @@
         "-|||||||||    |||||||||-",
         "|--------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "+": "t_door_metal_lab_c" },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 2, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 2 },
@@ -816,16 +751,7 @@
         "-||WWWWWWW|++|WWWWWWW||-",
         "A|                    |A"
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        ">": "t_stairs_down",
-        "A": "t_wall_metal",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": { "A": "f_metal_cold_vent" },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 2 },
         { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 15 }
@@ -864,16 +790,8 @@
         "-|  ddddddd  ddddddd  |-",
         "||                    ||"
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "A": "t_wall_metal",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": { "A": "f_metal_cold_vent", "d": "f_desk", "h": "f_chair" },
-      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "e": { "item": "lab_bookshelves", "chance": 25, "repeat": 2 } },
+      "palettes": [ "central_lab_palette" ],
+      "items": { "d": { "item": "lab_bookshelves", "chance": 25, "repeat": 2 } },
       "place_nested": [ { "chunks": [ "central_lab_melchior_mini_room_20x7" ], "x": 2, "y": 2 } ]
     }
   },
@@ -909,7 +827,7 @@
         "-|||||||||    |||||||||-",
         "|--------|    |---------"
       ],
-      "terrain": { "|": "t_wall_metal", "-": "t_rock", "<": "t_stairs_up", "+": "t_door_metal_lab_c" },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
         { "chunks": [ [ "null", 25 ], [ "central_lab_locked_s_4x4", 75 ] ], "x": 10, "y": 20 },
@@ -949,7 +867,7 @@
         "                        ",
         "========================"
       ],
-      "terrain": { "|": "t_wall_metal", "=": "t_strconc_wall", "-": "t_rock", "+": "t_door_metal_lab_c" },
+      "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_14x14" ], "x": 5, "y": 2 },
         { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 0, "y": 2 },
@@ -985,7 +903,7 @@
         "+    +            +    +",
         "=    =    u  u    =    =",
         "===========++===========",
-        "=  7777777u  u7777777  =",
+        "=  9999999u  u9999999  =",
         "=   h h h      h h h   =",
         "=                      =",
         "=                      =",
@@ -995,14 +913,8 @@
         "=                      =",
         "=   h h h      h h h   ="
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "=": "t_strconc_wall",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
-      },
-      "furniture": { "7": "f_control_station", "h": "f_chair", "S": "f_server" },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
@@ -1041,7 +953,7 @@
         "+    +     <<     +    +",
         "=    =u          u=    =",
         "===========++===========",
-        "=  7777777u  u7777777  =",
+        "=  9999999u  u9999999  =",
         "=   h h h      h h h   =",
         "=                      =",
         "=                      =",
@@ -1051,15 +963,8 @@
         "=                      =",
         "=   h h h      h h h   ="
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "=": "t_strconc_wall",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "<": "t_stairs_up",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
-      },
-      "furniture": { "7": "f_control_station", "h": "f_chair", "S": "f_server" },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
@@ -1108,16 +1013,8 @@
         "=                      =",
         "==========    =========="
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "=": "t_strconc_wall",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "6": "t_console_broken",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ]
-      },
-      "furniture": { "h": "f_chair" },
-      "nested": { "C": { "chunks": [ "null", "central_lab_crate_1x1" ] } },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
@@ -1166,16 +1063,9 @@
         "=       d=    =       |-",
         "===++======++=========|-"
       ],
-      "terrain": {
-        "|": "t_wall_metal",
-        "=": "t_strconc_wall",
-        "-": "t_rock",
-        "+": "t_door_metal_lab_c",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": { "c": "f_counter", "d": "f_desk", "e": "f_table", "g": "f_counter_gate_c", "h": "f_chair" },
-      "items": { "d": { "item": "office", "chance": 50, "repeat": 4 }, "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
+      "items": { "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 2 },
@@ -1206,7 +1096,7 @@
     "object": {
       "fill_ter": "t_open_air_rooved",
       "rows": [
-        "|__7777777u__u7777777__|",
+        "|__9999999u__u9999999__|",
         "||WWWWWWWWWWWWWWWWWWWW||",
         "                        ",
         "                        ",
@@ -1231,14 +1121,8 @@
         "                        ",
         "                        "
       ],
-      "terrain": {
-        "|": "t_strconc_wall",
-        "_": "t_metal_floor",
-        "7": "t_metal_floor",
-        "u": [ "t_metal_floor", "t_metal_floor_olight" ],
-        "W": "t_ballistic_glass"
-      },
-      "furniture": { "7": "f_control_station" }
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "|": "t_strconc_wall", "_": "t_metal_floor", " ": "t_open_air_rooved" }
     }
   },
   {
@@ -1257,14 +1141,14 @@
         "                      |-",
         "                      |-",
         "        RRRRRR        |-",
-        "        R7777R        |-",
+        "        R9999R        |-",
         "      RRIhGGhIRR      |-",
-        "      R7hGGGGh7R      |-",
-        "      R7GG>>GG7R      |-",
-        "      R7GG>>GG7R      |-",
-        "      R7hGGGGh7R      |-",
+        "      R9hGGGGh9R      |-",
+        "      R9GG>>GG9R      |-",
+        "      R9GG>>GG9R      |-",
+        "      R9hGGGGh9R      |-",
         "      RRIhGGhIRR      |-",
-        "        R7777R        |-",
+        "        R9999R        |-",
         "        RRRRRR        |-",
         "                      |-",
         "                      |-",
@@ -1273,17 +1157,8 @@
         "                      |-",
         "                      |-"
       ],
-      "terrain": {
-        "|": "t_strconc_wall",
-        "-": "t_wall_metal",
-        ">": "t_ladder_down",
-        "7": "t_grate",
-        "G": "t_grate",
-        "h": "t_grate",
-        "I": "t_column",
-        "R": "t_concrete_railing"
-      },
-      "furniture": { "7": "f_control_station", "h": "f_chair" }
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "|": "t_strconc_wall", "-": "t_wall_metal", ">": "t_ladder_down", "9": "t_grate", "G": "t_grate", "h": "t_grate" }
     }
   },
   {
@@ -1318,7 +1193,8 @@
         "=                     |-",
         "===++======++=========|-"
       ],
-      "terrain": { "|": "t_wall_metal", "=": "t_strconc_wall", "-": "t_rock", "+": "t_door_metal_lab_c", ">": "t_stairs_down" },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [ { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 } ]
     }
   },
@@ -1354,7 +1230,8 @@
         "=                     |-",
         "===++======++=========|-"
       ],
-      "terrain": { "|": "t_wall_metal", "=": "t_strconc_wall", "-": "t_rock", "+": "t_door_metal_lab_c", "<": "t_stairs_up" },
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [ { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 } ]
     }
   },
@@ -1367,7 +1244,7 @@
       "rows": [
         "---------||==7|---------",
         "||||||||||    ||||||||||",
-        "66666666        66666666",
+        "99999999        99999999",
         "  h  h            h  h  ",
         "                        ",
         "                        ",
@@ -1386,19 +1263,17 @@
         "                        ",
         "                        ",
         "    h  h        h  h    ",
-        "  66666666    66666666  ",
+        "  99999999    99999999  ",
         "GGGGGGGGGGGGGGGGGGGGGGGG",
         "GGGGGGGGGGGGGGGGGGGGGGGG"
       ],
+      "palettes": [ "central_lab_palette" ],
       "terrain": {
         " ": [ [ "t_metal_floor_no_roof", 90 ], [ "t_platform_resin", 8 ], [ "t_lava", 2 ] ],
         "|": "t_strconc_wall",
-        "-": "t_wall_metal",
-        "=": "t_door_metal_locked",
-        "7": "t_card_science",
-        "G": "t_grate"
+        "-": "t_wall_metal"
       },
-      "furniture": { "6": "f_console_broken_table", "h": "f_chair" },
+      "furniture": { "9": "f_console_broken_table" },
       "place_monster": [ { "group": "GROUP_ENDGAME_FINALE", "x": [ 1, 22 ], "y": [ 4, 22 ], "repeat": [ 3, 6 ] } ]
     }
   },
@@ -1434,16 +1309,14 @@
         "                      |-",
         "                      |-"
       ],
+      "palettes": [ "central_lab_palette" ],
       "terrain": {
         " ": [ [ "t_metal_floor_no_roof", 90 ], [ "t_platform_resin", 8 ], [ "t_lava", 2 ] ],
         "|": "t_strconc_wall",
         "-": "t_wall_metal",
         "<": "t_ladder_up",
-        "I": "t_column",
-        "R": "t_concrete_railing",
         "S": "t_metal_floor_no_roof"
       },
-      "furniture": { "S": "f_server" },
       "place_monster": [ { "group": "GROUP_ENDGAME_FINALE", "x": [ 4, 22 ], "y": [ 1, 20 ], "repeat": [ 3, 6 ] } ]
     }
   }
