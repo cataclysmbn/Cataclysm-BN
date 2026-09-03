@@ -101,7 +101,9 @@ auto compatible_reload_ammo( const avatar &you, const monster &z,
 {
     auto ammo_options = std::vector<monster_ammo_option> {};
     for( const auto &compatible_ammo_id : z.ammo_slot_items( ammo_id ) ) {
-        const auto available_ammo = you.charges_of( compatible_ammo_id );
+        const auto available_ammo = compatible_ammo_id->count_by_charges()
+                                    ? you.charges_of( compatible_ammo_id )
+                                    : you.amount_of( compatible_ammo_id );
         if( available_ammo <= 0 ) {
             continue;
         }
@@ -337,7 +339,11 @@ auto reload_monster_weapons( avatar &you, monster &z ) -> void
 
     const auto reload_amount = std::min( reload_option_iter->missing_ammo, selected_ammo_iter->amount );
     z.ammo[selected_ammo] += reload_amount;
-    you.use_charges( selected_ammo, reload_amount );
+    if( selected_ammo->count_by_charges() ) {
+        you.use_charges( selected_ammo, reload_amount );
+    } else {
+        you.use_amount( selected_ammo, reload_amount );
+    }
     add_msg( vgettext( "You load %1$d x %2$s round into the %3$s.",
                        "You load %1$d x %2$s rounds into the %3$s.", reload_amount ),
              reload_amount, selected_ammo->nname( reload_amount ), z.get_name() );
