@@ -381,14 +381,36 @@ auto unload_monster_weapons( avatar &you, monster &z ) -> void
         return;
     }
 
-    auto unloaded_ammo = item::spawn( selected_ammo, calendar::turn, loaded_ammo_iter->amount );
-    unloaded_ammo = you.i_add_or_drop( std::move( unloaded_ammo ) );
-    if( unloaded_ammo ) {
-        add_msg( m_info, _( "You can't unload the %s right now." ), z.get_name() );
-        return;
+    auto unloaded_amount = 0;
+    if( selected_ammo->count_by_charges() ) {
+        auto unloaded_ammo = item::spawn( selected_ammo, calendar::turn, loaded_ammo_iter->amount );
+        unloaded_ammo = you.i_add_or_drop( std::move( unloaded_ammo ) );
+        if( unloaded_ammo ) {
+            add_msg( m_info, _( "You can't unload the %s right now." ), z.get_name() );
+            return;
+        }
+        unloaded_amount = loaded_ammo_iter->amount;
+    } else {
+        for( auto i = 0; i < loaded_ammo_iter->amount; ++i ) {
+            auto unloaded_ammo = item::spawn( selected_ammo, calendar::turn, item::solitary_tag() );
+            unloaded_ammo = you.i_add_or_drop( std::move( unloaded_ammo ) );
+            if( unloaded_ammo ) {
+                add_msg( m_info, _( "You can't unload the %s right now." ), z.get_name() );
+                break;
+            }
+            ++unloaded_amount;
+        }
     }
 
-    z.ammo.erase( selected_ammo );
+    if( unloaded_amount > 0 ) {
+        z.ammo[selected_ammo] -= unloaded_amount;
+        if( z.ammo[selected_ammo] <= 0 ) {
+            z.ammo.erase( selected_ammo );
+        }
+    }
+    if( unloaded_amount != loaded_ammo_iter->amount ) {
+        return;
+    }
     add_msg( vgettext( "You unload %1$d x %2$s round from the %3$s.",
                        "You unload %1$d x %2$s rounds from the %3$s.", loaded_ammo_iter->amount ),
              loaded_ammo_iter->amount, selected_ammo->nname( loaded_ammo_iter->amount ),
