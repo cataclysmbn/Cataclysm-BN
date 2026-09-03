@@ -1506,7 +1506,9 @@ void monexamine::deactivate_pet( monster &z )
     if( !z.has_flag( MF_INTERIOR_AMMO ) ) {
         for( auto &ammodef : z.ammo ) {
             if( ammodef.second > 0 ) {
-                here.spawn_item( z.bub_pos(), ammodef.first, 1, ammodef.second, calendar::turn );
+                const bool count_by_charges = item::spawn_temporary( ammodef.first )->count_by_charges();
+                here.spawn_item( z.bub_pos(), ammodef.first, count_by_charges ? 1 : ammodef.second,
+                                 count_by_charges ? ammodef.second : 0, calendar::turn );
             }
         }
     }
