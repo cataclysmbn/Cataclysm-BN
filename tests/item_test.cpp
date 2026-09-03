@@ -40,8 +40,8 @@ TEST_CASE("item_volume", "[item]") {
 }
 
 TEST_CASE("solitary_item_has_no_charges", "[item]") {
-    const item &grenade = *item::spawn_temporary(
-        "grenade", calendar::start_of_cataclysm, item::solitary_tag());
+    const item& grenade =
+        *item::spawn_temporary("grenade", calendar::start_of_cataclysm, item::solitary_tag());
 
     REQUIRE_FALSE(grenade.count_by_charges());
     CHECK(grenade.charges == 0);
