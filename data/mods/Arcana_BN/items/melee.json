@@ -10,7 +10,7 @@
   {
     "id": "silver_glyph",
     "type": "GENERIC",
-    "category": "other",
+    "category": "arcane_components",
     "name": { "str": "silver glyph" },
     "description": "A silver emblem resembling a 16-pointed star in a circle.  You feel as though it could be a powerful arcane device, but there is no magic in it.  Yet.",
     "weight": "285 g",
@@ -26,7 +26,7 @@
   {
     "id": "scroll_blank",
     "type": "GENERIC",
-    "category": "other",
+    "category": "arcane_components",
     "name": { "str": "blank scroll" },
     "description": "A simple sheet of paper, with wooden rollers to support it.  You feel as if it was meant to have ancient, eldritch text written on it.  But sadly, it's blank.",
     "weight": "415 g",
@@ -42,7 +42,7 @@
   {
     "type": "GENERIC",
     "id": "graboid_fang",
-    "category": "other",
+    "category": "arcane_components",
     "weapon_category": [ "KNIVES" ],
     "//": "Obtained from graboids, rarely from dark wyrms.",
     "name": { "str": "crystalline fang" },
@@ -62,7 +62,7 @@
   {
     "type": "GENERIC",
     "id": "inflorescent_root",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": ",",
     "looks_like": "biollante_bud",
     "color": "magenta",
@@ -76,7 +76,7 @@
   {
     "type": "GENERIC",
     "id": "triffid_queen_flower",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": ",",
     "looks_like": "poppy_bud",
     "color": "red",
@@ -90,7 +90,7 @@
   {
     "type": "GENERIC",
     "id": "iron_thorn",
-    "category": "other",
+    "category": "arcane_components",
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "iron thorn" },
     "description": "A curved, seven-inch spike resembling some sort of thorn or talon, with an otherworldly metallic shimmer to it.  Makes a mediocre melee weapon, or could be made into a trophy of some sort.",
@@ -108,7 +108,7 @@
   {
     "type": "GENERIC",
     "id": "dermatik_sting",
-    "category": "other",
+    "category": "arcane_components",
     "weapon_category": [ "KNIVES" ],
     "//": "ID retained for compatibility reasons",
     "name": { "str": "barbed stinger" },
@@ -128,7 +128,7 @@
   {
     "type": "GENERIC",
     "id": "vortex_shard",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "color": "magenta",
     "//": "Obtained from vortices, rarely flying polyps.",
@@ -143,7 +143,7 @@
   {
     "type": "GENERIC",
     "id": "blob_gem",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "color": "dark_gray",
     "//": "Obtained from breather hubs, amoebic molds, and brain blobs.  Rarely from large blobs and shoggoths.",
@@ -158,7 +158,7 @@
   {
     "type": "GENERIC",
     "id": "monster_tear",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "color": "blue",
     "name": { "str": "crystallized tear" },
@@ -173,7 +173,7 @@
   {
     "type": "GENERIC",
     "id": "shadow_gem",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "color": "dark_gray",
     "//": "Obtained from wraiths.  Rarely from shadows and shadow snakes.",
@@ -188,7 +188,7 @@
   {
     "type": "GENERIC",
     "id": "bone_twisted",
-    "category": "other",
+    "category": "arcane_components",
     "weapon_category": [ "KNIVES" ],
     "name": { "str_sp": "twisted bones" },
     "weight": "225 g",
@@ -207,7 +207,7 @@
   {
     "type": "GENERIC",
     "id": "gracken_knuckles",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "looks_like": "bone_human",
     "color": "white",
@@ -224,7 +224,7 @@
     "type": "GENERIC",
     "id": "wyrmskin_piece",
     "//": "ID retained for compatibility reasons.",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": ",",
     "looks_like": "chitin_piece",
     "color": "blue",
@@ -241,7 +241,7 @@
   {
     "type": "GENERIC",
     "id": "monster_fang",
-    "category": "other",
+    "category": "arcane_components",
     "weapon_category": [ "KNIVES" ],
     "//": "Obtained from hunting horrors, flying polyps.  Rarely from krecks.",
     "name": { "str": "monstrous fang" },
@@ -260,7 +260,7 @@
   {
     "type": "GENERIC",
     "id": "iridescent_plate",
-    "category": "other",
+    "category": "arcane_components",
     "//": "Obtained from yuggs.  Rarely from mi-gos, human snails.",
     "symbol": ",",
     "looks_like": "chitin_piece",
@@ -277,7 +277,7 @@
   {
     "type": "GENERIC",
     "id": "engraved_stone",
-    "category": "other",
+    "category": "arcane_components",
     "//": "Obtained from shoggoths.  More rarely from amigara horrors, flesh angels, homunculi.",
     "symbol": ",",
     "looks_like": "spiral_stone",
@@ -292,7 +292,7 @@
   {
     "type": "GENERIC",
     "id": "draconic_heart",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "color": "red",
     "name": { "str": "petrified heart" },
@@ -328,7 +328,7 @@
   {
     "type": "GENERIC",
     "id": "arcana_strange_crystal",
-    "category": "other",
+    "category": "arcane_components",
     "symbol": "*",
     "color": "dark_gray",
     "name": { "str": "strange crystalline talisman" },
@@ -402,7 +402,7 @@
     "symbol": ",",
     "material": [ "superalloy", "essencemat" ],
     "volume": "5 L",
-    "category": "other",
+    "category": "arcane_components",
     "flags": [ "NO_SALVAGE", "TRADER_AVOID", "MISSION_ITEM" ]
   },
   {
