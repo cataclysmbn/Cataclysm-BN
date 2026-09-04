@@ -188,18 +188,31 @@ static void InitSDL()
 
 static bool SetupRenderTarget()
 {
+    fprintf( stderr, "DBG: SetupRenderTarget entry\n" );
     SetRenderDrawBlendMode( renderer, SDL_BLENDMODE_NONE );
-    display_buffer.reset( SDL_CreateTexture( renderer.get(), SDL_PIXELFORMAT_ARGB8888,
+    fprintf( stderr, "DBG: SetupRenderTarget — before CreateTexture, fmt=%d\n",
+             sdl_color_pixel_format );
+    display_buffer.reset( SDL_CreateTexture( renderer.get(), sdl_color_pixel_format,
                           SDL_TEXTUREACCESS_TARGET, WindowWidth / scaling_factor, WindowHeight / scaling_factor ) );
+    fprintf( stderr, "DBG: SetupRenderTarget — after CreateTexture, ptr=%p\n",
+             ( void * )display_buffer.get() );
     SDL_SetTextureScaleMode( display_buffer.get(), SDL_SCALEMODE_NEAREST );
+    fprintf( stderr, "DBG: SetupRenderTarget — after ScaleMode\n" );
+    SDL_SetTextureBlendMode( display_buffer.get(), SDL_BLENDMODE_NONE );
+    fprintf( stderr, "DBG: SetupRenderTarget — after BlendMode\n" );
     if( printErrorIf( !display_buffer, "Failed to create window buffer" ) ) {
+        fprintf( stderr, "DBG: SetupRenderTarget — FAILED display_buffer null\n" );
         return false;
     }
+    fprintf( stderr, "DBG: SetupRenderTarget — before SetRenderTarget\n" );
     if( printErrorIf( !SDL_SetRenderTarget( renderer.get(), display_buffer.get() ),
                       "SDL_SetRenderTarget failed" ) ) {
+        fprintf( stderr, "DBG: SetupRenderTarget — FAILED SetRenderTarget\n" );
         return false;
     }
+    fprintf( stderr, "DBG: SetupRenderTarget — before ClearScreen\n" );
     ClearScreen();
+    fprintf( stderr, "DBG: SetupRenderTarget — exit OK\n" );
 
     return true;
 }
@@ -315,19 +328,24 @@ static void WinCreate()
 #endif
 
     if( !software_renderer ) {
+        fprintf( stderr, "DBG: WinCreate — accelerated renderer path\n" );
         dbg( DL::Info ) << "Attempting to initialize accelerated SDL renderer.";
 
         const char *renderer_driver = renderer_id >= 0 ? SDL_GetRenderDriver( renderer_id ) : nullptr;
         renderer.reset( SDL_CreateRenderer( ::window.get(), renderer_driver ) );
         if( printErrorIf( !renderer,
                           "Failed to initialize accelerated renderer, falling back to software rendering" ) ) {
+            fprintf( stderr, "DBG: WinCreate — accelerated renderer FAILED\n" );
             software_renderer = true;
         } else {
+            fprintf( stderr, "DBG: WinCreate — accelerated renderer OK: %s\n",
+                     SDL_GetRendererName( renderer.get() ) );
             dbg( DL::Info ) << "Initialized SDL with Renderer: " << SDL_GetRendererName( renderer.get() );
             if( get_option<bool>( "VSYNC" ) ) {
                 SDL_SetRenderVSync( renderer.get(), 1 );
             }
             if( !SetupRenderTarget() ) {
+                fprintf( stderr, "DBG: WinCreate — SetupRenderTarget FAILED (accelerated)\n" );
                 dbg( DL::Error ) << "Failed to initialize display buffer under accelerated rendering, "
                                  "falling back to software rendering.";
                 software_renderer = true;
@@ -338,10 +356,13 @@ static void WinCreate()
     }
 
     if( software_renderer ) {
+        fprintf( stderr, "DBG: WinCreate — software renderer path\n" );
         renderer.reset( SDL_CreateRenderer( ::window.get(), "software" ) );
         throwErrorIf( !renderer, "Failed to initialize software renderer" );
+        fprintf( stderr, "DBG: WinCreate — software renderer OK\n" );
         throwErrorIf( !SetupRenderTarget(),
                       "Failed to initialize display buffer under software rendering, unable to continue." );
+        fprintf( stderr, "DBG: WinCreate — software SetupRenderTarget OK\n" );
     }
 
     SDL_SetWindowMinimumSize( ::window.get(), fontwidth * FULL_SCREEN_WIDTH * scaling_factor,
@@ -501,6 +522,7 @@ SDL_FRect get_android_render_rect( float DisplayBufferWidth, float DisplayBuffer
 
 void refresh_display()
 {
+    fprintf( stderr, "DBG: refresh_display entry\n" );
     needupdate = false;
     lastupdate = SDL_GetTicks();
 
@@ -526,6 +548,7 @@ void refresh_display()
 #endif
     SDL_RenderPresent( renderer.get() );
     SetRenderTarget( renderer, display_buffer );
+    fprintf( stderr, "DBG: refresh_display exit\n" );
 }
 
 // only update if the set interval has elapsed
@@ -850,9 +873,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     get_window_tile_counts( width, height, s.x, s.y );
 
     op = point( dest.x * fontwidth, dest.y * fontheight );
-    // Rounding up to include incomplete tiles at the bottom/right edges
-    screentile_width = divide_round_up( width, tile_width );
-    screentile_height = divide_round_up( height, tile_height );
+    screentile_width = s.x;
+    screentile_height = s.y;
 
     const int min_col = 0;
     const int max_col = s.x;
@@ -3770,14 +3792,18 @@ static void init_term_size_and_scaling_factor()
 //Basic Init, create the font, backbuffer, etc
 void catacurses::init_interface()
 {
+    fprintf( stderr, "DBG: init_interface entry\n" );
     last_input = input_event();
     inputdelay = -1;
 
+    fprintf( stderr, "DBG: init_interface — before InitSDL\n" );
     InitSDL();
+    fprintf( stderr, "DBG: init_interface — after InitSDL\n" );
 
     get_options().init();
     get_options().load();
     get_options().save();
+    fprintf( stderr, "DBG: init_interface — after options load\n" );
 
     font_loader fl;
     fl.load();
@@ -3795,13 +3821,18 @@ void catacurses::init_interface()
     ::fontheight = fl.fontheight;
 
     init_term_size_and_scaling_factor();
+    fprintf( stderr, "DBG: init_interface — before WinCreate\n" );
 
     WinCreate();
+    fprintf( stderr, "DBG: init_interface — after WinCreate\n" );
 
     dbg( DL::Info ) << "Initializing SDL Tiles context";
+    fprintf( stderr, "DBG: init_interface — before tilecontext creation\n" );
     tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
+    fprintf( stderr, "DBG: init_interface — after tilecontext creation\n" );
     const auto tilesName = get_option<std::string>( "TILES" );
     const auto omTilesName = get_option<std::string>( "OVERMAP_TILES" );
+    fprintf( stderr, "DBG: init_interface — before load_tileset\n" );
     try {
         std::vector<mod_id> dummy;
         tilecontext->load_tileset(
