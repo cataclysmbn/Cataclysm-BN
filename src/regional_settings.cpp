@@ -742,13 +742,13 @@ void load_region_settings( const JsonObject &jo )
         load_isolated_city_settings( jo.get_object( "isolated_city" ), new_region.isolated_city );
     }
 
-    if( !jo.has_object( "weather" ) ) {
+    auto base_weather = base_weather_id();
+    if( !jo.read( "base_weather", base_weather ) ) {
         if( strict ) {
-            jo.throw_error( "\"weather\": { … } required for default" );
+            jo.throw_error( "\"base_weather\" required for default" );
         }
     } else {
-        JsonObject wjo = jo.get_object( "weather" );
-        new_region.weather = weather_generator::load( wjo );
+        new_region.weather = base_weathers::get( base_weather );
     }
 
     // Unclear if required. C++ uninitialized values now concern me.
