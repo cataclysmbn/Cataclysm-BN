@@ -1168,7 +1168,14 @@ All object defined use actions support the following two types.
 "use_action": {
     "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
     "color_swap": true          // Allow the color to be swapped to any other named color
-}
+},
+"use_action": {
+    "type": "fluid_pickup",     // Pick up liquids from the ground or vehicle cargo
+    "max_volume": "1 L",        // Maximum volume of liquid that can be picked up per activation (default: 250 ml)
+    "moves": 150,               // Move cost for the action (default: 100)
+    "charges_to_use": 1,        // Optional, charges consumed from the tool per use (default: 0)
+    "retention_rate": 0.8       // Optional, fraction of liquid retained after pickup (default: 1.0, discarded is destroyed)
+},
 ```
 
 ### Random Descriptions

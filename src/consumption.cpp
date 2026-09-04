@@ -666,11 +666,6 @@ ret_val<edible_rating> Character::can_eat( const item &food ) const
         return ret_val<edible_rating>::make_failure( _( "That doesn't look edible in its current form." ) );
     }
 
-    if( food.has_own_flag( flag_DIRTY ) ) {
-        return ret_val<edible_rating>::make_failure(
-                   _( "This is full of dirt after being on the ground." ) );
-    }
-
     const bool eat_verb  = food.has_flag( flag_USE_EAT_VERB );
     const bool edible    = eat_verb ||  comest->comesttype == comesttype_FOOD;
     const bool drinkable = !eat_verb && comest->comesttype == comesttype_DRINK;
