@@ -4627,7 +4627,7 @@
       { "level": 6, "name": "rifle" },
       { "level": 3, "name": "pistol" },
       { "level": 4, "name": "survival" },
-      { "level": 7, "name": "cutting" },
+      { "level": 7, "name": "unarmed" },
       { "level": 7, "name": "melee" },
       { "level": 7, "name": "dodge" },
       { "level": 3, "name": "firstaid" },
