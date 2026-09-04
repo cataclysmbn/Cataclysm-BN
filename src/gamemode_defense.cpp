@@ -34,7 +34,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "popup.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"

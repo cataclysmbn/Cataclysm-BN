@@ -12,7 +12,7 @@
 #include "language.h"
 #include "mod_manager.h"
 #include "path_info.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 

@@ -13,7 +13,7 @@
 #include "coordinates.h"
 #include "game_constants.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 
 
 // A struct defining abilities of the actor and how to respond to various terrain features

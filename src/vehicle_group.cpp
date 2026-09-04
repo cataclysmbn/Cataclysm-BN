@@ -12,7 +12,7 @@
 #include "memory_fast.h"
 #include "options.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 #include "units_angle.h"
 #include "vehicle.h"

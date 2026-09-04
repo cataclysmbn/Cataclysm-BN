@@ -68,7 +68,7 @@
 #include "pldata.h"
 #include "ranged.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "sounds.h"
 #include "string_formatter.h"

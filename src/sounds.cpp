@@ -47,7 +47,7 @@
 #include "player.h"
 #include "player_activity.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "safemode_ui.h"
 #include "string_formatter.h"
 #include "string_id.h"

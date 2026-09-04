@@ -7,7 +7,7 @@
 #include "map_iterator.h"
 #include "projectile.h"
 #include "ranged.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "shape.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
