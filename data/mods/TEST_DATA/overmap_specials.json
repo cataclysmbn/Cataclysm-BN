@@ -95,5 +95,27 @@
     },
     "root": "crater_all",
     "phases": [ [ { "overmap": "crater_all", "max": { "poisson": 5 } } ], [ { "overmap": "crater_edge", "weight": 1 } ] ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "test_exact_origin",
+    "locations": [ "land" ],
+    "overmap_origin": [ 10, 20, 0 ],
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "field" } ],
+    "city_distance": [ 0, -1 ],
+    "occurrences": [ 0, 1 ],
+    "flags": [ "CLASSIC" ],
+    "rotate": false
+  },
+  {
+    "type": "overmap_special",
+    "id": "test_origin_range",
+    "locations": [ "land" ],
+    "overmap_origin": { "from": [ 30, 40, 0 ], "to": [ 32, 41, 0 ] },
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "field" } ],
+    "city_distance": [ 0, -1 ],
+    "occurrences": [ 0, 1 ],
+    "flags": [ "CLASSIC" ],
+    "rotate": false
   }
 ]
