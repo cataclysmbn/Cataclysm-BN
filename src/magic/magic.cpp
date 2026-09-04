@@ -149,6 +149,8 @@ template <> std::string enum_to_string<spell_flag>(spell_flag data) {
             return "MOD_MELEE_MOVES";
         case spell_flag::MOD_MELEE_STAM:
             return "MOD_MELEE_STAM";
+        case spell_flag::DAMAGE_TERRAIN:
+            return "DAMAGE_TERRAIN";
         case spell_flag::LAST:
             break;
     }
@@ -820,6 +822,35 @@ void spell::use_components(Character& who) const {
 }
 
 int spell::get_difficulty() const { return type->difficulty; }
+
+int spell::terrain_damage(const int base_damage) const {
+    switch (dmg_type()) {
+        case DT_BASH:
+        case DT_BULLET:
+            return base_damage; // Bash and ballistic are very good at damaging terrain
+        case DT_CUT:
+        case DT_STAB:
+            return std::floor(base_damage * 0.8); // Cut and Stab are fairly good at damaging
+                                                  // terrain
+        case DT_HEAT:
+        case DT_COLD:
+        case DT_ACID:
+            return std::floor(base_damage * 0.75); // Some elemental damage types are okay at
+                                                   // damaging terrain
+        case DT_LIGHT:
+        case DT_DARK:
+        case DT_ELECTRIC:
+            return std::floor(base_damage * 0.5); // Some elemental damage types are bad at damaging
+                                                  // terrain
+        case DT_PSI:
+        case DT_BIOLOGICAL:
+            return std::floor(base_damage * 0.1); // Terrain is generally not biological nor does it
+                                                  // have a brain to be psionically attacked
+        default:
+            return base_damage; // We don't know how we want to handle this damage type, let's just
+                                // assume it's good at damaging terrain
+    }
+}
 
 int spell::casting_time(const Character& guy) const {
     // casting time in moves
@@ -1982,6 +2013,7 @@ static std::string enumerate_spell_data(const spell& sp) {
     if (sp.has_flag(spell_flag::DIVIDE_DAMAGE)) {
         spell_data.emplace_back(_("divides damage evenly among its targets"));
     }
+    if (sp.has_flag(spell_flag::DAMAGE_TERRAIN)) { spell_data.emplace_back(_("damages terrain")); }
     if (!sp.type->melee_dam.empty()) {
         std::string damage_names;
         // I don't like unsigned int here but otherwise compiler complains about comparing signed
