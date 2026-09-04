@@ -38,6 +38,7 @@
 #include "debug.h"
 #include "dispersion.h"
 #include "enchantments/enchantment.h"
+#include "enchantments/enchantment_vision.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -2238,7 +2239,8 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
 static bool pl_sees( const Creature &cr )
 {
     Character &u = get_player_character();
-    return u.sees( cr ) || u.sees_with_infrared( cr ) || u.sees_with_specials( cr );
+    return u.sees( cr ) || u.sees_with_infrared( cr ) ||
+           u.sees_with_specials( cr ) != enchantment_vision_id::NULL_ID();
 }
 
 // Handle capping aim level when the player cannot see the target tile or there is nothing to aim at.
@@ -4431,10 +4433,18 @@ void target_ui::panel_target_info( int &text_y, bool fill_with_blank_if_no_targe
             text_y += max_lines;
         } else {
             std::vector<std::string> buf;
-            if( you->sees_with_infrared( *dst_critter ) ) {
+            enchantment_vision_id special = you->sees_with_specials( *dst_critter );
+            if( special != enchantment_vision_id::NULL_ID() ) {
+                if( special->use_normal_mon_tile() ) {
+                    int fix_for_print_info = max_lines - 2;
+                    dst_critter->print_info( w_target, text_y, fix_for_print_info, 1 );
+                    text_y += max_lines;
+                } else {
+                    buf.emplace_back( special->get_mon_desc( *dst_critter ) );
+                }
+
+            } else if( you->sees_with_infrared( *dst_critter ) ) {
                 dst_critter->describe_infrared( buf );
-            } else if( you->sees_with_specials( *dst_critter ) ) {
-                dst_critter->describe_specials( buf );
             }
             for( size_t i = 0; i < static_cast<size_t>( max_lines ); i++, text_y++ ) {
                 if( i >= buf.size() ) {

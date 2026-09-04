@@ -34,6 +34,7 @@
 #include "cursesport.h"
 #include "debug.h"
 #include "dynamic_atlas.h"
+#include "enchantments/enchantment_vision.h"
 #include "field.h"
 #include "field_type.h"
 #include "flag.h"
@@ -3648,9 +3649,15 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                 }
                                 for( int cz = pos.z(); !invisible[0] && cz <= -center.z(); cz++ ) {
                                     const Creature *critter = g->critter_at( { pos.xy(), cz }, true );
-                                    if( critter && ( g->u.sees_with_infrared( *critter ) ||
-                                                     g->u.sees_with_specials( *critter ) ) ) {
-                                        invisible[0] = true;
+                                    if( critter ) {
+                                        enchantment_vision_id vision = g->u.sees_with_specials( *critter );
+                                        if( vision.is_valid() && !vision.is_null() ) {
+                                            if( !vision->use_normal_mon_tile() ) {
+                                                invisible[0] = true;
+                                            }
+                                        } else if( g->u.sees_with_infrared( *critter ) ) {
+                                            invisible[0] = true;
+                                        }
                                     }
                                 }
                                 if( invisible[0] ) {
@@ -5898,93 +5905,112 @@ bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &h
         result = draw_from_id_string(
                      tile, p, std::nullopt, std::nullopt,
                      lit_level::LIT, false, z_drop, false, height_3d );
-    } else if( !invisible[0] ) {
+    } else {
         const Creature *pcritter = g->critter_at( p, true );
         if( pcritter == nullptr ) {
             return false;
         }
         const Creature &critter = *pcritter;
+        enchantment_vision_id special = g->u.sees_with_specials( critter );
+        if( !invisible[0] || special != enchantment_vision_id::NULL_ID() ) {
+            if( !g->u.sees( critter ) ) {
+                if( special != enchantment_vision_id::NULL_ID() ) {
+                    // Fall through to normal vision otherwise.
+                    // No need to duplicate code
+                    if( !special->use_normal_mon_tile() ) {
+                        const tile_search_params tile { special->get_mon_tile( critter ), C_NONE, empty_string, 0, 0 };
+                        return draw_from_id_string(
+                                   tile, p, std::nullopt, std::nullopt,
+                                   lit_level::LIT, false, z_drop, false, height_3d );
+                    }
+                } else if( g->u.sees_with_infrared( critter ) ) {
+                    const tile_search_params tile { "infrared_creature", C_NONE, empty_string, 0, 0 };
+                    return draw_from_id_string(
+                               tile, p, std::nullopt, std::nullopt,
+                               lit_level::LIT, false, z_drop, false, height_3d );
+                } else {
+                    return false;
+                }
+            }
+            result = false;
+            sees_player = false;
+            is_player = false;
+            attitude = Attitude::A_ANY;
+            const monster *m = dynamic_cast<const monster *>( &critter );
+            if( m != nullptr ) {
+                constexpr auto ent_category = C_MONSTER;
+                std::string ent_subcategory = empty_string;
+                if( !m->type->species.empty() ) {
+                    ent_subcategory = m->type->species.begin()->str();
+                }
+                constexpr int subtile = corner;
+                // depending on the toggle flip sprite left or right
+                int rot_facing = -1;
+                if( m->facing == FD_RIGHT ) {
+                    rot_facing = 0;
+                } else if( m->facing == FD_LEFT ) {
+                    rot_facing = 4;
+                }
+                if( rot_facing >= 0 ) {
+                    const auto ent_name = m->type->id;
+                    std::string chosen_id = ent_name.str();
+                    if( m->has_effect( effect_ridden ) ) {
+                        int pl_under_height = 6;
+                        if( m->mounted_player ) {
+                            draw_entity_with_overlays( *m->mounted_player, p, ll, pl_under_height );
+                        }
+                        const std::string prefix = "rid_";
+                        std::string copy_id = chosen_id;
+                        const std::string ridden_id = copy_id.insert( 0, prefix );
+                        const tile_type *tt = tileset_ptr->find_tile_type( ridden_id );
+                        if( tt ) {
+                            chosen_id = ridden_id;
+                        }
+                    }
 
-        if( !g->u.sees( critter ) ) {
-            if( g->u.sees_with_infrared( critter ) || g->u.sees_with_specials( critter ) ) {
+                    const auto [bgCol, fgCol] = get_monster_color( *m, get_map(), p );
+
+                    const tile_search_params tile { chosen_id, ent_category, ent_subcategory, subtile, rot_facing };
+                    result = draw_from_id_string(
+                                 tile, p, bgCol, fgCol,
+                                 ll, false, z_drop, false, height_3d );
+                    sees_player = m->sees( g->u );
+                    attitude = m->attitude_to( g-> u );
+                }
+            }
+            const player *pl = dynamic_cast<const player *>( &critter );
+            if( pl != nullptr ) {
+                draw_entity_with_overlays( *pl, p, ll, height_3d );
+                result = true;
+                if( pl->is_player() ) {
+                    is_player = true;
+                } else {
+                    sees_player = pl->sees( g-> u );
+                    attitude = pl->attitude_to( g-> u );
+                }
+            }
+        } else {
+            // invisible
+            if( special.is_valid() && !special.is_null() ) {
+                // Fall through to normal vision otherwise.
+                // No need to duplicate code
+                bool use_normal = special->use_normal_mon_tile();
+                if( !use_normal ) {
+                    const tile_search_params tile { special->get_mon_tile( critter ), C_NONE, empty_string, 0, 0 };
+                    return draw_from_id_string(
+                               tile, p, std::nullopt, std::nullopt,
+                               lit_level::LIT, false, z_drop, false, height_3d );
+                }
+            } else if( g->u.sees_with_infrared( critter ) ) {
                 const tile_search_params tile { "infrared_creature", C_NONE, empty_string, 0, 0 };
                 return draw_from_id_string(
                            tile, p, std::nullopt, std::nullopt,
                            lit_level::LIT, false, z_drop, false, height_3d );
-            }
-            return false;
-        }
-        result = false;
-        sees_player = false;
-        is_player = false;
-        attitude = Attitude::A_ANY;
-        const monster *m = dynamic_cast<const monster *>( &critter );
-        if( m != nullptr ) {
-            constexpr auto ent_category = C_MONSTER;
-            std::string ent_subcategory = empty_string;
-            if( !m->type->species.empty() ) {
-                ent_subcategory = m->type->species.begin()->str();
-            }
-            constexpr int subtile = corner;
-            // depending on the toggle flip sprite left or right
-            int rot_facing = -1;
-            if( m->facing == FD_RIGHT ) {
-                rot_facing = 0;
-            } else if( m->facing == FD_LEFT ) {
-                rot_facing = 4;
-            }
-            if( rot_facing >= 0 ) {
-                const auto ent_name = m->type->id;
-                std::string chosen_id = ent_name.str();
-                if( m->has_effect( effect_ridden ) ) {
-                    int pl_under_height = 6;
-                    if( m->mounted_player ) {
-                        draw_entity_with_overlays( *m->mounted_player, p, ll, pl_under_height );
-                    }
-                    const std::string prefix = "rid_";
-                    std::string copy_id = chosen_id;
-                    const std::string ridden_id = copy_id.insert( 0, prefix );
-                    const tile_type *tt = tileset_ptr->find_tile_type( ridden_id );
-                    if( tt ) {
-                        chosen_id = ridden_id;
-                    }
-                }
-
-                const auto [bgCol, fgCol] = get_monster_color( *m, get_map(), p );
-
-                const tile_search_params tile { chosen_id, ent_category, ent_subcategory, subtile, rot_facing };
-                result = draw_from_id_string(
-                             tile, p, bgCol, fgCol,
-                             ll, false, z_drop, false, height_3d );
-                sees_player = m->sees( g->u );
-                attitude = m->attitude_to( g-> u );
-            }
-        }
-        const player *pl = dynamic_cast<const player *>( &critter );
-        if( pl != nullptr ) {
-            draw_entity_with_overlays( *pl, p, ll, height_3d );
-            result = true;
-            if( pl->is_player() ) {
-                is_player = true;
             } else {
-                sees_player = pl->sees( g-> u );
-                attitude = pl->attitude_to( g-> u );
+                return false;
             }
         }
-    } else {
-        // invisible
-        const Creature *critter = g->critter_at( p, true );
-        if( critter && ( g->u.sees_with_infrared( *critter ) || g->u.sees_with_specials( *critter ) ) ) {
-            // try drawing infrared creature if invisible and not overridden
-            // return directly without drawing overlay
-            const tile_search_params tile { "infrared_creature", C_NONE, empty_string, 0, 0 };
-            return draw_from_id_string(
-                       tile, p, std::nullopt, std::nullopt,
-                       lit_level::LIT, false, z_drop, false, height_3d );
-        }
-        return false;
     }
-
     if( result && !is_player ) {
         std::string draw_id = "overlay_" + Creature::attitude_raw_string( attitude );
         if( sees_player && !g->u.has_trait( trait_INATTENTIVE ) ) {

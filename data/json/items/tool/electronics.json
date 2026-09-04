@@ -143,7 +143,8 @@
     "ammo": "battery",
     "initial_charges": 500,
     "max_charges": 700,
-    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "control_laptop_screen_lit",
@@ -153,7 +154,8 @@
     "power_draw": 5000,
     "revert_to": "laptop",
     "use_action": { "target": "control_laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "control_laptop_music",
@@ -163,7 +165,8 @@
     "power_draw": 7000,
     "revert_to": "control_laptop",
     "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "type": "TOOL_ARMOR",
@@ -350,9 +353,9 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY",
-      "DRONE_CAM"
+      "FANCY"
     ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] },
     "coverage": 15,
     "symbol": "[",
     "ammo": [ "battery" ]

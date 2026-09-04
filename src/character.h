@@ -577,7 +577,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns character luminosity based on the brightest active item they are carrying */
         float active_light() const;
 
-        bool sees_with_specials( const Creature &critter ) const;
+        enchantment_vision_id sees_with_specials( const Creature &critter ) const;
 
         /** Bitset of all the body parts covered only with items with `flag` (or nothing) */
         body_part_set exclusive_flag_coverage( const flag_id &flag ) const;

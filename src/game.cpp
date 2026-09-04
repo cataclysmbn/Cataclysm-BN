@@ -89,6 +89,7 @@
 #include "drop_token.h"
 #include "fluid_grid.h"
 #include "editmap.h"
+#include "enchantments/enchantment_vision.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -4858,7 +4859,8 @@ static void draw_critter_internal( const catacurses::window &w, const Creature &
         return;
     }
 
-    if( u.sees_with_infrared( critter ) || u.sees_with_specials( critter ) ) {
+    if( u.sees_with_infrared( critter ) ||
+        u.sees_with_specials( critter ) != enchantment_vision_id::NULL_ID() ) {
         mvwputch( w, point( mx, my ), c_red, '?' );
     }
 }
@@ -5573,32 +5575,36 @@ auto game::mon_info_update() -> void
             }
         }
 
-        //Safemode monster check
-        const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude,
-                                    mon_dist );
+        // Safemode monster check
+        // Dont do different z-level -> They are not threats, yet can be seen
+        // Via special vision effects such as `ANTENNAE` or `DRONE_CAM`
+        if( critter.bub_pos().z() == u.bub_pos().z() ) {
+            const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude,
+                                        mon_dist );
 
-        if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
-                ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
-            if( index < 8 && critter.sees( g->u ) ) {
-                dangerous[index] = true;
-            }
-
-            if( !safemode_empty || mon_dist <= iProxyDist ) {
-                auto passmon = false;
-                if( critter.ignoring > 0 ) {
-                    if( safe_mode != SAFE_MODE_ON ) {
-                        critter.ignoring = 0;
-                    } else if( ( sm_ignored_time == 0_seconds || ( critter.lastseen_turn &&
-                                 *critter.lastseen_turn > calendar::turn - sm_ignored_time ) ) &&
-                               ( mon_dist > critter.ignoring / 2 || mon_dist < 6 ) ) {
-                        passmon = true;
-                    }
-                    critter.lastseen_turn = calendar::turn;
+            if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
+                    ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
+                if( index < 8 && critter.sees( g->u ) ) {
+                    dangerous[index] = true;
                 }
 
-                if( !passmon ) {
-                    newseen++;
-                    new_seen_mon.push_back( mon_ptr );
+                if( !safemode_empty || mon_dist <= iProxyDist ) {
+                    auto passmon = false;
+                    if( critter.ignoring > 0 ) {
+                        if( safe_mode != SAFE_MODE_ON ) {
+                            critter.ignoring = 0;
+                        } else if( ( sm_ignored_time == 0_seconds || ( critter.lastseen_turn &&
+                                     *critter.lastseen_turn > calendar::turn - sm_ignored_time ) ) &&
+                                   ( mon_dist > critter.ignoring / 2 || mon_dist < 6 ) ) {
+                            passmon = true;
+                        }
+                        critter.lastseen_turn = calendar::turn;
+                    }
+
+                    if( !passmon ) {
+                        newseen++;
+                        new_seen_mon.push_back( mon_ptr );
+                    }
                 }
             }
         }
@@ -8952,10 +8958,16 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
 
             if( creature != nullptr ) {
                 std::vector<std::string> buf;
-                if( u.sees_with_infrared( *creature ) ) {
+                enchantment_vision_id special = u.sees_with_specials( *creature );
+                if( special != enchantment_vision_id::NULL_ID() ) {
+                    if( special->use_normal_mon_tile() ) {
+                        int vLines = last_line - line;
+                        line = creature->print_info( w_look, ++line, vLines, column );
+                    } else {
+                        buf.emplace_back( special->get_mon_desc( *creature ) );
+                    }
+                } else if( u.sees_with_infrared( *creature ) ) {
                     creature->describe_infrared( buf );
-                } else if( u.sees_with_specials( *creature ) ) {
-                    creature->describe_specials( buf );
                 }
                 for( const std::string &s : buf ) {
                     mvwprintw( w_look, point( 1, ++line ), s );

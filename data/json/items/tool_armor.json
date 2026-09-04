@@ -876,8 +876,7 @@
       "SWIM_GOGGLES",
       "SUN_GLASSES",
       "RAD_RESIST",
-      "COMBAT_NPC_USE",
-      "DRONE_CAM"
+      "COMBAT_NPC_USE"
     ],
     "price": "500 kUSD",
     "price_postapoc": "100 USD",
@@ -918,7 +917,8 @@
             { "value": "FLASH_PROTECTION", "max": 6 }
           ],
           "flags": [ "FIRE_FIELD_IMMUNE" ]
-        }
+        },
+        { "special_vision": [ "DRONE_CAM" ] }
       ]
     }
   },
@@ -1605,7 +1605,8 @@
     "coverage": 10,
     "material_thickness": 2,
     "magazines": [ [ "battery", [ "light_plus_battery_cell", "light_battery_cell" ] ] ],
-    "magazine_well": "250 ml"
+    "magazine_well": "250 ml",
+    "relic_data": { "passive_effects": [ { "conditions": [ "ACTIVE" ], "special_vision": [ "INFRARED" ] } ] }
   },
   {
     "id": "goggles_ir_on",
@@ -1614,7 +1615,7 @@
     "type": "TOOL_ARMOR",
     "name": { "str": "pair of infrared goggles (on)", "str_pl": "pairs of infrared goggles (on)" },
     "description": "A pair of battery-powered goggles that grant infrared vision, allowing you to see warm-blooded creatures in the dark.  Use it to turn them off.",
-    "flags": [ "IR_EFFECT", "FRAGILE", "TRADER_AVOID" ],
+    "flags": [ "FRAGILE", "TRADER_AVOID" ],
     "power_draw": 1000,
     "revert_to": "goggles_ir",
     "use_action": {

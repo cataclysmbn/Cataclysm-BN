@@ -7436,18 +7436,13 @@ float Character::active_light() const
     return lumination;
 }
 
-bool Character::sees_with_specials( const Creature &critter ) const
+enchantment_vision_id Character::sees_with_specials( const Creature &critter ) const
 {
-    // Prevent seeing through floors across z-levels
-    if( bub_pos().z() != critter.bub_pos().z() ) {
-        return false;
-    }
-
     // electroreceptors grants vision of robots and electric monsters through walls
     if( has_enchantment_flag( ench_flag_ELECTROSENSE ) &&
         ( critter.in_species( ROBOT ) || critter.in_species( ROBOT_FLYING ) ||
           critter.has_flag( MF_ELECTRIC ) || critter.has_flag( MF_ELECTRONIC ) ) ) {
-        return true;
+        return enchantment_vision_id( "ELECTROSENSE" );
     }
 
     if( critter.digging() && has_enchantment_flag( ench_flag_SONAR ) ) {
@@ -7455,12 +7450,12 @@ bool Character::sees_with_specials( const Creature &critter ) const
         // walls don't block sonar which is transmitted in the ground, not the air.
         // TODO: this might need checks whether the player is in the air, or otherwise not connected
         // to the ground. It also might need a range check.
-        return true;
+        return enchantment_vision_id( "SONAR" );
     }
     // Friendly eyebots can designate targets for the player
     if( critter.has_effect( effect_drone_marker ) && ( has_item_with_flag( flag_DRONE_CAM ) ||
             has_enchantment_flag( ench_flag_VIEW_DRONE_CAM ) ) ) {
-        return true;
+        return enchantment_vision_id( "DRONE_CAM" );
     }
 
     const int dist = rl_dist( bub_pos(), critter.bub_pos() );
@@ -7468,11 +7463,29 @@ bool Character::sees_with_specials( const Creature &critter ) const
     // Distance cannot be 0, so this is always safe
     if( dist <= bonus_from_enchantments( 0, ench_val_GROUNDED_CREATURE_SIGHT ) &&
         !critter.has_flag( MF_FLIES ) ) {
-        return true;
+        return enchantment_vision_id( "GROUNDED_SONAR" );
     }
 
-    // TODO: Add more range based enchantments here ( I.E. Limited Electrosense ranges )
-    return false;
+    bool sees_position = false;
+
+    if( is_player() || critter.is_player() ) {
+        // Players should not use map::sees
+        // Likewise, players should not be "looked at" with map::sees, not to break symmetry
+        sees_position = get_map().pl_line_of_sight( critter.bub_pos(),
+                        sight_range( current_daylight_level( calendar::turn ) ) );
+    } else {
+        sees_position = get_map().sees( bub_pos(), critter.bub_pos(),
+                                        sight_range( current_daylight_level( calendar::turn ) ) );
+    }
+
+    enchantment_vision_id sees_with = enchantment_cache->mon_passes_special_vision(
+                                          critter, dist, critter.bub_pos().z() == bub_pos().z(), sees_position
+                                      );
+    if( sees_with != enchantment_vision_id::NULL_ID() ) {
+        return sees_with;
+    }
+
+    return enchantment_vision_id::NULL_ID();
 }
 
 detached_ptr<item> Character::pour_into( item &container, detached_ptr<item> &&liquid, int limit )

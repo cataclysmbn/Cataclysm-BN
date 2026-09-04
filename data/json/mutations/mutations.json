@@ -1440,7 +1440,7 @@
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -1464,7 +1464,7 @@
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
     "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -3194,7 +3194,7 @@
     "restricts_gear": [ "head" ],
     "allowed_items": [ "ALLOWS_HORNS" ],
     "allow_soft_gear": true,
-    "mut_enchantments": [ { "values": [ { "value": "GROUNDED_CREATURE_SIGHT", "max": 5 } ] } ]
+    "mut_enchantments": [ { "special_vision": [ "GROUNDED_SONAR" ] } ]
   },
   {
     "type": "mutation",
@@ -6455,7 +6455,7 @@
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
     "mixed_effect": true,
-    "mut_enchantments": [ { "flags": [ "ELECTROSENSE" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
