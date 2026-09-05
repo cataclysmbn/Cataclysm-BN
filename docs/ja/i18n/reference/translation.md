@@ -31,7 +31,7 @@ const char *translated = _( "text marked for translation" )
 add_msg( _( "You drop the %s." ), the_item_name );
 ```
 
-JSONファイル内の文字列は、`lang/extract_json_strings.py` スクリプトによって抽出され、実行時に `_()`を使用して翻訳できます。JSON文字列に対して翻訳コンテキストが必要な場合は、代わりに後述の
+JSON および JSONC ファイル内の文字列は、`scripts/extract_json_strings.ts` スクリプトによって抽出され、実行時に `_()`を使用して翻訳できます。JSON文字列に対して翻訳コンテキストが必要な場合は、代わりに後述の
 `class translation` を使用できます。
 
 ### `pgettext()`

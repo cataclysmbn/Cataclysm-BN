@@ -23,18 +23,11 @@ jobs:
       - name: "Install gettext tools"
         run: sudo apt-get install -y gettext
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
 
       - name: Push translation template
-        run: |
-          # venv context isn't shared across steps
-          uv python install --default
-          uv venv
-          source .venv/bin/activate
-          uv pip install polib "luaparser>=3.3.1"
-
-          lang/update_pot.sh
+        run: lang/update_pot.sh
 
       - name: "Push translation template to Transifex server"
         uses: transifex/cli-action@v2

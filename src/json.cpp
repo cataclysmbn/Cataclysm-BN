@@ -831,8 +831,44 @@ void JsonIn::seek( int pos )
 
 void JsonIn::eat_whitespace()
 {
-    while( is_whitespace( peek() ) ) {
+    while( true ) {
+        while( is_whitespace( peek() ) ) {
+            stream->get();
+        }
+
+        if( peek() != '/' ) {
+            return;
+        }
+
         stream->get();
+        const auto comment_type = peek();
+        if( comment_type == '/' ) {
+            stream->get();
+            while( stream->good() ) {
+                const auto ch = stream->get();
+                if( ch == '\n' || ch == '\r' || ch == EOF ) {
+                    break;
+                }
+            }
+        } else if( comment_type == '*' ) {
+            stream->get();
+            auto previous = char{};
+            auto closed = false;
+            while( stream->good() ) {
+                const auto ch = static_cast<char>( stream->get() );
+                if( previous == '*' && ch == '/' ) {
+                    closed = true;
+                    break;
+                }
+                previous = ch;
+            }
+            if( !closed ) {
+                error( "unterminated block comment" );
+            }
+        } else {
+            stream->unget();
+            return;
+        }
     }
 }
 
