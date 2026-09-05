@@ -4442,32 +4442,38 @@ void Character::do_skill_rust( const time_duration &duration )
         const Skill &aSkill = *pair.first;
         SkillLevel &skill_level_obj = pair.second;
 
-        const int pred_tick = has_trait_flag( trait_flag_PRED2 ) ? calendar::ticks_between( duration,
-                              8_hours ) :
-                              has_trait_flag( trait_flag_PRED3 ) ? calendar::ticks_between( duration, 4_hours ) :
-                              has_trait_flag( trait_flag_PRED4 ) ? calendar::ticks_between( duration, 3_hours ) : 0;
+        const bool has_pred = has_trait_flag( trait_flag_PRED2 ) || has_trait_flag( trait_flag_PRED3 ) ||
+                              has_trait_flag( trait_flag_PRED4 );
 
-        if( aSkill.is_combat_skill() && pred_tick > 0 ) {
-            // Their brain is optimized to remember this
-            int tries = 0;
-            for( int i = 0; i < pred_tick; i++ ) {
-                tries += one_in( 13 ) ? 1 : 0;
-            }
-            if( tries > 0 && !has_effect( effect_sleep ) ) {
-                // They've already passed the roll to avoid rust at
-                // this point, but print a message about it now and
-                // then.
-                //
-                // 13 combat skills.
-                // This means PRED2/PRED3/PRED4 think of hunting on
-                // average every 8/4/3 hours, enough for immersion
-                // without becoming an annoyance.
-                //
-                // Additionally, catching up NPCs will prevent rust
-                // for combat skills, presumably they'd hunt while
-                // the player is gone.
-                add_msg_if_player( _( "Your heart races as you recall your most recent hunt." ) );
-                mod_stim( tries );
+        if( aSkill.is_combat_skill() && has_pred ) {
+            // Predator mutations always prevent combat-skill rust (see mutation
+            // descriptions: "effortlessly master and maintain combat skills").
+            // The flavor message/stim below is cosmetic and only fires on its
+            // own rare cadence; it must not gate the actual protection, since
+            // during normal turn-by-turn play `duration` is a single turn and
+            // essentially never spans a full 3/4/8-hour block.
+            const int pred_tick = has_trait_flag( trait_flag_PRED2 ) ? calendar::ticks_between( duration,
+                                  8_hours ) :
+                                  has_trait_flag( trait_flag_PRED3 ) ? calendar::ticks_between( duration, 4_hours ) :
+                                  calendar::ticks_between( duration, 3_hours );
+            if( pred_tick > 0 ) {
+                // Their brain is optimized to remember this
+                int tries = 0;
+                for( int i = 0; i < pred_tick; i++ ) {
+                    tries += one_in( 13 ) ? 1 : 0;
+                }
+                if( tries > 0 && !has_effect( effect_sleep ) ) {
+                    // 13 combat skills.
+                    // This means PRED2/PRED3/PRED4 think of hunting on
+                    // average every 8/4/3 hours, enough for immersion
+                    // without becoming an annoyance.
+                    //
+                    // Additionally, catching up NPCs will prevent rust
+                    // for combat skills, presumably they'd hunt while
+                    // the player is gone.
+                    add_msg_if_player( _( "Your heart races as you recall your most recent hunt." ) );
+                    mod_stim( tries );
+                }
             }
             continue;
         }
