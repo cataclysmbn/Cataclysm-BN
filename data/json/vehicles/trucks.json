@@ -421,6 +421,36 @@
     }
   },
   {
+    "id": "afs_industrial_lubricant_tanker",
+    "type": "vehicle",
+    "name": "Industrial Lubricant Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "industrial_lubricant", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "industrial_lubricant", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
     "id": "afs_formaldehyde_tanker",
     "type": "vehicle",
     "name": "Formaldehyde Tanker",

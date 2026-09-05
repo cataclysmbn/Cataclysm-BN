@@ -17,7 +17,8 @@
     "half_life": "2 days",
     "phase": "liquid",
     "accelerated_decay": true,
-    "display_field": true
+    "display_field": true,
+    "moppable": true
   },
   {
     "id": "fd_bile",
@@ -31,6 +32,7 @@
     "half_life": "1 days",
     "phase": "liquid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_acid"
   },
@@ -50,6 +52,7 @@
     "half_life": "2 days",
     "phase": "solid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood"
   },
@@ -69,6 +72,7 @@
     "half_life": "2 days",
     "phase": "solid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood_veggy"
   },
@@ -108,6 +112,7 @@
     "half_life": "1 days",
     "phase": "liquid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood_veggy"
   },
@@ -129,6 +134,26 @@
     "phase": "liquid",
     "display_field": true,
     "looks_like": "fd_bile"
+  },
+  {
+    "id": "fd_acid_water",
+    "type": "field_type",
+    "immunity_data": { "traits": [ "ACIDPROOF" ] },
+    "intensity_levels": [
+      { "name": "acid water splatter", "sym": "5", "color": "light_green" },
+      { "name": "acid water smear" },
+      { "name": "puddle of acid water", "color": "green" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "90 minutes",
+    "underwater_age_speedup": "15 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "green",
+    "display_field": true,
+    "looks_like": "fd_water"
   },
   {
     "id": "fd_sap",
@@ -215,6 +240,7 @@
     "half_life": "10 minutes",
     "underwater_age_speedup": "10 minutes",
     "phase": "liquid",
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_sap"
   },
@@ -763,6 +789,7 @@
     "half_life": "2 days",
     "phase": "liquid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood"
   },
@@ -778,6 +805,7 @@
     "half_life": "2 days",
     "phase": "liquid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood"
   },
@@ -797,6 +825,7 @@
     "half_life": "2 days",
     "phase": "liquid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood"
   },
@@ -816,6 +845,7 @@
     "half_life": "2 days",
     "phase": "solid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood_insect"
   },
@@ -835,6 +865,7 @@
     "half_life": "2 days",
     "phase": "solid",
     "accelerated_decay": true,
+    "moppable": true,
     "display_field": true,
     "looks_like": "fd_blood_invertebrate"
   },
@@ -1429,5 +1460,531 @@
     "display_items": true,
     "display_field": true,
     "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_water",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "water splatter", "sym": "~", "color": "light_blue" },
+      { "name": "water puddle" },
+      { "name": "pool of water", "color": "cyan" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "30 minutes",
+    "underwater_age_speedup": "5 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "cyan",
+    "display_field": true,
+    "looks_like": "fd_acid"
+  },
+  {
+    "id": "fd_salt_water",
+    "type": "field_type",
+    "conductive": true,
+    "intensity_levels": [
+      { "name": "salt water splatter", "sym": "~", "color": "light_cyan" },
+      { "name": "salt water puddle" },
+      { "name": "pool of salt water", "color": "cyan" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "30 minutes",
+    "underwater_age_speedup": "5 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "cyan",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_milk",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "milk splatter", "sym": "~", "color": "white" },
+      { "name": "milk puddle" },
+      { "name": "pool of milk", "color": "light_gray" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "45 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "white",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_tea",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "tea splatter", "sym": "~", "color": "brown" },
+      { "name": "tea stain" },
+      { "name": "pool of tea", "color": "brown" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "40 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "brown",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_soda",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "soda splatter",
+        "sym": "~",
+        "color": "magenta",
+        "effects": [
+          {
+            "effect_id": "sap",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 seconds",
+            "max_duration": "1 seconds",
+            "immune_in_vehicle": true,
+            "is_environmental": false,
+            "message": "The soda sticks to you!",
+            "message_npc": "The soda sticks to <npcname>!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "fizzy soda puddle" },
+      { "name": "fizzy pool of soda" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "50 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "magenta",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_syrup",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "syrup splatter", "sym": "~", "color": "brown" },
+      {
+        "name": "syrup smear",
+        "effects": [
+          {
+            "effect_id": "sap",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 seconds",
+            "max_duration": "1 seconds",
+            "immune_in_vehicle": true,
+            "is_environmental": false,
+            "message": "The syrup sticks to you!",
+            "message_npc": "The syrup sticks to <npcname>!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "syrupy pool" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "50 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "brown",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_glue",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "glue splatter", "sym": "~", "color": "white" },
+      {
+        "name": "glop of glue",
+        "effects": [
+          {
+            "effect_id": "sap",
+            "body_part": "torso",
+            "intensity": 3,
+            "min_duration": "5 seconds",
+            "max_duration": "5 seconds",
+            "immune_in_vehicle": true,
+            "is_environmental": false,
+            "message": "The glue sticks to you!",
+            "message_npc": "The glue sticks to <npcname>!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "pool of glue" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "6 hours",
+    "underwater_age_speedup": "30 minutes",
+    "phase": "liquid",
+    "tint": "white",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_mutagen",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "mutagen splatter", "sym": "~", "color": "light_green" },
+      { "name": "mutagen puddle" },
+      { "name": "pool of mutagen", "color": "green" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "90 minutes",
+    "underwater_age_speedup": "15 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "green",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_alcohol",
+    "type": "field_type",
+    "intensity_levels": [ { "name": "alcohol splatter", "sym": "~" }, { "name": "alcohol puddle" }, { "name": "pool of alcohol" } ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "90 minutes",
+    "underwater_age_speedup": "15 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "brown",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_plutonium_slurry",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "nuclear waste splatter", "sym": "~", "color": "light_green" },
+      { "name": "nuclear waste puddle" },
+      { "name": "pool of nuclear waste", "color": "green", "extra_radiation_max": 1 }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "6 hours",
+    "underwater_age_speedup": "30 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "green",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_juice",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "juice splatter", "sym": "~", "color": "yellow" },
+      { "name": "juice stain" },
+      { "name": "pool of juice", "color": "light_red" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "45 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "yellow",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_motor_oil",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "motor oil splatter",
+        "sym": "~",
+        "color": "dark_gray",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "downed",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 turn",
+            "max_duration": "1 turn",
+            "immune_in_vehicle": true,
+            "chance_outside_vehicle": 8,
+            "is_environmental": false,
+            "message": "You slip on the motor oil!",
+            "message_npc": "<npcname> slips on the motor oil!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "motor oil puddle" },
+      { "name": "pool of motor oil", "color": "light_gray" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "90 minutes",
+    "underwater_age_speedup": "15 minutes",
+    "phase": "liquid",
+    "tint": "dark_gray",
+    "display_field": true,
+    "looks_like": "fd_blood"
+  },
+  {
+    "id": "fd_cooking_oil",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "cooking oil splatter",
+        "sym": "~",
+        "color": "yellow",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "downed",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 turn",
+            "max_duration": "1 turn",
+            "immune_in_vehicle": true,
+            "chance_outside_vehicle": 8,
+            "is_environmental": false,
+            "message": "You slip on the cooking oil!",
+            "message_npc": "<npcname> slips on the cooking oil!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "cooking oil puddle" },
+      { "name": "pool of cooking oil", "color": "brown" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "75 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "yellow",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_industrial_lubricant",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "industrial lubricant splatter",
+        "sym": "~",
+        "color": "light_gray",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "downed",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 turn",
+            "max_duration": "1 turn",
+            "immune_in_vehicle": true,
+            "chance_outside_vehicle": 2,
+            "is_environmental": false,
+            "message": "You slip on the industrial lubricant!",
+            "message_npc": "<npcname> slips on the industrial lubricant!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "industrial lubricant puddle" },
+      { "name": "industrial lubricant slick", "color": "light_gray" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "3 hours",
+    "underwater_age_speedup": "20 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "dark_gray",
+    "display_field": true,
+    "looks_like": "fd_blood"
+  },
+  {
+    "id": "fd_chemical",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "chemical splatter", "sym": "~", "color": "white" },
+      { "name": "chemical smear" },
+      { "name": "pool of chemicals", "color": "light_gray" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "75 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "white",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_condiment",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "condiment splatter", "sym": "~", "color": "light_red" },
+      { "name": "condiment puddle" },
+      { "name": "pool of condiments", "color": "brown" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "90 minutes",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "brown",
+    "display_field": true,
+    "looks_like": "fd_bile"
+  },
+  {
+    "id": "fd_sewage",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "sewage smear", "sym": "~", "color": "green" },
+      { "name": "sewage puddle" },
+      { "name": "pool of sewage", "color": "light_green" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "2 hours",
+    "underwater_age_speedup": "15 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "brown",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_soapy_water",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "soapy water splatter",
+        "sym": "~",
+        "color": "light_cyan",
+        "dangerous": true,
+        "effects": [
+          {
+            "effect_id": "downed",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "1 turn",
+            "max_duration": "1 turn",
+            "immune_in_vehicle": true,
+            "chance_outside_vehicle": 8,
+            "is_environmental": false,
+            "message": "You slip on the soapy water!",
+            "message_npc": "<npcname> slips on the soapy water!",
+            "message_type": "bad"
+          }
+        ]
+      },
+      { "name": "soapy water puddle" },
+      { "name": "pool of soapy water", "color": "cyan" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "35 minutes",
+    "underwater_age_speedup": "5 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "cyan",
+    "display_field": true,
+    "looks_like": "fd_water"
+  },
+  {
+    "id": "fd_fuel",
+    "type": "field_type",
+    "legacy_enum_id": 53,
+    "intensity_levels": [
+      { "name": "fuel splatter", "sym": "~", "color": "light_red" },
+      { "name": "fuel puddle" },
+      { "name": "pool of fuel", "color": "yellow" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "25 minutes",
+    "underwater_age_speedup": "5 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "yellow",
+    "display_field": true,
+    "looks_like": "fd_blood"
+  },
+  {
+    "id": "fd_sticky_fuel",
+    "type": "field_type",
+    "legacy_enum_id": 53,
+    "intensity_levels": [
+      { "name": "sticky fuel splatter", "sym": "~", "color": "light_red" },
+      { "name": "sticky fuel smear" },
+      { "name": "sticky fuel glob", "color": "yellow" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "4 hours",
+    "underwater_age_speedup": "5 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "yellow",
+    "display_field": true,
+    "looks_like": "fd_blood"
+  },
+  {
+    "id": "fd_oil",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "oil splatter", "sym": "~", "color": "dark_gray" },
+      { "name": "oil smear" },
+      { "name": "oil slick", "color": "light_gray" }
+    ],
+    "description_affix": "covered_in_a",
+    "is_splattering": true,
+    "accelerated_decay": true,
+    "half_life": "2 hours",
+    "underwater_age_speedup": "10 minutes",
+    "phase": "liquid",
+    "moppable": true,
+    "tint": "brown",
+    "display_field": true,
+    "looks_like": "fd_fuel"
   }
 ]

@@ -11712,9 +11712,17 @@ bool item::on_drop( const tripoint_bub_ms &pos, map &m )
         !has_own_flag( flag_DIRTY ) ) {
         set_flag( flag_DIRTY );
     }
+
+    const auto spilled_to_field =
+        made_of( LIQUID ) && type->spill_field != fd_null && !m.has_flag( flag_LIQUIDCONT, pos );
+    if( spilled_to_field ) {
+        m.spill_liquid_field( pos, *this );
+    }
     you.flag_encumbrance();
 
-    return type->drop_action && type->drop_action.call( you, *this, false, pos );
+    const auto handled_by_drop_action =
+        type->drop_action && type->drop_action.call( you, *this, false, pos );
+    return spilled_to_field || handled_by_drop_action;
 }
 
 time_duration item::age() const

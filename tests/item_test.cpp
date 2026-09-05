@@ -1,7 +1,9 @@
+#include "ammo_effect.h"
 #include "cached_item_options.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "enums.h"
+#include "field_type.h"
 #include "flag.h"
 #include "item.h"
 #include "itype.h"
@@ -112,6 +114,48 @@ TEST_CASE("gun_cycle_mode_wraps_from_last_to_first", "[item]") {
     REQUIRE(reach_bow.gun_set_mode(last_mode));
     reach_bow.gun_cycle_mode();
     CHECK(reach_bow.gun_get_mode_id() == first_mode);
+}
+
+TEST_CASE("common_liquids_define_spill_fields", "[item][liquid][field]") {
+    CHECK(item::spawn_temporary("water")->type->spill_field == field_type_id("fd_water"));
+    CHECK(item::spawn_temporary("salt_water")->type->spill_field == field_type_id("fd_salt_water"));
+    CHECK(
+        item::spawn_temporary("soapy_water")->type->spill_field == field_type_id("fd_soapy_water"));
+    CHECK(item::spawn_temporary("water_sewage")->type->spill_field == field_type_id("fd_sewage"));
+    CHECK(item::spawn_temporary("gasoline")->type->spill_field == field_type_id("fd_fuel"));
+    CHECK(item::spawn_temporary("motor_oil")->type->spill_field == field_type_id("fd_oil"));
+    CHECK(item::spawn_temporary("plut_slurry")->type->spill_field
+          == field_type_id("fd_plutonium_slurry"));
+    CHECK(field_type_id("fd_water").obj().get_tint() == c_blue);
+    CHECK(field_type_id("fd_water").obj().get_tint_rgb() == RGBColor::try_parse("blue"));
+    CHECK(field_type_id("fd_sewage").obj().get_tint() == c_cyan);
+    CHECK(field_type_id("test_fd_rgb_tint").obj().get_tint() == c_unset);
+    CHECK(field_type_id("test_fd_rgb_tint").obj().get_tint_rgb() == RGBColor::try_parse("#123456"));
+    CHECK(item::spawn_temporary("soapy_water")->ammo_type() == ammotype("water"));
+    CHECK(field_type_id("fd_soapy_water").obj().get_intensity_level().field_effects.size() == 1);
+    CHECK(field_type_id("fd_soapy_water").obj().get_intensity_level().field_effects.front().id
+          == efftype_id("downed"));
+    CHECK(field_type_id("fd_plutonium_slurry").obj().get_extra_radiation_max(0) == 1);
+    CHECK(field_type_id("fd_plutonium_slurry").obj().get_extra_radiation_max(1) == 2);
+    CHECK(field_type_id("fd_plutonium_slurry").obj().get_extra_radiation_max(2) == 3);
+}
+
+TEST_CASE("super_soaker_uses_water_without_mount_restrictions", "[item][gun]") {
+    item& squirt_gun = *item::spawn_temporary("super_soaker");
+
+    CHECK(squirt_gun.ammo_types().count(ammotype("water")) == 1);
+    CHECK(squirt_gun.ammo_default() == itype_id("water"));
+    CHECK_FALSE(squirt_gun.has_flag(flag_MOUNTED_GUN));
+}
+
+TEST_CASE("water_cannons_inherit_liquid_trail_effects_from_ammo", "[item][gun][field]") {
+    item& squirt_gun = *item::spawn_temporary("super_soaker");
+
+    squirt_gun.ammo_set(itype_id("water"), 1);
+    CHECK(squirt_gun.ammo_effects().contains(ammo_effect_str_id("STREAM_WATER")));
+
+    squirt_gun.ammo_set(itype_id("soapy_water"), 1);
+    CHECK(squirt_gun.ammo_effects().contains(ammo_effect_str_id("STREAM_SOAPY_WATER")));
 }
 
 TEST_CASE("stacking_cash_cards", "[item]") {

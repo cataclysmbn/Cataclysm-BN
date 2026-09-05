@@ -25,6 +25,7 @@
 #include "emit.h"
 #include "enums.h"
 #include "field.h"
+#include "field_ignition_utils.h"
 #include "field_type.h"
 #include "fire.h"
 #include "fungal_effects.h"
@@ -97,6 +98,10 @@ static const trait_id trait_THRESH_MARLOSS( "THRESH_MARLOSS" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_WEB_WALKER( "WEB_WALKER" );
 
+static const auto fd_fuel_field = field_type_str_id( "fd_fuel" );
+static const auto fd_soapy_water_field = field_type_str_id( "fd_soapy_water" );
+static const auto fd_water_field = field_type_str_id( "fd_water" );
+
 void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel,
                           const units::mass &burned_mass )
 {
@@ -139,15 +144,29 @@ int map::burn_body_part( player &u, field_entry &cur, body_part bp_token, const 
 }
 
 
-bool ter_furn_has_flag( const ter_t &ter, const furn_t &furn, const ter_bitflags flag )
+auto ter_furn_has_flag( const ter_t &ter, const furn_t &furn, const ter_bitflags flag ) -> bool
 {
     return ter.has_flag( flag ) || furn.has_flag( flag );
 }
 
-static inline bool check_flammable( const map_data_common_t &t )
+static inline auto check_flammable( const map_data_common_t &t ) -> bool
 {
-    return t.has_flag( TFLAG_FLAMMABLE ) || t.has_flag( TFLAG_FLAMMABLE_ASH ) ||
-           t.has_flag( TFLAG_FLAMMABLE_HARD );
+    return t.is_flammable();
+}
+
+static inline auto check_basic_flammable( const map_data_common_t &t ) -> bool
+{
+    return t.is_basic_flammable();
+}
+
+static inline auto check_ash_flammable( const map_data_common_t &t ) -> bool
+{
+    return t.is_ash_flammable();
+}
+
+static inline auto check_hard_flammable( const map_data_common_t &t ) -> bool
+{
+    return t.is_hard_flammable();
 }
 
 /*
@@ -529,6 +548,12 @@ void map::player_in_field( player &u )
 
 void map::creature_in_field( Creature &critter )
 {
+    static const auto effect_downed = efftype_id( "downed" );
+    static const auto flag_NOSLIP = flag_id( "NOSLIP" );
+    static const auto ench_flag_NOSLIP = enchantment_flag_id( "NOSLIP" );
+    static const auto body_part_foot_l = bodypart_id( "foot_l" );
+    static const auto body_part_foot_r = bodypart_id( "foot_r" );
+
     bool in_vehicle = false;
     bool inside_vehicle = false;
     player *u = critter.as_player();
@@ -585,6 +610,15 @@ void map::creature_in_field( Creature &critter )
             const effect field_fx = fe.get_effect();
             if( critter.is_immune_field( cur_field_id ) || critter.is_immune_effect( field_fx.get_id() ) ) {
                 continue;
+            }
+            if( field_fx.get_id() == effect_downed ) {
+                if( Character *const character = critter.as_character();
+                    character != nullptr &&
+                    ( character->has_enchantment_flag( ench_flag_NOSLIP ) ||
+                      character->worn_with_flag( flag_NOSLIP, body_part_foot_l ) ||
+                      character->worn_with_flag( flag_NOSLIP, body_part_foot_r ) ) ) {
+                    continue;
+                }
             }
             bool effect_added = false;
             if( fe.is_environmental ) {
@@ -909,6 +943,159 @@ void map::emit_field( const tripoint_bub_ms &pos, const emit_id &src, float mul 
     }
 }
 
+namespace
+{
+
+static constexpr auto max_visual_spill_tiles = 90;
+
+struct spilled_liquid_field_candidate {
+    int distance = 0;
+    tripoint_bub_ms pos = tripoint_bub_ms::zero();
+
+    auto operator<=>( const spilled_liquid_field_candidate & ) const = default; // *NOPAD*
+};
+
+static constexpr std::array<std::pair<int, int>, 8> spilled_liquid_adjacent_offsets = {{
+        { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 },
+        { 1, -1 }, { -1, 1 }, { -1, -1 }, { 1, 1 },
+    }
+};
+} // namespace
+
+void map::spill_liquid_field( const tripoint_bub_ms &center, const item &liquid )
+{
+    namespace ranges = std::ranges;
+
+    const auto type = liquid.type->spill_field;
+    const auto max_field_intensity = type.obj().get_max_intensity();
+    const auto max_visual_amount = max_visual_spill_tiles * max_field_intensity;
+    static constexpr auto spill_tile_volume = 1_liter;
+    const auto spill_tiles = divide_round_up(
+                                 units::to_milliliter( liquid.volume() ),
+                                 units::to_milliliter( spill_tile_volume ) );
+    const auto amount = static_cast<int>( std::max<decltype( spill_tiles )>( 1, spill_tiles ) );
+    if( amount <= 0 ) {
+        return;
+    }
+
+    auto frontier = std::queue<tripoint_bub_ms>();
+    auto visited = std::set<tripoint_bub_ms>();
+    auto spill_tiles_seen = std::set<tripoint_bub_ms>();
+    auto spill_tiles_to_fill = std::vector<tripoint_bub_ms>();
+    auto candidates_seen = std::set<tripoint_bub_ms>();
+    auto candidates = std::vector<spilled_liquid_field_candidate>();
+    auto represented_amount = 0;
+    const auto sort_spill_tiles = [&]() {
+        ranges::sort( spill_tiles_to_fill, [&]( const tripoint_bub_ms & lhs, const tripoint_bub_ms & rhs ) {
+            return std::tuple( rl_dist( center, lhs ), lhs.x(), lhs.y(), lhs.z() ) <
+                   std::tuple( rl_dist( center, rhs ), rhs.x(), rhs.y(), rhs.z() );
+        } );
+    };
+    const auto sort_candidates = [&]() {
+        ranges::sort( candidates, [&]( const spilled_liquid_field_candidate & lhs,
+        const spilled_liquid_field_candidate & rhs ) {
+            return std::tuple( lhs.distance, lhs.pos.x(), lhs.pos.y(), lhs.pos.z() ) <
+                   std::tuple( rhs.distance, rhs.pos.x(), rhs.pos.y(), rhs.pos.z() );
+        } );
+    };
+    const auto add_candidate = [&]( const tripoint_bub_ms & current,
+    const tripoint_bub_ms & adjacent ) {
+        if( spill_tiles_seen.contains( adjacent ) || candidates_seen.contains( adjacent ) ||
+            impassable( adjacent ) || obstructed_by_vehicle_rotation( current, adjacent ) ) {
+            return;
+        }
+
+        candidates_seen.insert( adjacent );
+        candidates.push_back( {
+            .distance = rl_dist( center, adjacent ),
+            .pos = adjacent,
+        } );
+    };
+    const auto expand_candidates = [&]( const tripoint_bub_ms & current ) {
+        for( const auto &[dx, dy] : spilled_liquid_adjacent_offsets ) {
+            const auto adjacent = current + point( dx, dy );
+            if( get_field( adjacent, type ) != nullptr ) {
+                continue;
+            }
+            add_candidate( current, adjacent );
+        }
+    };
+
+    if( get_field( center, type ) != nullptr ) {
+        frontier.push( center );
+        while( !frontier.empty() ) {
+            const auto current = frontier.front();
+            frontier.pop();
+            if( visited.contains( current ) ) {
+                continue;
+            }
+            visited.insert( current );
+
+            const auto *existing_field = get_field( current, type );
+            if( existing_field == nullptr ) {
+                continue;
+            }
+            spill_tiles_seen.insert( current );
+            spill_tiles_to_fill.push_back( current );
+            represented_amount += existing_field->get_field_intensity();
+
+            for( const auto &[dx, dy] : spilled_liquid_adjacent_offsets ) {
+                const auto adjacent = current + point( dx, dy );
+                if( get_field( adjacent, type ) != nullptr ) {
+                    if( !visited.contains( adjacent ) ) {
+                        frontier.push( adjacent );
+                    }
+                    continue;
+                }
+                add_candidate( current, adjacent );
+            }
+        }
+    } else {
+        candidates_seen.insert( center );
+        candidates.push_back( {
+            .distance = 0,
+            .pos = center,
+        } );
+    }
+
+    sort_spill_tiles();
+    const auto target_amount = std::min( represented_amount + amount, max_visual_amount );
+    while( represented_amount < target_amount ) {
+        auto changed = false;
+        for( const auto &tile : spill_tiles_to_fill ) {
+            auto *existing_field = get_field( tile, type );
+            if( existing_field == nullptr || existing_field->get_field_intensity() >= max_field_intensity ) {
+                continue;
+            }
+            mod_field_intensity( tile, type, 1 );
+            represented_amount++;
+            changed = true;
+            if( represented_amount >= target_amount ) {
+                break;
+            }
+        }
+        if( represented_amount >= target_amount ) {
+            break;
+        }
+        if( spill_tiles_to_fill.size() < max_visual_spill_tiles && !candidates.empty() ) {
+            sort_candidates();
+            const auto candidate = candidates.front();
+            candidates.erase( candidates.begin() );
+            if( add_field( candidate.pos, type, 1 ) ) {
+                represented_amount++;
+                changed = true;
+                spill_tiles_seen.insert( candidate.pos );
+                spill_tiles_to_fill.push_back( candidate.pos );
+                sort_spill_tiles();
+                expand_candidates( candidate.pos );
+            }
+        }
+        if( !changed ) {
+            break;
+        }
+    }
+}
+
 void map::propagate_field( const tripoint_bub_ms &center, const field_type_id &type, int amount,
                            int max_intensity )
 {
@@ -1057,6 +1244,87 @@ auto sub_add_field( SubTile &dst, field_type_id type, int intensity,
     return dst.get_field().find_field( type );
 }
 
+auto sub_remove_field( field_cache_dirty_context const &ctx, SubTile &dst,
+                       const field_type_id &type ) -> bool
+{
+    if( !dst.valid() || !dst.get_field().remove_field( type ) ) {
+        return false;
+    }
+    --dst.sm->field_count;
+    dst.sm->is_uniform = false;
+    mark_field_cache_dirty( ctx, dst.abs_sm, type );
+    return true;
+}
+
+auto ignite_fuel_field( field_cache_dirty_context const &ctx, SubTile &dst,
+                        const time_duration &fire_age ) -> field_entry *
+{
+    auto *fuel = dst.valid() ? dst.get_field().find_field( fd_fuel_field.id() ) : nullptr;
+    if( fuel == nullptr ) {
+        return nullptr;
+    }
+    const auto fuel_intensity = fuel->get_field_intensity();
+    const auto fire_intensity = fuel_field_fire_intensity( fuel_intensity );
+    const auto age = fire_age == 0_turns ? 0_turns : fuel_field_fire_age( fuel_intensity );
+    auto *fire = sub_add_field( dst, fd_fire, fire_intensity, age );
+    sub_remove_field( ctx, dst, fd_fuel_field.id() );
+    return fire;
+}
+
+auto conductive_field_intensity( const field &fields ) -> int
+{
+    auto max_intensity = 0;
+    std::ranges::for_each( fields, [&]( const auto & field_pair ) {
+        if( field_pair.second.get_field_type()->is_conductive() ) {
+            max_intensity = std::max( max_intensity, field_pair.second.get_field_intensity() );
+        }
+    } );
+    return max_intensity;
+}
+
+auto energize_conductive_field( SubTile &dst ) -> field_entry *
+{
+    if( !dst.valid() ) {
+        return nullptr;
+    }
+
+    const auto max_conductive_intensity = conductive_field_intensity( dst.get_field() );
+    if( max_conductive_intensity <= 0 ) {
+        return nullptr;
+    }
+
+    const auto electricity_intensity =
+        conductive_field_electricity_intensity( max_conductive_intensity );
+    auto *electricity = dst.get_field().find_field( fd_electricity );
+    if( electricity != nullptr ) {
+        electricity->set_field_intensity(
+            std::max( electricity->get_field_intensity(), electricity_intensity ) );
+        return electricity;
+    }
+
+    return sub_add_field( dst, fd_electricity, electricity_intensity, 0_turns );
+}
+
+auto consume_fire_smothering_puddle( field &curfield,
+                                     const field_type_str_id &field_type ) -> bool
+{
+    auto *liquid = curfield.find_field( field_type.id() );
+    if( liquid == nullptr ) {
+        return false;
+    }
+    if( liquid->get_field_intensity() < liquid->get_max_field_intensity() ) {
+        return false;
+    }
+    liquid->set_field_intensity( liquid->get_field_intensity() - 1 );
+    return true;
+}
+
+auto extinguish_fire_with_puddle( field &curfield ) -> bool
+{
+    return consume_fire_smothering_puddle( curfield, fd_water_field ) ||
+           consume_fire_smothering_puddle( curfield, fd_soapy_water_field );
+}
+
 // True if the tile allows movement (movecost > 0).
 auto sub_passable( const SubTile &tile ) -> bool
 {
@@ -1072,6 +1340,14 @@ auto sub_passable( const SubTile &tile ) -> bool
         return false;
     }
     return true;
+}
+
+auto sub_grounded( const SubTile &tile ) -> bool
+{
+    if( !tile.valid() ) {
+        return false;
+    }
+    return !sub_passable( tile ) || conductive_field_intensity( tile.get_field() ) > 0;
 }
 
 // Simplified gas spread check (no wind / vehicle-rotation).
@@ -1215,247 +1491,267 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
             if( cur_fd_type_id == fd_fire ) {
                 cur.set_field_age( std::max( -24_hours, cur.get_field_age() ) );
 
-                const auto can_spread = !ter_furn_has_flag( ter, frn, TFLAG_FIRE_CONTAINER );
-                const auto no_floor   = ter.has_flag( TFLAG_NO_FLOOR );
-                const auto can_burn   = !no_floor && can_spread &&
-                                        ( check_flammable( ter ) || check_flammable( frn ) );
-                const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
-                                        !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
+                if( extinguish_fire_with_puddle( curfield ) ) {
+                    cur.set_field_intensity( 0 );
+                    cur.set_field_age( 0_turns );
+                } else {
+                    const auto can_spread = !ter_furn_has_flag( ter, frn, TFLAG_FIRE_CONTAINER );
+                    const auto no_floor   = ter.has_flag( TFLAG_NO_FLOOR );
+                    const auto can_burn   = !no_floor && can_spread &&
+                                            ( check_flammable( ter ) || check_flammable( frn ) );
+                    const auto is_sealed  = ter_furn_has_flag( ter, frn, TFLAG_SEALED ) &&
+                                            !ter_furn_has_flag( ter, frn, TFLAG_ALLOW_FIELD_EFFECT );
 
-                const auto tick_turns = action_time_scale::calendar_turns_this_tick();
-                const auto tick_duration = action_time_scale::calendar_duration_this_tick();
-                auto time_added = 0_turns;
+                    const auto tick_turns = action_time_scale::calendar_turns_this_tick();
+                    const auto tick_duration = action_time_scale::calendar_duration_this_tick();
+                    auto time_added = 0_turns;
 
-                // --- Item burning ---
-                auto &items_here = sm.get_items( local );
-                if( !is_sealed && !items_here.empty() ) {
-                    std::vector<detached_ptr<item>> new_content;
-                    // NOTE: item detonation skipped — requires map context for explosions.
-                    auto frd          = fire_data( cur.get_field_intensity(), !can_spread );
-                    const auto max_c  = cur.get_field_intensity() * 2;
-                    auto consumed     = 0;
-                    auto fuel_it      = items_here.begin();
-                    while( fuel_it != items_here.end() && consumed < max_c ) {
-                        auto *fuel            = *fuel_it;
-                        const auto old_weight = fuel->weight( false );
-                        const auto destroyed  = fuel->burn( frd );
-                        const auto new_weight = destroyed ? 0_gram : fuel->weight( false );
-                        if( old_weight != new_weight ) {
-                            create_burnproducts( new_content, *fuel, old_weight - new_weight );
+                    // --- Item burning ---
+                    auto &items_here = sm.get_items( local );
+                    if( !is_sealed && !items_here.empty() ) {
+                        std::vector<detached_ptr<item>> new_content;
+                        // NOTE: item detonation skipped — requires map context for explosions.
+                        auto frd          = fire_data( cur.get_field_intensity(), !can_spread );
+                        const auto max_c  = cur.get_field_intensity() * 2;
+                        auto consumed     = 0;
+                        auto fuel_it      = items_here.begin();
+                        while( fuel_it != items_here.end() && consumed < max_c ) {
+                            auto *fuel            = *fuel_it;
+                            const auto old_weight = fuel->weight( false );
+                            const auto destroyed  = fuel->burn( frd );
+                            const auto new_weight = destroyed ? 0_gram : fuel->weight( false );
+                            if( old_weight != new_weight ) {
+                                create_burnproducts( new_content, *fuel, old_weight - new_weight );
+                            }
+                            if( destroyed ) {
+                                std::ranges::for_each( fuel->contents.clear_items(),
+                                [&]( detached_ptr<item> &ci ) {
+                                    if( !ci->is_irremovable() ) {
+                                        new_content.push_back( std::move( ci ) );
+                                    }
+                                } );
+                                fuel_it = items_here.erase( fuel_it );
+                                ++consumed;
+                            } else {
+                                ++fuel_it;
+                            }
                         }
-                        if( destroyed ) {
-                            std::ranges::for_each( fuel->contents.clear_items(),
-                            [&]( detached_ptr<item> &ci ) {
-                                if( !ci->is_irremovable() ) {
-                                    new_content.push_back( std::move( ci ) );
+                        std::ranges::for_each( new_content, [&]( detached_ptr<item> &prod ) {
+                            items_here.push_back( std::move( prod ) );
+                        } );
+                        time_added = 1_turns * roll_remainder( frd.fuel_produced * tick_turns );
+                    }
+
+                    // --- Vehicle fire damage (TODO: requires coordinate translation) ---
+
+                    // --- Terrain fuel consumption ---
+                    if( can_burn ) {
+                        if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
+                            cur.set_field_age( cur.get_field_age() + 4_minutes * tick_turns );
+                        }
+                        if( ter.is_basic_flammable() || frn.is_basic_flammable() ) {
+                            time_added += tick_duration * ( 5 - cur.get_field_intensity() );
+                            if( cur.get_field_intensity() > 1 &&
+                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                                sm.set_ter( local, t_dirt );
+                            }
+                        } else if( ( ter.is_hard_flammable() || frn.is_hard_flammable() ) && one_in( 3 ) ) {
+                            time_added += tick_duration * ( 4 - cur.get_field_intensity() );
+                            if( cur.get_field_intensity() > 1 &&
+                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                                sm.set_ter( local, t_dirt );
+                            }
+                        } else if( ter.is_ash_flammable() ) {
+                            time_added += tick_duration * ( 5 - cur.get_field_intensity() );
+                            if( cur.get_field_intensity() > 1 &&
+                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                                sm.set_ter( local, t_dirt );
+                            }
+                        } else if( frn.is_ash_flammable() ) {
+                            time_added += tick_duration * ( 5 - cur.get_field_intensity() );
+                            if( cur.get_field_intensity() > 1 &&
+                                one_in( 200 - cur.get_field_intensity() * 50 ) ) {
+                                sm.set_furn( local, f_ash );
+                            }
+                        }
+                    }
+
+                    if( time_added != 0_turns ) {
+                        cur.set_field_age( cur.get_field_age() - time_added );
+                    } else if( can_burn ) {
+                        cur.mod_field_age( 10_seconds * cur.get_field_intensity() * tick_turns );
+                    }
+
+                    // --- Z-rise: level-3 fire spreads upward ---
+                    if( can_spread && pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
+                        const tripoint_abs_sm above_pos( pos.raw() + tripoint{ 0, 0, 1 } );
+                        auto *above_sm = mb.lookup_submap_in_memory( above_pos );
+                        if( above_sm ) {
+                            const auto &above_ter = above_sm->get_ter( local ).obj();
+                            if( above_ter.has_flag( TFLAG_NO_FLOOR ) ||
+                                above_ter.is_flammable() ) {
+                                auto *fire_above = above_sm->get_field( local ).find_field( fd_fire );
+                                if( fire_above ) {
+                                    fire_above->mod_field_age( -2_turns );
+                                } else if( above_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
+                                    ++above_sm->field_count;
+                                    above_sm->field_cache.push_back( local );
+                                    above_sm->is_uniform = false;
                                 }
-                            } );
-                            fuel_it = items_here.erase( fuel_it );
-                            ++consumed;
-                        } else {
-                            ++fuel_it;
-                        }
-                    }
-                    std::ranges::for_each( new_content, [&]( detached_ptr<item> &prod ) {
-                        items_here.push_back( std::move( prod ) );
-                    } );
-                    time_added = 1_turns * roll_remainder( frd.fuel_produced * tick_turns );
-                }
-
-                // --- Vehicle fire damage (TODO: requires coordinate translation) ---
-
-                // --- Terrain fuel consumption ---
-                if( can_burn ) {
-                    if( ter.has_flag( TFLAG_SWIMMABLE ) ) {
-                        cur.set_field_age( cur.get_field_age() + 4_minutes * tick_turns );
-                    }
-                    if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE ) ) {
-                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
-                        if( cur.get_field_intensity() > 1 &&
-                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                            sm.set_ter( local, t_dirt );
-                        }
-                    } else if( ter_furn_has_flag( ter, frn, TFLAG_FLAMMABLE_HARD ) && one_in( 3 ) ) {
-                        time_added += tick_duration * ( 4 - cur.get_field_intensity() );
-                        if( cur.get_field_intensity() > 1 &&
-                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                            sm.set_ter( local, t_dirt );
-                        }
-                    } else if( ter.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
-                        if( cur.get_field_intensity() > 1 &&
-                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                            sm.set_ter( local, t_dirt );
-                        }
-                    } else if( frn.has_flag( TFLAG_FLAMMABLE_ASH ) ) {
-                        time_added += tick_duration * ( 5 - cur.get_field_intensity() );
-                        if( cur.get_field_intensity() > 1 &&
-                            one_in( 200 - cur.get_field_intensity() * 50 ) ) {
-                            sm.set_furn( local, f_ash );
-                        }
-                    }
-                }
-
-                if( time_added != 0_turns ) {
-                    cur.set_field_age( cur.get_field_age() - time_added );
-                } else if( can_burn ) {
-                    cur.mod_field_age( 10_seconds * cur.get_field_intensity() * tick_turns );
-                }
-
-                // --- Z-rise: level-3 fire spreads upward ---
-                if( can_spread && pos.z() < OVERMAP_HEIGHT && cur.get_field_intensity() == 3 ) {
-                    const tripoint_abs_sm above_pos( pos.raw() + tripoint{ 0, 0, 1 } );
-                    auto *above_sm = mb.lookup_submap_in_memory( above_pos );
-                    if( above_sm ) {
-                        const auto &above_ter = above_sm->get_ter( local ).obj();
-                        if( above_ter.has_flag( TFLAG_NO_FLOOR ) ||
-                            above_ter.has_flag( TFLAG_FLAMMABLE ) ||
-                            above_ter.has_flag( TFLAG_FLAMMABLE_ASH ) ||
-                            above_ter.has_flag( TFLAG_FLAMMABLE_HARD ) ) {
-                            auto *fire_above = above_sm->get_field( local ).find_field( fd_fire );
-                            if( fire_above ) {
-                                fire_above->mod_field_age( -2_turns );
-                            } else if( above_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
-                                ++above_sm->field_count;
-                                above_sm->field_cache.push_back( local );
-                                above_sm->is_uniform = false;
                             }
                         }
                     }
-                }
 
-                // --- Neighbor scan for flashpoint / intensity growth / spreading ---
-                const auto get_nb = [&]( const point & d ) {
-                    return neighbor_tile( &sm, pos, local, d, mb );
-                };
-                const auto in_pit = can_spread && ter.id.id() == t_pit;
-                auto adjacent_fires = 0;
+                    // --- Neighbor scan for flashpoint / intensity growth / spreading ---
+                    const auto get_nb = [&]( const point & d ) {
+                        return neighbor_tile( &sm, pos, local, d, mb );
+                    };
+                    const auto in_pit = can_spread && ter.id.id() == t_pit;
+                    auto adjacent_fires = 0;
 
-                if( can_spread && cur.get_field_intensity() > 1 && one_in( 3 ) ) {
-                    // Flashpoint: fuel adjacent fires from our excess age.
-                    const auto end_it = static_cast<size_t>( rng( 0, 7 ) );
-                    std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
-                        if( cur.get_field_age() >= 0_turns ) {
-                            return;
-                        }
-                        const auto i   = ( end_it + 1 + c ) % 8;
-                        auto dst       = get_nb( eight_dirs_sm[i] );
-                        if( !dst.valid() ) {
-                            return;
-                        }
-                        auto *dstfld = dst.get_field().find_field( fd_fire );
-                        if( dstfld &&
-                            ( dstfld->get_field_intensity() <= cur.get_field_intensity() ||
-                              dstfld->get_field_age() > cur.get_field_age() ) &&
-                            ( in_pit == ( dst.get_ter_t().id.id() == t_pit ) ) ) {
-                            if( dstfld->get_field_intensity() < 2 ) {
-                                dstfld->set_field_intensity( dstfld->get_field_intensity() + 1 );
+                    if( can_spread && cur.get_field_intensity() > 1 && one_in( 3 ) ) {
+                        // Flashpoint: fuel adjacent fires from our excess age.
+                        const auto end_it = static_cast<size_t>( rng( 0, 7 ) );
+                        std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
+                            if( cur.get_field_age() >= 0_turns ) {
+                                return;
                             }
-                            dstfld->set_field_age( dstfld->get_field_age() - 5_minutes );
-                            cur.set_field_age( cur.get_field_age() + 5_minutes );
-                        }
-                        if( dstfld ) {
-                            ++adjacent_fires;
-                        }
-                    } );
-                } else if( cur.get_field_age() < 0_turns && cur.get_field_intensity() < 3 ) {
-                    // Intensity growth from neighbours.
-                    auto maximum_intensity = 1;
-                    if( cur.get_field_age() < -500_minutes ) {
-                        maximum_intensity = 3;
-                    } else {
-                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
-                            auto dst = get_nb( d );
-                            if( dst.valid() && dst.get_field().find_field( fd_fire ) ) {
+                            const auto i   = ( end_it + 1 + c ) % 8;
+                            auto dst       = get_nb( eight_dirs_sm[i] );
+                            if( !dst.valid() ) {
+                                return;
+                            }
+                            auto *dstfld = dst.get_field().find_field( fd_fire );
+                            if( dstfld &&
+                                ( dstfld->get_field_intensity() <= cur.get_field_intensity() ||
+                                  dstfld->get_field_age() > cur.get_field_age() ) &&
+                                ( in_pit == ( dst.get_ter_t().id.id() == t_pit ) ) ) {
+                                if( dstfld->get_field_intensity() < 2 ) {
+                                    dstfld->set_field_intensity( dstfld->get_field_intensity() + 1 );
+                                }
+                                dstfld->set_field_age( dstfld->get_field_age() - 5_minutes );
+                                cur.set_field_age( cur.get_field_age() + 5_minutes );
+                            }
+                            if( dstfld ) {
                                 ++adjacent_fires;
                             }
                         } );
-                        maximum_intensity = 1 + ( adjacent_fires >= 3 ) + ( adjacent_fires >= 7 );
-                        if( maximum_intensity < 2 && cur.get_field_age() < -50_minutes ) {
-                            maximum_intensity = 2;
+                    } else if( cur.get_field_age() < 0_turns && cur.get_field_intensity() < 3 ) {
+                        // Intensity growth from neighbours.
+                        auto maximum_intensity = 1;
+                        if( cur.get_field_age() < -500_minutes ) {
+                            maximum_intensity = 3;
+                        } else {
+                            std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                                auto dst = get_nb( d );
+                                if( dst.valid() && dst.get_field().find_field( fd_fire ) ) {
+                                    ++adjacent_fires;
+                                }
+                            } );
+                            maximum_intensity = 1 + ( adjacent_fires >= 3 ) + ( adjacent_fires >= 7 );
+                            if( maximum_intensity < 2 && cur.get_field_age() < -50_minutes ) {
+                                maximum_intensity = 2;
+                            }
+                        }
+                        if( cur.get_field_intensity() < maximum_intensity ) {
+                            cur.set_field_intensity( cur.get_field_intensity() + 1 );
+                            cur.set_field_age( cur.get_field_age() +
+                                               10_minutes * cur.get_field_intensity() );
                         }
                     }
-                    if( cur.get_field_intensity() < maximum_intensity ) {
-                        cur.set_field_intensity( cur.get_field_intensity() + 1 );
-                        cur.set_field_age( cur.get_field_age() +
-                                           10_minutes * cur.get_field_intensity() );
-                    }
-                }
 
-                // Fire spreading to adjacent tiles.
-                if( can_spread ) {
-                    const auto end_i = static_cast<size_t>( rng( 0, 7 ) );
-                    std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
-                        if( one_in( cur.get_field_intensity() * 2 ) ) {
-                            return;
-                        }
-                        auto dst = get_nb( eight_dirs_sm[( end_i + 1 + c ) % 8] );
-                        if( !dst.valid() ) {
-                            return;
-                        }
-                        if( dst.get_field().find_field( fd_fire ) ) {
-                            return;
-                        }
-                        const auto &dter = dst.get_ter_t();
-                        const auto &dfur = dst.get_furn_t();
-                        if( in_pit != ( dter.id.id() == t_pit ) ) {
-                            return;
-                        }
-                        auto *nearwebfld     = dst.get_field().find_field( fd_web );
-                        auto  spread_chance  = 25 * ( cur.get_field_intensity() - 1 );
-                        if( nearwebfld ) {
-                            spread_chance = 50 + spread_chance / 2;
-                        }
-                        const auto dst_has_flammable_items = std::ranges::any_of(
-                                dst.get_items().as_vector(),
-                        []( const item * i ) { return i && i->flammable(); } );
-                        const auto power = cur.get_field_intensity() + ( one_in( 5 ) ? 1 : 0 );
-                        const auto can_ignite =
-                            rng( 1, 100 ) < spread_chance &&
-                            ( check_flammable( dter ) || check_flammable( dfur ) || nearwebfld ) &&
-                            ( ( power >= 3 && cur.get_field_age() < 0_turns && one_in( 20 ) ) ||
-                              ( power >= 2 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE ) && one_in( 2 ) ) ||
-                              ( power >= 2 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE_ASH ) && one_in( 2 ) ) ||
-                              ( power >= 3 && ter_furn_has_flag( dter, dfur, TFLAG_FLAMMABLE_HARD ) && one_in( 5 ) ) ||
-                              nearwebfld ||
-                              ( dst_has_flammable_items && one_in( 5 ) ) );
-                        if( can_ignite ) {
-                            auto *newfire = sub_add_field( dst, fd_fire, 1, 0_turns );
-                            if( newfire ) {
-                                newfire->set_field_age( 2_minutes );
+                    // Fire spreading to adjacent tiles.
+                    if( can_spread ) {
+                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                            auto dst = get_nb( d );
+                            if( !dst.valid() || dst.get_field().find_field( fd_fire ) != nullptr ) {
+                                return;
+                            }
+                            if( in_pit != ( dst.get_ter_t().id.id() == t_pit ) ) {
+                                return;
+                            }
+                            if( ignite_fuel_field( dirty_context, dst, 0_turns ) != nullptr ) {
                                 cur.set_field_age( cur.get_field_age() + 1_minutes );
                             }
-                            if( nearwebfld ) {
-                                nearwebfld->set_field_intensity( 0 );
-                            }
-                        }
-                    } );
-                }
+                        } );
 
-                // --- Z-fall: fire on open-air tile falls to z-level below ---
-                if( no_floor && pos.z() > -OVERMAP_DEPTH ) {
-                    const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
-                    auto *below_sm = mb.lookup_submap_in_memory( below_pos );
-                    if( below_sm ) {
-                        auto *fire_below = below_sm->get_field( local ).find_field( fd_fire );
-                        if( !fire_below ) {
-                            if( below_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
-                                ++below_sm->field_count;
-                                below_sm->field_cache.push_back( local );
-                                below_sm->is_uniform = false;
+                        const auto end_i = static_cast<size_t>( rng( 0, 7 ) );
+                        std::ranges::for_each( std::views::iota( 0u, 8u ), [&]( size_t c ) {
+                            auto dst = get_nb( eight_dirs_sm[( end_i + 1 + c ) % 8] );
+                            if( !dst.valid() ) {
+                                return;
                             }
-                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
-                        } else {
-                            auto new_i = std::max( cur.get_field_intensity(),
-                                                   fire_below->get_field_intensity() );
-                            if( new_i < 3 &&
-                                cur.get_field_intensity() == fire_below->get_field_intensity() ) {
-                                ++new_i;
+                            if( dst.get_field().find_field( fd_fire ) ) {
+                                return;
                             }
-                            if( fire_below->get_field_intensity() < 3 || one_in( 10 ) ) {
+                            const auto &dter = dst.get_ter_t();
+                            const auto &dfur = dst.get_furn_t();
+                            if( in_pit != ( dter.id.id() == t_pit ) ) {
+                                return;
+                            }
+                            auto *nearwebfld     = dst.get_field().find_field( fd_web );
+                            if( one_in( cur.get_field_intensity() * 2 ) ) {
+                                return;
+                            }
+                            auto  spread_chance  = 25 * ( cur.get_field_intensity() - 1 );
+                            if( nearwebfld ) {
+                                spread_chance = 50 + spread_chance / 2;
+                            }
+                            const auto dst_has_flammable_items = std::ranges::any_of(
+                                    dst.get_items().as_vector(),
+                            []( const item * i ) { return i && i->flammable(); } );
+                            const auto power = cur.get_field_intensity() + ( one_in( 5 ) ? 1 : 0 );
+                            const auto can_ignite =
+                                rng( 1, 100 ) < spread_chance &&
+                                ( check_flammable( dter ) || check_flammable( dfur ) ||
+                                  nearwebfld ) &&
+                                ( ( power >= 3 && cur.get_field_age() < 0_turns && one_in( 20 ) ) ||
+                                  ( power >= 2 && ( check_basic_flammable( dter ) ||
+                                                    check_basic_flammable( dfur ) ) && one_in( 2 ) ) ||
+                                  ( power >= 2 && ( check_ash_flammable( dter ) ||
+                                                    check_ash_flammable( dfur ) ) && one_in( 2 ) ) ||
+                                  ( power >= 3 && ( check_hard_flammable( dter ) ||
+                                                    check_hard_flammable( dfur ) ) && one_in( 5 ) ) ||
+                                  nearwebfld ||
+                                  ( dst_has_flammable_items && one_in( 5 ) ) );
+                            if( can_ignite ) {
+                                auto *newfire = sub_add_field( dst, fd_fire, 1, 0_turns );
+                                if( newfire ) {
+                                    newfire->set_field_age( 2_minutes );
+                                    cur.set_field_age( cur.get_field_age() + 1_minutes );
+                                }
+                                if( nearwebfld ) {
+                                    nearwebfld->set_field_intensity( 0 );
+                                }
+                            }
+                        } );
+                    }
+
+                    // --- Z-fall: fire on open-air tile falls to z-level below ---
+                    if( no_floor && pos.z() > -OVERMAP_DEPTH ) {
+                        const tripoint_abs_sm below_pos( pos.raw() + tripoint{ 0, 0, -1 } );
+                        auto *below_sm = mb.lookup_submap_in_memory( below_pos );
+                        if( below_sm ) {
+                            auto *fire_below = below_sm->get_field( local ).find_field( fd_fire );
+                            if( !fire_below ) {
+                                if( below_sm->get_field( local ).add_field( fd_fire, 1, 0_turns ) ) {
+                                    ++below_sm->field_count;
+                                    below_sm->field_cache.push_back( local );
+                                    below_sm->is_uniform = false;
+                                }
                                 cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                            } else {
+                                auto new_i = std::max( cur.get_field_intensity(),
+                                                       fire_below->get_field_intensity() );
+                                if( new_i < 3 &&
+                                    cur.get_field_intensity() == fire_below->get_field_intensity() ) {
+                                    ++new_i;
+                                }
+                                if( fire_below->get_field_intensity() < 3 || one_in( 10 ) ) {
+                                    cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                                }
+                                fire_below->set_field_intensity( new_i );
                             }
-                            fire_below->set_field_intensity( new_i );
                         }
                     }
                 }
@@ -1516,6 +1812,10 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
             // ---- fd_electricity ------------------------------------------
             if( !is_newborn && cur_fd_type_id == fd_electricity && !one_in( 5 ) ) {
                 auto self = SubTile{ &sm, local, pos };
+                std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                    auto dst = neighbor_tile( &sm, pos, local, d, mb );
+                    static_cast<void>( energize_conductive_field( dst ) );
+                } );
                 if( !sub_passable( self ) && cur.get_field_intensity() > 1 ) {
                     auto tries = 0;
                     while( tries < 10 &&
@@ -1541,7 +1841,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                     std::vector<point> grounded;
                     std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
                         auto dst = neighbor_tile( &sm, pos, local, d, mb );
-                        if( dst.valid() && !sub_passable( dst ) ) {
+                        if( sub_grounded( dst ) ) {
                             grounded.push_back( d );
                         }
                     } );
@@ -1600,9 +1900,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                 if( dst.valid() ) {
                     const auto &dter = dst.get_ter_t();
                     const auto &dfrn = dst.get_furn_t();
-                    if( ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE ) ||
-                        ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE_ASH ) ||
-                        ter_furn_has_flag( dter, dfrn, TFLAG_FLAMMABLE_HARD ) ) {
+                    if( dter.is_flammable() || dfrn.is_flammable() ) {
                         sub_add_field( dst, fd_fire, 1, 0_turns );
                     }
                     const auto dst_has_flammable = std::ranges::any_of(
@@ -1611,6 +1909,7 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                     if( dst_has_flammable ) {
                         sub_add_field( dst, fd_fire, 1, 0_turns );
                     }
+                    ignite_fuel_field( dirty_context, dst, 0_turns );
                 }
                 // create_hot_air() skipped — render/audio effect only.
             }

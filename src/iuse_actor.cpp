@@ -47,6 +47,7 @@
 #include "enums.h"
 #include "explosion.h"
 #include "field_type.h"
+#include "field_ignition_utils.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "game.h"
@@ -1805,7 +1806,14 @@ bool firestarter_actor::prep_firestarter_use( const player &p, tripoint_bub_ms &
 
 void firestarter_actor::resolve_firestarter_use( player &p, const tripoint_bub_ms &pos )
 {
-    if( get_map().add_field( pos, fd_fire, 1, 10_minutes ) ) {
+    map &here = get_map();
+    static const auto fd_fuel = field_type_str_id( "fd_fuel" );
+    const auto fuel_intensity = here.get_field_intensity( pos, fd_fuel.id() );
+    if( fuel_intensity > 0 ) {
+        here.remove_field( pos, fd_fuel.id() );
+    }
+    if( here.add_field( pos, fd_fire, fuel_field_fire_intensity( fuel_intensity ),
+                        fuel_field_fire_age( fuel_intensity ) ) ) {
         if( !p.has_trait( trait_PYROMANIA ) ) {
             p.add_msg_if_player( _( "You successfully light a fire." ) );
         } else {

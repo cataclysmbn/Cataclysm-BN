@@ -382,7 +382,27 @@
     "warmth": 10,
     "material_thickness": 3,
     "environmental_protection": 12,
-    "flags": [ "WATERPROOF" ]
+    "flags": [ "WATERPROOF", "NOSLIP" ]
+  },
+  {
+    "id": "shoe_covers_noslip",
+    "type": "ARMOR",
+    "name": { "str": "pair of non-slip shoe covers", "str_pl": "pairs of non-slip shoe covers" },
+    "description": "A pair of disposable rubberized shoe covers meant to be pulled over normal footwear.  Their textured soles help keep your footing on slick surfaces, but the extra layer makes your steps clumsier.",
+    "weight": "190 g",
+    "volume": "750 ml",
+    "price": "12 USD",
+    "price_postapoc": "150 cent",
+    "material": [ "plastic", "rubber" ],
+    "symbol": "[",
+    "looks_like": "boots_rubber",
+    "color": "light_gray",
+    "covers": [ "feet" ],
+    "coverage": 90,
+    "encumbrance": 8,
+    "material_thickness": 1,
+    "environmental_protection": 2,
+    "flags": [ "WATERPROOF", "NOSLIP", "OUTER", "OVERSIZE" ]
   },
   {
     "id": "boots_scrap",
@@ -451,7 +471,7 @@
     "warmth": 15,
     "material_thickness": 5,
     "environmental_protection": 3,
-    "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "STURDY", "NOSLIP" ]
   },
   {
     "id": "boots_western",
@@ -493,7 +513,7 @@
     "warmth": 80,
     "material_thickness": 6,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "WATERPROOF" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "NOSLIP" ]
   },
   {
     "id": "boots_wsurvivor",
@@ -516,7 +536,7 @@
     "warmth": 75,
     "material_thickness": 6,
     "environmental_protection": 5,
-    "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "STURDY", "NOSLIP" ]
   },
   {
     "id": "cleats",
@@ -538,7 +558,7 @@
     "encumbrance": 15,
     "warmth": 20,
     "material_thickness": 3,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "NOSLIP" ]
   },
   {
     "id": "golf_shoes",
@@ -1014,7 +1034,7 @@
     "encumbrance": 10,
     "warmth": 20,
     "material_thickness": 3,
-    "flags": [ "VARSIZE" ]
+    "flags": [ "VARSIZE", "NOSLIP" ]
   },
   {
     "id": "slippers",
@@ -1142,7 +1162,7 @@
     "warmth": 30,
     "material_thickness": 2,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "NOSLIP" ]
   },
   {
     "id": "roller_shoes_off",

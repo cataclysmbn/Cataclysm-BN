@@ -219,6 +219,7 @@
     "name": { "str_sp": "bleach" },
     "weight": "138 g",
     "color": "white",
+    "spill_field": "fd_chemical",
     "container": "jug_plastic",
     "symbol": "~",
     "description": "This is sodium hypochlorite, a common household cleaning agent.  It is highly unsafe to drink.",
@@ -237,6 +238,7 @@
     "name": { "str_sp": "ammonia" },
     "weight": "124 g",
     "color": "white",
+    "spill_field": "fd_chemical",
     "container": "jug_plastic",
     "symbol": "~",
     "description": "This is ammonium hydroxide, a common household cleaning agent.  It is highly unsafe to drink.",
@@ -255,6 +257,7 @@
     "weight": "67 g",
     "color": "yellow",
     "flags": [ "FERTILIZER" ],
+    "spill_field": "fd_chemical",
     "container": "jug_plastic",
     "symbol": "~",
     "description": "A nutrient rich elixir for plants.",
@@ -340,6 +343,7 @@
     "price": "0 cent",
     "price_postapoc": "0 cent",
     "volume": "250 ml",
+    "spill_field": "fd_salt_water",
     "phase": "liquid",
     "ammo_type": "components",
     "category": "chems"
@@ -357,8 +361,10 @@
     "price": "0 cent",
     "price_postapoc": "0 cent",
     "volume": "250 ml",
+    "spill_field": "fd_soapy_water",
     "phase": "liquid",
-    "ammo_type": "components",
+    "ammo_type": "water",
+    "effects": [ "STREAM_SOAPY_WATER" ],
     "category": "chems"
   },
   {
@@ -371,6 +377,7 @@
     "use_action": "BLECH",
     "container": "jug_plastic",
     "comestible_type": "DRINK",
+    "spill_field": "fd_acid_water",
     "symbol": "~",
     "quench": -56,
     "healthy": -2,
@@ -393,6 +400,7 @@
     "use_action": "BLECH",
     "container": "jug_plastic",
     "comestible_type": "DRINK",
+    "spill_field": "fd_acid_water",
     "symbol": "~",
     "quench": -28,
     "healthy": -1,
@@ -421,12 +429,12 @@
     "description": "Concentrated acid.  Don't drink it.",
     "price": "20 USD",
     "price_postapoc": "50 cent",
+    "spill_field": "fd_acid",
     "volume": "250 ml",
     "phase": "liquid",
     "category": "chems",
     "fun": -45,
-    "//": "No scale_qty for this since can get this acid from butchering acidic monsters, player would be forced to dump any excess at their feet.",
-    "drop_action": { "type": "emit_actor", "emits": [ "emit_acid_splash" ] },
+    "//": "Spill handling now creates the acid field directly.",
     "ammo_data": { "ammo_type": "acid", "damage": { "damage_type": "acid", "amount": 3 }, "effects": [ "ACID_TRAIL" ] }
   },
   {
@@ -596,9 +604,9 @@
     "ammo_type": "acid",
     "damage": { "damage_type": "acid", "amount": 6 },
     "effects": [ "ACID_TRAIL_WEAK" ],
+    "spill_field": "fd_acid",
     "phase": "liquid",
-    "container": "bottle_glass",
-    "drop_action": { "type": "emit_actor", "emits": [ "emit_acid_drop" ], "scale_qty": true }
+    "container": "bottle_glass"
   },
   {
     "type": "AMMO",
@@ -617,9 +625,9 @@
     "ammo_type": "acid",
     "damage": { "damage_type": "acid", "amount": 5 },
     "effects": [ "ACID_TRAIL_WEAK" ],
+    "spill_field": "fd_acid",
     "phase": "liquid",
-    "container": "bottle_glass",
-    "drop_action": { "type": "emit_actor", "emits": [ "emit_acid_drop" ], "scale_qty": true }
+    "container": "bottle_glass"
   },
   {
     "type": "AMMO",
@@ -638,9 +646,9 @@
     "ammo_type": "acid",
     "damage": { "damage_type": "acid", "amount": 4 },
     "effects": [ "ACID_TRAIL_WEAK" ],
+    "spill_field": "fd_acid",
     "phase": "liquid",
-    "container": "bottle_glass",
-    "drop_action": { "type": "emit_actor", "emits": [ "emit_acid_drop" ], "scale_qty": true }
+    "container": "bottle_glass"
   },
   {
     "type": "AMMO",
@@ -713,6 +721,7 @@
     "bashing": 1,
     "ammo_type": "components",
     "phase": "liquid",
+    "spill_field": "fd_acid",
     "container": "bottle_glass"
   },
   {
@@ -909,6 +918,7 @@
     "price": "2 USD",
     "price_postapoc": "1 USD",
     "name": { "str_sp": "acetic acid" },
+    "spill_field": "fd_chemical",
     "symbol": "~",
     "color": "white",
     "description": "Concentrated acetic acid, typically used as a chemical reagent and antifungal agent.  Despite its horrid smell, it was used to prepare several types of perfumes, but would making perfume not be too fancy for postapocalyptic New England?",
@@ -927,6 +937,7 @@
     "price": "2 USD",
     "price_postapoc": "1 USD",
     "name": { "str_sp": "formaldehyde" },
+    "spill_field": "fd_chemical",
     "symbol": "~",
     "color": "white",
     "description": "Formaldehyde, here dissolved in water, was widely used before the Cataclysm as a precursor to production of many chemicals and materials and as an embalming agent.  Easily identifiable by its pungent odor.  Terribly toxic, carcinogenic, and volatile.",
@@ -1126,6 +1137,7 @@
     "symbol": "~",
     "description": "Turbid liquid from the sewers with awful stench.",
     "volume": "250 ml",
+    "spill_field": "fd_sewage",
     "phase": "liquid",
     "ammo_type": "components",
     "category": "chems"
@@ -1171,6 +1183,7 @@
     "weight": "125 g",
     "color": "white",
     "container": "bottle_plastic",
+    "spill_field": "fd_chemical",
     "symbol": "~",
     "description": "This is a liquid form of sodium hydroxide.  It is highly corrosive, handle with care.",
     "price": "1 USD",
@@ -1224,8 +1237,25 @@
     "symbol": "!",
     "color": "white",
     "container": "bottle_glass",
+    "spill_field": "fd_chemical",
     "description": "Diethyl ether largely supplanted the use of chloroform as a general anesthetic due to ether's more favorable therapeutic index, that is, a greater difference between an effective dose and a potentially toxic dose.",
     "volume": "1 ml",
+    "ammo_type": "components",
+    "phase": "liquid"
+  },
+  {
+    "type": "AMMO",
+    "id": "industrial_lubricant",
+    "category": "chems",
+    "price": "10 cent",
+    "price_postapoc": "5 cent",
+    "name": { "str_sp": "industrial lubricant" },
+    "symbol": "!",
+    "color": "white",
+    "container": "bottle_glass",
+    "spill_field": "fd_industrial_lubricant",
+    "description": "A viscous liquid used as an industrial lubricant.",
+    "volume": "250 ml",
     "ammo_type": "components",
     "phase": "liquid"
   },
@@ -1240,6 +1270,7 @@
     "symbol": "~",
     "color": "light_cyan",
     "container": "bottle_glass",
+    "spill_field": "fd_chemical",
     "description": "Dimethyl sulfoxide, or DMSO, is a common and important aprotic solvent, capable of dissolving a huge range of things.  It can help many chemical agents diffuse more quickly through the skin, and has a mild analgesic effect on its own.",
     "volume": "25 ml",
     "phase": "liquid",
@@ -1259,6 +1290,7 @@
     "symbol": "~",
     "color": "light_cyan",
     "container": "bottle_glass",
+    "spill_field": "fd_chemical",
     "description": "Famous for its abilities as an illicit sedative, this substance is also a very good solvent.  In particular, it's used a lot in nuclear magnetic resonance spectroscopy.",
     "volume": "1 ml",
     "ammo_type": "components",

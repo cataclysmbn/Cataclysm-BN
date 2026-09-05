@@ -59,6 +59,11 @@
     "info": "<good>Prevents sounds from movement</good>"
   },
   {
+    "id": "NOSLIP",
+    "type": "enchantment_flag",
+    "info": "<good>Provides non-slip footing on slippery surfaces</good>"
+  },
+  {
     "id": "EAT_ROTTEN",
     "type": "enchantment_flag",
     "info": "<good>Permits eating rotten food</good>"
