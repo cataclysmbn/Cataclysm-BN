@@ -109,6 +109,10 @@ class craft_command
             return tool_selections;
         }
 
+        auto is_volume_warning_canceled() const -> bool {
+            return volume_warning_canceled;
+        }
+
     private:
         const recipe *rec = nullptr;
         int batch_size = 0;
@@ -128,6 +132,8 @@ class craft_command
 
         std::vector<comp_selection<item_comp>> item_selections;
         std::vector<comp_selection<tool_comp>> tool_selections;
+
+        bool volume_warning_canceled = false;
 
         /** Checks if tools we selected in a previous call to execute() are still available. */
         std::vector<comp_selection<item_comp>> check_item_components_missing(
