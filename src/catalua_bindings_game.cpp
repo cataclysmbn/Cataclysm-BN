@@ -333,11 +333,18 @@ auto pregen_special_fits_bounds( const dimension_travel_options &opts ) -> bool
         return false;
     }
 
+    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
+    const auto local = project_remain<coords::om>( special_omt ).remainder_tripoint;
+    const auto fits_overmap = [&]( const auto & loc ) { return overmap::inbounds( local + loc.p ); };
+    if( !overmap::inbounds( local ) ||
+        !std::ranges::all_of( special.required_locations(), fits_overmap ) ) {
+        return false;
+    }
+
     if( !opts.bounds_min_omt || !opts.bounds_max_omt ) {
         return true;
     }
 
-    const auto special_omt = opts.pregen_special_omt.value_or( opts.target_omt );
     const auto overmap_terrain_overlaps = [&]( const tripoint_abs_omt & pos ) {
         const auto overmap_terrain_origin = opts.bounds_min_omt.value_or( opts.target_omt );
         return opts.overmap_terrain &&

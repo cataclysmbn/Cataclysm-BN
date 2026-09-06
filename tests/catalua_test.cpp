@@ -35,6 +35,7 @@
 #include "monster.h"
 #include "npc.h"
 #include "options.h"
+#include "overmap_special.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
 #include "player_activity.h"
@@ -881,6 +882,78 @@ TEST_CASE("lua_dimension_rejects_out_of_range_bounds", "[lua]") {
     CHECK(g->get_current_dimension_id() == original_dimension);
     CHECK(get_avatar().abs_pos() == original_pos);
     CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+}
+
+TEST_CASE("lua_dimension_rejects_clipped_specials", "[lua]") {
+    REQUIRE(overmap_special_id("test_dimension_special_bounds").is_valid());
+    auto lua = make_lua_state();
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto dim = dimension_id("lua_test_clipped_special");
+    REQUIRE_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+    const auto special_pos = GENERATE(
+        tripoint_abs_omt(0, 1, 0), tripoint_abs_omt(OMAPX - 1, 1, 0), tripoint_abs_omt(1, 0, 0),
+        tripoint_abs_omt(1, OMAPY - 1, 0), tripoint_abs_omt(-1, -2, 0),
+        tripoint_abs_omt(-OMAPX, -2, 0), tripoint_abs_omt(1, 1, -OVERMAP_DEPTH),
+        tripoint_abs_omt(1, 1, OVERMAP_HEIGHT));
+    const auto bounded = GENERATE(false, true);
+    CAPTURE(special_pos, bounded);
+    auto opts = lua.create_table();
+    opts["dimension_id"] = dim.str();
+    opts["world_type"] = "pocket_dimension";
+    opts["target_omt"] = tripoint_abs_omt(1, 1, 0);
+    opts["pregen_special_id"] = "test_dimension_special_bounds";
+    opts["pregen_special_omt"] = special_pos;
+    if (bounded) {
+        opts["bounds_min_omt"] = tripoint_abs_omt(-OMAPX - 1, -OMAPY - 1, -OVERMAP_DEPTH);
+        opts["bounds_max_omt"] = tripoint_abs_omt(OMAPX, OMAPY, OVERMAP_HEIGHT);
+    }
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+    CHECK_FALSE(has_any_overmapbuffer(dim));
+}
+
+TEST_CASE("lua_dimension_places_complete_special_at_overmap_edges", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_complete_special");
+    const auto original_pos = get_avatar().abs_pos();
+    const auto original_origin = player_reality_bubble_origin();
+    const auto cleanup = on_out_of_scope([&]() {
+        if (g->get_current_dimension_id() == dim) {
+            g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, original_origin);
+            get_avatar().setpos(original_pos);
+            g->update_map(get_avatar());
+        }
+        g->delete_dimension(dim);
+        clear_all_state();
+    });
+    const auto target = GENERATE(
+        tripoint_abs_omt(1, 1, -OVERMAP_DEPTH + 1), tripoint_abs_omt(-2, -2, OVERMAP_HEIGHT - 1));
+    CAPTURE(target);
+    auto lua = make_lua_state();
+    auto opts = lua.create_table();
+    opts["dimension_id"] = dim.str();
+    opts["world_type"] = "pocket_dimension";
+    opts["target_omt"] = target;
+    opts["bounds_min_omt"] = target - tripoint_rel_omt(1, 1, 1);
+    opts["bounds_max_omt"] = target + tripoint_rel_omt(1, 1, 1);
+    opts["pregen_special_id"] = "test_dimension_special_bounds";
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    REQUIRE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == dim);
+    auto& overmaps = get_overmapbuffer(dim);
+    for (const auto offset : {-1, 0, 1}) {
+        CHECK(overmaps.ter(target + tripoint_rel_omt(offset, offset, offset))
+              == oter_str_id("field").id());
+    }
 }
 
 TEST_CASE("lua_dimension_landing", "[lua]") {
