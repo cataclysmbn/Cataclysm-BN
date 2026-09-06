@@ -65,6 +65,7 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
 // workaround for https://github.com/llvm/llvm-project/issues/113087
@@ -954,6 +955,101 @@ TEST_CASE("lua_dimension_places_complete_special_at_overmap_edges", "[lua]") {
         CHECK(overmaps.ter(target + tripoint_rel_omt(offset, offset, offset))
               == oter_str_id("field").id());
     }
+}
+
+TEST_CASE("lua_callback_lock_allows_reentry_and_excludes_other_threads", "[lua]") {
+    auto& lua = cata::get_active_lua_state()->lua;
+    auto callbacks = lua["game"]["examine_functions"].get<sol::table>();
+    const auto id = std::string("test_lua_callback_lock");
+    const auto previous = callbacks[id].get<sol::object>();
+    const auto restore = on_out_of_scope([&]() { callbacks[id] = previous; });
+    auto reentered = false;
+    auto concurrent_access = true;
+    callbacks.set_function(id, [&](sol::table /*params*/) {
+        {
+            auto worker = std::jthread([&]() {
+                auto lock = std::unique_lock(cata::lua_lock, std::try_to_lock);
+                concurrent_access = lock.owns_lock();
+            });
+        }
+        auto lock = std::unique_lock(cata::lua_lock, std::try_to_lock);
+        reentered = lock.owns_lock();
+    });
+    cata::run_lua_examine(id, get_avatar(), get_avatar().bub_pos());
+    CHECK(reentered);
+    CHECK_FALSE(concurrent_access);
+}
+
+TEST_CASE("lua_examine_dimension_travel_reenters_mapgen_and_save_hooks", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_examine_travel");
+    const auto cleanup = on_out_of_scope([&]() {
+        if (!g->get_current_dimension_id().is_empty()) {
+            g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt);
+        }
+        g->delete_dimension(dim);
+        clear_all_state();
+    });
+    g->place_player_overmap(tripoint_abs_omt(0, 0, 0));
+    clear_map();
+    const auto return_pos = get_avatar().abs_pos();
+    get_map().ter_set(get_avatar().bub_pos(), ter_str_id("t_floor"));
+
+    auto& lua = cata::get_active_lua_state()->lua;
+    auto callbacks = lua["game"]["examine_functions"].get<sol::table>();
+    auto hooks = lua["game"]["hooks"].get<sol::table>();
+    const auto id = std::string("test_dimension_travel_callback");
+    const auto previous_callback = callbacks[id].get<sol::object>();
+    const auto previous_mapgen = hooks["on_mapgen_postprocess"].get<sol::object>();
+    const auto previous_save = hooks["on_game_save"].get<sol::object>();
+    const auto restore_hooks = on_out_of_scope([&]() {
+        callbacks[id] = previous_callback;
+        hooks["on_mapgen_postprocess"] = previous_mapgen;
+        hooks["on_game_save"] = previous_save;
+    });
+    auto mapgen_calls = 0;
+    auto save_calls = 0;
+    auto mapgen_hooks = lua.create_table();
+    mapgen_hooks[1] = [&](sol::table /*params*/) { ++mapgen_calls; };
+    hooks["on_mapgen_postprocess"] = mapgen_hooks;
+    auto save_hooks = lua.create_table();
+    save_hooks[1] = [&](sol::table /*params*/) { ++save_calls; };
+    hooks["on_game_save"] = save_hooks;
+
+    auto cleanup_function = std::string{};
+    SECTION("reset") { cleanup_function = "reset_dimension"; }
+    SECTION("delete") { cleanup_function = "delete_dimension"; }
+    auto completed = false;
+    callbacks.set_function(id, [&](sol::table /*params*/) {
+        auto opts = lua.create_table();
+        opts["dimension_id"] = dim.str();
+        opts["target_omt"] = tripoint_abs_omt(16, 16, 0);
+        opts["world_type"] = "pocket_dimension";
+        opts["bounds_min_omt"] = tripoint_abs_omt(16, 16, 0);
+        opts["bounds_max_omt"] = tripoint_abs_omt(16, 16, 0);
+        auto terrain = lua.create_table();
+        terrain[1] = lua.create_table_with(1, lua.create_table_with(1, "field"));
+        opts["overmap_terrain"] = terrain;
+        auto api = lua["gapi"].get<sol::table>();
+        auto travel = api["place_player_dimension_at"].get<sol::protected_function>();
+        auto entered = travel(opts);
+        if (!entered.valid() || !entered.get<bool>()) { return; }
+        auto back = lua.create_table_with("dimension_id", "", "target_ms", return_pos);
+        auto returned = travel(back);
+        if (!returned.valid() || !returned.get<bool>()) { return; }
+        auto tidy = api[cleanup_function].get<sol::protected_function>();
+        auto cleaned = tidy(dim.str());
+        completed = cleaned.valid() && cleaned.get<bool>();
+    });
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = false;
+    cata::run_lua_examine(id, get_avatar(), get_avatar().bub_pos());
+    CHECK(completed);
+    CHECK(mapgen_calls > 0);
+    CHECK(save_calls > 0);
+    CHECK(g->get_current_dimension_id().is_empty());
+    CHECK(get_avatar().abs_pos() == return_pos);
 }
 
 TEST_CASE("lua_dimension_landing", "[lua]") {
