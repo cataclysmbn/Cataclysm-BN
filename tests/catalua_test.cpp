@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "effect.h"
 #include "faction.h"
+#include "filesystem.h"
 #include "flag.h"
 #include "fstream_utils.h"
 #include "game.h"
@@ -35,6 +36,7 @@
 #include "npc.h"
 #include "options.h"
 #include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "sqlite3.h"
@@ -950,6 +952,11 @@ test_data["overmap_terrain"] = {
     CHECK(test_data["after_return_map_dim"].get<std::string>() == "");
     CHECK(test_data["after_return_pos"].get<tripoint_abs_ms>() == original_pos);
     CHECK_FALSE(test_data["after_return_outside_is_oob"].get<bool>());
+    CHECK_FALSE(test_data["out_of_bounds_reentry_travel"].get<bool>());
+    CHECK(test_data["after_out_of_bounds_reentry_dim"].get<std::string>() == "");
+    CHECK(test_data["after_out_of_bounds_reentry_map_dim"].get<std::string>() == "");
+    CHECK(test_data["after_out_of_bounds_reentry_pos"].get<tripoint_abs_ms>()
+          == test_data["before_out_of_bounds_reentry_pos"].get<tripoint_abs_ms>());
     CHECK(test_data["reentered_travel"].get<bool>());
     CHECK(test_data["reentered_dim"].get<std::string>() == "lua_test_pocket");
     CHECK(test_data["reentered_map_dim"].get<std::string>() == "lua_test_pocket");
@@ -1031,6 +1038,80 @@ test_data["overmap_terrain"] = {
     REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
     REQUIRE(g->delete_dimension(zone_dimension_id));
     CHECK(zone_manager::get_manager().has(zone_type_no_auto_pickup, original_pos));
+}
+
+TEST_CASE("dimension deletion unloads caches when saving zones fails", "[lua][sqlite]") {
+    clear_all_state();
+    const auto target_dimension_id = dimension_id("lua_test_zone_save_failure");
+    const auto cleanup_test_state = on_out_of_scope([target_dimension_id]() {
+        if (g != nullptr) {
+            if (!g->get_current_dimension_id().is_empty()) {
+                g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt);
+            }
+            g->delete_dimension(target_dimension_id);
+        }
+        clear_all_state();
+    });
+
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+    const auto return_pos = tripoint_abs_ms(11, 13, 0);
+    get_avatar().setpos(return_pos);
+    g->update_map(get_avatar());
+
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    auto& global_lua = DynamicDataLoader::get_instance().lua->lua;
+    auto mod_storage = global_lua["game"]["cata_internal"]["mod_storage"].get<sol::table>();
+    for (const auto& mod : active_world->info->active_mod_order) {
+        if (!mod_storage[mod.str()].is<sol::table>()) {
+            mod_storage[mod.str()] = global_lua.create_table();
+        }
+    }
+    const auto target_omt = tripoint_abs_omt(72, 72, 0);
+    const auto target_pos = project_combine(target_omt, point_omt_ms(SEEX, SEEY));
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.entry_point = target_pos;
+    pocket_data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>(target_omt),
+        .max_bound = project_to<coords::sm>(target_omt) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id("t_pd_border"),
+        .boundary_overmap_terrain = oter_str_id("pd_border"),
+    };
+    const auto load_pos =
+        project_to<coords::sm>(target_pos) - tripoint_rel_sm(g_half_mapsize, g_half_mapsize, 0);
+    REQUIRE(g->travel_to_dimension(
+        target_dimension_id, world_type_id("pocket_dimension"), pocket_data, load_pos));
+
+    auto& zones = zone_manager::get_manager();
+    const auto zone_type_no_auto_pickup = zone_type_id("NO_AUTO_PICKUP");
+    zones.add("dimension zone", zone_type_no_auto_pickup, your_fac, false, true, target_pos,
+              target_pos);
+    CHECK(zones.has(zone_type_no_auto_pickup, target_pos));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+    REQUIRE(active_world->has_dimension_data(target_dimension_id.str()));
+    REQUIRE(MAPBUFFER_REGISTRY.is_registered(target_dimension_id));
+    REQUIRE(has_any_overmapbuffer(target_dimension_id));
+
+    const auto zones_path =
+        active_world->info->folder_path() + "/" + base64_encode(get_avatar().get_save_id())
+        + ".zones.json";
+    REQUIRE(zones.save_zones());
+    REQUIRE(remove_file(zones_path));
+    REQUIRE(assure_dir_exist(zones_path));
+    const auto restore_zones_file = on_out_of_scope([&zones, &zones_path]() {
+        if (dir_exist(zones_path)) { remove_directory(zones_path); }
+        zones.save_zones();
+    });
+
+    CHECK_FALSE(g->delete_dimension(target_dimension_id));
+    CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(target_dimension_id));
+    CHECK_FALSE(has_any_overmapbuffer(target_dimension_id));
+
+    REQUIRE(g->save(false));
+    CHECK_FALSE(active_world->has_dimension_data(target_dimension_id.str()));
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(target_dimension_id));
+    CHECK_FALSE(has_any_overmapbuffer(target_dimension_id));
 }
 
 TEST_CASE("lua dimension cleanup replaces records in temporary sqlite world", "[lua][sqlite]") {

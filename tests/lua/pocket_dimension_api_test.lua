@@ -219,9 +219,18 @@ test_data["after_return_map_dim"] = gapi.get_map():get_bound_dimension()
 test_data["after_return_pos"] = gapi.get_avatar():abs_pos()
 test_data["after_return_outside_is_oob"] = gapi.get_map():is_out_of_bounds(test_data["outside_local"])
 
+test_data["before_out_of_bounds_reentry_pos"] = gapi.get_avatar():abs_pos()
+test_data["out_of_bounds_reentry_travel"] = gapi.place_player_dimension_at({
+  dimension_id = dimension_id,
+  target_omt = test_data["outside_omt"],
+})
+test_data["after_out_of_bounds_reentry_dim"] = gapi.get_current_dimension_id()
+test_data["after_out_of_bounds_reentry_map_dim"] = gapi.get_map():get_bound_dimension()
+test_data["after_out_of_bounds_reentry_pos"] = gapi.get_avatar():abs_pos()
+
 test_data["reentered_travel"] = gapi.place_player_dimension_at({
   dimension_id = dimension_id,
-  target_omt = target_omt,
+  target_omt = bounds_max_omt,
 })
 
 test_data["reentered_dim"] = gapi.get_current_dimension_id()
