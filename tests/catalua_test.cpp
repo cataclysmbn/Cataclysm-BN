@@ -63,6 +63,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // workaround for https://github.com/llvm/llvm-project/issues/113087
@@ -831,6 +832,55 @@ TEST_CASE("plumbing_lua_data_hooks", "[lua]") {
     const auto& vehicle_shower = vpart_id("vehicle_shower").obj();
     REQUIRE(vehicle_shower.has_flag("SHOWER"));
     REQUIRE(vehicle_shower.has_flag("FAUCET"));
+}
+
+TEST_CASE("lua_dimension_target_z_limits", "[lua]") {
+    auto lua = make_lua_state();
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto target_key = GENERATE("target_omt", "target_ms");
+    const auto z = GENERATE(-OVERMAP_DEPTH - 1, -OVERMAP_DEPTH, OVERMAP_HEIGHT, OVERMAP_HEIGHT + 1);
+    CAPTURE(target_key, z);
+    auto opts = lua.create_table();
+    opts["dimension_id"] = original_dimension.str();
+    if (std::string_view(target_key) == "target_omt") {
+        opts[target_key] = tripoint_abs_omt(0, 0, z);
+    } else {
+        opts[target_key] = tripoint_abs_ms(0, 0, z);
+    }
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK(result.get<bool>() == (z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT));
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+}
+
+TEST_CASE("lua_dimension_rejects_out_of_range_bounds", "[lua]") {
+    auto lua = make_lua_state();
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto dim = dimension_id("lua_test_invalid_z_bounds");
+    REQUIRE_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
+    auto opts = lua.create_table();
+    opts["dimension_id"] = dim.str();
+    opts["world_type"] = "pocket_dimension";
+    opts["target_omt"] = tripoint_abs_omt(0, 0, 0);
+    opts["bounds_min_omt"] = tripoint_abs_omt(0, 0, -OVERMAP_DEPTH);
+    opts["bounds_max_omt"] = tripoint_abs_omt(0, 0, OVERMAP_HEIGHT);
+    SECTION("minimum below engine range") {
+        opts["bounds_min_omt"] = tripoint_abs_omt(0, 0, -OVERMAP_DEPTH - 1);
+    }
+    SECTION("maximum above engine range") {
+        opts["bounds_max_omt"] = tripoint_abs_omt(0, 0, OVERMAP_HEIGHT + 1);
+    }
+    lua["opts"] = opts;
+    const auto result = lua.safe_script("return gapi.place_player_dimension_at(opts)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(result.get<bool>());
+    CHECK(g->get_current_dimension_id() == original_dimension);
+    CHECK(get_avatar().abs_pos() == original_pos);
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
 }
 
 TEST_CASE("lua_dimension_landing", "[lua]") {

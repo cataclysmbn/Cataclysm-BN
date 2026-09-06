@@ -380,6 +380,13 @@ auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) ->
         return false;
     }
 
+    const auto &here = get_map();
+    if( !here.inbounds_z( opts.target_omt.z() ) ||
+        ( opts.bounds_min_omt && !here.inbounds_z( opts.bounds_min_omt->z() ) ) ||
+        ( opts.bounds_max_omt && !here.inbounds_z( opts.bounds_max_omt->z() ) ) ) {
+        return false;
+    }
+
     if( opts.dim_id.is_empty() && has_dimension_generation_config( opts ) ) {
         return false;
     }
