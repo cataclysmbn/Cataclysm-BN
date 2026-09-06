@@ -116,6 +116,7 @@
 #include "vehicle_palette.h"
 #include "vitamin.h"
 #include "weather.h"
+#include "weather_gen.h"
 #include "weather_type.h"
 #include "world_type.h"
 #include "worldfactory.h"
@@ -269,6 +270,8 @@ void DynamicDataLoader::initialize()
     add( "fault", &fault::load_fault );
     add( "field_type", &field_types::load );
     add( "weather_type", &weather_types::load );
+    add( "weather_pattern", &weather_patterns::load );
+    add( "base_weather", &base_weathers::load );
     add( "world_type", &world_types::load );
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
@@ -660,6 +663,8 @@ void DynamicDataLoader::unload_data()
     vpart_info::reset();
     weapon_category::reset();
     weather_types::reset();
+    weather_patterns::reset();
+    base_weathers::reset();
     world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
@@ -693,6 +698,8 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Body parts" ), &body_part_type::finalize_all },
             { _( "Bionics" ), &bionic_data::finalize_all },
             { _( "Weather types" ), &weather_types::finalize_all },
+            { _( "Weather patterns" ), &weather_patterns::finalize_all },
+            { _( "Base weather" ), &base_weathers::finalize_all },
             { _( "World types" ), &world_types::finalize_all },
             { _( "Field types" ), &field_types::finalize_all },
             { _( "Ammo effects" ), &ammo_effects::finalize_all },
@@ -778,6 +785,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
+            { _( "Weather patterns" ), &weather_patterns::check_consistency },
+            { _( "Base weather" ), &base_weathers::check_consistency },
             { _( "World types" ), &world_types::check_consistency },
             { _( "Field types" ), &field_types::check_consistency },
             { _( "Ammo effects" ), &ammo_effects::check_consistency },

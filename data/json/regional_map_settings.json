@@ -1284,37 +1284,7 @@
       "required_specials": [ { "special": "marina", "placement": "shore", "min_island_radius": 12 } ],
       "optional_specials": [ { "special": "o_airport", "placement": "land", "min_city_size": 8, "min_island_radius": 20, "chance": 35 } ]
     },
-    "weather": {
-      "spring_temp": 8,
-      "summer_temp": 16,
-      "autumn_temp": 7,
-      "winter_temp": -14,
-      "base_humidity": 70,
-      "summer_humidity_manual_mod": -17,
-      "winter_humidity_manual_mod": 17,
-      "base_pressure": 1016,
-      "base_acid": 0,
-      "base_wind": 10,
-      "base_wind_distrib_peaks": 100,
-      "base_wind_season_variation": 30,
-      "weather_types": [
-        "clear",
-        "sunny",
-        "cloudy",
-        "light_drizzle",
-        "drizzle",
-        "rain",
-        "heavy_rain",
-        "thunder",
-        "lightning",
-        "acid_drizzle",
-        "acid_rain",
-        "light_flurries",
-        "flurries",
-        "snowing",
-        "snowstorm"
-      ]
-    },
+    "base_weather": "default",
     "overmap_feature_flag_settings": { "clear_blacklist": false, "blacklist": [  ], "clear_whitelist": false, "whitelist": [  ] }
   }
 ]

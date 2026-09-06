@@ -82,19 +82,7 @@
       },
       "finales": { "Military Outpost": 100 }
     },
-    "weather": {
-      "spring_temp": 35,
-      "summer_temp": 44,
-      "autumn_temp": 32,
-      "winter_temp": 26,
-      "base_humidity": 16,
-      "base_pressure": 850,
-      "summer_humidity_manual_mod": -5,
-      "winter_humidity_manual_mod": -7,
-      "base_wind": 35,
-      "base_wind_season_variation": 10,
-      "weather_types": [ "clear", "sunny" ]
-    },
+    "base_weather": "desert_test",
     "effects": [  ],
     "overmap_feature_flag_settings": { "clear_blacklist": false, "blacklist": [  ], "clear_whitelist": true, "whitelist": [  ] }
   },
