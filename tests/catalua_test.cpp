@@ -43,6 +43,7 @@
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
+#include "submap_load_manager.h"
 #include "type_id.h"
 #include "units_angle.h"
 #include "units_energy.h"
@@ -74,6 +75,16 @@ static void run_lua_test_script(sol::state& lua, const std::string& script_name)
 }
 
 namespace {
+
+auto initialize_dimension_test_storage() -> void {
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    auto& lua = DynamicDataLoader::get_instance().lua->lua;
+    auto storage = lua["game"]["cata_internal"]["mod_storage"].get<sol::table>();
+    for (const auto& mod : active_world->info->active_mod_order) {
+        if (!storage[mod.str()].is<sol::table>()) { storage[mod.str()] = lua.create_table(); }
+    }
+}
 
 struct saved_player_dimension_state {
     std::string dimension_id;
@@ -820,6 +831,125 @@ TEST_CASE("plumbing_lua_data_hooks", "[lua]") {
     const auto& vehicle_shower = vpart_id("vehicle_shower").obj();
     REQUIRE(vehicle_shower.has_flag("SHOWER"));
     REQUIRE(vehicle_shower.has_flag("FAUCET"));
+}
+
+TEST_CASE("lua_dimension_landing", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_landing");
+    const auto cleanup = on_out_of_scope([&]() {
+        if (!g->get_current_dimension_id().is_empty()) {
+            g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt);
+        }
+        g->delete_dimension(dim);
+        g->delete_dimension(dimension_id("lua_test_landing_home"));
+        clear_all_state();
+    });
+    g->place_player_overmap(tripoint_abs_omt(0, 0, 0));
+    clear_map();
+    const auto original_pos = tripoint_abs_ms(0, 0, 0);
+    get_avatar().setpos(original_pos);
+    g->update_map(get_avatar());
+    get_map().ter_set(get_avatar().bub_pos(), ter_str_id("t_floor"));
+
+    auto lua = make_lua_state();
+    lua["landing_dimension"] = dim.str();
+    lua["return_pos"] = original_pos;
+    auto terrain = std::string("empty_rock");
+    SECTION("blocked destination restores overworld") {}
+    SECTION("blocked destination restores another pocket") {
+        const auto source = lua.safe_script(R"(
+local target = coords.tripoint_abs_omt(8, 8, 0)
+assert(gapi.place_player_dimension_at({
+    dimension_id = "lua_test_landing_home",
+    target_omt = target,
+    world_type = "pocket_dimension",
+    bounds_min_omt = target,
+    bounds_max_omt = target,
+    overmap_terrain = { { { "field" } } },
+}))
+)");
+        REQUIRE(source.valid());
+    }
+    SECTION("exact return ignores avatar occupancy") { terrain = "field"; }
+    const auto expected_dimension = g->get_current_dimension_id();
+    const auto expected_pos = get_avatar().abs_pos();
+    const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+    disable_mapgen = terrain != "empty_rock";
+    lua["landing_terrain"] = terrain;
+    const auto result = lua.safe_script(R"(
+local target = coords.tripoint_abs_omt(16, 16, 0)
+entered = gapi.place_player_dimension_at({
+    dimension_id = landing_dimension,
+    target_omt = target,
+    world_type = "pocket_dimension",
+    bounds_min_omt = target,
+    bounds_max_omt = target,
+    overmap_terrain = { { { landing_terrain } } },
+})
+)");
+    REQUIRE(result.valid());
+    if (terrain == "empty_rock") {
+        CHECK_FALSE(lua["entered"].get<bool>());
+    } else {
+        REQUIRE(lua["entered"].get<bool>());
+        const auto returned = lua.safe_script(R"(
+returned = gapi.place_player_dimension_at({ dimension_id = "", target_ms = return_pos })
+)");
+        REQUIRE(returned.valid());
+        CHECK(lua["returned"].get<bool>());
+    }
+    CHECK(g->get_current_dimension_id() == expected_dimension);
+    CHECK(get_map().get_bound_dimension() == expected_dimension);
+    CHECK(get_avatar().abs_pos() == expected_pos);
+}
+
+TEST_CASE("lua_dimension_cleanup_preserves_portal_load_requests", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto dim = dimension_id("lua_test_portal_cleanup");
+    const auto cleanup = on_out_of_scope([&]() {
+        g->delete_dimension(dim);
+        clear_all_state();
+    });
+    g->place_player_overmap(tripoint_abs_omt(0, 0, 0));
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    const auto pos = tripoint_abs_sm(32, 32, 0);
+    const auto handle = submap_loader.request_load(
+        load_request_source::portal_preload, dim, pos.xy(), pos.xy() + point_rel_sm::south_east());
+    const auto release = on_out_of_scope([&]() { submap_loader.release_load(handle); });
+    submap_loader.update();
+    REQUIRE(submap_loader.is_loaded(dim, pos));
+    auto* const original_submap = MAPBUFFER_REGISTRY.get(dim).lookup_submap(pos);
+    REQUIRE(original_submap != nullptr);
+    {
+        const auto restore_mapgen = restore_on_out_of_scope<bool>(disable_mapgen);
+        disable_mapgen = false;
+        MAPBUFFER_REGISTRY.get(dim).save();
+    }
+    REQUIRE(active_world->has_dimension_data(dim.str()));
+    auto lua = make_lua_state();
+    lua["cleanup_dimension"] = dim.str();
+    const auto result = lua.safe_script(R"(
+deleted = gapi.delete_dimension(cleanup_dimension)
+reset = gapi.reset_dimension(cleanup_dimension)
+)");
+    REQUIRE(result.valid());
+    CHECK_FALSE(lua["deleted"].get<bool>());
+    CHECK_FALSE(lua["reset"].get<bool>());
+    CHECK(active_world->has_dimension_data(dim.str()));
+    submap_loader.update();
+    CHECK(submap_loader.is_requested(dim, pos));
+    CHECK(submap_loader.is_loaded(dim, pos));
+    CHECK(MAPBUFFER_REGISTRY.get(dim).lookup_submap(pos) == original_submap);
+    submap_loader.release_load(handle);
+    submap_loader.update();
+    SECTION("delete after releasing portal") { CHECK(g->delete_dimension(dim)); }
+    SECTION("reset after releasing portal") { CHECK(g->reset_dimension(dim)); }
+    submap_loader.update();
+    CHECK_FALSE(submap_loader.is_requested(dim, pos));
+    CHECK_FALSE(MAPBUFFER_REGISTRY.is_registered(dim));
 }
 
 TEST_CASE("lua_pocket_dimension_api", "[lua]") {

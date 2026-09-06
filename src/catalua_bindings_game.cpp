@@ -404,23 +404,27 @@ auto is_valid_dimension_travel_config( const dimension_travel_options &opts ) ->
     return true;
 }
 
-auto find_safe_spawn( const tripoint_bub_ms &target ) -> tripoint_bub_ms
+auto find_safe_spawn( const tripoint_bub_ms &target ) -> std::optional<tripoint_bub_ms>
 {
     auto &here = get_map();
+    const auto can_land = [&]( const tripoint_bub_ms & point ) {
+        const auto *occupant = g->critter_at( point );
+        return here.passable( point ) && ( !occupant || occupant == &get_avatar() );
+    };
 
-    if( here.passable( target ) && !g->critter_at( target ) ) {
+    if( can_land( target ) ) {
         return target;
     }
 
     for( auto radius = 1; radius <= 10; radius++ ) {
         for( const auto &point : here.points_in_radius( target, radius ) ) {
-            if( here.passable( point ) && !g->critter_at( point ) ) {
+            if( can_land( point ) ) {
                 return point;
             }
         }
     }
 
-    return target;
+    return std::nullopt;
 }
 
 auto get_dimension_load_position( const dimension_travel_options &opts ) -> tripoint_abs_sm
@@ -476,6 +480,9 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
 
     const auto preload_callback = build_dimension_preload_callback( opts );
     const auto load_pos = get_dimension_load_position( opts );
+    const auto original_dimension = g->get_current_dimension_id();
+    const auto original_pos = get_avatar().abs_pos();
+    const auto original_origin = player_reality_bubble_origin();
     if( !g->travel_to_dimension( opts.dim_id, world_type, pocket_data, load_pos,
                                  preload_callback ) ) {
         return false;
@@ -483,7 +490,17 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
 
     auto &avatar = get_avatar();
     const auto target_local = abs_to_bub( get_dimension_entry_point( opts ) );
-    avatar.setpos( find_safe_spawn( target_local ) );
+    const auto landing = find_safe_spawn( target_local );
+    if( !landing ) {
+        if( !g->travel_to_dimension( original_dimension, world_type_id(), std::nullopt,
+                                     original_origin ) ) {
+            throw std::runtime_error( "Failed to restore original dimension after blocked landing" );
+        }
+        avatar.setpos( original_pos );
+        g->update_map( avatar );
+        return false;
+    }
+    avatar.setpos( *landing );
     g->update_map( avatar );
     return true;
 }

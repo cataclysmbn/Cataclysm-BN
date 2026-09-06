@@ -14777,6 +14777,12 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
         return false;
     }
 
+    // Portals and scripts can still own requests for an inactive dimension.  Keep its buffers
+    // intact until those owners release their handles, including the loader's cached state.
+    if( std::ranges::contains( submap_loader.active_dimensions(), dim_id ) ) {
+        return false;
+    }
+
     auto *active_world = get_active_world();
     if( !active_world ) {
         return false;

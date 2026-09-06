@@ -234,6 +234,9 @@ gapi.place_player_dimension_at({
 ```
 
 After returning, re-enter the loaded pocket dimension with its ID and destination.
+Travel returns `false` and restores the original dimension and position if no
+passable, unoccupied landing tile exists within 10 tiles of the destination.
+The player does not count as an occupant when choosing a landing tile.
 
 ```lua
 local reentered = gapi.place_player_dimension_at({
@@ -266,7 +269,9 @@ end
 ```
 
 Both cleanup functions reject `""` because the primary overworld cannot be
-removed. `reset_dimension` keeps the dimension metadata for re-entry, while
+removed. They also reject the current dimension and any dimension with active
+load requests, such as a portal preloading its destination. Release those requests
+before retrying cleanup. `reset_dimension` keeps the dimension metadata for re-entry, while
 `delete_dimension` requires the full generation options on the next entry.
 Cleanup makes a full save before removing dimension data, so update persistent
 Lua state before calling it.
