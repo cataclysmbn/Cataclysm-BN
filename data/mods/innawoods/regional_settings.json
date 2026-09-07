@@ -576,9 +576,6 @@
         [ "f_boulder_large", 1 ]
       ]
     },
-    "items": {
-      "1": [ { "item": "creek_bed", "chance": 1 } ],
-      "2": [ { "item": "creek_bed", "chance": 1 } ]
-    }
+    "items": { "1": [ { "item": "creek_bed", "chance": 1 } ], "2": [ { "item": "creek_bed", "chance": 1 } ] }
   }
 ]
