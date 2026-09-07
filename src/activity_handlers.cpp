@@ -552,7 +552,7 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
     };
 
     const inventory &inv = u.crafting_inventory();
-    const int factor = inv.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER );
+    const int factor = u.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER );
 
     const mtype &corpse = *corpse_item.get_mtype();
 

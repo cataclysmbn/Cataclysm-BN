@@ -11978,7 +11978,7 @@ static void butcher_submenu( const std::vector<item *> &corpses, int corpse = -1
     avatar &you = get_avatar();
     const inventory &inv = you.crafting_inventory();
 
-    const int factor = inv.max_quality( quality_id( "BUTCHER" ) );
+    const int factor = you.max_quality( quality_id( "BUTCHER" ) );
     const std::string msg_inv = factor > INT_MIN
                                 ? string_format( _( "Your best tool has <color_cyan>%d butchering</color>." ), factor )
                                 :  _( "You have no butchering tool." );
