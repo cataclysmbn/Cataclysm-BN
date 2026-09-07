@@ -354,7 +354,9 @@ int visitable<Character>::max_quality( const quality_id &qual ) const
 
     if( qual == qual_BUTCHER ) {
         for( const trait_id &mut : self->get_mutations() ) {
-            res = std::max( res, mut->butchering_quality );
+            if( mut->butchering_quality > 0 ) {
+                res = std::max( res, mut->butchering_quality );
+            }
         }
     }
 
