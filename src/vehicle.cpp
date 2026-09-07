@@ -226,12 +226,12 @@ class DefaultRemovePartHandler : public RemovePartHandler
             return here.add_item_or_charges( loc, std::move( it ) );
         }
         void set_transparency_cache_dirty( const int z ) override {
-        if( here.get_dimension_id() != get_avatar().get_dimension() ) {
-            return;
-        }
-        get_map().set_transparency_cache_dirty( z );
-        get_map().set_seen_cache_dirty( tripoint_bub_ms::zero() );
-        get_map().set_vehicle_cache_dirty( z );
+            if( here.get_dimension_id() != get_avatar().get_dimension() ) {
+                return;
+            }
+            get_map().set_transparency_cache_dirty( z );
+            get_map().set_seen_cache_dirty( tripoint_bub_ms::zero() );
+            get_map().set_vehicle_cache_dirty( z );
         }
         void set_floor_cache_dirty( const int z ) override {
             if( here.get_dimension_id() != get_avatar().get_dimension() ) {

@@ -10822,7 +10822,7 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, Characte
 }
 
 detached_ptr<item> item::process_cable( detached_ptr<item> &&self, Character *carrier,
-        const tripoint_bub_ms &/*pos*/ )
+                                        const tripoint_bub_ms &/*pos*/ )
 {
     if( !self ) {
         return std::move( self );
@@ -10949,7 +10949,7 @@ void item::reset_cable( Character *who )
 }
 
 detached_ptr<item> item::process_UPS( detached_ptr<item> &&self, Character *carrier,
-        const tripoint_bub_ms &/*pos*/ )
+                                      const tripoint_bub_ms &/*pos*/ )
 {
     if( !self ) {
         return std::move( self );
@@ -11195,12 +11195,13 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, Character *carrier,
                                   temperature_flag flag, const weather_manager &weather_generator, const int ticks )
 {
     const auto pos = self ? self->bub_pos() : tripoint_bub_ms::zero();
-    return process_with_pos( std::move( self ), carrier, pos, activate, flag, weather_generator, ticks );
+    return process_with_pos( std::move( self ), carrier, pos, activate, flag, weather_generator,
+                             ticks );
 }
 
 detached_ptr<item> item::process_with_pos( detached_ptr<item> &&self, Character *carrier,
-                                  const tripoint_bub_ms &pos, bool activate,
-                                  temperature_flag flag, const weather_manager &weather_generator, const int ticks )
+        const tripoint_bub_ms &pos, bool activate,
+        temperature_flag flag, const weather_manager &weather_generator, const int ticks )
 {
     if( !self ) {
         return std::move( self );

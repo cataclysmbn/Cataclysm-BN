@@ -59,20 +59,21 @@ static std::optional<tripoint_omt_ms> find_valid_teleporters_omt(const tripoint_
     // an OMT is SEEX * SEEY in size
     const auto sm_pt = project_to<coords::sm>(omt_pt.xy());
     mapbuffer& buf = get_map().get_mapbuffer();
-    auto omt_view = mapbuffer_bounds_view( buf, sm_pt, sm_pt + point_rel_sm(1, 1),
-                    {.mode = mapbuffer_lookup_mode::load_from_disk} );
+    auto omt_view = mapbuffer_bounds_view(
+        buf, sm_pt, sm_pt + point_rel_sm(1, 1), {.mode = mapbuffer_lookup_mode::load_from_disk});
 
     for (auto submap_tile : point_range(sm_pt, sm_pt + point_rel_sm(1, 1))) {
-        auto submap_view = omt_view.get_submap_view(tripoint_abs_sm( submap_tile, omt_pt.z() ) );
+        auto submap_view = omt_view.get_submap_view(tripoint_abs_sm(submap_tile, omt_pt.z()));
         if (!submap_view) { return std::nullopt; }
-        const submap &sm = *submap_view->sm;
-        for (point_sm_ms submap_map_square : submap_tiles() ) {
+        const submap& sm = *submap_view->sm;
+        for (point_sm_ms submap_map_square : submap_tiles()) {
             auto furn = sm.get_furn(submap_map_square);
             if (furn.is_valid()) {
                 if (furn->has_flag("TRANSLOCATOR")) {
                     return tripoint_omt_ms(
-                        project_remain<coords::omt>(
-                        project_combine(submap_tile, submap_map_square)).remainder, omt_pt.z());
+                        project_remain<coords::omt>(project_combine(submap_tile, submap_map_square))
+                            .remainder,
+                        omt_pt.z());
                 }
             }
         }

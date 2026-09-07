@@ -26,8 +26,8 @@
 #include "options.h"
 #include "options_helpers.h"
 #include "pathfinding.h"
-#include "simulated_island_helpers.h"
 #include "player_helpers.h"
+#include "simulated_island_helpers.h"
 #include "state_helpers.h"
 #include "submap.h"
 #include "submap_load_manager.h"
@@ -425,7 +425,7 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
     const auto landing = middle + tripoint_rel_ms::east();
     const auto landing_below = landing + tripoint_rel_ms::below();
     auto& buffer = g->u.get_mapbuffer();
-    for (const auto &tile : simulated_tiles_in_radius( buffer, origin_abs, 2 ) ) {
+    for (const auto& tile : simulated_tiles_in_radius(buffer, origin_abs, 2)) {
         const auto pos = tile.abs_pos();
         buffer.set_ter(pos, ter_id("t_floor"));
         buffer.set_furn(pos, furn_id("f_null"));
