@@ -966,12 +966,11 @@ TEST_CASE("lua_callback_lock_allows_reentry_and_excludes_other_threads", "[lua]"
     auto reentered = false;
     auto concurrent_access = true;
     callbacks.set_function(id, [&](sol::table /*params*/) {
-        {
-            auto worker = std::jthread([&]() {
-                auto lock = std::unique_lock(cata::lua_lock, std::try_to_lock);
-                concurrent_access = lock.owns_lock();
-            });
-        }
+        auto worker = std::thread([&]() {
+            auto lock = std::unique_lock(cata::lua_lock, std::try_to_lock);
+            concurrent_access = lock.owns_lock();
+        });
+        worker.join();
         auto lock = std::unique_lock(cata::lua_lock, std::try_to_lock);
         reentered = lock.owns_lock();
     });
