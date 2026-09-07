@@ -1365,15 +1365,20 @@ void inventory_selector::add_nearby_items( int radius )
     }
 }
 
-void inventory_selector::add_bionics_items( Character &character )
+void inventory_selector::add_fake_items( Character &character )
 {
     for( bionic bio : character.get_bionic_collection() ) {
         const itype_id fake = bio.info().fake_item;
         if( bio.info().has_flag( flag_BIONIC_TOOLS ) && !fake.is_null() && fake.str() != "" ) {
             item *fakeitem = g->add_fake_item( item::spawn( fake ) );
             add_entry( own_gear_column, std::vector<item *>( 1, fakeitem ),
-                       &item_category_id( "BIONICS" ).obj() );
+                       &item_category_id( "MISC_USABLES" ).obj() );
         }
+    }
+    for( const itype_id &fake : character.get_enchantment_fake_items() ) {
+        item *fakeitem = g->add_fake_item( item::spawn( fake ) );
+        add_entry( own_gear_column, std::vector<item *>( 1, fakeitem ),
+                   &item_category_id( "MISC_USABLES" ).obj() );
     }
 }
 

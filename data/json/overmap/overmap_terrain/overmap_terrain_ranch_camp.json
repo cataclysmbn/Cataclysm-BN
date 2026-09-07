@@ -211,8 +211,7 @@
     "name": "road",
     "sym": "│",
     "color": "dark_gray",
-    "see_cost": 2,
-    "extras": "road"
+    "see_cost": 2
   },
   {
     "type": "overmap_terrain",

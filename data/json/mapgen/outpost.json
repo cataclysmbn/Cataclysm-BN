@@ -72,7 +72,7 @@
         "2": [
           { "item": "energy_weapon_armory", "chance": 50, "repeat": 2 },
           { "item": "mil_armor_electronics", "chance": 75, "repeat": 2 },
-          { "item": "pwr_armor", "chance": 50 },
+          { "item": "pwr_armor_basic", "chance": 50 },
           { "item": "pwr_armor_acc", "chance": 50, "repeat": 2 },
           { "item": "inactive_bots_milspec", "chance": 50 }
         ],
@@ -248,7 +248,7 @@
         "2": [
           { "item": "energy_weapon_armory", "chance": 50, "repeat": 2 },
           { "item": "mil_armor_electronics", "chance": 75, "repeat": 2 },
-          { "item": "pwr_armor", "chance": 50 },
+          { "item": "pwr_armor_basic", "chance": 50 },
           { "item": "pwr_armor_acc", "chance": 50, "repeat": 2 },
           { "item": "inactive_bots_milspec", "chance": 50 }
         ],

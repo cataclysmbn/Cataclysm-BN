@@ -21,6 +21,7 @@
 #include "catalua_sol.h"
 #include "character.h"
 #include "coordinates.h"
+#include "creature.h"
 #include "creature_tracker.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -77,8 +78,10 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
+#include "type_id.h"
 #include "weather.h"
 #include "profile.h"
+#include "units_utility.h"
 
 static const ammo_effect_str_id ammo_effect_WHIP( "WHIP" );
 
@@ -243,7 +246,8 @@ auto get_lua_monster_attitude( const monster &mon,
         return std::nullopt;
     }
 
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    std::unique_lock lock( cata::lua_lock );
+    auto *lua_state = cata::get_active_lua_state();
     if( lua_state == nullptr ) {
         return std::nullopt;
     }
@@ -431,6 +435,7 @@ monster::monster( const monster &source ) : Creature( source ),
     lastseen_turn = source.lastseen_turn;
     staircount = source.staircount;
     ammo = source.ammo;
+    upgrade_time = source.upgrade_time;
 
     for( const item * const &it : source.corpse_components ) {
         corpse_components.push_back( item::spawn( *it ) );
@@ -1271,6 +1276,9 @@ std::string monster::extended_description() const
         } else {
             ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
         }
+        ss += string_format( _( "It carries %s / %s\n" ),
+                             static_cast<int>( convert_weight( get_carried_weight() ) ),
+                             static_cast<int>( convert_weight( weight_capacity() ) ) );
     }
 
     if( training_level > 0 && type->pet_training ) {
@@ -1391,6 +1399,30 @@ bool monster::avoid_trap( const tripoint_abs_ms & /* pos */, const trap &tr ) co
 bool monster::has_flag( const m_flag f ) const
 {
     return type->has_flag( f ) || monster_flags.contains( f );
+}
+
+bool monster::sees( const Creature &ch ) const
+{
+    if( type->clairvoyance > 0 ) {
+        const int wanted_range = rl_dist( bub_pos(), ch.bub_pos() );
+        // Clairvoyance is now pretty cheap, so we can check it early
+        if( wanted_range < type->clairvoyance ) {
+            return true;
+        }
+    }
+    return Creature::sees( ch );
+}
+bool monster::sees( const tripoint_abs_ms &t, bool is_player, int range_mod ) const
+{
+    if( type->clairvoyance > 0 ) {
+        const int wanted_range = rl_dist( abs_pos(), t );
+
+        // Clairvoyance is now pretty cheap, so we can check it early
+        if( wanted_range < type->clairvoyance ) {
+            return true;
+        }
+    }
+    return Creature::sees( t, is_player, range_mod );
 }
 
 bool monster::can_see() const
@@ -2433,11 +2465,14 @@ void monster::melee_attack( Creature &target, float accuracy )
 
     target.check_dead_state();
 
-    cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
-        params["char"] = this;
-        params["target"] = &target;
-        params["success"] = attack_success;
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
+            params["char"] = this;
+            params["target"] = &target;
+            params["success"] = attack_success;
+        } );
+    }
 
     if( is_hallucination() ) {
         if( one_in( 7 ) ) {
@@ -3259,7 +3294,10 @@ void monster::process_turn()
             }
         }
     }
-
+    if( is_pet() ) {
+        // Only pets can upgrade in range of the player, monsters only upgrade on load.
+        try_upgrade( false );
+    }
     Creature::process_turn();
 }
 
@@ -3368,6 +3406,7 @@ void monster::die( Creature *nkiller )
         // *only* set to true in this function!
         return;
     }
+
     // We were carrying a creature, deposit the rider
     if( has_effect( effect_ridden ) && mounted_player ) {
         mounted_player->forced_dismount();
@@ -3534,6 +3573,7 @@ void monster::die( Creature *nkiller )
             }
         }
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_mon_death", [ &, this]( auto & params ) {
         params["mon"] = this;
         params["killer"] = get_killer();
@@ -3768,6 +3808,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mon_effect_added", [ &, this ]( auto & params ) {
             params["mon"] = this;
             params["effect"] = &it;
@@ -3775,6 +3816,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mon_effect", [ &, this ]( auto & params ) {
             params["mon"] = this;
             params["effect"] = &it;
@@ -3927,6 +3969,7 @@ void monster::make_pet( Character &actor )
         _lua_callbacks->call_on_tame( actor, *this );
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_monster_tame", [&](
     auto & params ) { params["avatar"] = &actor; params["monster"] = *this; }
                    );
@@ -4362,6 +4405,7 @@ void monster::on_load()
 
     last_updated = calendar::turn;
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
         params["creature"] = this;
     } );

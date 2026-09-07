@@ -7,6 +7,7 @@
 #include "calendar.h"
 #include "catalua_coord.h"
 #include "catalua_luna.h"
+#include "hsv_color.h"
 #include "mission.h"
 #include "type_id.h"
 #include "concepts_utility.h"
@@ -50,6 +51,8 @@ class distribution_grid;
 class distribution_grid_tracker;
 class effect;
 class overmapbuffer;
+class enchantment_value;
+class enchantment_flag;
 class effect_type;
 class item;
 class item_stack;
@@ -112,6 +115,7 @@ struct explosion_data;
 struct requirement_data;
 class inventory;
 class known_magic;
+struct RGBColor;
 
 namespace units
 {
@@ -236,7 +240,7 @@ LUNA_VAL( explosion_data, "ExplosionData" );
 LUNA_VAL( requirement_data, "RequirementData" );
 LUNA_VAL( inventory, "Inventory" );
 LUNA_VAL( bionic, "Bionic" );
-
+LUNA_VAL( RGBColor, "RGBColor" )
 // Ids for in-game objects
 LUNA_ID( ammunition_type, "AmmunitionType" )
 LUNA_ID( ammo_effect, "AmmunitionEffect" )
@@ -244,6 +248,8 @@ LUNA_ID( activity_type, "ActivityType" )
 LUNA_ID( bionic_data, "BionicData" )
 LUNA_ID( body_part_type, "BodyPartType" )
 LUNA_ID( disease_type, "DiseaseType" )
+LUNA_ID( enchantment_value, "EnchantmentValue" )
+LUNA_ID( enchantment_flag, "EnchantmentFlag" )
 LUNA_ID( effect_type, "EffectType" )
 LUNA_ID( faction, "Faction" )
 LUNA_ID( field_type, "FieldType" )

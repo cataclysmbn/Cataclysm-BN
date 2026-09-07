@@ -8,12 +8,14 @@
 #include "player.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
+#include "weather.h"
 
 static trait_id trait_CARNIVORE("CARNIVORE");
 static efftype_id effect_debug_clairvoyance("debug_clairvoyance");
 
 static void advance_turn(Character& guy) {
     guy.process_turn();
+    guy.process_items();
     calendar::turn += 1_turns;
 }
 
@@ -890,5 +892,39 @@ TEST_CASE("Skill enchantments", "[magic][enchantment][skill]") {
 
         REQUIRE(guy.get_skill_level(skill_id("barter")) == 6);
         REQUIRE(guy.get_skill_level(skill_id("speech")) == 2);
+    }
+}
+
+TEST_CASE("Climate Control enchantments", "[magic][enchantment]") {
+    clear_all_state();
+    Character& guy = get_player_character();
+    clear_character(*guy.as_player(), true);
+
+    REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
+            == BODYTEMP_COLD);
+
+    SECTION("One climate control heating item") {
+        // This is pretty much cross-path parent enchantment testing here
+        wear_item(guy, "test_relic_socks_of_hand_climate");
+
+        REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
+                == BODYTEMP_COLD + 500);
+    }
+
+    SECTION("Two climate control heating items") {
+        // This is pretty much cross-path parent enchantment testing here
+        wear_item(guy, "test_relic_socks_of_hand_climate");
+        wear_item(guy, "test_relic_socks_of_hand_cold_climate");
+
+        REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
+                == BODYTEMP_COLD + 1000);
+    }
+
+    SECTION("Base enchantments dont stack") {
+        // This is pretty much cross-path parent enchantment testing here
+        wear_item(guy, "test_relic_socks_of_climate");
+
+        REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
+                == BODYTEMP_COLD + 500);
     }
 }

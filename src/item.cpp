@@ -30,6 +30,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cached_item_options.h"
+#include "calendar.h"
 #include "catalua_icallback_actor.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -200,6 +201,9 @@ static const std::string has_thievery_witness( "has_thievery_witness" );
 static const activity_id ACT_PICKUP( "ACT_PICKUP" );
 
 static const matec_id rapid_strike( "RAPID" );
+
+static const enchantment_value_id ench_val_REACH_RANGE_ARMED( "REACH_RANGE_ARMED" );
+static const enchantment_value_id ench_val_ITEM_REACH_RANGE( "ITEM_REACH_RANGE" );
 
 class npc_class;
 
@@ -6100,12 +6104,9 @@ damage_instance item::base_damage_thrown() const
 
 int item::reach_range( const Character &guy ) const
 {
-    int res = 1;
+    int res = 1 + ( has_flag( flag_REACH_ATTACK ) ? has_flag( flag_REACH3 ) ? 2 : 1 : 0 );
 
-    if( has_flag( flag_REACH_ATTACK ) ) {
-        res = has_flag( flag_REACH3 ) ? 3 : 2;
-    }
-
+    res = std::max( res, int( 1 + bonus_from_enchantments( 0, ench_val_ITEM_REACH_RANGE, true ) ) );
     // for guns consider any attached gunmods
     if( is_gun() && !is_gunmod() ) {
         for( const std::pair<const gun_mode_id, gun_mode> &m : gun_all_modes() ) {
@@ -6117,6 +6118,8 @@ int item::reach_range( const Character &guy ) const
             }
         }
     }
+
+    res += guy.bonus_from_enchantments( 0, ench_val_REACH_RANGE_ARMED, true );
 
     return std::max( 1, res );
 }
@@ -6463,6 +6466,10 @@ time_duration item::get_shelf_life() const
 
 double item::get_relative_rot() const
 {
+    // Components are frozen in time, when they are returned they are new items
+    if( has_flag( flag_id( "COMPONENT" ) ) ) {
+        return rot / get_shelf_life();
+    }
     if( goes_bad() ) {
         const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
         return rot / get_shelf_life();
@@ -8009,8 +8016,10 @@ bool item::is_funnel_container( units::volume &bigger_than ) const
         contents.front().typeId() == itype_water ||
         contents.front().typeId() == itype_water_acid ||
         contents.front().typeId() == itype_water_acid_weak ) {
-        bigger_than = get_container_capacity();
-        return true;
+        if( !is_container_full() ) {
+            bigger_than = get_container_capacity();
+            return true;
+        }
     }
     return false;
 }
@@ -10646,7 +10655,8 @@ detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, Characte
     return std::move( self );
 }
 
-detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, Character *carrier )
+detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, Character *carrier,
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10654,7 +10664,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, Character *c
     if( !one_in( 10 ) ) {
         return std::move( self );
     }
-    self = self->process_extinguish( std::move( self ), carrier );
+    self = self->process_extinguish( std::move( self ), carrier, pos, 1 );
     // process_extinguish might have extinguished the item already
     if( !self->is_active() ) {
         return std::move( self );
@@ -10670,6 +10680,9 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, Character *c
             duration = 30_seconds;
         }
         carrier->add_msg_if_player( m_neutral, _( "You take a puff of your %s." ), it.tname() );
+        if( it.type->istate_callbacks ) {
+            it.type->istate_callbacks->call_on_puff( *carrier, it );
+        }
 
         // we need to figure out a way to get the item before this got converted,
         // but i don't think that's going to be very easy...
@@ -10731,7 +10744,8 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, Character *c
     return std::move( self );
 }
 
-detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, Character *carrier )
+detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, Character *carrier,
+        const tripoint_bub_ms &pos, const int ticks )
 {
     if( !self ) {
         return std::move( self );
@@ -10746,16 +10760,16 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, Characte
     int windpower = get_weather().windspeed;
     switch( get_weather().weather_id->precip ) {
         case precip_class::very_light:
-            precipitation = one_in( 100 );
+            precipitation = one_in( 100 / ticks );
             break;
         case precip_class::light:
-            precipitation = one_in( 50 );
+            precipitation = one_in( 50 / ticks );
             break;
         case precip_class::medium:
-            precipitation = one_in( 25 );
+            precipitation = one_in( 25 / ticks );
             break;
         case precip_class::heavy:
-            precipitation = one_in( 10 );
+            precipitation = one_in( 10 / ticks );
             break;
         default:
             break;
@@ -10807,7 +10821,8 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, Characte
     return std::move( self );
 }
 
-detached_ptr<item> item::process_cable( detached_ptr<item> &&self, Character *carrier )
+detached_ptr<item> item::process_cable( detached_ptr<item> &&self, Character *carrier,
+        const tripoint_bub_ms &/*pos*/ )
 {
     if( !self ) {
         return std::move( self );
@@ -10933,7 +10948,8 @@ void item::reset_cable( Character *who )
     }
 }
 
-detached_ptr<item> item::process_UPS( detached_ptr<item> &&self, Character *carrier )
+detached_ptr<item> item::process_UPS( detached_ptr<item> &&self, Character *carrier,
+        const tripoint_bub_ms &/*pos*/ )
 {
     if( !self ) {
         return std::move( self );
@@ -10966,7 +10982,8 @@ bool item::process_wet( Character * /*carrier*/ )
     return true;
 }
 
-detached_ptr<item> item::process_tool( detached_ptr<item> &&self, Character *carrier )
+detached_ptr<item> item::process_tool( detached_ptr<item> &&self, Character *carrier,
+                                       const tripoint_bub_ms &pos, const int ticks )
 {
     if( !self ) {
         return std::move( self );
@@ -11006,17 +11023,17 @@ detached_ptr<item> item::process_tool( detached_ptr<item> &&self, Character *car
     int energy = 0;
     const bool uses_UPS = it.has_flag( flag_USE_UPS );
     bool revert_destroy = false;
-    if( it.type->tool->turns_per_charge > 0 ) {
-        if( it.type->tool->turns_active >= it.type->tool->turns_per_charge ) {
-            energy = std::max( it.ammo_required(), 1 );
-            it.type->tool->turns_active = 0;
+    if( self->type->tool->turns_per_charge > 0 ) {
+        while( self->type->tool->turns_active >= self->type->tool->turns_per_charge ) {
+            energy = std::max( self->ammo_required(), 1 );
+            self->type->tool->turns_active -= self->type->tool->turns_per_charge;
         }
-        it.type->tool->turns_active += 1;
-    } else if( it.type->tool->power_draw > 0 ) {
+        self->type->tool->turns_active += ticks;
+    } else if( self->type->tool->power_draw > 0 ) {
         // power_draw in mW / 1000000 to give kJ (battery unit) per second
-        energy = it.type->tool->power_draw / 1000000;
+        energy = ( ( self->type->tool->power_draw * ticks ) / 1000000 );
         // energy_bat remainder results in chance at additional charge/discharge
-        energy += x_in_y( it.type->tool->power_draw % 1000000, 1000000 ) ? 1 : 0;
+        energy += x_in_y( ( self->type->tool->power_draw * ticks ) % 1000000, 1000000 ) ? 1 : 0;
     }
 
     // If ammo_required is 0 we just skip over this and go to tick processing.
@@ -11095,12 +11112,18 @@ detached_ptr<item> item::process_tool( detached_ptr<item> &&self, Character *car
             method = &it.type->use_methods.find( "RADIOCONTROL" )->second;
         }
         if( method != nullptr ) {
-            method->call( carrier != nullptr ? *carrier : you, *self, true, process_pos );
+            for( int i = 0; i < ticks; i++ ) {
+                method->call( carrier != nullptr ? *carrier : you, *self, true, process_pos );
+            }
         } else {
-            it.type->tick( carrier != nullptr ? *carrier : you, *self );
+            for( int i = 0; i < ticks; i++ ) {
+                self->type->tick( carrier != nullptr ? *carrier : you, *self );
+            }
         }
     } else {
-        it.type->tick( carrier != nullptr ? *carrier : you, *self );
+        for( int i = 0; i < ticks; i++ ) {
+            self->type->tick( carrier != nullptr ? *carrier : you, *self );
+        }
     }
 
     if( revert_destroy ) {
@@ -11116,32 +11139,68 @@ detached_ptr<item> item::process_tool( detached_ptr<item> &&self, Character *car
     return std::move( self );
 }
 
-detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
-        Character *carrier )
+detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self, Character *carrier,
+        const int ticks )
 {
     if( !self ) {
         return std::move( self );
     }
-    if( self->damage() < self->max_damage() && one_in( 2000 ) ) {
-        self->inc_damage( DT_ACID );
-        if( carrier ) {
-            carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
-                                        self->tname() );
+    if( ticks == 1 ) {
+        if( self->damage() < self->max_damage() && one_in( 2000 ) ) {
+            self->inc_damage( DT_ACID );
+            if( carrier ) {
+                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
+                                            self->tname() );
+            }
+        }
+    }
+    if( ticks > 2000 ) {
+        int count = ticks / 2000;
+        int leftover = ticks % 2000;
+        if( self->damage() < self->max_damage() && one_in( 2000 / leftover ) ) {
+            self->inc_damage( DT_ACID );
+            if( carrier ) {
+                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
+                                            self->tname() );
+            }
+        }
+        for( int i = 0; i < count; i++ ) {
+            self->inc_damage( DT_ACID );
+            if( carrier ) {
+                carrier->add_msg_if_player( m_bad, _( "Your %s rusts due to blackpowder fouling." ),
+                                            self->tname() );
+            }
         }
     }
     return std::move( self );
 }
 
-detached_ptr<item> item::process( detached_ptr<item> &&self, Character *carrier,
-                                  bool activate,
+detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
+                                  const tripoint_bub_ms &pos,
+                                  bool activate, const int ticks,
                                   temperature_flag flag )
 {
-    return process( std::move( self ), carrier, activate, flag, get_weather() );
+    return process_with_pos( std::move( self ), carrier, pos, activate, flag, get_weather(), ticks );
+}
+
+detached_ptr<item> item::process( detached_ptr<item> &&self, Character *carrier,
+                                  bool activate, temperature_flag flag )
+{
+    const auto pos = self ? self->bub_pos() : tripoint_bub_ms::zero();
+    return process_with_pos( std::move( self ), carrier, pos, activate, flag, get_weather(), 1 );
 }
 
 detached_ptr<item> item::process( detached_ptr<item> &&self, Character *carrier,
                                   bool activate,
-                                  temperature_flag flag, const weather_manager &weather_generator )
+                                  temperature_flag flag, const weather_manager &weather_generator, const int ticks )
+{
+    const auto pos = self ? self->bub_pos() : tripoint_bub_ms::zero();
+    return process_with_pos( std::move( self ), carrier, pos, activate, flag, weather_generator, ticks );
+}
+
+detached_ptr<item> item::process_with_pos( detached_ptr<item> &&self, Character *carrier,
+                                  const tripoint_bub_ms &pos, bool activate,
+                                  temperature_flag flag, const weather_manager &weather_generator, const int ticks )
 {
     if( !self ) {
         return std::move( self );
@@ -11193,8 +11252,8 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, Character *carrier,
         {
             it->last_rot_check = calendar::turn;
         }
-        return process_internal( std::move( it ), carrier, activate, content_seals, flag,
-                                 weather_generator );
+        return process_internal( std::move( it ), carrier, pos, activate, content_seals, flag,
+                                 weather_generator, ticks );
     };
 
     for( const cache_reference<item> &content_item : processing_items( obj.contents ) ) {
@@ -11209,14 +11268,15 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, Character *carrier,
         } );
     }
 
-    auto res = process_internal( std::move( self ), carrier, activate, seals, flag,
-                                 weather_generator );
+    auto res = process_internal( std::move( self ), carrier, pos, activate, seals, flag,
+                                 weather_generator, ticks );
     return res;
 }
 
 detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character *carrier,
-        bool activate, const bool seals, const temperature_flag flag,
-        const weather_manager &weather_generator )
+        const tripoint_bub_ms &pos, bool activate,
+        const bool seals, const temperature_flag flag,
+        const weather_manager &weather_generator, const int ticks )
 {
     ZoneScopedN( "item_process_internal" );
     if( !self ) {
@@ -11232,9 +11292,9 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character 
         if( !it.has_var( "ethereal" ) ) {
             return detached_ptr<item>();
         }
-        const auto ethereal_counter = string_utils::string_to_int( it.get_var( "ethereal" ) ).value_or(
-                                          0 ) - 1;
-        it.set_var( "ethereal", ethereal_counter );
+        const auto ethereal_counter = string_utils::string_to_int( self->get_var( "ethereal" ) ).value_or(
+                                          0 ) - ticks;
+        self->set_var( "ethereal", ethereal_counter );
         const bool processed = ethereal_counter <= 0;
         if( processed && carrier != nullptr ) {
             carrier->add_msg_if_player( _( "Your %s disappears!" ), it.tname() );
@@ -11248,13 +11308,18 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character 
 
     {
         ZoneScopedN( "item_process_artifact_relic" );
-        it.process_artifact( carrier );
-        it.process_relic( carrier );
+        // NOTE: Artifacts are rare...
+        // And they are going to be deleted, they dont cause the perf problem here
+        for( int i = 0; i < ticks; i++ ) {
+            self->process_artifact( carrier );
+        }
+        // NOTE: Ticks are handled by process_relic
+        self->process_relic( carrier );
     }
 
     if( it.faults.contains( fault_gun_blackpowder ) ) {
         ZoneScopedN( "item_process_faults" );
-        return process_blackpowder_fouling( std::move( self ), carrier );
+        return process_blackpowder_fouling( std::move( self ), carrier, ticks );
     }
 
     avatar &you = get_avatar();
@@ -11283,7 +11348,10 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character 
 
     if( !it.is_food() && it.item_counter > 0 ) {
         ZoneScopedN( "item_process_counter" );
-        it.item_counter--;
+        self->item_counter -= ticks;
+        if( self->item_counter < 0 ) {
+            self->item_counter = 0;
+        }
     }
 
     if( it.item_counter == 0 && it.type->countdown_action ) {
@@ -11296,12 +11364,15 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character 
 
     if( !it.type->emits.empty() ) {
         ZoneScopedN( "item_process_emits" );
-        for( const emit_id &e : it.type->emits ) {
-            here.emit_field( abs_pos, e );
+        for( int i = 0; i < ticks; i++ ) {
+            for( const emit_id &e : self->type->emits ) {
+                here.emit_field( abs_pos, e );
+            }
         }
     }
 
-    if( it.has_flag( flag_FAKE_SMOKE ) ) {
+    // Fake stuff are handled by item counter above
+    if( self->has_flag( flag_FAKE_SMOKE ) ) {
         ZoneScopedN( "item_process_fake_smoke" );
         self = process_fake_smoke( std::move( self ), carrier );
         if( !self ) {
@@ -11322,30 +11393,36 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character 
             return std::move( self );
         }
     }
-    if( it.is_corpse() ) {
+    // Checks for rotten -> this uses world time, no need for ticks
+    if( self->is_corpse() ) {
         ZoneScopedN( "item_process_corpse" );
         self = process_corpse( std::move( self ), carrier );
         if( !self ) {
             return std::move( self );
         }
     }
-    if( it.has_flag( flag_WET ) ) {
+    // Uses item counter -> ticks unneeeded
+    if( self->has_flag( flag_WET ) ) {
         ZoneScopedN( "item_process_wet" );
         if( it.process_wet( carrier ) ) {
             // Drying items are never destroyed, but we want to exit so they don't get processed as tools.
             return std::move( self );
         }
     }
-    if( it.has_flag( flag_LITCIG ) ) {
+    // LITCIG is randomness based, and applies effects
+    // Does not make sense to be one call, so loop it too
+    if( self->has_flag( flag_LITCIG ) ) {
         ZoneScopedN( "item_process_litcig" );
-        self = process_litcig( std::move( self ), carrier );
-        if( !self ) {
-            return std::move( self );
+        for( int i = 0; i < ticks; i++ ) {
+            self = process_litcig( std::move( self ), carrier, pos );
+            if( !self ) {
+                return std::move( self );
+            }
         }
     }
     if( ( it.has_flag( flag_WATER_EXTINGUISH ) || it.has_flag( flag_WIND_EXTINGUISH ) ) ) {
         ZoneScopedN( "item_process_extinguish" );
-        self = process_extinguish( std::move( self ), carrier );
+        self = process_extinguish( std::move( self ), carrier, pos, ticks );
         if( !self ) {
             return std::move( self );
         }
@@ -11360,19 +11437,22 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, Character 
     if( it.has_flag( flag_CABLE_SPOOL ) ) {
         ZoneScopedN( "item_process_cable" );
         // DO NOT process this as a tool! It really isn't!
-        return process_cable( std::move( self ), carrier );
+        // Ticks dont matter here, it is for determining if it should snap
+        return process_cable( std::move( self ), carrier, pos );
     }
     if( it.has_flag( flag_IS_UPS ) ) {
         ZoneScopedN( "item_process_ups" );
         // DO NOT process this as a tool! It really isn't!
-        return process_UPS( std::move( self ), carrier );
+        // Ticks dont matter here, it is for determining if it should snap from cable
+        return process_UPS( std::move( self ), carrier, pos );
     }
     if( it.is_tool() ) {
         ZoneScopedN( "item_process_tool" );
-        return process_tool( std::move( self ), carrier );
+        return process_tool( std::move( self ), carrier, pos, ticks );
     }
     // All foods that go bad have temperature
-    if( ( it.is_food() || it.is_corpse() ) ) {
+    // Rot automatically applies ticks, no need to catch up
+    if( ( self->is_food() || self->is_corpse() ) ) {
         ZoneScopedN( "item_process_rot" );
         auto removed_snapshot = it.is_comestible() || it.is_corpse() ?
                                 item::spawn( *self ) : detached_ptr<item>();
@@ -11928,6 +12008,7 @@ detached_ptr<item> item::remove_component( item &it )
 void item::add_component( detached_ptr<item> &&comp )
 {
     components.push_back( std::move( comp ) );
+    components.back()->set_flag( flag_id( "COMPONENT" ) );
 }
 
 const location_vector<item> &item::get_components() const

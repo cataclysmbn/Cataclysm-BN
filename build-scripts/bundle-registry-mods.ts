@@ -3,7 +3,7 @@
 /**
  * @module
  *
- * Bundles pinned Cataclysm: Bright Nights registry mods into release data.
+ * Bundles Cataclysm: Bright Nights registry mods into release data.
  */
 
 import { Command } from "@cliffy/command"
@@ -20,6 +20,7 @@ const LockSchema = v.array(v.object({
   id: v.string(),
   version: v.string(),
   url: v.pipe(v.string(), v.url()),
+  extract_path: v.optional(v.string()),
 }))
 const RegistrySchema = v.array(v.looseObject({
   id: v.string(),
@@ -66,20 +67,22 @@ export const selectEntries = (
     const found = registryById[lock.id]
     if (!found) throw new Error(`${lock.id} is not present in the mod registry`)
     if (found.version !== lock.version) {
-      throw new Error(
-        `${lock.id} version mismatch: lockfile has ${lock.version}, registry has ${found.version}`,
+      console.warn(
+        `${lock.id} version mismatch: lockfile has ${lock.version}, registry has ${found.version}; using locked version`,
       )
     }
     return { ...found, lock }
   }).filter((entry) => !excludedPackageTypes.has(packageType(entry)))
 }
 
+const extractPath = (entry: BundleEntry) => entry.lock.extract_path ?? entry.source.extract_path
+
 const targetDir = (entry: BundleEntry, outputRoot: string) =>
   join(
     outputRoot,
     "data",
     packageType(entry) === "soundpack" ? "sound" : "mods",
-    entry.source.extract_path ? pathParts(entry.source.extract_path).at(-1)! : entry.id,
+    extractPath(entry) ? pathParts(extractPath(entry)!).at(-1)! : entry.id,
   )
 
 const download = async (entry: BundleEntry, cacheDir: string) => {
@@ -103,12 +106,13 @@ const findSingleDir = async (root: string) => {
 }
 
 const findExtractDir = async (entry: BundleEntry, root: string) => {
-  const extract = pathParts(entry.source.extract_path ?? "")
+  const sourcePath = extractPath(entry)
+  const extract = pathParts(sourcePath ?? "")
   if (!extract.length) return await findSingleDir(root)
   for await (const { path } of walk(root, { includeFiles: false })) {
     if (pathParts(path).slice(-extract.length).join("/") === extract.join("/")) return path
   }
-  throw new Error(`${entry.id} archive did not contain ${entry.source.extract_path}`)
+  throw new Error(`${entry.id} archive did not contain ${sourcePath}`)
 }
 
 const extract = async (entry: BundleEntry, archive: string, outputRoot: string) => {
@@ -166,7 +170,7 @@ export const bundle = async (options: BundleOptions): Promise<BundleEntry[]> => 
 const main = () =>
   new Command()
     .name("bundle-registry-mods")
-    .description("Bundle pinned BN mod registry entries into release data.")
+    .description("Bundle BN mod registry entries into release data.")
     .option("--manifest <path:string>", "External registry lockfile path", {
       default: "data/mods/external.json",
     })

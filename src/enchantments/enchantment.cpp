@@ -9,6 +9,7 @@
 #include "enchantment_condition.h"
 #include "enchantment_flag.h"
 #include "enchantment_value.h"
+#include "enchantment_vision.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "generic_factory.h"
@@ -66,7 +67,7 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
     result.push_back(cond_string);
     for (const auto [ench_id, goodbad] : value_effects) {
         const std::string color = goodbad > 0 ? "green" : goodbad < 0 ? "red" : "magenta";
-        result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->desc));
+        result.push_back(string_format("  <color_%s>%s</color>", color, ench_id->get_desc()));
         describe = true;
     }
     for (const auto [eff_id, intense] : ench_effects) {
@@ -111,7 +112,14 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
             string_format(_("  <color_%s>Gives mutation %s</color>"), color, trait_id->name()));
         describe = true;
     }
-    for (const auto [flag, _] : flags) { result.push_back(string_format("  %s", flag->info)); }
+    for (const auto [flag, _] : flags) {
+        result.push_back(string_format("  %s", flag->info));
+        describe = true;
+    }
+    for (const auto vision : special_visions) {
+        result.push_back(string_format("  %s", vision->get_desc()));
+        describe = true;
+    }
     if (describe) {
         return result;
     } else {
@@ -266,9 +274,12 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
         ench_effects.emplace(efftype_id(jsobj.get_string("effect")), jsobj.get_int("intensity"));
     }
 
-    optional(jo, was_loaded, "mutations", mutations);
-    optional(jo, was_loaded, "immune_effects", immune_effects);
-    optional(jo, was_loaded, "immune_fields", immune_fields);
+    optional(jo, was_loaded, "mutations", mutations, auto_flags_reader<trait_id>{});
+    optional(jo, was_loaded, "fake_items", fake_items, auto_flags_reader<itype_id>{});
+    optional(jo, was_loaded, "immune_effects", immune_effects, auto_flags_reader<efftype_id>{});
+    optional(jo, was_loaded, "immune_fields", immune_fields, auto_flags_reader<field_type_id>{});
+    optional(jo, was_loaded, "special_vision", special_visions,
+             auto_flags_reader<enchantment_vision_id>{});
 
     if (jo.has_array("values")) {
         for (const JsonObject value_obj : jo.get_array("values")) {
@@ -405,10 +416,14 @@ void enchantment::force_add(const enchantment& rhs) {
 
     immune_effects.insert(rhs.immune_effects.begin(), rhs.immune_effects.end());
     immune_fields.insert(rhs.immune_fields.begin(), rhs.immune_fields.end());
+    special_visions
+        .insert(special_visions.begin(), rhs.special_visions.begin(), rhs.special_visions.end());
 
     if (rhs.emitter) { emitter = rhs.emitter; }
 
     for (const trait_id& branch : rhs.mutations) { mutations.emplace(branch); }
+
+    for (const itype_id& branch : rhs.fake_items) { fake_items.emplace(branch); }
 
     for (const std::pair<const time_duration, std::vector<fake_spell>>& act_pair :
          rhs.intermittent_activation) {
@@ -453,8 +468,11 @@ int enchantment::get_value_add(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
     if (values_add.contains(value)) { result += values_add.at(value); }
-    if (value->has_parent()) { result += get_value_add(value->get_parent()); }
-
+    if (value->has_parent()) {
+        for (enchantment_value_id ench_id : value->get_parents()) {
+            result += get_value_add(ench_id);
+        }
+    }
     return result;
 }
 
@@ -462,7 +480,11 @@ double enchantment::get_value_multiply(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     double result = 0;
     if (values_multiply.contains(value)) { result += values_multiply.at(value); }
-    if (value->has_parent()) { result += get_value_multiply(value->get_parent()); }
+    if (value->has_parent()) {
+        for (enchantment_value_id ench_id : value->get_parents()) {
+            result += get_value_multiply(ench_id);
+        }
+    }
 
     return result;
 }
@@ -471,7 +493,11 @@ int enchantment::get_value_max(const enchantment_value_id value) const {
     if (!value.is_valid()) { debugmsg("Tried to get invalid enchantment value \"%s\".", value); }
     int result = 0;
     if (values_max.contains(value)) { result = values_max.at(value); }
-    if (value->has_parent()) { result = std::max(result, get_value_max(value->get_parent())); }
+    if (value->has_parent()) {
+        for (enchantment_value_id ench_id : value->get_parents()) {
+            result = std::max(result, get_value_max(ench_id));
+        }
+    }
 
     return result;
 }
@@ -550,6 +576,14 @@ void enchantment::cast_enchantment_spell(
 
         spell_lvl.cast_all_effects(caster, trg_crtr.abs_pos());
     }
+}
+
+enchantment_vision_id enchantment::mon_passes_special_vision(
+    const Creature& mon, const int dist, const bool same_zlevel, const bool sees_position) const {
+    for (const enchantment_vision_id& vision : special_visions) {
+        if (vision->mon_passes(mon, dist, same_zlevel, sees_position)) { return vision; }
+    }
+    return enchantment_vision_id::NULL_ID();
 }
 
 bool enchantment::operator==(const enchantment& rhs) const {

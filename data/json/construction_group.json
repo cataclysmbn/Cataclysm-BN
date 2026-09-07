@@ -1236,6 +1236,11 @@
   },
   {
     "type": "construction_group",
+    "id": "constr_wall_paintable_standard",
+    "name": "Build Dark Plastered Wooden Wall"
+  },
+  {
+    "type": "construction_group",
     "id": "place_arc_welder",
     "name": "Plug In Arc Welder"
   },

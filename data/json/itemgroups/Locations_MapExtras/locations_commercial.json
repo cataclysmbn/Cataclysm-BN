@@ -612,7 +612,9 @@
       { "group": "tinware", "prob": 10 },
       [ "shield_riot", 5 ],
       [ "pirate_flag", 5 ],
-      [ "professional_chemical_thrower", 5 ]
+      [ "professional_chemical_thrower", 5 ],
+      [ "chestrig", 5 ],
+      [ "belt_magazine", 5 ]
     ]
   },
   {
@@ -728,6 +730,8 @@
       [ "bfipowder", 20 ],
       [ "sheath", 10 ],
       [ "bootsheath", 10 ],
+      [ "chestrig", 10 ],
+      [ "belt_magazine", 10 ],
       [ "survnote", 1 ],
       [ "solarpack", 1 ],
       [ "tourist_table", 5 ],

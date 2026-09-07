@@ -73,6 +73,7 @@ class start_location
         translation _name;
         std::vector<std::pair<std::string, ot_match_type>> _omt_types;
         std::set<std::string> _flags;
+        point_abs_om absolute_place_location;
 
         void prepare_map( map &m, const int &z ) const;
 };

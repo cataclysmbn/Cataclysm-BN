@@ -256,7 +256,6 @@ TEST_CASE("Rate of rotting") {
         // Move time 110 minutes
         calendar::turn += 110_minutes;
         here.process_items();
-
         // In freezer and in preserving container still should be no rot
         CHECK(here.i_at(sealed_pos).only_item().get_rot() == 0_turns);
         CHECK(here.i_at(freezer_pos).only_item().get_rot() == 0_turns);

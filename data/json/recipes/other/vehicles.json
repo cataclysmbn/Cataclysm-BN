@@ -2538,7 +2538,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 4 ], [ "welding_book", 5 ], [ "textbook_carpentry", 4 ] ],
     "using": [ [ "blacksmithing_intermediate", 15 ], [ "steel_standard", 15 ] ],
-    "components": [ [ [ "steel_plate", 3 ] ], [ [ "chain", 2 ] ] ]
+    "components": [ [ [ "steel_plate", 3 ], [ "steel_armor", 36 ] ], [ [ "chain", 2 ] ] ]
   },
   {
     "result": "tread3",
@@ -2552,7 +2552,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 5 ], [ "welding_book", 6 ], [ "textbook_carpentry", 5 ] ],
     "using": [ [ "blacksmithing_advanced", 20 ], [ "steel_standard", 20 ] ],
-    "components": [ [ [ "hard_plate", 5 ] ], [ [ "chain", 2 ] ] ]
+    "components": [ [ [ "hard_plate", 5 ], [ "hard_steel_armor", 60 ] ], [ [ "chain", 2 ] ] ]
   },
   {
     "result": "NBC_seal",

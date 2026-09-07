@@ -23,6 +23,7 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "cata_utility.h"
@@ -627,9 +628,13 @@ const inventory &Character::crafting_inventory( const tripoint_abs_ms &src_pos, 
                                                 units::to_kilojoule( get_power_level() ) ), true );
         }
     }
-    if( has_trait( trait_BURROW ) ) {
-        cached_crafting_inventory.add_item( *item::spawn_temporary( "pickaxe", calendar::turn ), true );
-        cached_crafting_inventory.add_item( *item::spawn_temporary( "shovel", calendar::turn ), true );
+    for( const itype_id &it : enchantment_cache->get_fake_items() ) {
+        if( it->has_flag( flag_USES_BIONIC_POWER ) ) {
+            cached_crafting_inventory.add_item( *item::spawn_temporary( it, calendar::turn,
+                                                units::to_kilojoule( get_power_level() ) ), true );
+        } else {
+            cached_crafting_inventory.add_item( *item::spawn_temporary( it, calendar::turn ), true );
+        }
     }
 
     cached_moves = moves;
@@ -680,6 +685,7 @@ static void set_components( item &of, const std::vector<item *> &used,
     if( batch_size <= 1 ) {
         for( item * const &it : used ) {
             components.push_back( item::spawn( *it ) );
+            components.back()->set_flag( flag_id( "COMPONENT" ) );
         }
         return;
     }
@@ -691,9 +697,11 @@ static void set_components( item &of, const std::vector<item *> &used,
             // This assumes all (count-by-charges) items of the same type have been merged into one,
             // which has a charges value that can be evenly divided by batch_size.
             components.back()->charges = tmp->charges / batch_size;
+            components.back()->set_flag( flag_id( "COMPONENT" ) );
         } else {
             if( ( non_charges_counter + offset ) % batch_size == 0 ) {
                 components.push_back( item::spawn( *tmp ) );
+                components.back()->set_flag( flag_id( "COMPONENT" ) );
             }
             non_charges_counter++;
         }
@@ -1188,15 +1196,19 @@ void complete_craft( Character &who, item &craft )
         if( food_contained.is_comestible() ) {
             food_contained.set_kcal_mult( cooking_kcal_mult );
         }
-        cata::run_hooks( "on_craft_result", [&]( auto & params ) {
-            params["crafter"] = &who;
-            params["craft"] = &craft;
-            params["item"] = &food_contained;
-            params["recipe"] = &making;
-            params["batch_size"] = batch_size;
-            params["hot_result"] = should_heat;
-            params["dehydrated_result"] = is_dehydrated;
-        } );
+        {
+            std::unique_lock lock( cata::lua_lock );
+            cata::run_hooks( "on_craft_result", [&]( auto & params ) {
+                params["crafter"] = &who;
+                params["craft"] = &craft;
+                params["item"] = &food_contained;
+                params["recipe"] = &making;
+                params["batch_size"] = batch_size;
+                params["hot_result"] = should_heat;
+                params["dehydrated_result"] = is_dehydrated;
+                params["crafting_menu"] = false;
+            } );
+        }
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
             food_contained.set_flag( flag_NUTRIENT_OVERRIDE );
@@ -1259,6 +1271,9 @@ void complete_craft( Character &who, item &craft )
         // If we created a tool that spawns empty, don't preset its ammotype.
         if( !newit->ammo_remaining() ) {
             newit->ammo_unset();
+        }
+        if( newit->has_flag( flag_id( "CRAFT_WITH_FULL_MAG" ) ) ) {
+            newit->ammo_set( newit->ammo_default(), newit->ammo_capacity() );
         }
         if( newit->made_of( LIQUID ) ) {
             liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );

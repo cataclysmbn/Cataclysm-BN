@@ -164,7 +164,7 @@
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL", "CHIMERA" ],
+    "category": [ "MEDICAL" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5
@@ -214,7 +214,8 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL", "CHIMERA" ]
+    "category": [ "MEDICAL", "CHIMERA" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.33 } ] } ]
   },
   {
     "type": "mutation",
@@ -365,7 +366,8 @@
     "description": "You are less likely to throw up from food poisoning, alcohol, etc.  If you throw up despite this, you won't suffer any residual nausea.",
     "starting_trait": true,
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "WEAKSTOMACH" ]
+    "cancels": [ "WEAKSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -428,7 +430,17 @@
     "description": "Whether due to a lifetime of exposure or through simple willpower, it's harder for you to become addicted to substances, and easier to rid yourself of these addictions.",
     "starting_trait": true,
     "valid": false,
-    "cancels": [ "ADDICTIVE" ]
+    "cancels": [ "ADDICTIVE" ],
+    "//": "10800 == 3 hours shorter per intensity, 14400 == 4 hours longer per addition",
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "ADDICTION_STRENGTH", "multiply": -0.5 },
+          { "value": "ADDICTION_TIME_PER_ADDITION", "add": 14400 },
+          { "value": "ADDICTION_TIME_PER_INTENSITY", "add": 10800 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1003,7 +1015,8 @@
     "starting_trait": true,
     "social_modifiers": { "intimidate": -2 },
     "category": [ "BIRD", "RAPTOR" ],
-    "cancels": [ "TOUGH" ]
+    "cancels": [ "TOUGH" ],
+    "mut_enchantments": [ { "values": [ { "value": "HEALTH_POINTS_HEAD", "multiply": -0.2 } ] } ]
   },
   {
     "type": "mutation",
@@ -1023,7 +1036,17 @@
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL", "MOUSE", "RABBIT" ],
-    "cancels": [ "NONADDICTIVE" ]
+    "cancels": [ "NONADDICTIVE" ],
+    "//": "-14400 == 4 hours longer per intensity, -3600 == 1 hours shorter per addition",
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "ADDICTION_STRENGTH", "multiply": 1 },
+          { "value": "ADDICTION_TIME_PER_ADDITION", "add": -3600 },
+          { "value": "ADDICTION_TIME_PER_INTENSITY", "add": -14400 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1150,7 +1173,7 @@
     "description": "You make more noise while walking.",
     "starting_trait": true,
     "cancels": [ "LIGHTSTEP" ],
-    "noise_modifier": 2
+    "mut_enchantments": [ { "values": [ { "value": "NOISE", "add": 12 } ] } ]
   },
   {
     "type": "mutation",
@@ -1221,7 +1244,8 @@
     "points": -1,
     "description": "You are more likely to throw up from food poisoning, alcohol, etc.",
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "STRONGSTOMACH" ]
+    "cancels": [ "STRONGSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -1416,7 +1440,7 @@
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -1440,7 +1464,7 @@
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
     "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -2356,7 +2380,8 @@
     "prereqs": [ "PLANTSKIN", "BARK" ],
     "prereqs2": [ "LEAVES" ],
     "threshreq": [ "THRESH_PLANT" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "mut_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 4 } ] } ]
   },
   {
     "type": "mutation",
@@ -2908,7 +2933,8 @@
     "prereqs": [ "PAINRESIST" ],
     "prereqs2": [ "STOCKY_TROGLO" ],
     "threshreq": [ "THRESH_TROGLOBITE" ],
-    "category": [ "TROGLOBITE" ]
+    "category": [ "TROGLOBITE" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3025,7 +3051,7 @@
     "prereqs2": [ "INCISORS" ],
     "threshreq": [ "THRESH_RAT", "THRESH_RABBIT" ],
     "category": [ "RAT", "RABBIT" ],
-    "active": true
+    "mut_enchantments": [ { "fake_items": [ "fake_burrowing" ] } ]
   },
   {
     "type": "mutation",
@@ -3167,7 +3193,8 @@
     "starts_active": true,
     "restricts_gear": [ "head" ],
     "allowed_items": [ "ALLOWS_HORNS" ],
-    "allow_soft_gear": true
+    "allow_soft_gear": true,
+    "mut_enchantments": [ { "special_vision": [ "GROUNDED_SONAR" ] } ]
   },
   {
     "type": "mutation",
@@ -3452,7 +3479,16 @@
     "purifiable": false,
     "prereqs": [ "MASOCHIST_MED" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "PAIN_PENALTY_STR", "multiply": -1 },
+          { "value": "PAIN_PENALTY_DEX", "multiply": -1 },
+          { "value": "PAIN_PENALTY_SPD", "multiply": -0.5 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -3466,7 +3502,8 @@
     "prereqs2": [ "PAINREC1" ],
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.1 } ] } ]
   },
   {
     "type": "mutation",
@@ -3477,7 +3514,8 @@
     "starting_trait": true,
     "//": "The MORE_PAIN mutations will always increase the pain you receive by at least 1.",
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN2" ]
+    "changes_to": [ "MORE_PAIN2" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.25 } ] } ]
   },
   {
     "type": "mutation",
@@ -3487,7 +3525,8 @@
     "description": "Your body experiences pain out of proportion to the physical causes.  Pain dealt to you is increased by 50%.",
     "prereqs": [ "MORE_PAIN" ],
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN3" ]
+    "changes_to": [ "MORE_PAIN3" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3496,7 +3535,8 @@
     "points": -5,
     "description": "Your body reacts cripplingly to any source of pain.  Pain dealt to you is doubled.",
     "prereqs": [ "MORE_PAIN2" ],
-    "cancels": [ "PAINRESIST", "NOPAIN" ]
+    "cancels": [ "PAINRESIST", "NOPAIN" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -4207,7 +4247,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "armor": [ { "parts": "ALL", "bash": -3 } ]
+    "armor": [ { "parts": "ALL", "bash": -3 } ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_PENALTY_INT", "multiply": -0.8 } ] } ]
   },
   {
     "type": "mutation",
@@ -4279,7 +4320,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "passive_mods": { "per_mod": -8 }
+    "passive_mods": { "per_mod": -8 },
+    "mut_enchantments": [ { "values": [ { "value": "FLASH_PROTECTION", "max": 3 } ] } ]
   },
   {
     "type": "mutation",
@@ -4297,7 +4339,7 @@
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
     "passive_mods": { "per_mod": 5 },
-    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ], "values": [ { "value": "FLASH_PROTECTION", "max": 8 } ] } ]
   },
   {
     "type": "mutation",
@@ -4785,7 +4827,8 @@
     "prereqs": [ "WEAKSTOMACH" ],
     "changes_to": [ "VOMITOUS" ],
     "category": [ "ALPHA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4795,7 +4838,8 @@
     "description": "You have a major digestive disorder.  Though it causes you to vomit frequently, you have found that you can trigger your vomit reflex on demand, too.",
     "prereqs": [ "NAUSEA" ],
     "category": [ "SLIME", "RAT", "MEDICAL", "ELFA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -5314,7 +5358,8 @@
     "active": true,
     "cost": 40,
     "hunger": true,
-    "thirst": true
+    "thirst": true,
+    "mut_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 8 } ] } ]
   },
   {
     "type": "mutation",
@@ -5892,7 +5937,10 @@
     "active": true,
     "restricts_gear": [ "torso" ],
     "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
-    "mut_enchantments": [ { "conditions": [ "INACTIVE" ], "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] } ]
+    "mut_enchantments": [
+      { "conditions": [ "INACTIVE" ], "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] },
+      { "conditions": [ "ACTIVE" ], "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 8 } ] }
+    ]
   },
   {
     "type": "mutation",
@@ -6407,7 +6455,7 @@
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
     "mixed_effect": true,
-    "mut_enchantments": [ { "flags": [ "ELECTROSENSE" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",

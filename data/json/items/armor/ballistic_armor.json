@@ -87,7 +87,7 @@
     "color": "light_gray",
     "covers": [ "torso" ],
     "coverage": 85,
-    "encumbrance": 10,
+    "encumbrance": 15,
     "storage": "2500 ml",
     "warmth": 15,
     "material_thickness": 7,
@@ -237,7 +237,7 @@
     "resistance": { "bullet": 90 },
     "extend": { "flags": [ "NO_REPAIR" ] },
     "delete": { "flags": [ "STURDY" ] },
-    "relative": { "weight": "6 kg", "encumbrance": 15, "material_thickness": 3 },
+    "relative": { "weight": "6 kg", "encumbrance": 10, "material_thickness": 3 },
     "proportional": { "price": 1.5, "price_postapoc": 1.5, "storage": 0.4 }
   },
   {
@@ -251,7 +251,7 @@
     "material": [ "kevlar", "hardsteel" ],
     "resistance": { "bullet": 90 },
     "extend": { "flags": [ "NO_REPAIR" ] },
-    "relative": { "weight": "18 kg", "encumbrance": 20, "material_thickness": 3 },
+    "relative": { "weight": "18 kg", "encumbrance": 15, "material_thickness": 3 },
     "proportional": { "price": 1.5, "price_postapoc": 1.5, "storage": 0.4 }
   },
   {
@@ -265,7 +265,7 @@
     "material": [ "kevlar", "steel" ],
     "resistance": { "bullet": 70 },
     "extend": { "flags": [ "NO_REPAIR" ] },
-    "relative": { "weight": "12 kg", "encumbrance": 15, "material_thickness": 3 },
+    "relative": { "weight": "12 kg", "encumbrance": 10, "material_thickness": 3 },
     "proportional": { "price": 1.5, "price_postapoc": 1.5, "storage": 0.4 }
   },
   {
@@ -279,7 +279,7 @@
     "material": [ "kevlar", "superalloy" ],
     "resistance": { "bullet": 70 },
     "extend": { "flags": [ "NO_REPAIR" ] },
-    "relative": { "weight": "10800 g", "encumbrance": 10, "material_thickness": 3 },
+    "relative": { "weight": "10800 g", "encumbrance": 5, "material_thickness": 3 },
     "proportional": { "price": 1.5, "price_postapoc": 1.5, "storage": 0.4 }
   },
   {

@@ -127,7 +127,8 @@ auto run_lua_monster_ai( monster &mon ) -> bool
         return false;
     }
 
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    std::unique_lock lock( cata::lua_lock );
+    auto *lua_state = cata::get_active_lua_state();
     if( lua_state == nullptr ) {
         return false;
     }
@@ -2437,16 +2438,20 @@ bool monster::move_to( const tripoint_abs_ms &p, bool force, bool step_on_critte
 
     // Move this below so the actual destination is set before the hook.
     // Lua won't exactly handle stairs properly without help.
-    const auto hook_results = cata::run_hooks( "on_monster_try_move",
-    [ &, this]( sol::table & params ) {
-        params["monster"] = this;
-        params["from"] = cata::detail::lua_coords::to_lua( abs_pos() );
-        params["to"] = cata::detail::lua_coords::to_lua( destination );
-        params["force"] = force;
-    } );
-    const auto can_move = hook_results.get_or( "allowed", true );
-    if( !can_move ) {
-        return false;
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto hook_results = cata::run_hooks(
+                                      "on_monster_try_move",
+        [ &, this]( sol::table & params ) {
+            params["monster"] = this;
+            params["from"] = cata::detail::lua_coords::to_lua( abs_pos() );
+            params["to"] = cata::detail::lua_coords::to_lua( destination );
+            params["force"] = force;
+        } );
+        const auto can_move = hook_results.get_or( "allowed", true );
+        if( !can_move ) {
+            return false;
+        }
     }
 
     const auto dest_handle = abs_tile_handle::fetch( here, destination );

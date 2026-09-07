@@ -648,11 +648,6 @@
   },
   {
     "type": "recipe",
-    "result": "mininuke",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "mirrorfrom_steel",
     "obsolete": true
   },
@@ -1992,22 +1987,6 @@
     "type": "recipe",
     "result": "fertilizer_liquid",
     "id_suffix": "simple",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "thermal_cooling_mask",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "thermal_cooling",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
-    "result": "thermal_cooling",
-    "id_suffix": "thermal_outfit_from_bits",
     "obsolete": true
   },
   {

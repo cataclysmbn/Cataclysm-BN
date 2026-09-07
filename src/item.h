@@ -1281,12 +1281,16 @@ class item : public location_visitable<item>, public game_object<item>
          * Returns false if the item is not destroyed.
          */
         /*@{*/
+        static detached_ptr<item> process( detached_ptr<item> &&self, player *carrier,
+                                           const tripoint_bub_ms &pos,
+                                           bool activate, const int ticks,
+                                           temperature_flag flag = temperature_flag::TEMP_NORMAL );
         static detached_ptr<item> process( detached_ptr<item> &&self, Character *carrier,
                                            bool activate,
                                            temperature_flag flag = temperature_flag::TEMP_NORMAL );
         static detached_ptr<item> process( detached_ptr<item> &&self, Character *carrier,
                                            bool activate,
-                                           temperature_flag flag, const weather_manager &weather_generator );
+                                           temperature_flag flag, const weather_manager &weather_generator, const int ticks );
         /*@}*/
         /**
          * Helper to bring a cable back to its initial state.
@@ -1306,7 +1310,6 @@ class item : public location_visitable<item>, public game_object<item>
          * Process and apply artifact effects. This should be called exactly once each turn, it may
          * modify character stats (like speed, strength, ...), so call it after those have been reset.
          * @param carrier The character carrying the artifact, can be null.
-         * @param pos The location of the artifact (should be the player location if carried).
          */
         void process_artifact( Character *carrier );
         void process_relic( Character *carrier );
@@ -2443,8 +2446,11 @@ class item : public location_visitable<item>, public game_object<item>
 
         const use_function *get_use_internal( const std::string &use_name ) const;
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, Character *carrier,
-                bool activate,
-                bool seals, temperature_flag flag, const weather_manager &weather_generator );
+                const tripoint_bub_ms &pos, bool activate,
+                bool seals, temperature_flag flag, const weather_manager &weather_generator, const int ticks );
+        static detached_ptr<item> process_with_pos( detached_ptr<item> &&self, Character *carrier,
+                const tripoint_bub_ms &pos, bool activate, temperature_flag flag,
+                const weather_manager &weather_generator, const int ticks );
         static auto actualize_rot( detached_ptr<item> &&self, temperature_flag temperature,
                                    const weather_manager &weather, bool seals ) -> detached_ptr<item>;
         static auto actualize_rot( detached_ptr<item> &&self,
@@ -2494,17 +2500,22 @@ class item : public location_visitable<item>, public game_object<item>
         // processing types, just to make the process function cleaner.
         // The interface is the same as for @ref process.
         static detached_ptr<item> process_corpse( detached_ptr<item> &&self, Character *carrier );
-        static detached_ptr<item> process_litcig( detached_ptr<item> &&self, Character *carrier );
-        static detached_ptr<item> process_extinguish( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_litcig( detached_ptr<item> &&self, Character *carrier,
+                const tripoint_bub_ms &pos );
+        static detached_ptr<item> process_extinguish( detached_ptr<item> &&self, Character *carrier,
+                const tripoint_bub_ms &pos, const int ticks );
         // Place conditions that should remove fake smoke item in this sub-function
         static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, Character *carrier );
         static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, Character *carrier );
         static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, Character *carrier );
-        static detached_ptr<item> process_cable( detached_ptr<item> &&self, Character *carrier );
-        static detached_ptr<item> process_UPS( detached_ptr<item> &&self, Character *carrier );
+        static detached_ptr<item> process_cable( detached_ptr<item> &&self, Character *carrier,
+                const tripoint_bub_ms &pos );
+        static detached_ptr<item> process_UPS( detached_ptr<item> &&self, Character *carrier,
+                                               const tripoint_bub_ms &pos );
         static detached_ptr<item> process_blackpowder_fouling( detached_ptr<item> &&self,
-                Character *carrier );
-        static detached_ptr<item> process_tool( detached_ptr<item> &&self, Character *carrier );
+                Character *carrier, const int ticks );
+        static detached_ptr<item> process_tool( detached_ptr<item> &&self, Character *carrier,
+                                                const tripoint_bub_ms &pos, const int ticks );
 
         //Process wet is built different because sigh
         bool process_wet( Character *carrier );

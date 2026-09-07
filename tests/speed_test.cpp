@@ -26,6 +26,7 @@ static const auto act_wait = activity_id("ACT_WAIT");
 
 static void advance_turn(Character& guy) {
     guy.process_turn();
+    guy.process_items();
     calendar::turn += 1_turns;
 }
 

@@ -47,7 +47,8 @@ struct trap;
 struct rl_vec2d;
 
 double precip_mm_per_hour( precip_class p );
-void handle_weather_effects( const weather_type_id &w );
+void handle_bulk_weather_field_decay( const weather_type_id &w, int turns );
+void handle_weather_effects( const weather_type_id &w, bool do_decay = true );
 
 /**
  * Weather drawing tracking.

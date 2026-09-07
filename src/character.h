@@ -576,7 +576,8 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns character luminosity based on the brightest active item they are carrying */
         float active_light() const;
 
-        bool sees_with_specials( const Creature &critter ) const;
+        enchantment_vision_id sees_with_specials( const Creature &critter,
+                const bool force_path = false ) const;
 
         /** Bitset of all the body parts covered only with items with `flag` (or nothing) */
         body_part_set exclusive_flag_coverage( const flag_id &flag ) const;
@@ -608,7 +609,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Processes human-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
         /** Process active items */
-        void process_items();
+        void process_items( int turns = 1 );
 
         /** Recalculates HP after a change to max strength */
         void recalc_hp();
@@ -944,6 +945,12 @@ class Character : public Creature, public location_visitable<Character>
          * Calculate bonus from enchantments for given base value.
          */
         double bonus_from_enchantments( double base, enchantment_value_id value, bool round = false ) const;
+
+        /** Returns true if the player has an enchantment with that fake item */
+        bool has_enchantment_with_fake( const itype_id &it ) const;
+
+        /** Returns all fake items from currently active enchantments */
+        std::set<itype_id> get_enchantment_fake_items() const;
 
         /** Returns true if the player has any martial arts buffs attached */
         bool has_mabuff( const mabuff_id &buff_id ) const;
@@ -2071,7 +2078,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Correction factor of the body temperature due to traits and mutations for player lying on the floor **/
         int bodytemp_modifier_traits_floor() const;
         /** Value of the body temperature corrected by climate control **/
-        int temp_corrected_by_climate_control( int temperature );
+        int temp_corrected_by_climate_control( int temperature, bodypart_id id );
 
         bool in_sleep_state() const override;
 

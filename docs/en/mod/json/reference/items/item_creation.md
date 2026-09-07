@@ -864,6 +864,18 @@ The contents of use_action fields can either be a string indicating a built-in f
 the item is activated (defined in iuse.cpp), or one of several special definitions that invoke a
 more structured function.
 
+All object defined use actions support the following two types.
+
+```jsonc
+"use_action": {
+  "menu_text": "xyz", // What string is shown in the activate menu
+  // Unique key for the iuse, defaults to the `type`
+  // Note: This should only be used on repeated type definitions
+  // WARN: This does not work on `repair_item` iuse actors -> they have their own special `item_action_type`
+  "internal_name": "test"
+}
+```
+
 ```json
 "use_action": {
     "type": "transform",  // The type of method, in this case one that transforms the item.

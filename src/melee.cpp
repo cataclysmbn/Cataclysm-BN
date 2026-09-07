@@ -21,6 +21,7 @@
 #include "bionics.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -125,6 +126,24 @@ static const auto skill_cutting = skill_id( "cutting" );
 static const auto skill_unarmed = skill_id( "unarmed" );
 static const auto skill_bashing = skill_id( "bashing" );
 static const auto skill_melee = skill_id( "melee" );
+
+static const enchantment_value_id ench_val_MELEE_DAMAGE_BASH( "MELEE_DAMAGE_BASH" );
+static const enchantment_value_id
+ench_val_ITEM_ARMOR_PENETRATION_BASH( "ITEM_ARMOR_PENETRATION_BASH" );
+static const enchantment_value_id
+ench_val_MELEE_ARMOR_PENETRATION_BASH( "MELEE_ARMOR_PENETRATION_BASH" );
+static const enchantment_value_id ench_val_MELEE_DAMAGE_CUT( "MELEE_DAMAGE_CUT" );
+static const enchantment_value_id
+ench_val_ITEM_ARMOR_PENETRATION_CUT( "ITEM_ARMOR_PENETRATION_CUT" );
+static const enchantment_value_id
+ench_val_MELEE_ARMOR_PENETRATION_CUT( "MELEE_ARMOR_PENETRATION_CUT" );
+static const enchantment_value_id ench_val_MELEE_DAMAGE_STAB( "MELEE_DAMAGE_STAB" );
+static const enchantment_value_id
+ench_val_ITEM_ARMOR_PENETRATION_STAB( "ITEM_ARMOR_PENETRATION_STAB" );
+static const enchantment_value_id
+ench_val_MELEE_ARMOR_PENETRATION_STAB( "MELEE_ARMOR_PENETRATION_STAB" );
+
+static const enchantment_value_id ench_val_MELEE_HIT( "MELEE_HIT" );
 
 static auto hardcoded_mutation_attack( const Character &u, const trait_id &id ) -> damage_instance;
 
@@ -601,7 +620,8 @@ auto character_requirement_reason( const Character &self, const ma_technique &te
     if( !tec.reqs.min_skill.empty() ) {
         auto missing_skills = std::vector<std::string>();
         for( const auto &req : tec.reqs.min_skill ) {
-            const auto current_skill = cqb ? 5 : self.get_skill_level( req.first );
+            const auto current_skill = cqb ? std::max( self.get_skill_level(
+                                           req.first ), BIO_CQB_LEVEL ) : self.get_skill_level( req.first );
             if( current_skill < req.second ) {
                 missing_skills.push_back( string_format( _( "%s %d+ (have %d)" ),
                                           req.first->name(), req.second,
@@ -1372,12 +1392,9 @@ float Character::get_melee_hit( const item &weapon, const attack_statblock &atta
         hit -= 2.0f;
     }
 
-    //Unstable ground chance of failure
-    if( has_effect( effect_bouldering ) ) {
-        hit *= 0.75f;
-    }
-
     hit *= std::max( 0.25f, 1.0f - encumb( body_part_torso ) / 100.0f );
+
+    hit += bonus_from_enchantments( hit, ench_val_MELEE_HIT );
 
     return hit;
 }
@@ -1763,6 +1780,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         t.as_character()->on_hit( this, bodypart_str_id::NULL_ID().id(), &dp );
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
         params["char"] = this;
         params["target"] = &t;
@@ -2046,7 +2064,7 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     const bool unarmed = weap.is_unarmed_weapon();
     int skill = c.get_skill_level( unarmed ? skill_unarmed : skill_bashing );
     if( c.has_active_bionic( bio_cqb ) ) {
-        skill = BIO_CQB_LEVEL;
+        skill = std::max( skill, BIO_CQB_LEVEL );
     }
 
     const int stat = c.get_str();
@@ -2140,11 +2158,13 @@ void melee::roll_bash_damage( const Character &c, bool crit, damage_instance &di
     bash_dam += weap_dam;
     bash_mul *= c.mabuff_damage_mult( DT_BASH );
 
+    bash_dam += c.bonus_from_enchantments( bash_dam, ench_val_MELEE_DAMAGE_BASH, true );
+
     float armor_mult = attack.damage.get_armor_mult( DT_BASH );
     int arpen = attack.damage.get_armor_pen( DT_BASH );
 
-    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_BASH" ),
-                                           true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_ITEM_ARMOR_PENETRATION_BASH, true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_MELEE_ARMOR_PENETRATION_BASH, true );
 
     arpen += c.mabuff_arpen_bonus( DT_BASH );
     armor_mult *= c.mabuff_tg_armor_mult( DT_BASH );
@@ -2168,7 +2188,7 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     int cutting_skill = c.get_skill_level( skill_cutting );
 
     if( c.has_active_bionic( bio_cqb ) ) {
-        cutting_skill = BIO_CQB_LEVEL;
+        cutting_skill = std::max( cutting_skill, BIO_CQB_LEVEL );
     }
 
     if( weap.is_unarmed_weapon() ) {
@@ -2207,14 +2227,16 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
         }
     }
 
+    cut_dam += c.bonus_from_enchantments( cut_dam, ench_val_MELEE_DAMAGE_CUT, true );
+
     if( cut_dam <= 0.0f ) {
         return; // No negative damage!
     }
 
     int arpen = attack.damage.get_armor_pen( DT_CUT );
 
-    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_CUT" ),
-                                           true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_ITEM_ARMOR_PENETRATION_CUT, true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_MELEE_ARMOR_PENETRATION_CUT, true );
 
     float armor_mult = attack.damage.get_armor_mult( DT_CUT );
 
@@ -2248,7 +2270,7 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     int stabbing_skill = c.get_skill_level( skill_stabbing );
 
     if( c.has_active_bionic( bio_cqb ) ) {
-        stabbing_skill = BIO_CQB_LEVEL;
+        stabbing_skill = std::max( stabbing_skill, BIO_CQB_LEVEL );
     }
 
     if( weap.is_unarmed_weapon() ) {
@@ -2280,6 +2302,8 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
         }
     }
 
+    stab_dam += c.bonus_from_enchantments( stab_dam, ench_val_MELEE_DAMAGE_STAB, true );
+
     if( stab_dam <= 0 ) {
         return; // No negative stabbing!
     }
@@ -2298,8 +2322,8 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     int arpen = attack.damage.get_armor_pen( DT_STAB );
     arpen += c.mabuff_arpen_bonus( DT_STAB );
 
-    arpen += weap.bonus_from_enchantments( arpen, enchantment_value_id( "ITEM_ARMOR_PENETRATION_STAB" ),
-                                           true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_ITEM_ARMOR_PENETRATION_STAB, true );
+    arpen += weap.bonus_from_enchantments( arpen, ench_val_MELEE_ARMOR_PENETRATION_STAB, true );
 
     armor_mult *= c.mabuff_tg_armor_mult( DT_STAB );
 
@@ -2322,6 +2346,11 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
     }
     float type_dam = c.mabuff_damage_bonus( dt ) + weap.damage_melee( attack, dt );
 
+    const auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
+
+    type_dam += weap.bonus_from_enchantments( type_dam,
+                enchantment_value_id( "MELEE_DAMAGE_" + internal_name ), true );
+
     if( type_dam <= 0 ) {
         return; // No negative damage!
     }
@@ -2329,12 +2358,13 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
     float type_mul = 1.0f;
     type_mul *= c.mabuff_damage_mult( dt );
 
-    const auto internal_name = damage_unit( dt, 0.0 ).get_internal_name();
     float armor_mult = attack.damage.get_armor_mult( dt );
     int arpen = attack.damage.get_armor_pen( dt );
     arpen += c.mabuff_arpen_bonus( dt );
     arpen += weap.bonus_from_enchantments( arpen,
                                            enchantment_value_id( "ITEM_ARMOR_PENETRATION_" + internal_name ), true );
+    arpen += weap.bonus_from_enchantments( arpen,
+                                           enchantment_value_id( "MELEE_ARMOR_PENETRATION_" + internal_name ), true );
     armor_mult *= c.mabuff_tg_armor_mult( dt );
 
     if( crit ) {
@@ -2766,6 +2796,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         }
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_performed_technique", [ &, this]( auto & params ) {
         params["char"] = this;
         params["technique"] = &technique;
@@ -3064,6 +3095,7 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
                                   static_cast<int>( damage_blocked ) );
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_blocked", [ &, this]( auto & params ) {
         params["char"] = this;
         params["source"] = source;
@@ -3529,7 +3561,8 @@ void player_hit_message( Character *attacker, const std::string &message,
 int Character::attack_cost( const item &weap ) const
 {
     const int base_move_cost = weap.attack_cost() / 2;
-    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? BIO_CQB_LEVEL : get_skill_level(
+    const int melee_skill = has_active_bionic( bionic_id( bio_cqb ) ) ? std::max( get_skill_level(
+                                skill_melee ), BIO_CQB_LEVEL ) : get_skill_level(
                                 skill_melee );
     /** @EFFECT_MELEE increases melee attack speed */
     const int skill_cost = ( base_move_cost * ( 15 - melee_skill ) / 15 );

@@ -483,6 +483,14 @@
   },
   {
     "type": "item_group",
+    "id": "mon_wasp_mega_acid_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "wyrmskin_piece", "prob": 50 }, { "item": "dermatik_sting", "prob": 50 } ], "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "mon_dermatik_larva_death_drops",
     "subtype": "collection",
     "entries": [ { "item": "dermatik_sting", "prob": 10 }, { "item": "essence_blood", "prob": 5, "count": [ 2, 4 ] } ]

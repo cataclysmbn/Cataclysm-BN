@@ -1,5 +1,7 @@
 #include "vehicle.h"
 #include "detached_ptr.h"
+#include "locations.h"
+#include "type_id.h"
 #include "units_mass.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h" // IWYU pragma: associated
@@ -224,17 +226,19 @@ class DefaultRemovePartHandler : public RemovePartHandler
             return here.add_item_or_charges( loc, std::move( it ) );
         }
         void set_transparency_cache_dirty( const int z ) override {
-            if( here.get_dimension_id() != get_avatar().get_dimension() ) {
-                return;
-            }
-            get_map().set_transparency_cache_dirty( z );
-            get_map().set_seen_cache_dirty( tripoint_bub_ms::zero() );
+        if( here.get_dimension_id() != get_avatar().get_dimension() ) {
+            return;
+        }
+        get_map().set_transparency_cache_dirty( z );
+        get_map().set_seen_cache_dirty( tripoint_bub_ms::zero() );
+        get_map().set_vehicle_cache_dirty( z );
         }
         void set_floor_cache_dirty( const int z ) override {
             if( here.get_dimension_id() != get_avatar().get_dimension() ) {
                 return;
             }
             get_map().set_floor_cache_dirty( z );
+            get_map().set_vehicle_cache_dirty( z - 1 );
         }
         void removed( vehicle &veh, const int part ) override {
             avatar &player_character = get_avatar();
@@ -2283,6 +2287,7 @@ int vehicle::install_part( const tripoint_mnt_veh &dp, vehicle_part &&new_part )
     refresh();
     get_map().invalidate_lightmap_caches();
     get_map().get_mapbuffer().refresh_vehicle_footprint( this );
+    get_map().set_vehicle_cache_dirty( abs_sm_pos.z() );
     coeff_air_changed = true;
     return parts.size() - 1;
 }
@@ -2472,6 +2477,7 @@ bool vehicle::merge_rackable_vehicle( vehicle *carry_veh, const std::vector<int>
         here.dirty_vehicle_list.insert( this );
         here.set_transparency_cache_dirty( abs_sm_pos.z() );
         here.set_seen_cache_dirty( tripoint_bub_ms::zero() );
+        here.set_vehicle_cache_dirty( abs_sm_pos.z() );
         refresh();
     } else {
         //~ %1$s is the vehicle being loaded onto the bicycle rack
@@ -2634,6 +2640,7 @@ void vehicle::part_removal_cleanup()
     if( changed || parts.empty() ) {
         refresh();
         here.invalidate_lightmap_caches();
+        here.set_vehicle_cache_dirty( abs_sm_pos.z() );
         if( parts.empty() ) {
             here.destroy_vehicle( this );
             return;
@@ -2868,6 +2875,7 @@ bool vehicle::find_and_split_vehicles( int exclude )
         if( success ) {
             // update the active cache
             g->m.reset_vehicle_cache();
+            g->m.set_vehicle_cache_dirty( abs_sm_pos.z() );
             return true;
         }
     }
@@ -3040,6 +3048,7 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
         here.dirty_vehicle_list.insert( new_vehicle );
         here.set_transparency_cache_dirty( abs_sm_pos.z() );
         here.set_seen_cache_dirty( tripoint_bub_ms::zero() );
+        here.set_vehicle_cache_dirty( abs_sm_pos.z() );
         if( !new_labels.empty() ) {
             new_vehicle->labels = new_labels;
         }
@@ -4668,7 +4677,7 @@ int vehicle::safe_velocity( const bool fueled ) const
     }
 }
 
-bool vehicle::do_environmental_effects()
+bool vehicle::do_environmental_effects( const int turns )
 {
     bool needed = false;
     // check for smoking parts
@@ -4680,7 +4689,7 @@ bool vehicle::do_environmental_effects()
             needed = true;
             if( get_weather().weather_id->rains &&
                 get_weather().weather_id->precip != precip_class::very_light ) {
-                vp.part().blood--;
+                vp.part().blood -= std::min( vp.part().blood, turns );
             }
         }
     }
@@ -5960,12 +5969,13 @@ void vehicle::update_alternator_load()
     }
 }
 
-void vehicle::power_parts()
+void vehicle::power_parts( int turns )
 {
     update_alternator_load();
     // Things that drain energy: engines and accessories.
-    int engine_epower = total_engine_epower_w();
-    int epower = engine_epower + total_accessory_epower_w() + total_alternator_epower_w();
+    int engine_epower = total_engine_epower_w() * turns;
+    int epower = engine_epower + ( ( total_accessory_epower_w() + total_alternator_epower_w() ) *
+                                   turns );
 
     int delta_energy_bat = power_to_energy_bat( epower, 1_turns );
     int storage_deficit_bat = std::max( 0, fuel_capacity( fuel_type_battery ) -
@@ -5985,7 +5995,7 @@ void vehicle::power_parts()
             // Keep track whether or not the vehicle has any reactors activated
             reactor_online = true;
             // the amount of energy the reactor generates each turn
-            const int gen_energy_bat = power_to_energy_bat( part_epower_w( elem ), 1_turns );
+            const int gen_energy_bat = power_to_energy_bat( part_epower_w( elem ), 1_turns * turns );
             if( parts[ elem ].is_unavailable() ) {
                 continue;
             } else if( parts[ elem ].info().has_flag( str_PERPETUAL ) ) {
@@ -6377,6 +6387,44 @@ void vehicle::do_engine_damage( size_t e, int strain )
     }
 }
 
+void vehicle::idle_turns( const int turns )
+{
+    power_parts( turns );
+    // Validate muscle engines - auto-disable if conditions are not met
+    validate_muscle_engines();
+    if( engine_on && total_power_w() > 0 ) {
+        bool no_electric_power = true;
+        int idle_rate = alternator_load;
+        if( idle_rate < 10 ) {
+            idle_rate = 10;    // minimum idle is 1% of full throttle
+        }
+        // Helicopters use extra power just to stay in the air
+        // 100 means 10% of power
+        /*
+            TODO: Consider different formula for idling aircraft, may need a formula to determine this
+            Possibly something like total lift / total engine power, maybe some factors for hovering efficiency of different types
+            Also consider adding a hover efficiency field
+        */
+        if( is_rotorcraft() && is_flying_in_air() ) {
+            const auto rotor_newtons = std::max( 0.0,
+                                                 to_newton( total_mass() ) - total_balloon_lift() - total_wing_lift() );
+            const auto rotor_capacity = rotor_newtons / thrust_of_rotorcraft( true );
+            idle_rate = std::max( 10, int( std::floor( 100 * rotor_capacity ) ) );
+            no_electric_power = false;
+        }
+        if( has_engine_type_not( fuel_type_muscle, true ) ) {
+            consume_fuel( idle_rate, turns, no_electric_power );
+        }
+    } else {
+        if( engine_on && g->u.get_dimension() == get_dimension() && g->u.sees( abs_ms_location() ) &&
+            ( has_engine_type_not( fuel_type_muscle, true ) && has_engine_type_not( fuel_type_animal, true ) &&
+              has_engine_type_not( fuel_type_wind, true ) && has_engine_type_not( fuel_type_mana, true ) ) ) {
+            add_msg( _( "The %s's engine dies!" ), name );
+        }
+        engine_on = false;
+    }
+}
+
 void vehicle::idle( bool on_map )
 {
     power_parts();
@@ -6431,7 +6479,7 @@ void vehicle::idle( bool on_map )
     if( !on_map ) {
         return;
     } else {
-        update_time( calendar::turn );
+        update_time( calendar::turn, false );
     }
 
     process_emitters();
@@ -8053,6 +8101,7 @@ int vehicle::damage_direct( int p, int dmg, damage_type type )
         stop_autodriving();
     }
     here.set_memory_seen_cache_dirty( bub_part_location( p ) );
+    here.set_vehicle_cache_dirty( abs_sm_pos.z() );
     if( parts[p].is_broken() ) {
         return break_off( p, dmg );
     }
@@ -8260,7 +8309,7 @@ static bool is_sm_tile_outside( const tripoint_abs_ms &pos )
     return m.is_outside( abs_to_bub( pos ) );
 }
 
-void vehicle::update_time( const time_point &update_to )
+void vehicle::update_time( const time_point &update_to, const bool batched )
 {
     const time_point update_from = last_update;
     if( update_to < update_from ) {
@@ -8275,6 +8324,12 @@ void vehicle::update_time( const time_point &update_to )
     }
     time_duration elapsed = update_to - last_update;
     last_update = update_to;
+    if( batched ) {
+        idle_turns( elapsed / 1_turns );
+        if( check_environmental_effects ) {
+            check_environmental_effects = do_environmental_effects( elapsed / 1_turns );
+        }
+    }
 
     if( !converters.empty() ) {
         for( int p : converters ) {

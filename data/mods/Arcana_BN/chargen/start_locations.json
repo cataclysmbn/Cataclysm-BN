@@ -4,26 +4,30 @@
     "id": "strange_grove",
     "name": "Strange Grove",
     "terrain": [ "strange_grove" ],
-    "flags": [ "ALLOW_OUTSIDE" ]
+    "flags": [ "ALLOW_OUTSIDE" ],
+    "absolute_place_location": { "x": 1, "y": -1 }
   },
   {
     "type": "start_location",
     "id": "island_temple",
     "name": "Sanguine Ruins",
-    "terrain": [ "island_temple_1" ]
+    "terrain": [ "island_temple_1" ],
+    "absolute_place_location": { "x": 1, "y": 0 }
   },
   {
     "type": "start_location",
     "id": "impact_site",
     "name": "Impact Site",
     "terrain": [ "impact_site" ],
-    "flags": [ "ALLOW_OUTSIDE" ]
+    "flags": [ "ALLOW_OUTSIDE" ],
+    "absolute_place_location": { "x": -1, "y": -1 }
   },
   {
     "type": "start_location",
     "id": "curious_structure",
     "name": "Curious Structure",
-    "terrain": [ "curious_structure_2" ]
+    "terrain": [ "curious_structure_2" ],
+    "absolute_place_location": { "x": -1, "y": 0 }
   },
   {
     "type": "start_location",
@@ -41,12 +45,21 @@
     "type": "start_location",
     "ident": "necropolis_basement",
     "name": "Ruined City …?",
-    "terrain": [ "necropolis_b_54" ]
+    "terrain": [ "necropolis_b_54" ],
+    "absolute_place_location": { "x": 0, "y": 1 }
   },
   {
     "type": "start_location",
     "ident": "hermit_house",
     "name": "Odd House",
-    "terrain": [ "arcana_hermitage_1" ]
+    "terrain": [ "arcana_hermitage_1" ],
+    "absolute_place_location": { "x": -1, "y": -1 }
+  },
+  {
+    "type": "start_location",
+    "ident": "sloc_rural_church",
+    "name": "Rural Church",
+    "terrain": [ "cf_church_3" ],
+    "absolute_place_location": { "x": -1, "y": -1 }
   }
 ]

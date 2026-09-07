@@ -50,9 +50,70 @@
   },
   {
     "type": "terrain",
+    "id": "t_wall_paintable",
+    "looks_like": "t_wall",
+    "name": "dark plastered wooden wall",
+    "description": "The stereotypical wall with wooden support structure filled with insulation and drywalled.  Paint job is by default is the all too common and neutral off-white, but it is simple and easy to paint with spray cans.  The underlying material is still somewhat flammable.",
+    "symbol": "LINE_OXOX",
+    "color": "green",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE_HARD",
+      "NOITEM",
+      "SUPPORTS_ROOF",
+      "WALL",
+      "NO_SCENT",
+      "CHIP",
+      "AUTO_WALL_SYMBOL",
+      "MINEABLE",
+      "BLOCK_WIND"
+    ],
+    "bash": {
+      "str_min": 40,
+      "str_max": 210,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "items": "wall_bash_results",
+      "//": "Reduction ranges from 1x to 2x the that of the half-built version, idea is make it worse off than wooden walls on average but a chance to hit something more solid.",
+      "ranged": { "reduction": [ 8, 16 ], "destroy_threshold": 210 }
+    }
+  },
+  {
+    "type": "terrain",
     "id": "t_wall_half",
     "name": "half-built wooden wall",
     "description": "An incomplete wall of refined wood, dotted with carefully placed nails to provide proper support.  It requires some more two by fours and nails before it'd be considered a suitable wall.",
+    "symbol": "#",
+    "color": "light_red",
+    "move_cost": 4,
+    "coverage": 60,
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "NOITEM", "REDUCE_SCENT", "MOUNTABLE" ],
+    "connects_to": "WALL",
+    "bash": {
+      "str_min": 10,
+      "str_max": 70,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "items": [
+        { "item": "2x4", "count": [ 0, 5 ] },
+        { "item": "wood_panel", "count": [ 0, 1 ] },
+        { "item": "nail", "charges": [ 0, 5 ] },
+        { "item": "splinter", "count": [ 5, 10 ] }
+      ],
+      "//": "reduction and destroy_threshold equal to completed version",
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 150, "block_unaimed_chance": "50%" }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_wall_paintable_half",
+    "name": "half-built wooden wall",
+    "description": "An incomplete wall of refined wood, dotted with carefully placed nails to provide proper support.  It requires some more two by fours and nails before it'd be considered a suitable wall.",
+    "looks_like": "t_wall_half",
     "symbol": "#",
     "color": "light_red",
     "move_cost": 4,

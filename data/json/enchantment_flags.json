@@ -44,6 +44,16 @@
     "info": "<good>Allows seeing electrical signals</good>"
   },
   {
+    "id": "SONAR",
+    "type": "enchantment_flag",
+    "info": "<good>Allows seeing burrowed creatures</good>"
+  },
+  {
+    "id": "ANTIGLARE",
+    "type": "enchantment_flag",
+    "info": "<good>Prevents glare effects from light</good>"
+  },
+  {
     "id": "SILENT",
     "type": "enchantment_flag",
     "info": "<good>Prevents sounds from movement</good>"

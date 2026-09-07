@@ -326,7 +326,8 @@
     "desc": [ "You're knocked to the ground.  You have to get up before you can move." ],
     "apply_message": "You're knocked to the floor!",
     "rating": "bad",
-    "show_in_info": true
+    "show_in_info": true,
+    "base_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": -4 } ] } ]
   },
   {
     "type": "effect_type",
@@ -424,7 +425,8 @@
     "desc": [ "Your footing is unstable.  It's more difficult to fight while standing here." ],
     "apply_message": "You try to keep your balance.",
     "rating": "bad",
-    "permanent": true
+    "permanent": true,
+    "base_enchantments": [ { "values": [ { "value": "MELEE_HIT", "multiply": -0.25 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1607,7 +1609,8 @@
     "apply_message": "You feel lightheaded.",
     "morale": "morale_high",
     "base_mods": { "per_mod": [ -1 ], "morale": [ 10 ] },
-    "blood_analysis_description": "Intoxicant: THC"
+    "blood_analysis_description": "Intoxicant: THC",
+    "base_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.9 } ] } ]
   },
   {
     "type": "effect_type",

@@ -63,6 +63,9 @@ using enchantment_flag_id = string_id<enchantment_flag>;
 class enchantment_condition;
 using enchantment_condition_id = string_id<enchantment_condition>;
 
+class enchantment_vision;
+using enchantment_vision_id = string_id<enchantment_vision>;
+
 class fault;
 using fault_id = string_id<fault>;
 
@@ -103,6 +106,10 @@ using matec_id = string_id<ma_technique>;
 
 class mapgen_palette;
 using palette_id = string_id<mapgen_palette>;
+
+class MapgenColorPalette;
+using mpalette_id = string_id<MapgenColorPalette>;
+
 
 class material_type;
 using material_id = string_id<material_type>;

@@ -443,7 +443,7 @@ void load_sound_effects( const JsonObject &jsobj );
 void load_sound_effect_preload( const JsonObject &jsobj );
 void load_playlist( const JsonObject &jsobj );
 void play_variant_sound( const std::string &id, const std::string &variant, int volume,
-                         units::angle angle, double pitch_min = -1.0, double pitch_max = -1.0 );
+                         units::angle angle, double pitch_min = -1.0, double pitch_max = -1.0, const bool stacks = false );
 void play_variant_sound( const std::string &id, const std::string &variant, int volume,
                          const bool stacks = true );
 void play_ambient_variant_sound( const std::string &id, const std::string &variant, int volume,

@@ -162,6 +162,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
         }
         refresh();
         get_map().invalidate_lightmap_caches();
+        get_map().set_vehicle_cache_dirty( abs_sm_pos.z() );
     } );
 }
 
@@ -363,6 +364,7 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
                 add_msg( _( "Camera system won't turn on" ) );
             }
             get_map().set_seen_cache_dirty( bub_ms_location().z() );
+            get_map().set_vehicle_cache_dirty( bub_ms_location().z() );
             get_map().invalidate_visibility_caches();
             refresh();
         } );
@@ -1804,11 +1806,12 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     parts[part_index].open = opening;
     insides_dirty = true;
     map &map = get_map();
+    const auto part_location = abs_part_location( part_index );
     if( map.inbounds( abs_sm_pos ) ) {
         map.set_transparency_cache_dirty( abs_sm_pos.z() );
         map.set_seen_cache_dirty( bub_part_location( part_index ) );
+        map.set_vehicle_cache_dirty( part_location.z() );
     }
-    const auto part_location = abs_part_location( part_index );
     const int dist = rl_dist( get_player_character().abs_pos(), part_location );
     if( dist < 20 ) {
         sfx::play_variant_sound( opening ? "vehicle_open" : "vehicle_close",

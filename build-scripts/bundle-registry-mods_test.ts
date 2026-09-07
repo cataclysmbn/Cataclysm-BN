@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert"
+import { assertEquals } from "@std/assert"
 import { exists } from "@std/fs"
 import { join } from "@std/path"
 import { BlobWriter, terminateWorkers, TextReader, ZipWriter } from "@zip-js/zip-js"
@@ -15,16 +15,16 @@ const zipUrl = async (files: Record<string, string>): Promise<string> => {
   return `data:application/zip;base64,${btoa(binary)}`
 }
 
-Deno.test("selectEntries rejects stale lock versions", () => {
-  assertThrows(
-    () =>
-      selectEntries(
-        [{ id: "demo", version: "1.0.0", url: "https://example.com/demo.zip" }],
-        [{ id: "demo", version: "2.0.0", display_name: "Demo", package_type: "mod", source: {} }],
-      ),
-    Error,
-    "version mismatch",
+Deno.test("selectEntries accepts stale lock versions", () => {
+  const entries = selectEntries(
+    [{ id: "demo", version: "1.0.0", url: "https://example.com/demo-1.0.0.zip" }],
+    [{ id: "demo", version: "2.0.0", display_name: "Demo", package_type: "mod", source: {} }],
   )
+
+  assertEquals(entries.length, 1)
+  assertEquals(entries[0].lock.version, "1.0.0")
+  assertEquals(entries[0].lock.url, "https://example.com/demo-1.0.0.zip")
+  assertEquals(entries[0].version, "2.0.0")
 })
 
 Deno.test("bundle extracts mods, skips excluded soundpacks, and writes credits", async () => {

@@ -266,15 +266,17 @@
           "T": { "items": [ { "item": "ammo_swat", "chance": 100 } ] },
           "S": { "items": [ { "item": "classified_file_docmission", "chance": 100 } ] }
         },
+        "set": [
+          { "point": "trap", "id": "tr_cot", "x": 8, "y": 8 },
+          { "point": "trap", "id": "tr_cot", "x": 10, "y": 12 },
+          { "point": "trap", "id": "tr_cot", "x": 15, "y": 11 },
+          { "point": "trap", "id": "tr_cot", "x": 15, "y": 8 }
+        ],
         "place_items": [
           { "item": "bed", "x": 8, "y": 8, "chance": 100, "repeat": 1 },
           { "item": "bed", "x": 10, "y": 12, "chance": 100, "repeat": 1 },
           { "item": "bed", "x": 15, "y": 11, "chance": 100, "repeat": 1 },
           { "item": "bed", "x": 15, "y": 8, "chance": 100, "repeat": 1 },
-          { "item": "cot", "x": 8, "y": 8, "chance": 100, "repeat": 1 },
-          { "item": "cot", "x": 10, "y": 12, "chance": 100, "repeat": 1 },
-          { "item": "cot", "x": 15, "y": 11, "chance": 100, "repeat": 1 },
-          { "item": "cot", "x": 15, "y": 8, "chance": 100, "repeat": 1 },
           { "item": "mil_food_nodrugs", "x": [ 10, 13 ], "y": 6, "chance": 100, "repeat": [ 2, 5 ] },
           { "item": "mil_food", "x": [ 13, 15 ], "y": 5, "chance": 100, "repeat": [ 2, 5 ] }
         ]

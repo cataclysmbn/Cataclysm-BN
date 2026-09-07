@@ -282,6 +282,12 @@
     "death_drops": "mon_wasp_mega_death_drops"
   },
   {
+    "id": "mon_wasp_mega_acid",
+    "copy-from": "mon_wasp_mega_acid",
+    "type": "MONSTER",
+    "death_drops": "mon_wasp_mega_acid_death_drops"
+  },
+  {
     "id": "mon_dermatik_larva",
     "copy-from": "mon_dermatik_larva",
     "type": "MONSTER",

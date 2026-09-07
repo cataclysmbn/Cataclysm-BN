@@ -191,6 +191,7 @@ bool enchantment_condition_lua::check_item_character_condition(
         return false;
     }
     try {
+        std::unique_lock lock(cata::lua_lock);
         sol::state_view lua(item_character_func.lua_state());
         auto params = lua.create_table();
         params["guy"] = &guy;
@@ -212,6 +213,7 @@ bool enchantment_condition_lua::check_item_condition(const item& it) const {
         return false;
     }
     try {
+        std::unique_lock lock(cata::lua_lock);
         sol::state_view lua(item_func.lua_state());
         auto params = lua.create_table();
         params["item"] = &it;
@@ -233,6 +235,7 @@ bool enchantment_condition_lua::check_character_condition(
         return false;
     }
     try {
+        std::unique_lock lock(cata::lua_lock);
         sol::state_view lua(character_func.lua_state());
         auto params = lua.create_table();
         params["guy"] = &guy;
@@ -254,6 +257,7 @@ bool enchantment_condition_lua::check_generic_condition(const bool active) const
         return false;
     }
     try {
+        std::unique_lock lock(cata::lua_lock);
         sol::state_view lua(generic_func.lua_state());
         auto params = lua.create_table();
         params["active"] = active;

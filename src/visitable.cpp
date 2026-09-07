@@ -26,6 +26,7 @@
 #include "player.h"
 #include "point.h"
 #include "submap.h"
+#include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
 #include "veh_type.h"
@@ -48,6 +49,8 @@ static const bionic_id bio_ups( "bio_ups" );
 static const flag_id flag_BIONIC_ARMOR_INTERFACE( "BIONIC_ARMOR_INTERFACE" );
 static const flag_id flag_IS_UPS( "IS_UPS" );
 static const flag_id flag_BIONIC_TOOLS( "BIONIC_TOOLS" );
+static const flag_id flag_ENCHANTMENT_TOOLS( "ENCHANTMENT_TOOLS" );
+static const flag_id flag_USES_BIONIC_POWER( "USES_BIONIC_POWER" );
 
 /** @relates visitable */
 template <typename T>
@@ -270,6 +273,15 @@ bool visitable<Character>::has_quality( const quality_id &qual, int level, int q
                 return true;
             }
 
+            qty--;
+        }
+    }
+    for( const auto it : self->get_enchantment_fake_items() ) {
+        for( const auto &[itqual, lev] : it->qualities ) {
+            if( qual != itqual || lev < level ) { continue; }
+            if( qty <= 1 ) {
+                return true;
+            }
             qty--;
         }
     }
@@ -1116,8 +1128,8 @@ int visitable<Character>::charges_of( const itype_id &what, int limit,
         }
     }
 
-    if( what == itype_voltmeter_bionic ) {
-        if( p && p->has_bionic( bio_electrosense_voltmeter ) ) {
+    if( what->has_flag( flag_ENCHANTMENT_TOOLS ) ) {
+        if( p && p->has_enchantment_with_fake( what ) && what->has_flag( flag_USES_BIONIC_POWER ) ) {
             return std::min( units::to_kilojoule( p->get_power_level() ), limit );
         } else {
             return 0;
@@ -1221,7 +1233,8 @@ int visitable<Character>::amount_of( const itype_id &what, bool pseudo, int limi
         return 1;
     }
 
-    if( what == itype_voltmeter_bionic && pseudo && self->has_bionic( bio_electrosense_voltmeter ) ) {
+    if( what->has_flag( flag_ENCHANTMENT_TOOLS ) && pseudo &&
+        self->has_enchantment_with_fake( what ) ) {
         return 1;
     }
 

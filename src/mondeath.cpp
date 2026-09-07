@@ -93,6 +93,8 @@ static const trait_flag_str_id trait_flag_PRED2( "PRED2" );
 static const trait_flag_str_id trait_flag_PRED3( "PRED3" );
 static const trait_flag_str_id trait_flag_PRED4( "PRED4" );
 
+static const enchantment_value_id ench_val_OVERKILL( "OVERKILL" );
+
 void mdeath::normal( monster &z )
 {
     if( z.no_corpse_quiet ) {
@@ -109,7 +111,12 @@ void mdeath::normal( monster &z )
     }
 
     const int max_hp = std::max( z.get_hp_max(), 1 );
-    const float overflow_damage = std::max( -z.get_hp(), 0 );
+    float overflow_damage = -z.get_hp();
+    player *ch = dynamic_cast<player *>( z.get_killer() );
+    if( ch ) {
+        overflow_damage += ch->bonus_from_enchantments( overflow_damage, ench_val_OVERKILL );
+    }
+    overflow_damage = std::max( overflow_damage, 0.0f );
     const float corpse_damage = 2.5 * overflow_damage / max_hp;
     const bool pulverized = corpse_damage > 5 && overflow_damage > z.get_hp_max();
 

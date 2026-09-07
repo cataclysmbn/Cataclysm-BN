@@ -93,8 +93,11 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
-          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+          "values": [
+            { "value": "BONUS_DODGE", "add": 2 },
+            { "value": "CLAIRVOYANCE", "max": 20 },
+            { "value": "FLASH_PROTECTION", "max": 20 }
+          ]
         }
       ]
     },
@@ -125,7 +128,7 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND" ] },
     "adv_hearing_protection": 65
   },
   {
@@ -154,8 +157,11 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
-          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+          "values": [
+            { "value": "BONUS_DODGE", "add": 2 },
+            { "value": "CLAIRVOYANCE", "max": 20 },
+            { "value": "FLASH_PROTECTION", "max": 20 }
+          ]
         }
       ]
     },
@@ -185,7 +191,7 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND" ] },
     "adv_hearing_protection": 65
   },
   {
@@ -490,7 +496,8 @@
             { "value": "ARMOR_LIGHT", "multiply": -0.5 },
             { "value": "ARMOR_DARK", "multiply": -0.5 },
             { "value": "ARMOR_PSI", "multiply": -0.5 },
-            { "value": "ARMOR_ACID", "multiply": -0.5 }
+            { "value": "ARMOR_ACID", "multiply": -0.5 },
+            { "value": "CLIMATE_CONTROL", "add": 750 }
           ]
         }
       ]
@@ -539,9 +546,6 @@
         "COMBAT_NPC_ON"
       ]
     },
-    "relic_data": {
-      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
-    },
     "qualities": [ [ "HV_INSULATION", 1 ] ]
   },
   {
@@ -562,11 +566,7 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [
-            { "value": "ARMOR_HEAT", "multiply": -1.0 },
-            { "value": "ARMOR_STAB", "multiply": -1.0 },
-            { "value": "ARMOR_BULLET", "multiply": -0.9 }
-          ]
+          "values": [ { "value": "ARMOR_BULLET", "multiply": -0.9 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ]
         }
       ]
     },
@@ -586,7 +586,8 @@
         "spell_id": "arcana_item_jade_hauberk_healing",
         "no_fail": true,
         "level": 0,
-        "need_worn": true
+        "need_worn": true,
+        "menu_text": "Heal yourself"
       }
     ],
     "relative": { "weight": "3020 g", "price": "550 USD", "material_thickness": 1 },
@@ -607,9 +608,6 @@
     "qualities": [ [ "GLARE", 1 ] ],
     "extend": {
       "flags": [ "GAS_PROOF", "RAD_PROOF", "SUN_GLASSES", "CUT_IMMUNE", "STAB_IMMUNE", "HEAT_IMMUNE", "UNBREAKABLE", "COMBAT_NPC_ON" ]
-    },
-    "relic_data": {
-      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
     }
   },
   {
@@ -708,7 +706,7 @@
       "passive_effects": [
         {
           "conditions": [ "WORN", "ACTIVE" ],
-          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 } ],
+          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ],
           "ench_effects": [ { "effect": "heat_ward", "intensity": 1 } ]
         }
       ]
@@ -735,10 +733,7 @@
     "turns_per_charge": 150,
     "revert_to": "jade_wreath",
     "use_action": { "target": "jade_wreath", "msg": "The glowing carvings on the jade wreath fade.", "type": "transform" },
-    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] },
-    "relic_data": {
-      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "values": [ { "value": "CLIMATE_CONTROL", "add": 750 } ] } ]
-    }
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
   },
   {
     "id": "meteoric_talisman",

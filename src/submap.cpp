@@ -462,6 +462,8 @@ void submap::rotate( int turns )
     [this]( const point_sm_ms & p ) {
         if( trp[p.x()][p.y()] != tr_null ) {
             trap_cache.push_back( p );
+        } else if( ter[p.x()][p.y()].obj().trap != tr_null ) {
+            trap_cache.push_back( p );
         }
         if( fld[p.x()][p.y()].displayed_field_type() ) {
             field_cache.push_back( p );

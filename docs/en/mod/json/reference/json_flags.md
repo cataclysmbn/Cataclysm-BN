@@ -194,6 +194,7 @@ to find which flags work elsewhere.
 - `POWERARMOR_EXO` Marks the item as the main exoskeleton for power armor.
 - `POWERARMOR_EXTERNAL` Marks the item as external pieces that cover body parts the exoskeleton
   doesn't.
+- `POWERARMOR_PLATING` Marks the item as external armor plates that are worn over the exoskeleton.
 - `POWERARMOR_MOD` Marks the item as a power armour mod that is worn onto an exoskeleton/external
   piece.
 - `POWERARMOR_COMPATIBLE` Makes item compatible with power armor despite other parameters causing
@@ -686,6 +687,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   it's active.
 - `BIONIC_GUN` ... This bionic is a gun bionic and activating it will fire it. Prevents all other
   activation effects.
+- `CRAFT_WITH_FULL_MAG` ... This item crafts with a full set of ammo
 - `COMBAT_NPC_ON` ... The "on" state for Items that NPCs will use in combat
 - `COMBAT_NPC_USE` ... Items and CBMs that NPCs will activate when in combat
 - `CORPSE` ... Flag used to spawn various human corpses during the mapgen.

@@ -355,7 +355,7 @@ Example:
   "O": "f_oven",
   "r": "f_rack",
   "^": "f_indoor_plant",
-  "t": "f_table",
+  "t": { "furn": "f_table" "palette": "wooden_furniture_palette" },
   "T": "f_toilet",
   "S": "f_sink",
   "e": "f_fridge",
@@ -364,6 +364,11 @@ Example:
   "l": "f_locker"
 },
 ```
+
+The palette causes the furniture to be default painted based off the palette
+The palette randomly chooses a color based of the position on the global overmap
+
+Can also defined an inline palette as a seperate option
 
 ## Set terrain, furniture, or traps with a "set" array
 
@@ -657,13 +662,23 @@ times):
 }
 ```
 
+It is also possible to specify a color palette to apply
+The palette is a `mapgen_color_palette`
+
+Can also defined an inline palette as a seperate option
+
+````json
+"terrain": {
+  "|": { "ter": "t_wall_paintable", "palette": "plaster_wall_palette" }
+}
+
 Example (places a blood and a bile field on each '.' square):
 
 ```json
 "fields" : {
     ".": [ { "field": "fd_blood" }, { "field": "fd_bile" } ]
 }
-```
+````
 
 Or define the mappings for one character at once:
 
@@ -821,13 +836,14 @@ The actual monsters are spawned when the map is loaded. Fields:
 
 ### Place a vehicle by type or group with "vehicles"
 
-| Field    | Description                                                                                                                                                                                       |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| vehicle  | (required, string) type of the vehicle or id of a vehicle group.                                                                                                                                  |
-| chance   | (optional, integer or min/max array) x in 100 chance of the vehicle spawning at all. The default is 1 (which means 1% probability that the vehicle spawns, you probably want something larger).   |
-| rotation | (optional, integer) the direction the vehicle faces.                                                                                                                                              |
-| fuel     | (optional, integer) the fuel status. Default is -1 which makes the tanks 1-7% full. Positive values are interpreted as percentage of the vehicles tanks to fill (e.g. 100 means completely full). |
-| status   | (optional, integer) default is -1 (light damage), a value of 0 means perfect condition, 1 means heavily damaged.                                                                                  |
+| Field               | Description                                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| vehicle             | (required, string) type of the vehicle or id of a vehicle group.                                                                                                                                  |
+| chance              | (optional, integer or min/max array) x in 100 chance of the vehicle spawning at all. The default is 1 (which means 1% probability that the vehicle spawns, you probably want something larger).   |
+| rotation            | (optional, integer) the direction the vehicle faces.                                                                                                                                              |
+| fuel                | (optional, integer) the fuel status. Default is -1 which makes the tanks 1-7% full. Positive values are interpreted as percentage of the vehicles tanks to fill (e.g. 100 means completely full). |
+| status              | (optional, integer) default is -1 (light damage), a value of 0 means perfect condition, 1 means heavily damaged.                                                                                  |
+| place_beyond_bounds | (optional, integer) semi-dangerous value that allows for all collisions outside the 24x24 OMT to be ignored, allowing for larger vehicles to spawn                                                |
 
 ### Place a specific item with "item"
 
@@ -1027,6 +1043,7 @@ mutable structure.
 | neighbors          | (optional) Any of the neighboring overmaps that should be checked before placing the chunk. Each direction is associated with a list of overmap `"id"` substrings.        |
 | joins              | (optional) Any mutable overmap special joins that should be checked before placing the chunk. Each direction is associated with a list of join `"id"` strings.            |
 | connections        | (optional) Any connection that should be directed toward this overmap before placing the chunk. Each direction is associated with a list of connection `"id"` strings.    |
+| rotation           | (optional) How many turns to rotate the map, 90 degree turns                                                                                                              |
 |                    |                                                                                                                                                                           |
 
 The adjacent overmaps which can be checked in this manner are:
@@ -1041,7 +1058,7 @@ Example:
 
 ```json
 "place_nested": [
-  { "chunks": [ "concrete_wall_ew" ], "x": 0, "y": 0, "neighbors": { "north": [ "empty_rock", "field" ] } },
+  { "chunks": [ "concrete_wall_ew" ], "x": 0, "y": 0, "neighbors": { "north": [ "empty_rock", "field" ] }, "rotation": 0  },
   { "chunks": [ "gate_north" ], "x": 0, "y": 0, "joins": { "north": [ "interior_to_exterior" ] } },
   { "else_chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "north_west": [ "field", "microlab" ] } }
 ],

@@ -2036,7 +2036,7 @@
           "rucksack"
         ],
         "entries": [
-          { "item": "chestrig", "contents-group": "temporal_soldier_garand" },
+          { "item": "belt_magazine", "contents-group": "temporal_soldier_garand" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
           { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": [ "shoulder_strap" ] }
@@ -2496,7 +2496,7 @@
     "type": "profession",
     "id": "power_armor_soldier",
     "name": "Power Armor Soldier",
-    "description": "Your unit received the latest generation of powered armor, running off those new plutonium power banks they were rolling out and equipped with experimental energy weapons.  The rest of your squad has fallen, but your gear might see you through.",
+    "description": "Your unit received the latest generation of power armor plating, running off those new plutonium power banks they were rolling out and equipped with experimental energy weapons.  The rest of your squad has fallen, and your exoskeleton might be a bit out of date, but your gear might see you through.",
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
@@ -2518,7 +2518,8 @@
     "items": {
       "both": {
         "items": [
-          "power_armor_light",
+          "power_armor_exo_2",
+          "power_armor_plating_3",
           "power_armor_helmet_light",
           "power_armor_frame",
           "power_armor_back_hardpoint",
@@ -3366,7 +3367,7 @@
     "items": {
       "both": {
         "items": [ "jeans", "longshirt", "socks", "sneakers", "water_clean", "wristwatch", "smart_phone", "petpack", "pet_carrier" ],
-        "entries": [ { "item": "mbag", "contents-group": "dog_lover_bag" } ]
+        "entries": [ { "item": "mbag" }, { "group": "dog_lover_bag" } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -4609,7 +4610,16 @@
     "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
-    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
+    "CBMs": [
+      "bio_cqb",
+      "bio_carbon",
+      "bio_night_vision",
+      "bio_torsionratchet",
+      "bio_claws",
+      "bio_ups",
+      "bio_uncanny_dodge",
+      "bio_power_storage_mkII"
+    ],
     "skills": [
       { "level": 5, "name": "swimming" },
       { "level": 6, "name": "gun" },
@@ -4617,7 +4627,7 @@
       { "level": 6, "name": "rifle" },
       { "level": 3, "name": "pistol" },
       { "level": 4, "name": "survival" },
-      { "level": 7, "name": "cutting" },
+      { "level": 7, "name": "unarmed" },
       { "level": 7, "name": "melee" },
       { "level": 7, "name": "dodge" },
       { "level": 3, "name": "firstaid" },
@@ -4642,6 +4652,7 @@
           "molle_pack"
         ],
         "entries": [
+          { "item": "exosuit_military", "charges": 500 },
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "winter_jacket_army" },
           { "item": "modularvestsuper", "contents-group": "army_mags_rm216" },
@@ -4698,7 +4709,7 @@
     ],
     "skills": [
       { "level": 8, "name": "melee" },
-      { "level": 8, "name": "cutting" },
+      { "level": 8, "name": "unarmed" },
       { "level": 8, "name": "dodge" },
       { "level": 4, "name": "speech" }
     ],
