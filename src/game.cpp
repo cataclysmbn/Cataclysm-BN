@@ -14803,43 +14803,15 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
     }
     const auto was_kept = kept_pocket_dimension_id_ == dim_id;
 
-    // A deleted dimension must not reappear from persisted metadata after restart.  A reset keeps
-    // that metadata so callers can re-enter without repeating the generation options.
-    if( remove_zones ) {
-        loaded_dimensions_.erase( dim_id );
-        if( was_kept ) {
-            kept_pocket_dimension_id_ = dimension_id();
-        }
-    }
-
-    // Persist the player's current dimension and the cleanup's final metadata before deleting any
-    // destination data.  If the process stops during cleanup, the save must never place the player
-    // in the removed dimension.
+    // Save while the destination metadata is still intact.  If data deletion fails or the process
+    // stops during cleanup, the next load can still recover the dimension's generation settings.
     if( !save( false ) ) {
-        if( preserved_info ) {
-            loaded_dimensions_[dim_id] = *preserved_info;
-        }
-        if( was_kept ) {
-            kept_pocket_dimension_id_ = dim_id;
-        }
         return false;
     }
 
     submap_loader.drain_lazy_loads();
     if( !active_world->delete_dimension_data( dim_id.str() ) ) {
-        if( preserved_info ) {
-            loaded_dimensions_[dim_id] = *preserved_info;
-        }
-        if( was_kept ) {
-            kept_pocket_dimension_id_ = dim_id;
-        }
         return false;
-    }
-
-    auto zones_saved = true;
-    auto &zones = zone_manager::get_manager();
-    if( remove_zones && zones.remove_dimension_zones( dim_id ) ) {
-        zones_saved = zones.save_zones();
     }
 
     if( auto tracker_it = grid_trackers_.find( dim_id ); tracker_it != grid_trackers_.end() ) {
@@ -14847,13 +14819,32 @@ auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones
         grid_trackers_.erase( tracker_it );
     }
 
-    if( kept_pocket_dimension_id_ == dim_id ) {
-        kept_pocket_dimension_id_ = dimension_id();
-    }
-
-    loaded_dimensions_.erase( dim_id );
     MAPBUFFER_REGISTRY.unload_dimension( dim_id );
     unload_overmapbuffer_dimension( dim_id );
+
+    // Finalize a deletion only after its data is gone.  A reset deliberately keeps this metadata
+    // so callers can re-enter without repeating the generation options.
+    if( remove_zones ) {
+        loaded_dimensions_.erase( dim_id );
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dimension_id();
+        }
+        if( !save( false ) ) {
+            if( preserved_info ) {
+                loaded_dimensions_[dim_id] = *preserved_info;
+            }
+            if( was_kept ) {
+                kept_pocket_dimension_id_ = dim_id;
+            }
+            return false;
+        }
+    }
+
+    auto zones_saved = true;
+    auto &zones = zone_manager::get_manager();
+    if( remove_zones && zones.remove_dimension_zones( dim_id ) ) {
+        zones_saved = zones.save_zones();
+    }
 
     return zones_saved;
 }

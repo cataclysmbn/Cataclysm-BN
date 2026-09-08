@@ -16,6 +16,7 @@
 #include "color.h"
 #include "coordinates.h"
 #include "debug.h"
+#include "dimension_info.h"
 #include "effect.h"
 #include "faction.h"
 #include "filesystem.h"
@@ -62,6 +63,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -94,6 +96,7 @@ struct saved_player_dimension_state {
     std::string kept_dimension_id;
     tripoint_abs_ms player_pos = tripoint_abs_ms::zero();
     std::vector<std::string> loaded_dimension_ids;
+    std::vector<dimension_info> loaded_dimensions;
 };
 
 auto sqlite_dimension_record_count(const std::string& db_path, const std::string& dimension)
@@ -146,6 +149,18 @@ auto read_saved_player_dimension_state(world& active_world)
                     auto loaded_dimension_id = std::string{};
                     if (dimension_data.read("dimension_id", loaded_dimension_id)) {
                         state.loaded_dimension_ids.push_back(loaded_dimension_id);
+                        auto info = dimension_info{
+                            .id = dimension_id(loaded_dimension_id),
+                            .world_type = world_type_id{},
+                            .display_name = {},
+                            .pocket_info = std::nullopt,
+                        };
+                        dimension_data.read("world_type", info.world_type);
+                        dimension_data.read("display_name", info.display_name);
+                        if (dimension_data.has_object("pocket_info")) {
+                            dimension_data.read("pocket_info", info.pocket_info);
+                        }
+                        state.loaded_dimensions.push_back(info);
                     }
                 }
             }
@@ -1121,6 +1136,60 @@ returned = gapi.place_player_dimension_at({ dimension_id = "", target_ms = retur
     CHECK(get_map().get_bound_dimension() == expected_dimension);
     CHECK(get_avatar().abs_pos() == expected_pos);
 }
+
+#if !defined(_WIN32)
+TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
+    clear_all_state();
+    initialize_dimension_test_storage();
+    const auto target_dimension_id = dimension_id("lua\\test_failed_delete");
+    g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
+
+    auto* const active_world = g->get_active_world();
+    REQUIRE(active_world != nullptr);
+    REQUIRE(g->save(false));
+    auto original_save = std::ostringstream{};
+    REQUIRE(active_world->read_from_player_file(
+        SAVE_EXTENSION, [&](std::istream& input) { original_save << input.rdbuf(); }, false));
+    const auto cleanup = on_out_of_scope([&]() {
+        if (!g->get_current_dimension_id().is_empty()) {
+            g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt);
+        }
+        MAPBUFFER_REGISTRY.unload_dimension(target_dimension_id);
+        unload_overmapbuffer_dimension(target_dimension_id);
+        auto input = std::istringstream(original_save.str());
+        g->unserialize(input);
+        clear_all_state();
+    });
+
+    const auto target_omt = tripoint_abs_omt(24, 24, 0);
+    const auto target_pos = project_combine(target_omt, point_omt_ms(SEEX, SEEY));
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.entry_point = target_pos;
+    pocket_data.bounds = dimension_bounds{
+        .min_bound = project_to<coords::sm>(target_omt),
+        .max_bound = project_to<coords::sm>(target_omt) + point_rel_sm::south_east(),
+        .boundary_terrain = ter_str_id("t_pd_border"),
+        .boundary_overmap_terrain = oter_str_id("pd_border"),
+    };
+    const auto load_pos =
+        project_to<coords::sm>(target_pos) - tripoint_rel_sm(g_half_mapsize, g_half_mapsize, 0);
+    REQUIRE(g->travel_to_dimension(
+        target_dimension_id, world_type_id("pocket_dimension"), pocket_data, load_pos));
+    REQUIRE(g->travel_to_dimension(dimension_id(), world_type_id(), std::nullopt, std::nullopt));
+
+    CHECK_FALSE(g->delete_dimension(target_dimension_id));
+
+    const auto saved_state = read_saved_player_dimension_state(*active_world);
+    REQUIRE(saved_state.has_value());
+    CHECK(saved_state->kept_dimension_id == target_dimension_id.str());
+    const auto saved_dimension =
+        std::ranges::find(saved_state->loaded_dimensions, target_dimension_id, &dimension_info::id);
+    REQUIRE(saved_dimension != saved_state->loaded_dimensions.end());
+    CHECK(saved_dimension->world_type == world_type_id("pocket_dimension"));
+    REQUIRE(saved_dimension->pocket_info.has_value());
+    CHECK(saved_dimension->pocket_info->bounds == pocket_data.bounds);
+}
+#endif
 
 TEST_CASE("lua_dimension_cleanup_preserves_portal_load_requests", "[lua]") {
     clear_all_state();

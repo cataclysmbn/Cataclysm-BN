@@ -423,7 +423,9 @@ auto find_safe_spawn( const tripoint_bub_ms &target ) -> std::optional<tripoint_
     auto &here = get_map();
     const auto can_land = [&]( const tripoint_bub_ms & point ) {
         const auto *occupant = g->critter_at( point );
-        return here.passable( point ) && ( !occupant || occupant == &get_avatar() );
+        return !here.get_mapbuffer().is_outside_pocket_dimension_bounds(
+                   map_local_to_abs( here, point ) ) && here.passable( point ) &&
+               ( !occupant || occupant == &get_avatar() );
     };
 
     if( can_land( target ) ) {
