@@ -62,7 +62,7 @@
     "id": "arcane_seeker",
     "copy-from": "arcane_seeker",
     "extend": {
-      "professions": [ "novice_necromancer", "novice_stormshaper", "novice_earthshaper", "novice_technomancer", "novice_kelvinist" ]
+      "professions": [ "novice_necromancer", "novice_stormshaper", "novice_earthshaper", "novice_technomancer", "novice_kelvinist", "druid" ]
     }
   },
   {

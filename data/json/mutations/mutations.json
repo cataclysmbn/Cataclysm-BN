@@ -7037,7 +7037,7 @@
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
     "random_starting_trait": false,
-    "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
+    "cancels": [ "GUNSHY", "GUNNUT", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -7048,7 +7048,18 @@
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
     "random_starting_trait": false,
-    "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
+    "cancels": [ "BRAWLER", "GUNNUT", "CARRY_PERMIT" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNNUT",
+    "name": { "str": "Gun Nut" },
+    "points": -4,
+    "description": "REAL survivors use guns!  You refuse to use crude bows, crossbows, or other primitive ranged weapons even if your life depends on it.",
+    "starting_trait": true,
+    "random_starting_trait": false,
+    "cancels": [ "BRAWLER", "GUNSHY" ],
     "valid": false
   },
   {
