@@ -84,7 +84,7 @@ void mdefense::zapback( monster &m, Creature *const source,
         return;
     }
 
-    if( get_avatar().sees( source->bub_pos() ) ) {
+    if( get_avatar().sees( source->abs_pos() ) ) {
         const auto msg_type = source == &get_avatar() ? m_bad : m_info;
         add_msg( msg_type, _( "Striking %1$s shocks %2$s!" ),
                  m.disp_name(), source->disp_name() );
@@ -133,8 +133,8 @@ void mdefense::acidsplash( monster &m, Creature *const source,
     }
 
     // Don't splatter directly on the `m`, that doesn't work well
-    std::vector<tripoint_bub_ms> pts = closest_points_first( source->bub_pos(), 1 );
-    pts.erase( std::remove( pts.begin(), pts.end(), m.bub_pos() ), pts.end() );
+    auto pts = closest_points_first( source->abs_pos(), 1 );
+    pts.erase( std::remove( pts.begin(), pts.end(), m.abs_pos() ), pts.end() );
 
     projectile prj;
     prj.speed = 10;
@@ -144,10 +144,10 @@ void mdefense::acidsplash( monster &m, Creature *const source,
     prj.impact.add_damage( DT_ACID, rng( 1, 3 ) );
     for( size_t i = 0; i < num_drops; i++ ) {
         const auto &target = random_entry( pts );
-        projectile_attack( prj, m.bub_pos(), target, dispersion_sources{ 1200 }, &m );
+        projectile_attack( prj, m.abs_pos(), target, dispersion_sources{ 1200 }, &m );
     }
 
-    if( get_avatar().sees( m.bub_pos() ) ) {
+    if( get_avatar().sees( m.abs_pos() ) ) {
         add_msg( m_warning, _( "Acid sprays out of %s as it is hit!" ), m.disp_name() );
     }
 }
@@ -179,7 +179,7 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
     const int distance_to_source = rl_dist( m.bub_pos(), source->bub_pos() );
 
     // TODO: implement different rule, dependent on sound and probably some other things
-    const auto fire_point = source->bub_pos();
+    const auto fire_point = source->abs_pos();
     // Add some innacuracy since it is blind fire
     int dispersion = 150;
 
@@ -191,7 +191,7 @@ void mdefense::return_fire( monster &m, Creature *source, const dealt_projectile
                 continue;
             }
             sound_event se;
-            se.origin = m.bub_pos();
+            se.origin = m.abs_pos();
             se.volume = 80;
             se.category = sounds::sound_t::alert;
             se.description = _( "Detected shots from unseen attacker, return fire mode engaged." );
@@ -216,13 +216,13 @@ void mdefense::revenge_aggro( monster &m, Creature *source, const dealt_projecti
 
     size_t aggroed = 0;
     for( monster &ally : g->all_monsters() ) {
-        if( rl_dist_fast( ally.bub_pos(), m.bub_pos() ) <= 40 &&
+        if( rl_dist_fast( ally.abs_pos(), m.abs_pos() ) <= 40 &&
             ally.attitude_to( m ) == Attitude::A_FRIENDLY ) {
             ally.anger = std::max( ally.anger, 100 );
             ally.morale = std::max( ally.morale, 100 );
-            if( ally.move_target() != source->bub_pos() &&
+            if( ally.move_target() != source->abs_pos() &&
                 ally.attitude_to( *source ) == Attitude::A_HOSTILE ) {
-                ally.set_dest( source->bub_pos() );
+                ally.set_dest( source->abs_pos() );
                 aggroed++;
             }
 

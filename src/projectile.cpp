@@ -6,8 +6,10 @@
 #include <vector>
 
 #include "ammo_effect.h"
+#include "avatar.h"
 #include "explosion.h"
 #include "game.h"
+#include "game_constants.h"
 #include "json.h"
 #include "item.h"
 #include "map.h"
@@ -98,24 +100,25 @@ void projectile::load( JsonObject &jo )
     jo.read( "proj_effects", proj_effects );
 }
 
-auto apply_ammo_trail_effects( const tripoint_bub_ms &p,
+auto apply_ammo_trail_effects( const tripoint_abs_ms &p,
                                const std::set<ammo_effect_str_id> &effects,
                                const double chance_multiplier ) -> void
 {
-    map &here = get_map();
+    auto &here = g->u.get_mapbuffer();
     for( const auto &ae_id : effects ) {
         const auto &ae = *ae_id;
         const auto adjusted_chance = std::clamp( ae.trail_chance * chance_multiplier, 0.0, 100.0 );
         if( ae.trail_field_type && x_in_y( adjusted_chance, 100.0 ) ) {
-            here.add_field( p, ae.trail_field_type, rng( ae.trail_intensity_min, ae.trail_intensity_max ) );
+            here.add_field( p, { ae.trail_field_type, rng( ae.trail_intensity_min, ae.trail_intensity_max ) } );
         }
     }
 }
 
-void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<ammo_effect_str_id> &effects,
+void apply_ammo_effects( const tripoint_abs_ms &pos, const std::set<ammo_effect_str_id> &effects,
                          Creature *source )
 {
     map &here = get_map();
+    const auto p = abs_to_bub( pos );
     for( const ammo_effect_str_id &ae_id : effects ) {
         const ammo_effect &ae = *ae_id;
         if( ae.aoe_field_type )
@@ -140,7 +143,7 @@ void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<ammo_effect_st
     }
 }
 
-void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<std::string> &effects,
+void apply_ammo_effects( const tripoint_abs_ms &p, const std::set<std::string> &effects,
                          Creature *source )
 {
     std::set<ammo_effect_str_id> effect_ids;

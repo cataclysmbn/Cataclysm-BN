@@ -55,6 +55,8 @@ void harvest_ter_nectar( player &p, const tripoint_bub_ms &examp );
 void harvest_ter( player &p, const tripoint_bub_ms &examp );
 void harvested_plant( player &p, const tripoint_bub_ms &examp );
 void locked_object( player &p, const tripoint_bub_ms &examp );
+bool can_pick_lock( player &p );
+void pick_lock( player &p, const tripoint_bub_ms &examp );
 void locked_object_pickable( player &p, const tripoint_bub_ms &examp );
 void fault( player &p, const tripoint_bub_ms &examp );
 void notify( player &p, const tripoint_bub_ms &pos );

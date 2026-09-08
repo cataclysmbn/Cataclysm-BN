@@ -350,7 +350,7 @@ void computer_session::action_unlock()
 void computer_session::action_toll()
 {
     sound_event se;
-    se.origin = g->u.bub_pos();
+    se.origin = g->u.abs_pos();
     se.volume = 130;
     se.category = sounds::sound_t::music;
     //~ the sound of a church bell ringing
@@ -401,7 +401,7 @@ void computer_session::action_release()
 {
     g->events().send<event_type::releases_subspace_specimens>();
     sound_event se;
-    se.origin = g->u.bub_pos();
+    se.origin = g->u.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::alarm;
     se.description = _( "an alarm sound!" );
@@ -421,7 +421,7 @@ void computer_session::action_release_disarm()
 void computer_session::action_release_bionics()
 {
     sound_event se;
-    se.origin = g->u.bub_pos();
+    se.origin = g->u.abs_pos();
     se.volume = 80;
     se.category = sounds::sound_t::alarm;
     se.description = _( "an alarm sound!" );
@@ -1062,7 +1062,7 @@ void computer_session::action_irradiator()
                         print_error( _( "WARNING [912]: Catastrophic malfunction!  Contamination detected!" ) );
                         print_error( _( "EMERGENCY PROCEDURE [1]:  Evacuate.  Evacuate.  Evacuate.\n" ) );
                         sound_event se;
-                        se.origin = g->u.bub_pos();
+                        se.origin = g->u.abs_pos();
                         se.volume = 90;
                         se.category = sounds::sound_t::alarm;
                         se.description = _( "an alarm sound!" );
@@ -1334,7 +1334,7 @@ void computer_session::failure_alarm()
 {
     g->events().send<event_type::triggers_alarm>( g->u.getID() );
     sound_event se;
-    se.origin = g->u.bub_pos();
+    se.origin = g->u.abs_pos();
     se.volume = 100;
     se.category = sounds::sound_t::alarm;
     se.description = _( "an alarm sound!" );

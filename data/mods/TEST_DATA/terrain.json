@@ -40,7 +40,14 @@
     "color": "red",
     "move_cost": 0,
     "roof": "t_fragile_roof",
-    "bash": { "str_min": 1, "str_max": 1, "sound": "crash!", "sound_fail": "whump!", "ter_set": "t_null" }
+    "bash": {
+      "str_min": 1,
+      "str_max": 1,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof"
+    }
   },
   {
     "type": "terrain",
@@ -75,7 +82,13 @@
     "symbol": ".",
     "color": "green",
     "roof": "t_strong_roof",
-    "bash": { "sound": "SMASH!", "ter_set": "t_null", "str_min": 1000, "str_max": 1000 }
+    "bash": {
+      "sound": "SMASH!",
+      "ter_set": "t_null",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "str_min": 1000,
+      "str_max": 1000
+    }
   },
   {
     "type": "terrain",

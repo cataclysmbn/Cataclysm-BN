@@ -11,7 +11,6 @@ class avatar;
 class Character;
 class Creature;
 class item;
-class map;
 class turret_data;
 
 namespace avatar_action
@@ -28,21 +27,21 @@ bool eat_here( avatar &you );
 
 // Standard movement; handles attacks, traps, &c. Returns false if auto move
 // should be canceled
-bool move( avatar &you, map &m, const tripoint_rel_ms &d );
-inline bool move( avatar &you, map &m, const point_rel_ms &d )
+bool move( avatar &you, const tripoint_rel_ms &d );
+inline bool move( avatar &you, const point_rel_ms &d )
 {
-    return move( you, m, tripoint_rel_ms( d, 0 ) );
+    return move( you, tripoint_rel_ms( d, 0 ) );
 }
 
 // Handle moving from a ramp
-bool ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest );
+bool ramp_move( avatar &you, const tripoint_abs_ms &dest );
 
 /** Handles swimming by the player. Called by avatar_action::move(). */
-void swim( map &m, avatar &you, const tripoint_bub_ms &p );
+void swim( avatar &you, const tripoint_abs_ms &p );
 
 auto handle_melee_action( const melee_action_callback &callback ) -> void;
 auto melee_attack_while_handling_manual_combat_mode( avatar &you, Creature &target ) -> void;
-auto autoattack( avatar &you, map &m ) -> void;
+auto autoattack( avatar &you ) -> void;
 auto toggle_manual_combat_mode() -> void;
 auto is_manual_combat_mode() -> bool;
 
@@ -76,7 +75,7 @@ void unload_all( avatar &you, bool inv = true );
  * Used for validating ACT_AIM and turret weapon
  * @return True if all conditions are true, otherwise false.
  */
-bool can_fire_weapon( avatar &you, const map &m, const item &weapon );
+bool can_fire_weapon( avatar &you, const item &weapon );
 
 /**
  * Checks if the player meets certain conditions for firing it.
@@ -90,7 +89,7 @@ bool will_fire_turret( avatar &you, const turret_data &turret );
  * @param turret Turret to check.
  * @return True if all conditions are true, otherwise false.
  */
-bool can_fire_turret( avatar &you, const map &m, const turret_data &turret );
+bool can_fire_turret( avatar &you, const turret_data &turret );
 
 /** Checks if the wielded weapon is a gun and can be fired then starts interactive aiming */
 void fire_wielded_weapon( avatar &you );
@@ -110,11 +109,11 @@ void fire_ranged_bionic( avatar &you, detached_ptr<item> &&fake_gun,
  * fire a turret and then starts interactive aiming.
  * Assumes that the turret is on player position.
  */
-void fire_turret_manual( avatar &you, map &m, turret_data &turret );
+void fire_turret_manual( avatar &you, turret_data &turret );
 
 // Throw an item  't'
 void plthrow( avatar &you, item *loc,
-              const std::optional<tripoint_bub_ms> &blind_throw_from_pos = std::nullopt );
+              const std::optional<tripoint_abs_ms> &blind_throw_from_pos = std::nullopt );
 
 // Use item; also tries E,R,W  'a'
 void use_item( avatar &you, item *loc = nullptr );

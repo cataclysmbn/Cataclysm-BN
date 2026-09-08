@@ -30,6 +30,7 @@
 #include "messages.h"
 #include "monster.h"
 #include "player_activity.h"
+#include "activity_actor_definitions.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
@@ -39,37 +40,17 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
-static void serialize_liquid_source( player_activity &act, vehicle &veh,
-                                     int part_id )
+static void assign_liquid_transfer(
+    liquid_source_type src_type, const tripoint_abs_ms &src_pos, int src_part_index,
+    liquid_target_type tgt_type, const tripoint_abs_ms &tgt_pos,
+    safe_reference<item> tgt_container )
 {
-    act.values.push_back( LST_VEHICLE );
-    act.values.push_back( part_id );
-    act.coords.push_back( bub_to_abs( veh.bub_part_location( 0 ) ) );
-}
-
-static void serialize_liquid_source( player_activity &act, const tripoint_bub_ms &pos )
-{
-    act.values.push_back( LST_INFINITE_MAP );
-    act.values.push_back( 0 ); //dummy
-    act.coords.push_back( bub_to_abs( pos ) );
-}
-
-static void serialize_liquid_target( player_activity &act, const vehicle &veh )
-{
-    act.values.push_back( LTT_VEHICLE );
-    act.coords.push_back( bub_to_abs( veh.bub_part_location( 0 ) ) );
-}
-
-static void serialize_liquid_target( player_activity &act, item &container )
-{
-    act.values.push_back( LTT_CONTAINER );
-    act.targets.emplace_back( &container );
-}
-
-static void serialize_liquid_target( player_activity &act, const tripoint_bub_ms &pos )
-{
-    act.values.push_back( LTT_MAP );
-    act.coords.push_back( bub_to_abs( pos ) );
+    g->u.assign_activity( std::make_unique<player_activity>(
+                              std::make_unique<liquid_transfer_actor>(
+                                  src_type, src_pos, src_part_index,
+                                  tgt_type, tgt_pos, std::move( tgt_container )
+                              )
+                          ) );
 }
 
 namespace liquid_handler
@@ -335,25 +316,28 @@ static bool perform_liquid_transfer( detached_ptr<item> &&liquid, liquid_dest_op
 static bool perform_liquid_transfer( const tripoint_bub_ms &pos, liquid_dest_opt &target )
 {
     map &here = get_map();
+    const tripoint_abs_ms src_abs = bub_to_abs( pos );
     switch( target.dest_opt ) {
         case LD_CONSUME:
             g->u.consume_item( here.water_from( pos ) );
             return true;
         case LD_ITEM:
-            g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
-            serialize_liquid_source( *g->u.activity, pos );
-            serialize_liquid_target( *g->u.activity, *target.it );
+            assign_liquid_transfer(
+                LST_INFINITE_MAP, src_abs, -1,
+                LTT_CONTAINER, tripoint_abs_ms(), safe_reference<item>( target.it ) );
             return true;
         case LD_VEH:
-            g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
-            serialize_liquid_source( *g->u.activity, pos );
-            serialize_liquid_target( *g->u.activity, *target.veh );
+            assign_liquid_transfer(
+                LST_INFINITE_MAP, src_abs, -1,
+                LTT_VEHICLE, bub_to_abs( target.veh->bub_part_location( 0 ) ),
+                safe_reference<item>() );
             return true;
         case LD_KEG:
         case LD_GROUND:
-            g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
-            serialize_liquid_source( *g->u.activity, pos );
-            serialize_liquid_target( *g->u.activity, target.pos );
+            assign_liquid_transfer(
+                LST_INFINITE_MAP, src_abs, -1,
+                LTT_MAP, bub_to_abs( target.pos ),
+                safe_reference<item>() );
             return true;
         case LD_NULL:
         default:
@@ -363,6 +347,7 @@ static bool perform_liquid_transfer( const tripoint_bub_ms &pos, liquid_dest_opt
 static bool perform_liquid_transfer( vehicle *veh, int part_id, liquid_dest_opt &target )
 {
     item &liquid = veh->part( part_id ).get_base().contents.back();
+    const tripoint_abs_ms src_abs = bub_to_abs( veh->bub_part_location( 0 ) );
     switch( target.dest_opt ) {
         case LD_CONSUME:
             liquid.attempt_split( 0, []( detached_ptr<item> &&it ) {
@@ -370,20 +355,22 @@ static bool perform_liquid_transfer( vehicle *veh, int part_id, liquid_dest_opt 
             } );
             return true;
         case LD_ITEM:
-            g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
-            serialize_liquid_source( *g->u.activity, *veh, part_id );
-            serialize_liquid_target( *g->u.activity, *target.it );
+            assign_liquid_transfer(
+                LST_VEHICLE, src_abs, part_id,
+                LTT_CONTAINER, tripoint_abs_ms(), safe_reference<item>( target.it ) );
             return true;
         case LD_VEH:
-            g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
-            serialize_liquid_source( *g->u.activity, *veh, part_id );
-            serialize_liquid_target( *g->u.activity, *target.veh );
+            assign_liquid_transfer(
+                LST_VEHICLE, src_abs, part_id,
+                LTT_VEHICLE, bub_to_abs( target.veh->bub_part_location( 0 ) ),
+                safe_reference<item>() );
             return true;
         case LD_KEG:
         case LD_GROUND:
-            g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
-            serialize_liquid_source( *g->u.activity, *veh, part_id );
-            serialize_liquid_target( *g->u.activity, target.pos );
+            assign_liquid_transfer(
+                LST_VEHICLE, src_abs, part_id,
+                LTT_MAP, bub_to_abs( target.pos ),
+                safe_reference<item>() );
             return true;
         case LD_NULL:
         default:

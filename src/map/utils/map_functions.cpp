@@ -11,6 +11,7 @@
 #include "monster.h"
 #include "sounds.h"
 #include "veh_type.h"
+#include "vehicle.h"
 #include "vpart_position.h"
 
 #include <algorithm>
@@ -22,11 +23,9 @@ namespace {
 
 auto remove_migo_nerve_cage_terrain(mapbuffer& buffer, const tripoint_abs_ms& p) -> bool {
     auto open = false;
-    const auto tile_reader = buffer.make_abs_tile_reader();
-    for (const auto& tmp : points_in_radius(p, 12)) {
-        const auto tile = tile_reader.get_tile(tmp);
-        if (tile && tile->get_ter() == ter_id("t_wall_resin_cage")) {
-            buffer.set_ter(tmp, ter_id("t_floor_resin"));
+    for (const auto& tmp : simulated_tiles_in_radius(buffer, p, 12)) {
+        if (tmp.ter() == ter_id("t_wall_resin_cage")) {
+            buffer.set_ter(tmp.abs_pos(), ter_id("t_floor_resin"));
             open = true;
         }
     }
@@ -34,7 +33,8 @@ auto remove_migo_nerve_cage_terrain(mapbuffer& buffer, const tripoint_abs_ms& p)
 }
 
 auto finish_migo_nerve_cage_removal(
-    const tripoint_bub_ms& p, const bool spawn_damaged, const bool open) -> void {
+    mapbuffer& buffer, const tripoint_abs_ms& p, const bool spawn_damaged, const bool open)
+    -> void {
     if (open) {
         add_msg(m_good, _("The nerve cluster collapses in on itself, and the nearby cages open!"));
     } else {
@@ -48,11 +48,12 @@ auto finish_migo_nerve_cage_removal(
     se.id = "shout";
     se.variant = "scream_tortured";
     sounds::sound(se);
-    monster* const spawn = g->place_critter_around(mon_mi_go_myrmidon, p, 1);
+    monster* const spawn = buffer.place_critter_around(mon_mi_go_myrmidon, p, 1);
     if (spawn_damaged) { spawn->set_hp(spawn->get_hp_max() / 2); }
     // Don't give the mi-go free shots against the player
     spawn->mod_moves(-300);
-    if (get_player_character().sees(p)) {
+    if (buffer.get_dimension_id() == get_player_character().get_dimension()
+        && get_player_character().sees(p)) {
         add_msg(m_bad,
                 _("Something stirs and clambers out of the ruined mass of flesh and nerves!"));
     }
@@ -71,13 +72,13 @@ auto has_vehicle_ceiling(const optional_vpart_position& vp) -> bool {
 }
 
 auto vehicle_vertical_barrier_between(
-    const map& m, const tripoint_bub_ms& from, const tripoint_bub_ms& to) -> bool {
+    mapbuffer& m, const tripoint_abs_ms& from, const tripoint_abs_ms& to) -> bool {
     const auto upper_z = std::max(from.z(), to.z());
     const auto lower_z = std::min(from.z(), to.z());
-    const auto upper_from = tripoint_bub_ms(from.xy(), upper_z);
-    const auto upper_to = tripoint_bub_ms(to.xy(), upper_z);
-    const auto lower_from = tripoint_bub_ms(from.xy(), lower_z);
-    const auto lower_to = tripoint_bub_ms(to.xy(), lower_z);
+    const auto upper_from = tripoint_abs_ms(from.xy(), upper_z);
+    const auto upper_to = tripoint_abs_ms(to.xy(), upper_z);
+    const auto lower_from = tripoint_abs_ms(from.xy(), lower_z);
+    const auto lower_to = tripoint_abs_ms(to.xy(), lower_z);
     return has_vehicle_floor_or_obstacle(m.veh_at(upper_from))
         || has_vehicle_ceiling(m.veh_at(lower_from))
         || (from.xy() != to.xy()
@@ -85,7 +86,7 @@ auto vehicle_vertical_barrier_between(
                 || has_vehicle_ceiling(m.veh_at(lower_to))));
 }
 
-auto physical_floor_between(const map& m, const tripoint_bub_ms& from, const tripoint_bub_ms& to)
+auto physical_floor_between(mapbuffer& m, const tripoint_abs_ms& from, const tripoint_abs_ms& to)
     -> bool {
     const auto z_delta = std::abs(from.z() - to.z());
     if (z_delta == 0) { return false; }
@@ -93,9 +94,11 @@ auto physical_floor_between(const map& m, const tripoint_bub_ms& from, const tri
     return m.floor_between(from, to) || vehicle_vertical_barrier_between(m, from, to);
 }
 
-auto is_inside_vehicle(const optional_vpart_position& vp) -> bool { return vp && vp->is_inside(); }
+auto is_inside_vehicle(const optional_vpart_position& vp) -> bool {
+    return vp && vp->vehicle().enclosed_at(vp->abs_pos());
+}
 
-auto vehicle_enclosure_between(const map& m, const tripoint_bub_ms& from, const tripoint_bub_ms& to)
+auto vehicle_enclosure_between(mapbuffer& m, const tripoint_abs_ms& from, const tripoint_abs_ms& to)
     -> bool {
     if (from == to || from.z() != to.z()) { return false; }
 
@@ -105,7 +108,7 @@ auto vehicle_enclosure_between(const map& m, const tripoint_bub_ms& from, const 
         || has_vehicle_obstacle(to_vp);
 }
 
-auto physical_barrier_between(const map& m, const tripoint_bub_ms& from, const tripoint_bub_ms& to)
+auto physical_barrier_between(mapbuffer& m, const tripoint_abs_ms& from, const tripoint_abs_ms& to)
     -> bool {
     return physical_floor_between(m, from, to) || vehicle_enclosure_between(m, from, to);
 }
@@ -116,13 +119,13 @@ namespace map_funcs {
 
 auto physical_clear_path(const physical_clear_path_opts& opts) -> bool {
     if (opts.require_clear_path
-        && !opts.m.clear_path(opts.from, opts.to, opts.range, opts.cost_min, opts.cost_max)) {
+        && !opts.here.clear_path(opts.from, opts.to, opts.range, opts.cost_min, opts.cost_max)) {
         return false;
     }
 
     auto previous = opts.from;
     for (const auto& point : line_to(opts.from, opts.to)) {
-        if (physical_barrier_between(opts.m, previous, point)) { return false; }
+        if (physical_barrier_between(opts.here, previous, point)) { return false; }
         previous = point;
     }
     return true;
@@ -143,21 +146,20 @@ auto climbing_cost(mapbuffer& buffer, const tripoint_abs_ms& from, const tripoin
 
 auto climbing_cost(const map& m, const tripoint_bub_ms& from, const tripoint_bub_ms& to)
     -> std::optional<int> {
-    return climbing_cost(
-        MAPBUFFER_REGISTRY.get(m.get_bound_dimension()), map_local_to_abs(m, from),
-        map_local_to_abs(m, to));
+    return climbing_cost(m.get_mapbuffer(), bub_to_abs(from), bub_to_abs(to));
 }
 
 auto migo_nerve_cage_removal(mapbuffer& buffer, const tripoint_abs_ms& p, const bool spawn_damaged)
     -> void {
     finish_migo_nerve_cage_removal(
-        abs_to_bub(p), spawn_damaged, remove_migo_nerve_cage_terrain(buffer, p));
+        buffer, p, spawn_damaged, remove_migo_nerve_cage_terrain(buffer, p));
 }
 
 void migo_nerve_cage_removal(map& m, const tripoint_bub_ms& p, bool spawn_damaged) {
-    auto& buffer = MAPBUFFER_REGISTRY.get(m.get_bound_dimension());
+    auto& buffer = m.get_mapbuffer();
     finish_migo_nerve_cage_removal(
-        p, spawn_damaged, remove_migo_nerve_cage_terrain(buffer, map_local_to_abs(m, p)));
+        buffer, bub_to_abs(p), spawn_damaged,
+        remove_migo_nerve_cage_terrain(buffer, bub_to_abs(p)));
 }
 
 } // namespace map_funcs

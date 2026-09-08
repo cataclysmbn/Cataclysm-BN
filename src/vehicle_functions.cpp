@@ -62,7 +62,7 @@ auto check_reload_timing( item &gun, const item &ammo_item, bool is_ammo_refill,
 
             add_msg( m_debug, "Autoload: Empty gun found ammo, starting cycle at turn %lld", current_turn );
 
-            if( get_avatar().sees( veh.bub_ms_location() ) ) {
+            if( get_avatar().sees( veh.abs_ms_location() ) ) {
                 add_msg( _( "The %1$s's autoloader begins reloading %2$s into %3$s." ),
                          veh.name, ammo_item.tname(), turret_name );
                 sfx::play_variant_sound( "reload", "start", sfx::get_heard_volume( veh.bub_ms_location(), 85 ) );
@@ -131,7 +131,7 @@ void perform_reload( vehicle &veh, vehicle_part &cargo_part, item &gun, item &so
     gun.item_vars().set( "autoloader_cycle_start", 0 ); // Reset cycle
 
     // Feedback
-    if( get_avatar().sees( veh.bub_ms_location() ) ) {
+    if( get_avatar().sees( veh.abs_ms_location() ) ) {
         add_msg( _( "The %1$s's autoloader reloaded %2$s into %3$s." ),
                  veh.name, item_name, turret_name );
         sfx::play_variant_sound( "reload", "end", sfx::get_heard_volume( veh.bub_ms_location(), 85 ) );

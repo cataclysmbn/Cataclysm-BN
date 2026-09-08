@@ -1,4 +1,4 @@
-#include "magic/magic_teleporter_list.h"
+#include "magic_teleporter_list.h"
 
 #include "avatar.h"
 #include "bodypart.h"
@@ -19,6 +19,7 @@
 #include "panels.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
+#include "submap.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -58,19 +59,21 @@ static std::optional<tripoint_omt_ms> find_valid_teleporters_omt(const tripoint_
     // an OMT is SEEX * SEEY in size
     const auto sm_pt = project_to<coords::sm>(omt_pt.xy());
     mapbuffer& buf = get_map().get_mapbuffer();
-    auto omt_view = buf.get_abs_omt_view(omt_pt, {.mode = mapbuffer_lookup_mode::load_from_disk});
+    auto omt_view = mapbuffer_bounds_view(
+        buf, sm_pt, sm_pt + point_rel_sm(1, 1), {.mode = mapbuffer_lookup_mode::load_from_disk});
 
-    if (!omt_view || !omt_view->has_any_submap()) { return std::nullopt; }
-
-    for (point_omt_sm submap_tile : point_range(point_omt_sm(0, 0), point_omt_sm(1, 1))) {
-        auto submap_view = omt_view->get_submap_view(submap_tile);
+    for (auto submap_tile : point_range(sm_pt, sm_pt + point_rel_sm(1, 1))) {
+        auto submap_view = omt_view.get_submap_view(tripoint_abs_sm(submap_tile, omt_pt.z()));
         if (!submap_view) { return std::nullopt; }
-        for (point_sm_ms submap_map_square : submap_view->tiles()) {
-            auto furn = submap_view->tile(submap_map_square).get_furn();
+        const submap& sm = *submap_view->sm;
+        for (point_sm_ms submap_map_square : submap_tiles()) {
+            auto furn = sm.get_furn(submap_map_square);
             if (furn.is_valid()) {
                 if (furn->has_flag("TRANSLOCATOR")) {
                     return tripoint_omt_ms(
-                        project_combine(submap_tile, submap_map_square), omt_pt.z());
+                        project_remain<coords::omt>(project_combine(submap_tile, submap_map_square))
+                            .remainder,
+                        omt_pt.z());
                 }
             }
         }
@@ -91,7 +94,7 @@ bool teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_om
     return true;
 }
 
-void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
+void teleporter_list::translocate(const std::set<tripoint_abs_ms>& targets) {
     if (known_teleporters.empty()) {
         // we can't go somewhere if we don't know how to get there!
         add_msg(m_bad, _("No translocator target known."));
@@ -104,14 +107,14 @@ void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
     }
 
     bool valid_targets = false;
-    for (const tripoint_bub_ms& pt : targets) {
+    for (const tripoint_abs_ms& pt : targets) {
         Character* you = g->critter_at<Character>(pt);
 
         if (you && you->is_avatar()) {
             valid_targets = true;
             if (!place_avatar_overmap(*you, *omt_dest)) {
                 add_msg(_("Failed to teleport.  Teleporter obstructed or destroyed."));
-                deactivate_teleporter(*omt_dest, pt);
+                deactivate_teleporter(*omt_dest, abs_to_bub(pt));
             }
         }
     }

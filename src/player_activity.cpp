@@ -232,82 +232,7 @@ void player_activity::get_assistants( const Character &who )
     }
 }
 
-static std::string craft_progress_message( const avatar &u, const player_activity &act )
-{
-    const item *craft = &*act.targets.front();
-    if( craft == nullptr ) {
-        // Should never happen (?)
-        return string_format( _( "%s…" ), act.get_verb().translated() );
-    }
-
-    // Horrid copypaste warning! TODO: Functions
-    const recipe &rec = craft->get_making();
-    const auto bench_pos = act.coords.front();
-    // Ugly
-    const auto bench_t = bench_type( act.values[craft_bench_type_idx] );
-
-    const bench_location bench{ bench_t, bench_pos };
-
-    const float light_mult = lighting_crafting_speed_multiplier( u, rec );
-    const float bench_mult = workbench_crafting_speed_multiplier( *craft, bench );
-    const float morale_mult = morale_crafting_speed_multiplier( u, rec );
-    const auto tools_mult = ( act.values.size() > craft_tools_mult_percent_idx )
-                            ? static_cast<float>( act.values[craft_tools_mult_percent_idx] ) / 100.0f
-                            : crafting_tools_speed_multiplier( u, rec );
-    const int assistants = u.available_assistant_count( craft->get_making() );
-    const float base_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, 0 ) );
-    const float assist_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, assistants ) );
-    const float assist_mult = base_total_moves / assist_total_moves;
-    const float speed_mult = u.get_speed() / 100.0f;
-    const float mutation_mult = u.mutation_value( "crafting_speed_modifier" );
-    const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                ? 9999
-                                : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
-
-    auto total_mult_without_enchant = bench_mult * assist_mult * tools_mult * light_mult * morale_mult *
-                                      mutation_mult * game_opt_mult;
-
-    const auto enchant_mult_add = u.bonus_from_enchantments( total_mult_without_enchant,
-                                  enchantment_value_id( "CRAFTING_SPEED" ) );
-
-    const float total_mult = total_mult_without_enchant + enchant_mult_add;
-
-    const auto enchant_mult = total_mult / total_mult_without_enchant;
-
-    const double remaining_percentage = 1.0 - craft->get_counter() / 10'000'000.0;
-    int remaining_turns = remaining_percentage * base_total_moves / 100 / std::max( 0.01f, total_mult );
-    std::string time_desc = string_format( _( "Time left: %s" ),
-                                           to_string( time_duration::from_turns( remaining_turns ) ) );
-
-    const std::array<std::pair<float, std::string>, 9> mults_with_data = { {
-            { total_mult, _( "Total" ) },
-            { speed_mult, _( "Speed" ) },
-            { light_mult, _( "Light" ) },
-            { bench_mult, _( "Workbench" ) },
-            { morale_mult, _( "Morale" ) },
-            { tools_mult, _( "Tools" ) },
-            { assist_mult, _( "Assistants" ) },
-            { mutation_mult, _( "Traits" ) },
-            { enchant_mult, _( "Misc" ) }
-        }
-    };
-    std::string mults_desc = _( "Crafting speed multipliers:\n" );
-    // Hack to make sure total always shows
-    bool first = true;
-    for( const std::pair<float, std::string> &p : mults_with_data ) {
-        int percent = static_cast<int>( p.first * 100 );
-        if( first || percent != 100 ) {
-            nc_color col = percent > 100 ? c_green : c_red;
-            std::string colorized = colorize( std::to_string( percent ) + '%', col );
-            mults_desc += string_format( _( "%s: %s\n" ), p.second, colorized );
-        }
-        first = false;
-    }
-
-    return string_format( _( "%s: %s\n\n%s\n\n%s" ), act.get_verb().translated(), craft->tname(),
-                          time_desc,
-                          mults_desc );
-}
+// craft_progress_message — removed (dead code, all ACT_CRAFT use actor's get_progress_message)
 
 static std::string format_spd( float level, std::string name, int indent = 0,
                                bool force_show = false )
@@ -342,39 +267,41 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
          * TODO progress for targets
          * proper use of activity_actor::targets for all activities
          * must be implementated for proper work of multiple targets
-         */
-        if( actor ) {
-            if( actor->progress.empty() ) {
-                target = string_format( ": %s", actor->progress.front().target_name );
-                progress_desc = "";
-                //shouldn't ever happend actually
-                debugmsg( "Progress counter is empty, despite activity using actor, total tasks %s",
-                          actor->progress.get_total_tasks() );
-            } else {
-                target = string_format( ": %s", actor->progress.front().target_name );
-                if( actor->progress.get_total_tasks() > 1 ) {
-                    progress_desc += "\n - Total: ";
-                    progress_desc += string_format( "%.1f%%\n",
-                                                    ( 1.0f - float( actor->progress.get_moves_left() ) / actor->progress.get_moves_total() ) * 100.0f );
-                    progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
-                                                    actor->progress.get_total_tasks() );
-                    progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns(
-                                                            action_time_scale::turns_for_progress( actor->progress.get_moves_left(),
-                                                                    progress_per_calendar_turn ) ) ) );
-                    progress_desc += " - Current: ";
-                }
+        */
+        if( actor && !actor->progress.empty() ) {
+            target = string_format( ": %s", actor->progress.front().target_name );
+            if( actor->progress.get_total_tasks() > 1 && actor->progress.get_moves_total() > 0 ) {
+                progress_desc += "\n - Total: ";
                 progress_desc += string_format( "%.1f%%\n",
-                                                ( 1.0f - float( actor->progress.front().moves_left ) / actor->progress.front().moves_total ) *
-                                                100.0f );
-                if( actor->progress.get_total_tasks() > 1 ) {
-                    progress_desc += "  - ";
-                }
-                progress_desc += string_format( _( "Time left: %s\n" ),
+                                                ( 1.0f - float( actor->progress.get_moves_left() ) /
+                                                  actor->progress.get_moves_total() ) * 100.0f );
+                progress_desc += string_format( _( "  - Processing %s out of %s\n" ),
+                                                actor->progress.get_index(),
+                                                actor->progress.get_total_tasks() );
+                progress_desc += string_format( _( "  - Estimated time: %s\n" ),
                                                 to_string( time_duration::from_turns(
-                                                        action_time_scale::turns_for_progress( actor->progress.front().moves_left,
+                                                        action_time_scale::turns_for_progress(
+                                                                actor->progress.get_moves_left(),
                                                                 progress_per_calendar_turn ) ) ) );
+                progress_desc += " - Current: ";
             }
+            if( actor->progress.front().moves_total > 0 ) {
+                progress_desc += string_format( "%.1f%%\n",
+                                                ( 1.0f - float( actor->progress.front().moves_left ) /
+                                                  actor->progress.front().moves_total ) * 100.0f );
+            }
+            if( actor->progress.get_total_tasks() > 1 && actor->progress.get_moves_total() > 0 ) {
+                progress_desc += "  - ";
+            }
+            progress_desc += string_format( _( "Time left: %s\n" ),
+                                            to_string( time_duration::from_turns(
+                                                    action_time_scale::turns_for_progress(
+                                                            actor->progress.front().moves_left,
+                                                            progress_per_calendar_turn ) ) ) );
+        } else if( actor ) {
+            // Actor-backed activities can be redrawn before start() initializes
+            // their progress queue.  Leave the progress block empty until then.
+            progress_desc = "";
         } else {
             if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
                 target = string_format( ": %s", targets.front()->tname( targets.front()->count() ) );
@@ -446,9 +373,11 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
 
     std::string extra_info;
     if( type == ACT_CRAFT ) {
-        return craft_progress_message( u, *this );
+        // Actor's get_progress_message handles this — keep return nullopt here since no actor fallback
+        return std::nullopt;
     } else if( type == ACT_READ ) {
-        if( const item *book = &*targets.front() ) {
+        const item *book = targets.empty() ? nullptr : targets.front().get_const();
+        if( book != nullptr ) {
             if( const auto &reading = book->type->book ) {
                 const skill_id &skill = reading->skill;
                 if( skill && u.get_skill_level( skill ) < reading->level &&
@@ -491,6 +420,13 @@ void player_activity::start_or_resume( Character &who, bool resuming )
 {
     if( actor && !resuming ) {
         actor->start( *this, who );
+        // Legacy activity saves carry their duration on player_activity while
+        // the migrated actor starts with an empty progress queue.  Seed that
+        // queue after the actor has had a chance to initialize itself so the
+        // generic move-consumption path cannot dereference an empty task list.
+        if( actor->progress.empty() && moves_total > 0 ) {
+            actor->progress.emplace( id().str(), moves_total, moves_left );
+        }
     }
     init_all_moves( who );
     if( rooted() ) {
@@ -553,7 +489,10 @@ void player_activity::do_turn( player &p )
     if( !type->special() ) {
         const auto consume_activity_progress = [&]( const int moves_total,
         const bool complex_partial_cost ) {
-            if( actor ) {
+            // A few migrated actors still perform their own work from the
+            // legacy duration fields.  Keep that bridge until those actors
+            // move their timing into progress_counter as well.
+            if( actor && !actor->progress.invalid() ) {
                 if( actor->progress.get_moves_left() >= moves_total ) {
                     actor->progress.mod_moves_left( -moves_total );
                     p.moves = 0;
@@ -624,10 +563,9 @@ void player_activity::do_turn( player &p )
             p.add_msg_if_player( _( "You pause for a moment to catch your breath." ) );
         }
         auto_resume = true;
-        std::unique_ptr<player_activity> new_act = std::make_unique<player_activity>
-                ( ACT_WAIT_STAMINA, to_moves<int>( 1_minutes ) );
-        new_act->values.push_back( 200 + p.get_stamina_max() / 3 );
-        p.assign_activity( std::move( new_act ) );
+        p.assign_activity( std::make_unique<player_activity>(
+                               std::make_unique<wait_stamina_actor>( 200 + p.get_stamina_max() / 3 )
+                           ) );
         return;
     }
 
@@ -704,8 +642,12 @@ bool player_activity::can_resume_with( const player_activity &other, const Chara
         return false;
     }
 
-    // if actor XOR other.actor then id() != other.id() so
-    // we will correctly return false based on final return statement
+    // Actor-backed and legacy activities with the same ID are not safely
+    // resumable against one another.
+    if( static_cast<bool>( actor ) != static_cast<bool>( other.actor ) ) {
+        return false;
+    }
+
     if( actor && other.actor ) {
         return actor->can_resume_with( *other.actor, who );
     }

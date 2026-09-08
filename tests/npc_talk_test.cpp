@@ -86,8 +86,6 @@ static auto prep_test(dialogue& d) -> npc& {
     auto& player_character = get_avatar();
     REQUIRE_FALSE(player_character.in_vehicle);
 
-    const auto test_origin =
-        tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, player_character.abs_pos().z());
     player_character.setpos(test_origin);
 
     g->faction_manager_ptr->create_if_needed();

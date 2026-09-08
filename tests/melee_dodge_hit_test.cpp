@@ -10,6 +10,7 @@
 #include "mtype.h"
 #include "player_helpers.h"
 #include "point.h"
+#include "simulated_island_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -249,6 +250,8 @@ TEST_CASE("player::get_dodge while grabbed", "[player][melee][dodge][grab]") {
     clear_all_state();
     avatar& dummy = g->u;
     clear_character(dummy);
+    g->place_player(dummy.bub_pos());
+    ensure_simulated_islands_for(dummy.abs_pos());
 
     // Base dodge rate when not grabbed
     const float base_dodge = dummy.get_dodge_base();

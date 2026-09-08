@@ -138,7 +138,7 @@ static std::vector<int> converge_temperature(
         history.emplace(current_iter_temperature);
         last_n_history.emplace_front(current_iter_temperature);
         while (last_n_history.size() > n_history) { last_n_history.pop_back(); }
-        p.update_bodytemp(get_map(), get_weather());
+        p.update_bodytemp(get_weather());
     }
 
     std::vector<int> result;
@@ -490,7 +490,7 @@ static void hypothermia_check(
 
     int actual_time;
     for (actual_time = 0; actual_time < upper_bound * 2; actual_time++) {
-        p.update_bodytemp(get_map(), get_weather());
+        p.update_bodytemp(get_weather());
         if (get_temp_cur(p, body_part_head) <= expected_temperature) { break; }
     }
 
@@ -544,7 +544,7 @@ TEST_CASE("player_move_through_vehicle_holes") {
 
     REQUIRE(get_avatar().bub_pos() == pos);
 
-    avatar_action::move(get_avatar(), get_map(), point_rel_ms::north_west());
+    avatar_action::move(get_avatar(), point_rel_ms::north_west());
 
     CHECK(get_avatar().bub_pos() == pos);
 }

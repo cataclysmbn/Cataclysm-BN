@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "activity_actor_definitions.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -211,7 +212,9 @@ void talk_function::start_trade( npc &p )
 
 void talk_function::sort_loot( npc &p )
 {
-    p.assign_activity( ACT_MOVE_LOOT );
+    p.assign_activity( std::make_unique<player_activity>(
+                           std::make_unique<move_loot_activity_actor>()
+                       ) );
 }
 
 void talk_function::do_construction( npc &p )
@@ -514,8 +517,9 @@ void talk_function::give_aid( npc &p )
 
     p.add_effect( effect_currently_busy, 30_minutes );
     const int moves = to_moves<int>( 30_minutes );
-    u.assign_activity( ACT_WAIT_NPC, moves );
-    u.activity->str_values.push_back( p.name );
+    u.assign_activity( std::make_unique<player_activity>(
+                           std::make_unique<wait_npc_actor>( p.name ) ) );
+    u.activity->get_actor()->progress.emplace( "waiting for aid", moves );
 }
 
 void talk_function::give_all_aid( npc &p )
@@ -531,8 +535,9 @@ void talk_function::give_all_aid( npc &p )
 
     p.add_effect( effect_currently_busy, 60_minutes );
     const int moves = to_moves<int>( 60_minutes );
-    u.assign_activity( ACT_WAIT_NPC, moves );
-    u.activity->str_values.push_back( p.name );
+    u.assign_activity( std::make_unique<player_activity>(
+                           std::make_unique<wait_npc_actor>( p.name ) ) );
+    u.activity->get_actor()->progress.emplace( "waiting for aid", moves );
 }
 
 static void generic_barber( const std::string &mut_type )
@@ -581,8 +586,9 @@ void talk_function::buy_haircut( npc &p )
 {
     g->u.add_morale( MORALE_HAIRCUT, 5, 5, 720_minutes, 3_minutes );
     const int moves = to_moves<int>( 20_minutes );
-    g->u.assign_activity( ACT_WAIT_NPC, moves );
-    g->u.activity->str_values.push_back( p.name );
+    g->u.assign_activity( std::make_unique<player_activity>(
+                              std::make_unique<wait_npc_actor>( p.name ) ) );
+    g->u.activity->get_actor()->progress.emplace( "haircut", moves );
     add_msg( m_good, _( "%s gives you a decent haircut…" ), p.name );
 }
 
@@ -590,8 +596,9 @@ void talk_function::buy_shave( npc &p )
 {
     g->u.add_morale( MORALE_SHAVE, 10, 10, 360_minutes, 3_minutes );
     const int moves = to_moves<int>( 5_minutes );
-    g->u.assign_activity( ACT_WAIT_NPC, moves );
-    g->u.activity->str_values.push_back( p.name );
+    g->u.assign_activity( std::make_unique<player_activity>(
+                              std::make_unique<wait_npc_actor>( p.name ) ) );
+    g->u.activity->get_actor()->progress.emplace( "shave", moves );
     add_msg( m_good, _( "%s gives you a decent shave…" ), p.name );
 }
 
@@ -604,8 +611,9 @@ void talk_function::morale_chat( npc &p )
 void talk_function::morale_chat_activity( npc &p )
 {
     const int moves = to_moves<int>( 10_minutes );
-    g->u.assign_activity( ACT_SOCIALIZE, moves );
-    g->u.activity->str_values.push_back( p.name );
+    g->u.assign_activity( std::make_unique<player_activity>(
+                              std::make_unique<socialize_actor>( p.name ) ) );
+    g->u.activity->get_actor()->progress.emplace( "socializing", moves );
     add_msg( m_good, _( "That was a pleasant conversation with %s." ), p.disp_name() );
     g->u.add_morale( MORALE_CHAT, rng( 3, 10 ), 10, 200_minutes, 5_minutes / 2 );
 }
@@ -907,11 +915,9 @@ void talk_function::start_training( npc &p )
     } else if( !npc_trading::pay_npc( p, cost ) ) {
         return;
     }
-    std::unique_ptr<player_activity> act = std::make_unique<player_activity>( ACT_TRAIN,
-                                           to_moves<int>( time ),
-                                           p.getID().get_value(), 0, name );
-    act->values.push_back( expert_multiplier );
-    g->u.assign_activity( std::move( act ) );
+    g->u.assign_activity( std::make_unique<player_activity>(
+                              std::make_unique<train_actor>( name, expert_multiplier, p.getID().get_value() ) ) );
+    g->u.activity->get_actor()->progress.emplace( "training", to_moves<int>( time ) );
 
     p.add_effect( effect_asked_to_train, 6_hours );
 }

@@ -14,7 +14,7 @@ TEST_CASE("travel_destination_accepts_memorized_tiles", "[travel][map_memory]") 
     const auto cleanup = on_out_of_scope([&you]() { you.clear_map_memory(); });
 
     const auto target = tripoint_bub_ms(0, 0, you.bub_pos().z());
-    REQUIRE_FALSE(you.sees(target));
+    REQUIRE_FALSE(you.sees(bub_to_abs(target)));
 
     you.memorize_symbol(bub_to_abs(target), '#');
 

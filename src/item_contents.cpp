@@ -102,6 +102,15 @@ bool item_contents::spill_contents( const tripoint_bub_ms &pos )
     return true;
 }
 
+bool item_contents::spill_contents( const tripoint_abs_ms &pos )
+{
+    auto &here = owner->get_mapbuffer();
+    for( detached_ptr<item> &it : clear_items() ) {
+        here.add_item_or_charges( pos, std::move( it ) );
+    }
+    return true;
+}
+
 void item_contents::handle_liquid_or_spill( Character &guy )
 {
     const bool had_items = !items.empty();

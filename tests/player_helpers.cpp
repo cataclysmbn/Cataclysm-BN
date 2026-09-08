@@ -50,6 +50,8 @@ bool player_has_item_of_type(const std::string& type) {
 
 void clear_character(player& dummy, bool debug_storage) {
     character_funcs::normalize(dummy);
+    dummy.in_vehicle = false;
+    dummy.controlling_vehicle = false;
 
     // Remove first worn item until there are none left.
     std::vector<detached_ptr<item>> temp;
@@ -119,8 +121,7 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.cash = 0;
     dummy.dodges_left = 1;
 
-    const tripoint_bub_ms spot(60, 60, 0);
-    dummy.setpos(map_local_to_abs(get_map(), spot));
+    dummy.setpos(test_origin);
 
     dummy.invalidate_crafting_inventory();
 }

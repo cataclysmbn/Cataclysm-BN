@@ -109,8 +109,9 @@ item_action_map item_action_generator::map_actions_to_items( player &p,
             }
 
             const use_function *func = actual_item->get_use( use );
+            auto pos = p.abs_pos();
             if( !( func && func->get_actor_ptr() &&
-                   func->get_actor_ptr()->can_use( p, *actual_item, false, p.bub_pos() ).success() ) ) {
+                   func->get_actor_ptr()->can_use( p, *actual_item, false, pos ).success() ) ) {
                 continue;
             }
             if( !actual_item->ammo_sufficient() ) {
@@ -344,7 +345,7 @@ std::string use_function::get_type() const
 }
 
 ret_val<bool> iuse_actor::can_use( const Character &, const item &, bool,
-                                   const tripoint_bub_ms & ) const
+                                   const tripoint_abs_ms & ) const
 {
     return ret_val<bool>::make_success();
 }

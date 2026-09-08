@@ -45,9 +45,9 @@ class start_location
          */
         void prepare_map( const tripoint_abs_omt &omtstart ) const;
         /**
-         * Place the player somewhere in the reality bubble (g->m).
+         * Place the player somewhere in the loaded map around the selected OMT.
          */
-        void place_player( player &u, const int &z ) const;
+        void place_player( player &u, const tripoint_abs_omt &omtstart ) const;
         /**
          * Burn random terrain / furniture with FLAMMABLE or FLAMMABLE_ASH tag.
          * Doors and windows are excluded.

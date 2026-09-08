@@ -10,7 +10,6 @@
 #include "calendar.h"
 #include "coordinates.h"
 #include "memory_fast.h"
-#include "point.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 
@@ -116,7 +115,7 @@ class grid_furn_transform_queue
             queue.emplace_back( transform_queue_entry{ p, id, msg } );
         }
 
-        void apply( mapbuffer &mb, distribution_grid_tracker &grid_tracker, Character &u, map &m );
+        void apply( mapbuffer &mb, distribution_grid_tracker &grid_tracker, Character &u );
 
         void clear() {
             queue.clear();
@@ -163,11 +162,10 @@ struct cross_dimension_export_node {
 /**
  * Contains and manages all the active distribution grids.
  *
- * Implements submap_load_listener to receive per-submap load/unload events.
- * Registered with submap_load_manager so that grids are built incrementally
- * as submaps enter and leave memory rather than on every map shift.
+ * Receives on_submap_loaded/on_submap_unloaded calls directly from
+ * mapbuffer's submap eviction path and from game.cpp initialization.
  */
-class distribution_grid_tracker : public submap_load_listener
+class distribution_grid_tracker
 {
     private:
         /**
@@ -306,19 +304,18 @@ class distribution_grid_tracker : public submap_load_listener
         }
 
         /**
-         * submap_load_listener overrides.
          * Called when a submap at @p pos in dimension @p dim_id becomes resident.
          * Inserts the position into tracked_submaps_ and builds the grid cluster.
          */
         void on_submap_loaded( const tripoint_abs_sm &pos,
-                               const dimension_id &dim_id ) override;
+                               const dimension_id &dim_id );
 
         /**
          * Called just before the submap at @p pos in dimension @p dim_id is evicted.
          * Removes from tracked_submaps_ and invalidates all 4 submaps of the affected OMT.
          */
         void on_submap_unloaded( const tripoint_abs_sm &pos,
-                                 const dimension_id &dim_id ) override;
+                                 const dimension_id &dim_id );
 
         /**
          * Updates grid at given global map square coordinate.

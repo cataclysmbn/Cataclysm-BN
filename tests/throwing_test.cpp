@@ -34,7 +34,7 @@
 
 TEST_CASE("throwing distance test", "[throwing], [balance]") {
     clear_all_state();
-    const standard_npc thrower("Thrower", tripoint_bub_ms(60, 60, 0), {}, 4, 10, 10, 10, 10);
+    const standard_npc thrower("Thrower", test_origin, {}, 4, 10, 10, 10, 10);
     item& grenade = *item::spawn_temporary("grenade");
     CHECK(thrower.throw_range(grenade) >= 30);
     CHECK(thrower.throw_range(grenade) <= 35);
@@ -42,10 +42,8 @@ TEST_CASE("throwing distance test", "[throwing], [balance]") {
 
 TEST_CASE("throwing heavier items scales with strength", "[throwing], [balance]") {
     clear_all_state();
-    const auto weak_thrower =
-        standard_npc("WeakThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 8, 10, 10, 10);
-    const auto strong_thrower =
-        standard_npc("StrongThrower", tripoint_bub_ms(60, 60, 0), {}, 4, 14, 10, 10, 10);
+    const auto weak_thrower = standard_npc("WeakThrower", test_origin, {}, 4, 8, 10, 10, 10);
+    const auto strong_thrower = standard_npc("StrongThrower", test_origin, {}, 4, 14, 10, 10, 10);
     item& bronze_anvil = *item::spawn_temporary("anvil_bronze");
 
     CHECK(weak_thrower.throw_range(bronze_anvil) < strong_thrower.throw_range(bronze_anvil));
@@ -179,27 +177,27 @@ TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][
     clear_all_state();
     clear_map();
 
-    g->u.setpos(tripoint_bub_ms{10, 10, 0});
+    g->u.setpos(tripoint_abs_ms{10, 10, 0});
+    auto& here = g->u.get_mapbuffer();
 
-    auto& here = g->m;
-    const auto source = tripoint_bub_ms{40, 30, 0};
-    const auto target = tripoint_bub_ms{41, 30, 0};
-    const auto landing = tripoint_bub_ms{42, 30, 0};
-    const auto wall = tripoint_bub_ms{43, 30, 0};
+    const auto source = tripoint_abs_ms{40, 30, 0};
+    const auto target = tripoint_abs_ms{41, 30, 0};
+    const auto landing = tripoint_abs_ms{42, 30, 0};
+    const auto wall = tripoint_abs_ms{43, 30, 0};
 
-    here.ter_set(source, ter_id("t_floor"));
-    here.ter_set(target, ter_id("t_floor"));
-    here.ter_set(landing, ter_id("t_floor"));
-    here.ter_set(wall, ter_id("t_test_indestructible_wall"));
-    REQUIRE(here.impassable(wall));
+    here.set_ter(source, ter_id("t_floor"));
+    here.set_ter(target, ter_id("t_floor"));
+    here.set_ter(landing, ter_id("t_floor"));
+    here.set_ter(wall, ter_id("t_test_indestructible_wall"));
+    REQUIRE(here.passable(wall) == false);
     REQUIRE_FALSE(here.is_bashable(wall));
 
-    auto& zombie = spawn_test_monster("mon_zombie", target);
+    auto& zombie = spawn_test_monster("mon_zombie", abs_to_bub(target));
     const auto hp_before = zombie.get_hp();
 
     g->fling_creature(&zombie, coord_to_angle(source, target), 30.0f);
 
-    CHECK(zombie.bub_pos() == landing);
+    CHECK(zombie.abs_pos() == landing);
     CHECK(zombie.get_hp() < hp_before);
 }
 
@@ -207,22 +205,22 @@ TEST_CASE("flung creatures stop at the reality bubble edge", "[throwing][bubble]
     clear_all_state();
     clear_map();
 
-    auto& here = get_map();
-    const auto bubble_mapsize = 2 * g_reality_bubble_size + 3;
-    const auto bubble_edge_x = SEEX * bubble_mapsize - 1;
-    const auto bubble_mid_y = SEEY * bubble_mapsize / 2;
-    const auto start = tripoint_bub_ms{bubble_edge_x - 1, bubble_mid_y, 0};
-    const auto edge = tripoint_bub_ms{bubble_edge_x, bubble_mid_y, 0};
+    auto& map = get_map();
+    auto& here = map.get_mapbuffer();
+    const auto bubble_edge_x = g_mapsize_x - 1;
+    const auto bubble_mid_y = g_mapsize_y / 2;
+    const auto start = bub_to_abs(tripoint_bub_ms{bubble_edge_x - 1, bubble_mid_y, 0});
+    const auto edge = bub_to_abs(tripoint_bub_ms{bubble_edge_x, bubble_mid_y, 0});
 
-    here.ter_set(start, ter_id("t_floor"));
-    here.ter_set(edge, ter_id("t_floor"));
-    REQUIRE(is_in_reality_bubble_bounds(edge));
+    here.set_ter(start, ter_id("t_floor"));
+    here.set_ter(edge, ter_id("t_floor"));
+    REQUIRE(is_in_reality_bubble_bounds(abs_to_bub(edge)));
 
-    auto& zombie = spawn_test_monster("mon_zombie", start);
+    auto& zombie = spawn_test_monster("mon_zombie", abs_to_bub(start));
 
     g->fling_creature(&zombie, coord_to_angle(start, start + tripoint_east), 30.0f);
 
-    CHECK(zombie.bub_pos() == edge);
+    CHECK(zombie.abs_pos() == edge);
 }
 
 struct throw_test_data {
@@ -246,7 +244,7 @@ static std::ostream& operator<<(std::ostream& stream, const throw_test_pstats& p
 
 static const skill_id skill_throw = skill_id("throw");
 
-static void reset_player(player& p, const throw_test_pstats& pstats, const tripoint_bub_ms& pos) {
+static void reset_player(player& p, const throw_test_pstats& pstats, const tripoint_abs_ms& pos) {
     clear_character(p);
     CHECK(!p.in_vehicle);
     p.setpos(pos);
@@ -275,20 +273,19 @@ static void test_throwing_player_versus(
     player& p, const std::string& mon_id, const std::string& throw_id, const int range,
     const throw_test_pstats& pstats, const epsilon_threshold& hit_thresh,
     const epsilon_threshold& dmg_thresh) {
-    const auto player_start = tripoint_bub_ms(g_half_mapsize_x, g_half_mapsize_y, 0);
-    const auto monster_start = player_start + tripoint_rel_ms(range, 0, 0);
+    const auto monster_start = test_origin + tripoint_rel_ms(range, 0, 0);
     bool hit_thresh_met = false;
     bool dmg_thresh_met = false;
     throw_test_data data;
 
 
     do {
-        reset_player(p, pstats, player_start);
+        reset_player(p, pstats, test_origin);
         p.set_moves(1000);
         p.set_stamina(p.get_stamina_max());
         detached_ptr<item> det = item::spawn(throw_id);
         item& it = *det;
-        monster& mon = spawn_test_monster(mon_id, monster_start);
+        monster& mon = spawn_test_monster(mon_id, abs_to_bub(monster_start));
         mon.set_moves(0);
 
         double actual_hit_chance = ranged::hit_chance(
@@ -301,13 +298,12 @@ static void test_throwing_player_versus(
             CAPTURE(range);
             CAPTURE(mon.ranged_target_size());
             FAIL_CHECK(
-                "Expected and calculated midpoints must be within epsilon/4 or the test is "
-                "too fragile");
+                "Expected and calculated midpoints must be within epsilon/4 or the test is too fragile");
             return;
         }
 
         dealt_projectile_attack atk =
-            ranged::throw_item(p, mon.bub_pos(), std::move(det), std::nullopt);
+            ranged::throw_item(p, mon.abs_pos(), std::move(det), std::nullopt);
         data.hits.add(atk.hit_critter != nullptr);
         data.dmg.add(atk.dealt_dam.total_damage());
 

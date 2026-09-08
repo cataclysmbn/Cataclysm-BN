@@ -33,7 +33,7 @@ static void clear_game_drag(const ter_id& terrain) {
     avatar& player_character = get_avatar();
     // Move player somewhere safe
     CHECK(!player_character.in_vehicle);
-    player_character.setpos(tripoint_bub_ms::zero());
+    player_character.setpos(test_origin);
     // Blind the player to avoid needless drawing-related overhead
     player_character.add_effect(effect_blind, 365_days, bodypart_str_id::NULL_ID());
     // Make sure the ST is 8 so that muscle powered results are consistent
@@ -46,8 +46,7 @@ static void clear_game_drag(const ter_id& terrain) {
 }
 
 static vehicle* setup_drag_test(const vproto_id& veh_id) {
-    const tripoint_bub_ms map_starting_point(60, 60, 0);
-    vehicle* veh_ptr = get_map().add_vehicle(veh_id, map_starting_point, -90_degrees, 0, 0);
+    vehicle* veh_ptr = get_map().add_vehicle(veh_id, bub_test_origin(), -90_degrees, 0, 0);
 
     REQUIRE(veh_ptr != nullptr);
     if (veh_ptr == nullptr) { return nullptr; }
@@ -149,12 +148,11 @@ TEST_CASE("water drag remains positive with excess floating parts", "[vehicle] [
     clear_game_drag(ter_id("t_pavement"));
 
     auto* const veh_ptr =
-        get_map().add_vehicle(vproto_id("none"), tripoint_bub_ms(60, 60, 0), 0_degrees, 0, 0);
+        get_map().add_vehicle(vproto_id("none"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh_ptr != nullptr);
 
-    REQUIRE(
-        veh_ptr->install_part(tripoint_mnt_veh(0, 0, 0), vpart_id("frame_vertical"), true) >= 0);
-    REQUIRE(veh_ptr->install_part(tripoint_mnt_veh(0, 0, 0), vpart_id("boat_board"), true) >= 0);
+    REQUIRE(veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
+    REQUIRE(veh_ptr->install_part(tripoint_mnt_veh::zero(), vpart_id("boat_board"), true) >= 0);
     REQUIRE(
         veh_ptr->install_part(tripoint_mnt_veh(1, 0, 0), vpart_id("sea_scooter_hull"), true) >= 0);
     REQUIRE(

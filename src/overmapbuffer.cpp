@@ -834,7 +834,7 @@ bool overmapbuffer::seen( const tripoint_abs_omt &p )
 void overmapbuffer::set_seen( const tripoint_abs_omt &p, bool seen )
 {
     const overmap_with_local_coords om_loc = get_om_global( p );
-    if( is_ot_match( "empty_rock", ter( p ), ot_match_type::type ) &&
+    if( !disable_mapgen && is_ot_match( "empty_rock", ter( p ), ot_match_type::type ) &&
         !( om_loc.om->seen( om_loc.local ) ) ) {
         om_loc.om->spawn_ores( p );
     }
@@ -1924,9 +1924,10 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         const auto ms = this_monster.abs_pos();
         const map &here = get_map();
         const auto local = abs_to_bub( ms );
-        if( !here.inbounds( local ) ) {
+        if( !here.inbounds( ms ) ) {
             debugmsg( "Monster at bub( %s, %s, %s ), abs( %s, %s, %s ) was out of bounds. Skipping spawn",
                       local.x(), local.y(), local.z(), ms.x(), ms.y(), ms.z() );
+            return;
         }
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ), local );
         if( placed ) {

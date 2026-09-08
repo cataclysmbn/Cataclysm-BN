@@ -846,7 +846,7 @@ bool Character::eat( item &food, bool force )
     int charges_used = 0;
     if( food.type->has_use() ) {
         if( !food.type->can_use( "PETFOOD" ) ) {
-            charges_used = food.type->invoke( *this->as_player(), food, bub_pos() );
+            charges_used = food.type->invoke( *this->as_player(), food, abs_pos() );
             if( charges_used <= 0 ) {
                 return false;
             }
@@ -1079,7 +1079,7 @@ void Character::modify_morale( item &food, int nutr )
             food_morale( MORALE_FOOD_HOT );
         }
     } else if( food.has_flag( flag_EATEN_COLD ) ) {
-        const auto temp = rot::temp::for_location( get_map(), food );
+        const auto temp = rot::temp::for_location( food );
 
         if( temp == temperature_flag::TEMP_FREEZER ) {
             add_msg_if_player( m_good, _( "This stuff is icy!" ), food.tname() );
@@ -1681,7 +1681,7 @@ bool Character::consume_med( item &target )
 
     int amount_used = 1;
     if( target.type->has_use() ) {
-        amount_used = target.type->invoke( *this->as_player(), target, bub_pos() );
+        amount_used = target.type->invoke( *this->as_player(), target, abs_pos() );
         if( amount_used <= 0 ) {
             return false;
         }

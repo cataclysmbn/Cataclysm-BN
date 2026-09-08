@@ -2,13 +2,12 @@
 #include "enums.h"
 #include "generic_factory.h"
 #include "json.h"
-#include "magic/magic_ter_furn_transform.h"
+#include "magic_ter_furn_transform.h"
 #include "map.h"
 #include "mapdata.h"
 #include "mapgen_constructor.h"
 #include "string_id.h"
 #include "type_id.h"
-#include "type_id_implement.h"
 
 #include <map>
 #include <memory>
@@ -25,7 +24,13 @@ namespace {
 generic_factory<ter_furn_transform> ter_furn_transform_factory("ter_furn_transform");
 } // namespace
 
-IMPLEMENT_STRING_AND_INT_IDS(ter_furn_transform, ter_furn_transform_factory);
+template <> const ter_furn_transform& string_id<ter_furn_transform>::obj() const {
+    return ter_furn_transform_factory.obj(*this);
+}
+
+template <> bool string_id<ter_furn_transform>::is_valid() const {
+    return ter_furn_transform_factory.is_valid(*this);
+}
 
 void ter_furn_transform::load_transform(const JsonObject& jo, const std::string& src) {
     ter_furn_transform_factory.load(jo, src);
@@ -134,7 +139,7 @@ bool ter_furn_transform::add_message(
     const tripoint_bub_ms& location) const {
     const std::optional<ter_furn_data<T>> result = find_transform(list, key);
     if (result && !result->has_msg()) {
-        if (critter.sees(location)) { result->add_msg(critter); }
+        if (critter.sees(bub_to_abs(location))) { result->add_msg(critter); }
         return true;
     }
     return false;

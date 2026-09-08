@@ -2199,7 +2199,7 @@ input_context touch_input_context;
 std::string get_quick_shortcut_name( const std::string &category )
 {
     if( category == "DEFAULTMODE" &&
-        g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), g->u.bub_pos() ) &&
+        g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), g->u.abs_pos() ) &&
         get_option<bool>( "ANDROID_SHORTCUT_ZONE" ) ) {
         return "DEFAULTMODE____SHORTCUTS";
     }

@@ -14,7 +14,7 @@ end
 local function detonate_minirose(who)
   if not who:has_bionic(minirose_id) then return end
   who:remove_bionic(minirose_id)
-  detonate_mininuke_at(who:bub_pos())
+  detonate_mininuke_at(who:abs_pos())
 end
 
 ---@param who Character

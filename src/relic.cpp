@@ -242,7 +242,7 @@ int relic::activate( Creature &caster, const tripoint_bub_ms &target ) const
 {
     caster.moves -= moves;
     for( const fake_spell &sp : active_effects ) {
-        sp.get_spell( sp.level ).cast_all_effects( caster, target );
+        sp.get_spell( sp.level ).cast_all_effects( caster, bub_to_abs( target ) );
     }
     return charges_per_activation;
 }

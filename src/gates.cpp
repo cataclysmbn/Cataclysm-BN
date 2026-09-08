@@ -72,12 +72,13 @@ struct gate_data {
     void load( const JsonObject &jo, const std::string &src );
     void check() const;
 
-    bool is_suitable_wall( const tripoint_bub_ms &pos ) const;
+    bool is_suitable_wall( mapbuffer &here, const tripoint_abs_ms &pos ) const;
 };
 
-gate_id get_gate_id( const tripoint_bub_ms &pos )
+gate_id get_gate_id( mapbuffer &here, const tripoint_abs_ms &pos )
 {
-    return gate_id( get_map().ter( pos ).id().str() );
+    auto ter = here.ter( pos );
+    return ter ? gate_id( ter->id().str() ) : gate_id();
 }
 
 generic_factory<gate_data> gates_data( "gate type" );
@@ -135,11 +136,14 @@ void gate_data::check() const
     }
 }
 
-bool gate_data::is_suitable_wall( const tripoint_bub_ms &pos ) const
+bool gate_data::is_suitable_wall( mapbuffer &here, const tripoint_abs_ms &pos ) const
 {
-    const auto wid = get_map().ter( pos );
+    const auto wid = here.ter( pos );
+    if( !wid ) {
+        return false;
+    }
     const auto iter = std::ranges::find_if( walls, [ wid ]( const ter_str_id & wall ) {
-        return wall.id() == wid;
+        return wall.id() == *wid;
     } );
     return iter != walls.end();
 }
@@ -171,11 +175,15 @@ void gates::reset()
 //  !|   |!        !   |
 //
 
-void gates::toggle_gate( const tripoint_bub_ms &pos )
+void gates::toggle_gate( mapbuffer &here, const tripoint_abs_ms &pos )
 {
-    const gate_id gid = get_gate_id( pos );
+    const gate_id gid = get_gate_id( here, pos );
 
     if( !gates_data.is_valid( gid ) ) {
+        return;
+    }
+    auto handle = abs_tile_handle::fetch( here, pos );
+    if( !handle ) {
         return;
     }
 
@@ -185,11 +193,10 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
     bool close = false;
     bool fail = false;
 
-    map &here = get_map();
     for( point wall_offset : four_adjacent_offsets ) {
         const auto wall_pos = pos + wall_offset;
 
-        if( !gate.is_suitable_wall( wall_pos ) ) {
+        if( !gate.is_suitable_wall( here, wall_pos ) ) {
             continue;
         }
         if( !gate.complex_shape ) {
@@ -203,7 +210,7 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
                 if( !open ) { // Closing the gate...
                     auto cur_pos = gate_pos;
                     while( here.ter( cur_pos ) == gate.floor.id() ) {
-                        fail = !g->forced_door_closing( cur_pos, gate.door.id(), gate.bash_dmg ) || fail;
+                        fail = !here.forced_door_closing( cur_pos, gate.door.id(), gate.bash_dmg ) || fail;
                         close = !fail;
                         cur_pos += gate_offset;
                     }
@@ -212,10 +219,10 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
                 if( !close ) { // Opening the gate...
                     auto cur_pos = gate_pos;
                     while( true ) {
-                        const ter_id ter = here.ter( cur_pos );
+                        const ter_id ter = *here.ter( cur_pos );
 
                         if( ter == gate.door.id() ) {
-                            here.ter_set( cur_pos, gate.floor.id() );
+                            here.set_ter( cur_pos, gate.floor.id() );
                             open = !fail;
                         } else if( ter != gate.floor.id() ) {
                             break;
@@ -225,24 +232,24 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
                 }
             }
         } else {
-            const auto is_door = [&]( const tripoint_bub_ms & pos ) -> bool {
+            const auto is_door = [&]( const tripoint_abs_ms & pos ) -> bool {
                 return here.ter( pos ) == gate.floor.id() ||
                 here.ter( pos ) == gate.door.id();
             };
-            std::unordered_set<tripoint_bub_ms> visited;
+            std::unordered_set<tripoint_abs_ms> visited;
             for( point gate_offset : four_adjacent_offsets ) {
-                const tripoint_bub_ms gate_pos = wall_pos + gate_offset;
-                for( const tripoint_bub_ms &tmp : ff::point_flood_fill_4_connected( gate_pos, visited, is_door ) ) {
+                const tripoint_abs_ms gate_pos = wall_pos + gate_offset;
+                for( const tripoint_abs_ms &tmp : ff::point_flood_fill_4_connected( gate_pos, visited, is_door ) ) {
                     if( !open && here.ter( tmp ) == gate.floor.id() ) {
                         close = true;
-                        fail = !g->forced_door_closing( tmp, gate.door.id(), gate.bash_dmg ) || fail;
+                        fail = !here.forced_door_closing( tmp, gate.door.id(), gate.bash_dmg ) || fail;
                         if( fail ) {
                             break;
                         }
                     }
                     if( !close && here.ter( tmp ) == gate.door.id() ) {
                         open = true;
-                        here.ter_set( tmp, gate.floor.id() );
+                        here.set_ter( tmp, gate.floor.id() );
                         if( here.ter( tmp ) != gate.floor.id() ) {
                             break;
                         }
@@ -252,7 +259,7 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
         }
     }
 
-    if( g->u.sees( pos ) ) {
+    if( here.get_dimension_id() == g->u.get_dimension() && g->u.sees( pos ) ) {
         if( open ) {
             add_msg( gate.open_message );
         } else if( close ) {
@@ -265,9 +272,9 @@ void gates::toggle_gate( const tripoint_bub_ms &pos )
     }
 }
 
-void gates::toggle_gate( const tripoint_bub_ms &pos, Character &who )
+void gates::toggle_gate( const tripoint_abs_ms &pos, Character &who )
 {
-    const gate_id gid = get_gate_id( pos );
+    const gate_id gid = get_gate_id( who.get_mapbuffer(), pos );
 
     if( !gates_data.is_valid( gid ) ) {
         who.add_msg_if_player( _( "Nothing happens." ) );
@@ -279,17 +286,16 @@ void gates::toggle_gate( const tripoint_bub_ms &pos, Character &who )
     who.add_msg_if_player( gate.pull_message );
     who.assign_activity( std::make_unique<player_activity>
                          ( std::make_unique<toggle_gate_activity_actor>(
-                               gate.moves,
-                               pos
-                           ) ) );
+                               gate.moves, pos ) ) );
 }
 
 // Doors namespace
 
-void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
+void doors::close_door( Character &who, const tripoint_abs_ms &closep )
 {
     bool didit = false;
-    const bool inside = !m.is_outside( who.bub_pos() );
+    auto &here = who.get_mapbuffer();
+    const bool inside = !here.is_outside( who.abs_pos() );
 
     const Creature *const mon = g->critter_at( closep );
     if( mon ) {
@@ -304,11 +310,11 @@ void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
         return;
     }
 
-    if( optional_vpart_position vp = m.veh_at( closep ) ) {
+    if( optional_vpart_position vp = here.veh_at( closep ) ) {
         vehicle *const veh = &vp->vehicle();
         const int vpart = vp->part_index();
         const int closable = veh->next_part_to_close( vpart,
-                             veh_pointer_or_null( m.veh_at( who.bub_pos() ) ) != veh );
+                             veh_pointer_or_null( here.veh_at( who.abs_pos() ) ) != veh );
         const int inside_closable = veh->next_part_to_close( vpart );
         const int openable = veh->next_part_to_open( vpart );
         if( closable >= 0 ) {
@@ -331,20 +337,24 @@ void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
         } else {
             who.add_msg_if_player( m_info, _( "You cannot close the %s." ), veh->part( vpart ).name() );
         }
-    } else if( m.furn( closep ) == furn_str_id( "f_crate_o" ) ) {
+    } else if( *here.furn( closep ) == furn_str_id( "f_crate_o" ) ) {
         who.add_msg_if_player( m_info, _( "You'll need to construct a seal to close the crate!" ) );
-    } else if( !m.close_door( closep, inside, true ) ) {
-        if( m.close_door( closep, true, true ) ) {
+    } else if( !here.close_door( closep, inside, true ) ) {
+        if( here.close_door( closep, true, true ) ) {
             who.add_msg_if_player( m_info,
                                    _( "You cannot close the %s from outside.  You must be inside the building." ),
-                                   m.name( closep ) );
+                                   here.name( closep ) );
         } else {
-            who.add_msg_if_player( m_info, _( "You cannot close the %s." ), m.name( closep ) );
+            who.add_msg_if_player( m_info, _( "You cannot close the %s." ), here.name( closep ) );
         }
     } else {
-        auto items_in_way = m.i_at( closep );
+        map_stack items_in_way( map_stack_options{
+            .stack = here.get_items( closep ),
+            .location = closep,
+            .origin = &here,
+        } );
         // Scoot up to 25 liters of items out of the way
-        if( m.furn( closep ) != furn_str_id( "f_safe_o" ) && !items_in_way.empty() ) {
+        if( *here.furn( closep ) != furn_str_id( "f_safe_o" ) && !items_in_way.empty() ) {
             const units::volume max_nudge = 25_liter;
 
             const auto toobig = std::ranges::find_if( items_in_way,
@@ -357,7 +367,7 @@ void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
             } else if( items_in_way.stored_volume() > max_nudge ) {
                 who.add_msg_if_player( m_info, _( "There is too much stuff in the way." ) );
             } else {
-                m.close_door( closep, inside, false );
+                here.close_door( closep, inside, false );
                 didit = true;
                 who.add_msg_if_player( m_info, _( "You push the %s out of the way." ),
                                        items_in_way.size() == 1 ? items_in_way.only_item().tname() : _( "stuff" ) );
@@ -365,17 +375,17 @@ void doors::close_door( map &m, Character &who, const tripoint_bub_ms &closep )
                 const auto max_nudge_moves = decltype( nudge_moves ) { 100 };
                 who.mod_moves( -static_cast<int>( std::min( nudge_moves, max_nudge_moves ) ) );
 
-                if( m.has_flag( "NOITEM", closep ) ) {
+                if( here.has_flag( "NOITEM", closep ) ) {
                     // Just plopping items back on their origin square will displace them to adjacent squares
                     // since the door is closed now.
 
-                    for( auto &elem : m.i_clear( closep ) ) {
-                        m.add_item_or_charges( closep, std::move( elem ) );
+                    for( auto &elem : here.clear_items( closep ) ) {
+                        here.add_item_or_charges( closep, std::move( elem ) );
                     }
                 }
             }
         } else {
-            m.close_door( closep, inside, false );
+            here.close_door( closep, inside, false );
             didit = true;
         }
     }

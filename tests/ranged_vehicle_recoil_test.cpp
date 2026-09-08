@@ -21,15 +21,14 @@ TEST_CASE("firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun]
     clear_all_state();
     rng_set_engine_seed(0);
 
-    auto& here = get_map();
     auto& player_character = get_avatar();
-    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
+    auto& here = player_character.get_mapbuffer();
 
-    auto* const veh = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    auto* const veh = here.add_vehicle(vproto_id("bicycle"), test_origin, 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
-    player_character.setpos(vehicle_origin);
-    here.board_vehicle(vehicle_origin, &player_character);
+    player_character.setpos(test_origin);
+    here.board_vehicle(test_origin, player_character);
     REQUIRE(player_character.in_vehicle);
 
     auto gun = item::spawn(itype_id("m1014"));
@@ -40,7 +39,7 @@ TEST_CASE("firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun]
     REQUIRE(veh->velocity == 0);
 
     const auto shots_fired =
-        ranged::fire_gun(player_character, vehicle_origin + tripoint_rel_ms(5, 0, 0), 1);
+        ranged::fire_gun(player_character, test_origin + tripoint_rel_ms(5, 0, 0), 1);
 
     REQUIRE(shots_fired == 1);
     CHECK(veh->velocity != 0);
@@ -52,15 +51,15 @@ TEST_CASE("vehicle gun recoil scaling factor can disable vehicle thrust", "[vehi
 
     override_option vehicle_gun_recoil_factor("VEHICLE_GUN_RECOIL_FACTOR", "0.0");
 
-    auto& here = get_map();
     auto& player_character = get_avatar();
-    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
+    auto& map = get_map();
+    auto& here = player_character.get_mapbuffer();
 
-    auto* const veh = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+    auto* const veh = map.add_vehicle(vproto_id("bicycle"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
-    player_character.setpos(vehicle_origin);
-    here.board_vehicle(vehicle_origin, &player_character);
+    player_character.setpos(test_origin);
+    here.board_vehicle(test_origin, player_character);
     REQUIRE(player_character.in_vehicle);
 
     auto gun = item::spawn(itype_id("m1014"));
@@ -71,7 +70,7 @@ TEST_CASE("vehicle gun recoil scaling factor can disable vehicle thrust", "[vehi
     REQUIRE(veh->velocity == 0);
 
     const auto shots_fired =
-        ranged::fire_gun(player_character, vehicle_origin + tripoint_rel_ms(5, 0, 0), 1);
+        ranged::fire_gun(player_character, test_origin + tripoint_rel_ms(5, 0, 0), 1);
 
     REQUIRE(shots_fired == 1);
     CHECK(veh->velocity == 0);
@@ -82,9 +81,9 @@ TEST_CASE("brake hold toggles parked braking drag", "[vehicle][drag]") {
 
     auto& here = get_map();
     auto* const bicycle =
-        here.add_vehicle(vproto_id("bicycle"), tripoint_bub_ms(60, 60, 0), 0_degrees, 0, 0);
-    auto* const shopping_cart =
-        here.add_vehicle(vproto_id("shopping_cart"), tripoint_bub_ms(70, 60, 0), 0_degrees, 0, 0);
+        here.add_vehicle(vproto_id("bicycle"), bub_test_origin(), 0_degrees, 0, 0);
+    auto* const shopping_cart = here.add_vehicle(
+        vproto_id("shopping_cart"), bub_test_origin() + point_rel_ms(10, 0), 0_degrees, 0, 0);
 
     REQUIRE(bicycle != nullptr);
     REQUIRE(shopping_cart != nullptr);
@@ -100,38 +99,30 @@ TEST_CASE("brake hold toggles parked braking drag", "[vehicle][drag]") {
 
 TEST_CASE(
     "single birdshot can move a swivel chair one tile on office floor at 10x recoil",
-    "[vehic"
-    "le]["
-    "gun"
-    "]") {
+    "[vehicle][gun]") {
     clear_all_state();
     rng_set_engine_seed(0);
 
     override_option vehicle_gun_recoil_factor("VEHICLE_GUN_RECOIL_FACTOR", "10.0");
 
-    auto& here = get_map();
     auto& player_character = get_avatar();
-    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
+    auto& map = get_map();
+    auto& here = player_character.get_mapbuffer();
 
     for (const auto x : std::views::iota(40, 81)) {
-        here.ter_set(
-            tripoint_bub_ms(x, vehicle_origin.y(), vehicle_origin.z()),
-            ter_id("t_"
-                   "linoleum_"
-                   "white"));
-        here.furn_set(
-            tripoint_bub_ms(x, vehicle_origin.y(), vehicle_origin.z()),
-            furn_id("f_"
-                    "null"));
+        here.set_ter(tripoint_abs_ms(x, test_origin.y(), test_origin.z()),
+                     ter_id("t_linoleum_white"));
+        here.set_furn(tripoint_abs_ms(x, test_origin.y(), test_origin.z()), furn_id("f_null"));
     }
 
-    auto* const veh = here.add_vehicle(vproto_id("swivel_chair"), vehicle_origin, 0_degrees, 0, 0);
+    auto* const veh =
+        map.add_vehicle(vproto_id("swivel_chair"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
     veh->toggle_brake_hold();
 
-    player_character.setpos(vehicle_origin);
-    here.board_vehicle(vehicle_origin, &player_character);
+    player_character.setpos(test_origin);
+    here.board_vehicle(test_origin, player_character);
     REQUIRE(player_character.in_vehicle);
 
     auto gun = item::spawn(itype_id("m1014"));
@@ -139,38 +130,36 @@ TEST_CASE(
     player_character.wield(std::move(gun));
     REQUIRE(player_character.primary_weapon().typeId() == itype_id("m1014"));
 
-    const auto starting_pos = veh->bub_ms_location();
+    const auto starting_pos = veh->abs_ms_location();
 
     const auto shots_fired =
-        ranged::fire_gun(player_character, vehicle_origin + tripoint_rel_ms(5, 0, 0), 1);
+        ranged::fire_gun(player_character, test_origin + tripoint_rel_ms(5, 0, 0), 1);
 
     REQUIRE(shots_fired == 1);
     REQUIRE(veh->velocity != 0);
 
     for (const auto _ : std::views::iota(0, 20)) {
         (void)_;
-        here.vehmove();
-        if (veh->bub_ms_location() != starting_pos) { break; }
+        map.vehmove();
+        if (veh->abs_ms_location() != starting_pos) { break; }
     }
 
-    CHECK(square_dist(starting_pos, veh->bub_ms_location()) >= 1);
-    CHECK(player_character.bub_pos() == veh->bub_ms_location());
+    CHECK(square_dist(starting_pos, veh->abs_ms_location()) >= 1);
+    CHECK(player_character.abs_pos() == veh->abs_ms_location());
 }
 
 TEST_CASE(
     "vehicle gun recoil can launch a shopping cart with a mounted M2 Browning near 6 km/h",
-    "[vehic"
-    "le]["
-    "gun"
-    "]") {
+    "[vehicle][gun]") {
     clear_all_state();
     rng_set_engine_seed(0);
 
-    auto& here = get_map();
     auto& player_character = get_avatar();
-    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
+    auto& map = get_map();
+    auto& here = player_character.get_mapbuffer();
 
-    auto* const veh = here.add_vehicle(vproto_id("shopping_cart"), vehicle_origin, 0_degrees, 0, 0);
+    auto* const veh =
+        map.add_vehicle(vproto_id("shopping_cart"), bub_test_origin(), 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
     REQUIRE(veh->install_part(tripoint_mnt_veh::zero(), vpart_id("turret_mount_manual_steel"), true)
@@ -180,8 +169,8 @@ TEST_CASE(
     REQUIRE(turret_index >= 0);
     REQUIRE(veh->part(turret_index).ammo_set(itype_id("50bmg")));
 
-    player_character.setpos(vehicle_origin);
-    here.board_vehicle(vehicle_origin, &player_character);
+    player_character.setpos(test_origin);
+    here.board_vehicle(test_origin, player_character);
     REQUIRE(player_character.in_vehicle);
 
     auto turret = veh->turret_query(veh->part(turret_index));
@@ -197,7 +186,7 @@ TEST_CASE(
     for (const auto _ : std::views::iota(0, max_bursts)) {
         (void)_;
         if (shots_fired >= target_shots) { break; }
-        const auto target = map_local_to_abs(here, vehicle_origin) + tripoint_rel_ms(10, 0, 0);
+        const auto target = test_origin + tripoint_rel_ms(10, 0, 0);
         shots_fired += turret.fire(player_character, target);
     }
 
@@ -207,10 +196,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "perpendicular gun recoil keeps full sideways push on rigid-wheel vehicles",
-    "[vehicle]["
-    "gun]") {
-    const auto vehicle_origin = tripoint_bub_ms(60, 60, 0);
+    "perpendicular gun recoil keeps full sideways push on rigid-wheel vehicles", "[vehicle][gun]") {
 
     override_option vehicle_gun_recoil_factor("VEHICLE_GUN_RECOIL_FACTOR", "1.0");
 
@@ -221,18 +207,19 @@ TEST_CASE(
     };
 
     const auto fire_recoil =
-        [&](const vproto_id& vehicle_type, const units::angle facing, const tripoint_bub_ms& target,
-            const std::optional<tripoint_bub_ms>& shot_origin) -> recoil_result {
+        [&](const vproto_id& vehicle_type, const units::angle facing, const tripoint_abs_ms& target,
+            const std::optional<tripoint_abs_ms>& shot_origin) -> recoil_result {
         clear_all_state();
         rng_set_engine_seed(0);
 
-        auto& here = get_map();
         auto& player_character = get_avatar();
-        auto* const veh = here.add_vehicle(vehicle_type, vehicle_origin, facing, 0, 0);
+        auto& map = get_map();
+        auto& here = player_character.get_mapbuffer();
+        auto* const veh = map.add_vehicle(vehicle_type, bub_test_origin(), facing, 0, 0);
         REQUIRE(veh != nullptr);
 
-        player_character.setpos(vehicle_origin);
-        here.board_vehicle(vehicle_origin, &player_character);
+        player_character.setpos(test_origin);
+        here.board_vehicle(test_origin, player_character);
         REQUIRE(player_character.in_vehicle);
 
         auto gun = item::spawn(itype_id("m1014"));
@@ -259,11 +246,11 @@ TEST_CASE(
     };
 
     const auto forward_result = fire_recoil(
-        vproto_id("shopping_cart"), 180_degrees, vehicle_origin + tripoint_rel_ms(-5, 0, 0),
+        vproto_id("shopping_cart"), 180_degrees, test_origin + tripoint_rel_ms(-5, 0, 0),
         std::nullopt);
     const auto offset_lateral_result = fire_recoil(
-        vproto_id("grocery_cart"), -90_degrees, vehicle_origin + tripoint_rel_ms(-6, 0, 0),
-        vehicle_origin + tripoint_rel_ms(-1, 0, 0));
+        vproto_id("grocery_cart"), -90_degrees, test_origin + tripoint_rel_ms(-6, 0, 0),
+        test_origin + tripoint_rel_ms(-1, 0, 0));
 
     CHECK(forward_result.skidding);
     CHECK(normalize(forward_result.move_dir) == normalize(0_degrees));

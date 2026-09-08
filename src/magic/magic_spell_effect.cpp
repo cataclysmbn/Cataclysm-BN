@@ -18,10 +18,10 @@
 #include "handle_liquid.h"
 #include "item.h"
 #include "line.h"
-#include "magic/magic.h"
-#include "magic/magic_spell_effect_helpers.h"
-#include "magic/magic_teleporter_list.h"
-#include "magic/magic_ter_furn_transform.h"
+#include "magic.h"
+#include "magic_spell_effect_helpers.h"
+#include "magic_teleporter_list.h"
+#include "magic_ter_furn_transform.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "messages.h"
@@ -102,9 +102,9 @@ static bool between_or_on(point a0, point a1, point d, point c) {
 // Builds line until obstructed or outside of region bound by near and far lines. Stores result in
 // set
 static void build_line(
-    spell_detail::line_iterable line, const tripoint_bub_ms& source, point delta, point delta_perp,
-    bool (*test)(const tripoint_bub_ms&, const tripoint_bub_ms&),
-    std::set<tripoint_bub_ms>& result) {
+    spell_detail::line_iterable line, const tripoint_abs_ms& source, point delta, point delta_perp,
+    bool (*test)(const tripoint_abs_ms&, const tripoint_abs_ms&),
+    std::set<tripoint_abs_ms>& result) {
     auto last_point = source;
     while (between_or_on(point_zero, delta, delta_perp, line.get())) {
         if (!test(source + line.get(), last_point)) { break; }
@@ -115,7 +115,7 @@ static void build_line(
 }
 } // namespace spell_detail
 
-void spell_effect::teleport_random(const spell& sp, Creature& caster, const tripoint_bub_ms&) {
+void spell_effect::teleport_random(const spell& sp, Creature& caster, const tripoint_abs_ms&) {
     bool safe = !sp.has_flag(spell_flag::UNSAFE_TELEPORT);
     const int min_distance = sp.range();
     const int max_distance = sp.range() + sp.aoe();
@@ -126,16 +126,16 @@ void spell_effect::teleport_random(const spell& sp, Creature& caster, const trip
     teleport::teleport(caster, min_distance, max_distance, safe, false);
 }
 
-static void swap_pos(Creature& caster, const tripoint_bub_ms& target) {
+static void swap_pos(Creature& caster, const tripoint_abs_ms& target) {
     Creature* const critter = g->critter_at<Creature>(target);
     if (critter != nullptr) { critter->setpos(caster.bub_pos()); }
     caster.setpos(target);
 }
 
-void spell_effect::pain_split(const spell& sp, Creature& caster, const tripoint_bub_ms&) {
+void spell_effect::pain_split(const spell& sp, Creature& caster, const tripoint_abs_ms&) {
     player* p = caster.as_player();
     if (p == nullptr) { return; }
-    sp.make_sound(caster.bub_pos(), caster);
+    sp.make_sound(caster.abs_pos(), caster);
     add_msg(m_info, _("Your injuries even out."));
     int num_limbs = 0; // number of limbs effected (broken don't count)
     int total_hp = 0;  // total hp among limbs
@@ -150,15 +150,15 @@ void spell_effect::pain_split(const spell& sp, Creature& caster, const tripoint_
 }
 
 static bool in_spell_aoe(
-    const tripoint_bub_ms& start, const tripoint_bub_ms& end, const int& radius,
+    const tripoint_abs_ms& start, const tripoint_abs_ms& end, const int& radius,
     const bool ignore_walls) {
     if (rl_dist(start, end) > radius) { return false; }
     if (ignore_walls) { return true; }
-    map& here = get_map();
-    const std::vector<tripoint_bub_ms> trajectory = line_to(start, end);
+    auto& here = get_map().get_mapbuffer();
+    const std::vector<tripoint_abs_ms> trajectory = line_to(start, end);
     auto last_point = start;
-    for (const tripoint_bub_ms& pt : trajectory) {
-        if ((here.impassable(pt) && !here.has_flag("THIN_OBSTACLE", pt))
+    for (const tripoint_abs_ms& pt : trajectory) {
+        if ((!here.passable(pt) && !here.has_flag("THIN_OBSTACLE", pt))
             || here.obstructed_by_vehicle_rotation(pt, last_point)) {
             return false;
         }
@@ -167,38 +167,39 @@ static bool in_spell_aoe(
     return true;
 }
 
-std::set<tripoint_bub_ms> spell_effect::spell_effect_blast(
-    const spell&, const tripoint_bub_ms&, const tripoint_bub_ms& target, const int aoe_radius,
+std::set<tripoint_abs_ms> spell_effect::spell_effect_blast(
+    const spell&, const tripoint_abs_ms&, const tripoint_abs_ms& target, const int aoe_radius,
     const bool ignore_walls) {
-    std::set<tripoint_bub_ms> targets;
+    std::set<tripoint_abs_ms> targets;
     // TODO: Make this breadth-first
-    for (const tripoint_bub_ms& potential_target : get_map().points_in_radius(target, aoe_radius)) {
-        if (in_spell_aoe(target, potential_target, aoe_radius, ignore_walls)) {
-            targets.emplace(potential_target);
+    for (const auto& potential_target :
+         simulated_tiles_in_radius(get_map().get_mapbuffer(), target, aoe_radius)) {
+        if (in_spell_aoe(target, potential_target.abs_pos(), aoe_radius, ignore_walls)) {
+            targets.emplace(potential_target.abs_pos());
         }
     }
     return targets;
 }
 
-static std::set<tripoint_bub_ms> spell_effect_cone_range_override(
-    const tripoint_bub_ms& source, const tripoint_bub_ms& target, const int aoe_radius,
+static std::set<tripoint_abs_ms> spell_effect_cone_range_override(
+    const tripoint_abs_ms& source, const tripoint_abs_ms& target, const int aoe_radius,
     const bool ignore_walls, const int range) {
-    std::set<tripoint_bub_ms> targets;
+    std::set<tripoint_abs_ms> targets;
     const units::angle initial_angle = coord_to_angle(source, target);
     const units::angle half_width = units::from_degrees(aoe_radius / 2.0);
     const units::angle start_angle = initial_angle - half_width;
     const units::angle end_angle = initial_angle + half_width;
-    std::set<tripoint_bub_ms> end_points;
+    std::set<tripoint_abs_ms> end_points;
     for (units::angle angle = start_angle; angle <= end_angle; angle += 0.5_degrees) {
-        tripoint_bub_ms potential;
+        tripoint_abs_ms potential;
         calc_ray_end(angle, range, source, potential);
         end_points.emplace(potential);
     }
-    map& here = get_map();
-    for (const tripoint_bub_ms& ep : end_points) {
-        std::vector<tripoint_bub_ms> trajectory = line_to(source, ep);
-        tripoint_bub_ms last_point = source;
-        for (const tripoint_bub_ms& tp : trajectory) {
+    auto& here = get_map().get_mapbuffer();
+    for (const tripoint_abs_ms& ep : end_points) {
+        std::vector<tripoint_abs_ms> trajectory = line_to(source, ep);
+        tripoint_abs_ms last_point = source;
+        for (const tripoint_abs_ms& tp : trajectory) {
             if (ignore_walls
                 || (!here.obstructed_by_vehicle_rotation(tp, last_point)
                     && (here.passable(tp) || here.has_flag("THIN_OBSTACLE", tp)))) {
@@ -214,32 +215,32 @@ static std::set<tripoint_bub_ms> spell_effect_cone_range_override(
     return targets;
 }
 
-std::set<tripoint_bub_ms> spell_effect::spell_effect_cone(
-    const spell& sp, const tripoint_bub_ms& source, const tripoint_bub_ms& target,
+std::set<tripoint_abs_ms> spell_effect::spell_effect_cone(
+    const spell& sp, const tripoint_abs_ms& source, const tripoint_abs_ms& target,
     const int aoe_radius, const bool ignore_walls) {
     // cones go all the way to end (if they don't hit an obstacle)
     const int range = sp.range() + 1;
     return spell_effect_cone_range_override(source, target, aoe_radius, ignore_walls, range);
 }
 
-static bool test_always_true(const tripoint_bub_ms&, const tripoint_bub_ms&) { return true; }
-static bool test_passable(const tripoint_bub_ms& p, const tripoint_bub_ms& prev) {
-    map& here = get_map();
+static bool test_always_true(const tripoint_abs_ms&, const tripoint_abs_ms&) { return true; }
+static bool test_passable(const tripoint_abs_ms& p, const tripoint_abs_ms& prev) {
+    auto& here = get_map().get_mapbuffer();
     return (!here.obstructed_by_vehicle_rotation(prev, p)
             && (here.passable(p) || here.has_flag("THIN_OBSTACLE", p)));
 }
 
-std::set<tripoint_bub_ms> spell_effect::spell_effect_line(
-    const spell&, const tripoint_bub_ms& source, const tripoint_bub_ms& target,
+std::set<tripoint_abs_ms> spell_effect::spell_effect_line(
+    const spell&, const tripoint_abs_ms& source, const tripoint_abs_ms& target,
     const int aoe_radius, const bool ignore_walls) {
     const auto delta = (target - source).raw().xy();
     const int dist = square_dist(point_zero, delta);
     // Early out to prevent unnecessary calculations
-    if (dist == 0) { return std::set<tripoint_bub_ms>(); }
+    if (dist == 0) { return std::set<tripoint_abs_ms>(); }
     // Clockwise Perpendicular of Delta vector
     const point delta_perp(-delta.y, delta.x);
 
-    const point abs_delta = delta.abs();
+    const auto abs_delta = delta.abs();
     // Primary axis of delta vector
     const point axis_delta = abs_delta.x > abs_delta.y ? point(delta.x, 0) : point(0, delta.y);
     // Clockwise Perpendicular of axis vector
@@ -257,7 +258,7 @@ std::set<tripoint_bub_ms> spell_effect::spell_effect_line(
     // is delta aligned with, cw, or ccw of primary axis
     int delta_side = spell_detail::side_of(point_zero, axis_delta, delta);
 
-    bool (*test)(const tripoint_bub_ms&, const tripoint_bub_ms&) =
+    bool (*test)(const tripoint_abs_ms&, const tripoint_abs_ms&) =
         ignore_walls ? test_always_true : test_passable;
 
     // Canonical path from source to target, offset to local space
@@ -269,7 +270,7 @@ std::set<tripoint_bub_ms> spell_effect::spell_effect_line(
 
     spell_detail::line_iterable base_line(point_zero, delta, path_to_target);
 
-    std::set<tripoint_bub_ms> result;
+    std::set<tripoint_abs_ms> result;
 
     // Add midline points (source -> target )
     spell_detail::build_line(base_line, source, delta, delta_perp, test, result);
@@ -358,17 +359,19 @@ std::set<tripoint_bub_ms> spell_effect::spell_effect_line(
 
 // spells do not reduce in damage the further away from the epicenter the targets are
 // rather they do their full damage in the entire area of effect
-std::set<tripoint_bub_ms> calculate_spell_effect_area(
-    const spell& sp, const tripoint_bub_ms& target,
-    const std::function<std::set<tripoint_bub_ms>(
-        const spell&, const tripoint_bub_ms&, const tripoint_bub_ms&, int, bool)>& aoe_func,
+std::set<tripoint_abs_ms> calculate_spell_effect_area(
+    const spell& sp, const tripoint_abs_ms& target,
+    const std::function<std::set<tripoint_abs_ms>(
+        const spell&, const tripoint_abs_ms&, const tripoint_abs_ms&, int, bool)>& aoe_func,
     const Creature& caster, bool ignore_walls) {
-    std::set<tripoint_bub_ms> targets = {target}; // initialize with epicenter
+    std::set<tripoint_abs_ms> targets = {target}; // initialize with epicenter
 
     const int aoe_radius = sp.aoe();
-    targets = aoe_func(sp, caster.bub_pos(), target, aoe_radius, ignore_walls);
+    std::set<tripoint_abs_ms> aoe_targets =
+        aoe_func(sp, caster.abs_pos(), target, aoe_radius, ignore_walls);
+    targets.insert(aoe_targets.begin(), aoe_targets.end());
 
-    for (std::set<tripoint_bub_ms>::iterator it = targets.begin(); it != targets.end();) {
+    for (std::set<tripoint_abs_ms>::iterator it = targets.begin(); it != targets.end();) {
         if (!sp.is_valid_target(caster, *it)) {
             it = targets.erase(it);
         } else {
@@ -379,13 +382,13 @@ std::set<tripoint_bub_ms> calculate_spell_effect_area(
     return targets;
 }
 
-static std::set<tripoint_bub_ms> spell_effect_area(
-    const spell& sp, const tripoint_bub_ms& target,
-    const std::function<std::set<tripoint_bub_ms>(
-        const spell&, const tripoint_bub_ms&, const tripoint_bub_ms&, int, bool)>& aoe_func,
+static std::set<tripoint_abs_ms> spell_effect_area(
+    const spell& sp, const tripoint_abs_ms& target,
+    const std::function<std::set<tripoint_abs_ms>(
+        const spell&, const tripoint_abs_ms&, const tripoint_abs_ms&, int, bool)>& aoe_func,
     const Creature& caster, bool ignore_walls = false) {
     // calculate spell's effect area
-    std::set<tripoint_bub_ms> targets =
+    std::set<tripoint_abs_ms> targets =
         calculate_spell_effect_area(sp, target, aoe_func, caster, ignore_walls);
 
     // Return early if spell is flagged to not draw visual effects
@@ -393,7 +396,7 @@ static std::set<tripoint_bub_ms> spell_effect_area(
 
     // Draw the explosion
     std::map<tripoint_bub_ms, nc_color> explosion_colors;
-    for (auto& pt : targets) { explosion_colors[pt] = sp.damage_type_color(); }
+    for (auto& pt : targets) { explosion_colors[abs_to_bub(pt)] = sp.damage_type_color(); }
 
     if (!sp.id()->sprite.empty()) {
         explosion_handler::draw_custom_explosion(
@@ -406,7 +409,7 @@ static std::set<tripoint_bub_ms> spell_effect_area(
     return targets;
 }
 
-static void add_effect_to_target(const tripoint_bub_ms& target, const spell& sp) {
+static void add_effect_to_target(const tripoint_abs_ms& target, const spell& sp) {
     Creature* const critter = g->critter_at<Creature>(target);
     Character* const guy = g->critter_at<Character>(target);
     efftype_id spell_effect(sp.effect_data());
@@ -434,12 +437,12 @@ static void add_effect_to_target(const tripoint_bub_ms& target, const spell& sp)
 }
 
 static void damage_targets(
-    const spell& sp, Creature& caster, const std::set<tripoint_bub_ms>& targets) {
+    const spell& sp, Creature& caster, const std::set<tripoint_abs_ms>& targets) {
     bool sound_played = false;
     const int affected = std::ranges::count_if(targets, [&](const auto& target) {
         return g->critter_at<Creature>(target) != nullptr;
     });
-    for (const tripoint_bub_ms& target : targets) {
+    for (const tripoint_abs_ms& target : targets) {
         if (!sp.is_valid_target(caster, target)) { continue; }
         if (sp.has_flag(spell_flag::DUPE_SOUND) || !sound_played) {
             sp.make_sound(target, caster);
@@ -477,7 +480,7 @@ static void damage_targets(
             cr->deal_projectile_attack(&caster, atk);
         } else if (sp.damage() < 0) {
             sp.heal(target);
-            if (get_avatar().sees(cr->bub_pos())) {
+            if (get_avatar().sees(cr->abs_pos())) {
                 add_msg(m_good, _("%s wounds are closing up!"), cr->disp_name(true, true));
             }
         }
@@ -485,13 +488,13 @@ static void damage_targets(
 }
 
 void spell_effect::projectile_attack(
-    const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    std::vector<tripoint_bub_ms> trajectory = line_to(caster.bub_pos(), target);
-    auto prev_point = caster.bub_pos();
-    map& here = get_map();
-    for (std::vector<tripoint_bub_ms>::iterator iter = trajectory.begin(); iter != trajectory.end();
+    const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    std::vector<tripoint_abs_ms> trajectory = line_to(caster.abs_pos(), target);
+    auto prev_point = caster.abs_pos();
+    auto& here = get_map().get_mapbuffer();
+    for (std::vector<tripoint_abs_ms>::iterator iter = trajectory.begin(); iter != trajectory.end();
          iter++) {
-        if ((here.impassable(*iter) && !here.has_flag("THIN_OBSTACLE", *iter))
+        if ((!here.passable(*iter) && !here.has_flag("THIN_OBSTACLE", *iter))
             || here.obstructed_by_vehicle_rotation(prev_point, *iter)) {
             if (iter != trajectory.begin()) {
                 target_attack(sp, caster, *(iter - 1));
@@ -506,7 +509,7 @@ void spell_effect::projectile_attack(
 }
 
 void spell_effect::target_attack(
-    const spell& sp, Creature& caster, const tripoint_bub_ms& epicenter) {
+    const spell& sp, Creature& caster, const tripoint_abs_ms& epicenter) {
     damage_targets(
         sp, caster,
         spell_effect_area(
@@ -514,14 +517,14 @@ void spell_effect::target_attack(
     if (sp.has_flag(spell_flag::SWAP_POS)) { swap_pos(caster, epicenter); }
 }
 
-void spell_effect::cone_attack(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+void spell_effect::cone_attack(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     damage_targets(
         sp, caster,
         spell_effect_area(
             sp, target, spell_effect_cone, caster, sp.has_flag(spell_flag::IGNORE_WALLS)));
 }
 
-void spell_effect::line_attack(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+void spell_effect::line_attack(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     damage_targets(
         sp, caster,
         spell_effect_area(
@@ -531,10 +534,10 @@ void spell_effect::line_attack(const spell& sp, Creature& caster, const tripoint
 area_expander::area_expander(): frontier(area_node_comparator(area)) {}
 
 // Check whether we have already visited this node.
-int area_expander::contains(const tripoint_bub_ms& pt) const { return area_search.contains(pt); }
+int area_expander::contains(const tripoint_abs_ms& pt) const { return area_search.contains(pt); }
 
 // Adds node to a search tree. Returns true if new node is allocated.
-bool area_expander::enqueue(const tripoint_bub_ms& from, const tripoint_bub_ms& to, float cost) {
+bool area_expander::enqueue(const tripoint_abs_ms& from, const tripoint_abs_ms& to, float cost) {
     if (contains(to)) {
         // We will modify existing node if its cost is lower.
         int index = area_search[to];
@@ -553,7 +556,7 @@ bool area_expander::enqueue(const tripoint_bub_ms& from, const tripoint_bub_ms& 
 }
 
 // Run wave propagation
-int area_expander::run(const tripoint_bub_ms& center) {
+int area_expander::run(const tripoint_abs_ms& center) {
     enqueue(center, center, 0.0);
 
     static constexpr std::array<int, 8> x_offset = {{-1, 1, 0, 0, 1, -1, -1, 1}};
@@ -562,7 +565,7 @@ int area_expander::run(const tripoint_bub_ms& center) {
     // Number of nodes expanded.
     int expanded = 0;
 
-    map& here = get_map();
+    auto& here = get_map().get_mapbuffer();
 
     while (!frontier.empty()) {
         int best_index = frontier.top();
@@ -572,7 +575,7 @@ int area_expander::run(const tripoint_bub_ms& center) {
         for (size_t i = 0; i < 8; i++) {
             auto pt = best.position + point(x_offset[i], y_offset[i]);
 
-            if ((here.impassable(pt) && !here.has_flag("THIN_OBSTACLE", pt))
+            if ((!here.passable(pt) && !here.has_flag_ter("THIN_OBSTACLE", pt))
                 || here.obstructed_by_vehicle_rotation(best.position, pt)) {
                 continue;
             }
@@ -603,16 +606,20 @@ void area_expander::sort_descending() {
     std::ranges::sort(area, [](const node& a, const node& b) -> bool { return a.cost > b.cost; });
 }
 
-static void move_items(map& here, const tripoint_bub_ms& from, const tripoint_bub_ms& to) {
-    auto src_items = here.i_at(from);
-    auto dst_items = here.i_at(to);
+static void move_items(mapbuffer& here, const tripoint_abs_ms& from, const tripoint_abs_ms& to) {
+    auto src_items = here.get_items(from);
+    auto dst_items = here.get_items(to);
 
-    for (detached_ptr<item>& it : src_items.clear()) { dst_items.insert(std::move(it)); }
-    src_items.clear();
+    if (src_items && dst_items) {
+        for (detached_ptr<item>& it : src_items->clear()) {
+            here.add_item_or_charges(to, std::move(it));
+        }
+        src_items->clear();
+    }
 }
 
-static void move_field(map& here, const tripoint_bub_ms& from, const tripoint_bub_ms& to) {
-    field& src_field = here.field_at(from);
+static void move_field(mapbuffer& here, const tripoint_abs_ms& from, const tripoint_abs_ms& to) {
+    field& src_field = *here.get_field(from);
     std::map<field_type_id, int> moving_fields;
     for (const std::pair<const field_type_id, field_entry>& fd : src_field) {
         if (fd.first.is_valid() && !fd.first.id().is_null()) {
@@ -622,14 +629,14 @@ static void move_field(map& here, const tripoint_bub_ms& from, const tripoint_bu
     }
     for (const std::pair<const field_type_id, int>& fd : moving_fields) {
         here.remove_field(from, fd.first);
-        here.set_field_intensity(to, fd.first, fd.second);
+        here.set_field_intensity(to, {fd.first, fd.second});
     }
 }
 
 // Moving all objects from one point to another by the power of magic.
 static void spell_move(
-    const spell& sp, const Creature& caster, const tripoint_bub_ms& from,
-    const tripoint_bub_ms& to) {
+    const spell& sp, const Creature& caster, const tripoint_abs_ms& from,
+    const tripoint_abs_ms& to) {
     if (from == to) { return; }
 
     // Moving creatures
@@ -648,21 +655,15 @@ static void spell_move(
         }
     }
 
-    map& here = get_map();
+    auto& here = get_map().get_mapbuffer();
     // Moving items
-    if (sp.is_valid_effect_target(target_item)) {
-        auto src_items = here.i_at(from);
-        auto dst_items = here.i_at(to);
-
-        for (detached_ptr<item>& it : src_items.clear()) { dst_items.insert(std::move(it)); }
-        src_items.clear();
-    }
+    if (sp.is_valid_effect_target(target_item)) { move_items(here, from, to); }
 
     // Helper function to move fields
-    move_field(get_map(), from, to);
+    move_field(here, from, to);
 }
 
-void spell_effect::area_pull(const spell& sp, Creature& caster, const tripoint_bub_ms& center) {
+void spell_effect::area_pull(const spell& sp, Creature& caster, const tripoint_abs_ms& center) {
     area_expander expander;
 
     expander.max_range = sp.aoe();
@@ -674,10 +675,10 @@ void spell_effect::area_pull(const spell& sp, Creature& caster, const tripoint_b
 
         spell_move(sp, caster, node.position, node.from);
     }
-    sp.make_sound(caster.bub_pos(), caster);
+    sp.make_sound(caster.abs_pos(), caster);
 }
 
-void spell_effect::area_push(const spell& sp, Creature& caster, const tripoint_bub_ms& center) {
+void spell_effect::area_push(const spell& sp, Creature& caster, const tripoint_abs_ms& center) {
     area_expander expander;
 
     expander.max_range = sp.aoe();
@@ -689,15 +690,15 @@ void spell_effect::area_push(const spell& sp, Creature& caster, const tripoint_b
 
         spell_move(sp, caster, node.from, node.position);
     }
-    sp.make_sound(caster.bub_pos(), caster);
+    sp.make_sound(caster.abs_pos(), caster);
 }
 
 static void character_push_effects(
-    Creature* caster, Character& guy, tripoint_bub_ms& push_dest, const int push_distance,
-    const std::vector<tripoint_bub_ms>& push_vec) {
+    Creature* caster, Character& guy, tripoint_abs_ms& push_dest, const int push_distance,
+    const std::vector<tripoint_abs_ms>& push_vec) {
     int dist_left = std::abs(push_distance);
-    for (const tripoint_bub_ms& pushed_point : push_vec) {
-        if (get_map().impassable(pushed_point)) {
+    for (const tripoint_abs_ms& pushed_point : push_vec) {
+        if (!get_map().get_mapbuffer().passable(pushed_point)) {
             guy.hurtall(dist_left * 4, caster);
             push_dest = pushed_point;
             break;
@@ -708,39 +709,39 @@ static void character_push_effects(
     guy.setpos(push_dest);
 }
 
-void spell_effect::directed_push(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    std::set<tripoint_bub_ms> area = spell_effect_area(sp, target, spell_effect_blast, caster);
+void spell_effect::directed_push(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    std::set<tripoint_abs_ms> area = spell_effect_area(sp, target, spell_effect_blast, caster);
     // this group of variables is for deferring movement of the avatar
     int pushed_distance;
-    tripoint_bub_ms push_to;
-    std::vector<tripoint_bub_ms> pushed_vec;
+    tripoint_abs_ms push_to;
+    std::vector<tripoint_abs_ms> pushed_vec;
     bool player_pushed = false;
 
-    ::map& here = get_map();
+    auto& here = get_map().get_mapbuffer();
 
     // whether it's push or pull, so how the multimap is sorted
     // -1 is push and 1 is pull
     const int sign = sp.damage() > 0 ? -1 : 1;
 
-    std::multimap<int, tripoint_bub_ms> targets_ordered_by_range;
-    for (const tripoint_bub_ms& pt : area) {
-        targets_ordered_by_range.emplace(sign * rl_dist(pt, caster.bub_pos()), pt);
+    std::multimap<int, tripoint_abs_ms> targets_ordered_by_range;
+    for (const tripoint_abs_ms& pt : area) {
+        targets_ordered_by_range.emplace(sign * rl_dist(pt, caster.abs_pos()), pt);
     }
 
-    for (const std::pair<const int, tripoint_bub_ms>& pair : targets_ordered_by_range) {
-        tripoint_bub_ms push_point = pair.second;
-        const units::angle start_angle = coord_to_angle(caster.bub_pos(), target);
+    for (const std::pair<const int, tripoint_abs_ms>& pair : targets_ordered_by_range) {
+        tripoint_abs_ms push_point = pair.second;
+        const units::angle start_angle = coord_to_angle(caster.abs_pos(), target);
         // positive is push, negative is pull
         int push_distance = sp.damage();
-        const int prev_distance = rl_dist(caster.bub_pos(), target);
+        const int prev_distance = rl_dist(caster.abs_pos(), target);
         if (push_distance < 0) {
             push_distance = std::max(-std::abs(push_distance), -std::abs(prev_distance));
         }
         if (push_distance == 0) { continue; }
 
-        tripoint_bub_ms push_dest;
+        tripoint_abs_ms push_dest;
         calc_ray_end(start_angle, push_distance, push_point, push_dest);
-        const std::vector<tripoint_bub_ms> push_vec = line_to(push_point, push_dest);
+        const std::vector<tripoint_abs_ms> push_vec = line_to(push_point, push_dest);
 
         const Creature* critter = g->critter_at<Creature>(push_point);
         if (critter != nullptr) {
@@ -750,7 +751,7 @@ void spell_effect::directed_push(const spell& sp, Creature& caster, const tripoi
             monster* mon = g->critter_at<monster>(push_point);
             Character* guy = g->critter_at<Character>(push_point);
 
-            if ((sp.is_valid_target(target_self) && push_point == caster.bub_pos())
+            if ((sp.is_valid_target(target_self) && push_point == caster.abs_pos())
                 || (attitude_to_target == Attitude::A_FRIENDLY && sp.is_valid_target(target_ally))
                 || ((attitude_to_target == Attitude::A_HOSTILE
                      || attitude_to_target == Attitude::A_NEUTRAL)
@@ -764,8 +765,8 @@ void spell_effect::directed_push(const spell& sp, Creature& caster, const tripoi
                     pushed_vec = push_vec;
                 } else if (mon) {
                     int dist_left = std::abs(push_distance);
-                    for (const tripoint_bub_ms& pushed_push_point : push_vec) {
-                        if (get_map().impassable(pushed_push_point)) {
+                    for (const tripoint_abs_ms& pushed_push_point : push_vec) {
+                        if (!here.passable(pushed_push_point)) {
                             mon->apply_damage(&caster, bodypart_id(), dist_left * 10);
                             push_dest = pushed_push_point;
                             break;
@@ -797,7 +798,7 @@ void spell_effect::directed_push(const spell& sp, Creature& caster, const tripoi
 }
 
 
-void spell_effect::spawn_ethereal_item(const spell& sp, Creature& caster, const tripoint_bub_ms&) {
+void spell_effect::spawn_ethereal_item(const spell& sp, Creature& caster, const tripoint_abs_ms&) {
     detached_ptr<item> granted = item::spawn(sp.effect_data(), calendar::turn);
     item& as_item = *granted;
     if (!granted->is_comestible() && !(sp.has_flag(spell_flag::PERMANENT))) {
@@ -820,11 +821,11 @@ void spell_effect::spawn_ethereal_item(const spell& sp, Creature& caster, const 
     if (!as_item.count_by_charges()) {
         for (int i = 1; i < sp.damage(); i++) { you.i_add(item::spawn(as_item)); }
     }
-    sp.make_sound(caster.bub_pos(), caster);
+    sp.make_sound(caster.abs_pos(), caster);
 }
 
 void spell_effect::recover_energy(
-    const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+    const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     // this spell is not appropriate for healing
     const int healing = sp.damage();
     const std::string energy_source = sp.effect_data();
@@ -858,10 +859,10 @@ void spell_effect::recover_energy(
     } else {
         debugmsg("Invalid effect_str %s for spell %s", energy_source, sp.name());
     }
-    sp.make_sound(caster.bub_pos(), caster);
+    sp.make_sound(caster.abs_pos(), caster);
 }
 
-void spell_effect::timed_event(const spell& sp, Creature& caster, const tripoint_bub_ms&) {
+void spell_effect::timed_event(const spell& sp, Creature& caster, const tripoint_abs_ms&) {
     const std::map<std::string, timed_event_type> timed_event_map{
         {"help", timed_event_type::TIMED_EVENT_HELP},
         {"wanted", timed_event_type::TIMED_EVENT_WANTED},
@@ -880,7 +881,7 @@ void spell_effect::timed_event(const spell& sp, Creature& caster, const tripoint
     const auto iter = timed_event_map.find(sp.effect_data());
     if (iter != timed_event_map.cend()) { spell_event = iter->second; }
 
-    sp.make_sound(caster.bub_pos(), caster);
+    sp.make_sound(caster.abs_pos(), caster);
     g->timed_events.add(spell_event, calendar::turn + sp.duration_turns());
 }
 
@@ -892,8 +893,8 @@ static bool is_summon_friendly(const spell& sp) {
 }
 
 static bool add_summoned_mon(
-    const mtype_id& id, const tripoint_bub_ms& pos, const time_duration& time, const spell& sp) {
-    monster* const mon_ptr = g->place_critter_at(id, pos);
+    const mtype_id& id, const tripoint_abs_ms& pos, const time_duration& time, const spell& sp) {
+    monster* const mon_ptr = g->place_critter_at(id, abs_to_bub(pos));
     if (!mon_ptr) { return false; }
     const bool permanent = sp.has_flag(spell_flag::PERMANENT);
     monster& spawned_mon = *mon_ptr;
@@ -910,9 +911,9 @@ static bool add_summoned_mon(
 }
 
 void spell_effect::spawn_summoned_monster(
-    const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+    const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     const mtype_id mon_id(sp.effect_data());
-    std::set<tripoint_bub_ms> area = spell_effect_area(sp, target, spell_effect_blast, caster);
+    std::set<tripoint_abs_ms> area = spell_effect_area(sp, target, spell_effect_blast, caster);
     // this should never be negative, but this'll keep problems from happening
     size_t num_mons = std::abs(sp.damage());
     const time_duration summon_time = sp.duration_turns();
@@ -935,14 +936,14 @@ void spell_effect::spawn_summoned_monster(
 }
 
 void spell_effect::spawn_summoned_vehicle(
-    const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    map& here = get_map();
+    const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    auto& here = get_map().get_mapbuffer();
     if (here.veh_at(target)) {
         caster.add_msg_if_player(m_bad, _("There is already a vehicle there."));
         return;
     }
-    vehicle* veh =
-        here.add_vehicle(sp.summon_vehicle_id(), target, -90_degrees, 100, 0, false, false, true);
+    vehicle* veh = get_map().add_vehicle(
+        sp.summon_vehicle_id(), abs_to_bub(target), -90_degrees, 100, 0, false, false, true);
     if (veh) {
         veh->magic = true;
         if (caster.is_player()) { veh->set_owner(*caster.as_player()); }
@@ -952,39 +953,39 @@ void spell_effect::spawn_summoned_vehicle(
     }
 }
 
-void spell_effect::translocate(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+void spell_effect::translocate(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     avatar* you = caster.as_avatar();
     if (you == nullptr) { return; }
     you->translocators->translocate(
         spell_effect_area(sp, target, spell_effect_blast, caster, true));
 }
 
-void spell_effect::none(const spell& sp, Creature&, const tripoint_bub_ms&) {
+void spell_effect::none(const spell& sp, Creature&, const tripoint_abs_ms&) {
     debugmsg("ERROR: %s has invalid spell effect.", sp.name());
 }
 
 void spell_effect::transform_blast(
-    const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+    const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     ter_furn_transform_id transform(sp.effect_data());
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), true);
-    for (const tripoint_bub_ms& location : area) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), true);
+    for (const tripoint_abs_ms& location : area) {
         if (one_in(sp.damage())) {
-            transform->transform(location);
-            transform->add_all_messages(caster, location);
+            transform->transform(abs_to_bub(location));
+            transform->add_all_messages(caster, abs_to_bub(location));
         }
     }
 }
 
-void spell_effect::noise(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+void spell_effect::noise(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     sp.make_sound(target, caster, sp.damage());
 }
 
-void spell_effect::vomit(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), true);
+void spell_effect::vomit(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), true);
     bool sound_played = false;
-    for (const tripoint_bub_ms& potential_target : area) {
+    for (const tripoint_abs_ms& potential_target : area) {
         if (!sp.is_valid_target(caster, potential_target)) { continue; }
         Character* const ch = g->critter_at<Character>(potential_target);
         if (!ch) { continue; }
@@ -996,27 +997,27 @@ void spell_effect::vomit(const spell& sp, Creature& caster, const tripoint_bub_m
     }
 }
 
-void spell_effect::explosion(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    explosion_handler::explosion(target, &caster, sp.damage(), sp.aoe() / 10.0, true);
+void spell_effect::explosion(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    explosion_handler::explosion(abs_to_bub(target), &caster, sp.damage(), sp.aoe() / 10.0, true);
 }
 
-void spell_effect::flashbang(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+void spell_effect::flashbang(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     if (!sp.id()->sprite.empty()) {
         explosion_handler::flashbang(
-            target, caster.is_avatar() && !sp.is_valid_target(valid_target::target_self),
-            sp.id()->sprite);
+            abs_to_bub(target),
+            caster.is_avatar() && !sp.is_valid_target(valid_target::target_self), sp.id()->sprite);
     } else {
         explosion_handler::flashbang(
-            target, caster.is_avatar() && !sp.is_valid_target(valid_target::target_self),
-            "explosion");
+            abs_to_bub(target),
+            caster.is_avatar() && !sp.is_valid_target(valid_target::target_self), "explosion");
     }
 }
 
-void spell_effect::mod_moves(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), false);
+void spell_effect::mod_moves(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), false);
     bool sound_played = false;
-    for (const tripoint_bub_ms& potential_target : area) {
+    for (const tripoint_abs_ms& potential_target : area) {
         if (!sp.is_valid_target(caster, potential_target)) { continue; }
         Creature* critter = g->critter_at<Creature>(potential_target);
         if (!critter) { continue; }
@@ -1028,7 +1029,7 @@ void spell_effect::mod_moves(const spell& sp, Creature& caster, const tripoint_b
     }
 }
 
-void spell_effect::map_area(const spell& sp, Creature& caster, const tripoint_bub_ms&) {
+void spell_effect::map_area(const spell& sp, Creature& caster, const tripoint_abs_ms&) {
     const avatar* you = caster.as_avatar();
     if (!you) {
         // revealing the map only makes sense for the avatar
@@ -1038,9 +1039,9 @@ void spell_effect::map_area(const spell& sp, Creature& caster, const tripoint_bu
     get_overmapbuffer(you->get_dimension()).reveal(center.xy(), sp.aoe(), center.z());
 }
 
-void spell_effect::morale(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), false);
+void spell_effect::morale(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), false);
     if (sp.effect_data().empty()) {
         debugmsg("ERROR: %s must have a valid morale_type as effect_str.  None specified.",
                  sp.id().c_str());
@@ -1052,7 +1053,7 @@ void spell_effect::morale(const spell& sp, Creature& caster, const tripoint_bub_
         return;
     }
     bool sound_played = false;
-    for (const tripoint_bub_ms& potential_target : area) {
+    for (const tripoint_abs_ms& potential_target : area) {
         player* player_target;
         if (!(sp.is_valid_target(caster, potential_target)
               && (player_target = g->critter_at<player>(potential_target)))) {
@@ -1068,11 +1069,11 @@ void spell_effect::morale(const spell& sp, Creature& caster, const tripoint_bub_
     }
 }
 
-void spell_effect::charm_monster(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), false);
+void spell_effect::charm_monster(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), false);
     bool sound_played = false;
-    for (const tripoint_bub_ms& potential_target : area) {
+    for (const tripoint_abs_ms& potential_target : area) {
         if (!sp.is_valid_target(caster, potential_target)) { continue; }
         monster* mon = g->critter_at<monster>(potential_target);
         if (!mon) { continue; }
@@ -1087,11 +1088,11 @@ void spell_effect::charm_monster(const spell& sp, Creature& caster, const tripoi
     }
 }
 
-void spell_effect::mutate(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), false);
+void spell_effect::mutate(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), false);
     bool sound_played = false;
-    for (const tripoint_bub_ms& potential_target : area) {
+    for (const tripoint_abs_ms& potential_target : area) {
         if (!sp.is_valid_target(caster, potential_target)) { continue; }
         Character* guy = g->critter_at<Character>(potential_target);
         if (!guy) { continue; }
@@ -1131,19 +1132,21 @@ void spell_effect::mutate(const spell& sp, Creature& caster, const tripoint_bub_
     }
 }
 
-void spell_effect::bash(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
-    const std::set<tripoint_bub_ms> area =
-        spell_effect_blast(sp, caster.bub_pos(), target, sp.aoe(), true);
-    for (const tripoint_bub_ms& potential_target : area) {
+void spell_effect::bash(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
+    const std::set<tripoint_abs_ms> area =
+        spell_effect_blast(sp, caster.abs_pos(), target, sp.aoe(), true);
+    for (const tripoint_abs_ms& potential_target : area) {
         if (!sp.is_valid_target(caster, potential_target)) { continue; }
         // the bash already makes noise, so no need for spell::make_sound()
-        get_map().bash(potential_target, sp.damage(), sp.has_flag(spell_flag::SILENT));
+        get_map()
+            .get_mapbuffer()
+            .bash(potential_target, sp.damage(), sp.has_flag(spell_flag::SILENT));
     }
 }
 
-void spell_effect::dash(const spell& sp, Creature& caster, const tripoint_bub_ms& target) {
+void spell_effect::dash(const spell& sp, Creature& caster, const tripoint_abs_ms& target) {
     const auto start = caster.abs_pos();
-    std::vector<tripoint_abs_ms> trajectory = line_to(start, bub_to_abs(target));
+    std::vector<tripoint_abs_ms> trajectory = line_to(start, target);
     avatar* caster_you = caster.as_avatar();
     auto walk_point = trajectory.begin();
     if (*walk_point == start) { ++walk_point; }
@@ -1153,11 +1156,11 @@ void spell_effect::dash(const spell& sp, Creature& caster, const tripoint_bub_ms
     caster.add_effect(dashing_effect, 1_turns);
     while (walk_point != trajectory.end()) {
         if (caster_you != nullptr) {
-            if (g->critter_at(*walk_point) || !g->walk_move(abs_to_bub(*walk_point), false)) {
+            if (g->critter_at(*walk_point) || !g->walk_move(*walk_point, false)) {
                 --walk_point;
                 break;
             } else {
-                sp.create_field(abs_to_bub(*(walk_point - 1)));
+                sp.create_field(*(walk_point - 1));
                 g->draw_ter();
             }
         }

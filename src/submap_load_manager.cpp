@@ -28,6 +28,7 @@
 #include "point.h"
 #include "profile.h"
 #include "thread_pool.h"
+#include "vehicle.h"
 
 namespace
 {
@@ -341,15 +342,11 @@ auto submap_load_manager::evict_omt_column( const omt_column_key &key ) -> void
 {
     const auto &[dim_id, omt_xy] = key;
     auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-    const auto was_dirty = dirty_omts_.contains( key );
-    if( was_dirty ) {
-        dirty_omts_.erase( key );
-    }
     std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
     [&]( const auto z ) {
         const auto pos = tripoint_abs_omt{ omt_xy, z };
         finish_lazy_omt_job( omt_key{ dim_id, pos } );
-        mb.unload_omt( pos, was_dirty );
+        mb.unload_omt( pos );
     } );
 }
 
@@ -470,9 +467,6 @@ auto submap_load_manager::apply_lazy_omt_result( const omt_key &key,
         const lazy_omt_load_result &result ) -> bool
 {
     MAPBUFFER_REGISTRY.get( key.first ).drain_pending_submap_destroy();
-    if( result.dirty || result.generated() ) {
-        dirty_omts_.insert( { key.first, key.second.xy() } );
-    }
     return result.generated();
 }
 
@@ -876,6 +870,12 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
 {
     ZoneScoped;
 
+    if( vehicle_footprint_simulation_enabled ) {
+        update_vehicle_footprint_requests();
+    } else {
+        release_vehicle_footprint_requests();
+    }
+
     if( lazy_border_work_deferred_ ) {
         if( !has_lazy_border_work_pending() ) {
             lazy_border_work_deferred_ = false;
@@ -959,16 +959,12 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     using horiz_omt_key = std::pair<dimension_id, point_abs_omt>;
     std::unordered_set<horiz_omt_key, coord_pair_hash<point_abs_omt>> new_omts;
     for( const desired_key &key : simulated ) {
-        if( prev_simulated_.count( key ) == 0 ) {
+        auto &mb = MAPBUFFER_REGISTRY.get( key.first );
+        if( !mb.is_column_state( key.second, submap_column_load_state::simulated ) ) {
             new_omts.emplace( key.first, project_to<coords::omt>( key.second ) );
         }
     }
 
-    // Mark ALL z-levels for newly-simulated horizontal OMTs as dirty: they
-    // will receive game logic and must be saved to disk when evicted.
-    for( const auto &[dim_id, omt_xy] : new_omts ) {
-        dirty_omts_.insert( { dim_id, omt_xy } );
-    }
 
     // ---- Step 1: parallel disk preload for newly-simulated omts ----
     // preload_omt() is thread-safe (disk I/O outside submaps_mutex_; add
@@ -1065,45 +1061,28 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
         run_deferred_mapgen_hooks_and_omt_post_passes( generated_omt_columns );
     }
 
-    // ---- Listener notifications (simulated set only) ----
-    // The simulated set is 2-D; fire for every z-level when a horizontal
-    // position enters or leaves simulation.
     {
-        ZoneScopedN( "slm_listener_notifications" );
+        ZoneScopedN( "slm_push_simulated_to_mapbuffer" );
+        std::unordered_map<dimension_id, std::unordered_set<point_abs_sm>> by_dim;
         for( const desired_key &key : simulated ) {
-            if( prev_simulated_.count( key ) == 0 ) {
-                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                    const tripoint_abs_sm pos{ key.second, z };
-                    for( submap_load_listener *listener : listeners_ ) {
-                        listener->on_submap_loaded( pos, key.first );
-                    }
-                }
-            }
+            by_dim[key.first].insert( key.second );
         }
+        for( auto &[dim_id, cols] : by_dim ) {
+            MAPBUFFER_REGISTRY.get( dim_id ).set_simulated_submaps( cols );
+        }
+    }
 
-        for( const desired_key &key : prev_simulated_ ) {
-            if( simulated.count( key ) == 0 ) {
-                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-                    const tripoint_abs_sm pos{ key.second, z };
-                    for( submap_load_listener *listener : listeners_ ) {
-                        listener->on_submap_unloaded( pos, key.first );
-                    }
-                }
-            }
-        }
-    } // slm_listener_notifications
 
     // ---- Retain departed omts (full set: simulated + border) ----
-    // prev_desired_ is now 2-D (horizontal SM positions).  Multiple entries
-    // can map to the same horizontal OMT (up to 4: the 2×2 omt footprint).
-    // omts_checked deduplicates by horizontal OMT so we retain each column
-    // exactly once.  The sibling check and the z-level loop both work in
-    // terms of the 2-D desired set.
+    // Multiple entries can map to the same horizontal OMT (up to 4: the
+    // 2×2 omt footprint).  omts_checked deduplicates by horizontal OMT so
+    // we retain each column exactly once.  The sibling check and the
+    // z-level loop both work in terms of the 2-D desired set.
     {
         ZoneScopedN( "slm_retain_departed_omts" );
         using horiz_key = std::pair<dimension_id, point_abs_omt>;
         std::unordered_set<horiz_key, coord_pair_hash<point_abs_omt>> omts_checked;
-        for( const desired_key &key : prev_desired_ ) {
+        for( const desired_key &key : previous_all_desired_ ) {
             if( all_desired.count( key ) != 0 ) {
                 continue;  // still desired — skip
             }
@@ -1132,14 +1111,123 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     process_or_defer_lazy_border_work( defer_lazy_border_work );
 
     rebuild_simulated_submaps_by_dimension( simulated );
-    prev_simulated_ = std::move( simulated );
-    prev_desired_ = std::move( all_desired );
+    previous_all_desired_ = std::move( all_desired );
 }
 
 auto submap_load_manager::is_requested( const dimension_id &dim_id,
                                         const point_abs_sm &pos ) const -> bool
 {
-    return prev_desired_.count( { dim_id, pos } ) > 0;
+    return std::ranges::any_of( requests_, [&]( const auto & kv ) {
+        const submap_load_request &req = kv.second;
+        return req.dim_id == dim_id && contains_request_pos( req, pos );
+    } );
+}
+
+auto submap_load_manager::is_stably_requested( const dimension_id &dim_id,
+        const point_abs_sm &pos ) const -> bool
+{
+    return std::ranges::any_of( requests_, [&]( const auto & kv ) {
+        const submap_load_request &req = kv.second;
+        return req.dim_id == dim_id && load_request_source_is_stable( req.source ) &&
+               contains_request_pos( req, pos );
+    } );
+}
+
+auto submap_load_manager::release_vehicle_footprint_requests() -> void
+{
+    for( const auto &[veh, request] : vehicle_footprint_requests_ ) {
+        release_load( request.handle );
+    }
+    vehicle_footprint_requests_.clear();
+}
+
+auto submap_load_manager::update_vehicle_footprint_requests() -> void
+{
+    auto active_vehicles = std::unordered_set<vehicle *> {};
+
+    MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim_id, mapbuffer & buffer ) {
+        buffer.for_each_vehicle( [&]( vehicle & veh ) {
+            active_vehicles.insert( &veh );
+
+            const auto footprints = buffer.get_vehicle_submap_footprints( veh );
+            auto footprint_begin = std::optional<point_abs_sm> {};
+            auto footprint_end = std::optional<point_abs_sm> {};
+            bool has_stable_contact = false;
+            bool fully_stable = true;
+
+            for( const auto &footprint : footprints ) {
+                if( !footprint ) {
+                    continue;
+                }
+                const auto begin = footprint->min.xy();
+                const auto end = footprint->max.xy();
+                if( !footprint_begin ) {
+                    footprint_begin = begin;
+                    footprint_end = end;
+                } else {
+                    footprint_begin->x() = std::min( footprint_begin->x(), begin.x() );
+                    footprint_begin->y() = std::min( footprint_begin->y(), begin.y() );
+                    footprint_end->x() = std::max( footprint_end->x(), end.x() );
+                    footprint_end->y() = std::max( footprint_end->y(), end.y() );
+                }
+
+                for( const auto &submap_pos : point_range<point_abs_sm>( begin, end ) ) {
+                    if( is_stably_requested( dim_id, tripoint_abs_sm{ submap_pos, 0 } ) ) {
+                        has_stable_contact = true;
+                    } else {
+                        fully_stable = false;
+                    }
+                }
+            }
+
+            auto request_it = vehicle_footprint_requests_.find( &veh );
+            if( !has_stable_contact || fully_stable || !footprint_begin || !footprint_end ) {
+                if( request_it != vehicle_footprint_requests_.end() ) {
+                    release_load( request_it->second.handle );
+                    vehicle_footprint_requests_.erase( request_it );
+                }
+                return;
+            }
+
+            const auto request_begin = *footprint_begin;
+            const auto request_end = *footprint_end + point_rel_sm{ 1, 1 };
+            if( request_it == vehicle_footprint_requests_.end() ) {
+                const auto handle = request_load( load_request_source::vehicle_footprint,
+                                                  dim_id, request_begin, request_end );
+                vehicle_footprint_requests_.emplace( &veh, vehicle_footprint_request {
+                    .dim_id = dim_id,
+                    .begin = request_begin,
+                    .end = request_end,
+                    .handle = handle,
+                } );
+                return;
+            }
+
+            auto &request = request_it->second;
+            if( request.dim_id != dim_id ) {
+                release_load( request.handle );
+                request = vehicle_footprint_request {
+                    .dim_id = dim_id,
+                    .begin = request_begin,
+                    .end = request_end,
+                    .handle = request_load( load_request_source::vehicle_footprint,
+                                            dim_id, request_begin, request_end ),
+                };
+            } else if( request.begin != request_begin || request.end != request_end ) {
+                update_request( request.handle, request_begin, request_end );
+                request.begin = request_begin;
+                request.end = request_end;
+            }
+        } );
+    } );
+
+    std::erase_if( vehicle_footprint_requests_, [&]( const auto & entry ) {
+        if( active_vehicles.contains( entry.first ) ) {
+            return false;
+        }
+        release_load( entry.second.handle );
+        return true;
+    } );
 }
 
 auto submap_load_manager::is_properly_requested( const dimension_id &dim_id,
@@ -1228,16 +1316,10 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
     return { view.begin(), view.end() };
 }
 
-auto submap_load_manager::is_fully_drained() const noexcept -> bool
-{
-    return lazy_omt_futures_.empty();
-}
-
 void submap_load_manager::flush_prev_desired()
 {
-    assert( is_fully_drained() );
-    prev_desired_.clear();
-    prev_simulated_.clear();
+    release_vehicle_footprint_requests();
+    previous_all_desired_.clear();
     simulated_submaps_by_dimension_.clear();
     prev_requests_.clear();
     retained_omts_.clear();
@@ -1249,18 +1331,4 @@ void submap_load_manager::flush_prev_desired()
     lazy_omt_focus_.reset();
     lazy_omt_budget_credit_ = 0.0;
     lazy_omt_last_credit_turn_ = -1;
-    dirty_omts_.clear();
-}
-
-void submap_load_manager::add_listener( submap_load_listener *listener )
-{
-    if( std::find( listeners_.begin(), listeners_.end(), listener ) == listeners_.end() ) {
-        listeners_.push_back( listener );
-    }
-}
-
-void submap_load_manager::remove_listener( submap_load_listener *listener )
-{
-    listeners_.erase( std::remove( listeners_.begin(), listeners_.end(), listener ),
-                      listeners_.end() );
 }

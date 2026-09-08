@@ -176,7 +176,7 @@ void advanced_inv_area::init()
 
     // trap?
     const trap &tr = here.tr_at( pos );
-    if( tr.can_see( pos, g->u ) && !tr.is_benign() ) {
+    if( tr.can_see( bub_to_abs( pos ), g->u ) && !tr.is_benign() ) {
         flags.append( _( " TRAP" ) );
     }
 

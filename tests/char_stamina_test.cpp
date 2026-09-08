@@ -26,7 +26,7 @@ static int actual_burn_rate(player& dummy, character_movemode move_mode) {
 
     // Measure stamina burned, and ensure it is nonzero
     int before_stam = dummy.get_stamina();
-    dummy.burn_move_stamina(to_moves<int>(1_turns));
+    dummy.burn_move_stamina(to_moves<int>(1_turns), false);
     int after_stam = dummy.get_stamina();
     REQUIRE(before_stam > after_stam);
 
@@ -111,13 +111,13 @@ TEST_CASE("modify character stamina", "[stamina][modify]") {
         }
 
         WHEN("they lose all of their remaining stamina") {
-            dummy.mod_stamina(-(dummy.get_stamina()));
+            dummy.mod_stamina(-(dummy.get_stamina()), false);
 
             THEN("stamina is at zero") { CHECK(dummy.get_stamina() == 0); }
         }
 
         WHEN("they lose more stamina than they have remaining") {
-            dummy.mod_stamina(-(dummy.get_stamina() + 1));
+            dummy.mod_stamina(-(dummy.get_stamina() + 1), false);
 
             THEN("stamina is at zero") { CHECK(dummy.get_stamina() == 0); }
         }

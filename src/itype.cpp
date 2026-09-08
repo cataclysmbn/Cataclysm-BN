@@ -183,21 +183,22 @@ const use_function *itype::get_use( const std::string &iuse_name ) const
     return iter != use_methods.end() ? &iter->second : nullptr;
 }
 
-void itype::tick( player &p, item &it, const tripoint_bub_ms &pos ) const
+void itype::tick( Character &p, item &it ) const
 {
     // If istate_callbacks defines on_tick, use it instead of legacy use_methods loop
     if( istate_callbacks && istate_callbacks->has_on_tick() ) {
-        istate_callbacks->call_on_tick( p, it, pos );
+        istate_callbacks->call_on_tick( p, it );
         return;
     }
     // Legacy fallback: tick via use_methods (iuse tick_func)
     // Maybe should move charge decrementing here?
+    const tripoint_abs_ms use_pos = it.abs_pos();
     for( auto &method : use_methods ) {
-        method.second.call( p, it, true, pos );
+        method.second.call( p, it, true, use_pos );
     }
 }
 
-int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos ) const
+int itype::invoke( Character &p, item &it, const tripoint_abs_ms &pos ) const
 {
     if( !has_use() ) {
         return 0;
@@ -205,7 +206,7 @@ int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos ) const
     return invoke( p, it, pos, use_methods.begin()->first );
 }
 
-int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos,
+int itype::invoke( Character &p, item &it, const tripoint_abs_ms &pos,
                    const std::string &iuse_name ) const
 {
     const use_function *use = get_use( iuse_name );

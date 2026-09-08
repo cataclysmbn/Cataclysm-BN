@@ -24,7 +24,7 @@ TEST_CASE("solar_cache_uses_date_sensitive_hour", "[vision][zlevel][sun]") {
     const auto one_season = calendar::season_length();
     const auto summer_after_sunrise = calendar::turn_zero + one_season + 5_hours + 30_minutes;
     const auto winter_before_sunrise = calendar::turn_zero + one_season * 3 + 5_hours + 30_minutes;
-    const auto sample = tripoint_bub_ms(60, 60, OVERMAP_HEIGHT);
+    const auto sample = abs_to_map_local(here, tripoint_abs_ms(0, 0, OVERMAP_HEIGHT));
 
     REQUIRE(time_past_midnight(summer_after_sunrise) == time_past_midnight(winter_before_sunrise));
     REQUIRE(summer_after_sunrise > sunrise(summer_after_sunrise));
@@ -59,7 +59,7 @@ TEST_CASE("opening_floor_invalidates_below_seen_cache", "[vision][zlevel]") {
     const ter_id t_open_air("t_open_air");
 
     // Place the player on z=1 so we have a meaningful "below".
-    g->place_player(tripoint_bub_ms(60, 60, 1));
+    g->place_player(tripoint_abs_ms::above());
 
     const auto hole_pos = g->u.bub_pos() + point_east;
 
@@ -88,7 +88,7 @@ TEST_CASE("solid_floor_blocks_directly_below_visibility", "[vision][zlevel]") {
 
     const ter_id t_floor("t_floor");
 
-    g->place_player(tripoint_bub_ms(60, 60, 1));
+    g->place_player(tripoint_abs_ms::above());
 
     calendar::turn = calendar::turn_zero + 12_hours;
     g->reset_light_level();
@@ -118,7 +118,7 @@ TEST_CASE("opening_floor_rebuilds_below_visibility", "[vision][zlevel]") {
     const ter_id t_floor("t_floor");
     const ter_id t_open_air("t_open_air");
 
-    g->place_player(tripoint_bub_ms(60, 60, 1));
+    g->place_player(tripoint_abs_ms::above());
 
     calendar::turn = calendar::turn_zero + 12_hours;
     g->reset_light_level();
@@ -130,8 +130,8 @@ TEST_CASE("opening_floor_rebuilds_below_visibility", "[vision][zlevel]") {
 
     here.invalidate_map_cache(hole_pos.z());
     here.invalidate_map_cache(hole_pos.z() - 1);
-    here.build_map_cache(g->u.bub_pos().z());
-    here.update_visibility_cache(g->u.bub_pos().z());
+    here.build_map_cache(g->u.abs_pos().z());
+    here.update_visibility_cache(g->u.abs_pos().z());
 
     const level_cache& below_cache = here.access_cache(hole_pos.z() - 1);
 
