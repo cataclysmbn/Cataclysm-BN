@@ -129,7 +129,8 @@ bool is_pool_worker_thread();
  *
  * Falls through to a direct serial loop when:
  *   - n <= 1 (trivial range, avoid dispatch overhead), or
- *   - num_workers == 0 (single-core machine).
+ *   - num_workers == 0 (single-core machine), or
+ *   - the caller is a pool worker (nested dispatch could exhaust the pool).
  *
  * F must be callable as  void F(int index)
  */
@@ -150,8 +151,8 @@ void parallel_for( int begin, int end, F &&f )
     cata_thread_pool &pool = get_thread_pool();
     const int nw = static_cast<int>( pool.num_workers() );
 
-    // Serial fallback on single-core machines.
-    if( nw == 0 ) {
+    // Workers must not wait for nested tasks queued to their own saturated pool.
+    if( nw == 0 || is_pool_worker_thread() ) {
         for( int i = begin; i < end; ++i ) {
             f( i );
         }
@@ -192,7 +193,7 @@ void parallel_for( int begin, int end, F &&f )
  * than dividing the range evenly by number of workers.  Useful when the
  * natural work unit has a known, fixed size.
  *
- * Falls through to a serial loop when nw == 0 or num_chunks <= 1.
+ * Falls through to a serial loop when nw == 0, num_chunks <= 1, or called by a pool worker.
  *
  * F must be callable as  void F(int index)
  */
@@ -209,7 +210,7 @@ void parallel_for_chunked( int begin, int end, int chunk_size, F &&f )
     const int n = end - begin;
     const int num_chunks = ( n + chunk_size - 1 ) / chunk_size;
 
-    if( nw == 0 || num_chunks <= 1 ) {
+    if( nw == 0 || num_chunks <= 1 || is_pool_worker_thread() ) {
         for( int i = begin; i < end; ++i ) {
             f( i );
         }
