@@ -20,6 +20,7 @@ build-data/mesa
 build-data/mesa*
 build-data/mesa/*
 test_user_dir*
+/test-diagnostics/
 /build-start-time
 /cmake-build-debug/
 /config/

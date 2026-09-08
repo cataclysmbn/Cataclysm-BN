@@ -223,8 +223,16 @@ jobs:
           path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
           if-no-files-found: error
 
+      - name: Prepare test hang diagnostics
+        if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
+        run: |
+          sudo apt-get install -y gdb
+          sudo sysctl -w kernel.yama.ptrace_scope=0
+          deno test -A build-scripts/test-watchdog-tests.ts build-scripts/run-linux-test-shards.ts
+
       - name: run tests
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
+        timeout-minutes: 120
         run: |
           # Run tests using parallel execution
           Xvfb :99 -screen 0 1280x1024x24 &
@@ -250,6 +258,14 @@ jobs:
                 $test_bin $test_opts '~*' --user-dir=all_modded --mods="${mods}"
               done
           fi
+
+      - name: Upload test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: test-diagnostics-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
+          path: test-diagnostics/
+          if-no-files-found: ignore
 
       - name: upload artifacts if failed
         uses: actions/upload-artifact@v4.6.0
