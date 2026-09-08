@@ -1021,7 +1021,7 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
         add_msg( m_good, _( "You refuse to use this gun." ) );
         return false;
     } else if( you.has_trait( trait_GUNNUT ) && !weapon.is_firearm() ) {
-        add_msg( m_good, _( "You refuse to use this non-gun."));
+        add_msg( m_good, _( "You refuse to use this non-gun." ) );
         return false;
     }
 
