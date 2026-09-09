@@ -20,6 +20,7 @@
 #include "timed_event.h"
 #include "units_temperature.h"
 #include "vehicle.h"
+#include "vitamin.h"
 #include "weather.h"
 
 #include <string>
@@ -166,4 +167,79 @@ TEST_CASE(
             g->timed_events.add(TIMED_EVENT_WANTED, calendar::turn + 30_seconds);
         });
     }
+}
+
+struct body_aging {
+    int thirst = 0;
+    int fatigue = 0;
+    int vitamins = 0;
+    int turns = 0;
+};
+
+// Age the body for a fixed slice of calendar time, keeping a wait activity
+// alive so the skip batch stays eligible, and report how far the needs moved.
+static auto measure_body_aging(const std::string& action_scale) -> body_aging {
+    const auto no_autosave = override_option("AUTOSAVE", "false");
+    const auto global_actions = override_option("TIME_ACTION_SCALE", action_scale);
+    const auto normal_bubble_size =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const auto no_mobile_bubble = override_option("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const auto no_idle_bubble = override_option("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    const auto no_underground_bubble = override_option("UNDERGROUND_BUBBLE_SIZE", "0");
+    const auto no_vehicle_bubble = override_option("VEHICLE_BUBBLE_SIZE", "0");
+    const auto no_combat_bubble = override_option("COMBAT_BUBBLE_SIZE", "0");
+
+    prepare_fixed_window_wait(1_hours);
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+
+    const auto vitamin_total = []() -> int {
+        auto total = 0;
+        for (const auto& v : vitamin::all()) { total += g->u.vitamin_get(v.id); }
+        return total;
+    };
+
+    const auto start_turn = calendar::turn;
+    const auto thirst_before = g->u.get_thirst();
+    const auto fatigue_before = g->u.get_fatigue();
+    const auto vitamins_before = vitamin_total();
+
+    const auto measured = 30_minutes;
+    while (calendar::turn - start_turn < measured) {
+        auto& weather = get_weather();
+        if (weather.nextweather <= calendar::turn + 10_minutes) {
+            weather.nextweather = calendar::turn + 1_hours;
+        }
+        if (!g->u.activity || !*g->u.activity || g->u.activity->complete()) {
+            g->u.assign_activity(act_wait, to_moves<int>(1_hours), 0);
+        }
+        g->do_turn();
+    }
+
+    return body_aging{
+        g->u.get_thirst() - thirst_before,
+        g->u.get_fatigue() - fatigue_before,
+        vitamins_before - vitamin_total(),
+        to_turns<int>(calendar::turn - start_turn),
+    };
+}
+
+TEST_CASE(
+    "fixed window activity skip ages the body by elapsed time, not by action scale",
+    "[activity][fixed_window][speed]") {
+    const auto normal = measure_body_aging("100");
+    const auto slow = measure_body_aging("10");
+
+    UNSCOPED_INFO(
+        "scale 100: " << normal.turns << " turns, thirst +" << normal.thirst << " fatigue +"
+                      << normal.fatigue << " vitamins -" << normal.vitamins);
+    UNSCOPED_INFO(
+        "scale 10:  " << slow.turns << " turns, thirst +" << slow.thirst << " fatigue +"
+                      << slow.fatigue << " vitamins -" << slow.vitamins);
+
+    // Both runs cover the same calendar time, so the body should age the same.
+    REQUIRE(slow.turns >= normal.turns - to_turns<int>(1_minutes));
+    REQUIRE(slow.turns <= normal.turns + to_turns<int>(1_minutes));
+    CHECK(slow.thirst == normal.thirst);
+    CHECK(slow.fatigue == normal.fatigue);
+    CHECK(slow.vitamins == normal.vitamins);
 }
