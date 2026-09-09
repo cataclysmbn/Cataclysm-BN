@@ -1557,6 +1557,9 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
     if( used->has_flag( flag_ADD_UPS_TOGGLE ) && !used->type->has_flag( flag_ADD_UPS_TOGGLE ) ) {
         use_methods["TOGGLE_UPS_CHARGING"] = item_controller->usage_from_string( "TOGGLE_UPS_CHARGING" );
     }
+    for( const auto *it : used->contents.all_items_ptr() ) {
+        use_methods.insert( it->type->use_methods.begin(), it->type->use_methods.end() );
+    }
     if( use_methods.empty() ) {
         return false;
     } else if( use_methods.size() == 1 ) {
@@ -1569,7 +1572,8 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
     umenu.hilight_disabled = true;
 
     for( const auto &e : use_methods ) {
-        const auto res = e.second.can_call( *this, *used, false, pt );
+        item *actually_used = used->get_usable_item( e.first );
+        const auto res = e.second.can_call( *this, *actually_used, false, pt );
         umenu.addentry_desc( MENU_AUTOASSIGN, res.success(), MENU_AUTOASSIGN, e.second.get_name(),
                              res.str() );
     }
