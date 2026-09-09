@@ -1907,7 +1907,7 @@
     "to_hit": -1,
     "revert_to": "towel",
     "use_action": "TOWEL",
-    "flags": [ "WET", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ],
+    "flags": [ "OVERSIZE", "ALLOWS_TAIL_SNAKE" ],
     "coverage": 50,
     "material_thickness": 1
   },
