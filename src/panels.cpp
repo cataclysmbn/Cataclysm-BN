@@ -1171,14 +1171,14 @@ static std::string get_sound( const avatar &u )
         const int weather_vol = ( weather.weather_id->sound_attn );
         const int wind_volume = ( std::min( 150, weather.windspeed ) );
         const int INDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
-                                         2 * weather_vol ) );
+                                         2 * weather_vol ) ) / 100;
         // We also use this as the base ambient to measure horde signals against.
         const int OUTDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
-                                          wind_volume + weather_vol ) );
-        const int AMBIENT = ( get_map().is_outside( u.bub_pos() ) ?
-                              OUTDOOR_AMBIENT :
-                              INDOOR_AMBIENT ) / 100;
-        const int dist_to_ambient = std::pow( 10, ( u.volume - AMBIENT ) / 20 );
+                                          wind_volume + weather_vol ) ) / 100;
+        const int AMBIENT = get_map().is_outside( u.bub_pos() ) ?
+                            OUTDOOR_AMBIENT :
+                            INDOOR_AMBIENT;
+        const int dist_to_ambient = std::pow( 10.0, double( u.volume - AMBIENT ) / 20.0 );
         snd = std::to_string( dist_to_ambient );
     }
     return snd;
