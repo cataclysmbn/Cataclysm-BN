@@ -4351,23 +4351,23 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     int max_error = ( goodhearing ) ? 0 : 2;
     if( volume < -1000 ) {
         // -10dB or greater below ambient
-        max_error = ( goodhearing ) ? 8 : 16;
+        max_error = ( goodhearing ) ? 8 : 0;
 
     } else if( volume < 0 ) {
         // -10 - 0 dB below ambient
-        max_error = ( goodhearing ) ? 6 : 12;
+        max_error = ( goodhearing ) ? 6 : 0;
 
     } else if( volume < 1000 ) {
         // 0-10dB greater than ambient
-        max_error = ( goodhearing ) ? 4 : 10;
+        max_error = ( goodhearing ) ? 5 : 12;
 
     } else if( volume < 2000 ) {
         // 10-20dB greater than ambient
-        max_error = ( goodhearing ) ? 3 : 8;
+        max_error = ( goodhearing ) ? 4 : 10;
 
     } else if( volume < 4000 ) {
         // 20-40dB greater than ambient
-        max_error = ( goodhearing ) ? 2 : 6;
+        max_error = ( goodhearing ) ? 3 : 8;
 
     } else if( volume < 8000 ) {
         // 40-80dB greater than ambient
