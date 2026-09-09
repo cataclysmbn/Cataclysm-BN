@@ -1178,7 +1178,7 @@ static std::string get_sound( const avatar &u )
         const int AMBIENT = get_map().is_outside( u.bub_pos() ) ?
                             OUTDOOR_AMBIENT :
                             INDOOR_AMBIENT;
-        const int dist_to_ambient = std::pow( 10.0, double( u.volume - AMBIENT ) / 20.0 );
+        const int dist_to_ambient = average_minvol_distance( 0, ( u.volume - AMBIENT ) * 100, 0, 0 );
         snd = std::to_string( dist_to_ambient );
     }
     return snd;
