@@ -477,8 +477,9 @@ class vehicle
 
     public:
 
-        vehicle_part &get_part_hack( int );
-        int get_part_id_hack( int );
+        vehicle_part *find_part_hack( int id );
+        const vehicle_part *find_part_hack( int id ) const;
+        int get_part_id_hack( int id ) const;
         void refresh_locations_hack();
 
         int get_next_hack_id() {

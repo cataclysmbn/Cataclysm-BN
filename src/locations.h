@@ -189,6 +189,9 @@ class vehicle_item_location : public item_location
         int hack_id;
     public:
         vehicle_item_location( vehicle *veh, int hack_id ) : veh( veh ), hack_id( hack_id ) {}
+        vehicle *vehicle_ptr() const {
+            return veh;
+        }
         detached_ptr<item> detach( item *it ) override;
         void attach( detached_ptr<item> &&obj ) override;
         bool is_loaded( const item *it ) const override;

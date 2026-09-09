@@ -65,6 +65,9 @@ struct vehicle_part {
         /** this can be removed when vehicles are made into GOs */
         void set_vehicle_hack( vehicle * );
         void refresh_locations_hack( vehicle * );
+        int get_hack_id() const {
+            return hack_id;
+        }
 
         /**
          * Translated name of a part inclusive of any current status effects
