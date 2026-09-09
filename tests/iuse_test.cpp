@@ -965,13 +965,14 @@ TEST_CASE("towel", "[iuse][towel]") {
                 CHECK(dummy.get_part(body_part_arm_l).get_wetness() == 0);
                 CHECK(dummy.get_part(body_part_arm_r).get_wetness() == 0);
 
-                AND_THEN("the towel becomes wet") { CHECK(towel.typeId().str() == "towel_wet"); }
+                AND_THEN("the towel becomes wet") { CHECK((towel.typeId().str() == "towel_wet" && towel.has_flag(flag_WET))); }
             }
         }
 
         WHEN("they use a wet towel") {
-            towel.convert(itype_id("towel_wet"));
-            REQUIRE(towel.has_flag(flag_WET));
+            // Wetness of the towel is set on use, not in the item itself
+            towel.set_flag( flag_WET );
+            REQUIRE(towel.has_own_flag(flag_WET));
             dummy.invoke_item(&towel);
 
             THEN("it does not dry them off") {
@@ -988,7 +989,7 @@ TEST_CASE("towel", "[iuse][towel]") {
         REQUIRE(dummy.get_morale(MORALE_WET) == -10);
 
         WHEN("they use a wet towel") {
-            towel.convert(itype_id("towel_wet"));
+            towel.set_flag( flag_WET );
             REQUIRE(towel.has_flag(flag_WET));
             dummy.invoke_item(&towel);
 
