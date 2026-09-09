@@ -231,6 +231,7 @@
     "category": "<no>",
     "//": "Generally emphatic negative responses to a request or command",
     "text": [
+      { "text": { "ctxt": "<no>", "str": "No." } },
       "Never.",
       "Not gonna happen.",
       "Not happening.",
