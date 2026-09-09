@@ -124,8 +124,7 @@ TEST_CASE("split vehicle keeps selected structure part at origin") {
     CHECK(new_vehicle->bub_part_location(origin_parts.front()) == original_split_pos);
 }
 
-static void require_unique_hack_ids(const vehicle &veh)
-{
+static void require_unique_hack_ids(const vehicle& veh) {
     std::set<int> ids;
     for (int i = 0; i < veh.part_count(); ++i) {
         REQUIRE(ids.insert(veh.cpart(i).get_hack_id()).second);
@@ -135,9 +134,9 @@ static void require_unique_hack_ids(const vehicle &veh)
 
 TEST_CASE("vehicle split with perishable cargo keeps hack ids", "[vehicle][hack_id]") {
     clear_all_state();
-    map &here = get_map();
+    map& here = get_map();
     const tripoint_bub_ms origin(10, 10, 0);
-    vehicle *veh = here.add_vehicle(vproto_id("cross_split_test"), origin, 0_degrees, 0, 0);
+    vehicle* veh = here.add_vehicle(vproto_id("cross_split_test"), origin, 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
 
     require_unique_hack_ids(*veh);
@@ -146,16 +145,15 @@ TEST_CASE("vehicle split with perishable cargo keeps hack ids", "[vehicle][hack_
     for (int i = 0; i < veh->part_count(); ++i) {
         ids_before_install.insert(veh->cpart(i).get_hack_id());
     }
-    const int extra = veh->install_part(tripoint_mnt_veh(2, 0, 0), vpart_id("frame_vertical"), true);
+    const int extra =
+        veh->install_part(tripoint_mnt_veh(2, 0, 0), vpart_id("frame_vertical"), true);
     REQUIRE(extra >= 0);
     CHECK(ids_before_install.insert(veh->cpart(extra).get_hack_id()).second);
     require_unique_hack_ids(*veh);
 
     int cargo_loaded = 0;
-    for (const vpart_reference &vp : veh->get_any_parts("CARGO")) {
-        if (!veh->add_item(vp.part(), item::spawn("meat"))) {
-            ++cargo_loaded;
-        }
+    for (const vpart_reference& vp : veh->get_any_parts("CARGO")) {
+        if (!veh->add_item(vp.part(), item::spawn("meat"))) { ++cargo_loaded; }
     }
     REQUIRE(cargo_loaded > 0);
 
@@ -168,7 +166,5 @@ TEST_CASE("vehicle split with perishable cargo keeps hack ids", "[vehicle][hack_
 
     const VehicleList vehs = here.get_vehicles();
     REQUIRE(vehs.size() >= 2);
-    for (const wrapped_vehicle &wv : vehs) {
-        require_unique_hack_ids(*wv.v);
-    }
+    for (const wrapped_vehicle& wv : vehs) { require_unique_hack_ids(*wv.v); }
 }

@@ -574,7 +574,8 @@ int vehicle_item_location::obtain_cost( const Character &ch, int qty, const item
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *obj, true,
              VEHICLE_HANDLING_PENALTY );
     const vehicle_part *const part = veh->find_part_hack( hack_id );
-    const tripoint_bub_ms part_pos = part ? veh->mount_to_bubble( part->mount ) : veh->bub_ms_location();
+    const tripoint_bub_ms part_pos = part ? veh->mount_to_bubble( part->mount ) :
+                                     veh->bub_ms_location();
     mv += 100 * rl_dist( ch.bub_pos(), part_pos );
     return mv;
 }
