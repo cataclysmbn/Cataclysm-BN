@@ -1084,6 +1084,13 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
     mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
 
+    {
+        const int cur_moves = get_moves();
+        const nc_color moves_color = cur_moves > 0 ? c_yellow : c_light_green;
+        mvwprintz( w, point( column, ++vStart ), moves_color,
+                   string_format( _( "Moves: %d  Speed: %d" ), cur_moves, get_speed() ) );
+    }
+
     if( debug_mode ) {
         mvwprintz( w, point( column, ++vStart ), c_light_gray,
                    _( " Difficulty " ) + std::to_string( type->difficulty ) );
@@ -1173,6 +1180,12 @@ std::string monster::extended_description() const
                 speed_rating(),
                 has_flag( MF_IMMOBILE ) );
     ss += colorize( speed_desc.first, speed_desc.second ) + "\n";
+    {
+        const int cur_moves = get_moves();
+        const nc_color moves_color = cur_moves > 0 ? c_yellow : c_light_green;
+        ss += colorize( string_format( _( "Moves: %d  Speed: %d" ), cur_moves, get_speed() ),
+                        moves_color ) + "\n";
+    }
 
     ss += "--\n";
     ss += "<color_light_gray>" + type->get_description() + "</color>\n";
@@ -1313,6 +1326,7 @@ std::string monster::extended_description() const
 
     if( debug_mode ) {
         ss += string_format( _( "Current Speed: %1$d" ), get_speed() ) + "\n";
+        ss += string_format( _( "Current Moves: %1$d" ), get_moves() ) + "\n";
         ss += string_format( _( "Anger: %1$d" ), anger ) + "\n";
         if( !faction_anger.empty() ) {
             ss += string_format( _( "Anger by faction:" ) ) + "\n";
