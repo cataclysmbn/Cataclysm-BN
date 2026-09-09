@@ -1468,6 +1468,7 @@
     "price_postapoc": "10 cent",
     "name": { "str_sp": "Shimmer! Floor Wax and Dessert Topping" },
     "looks_like": "detergent",
+    "comestible_type": "FOOD",
     "symbol": "=",
     "color": "white",
     "description": "It's durable and it's scuff resistant!  It even cleans your clothes!  But despite the advertisements, it is not, in fact, delicious.",
