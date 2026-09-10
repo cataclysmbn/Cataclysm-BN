@@ -1051,6 +1051,39 @@ static std::pair<std::string, nc_color> speed_description( float mon_speed_ratin
     return std::make_pair( _( "Unknown" ), c_white );
 }
 
+/// How many process_turn ticks until leftover moves are positive (can_act).
+/// Empty when the card should stay qualitative-only (immobile / inattentive).
+static std::optional<std::pair<std::string, nc_color>> action_readiness_description(
+    const monster &mon )
+{
+    if( mon.has_flag( MF_IMMOBILE ) ) {
+        return std::nullopt;
+    }
+    if( get_avatar().has_trait( trait_INATTENTIVE ) ) {
+        return std::nullopt;
+    }
+
+    const int cur_moves = mon.get_moves();
+    if( cur_moves > 0 ) {
+        return std::make_pair( _( "It can act right now." ), c_red );
+    }
+
+    const int64_t credit = static_cast<int64_t>( mon.get_speed() ) * mon.action_move_factor() /
+                           action_time_scale::factor_denominator;
+    if( credit <= 0 ) {
+        return std::make_pair( _( "It is not recovering." ), c_dark_gray );
+    }
+
+    // can_act() requires moves > 0.
+    const int64_t need = static_cast<int64_t>( 1 ) - cur_moves;
+    const int turns = static_cast<int>( ( need + credit - 1 ) / credit );
+    if( turns <= 1 ) {
+        return std::make_pair( _( "It will be ready next turn." ), c_yellow );
+    }
+    return std::make_pair( string_format( _( "It will be ready in %d turns." ), turns ),
+                           c_light_green );
+}
+
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
     const int vEnd = vStart + vLines;
@@ -1084,16 +1117,15 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
     mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
 
-    {
-        const int cur_moves = get_moves();
-        const nc_color moves_color = cur_moves > 0 ? c_yellow : c_light_green;
-        mvwprintz( w, point( column, ++vStart ), moves_color,
-                   string_format( _( "Moves: %d  Speed: %d" ), cur_moves, get_speed() ) );
+    if( const auto ready = action_readiness_description( *this ) ) {
+        mvwprintz( w, point( column, ++vStart ), ready->second, ready->first );
     }
 
     if( debug_mode ) {
         mvwprintz( w, point( column, ++vStart ), c_light_gray,
                    _( " Difficulty " ) + std::to_string( type->difficulty ) );
+        mvwprintz( w, point( column, ++vStart ), c_light_gray,
+                   string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ) );
     }
     if( display_mod_source ) {
         const std::string mod_src = enumerate_as_string( type->src.begin(),
@@ -1180,11 +1212,8 @@ std::string monster::extended_description() const
                 speed_rating(),
                 has_flag( MF_IMMOBILE ) );
     ss += colorize( speed_desc.first, speed_desc.second ) + "\n";
-    {
-        const int cur_moves = get_moves();
-        const nc_color moves_color = cur_moves > 0 ? c_yellow : c_light_green;
-        ss += colorize( string_format( _( "Moves: %d  Speed: %d" ), cur_moves, get_speed() ),
-                        moves_color ) + "\n";
+    if( const auto ready = action_readiness_description( *this ) ) {
+        ss += colorize( ready->first, ready->second ) + "\n";
     }
 
     ss += "--\n";
