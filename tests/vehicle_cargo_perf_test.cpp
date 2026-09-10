@@ -81,7 +81,7 @@ auto make_cargo_benchmark_fixture(const cargo_benchmark_options& opts) -> cargo_
     vehicle* const veh =
         get_map().add_vehicle(vproto_id("aapc-mg"), u.bub_pos(), 0_degrees, 100, 0);
     REQUIRE(veh != nullptr);
-    veh->update_time(calendar::turn_zero);
+    veh->update_time(calendar::turn_zero, false);
 
     auto has_recharger = false;
     for (const vpart_reference& vp : veh->get_any_parts("RECHARGE")) {
@@ -130,7 +130,7 @@ auto make_solar_benchmark_fixture(const solar_benchmark_options& opts) -> solar_
         veh->part(battery_part).ammo_unset();
     }
 
-    veh->update_time(calendar::turn_zero);
+    veh->update_time(calendar::turn_zero, false);
 
     return solar_benchmark_fixture{
         .veh = veh,
@@ -210,9 +210,9 @@ TEST_CASE(
     (Catch::Benchmark::Chronometer meter) {
         meter.measure([&fixture]() {
             reset_vehicle_batteries(*fixture.veh);
-            fixture.veh->update_time(calendar::turn_zero + 1_minutes);
+            fixture.veh->update_time(calendar::turn_zero + 1_minutes, false);
             const auto stored_energy = fixture.veh->fuel_left(fuel_type_battery, false);
-            fixture.veh->update_time(calendar::turn_zero);
+            fixture.veh->update_time(calendar::turn_zero, false);
             return stored_energy;
         });
     };

@@ -89,6 +89,7 @@
 #include "drop_token.h"
 #include "fluid_grid.h"
 #include "editmap.h"
+#include "enchantments/enchantment_vision.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -361,6 +362,7 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id dashing_effect( "dashing" );
 
+static const enchantment_value_id ench_val_MOTION_ALARM( "MOTION_ALARM" );
 namespace
 {
 
@@ -844,6 +846,17 @@ void game::load_map( const point_abs_sm &pos_sm, const bool pump_events )
     submap_loader.add_listener( this );
     submap_loader.add_listener( &m );
 
+    // m.load() above cleared map::funnel_locations_ and the map listener was
+    // only just registered, so the submaps loaded by m.load() never fired
+    // on_submap_loaded() for it.  Replay on_submap_loaded() for every
+    // currently-resident submap so funnel traps (e.g. gutter downspouts) are
+    // registered and fill_water_collectors() can find them (#10171).
+    for( auto &[raw_pos, sm_ptr] : MAPBUFFER_REGISTRY.get( new_dim_id ) ) {
+        if( sm_ptr ) {
+            m.on_submap_loaded( tripoint_abs_sm( raw_pos ), new_dim_id );
+        }
+    }
+
     const auto bubble_begin = pos_sm;
     const auto bubble_end = bubble_begin + point_rel_sm( g_mapsize, g_mapsize );
 
@@ -1052,6 +1065,7 @@ bool game::start_game()
         u.add_effect( effect_feral_killed_recently, 3_days );
     }
     u.process_turn(); // process_turn adds the initial move points
+    u.process_items();
     u.set_stamina( u.get_stamina_max() );
     get_weather().update_weather();
     u.next_climate_control_check = calendar::before_time_starts; // Force recheck at startup
@@ -1086,6 +1100,7 @@ bool game::start_game()
             tmp->mission = NPC_MISSION_NULL;
             tmp->set_attitude( NPCATT_FOLLOW );
             add_npc_follower( tmp->getID() );
+            std::unique_lock lock( cata::lua_lock );
             cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
                 params["creature"] = tmp.get();
             } );
@@ -1216,6 +1231,7 @@ bool game::start_game()
         }
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_game_started" );
     return true;
 }
@@ -1508,12 +1524,15 @@ void game::create_starting_npcs()
     //One random starting NPC mission
     tmp->add_new_mission( mission::reserve_random( ORIGIN_OPENER_NPC, tmp->abs_omt_pos(),
                           tmp->getID() ) );
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = tmp.get();
-    } );
-    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-        params["npc"] = tmp.get();
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = tmp.get();
+        } );
+        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+            params["npc"] = tmp.get();
+        } );
+    }
 }
 
 static std::string generate_memorial_filename( const std::string &char_name )
@@ -2123,7 +2142,11 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_pre_action_updates" );
         perhaps_add_random_npc();
-        refresh_player_visibility_cache_if_needed();
+        if( ( ( !u.activity || !*u.activity || u.activity->complete() ) && !u.in_sleep_state() ) ||
+            !get_option<bool>( "ACTIVITY_SKIP_VISIBILITY" ) ) {
+            // If map cache needs to be updated visibility cache will handle it.
+            refresh_player_visibility_cache_if_needed( true, true );
+        }
         process_voluntary_act_interrupt();
         process_activity();
         update_performance_bubble();
@@ -2279,7 +2302,7 @@ bool game::do_turn()
     // consider a stripped down cache just for monsters.
     {
         ZoneScopedN( "do_turn_monster_visibility_cache" );
-        m.build_map_cache( get_levz(), true );
+        m.build_map_cache( get_levz(), false );
     }
     // This has to be done after updating our map caches, as sound propagation relies on terrain.
     if( !soundperf ) {
@@ -2341,11 +2364,12 @@ bool game::do_turn()
     {
         ZoneScopedN( "do_turn_player_process_turn" );
         u.process_turn();
+        u.process_items();
     }
 
     {
         ZoneScopedN( "do_turn_lua_every_x" );
-        cata::run_on_every_x_hooks( *DynamicDataLoader::get_instance().lua );
+        cata::run_on_every_x_hooks();
     }
 
     {
@@ -2557,12 +2581,32 @@ auto game::has_activity_skip_relevant_vehicle() -> bool
 {
     return std::ranges::any_of( m.get_vehicles(), []( const wrapped_vehicle & wrapped ) {
         const vehicle *veh = wrapped.v;
-        return veh != nullptr &&
-               ( veh->is_moving() || veh->vertical_velocity != 0 || veh->skidding ||
-                 veh->is_falling || veh->engine_on || veh->is_autodriving ||
-                 veh->is_following || veh->is_patrolling || veh->autopilot_on ||
-                 veh->is_alarm_on || veh->check_environmental_effects ||
-                 veh->total_accessory_epower_w() < 0 );
+        if( !log_activity_skip_state ) {
+            return veh != nullptr &&
+                   ( veh->is_moving() || veh->vertical_velocity != 0 || veh->skidding ||
+                     veh->is_falling || veh->is_autodriving || veh->is_following ||
+                     veh->is_patrolling || veh->autopilot_on || veh->is_alarm_on );
+        }
+        if( veh == nullptr ) {
+            return false;
+        }
+        if( veh->is_moving() || veh->vertical_velocity != 0 || veh->is_falling ) {
+            add_msg( "Vehicles are actively moving, cannot skip time" );
+            return true;
+        }
+        if( veh->skidding ) {
+            add_msg( "Vehicles are skidding, cannot skip time" );
+            return true;
+        }
+        if( veh->is_autodriving || veh->is_following || veh->is_patrolling || veh->autopilot_on ) {
+            add_msg( "Vehicles are autodriving, cannot skip time" );
+            return true;
+        }
+        if( veh->is_alarm_on ) {
+            add_msg( "Vehicle alarm is actively going off..." );
+            return true;
+        }
+        return false;
     } );
 }
 
@@ -2605,31 +2649,59 @@ auto game::has_activity_skip_active_fire() -> bool
 auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
 {
     if( new_game || queue_screenshot || uquit == QUIT_WATCH ) {
+        if( log_activity_skip_state ) {
+            add_msg( "Preparing quitting or screenshot, skip state impossible" );
+        }
         return false;
     }
     if( duration <= 0_turns || !get_weather().weather_id ||
         get_weather().nextweather <= calendar::turn ) {
+        if( log_activity_skip_state ) {
+            add_msg( "Need to process weather" );
+        }
         return false;
     }
     if( debug_infinite_speed_can_freeze_time() ) {
+        if( log_activity_skip_state ) {
+            add_msg( "Time is frozen" );
+        }
         return false;
     }
-    if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
-        u.is_mounted() ) {
-        return false;
-    }
-    if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
-        !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
-        !u.activity->assistants().empty() ) {
-        return false;
+    if( !u.in_sleep_state() ) {
+        if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
+            u.is_mounted() ) {
+            if( log_activity_skip_state ) {
+                if( !u.activity || !*u.activity || u.activity->complete() ) {
+                    add_msg( "Activity is null" );
+                }
+                if( u.has_destination() ) {
+                    add_msg( "You have autowalk target" );
+                }
+                if( u.is_mounted() ) {
+                    add_msg( "You are currently mounted on something" );
+                }
+            }
+            return false;
+        }
+        if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
+            !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
+            !u.activity->assistants().empty() ) {
+            if( log_activity_skip_state ) {
+                add_msg( "The activity does not support skip state, or you have assistants" );
+            }
+            return false;
+        }
     }
     if( u.in_vehicle && u.controlling_vehicle ) {
-        return false;
-    }
-    if( m.field_at( u.bub_pos() ).field_count() > 0 ) {
+        if( log_activity_skip_state ) {
+            add_msg( "You are controlling a vehicle" );
+        }
         return false;
     }
     if( has_activity_skip_active_fire() ) {
+        if( log_activity_skip_state ) {
+            add_msg( "Fire is being processed, cannot skip time" );
+        }
         return false;
     }
     if( has_activity_skip_relevant_vehicle() ) {
@@ -2637,9 +2709,15 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     }
     if( const std::optional<time_point> event_time = timed_events.next_event_time();
         event_time && *event_time <= calendar::turn + duration ) {
+        if( log_activity_skip_state ) {
+            add_msg( "Upcoming timed event, cannot skip time" );
+        }
         return false;
     }
     if( has_activity_skip_blocking_npc_state() ) {
+        if( log_activity_skip_state ) {
+            add_msg( "New NPCs generated, cannot skip time" );
+        }
         return false;
     }
     return true;
@@ -2673,7 +2751,10 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     auto activity_monsters = activity_monmove_cache {};
     const auto requested_turns = to_turns<int>( duration );
     while( skipped_turns < requested_turns ) {
-        if( is_game_over() || !u.activity || !*u.activity ) {
+        if( is_game_over() || ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
+            if( log_activity_skip_state ) {
+                add_msg( "Activity lost, cannot skip time" );
+            }
             break;
         }
 
@@ -2713,39 +2794,45 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         perhaps_add_random_npc();
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
             activity_fixed_window_force_normal_turn_ = true;
+            if( log_activity_skip_state ) {
+                add_msg( "NPC added, cannot skip time" );
+            }
             break;
         }
 
         debug_hour_timer.print_time();
-        u.update_body( action_time_scale::calendar_duration_this_tick() );
         process_voluntary_act_interrupt();
-        if( !u.activity || !*u.activity ) {
+        if( ( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) ) {
+            if( log_activity_skip_state ) {
+                add_msg( "Lost activity, cannot skip time" );
+            }
             break;
         }
 
         process_activity();
         if( is_game_over() ) {
+            if( log_activity_skip_state ) {
+                add_msg( "You died, cannot skip time" );
+            }
             break;
         }
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
             activity_fixed_window_force_normal_turn_ = true;
+            if( log_activity_skip_state ) {
+                add_msg( "NPC or monster added, cannot skip time" );
+            }
             break;
         }
-        const auto activity_continues = u.activity && *u.activity &&
-                                        u.activity->id() == starting_activity;
+        const auto activity_continues = ( u.activity && *u.activity &&
+                                          u.activity->id() == starting_activity ) ||
+                                        u.in_sleep_state();
 
         if( m.has_field_at( u.bub_pos() ) ) {
             m.creature_in_field( u );
         }
-        for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
-            if( tracker_ptr ) {
-                tracker_ptr->update( calendar::turn );
-            }
-        }
         tick_portal_links();
         tick_temporary_pocket_dimensions();
         tick_vehicle_portal_taps();
-        fluid_grid::update( calendar::turn );
 
         const auto has_active_npcs = std::ranges::any_of( active_npc,
         []( const shared_ptr_fast<npc> &guy ) {
@@ -2758,6 +2845,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                 monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
                 if( critter_tracker->size() != monster_count ) {
                     activity_fixed_window_force_normal_turn_ = true;
+                    if( log_activity_skip_state ) {
+                        add_msg( "Monster added, cannot skip time" );
+                    }
                     break;
                 }
             }
@@ -2765,6 +2855,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
                 npcmove();
                 if( npcs_dirty || critter_tracker->size() != monster_count ) {
                     activity_fixed_window_force_normal_turn_ = true;
+                    if( log_activity_skip_state ) {
+                        add_msg( "NPC or monster added, cannot skip time" );
+                    }
                     break;
                 }
             }
@@ -2776,23 +2869,24 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
         {
             ZoneScopedN( "do_turn_lua_every_x" );
-            cata::run_on_every_x_hooks( *DynamicDataLoader::get_instance().lua );
+            cata::run_on_every_x_hooks();
         }
         explosion_handler::get_explosion_queue().execute();
         cleanup_dead();
 
         if( get_levz() >= 0 && !u.is_underwater() ) {
-            handle_weather_effects( weather.weather_id );
+            handle_weather_effects( weather.weather_id, false );
         }
         u.update_bodytemp( m, weather );
         character_funcs::update_body_wetness( u, get_weather().get_precise() );
         u.apply_wetness_morale( weather.temperature );
         u.volume = 0;
 
-        if( !activity_continues || u.activity->complete() ) {
+        if( !activity_continues || ( !u.in_sleep_state() && u.activity->complete() ) ) {
             break;
         }
     }
+    handle_bulk_weather_field_decay( weather.weather_id, skipped_turns );
     run_activity_skip_batch_turns( skipped_turns );
     return skipped_turns;
 }
@@ -2819,6 +2913,28 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     {
         ZoneScopedN( "do_map_process_items" );
         m.process_items( skipped_turns );
+    }
+
+    {
+        u.update_body( action_time_scale::calendar_duration_this_tick() * skipped_turns );
+    }
+
+    {
+        ZoneScopedN( "do_player_process_items" );
+        u.process_items( skipped_turns );
+    }
+
+    {
+        ZoneScopedN( "activity_fixed_window_distribution_grid_update" );
+        for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
+            if( tracker_ptr ) {
+                tracker_ptr->update( calendar::turn );
+            }
+        }
+    }
+    {
+        ZoneScopedN( "activity_fixed_window_fluid_grid_update" );
+        fluid_grid::update( calendar::turn );
     }
 
     explosion_handler::get_explosion_queue().execute();
@@ -2848,9 +2964,23 @@ auto game::try_activity_fixed_window_skip() -> bool
     ZoneScopedN( "activity_fixed_window_try" );
     if( activity_fixed_window_force_normal_turn_ ) {
         activity_fixed_window_force_normal_turn_ = false;
+        if( log_activity_skip_state ) {
+            add_msg( "Forced Normal Turn" );
+        }
         return false;
     }
-    if( !u.activity || !*u.activity || calendar::turn < next_activity_fixed_window_check_ ) {
+    if( ( !u.activity || !*u.activity ) && !u.in_sleep_state() ) {
+        if( log_activity_skip_state ) {
+            add_msg( "No Activity" );
+        }
+        return false;
+    }
+    if( calendar::turn < next_activity_fixed_window_check_ ) {
+        if( log_activity_skip_state ) {
+            add_msg(
+                string_format( "Before Next Fixed Window Check in %s turns",
+                               ( next_activity_fixed_window_check_ - calendar::turn ) / 1_turns ) );
+        }
         return false;
     }
     const auto duration = activity_fixed_window_duration();
@@ -2861,6 +2991,9 @@ auto game::try_activity_fixed_window_skip() -> bool
     const auto skipped_turns = execute_activity_fixed_window_skip( duration );
     if( skipped_turns <= 0 ) {
         next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        if( log_activity_skip_state ) {
+            add_msg( "No Turns Were Skipped" );
+        }
         return false;
     }
     TracyPlot( "Activity Fixed Window Skipped Turns", int64_t{ skipped_turns } );
@@ -4045,8 +4178,6 @@ bool game::load( const save_t &name )
 
     cata::load_world_lua_state( get_active_world(), "lua_state.json" );
 
-    cata::run_on_game_load_hooks( *DynamicDataLoader::get_instance().lua );
-
     // Build caches once so any immediate post-load draws don't use uninitialized lighting/visibility,
     // then re-invalidate so the first real in-game draw rebuilds everything again.
     m.invalidate_map_cache( get_levz() );
@@ -4202,7 +4333,6 @@ bool game::save( bool quitting )
 
     world->start_save_tx();
 
-    cata::run_on_game_save_hooks( *DynamicDataLoader::get_instance().lua );
     try {
         reset_save_ids( time( nullptr ), quitting );
         if( !save_factions_missions_npcs() ||
@@ -4742,7 +4872,8 @@ static void draw_critter_internal( const catacurses::window &w, const Creature &
         return;
     }
 
-    if( u.sees_with_infrared( critter ) || u.sees_with_specials( critter ) ) {
+    if( u.sees_with_infrared( critter ) ||
+        u.sees_with_specials( critter ) != enchantment_vision_id::NULL_ID() ) {
         mvwputch( w, point( mx, my ), c_red, '?' );
     }
 }
@@ -4776,7 +4907,8 @@ auto game::visibility_cache_z() -> int
     return is_looking ? u.bub_pos().z() : ter_view_p.z();
 }
 
-auto game::refresh_player_visibility_cache_if_needed( const bool player_map_cache_current ) -> void
+auto game::refresh_player_visibility_cache_if_needed( const bool player_map_cache_current,
+        const bool skip_lightmap ) -> void
 {
 #if defined( CATA_SDL )
     ZoneScopedN( "refresh_player_visibility_cache_if_needed" );
@@ -4794,7 +4926,7 @@ auto game::refresh_player_visibility_cache_if_needed( const bool player_map_cach
     }
 
     if( !player_map_cache_current ) {
-        m.build_map_cache( zlev );
+        m.build_map_cache( zlev, skip_lightmap );
     }
     if( needs_visibility_refresh() ) {
         m.update_visibility_cache( zlev );
@@ -5456,32 +5588,36 @@ auto game::mon_info_update() -> void
             }
         }
 
-        //Safemode monster check
-        const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude,
-                                    mon_dist );
+        // Safemode monster check
+        // Dont do different z-level -> They are not threats, yet can be seen
+        // Via special vision effects such as `ANTENNAE` or `DRONE_CAM`
+        if( critter.bub_pos().z() == u.bub_pos().z() ) {
+            const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude,
+                                        mon_dist );
 
-        if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
-                ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
-            if( index < 8 && critter.sees( g->u ) ) {
-                dangerous[index] = true;
-            }
-
-            if( !safemode_empty || mon_dist <= iProxyDist ) {
-                auto passmon = false;
-                if( critter.ignoring > 0 ) {
-                    if( safe_mode != SAFE_MODE_ON ) {
-                        critter.ignoring = 0;
-                    } else if( ( sm_ignored_time == 0_seconds || ( critter.lastseen_turn &&
-                                 *critter.lastseen_turn > calendar::turn - sm_ignored_time ) ) &&
-                               ( mon_dist > critter.ignoring / 2 || mon_dist < 6 ) ) {
-                        passmon = true;
-                    }
-                    critter.lastseen_turn = calendar::turn;
+            if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
+                    ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
+                if( index < 8 && critter.sees( g->u ) ) {
+                    dangerous[index] = true;
                 }
 
-                if( !passmon ) {
-                    newseen++;
-                    new_seen_mon.push_back( mon_ptr );
+                if( !safemode_empty || mon_dist <= iProxyDist ) {
+                    auto passmon = false;
+                    if( critter.ignoring > 0 ) {
+                        if( safe_mode != SAFE_MODE_ON ) {
+                            critter.ignoring = 0;
+                        } else if( ( sm_ignored_time == 0_seconds || ( critter.lastseen_turn &&
+                                     *critter.lastseen_turn > calendar::turn - sm_ignored_time ) ) &&
+                                   ( mon_dist > critter.ignoring / 2 || mon_dist < 6 ) ) {
+                            passmon = true;
+                        }
+                        critter.lastseen_turn = calendar::turn;
+                    }
+
+                    if( !passmon ) {
+                        newseen++;
+                        new_seen_mon.push_back( mon_ptr );
+                    }
                 }
             }
         }
@@ -6326,12 +6462,22 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     // static const: string_id hash lookup happens once, not every turn.
     static const bionic_id bio_alarm( "bio_alarm" );
     const auto check_bio_alarm = [&]( const monster & critter ) {
-        if( !critter.is_dead() &&
-            u.has_active_bionic( bio_alarm ) &&
-            u.get_power_level() >= bio_alarm->power_trigger &&
-            rl_dist( u.bub_pos(), critter.bub_pos() ) <= 5 &&
-            !critter.is_hallucination() ) {
-            u.mod_power_level( -bio_alarm->power_trigger );
+        bool do_alarm = false;
+        if( !critter.is_dead() && !critter.is_hallucination() ) {
+            if( u.has_active_bionic( bio_alarm ) &&
+                u.get_power_level() >= bio_alarm->power_trigger &&
+                rl_dist( u.bub_pos(), critter.bub_pos() ) <= 5 ) {
+                u.mod_power_level( -bio_alarm->power_trigger );
+                do_alarm = true;
+            } else {
+                int ench_range = u.bonus_from_enchantments( 0.0, ench_val_MOTION_ALARM );
+                if( ench_range >= 1 &&
+                    rl_dist( u.bub_pos(), critter.bub_pos() ) <= ench_range ) {
+                    do_alarm = true;
+                }
+            }
+        }
+        if( do_alarm ) {
             add_msg( m_warning, _( "Your motion alarm goes off!" ) );
             cancel_activity_or_ignore_query( distraction_type::alert,
                                              _( "Your motion alarm goes off!" ) );
@@ -6430,11 +6576,13 @@ void game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             if( has_creature_do_turn_hooks || has_monster_do_turn_hooks ) {
                 ZoneScopedN( "monmove_turn_hooks" );
                 if( has_creature_do_turn_hooks ) {
+                    std::unique_lock lock( cata::lua_lock );
                     cata::run_hooks( "on_creature_do_turn", [&critter]( sol::table & params ) {
                         params["creature"] = static_cast<Creature *>( &critter );
                     } );
                 }
                 if( has_monster_do_turn_hooks ) {
+                    std::unique_lock lock( cata::lua_lock );
                     cata::run_hooks( "on_monster_do_turn", [&critter]( sol::table & params ) {
                         params["monster"] = &critter;
                     } );
@@ -6582,11 +6730,13 @@ void game::npcmove()
         if( has_creature_do_turn_hooks || has_npc_do_turn_hooks ) {
             ZoneScopedN( "npc_turn_hooks" );
             if( has_creature_do_turn_hooks ) {
+                std::unique_lock lock( cata::lua_lock );
                 cata::run_hooks( "on_creature_do_turn", [&guy]( sol::table & params ) {
                     params["creature"] = static_cast<Creature *>( &guy );
                 } );
             }
             if( has_npc_do_turn_hooks ) {
+                std::unique_lock lock( cata::lua_lock );
                 cata::run_hooks( "on_npc_do_turn", [&guy]( sol::table & params ) {
                     params["npc"] = &guy;
                 } );
@@ -6602,6 +6752,7 @@ void game::npcmove()
             ZoneScopedN( "npc_process_turn" );
             if( !guy.has_effect( effect_npc_suspend ) ) {
                 guy.process_turn();
+                guy.process_items();
             }
         }
         while( !guy.is_dead() && guy.moves > 0 && turns < 10 &&
@@ -6703,6 +6854,7 @@ void game::sleep_skip_npc_process()
         m.creature_in_field( guy );
         if( !guy.has_effect( effect_npc_suspend ) ) {
             guy.process_turn();
+            guy.process_items();
         }
         guy.npc_update_body();
     }
@@ -7254,12 +7406,15 @@ monster *game::place_critter_around( const mtype_id &id, const tripoint_bub_ms &
         return nullptr;
     }
     const auto temp = make_shared_fast<monster>( id );
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = temp.get();
-    } );
-    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
-        params["monster"] = temp.get();
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = temp.get();
+        } );
+        cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+            params["monster"] = temp.get();
+        } );
+    }
     return place_critter_around( temp, center, radius );
 }
 
@@ -7299,12 +7454,15 @@ monster *game::place_critter_within( const mtype_id &id,
         return nullptr;
     }
     const auto temp = make_shared_fast<monster>( id );
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = temp.get();
-    } );
-    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
-        params["monster"] = temp.get();
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = temp.get();
+        } );
+        cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+            params["monster"] = temp.get();
+        } );
+    }
     return place_critter_within( temp, range );
 }
 
@@ -7367,12 +7525,15 @@ bool game::spawn_hallucination( const tripoint_bub_ms &p )
         tmp->randomize( NC_HALLU );
         const auto proj = project_remain<coords::sm>( bub_to_abs( p ) );
         tmp->spawn_at_precise( proj.quotient, proj.remainder_tripoint );
-        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-            params["creature"] = tmp.get();
-        } );
-        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-            params["npc"] = tmp.get();
-        } );
+        {
+            std::unique_lock lock( cata::lua_lock );
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                params["creature"] = tmp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                params["npc"] = tmp.get();
+            } );
+        }
         if( !critter_at( p, true ) ) {
             get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
             load_npcs();
@@ -7387,13 +7548,15 @@ bool game::spawn_hallucination( const tripoint_bub_ms &p )
     phantasm->hallucination = true;
     phantasm->set_dimension( m.get_bound_dimension() );
     phantasm->spawn( p );
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = phantasm.get();
-    } );
-    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
-        params["monster"] = phantasm.get();
-    } );
-
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = phantasm.get();
+        } );
+        cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+            params["monster"] = phantasm.get();
+        } );
+    }
     //Don't attempt to place phantasms inside of other creatures
     if( !critter_at( phantasm->bub_pos(), true ) ) {
         return phantasm->get_mapbuffer().creature_tracker().add( phantasm );
@@ -7534,12 +7697,15 @@ bool game::revive_corpse( const tripoint_bub_ms &p, item &it )
         }
     }
 
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = &critter;
-    } );
-    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
-        params["monster"] = &critter;
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = &critter;
+        } );
+        cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+            params["monster"] = &critter;
+        } );
+    }
     return place_critter_at( newmon_ptr, p );
 }
 
@@ -7609,12 +7775,15 @@ void game::save_cyborg( item *cyborg, const tripoint_bub_ms &couch_pos, Characte
         get_overmapbuffer( current_dimension_id_ ).insert_npc( tmp );
         tmp->hurtall( dmg_lvl * 10, nullptr );
         tmp->add_effect( effect_downed, rng( 1_turns, 4_turns ), bodypart_str_id::NULL_ID(), 0, true );
-        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-            params["creature"] = tmp.get();
-        } );
-        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-            params["npc"] = tmp.get();
-        } );
+        {
+            std::unique_lock lock( cata::lua_lock );
+            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                params["creature"] = tmp.get();
+            } );
+            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                params["npc"] = tmp.get();
+            } );
+        }
         load_npcs();
 
     } else {
@@ -7940,11 +8109,15 @@ void game::control_vehicle()
 bool game::npc_menu( npc &who, const bool &force )
 {
     if( !force ) {
+        std::unique_lock lock( cata::lua_lock );
         const auto allowed = cata::run_hooks( "on_try_npc_interaction",
         [&]( auto & params ) { params["npc"] = &who; }, { .exit_early = true } ).get_or( "allowed", true );
         if( !allowed ) { return false; }
     }
-    cata::run_hooks( "on_npc_interaction", [&]( auto & params ) { params["npc"] = &who; } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_npc_interaction", [&]( auto & params ) { params["npc"] = &who; } );
+    }
     enum choices : int {
         talk = 0,
         swap_pos,
@@ -8492,6 +8665,7 @@ void game::examine( const tripoint_bub_ms &examp )
                 add_msg( _( "There is a %s." ), mon->get_name() );
             }
 
+            std::unique_lock lock( cata::lua_lock );
             const auto allowed = cata::run_hooks( "on_try_monster_interaction", [&]( auto & params ) { params["monster"] = mon; },
             { .exit_early = true } ).get_or( "allowed", true );
             if( allowed ) {
@@ -8823,10 +8997,16 @@ void game::print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::win
 
             if( creature != nullptr ) {
                 std::vector<std::string> buf;
-                if( u.sees_with_infrared( *creature ) ) {
+                enchantment_vision_id special = u.sees_with_specials( *creature );
+                if( special != enchantment_vision_id::NULL_ID() ) {
+                    if( special->use_normal_mon_tile() ) {
+                        int vLines = last_line - line;
+                        line = creature->print_info( w_look, ++line, vLines, column );
+                    } else {
+                        buf.emplace_back( special->get_mon_desc( *creature ) );
+                    }
+                } else if( u.sees_with_infrared( *creature ) ) {
                     creature->describe_infrared( buf );
-                } else if( u.sees_with_specials( *creature ) ) {
-                    creature->describe_specials( buf );
                 }
                 for( const std::string &s : buf ) {
                     mvwprintw( w_look, point( 1, ++line ), s );
@@ -11798,12 +11978,14 @@ static void butcher_submenu( const std::vector<item *> &corpses, int corpse = -1
     avatar &you = get_avatar();
     const inventory &inv = you.crafting_inventory();
 
-    const int factor = inv.max_quality( quality_id( "BUTCHER" ) );
+    const int factor = std::max( you.max_quality( quality_id( "BUTCHER" ) ),
+                                 inv.max_quality( quality_id( "BUTCHER" ) ) );
     const std::string msg_inv = factor > INT_MIN
                                 ? string_format( _( "Your best tool has <color_cyan>%d butchering</color>." ), factor )
                                 :  _( "You have no butchering tool." );
 
-    const int factor_diss = inv.max_quality( quality_id( "CUT_FINE" ) );
+    const int factor_diss = std::max( you.max_quality( quality_id( "CUT_FINE" ) ),
+                                      inv.max_quality( quality_id( "CUT_FINE" ) ) );
     const std::string msg_inv_diss = factor_diss > INT_MIN
                                      ? string_format( _( "Your best tool has <color_cyan>%d fine cutting</color>." ), factor_diss )
                                      :  _( "You have no fine cutting tool." );
@@ -12546,6 +12728,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     u.set_underwater( false );
 
     {
+        std::unique_lock lock( cata::lua_lock );
         ZoneScopedN( "walk_move_try_move_hooks" );
         const auto hook_results = cata::run_hooks(
                                       "on_player_try_move",
@@ -12741,8 +12924,9 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
     if( !u.has_artifact_with( AEP_STEALTH ) &&
         !u.has_enchantment_flag( enchantment_flag_id( "SILENT" ) ) ) {
-        int volume = u.is_stealthy() ? 30 : 50;
-        volume *= u.mutation_value( "noise_modifier" );
+        int volume = u.is_stealthy() ? 40 : 60;
+        // Used to be a multiplier on tile distance, this approximates that
+        volume += ( u.mutation_value( "noise_modifier" ) / 2 * 6 );
         volume += u.bonus_from_enchantments( volume, enchantment_value_id( "NOISE" ) );
         if( volume > 0 ) {
             if( u.movement_mode_is( CMM_RUN ) ) {
@@ -14217,8 +14401,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
                         get_avatar().mutation_spend_resources( tid );
                     }
                 }
-                add_msg( m_info, _( "There is something above blocking your way." ) );
-                return;
+                if( dest.z() > OVERMAP_HEIGHT ) {
+                    add_msg( m_info, _( "It would be unsafe to try and ascend further." ) );
+                    return;
+                } else {
+                    add_msg( m_info, _( "There is something above blocking your way." ) );
+                    return;
+                }
             } else {
                 if( dest.z() > OVERMAP_HEIGHT ) {
                     add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
@@ -14395,7 +14584,8 @@ void game::vertical_move( int movez, bool force, bool peeking )
     // Find the corresponding staircase
     bool rope_ladder = false;
     // TODO: Remove the stairfinding, make the mapgen gen aligned maps
-    const bool special_move = climbing || swimming || can_fly;
+    // Don't check can_fly here, flight was handled earlier and doing that would just embed you in a wall instead
+    const bool special_move = climbing || swimming;
 
     if( !force && !special_move ) {
         const std::optional<tripoint_bub_ms> pnt = find_or_make_stairs( m, z_after, rope_ladder,
@@ -15611,12 +15801,15 @@ void game::perhaps_add_random_npc()
     tmp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, tmp->abs_omt_pos(),
                           tmp->getID() ) );
     dbg( DL::Debug ) << "Spawning a random NPC at " << spawn_point;
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = tmp.get();
-    } );
-    cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-        params["npc"] = tmp.get();
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = tmp.get();
+        } );
+        cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+            params["npc"] = tmp.get();
+        } );
+    }
     // This will make the new NPC active- if its nearby to the player
     load_npcs();
 }

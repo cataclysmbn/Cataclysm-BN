@@ -100,6 +100,8 @@ extern int PICKUP_RANGE;
  */
 extern bool dont_debugmsg;
 
+// If true, add messages for why activities aren't entering skip state.
+extern bool log_activity_skip_state;
 
 /** Monster LOD (level-of-detail) options. */
 extern bool monster_lod_enabled;

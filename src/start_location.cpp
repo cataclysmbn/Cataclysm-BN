@@ -80,6 +80,13 @@ void start_location::load( const JsonObject &jo, const std::string & )
         _omt_types.emplace_back( ter, ter_match_type );
     }
     optional( jo, was_loaded, "flags", _flags, auto_flags_reader<> {} );
+
+    if( jo.has_object( "absolute_place_location" ) ) {
+        const auto &obj = jo.get_object( "absolute_place_location" );
+        absolute_place_location = point_abs_om( obj.get_int( "x" ), obj.get_int( "y" ) );
+    } else if( !was_loaded ) {
+        absolute_place_location = point_abs_om( 0, 0 );
+    }
 }
 
 void start_location::check() const
@@ -194,7 +201,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
     // Spiral out from the world origin scanning for a compatible starting location,
     // creating overmaps as necessary.
     const int radius = 3;
-    std::vector<point_abs_om> overmaps = closest_points_first( point_abs_om(), radius );
+    std::vector<point_abs_om> overmaps = closest_points_first( absolute_place_location, radius );
     // Shuffle 8 first ones after (0,0) so that (0,0) retains priority, but if not so that we don't always start at (1,0)
     std::shuffle( overmaps.begin() + 1, overmaps.begin() + 8, rng_get_engine() );
     for( const point_abs_om &omp : overmaps ) {

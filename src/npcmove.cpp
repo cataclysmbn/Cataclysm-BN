@@ -123,7 +123,8 @@ auto run_lua_npc_ai( npc &who ) -> bool
         return false;
     }
 
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    std::unique_lock lock( cata::lua_lock );
+    auto *lua_state = cata::get_active_lua_state();
     if( lua_state == nullptr ) {
         return false;
     }
@@ -2660,41 +2661,44 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
 {
     auto p = pt;
 
-    const auto hook_results = cata::run_hooks(
-                                  "on_npc_try_move",
-    [ &, this]( sol::table & params ) {
-        params["npc"] = this;
-        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
-        params["to"] = cata::detail::lua_coords::to_lua( p );
-        params["movement_mode"] = get_movement_mode();
-        params["via_ramp"] = false;
-        if( is_mounted() ) {
-            params["mounted"] = true;
-            params["mount"] = mounted_creature.get();
-        } else {
-            params["mounted"] = false;
-        }
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto hook_results = cata::run_hooks(
+                                      "on_npc_try_move",
+        [ &, this]( sol::table & params ) {
+            params["npc"] = this;
+            params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+            params["to"] = cata::detail::lua_coords::to_lua( p );
+            params["movement_mode"] = get_movement_mode();
+            params["via_ramp"] = false;
+            if( is_mounted() ) {
+                params["mounted"] = true;
+                params["mount"] = mounted_creature.get();
+            } else {
+                params["mounted"] = false;
+            }
+        } );
 
-    const auto char_hook_results = cata::run_hooks(
-                                       "on_character_try_move",
-    [ &, this]( sol::table & params ) {
-        params["char"] = static_cast<Character *>( this );
-        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
-        params["to"] = cata::detail::lua_coords::to_lua( p );
-        params["movement_mode"] = get_movement_mode();
-        params["via_ramp"] = false;
-        if( is_mounted() ) {
-            params["mounted"] = true;
-            params["mount"] = mounted_creature.get();
-        } else {
-            params["mounted"] = false;
-        }
-    } );
+        const auto char_hook_results = cata::run_hooks(
+                                           "on_character_try_move",
+        [ &, this]( sol::table & params ) {
+            params["char"] = static_cast<Character *>( this );
+            params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+            params["to"] = cata::detail::lua_coords::to_lua( p );
+            params["movement_mode"] = get_movement_mode();
+            params["via_ramp"] = false;
+            if( is_mounted() ) {
+                params["mounted"] = true;
+                params["mount"] = mounted_creature.get();
+            } else {
+                params["mounted"] = false;
+            }
+        } );
 
-    if( !hook_results.get_or( "allowed", true ) ||
-        !char_hook_results.get_or( "allowed", true ) ) {
-        return;
+        if( !hook_results.get_or( "allowed", true ) ||
+            !char_hook_results.get_or( "allowed", true ) ) {
+            return;
+        }
     }
 
     map &here = get_map();

@@ -3367,7 +3367,7 @@
     "items": {
       "both": {
         "items": [ "jeans", "longshirt", "socks", "sneakers", "water_clean", "wristwatch", "smart_phone", "petpack", "pet_carrier" ],
-        "entries": [ { "item": "mbag", "contents-group": "dog_lover_bag" } ]
+        "entries": [ { "item": "mbag" }, { "group": "dog_lover_bag" } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -4627,7 +4627,7 @@
       { "level": 6, "name": "rifle" },
       { "level": 3, "name": "pistol" },
       { "level": 4, "name": "survival" },
-      { "level": 7, "name": "cutting" },
+      { "level": 7, "name": "unarmed" },
       { "level": 7, "name": "melee" },
       { "level": 7, "name": "dodge" },
       { "level": 3, "name": "firstaid" },
@@ -4709,7 +4709,7 @@
     ],
     "skills": [
       { "level": 8, "name": "melee" },
-      { "level": 8, "name": "cutting" },
+      { "level": 8, "name": "unarmed" },
       { "level": 8, "name": "dodge" },
       { "level": 4, "name": "speech" }
     ],

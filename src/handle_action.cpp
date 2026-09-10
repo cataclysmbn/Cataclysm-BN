@@ -139,6 +139,8 @@ static const skill_id skill_melee( "melee" );
 
 static const quality_id qual_CUT( "CUT" );
 
+static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNARMED" );
+
 namespace
 {
 
@@ -1582,7 +1584,12 @@ static void reach_attack( avatar &you )
 {
     g->temp_exit_fullscreen();
 
-    target_handler::trajectory traj = target_handler::mode_reach( you, you.primary_weapon() );
+    target_handler::trajectory traj;
+    if( you.is_armed() ) {
+        traj = target_handler::mode_reach( you, you.primary_weapon() );
+    } else {
+        traj = target_handler::mode_unarmed_reach( you );
+    }
 
     if( !traj.empty() ) {
         you.reach_attack( traj.back() );
@@ -1615,13 +1622,31 @@ static void fire()
         std::vector<std::string> options;
         std::vector<std::function<void()>> actions;
 
+        if( u.bonus_from_enchantments( 0, ench_val_REACH_RANGE_UNARMED, true ) > 0 ) {
+            options.push_back( _( "Unarmed Reach Attack" ) );
+            actions.emplace_back( [&] {
+                if( u.has_effect( effect_relax_gas ) )
+                {
+                    if( one_in( 8 ) ) {
+                        add_msg( m_good, _( "Your willpower asserts itself, and so do you!" ) );
+                        reach_attack( u );
+                    } else {
+                        u.moves -= rng( 2, 8 ) * 10;
+                        add_msg( m_bad, _( "You're too pacified to strike anything…" ) );
+                    }
+                } else
+                {
+                    reach_attack( u );
+                }
+            } );
+        }
         bool do_autofire = false;
         for( auto &w : u.worn ) {
             if( w->type->can_use( "holster" ) && !w->has_flag( flag_NO_QUICKDRAW ) &&
                 !w->contents.empty() && w->contents.front().is_gun() ) {
                 //~ draw (first) gun contained in holster
                 //~ %1$s: weapon name, %2$s: container name, %3$d: remaining ammo count
-                options.push_back( "Draw: " + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
+                options.push_back( _( "Draw: " ) + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
                                    w->contents.front().tname(),
                                    w->type_name(),
                                    w->contents.front().ammo_remaining() ) );
@@ -1629,16 +1654,16 @@ static void fire()
                 actions.emplace_back( [&] { u.invoke_item( w, "holster" ); } );
 
             } else if( w->is_gun() && w->has_flag( flag_WORN_GUN ) ) {
-                options.push_back( "Fire: " + w->display_name() );
+                options.push_back( _( "Fire: " ) + w->display_name() );
                 actions.emplace_back( [&] { avatar_action::fire_ranged_gear( u, w ); } );
                 do_autofire = true;
             } else if( w->is_gun() && w->gunmod_find( itype_shoulder_strap ) ) {
                 // wield item currently worn using shoulder strap
-                options.push_back( "Wield: " + w->display_name() );
+                options.push_back( _( "Wield: " ) + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             } else if( w->is_gun() && w->gunmod_find( itype_pistol_lanyard ) ) {
                 // wield item currently worn using pistol lanyard
-                options.push_back( "Wield: " + w->display_name() );
+                options.push_back( _( "Wield: " ) + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             }
         }

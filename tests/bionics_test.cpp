@@ -199,6 +199,7 @@ TEST_CASE("microreactor_fuel_consumption", "[bionics] [reactor]") {
         REQUIRE(safety_override.powered);
 
         CHECK_NOTHROW(dummy.process_turn());
+        CHECK_NOTHROW(dummy.process_items());
         CHECK_FALSE(safety_override.powered);
     }
 
@@ -215,6 +216,7 @@ TEST_CASE("microreactor_fuel_consumption", "[bionics] [reactor]") {
         const auto power_before = dummy.get_power_level();
         const auto rad_before = dummy.get_rad();
         dummy.process_turn();
+        dummy.process_items();
 
         CHECK(safety_override.powered);
         CHECK(dummy.get_power_level() > power_before);
@@ -230,6 +232,7 @@ TEST_CASE("microreactor_fuel_consumption", "[bionics] [reactor]") {
         reactor.charge_timer = 0;
 
         CHECK_NOTHROW(dummy.process_turn());
+        CHECK_NOTHROW(dummy.process_items());
         CHECK_FALSE(reactor.powered);
     }
 
@@ -243,6 +246,7 @@ TEST_CASE("microreactor_fuel_consumption", "[bionics] [reactor]") {
         REQUIRE(safety_override.powered);
 
         CHECK_NOTHROW(dummy.process_turn());
+        CHECK_NOTHROW(dummy.process_items());
         CHECK_FALSE(safety_override.powered);
     }
 

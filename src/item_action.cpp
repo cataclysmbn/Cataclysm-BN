@@ -356,6 +356,9 @@ bool iuse_actor::is_valid() const
 
 std::string iuse_actor::get_name() const
 {
+    if( use_local_display_name ) {
+        return display_name.translated();
+    }
     return item_action_generator::generator().get_action_name( type );
 }
 

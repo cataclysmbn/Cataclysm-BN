@@ -128,9 +128,11 @@
     "id": "cleansing_flame_crafting",
     "type": "item_group",
     "items": [
+      [ "scroll_blank", 5 ],
       [ "holy_symbol", 15 ],
       [ "pot", 5 ],
       [ "bowl_clay", 10 ],
+      [ "retort_copper", 5 ],
       [ "candle", 5 ],
       [ "matches", 15 ],
       { "item": "copper", "prob": 5, "charges": [ 25, 100 ] },

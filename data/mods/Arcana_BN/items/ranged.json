@@ -78,7 +78,14 @@
     "modes": [ [ "DEFAULT", "single", 1 ], [ "BURST", "triple", 3 ] ],
     "ammo_effects": [ "FLAME", "STREAM", "IGNITE" ],
     "techniques": [ "WBLOCK_1", "RAPID" ],
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_sparks", "no_fail": true, "level": 0, "need_wielding": true },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_sparks",
+      "no_fail": true,
+      "level": 0,
+      "need_wielding": true,
+      "menu_text": "Ignite something"
+    },
     "relic_data": {
       "passive_effects": [
         {
@@ -304,7 +311,14 @@
     "loudness": 186,
     "clip_size": 1,
     "reload": 200,
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_sparks", "no_fail": true, "level": 0, "need_wielding": true },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_sparks",
+      "no_fail": true,
+      "level": 0,
+      "need_wielding": true,
+      "menu_text": "Ignite something"
+    },
     "ammo_effects": [ "NAPALM_CLAW", "NO_PENETRATE_OBSTACLES" ],
     "relic_data": {
       "passive_effects": [
@@ -486,11 +500,11 @@
     "flags": [ "NEVER_JAMS" ],
     "skill": "pistol",
     "durability": 10,
-    "range": 7,
+    "range": 10,
     "dispersion": 7500,
     "sight_dispersion": 1000,
-    "//": "Roughly half the damage of closest weapon equivalent, rounded up.",
-    "ranged_damage": { "damage_type": "heat", "amount": 13, "armor_penetration": 5 }
+    "//": "Half the damage of a hellfire staff, and half the arpen rounded up.",
+    "ranged_damage": { "damage_type": "heat", "amount": 20, "armor_penetration": 2 }
   },
   {
     "id": "monster_lightning_fake",
@@ -498,7 +512,7 @@
     "type": "GUN",
     "copy-from": "fake_item",
     "name": { "str": "monster lightning weapon" },
-    "description": "Used to give the Host of the Archon a specific degree of inaccuracy.  If you encounter one of these in the wild, it's a bug.",
+    "description": "Used to give the Host of the Archon a specific degree of inaccuracy, and to nerf his damage to not be an immediate instakill.  If you encounter one of these in the wild, it's a bug.",
     "ammo_effects": [ "NEVER_MISFIRES", "LIGHTNING" ],
     "flags": [ "NEVER_JAMS" ],
     "skill": "pistol",
@@ -507,7 +521,8 @@
     "dispersion": 5000,
     "sight_dispersion": 1000,
     "loudness": 65,
-    "ranged_damage": { "damage_type": "electric", "amount": 38, "armor_penetration": 10 }
+    "//": "One-third the damage of a symbol of judgment, for balance purposes because 120 would be way too strong to be fair to throw at the player.",
+    "ranged_damage": { "damage_type": "electric", "amount": 40, "armor_penetration": 5 }
   },
   {
     "id": "monster_hammer_fake",
@@ -539,6 +554,7 @@
     "range": 20,
     "dispersion": 5000,
     "sight_dispersion": 1000,
+    "//": "Half that of the bionic rift focus weapon.",
     "ranged_damage": { "damage_type": "dark", "amount": 20 }
   },
   {
@@ -644,7 +660,14 @@
         }
       ]
     },
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_mech_flare", "no_fail": true, "level": 0, "need_wielding": true },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_mech_flare",
+      "no_fail": true,
+      "level": 0,
+      "need_wielding": true,
+      "menu_text": "Launch flare"
+    },
     "ammo_effects": [ "LASER", "PLASMA_BUBBLE", "BLINDS_EYES", "BEANBAG", "AMMO_RIFT_FOCUS_SHADOWS", "AMMO_RIFT_FOCUS_TINDALOS" ],
     "flags": [
       "NO_UNLOAD",

@@ -1162,6 +1162,7 @@ void Item_factory::init()
     add_actor( std::make_unique<hand_crank_actor>() );
     add_actor( std::make_unique<sex_toy_actor>() );
     add_actor( std::make_unique<train_skill_actor>() );
+    // Obsolete
     add_actor( std::make_unique<iuse_music_player>() );
     add_actor( std::make_unique<iuse_prospect_pick>() );
     add_actor( std::make_unique<iuse_reveal_contents>() );
@@ -3368,7 +3369,8 @@ auto load_postprocessors( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bo
                     // We ignore these functions during checks
                     return std::move( it );
                 }
-                auto &state = *loader.lua.get();
+                std::unique_lock lock( cata::lua_lock );
+                auto &state = *cata::get_active_lua_state();
                 auto func = cata::get_lua_callback( state, "itemgroup_postprocessors", postprocess );
                 if( !func ) {
                     debugmsg( "Lua callback %s for `itemgroup_postprocessors does not exist.", postprocess );
@@ -3608,6 +3610,7 @@ void Item_factory::emplace_usage( std::map<std::string, use_function> &container
 std::pair<std::string, use_function> Item_factory::usage_from_object( const JsonObject &obj )
 {
     auto type = obj.get_string( "type" );
+    auto internal_name = obj.get_string( "internal_name", type );
 
     if( type == "repair_item" ) {
         type = obj.get_string( "item_action_type" );
@@ -3615,6 +3618,7 @@ std::pair<std::string, use_function> Item_factory::usage_from_object( const Json
             add_actor( std::make_unique<repair_item_actor>( type ) );
             repair_actions.insert( type );
         }
+        internal_name = type;
     }
 
     use_function method = usage_from_string( type );
@@ -3624,7 +3628,10 @@ std::pair<std::string, use_function> Item_factory::usage_from_object( const Json
     }
 
     method.get_actor_ptr()->load( obj );
-    return std::make_pair( type, method );
+    if( obj.has_string( "menu_text" ) ) {
+        method.get_actor_ptr()->set_name( obj.get_string( "menu_text" ) );
+    }
+    return std::make_pair( internal_name, method );
 }
 
 use_function Item_factory::usage_from_string( const std::string &type ) const

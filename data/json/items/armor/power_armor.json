@@ -544,9 +544,10 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH", "DRONE_CAM" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
     "resistance": { "bullet": 90 },
-    "hearing_protection": 80
+    "hearing_protection": 80,
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "power_armor_helmet_basic_on",
@@ -605,8 +606,9 @@
       "active": true
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH", "DRONE_CAM" ],
-    "hearing_protection": 80
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
+    "hearing_protection": 80,
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "power_armor_helmet_heavy_on",
@@ -665,9 +667,10 @@
     },
     "qualities": [ [ "GLARE", 1 ] ],
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH", "DRONE_CAM" ],
+    "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "SUN_GLASSES", "WATCH" ],
     "resistance": { "bullet": 70 },
-    "hearing_protection": 80
+    "hearing_protection": 80,
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "power_armor_helmet_light_on",

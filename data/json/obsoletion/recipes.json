@@ -648,11 +648,6 @@
   },
   {
     "type": "recipe",
-    "result": "mininuke",
-    "obsolete": true
-  },
-  {
-    "type": "recipe",
     "result": "mirrorfrom_steel",
     "obsolete": true
   },

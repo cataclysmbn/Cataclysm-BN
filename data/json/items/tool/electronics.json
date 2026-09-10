@@ -124,11 +124,16 @@
         "type": "transform"
       },
       {
-        "type": "music_player",
         "target": "control_laptop_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 1
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The control laptop's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "ROBOTCONTROL",
       "RADIOCONTROL",
@@ -138,7 +143,8 @@
     "ammo": "battery",
     "initial_charges": 500,
     "max_charges": 700,
-    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "flags": [ "WATCH", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "control_laptop_screen_lit",
@@ -148,7 +154,8 @@
     "power_draw": 5000,
     "revert_to": "laptop",
     "use_action": { "target": "control_laptop", "msg": "You stop lighting up the screen.", "menu_text": "Turn off", "type": "transform" },
-    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "flags": [ "WATCH", "LIGHT_20", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "control_laptop_music",
@@ -157,8 +164,9 @@
     "name": { "str": "control laptop - music", "str_pl": "control laptops - music" },
     "power_draw": 7000,
     "revert_to": "control_laptop",
-    "use_action": "MP3_ON",
-    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "use_action": [ "MP3_ON" ],
+    "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "type": "TOOL_ARMOR",
@@ -202,11 +210,16 @@
       "WEATHER_TOOL",
       "CAMERA",
       {
-        "type": "music_player",
         "target": "wrist_comp_budget_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 1
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The wrist computer's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "PORTABLE_GAME",
       "EINKTABLETPC",
@@ -311,11 +324,16 @@
       "CAMERA",
       "WEATHER_TOOL",
       {
-        "type": "music_player",
         "target": "wrist_comp_control_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 1
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The wrist control computer's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "PORTABLE_GAME",
       "RADIOCONTROL",
@@ -335,9 +353,9 @@
       "NO_UNLOAD",
       "NO_RELOAD",
       "THERMOMETER",
-      "FANCY",
-      "DRONE_CAM"
+      "FANCY"
     ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] },
     "coverage": 15,
     "symbol": "[",
     "ammo": [ "battery" ]
@@ -426,11 +444,16 @@
     "use_action": [
       "EINKTABLETPC",
       {
-        "type": "music_player",
         "target": "eink_tablet_pc_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 1
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The e-ink tablet PC's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "TOGGLE_UPS_CHARGING"
     ],
@@ -588,11 +611,16 @@
         "type": "transform"
       },
       {
-        "type": "music_player",
         "target": "laptop_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 1
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The laptop computer's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "TOGGLE_UPS_CHARGING"
     ],
@@ -605,7 +633,7 @@
     "name": { "str": "laptop computer - music", "str_pl": "laptop computers - music" },
     "power_draw": 7000,
     "revert_to": "laptop",
-    "use_action": "MP3_ON",
+    "use_action": [ "MP3_ON" ],
     "flags": [ "WATCH", "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
   },
   {
@@ -637,11 +665,16 @@
     "flags": [ "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
     "use_action": [
       {
-        "type": "music_player",
         "target": "mp3_on",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 5
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The mp3 player's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "TOGGLE_UPS_CHARGING"
     ],
@@ -655,7 +688,7 @@
     "description": "This mp3 player is turned on and playing some great tunes, raising your morale steadily while on your person.  It runs through batteries quickly; you can turn it off by using it.  It also obscures your hearing.",
     "power_draw": 3500,
     "revert_to": "mp3",
-    "use_action": "MP3_ON",
+    "use_action": [ "MP3_ON" ],
     "flags": [ "TRADER_AVOID", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ]
   },
   {
@@ -752,11 +785,16 @@
       },
       "CAMERA",
       {
-        "type": "music_player",
         "target": "smart_phone_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 5
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The smart phone's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "PORTABLE_GAME",
       "TOGGLE_UPS_CHARGING"
@@ -771,7 +809,7 @@
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "power_draw": 7000,
     "revert_to": "smart_phone",
-    "use_action": "MP3_ON",
+    "use_action": [ "MP3_ON" ],
     "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "RECHARGE", "NO_UNLOAD", "NO_RELOAD" ],
     "magazine_well": "250 ml"
   },
@@ -826,10 +864,14 @@
       "CAMERA",
       "PORTABLE_GAME",
       {
-        "type": "music_player",
         "target": "afs_atomic_smartphone_music",
         "msg": "You put in the earbuds and start listening to music.",
-        "moves": 200
+        "active": true,
+        "moves": 200,
+        "need_charges_msg": "The atomic smartphone's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       }
     ],
     "flags": [ "WATCH", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]

@@ -5,6 +5,7 @@
 bool test_mode = false;
 bool debug_mode = false;
 bool json_report_strict = true;
+bool log_activity_skip_state = false;
 bool use_tiles = false;
 bool colored_lighting = false;
 bool use_pinyin_search = false;

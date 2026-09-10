@@ -542,7 +542,7 @@ void spawn_nested_mapgen()
             return;
         }
         const auto nested_offset = point_rel_ms( local_ms.x(), local_ms.y() );
-        ( *ptr )->nest( md, nested_offset );
+        ( *ptr )->nest( md, nested_offset, 0 );
         g->load_npcs();
         get_map().invalidate_map_cache( g->get_levz() );
     }
@@ -1566,12 +1566,15 @@ void debug()
             faction *new_solo_fac = g->faction_manager_ptr->add_new_faction( temp->name,
                                     faction_id( new_fac_id ), faction_id( "no_faction" ) );
             temp->set_fac( new_solo_fac ? new_solo_fac->id : faction_id( "no_faction" ) );
-            cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-                params["creature"] = temp.get();
-            } );
-            cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
-                params["npc"] = temp.get();
-            } );
+            {
+                std::unique_lock lock( cata::lua_lock );
+                cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+                    params["creature"] = temp.get();
+                } );
+                cata::run_hooks( "on_npc_spawn", [&]( sol::table & params ) {
+                    params["npc"] = temp.get();
+                } );
+            }
             g->load_npcs();
         }
         break;

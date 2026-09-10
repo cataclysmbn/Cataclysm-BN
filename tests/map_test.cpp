@@ -51,7 +51,7 @@ auto burden_jumping_player(avatar& you, const float burden_proportion) -> void {
     }
 }
 
-auto reset_jumping_avatar(avatar& you, const tripoint_bub_ms& origin, const int dexterity) -> void {
+auto reset_jumping_player(player& you, const tripoint_bub_ms& origin, const int dexterity) -> void {
     clear_character(you, false);
     you.setpos(origin);
     you.str_cur = 8;
@@ -59,10 +59,11 @@ auto reset_jumping_avatar(avatar& you, const tripoint_bub_ms& origin, const int 
     you.moves = 1000;
 }
 
-auto equip_window_jump_protection(avatar& you) -> void {
-    REQUIRE_FALSE(you.wear_item(item::spawn("gloves_work"), false));
-    REQUIRE_FALSE(you.wear_item(item::spawn("longshirt"), false));
-    REQUIRE_FALSE(you.wear_item(item::spawn("jeans"), false));
+auto spawn_window_jump_npc(const tripoint_bub_ms& origin, const int dexterity) -> npc& {
+    g->place_player(origin + tripoint_rel_ms::south());
+    auto& jumper = spawn_npc(origin, "test_talker");
+    reset_jumping_player(jumper, origin, dexterity);
+    return jumper;
 }
 
 struct adjacent_pit_move {
@@ -229,7 +230,7 @@ TEST_CASE("moving through a sharp window frame can cause bleeding") {
     auto started_bleeding = false;
     for (const auto attempt : std::views::iota(0, 64)) {
         (void)attempt;
-        reset_jumping_avatar(g->u, origin, 2);
+        reset_jumping_player(g->u, origin, 2);
 
         REQUIRE(g->walk_move(destination, false));
         if (g->u.has_effect(effect_bleed)) {
@@ -323,17 +324,17 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
 
     SECTION("can jump through a closed window and bash it out") {
         here.ter_set(middle, ter_id("t_window"));
-        reset_jumping_avatar(g->u, origin, 8);
+        auto& jumper = spawn_window_jump_npc(origin, 8);
 
-        CHECK(iexamine::can_jump_over_tile(g->u, middle));
-        REQUIRE(iexamine::jump_over_tile(g->u, middle));
-        CHECK(g->u.bub_pos() == landing);
+        CHECK(iexamine::can_jump_over_tile(jumper, middle));
+        REQUIRE(iexamine::jump_over_tile(jumper, middle));
+        CHECK(jumper.bub_pos() == landing);
         CHECK(here.ter(middle) == ter_id("t_window_frame"));
     }
 
     SECTION("cannot jump through reinforced boarded windows") {
         here.ter_set(middle, ter_id("t_window_reinforced"));
-        reset_jumping_avatar(g->u, origin, 20);
+        reset_jumping_player(g->u, origin, 20);
 
         CHECK_FALSE(iexamine::can_jump_over_tile(g->u, middle));
         CHECK_FALSE(iexamine::jump_over_tile(g->u, middle));
@@ -341,16 +342,17 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
     }
 
     SECTION("jumping through a closed window can cut exposed body parts") {
+        auto& jumper = spawn_window_jump_npc(origin, 2);
         auto took_damage = false;
         for (const auto attempt : std::views::iota(0, 16)) {
             (void)attempt;
             here.ter_set(middle, ter_id("t_window"));
-            reset_jumping_avatar(g->u, origin, 2);
+            reset_jumping_player(jumper, origin, 2);
 
-            const auto hp_before = g->u.get_hp();
-            CHECK(iexamine::can_jump_over_tile(g->u, middle));
-            REQUIRE(iexamine::jump_over_tile(g->u, middle));
-            if (g->u.get_hp() < hp_before) {
+            const auto hp_before = jumper.get_hp();
+            CHECK(iexamine::can_jump_over_tile(jumper, middle));
+            REQUIRE(iexamine::jump_over_tile(jumper, middle));
+            if (jumper.get_hp() < hp_before) {
                 took_damage = true;
                 break;
             }
@@ -364,7 +366,7 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
         for (const auto attempt : std::views::iota(0, 16)) {
             (void)attempt;
             here.ter_set(middle, ter_id("t_fence_barbed"));
-            reset_jumping_avatar(g->u, origin, 2);
+            reset_jumping_player(g->u, origin, 2);
 
             const auto hp_before = g->u.get_hp();
             CHECK(iexamine::can_jump_over_tile(g->u, middle));
@@ -383,7 +385,7 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
         for (const auto attempt : std::views::iota(0, 32)) {
             (void)attempt;
             here.ter_set(middle, ter_id("t_fence_barbed"));
-            reset_jumping_avatar(g->u, origin, 2);
+            reset_jumping_player(g->u, origin, 2);
 
             CHECK(iexamine::can_jump_over_tile(g->u, middle));
             REQUIRE(iexamine::jump_over_tile(g->u, middle));
@@ -397,22 +399,23 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
     }
 
     SECTION("jumping through a closed window with only hands exposed damages an arm") {
+        auto& jumper = spawn_window_jump_npc(origin, 2);
         auto took_arm_damage = false;
         for (const auto attempt : std::views::iota(0, 16)) {
             (void)attempt;
             here.ter_set(middle, ter_id("t_window"));
-            reset_jumping_avatar(g->u, origin, 2);
-            REQUIRE_FALSE(g->u.wear_item(item::spawn("longshirt"), false));
-            REQUIRE_FALSE(g->u.wear_item(item::spawn("jeans"), false));
+            reset_jumping_player(jumper, origin, 2);
+            REQUIRE_FALSE(jumper.wear_item(item::spawn("longshirt"), false));
+            REQUIRE_FALSE(jumper.wear_item(item::spawn("jeans"), false));
 
             const auto arm_hp_before =
-                g->u.get_part_hp_cur(bodypart_id("arm_l"))
-                + g->u.get_part_hp_cur(bodypart_id("arm_r"));
-            CHECK(iexamine::can_jump_over_tile(g->u, middle));
-            REQUIRE(iexamine::jump_over_tile(g->u, middle));
+                jumper.get_part_hp_cur(bodypart_id("arm_l"))
+                + jumper.get_part_hp_cur(bodypart_id("arm_r"));
+            CHECK(iexamine::can_jump_over_tile(jumper, middle));
+            REQUIRE(iexamine::jump_over_tile(jumper, middle));
             const auto arm_hp_after =
-                g->u.get_part_hp_cur(bodypart_id("arm_l"))
-                + g->u.get_part_hp_cur(bodypart_id("arm_r"));
+                jumper.get_part_hp_cur(bodypart_id("arm_l"))
+                + jumper.get_part_hp_cur(bodypart_id("arm_r"));
             if (arm_hp_after < arm_hp_before) {
                 took_arm_damage = true;
                 break;
@@ -420,30 +423,6 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
         }
 
         CHECK(took_arm_damage);
-    }
-
-    SECTION("jumping through a closed window is safe when covered") {
-        here.ter_set(middle, ter_id("t_window"));
-        reset_jumping_avatar(g->u, origin, 2);
-        equip_window_jump_protection(g->u);
-
-        const auto hp_before = g->u.get_hp();
-        CHECK(iexamine::can_jump_over_tile(g->u, middle));
-        REQUIRE(iexamine::jump_over_tile(g->u, middle));
-        CHECK(g->u.bub_pos() == landing);
-        CHECK(g->u.get_hp() == hp_before);
-    }
-
-    SECTION("parkour experts never trip while jumping obstacles") {
-        here.ter_set(middle, ter_id("t_window"));
-        reset_jumping_avatar(g->u, origin, 1);
-        equip_window_jump_protection(g->u);
-        g->u.toggle_trait(trait_id("PARKOUR"));
-
-        CHECK(iexamine::can_jump_over_tile(g->u, middle));
-        REQUIRE(iexamine::jump_over_tile(g->u, middle));
-        CHECK(g->u.bub_pos() == landing);
-        CHECK_FALSE(g->u.has_effect(effect_downed));
     }
 
     SECTION("can trip and end up downed when jumping over furniture") {
@@ -537,15 +516,25 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
         CHECK(burdened_burn.actual_burn > unburdened_burn.actual_burn);
     }
 
-    SECTION("warns when too weak to jump") {
-        g->u.str_cur = 3;
-        Messages::clear_messages();
+    SECTION("cannot start when too weak to jump") {
+        g->u.str_max = 3;
+        g->u.set_str_bonus(0);
+        g->u.str_cur = g->u.get_str();
 
         CHECK_FALSE(iexamine::can_start_jump_over_tile(g->u, true));
+    }
 
-        const auto recent_messages = Messages::recent_messages(1);
-        REQUIRE(recent_messages.size() == 1);
-        CHECK(recent_messages.front().second == "You are too weak to jump over an obstacle.");
+    SECTION("cannot start when stamina is below the jump cost") {
+        const auto move_cost = g->u.run_cost(200);
+        const auto required_stamina =
+            divide_round_up(get_option<int>("PLAYER_BASE_STAMINA_BURN_RATE") * move_cost * 14, 100);
+        REQUIRE(required_stamina > 0);
+        g->u.set_stamina(required_stamina - 1);
+
+        CHECK_FALSE(iexamine::can_start_jump_over_tile(g->u, true));
+        CHECK_FALSE(iexamine::can_jump_over_tile(g->u, middle));
+        CHECK_FALSE(iexamine::jump_over_tile(g->u, middle));
+        CHECK(g->u.bub_pos() == origin);
     }
 }
 

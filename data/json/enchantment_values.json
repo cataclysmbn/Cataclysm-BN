@@ -172,6 +172,14 @@
     "desc": "Affects Visibility"
   },
   {
+    "id": "MOTION_ALARM",
+    "type": "enchantment_value",
+    "desc": "Alerts on creatures moving nearby",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true
+  },
+  {
     "id": "BODYTEMP_MIN",
     "type": "enchantment_value",
     "desc": "Affects Minimum Survivable Temperatures",
@@ -288,6 +296,21 @@
     "desc": "Affects Carrying Capacity ( Weight )"
   },
   {
+    "id": "WEIGHTMOD",
+    "type": "enchantment_value",
+    "desc": "Affects %s weight",
+    "desc_insert": [ "total" ],
+    "suffixes": [
+      [
+        { "suffix": "WORN", "desc_insert": [ "armor" ] },
+        { "suffix": "BODY", "desc_insert": [ "body" ] },
+        { "suffix": "INVENTORY", "desc_insert": [ "inventory" ] },
+        { "suffix": "BIONICS", "desc_insert": [ "bionics" ] },
+        { "suffix": "WEAPON", "desc_insert": [ "wielded" ] }
+      ]
+    ]
+  },
+  {
     "id": "OVERMAP_SIGHT",
     "type": "enchantment_value",
     "desc": "Affects Long Range Vision"
@@ -298,9 +321,74 @@
     "desc": "Affects Focus"
   },
   {
+    "id": "MELEE_HIT",
+    "type": "enchantment_value",
+    "desc": "Affects melee hit chance"
+  },
+  {
+    "id": "OVERKILL",
+    "type": "enchantment_value",
+    "desc": "Affects how damaged killed corpses are"
+  },
+  {
     "id": "FOOD_FUN",
     "type": "enchantment_value",
     "desc": "Affects Food Taste"
+  },
+  {
+    "id": "VOMIT_MOD",
+    "type": "enchantment_value",
+    "desc": "Affects likelyhood of vomiting",
+    "increase_good": false
+  },
+  {
+    "id": "PAIN",
+    "type": "enchantment_value",
+    "desc": "Affects %s in pain",
+    "desc_insert": [ "all shifts" ],
+    "suffixes": [ [ { "suffix": "GAIN", "desc_insert": [ "increases" ] }, { "suffix": "LOSS", "desc_insert": [ "reductions" ] } ] ],
+    "increase_good": false
+  },
+  {
+    "id": "PAIN_GOOD",
+    "copy-from": "PAIN_GOOD",
+    "type": "enchantment_value",
+    "increase_good": true
+  },
+  {
+    "id": "PAIN_MOD",
+    "type": "enchantment_value",
+    "desc": "Affects real pain",
+    "increase_good": false
+  },
+  {
+    "id": "CHRONIC_PAIN_MOD",
+    "type": "enchantment_value",
+    "desc": "Affects real chronic pain",
+    "increase_good": false
+  },
+  {
+    "id": "PERCEIVED_PAIN_MOD",
+    "type": "enchantment_value",
+    "desc": "Affects felt pain",
+    "increase_good": false
+  },
+  {
+    "id": "PAIN_PENALTY",
+    "type": "enchantment_value",
+    "desc": "Affects %s Pain Penalty",
+    "desc_insert": [ "Global", "All Bodyparts" ],
+    "suffixes": [
+      [
+        { "suffix": "SPD", "desc_insert": [ "Speed" ] },
+        { "suffix": "STR", "desc_insert": [ "Strength" ] },
+        { "suffix": "DEX", "desc_insert": [ "Dexterity" ] },
+        { "suffix": "INT", "desc_insert": [ "Intellegence" ] },
+        { "suffix": "PER", "desc_insert": [ "Perception" ] }
+      ]
+    ],
+    "increase_good": false,
+    "can_add": false
   },
   {
     "id": "ADDICTION_STRENGTH",
@@ -320,9 +408,37 @@
     "desc": "Affects Addiction Duration Per Intensity"
   },
   {
+    "id": "UNCANNY_DODGE",
+    "type": "enchantment_value",
+    "desc": "Affects dodging of bullets"
+  },
+  {
     "id": "BONUS_DODGE",
     "type": "enchantment_value",
     "desc": "Affects Dodging Ability"
+  },
+  {
+    "id": "FORCEFIELD",
+    "type": "enchantment_value",
+    "desc": "Provides Mitigation of %s Damage",
+    "desc_insert": [ "all" ],
+    "suffixes": [
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
+    ]
   },
   {
     "id": "CROWD_CRUSH_RESIST",
@@ -373,7 +489,17 @@
     "can_add": false,
     "can_mult": false,
     "can_max": true,
-    "desc": "ALlows Sight of Nearby Non-Flying Creatures"
+    "desc": "Allows Sight of Nearby Non-Flying Creatures"
+  },
+  {
+    "id": "REACH_RANGE",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true,
+    "desc": "Grants additional range for %s attacks",
+    "desc_insert": [ "all" ],
+    "suffixes": [ [ { "suffix": "UNARMED", "desc_insert": [ "unarmed" ] }, { "suffix": "ARMED", "desc_insert": [ "armed" ] } ] ]
   },
   {
     "id": "ARMOR",
@@ -585,6 +711,52 @@
     "desc_insert": [ "All" ]
   },
   {
+    "id": "MELEE_DAMAGE",
+    "type": "enchantment_value",
+    "suffixes": [
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
+    ],
+    "desc": "Affects Outgoing Melee %s Damage",
+    "desc_insert": [ "" ]
+  },
+  {
+    "id": "MELEE_ARMOR_PENETRATION",
+    "type": "enchantment_value",
+    "suffixes": [
+      [
+        { "suffix": "BASH", "desc_insert": [ "Bash" ] },
+        { "suffix": "CUT", "desc_insert": [ "Cut" ] },
+        { "suffix": "DARK", "desc_insert": [ "Dark" ] },
+        { "suffix": "LIGHT", "desc_insert": [ "Light" ] },
+        { "suffix": "PSI", "desc_insert": [ "Psi" ] },
+        { "suffix": "STAB", "desc_insert": [ "Stab" ] },
+        { "suffix": "BULLET", "desc_insert": [ "Ballistic" ] },
+        { "suffix": "HEAT", "desc_insert": [ "Heat" ] },
+        { "suffix": "COLD", "desc_insert": [ "Cold" ] },
+        { "suffix": "ELECTRIC", "desc_insert": [ "Electric" ] },
+        { "suffix": "ACID", "desc_insert": [ "Acidic" ] },
+        { "suffix": "BIOLOGICAL", "desc_insert": [ "Biological" ] },
+        { "suffix": "TRUE", "desc_insert": [ "True" ] }
+      ]
+    ],
+    "desc": "Affects Outgoing Melee %s Armor Penetration",
+    "desc_insert": [ "" ]
+  },
+  {
     "id": "ITEM_DAMAGE",
     "type": "enchantment_value",
     "suffixes": [
@@ -666,5 +838,13 @@
     "type": "enchantment_value",
     "desc": "Affects Throwing Attack Cost ( This Item Only )",
     "unsupported_conditions": [ "character", "item_and_character" ]
+  },
+  {
+    "id": "ITEM_REACH_RANGE",
+    "type": "enchantment_value",
+    "can_add": false,
+    "can_mult": false,
+    "can_max": true,
+    "desc": "Grants additional range for this item's attacks"
   }
 ]

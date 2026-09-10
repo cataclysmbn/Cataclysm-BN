@@ -32,6 +32,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "cata_cartesian_product.h"
@@ -608,12 +609,18 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
     get_mapbuffer().refresh_active_item_submap_index( p, resident_item_lookup() );
 
     // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
+    // Guard against duplicate registration: on_submap_loaded() may be replayed for
+    // already-resident submaps (e.g. game::load_map() after m.load() cleared the
+    // list, or submap_loader.update() firing for the bubble), and funnel_locations_
+    // is a vector with no natural dedup — a double entry would fill at 2x rate (#10171).
     if( sm != nullptr && !sm->trap_cache.empty() ) {
-        std::ranges::for_each( sm->trap_cache, [&]( const point_sm_ms & lp ) {
-            if( sm->get_trap( lp ).obj().is_funnel() ) {
-                funnel_locations_.emplace_back( p, lp );
+        for( const point_sm_ms &lp : sm->trap_cache ) {
+            if( sm->get_effective_trap( lp ).obj().is_funnel() ) {
+                if( !std::ranges::contains( funnel_locations_, std::pair( p, lp ) ) ) {
+                    funnel_locations_.emplace_back( p, lp );
+                }
             }
-        } );
+        }
     }
 
 }
@@ -664,6 +671,7 @@ void map::set_seen_cache_dirty( const tripoint_bub_ms &change_location )
 {
     if( inbounds( change_location ) ) {
         level_cache &cache = get_cache( change_location.z() );
+        cache.vehicle_caches_dirty = true;
         if( cache.seen_cache_dirty ) {
             return;
         }
@@ -763,6 +771,16 @@ void map::set_floor_cache_dirty( const int zlev )
     set_absorption_cache_dirty( zlev - 1 );
 }
 
+void map::set_vehicle_cache_dirty( const int zlev )
+{
+    if( inbounds_z( zlev ) ) {
+        get_cache( zlev ).vehicle_caches_dirty = true;
+    }
+    if( inbounds_z( zlev + 1 ) ) {
+        get_cache( zlev + 1 ).vehicle_floor_cache_dirty = true;
+    }
+}
+
 void map::set_floor_cache_dirty( const tripoint_bub_ms &p )
 {
     if( !inbounds( p ) ) {
@@ -798,6 +816,7 @@ void map::set_transparency_cache_dirty( const tripoint_bub_ms &p )
     if( inbounds( p ) ) {
         const auto smp = project_to<coords::sm>( p );
         level_cache &ch = get_cache( smp.z() );
+        ch.vehicle_caches_dirty = true;
         ch.transparency_cache_dirty.set( static_cast<size_t>( ch.bidx( smp.x(), smp.y() ) ) );
         const auto abs_sm = map_local_to_abs( *this, smp );
         get_mapbuffer().mark_submap_caches_dirty( {
@@ -941,6 +960,7 @@ void map::add_vehicle_to_cache( vehicle *veh )
         }
         level_cache &ch = get_cache( p.z() );
         ch.veh_in_active_range = true;
+        set_vehicle_cache_dirty( p.z() );
 
         if( !ch.veh_cached_parts.contains( p ) ||
             !veh->part_info( vpr.part_index() ).has_flag( VPFLAG_NOCOLLIDE ) ||
@@ -963,6 +983,7 @@ void map::clear_vehicle_point_from_cache( vehicle *veh, const tripoint_bub_ms &p
     }
 
     level_cache &ch = get_cache( pt.z() );
+    set_vehicle_cache_dirty( pt.z() );
     auto it = ch.veh_cached_parts.find( pt );
     if( it != ch.veh_cached_parts.end() && it->second.first == veh ) {
         if( inbounds( pt ) ) {
@@ -1002,6 +1023,7 @@ void map::clear_vehicle_cache( )
             ch.veh_cached_parts.erase( part );
         }
         ch.veh_in_active_range = false;
+        set_vehicle_cache_dirty( zlev );
     }
     cached_veh_rope.clear();
 }
@@ -1011,6 +1033,7 @@ void map::clear_vehicle_list( const int zlev )
     auto &ch = get_cache( zlev );
     ch.vehicle_list.clear();
     ch.zone_vehicles.clear();
+    set_vehicle_cache_dirty( zlev );
 
     last_full_vehicle_list_dirty = true;
 }
@@ -1024,6 +1047,7 @@ void map::update_vehicle_list( const submap *const to, const int zlev )
     level_cache &ch = get_cache( zlev );
     for( const auto &elem : to->vehicles ) {
         ch.vehicle_list.insert( elem.get() );
+        set_vehicle_cache_dirty( zlev );
         if( !elem->loot_zones.empty() ) {
             ch.zone_vehicles.insert( elem.get() );
         }
@@ -1143,6 +1167,9 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     // cache effects.  Keep that cleanup path active even if this movement is a
     // removal of the last vehicle on the level.
     ch.veh_in_active_range = true;
+
+    // Vehicle
+    set_vehicle_cache_dirty( smz );
     invalidate_lightmap_caches();
     set_seen_cache_dirty( smz );
     mark_visibility_cache_dirty( smz );
@@ -3747,7 +3774,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
         }
 
         if( to_proc > 0 ) {
-            for( const auto sm_ms : submap_tiles() ) {
+            for( const auto sm_ms : cur_submap->field_cache ) {
                 const auto ms_pos = project_combine( p, sm_ms );
 
                 field &fields = cur_submap->get_field( sm_ms );
@@ -5973,7 +6000,7 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     // Process foods when they are added to the map, here instead of add_item_at()
     // to avoid double processing food and corpses during active item processing.
     if( new_item->is_food() ) {
-        new_item = item::process( std::move( new_item ), nullptr, p, false );
+        new_item = item::process( std::move( new_item ), nullptr, p, 1, false );
         if( !new_item ) {
             return;
         }
@@ -6163,11 +6190,7 @@ static bool process_map_items( item *item_ref, const tripoint_bub_ms &location,
 {
     ZoneScopedN( "process_map_items" );
     return item_ref->attempt_detach( [&location, &flag, &turns]( detached_ptr<item> &&it ) {
-        auto ret = std::move( it );
-        for( int i = 0; i < turns; i++ ) {
-            ret = item::process( std::move( ret ), nullptr, location, false, flag );
-        }
-        return ret;
+        return item::process( std::move( it ), nullptr, location, false, turns, flag );
     } );
 }
 
@@ -8813,6 +8836,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
             set_seen_cache_dirty( grid.z() );
             set_pathfinding_cache_dirty( grid.z() );
             set_suspension_cache_dirty( grid.z() );
+            set_vehicle_cache_dirty( grid.z() );
         }
     }
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
@@ -9043,6 +9067,7 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
                 monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
+                    std::unique_lock lock( cata::lua_lock );
                     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
                         params["creature"] = placed;
                     } );
@@ -9536,12 +9561,16 @@ static void vehicle_caching_internal_above( level_cache &zch_above, const vpart_
         const tripoint_bub_ms &part_pos = v->bub_part_location( vp.part() );
         const int tile_idx = zch_above.idx( part_pos.x(), part_pos.y() );
         zch_above.vehicle_floor_cache[tile_idx] = true;
+        zch_above.has_any_vehicle_floor = true;
     }
 }
 
 void map::do_vehicle_caching( int z )
 {
     level_cache &ch = get_cache( z );
+    if( ch.vehicle_list.empty() && inbounds_z( z + 1 ) ) {
+        get_cache( z + 1 ).vehicle_floor_cache_dirty = false;
+    }
     for( vehicle *v : ch.vehicle_list ) {
         for( const vpart_reference &vp : v->get_all_parts() ) {
             const tripoint_bub_ms &part_pos = v->bub_part_location( vp.part() );
@@ -9550,10 +9579,13 @@ void map::do_vehicle_caching( int z )
             }
             vehicle_caching_internal( get_cache( part_pos.z() ), vp, v );
             if( part_pos.z() < OVERMAP_HEIGHT ) {
-                vehicle_caching_internal_above( get_cache( part_pos.z() + 1 ), vp, v );
+                level_cache &ch_above = get_cache( part_pos.z() + 1 );
+                vehicle_caching_internal_above( ch_above, vp, v );
+                ch_above.vehicle_floor_cache_dirty = false;
             }
         }
     }
+    ch.vehicle_caches_dirty = false;
 }
 
 void map::build_map_cache( const int zlev, bool skip_lightmap )
@@ -9576,11 +9608,17 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool gpu_vehicle_floor_dirty = false;
     bool gpu_vehicle_obscured_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
+    dirty_seen_cache_levels.reserve( OVERMAP_HEIGHT + OVERMAP_DEPTH + 1 );
     std::vector<int> gpu_transparency_dirty_levels;
+    gpu_transparency_dirty_levels.reserve( OVERMAP_HEIGHT + OVERMAP_DEPTH + 1 );
     std::vector<int> gpu_transparency_residency_invalid_levels;
+    gpu_transparency_residency_invalid_levels.reserve( OVERMAP_HEIGHT + OVERMAP_DEPTH + 1 );
     std::vector<int> gpu_floor_dirty_levels;
+    gpu_floor_dirty_levels.reserve( OVERMAP_HEIGHT + OVERMAP_DEPTH + 1 );
     std::vector<int> gpu_vehicle_floor_dirty_levels;
+    gpu_vehicle_floor_dirty_levels.reserve( OVERMAP_HEIGHT + OVERMAP_DEPTH + 1 );
     std::vector<int> gpu_vehicle_obscured_dirty_levels;
+    gpu_vehicle_obscured_dirty_levels.reserve( OVERMAP_HEIGHT + OVERMAP_DEPTH + 1 );
 
     auto mark_lightmap_dirty = [this]( const int z ) {
         auto &cache = get_cache( z );
@@ -9599,9 +9637,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         levels.erase( std::ranges::unique( levels ).begin(), levels.end() );
     };
     auto level_has_vehicle_floor = []( const level_cache & ch ) {
-        return std::ranges::any_of( ch.vehicle_floor_cache, []( const char c ) {
-            return c != '\0';
-        } );
+        ZoneScopedN( "Level_Has_Vehicle_Floor" );
+        return ch.has_any_vehicle_floor;
     };
 
     // Refresh the shared weather-transparency lookup table once, serially,
@@ -9656,61 +9693,28 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
 
     {
-        ZoneScopedN( "Phase1_parallel_caches" );
+        ZoneScopedN( "Phase1_seen_and_vehicle_caches" );
         // Vehicle cache clearing only — floor/outside/sheltered are already done above.
-        if( parallel_enabled && parallel_map_cache ) {
-            std::mutex dirty_mutex;
-            parallel_for( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1, [&]( int z ) {
-                level_cache &ch = get_cache( z );
-                const bool vehicle_floor_was_dirty = level_has_vehicle_floor( ch );
-                // vehicle_floor_cache is written by vehicles one level below (via
-                // vehicle_caching_internal_above), so it must be cleared unconditionally —
-                // not gated on veh_in_active_range — to prevent stale entries after shifts.
+        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+            level_cache &ch = get_cache( z );
+
+            if( ch.vehicle_floor_cache_dirty ) {
+                ZoneScopedN( "fill_veh_caches_zabove" );
                 std::fill( ch.vehicle_floor_cache.begin(), ch.vehicle_floor_cache.end(), '\0' );
-                if( ch.veh_in_active_range ) {
-                    const diagonal_blocks fill = {false, false};
-                    std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
-                    std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
-                    std::lock_guard<std::mutex> lock( dirty_mutex );
-                    add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
-                }
-
-                const bool level_seen_dirty = ch.seen_cache_dirty;
-                if( level_seen_dirty || vehicle_floor_was_dirty ) {
-                    std::lock_guard<std::mutex> lock( dirty_mutex );
-                    if( level_seen_dirty ) {
-                        seen_cache_dirty = true;
-                        dirty_seen_cache_levels.push_back( z );
-                    }
-                    if( vehicle_floor_was_dirty ) {
-                        add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
-                    }
-                }
-            } );
-        } else {
-            for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
-                level_cache &ch = get_cache( z );
-                const bool vehicle_floor_was_dirty = level_has_vehicle_floor( ch );
-
-                // vehicle_floor_cache is written by vehicles one level below (via
-                // vehicle_caching_internal_above), so it must be cleared unconditionally —
-                // not gated on veh_in_active_range — to prevent stale entries after shifts.
-                std::fill( ch.vehicle_floor_cache.begin(), ch.vehicle_floor_cache.end(), '\0' );
-                if( ch.veh_in_active_range ) {
-                    const diagonal_blocks fill = {false, false};
-                    std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
-                    std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
-                    add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
-                }
-
-                const bool level_seen_dirty = ch.seen_cache_dirty;
-                if( level_seen_dirty ) {
-                    seen_cache_dirty = true;
-                    dirty_seen_cache_levels.push_back( z );
-                }
-                if( vehicle_floor_was_dirty ) {
-                    add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
-                }
+                ch.has_any_vehicle_floor = false;
+                add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
+            }
+            if( ch.vehicle_caches_dirty ) {
+                ZoneScopedN( "fill_veh_caches_thisz" );
+                const diagonal_blocks fill = {false, false};
+                std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
+                std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
+                add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
+            }
+            if( ch.seen_cache_dirty ) {
+                ZoneScopedN( "seen_dirty" );
+                seen_cache_dirty = true;
+                dirty_seen_cache_levels.push_back( z );
             }
         }
     }
@@ -9727,37 +9731,23 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
     {
         ZoneScopedN( "Phase3_vehicles" );
-        // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
-        // otherwise such changes might be overwritten by main cache-building logic.
-        // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
-        auto const mark_vehicle_gpu_structural_levels = [&]( const vehicle * const veh ) {
-            if( veh == nullptr ) {
-                return;
-            }
-            for( const vpart_reference &vp : veh->get_all_parts() ) {
-                const auto &part_pos = veh->bub_part_location( vp.part() );
-                if( !inbounds( part_pos ) || vp.part().removed ) {
-                    continue;
-                }
-                add_gpu_dirty_level( gpu_transparency_dirty_levels, part_pos.z() );
-                add_gpu_dirty_level( gpu_transparency_residency_invalid_levels, part_pos.z() );
-                add_gpu_dirty_level( gpu_floor_dirty_levels, part_pos.z() );
-                add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, part_pos.z() );
-            }
-        };
         for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-            if( get_cache( z ).veh_in_active_range ) {
-                for( const vehicle *const veh : get_cache( z ).vehicle_list ) {
-                    mark_vehicle_gpu_structural_levels( veh );
+            // If one cache is dirty redo the entire cache for simplicity
+            if( get_cache( z ).vehicle_caches_dirty || ( inbounds_z( z + 1 ) &&
+                    get_cache( z + 1 ).vehicle_floor_cache_dirty ) ) {
+                add_gpu_dirty_level( gpu_transparency_dirty_levels, z );
+                add_gpu_dirty_level( gpu_transparency_residency_invalid_levels, z );
+                add_gpu_dirty_level( gpu_floor_dirty_levels, z );
+                add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
+                {
+                    ZoneScopedN( "Phase3_vehicles_cache" );
+                    do_vehicle_caching( z );
                 }
-                do_vehicle_caching( z );
             }
-        }
-        std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ), [&]( const int z ) {
-            if( level_has_vehicle_floor( get_cache_ref( z ) ) ) {
+            if( get_cache( z ).vehicle_floor_cache_dirty ) {
                 add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
             }
-        } );
+        }
     }
 
     normalize_gpu_dirty_levels( gpu_transparency_dirty_levels );
@@ -9775,6 +9765,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     if( skip_lightmap && use_sdl_gpu_compute && gpu_transparency_dirty ) {
         cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_dirty_levels );
+    }
+    if( !use_sdl_gpu_compute && gpu_transparency_dirty ) {
+        invalidate_lightmap_caches();
+    }
+#else
+    if( gpu_transparency_dirty ) {
+        invalidate_lightmap_caches();
     }
 #endif
     TracyPlot( "Map GPU Transparency Dirty Levels",
@@ -10656,6 +10653,18 @@ bool map::check_and_set_seen_cache( const tripoint_bub_ms &p ) const
     return false;
 }
 
+bool map::is_map_cache_valid( const int zlev )
+{
+    if( inbounds_z( zlev ) ) {
+        level_cache &ch = get_cache( zlev );
+        // NOTE: Purposely excludes visibility cache, that is handled seperately in the game loop
+        return ch.floor_cache_dirty.any() || ch.transparency_cache_dirty.any() ||
+               ch.absorption_cache_dirty.any() || ch.sound_wall_cache_dirty.any() ||
+               ch.seen_cache_dirty || ch.lightmap_dirty || ch.outside_cache_dirty.any() ||
+               ch.suspension_cache_dirty;
+    }
+}
+
 void map::invalidate_map_cache( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
@@ -10667,6 +10676,7 @@ void map::invalidate_map_cache( const int zlev )
         ch.seen_cache_dirty = true;
         ch.lightmap_dirty = true;
         ch.lm_cpu_cache_valid = false;
+        set_vehicle_cache_dirty( zlev );
         ++ch.lm_cpu_cache_generation;
         mark_visibility_cache_dirty( zlev );
         ch.outside_cache_dirty.set();

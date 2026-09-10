@@ -552,7 +552,10 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
     };
 
     const inventory &inv = u.crafting_inventory();
-    const int factor = inv.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER );
+    // Must check both u and inventory because crafting inventory lacks mutation butcher items
+    const int factor = std::max(
+                           u.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER ),
+                           inv.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER ) );
 
     const mtype &corpse = *corpse_item.get_mtype();
 
@@ -4770,13 +4773,13 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
     bool target_is_valid = false;
     if( spell_being_cast.range() > 0 && !spell_being_cast.is_valid_target( target_none ) &&
         !spell_being_cast.has_flag( RANDOM_TARGET ) ) {
-        g->refresh_player_visibility_cache_if_needed();
+        g->refresh_player_visibility_cache_if_needed( true );
         do {
             avatar &you = *p->as_avatar();
             std::vector<tripoint_bub_ms> trajectory = target_handler::mode_spell( you, spell_being_cast,
                     no_fail,
                     no_mana );
-            g->refresh_player_visibility_cache_if_needed();
+            g->refresh_player_visibility_cache_if_needed( true );
 
             if( !trajectory.empty() ) {
                 target = trajectory.back();

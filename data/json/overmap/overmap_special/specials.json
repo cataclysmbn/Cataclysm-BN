@@ -1649,7 +1649,8 @@
     "locations": [ "wilderness" ],
     "city_sizes": [ 1, -1 ],
     "city_distance": [ 12, -1 ],
-    "occurrences": [ 30, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": 0, "y": 1 },
     "flags": [ "UNIQUE", "GLOBALLY_UNIQUE" ]
   },
   {
@@ -1897,7 +1898,8 @@
     "city_distance": [ 3, -1 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 1, 1 ],
-    "flags": [ "UNIQUE", "GLOBALLY_UNIQUE", "ELECTRIC_GRID", "ENDGAME" ]
+    "absolute_spawn_loc": { "x": 0, "y": 0 },
+    "flags": [ "UNIQUE", "GLOBALLY_UNIQUE", "ELECTRIC_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -1910,6 +1912,7 @@
     "city_distance": [ 20, -1 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 80, 100 ],
+    "absolute_spawn_loc": { "x": 0, "y": 0 },
     "flags": [ "CLASSIC", "WILDERNESS", "UNIQUE", "ELECTRIC_GRID" ]
   },
   {
@@ -1927,8 +1930,9 @@
     "locations": [ "wilderness" ],
     "city_distance": [ 20, -1 ],
     "city_sizes": [ 4, -1 ],
-    "occurrences": [ 50, 100 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "UNIQUE", "ELECTRIC_GRID" ]
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": -1, "y": 0 },
+    "flags": [ "CLASSIC", "WILDERNESS", "GLOBALLY_UNIQUE", "ELECTRIC_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -2094,7 +2098,8 @@
     "locations": [ "wilderness" ],
     "city_distance": [ 3, -1 ],
     "rotate": false,
-    "occurrences": [ 30, 100 ],
+    "occurrences": [ 1, 1 ],
+    "absolute_spawn_loc": { "x": -1, "y": 0 },
     "flags": [ "UNIQUE", "GLOBALLY_UNIQUE" ]
   },
   {
@@ -3106,7 +3111,8 @@
     "city_sizes": [ 1, 16 ],
     "occurrences": [ 1, 1 ],
     "rotate": false,
-    "flags": [ "ELECTRIC_GRID", "UNIQUE", "GLOBALLY_UNIQUE", "ENDGAME" ]
+    "absolute_spawn_loc": { "x": 0, "y": 1 },
+    "flags": [ "ELECTRIC_GRID", "UNIQUE", "GLOBALLY_UNIQUE" ]
   },
   {
     "type": "overmap_special",

@@ -18,9 +18,15 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str_sp": "teeth and claws" },
-    "flags": "TRADER_AVOID",
+    "flags": [ "TRADER_AVOID", "DIG_TOOL", "ENCHANTMENT_TOOLS" ],
     "use_action": [ "BURROW" ],
     "qualities": [ [ "DIG", 3 ] ]
+  },
+  {
+    "id": "fake_hands",
+    "copy-from": "fake_item",
+    "type": "GENERIC",
+    "name": { "str_sp": "unarmed" }
   },
   {
     "id": "toolset",
@@ -70,7 +76,7 @@
     "copy-from": "fake_item",
     "type": "TOOL",
     "name": { "str": "integrated voltmeter" },
-    "flags": [ "TRADER_AVOID", "USES_BIONIC_POWER" ],
+    "flags": [ "TRADER_AVOID", "USES_BIONIC_POWER", "BIONIC_TOOLS" ],
     "max_charges": 10000,
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
     "use_action": [ "VOLTMETER" ]

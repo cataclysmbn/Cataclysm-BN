@@ -2571,6 +2571,12 @@
     "context": [  ]
   },
   {
+    "id": "ENCHANTMENT_TOOLS",
+    "type": "json_flag",
+    "//": "Used on fake enchantment items",
+    "context": [  ]
+  },
+  {
     "id": "MULTIINSTALL",
     "type": "json_flag",
     "//": "Lets you install multiple copies of this bionic",

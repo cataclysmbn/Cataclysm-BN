@@ -441,5 +441,29 @@
     "using": [ [ "steel_standard", 10 ], [ "welding_standard", 10 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "DRILL", "level": 2 } ],
     "components": [ [ [ "military_explosive", 3500, "LIST" ] ], [ [ "impact_fuze", 1 ] ], [ [ "steel_plate", 5 ] ] ]
+  },
+  {
+    "result": "mininuke",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_EXPLOSIVE",
+    "skill_used": "electronics",
+    "skills_required": [ [ "fabrication", 6 ], [ "mechanics", 8 ] ],
+    "difficulty": 10,
+    "time": "1 h 30 m",
+    "book_learn": [ [ "recipe_lab_elec", 7 ], [ "recipe_mininuke_launch", 9 ] ],
+    "reversible": true,
+    "decomp_learn": 8,
+    "using": [ [ "soldering_standard", 50 ], [ "welding_standard", 10 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [
+      [ [ "cable", 12 ] ],
+      [ [ "military_explosive", 25, "LIST" ] ],
+      [ [ "circuit", 6 ] ],
+      [ [ "plut_cell", 10 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "sheet_metal_small", 48 ], [ "sheet_metal", 2 ] ],
+      [ [ "small_storage_battery", 2 ] ]
+    ]
   }
 ]
