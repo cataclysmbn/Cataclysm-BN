@@ -6186,7 +6186,11 @@ std::map<bodypart_id, int> get_wind_resistance( const Character &chr,
                 bonus_clothing_map );
     for( auto &pair : wind_res_per_bp ) {
         const int exposed = std::max( 0, 100 - pair.second );
-        const int exposed_bonus = std::max( 0, 100 - wind_res_per_bp_bonus[ pair.first ] );
+        const auto exposed_it = wind_res_per_bp_bonus.find( pair.first );
+        int exposed_bonus = 0;
+        if (exposed_it != wind_res_per_bp_bonus.end()) {
+            exposed_bonus = std::max( 0, 100 - exposed_it->second );
+        }
         const int exposed_final = exposed * exposed_bonus / ( 100 * 100 );
         pair.second = 100 - exposed_final;  // Modifies the actual map value
     }
@@ -6397,7 +6401,7 @@ void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
         // Warmth gives a slight buff to temperature resistance
         // Wetness gives a heavy nerf to temperature resistance
         const auto it = body_mods.warmth_per_bp.find( bp );
-        const int adjusted_warmth = (it != body_mods.warmth_per_bp.end()) ? it->second : 0;
+        const int adjusted_warmth = (it != body_mods.warmth_per_bp.end() ? it->second : 0) - wetness_percentage;
         int Ftemperature = static_cast<int>( units::to_fahrenheit( body_mods.ambient_temperature ) + 0.2 *
                                              adjusted_warmth );
         // Windchill reduced by your armor
