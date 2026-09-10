@@ -1054,7 +1054,7 @@ static std::pair<std::string, nc_color> speed_description( float mon_speed_ratin
 /// How many process_turn ticks until leftover moves are positive (can_act).
 /// Empty when the card should stay qualitative-only (immobile / inattentive).
 static std::optional<std::pair<std::string, nc_color>> action_readiness_description(
-    const monster &mon )
+            const monster &mon )
 {
     if( mon.has_flag( MF_IMMOBILE ) ) {
         return std::nullopt;
