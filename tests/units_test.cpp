@@ -101,8 +101,9 @@ TEST_CASE("sound parsing from JSON", "[units]") {
         legacy_sound = assign_sound_quantity("{ \"volume\": 2 }");
     });
     CHECK(warning.find("legacy sound volume values used") != std::string::npos);
+    // Legacy sounds increased by 50 so it's above ambient and thus audible
     CHECK(legacy_sound
-          == units::from_decibel(approximate_dB_volume_from_legacy_tile_distance_vol(2)));
+          == units::from_decibel(approximate_dB_volume_from_legacy_tile_distance_vol(2) + 50));
 }
 
 TEST_CASE("energy parsing from JSON", "[units]") {
