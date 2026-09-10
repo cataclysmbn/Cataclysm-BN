@@ -596,29 +596,11 @@ mod.ebook_ui = function(params)
     locale.gettext("Scan book(s)"),
     locale.gettext("Scan all the books you have. It will progress instantly.")
   )
-  uilist:add_w_desc(
-    -1,
-    locale.gettext("Load book(s)"),
-    locale.gettext("Temporarily prints a physical copy from the device’s library.")
-  )
-  uilist:add_w_desc(
-    -1,
-    locale.gettext("Return book(s)"),
-    locale.gettext("Absorbs the copy back into the device and restores partial power.")
-  )
   uilist:add_w_desc(-1, locale.gettext("Info.."), locale.gettext("Shows UID, list of data, explanation for customers!"))
-
-  local load_entry = uilist.entries[2]
-  if var_count < 1 and load_entry ~= nil then
-    load_entry.ctxt = locale.gettext("No book in device!")
-    load_entry.enable = false
-  end
 
   local actions = {
     [0] = mod.ebook_scan,
-    [1] = mod.ebook_load,
-    [2] = mod.ebook_return,
-    [3] = mod.ebook_info,
+    [1] = mod.ebook_info,
   }
 
   while true do

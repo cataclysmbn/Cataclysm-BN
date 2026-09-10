@@ -19,7 +19,8 @@
         "menu_text": "Listen to music"
       },
       "TOGGLE_UPS_CHARGING",
-      "LUA_EBOOK"
+      "LUA_EBOOK",
+      "EBOOK_READER"
     ]
   }
 ]
