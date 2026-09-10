@@ -472,7 +472,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
     }
     int rate_multiplier = 1; // Not quite sure where to put this
     int ticks;
-    if( rech.type == relic_recharge_type::time ) {
+    if( rech.type == relic_recharge_type::time || rech.type == relic_recharge_type::solar ) {
         int last_relic_process = itm.get_var( "last_relic_process", 0 );
         if( last_relic_process == 0 &&
             itm.get_var( "relic_was_in_inventory",
@@ -484,6 +484,11 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         if( ticks > 0 ) {
             rate_multiplier = ticks;
+            // It's solar for roughly half the day
+            // This permits catchup without being broken
+            if( rech.type == relic_recharge_type::solar ) {
+                rate_multiplier /= 2;
+            }
         }
         itm.set_var( "last_relic_process", to_turn<int>( calendar::turn ) );
     }

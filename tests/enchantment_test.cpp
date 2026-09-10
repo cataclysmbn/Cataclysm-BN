@@ -15,6 +15,7 @@ static efftype_id effect_debug_clairvoyance("debug_clairvoyance");
 
 static void advance_turn(Character& guy) {
     guy.process_turn();
+    guy.process_items();
     calendar::turn += 1_turns;
 }
 

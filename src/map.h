@@ -382,8 +382,13 @@ struct level_cache {
     bool visibility_cache_dirty = true;
     // Set by build_floor_cache; true when at least one tile has a floor.
     bool has_any_floor = true;
+    bool has_any_vehicle_floor = false;
     bool suspension_cache_initialized = false;
     bool suspension_cache_dirty = false;
+    // Vehicle floor cache dirty: set when vehicle below moves
+    bool vehicle_floor_cache_dirty = false;
+    // Vehicle cache dirty: set when vehicle here moves
+    bool vehicle_caches_dirty = false;
     std::list<point_abs_ms> suspension_cache;
 
     // ---- 12 tile-coordinate arrays (size: cache_x * cache_y) ----
@@ -826,6 +831,7 @@ class map : public submap_load_listener
         void set_outside_cache_dirty( const tripoint_bub_ms &p );
 
         void set_floor_cache_dirty( const int zlev );
+        void set_vehicle_cache_dirty( const int zlev );
         // Point-level: marks only the tile's own submap (no horizontal neighbour dependency).
         void set_floor_cache_dirty( const tripoint_bub_ms &p );
 
@@ -844,6 +850,7 @@ class map : public submap_load_listener
         auto take_memory_seen_cache_dirty_points( int zlev ) -> std::vector<tripoint_bub_ms>;
         auto mark_memory_seen_cache_dirty_all_clean( int zlev ) -> void;
 
+        auto is_map_cache_valid( const int zlev ) -> bool;
         void invalidate_map_cache( const int zlev );
 
         /// Mark lightmap_dirty for every loaded z-level.

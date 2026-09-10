@@ -84,11 +84,13 @@
     "//": "Mainly the standard rifles that an Army/Marine rifleman, Army TL, or Marine assistant automatic rifleman would use, but allow a handful of Ranger and Delta Force rifles",
     "subtype": "distribution",
     "entries": [
-      { "group": "everyday_m4a1_military", "prob": 75, "charges": [ 0, 30 ] },
+      { "group": "everyday_m4a1_military", "prob": 65, "charges": [ 0, 30 ] },
+      { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ], "contents-group": "military_accessories_standard" },
       { "group": "everyday_m27iar_military", "prob": 10, "charges": [ 0, 30 ] },
       { "group": "everyday_h&k416a5_military", "prob": 5, "charges": [ 0, 30 ] },
+      { "group": "everyday_hk417_13", "prob": 5, "charges": [ 0, 30 ] },
       { "group": "everyday_scar_h_military", "prob": 5, "charges": [ 0, 30 ] },
-      { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ], "contents-group": "military_accessories_standard" }
+      { "group": "everyday_m7", "prob": 5, "charges": [ 0, 30 ] }
     ]
   },
   {
@@ -101,11 +103,13 @@
         "collection": [
           {
             "distribution": [
-              { "group": "everyday_m4a1_grenadier", "prob": 75, "charges": [ 0, 30 ] },
+              { "group": "everyday_m4a1_grenadier", "prob": 65, "charges": [ 0, 30 ] },
+              { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ], "contents-group": "military_accessories_grenadier" },
               { "group": "everyday_m27iar_grenadier", "prob": 10, "charges": [ 0, 30 ] },
               { "group": "everyday_h&k416a5_grenadier", "prob": 5, "charges": [ 0, 30 ] },
+              { "group": "everyday_hk417_13_grenadier", "prob": 5, "charges": [ 0, 30 ] },
               { "group": "everyday_scar_h_grenadier", "prob": 5, "charges": [ 0, 30 ] },
-              { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ], "contents-group": "military_accessories_grenadier" }
+              { "group": "everyday_m7_grenadier", "prob": 5, "charges": [ 0, 30 ] }
             ]
           },
           { "group": "on_hand_40x46mm" }
@@ -151,9 +155,10 @@
     "//": "Mostly LMGs but allows the occasional GPMG too",
     "subtype": "distribution",
     "entries": [
-      { "group": "everyday_m249_military", "prob": 75, "charges": [ 0, 100 ] },
+      { "group": "everyday_m249_military", "prob": 70, "charges": [ 0, 100 ] },
       { "group": "everyday_m27iar_fire_support", "prob": 15, "charges": [ 0, 100 ] },
-      { "group": "everyday_m240_military", "prob": 10, "charges": [ 0, 100 ] }
+      { "group": "everyday_m240_military", "prob": 10, "charges": [ 0, 100 ] },
+      { "group": "everyday_m250", "prob": 5, "charges": [ 0, 100 ] }
     ]
   },
   {
@@ -162,9 +167,10 @@
     "subtype": "distribution",
     "entries": [
       { "group": "everyday_m9", "prob": 30, "charges": [ 0, 15 ] },
-      { "group": "everyday_m17", "prob": 65, "charges": [ 0, 17 ] },
-      { "group": "everyday_glock_19", "prob": 3, "charges": [ 0, 15 ] },
-      { "group": "everyday_m1911_MEU", "prob": 2, "charges": [ 0, 7 ] }
+      { "group": "everyday_m17", "prob": 50, "charges": [ 0, 17 ] },
+      { "group": "everyday_glock_19", "prob": 5, "charges": [ 0, 15 ] },
+      { "group": "everyday_m1911_MEU", "prob": 10, "charges": [ 0, 7 ] },
+      { "group": "everyday_mk23", "prob": 5, "charges": [ 0, 12 ] }
     ]
   },
   {
@@ -191,9 +197,31 @@
     "entries": [
       { "item": "e_tool", "prob": 50 },
       { "item": "mask_gas", "prob": 20 },
-      { "item": "two_way_radio", "prob": 60 },
-      { "item": "army_powered_earmuffs", "prob": 25 },
+      {
+        "distribution": [
+          { "collection": [ { "item": "two_way_radio" }, { "item": "ear_plugs", "prob": 50 } ], "prob": 50 },
+          { "item": "army_powered_earmuffs", "prob": 50 }
+        ],
+        "prob": 75
+      },
       { "item": "sheath", "contents-item": "knife_combat", "prob": 80 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "infantry_elite_gear",
+    "subtype": "collection",
+    "entries": [
+      { "item": "e_tool", "prob": 50 },
+      { "item": "mask_gas", "prob": 20 },
+      { "item": "army_powered_earmuffs", "prob": 75 },
+      {
+        "collection": [
+          { "item": "sheath", "contents-item": "knife_combat", "prob": 80 },
+          { "item": "sheath", "contents-item": "knife_rm42", "prob": 20 }
+        ],
+        "prob": 80
+      }
     ]
   },
   {

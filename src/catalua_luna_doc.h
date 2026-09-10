@@ -51,6 +51,8 @@ class distribution_grid;
 class distribution_grid_tracker;
 class effect;
 class overmapbuffer;
+class enchantment_value;
+class enchantment_flag;
 class effect_type;
 class item;
 class item_stack;
@@ -246,6 +248,8 @@ LUNA_ID( activity_type, "ActivityType" )
 LUNA_ID( bionic_data, "BionicData" )
 LUNA_ID( body_part_type, "BodyPartType" )
 LUNA_ID( disease_type, "DiseaseType" )
+LUNA_ID( enchantment_value, "EnchantmentValue" )
+LUNA_ID( enchantment_flag, "EnchantmentFlag" )
 LUNA_ID( effect_type, "EffectType" )
 LUNA_ID( faction, "Faction" )
 LUNA_ID( field_type, "FieldType" )

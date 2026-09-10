@@ -21,6 +21,8 @@
 #include "catalua_luna_doc.h"
 #include "catalua_serde.h"
 #include "character.h"
+#include "crafting.h"
+#include "craft_command.h"
 #include "creature.h"
 #include "damage.h"
 #include "disease.h"
@@ -458,6 +460,7 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( flies, bool() const );
         SET_FX_T( climbs, bool() const );
         SET_FX_T( swims, bool() const );
+        SET_FX_T( made_of, bool( const material_id & ) const );
 
         SET_FX_T( move_target, tripoint_bub_ms() );
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
@@ -1305,6 +1308,23 @@ void cata::detail::reg_character( sol::state &lua )
         DOC( "Invalidates the cached crafting inventory" );
         SET_FX_T( invalidate_crafting_inventory, void() );
 
+        DOC( "Consumes a requirement's items from the inventory" );
+        luna::set_fx( ut, "consume_requirement", []( UT_CLASS & ch, const requirement_data & req, const sol::table & opts ) -> bool {
+            int range = opts.get_or( "range", PICKUP_RANGE );
+            int size = opts.get_or( "count", 1 );
+            inventory map_inv;
+            map_inv.form_from_map( ch.bub_pos(), range );
+            for( const auto &it : req.get_components() )
+            {
+                auto chosen = ch.select_item_component( it, size, map_inv, true );
+                if( chosen.use_from == usage_from::cancel ) {
+                    return false;
+                }
+                ch.consume_items( chosen, size );
+            }
+            return true;
+        } );
+
         DOC( "Consumes items from inventory based on item component list" );
         luna::set_fx( ut, "consume_items", []( UT_CLASS & ch, const std::vector<item_comp> &components ) -> void {
             ch.consume_items( components );
@@ -1315,6 +1335,11 @@ void cata::detail::reg_character( sol::state &lua )
             ch.consume_tools( tools );
         } );
 
+        DOC( "Gets the bonus from the enchantment value. Doesn't handle max logic itself." );
+        luna::set_fx( ut, "bonus_from_enchantments", []( UT_CLASS & ch, const double base, const enchantment_value_id & ench_val_id, sol::optional<bool> round ) -> double {
+            return ch.bonus_from_enchantments( base, ench_val_id, round.value_or( false ) );
+        } );
+        SET_FX( has_enchantment_flag );
     }
 #undef UT_CLASS // #define UT_CLASS Character
 

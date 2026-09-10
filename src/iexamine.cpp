@@ -4122,7 +4122,11 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 }
                 detached_ptr<item> tmp = item::spawn( drink.typeId(), calendar::turn, charges_held );
                 tmp = pour_into_keg( examp, std::move( tmp ) );
-                p.use_charges( drink.typeId(), charges_held - tmp->charges );
+                if( tmp ) { // tmp->charges contains the charges left after pouring into the keg
+                    p.use_charges( drink.typeId(), charges_held - tmp->charges );
+                } else { // tmp being empty means all charges were used up
+                    p.use_charges( drink.typeId(), charges_held );
+                }
                 add_msg( _( "You fill the %1$s with %2$s." ), keg_name, drink_nname );
                 notify_contents_changed( examp );
                 p.moves -= to_moves<int>( 10_seconds );
@@ -5628,6 +5632,11 @@ auto scale_jump_over_tile_cost_round_up( const int value, const int numerator,
     return divide_round_up( value * numerator, denominator );
 }
 
+auto jump_over_tile_move_cost( const player &p ) -> int
+{
+    return p.run_cost( jump_over_tile_base_move_cost );
+}
+
 auto jump_over_tile_stamina_cost( const player &p, const int move_cost ) -> int
 {
     const auto base_stamina_cost = scale_jump_over_tile_cost_round_up(
@@ -5678,6 +5687,23 @@ auto jump_over_tile_can_cross_impassable( const map &here, const player &p,
 {
     return here.has_flag( flag_CLIMB_SIMPLE, jumped_tile ) ||
            jump_over_tile_bashes_window( here, p, jumped_tile );
+}
+
+auto jump_over_tile_can_land_on_ledge( mapbuffer &buffer,
+                                       const tripoint_abs_ms &landing_tile ) -> bool
+{
+    const auto tile_reader = buffer.make_abs_tile_reader();
+    const auto landing = tile_reader.get_tile( landing_tile );
+    if( !landing ) {
+        return false;
+    }
+
+    if( landing->get_trap() != tr_ledge && landing->get_ter_t().trap != tr_ledge ) {
+        return false;
+    }
+
+    return buffer.valid_move( landing_tile, landing_tile + tripoint_rel_ms::below(),
+    { .flying = true } );
 }
 
 auto bash_window_for_jump( map &here, const player &p,
@@ -5797,6 +5823,10 @@ auto confirm_dangerous_jump_landing( const player &p,
         return true;
     }
 
+    if( get_option<std::string>( "DANGEROUS_TERRAIN_WARNING_PROMPT" ) == "IGNORE" ) {
+        return true;
+    }
+
     return g->prompt_dangerous_tile( abs_to_bub( dest ), _( "Really jump into %s?" ), false );
 }
 
@@ -5846,7 +5876,8 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
     }
 
     const auto landing_tile = abs_to_bub( jump_state.dest );
-    if( here.impassable( landing_tile ) ) {
+    if( here.impassable( landing_tile ) &&
+        !jump_over_tile_can_land_on_ledge( buffer, jump_state.dest ) ) {
         if( show_messages ) {
             add_msg( m_warning, _( "You cannot land there - the %s is blocking the way." ),
                      here.obstacle_name( landing_tile ) );
@@ -5872,6 +5903,14 @@ auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messag
     if( p.get_str() < jump_over_tile_min_strength ) {
         if( show_messages ) {
             add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
+        }
+        return false;
+    }
+
+    const auto stamina_cost = jump_over_tile_stamina_cost( p, jump_over_tile_move_cost( p ) );
+    if( p.get_stamina() < stamina_cost ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You're too exhausted to jump over an obstacle." ) );
         }
         return false;
     }
@@ -5906,7 +5945,7 @@ auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
         get_map().unboard_vehicle( p.bub_pos() );
     }
 
-    const auto move_cost = p.run_cost( jump_over_tile_base_move_cost );
+    const auto move_cost = jump_over_tile_move_cost( p );
     const auto stamina_cost = jump_over_tile_stamina_cost( p, move_cost );
     auto &here = get_map();
     const auto jumped_tile = abs_to_bub( jump_state.examp );

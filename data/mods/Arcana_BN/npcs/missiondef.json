@@ -208,15 +208,7 @@
     "has_generic_rewards": false,
     "start": {
       "effect": [ { "npc_add_effect": "rural_church_aware" }, { "u_add_effect": "already_asked_deacon" } ],
-      "assign_mission_target": {
-        "om_terrain": "cf_church_4",
-        "om_special": "cf_rural_church",
-        "om_terrain_replace": "field",
-        "reveal_radius": 3,
-        "random": true,
-        "search_range": 180,
-        "min_distance": 10
-      }
+      "assign_mission_target": { "om_terrain": "cf_church_4", "om_special": "cf_rural_church", "reveal_radius": 3 }
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "dialogue": {
@@ -281,7 +273,7 @@
     "item": "cf_rep_trade_receipt",
     "start": {
       "effect": [ { "u_buy_item": "cf_rep_trade_arrangement" }, { "u_buy_item": "CF_golden_scale", "count": 20 } ],
-      "assign_mission_target": { "om_terrain": "evac_center_18", "om_special": "evac_center", "must_see": true, "reveal_radius": 1 }
+      "assign_mission_target": { "om_terrain": "evac_center_18", "om_special": "evac_center", "reveal_radius": 1 }
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_CF_REP_3",

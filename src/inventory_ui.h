@@ -459,7 +459,7 @@ class inventory_selector
         void add_map_items( const tripoint_bub_ms &target );
         void add_vehicle_items( const tripoint_bub_ms &target );
         void add_nearby_items( int radius = 1 );
-        void add_bionics_items( Character &character );
+        void add_fake_items( Character &character );
         /** Remove all items */
         void clear_items();
         /** Assigns a title that will be shown on top of the menu. */

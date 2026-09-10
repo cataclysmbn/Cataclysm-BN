@@ -4638,6 +4638,9 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 --remaining;
             }
             ter[sm_ms.x()][sm_ms.y()] = iid;
+            if( iid->trap != tr_null ) {
+                trap_cache.push_back( sm_ms );
+            }
         }
         if( remaining ) {
             debugmsg( "Mapbuffer terrain data is corrupt, tile data remaining." );

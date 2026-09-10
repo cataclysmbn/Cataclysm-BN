@@ -45,6 +45,10 @@ public:
     bool has_parent() const;
     std::vector<enchantment_value_id> get_parents() const;
 
+    // Needed for bindings
+    bool operator==(const enchantment_value& rhs) const { return id == rhs.id; }
+    bool operator<(const enchantment_value& rhs) const { return id < rhs.id; }
+
 private:
     std::vector<enchantment_value_id> define_child_enchantments(
         const enchantment_value& main, const std::vector<enchantment_value_id>& parents,

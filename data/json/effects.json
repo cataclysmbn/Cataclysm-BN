@@ -425,7 +425,8 @@
     "desc": [ "Your footing is unstable.  It's more difficult to fight while standing here." ],
     "apply_message": "You try to keep your balance.",
     "rating": "bad",
-    "permanent": true
+    "permanent": true,
+    "base_enchantments": [ { "values": [ { "value": "MELEE_HIT", "multiply": -0.25 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1608,7 +1609,8 @@
     "apply_message": "You feel lightheaded.",
     "morale": "morale_high",
     "base_mods": { "per_mod": [ -1 ], "morale": [ 10 ] },
-    "blood_analysis_description": "Intoxicant: THC"
+    "blood_analysis_description": "Intoxicant: THC",
+    "base_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.9 } ] } ]
   },
   {
     "type": "effect_type",

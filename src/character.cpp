@@ -27,6 +27,7 @@
 #include "bodypart.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -104,6 +105,7 @@
 #include "string_utils.h"
 #include "submap.h"
 #include "text_snippets.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -322,9 +324,6 @@ static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
 static const trait_id trait_M_SKIN2( "M_SKIN2" );
 static const trait_id trait_M_SKIN3( "M_SKIN3" );
 static const trait_id trait_MEMBRANE( "MEMBRANE" );
-static const trait_id trait_MOREPAIN( "MORE_PAIN" );
-static const trait_id trait_MOREPAIN2( "MORE_PAIN2" );
-static const trait_id trait_MOREPAIN3( "MORE_PAIN3" );
 static const trait_id trait_MYOPIC( "MYOPIC" );
 static const trait_id trait_NO_THIRST( "NO_THIRST" );
 static const trait_id trait_NOMAD( "NOMAD" );
@@ -333,8 +332,6 @@ static const trait_id trait_NOMAD3( "NOMAD3" );
 static const trait_id trait_NOPAIN( "NOPAIN" );
 static const trait_id trait_PACIFIST( "PACIFIST" );
 static const trait_id trait_PADDED_FEET( "PADDED_FEET" );
-static const trait_id trait_PAINRESIST_TROGLO( "PAINRESIST_TROGLO" );
-static const trait_id trait_PAINRESIST( "PAINRESIST" );
 static const trait_id trait_PAWS_LARGE( "PAWS_LARGE" );
 static const trait_id trait_PAWS( "PAWS" );
 static const trait_id trait_PER_SLIME_OK( "PER_SLIME_OK" );
@@ -394,6 +391,17 @@ static const enchantment_flag_id ench_flag_SONAR( "SONAR" );
 
 static const enchantment_value_id ench_val_GROUNDED_CREATURE_SIGHT( "GROUNDED_CREATURE_SIGHT" );
 
+static const enchantment_value_id ench_val_PAIN_MOD( "PAIN_MOD" );
+static const enchantment_value_id ench_val_PAIN_GAIN( "PAIN_GAIN" );
+static const enchantment_value_id ench_val_PAIN_LOSS( "PAIN_LOSS" );
+static const enchantment_value_id ench_val_CHRONIC_PAIN_MOD( "CHRONIC_PAIN_MOD" );
+static const enchantment_value_id ench_val_PERCEIVED_PAIN_MOD( "PERCEIVED_PAIN_MOD" );
+
+static const enchantment_value_id ench_val_WEIGHTMOD_WORN( "WEIGHTMOD_WORN" );
+static const enchantment_value_id ench_val_WEIGHTMOD_BODY( "WEIGHTMOD_BODY" );
+static const enchantment_value_id ench_val_WEIGHTMOD_INVENTORY( "WEIGHTMOD_INVENTORY" );
+static const enchantment_value_id ench_val_WEIGHTMOD_BIONICS( "WEIGHTMOD_BIONICS" );
+static const enchantment_value_id ench_val_WEIGHTMOD_WEAPON( "WEIGHTMOD_WEAPON" );
 namespace io
 {
 
@@ -1039,26 +1047,14 @@ void Character::react_to_felt_pain( int intensity )
 void Character::mod_pain( int npain )
 {
     if( npain > 0 ) {
+        // Technically mult of -1 can still apply
+        // Maybe one day should add `min` for these cases
         if( has_trait( trait_NOPAIN ) || has_effect( effect_narcosis ) ) {
             return;
         }
-        // always increase pain gained by one from these bad mutations
-        if( has_trait( trait_MOREPAIN ) ) {
-            npain += std::max( 1, roll_remainder( npain * 0.25 ) );
-        } else if( has_trait( trait_MOREPAIN2 ) ) {
-            npain += std::max( 1, roll_remainder( npain * 0.5 ) );
-        } else if( has_trait( trait_MOREPAIN3 ) ) {
-            npain += std::max( 1, roll_remainder( npain * 1.0 ) );
-        }
-
-        if( npain > 1 ) {
-            // if it's 1 it'll just become 0, which is bad
-            if( has_trait( trait_PAINRESIST_TROGLO ) ) {
-                npain = roll_remainder( npain * 0.5 );
-            } else if( has_trait( trait_PAINRESIST ) ) {
-                npain = roll_remainder( npain * 0.67 );
-            }
-        }
+        npain += bonus_from_enchantments( npain, ench_val_PAIN_GAIN );
+    } else if( npain < 0 ) {
+        npain += bonus_from_enchantments( npain, ench_val_PAIN_LOSS );
     }
     Creature::mod_pain( npain );
 }
@@ -1124,10 +1120,14 @@ int min_pain( const Character &c )
 
 int Character::get_pain() const
 {
+    int pain = Creature::get_pain();
+    pain += bonus_from_enchantments( pain, ench_val_PAIN_MOD );
     if( get_option<bool>( "CHRONIC_PAIN" ) ) {
-        return std::max( Creature::get_pain(), min_pain( *this ) );
+        pain =  std::max( pain, min_pain( *this ) );
+        pain += bonus_from_enchantments( pain, ench_val_CHRONIC_PAIN_MOD );
     }
-    return Creature::get_pain();
+    pain = std::max( pain, 0 );
+    return pain;
 }
 
 int Character::get_perceived_pain() const
@@ -1136,7 +1136,9 @@ int Character::get_perceived_pain() const
         return 0;
     }
 
-    return std::max( get_pain() - get_painkiller(), 0 );
+    int percieved_pain = get_pain() - get_painkiller();
+    percieved_pain += bonus_from_enchantments( percieved_pain, ench_val_PERCEIVED_PAIN_MOD );
+    return std::max( percieved_pain, 0 );
 }
 
 int Character::swim_speed() const
@@ -2244,6 +2246,16 @@ bool Character::has_active_bionic_with_fake( const itype_id &it ) const
     return false;
 }
 
+std::set<itype_id> Character::get_enchantment_fake_items() const
+{
+    return enchantment_cache->get_fake_items();
+}
+
+bool Character::has_enchantment_with_fake( const itype_id &it ) const
+{
+    return enchantment_cache->get_fake_items().contains( it );
+}
+
 int Character::count_bionic_of_type( const bionic_id &bio ) const
 {
     int i = 0;
@@ -3303,11 +3315,20 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
         return ret_val<bool>::make_failure( _( "Putting on a %s would be tricky." ), it.tname() );
     }
 
-    if( has_trait( trait_WOOLALLERGY ) && ( it.made_of( material_id( "wool" ) ) ||
-                                            it.has_own_flag( flag_wooled ) ) ) {
-        return ret_val<bool>::make_failure( _( "Can't wear that, it's made of wool!" ) );
-    }
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto &hook_results = cata::run_hooks( "on_character_try_wear",
+        [&]( sol::table & params ) {
+            params["who"] = this;
+            params["item"] = &it;
+        }, {.exit_early = true} );
 
+        bool allowed = hook_results.get<bool>( "allowed" );
+        if( !allowed ) {
+            return ret_val<bool>::make_failure( hook_results.get_or( "message",
+                                                _( "Wearing that is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
+        }
+    }
 
     if( !it.has_flag( flag_SEMITANGIBLE ) ) {
         for( const trait_id &mut : get_mutations() ) {
@@ -3581,6 +3602,20 @@ ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
                                             _( "<npcname> is not wearing that item." ) );
     }
 
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto &hook_results = cata::run_hooks( "on_character_try_takeoff",
+        [&]( sol::table & params ) {
+            params["who"] = this;
+            params["item"] = &it;
+        }, {.exit_early = true} );
+
+        bool allowed = hook_results.get<bool>( "allowed" );
+        if( !allowed ) {
+            return ret_val<bool>::make_failure( hook_results.get_or( "message",
+                                                _( "Taking that off is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
+        }
+    }
     if( dropping && !get_dependent_worn_items( it ).empty() ) {
         return ret_val<bool>::make_failure( !is_npc() ?
                                             _( "You can't take off power armor while wearing other power armor components." ) :
@@ -4346,6 +4381,7 @@ void Character::die( Creature *nkiller )
     }
     mission::on_creature_death( *this );
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
         params["char"] = this;
         params["killer"] = get_killer();
@@ -4535,15 +4571,26 @@ units::mass Character::get_weight() const
 {
     if( has_trait( trait_DEBUG_WEIGHTLESSNESS ) ) { return 0_gram; }
 
-    const auto worn_weight = std::ranges::fold_left( worn, 0_gram,
+    auto worn_weight = std::ranges::fold_left( worn, 0_gram,
     []( const auto sum, const auto * const itm ) { return sum + itm->weight(); } );
-
-    auto ret = bodyweight();                       // The base weight of the player's body
-    ret += inv.weight();                           // Weight of the stored inventory
-    ret += worn_weight;                            // Weight of worn items
-    ret += primary_weapon().weight();              // Weight of wielded item
-    ret += bionics_weight();                       // Weight of installed bionics
-    return ret;
+    worn_weight += bonus_from_enchantments( worn_weight / 1_gram,
+                                            ench_val_WEIGHTMOD_WORN ) * 1_gram; // Weight of worn items
+    worn_weight = std::max( 0_gram, worn_weight );
+    auto weight = bodyweight();
+    weight += bonus_from_enchantments( weight / 1_gram, ench_val_WEIGHTMOD_BODY ) * 1_gram;
+    weight = std::max( 0_gram, weight );
+    auto invweight = inv.weight();  // Weight of the stored inventory
+    invweight += bonus_from_enchantments( invweight / 1_gram, ench_val_WEIGHTMOD_INVENTORY ) * 1_gram;
+    invweight = std::max( 0_gram, invweight );
+    auto weaponweight = primary_weapon().weight();
+    weaponweight += bonus_from_enchantments( weaponweight / 1_gram,
+                    ench_val_WEIGHTMOD_WEAPON ) * 1_gram;
+    weaponweight = std::max( 0_gram, weaponweight );
+    auto bionicsweight = bionics_weight();
+    bionicsweight += bonus_from_enchantments( bionicsweight / 1_gram,
+                     ench_val_WEIGHTMOD_BIONICS ) * 1_gram;
+    bionicsweight = std::max( 0_gram, bionicsweight );
+    return weight + invweight + weaponweight + bionicsweight + worn_weight;
 }
 
 char_encumbrance_data Character::get_encumbrance() const
@@ -7517,18 +7564,27 @@ float Character::active_light() const
     return lumination;
 }
 
-bool Character::sees_with_specials( const Creature &critter ) const
+enchantment_vision_id Character::sees_with_specials( const Creature &critter,
+        const bool force_path ) const
 {
-    // Prevent seeing through floors across z-levels
-    if( bub_pos().z() != critter.bub_pos().z() ) {
-        return false;
+    bool sees_position = false;
+    if( force_path ) {
+        if( is_player() || critter.is_player() ) {
+            // Players should not use map::sees
+            // Likewise, players should not be "looked at" with map::sees, not to break symmetry
+            sees_position = get_map().pl_line_of_sight( critter.bub_pos(),
+                            sight_range( current_daylight_level( calendar::turn ) ) );
+        } else {
+            sees_position = get_map().sees( bub_pos(), critter.bub_pos(),
+                                            sight_range( current_daylight_level( calendar::turn ) ) );
+        }
+        if( !sees_position ) { return enchantment_vision_id::NULL_ID(); }
     }
-
     // electroreceptors grants vision of robots and electric monsters through walls
     if( has_enchantment_flag( ench_flag_ELECTROSENSE ) &&
         ( critter.in_species( ROBOT ) || critter.in_species( ROBOT_FLYING ) ||
           critter.has_flag( MF_ELECTRIC ) || critter.has_flag( MF_ELECTRONIC ) ) ) {
-        return true;
+        return enchantment_vision_id( "ELECTROSENSE" );
     }
 
     if( critter.digging() && has_enchantment_flag( ench_flag_SONAR ) ) {
@@ -7536,12 +7592,12 @@ bool Character::sees_with_specials( const Creature &critter ) const
         // walls don't block sonar which is transmitted in the ground, not the air.
         // TODO: this might need checks whether the player is in the air, or otherwise not connected
         // to the ground. It also might need a range check.
-        return true;
+        return enchantment_vision_id( "SONAR" );
     }
     // Friendly eyebots can designate targets for the player
     if( critter.has_effect( effect_drone_marker ) && ( has_item_with_flag( flag_DRONE_CAM ) ||
             has_enchantment_flag( ench_flag_VIEW_DRONE_CAM ) ) ) {
-        return true;
+        return enchantment_vision_id( "DRONE_CAM" );
     }
 
     const int dist = rl_dist( bub_pos(), critter.bub_pos() );
@@ -7549,11 +7605,29 @@ bool Character::sees_with_specials( const Creature &critter ) const
     // Distance cannot be 0, so this is always safe
     if( dist <= bonus_from_enchantments( 0, ench_val_GROUNDED_CREATURE_SIGHT ) &&
         !critter.has_flag( MF_FLIES ) ) {
-        return true;
+        return enchantment_vision_id( "GROUNDED_SONAR" );
     }
 
-    // TODO: Add more range based enchantments here ( I.E. Limited Electrosense ranges )
-    return false;
+    // Dont recalc if unneeded
+    if( !force_path ) {
+        if( is_player() || critter.is_player() ) {
+            // Players should not use map::sees
+            // Likewise, players should not be "looked at" with map::sees, not to break symmetry
+            sees_position = get_map().pl_line_of_sight( critter.bub_pos(),
+                            sight_range( current_daylight_level( calendar::turn ) ) );
+        } else {
+            sees_position = get_map().sees( bub_pos(), critter.bub_pos(),
+                                            sight_range( current_daylight_level( calendar::turn ) ) );
+        }
+    }
+    enchantment_vision_id sees_with = enchantment_cache->mon_passes_special_vision(
+                                          critter, dist, critter.bub_pos().z() == bub_pos().z(), sees_position
+                                      );
+    if( sees_with != enchantment_vision_id::NULL_ID() ) {
+        return sees_with;
+    }
+
+    return enchantment_vision_id::NULL_ID();
 }
 
 detached_ptr<item> Character::pour_into( item &container, detached_ptr<item> &&liquid, int limit )
@@ -9204,6 +9278,9 @@ void Character::recalculate_enchantment_cache()
 
     // Enchantments can also give encumbrance
     reset_encumbrance();
+
+    // Enchantments can also give tools so...
+    invalidate_crafting_inventory();
 }
 
 void Character::rebuild_mutation_cache()
@@ -9305,7 +9382,19 @@ void Character::absorb_hit( const bodypart_id &bp, damage_instance &dam )
     std::vector<detached_ptr<item>> worn_remains;
     bool armor_destroyed = false;
 
+    bool forcefield_message = false;
     for( damage_unit &elem : dam.damage_units ) {
+        float prot = bonus_from_enchantments( 0.0,
+                                              enchantment_value_id( "FORCEFIELD_" + elem.get_internal_name() ) ) * 100;
+        if( prot != 0 && prot > rng_float( 0.0, 100.0 ) ) {
+            elem.amount = 0;
+            if( !forcefield_message ) {
+                forcefield_message = true;
+                add_msg_if_player( _( "The incoming attack was deflected" ) );
+            }
+            continue;
+        }
+
         if( elem.amount < 0 ) {
             // Prevents 0 damage hits (like from hallucinations) from ripping armor
             elem.amount = 0;
@@ -9620,6 +9709,7 @@ void Character::on_dodge( Creature *source, int difficulty )
             }
         }
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_dodged", [ &, this]( auto & params ) {
         params["char"] = this;
         params["source"] = source;
@@ -11382,6 +11472,11 @@ void Character::on_item_wear( item &it )
     if( it.type->iwearable_callbacks ) {
         it.type->iwearable_callbacks->call_on_wear( *this, it );
     }
+    std::unique_lock lock( cata::lua_lock );
+    cata::run_hooks( "on_character_item_wear", [&]( auto & params ) {
+        params["who"] = this;
+        params["item"] = &it;
+    } );
 }
 
 void Character::on_item_takeoff( item &it )
@@ -11399,6 +11494,11 @@ void Character::on_item_takeoff( item &it )
     if( it.type->iwearable_callbacks ) {
         it.type->iwearable_callbacks->call_on_takeoff( *this, it );
     }
+    std::unique_lock lock( cata::lua_lock );
+    cata::run_hooks( "on_character_item_takeoff", [&]( auto & params ) {
+        params["who"] = this;
+        params["item"] = &it;
+    } );
 }
 
 void Character::on_effect_int_change( const efftype_id &effect_type, int intensity,

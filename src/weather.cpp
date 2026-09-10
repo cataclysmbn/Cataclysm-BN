@@ -16,6 +16,7 @@
 #include "calendar.h"
 #include "cata_cartesian_product.h"
 #include "cata_utility.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "coordinates.h"
@@ -358,7 +359,9 @@ static void fill_water_collectors( int mmPerHour, bool acid )
         if( !sm ) {
             return;
         }
-        const trap &tr = sm->get_trap( lp ).obj();
+        // Resolve the effective trap: terrain-attached funnels (e.g. gutter
+        // downspouts) live in ter_t::trap, not the standalone trp array.
+        const trap &tr = sm->get_effective_trap( lp ).obj();
         if( !tr.is_funnel() ) {
             return;
         }
@@ -596,7 +599,7 @@ double precip_mm_per_hour( precip_class const p )
         0;
 }
 
-void handle_weather_effects( const weather_type_id &w )
+void handle_bulk_weather_field_decay( const weather_type_id &w, int turns )
 {
     ZoneScoped;
     if( w->rains && w->precip != precip_class::none ) {
@@ -617,7 +620,33 @@ void handle_weather_effects( const weather_type_id &w )
             decay_time = 45_turns;
             wetness = 60;
         }
-        g->m.decay_fields_and_scent( decay_time );
+        g->m.decay_fields_and_scent( decay_time * turns );
+    }
+}
+void handle_weather_effects( const weather_type_id &w, bool do_decay )
+{
+    ZoneScoped;
+    if( w->rains && w->precip != precip_class::none ) {
+        fill_water_collectors( precip_mm_per_hour( w->precip ),
+                               w->acidic );
+        int wetness = 0;
+        time_duration decay_time = 60_turns;
+        if( w->precip == precip_class::very_light ) {
+            wetness = 5;
+            decay_time = 5_turns;
+        } else if( w->precip == precip_class::light ) {
+            wetness = 30;
+            decay_time = 15_turns;
+        } else if( w->precip == precip_class::medium ) {
+            wetness = 45;
+            decay_time = 30_turns;
+        } else if( w->precip == precip_class::heavy ) {
+            decay_time = 45_turns;
+            wetness = 60;
+        }
+        if( do_decay ) {
+            g->m.decay_fields_and_scent( decay_time );
+        }
         weather_effect::wet_player( wetness );
     }
     glare( w );
@@ -1176,6 +1205,7 @@ void weather_manager::update_weather()
 
     // Only call on_weather_changed if old_weather was a valid weather type (not initial state)
     if( weather_id != old_weather && old_weather != weather_type_id::NULL_ID() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_weather_changed", [ &, this]( auto & params ) {
             params["weather_id"] = weather_id.str();
             params["old_weather_id"] = old_weather.str();
@@ -1191,6 +1221,7 @@ void weather_manager::update_weather()
 
     // Only call on_weather_updated if old_weather was valid (not initial state)
     if( old_weather != weather_type_id::NULL_ID() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_weather_updated", [ &, this]( auto & params ) {
             params["weather_id"] = weather_id.str();
             params["temperature"] = units::to_celsius( temperature );

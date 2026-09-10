@@ -20,7 +20,6 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
-#include "translocator_utils.h"
 #include "type_id.h"
 #include "ui.h"
 
@@ -53,29 +52,39 @@ void teleporter_list::deactivate_teleporter(
 }
 
 // returns the first valid teleport location near a teleporter
-// returns map square (global coordinates)
-static std::optional<tripoint_abs_ms> find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt) {
+static std::optional<tripoint_omt_ms> find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt) {
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
     const auto sm_pt = project_to<coords::sm>(omt_pt.xy());
-    map checker(2);
-    checker.load(sm_pt, true);
-    for (const auto& p : checker.points_on_zlevel()) {
-        if (checker.has_flag_furn("TRANSLOCATOR", p)) { return map_local_to_abs(checker, p); }
+    mapbuffer& buf = get_map().get_mapbuffer();
+    auto omt_view = buf.get_abs_omt_view(omt_pt, {.mode = mapbuffer_lookup_mode::load_from_disk});
+
+    if (!omt_view || !omt_view->has_any_submap()) { return std::nullopt; }
+
+    for (point_omt_sm submap_tile : point_range(point_omt_sm(0, 0), point_omt_sm(1, 1))) {
+        auto submap_view = omt_view->get_submap_view(submap_tile);
+        if (!submap_view) { return std::nullopt; }
+        for (point_sm_ms submap_map_square : submap_view->tiles()) {
+            auto furn = submap_view->tile(submap_map_square).get_furn();
+            if (furn.is_valid()) {
+                if (furn->has_flag("TRANSLOCATOR")) {
+                    return tripoint_omt_ms(
+                        project_combine(submap_tile, submap_map_square), omt_pt.z());
+                }
+            }
+        }
     }
     return std::nullopt;
 }
 
 bool teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_omt& omt_pt) const {
-    map omt_dest(2);
-    const auto sm_dest = project_to<coords::sm>(omt_pt.xy());
-    omt_dest.load(sm_dest, true);
-    std::optional<tripoint_abs_ms> global_dest = find_valid_teleporters_omt(omt_pt);
-    if (!global_dest) { return false; }
-    const auto omt_local_dest = abs_to_map_local(omt_dest, *global_dest);
-    const auto local_dest =
-        translocator::local_dest(omt_local_dest, point_bub_ms(g_half_mapsize_x, g_half_mapsize_y));
+    std::optional<tripoint_omt_ms> omt_dest = find_valid_teleporters_omt(omt_pt);
+    if (!omt_dest) { return false; }
+    // WARN: Legacy hack here
+    // Dont know how to do it any better though
+    const auto local_dest = tripoint_bub_ms(
+        omt_dest->x() + g_half_mapsize_x, omt_dest->y() + g_half_mapsize_y, omt_dest->z());
     you.add_effect(efftype_id("ignore_fall_damage"), 1_seconds, bodypart_str_id::NULL_ID(), 0, true);
     g->place_player_overmap(omt_pt);
     g->place_player(local_dest);

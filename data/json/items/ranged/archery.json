@@ -467,7 +467,7 @@
     "looks_like": "longbow",
     "type": "GUN",
     "name": { "str": "compound bow" },
-    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by fairly strong archers.  Currently set to a medium weight.",
+    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by fairly strong archers.  Currently set to a medium weight, activate it to choose between a lower or higher draw weight.",
     "price": "550 USD",
     "material": [ "steel", "plastic" ],
     "extend": { "flags": [ "STR_DRAW" ] },
@@ -482,47 +482,77 @@
     "range": 18,
     "dispersion": 850,
     "durability": 6,
-    "use_action": {
-      "menu_text": "Tighten Limbs",
-      "type": "transform",
-      "target": "compbow_high",
-      "qualities_needed": { "SCREW_FINE": 1 },
-      "msg": "You tighten the limbs, increasing the strength of the bow."
-    }
+    "use_action": [
+      {
+        "menu_text": "Tighten Limbs",
+        "type": "transform",
+        "target": "compbow_high",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You tighten the limbs, increasing the strength of the bow."
+      },
+      {
+        "menu_text": "Loosen Limbs",
+        "type": "transform",
+        "target": "compbow_low",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You loosen the limbs, decreasing the strength of the bow.",
+        "internal_name": "loosen_limbs"
+      }
+    ]
   },
   {
     "id": "compbow_high",
     "copy-from": "compbow",
     "type": "GUN",
     "name": { "str": "compound bow (high)", "str_pl": "compound bows (high)" },
-    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by very strong archers.  Currently set to a high weight, and ready to cause some real damage - if you can draw it.",
+    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by very strong archers.  Currently set to a high weight, and ready to cause some real damage - if you can draw it.  Activate it to adjust it to lower draw weights.",
     "min_strength": 11,
     "ranged_damage": { "damage_type": "stab", "amount": 50 },
     "range": 20,
-    "use_action": {
-      "menu_text": "Loosen Limbs",
-      "type": "transform",
-      "target": "compbow_low",
-      "qualities_needed": { "SCREW_FINE": 1 },
-      "msg": "You loosen the limbs, decreasing the strength of the bow."
-    }
+    "use_action": [
+      {
+        "menu_text": "Loosen Limbs (low)",
+        "type": "transform",
+        "target": "compbow_low",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You loosen the limbs, decreasing the strength of the bow significantly."
+      },
+      {
+        "menu_text": "Loosen Limbs (medium)",
+        "type": "transform",
+        "target": "compbow_low",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You loosen the limbs, decreasing the strength of the bow.",
+        "internal_name": "tighten_limbs_medium"
+      }
+    ]
   },
   {
     "id": "compbow_low",
     "copy-from": "compbow",
     "type": "GUN",
     "name": { "str": "compound bow (low)", "str_pl": "compound bows (low)" },
-    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by average archers.  Currently set to a low weight, making it much easier to draw.",
+    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by average archers.  Currently set to a low weight, making it much easier to draw.  Activate it to adjust it to higher draw weights.",
     "min_strength": 7,
     "ranged_damage": { "damage_type": "stab", "amount": 32 },
     "range": 16,
-    "use_action": {
-      "menu_text": "Tighten Limbs",
-      "type": "transform",
-      "target": "compbow",
-      "qualities_needed": { "SCREW_FINE": 1 },
-      "msg": "You tighten the limbs, increasing the strength of the bow."
-    }
+    "use_action": [
+      {
+        "menu_text": "Tighten Limbs (medium)",
+        "type": "transform",
+        "target": "compbow",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You tighten the limbs, increasing the strength of the bow."
+      },
+      {
+        "menu_text": "Tighten Limbs (high)",
+        "type": "transform",
+        "target": "compbow_high",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You tighten the limbs, increasing the strength of the bow significantly.",
+        "internal_name": "tighten_limbs_high"
+      }
+    ]
   },
   {
     "id": "compositebow",

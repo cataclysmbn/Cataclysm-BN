@@ -3,41 +3,19 @@
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_west_wall_door",
-    "object": {
-      "mapgensize": [ 2, 2 ],
-      "rows": [
-        "q+",
-        "  "
-      ],
-      "terrain": { "q": "t_wall_wood", "+": "t_door_c" }
-    }
+    "object": { "mapgensize": [ 2, 1 ], "rows": [ "q+" ], "terrain": { "q": "t_wall_wood", "+": "t_door_c" } }
   },
   {
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_east_wall_door",
-    "object": {
-      "mapgensize": [ 2, 2 ],
-      "rows": [
-        "+q",
-        "  "
-      ],
-      "terrain": { "q": "t_wall_wood", "+": "t_door_c" }
-    }
+    "object": { "mapgensize": [ 2, 1 ], "rows": [ "+q" ], "terrain": { "q": "t_wall_wood", "+": "t_door_c" } }
   },
   {
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_makeshift_bed",
-    "object": {
-      "mapgensize": [ 2, 2 ],
-      "rows": [
-        "##",
-        "  "
-      ],
-      "terrain": { "#": "t_dirt" },
-      "furniture": { "#": "f_makeshift_bed" }
-    }
+    "object": { "mapgensize": [ 2, 1 ], "rows": [ "##" ], "furniture": { "#": "f_makeshift_bed" } }
   },
   {
     "type": "mapgen",
@@ -437,63 +415,36 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "tacoma_commune_clinic_8",
-    "object": {
-      "mapgensize": [ 20, 20 ],
-      "rows": [
-        "                    ",
-        "                    ",
-        "                    ",
-        "........     .......",
-        "........     .......",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "....................",
-        "........     .......",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    "
-      ],
-      "terrain": { ".": "t_dirt" }
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
     "nested_mapgen_id": "tacoma_commune_clinic_9",
     "object": {
-      "mapgensize": [ 20, 20 ],
+      "mapgensize": [ 21, 24 ],
       "rows": [
-        "                    ",
-        "                    ",
-        "                    ",
-        "wwwwwwww     wwwwwww",
-        "w......w     w.....w",
-        "w......wwwwwww.....w",
-        "w..................w",
-        "w..................w",
-        "w..................w",
-        "w......wwwwwww.....w",
-        "www..www     wwwwwww",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    "
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " w......w   w......w ",
+        " [......wwfww......[ ",
+        " w.................w ",
+        " w.................w ",
+        " [.................[ ",
+        " w......wwwww......w ",
+        " wwwffwww   wwwwwwww ",
+        "                     "
       ],
-      "terrain": { "w": "t_wall_half", ".": "t_dirt" }
+      "terrain": { ".": "t_region_soil", "w": "t_wall_half", "f": "t_door_frame", "[": "t_window_empty" }
     }
   },
   {
@@ -501,31 +452,34 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_clinic_10",
     "object": {
-      "mapgensize": [ 20, 20 ],
+      "mapgensize": [ 21, 24 ],
       "rows": [
-        "                    ",
-        "                    ",
-        "                    ",
-        "wwwwwwww     wwwwwww",
-        "w......w     w.....w",
-        "[......wwwwwww.....[",
-        "w......w.....w.....w",
-        "w..................w",
-        "[......w.....w.....[",
-        "w......wwwwwww.....w",
-        "www..www     wwwwwww",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    "
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " w......w   w......w ",
+        " [......ww+ww......[ ",
+        " w......w...w......w ",
+        " w......+...+......w ",
+        " [......w...w......[ ",
+        " w......wwwww......w ",
+        " www++www   wwwwwwww ",
+        "                     "
       ],
-      "terrain": { "w": "t_wall", ".": "t_dirt", "[": "t_window_boarded_noglass" },
-      "place_item": [ { "item": "ax", "x": 13, "y": 18 } ]
+      "terrain": { ".": "t_region_soil", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" }
     }
   },
   {
@@ -533,32 +487,187 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_clinic_11",
     "object": {
-      "mapgensize": [ 20, 20 ],
+      "mapgensize": [ 21, 24 ],
       "rows": [
-        "                    ",
-        "                    ",
-        "                    ",
-        "wwwwwwww     wwwwwww",
-        "w......w     wcccccw",
-        "[......wwwwwww.....[",
-        "w......w.....w.....w",
-        "w..............tt..w",
-        "[..... w.....w.....[",
-        "w......wwwwwww.....w",
-        "www++www     wwwwwww",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    ",
-        "                    "
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " w......w   wccccccw ",
+        " [..CCC.ww+ww......[ ",
+        " w......w...w......w ",
+        " w......+...+..tt..w ",
+        " [......w...w......[ ",
+        " w......wwwww......w ",
+        " www++www   wwwwwwww ",
+        "                     "
       ],
-      "terrain": { "w": "t_wall", ".": "t_floor", "+": "t_door_c", "[": "t_window_boarded_noglass", "c": "t_floor", "t": "t_floor" },
-      "furniture": { "c": "f_cupboard", "t": "f_table" },
-      "place_npcs": [ { "class": "ranch_nurse_1", "x": 5, "y": 6 } ]
+      "terrain": {
+        ".": "t_floor",
+        "w": "t_wall_wood",
+        "+": "t_door_c",
+        "[": "t_window_boarded_noglass",
+        "C": "t_floor",
+        "c": "t_floor",
+        "t": "t_floor"
+      },
+      "furniture": { "C": "f_counter", "c": "f_cupboard", "t": "f_table" },
+      "place_npcs": [ { "class": "ranch_nurse_1", "x": 5, "y": 16 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "tacoma_commune_clinic_12",
+    "object": {
+      "mapgensize": [ 21, 24 ],
+      "rows": [
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " w......wwwww......w ",
+        " [......w...w......[ ",
+        " w......f...f......w ",
+        " w......w...w......w ",
+        " [......w...w......[ ",
+        " w......w...w......w ",
+        " wwwwwwww...wwwwwwww ",
+        "   w....w...w....w   ",
+        "   w....f...f....w   ",
+        "   w....w...w....w   ",
+        "         ...         ",
+        "         ...         ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     "
+      ],
+      "terrain": { ".": "t_region_soil", "w": "t_wall_half", "f": "t_door_frame", "[": "t_window_empty" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "tacoma_commune_clinic_13",
+    "object": {
+      "mapgensize": [ 21, 24 ],
+      "rows": [
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " w......wwwww......w ",
+        " [......w...w......[ ",
+        " w......+...+......w ",
+        " w......w...w......w ",
+        " [......w...w......[ ",
+        " w......w...w......w ",
+        " wwwwwwww...wwwwwwww ",
+        "   w....w...w....w   ",
+        "   w....+...+....w   ",
+        "   w....w...w....w   ",
+        "         ...         ",
+        "         ...         ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     "
+      ],
+      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "tacoma_commune_clinic_14",
+    "object": {
+      "mapgensize": [ 21, 24 ],
+      "rows": [
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " w.#..#.wwwww.#..#.w ",
+        " [.#..#.w...w.#..#.[ ",
+        " w......+...+......w ",
+        " w......w...w......w ",
+        " [.#..#.w...w.#..#.[ ",
+        " w.#..#.w...w.#..#.w ",
+        " wwwwwwww...wwwwwwww ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     "
+      ],
+      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" },
+      "furniture": { "#": "f_makeshift_bed" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "tacoma_commune_clinic_15",
+    "object": {
+      "mapgensize": [ 21, 24 ],
+      "rows": [
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        " wwwwwwww   wwwwwwww ",
+        " wd#..#dwwwwwd#..#dw ",
+        " [.#..#.w...w.#..#.[ ",
+        " w......+...+......w ",
+        " w......w...w......w ",
+        " [.#..#.w...w.#..#.[ ",
+        " wd#..#dw...wd#..#dw ",
+        " wwwwwwww...wwwwwwww ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     ",
+        "                     "
+      ],
+      "terrain": { ".": "t_floor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" },
+      "furniture": { "#": "f_makeshift_bed", "d": "f_dresser" },
+      "place_npcs": [ { "class": "ranch_doctor", "x": 15, "y": 7 } ]
     }
   },
   {
@@ -873,16 +982,17 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_toolshed_8",
     "object": {
-      "mapgensize": [ 6, 6 ],
+      "mapgensize": [ 8, 7 ],
       "rows": [
-        "wwwwww",
-        "w....w",
-        ".....w",
-        "w....w",
-        "wwwwww",
-        "      "
+        "        ",
+        " wwwwww ",
+        " w....w ",
+        " f....[ ",
+        " w....w ",
+        " wwwwww ",
+        "        "
       ],
-      "terrain": { "w": "t_wall_half", ".": "t_dirtfloor" }
+      "terrain": { ".": "t_region_soil", "w": "t_wall_half", "f": "t_door_frame", "[": "t_window_empty" }
     }
   },
   {
@@ -890,16 +1000,17 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_toolshed_9_done",
     "object": {
-      "mapgensize": [ 6, 6 ],
+      "mapgensize": [ 8, 7 ],
       "rows": [
-        "wwwwww",
-        "wccccw",
-        "+....W",
-        "wccccw",
-        "wwwwww",
-        "      "
+        "        ",
+        " wwwwww ",
+        " wccccw ",
+        " +....[ ",
+        " wccccw ",
+        " wwwwww ",
+        "        "
       ],
-      "terrain": { "w": "t_wall", "+": "t_door_c", "W": "t_window_boarded_noglass", "c": "t_dirtfloor", ".": "t_dirtfloor" },
+      "terrain": { ".": "t_dirtfloor", "c": "t_dirtfloor", "w": "t_wall_wood", "+": "t_door_c", "[": "t_window_boarded_noglass" },
       "furniture": { "c": "f_counter" }
     }
   }

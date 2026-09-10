@@ -103,8 +103,6 @@ class iuse_transform : public iuse_actor
         /** Tool qualities needed, e.g. "fine bolt turning 1". **/
         std::map<quality_id, int> qualities_needed;
 
-        translation menu_text;
-
         iuse_transform( const std::string &type = "transform" ) : iuse_actor( type ) {}
 
         ~iuse_transform() override = default;
@@ -113,7 +111,6 @@ class iuse_transform : public iuse_actor
         ret_val<bool> can_use( const Character &, const item &, bool,
                                const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
-        std::string get_name() const override;
         void finalize( const itype_id &my_item_type ) override;
         void info( const item &, std::vector<iteminfo> & ) const override;
 };

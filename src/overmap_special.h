@@ -142,6 +142,13 @@ class overmap_special
         void set_flag( const std::string &flag ) {
             flags_.insert( flag );
         }
+        bool use_absolute_spawn_loc() const {
+            return use_absolute_spawn_loc_;
+        }
+        bool at_absolute_spawn_loc( point_abs_om point ) const {
+            return point == absolute_spawn_loc_;
+        }
+
         int longest_side() const;
         std::vector<oter_str_id> all_terrains() const;
         std::vector<overmap_special_terrain> preview_terrains() const;
@@ -190,6 +197,8 @@ class overmap_special
         cata::flat_set<overmap_location_id> default_locations_;
         mapgen_parameters mapgen_params_;
         std::unordered_map<tripoint_rel_omt, overmap_special_id> nested_;
+        bool use_absolute_spawn_loc_ = false;
+        point_abs_om absolute_spawn_loc_ = point_abs_om( 0, 0 );
 };
 
 namespace overmap_specials

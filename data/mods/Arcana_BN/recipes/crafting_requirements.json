@@ -96,7 +96,7 @@
     "id": "arcana_potioncraft_standard",
     "type": "requirement",
     "//": "Tools and components for making potions.",
-    "qualities": [ { "id": "CHEM", "level": 1 } ],
+    "qualities": [ { "id": "CHEM", "level": 1 }, { "id": "DISTILL", "level": 1 } ],
     "tools": [ [ [ "book_potioncraft", -1 ] ] ],
     "components": [
       [
@@ -111,7 +111,7 @@
     "id": "arcana_potioncraft_upgrade",
     "type": "requirement",
     "//": "Tools and components for upgrading potions.",
-    "qualities": [ { "id": "CHEM", "level": 1 } ],
+    "qualities": [ { "id": "CHEM", "level": 1 }, { "id": "DISTILL", "level": 1 } ],
     "tools": [ [ [ "book_potioncraft", -1 ] ] ]
   },
   {

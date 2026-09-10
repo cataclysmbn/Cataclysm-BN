@@ -3,6 +3,7 @@
 #include "assign.h"
 #include "debug.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "type_id_implement.h"
 
 #include <optional>
@@ -20,8 +21,8 @@ void enchantment_flag::load_enchantment_flags(const JsonObject& jo, const std::s
 
 void enchantment_flag::load(const JsonObject& jo, const std::string& src) {
     mandatory(jo, was_loaded, "info", info);
-    optional(jo, was_loaded, "conflicts", conflicts);
-    optional(jo, was_loaded, "parents", parents);
+    optional(jo, was_loaded, "conflicts", conflicts, auto_flags_reader<enchantment_flag_id>{});
+    optional(jo, was_loaded, "parents", parents, auto_flags_reader<enchantment_flag_id>{});
 }
 
 void enchantment_flag::check() const {

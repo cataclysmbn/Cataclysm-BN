@@ -2,6 +2,7 @@
 
 #include <map>
 #include <vector>
+#include "bodypart.h"
 #include "calendar.h"
 #include "debug.h"
 #include "json.h"
@@ -471,5 +472,16 @@ inline bool legacy_volume_reader( const JsonObject &jo, const std::string &membe
     value = legacy_value * units::legacy_volume_factor;
     return true;
 }
+
+/**
+ * Loads string_id from JSON
+ */
+class bodypart_reader : public generic_typed_reader<bodypart_reader>
+{
+    public:
+        body_part get_next( JsonIn &jin ) const {
+            return get_body_part_token( jin.get_string() );
+        }
+};
 
 

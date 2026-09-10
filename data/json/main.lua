@@ -13,6 +13,7 @@ local nuclear_tear = require("lua/nuclear_tear")
 local minirose = require("lua/minirose")
 local plumbing = require("lua/plumbing")
 local genome = require("lua/itemgroup_modifiers/genome")
+local wool = require("lua/traits/wool_allergy")
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
@@ -33,3 +34,4 @@ mod.nuclear_tear = nuclear_tear
 mod.minirose = minirose
 mod.genome = genome
 mod.cvd_machine = cvd_machine
+mod.wool = wool

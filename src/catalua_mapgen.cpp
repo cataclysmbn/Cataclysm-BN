@@ -15,7 +15,8 @@
 mapgen_function_lua::mapgen_function_lua( const std::string &func,
         int weight ) : mapgen_function( weight )
 {
-    sol::state &lua = DynamicDataLoader::get_instance().lua->lua;
+    std::unique_lock lock( cata::lua_lock );
+    sol::state &lua = cata::get_active_lua_state()->lua;
     sol::object ref = lua.globals()["game"]["mapgen_functions"][func];
     if( ref.get_type() == sol::type::function ) {
         auto luafunc = ref.as<sol::function>();
