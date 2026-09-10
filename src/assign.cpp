@@ -1,6 +1,7 @@
 #include "assign.h"
 #include "data_vars.h"
 #include "sounds.h"
+#include "units/sound.h"
 #include <algorithm>
 
 void report_strict_violation( const JsonObject &jo, const std::string &message,
@@ -37,7 +38,7 @@ bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
     const auto parse = [&name]( const JsonObject & obj, units::volume & out ) {
         if( obj.has_int( name ) ) {
             obj.show_warning( "legacy volume values used, support will be removed eventually.",
-                              name );
+                              name, true );
             out = obj.get_int( name ) * units::legacy_volume_factor;
             return true;
         }
@@ -115,7 +116,7 @@ bool assign( const JsonObject &jo,
     const auto parse = [&name]( const JsonObject & obj, units::mass & out ) {
         if( obj.has_int( name ) ) {
             obj.show_warning( "legacy mass values used, support will be removed eventually.",
-                              name );
+                              name, true );
             out = units::from_gram<std::int64_t>( obj.get_int( name ) );
             return true;
         }
@@ -181,7 +182,7 @@ bool assign( const JsonObject &jo,
     const auto parse = [&name]( const JsonObject & obj, units::money & out ) {
         if( obj.has_int( name ) ) {
             obj.show_warning( "legacy money values used, support will be removed eventually.",
-                              name );
+                              name, true );
             out = units::from_cent( obj.get_int( name ) );
             return true;
         }
@@ -247,7 +248,7 @@ bool assign( const JsonObject &jo,
     const auto parse = [&name]( const JsonObject & obj, units::energy & out ) {
         if( obj.has_int( name ) ) {
             obj.show_warning( "legacy energy values used, support will be removed eventually.",
-                              name );
+                              name, true );
             const std::int64_t tmp = obj.get_int( name );
             if( tmp > units::to_kilojoule( units::energy_max ) ) {
                 out = units::energy_max;
@@ -317,10 +318,12 @@ auto assign( const JsonObject &jo,
 {
     const auto parse = [&name]( const JsonObject & obj, units::sound & out ) {
         if( obj.has_int( name ) ) {
-            obj.show_warning( "legacy sound volume values used, support will be removed eventually.",
-                              name );
             out = units::from_decibel(
-                      approximate_dB_volume_from_legacy_tile_distance_vol( obj.get_int( name ) ) );
+                      approximate_dB_volume_from_legacy_tile_distance_vol( obj.get_int( name ) ) + 50 );
+            obj.show_warning(
+                string_format( "legacy sound volume values used, support will be removed eventually. Recommended value: \"%s dB\"",
+                               units::to_decibel( out ) ),
+                name, true );
             return true;
         }
         if( obj.has_string( name ) ) {
