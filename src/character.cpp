@@ -6676,7 +6676,7 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
             bp_conv = ( ( bp_conv - adjusted_temp ) / 5 ) + adjusted_temp;
         }
 
-        adjust_bp_conv_for_insulation( bp_conv, clothing_warmth_adjustment );
+        bp_conv = adjust_bp_conv_for_insulation( bp_conv, clothing_warmth_adjustment );
         // FINAL CALCULATION : Increments current body temperature towards convergent.
         const int temp_before = bp_stats.get_temp_cur();
         const int temp_difference = temp_before - bp_conv; // Negative if the player is warming up.
