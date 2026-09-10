@@ -245,7 +245,8 @@ auto get_lua_monster_attitude( const monster &mon,
         return std::nullopt;
     }
 
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    std::unique_lock lock( cata::lua_lock );
+    auto *lua_state = cata::get_active_lua_state();
     if( lua_state == nullptr ) {
         return std::nullopt;
     }
@@ -2492,11 +2493,14 @@ void monster::melee_attack( Creature &target, float accuracy )
 
     target.check_dead_state();
 
-    cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
-        params["char"] = this;
-        params["target"] = &target;
-        params["success"] = attack_success;
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
+            params["char"] = this;
+            params["target"] = &target;
+            params["success"] = attack_success;
+        } );
+    }
 
     if( is_hallucination() ) {
         if( one_in( 7 ) ) {
@@ -3596,6 +3600,7 @@ void monster::die( Creature *nkiller )
             }
         }
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_mon_death", [ &, this]( auto & params ) {
         params["mon"] = this;
         params["killer"] = get_killer();
@@ -3830,6 +3835,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mon_effect_added", [ &, this ]( auto & params ) {
             params["mon"] = this;
             params["effect"] = &it;
@@ -3837,6 +3843,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mon_effect", [ &, this ]( auto & params ) {
             params["mon"] = this;
             params["effect"] = &it;
@@ -3989,6 +3996,7 @@ void monster::make_pet( Character &actor )
         _lua_callbacks->call_on_tame( actor, *this );
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_monster_tame", [&](
     auto & params ) { params["avatar"] = &actor; params["monster"] = *this; }
                    );
@@ -4343,23 +4351,23 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     int max_error = ( goodhearing ) ? 0 : 2;
     if( volume < -1000 ) {
         // -10dB or greater below ambient
-        max_error = ( goodhearing ) ? 8 : 16;
+        max_error = ( goodhearing ) ? 8 : 0;
 
     } else if( volume < 0 ) {
         // -10 - 0 dB below ambient
-        max_error = ( goodhearing ) ? 6 : 12;
+        max_error = ( goodhearing ) ? 6 : 0;
 
     } else if( volume < 1000 ) {
         // 0-10dB greater than ambient
-        max_error = ( goodhearing ) ? 4 : 10;
+        max_error = ( goodhearing ) ? 5 : 12;
 
     } else if( volume < 2000 ) {
         // 10-20dB greater than ambient
-        max_error = ( goodhearing ) ? 3 : 8;
+        max_error = ( goodhearing ) ? 4 : 10;
 
     } else if( volume < 4000 ) {
         // 20-40dB greater than ambient
-        max_error = ( goodhearing ) ? 2 : 6;
+        max_error = ( goodhearing ) ? 3 : 8;
 
     } else if( volume < 8000 ) {
         // 40-80dB greater than ambient
@@ -4428,6 +4436,7 @@ void monster::on_load()
 
     last_updated = calendar::turn;
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
         params["creature"] = this;
     } );

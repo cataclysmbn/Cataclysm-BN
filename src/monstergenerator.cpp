@@ -804,6 +804,8 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     assign( jo, "mountable_weight_ratio", mountable_weight_ratio, strict );
 
+    optional( jo, was_loaded, "mountable_pixels_up", mountable_pixels_up, 6 );
+
     assign( jo, "attack_cost", attack_cost, strict, 0 );
     assign( jo, "melee_skill", melee_skill, strict, 0 );
     assign( jo, "melee_dice", melee_dice, strict, 0 );

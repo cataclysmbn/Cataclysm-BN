@@ -304,6 +304,11 @@ are slower.
 Used as the acceptable rider vs. mount weight percentage ratio. Defaults to "0.3", which means the
 mount is capable of carrying riders weighing <= 30% of the mount's weight.
 
+## "mountable_pixels_up"
+
+(int, optional)
+Used as the number of pixels upward to place the player when the mount is mounted
+
 ## "melee_skill"
 
 (integer, optional)

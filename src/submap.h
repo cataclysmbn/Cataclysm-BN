@@ -104,6 +104,18 @@ class submap : maptile_soa<SEEX, SEEY>
             return trp[p.x()][p.y()];
         }
 
+        /// The effective trap at a tile: a terrain-attached trap (ter_t::trap) takes
+        /// precedence over a standalone trap in the trp array. Mirrors map::tr_at().
+        /// Use this (not get_trap()) when a tile may carry a terrain-attached trap,
+        /// e.g. a gutter downspout's funnel.
+        trap_id get_effective_trap( const point_sm_ms &p ) const {
+            const trap_id ter_trap = get_ter( p ).obj().trap;
+            if( ter_trap != tr_null ) {
+                return ter_trap;
+            }
+            return get_trap( p );
+        }
+
         void set_trap( const point_sm_ms &p, trap_id trap ) {
             is_uniform = false;
             trp[p.x()][p.y()] = trap;
@@ -150,6 +162,9 @@ class submap : maptile_soa<SEEX, SEEY>
             is_uniform = false;
             emitter_cache = std::nullopt;
             ter[p.x()][p.y()] = terr;
+            if( terr->trap != tr_null ) {
+                trap_cache.push_back( p );
+            }
         }
 
         void set_all_ter( const ter_id &terr ) {
@@ -286,7 +301,9 @@ class submap : maptile_soa<SEEX, SEEY>
         // Per-submap flat lists used to avoid full 144-tile scans.
         // Entries may be stale (tile no longer has the relevant data); callers must validate.
         // A stale entry is benign — it just costs a cheap branch on iteration.
-        // trap_cache: positions of any non-null trap; rebuilt incrementally via set_trap.
+        // trap_cache: positions of any non-null trap — standalone (trp) or
+        // terrain-attached (ter_t::trap). Maintained by set_trap/set_ter, the
+        // rotate() rebuild, and load(); entries may be stale, so callers re-validate.
         std::vector<point_sm_ms> trap_cache;
         // field_cache: positions of tiles with active fields; compacted after each
         // processing pass to remove positions whose fields have fully decayed.

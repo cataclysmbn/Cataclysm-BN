@@ -128,7 +128,8 @@ auto run_lua_monster_ai( monster &mon ) -> bool
         return false;
     }
 
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    std::unique_lock lock( cata::lua_lock );
+    auto *lua_state = cata::get_active_lua_state();
     if( lua_state == nullptr ) {
         return false;
     }
@@ -2405,17 +2406,20 @@ static tripoint_bub_ms find_closest_stair( const tripoint_bub_ms &near_this,
 bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critter,
                        const float stagger_adjustment )
 {
-    const auto hook_results = cata::run_hooks(
-                                  "on_monster_try_move",
-    [ &, this]( sol::table & params ) {
-        params["monster"] = this;
-        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
-        params["to"] = cata::detail::lua_coords::to_lua( p );
-        params["force"] = force;
-    } );
-    const auto can_move = hook_results.get_or( "allowed", true );
-    if( !can_move ) {
-        return false;
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto hook_results = cata::run_hooks(
+                                      "on_monster_try_move",
+        [ &, this]( sol::table & params ) {
+            params["monster"] = this;
+            params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+            params["to"] = cata::detail::lua_coords::to_lua( p );
+            params["force"] = force;
+        } );
+        const auto can_move = hook_results.get_or( "allowed", true );
+        if( !can_move ) {
+            return false;
+        }
     }
 
     const bool on_ground = !digging() && !flies();

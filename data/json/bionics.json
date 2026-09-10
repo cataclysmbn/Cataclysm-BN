@@ -605,7 +605,7 @@
     "react_cost": "200 J",
     "time": 1,
     "points": 2,
-    "bio_enchantments": [ { "condition": "ACTIVE", "flags": [ "SONAR" ], "values": [ { "value": "GROUNDED_CREATURE_SIGHT", "max": 5 } ] } ]
+    "bio_enchantments": [ { "condition": "ACTIVE", "special_vision": [ "SONAR", "GROUNDED_SONAR" ] } ]
   },
   {
     "id": "bio_heat_absorb",
@@ -667,7 +667,7 @@
     "act_cost": "10 J",
     "starting_bionic": true,
     "points": 1,
-    "bio_enchantments": [ { "flags": [ "INTERNAL_ALARMCLOCK", "WATCH", "RADIO", "THERMOMETER", "VIEW_DRONE_CAM" ] } ]
+    "bio_enchantments": [ { "flags": [ "INTERNAL_ALARMCLOCK", "WATCH", "RADIO", "THERMOMETER" ], "special_vision": [ "DRONE_CAM" ] } ]
   },
   {
     "id": "bio_infrared",
@@ -680,7 +680,7 @@
     "react_cost": "5 J",
     "time": 1,
     "points": 1,
-    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "flags": [ "INFRARED_VISION" ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "special_vision": [ "INFRARED" ] } ]
   },
   {
     "id": "bio_int_enhancer",
@@ -1584,7 +1584,7 @@
     "react_cost": "20 J",
     "time": 1,
     "included_bionics": [ "bio_electrosense_voltmeter", "bio_electrosense_bscanner" ],
-    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "flags": [ "ELECTROSENSE" ] } ]
+    "bio_enchantments": [ { "conditions": [ "ACTIVE" ], "special_vision": [ "ELECTROSENSE" ] } ]
   },
   {
     "id": "bio_electrosense_voltmeter",

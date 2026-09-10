@@ -339,6 +339,8 @@ struct mtype {
 
         // mountable ratio for rider weight vs. mount weight, default 0.3
         float mountable_weight_ratio = 0.3;
+        // how many pixels up does player go
+        int mountable_pixels_up = 6;
 
         int attack_cost = 100;  /** moves per regular attack */
         int melee_skill = 0;    /** melee hit skill, 20 is superhuman hitting abilities */

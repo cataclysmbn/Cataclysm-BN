@@ -13,6 +13,7 @@
 #include "anatomy.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -1243,6 +1244,7 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     attack.hit_critter = this;
     attack.missed_by = goodhit;
     if( sourceplayer || sourcenpc ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_creature_attacked_by_character", [ &, this]( auto & params ) {
             params["char"] = source;
             params["target"] = this;
@@ -1384,6 +1386,7 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
 
 void Creature::on_dodge( Creature *source, int difficulty )
 {
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_dodged", [ &, this]( auto & params ) {
         params["char"] = this;
         params["source"] = source;
@@ -1596,11 +1599,13 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
 
     if( type.has_flag( flag_EFFECT_LUA_ON_REMOVED ) ) {
         if( ch != nullptr ) {
+            std::unique_lock lock( cata::lua_lock );
             cata::run_hooks( "on_character_effect_removed", [ & ]( auto & params ) {
                 params["character"] = ch;
                 params["effect"] = get_effect( eff_id );
             } );
         } else {
+            std::unique_lock lock( cata::lua_lock );
             cata::run_hooks( "on_mon_effect_removed", [ &, this ]( auto & params ) {
                 params["mon"] = this;
                 params["effect"] = get_effect( eff_id );

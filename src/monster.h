@@ -622,6 +622,7 @@ class monster : public Creature, public location_visitable<monster>
         units::mass get_carried_weight() const;
         units::volume get_carried_volume() const;
 
+        enchantment_vision_id special_seen_with;
         // DEFINING VALUES
         // Is the monster friendly to the player.
         // 0 = hostile

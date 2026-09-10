@@ -128,7 +128,7 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND" ] },
     "adv_hearing_protection": 65
   },
   {
@@ -191,7 +191,7 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND" ] },
     "adv_hearing_protection": 65
   },
   {

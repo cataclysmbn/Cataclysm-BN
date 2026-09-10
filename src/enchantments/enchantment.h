@@ -86,6 +86,12 @@ public:
 
     bool is_immune_field(const field_type_id& fd) const { return immune_fields.contains(fd); }
 
+    // Returns enchantment_vision's null id if nothing passes
+    // Otherwise it can see it, and the value needs to be cached for use in
+    // The display function for retriving the description and tile
+    enchantment_vision_id mon_passes_special_vision(
+        const Creature& mon, const int dist, const bool on_same_zlevel, const bool has_los) const;
+
     bool operator==(const enchantment& rhs) const;
 
     static void check_consistency();
@@ -124,6 +130,8 @@ private:
     std::set<field_type_id> immune_fields;
 
     std::map<enchantment_flag_id, int> flags;
+
+    std::vector<enchantment_vision_id> special_visions;
 
     void add_activation(const time_duration& freq, const fake_spell& fake);
 

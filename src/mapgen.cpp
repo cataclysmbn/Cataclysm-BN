@@ -256,7 +256,6 @@ auto mapgen_constructor::generate( const tripoint_abs_omt &omt_pos, const time_p
             push_deferred_mapgen_hook( { get_bound_dimension(), omt_pos, when } );
         } else {
             cata::run_on_mapgen_postprocess_hooks(
-                *DynamicDataLoader::get_instance().lua,
                 *this,
                 omt_pos,
                 when
@@ -398,6 +397,7 @@ class mapgen_factory
             // Stuff used in lua code only
             // Yes a mod could blow something up...
             // But it makes itself widely known
+            std::unique_lock lock( cata::lua_lock );
             result = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) { params["results"] = &result; } ).get_or( "results",
                     result );
             return result;
@@ -5961,6 +5961,7 @@ character_id map::place_npc( const tripoint_bub_ms &p, const string_id<npc_templ
     // The NPC is already registered in the overmapbuffer (thread-safe via npc_mutex_);
     // mods that need on_npc_spawn will see it when the main thread next loads the submap.
     if( !is_pool_worker_thread() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
             params["creature"] = temp.get();
         } );
