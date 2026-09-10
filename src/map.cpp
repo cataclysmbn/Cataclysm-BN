@@ -5916,7 +5916,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         // Pass map into on_drop, because this map may not be the global map object (in mapgen, for instance).
         if( obj->made_of( LIQUID ) || !obj->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
             if( obj->on_drop( pos, *this ) ) {
-                return std::move( obj );
+                return detached_ptr<item>();
             }
 
         }
@@ -5942,7 +5942,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
             }
             if( obj->made_of( LIQUID ) || !obj->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
                 if( obj->on_drop( e, *this ) ) {
-                    return std::move( obj );
+                    return detached_ptr<item>();
                 }
             }
 
