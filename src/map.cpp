@@ -32,6 +32,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "cata_cartesian_product.h"
@@ -608,12 +609,18 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const dimension_id &dim_id
     get_mapbuffer().refresh_active_item_submap_index( p, resident_item_lookup() );
 
     // Register any funnel traps so fill_water_collectors can skip the mapbuffer scan.
+    // Guard against duplicate registration: on_submap_loaded() may be replayed for
+    // already-resident submaps (e.g. game::load_map() after m.load() cleared the
+    // list, or submap_loader.update() firing for the bubble), and funnel_locations_
+    // is a vector with no natural dedup — a double entry would fill at 2x rate (#10171).
     if( sm != nullptr && !sm->trap_cache.empty() ) {
-        std::ranges::for_each( sm->trap_cache, [&]( const point_sm_ms & lp ) {
-            if( sm->get_trap( lp ).obj().is_funnel() ) {
-                funnel_locations_.emplace_back( p, lp );
+        for( const point_sm_ms &lp : sm->trap_cache ) {
+            if( sm->get_effective_trap( lp ).obj().is_funnel() ) {
+                if( !std::ranges::contains( funnel_locations_, std::pair( p, lp ) ) ) {
+                    funnel_locations_.emplace_back( p, lp );
+                }
             }
-        } );
+        }
     }
 
 }
@@ -9060,6 +9067,7 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
                 monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
+                    std::unique_lock lock( cata::lua_lock );
                     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
                         params["creature"] = placed;
                     } );
@@ -9757,6 +9765,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     if( skip_lightmap && use_sdl_gpu_compute && gpu_transparency_dirty ) {
         cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_dirty_levels );
+    }
+    if( !use_sdl_gpu_compute && gpu_transparency_dirty ) {
+        invalidate_lightmap_caches();
+    }
+#else
+    if( gpu_transparency_dirty ) {
+        invalidate_lightmap_caches();
     }
 #endif
     TracyPlot( "Map GPU Transparency Dirty Levels",

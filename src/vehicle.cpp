@@ -8602,27 +8602,31 @@ void vehicle::refresh_locations_hack()
     }
 }
 
-vehicle_part &vehicle::get_part_hack( int id )
+const vehicle_part *vehicle::find_part_hack( const int id ) const
 {
-    for( vehicle_part &part : parts ) {
+    for( const vehicle_part &part : parts ) {
         if( part.hack_id == id ) {
-            return part;
+            return &part;
         }
     }
-    debugmsg( "Could not find part via hack id" );
-    return parts[0];
+    return nullptr;
 }
 
-int vehicle::get_part_id_hack( int id )
+vehicle_part *vehicle::find_part_hack( const int id )
+{
+    return const_cast<vehicle_part *>(
+               static_cast<const vehicle *>( this )->find_part_hack( id ) );
+}
+
+int vehicle::get_part_id_hack( const int id ) const
 {
     int i = 0;
-    for( vehicle_part &part : parts ) {
+    for( const vehicle_part &part : parts ) {
         if( part.hack_id == id ) {
             return i;
         }
         i++;
     }
-    debugmsg( "Could not find part id via hack id" );
     return -1;
 }
 

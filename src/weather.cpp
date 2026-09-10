@@ -16,6 +16,7 @@
 #include "calendar.h"
 #include "cata_cartesian_product.h"
 #include "cata_utility.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "coordinates.h"
@@ -358,7 +359,9 @@ static void fill_water_collectors( int mmPerHour, bool acid )
         if( !sm ) {
             return;
         }
-        const trap &tr = sm->get_trap( lp ).obj();
+        // Resolve the effective trap: terrain-attached funnels (e.g. gutter
+        // downspouts) live in ter_t::trap, not the standalone trp array.
+        const trap &tr = sm->get_effective_trap( lp ).obj();
         if( !tr.is_funnel() ) {
             return;
         }
@@ -1202,6 +1205,7 @@ void weather_manager::update_weather()
 
     // Only call on_weather_changed if old_weather was a valid weather type (not initial state)
     if( weather_id != old_weather && old_weather != weather_type_id::NULL_ID() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_weather_changed", [ &, this]( auto & params ) {
             params["weather_id"] = weather_id.str();
             params["old_weather_id"] = old_weather.str();
@@ -1217,6 +1221,7 @@ void weather_manager::update_weather()
 
     // Only call on_weather_updated if old_weather was valid (not initial state)
     if( old_weather != weather_type_id::NULL_ID() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_weather_updated", [ &, this]( auto & params ) {
             params["weather_id"] = weather_id.str();
             params["temperature"] = units::to_celsius( temperature );

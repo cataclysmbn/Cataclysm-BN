@@ -1002,6 +1002,7 @@
     "melee_dice_sides": 7,
     "melee_damage": [ { "damage_type": "dark", "amount": 5 } ],
     "melee_cut": 2,
+    "mountable_pixels_up": 20,
     "dodge": 4,
     "armor_bash": 25,
     "armor_cut": 35,

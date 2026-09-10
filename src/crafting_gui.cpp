@@ -15,6 +15,7 @@
 #include "avatar.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "cata_utility.h"
@@ -318,6 +319,7 @@ auto apply_craft_result_hooks( const craft_result_hook_options &opts ) -> void
 {
     auto &food_contained = ( opts.result.is_container() && !opts.result.contents.empty() ) ?
                            opts.result.contents.back() : opts.result;
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_craft_result", [&]( auto & params ) {
         params["crafter"] = &opts.crafter;
         params["item"] = &food_contained;

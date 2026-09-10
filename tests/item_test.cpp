@@ -39,6 +39,14 @@ TEST_CASE("item_volume", "[item]") {
     }
 }
 
+TEST_CASE("solitary_item_has_no_charges", "[item]") {
+    const item& grenade =
+        *item::spawn_temporary("grenade", calendar::start_of_cataclysm, item::solitary_tag());
+
+    REQUIRE_FALSE(grenade.count_by_charges());
+    CHECK(grenade.charges == 0);
+}
+
 TEST_CASE("large_item_storage_volumes", "[item][volume]") {
     constexpr auto legacy_int_limit_ml = static_cast<std::int64_t>(std::numeric_limits<int>::max());
     const auto volume_above_legacy_int_limit = units::from_milliliter(legacy_int_limit_ml + 1);

@@ -166,6 +166,12 @@ For all basegame values see [here](#Basegame-Enchantment-Value-ID-List)
 
 For all basegame values see [here](#Basegame-Enchantment-Flag-ID-List)
 
+#### Flags
+
+(array) of enchantment_vision_id values
+
+For reference on how to make one see [here](#Enchantment-Vision)
+
 #### Immune Effects
 
 (array) of effect_type_id values
@@ -1039,3 +1045,37 @@ When the owner of the item is at or above Z-level 0
 ##### UNDERWATER
 
 When the owner is in swimmable terrain
+
+## Enchantment Vision
+
+The following is enchantment vision definitions.
+All conditions must pass to show
+
+```jsonc
+{
+  "id": "ELECTROSENSE",                          // Id of the enchantment flag
+  "type": "enchantment_vision",                  // Needed type
+  "desc": "Allows Sight Of Electric Creatures",  // Info string showed in enchantment info
+  "distance": 5,                                 // Max tile distance that this works
+  "same_z_level": false,                         // Show across z-levels
+  "require_los": true,                           // Require line of sight
+  "detect_heat": true,                           // Require `is_warm`
+  "show_with_species": [ "ROBOT" ],              // List of species, any being true -> pass
+  "show_with_flag": [ "ELECTRIC" ],              // List of monster flags, any true -> pass
+  "show_without_any_flag": [ "FLIES" ],          // List of monster flags, any true -> fail
+  "show_with_effect": [ "drone_marker" ],        // List of effects, any true -> pass
+  "show_without_any_effect": [ "drone_marker" ], // List of effects, any true -> fail
+  "show_normal": true,                           // Shows the monster normally, this or vision desc must be used
+  "vision_desc": {                               // Can be an array or object
+    "tile_id": "infrared_creature",              // Tile to display
+    "description": "You sense electricity."      // Message to show on examine of any size
+  },
+  "vision_desc": [ // Must define one for each of `TINY`, `SMALL`, `MEDIUM`, `LARGE` and `HUGE`
+    {
+      "tile_id": "infrared_creature",                     // Tile id
+      "description": "You sense tiny bits of electricity" // Message to show on examine
+      "size": "TINY"                                      // Size enum of the creature
+    }
+  ]
+},
+```

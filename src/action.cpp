@@ -831,7 +831,7 @@ bool can_examine_at( const tripoint_bub_ms &p )
     }
 
     Creature *c = g->critter_at( p );
-    if( c != nullptr && p != u.bub_pos() ) {
+    if( c != nullptr && ( p != u.bub_pos() || u.is_mounted() ) ) {
         return true;
     }
 

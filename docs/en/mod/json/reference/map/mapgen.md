@@ -1043,6 +1043,7 @@ mutable structure.
 | neighbors          | (optional) Any of the neighboring overmaps that should be checked before placing the chunk. Each direction is associated with a list of overmap `"id"` substrings.        |
 | joins              | (optional) Any mutable overmap special joins that should be checked before placing the chunk. Each direction is associated with a list of join `"id"` strings.            |
 | connections        | (optional) Any connection that should be directed toward this overmap before placing the chunk. Each direction is associated with a list of connection `"id"` strings.    |
+| rotation           | (optional) How many turns to rotate the map, 90 degree turns                                                                                                              |
 |                    |                                                                                                                                                                           |
 
 The adjacent overmaps which can be checked in this manner are:
@@ -1057,7 +1058,7 @@ Example:
 
 ```json
 "place_nested": [
-  { "chunks": [ "concrete_wall_ew" ], "x": 0, "y": 0, "neighbors": { "north": [ "empty_rock", "field" ] } },
+  { "chunks": [ "concrete_wall_ew" ], "x": 0, "y": 0, "neighbors": { "north": [ "empty_rock", "field" ] }, "rotation": 0  },
   { "chunks": [ "gate_north" ], "x": 0, "y": 0, "joins": { "north": [ "interior_to_exterior" ] } },
   { "else_chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "north_west": [ "field", "microlab" ] } }
 ],

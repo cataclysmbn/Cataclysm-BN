@@ -40,7 +40,7 @@
       },
       "ROBOTCONTROL"
     ],
-    "extend": { "flags": [ "DRONE_CAM" ] }
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "afs_wraitheon_smartphone_music",
@@ -50,7 +50,7 @@
     "description": "This phone is playing music, steadily raising your morale.  You can't hear anything else while you're listening.",
     "revert_to": "afs_atomic_smartphone",
     "use_action": [ "MP3_ON" ],
-    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD", "DRONE_CAM" ]
+    "flags": [ "WATCH", "TRADER_AVOID", "ALARMCLOCK", "NO_UNLOAD", "NO_RELOAD" ]
   },
   {
     "id": "afs_wraitheon_smartphone_flashlight",
@@ -63,8 +63,7 @@
       "msg": "You deactivate the flashlight app.",
       "menu_text": "Turn off flashlight",
       "type": "transform"
-    },
-    "extend": { "flags": [ "DRONE_CAM" ] }
+    }
   },
   {
     "id": "afs_chain_wrench",

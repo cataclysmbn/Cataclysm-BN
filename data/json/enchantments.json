@@ -66,5 +66,10 @@
       { "value": "ITEM_ARMOR_PENETRATION_CUT", "multiply": 0.35, "add": 10 },
       { "value": "ITEM_ARMOR_PENETRATION_STAB", "multiply": 0.35, "add": 10 }
     ]
+  },
+  {
+    "type": "enchantment",
+    "id": "DRONE_CAM",
+    "special_vision": [ "DRONE_CAM" ]
   }
 ]

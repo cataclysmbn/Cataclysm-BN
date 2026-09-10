@@ -9,6 +9,7 @@
 #include "addiction.h"
 #include "avatar.h"
 #include "bionics.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "cata_utility.h"
@@ -919,14 +920,17 @@ static void draw_skills_info( const catacurses::window &w_info, const Character 
 
     if( selectedSkill ) {
         auto description = selectedSkill->description();
-        const auto hook_results = cata::run_hooks( "on_character_display_skill_info",
-        [&]( sol::table & params ) {
-            params["character"] = &you;
-            params["skill"] = selectedSkill->ident();
-        } );
-        const auto extra_text = hook_results.get_or( "text", std::string() );
-        if( !extra_text.empty() ) {
-            description += "\n\n" + extra_text;
+        {
+            std::unique_lock lock( cata::lua_lock );
+            const auto hook_results = cata::run_hooks( "on_character_display_skill_info",
+            [&]( sol::table & params ) {
+                params["character"] = &you;
+                params["skill"] = selectedSkill->ident();
+            } );
+            const auto extra_text = hook_results.get_or( "text", std::string() );
+            if( !extra_text.empty() ) {
+                description += "\n\n" + extra_text;
+            }
         }
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_light_gray,
@@ -1233,6 +1237,7 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
                     selectedSkill = skillslist[line].skill;
                 }
                 if( selectedSkill ) {
+                    std::unique_lock lock( cata::lua_lock );
                     const auto hook_results = cata::run_hooks( "on_character_display_skill_action",
                     [&]( sol::table & params ) {
                         params["character"] = &you;

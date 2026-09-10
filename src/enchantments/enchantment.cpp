@@ -9,6 +9,7 @@
 #include "enchantment_condition.h"
 #include "enchantment_flag.h"
 #include "enchantment_value.h"
+#include "enchantment_vision.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "generic_factory.h"
@@ -111,7 +112,14 @@ std::vector<std::string> enchantment::get_effect_string(bool is_item) const {
             string_format(_("  <color_%s>Gives mutation %s</color>"), color, trait_id->name()));
         describe = true;
     }
-    for (const auto [flag, _] : flags) { result.push_back(string_format("  %s", flag->info)); }
+    for (const auto [flag, _] : flags) {
+        result.push_back(string_format("  %s", flag->info));
+        describe = true;
+    }
+    for (const auto vision : special_visions) {
+        result.push_back(string_format("  %s", vision->get_desc()));
+        describe = true;
+    }
     if (describe) {
         return result;
     } else {
@@ -270,6 +278,8 @@ void enchantment::load(const JsonObject& jo, const std::string&) {
     optional(jo, was_loaded, "fake_items", fake_items, auto_flags_reader<itype_id>{});
     optional(jo, was_loaded, "immune_effects", immune_effects, auto_flags_reader<efftype_id>{});
     optional(jo, was_loaded, "immune_fields", immune_fields, auto_flags_reader<field_type_id>{});
+    optional(jo, was_loaded, "special_vision", special_visions,
+             auto_flags_reader<enchantment_vision_id>{});
 
     if (jo.has_array("values")) {
         for (const JsonObject value_obj : jo.get_array("values")) {
@@ -406,6 +416,8 @@ void enchantment::force_add(const enchantment& rhs) {
 
     immune_effects.insert(rhs.immune_effects.begin(), rhs.immune_effects.end());
     immune_fields.insert(rhs.immune_fields.begin(), rhs.immune_fields.end());
+    special_visions
+        .insert(special_visions.begin(), rhs.special_visions.begin(), rhs.special_visions.end());
 
     if (rhs.emitter) { emitter = rhs.emitter; }
 
@@ -564,6 +576,14 @@ void enchantment::cast_enchantment_spell(
 
         spell_lvl.cast_all_effects(caster, trg_crtr.bub_pos());
     }
+}
+
+enchantment_vision_id enchantment::mon_passes_special_vision(
+    const Creature& mon, const int dist, const bool same_zlevel, const bool sees_position) const {
+    for (const enchantment_vision_id& vision : special_visions) {
+        if (vision->mon_passes(mon, dist, same_zlevel, sees_position)) { return vision; }
+    }
+    return enchantment_vision_id::NULL_ID();
 }
 
 bool enchantment::operator==(const enchantment& rhs) const {

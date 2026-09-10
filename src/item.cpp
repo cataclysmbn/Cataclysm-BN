@@ -8010,8 +8010,10 @@ bool item::is_funnel_container( units::volume &bigger_than ) const
         contents.front().typeId() == itype_water ||
         contents.front().typeId() == itype_water_acid ||
         contents.front().typeId() == itype_water_acid_weak ) {
-        bigger_than = get_container_capacity();
-        return true;
+        if( !is_container_full() ) {
+            bigger_than = get_container_capacity();
+            return true;
+        }
     }
     return false;
 }

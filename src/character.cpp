@@ -27,6 +27,7 @@
 #include "bodypart.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -104,6 +105,7 @@
 #include "string_utils.h"
 #include "submap.h"
 #include "text_snippets.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
@@ -3313,16 +3315,19 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
         return ret_val<bool>::make_failure( _( "Putting on a %s would be tricky." ), it.tname() );
     }
 
-    const auto &hook_results = cata::run_hooks( "on_character_try_wear",
-    [&]( sol::table & params ) {
-        params["who"] = this;
-        params["item"] = &it;
-    }, {.exit_early = true} );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto &hook_results = cata::run_hooks( "on_character_try_wear",
+        [&]( sol::table & params ) {
+            params["who"] = this;
+            params["item"] = &it;
+        }, {.exit_early = true} );
 
-    bool allowed = hook_results.get<bool>( "allowed" );
-    if( !allowed ) {
-        return ret_val<bool>::make_failure( hook_results.get_or( "message",
-                                            _( "Wearing that is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
+        bool allowed = hook_results.get<bool>( "allowed" );
+        if( !allowed ) {
+            return ret_val<bool>::make_failure( hook_results.get_or( "message",
+                                                _( "Wearing that is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
+        }
     }
 
     if( !it.has_flag( flag_SEMITANGIBLE ) ) {
@@ -3597,18 +3602,20 @@ ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
                                             _( "<npcname> is not wearing that item." ) );
     }
 
-    const auto &hook_results = cata::run_hooks( "on_character_try_takeoff",
-    [&]( sol::table & params ) {
-        params["who"] = this;
-        params["item"] = &it;
-    }, {.exit_early = true} );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        const auto &hook_results = cata::run_hooks( "on_character_try_takeoff",
+        [&]( sol::table & params ) {
+            params["who"] = this;
+            params["item"] = &it;
+        }, {.exit_early = true} );
 
-    bool allowed = hook_results.get<bool>( "allowed" );
-    if( !allowed ) {
-        return ret_val<bool>::make_failure( hook_results.get_or( "message",
-                                            _( "Taking that off is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
+        bool allowed = hook_results.get<bool>( "allowed" );
+        if( !allowed ) {
+            return ret_val<bool>::make_failure( hook_results.get_or( "message",
+                                                _( "Taking that off is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
+        }
     }
-
     if( dropping && !get_dependent_worn_items( it ).empty() ) {
         return ret_val<bool>::make_failure( !is_npc() ?
                                             _( "You can't take off power armor while wearing other power armor components." ) :
@@ -4374,6 +4381,7 @@ void Character::die( Creature *nkiller )
     }
     mission::on_creature_death( *this );
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_character_death", [ &, this]( auto & params ) {
         params["char"] = this;
         params["killer"] = get_killer();
@@ -7424,18 +7432,27 @@ float Character::active_light() const
     return lumination;
 }
 
-bool Character::sees_with_specials( const Creature &critter ) const
+enchantment_vision_id Character::sees_with_specials( const Creature &critter,
+        const bool force_path ) const
 {
-    // Prevent seeing through floors across z-levels
-    if( bub_pos().z() != critter.bub_pos().z() ) {
-        return false;
+    bool sees_position = false;
+    if( force_path ) {
+        if( is_player() || critter.is_player() ) {
+            // Players should not use map::sees
+            // Likewise, players should not be "looked at" with map::sees, not to break symmetry
+            sees_position = get_map().pl_line_of_sight( critter.bub_pos(),
+                            sight_range( current_daylight_level( calendar::turn ) ) );
+        } else {
+            sees_position = get_map().sees( bub_pos(), critter.bub_pos(),
+                                            sight_range( current_daylight_level( calendar::turn ) ) );
+        }
+        if( !sees_position ) { return enchantment_vision_id::NULL_ID(); }
     }
-
     // electroreceptors grants vision of robots and electric monsters through walls
     if( has_enchantment_flag( ench_flag_ELECTROSENSE ) &&
         ( critter.in_species( ROBOT ) || critter.in_species( ROBOT_FLYING ) ||
           critter.has_flag( MF_ELECTRIC ) || critter.has_flag( MF_ELECTRONIC ) ) ) {
-        return true;
+        return enchantment_vision_id( "ELECTROSENSE" );
     }
 
     if( critter.digging() && has_enchantment_flag( ench_flag_SONAR ) ) {
@@ -7443,12 +7460,12 @@ bool Character::sees_with_specials( const Creature &critter ) const
         // walls don't block sonar which is transmitted in the ground, not the air.
         // TODO: this might need checks whether the player is in the air, or otherwise not connected
         // to the ground. It also might need a range check.
-        return true;
+        return enchantment_vision_id( "SONAR" );
     }
     // Friendly eyebots can designate targets for the player
     if( critter.has_effect( effect_drone_marker ) && ( has_item_with_flag( flag_DRONE_CAM ) ||
             has_enchantment_flag( ench_flag_VIEW_DRONE_CAM ) ) ) {
-        return true;
+        return enchantment_vision_id( "DRONE_CAM" );
     }
 
     const int dist = rl_dist( bub_pos(), critter.bub_pos() );
@@ -7456,11 +7473,29 @@ bool Character::sees_with_specials( const Creature &critter ) const
     // Distance cannot be 0, so this is always safe
     if( dist <= bonus_from_enchantments( 0, ench_val_GROUNDED_CREATURE_SIGHT ) &&
         !critter.has_flag( MF_FLIES ) ) {
-        return true;
+        return enchantment_vision_id( "GROUNDED_SONAR" );
     }
 
-    // TODO: Add more range based enchantments here ( I.E. Limited Electrosense ranges )
-    return false;
+    // Dont recalc if unneeded
+    if( !force_path ) {
+        if( is_player() || critter.is_player() ) {
+            // Players should not use map::sees
+            // Likewise, players should not be "looked at" with map::sees, not to break symmetry
+            sees_position = get_map().pl_line_of_sight( critter.bub_pos(),
+                            sight_range( current_daylight_level( calendar::turn ) ) );
+        } else {
+            sees_position = get_map().sees( bub_pos(), critter.bub_pos(),
+                                            sight_range( current_daylight_level( calendar::turn ) ) );
+        }
+    }
+    enchantment_vision_id sees_with = enchantment_cache->mon_passes_special_vision(
+                                          critter, dist, critter.bub_pos().z() == bub_pos().z(), sees_position
+                                      );
+    if( sees_with != enchantment_vision_id::NULL_ID() ) {
+        return sees_with;
+    }
+
+    return enchantment_vision_id::NULL_ID();
 }
 
 detached_ptr<item> Character::pour_into( item &container, detached_ptr<item> &&liquid, int limit )
@@ -9542,6 +9577,7 @@ void Character::on_dodge( Creature *source, int difficulty )
             }
         }
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_dodged", [ &, this]( auto & params ) {
         params["char"] = this;
         params["source"] = source;
@@ -11303,6 +11339,7 @@ void Character::on_item_wear( item &it )
     if( it.type->iwearable_callbacks ) {
         it.type->iwearable_callbacks->call_on_wear( *this, it );
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_character_item_wear", [&]( auto & params ) {
         params["who"] = this;
         params["item"] = &it;
@@ -11324,6 +11361,7 @@ void Character::on_item_takeoff( item &it )
     if( it.type->iwearable_callbacks ) {
         it.type->iwearable_callbacks->call_on_takeoff( *this, it );
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_character_item_takeoff", [&]( auto & params ) {
         params["who"] = this;
         params["item"] = &it;

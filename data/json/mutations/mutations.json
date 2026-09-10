@@ -160,7 +160,7 @@
     "id": "FASTHEALER",
     "name": { "str": "Fast Healer" },
     "points": 2,
-    "description": "Your wounds heal themselves quicker than usual.  You heal 50% faster whilst asleep, and 20% faster whilst awake.  Your broken limbs also heal twice as fast.",
+    "description": "Your wounds heal themselves quicker than usual.  Sleep and medicine heal you 50% faster, and you even heal a little while awake.  Your broken limbs also heal less poorly without splints.",
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
@@ -749,7 +749,7 @@
     "id": "SLOWHEALER",
     "name": { "str": "Slow Healer" },
     "points": -2,
-    "description": "Your wounds heal a little slower than most.  Your HP whilst asleep heals at 75% of the regular rate.",
+    "description": "Your wounds heal a little slower than most.  Your HP heals at 75% of the regular rate.",
     "starting_trait": true,
     "types": [ "HEALING" ],
     "healing_resting": -0.25
@@ -759,7 +759,7 @@
     "id": "SLOWHEALER2",
     "name": { "str": "Poor Healer" },
     "points": -4,
-    "description": "Your health recovery is severely impaired.  Your HP whilst asleep heals at 33% of the regular rate.",
+    "description": "Your health recovery is severely impaired.  Your HP heals at 33% of the regular rate.",
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
@@ -771,7 +771,7 @@
     "id": "SLOWHEALER3",
     "name": { "str": "Imperceptive Healer" },
     "points": -8,
-    "description": "Wounds are incredibly dangerous to you, as they barely heal at all.  Your HP whilst asleep heals at 10% of the regular rate.",
+    "description": "Wounds are incredibly dangerous to you, as they barely heal at all.  Your HP heals at 10% of the regular rate.",
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
@@ -1440,7 +1440,7 @@
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -1464,14 +1464,14 @@
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
     "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
     "id": "FASTHEALER2",
     "name": { "str": "Very Fast Healer" },
     "points": 4,
-    "description": "Your flesh regenerates slowly, and you will regain HP even when not sleeping.",
+    "description": "Your flesh regenerates slowly.  You will regain HP at a moderate rate even when not sleeping, and sleep and medicine will heal you 50% more.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER" ],
     "changes_to": [ "REGEN" ],
@@ -1485,7 +1485,7 @@
     "id": "REGEN",
     "name": { "str": "Regeneration" },
     "points": 6,
-    "description": "Your flesh regenerates from wounds incredibly quickly.  You heal 150% faster whilst asleep and 200% faster whilst awake.  You do not require splints to heal broken limbs.",
+    "description": "Your flesh regenerates from wounds incredibly quickly.  You constantly regenerate HP at a rapid rate, and sleep and medicine heal you 150% more.  You do not require splints to heal broken limbs.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER2" ],
     "category": [ "SLIME", "TROGLOBITE" ],
@@ -3194,7 +3194,7 @@
     "restricts_gear": [ "head" ],
     "allowed_items": [ "ALLOWS_HORNS" ],
     "allow_soft_gear": true,
-    "mut_enchantments": [ { "values": [ { "value": "GROUNDED_CREATURE_SIGHT", "max": 5 } ] } ]
+    "mut_enchantments": [ { "special_vision": [ "GROUNDED_SONAR" ] } ]
   },
   {
     "type": "mutation",
@@ -4897,7 +4897,7 @@
     "name": { "str": "Rapid Metabolism" },
     "points": -2,
     "valid": false,
-    "description": "You require more resources than most, but heal more rapidly as well.  Provides weak regeneration even when not asleep.",
+    "description": "You require more food and sleep than most, but heal more rapidly as well.  Provides weak regeneration even when not asleep.",
     "types": [ "HEALING" ],
     "cancels": [ "LIGHTEATER", "COLDBLOOD", "COLDBLOOD2", "COLDBLOOD3", "COLDBLOOD4", "WAKEFUL", "WAKEFUL2", "WAKEFUL3" ],
     "prereqs": [ "HUNGER" ],
@@ -6455,7 +6455,7 @@
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
     "mixed_effect": true,
-    "mut_enchantments": [ { "flags": [ "ELECTROSENSE" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
@@ -7037,7 +7037,7 @@
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
     "random_starting_trait": false,
-    "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
+    "cancels": [ "GUNSHY", "GUNNUT", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -7048,7 +7048,18 @@
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
     "random_starting_trait": false,
-    "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
+    "cancels": [ "BRAWLER", "GUNNUT", "CARRY_PERMIT" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNNUT",
+    "name": { "str": "Gun Nut" },
+    "points": -4,
+    "description": "REAL survivors use guns!  You refuse to use crude bows, crossbows, or other primitive ranged weapons even if your life depends on it.",
+    "starting_trait": true,
+    "random_starting_trait": false,
+    "cancels": [ "BRAWLER", "GUNSHY" ],
     "valid": false
   },
   {

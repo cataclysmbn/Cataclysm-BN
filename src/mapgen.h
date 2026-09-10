@@ -131,7 +131,12 @@ struct jmapgen_setmap {
         x( ix ), y( iy ), x2( ix2 ), y2( iy2 ), op( iop ), val( ival ), chance( ione_in ),
         repeat( irepeat ), rotation( irotation ),
         fuel( ifuel ), status( istatus ) {}
-    bool apply( const mapgendata &dat, const point_rel_ms &offset ) const;
+
+    static point_omt_ms default_rotate( const point_omt_ms &pt ) { return pt; }
+
+    bool apply( const mapgendata &dat, const point_rel_ms &offset,
+                std::function<point_omt_ms( const point_omt_ms & )> func = default_rotate ) const;
+
     /**
      * checks if applying these objects to data would cause cause a collision with vehicles
      * on the same map
@@ -221,6 +226,7 @@ class jmapgen_place
         jmapgen_place( const point_rel_ms &p ) : x( p.x() ), y( p.y() ), repeat( 1, 1 ) { }
         jmapgen_place( const JsonObject &jsi );
         void offset( const point_rel_ms &offset );
+        void edit( std::function<point_omt_ms( const point_omt_ms & )> func );
         jmapgen_int x;
         jmapgen_int y;
         jmapgen_int repeat;
@@ -376,7 +382,9 @@ struct jmapgen_objects {
         void merge_parameters_into( mapgen_parameters &, const std::string &outer_context ) const;
 
         void apply( const mapgendata &dat ) const;
-        void apply( const mapgendata &dat, const point_rel_ms &offset ) const;
+        static point_omt_ms default_rotate( const point_omt_ms &pt ) { return pt; }
+        void apply( const mapgendata &dat, const point_rel_ms &offset,
+                    std::function<point_omt_ms( const point_omt_ms & )> func = default_rotate ) const;
 
         /**
          * checks if applying these objects to data would cause cause a collision with vehicles
@@ -487,7 +495,7 @@ class mapgen_function_json_nested : public mapgen_function_json_base
         explicit mapgen_function_json_nested( const json_source_location &jsrcloc );
         ~mapgen_function_json_nested() override = default;
 
-        void nest( const mapgendata &md, const point_rel_ms &offset ) const;
+        void nest( const mapgendata &md, const point_rel_ms &offset, const int rotation ) const;
     protected:
         bool setup_internal( const JsonObject &jo ) override;
 

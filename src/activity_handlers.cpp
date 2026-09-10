@@ -552,7 +552,10 @@ butchery_setup consider_butchery( const item &corpse_item, player &u, butcher_ty
     };
 
     const inventory &inv = u.crafting_inventory();
-    const int factor = inv.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER );
+    // Must check both u and inventory because crafting inventory lacks mutation butcher items
+    const int factor = std::max(
+                           u.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER ),
+                           inv.max_quality( action == DISSECT ? qual_CUT_FINE : qual_BUTCHER ) );
 
     const mtype &corpse = *corpse_item.get_mtype();
 

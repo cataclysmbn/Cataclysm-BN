@@ -54,5 +54,11 @@
     "version": "0.0.0",
     "url": "https://github.com/chaosvolt/MST_Extra_Mod/archive/refs/heads/master.zip",
     "extract_path": "MST_Extra_BN"
+  },
+  {
+    "id": "medieval_mod_reborn",
+    "version": "0.0.0",
+    "url": "https://github.com/chaosvolt/cdda_medieval_mod_reborn/archive/refs/heads/master.zip",
+    "extract_path": "Medieval_Mod_Reborn_BN"
   }
 ]

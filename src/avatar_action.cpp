@@ -208,6 +208,7 @@ static const skill_id skill_unarmed( "unarmed" );
 
 static const trait_id trait_BRAWLER( "BRAWLER" );
 static const trait_id trait_GUNSHY( "GUNSHY" );
+static const trait_id trait_GUNNUT( "GUNNUT" );
 static const trait_id trait_BURROW( "BURROW" );
 static const trait_id trait_GRAZER( "GRAZER" );
 static const trait_id trait_RUMINANT( "RUMINANT" );
@@ -1019,6 +1020,9 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
     } else if( you.has_trait( trait_GUNSHY ) && weapon.is_firearm() ) {
         add_msg( m_good, _( "You refuse to use this gun." ) );
         return false;
+    } else if( you.has_trait( trait_GUNNUT ) && !weapon.is_firearm() ) {
+        add_msg( m_bad, _( "You refuse to use this primitive weapon." ) );
+        return false;
     }
 
     if( you.has_effect( effect_relax_gas ) ) {
@@ -1051,10 +1055,13 @@ bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weap
 bool avatar_action::will_fire_turret( avatar &you, const turret_data &turret )
 {
     if( you.has_trait( trait_BRAWLER ) ) {
-        add_msg( m_bad, _( "You refuse to use this ranged weapon" ) );
+        add_msg( m_bad, _( "You refuse to use this ranged weapon." ) );
         return false;
     } else if( you.has_trait( trait_GUNSHY ) && turret.base().is_firearm() ) {
-        add_msg( m_bad, _( "You refuse to use this gun turret" ) );
+        add_msg( m_bad, _( "You refuse to use this gun turret." ) );
+        return false;
+    } else if( you.has_trait( trait_GUNNUT ) && !turret.base().is_firearm() ) {
+        add_msg( m_bad, _( "You refuse to use this primitive turret." ) );
         return false;
     }
 

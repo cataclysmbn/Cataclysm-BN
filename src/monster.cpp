@@ -245,7 +245,8 @@ auto get_lua_monster_attitude( const monster &mon,
         return std::nullopt;
     }
 
-    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    std::unique_lock lock( cata::lua_lock );
+    auto *lua_state = cata::get_active_lua_state();
     if( lua_state == nullptr ) {
         return std::nullopt;
     }
@@ -1050,6 +1051,40 @@ static std::pair<std::string, nc_color> speed_description( float mon_speed_ratin
     return std::make_pair( _( "Unknown" ), c_white );
 }
 
+/// How many process_turn ticks until leftover moves are positive (can_act).
+/// Empty when the card should stay qualitative-only (immobile / inattentive).
+static std::optional<std::pair<std::string, nc_color>> action_readiness_description(
+            const monster &mon )
+{
+    if( mon.has_flag( MF_IMMOBILE ) ) {
+        return std::nullopt;
+    }
+    if( get_avatar().has_trait( trait_INATTENTIVE ) ) {
+        return std::nullopt;
+    }
+
+    const int cur_moves = mon.get_moves();
+    if( cur_moves > 0 ) {
+        return std::make_pair( _( "It can act right now." ), c_red );
+    }
+
+    const int64_t credit = static_cast<int64_t>( mon.get_speed() ) *
+                           action_time_scale::monster_tick_action_factor() /
+                           action_time_scale::factor_denominator;
+    if( credit <= 0 ) {
+        return std::make_pair( _( "It is not recovering." ), c_dark_gray );
+    }
+
+    // can_act() requires moves > 0.
+    const int64_t need = static_cast<int64_t>( 1 ) - cur_moves;
+    const int turns = static_cast<int>( ( need + credit - 1 ) / credit );
+    if( turns <= 1 ) {
+        return std::make_pair( _( "It will be ready next turn." ), c_yellow );
+    }
+    return std::make_pair( string_format( _( "It will be ready in %d turns." ), turns ),
+                           c_light_green );
+}
+
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
     const int vEnd = vStart + vLines;
@@ -1083,9 +1118,15 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
     mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
 
+    if( const auto ready = action_readiness_description( *this ) ) {
+        mvwprintz( w, point( column, ++vStart ), ready->second, ready->first );
+    }
+
     if( debug_mode ) {
         mvwprintz( w, point( column, ++vStart ), c_light_gray,
                    _( " Difficulty " ) + std::to_string( type->difficulty ) );
+        mvwprintz( w, point( column, ++vStart ), c_light_gray,
+                   string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ) );
     }
     if( display_mod_source ) {
         const std::string mod_src = enumerate_as_string( type->src.begin(),
@@ -1172,6 +1213,9 @@ std::string monster::extended_description() const
                 speed_rating(),
                 has_flag( MF_IMMOBILE ) );
     ss += colorize( speed_desc.first, speed_desc.second ) + "\n";
+    if( const auto ready = action_readiness_description( *this ) ) {
+        ss += colorize( ready->first, ready->second ) + "\n";
+    }
 
     ss += "--\n";
     ss += "<color_light_gray>" + type->get_description() + "</color>\n";
@@ -1312,6 +1356,7 @@ std::string monster::extended_description() const
 
     if( debug_mode ) {
         ss += string_format( _( "Current Speed: %1$d" ), get_speed() ) + "\n";
+        ss += string_format( _( "Current Moves: %1$d" ), get_moves() ) + "\n";
         ss += string_format( _( "Anger: %1$d" ), anger ) + "\n";
         if( !faction_anger.empty() ) {
             ss += string_format( _( "Anger by faction:" ) ) + "\n";
@@ -2492,11 +2537,14 @@ void monster::melee_attack( Creature &target, float accuracy )
 
     target.check_dead_state();
 
-    cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
-        params["char"] = this;
-        params["target"] = &target;
-        params["success"] = attack_success;
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_melee_attacked", [ &, this]( auto & params ) {
+            params["char"] = this;
+            params["target"] = &target;
+            params["success"] = attack_success;
+        } );
+    }
 
     if( is_hallucination() ) {
         if( one_in( 7 ) ) {
@@ -3596,6 +3644,7 @@ void monster::die( Creature *nkiller )
             }
         }
     }
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_mon_death", [ &, this]( auto & params ) {
         params["mon"] = this;
         params["killer"] = get_killer();
@@ -3830,6 +3879,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mon_effect_added", [ &, this ]( auto & params ) {
             params["mon"] = this;
             params["effect"] = &it;
@@ -3837,6 +3887,7 @@ void monster::process_one_effect( effect &it, bool is_new )
     }
 
     if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mon_effect", [ &, this ]( auto & params ) {
             params["mon"] = this;
             params["effect"] = &it;
@@ -3989,6 +4040,7 @@ void monster::make_pet( Character &actor )
         _lua_callbacks->call_on_tame( actor, *this );
     }
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_monster_tame", [&](
     auto & params ) { params["avatar"] = &actor; params["monster"] = *this; }
                    );
@@ -4343,23 +4395,23 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     int max_error = ( goodhearing ) ? 0 : 2;
     if( volume < -1000 ) {
         // -10dB or greater below ambient
-        max_error = ( goodhearing ) ? 8 : 16;
+        max_error = ( goodhearing ) ? 8 : 0;
 
     } else if( volume < 0 ) {
         // -10 - 0 dB below ambient
-        max_error = ( goodhearing ) ? 6 : 12;
+        max_error = ( goodhearing ) ? 6 : 0;
 
     } else if( volume < 1000 ) {
         // 0-10dB greater than ambient
-        max_error = ( goodhearing ) ? 4 : 10;
+        max_error = ( goodhearing ) ? 5 : 12;
 
     } else if( volume < 2000 ) {
         // 10-20dB greater than ambient
-        max_error = ( goodhearing ) ? 3 : 8;
+        max_error = ( goodhearing ) ? 4 : 10;
 
     } else if( volume < 4000 ) {
         // 20-40dB greater than ambient
-        max_error = ( goodhearing ) ? 2 : 6;
+        max_error = ( goodhearing ) ? 3 : 8;
 
     } else if( volume < 8000 ) {
         // 40-80dB greater than ambient
@@ -4428,6 +4480,7 @@ void monster::on_load()
 
     last_updated = calendar::turn;
 
+    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_creature_loaded", [this]( sol::table & params ) {
         params["creature"] = this;
     } );
