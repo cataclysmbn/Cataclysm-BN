@@ -12926,7 +12926,17 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         !u.has_enchantment_flag( enchantment_flag_id( "SILENT" ) ) ) {
         int volume = u.is_stealthy() ? 40 : 60;
         // Used to be a multiplier on tile distance, this approximates that
-        volume += ( u.mutation_value( "noise_modifier" ) / 2 * 6 );
+        double noisemod = u.mutation_value( "noise_modifier" );
+        if( noisemod < 1 ) {
+            // Just in case someone goes below 0...
+            if( noisemod == 0 ) {
+                volume = 0;
+            } else if( noisemod > 0 ) {
+                volume -= ( 3.0 / noisemod );
+            }
+        } else {
+            volume += ( ( noisemod - 1 ) * 6.0 );
+        }
         volume += u.bonus_from_enchantments( volume, enchantment_value_id( "NOISE" ) );
         if( volume > 0 ) {
             if( u.movement_mode_is( CMM_RUN ) ) {
