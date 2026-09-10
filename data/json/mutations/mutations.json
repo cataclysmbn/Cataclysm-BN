@@ -1471,7 +1471,7 @@
     "id": "FASTHEALER2",
     "name": { "str": "Very Fast Healer" },
     "points": 4,
-    "description": "Your flesh regenerates slowly. You will regain HP at a moderate rate even when not sleeping, and sleep and medicine will heal you 50% more.",
+    "description": "Your flesh regenerates slowly.  You will regain HP at a moderate rate even when not sleeping, and sleep and medicine will heal you 50% more.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER" ],
     "changes_to": [ "REGEN" ],
