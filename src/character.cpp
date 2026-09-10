@@ -6308,38 +6308,29 @@ void apply_comfort_morale( Character &chr, const bodypart_id &bp, const bodypart
 }
 
 
-std::map<bodypart_id, std::vector<const item *>> set_clothing_map(
-            Character &chr,
+void set_clothing_map(
+            const Character &chr,
             std::map<bodypart_id, std::vector<const item *>> &clothing_map,
-            std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map,
-            std::vector<bodypart_id> body_part_ids
+            std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map
         )
 {
-    for( const auto &bp_id : body_part_ids ) {
-        if (bp_id.is_valid()) {
-            clothing_map.emplace(bp_id, std::vector<const item *>() );
-            bonus_clothing_map.emplace(bp_id, std::vector<const item *>() );
-        }
+    for( auto &pr : chr.get_body() ) {
+        const bodypart_str_id &bp_id = pr.first;
+        clothing_map.emplace( bp_id, std::vector<const item *>() );
+        bonus_clothing_map.emplace( bp_id, std::vector<const item *>() );
     }
 }
 
-std::map<bodypart_id, std::vector<const item *>> set_bonus_clothing_map( const Character &chr,
+void set_bonus_clothing_map( const Character &chr,
         std::map<bodypart_id, std::vector<const item *>> &clothing_map,
-        std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map
-        )
+        std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map )
 {
+    const auto &all_bps = chr.get_all_body_parts();
     for( const item *it : chr.worn ) {
         const body_part_set &covered = it->get_covered_body_parts();
-
-        for( auto &pr : chr.get_body() ) {
-            const bodypart_id &bp = pr.first;
-
-            if( bp.id().is_empty() || bp.id().str().empty() ) {
-                continue;
-            }
-
+        for( const bodypart_id &bp : all_bps ) {
             if( covered.test( bp.id() ) ) {
-                clothing_map[bp].emplace_back( it );
+                clothing_map[bp.id()].emplace_back( it );
             }
             if( it->has_flag( flag_HOOD ) ) {
                 bonus_clothing_map[body_part_head].emplace_back( it );
@@ -6369,7 +6360,7 @@ std::map<bodypart_id, std::vector<const item *>> set_bonus_clothing_map( const C
 }
 
 void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
-                      BodyTemperatureModifiers body_mods )
+                      const BodyTemperatureModifiers &body_mods )
 {
     // FROSTBITE - only occurs to hands, feet, face
     /**
@@ -6410,8 +6401,10 @@ void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
         int Ftemperature = static_cast<int>( units::to_fahrenheit( body_mods.ambient_temperature ) + 0.2 *
                                              adjusted_warmth );
         // Windchill reduced by your armor
+        const auto wind_it = body_mods.wind_res_per_bp.find( bp );
+        const int wind_res = ( wind_it != body_mods.wind_res_per_bp.end() ) ? wind_it->second : 0;
         int FBwindPower = static_cast<int>(
-                              body_mods.total_windpower * ( 1 - body_mods.wind_res_per_bp[ bp ] / 100.0 ) );
+                              body_mods.total_windpower * ( 1 - wind_res / 100.0 ) );
 
         int intense = chr.get_effect_int( effect_frostbite, bp.id() );
 
@@ -6564,6 +6557,7 @@ int adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
     }
 
     apply_comfort_morale( chr, bp, bp_stats, comfortable_warmth );
+    return bp_conv;
 }
 
 int adjust_bp_conv_for_insulation( int bp_conv, const int clothing_warmth_adjustment )
@@ -6622,12 +6616,7 @@ void apply_blisters( Character &chr, const bodypart_id &bp, BodyTemperatureModif
 void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
 {
     for( auto &pr : chr.get_body() ) {
-        const bodypart_str_id &bp_str = pr.first;
-        if( bp_str.is_empty() || bp_str.str().empty() ) {
-            continue;
-        }
-
-        const bodypart_id bp = bp_str.id();
+        const bodypart_id &bp = pr.first;
         bodypart &bp_stats = pr.second;
         if( !bp_stats.is_affected_by_temperature() ) {
             continue;
@@ -6645,12 +6634,16 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
 
         // Produces a smooth curve between 30.0 and 60.0.
         double homeostasis_adjustment = 30.0 * ( 1.0 + scaled_temperature );
+        const auto warmth_it = body_mods.warmth_per_bp.find( bp );
         const int clothing_warmth_adjustment = static_cast<int>( homeostasis_adjustment *
-                                               body_mods.warmth_per_bp[bp] );
+                                               ( warmth_it != body_mods.warmth_per_bp.end() ? warmth_it->second : 0 ) );
+        const auto warmth_bonus_it = body_mods.warmth_per_bp_bonus.find( bp );
         const int clothing_warmth_adjusted_bonus = static_cast<int>( homeostasis_adjustment *
-                body_mods.warmth_per_bp_bonus[bp] );
+                ( warmth_bonus_it != body_mods.warmth_per_bp_bonus.end() ? warmth_bonus_it->second : 0 ) );
 
-        double bp_windpower = body_mods.total_windpower * ( 1 - body_mods.wind_res_per_bp[bp] / 100.0 );
+        const auto wind_res_it = body_mods.wind_res_per_bp.find( bp );
+        const int wind_res = ( wind_res_it != body_mods.wind_res_per_bp.end() ) ? wind_res_it->second : 0;
+        double bp_windpower = body_mods.total_windpower * ( 1 - wind_res / 100.0 );
         int bp_wind_chill = submerged_bp ? 0 : get_local_windchill( units::to_fahrenheit(
                                 body_mods.ambient_temperature ),
                             body_mods.air_humidity,
@@ -6766,8 +6759,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
                                 weather.winddirection, body_mods.sheltered );
 
     equalize_temperature( *this );
-    const auto bodypart_ids = this->get_all_body_parts(true);
-    set_clothing_map( *this, body_mods.clothing_map, body_mods.clothing_map_bonus, bodypart_ids );
+    set_clothing_map( *this, body_mods.clothing_map, body_mods.clothing_map_bonus );
     set_bonus_clothing_map( *this, body_mods.clothing_map, body_mods.clothing_map_bonus);
     body_mods.warmth_per_bp = warmth::from_clothing( body_mods.clothing_map );
     body_mods.warmth_per_bp_bonus = warmth::bonus_from_clothing( body_mods.clothing_map_bonus );

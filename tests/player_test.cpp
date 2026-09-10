@@ -532,6 +532,82 @@ TEST_CASE("Water hypothermia check.", "[.][bodytemp]") {
     }
 }
 
+TEST_CASE("update_bodytemp keeps the body intact for a single step.", "[bodytemp]") {
+    // Taking a step evaluates body temperature once via update_bodytemp().
+    // The refactor that builds the clothing map from bodypart objects must not
+    // move parts out of the character's body or leak the num_bp sentinel.
+    clear_all_state();
+    player& dummy = get_avatar();
+    guarantee_neutral_weather(dummy, get_weather());
+
+    for( auto &pr : dummy.get_body() ) {
+        pr.second.set_temp_cur( BODYTEMP_NORM );
+        pr.second.set_temp_conv( BODYTEMP_NORM );
+    }
+
+    const std::vector<bodypart_id> ids_before = dummy.get_all_body_parts( true );
+    REQUIRE( !ids_before.empty() );
+    for( const bodypart_id &bp_id : ids_before ) {
+        INFO( "before: " << bp_id.id().str() );
+        REQUIRE( bp_id.is_valid() );
+    }
+
+    // This is the call that happens when a step is taken.
+    dummy.update_bodytemp( get_map(), get_weather() );
+
+    // The body must still contain the same main parts, in the same order.
+    const std::vector<bodypart_id> ids_after = dummy.get_all_body_parts( true );
+    CHECK( ids_after == ids_before );
+
+    // Every part must still be queryable and report its own id (a move-out would
+    // leave moved-from parts behind, surfacing the actual crash message here).
+    for( const bodypart_id &bp_id : ids_after ) {
+        INFO( "after: " << bp_id.id().str() );
+        REQUIRE( bp_id.is_valid() );
+        const bodypart &part = dummy.get_part( bp_id );
+        CHECK( part.get_str_id() == bp_id.id() );
+        CHECK( part.get_temp_cur() >= BODYTEMP_FREEZING );
+        CHECK( part.get_temp_cur() <= BODYTEMP_SCORCHING );
+    }
+}
+
+TEST_CASE("update_bodytemp with worn clothing keeps the body intact for a single step.", "[bodytemp]") {
+    // The in-game character has worn clothing when update_bodytemp runs.
+    // The nude test above does not exercise set_bonus_clothing_map's worn-item loop,
+    // so this test reproduces the real game path.
+    clear_all_state();
+    player& dummy = get_avatar();
+    guarantee_neutral_weather(dummy, get_weather());
+
+    equip_clothing(dummy, heavy_clothing);
+
+    for( auto &pr : dummy.get_body() ) {
+        pr.second.set_temp_cur( BODYTEMP_NORM );
+        pr.second.set_temp_conv( BODYTEMP_NORM );
+    }
+
+    const std::vector<bodypart_id> ids_before = dummy.get_all_body_parts( true );
+    REQUIRE( !ids_before.empty() );
+    for( const bodypart_id &bp_id : ids_before ) {
+        INFO( "before: " << bp_id.id().str() );
+        REQUIRE( bp_id.is_valid() );
+    }
+
+    dummy.update_bodytemp( get_map(), get_weather() );
+
+    const std::vector<bodypart_id> ids_after = dummy.get_all_body_parts( true );
+    CHECK( ids_after == ids_before );
+
+    for( const bodypart_id &bp_id : ids_after ) {
+        INFO( "after: " << bp_id.id().str() );
+        REQUIRE( bp_id.is_valid() );
+        const bodypart &part = dummy.get_part( bp_id );
+        CHECK( part.get_str_id() == bp_id.id() );
+        CHECK( part.get_temp_cur() >= BODYTEMP_FREEZING );
+        CHECK( part.get_temp_cur() <= BODYTEMP_SCORCHING );
+    }
+}
+
 TEST_CASE("player_move_through_vehicle_holes") {
 
     clear_all_state();
