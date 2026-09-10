@@ -1068,7 +1068,8 @@ static std::optional<std::pair<std::string, nc_color>> action_readiness_descript
         return std::make_pair( _( "It can act right now." ), c_red );
     }
 
-    const int64_t credit = static_cast<int64_t>( mon.get_speed() ) * mon.action_move_factor() /
+    const int64_t credit = static_cast<int64_t>( mon.get_speed() ) *
+                           action_time_scale::monster_tick_action_factor() /
                            action_time_scale::factor_denominator;
     if( credit <= 0 ) {
         return std::make_pair( _( "It is not recovering." ), c_dark_gray );
