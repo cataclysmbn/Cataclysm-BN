@@ -1,34 +1,18 @@
 #include "init.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <exception>
-#include <fstream>
-#include <iterator>
-#include <memory>
-#include <set>
-#include <sstream> // for throwing errors
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <ranges>
-
 #include "achievement.h"
 #include "activity_type.h"
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "anatomy.h"
-#include "ascii_art.h"
 #include "artifact.h"
+#include "ascii_art.h"
 #include "behavior.h"
 #include "bionics.h"
 #include "bodypart.h"
-#include "catalua.h"
 #include "cata_utility.h"
+#include "catalua.h"
 #include "catalua_impl.h"
-#include "lua_sidebar_widgets.h"
-#include "panels.h"
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "construction.h"
@@ -42,20 +26,20 @@
 #include "dialogue.h"
 #include "disease.h"
 #include "effect.h"
-#include "enchantments/enchantment.h"
-#include "enchantments/enchantment_value.h"
-#include "enchantments/enchantment_flag.h"
-#include "enchantments/enchantment_condition.h"
-#include "enchantments/enchantment_vision.h"
 #include "emit.h"
+#include "enchantments/enchantment.h"
+#include "enchantments/enchantment_condition.h"
+#include "enchantments/enchantment_flag.h"
+#include "enchantments/enchantment_value.h"
+#include "enchantments/enchantment_vision.h"
 #include "event_statistics.h"
 #include "faction.h"
 #include "fault.h"
 #include "field_type.h"
 #include "filesystem.h"
-#include "fstream_utils.h"
 #include "flag.h"
 #include "flag_trait.h"
+#include "fstream_utils.h"
 #include "gates.h"
 #include "harvest.h"
 #include "item_action.h"
@@ -65,11 +49,12 @@
 #include "language.h"
 #include "loading_ui.h"
 #include "lru_cache.h"
+#include "lua_sidebar_widgets.h"
 #include "magic/magic.h"
 #include "magic/magic_ter_furn_transform.h"
 #include "map_extras.h"
-#include "mapbuffer.h"
 #include "map_feature_descriptions.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "mapgen.h"
 #include "mapgen_async.h"
@@ -82,17 +67,18 @@
 #include "mongroup.h"
 #include "monstergenerator.h"
 #include "morale_types.h"
-#include "mutation_data.h"
 #include "mutation.h"
+#include "mutation_data.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "omdata.h"
 #include "overlay_ordering.h"
 #include "overmap.h"
-#include "overmapbuffer.h"
 #include "overmap_connection.h"
 #include "overmap_location.h"
 #include "overmap_special.h"
+#include "overmapbuffer.h"
+#include "panels.h"
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
@@ -116,10 +102,24 @@
 #include "vehicle_group.h"
 #include "vehicle_palette.h"
 #include "vitamin.h"
-#include "weather.h"
-#include "weather_type.h"
+#include "weather/weather.h"
+#include "weather/weather_type.h"
 #include "world_type.h"
 #include "worldfactory.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <exception>
+#include <fstream>
+#include <iterator>
+#include <memory>
+#include <ranges>
+#include <set>
+#include <sstream> // for throwing errors
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #if defined(TILES)
 #  include "mod_tileset.h"

@@ -15,7 +15,7 @@
 #include "units.h"
 #include "units_temperature.h"
 #include "vpart_position.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #include <array>
 #include <list>

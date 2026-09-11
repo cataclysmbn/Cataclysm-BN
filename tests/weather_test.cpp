@@ -1,8 +1,8 @@
+#include "../src/weather/weather_gen.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "weather/weather.h"
 
 #include <algorithm>
 #include <memory>

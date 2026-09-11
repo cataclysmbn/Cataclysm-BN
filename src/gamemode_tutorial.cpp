@@ -1,11 +1,5 @@
 #include "gamemode_tutorial.h" // IWYU pragma: associated
 
-#include <array>
-#include <cstdlib>
-#include <memory>
-#include <optional>
-#include <string>
-
 #include "action.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -31,7 +25,13 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <array>
+#include <cstdlib>
+#include <memory>
+#include <optional>
+#include <string>
 
 static const itype_id itype_cig( "cig" );
 static const itype_id itype_codeine( "codeine" );

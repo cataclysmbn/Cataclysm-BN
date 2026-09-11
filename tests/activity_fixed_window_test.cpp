@@ -20,7 +20,7 @@
 #include "timed_event.h"
 #include "units_temperature.h"
 #include "vehicle.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #include <string>
 #include <utility>

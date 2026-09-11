@@ -1,12 +1,5 @@
 #include "weather_gen.h"
 
-#include <algorithm>
-#include <cmath>
-#include <numeric>
-#include <ostream>
-#include <random>
-#include <string>
-
 #include "assign.h"
 #include "cached_options.h"
 #include "cata_utility.h"
@@ -19,6 +12,13 @@
 #include "rng.h"
 #include "simplexnoise.h"
 #include "weather.h"
+
+#include <algorithm>
+#include <cmath>
+#include <numeric>
+#include <ostream>
+#include <random>
+#include <string>
 
 namespace
 {

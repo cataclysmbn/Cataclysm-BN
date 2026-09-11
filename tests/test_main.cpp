@@ -43,7 +43,7 @@
 #include "string_formatter.h"
 #include "string_utils.h"
 #include "type_id.h"
-#include "weather.h"
+#include "weather/weather.h"
 #include "worldfactory.h"
 
 #include <algorithm>

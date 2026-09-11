@@ -1,16 +1,5 @@
 #include "monster.h"
 
-#include <algorithm>
-#include <cmath>
-#include <iterator>
-#include <limits>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -27,28 +16,29 @@
 #include "debug.h"
 #include "effect.h"
 #include "enums.h"
-#include "event_bus.h"
 #include "event.h"
+#include "event_bus.h"
 #include "explosion.h"
 #include "field_type.h"
 #include "flag.h"
 #include "flat_set.h"
-#include "game_constants.h"
 #include "game.h"
-#include "int_id.h"
+#include "game_constants.h"
 #include "init.h"
-#include "item_group.h"
-#include "item_factory.h"
+#include "int_id.h"
 #include "item.h"
 #include "item_category.h"
+#include "item_factory.h"
+#include "item_group.h"
 #include "itype.h"
 #include "line.h"
 #include "locations.h"
 #include "make_static.h"
-#include "mapdata.h"
 #include "map.h"
-#include "mapbuffer.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
+#include "mapdata.h"
+#include "mattack_actors.h"
 #include "mattack_common.h"
 #include "melee.h"
 #include "messages.h"
@@ -58,7 +48,6 @@
 #include "mondefense.h"
 #include "monfaction.h"
 #include "mongroup.h"
-#include "mattack_actors.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -68,6 +57,7 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
+#include "profile.h"
 #include "projectile.h"
 #include "rng.h"
 #include "sounds.h"
@@ -79,9 +69,19 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
-#include "weather.h"
-#include "profile.h"
 #include "units_utility.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 
 static const ammo_effect_str_id ammo_effect_WHIP( "WHIP" );
 

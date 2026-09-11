@@ -1,15 +1,7 @@
 #include "weather.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <memory>
-#include <ranges>
-#include <string>
-#include <vector>
-
-#include "activity_time_cadence.h"
 #include "action_time_scale.h"
+#include "activity_time_cadence.h"
 #include "assign.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -20,6 +12,7 @@
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "coordinates.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
@@ -34,6 +27,7 @@
 #include "overmapbuffer.h"
 #include "point.h"
 #include "point_float.h"
+#include "profile.h"
 #include "regional_settings.h"
 #include "rng.h"
 #include "sounds.h"
@@ -47,8 +41,14 @@
 #include "vpart_position.h"
 #include "weather_gen.h"
 #include "world_type.h"
-#include "dimension_info.h"
-#include "profile.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <memory>
+#include <ranges>
+#include <string>
+#include <vector>
 
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
 

@@ -1,5 +1,27 @@
 #include "fluid_grid.h"
 
+#include "calendar.h"
+#include "coordinates.h"
+#include "cuboid_rectangle.h"
+#include "debug.h"
+#include "game_constants.h"
+#include "item.h"
+#include "map.h"
+#include "mapbuffer.h"
+#include "mapdata.h"
+#include "memory_fast.h"
+#include "messages.h"
+#include "output.h"
+#include "overmap.h"
+#include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
+#include "point.h"
+#include "profile.h"
+#include "rng.h"
+#include "submap.h"
+#include "translations.h"
+#include "weather/weather.h"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -10,28 +32,6 @@
 #include <optional>
 #include <queue>
 #include <ranges>
-
-#include "calendar.h"
-#include "coordinates.h"
-#include "cuboid_rectangle.h"
-#include "debug.h"
-#include "game_constants.h"
-#include "item.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
-#include "memory_fast.h"
-#include "map.h"
-#include "messages.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
-#include "output.h"
-#include "point.h"
-#include "profile.h"
-#include "rng.h"
-#include "submap.h"
-#include "translations.h"
-#include "weather.h"
 
 namespace
 {

@@ -1,19 +1,13 @@
 #include "character_display.h" // IWYU pragma: associated
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstdlib>
-#include <memory>
-
 #include "addiction.h"
 #include "avatar.h"
 #include "bionics.h"
+#include "cata_utility.h"
+#include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
-#include "catacharset.h"
 #include "character_effects.h"
 #include "character_encumbrance.h"
 #include "debug.h"
@@ -21,8 +15,8 @@
 #include "game.h"
 #include "input.h"
 #include "melee.h"
-#include "mutation.h"
 #include "messages.h"
+#include "mutation.h"
 #include "options.h"
 #include "output.h"
 #include "pldata.h"
@@ -37,7 +31,13 @@
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <memory>
 
 static const skill_id skill_swimming( "swimming" );
 static const skill_id skill_unarmed( "unarmed" );

@@ -15,7 +15,7 @@
 #include "units_temperature.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #include <memory>
 #include <ranges>

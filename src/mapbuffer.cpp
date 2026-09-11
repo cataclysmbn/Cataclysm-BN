@@ -1,22 +1,5 @@
 #include "mapbuffer.h"
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <chrono>
-#include <cmath>
-#include <cstdlib>
-#include <exception>
-#include <functional>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <sstream>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "batch_turns.h"
 #include "calendar.h"
@@ -25,10 +8,10 @@
 #include "debug.h"
 #include "detached_ptr.h"
 #include "distribution_grid.h"
-#include "filesystem.h"
 #include "field_type.h"
-#include "fluid_grid.h"
+#include "filesystem.h"
 #include "flag.h"
+#include "fluid_grid.h"
 #include "fstream_utils.h"
 #include "game.h"
 #include "game_constants.h"
@@ -38,18 +21,18 @@
 #include "itype.h"
 #include "json.h"
 #include "map.h"
-#include "mapdata.h"
-#include "mapgen_constructor.h"
 #include "map_iterator.h"
 #include "map_mutation_hooks.h"
-#include "monster.h"
-#include "npc.h"
+#include "mapdata.h"
+#include "mapgen_constructor.h"
 #include "messages.h"
 #include "mongroup.h"
+#include "monster.h"
 #include "mtype.h"
+#include "npc.h"
 #include "options.h"
-#include "overmapbuffer.h"
 #include "output.h"
+#include "overmapbuffer.h"
 #include "popup.h"
 #include "profile.h"
 #include "rng.h"
@@ -67,8 +50,25 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_range.h"
-#include "weather.h"
+#include "weather/weather.h"
 #include "world.h"
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <exception>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <sstream>
+#include <utility>
+#include <vector>
 
 namespace
 {

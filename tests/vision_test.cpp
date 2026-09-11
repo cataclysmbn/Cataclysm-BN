@@ -17,7 +17,7 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #include <algorithm>
 #include <cstddef>

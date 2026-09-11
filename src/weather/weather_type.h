@@ -1,12 +1,12 @@
 #pragma once
 
-#include <climits>
-#include <string>
-
 #include "catacharset.h"
 #include "color.h"
 #include "translations.h"
 #include "type_id.h"
+
+#include <climits>
+#include <string>
 
 using weather_effect_fn = std::function<void( int )>;
 

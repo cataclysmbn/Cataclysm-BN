@@ -1,10 +1,10 @@
 #include "weather_type.h"
 
-#include "units_serde.h"
+#include "bodypart.h"
 #include "game_constants.h"
 #include "generic_factory.h"
-#include "bodypart.h"
 #include "type_id_implement.h"
+#include "units_serde.h"
 #include "weather.h"
 
 namespace

@@ -2,29 +2,6 @@
 
 // IWYU pragma: no_include <cxxabi.h>
 
-#include <algorithm>
-#include <numeric>
-#include <array>
-#include <chrono>
-#include <csignal>
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#include <fstream>
-
 #include "action.h"
 #include "artifact.h"
 #include "avatar.h"
@@ -43,7 +20,6 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
-#include "thread_pool.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -51,6 +27,7 @@
 #include "filesystem.h"
 #include "game.h"
 #include "game_constants.h"
+#include "game_info.h"
 #include "game_inventory.h"
 #include "input.h"
 #include "inventory.h"
@@ -61,9 +38,9 @@
 #include "language.h"
 #include "magic/magic.h"
 #include "map.h"
-#include "mapbuffer_registry.h"
 #include "map_extras.h"
 #include "map_iterator.h"
+#include "mapbuffer_registry.h"
 #include "mapgen.h"
 #include "mapgen_constructor.h"
 #include "mapgendata.h"
@@ -81,6 +58,7 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
@@ -97,6 +75,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
+#include "thread_pool.h"
 #include "trait_group.h"
 #include "translations.h"
 #include "type_id.h"
@@ -106,16 +85,37 @@
 #include "units.h"
 #include "units_utility.h"
 #include "utils/url.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
-#include "veh_type.h"
 #include "vitamin.h"
 #include "vpart_position.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
 #include "weighted_list.h"
-#include "game_info.h"
-#include "overmap_special.h"
+
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <csignal>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 static const mtype_id mon_generator( "mon_generator" );
 
