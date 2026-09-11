@@ -2932,7 +2932,7 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     }
 
     {
-        u.update_body( action_time_scale::calendar_duration_this_tick() * skipped_turns );
+        u.update_body( time_duration::from_turns( skipped_turns ) );
     }
 
     {
