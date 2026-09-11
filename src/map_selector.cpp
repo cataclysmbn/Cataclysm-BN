@@ -10,7 +10,7 @@
 #include "game_constants.h"
 #include "map.h"
 #include "map_iterator.h"
-#include "rng.h"
+#include "random/rng.h"
 
 map_selector::map_selector( const tripoint_bub_ms &pos, int radius, bool accessible )
 {

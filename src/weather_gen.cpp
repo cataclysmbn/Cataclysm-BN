@@ -16,7 +16,7 @@
 #include "json.h"
 #include "math_defines.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "simplexnoise.h"
 #include "weather.h"
 

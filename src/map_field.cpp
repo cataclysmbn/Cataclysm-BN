@@ -51,7 +51,7 @@
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "scent_block.h"
 #include "string_id.h"
 #include "submap.h"

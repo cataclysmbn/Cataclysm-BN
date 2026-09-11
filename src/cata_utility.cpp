@@ -18,7 +18,7 @@
 #include "json.h"
 #include "options.h"
 #include "output.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 #include "units.h"
 

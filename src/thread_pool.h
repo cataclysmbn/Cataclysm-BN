@@ -14,6 +14,16 @@
 #include <utility>
 #include <vector>
 
+#include "random/rng.h"
+
+namespace thread_pool_detail
+{
+
+constexpr auto parallel_for_seed_stream = std::uint64_t { 0x706172666f725f5f };
+constexpr auto parallel_for_chunked_seed_stream = std::uint64_t { 0x7061726368756e6b };
+
+} // namespace thread_pool_detail
+
 /**
  * Persistent thread pool for parallelizing game work.
  *
@@ -56,19 +66,21 @@ class cata_thread_pool
         ~cata_thread_pool();
 
         cata_thread_pool( const cata_thread_pool & ) = delete;
-        cata_thread_pool &operator=( const cata_thread_pool & ) = delete;
+        auto operator=( const cata_thread_pool & ) -> cata_thread_pool& = delete; // *NOPAD*
 
-        unsigned int num_workers() const {
+        auto num_workers() const -> unsigned int {
             return static_cast<unsigned int>( workers_.size() );
         }
 
-        size_t queue_size() const {
-            std::lock_guard<std::mutex> lk( mutex_ );
+        auto queue_size() const -> size_t {
+            auto lk = std::lock_guard<std::mutex>( mutex_ );
             return queue_.size();
         }
 
         /** Enqueue a callable for execution on a worker thread. */
-        void submit( std::function<void()> task );
+        auto submit( std::function<void()> task ) -> void;
+        /** Enqueue a callable with a stable replay-deterministic task key. */
+        auto submit( const rng_deterministic_key &key, std::function<void()> task ) -> void;
 
         /**
          * Enqueue a callable that returns a value and get a future for its result.
@@ -87,7 +99,7 @@ class cata_thread_pool
             auto task = std::make_shared<std::packaged_task<R()>>(
                             std::bind( std::forward<F>( f ), std::forward<Args>( args )... )
                         );
-            std::future<R> fut = task->get_future();
+            auto fut = task->get_future();
             if( num_workers() == 0 ) {
                 // Single-core fallback: execute synchronously on the calling thread
                 // to avoid enqueuing work that would never be processed by a worker.
@@ -100,8 +112,33 @@ class cata_thread_pool
             return fut;
         }
 
+        template<typename F, typename... Args>
+        auto submit_returning( const rng_deterministic_key &key, F &&f, Args &&...args )
+        -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>> {
+            using R = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
+            auto task = std::make_shared<std::packaged_task<R()>>(
+                            std::bind( std::forward<F>( f ), std::forward<Args>( args )... )
+                        );
+            auto fut = task->get_future();
+            const auto deterministic_seed = rng_deterministic_seed_for_current_context( key );
+            if( num_workers() == 0 ) {
+                if( deterministic_seed ) {
+                    [[maybe_unused]] const auto deterministic_scope =
+                        rng_deterministic_task_scope( *deterministic_seed );
+                    ( *task )();
+                } else {
+                    ( *task )();
+                }
+            } else {
+                submit( key, [task]() {
+                    ( *task )();
+                } );
+            }
+            return fut;
+        }
+
     private:
-        void worker_loop();
+        auto worker_loop( unsigned int worker_index ) -> void;
 
         std::vector<std::thread> workers_;
         std::deque<std::function<void()>> queue_;
@@ -111,7 +148,7 @@ class cata_thread_pool
 };
 
 /** Returns the process-lifetime thread pool (lazy-initialized, thread-safe). */
-cata_thread_pool &get_thread_pool();
+auto get_thread_pool() -> cata_thread_pool&; // *NOPAD*
 
 /**
  * Returns true when the calling thread is a pool worker thread.
@@ -119,7 +156,7 @@ cata_thread_pool &get_thread_pool();
  * Use this to guard main-thread-only APIs (Lua, SDL) that must not be called
  * from worker threads.  Set via a thread_local flag in worker_loop().
  */
-bool is_pool_worker_thread();
+auto is_pool_worker_thread() -> bool;
 
 /**
  * Submit a range of work items and block until all complete.
@@ -134,53 +171,73 @@ bool is_pool_worker_thread();
  * F must be callable as  void F(int index)
  */
 template<typename F>
-void parallel_for( int begin, int end, F &&f )
+auto parallel_for( int begin, int end, F &&f ) -> void
 {
     const int n = end - begin;
     if( n <= 0 ) {
         return;
     }
 
+    const auto call_seed = rng_next_deterministic_call_seed(
+                               thread_pool_detail::parallel_for_seed_stream );
+    const auto run_index = [&f, &call_seed]( const int i ) {
+        if( call_seed ) {
+            [[maybe_unused]] const auto deterministic_scope = rng_deterministic_task_scope(
+            rng_deterministic_child_seed( *call_seed, {
+                .stream = thread_pool_detail::parallel_for_seed_stream,
+                .id = static_cast<std::uint64_t>( i )
+            } ) );
+            f( i );
+        } else {
+            f( i );
+        }
+    };
+
     // Short-circuit: single item — run directly with no dispatch overhead.
     if( n == 1 ) {
-        f( begin );
+        run_index( begin );
         return;
     }
 
-    cata_thread_pool &pool = get_thread_pool();
+    auto &pool = get_thread_pool();
     const int nw = static_cast<int>( pool.num_workers() );
 
     // Serial fallback on single-core machines.
     if( nw == 0 ) {
         for( int i = begin; i < end; ++i ) {
-            f( i );
+            run_index( i );
         }
         return;
     }
 
     const int chunks = std::min( n, nw );
-    std::latch latch( chunks );
     std::exception_ptr first_ex;
     std::mutex         ex_mutex;
 
+    const auto run_chunk = [&]( const int chunk_begin, const int chunk_end ) {
+        try {
+            for( int i = chunk_begin; i < chunk_end; ++i ) {
+                run_index( i );
+            }
+        } catch( ... ) {
+            std::lock_guard<std::mutex> lock( ex_mutex );
+            if( !first_ex ) {
+                first_ex = std::current_exception();
+            }
+        }
+    };
+
+    std::latch latch( chunks );
     for( int c = 0; c < chunks; ++c ) {
         const int chunk_begin = begin + ( n * c / chunks );
         const int chunk_end   = begin + ( n * ( c + 1 ) / chunks );
-        pool.submit( [&latch, &f, &first_ex, &ex_mutex, chunk_begin, chunk_end]() {
-            try {
-                for( int i = chunk_begin; i < chunk_end; ++i ) {
-                    f( i );
-                }
-            } catch( ... ) {
-                std::lock_guard<std::mutex> lock( ex_mutex );
-                if( !first_ex ) {
-                    first_ex = std::current_exception();
-                }
-            }
+        pool.submit( { .stream = thread_pool_detail::parallel_for_seed_stream,
+                       .id = static_cast<std::uint64_t>( chunk_begin ) },
+        [&latch, &run_chunk, chunk_begin, chunk_end]() {
+            run_chunk( chunk_begin, chunk_end );
             latch.count_down();
         } );
     }
-
     latch.wait();
     if( first_ex ) {
         std::rethrow_exception( first_ex );
@@ -197,48 +254,75 @@ void parallel_for( int begin, int end, F &&f )
  * F must be callable as  void F(int index)
  */
 template<typename F>
-void parallel_for_chunked( int begin, int end, int chunk_size, F &&f )
+auto parallel_for_chunked( int begin, int end, int chunk_size, F &&f ) -> void
 {
     if( end <= begin || chunk_size <= 0 ) {
         return;
     }
 
-    cata_thread_pool &pool = get_thread_pool();
+    auto &pool = get_thread_pool();
     const int nw = static_cast<int>( pool.num_workers() );
 
     const int n = end - begin;
     const int num_chunks = ( n + chunk_size - 1 ) / chunk_size;
 
-    if( nw == 0 || num_chunks <= 1 ) {
-        for( int i = begin; i < end; ++i ) {
+    const auto call_seed = rng_next_deterministic_call_seed(
+                               thread_pool_detail::parallel_for_chunked_seed_stream );
+    const auto run_index = [&f, &call_seed]( const int i ) {
+        if( call_seed ) {
+            [[maybe_unused]] const auto deterministic_scope = rng_deterministic_task_scope(
+            rng_deterministic_child_seed( *call_seed, {
+                .stream = thread_pool_detail::parallel_for_chunked_seed_stream,
+                .id = static_cast<std::uint64_t>( i )
+            } ) );
             f( i );
+        } else {
+            f( i );
+        }
+    };
+
+    if( num_chunks <= 1 ) {
+        for( int i = begin; i < end; ++i ) {
+            run_index( i );
         }
         return;
     }
 
-    std::latch latch( num_chunks );
     std::exception_ptr first_ex;
     std::mutex         ex_mutex;
-
-    for( int c = 0; c < num_chunks; ++c ) {
-        const int chunk_begin = begin + c * chunk_size;
-        const int chunk_end   = std::min( chunk_begin + chunk_size, end );
-        pool.submit( [&latch, &f, &first_ex, &ex_mutex, chunk_begin, chunk_end]() {
-            try {
-                for( int i = chunk_begin; i < chunk_end; ++i ) {
-                    f( i );
-                }
-            } catch( ... ) {
-                std::lock_guard<std::mutex> lock( ex_mutex );
-                if( !first_ex ) {
-                    first_ex = std::current_exception();
-                }
+    const auto run_chunk = [&]( const int chunk_begin, const int chunk_end ) {
+        try {
+            for( int i = chunk_begin; i < chunk_end; ++i ) {
+                run_index( i );
             }
-            latch.count_down();
-        } );
-    }
+        } catch( ... ) {
+            std::lock_guard<std::mutex> lock( ex_mutex );
+            if( !first_ex ) {
+                first_ex = std::current_exception();
+            }
+        }
+    };
 
-    latch.wait();
+    if( nw == 0 ) {
+        for( int c = 0; c < num_chunks; ++c ) {
+            const int chunk_begin = begin + c * chunk_size;
+            const int chunk_end   = std::min( chunk_begin + chunk_size, end );
+            run_chunk( chunk_begin, chunk_end );
+        }
+    } else {
+        std::latch latch( num_chunks );
+        for( int c = 0; c < num_chunks; ++c ) {
+            const int chunk_begin = begin + c * chunk_size;
+            const int chunk_end   = std::min( chunk_begin + chunk_size, end );
+            pool.submit( { .stream = thread_pool_detail::parallel_for_chunked_seed_stream,
+                           .id = static_cast<std::uint64_t>( chunk_begin ) },
+            [&latch, &run_chunk, chunk_begin, chunk_end]() {
+                run_chunk( chunk_begin, chunk_end );
+                latch.count_down();
+            } );
+        }
+        latch.wait();
+    }
     if( first_ex ) {
         std::rethrow_exception( first_ex );
     }

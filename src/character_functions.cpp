@@ -25,7 +25,7 @@
 #include "output.h"
 #include "player.h"
 #include "ranged.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "submap.h"
 #include "trap.h"

@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 
+#include "random/rng.h"
 #include "thread_pool.h"
 
 // Registry class — defined here, never exposed in a header.
@@ -128,7 +129,11 @@ auto save_all_overmapbuffers() -> void
     futures.reserve( 8 );  // most games have at most a handful of dimensions
 
     for_each_overmapbuffer( [&futures]( const dimension_id & dim_id, overmapbuffer & buf ) {
-        futures.push_back( get_thread_pool().submit_returning(
+        const auto raw_dim_id = dim_id.str();
+        futures.push_back( get_thread_pool().submit_returning( {
+            .stream = 0x6f6d627566736176ULL,
+            .id = static_cast<std::uint64_t>( djb2_hash( reinterpret_cast<const unsigned char *>(
+                                                  raw_dim_id.c_str() ) ) ) },
         [dim_id, &buf]() {
             buf.save( dim_id );
         } ) );

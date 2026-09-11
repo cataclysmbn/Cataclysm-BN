@@ -16,6 +16,7 @@
 #include "get_version.h"
 #include "init.h"
 #include "input.h"
+#include "replay/replay.h"
 #include "runtime_handlers.h"
 #include "path_info.h"
 #include "filesystem.h"
@@ -678,6 +679,14 @@ void input_manager::pump_events()
 
 input_event input_manager::get_input_event()
 {
+    if( replay::is_playing() && inputdelay == 0 ) {
+        return input_event();
+    }
+    if( const auto replay_input = replay::next_input_event() ) {
+        previously_pressed_key = replay_input->type == input_event_t::keyboard ?
+                                 replay_input->get_first_input() : 0;
+        return *replay_input;
+    }
     // standards note: getch is sometimes required to call refresh
     // see, e.g., http://linux.die.net/man/3/getch
     // so although it's non-obvious, that refresh() call (and maybe InvalidateRect?) IS supposed to be there
@@ -720,7 +729,9 @@ input_event input_manager::get_input_event()
         // == Unicode DELETE
         if( lastchar == 127 ) {
             previously_pressed_key = KEY_BACKSPACE;
-            return input_event( KEY_BACKSPACE, input_event_t::keyboard );
+            const auto event = input_event( KEY_BACKSPACE, input_event_t::keyboard );
+            replay::record_input_event( event );
+            return event;
         }
         rval.type = input_event_t::keyboard;
         rval.text = utf32_to_utf8( lastchar );
@@ -730,6 +741,7 @@ input_event input_manager::get_input_event()
         rval.add_input( lastchar );
     }
 
+    replay::record_input_event( rval );
     return rval;
 }
 

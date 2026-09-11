@@ -102,7 +102,7 @@
 #include "recipe_dictionary.h"
 #include "relic.h"
 #include "requirements.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "scenario.h"
 #include "skill.h"
 #include "stats_tracker.h"

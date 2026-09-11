@@ -14,7 +14,7 @@
 #include "generic_factory.h"
 #include "item_group.h"
 #include "mutation.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "trait_group.h"
 #include "type_id_implement.h"

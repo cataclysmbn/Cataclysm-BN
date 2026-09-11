@@ -66,7 +66,7 @@
 #include "point.h"
 #include "requirements.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "stomach.h"
 #include "string_formatter.h"
 #include "string_id.h"

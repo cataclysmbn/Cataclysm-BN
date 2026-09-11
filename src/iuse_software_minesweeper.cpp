@@ -13,7 +13,7 @@
 #include "input.h"
 #include "output.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"

@@ -52,7 +52,7 @@
 #include "output.h"
 #include "popup.h"
 #include "profile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "rot.h"
 #include "skill.h"
 #include "string_formatter.h"

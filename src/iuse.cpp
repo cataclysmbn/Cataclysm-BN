@@ -102,7 +102,7 @@
 #include "recipe_dictionary.h"
 #include "requirements.h"
 #include "ret_val.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sounds.h"
 #include "speech.h"
 #include "string_formatter.h"

@@ -16,7 +16,7 @@
 #include "output.h"
 #include "path_info.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "ui.h"

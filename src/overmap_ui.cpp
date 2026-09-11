@@ -61,7 +61,7 @@
 #include "overmap_special.h"
 #include "player_activity.h"
 #include "regional_settings.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "sdltiles.h"
 #include "sounds.h"
 #include "string_formatter.h"

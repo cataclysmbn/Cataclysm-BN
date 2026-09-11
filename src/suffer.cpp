@@ -46,7 +46,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "regional_settings.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "sounds.h"
 #include "stomach.h"

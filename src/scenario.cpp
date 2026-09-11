@@ -13,8 +13,8 @@
 #include "profession.h"
 #include "string_id.h"
 #include "translations.h"
+#include "random/rng.h"
 #include "type_id_implement.h"
-#include "rng.h"
 #include "start_location.h"
 
 namespace

@@ -22,7 +22,7 @@
 #include "map_iterator.h"
 #include "mapgen_functions.h"
 #include "point.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "translations.h"
 

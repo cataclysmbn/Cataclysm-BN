@@ -7,7 +7,7 @@
 #include "game.h"
 #include "messages.h"
 #include "npc.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "translations.h"
 #include "item.h"
 

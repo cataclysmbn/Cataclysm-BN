@@ -31,7 +31,7 @@
 #include "line.h"
 #include "options.h"
 #include "popup.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "ui_manager.h"

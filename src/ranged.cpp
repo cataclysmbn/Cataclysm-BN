@@ -68,7 +68,7 @@
 #include "player_activity.h"
 #include "point.h"
 #include "projectile.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "skill.h"
 #include "sounds.h"
 #include "shape_impl.h"

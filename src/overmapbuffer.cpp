@@ -11,6 +11,7 @@
 #include <map>
 #include <optional>
 #include <queue>
+#include <functional>
 #include <future>
 #include <ranges>
 #include <vector>
@@ -42,7 +43,7 @@
 #include "overmap_special.h"
 #include "overmap_types.h"
 #include "popup.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "simple_pathfinding.h"
 #include "thread_pool.h"
 #include "string_formatter.h"
@@ -137,14 +138,18 @@ void overmapbuffer::generate( const std::vector<point_abs_om> &locs )
     for( const point_abs_om &loc : locs ) {
         {
             std::shared_lock lock( mutex );
-            if( overmaps.count( loc ) ) {
+            if( overmaps.contains( loc ) ) {
                 continue;
             }
         }
         // Capture loc by value — [&] would reference the loop variable, which
         // advances each iteration, creating a latent race if threads outlive the loop.
         auto dim_id = dimension_id_;
-        futures.push_back( { loc, get_thread_pool().submit_returning( [loc, dim_id] {
+        const auto seed_id = static_cast<std::uint64_t>( std::hash<point_abs_om> {}( loc ) ) ^
+                             ( static_cast<std::uint64_t>( djb2_hash( reinterpret_cast<const unsigned char *>(
+                                         dim_id.c_str() ) ) ) << 1 );
+        futures.push_back( { loc, get_thread_pool().submit_returning(
+            { .stream = 0x6f7665726d61705fULL, .id = seed_id }, [loc, dim_id] {
                 auto om = std::make_unique<overmap>( loc, dim_id );
                 om->populate( dim_id );
                 return om;
@@ -1511,7 +1516,10 @@ std::vector<tripoint_abs_omt> overmapbuffer::find_all_async( const tripoint_abs_
             return result;
         };
 
-        auto task = get_thread_pool().submit_returning( task_func, task_om, std::move( task_omts ) );
+        auto task = get_thread_pool().submit_returning( {
+            .stream = 0x6f6d5f66696e645fULL,
+            .id = static_cast<std::uint64_t>( std::hash<point_abs_om>{}( task_om ) ) },
+        task_func, task_om, std::move( task_omts ) );
 
         tasks.push_back( std::move( task ) );
 

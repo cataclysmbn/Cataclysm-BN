@@ -39,7 +39,7 @@
 #include "output.h"
 #include "overmapbuffer.h"
 #include "player_activity.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "string_id.h"
 #include "translations.h"
 #include "units.h"

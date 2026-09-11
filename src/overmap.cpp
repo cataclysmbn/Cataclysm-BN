@@ -67,7 +67,7 @@
 #include "overmapbuffer_registry.h"
 #include "fluid_grid.h"
 #include "regional_settings.h"
-#include "rng.h"
+#include "random/rng.h"
 #include "rotatable_symbols.h"
 #include "sets_intersect.h"
 #include "simple_pathfinding.h"
