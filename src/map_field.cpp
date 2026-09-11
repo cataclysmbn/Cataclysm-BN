@@ -1816,22 +1816,22 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                     static_cast<void>( energize_conductive_field( dst ) );
                 } );
 
-                if ( !one_in ( 5 )) {
+                if( !one_in( 5 ) ) {
                     auto self = SubTile{&sm, local, pos};
-                    if (!sub_passable(self) && cur.get_field_intensity() > 1) {
+                    if( !sub_passable( self ) && cur.get_field_intensity() > 1 ) {
                         auto tries = 0;
-                        while (tries < 10 && cur.get_field_age() < 5_minutes
-                               && cur.get_field_intensity() > 1) {
-                            const auto dx = rng(-1, 1);
-                            const auto dy = rng(-1, 1);
-                            if (dx == 0 && dy == 0) {
+                        while( tries < 10 && cur.get_field_age() < 5_minutes
+                               && cur.get_field_intensity() > 1 ) {
+                            const auto dx = rng( -1, 1 );
+                            const auto dy = rng( -1, 1 );
+                            if( dx == 0 && dy == 0 ) {
                                 ++tries;
                                 continue;
                             }
-                            auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
-                            if (sub_passable(dst)) {
-                                sub_add_field(dst, fd_electricity, 1, cur.get_field_age() + 1_turns);
-                                cur.set_field_intensity(cur.get_field_intensity() - 1);
+                            auto dst = neighbor_tile( &sm, pos, local, {dx, dy}, mb );
+                            if( sub_passable( dst ) ) {
+                                sub_add_field( dst, fd_electricity, 1, cur.get_field_age() + 1_turns );
+                                cur.set_field_intensity( cur.get_field_intensity() - 1 );
                                 tries = 0;
                             } else {
                                 ++tries;
@@ -1839,29 +1839,29 @@ auto process_fields_in_submap( const dimension_id &dim, submap &sm,
                         }
                     } else {
                         std::vector<point> grounded;
-                        std::ranges::for_each(eight_dirs_sm, [&](const point& d) {
-                            auto dst = neighbor_tile(&sm, pos, local, d, mb);
-                            if (sub_grounded(dst)) { grounded.push_back(d); }
-                        });
-                        if (grounded.empty()) {
-                            const auto dx = rng(-1, 1);
-                            const auto dy = rng(-1, 1);
-                            auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
-                            auto* elec =
-                                dst.valid() ? dst.get_field().find_field(fd_electricity) : nullptr;
-                            if (sub_passable(dst) && elec && elec->get_field_intensity() < 3) {
-                                elec->set_field_intensity(elec->get_field_intensity() + 1);
-                                cur.set_field_intensity(cur.get_field_intensity() - 1);
-                            } else if (sub_passable(dst)) {
-                                sub_add_field(dst, fd_electricity, 1, cur.get_field_age() + 1_turns);
+                        std::ranges::for_each( eight_dirs_sm, [&]( const point & d ) {
+                            auto dst = neighbor_tile( &sm, pos, local, d, mb );
+                            if( sub_grounded( dst ) ) { grounded.push_back( d ); }
+                        } );
+                        if( grounded.empty() ) {
+                            const auto dx = rng( -1, 1 );
+                            const auto dy = rng( -1, 1 );
+                            auto dst = neighbor_tile( &sm, pos, local, {dx, dy}, mb );
+                            auto *elec =
+                                dst.valid() ? dst.get_field().find_field( fd_electricity ) : nullptr;
+                            if( sub_passable( dst ) && elec && elec->get_field_intensity() < 3 ) {
+                                elec->set_field_intensity( elec->get_field_intensity() + 1 );
+                                cur.set_field_intensity( cur.get_field_intensity() - 1 );
+                            } else if( sub_passable( dst ) ) {
+                                sub_add_field( dst, fd_electricity, 1, cur.get_field_age() + 1_turns );
                             }
-                            cur.set_field_intensity(cur.get_field_intensity() - 1);
+                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
                         }
-                        while (!grounded.empty() && cur.get_field_intensity() > 1) {
-                            const auto d = random_entry_removed(grounded);
-                            auto dst = neighbor_tile(&sm, pos, local, d, mb);
-                            sub_add_field(dst, fd_electricity, 1, cur.get_field_age() + 1_turns);
-                            cur.set_field_intensity(cur.get_field_intensity() - 1);
+                        while( !grounded.empty() && cur.get_field_intensity() > 1 ) {
+                            const auto d = random_entry_removed( grounded );
+                            auto dst = neighbor_tile( &sm, pos, local, d, mb );
+                            sub_add_field( dst, fd_electricity, 1, cur.get_field_age() + 1_turns );
+                            cur.set_field_intensity( cur.get_field_intensity() - 1 );
                         }
                     }
                 }

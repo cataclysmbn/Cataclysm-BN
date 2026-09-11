@@ -2967,8 +2967,8 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
             return false;
         }
         if( new_item->made_of( LIQUID ) || !new_item->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
-            const auto destroyed = new_item ->on_drop( *local, g->m);
-            if (destroyed) {
+            const auto destroyed = new_item ->on_drop( *local, g->m );
+            if( destroyed ) {
                 new_item = detached_ptr<item>();
             }
             return destroyed;
