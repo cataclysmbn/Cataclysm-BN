@@ -1644,7 +1644,7 @@ void options_manager::add_options_interface()
     add( "SOUND_DISPLAY_TYPE", interface, translate_marker( "Sound Display Type" ),
          translate_marker( "Switch between decibles, relative decibels, and rough tile distance." ),
     {  { "decibels", translate_marker( "Decibels" ) }, { "relative_decibels", translate_marker( "Relative Decibels" ) }, { "tiles", translate_marker( "Rough Tiles" ) } },
-    "Rough Tiles"
+    "tiles"
        );
 
     add(
