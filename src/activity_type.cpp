@@ -77,6 +77,7 @@ void activity_type::load( const JsonObject &jo )
     assign( jo, "auto_needs", result.auto_needs, false );
     assign( jo, "morale_blocked", result.morale_blocked_, false );
     assign( jo, "verbose_tooltip", result.verbose_tooltip_, false );
+    assign( jo, "rest_amount", result.rest_amount_, false);
     result.bubble_effect_ = jo.get_enum_value<activity_bubble_effect>( "bubble_size_effect",
                             activity_bubble_effect::none );
     if( jo.has_member( "complex_moves" ) ) {
