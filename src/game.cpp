@@ -13218,17 +13218,6 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
     }
     const auto submap_shift = ( m.get_abs_sub() - origin_before_setpos );
 
-    if( submap_shift != point_rel_sm() ) {
-        for( mission *miss : u.get_active_missions() ) {
-            const auto goal = miss->get_type().goal;
-            if( goal == MGOAL_GO_TO_TYPE || goal == MGOAL_GO_TO ) {
-                if( miss->is_complete( u.getID() ) ) {
-                    miss->wrap_up();
-                }
-            }
-        }
-    }
-
     //Auto pulp or butcher and Auto foraging
     if( get_option<bool>( "AUTO_FEATURES" ) && mostseen == 0  && !u.is_mounted() ) {
         ZoneScopedN( "place_player_auto_features" );
