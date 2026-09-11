@@ -64,7 +64,8 @@
     "suspendable": false,
     "no_resume": true,
     "multi_activity": true,
-    "bubble_size_effect": "mobile"
+    "rooted": true,
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_VEHICLE_REPAIR",
@@ -74,7 +75,8 @@
     "suspendable": false,
     "no_resume": true,
     "multi_activity": true,
-    "bubble_size_effect": "mobile"
+    "rooted": true,
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_MULTIPLE_CHOP_PLANKS",
@@ -190,7 +192,7 @@
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
     },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_BUTCHER_FULL",
@@ -206,7 +208,7 @@
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
     },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_FIELD_DRESS",
@@ -222,7 +224,7 @@
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
     },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_BLEED",
@@ -231,7 +233,7 @@
     "auto_needs": true,
     "morale_blocked": true,
     "complex_moves": { "skills": [ [ "survival" ] ] },
-    "bubble_size_effect": "mobile",
+    "bubble_size_effect": "idle",
     "//": "the only way to bleed corpse 'faster' is making a proper cut"
   },
   {
@@ -248,7 +250,7 @@
       "stats": [ [ "DEX" ] ],
       "qualities": [ [ "BUTCHER" ] ]
     },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_QUARTER",
@@ -264,7 +266,7 @@
       "stats": [ [ "STR" ] ],
       "qualities": [ [ "BUTCHER" ] ]
     },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_DISMEMBER",
@@ -279,7 +281,7 @@
       "stats": [ [ "STR" ] ],
       "qualities": [ [ "BUTCHER" ] ]
     },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_DISSECT",
@@ -323,20 +325,21 @@
     "verb": "constructing",
     "morale_blocked": true,
     "complex_moves": { "max_assistants": 8, "light": true, "speed": true, "skills": true, "qualities": true },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_VEHICLE",
     "type": "activity_type",
     "verb": "interacting with the vehicle",
-    "complex_moves": { "speed": true }
+    "complex_moves": { "speed": true },
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_TRAIN",
     "type": "activity_type",
     "verb": "training",
     "complex_moves": { "speed": true, "skills": [ [ "melee" ] ], "stats": [ [ "INT" ] ] },
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_SOCIALIZE",
@@ -376,13 +379,15 @@
     "id": "ACT_PICKAXE",
     "type": "activity_type",
     "verb": "mining",
-    "complex_moves": { "max_assistants": 4, "light": true, "speed": true, "stats": [ [ "STR" ] ] }
+    "complex_moves": { "max_assistants": 4, "light": true, "speed": true, "stats": [ [ "STR" ] ] },
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_BURROW",
     "type": "activity_type",
     "verb": "burrowing",
-    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ] }
+    "complex_moves": { "speed": true, "stats": [ [ "STR" ] ] },
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_PULP",
@@ -397,6 +402,7 @@
     "type": "activity_type",
     "verb": "charging",
     "rooted": true,
+    "bubble_size_effect": "idle",
     "complex_moves": { "speed": true, "stats": [ [ "STR" ] ] }
   },
   {
@@ -417,7 +423,7 @@
     "type": "activity_type",
     "verb": "training",
     "verbose_tooltip": false,
-    "bubble_size_effect": "mobile"
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_MAKE_ZLAVE",
@@ -961,6 +967,7 @@
     "type": "activity_type",
     "verb": "enchanting",
     "no_resume": true,
+    "bubble_size_effect": "idle",
     "complex_moves": { "speed": true }
   },
   {
