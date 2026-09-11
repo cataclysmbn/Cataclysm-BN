@@ -200,23 +200,25 @@
     "id": "MISSION_ROBOFAC_INTERCOM_4",
     "type": "mission_definition",
     "name": { "str": "Bury the Light" },
-    "description": "Reach the <color_red>physics lab</color> and investigate the <color_light_blue>gravitational anomaly</color>.",
-    "goal": "MGOAL_GO_TO_TYPE",
-    "destination": "microlab_nether_glass_entrance",
+    "description": "Reach the <color_red>physics lab</color> and retrieve the document <color_light_blue>PROCEDURE 025-EPSILON</color>.",
+    "goal": "MGOAL_FIND_ITEM",
+    "item": "physics_anomaly_epsilon",
     "difficulty": 5,
     "value": 1000,
-    "start": { "assign_mission_target": { "om_terrain": "microlab_nether_glass_entrance", "reveal_radius": 0, "z": -10 } },
+    "start": {
+      "assign_mission_target": { "om_terrain": "microlab_portal_elevator_nether_glass", "om_special": "physics_microlab", "z": -10 }
+    },
     "end": { "effect": [ { "u_buy_item": "RobofacCoin", "count": 4 } ] },
     "origins": [ "ORIGIN_SECONDARY" ],
     "has_generic_rewards": false,
     "dialogue": {
       "describe": "…",
-      "offer": "One of our recon drones recently detected something strange.  A faint gravitational anomaly was detected by the drone's gravimetric sensors, and analysis seems to indicate its source is deep underground.  We suspect this to be related to a classified research facility our records indicate was located in the area, though we have no records as to what kind of research was conducted in this facility other than 'advanced physics'.  We need you to investigate this facility and report back on the cause of this anomaly.",
+      "offer": "We have identified the location of an underground classified research facility that our records indicate was dedicated to the study of 'advanced physics'.  We need you to investigate this facility and retrieve a critical document that is likely located inside, titled 'PROCEDURE 025-EPSILON'.",
       "accepted": "We await results, mercenary.",
       "rejected": "Return if you change your mind.",
-      "advice": "The lab itself should be similar in format to a standard 'microlab', and thus is likely only accessible through the subway system.  We have no information as to what could be inside this facility.",
-      "inquire": "Anything to report?",
-      "success": "Fascinating.  It is possible the portal storms caused a sort of 'synergy' with the anomaly, causing its effects to expand greatly during the initial days of the Cataclysm.",
+      "advice": "The lab itself should be similar in format to a standard microlab, and thus is likely only accessible through the subway system.  We have no information as to what could be inside this facility.",
+      "inquire": "Have you found the document?",
+      "success": "Fascinating.  It is possible the portal storms caused a sort of synergy with the anomaly, causing its effects to expand greatly during the initial days of the Cataclysm.  This would align with the development of...",
       "success_lie": "What good does this do us?",
       "failure": "Simply useless…"
     }
