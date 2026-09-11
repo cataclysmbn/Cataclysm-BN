@@ -654,7 +654,7 @@ std::string weather_forecast(const point_abs_sm& abs_sm_pos) {
     const weather_manager& weather = get_weather();
     weather_report += string_format(
         //~ %1$s: time of day, %2$s: hour of day, %3$s: city name, %4$s: weather name, %5$s:
-        //temperature value
+        // temperature value
         _("for %1$s:\nCurrently %2$s, %3$s.\nLater "), city_name,
         print_temperature(get_weather().temperature), get_weather().weather_id->name);
 
