@@ -6188,7 +6188,7 @@ std::map<bodypart_id, int> get_wind_resistance( const Character &chr,
         const int exposed = std::max( 0, 100 - pair.second );
         const auto exposed_it = wind_res_per_bp_bonus.find( pair.first );
         int exposed_bonus = 0;
-        if (exposed_it != wind_res_per_bp_bonus.end()) {
+        if( exposed_it != wind_res_per_bp_bonus.end() ) {
             exposed_bonus = std::max( 0, 100 - exposed_it->second );
         }
         const int exposed_final = exposed * exposed_bonus / ( 100 * 100 );
@@ -6313,10 +6313,10 @@ void apply_comfort_morale( Character &chr, const bodypart_id &bp, const bodypart
 
 
 void set_clothing_map(
-            const Character &chr,
-            std::map<bodypart_id, std::vector<const item *>> &clothing_map,
-            std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map
-        )
+    const Character &chr,
+    std::map<bodypart_id, std::vector<const item *>> &clothing_map,
+    std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map
+)
 {
     for( auto &pr : chr.get_body() ) {
         const bodypart_str_id &bp_id = pr.first;
@@ -6326,8 +6326,8 @@ void set_clothing_map(
 }
 
 void set_bonus_clothing_map( const Character &chr,
-        std::map<bodypart_id, std::vector<const item *>> &clothing_map,
-        std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map )
+                             std::map<bodypart_id, std::vector<const item *>> &clothing_map,
+                             std::map<bodypart_id, std::vector<const item *>> &bonus_clothing_map )
 {
     const auto &all_bps = chr.get_all_body_parts();
     for( const item *it : chr.worn ) {
@@ -6401,7 +6401,8 @@ void apply_frostbite( Character &chr, const bodypart_id &bp, bodypart &bp_stats,
         // Warmth gives a slight buff to temperature resistance
         // Wetness gives a heavy nerf to temperature resistance
         const auto it = body_mods.warmth_per_bp.find( bp );
-        const int adjusted_warmth = (it != body_mods.warmth_per_bp.end() ? it->second : 0) - wetness_percentage;
+        const int adjusted_warmth = ( it != body_mods.warmth_per_bp.end() ? it->second : 0 ) -
+                                    wetness_percentage;
         int Ftemperature = static_cast<int>( units::to_fahrenheit( body_mods.ambient_temperature ) + 0.2 *
                                              adjusted_warmth );
         // Windchill reduced by your armor
@@ -6599,7 +6600,7 @@ void apply_blisters( Character &chr, const bodypart_id &bp, BodyTemperatureModif
     // Fire protection protects from blisters.
     // Heatsinks give near-immunity.
     const auto fire_it = body_mods.fire_armor_per_bp.find( bp );
-    const int fire_armor = (fire_it != body_mods.fire_armor_per_bp.end()) ? fire_it->second : 0;
+    const int fire_armor = ( fire_it != body_mods.fire_armor_per_bp.end() ) ? fire_it->second : 0;
 
     if( blister_count - fire_armor > 0 ) {
         chr.add_effect( effect_blisters, 1_turns, bp.id() );
@@ -6764,7 +6765,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
 
     equalize_temperature( *this );
     set_clothing_map( *this, body_mods.clothing_map, body_mods.clothing_map_bonus );
-    set_bonus_clothing_map( *this, body_mods.clothing_map, body_mods.clothing_map_bonus);
+    set_bonus_clothing_map( *this, body_mods.clothing_map, body_mods.clothing_map_bonus );
     body_mods.warmth_per_bp = warmth::from_clothing( body_mods.clothing_map );
     body_mods.warmth_per_bp_bonus = warmth::bonus_from_clothing( body_mods.clothing_map_bonus );
     for( const auto &pr : warmth::from_effects( *this ) ) {
