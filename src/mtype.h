@@ -339,6 +339,8 @@ struct mtype {
 
         // mountable ratio for rider weight vs. mount weight, default 0.3
         float mountable_weight_ratio = 0.3;
+        // how many pixels up does player go
+        int mountable_pixels_up = 6;
 
         int attack_cost = 100;  /** moves per regular attack */
         int melee_skill = 0;    /** melee hit skill, 20 is superhuman hitting abilities */
@@ -390,6 +392,9 @@ struct mtype {
         // Vision range is linearly scaled depending on lighting conditions
         int vision_day = 40;    /** vision range in bright light */
         int vision_night = 1;   /** vision range in total darkness */
+
+        // Clairvoyance
+        int clairvoyance = 0;
 
         damage_instance melee_damage; // Basic melee attack damage
         harvest_id harvest;

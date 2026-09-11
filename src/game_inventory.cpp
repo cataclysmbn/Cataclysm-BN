@@ -173,7 +173,7 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
                            const std::string &title, int radius,
                            const std::string &none_message,
                            const std::string &hint = std::string(),
-                           bool include_fake_bionics = false )
+                           bool include_fake_items = false )
 {
     inventory_pick_selector inv_s( u, preset );
 
@@ -216,8 +216,8 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
         inv_s.add_character_items( u );
         inv_s.add_nearby_items( radius );
 
-        if( include_fake_bionics ) {
-            inv_s.add_bionics_items( u );
+        if( include_fake_items ) {
+            inv_s.add_fake_items( u );
         }
         if( has_init_filter ) {
             inv_s.set_filter( init_filter );

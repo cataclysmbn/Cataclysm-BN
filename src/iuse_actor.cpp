@@ -29,6 +29,7 @@
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "cata_utility.h"
@@ -263,8 +264,6 @@ void iuse_transform::load( const JsonObject &obj )
     obj.read( "need_dry", need_dry );
 
     obj.read( "qualities_needed", qualities_needed );
-
-    obj.read( "menu_text", menu_text );
 }
 
 int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
@@ -427,14 +426,6 @@ ret_val<bool> iuse_transform::can_use( const Character &p, const item &, bool,
     } );
     return ret_val<bool>::make_failure( vgettext( "You need a tool with %s.", "You need tools with %s.",
                                         unmet_reqs.size() ), unmet_reqs_string );
-}
-
-std::string iuse_transform::get_name() const
-{
-    if( !menu_text.empty() ) {
-        return menu_text.translated();
-    }
-    return iuse_actor::get_name();
 }
 
 void iuse_transform::finalize( const itype_id & )
@@ -1260,12 +1251,15 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
-    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-        params["creature"] = &newmon;
-    } );
-    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
-        params["monster"] = &newmon;
-    } );
+    {
+        std::unique_lock lock( cata::lua_lock );
+        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+            params["creature"] = &newmon;
+        } );
+        cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+            params["monster"] = &newmon;
+        } );
+    }
     if( place_random ) {
         // place_critter_around returns the same pointer as its parameter (or null)
         // Allow position to be different from the player for tossed or launched items
@@ -7795,8 +7789,12 @@ auto iuse_paint_stuff_do_paint( player &who, item &it,
             }
 
             if( painter.set_color( thing, n_col.value(), layer ) ) {
-                who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
-                                       target_color.friendly_name() );
+                if( target_color == RGBColor{} ) {
+                    who.add_msg_if_player( m_info, _( "You strip the paint from the %s." ), painter.describe( thing ) );
+                } else {
+                    who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
+                                           target_color.friendly_name() );
+                }
                 charges_used += iter_cost;
                 who.moves -= to_turns<int>( 30_seconds );
             }
@@ -8482,7 +8480,7 @@ void iuse_paint_stuff_config::set_color( item &it )
 ret_val<bool> iuse_paint_stuff::can_use( const Character &, const item &it, bool,
         const tripoint_bub_ms & ) const
 {
-    if( it.ammo_remaining() < 1 ) {
+    if( it.ammo_remaining() < charge_cost ) {
         return ret_val<bool>::make_failure( _( "The %s doesn't have enough charges." ), it.tname() );
     }
 

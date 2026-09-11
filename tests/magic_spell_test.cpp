@@ -146,7 +146,7 @@ TEST_CASE(
     REQUIRE_FALSE(hostile_spell.is_valid_target(target_ground));
     REQUIRE(
         std::ranges::contains(ranged::targetable_creatures(you, hostile_spell.range()), &target));
-    REQUIRE(you.sees_with_infrared(target));
+    REQUIRE(!you.sees_with_specials(target, true).is_null());
     REQUIRE_FALSE(you.sees(target_pos));
 
     CHECK(spell_target_can_be_resolved(hostile_spell, you, target_pos));

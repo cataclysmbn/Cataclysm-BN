@@ -121,9 +121,9 @@ static constexpr short SOUND_MINIMUM_VOLUME_FOR_PROPAGATION = 2000;
 // Cache this because we call it every time we check a sound to see if a monster hears it, which adds up quickly.
 static constexpr short SOUND_ABSORPTION_PER_ZLEV = 4200;
 // The base ambient volume above ground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
-static constexpr short AMBIENT_VOLUME_ABOVEGROUND = 4500;
+static constexpr short AMBIENT_VOLUME_ABOVEGROUND = 3500;
 // The base ambient volume underground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
-static constexpr short AMBIENT_VOLUME_UNDERGROUND = 3500;
+static constexpr short AMBIENT_VOLUME_UNDERGROUND = 2500;
 
 // Well made residential walls with sound proofing materials can have transmission loss values of upwards of 63 dB.
 // STC ratings (in dB of sound reduction) range from 25 to 55+

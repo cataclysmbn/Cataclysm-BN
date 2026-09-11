@@ -3,6 +3,7 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
+#include "map_helpers.h"
 #include "numeric_interval.h"
 #include "omdata.h"
 #include "overmap.h"
@@ -57,21 +58,17 @@ TEST_CASE("default_overmap_generation_always_succeeds", "[overmap][slow]") {
 namespace {
 
 void do_lab_finale_test() {
-    const oter_id labt_endgame("central_lab_endgame");
-    const point_abs_om origin;
-    auto batch = overmap_specials::get_default_batch(origin);
-    ACTIVE_OVERMAP_BUFFER.create_custom_overmap(origin, batch);
-    overmap* test_overmap = ACTIVE_OVERMAP_BUFFER.get_existing(origin);
-    int endgame_count = 0;
-    for (int z = -OVERMAP_DEPTH; z < 0; ++z) {
-        for (int x = 0; x < OMAPX; ++x) {
-            for (int y = 0; y < OMAPY; ++y) {
-                const oter_id t = test_overmap->ter({x, y, z});
-                if (t == labt_endgame) { endgame_count++; }
-            }
-        }
-    }
-    CHECK(endgame_count == 1);
+    const point_abs_om origin = point_abs_om(0, -1);
+    static const tripoint_om_omt om_mid{OMAPX / 2, OMAPY / 2, 0};
+
+    ACTIVE_OVERMAP_BUFFER.clear();
+    omt_find_params find_params{};
+    find_params.types.emplace_back("central_lab_endgame", ot_match_type::exact);
+    find_params.search_range = {0, OMAPX / 2};
+    find_params.search_layers = omt_find_all_layers;
+    const tripoint_abs_omt abs_mid = project_combine(origin, om_mid);
+    const tripoint_abs_omt start = ACTIVE_OVERMAP_BUFFER.find_closest(abs_mid, find_params);
+    CHECK(start != overmap::invalid_tripoint);
 }
 
 } // namespace

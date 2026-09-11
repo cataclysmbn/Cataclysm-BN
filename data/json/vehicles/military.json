@@ -2250,7 +2250,7 @@
   {
     "id": "tank_xm7_elec",
     "type": "vehicle",
-    "name": "XM7 Electric Mini-Tank",
+    "name": "XM7 Atomic Tankette",
     "blueprint": [
       [ "oooooo  " ],
       [ "=--+-|  " ],
@@ -2268,15 +2268,11 @@
       { "x": 1, "y": -2, "parts": [ "hdframe_vertical_2", "tread3", "plating_military" ] },
       { "x": 2, "y": -2, "parts": [ "hdframe_vertical_2", "tread3", "plating_military" ] },
       { "x": -3, "y": -1, "parts": [ "hdframe_vertical_2", "trunk", "omnicam", "plating_military" ] },
-      {
-        "x": -2,
-        "y": -1,
-        "parts": [ "hdframe_vertical_2", "hdboard_sw", "storage_battery", "plating_military", "solar_panel_v2" ]
-      },
+      { "x": -2, "y": -1, "parts": [ "hdframe_vertical_2", "hdboard_sw", "storage_battery", "plating_military" ] },
       {
         "x": -1,
         "y": -1,
-        "parts": [ "hdframe_vertical_2", "hdstowboard_vertical", "plating_military", "solar_panel_v2" ]
+        "parts": [ "hdframe_vertical_2", "hdstowboard_vertical", "minireactor", "plating_military" ]
       },
       {
         "x": 0,
@@ -2331,15 +2327,11 @@
         "parts": [ "hdframe_vertical_2", "hdhalfboard_vertical", "hdroof", "NBC_seal", "plating_military" ]
       },
       { "x": -3, "y": 1, "parts": [ "hdframe_vertical_2", "trunk", "omnicam", "plating_military" ] },
-      {
-        "x": -2,
-        "y": 1,
-        "parts": [ "hdframe_vertical_2", "hdboard_se", "storage_battery", "plating_military", "solar_panel_v2" ]
-      },
+      { "x": -2, "y": 1, "parts": [ "hdframe_vertical_2", "hdboard_se", "storage_battery", "plating_military" ] },
       {
         "x": -1,
         "y": 1,
-        "parts": [ "hdframe_vertical_2", "hdstowboard_vertical", "plating_military", "solar_panel_v2" ]
+        "parts": [ "hdframe_vertical_2", "hdstowboard_vertical", "minireactor", "plating_military" ]
       },
       {
         "x": 0,

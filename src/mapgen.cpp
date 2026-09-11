@@ -256,7 +256,6 @@ auto mapgen_constructor::generate( const tripoint_abs_omt &omt_pos, const time_p
             push_deferred_mapgen_hook( { get_bound_dimension(), omt_pos, when } );
         } else {
             cata::run_on_mapgen_postprocess_hooks(
-                *DynamicDataLoader::get_instance().lua,
                 *this,
                 omt_pos,
                 when
@@ -398,6 +397,7 @@ class mapgen_factory
             // Stuff used in lua code only
             // Yes a mod could blow something up...
             // But it makes itself widely known
+            std::unique_lock lock( cata::lua_lock );
             result = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) { params["results"] = &result; } ).get_or( "results",
                     result );
             return result;
@@ -522,7 +522,7 @@ void call_mapgen_function( std::string name, mapgendata &dat, bool nested, const
         if( ptr == nullptr ) {
             return;
         }
-        ( *ptr )->nest( dat, pos );
+        ( *ptr )->nest( dat, pos, 0 );
     } else {
         oter_mapgen.generate( dat, name );
     }
@@ -1013,6 +1013,26 @@ void jmapgen_place::offset( const point_rel_ms &offset )
     x.valmax -= offset.x();
     y.val -= offset.y();
     y.valmax -= offset.y();
+}
+
+void jmapgen_place::edit( std::function<point_omt_ms( const point_omt_ms & )> func )
+{
+    point_omt_ms low = func( point_omt_ms( x.val, y.val ) );
+    point_omt_ms high = func( point_omt_ms( x.valmax, y.valmax ) );
+    if( low.x() > high.x() ) {
+        x.valmax = low.x();
+        x.val = high.x();
+    } else {
+        x.val = low.x();
+        x.valmax = high.x();
+    }
+    if( low.y() > high.y() ) {
+        y.valmax = low.y();
+        y.val = high.y();
+    } else {
+        y.val = low.y();
+        y.valmax = high.y();
+    }
 }
 
 map_key::map_key( const std::string &s ) : str( s )
@@ -2302,6 +2322,7 @@ class jmapgen_vehicle : public jmapgen_piece
         int fuel;
         int status;
         std::optional<bool> locked;
+        bool place_beyond_bounds;
 
         jmapgen_vehicle( const JsonObject &jsi )
             : type( jsi.get_member( "vehicle" ) )
@@ -2313,6 +2334,7 @@ class jmapgen_vehicle : public jmapgen_piece
             if( jsi.has_bool( "locked" ) ) {
                 locked = jsi.get_bool( "locked" );
             }
+            optional( jsi, false, "place_beyond_bounds", place_beyond_bounds, false );
             if( jsi.has_array( "rotation" ) ) {
                 for( const JsonValue &elt : jsi.get_array( "rotation" ) ) {
                     rotation.push_back( units::from_degrees( elt.get_int() ) );
@@ -2343,7 +2365,7 @@ class jmapgen_vehicle : public jmapgen_piece
                                                  : std::nullopt;
             dat.m.add_vehicle(
                 chosen_id, point_omt_ms( x.get(), y.get() ),
-                random_entry( rotation ), fuel, status, true, locked, has_keys );
+                random_entry( rotation ), fuel, status, true, locked, has_keys, place_beyond_bounds );
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
             return dat.m.veh_at( point_omt_ms( p.x(), p.y() ) ).has_value();
@@ -3171,6 +3193,7 @@ class jmapgen_nested : public jmapgen_piece
         neighbor_oter_check neighbor_oters;
         neighbor_join_check neighbor_joins;
         neighbor_connection_check neighbor_connections;
+        jmapgen_int rotation = 0;
         jmapgen_nested( const JsonObject &jsi )
             : neighbor_oters( jsi.get_object( "neighbors" ) )
             , neighbor_joins( jsi.get_object( "joins" ) )
@@ -3180,6 +3203,9 @@ class jmapgen_nested : public jmapgen_piece
             }
             if( jsi.has_member( "else_chunks" ) ) {
                 load_weighted_list( jsi.get_member( "else_chunks" ), else_entries, 100 );
+            }
+            if( jsi.has_member( "rotation" ) ) {
+                rotation = jmapgen_int( jsi, "rotation" );
             }
         }
 
@@ -3255,7 +3281,7 @@ class jmapgen_nested : public jmapgen_piece
 
             {
                 ZoneScopedN( "jmapgen_nested_nest" );
-                ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
+                ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ), rotation.get() );
             }
         }
 
@@ -4104,7 +4130,8 @@ void jmapgen_objects::merge_parameters_into( mapgen_parameters &params,
  * (set|line|square)_(ter|furn|trap|radiation); simple (x, y, int) or (x1,y1,x2,y2, int) functions
  * TODO: optimize, though gcc -O2 optimizes enough that splitting the switch has no effect
  */
-bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) const
+bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset,
+                            std::function<point_omt_ms( const point_omt_ms & )> func ) const
 {
     if( chance != 1 && !one_in( chance ) ) {
         return true;
@@ -4121,47 +4148,55 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
     auto &m = dat.m;
     const int trepeat = repeat.get();
     for( int i = 0; i < trepeat; i++ ) {
+        point_omt_ms pt = func( point_omt_ms( x_get(), y_get() ) );
+        point_omt_ms pt2 = func( point_omt_ms( x2_get(), y2_get() ) );
+        if( pt.x() > pt2.x() ) {
+            int inter = pt.x();
+            pt.x() = pt2.x();
+            pt2.x() = inter;
+        }
+        if( pt.y() > pt2.y() ) {
+            int inter = pt.y();
+            pt.y() = pt2.y();
+            pt2.y() = inter;
+        }
         switch( op ) {
             case JMAPGEN_SETMAP_TER: {
                 // TODO: the ter_id should be stored separately and not be wrapped in an jmapgen_int
-                m.ter_set( point_omt_ms( x_get(), y_get() ), ter_id( val.get() ) );
+                m.ter_set( pt, ter_id( val.get() ) );
             }
             break;
             case JMAPGEN_SETMAP_FURN: {
                 // TODO: the furn_id should be stored separately and not be wrapped in an jmapgen_int
-                m.furn_set( point_omt_ms( x_get(), y_get() ), furn_id( val.get() ) );
+                m.furn_set( pt, furn_id( val.get() ) );
             }
             break;
             case JMAPGEN_SETMAP_TRAP: {
                 // TODO: the trap_id should be stored separately and not be wrapped in an jmapgen_int
-                mtrap_set( &m, point_omt_ms( x_get(), y_get() ), trap_id( val.get() ) );
+                mtrap_set( &m, pt, trap_id( val.get() ) );
             }
             break;
             case JMAPGEN_SETMAP_RADIATION: {
-                m.set_radiation( point_omt_ms( x_get(), y_get() ), val.get() );
+                m.set_radiation( pt, val.get() );
             }
             break;
             case JMAPGEN_SETMAP_BASH: {
-                m.bash( point_omt_ms( x_get(), y_get() ), 9999, true );
+                m.bash( pt, 9999, true );
             }
             break;
 
             case JMAPGEN_SETMAP_LINE_TER: {
                 // TODO: the ter_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_line_ter( ter_id( val.get() ), point_omt_ms( x_get(), y_get() ), point_omt_ms( x2_get(),
-                                 y2_get() ) );
+                m.draw_line_ter( ter_id( val.get() ), pt, pt2 );
             }
             break;
             case JMAPGEN_SETMAP_LINE_FURN: {
                 // TODO: the furn_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_line_furn( furn_id( val.get() ), point_omt_ms( x_get(), y_get() ), point_omt_ms( x2_get(),
-                                  y2_get() ) );
+                m.draw_line_furn( furn_id( val.get() ), pt, pt2 );
             }
             break;
             case JMAPGEN_SETMAP_LINE_TRAP: {
-                const std::vector<point_omt_ms> line = line_to( point_omt_ms( x_get(), y_get() ),
-                                                       point_omt_ms( x2_get(), y2_get() ),
-                                                       0 );
+                const std::vector<point_omt_ms> line = line_to( pt, pt2, 0 );
                 for( auto &i : line ) {
                     // TODO: the trap_id should be stored separately and not be wrapped in an jmapgen_int
                     mtrap_set( &m, i, trap_id( val.get() ) );
@@ -4169,9 +4204,7 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
             }
             break;
             case JMAPGEN_SETMAP_LINE_RADIATION: {
-                const std::vector<point_omt_ms> line = line_to( point_omt_ms( x_get(), y_get() ),
-                                                       point_omt_ms( x2_get(), y2_get() ),
-                                                       0 );
+                const std::vector<point_omt_ms> line = line_to( pt, pt2, 0 );
                 for( auto &i : line ) {
                     m.set_radiation( i, val.get() );
                 }
@@ -4179,21 +4212,17 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
             break;
             case JMAPGEN_SETMAP_SQUARE_TER: {
                 // TODO: the ter_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_square_ter( ter_id( val.get() ), point_omt_ms( x_get(), y_get() ), point_omt_ms( x2_get(),
-                                   y2_get() ) );
+                m.draw_square_ter( ter_id( val.get() ), pt, pt2 );
             }
             break;
             case JMAPGEN_SETMAP_SQUARE_FURN: {
                 // TODO: the furn_id should be stored separately and not be wrapped in an jmapgen_int
-                m.draw_square_furn( furn_id( val.get() ), point_omt_ms( x_get(), y_get() ), point_omt_ms( x2_get(),
-                                    y2_get() ) );
+                m.draw_square_furn( furn_id( val.get() ), pt, pt2 );
             }
             break;
             case JMAPGEN_SETMAP_SQUARE_TRAP: {
-                const point_omt_ms c{ x_get(), y_get() };
-                const point_omt_ms c2{ x2_get(), y2_get() };
-                for( int tx = c.x(); tx <= c2.x(); tx++ ) {
-                    for( int ty = c.y(); ty <= c2.y(); ty++ ) {
+                for( int tx = pt.x(); tx <= pt2.x(); tx++ ) {
+                    for( int ty = pt.y(); ty <= pt2.y(); ty++ ) {
                         // TODO: the trap_id should be stored separately and not be wrapped in an jmapgen_int
                         mtrap_set( &m, point_omt_ms( tx, ty ), trap_id( val.get() ) );
                     }
@@ -4201,12 +4230,8 @@ bool jmapgen_setmap::apply( const mapgendata &dat, const point_rel_ms &offset ) 
             }
             break;
             case JMAPGEN_SETMAP_SQUARE_RADIATION: {
-                const int cx = x_get();
-                const int cy = y_get();
-                const int cx2 = x2_get();
-                const int cy2 = y2_get();
-                for( int tx = cx; tx <= cx2; tx++ ) {
-                    for( int ty = cy; ty <= cy2; ty++ ) {
+                for( int tx = pt.x(); tx <= pt2.x(); tx++ ) {
+                    for( int ty = pt.y(); ty <= pt2.y(); ty++ ) {
                         m.set_radiation( point_omt_ms( tx, ty ), val.get() );
                     }
                 }
@@ -4362,11 +4387,16 @@ mapgen_parameters mapgen_function_json::get_mapgen_params( mapgen_parameter_scop
     return parameters.params_for_scope( scope );
 }
 
-void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms &offset ) const
+void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms &offset,
+                                        const int rotation ) const
 {
     ZoneScopedN( "mapgen_json_nested" );
-    // TODO: Make rotation work for submaps, then pass this value into elem & objects apply.
-    //int chosen_rotation = rotation.get() % 4;
+
+    int chosen_rotation = rotation;
+
+    const auto rot_func = [&]( const point_omt_ms & pt ) -> point_omt_ms {
+        return pt.rotate( chosen_rotation, total_size.raw() );
+    };
 
     auto args = mapgen_arguments {};
     {
@@ -4379,13 +4409,13 @@ void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms
             ZoneScopedN( "mapgen_json_nested_setmap" );
             for( const auto &elem : setmap_points )
             {
-                elem.apply( active_md, offset );
+                elem.apply( active_md, offset, rot_func );
             }
         }
 
         {
             ZoneScopedN( "mapgen_json_nested_objects" );
-            objects.apply( active_md, offset );
+            objects.apply( active_md, offset, rot_func );
         }
 
         {
@@ -4424,10 +4454,11 @@ void jmapgen_objects::apply( const mapgendata &dat ) const
     }
 }
 
-void jmapgen_objects::apply( const mapgendata &dat, const point_rel_ms &offset ) const
+void jmapgen_objects::apply( const mapgendata &dat, const point_rel_ms &offset,
+                             std::function<point_omt_ms( const point_omt_ms & )> func ) const
 {
     ZoneScopedN( "jmapgen_objects_apply_offset" );
-    if( offset == point_rel_ms::zero() ) {
+    if( offset == point_rel_ms::zero() && func( point_omt_ms::zero() ) == point_omt_ms::zero() ) {
         // It's a bit faster
         apply( dat );
         return;
@@ -4435,6 +4466,7 @@ void jmapgen_objects::apply( const mapgendata &dat, const point_rel_ms &offset )
 
     for( auto &obj : objects ) {
         auto where = obj.first;
+        where.edit( func );
         where.offset( -offset );
 
         const auto &what = *obj.second;
@@ -5929,6 +5961,7 @@ character_id map::place_npc( const tripoint_bub_ms &p, const string_id<npc_templ
     // The NPC is already registered in the overmapbuffer (thread-safe via npc_mutex_);
     // mods that need on_npc_spawn will see it when the main thread next loads the submap.
     if( !is_pool_worker_thread() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
             params["creature"] = temp.get();
         } );

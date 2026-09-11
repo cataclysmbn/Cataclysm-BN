@@ -970,8 +970,9 @@ class JsonObject
         std::string str() const; // copy object json as string
         [[noreturn]] void throw_error( const std::string &err ) const;
         [[noreturn]] void throw_error( const std::string &err, const std::string &name ) const;
-        void show_warning( const std::string &err ) const;
-        void show_warning( const std::string &err, const std::string &name ) const;
+        void show_warning( const std::string &err, const bool debug = false ) const;
+        void show_warning( const std::string &err, const std::string &name,
+                           const bool debug = false ) const;
         // seek to a value and return a pointer to the JsonIn (member must exist)
         JsonIn *get_raw( const std::string &name ) const;
         JsonValue get_member( const std::string &name ) const;
@@ -1165,8 +1166,8 @@ class JsonArray
         [[noreturn]] void throw_error( const std::string &err, int idx );
         // See JsonIn::string_error
         [[noreturn]] void string_error( const std::string &err, int idx, int offset );
-        void show_warning( const std::string &err );
-        void show_warning( const std::string &err, int idx );
+        void show_warning( const std::string &err, const bool debug = false );
+        void show_warning( const std::string &err, int idx, const bool debug = false );
 
         // iterative access
         JsonValue next();
@@ -1294,7 +1295,7 @@ class JsonValue
         [[noreturn]] void throw_error( const std::string &err ) const {
             seek().error( err );
         }
-        void show_warning( const std::string &err ) const;
+        void show_warning( const std::string &err, const bool debug = false ) const;
 
         std::string get_string() const {
             return seek().get_string();

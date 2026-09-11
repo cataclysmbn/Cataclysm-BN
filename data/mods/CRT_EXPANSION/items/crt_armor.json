@@ -21,7 +21,8 @@
     "material_thickness": 2,
     "environmental_protection": 10,
     "qualities": [ [ "GLARE", 1 ] ],
-    "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES", "VARSIZE", "WATCH", "THERMOMETER", "DRONE_CAM" ]
+    "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES", "VARSIZE", "WATCH", "THERMOMETER" ],
+    "relic_data": { "passive_effects": [ { "id": "DRONE_CAM" } ] }
   },
   {
     "id": "crt_boots",

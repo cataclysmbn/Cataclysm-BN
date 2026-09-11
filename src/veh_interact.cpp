@@ -2871,7 +2871,7 @@ void veh_interact::display_mode()
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         print_colored_text( w_mode, point( 1, 0 ), title_col, title_col, title.value() );
     } else {
-        constexpr size_t action_cnt = 11;
+        constexpr size_t action_cnt = 12;
         const std::array<std::string, action_cnt> actions = { {
                 veh_act_desc( main_context, "INSTALL",
                               pgettext( "veh_interact", "install" ),
@@ -2903,6 +2903,9 @@ void veh_interact::display_mode()
                 veh_act_desc( main_context, "RELABEL",
                               pgettext( "veh_interact", "label" ),
                               cant_do( 'a' ) ),
+                veh_act_desc( main_context, "CHANGE_SHAPE",
+                              pgettext( "veh_interact", "shape" ),
+                              cant_do( 'p' ) ),
                 veh_act_desc( main_context, "QUIT",
                               pgettext( "veh_interact", "back" ),
                               task_reason::CAN_DO ),

@@ -1,0 +1,41 @@
+[
+  {
+    "type": "enchantment_vision",
+    "id": "DRONE_CAM",
+    "desc": "Allows Sight Through Friendly Drones",
+    "show_with_effect": [ "drone_marker" ],
+    "show_normal": true
+  },
+  {
+    "type": "enchantment_vision",
+    "id": "ELECTROSENSE",
+    "desc": "Allows Sight Of Electric Creatures",
+    "show_with_species": [ "ROBOT", "ROBOT_FLYING" ],
+    "show_with_flag": [ "ELECTRIC", "ELECTRONIC" ],
+    "vision_desc": { "tile_id": "infrared_creature", "description": "You sense an electric critter." }
+  },
+  {
+    "type": "enchantment_vision",
+    "id": "SONAR",
+    "desc": "Allows Sight Of Digging Creatures",
+    "show_with_flag": [ "DIGS" ],
+    "vision_desc": { "tile_id": "infrared_creature", "description": "You sense an digging critter." }
+  },
+  {
+    "type": "enchantment_vision",
+    "id": "GROUNDED_SONAR",
+    "desc": "Allows Sight Of Nearby Non-Flying Creatures",
+    "show_without_any_flag": [ "FLIES" ],
+    "distance": 5,
+    "vision_desc": { "tile_id": "infrared_creature", "description": "You sense a critter." }
+  },
+  {
+    "type": "enchantment_vision",
+    "id": "INFRARED",
+    "desc": "Allows Sight Of Warm Creatures",
+    "require_los": true,
+    "same_z_level": true,
+    "detect_heat": true,
+    "vision_desc": { "tile_id": "infrared_creature", "description": "You see something warm." }
+  }
+]

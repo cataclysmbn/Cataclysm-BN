@@ -23,9 +23,12 @@ struct lua_state_deleter {
     void operator()( lua_state *state ) const;
 };
 
+static std::mutex lua_lock;
+
 bool has_lua();
 int get_lua_api_version();
 std::string get_lapi_version_string();
+auto get_active_lua_state() -> lua_state *;
 void startup_lua_test();
 auto generate_lua_docs( const std::filesystem::path &script_path,
                         const std::filesystem::path &to ) -> bool;
@@ -44,9 +47,9 @@ void clear_mod_being_loaded( lua_state &state );
 void run_mod_preload_script( lua_state &state, const mod_id &mod );
 void run_mod_finalize_script( lua_state &state, const mod_id &mod );
 void run_mod_main_script( lua_state &state, const mod_id &mod );
-void run_on_game_load_hooks( lua_state &state );
-void run_on_game_save_hooks( lua_state &state );
-void run_on_every_x_hooks( lua_state &state );
+void run_on_game_load_hooks();
+void run_on_game_save_hooks();
+void run_on_every_x_hooks();
 auto run_lua_examine( const std::string &callback_id, player &who,
                       const tripoint_bub_ms &pos ) -> void;
 auto get_lua_activity_on_finish( const player_activity &act ) -> std::string;
@@ -55,7 +58,7 @@ auto run_lua_activity_callback( const std::string &callback_id, player &who,
                                 player_activity &act ) -> void;
 auto get_lua_callback( lua_state &state, const std::string table_name,
                        const std::string &callback_id ) -> sol::protected_function;
-void run_on_mapgen_postprocess_hooks( lua_state &state, mapgen_constructor &m,
+void run_on_mapgen_postprocess_hooks( mapgen_constructor &m,
                                       const tripoint_abs_omt &p,
                                       const time_point &when );
 
@@ -76,7 +79,7 @@ struct mapgen_hook_batch_item {
  *
      * All items must belong to the same bound dimension of constructor.
      */
-void run_on_mapgen_postprocess_hooks_batch( lua_state &state, mapgen_constructor &constructor,
+void run_on_mapgen_postprocess_hooks_batch( mapgen_constructor &constructor,
         std::span<const mapgen_hook_batch_item> items );
 
 /** Return true if at least one on_mapgen_postprocess hook is registered. */

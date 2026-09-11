@@ -99,6 +99,7 @@ std::string io::enum_to_string<action_id>( action_id data )
             PAIR( ACTION_CLOSE )
             PAIR( ACTION_SMASH )
             PAIR( ACTION_EXAMINE )
+            PAIR( ACTION_JUMP )
             PAIR( ACTION_PICKUP )
             PAIR( ACTION_PICKUP_ALL )
             PAIR( ACTION_PICKUP_FEET )
@@ -474,6 +475,8 @@ std::string action_ident( action_id act )
             return "smash";
         case ACTION_EXAMINE:
             return "examine";
+        case ACTION_JUMP:
+            return "jump";
         case ACTION_ADVANCEDINV:
             return "advinv";
         case ACTION_PICKUP:
@@ -992,7 +995,7 @@ bool can_examine_at( const tripoint_bub_ms &p )
     }
 
     Creature *c = g->critter_at( p );
-    if( c != nullptr && p != u.bub_pos() ) {
+    if( c != nullptr && ( p != u.bub_pos() || u.is_mounted() ) ) {
         return true;
     }
 
@@ -1054,6 +1057,8 @@ bool can_interact_at( action_id action, const tripoint_bub_ms &p )
             return can_move_vertical_at( p, -1 );
         case ACTION_EXAMINE:
             return can_examine_at( p );
+        case ACTION_JUMP:
+            return iexamine::can_jump_over_tile( get_avatar(), p );
         case ACTION_PICKUP:
         case ACTION_PICKUP_ALL:
         case ACTION_PICKUP_FEET:
@@ -1155,7 +1160,7 @@ action_id handle_action_menu()
             action_weightings[ACTION_CYCLE_MOVE] = 400;
         }
         // Only prioritize fire weapon options if we're wielding a ranged weapon.
-        if( g->u.primary_weapon().is_gun() || g->u.primary_weapon().has_flag( flag_REACH_ATTACK ) ) {
+        if( g->u.primary_weapon().is_gun() || g->u.primary_weapon().reach_range( g->u ) > 1 ) {
             action_weightings[ACTION_FIRE] = 350;
         }
     }
@@ -1300,7 +1305,7 @@ action_id handle_action_menu()
             register_lua_action_entries( category_id );
         } else if( category_id == "interact" ) {
             register_actions( {
-                ACTION_EXAMINE, ACTION_SMASH, ACTION_MOVE_DOWN, ACTION_MOVE_UP,
+                ACTION_EXAMINE, ACTION_JUMP, ACTION_SMASH, ACTION_MOVE_DOWN, ACTION_MOVE_UP,
                 ACTION_OPEN, ACTION_CLOSE, ACTION_CHAT, ACTION_PICKUP,
                 ACTION_PICKUP_ALL, ACTION_PICKUP_FEET, ACTION_GRAB, ACTION_HAUL, ACTION_BUTCHER, ACTION_LOOT,
             } );

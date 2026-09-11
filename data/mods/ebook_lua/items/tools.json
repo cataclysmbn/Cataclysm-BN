@@ -7,11 +7,16 @@
     "use_action": [
       "EINKTABLETPC",
       {
-        "type": "music_player",
         "target": "eink_tablet_pc_music",
         "msg": "You put in the earbuds and start listening to music.",
+        "active": true,
         "moves": 200,
-        "need_charges": 1
+        "need_charges": 1,
+        "transform_charges": 1,
+        "need_charges_msg": "The e-ink tablet PC's batteries need more charge.",
+        "type": "transform",
+        "internal_name": "music_player",
+        "menu_text": "Listen to music"
       },
       "TOGGLE_UPS_CHARGING",
       "LUA_EBOOK"

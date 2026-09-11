@@ -17,29 +17,6 @@
     ]
   },
   {
-    "result": "mininuke",
-    "type": "recipe",
-    "category": "CC_WEAPON",
-    "subcategory": "CSC_WEAPON_EXPLOSIVE",
-    "skill_used": "mechanics",
-    "skills_required": [ "electronics", 5 ],
-    "difficulty": 10,
-    "time": 360000,
-    "reversible": true,
-    "decomp_learn": 10,
-    "book_learn": [ [ "textbook_atomic_lab", 5 ] ],
-    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
-    "components": [
-      [ [ "canister_empty", 1 ] ],
-      [ [ "grenade", 1 ], [ "40x46mm_m433", 2 ] ],
-      [ [ "plut_cell", 6 ] ],
-      [ [ "amplifier", 3 ] ],
-      [ [ "power_supply", 1 ] ],
-      [ [ "clockworks", 1 ] ],
-      [ [ "cable", 15 ] ]
-    ]
-  },
-  {
     "result": "light_battery_cell",
     "id_suffix": "afs_plutonium_battery",
     "type": "recipe",

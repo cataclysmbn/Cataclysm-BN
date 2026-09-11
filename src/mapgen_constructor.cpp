@@ -6,6 +6,7 @@
 #include <ranges>
 
 #include "artifact.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "computer.h"
@@ -1212,6 +1213,7 @@ auto mapgen_constructor::place_npc( const point_omt_ms &p, const string_id<npc_t
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     get_overmapbuffer( get_bound_dimension() ).insert_npc( temp );
     if( !is_pool_worker_thread() ) {
+        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
             params["creature"] = temp.get();
         } );
@@ -1265,7 +1267,7 @@ auto mapgen_constructor::add_spawn( const mtype_id &type, const int count,
 auto mapgen_constructor::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
                                       const point_omt_ms &p, const units::angle dir,
                                       const int veh_fuel, const int veh_status, const bool /*merge_wrecks*/,
-                                      std::optional<bool> locked, std::optional<bool> has_keys ) -> vehicle *
+                                      std::optional<bool> locked, std::optional<bool> has_keys, bool place_beyond_bounds ) -> vehicle *
 {
     const auto type = std::visit( []( const auto & v ) -> vproto_id {
         using T = std::decay_t<decltype( v )>;
@@ -1277,7 +1279,7 @@ auto mapgen_constructor::add_vehicle( const std::variant<vgroup_id, vproto_id> &
             return v;
         }
     }, type_ );
-    if( !is_inside_omt_tile_bounds( p ) || !type.is_valid() ) {
+    if( ( !is_inside_omt_tile_bounds( p ) && !place_beyond_bounds ) || !type.is_valid() ) {
         return nullptr;
     }
     auto veh = std::make_unique<vehicle>( type, veh_fuel, veh_status, locked, has_keys );

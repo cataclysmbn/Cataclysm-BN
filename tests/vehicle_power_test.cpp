@@ -175,7 +175,7 @@ TEST_CASE("vehicle power with reactor and solar panels", "[vehicle][power]") {
         GIVEN("it is 3 hours after sunrise, with sunny weather") {
             calendar::turn = calendar::turn_zero + calendar::season_length() + 1_days;
             const time_point start_time = sunrise(calendar::turn) + 3_hours;
-            veh_ptr->update_time(start_time);
+            veh_ptr->update_time(start_time, false);
             get_weather().weather_override = weather_type_id("sunny");
 
             AND_GIVEN("the battery has no charge") {
@@ -183,7 +183,7 @@ TEST_CASE("vehicle power with reactor and solar panels", "[vehicle][power]") {
                 REQUIRE(veh_ptr->fuel_left(fuel_type_battery) == 0);
 
                 WHEN("30 minutes elapse") {
-                    veh_ptr->update_time(start_time + 30_minutes);
+                    veh_ptr->update_time(start_time + 30_minutes, false);
 
                     THEN("the battery should be partially charged") {
                         int charge = veh_ptr->fuel_left(fuel_type_battery) / 100;
@@ -191,7 +191,7 @@ TEST_CASE("vehicle power with reactor and solar panels", "[vehicle][power]") {
                         CHECK(charge <= 30);
 
                         AND_WHEN("another 30 minutes elapse") {
-                            veh_ptr->update_time(start_time + 2 * 30_minutes);
+                            veh_ptr->update_time(start_time + 2 * 30_minutes, false);
 
                             THEN("the battery should be further charged") {
                                 charge = veh_ptr->fuel_left(fuel_type_battery) / 100;
@@ -207,14 +207,14 @@ TEST_CASE("vehicle power with reactor and solar panels", "[vehicle][power]") {
         GIVEN("it is 3 hours after sunset, with clear weather") {
             const time_point at_night = sunset(calendar::turn) + 3_hours;
             get_weather().weather_override = weather_type_id("clear");
-            veh_ptr->update_time(at_night);
+            veh_ptr->update_time(at_night, false);
 
             AND_GIVEN("the battery has no charge") {
                 veh_ptr->discharge_battery(veh_ptr->fuel_left(fuel_type_battery));
                 REQUIRE(veh_ptr->fuel_left(fuel_type_battery) == 0);
 
                 WHEN("60 minutes elapse") {
-                    veh_ptr->update_time(at_night + 2 * 30_minutes);
+                    veh_ptr->update_time(at_night + 2 * 30_minutes, false);
 
                     THEN("the battery should still have no charge") {
                         CHECK(veh_ptr->fuel_left(fuel_type_battery) == 0);
@@ -290,7 +290,7 @@ TEST_CASE("Vehicle charging station", "[vehicle][power]") {
             g->m.add_vehicle(vproto_id("recharge_test"), vehicle_origin, 0_degrees, 100, 0);
         REQUIRE(veh_ptr != nullptr);
         REQUIRE(veh_ptr->fuel_left(fuel_type_battery) > 1000);
-        veh_ptr->update_time(calendar::turn_zero);
+        veh_ptr->update_time(calendar::turn_zero, false);
 
         auto cargo_part_index = veh_ptr->part_with_feature(tripoint_mnt_veh::zero(), "CARGO", true);
         REQUIRE(cargo_part_index >= 0);

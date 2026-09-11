@@ -104,6 +104,9 @@ void curtains( player &p, const tripoint_bub_ms &examp );
 void sign( player &p, const tripoint_bub_ms &examp );
 void pay_gas( player &p, const tripoint_bub_ms &examp );
 void ledge( player &p, const tripoint_bub_ms &examp );
+auto can_start_jump_over_tile( const player &p, const bool show_messages = false ) -> bool;
+auto can_jump_over_tile( const player &p, const tripoint_bub_ms &examp ) -> bool;
+auto jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool;
 void autodoc( player &p, const tripoint_bub_ms &examp );
 void translocator( player &p, const tripoint_bub_ms &examp );
 void on_smoke_out( const tripoint_bub_ms &examp,

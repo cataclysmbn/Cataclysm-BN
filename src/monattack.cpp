@@ -6124,7 +6124,7 @@ bool mattack::kamikaze( monster *z )
             // Timer is out, detonate
             detached_ptr<item> i_explodes = item::spawn( act_bomb_type, calendar::turn, 0 );
             i_explodes->activate();
-            item::process( std::move( i_explodes ), nullptr, z->bub_pos(), false );
+            item::process( std::move( i_explodes ), nullptr, z->bub_pos(), false, 1 );
             return false;
         }
         return false;

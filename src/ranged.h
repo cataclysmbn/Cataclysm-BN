@@ -54,6 +54,9 @@ trajectory mode_throw_vehicle( avatar &you, const tripoint_bub_ms &grabbed_part_
 /** Reach attacking */
 trajectory mode_reach( avatar &you, item &weapon );
 
+/** Reach attacking */
+trajectory mode_unarmed_reach( avatar &you );
+
 /** Manually firing vehicle turret */
 trajectory mode_turret_manual( avatar &you, turret_data &turret );
 

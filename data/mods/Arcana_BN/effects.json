@@ -242,7 +242,8 @@
     "max_duration": "120 m",
     "max_intensity": 120,
     "int_dur_factor": "1 m",
-    "flags": [ "EFFECT_COLD_IMMUNE" ]
+    "flags": [ "EFFECT_COLD_IMMUNE" ],
+    "base_enchantments": [ { "values": [ { "value": "CLIMATE_CONTROL_HEATING", "add": 5000 } ] } ]
   },
   {
     "type": "effect_type",
@@ -293,7 +294,7 @@
     "type": "effect_type",
     "id": "heat_ward",
     "name": [ "Ward Against Flame" ],
-    "desc": [ "Complete immunity to fire, and to side effectsc from heat or smoke." ],
+    "desc": [ "Complete immunity to fire, and to side effects from heat or smoke." ],
     "remove_message": "You feel a strange tingling sensation, as the ward against flame fades.",
     "removes_effects": [ "onfire", "smoke", "hot", "blisters", "hot_speed" ],
     "decay_messages": [ [ "The ward against flame is waning.", "bad" ] ],
@@ -301,7 +302,8 @@
     "max_duration": "120 m",
     "max_intensity": 120,
     "int_dur_factor": "1 m",
-    "flags": [ "EFFECT_HEAT_IMMUNE" ]
+    "flags": [ "EFFECT_HEAT_IMMUNE" ],
+    "base_enchantments": [ { "values": [ { "value": "CLIMATE_CONTROL_COOLING", "add": 5000 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1202,7 +1204,7 @@
     "name": [ "Drain Life" ],
     "desc": [ "A strange radiance permeates your body, draining life from your foes with each strike." ],
     "remove_message": "You feel momentarily weak as your life-draining spell fades.",
-    "decay_messages": [ [ "You feel your lift-draining spell fading.", "bad" ] ],
+    "decay_messages": [ [ "You feel your life-draining spell fading.", "bad" ] ],
     "rating": "good",
     "max_duration": "120 m",
     "max_intensity": 120,

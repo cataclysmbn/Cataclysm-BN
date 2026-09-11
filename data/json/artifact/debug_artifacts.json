@@ -1,0 +1,236 @@
+[
+  {
+    "id": "architect_cube",
+    "type": "TOOL",
+    "name": { "str": "The Architect's Cube" },
+    "description": "This is a solid cube that is much heavier than its size suggests.  When you look at it, it pulls your gaze inward until you fall through the sky, showing you a top-down view of your position with the surroundings revealed.",
+    "weight": "2 kg",
+    "volume": "100 ml",
+    "material": [ "iron" ],
+    "symbol": "]",
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID" ],
+    "relic_data": {
+      "passive_effects": [
+        { "conditions": [ "HELD" ], "ench_effects": [ { "effect": "debug_clairvoyance", "intensity": 1 } ] },
+        { "ench_effects": [ { "effect": "blind", "intensity": 1 } ], "immune_effects": [ "blind" ] }
+      ]
+    }
+  },
+  {
+    "id": "radiation_triangle",
+    "type": "TOOL",
+    "name": { "str": "The irradiation triangle" },
+    "description": "Who so ever dares to hold this triangle inside inventory when not underground shall gain 1 to 3 irradiation every 10 minutes.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "material": [ "iron" ],
+    "symbol": "]",
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID" ],
+    "relic_data": {
+      "passive_effects": [ { "conditions": [ "HELD", "ABOVEGROUND" ], "ench_effects": [ { "effect": "debug_irradiation", "intensity": 1 } ] } ]
+    }
+  },
+  {
+    "id": "chaos_dagger",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "KNIVES" ],
+    "name": "chaos dagger",
+    "description": "A small but surprisingly heavy knife seemingly made of crystalline bismuth, iridescent rectangular patterns twisting into a fractal towards the blade's edge.",
+    "weight": "1500 g",
+    "volume": "300 ml",
+    "attacks": [
+      {
+        "id": "STAB",
+        "to_hit": 1,
+        "damage": { "values": [ { "damage_type": "bash", "amount": 3 }, { "damage_type": "stab", "amount": 8 } ] }
+      }
+    ],
+    "material": "gemstone",
+    "symbol": ";",
+    "color": "magenta",
+    "techniques": [ "RAPID" ],
+    "qualities": [ [ "BUTCHER", 5 ] ],
+    "use_action": {
+      "target": "chaos_dagger_on",
+      "msg": "The chaos dagger starts shifting, the crystals moving about in a scintillating rainbow.",
+      "menu_text": "Turn on",
+      "type": "transform"
+    },
+    "flags": [ "STAB", "TRADER_AVOID" ],
+    "relic_data": { "passive_effects": [ { "values": [ { "value": "MELEE_DAMAGE_DARK", "multiply": 2 } ] } ] }
+  },
+  {
+    "id": "chaos_dagger_on",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "KNIVES" ],
+    "name": { "str": "chaos dagger (shifting)", "str_pl": "chaos daggers (shifting)" },
+    "description": "A small but surprisingly heavy knife seemingly made of crystalline bismuth, iridescent rectangular patterns twisting into a fractal towards the blade's edge.  The crystals are shifting as you look at them, rapidly growing, melding together and reforming.",
+    "weight": "1500 g",
+    "volume": "300 ml",
+    "attacks": [
+      {
+        "id": "STAB",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 1 },
+            { "damage_type": "stab", "amount": 10, "armor_penetration": 1, "armor_multiplier": 0.2 },
+            { "damage_type": "dark", "amount": 8 }
+          ]
+        }
+      }
+    ],
+    "material": "gemstone",
+    "symbol": ";",
+    "color": "magenta",
+    "techniques": [ "RAPID" ],
+    "qualities": [ [ "BUTCHER", 5 ] ],
+    "use_action": { "target": "chaos_dagger", "msg": "The chaos dagger goes still", "menu_text": "Turn off", "type": "transform" },
+    "flags": [ "STAB", "TRADER_AVOID" ],
+    "relic_data": { "passive_effects": [ { "values": [ { "value": "MELEE_DAMAGE_DARK", "add": 100 } ] } ] }
+  },
+  {
+    "id": "onyx_eye",
+    "type": "TOOL",
+    "name": { "str": "onyx eye" },
+    "description": "A small, light gemstone made of an unknown pitch black material.  The gem's surface is lined with cracks, through which a blinding white light shines through.  Holding it gives you profound, indescribable perspective, as countless worlds along with your own flash before you, all somehow equally discernible.  However, you get the feeling you aren't the only one looking…",
+    "weight": "5 g",
+    "volume": "10 ml",
+    "material": [ "gemstone" ],
+    "symbol": ".",
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID" ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "conditions": [ "WIELD" ],
+          "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_ATTENTION_SPELL" } ] } ] },
+          "ench_effects": [ { "effect": "clairvoyance_plus", "intensity": 1 } ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "debug_active_relic_test",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str_sp": "Cube of Shame" },
+    "description": "This is a debug-only item for testing relic properties, powered by batteries.  Turn it on to lose intelligence and perception, but gain clairvoyance.",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "blue",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "ammo": "battery",
+    "use_action": {
+      "type": "transform",
+      "msg": "You inject yourself into the Cube of Shame.",
+      "target": "debug_active_relic_test_on",
+      "active": true,
+      "transform_charges": 1,
+      "need_charges": 1,
+      "need_charges_msg": "Batteries not included."
+    },
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
+    "magazine_well": "250 ml",
+    "relic_data": {
+      "recharge_scheme": [ { "type": "time", "req": "none", "interval": "10 m", "rate": 1 } ],
+      "passive_effects": [
+        {
+          "conditions": [ "HELD" ],
+          "mutations": [ "CARNIVORE" ],
+          "intermittent_activation": { "effects": [ { "frequency": "5 minutes", "spell_effects": [ { "id": "AEA_HEAL" } ] } ] }
+        },
+        {
+          "conditions": [ "HELD", "ACTIVE" ],
+          "values": [ { "value": "INTELLIGENCE", "add": -2 }, { "value": "PERCEPTION", "add": -2 } ],
+          "ench_effects": [ { "effect": "debug_clairvoyance", "intensity": 1 } ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "debug_active_relic_test_on",
+    "copy-from": "debug_active_relic_test",
+    "type": "TOOL",
+    "name": { "str_sp": "Cube of Shame (on)" },
+    "description": "This is a debug-only item for testing relic properties, powered by batteries.  Drop it or turn it off to retrieve your mind.",
+    "power_draw": 10000,
+    "revert_to": "debug_active_relic_test",
+    "use_action": {
+      "menu_text": "Turn off",
+      "type": "transform",
+      "msg": "You extract yourself from the Cube of Shame.",
+      "target": "debug_active_relic_test"
+    }
+  },
+  {
+    "id": "debug_trait_enchantment",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str_sp": "Trapezohedron of Edginess" },
+    "description": "This is a debug-only item for testing enchantment mutations.  Wield it to stay up all night, become stealthy, and to see in the dark.",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "blue",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "relic_data": { "passive_effects": [ { "conditions": [ "WIELD" ], "mutations": [ "CRAFTY", "WAKEFUL3", "NIGHTVISION3" ] } ] }
+  },
+  {
+    "id": "debug_pain_enchantment",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str_sp": "Hexecontahedron of Reaching" },
+    "description": "This is a debug-only item for testing reaching enchantments.",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "blue",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "relic_data": { "passive_effects": [ { "values": [ { "value": "REACH_RANGE", "max": 10 } ] } ] }
+  },
+  {
+    "id": "debug_pain_enchantment",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str_sp": "Triacontahedron of Weightlessness" },
+    "description": "This is a debug-only item for testing weight modification enchantments.",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "blue",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "relic_data": { "passive_effects": [ { "values": [ { "value": "WEIGHTMOD", "multiply": -1 } ] } ] }
+  },
+  {
+    "id": "debug_pacifist_enchantment",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str_sp": "Hexecontahedron of Pacifism" },
+    "description": "This is a debug-only item for testing melee hit and forcefield enchantments.",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "blue",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "relic_data": { "passive_effects": [ { "values": [ { "value": "MELEE_HIT", "add": -100 }, { "value": "FORCEFIELD", "add": 1 } ] } ] }
+  },
+  {
+    "id": "debug_pacifist_enchantment",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str_sp": "Pyramid of Explosiveness" },
+    "description": "This is a debug-only item for testing overkill enchantments.",
+    "material": [ "steel" ],
+    "symbol": ";",
+    "color": "blue",
+    "weight": "400 g",
+    "volume": "500 ml",
+    "relic_data": { "passive_effects": [ { "values": [ { "value": "OVERKILL", "add": 10000 } ] } ] }
+  }
+]

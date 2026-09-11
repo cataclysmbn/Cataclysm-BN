@@ -160,7 +160,7 @@
     "id": "FASTHEALER",
     "name": { "str": "Fast Healer" },
     "points": 2,
-    "description": "Your wounds heal themselves quicker than usual.  You heal 50% faster whilst asleep, and 20% faster whilst awake.  Your broken limbs also heal twice as fast.",
+    "description": "Your wounds heal themselves quicker than usual.  Sleep and medicine heal you 50% faster, and you even heal a little while awake.  Your broken limbs also heal less poorly without splints.",
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
@@ -214,7 +214,8 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL", "CHIMERA" ]
+    "category": [ "MEDICAL", "CHIMERA" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.33 } ] } ]
   },
   {
     "type": "mutation",
@@ -365,7 +366,8 @@
     "description": "You are less likely to throw up from food poisoning, alcohol, etc.  If you throw up despite this, you won't suffer any residual nausea.",
     "starting_trait": true,
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "WEAKSTOMACH" ]
+    "cancels": [ "WEAKSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -747,7 +749,7 @@
     "id": "SLOWHEALER",
     "name": { "str": "Slow Healer" },
     "points": -2,
-    "description": "Your wounds heal a little slower than most.  Your HP whilst asleep heals at 75% of the regular rate.",
+    "description": "Your wounds heal a little slower than most.  Your HP heals at 75% of the regular rate.",
     "starting_trait": true,
     "types": [ "HEALING" ],
     "healing_resting": -0.25
@@ -757,7 +759,7 @@
     "id": "SLOWHEALER2",
     "name": { "str": "Poor Healer" },
     "points": -4,
-    "description": "Your health recovery is severely impaired.  Your HP whilst asleep heals at 33% of the regular rate.",
+    "description": "Your health recovery is severely impaired.  Your HP heals at 33% of the regular rate.",
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
@@ -769,7 +771,7 @@
     "id": "SLOWHEALER3",
     "name": { "str": "Imperceptive Healer" },
     "points": -8,
-    "description": "Wounds are incredibly dangerous to you, as they barely heal at all.  Your HP whilst asleep heals at 10% of the regular rate.",
+    "description": "Wounds are incredibly dangerous to you, as they barely heal at all.  Your HP heals at 10% of the regular rate.",
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
@@ -1242,7 +1244,8 @@
     "points": -1,
     "description": "You are more likely to throw up from food poisoning, alcohol, etc.",
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "STRONGSTOMACH" ]
+    "cancels": [ "STRONGSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -1437,7 +1440,7 @@
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
     "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -1461,14 +1464,14 @@
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
     "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
-    "mut_enchantments": [ { "flags": [ "INFRARED_VISION" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
     "id": "FASTHEALER2",
     "name": { "str": "Very Fast Healer" },
     "points": 4,
-    "description": "Your flesh regenerates slowly, and you will regain HP even when not sleeping.",
+    "description": "Your flesh regenerates slowly.  You will regain HP at a moderate rate even when not sleeping, and sleep and medicine will heal you 50% more.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER" ],
     "changes_to": [ "REGEN" ],
@@ -1482,7 +1485,7 @@
     "id": "REGEN",
     "name": { "str": "Regeneration" },
     "points": 6,
-    "description": "Your flesh regenerates from wounds incredibly quickly.  You heal 150% faster whilst asleep and 200% faster whilst awake.  You do not require splints to heal broken limbs.",
+    "description": "Your flesh regenerates from wounds incredibly quickly.  You constantly regenerate HP at a rapid rate, and sleep and medicine heal you 150% more.  You do not require splints to heal broken limbs.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER2" ],
     "category": [ "SLIME", "TROGLOBITE" ],
@@ -2930,7 +2933,8 @@
     "prereqs": [ "PAINRESIST" ],
     "prereqs2": [ "STOCKY_TROGLO" ],
     "threshreq": [ "THRESH_TROGLOBITE" ],
-    "category": [ "TROGLOBITE" ]
+    "category": [ "TROGLOBITE" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3047,7 +3051,7 @@
     "prereqs2": [ "INCISORS" ],
     "threshreq": [ "THRESH_RAT", "THRESH_RABBIT" ],
     "category": [ "RAT", "RABBIT" ],
-    "active": true
+    "mut_enchantments": [ { "fake_items": [ "fake_burrowing" ] } ]
   },
   {
     "type": "mutation",
@@ -3190,7 +3194,7 @@
     "restricts_gear": [ "head" ],
     "allowed_items": [ "ALLOWS_HORNS" ],
     "allow_soft_gear": true,
-    "mut_enchantments": [ { "values": [ { "value": "GROUNDED_CREATURE_SIGHT", "max": 5 } ] } ]
+    "mut_enchantments": [ { "special_vision": [ "GROUNDED_SONAR" ] } ]
   },
   {
     "type": "mutation",
@@ -3475,7 +3479,16 @@
     "purifiable": false,
     "prereqs": [ "MASOCHIST_MED" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "PAIN_PENALTY_STR", "multiply": -1 },
+          { "value": "PAIN_PENALTY_DEX", "multiply": -1 },
+          { "value": "PAIN_PENALTY_SPD", "multiply": -0.5 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -3489,7 +3502,8 @@
     "prereqs2": [ "PAINREC1" ],
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.1 } ] } ]
   },
   {
     "type": "mutation",
@@ -3500,7 +3514,8 @@
     "starting_trait": true,
     "//": "The MORE_PAIN mutations will always increase the pain you receive by at least 1.",
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN2" ]
+    "changes_to": [ "MORE_PAIN2" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.25 } ] } ]
   },
   {
     "type": "mutation",
@@ -3510,7 +3525,8 @@
     "description": "Your body experiences pain out of proportion to the physical causes.  Pain dealt to you is increased by 50%.",
     "prereqs": [ "MORE_PAIN" ],
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN3" ]
+    "changes_to": [ "MORE_PAIN3" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3519,7 +3535,8 @@
     "points": -5,
     "description": "Your body reacts cripplingly to any source of pain.  Pain dealt to you is doubled.",
     "prereqs": [ "MORE_PAIN2" ],
-    "cancels": [ "PAINRESIST", "NOPAIN" ]
+    "cancels": [ "PAINRESIST", "NOPAIN" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -4230,7 +4247,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "armor": [ { "parts": "ALL", "bash": -3 } ]
+    "armor": [ { "parts": "ALL", "bash": -3 } ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_PENALTY_INT", "multiply": -0.8 } ] } ]
   },
   {
     "type": "mutation",
@@ -4809,7 +4827,8 @@
     "prereqs": [ "WEAKSTOMACH" ],
     "changes_to": [ "VOMITOUS" ],
     "category": [ "ALPHA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4819,7 +4838,8 @@
     "description": "You have a major digestive disorder.  Though it causes you to vomit frequently, you have found that you can trigger your vomit reflex on demand, too.",
     "prereqs": [ "NAUSEA" ],
     "category": [ "SLIME", "RAT", "MEDICAL", "ELFA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4877,7 +4897,7 @@
     "name": { "str": "Rapid Metabolism" },
     "points": -2,
     "valid": false,
-    "description": "You require more resources than most, but heal more rapidly as well.  Provides weak regeneration even when not asleep.",
+    "description": "You require more food and sleep than most, but heal more rapidly as well.  Provides weak regeneration even when not asleep.",
     "types": [ "HEALING" ],
     "cancels": [ "LIGHTEATER", "COLDBLOOD", "COLDBLOOD2", "COLDBLOOD3", "COLDBLOOD4", "WAKEFUL", "WAKEFUL2", "WAKEFUL3" ],
     "prereqs": [ "HUNGER" ],
@@ -6435,7 +6455,7 @@
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
     "mixed_effect": true,
-    "mut_enchantments": [ { "flags": [ "ELECTROSENSE" ] } ]
+    "mut_enchantments": [ { "special_vision": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
@@ -7017,7 +7037,7 @@
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
     "random_starting_trait": false,
-    "cancels": [ "GUNSHY", "CARRY_PERMIT" ],
+    "cancels": [ "GUNSHY", "GUNNUT", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -7028,7 +7048,18 @@
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
     "random_starting_trait": false,
-    "cancels": [ "BRAWLER", "CARRY_PERMIT" ],
+    "cancels": [ "BRAWLER", "GUNNUT", "CARRY_PERMIT" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNNUT",
+    "name": { "str": "Gun Nut" },
+    "points": -4,
+    "description": "REAL survivors use guns!  You refuse to use crude bows, crossbows, or other primitive ranged weapons even if your life depends on it.",
+    "starting_trait": true,
+    "random_starting_trait": false,
+    "cancels": [ "BRAWLER", "GUNSHY" ],
     "valid": false
   },
   {
