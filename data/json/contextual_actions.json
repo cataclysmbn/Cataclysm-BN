@@ -1,0 +1,65 @@
+[
+  {
+    "type": "contextual_action",
+    "id": "contextual_pickup",
+    "action": "pickup",
+    "target": "self_or_adjacent",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  },
+  {
+    "type": "contextual_action",
+    "id": "contextual_butcher",
+    "action": "butcher",
+    "target": "self",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  },
+  {
+    "type": "contextual_action",
+    "id": "contextual_open",
+    "action": "open",
+    "target": "adjacent",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  },
+  {
+    "type": "contextual_action",
+    "id": "contextual_close",
+    "action": "close",
+    "target": "adjacent",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  },
+  {
+    "type": "contextual_action",
+    "id": "contextual_move_up",
+    "action": "LEVEL_UP",
+    "target": "self",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  },
+  {
+    "type": "contextual_action",
+    "id": "contextual_move_down",
+    "action": "LEVEL_DOWN",
+    "target": "self",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  },
+  {
+    "type": "contextual_action",
+    "id": "contextual_examine",
+    "action": "examine",
+    "target": "self_or_adjacent",
+    "right_click": true,
+    "action_menu": true,
+    "walk_to": true
+  }
+]
