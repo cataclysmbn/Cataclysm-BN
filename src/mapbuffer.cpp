@@ -2391,6 +2391,7 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
                 best_difficulty = 5;
             }
         }
+    }
 
     return std::max( 0, best_difficulty - blocks_movement );
 }
