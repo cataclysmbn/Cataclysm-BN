@@ -161,7 +161,7 @@ class activity_type
         inline bool verbose_tooltip() const {
             return verbose_tooltip_;
         }
-        inline float rest_amount() const { 
+        inline float rest_amount() const {
             return rest_amount_;
         }
         inline activity_bubble_effect bubble_effect() const {

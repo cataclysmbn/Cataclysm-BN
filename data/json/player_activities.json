@@ -382,7 +382,7 @@
     "complex_moves": { "light": true, "morale": true, "speed": true, "skills": [ [ "survival" ] ], "stats": [ [ "PER" ] ] },
     "bubble_size_effect": "idle",
     "rest_amount": 0.2
-    },
+  },
   {
     "id": "ACT_PICKAXE",
     "type": "activity_type",

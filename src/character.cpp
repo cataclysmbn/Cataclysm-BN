@@ -7574,18 +7574,18 @@ float Character::mutation_armor( bodypart_id bp, const damage_unit &du ) const
 float Character::rest_quality() const
 {
     // TODO: Make comfort (bed, sofa, blankets, etc) contribute to rest, both while asleep and awake
-	float rest_rate = 0.0f;
-	const float activity_rest = activity->get_rest_amount();
-	
-	if( activity_rest > 0.0f ) {
-		rest_rate += activity_rest;
-	}
-	
-	if( has_effect ( effect_sleep ) ) {
+    float rest_rate = 0.0f;
+    const float activity_rest = activity->get_rest_amount();
+
+    if( activity_rest > 0.0f ) {
+        rest_rate += activity_rest;
+    }
+
+    if( has_effect( effect_sleep ) ) {
         // Can be reduced below 1 once comfort is involved
-		rest_rate += 1.0f;
-	}
-	
+        rest_rate += 1.0f;
+    }
+
     return clamp( rest_rate, 0.0f, 1.0f );
 }
 

@@ -167,7 +167,7 @@ class player_activity
             return type->verb();
         }
 
-        const float &get_rest_amount() const { 
+        const float &get_rest_amount() const {
             return type->rest_amount();
         }
 
