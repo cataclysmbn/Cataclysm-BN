@@ -822,42 +822,6 @@ jobs:
           $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
           cmake --build $buildDir --target $target --config Release
 
-      - name: Run sharded tests (desktop)
-        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $buildDir = if ($IsWindows) {
-            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
-          } else {
-            "${{ github.workspace }}/build"
-          }
-          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
-          if ($IsWindows) {
-            $exeName = "$exeName.exe"
-          }
-          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
-          if (-not (Test-Path $testBin)) {
-            throw "Missing test executable: $testBin"
-          }
-
-          $testOpts = @(
-            "--min-duration", "20",
-            "--use-colour", "yes",
-            "--rng-seed", "time",
-            "--error-format=github-action"
-          )
-          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
-            $testOpts += "--gpu-backend=software"
-          }
-          deno run --allow-read --allow-write --allow-run --allow-env `
-            build-scripts/run-linux-test-shards.ts `
-            --mode file-tags `
-            --jobs 4 `
-            --non-slow-shards 8 `
-            $testBin `
-            -- `
-            @testOpts
 
       # Upload artifacts
       - name: Upload packaged build artifact
@@ -897,3 +861,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
+
+      - name: Run sharded tests (desktop)
+        if: inputs.run-tests && (runner.os == 'Windows' || (runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')))
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $buildDir = if ($IsWindows) {
+            "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc"
+          } else {
+            "${{ github.workspace }}/build"
+          }
+          $exeName = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
+          if ($IsWindows) {
+            $exeName = "$exeName.exe"
+          }
+          $testBin = Join-Path $buildDir (Join-Path "tests" $exeName)
+          if (-not (Test-Path $testBin)) {
+            throw "Missing test executable: $testBin"
+          }
+
+          $testOpts = @(
+            "--min-duration", "20",
+            "--use-colour", "yes",
+            "--rng-seed", "time",
+            "--error-format=github-action"
+          )
+          if ($IsLinux -and "${{ matrix.tiles }}" -eq "true") {
+            $testOpts += "--gpu-backend=software"
+          }
+          deno run --allow-read --allow-write --allow-run --allow-env `
+            build-scripts/run-linux-test-shards.ts `
+            --mode file-tags `
+            --jobs 4 `
+            --non-slow-shards 8 `
+            $testBin `
+            -- `
+            @testOpts
