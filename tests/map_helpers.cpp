@@ -14,6 +14,7 @@
 #include "mapdata.h"
 #include "npc.h"
 #include "overmapbuffer.h"
+#include "sounds.h"
 #include "submap.h"
 #include "type_id.h"
 
@@ -122,6 +123,8 @@ void clear_map() {
     clear_creatures();
     g->m.clear_traps();
     for (int z = -2; z <= 0; ++z) { clear_items(z); }
+    // Melee and other tests enqueue floodfills. Leave no leftover sound cache for the next case.
+    sounds::reset_sounds();
     // Reset the distribution grid tracker so that stale grids from a previous
     // test's Catch2 WHEN section do not bleed into the next run.  The tracker
     // is a global singleton; grid_at() rebuilds on demand, so clearing here is safe.

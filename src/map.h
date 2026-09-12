@@ -543,7 +543,7 @@ struct sound_instance_cache {
 
     // Side length of the flood volume vector: (2 * flood_radius) + 1.
     // Use this (not dist_enum) so envelope tests match the allocated volume[] size.
-    int envelope_side() const {
+    auto envelope_side() const -> int {
         const int radius = flood_radius < 0 ? 0 : flood_radius;
         return ( 2 * radius ) + 1;
     }

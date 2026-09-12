@@ -318,8 +318,9 @@ static short sanitize_heard_mdB( const int heard_volume, const sound_instance_ca
         return 0;
     }
     if( heard_volume > origin_mdB || heard_volume >= MAXIMUM_VOLUME_ATMOSPHERE ) {
-        debugmsg( "Player given impossibly loud sound! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB, tile volume of %i mdB, distance %i at %i:%i:%i is louder than possible.",
-                  sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
+        debugmsg( "Player given impossibly loud sound! Sound with description [ %s ] from %i:%i:%i with an origin volume of %i dB, tile volume of %i mdB, distance %i at %i:%i:%i is louder than possible.",
+                  sound_inst.sound.description.c_str(), sound_inst.sound.origin.x(),
+                  sound_inst.sound.origin.y(),
                   sound_inst.sound.origin.z(), sound_inst.sound.volume, heard_volume, distance, listener.x(),
                   listener.y(), listener.z() );
         return 0;
@@ -2938,6 +2939,17 @@ void sounds::reset_sounds()
     sound_markers.clear();
     map.m_sound_cache.sound_list_filtered.clear();
     sound_batch_floodfill_que.clear();
+    map.m_sound_cache.sounds_this_turn = 0;
+    map.m_sound_cache.attempted_monster_sounds = 0;
+    map.m_sound_cache.attempted_NPC_sounds = 0;
+    map.m_sound_cache.attempted_movement_sounds = 0;
+    map.m_sound_cache.attempted_potential_deafening_sounds = 0;
+    map.m_sound_cache.attempted_non_batch_floodfills = 0;
+    map.m_sound_cache.batch_flooded_monster_sounds = 0;
+    map.m_sound_cache.batch_flooded_NPC_sounds = 0;
+    map.m_sound_cache.invalidated_batch_sounds = 0;
+    map.m_sound_cache.filtered_sound_lists_made = 0;
+    map.m_sound_cache.filtered_sound_lists_cleared = 0;
 }
 
 auto sounds::shift_sound_positions( const point_rel_ms &offset ) -> void
