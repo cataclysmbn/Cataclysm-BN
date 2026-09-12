@@ -2085,7 +2085,7 @@ tripoint_bub_ms monster::scent_move() const
             ( ( can_move_to( dest ) && !here.obstructed_by_vehicle_rotation( pos, dest ) ) ||
               ( dest == g->u.bub_pos() ) ||
               ( can_bash && here.is_bashable( dest ) &&
-                ( here.bash_rating( bash_estimate( dest ), dest ) > 0 || here.has_flag( TFLAG_TREE, candidate ) ) ) ) ) {
+                ( here.bash_rating( bash_estimate( dest ), dest ) > 0 || here.has_flag( TFLAG_TREE, dest ) ) ) ) ) {
             if( ( !fleeing && smell > bestsmell ) || ( fleeing && smell < bestsmell ) ) {
                 smove_count = 0;
                 smoves[smove_count++] = dest;
