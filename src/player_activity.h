@@ -167,6 +167,10 @@ class player_activity
             return type->verb();
         }
 
+        const float &get_rest_amount() const {
+            return type->rest_amount();
+        }
+
         int get_value( size_t index, int def = 0 ) const;
         std::string get_str_value( size_t index, const std::string &def = "" ) const;
 
