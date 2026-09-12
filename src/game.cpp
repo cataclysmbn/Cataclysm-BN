@@ -16796,6 +16796,10 @@ bool game::slip_down()
 {
     ///\EFFECT_DEX decreases chances of slipping while climbing
     int climb = u.dex_cur;
+    // Make climbing trees harder
+    if( m.has_flag( "TREE", u.bub_pos() ) ) {
+        climb = 2;
+    }
     // Parkour and Bad Knees affect it too, avoid division by zero
     if( u.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
         climb = climb / u.mutation_value( "movecost_obstacle_modifier" );
