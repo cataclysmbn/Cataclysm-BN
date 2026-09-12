@@ -71,7 +71,7 @@
     "symbol": "/",
     "color": "light_gray",
     "techniques": [ "WBLOCK_1" ],
-    "use_action": "MOP"
+    "use_action": [ "MOP", { "type": "fluid_pickup", "max_volume": "500 ml", "moves": 200, "retention_rate": 0.5 } ]
   },
   {
     "id": "mop_folded",
@@ -88,7 +88,7 @@
     "symbol": "/",
     "color": "light_gray",
     "looks_like": "mop",
-    "use_action": [ "MOP" ]
+    "use_action": [ "MOP", { "type": "fluid_pickup", "max_volume": "500 ml", "moves": 200, "retention_rate": 0.5 } ]
   },
   {
     "type": "GENERIC",
@@ -139,6 +139,7 @@
     "symbol": "s",
     "color": "yellow",
     "qualities": [ [ "SANDING", 1 ] ],
+    "use_action": { "type": "fluid_pickup", "max_volume": "250 ml", "moves": 100, "retention_rate": 0.5 },
     "flags": [ "NO_SALVAGE" ]
   },
   {

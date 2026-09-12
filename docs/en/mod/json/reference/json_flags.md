@@ -1562,7 +1562,6 @@ These flags **do not apply to item types**.
 Those flags are added by the game code to specific items (that specific welder, not _all_ welders).
 
 - `COLD` Item is cold (see EATEN_COLD).
-- `DIRTY` Item (liquid) was dropped on the ground and is now irreparably dirty.
 - `FIELD_DRESS_FAILED` Corpse was damaged by unskillful field dressing. Affects butcher results.
 - `FIELD_DRESS` Corpse was field dressed. Affects butcher results.
 - `FIT` Reduces encumbrance by one.

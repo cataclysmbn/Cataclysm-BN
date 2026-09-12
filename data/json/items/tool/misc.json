@@ -200,6 +200,23 @@
     "qualities": [ [ "PRESSURIZATION", 1 ] ]
   },
   {
+    "id": "pump_fluid",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str": "hand fluid pump" },
+    "description": "A simple hand-operated diaphragm pump fitted with a flexible hose.  You can use it to pump liquids from the ground or vehicle cargo into containers.",
+    "weight": "1560 g",
+    "volume": "1250 ml",
+    "price": "30 USD",
+    "price_postapoc": "250 cent",
+    "to_hit": -2,
+    "bashing": 6,
+    "material": [ "plastic", "iron" ],
+    "symbol": ";",
+    "color": "light_red",
+    "use_action": { "type": "fluid_pickup", "max_volume": "1 L", "moves": 150, "retention_rate": 0.8 }
+  },
+  {
     "id": "horn_bicycle",
     "type": "TOOL",
     "category": "veh_parts",

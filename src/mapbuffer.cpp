@@ -2961,8 +2961,13 @@ auto mapbuffer::add_item_or_charges( const tripoint_abs_ms &p, detached_ptr<item
     auto call_active_drop_hook = [&]( const tripoint_abs_ms & target ) {
         const auto local = active_reality_bubble_local( target );
         if( !local ) {
-            if( new_item->made_of( LIQUID ) && !new_item->has_own_flag( flag_DIRTY ) ) {
-                new_item->set_flag( flag_DIRTY );
+            if( new_item->made_of( LIQUID ) ) {
+                for( const fluid_reaction &r : new_item->type->reacts_into ) {
+                    if( r.cause == "ground_contamination" ) {
+                        new_item->convert( r.result );
+                        break;
+                    }
+                }
             }
             return false;
         }

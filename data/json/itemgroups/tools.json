@@ -31,6 +31,7 @@
       [ "broom", 25 ],
       [ "mop", 15 ],
       [ "mop_folded", 10 ],
+      [ "sponge", 20 ],
       [ "bucket", 10 ],
       { "item": "bag_plastic", "prob": 15, "count": [ 1, 5 ] },
       { "item": "bag_zipper_small", "prob": 7, "count": [ 1, 3 ] },
@@ -81,6 +82,7 @@
       [ "jumper_cable", 10 ],
       [ "hd_tow_cable", 5 ],
       [ "funnel", 50 ],
+      [ "fuel_filter_funnel", 20 ],
       [ "claw_bar", 2 ],
       [ "crowbar", 10 ],
       [ "thermometer", 5 ],
@@ -129,7 +131,10 @@
       [ "professional_chemical_thrower", 5 ],
       [ "carbondioxide_tank", 1 ],
       [ "tongs", 1 ],
-      [ "tourist_table", 1 ]
+      [ "tourist_table", 1 ],
+      [ "pump_fluid", 5 ],
+      [ "pump_gas", 3 ],
+      [ "pump_electric", 1 ]
     ]
   },
   {
@@ -294,7 +299,10 @@
       [ "polisher", 70 ],
       [ "angle_grinder", 5 ],
       [ "welder", 10 ],
-      [ "clamp", 10 ]
+      [ "clamp", 10 ],
+      [ "pump_fluid", 10 ],
+      [ "pump_gas", 8 ],
+      [ "pump_electric", 5 ]
     ]
   },
   {
