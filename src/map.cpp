@@ -34,6 +34,7 @@
 #include "explosion_queue.h"
 #include "faction.h"
 #include "field.h"
+#include "field_ignition_utils.h"
 #include "field_type.h"
 #include "flag.h"
 #include "flat_set.h"
@@ -3724,15 +3725,17 @@ bool map::flammable_items_at( const tripoint_bub_ms &p, int threshold )
 
 bool map::is_flammable( const tripoint_bub_ms &p )
 {
+    static const auto fd_fuel = field_type_str_id( "fd_fuel" );
+
     if( flammable_items_at( p ) ) {
         return true;
     }
 
-    if( has_flag( "FLAMMABLE", p ) ) {
+    if( ter( p ).obj().is_flammable() || furn( p ).obj().is_flammable() ) {
         return true;
     }
 
-    if( has_flag( "FLAMMABLE_ASH", p ) ) {
+    if( get_field_intensity( p, fd_fuel.id() ) > 0 ) {
         return true;
     }
 
@@ -3936,21 +3939,15 @@ bool map::mop_spills( const tripoint_bub_ms &p )
     }
 
     field &fld = field_at( p );
-    static const std::vector<field_type_id> to_check = {
-        fd_blood,
-        fd_blood_veggy,
-        fd_blood_insect,
-        fd_blood_invertebrate,
-        fd_gibs_flesh,
-        fd_gibs_veggy,
-        fd_gibs_insect,
-        fd_gibs_invertebrate,
-        fd_bile,
-        fd_slime,
-        fd_sludge
-    };
-    for( field_type_id fid : to_check ) {
-        retval |= fld.remove_field( fid );
+    auto fields_to_remove = std::vector<field_type_id> {};
+    for( const auto &[field_id, entry] : fld ) {
+        static_cast<void>( field_id );
+        if( entry.is_moppable() ) {
+            fields_to_remove.push_back( entry.get_field_type() );
+        }
+    }
+    for( const field_type_id &field_id : fields_to_remove ) {
+        retval |= fld.remove_field( field_id );
     }
 
     if( const optional_vpart_position vp = veh_at( p ) ) {
@@ -5152,6 +5149,16 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
     apply_ammo_trail_effects( p, proj.get_ammo_effects(), 1.0 );
 
     // Check fields?
+    if( inc ) {
+        static const auto fd_fuel = field_type_str_id( "fd_fuel" );
+        const auto fuel_intensity = get_field_intensity( p, fd_fuel.id() );
+        if( fuel_intensity > 0 ) {
+            remove_field( p, fd_fuel.id() );
+            add_field( p, fd_fire, fuel_field_fire_intensity( fuel_intensity ),
+                       fuel_field_fire_age( fuel_intensity ) );
+        }
+    }
+
     const field_entry *fieldhit = get_field( p, fd_web );
     if( fieldhit != nullptr ) {
         if( inc ) {
@@ -5245,7 +5252,7 @@ bool map::hit_with_fire( const tripoint_bub_ms &p )
     }
 
     // non passable but flammable terrain, set it on fire
-    if( has_flag( "FLAMMABLE", p ) || has_flag( "FLAMMABLE_ASH", p ) ) {
+    if( ter( p ).obj().is_flammable() || furn( p ).obj().is_flammable() ) {
         add_field( p, fd_fire, 3 );
     }
     return true;
@@ -5935,7 +5942,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
         // Pass map into on_drop, because this map may not be the global map object (in mapgen, for instance).
         if( obj->made_of( LIQUID ) || !obj->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
             if( obj->on_drop( pos, *this ) ) {
-                return std::move( obj );
+                return detached_ptr<item>();
             }
 
         }
@@ -5961,7 +5968,7 @@ detached_ptr<item> map::add_item_or_charges( const tripoint_bub_ms &pos, detache
             }
             if( obj->made_of( LIQUID ) || !obj->has_flag( flag_DROP_ACTION_ONLY_IF_LIQUID ) ) {
                 if( obj->on_drop( e, *this ) ) {
-                    return std::move( obj );
+                    return detached_ptr<item>();
                 }
             }
 

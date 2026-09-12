@@ -27,6 +27,8 @@
 "description": "Socks. Put 'em on your feet.", // Description of the item
 "ascii_picture": "ascii_socks", // Id of the asci_art used for this item
 "phase": "solid",                            // (Optional, default = "solid") What phase it is
+"spill_field": "fd_water",                   // (Optional) For liquids dropped onto ordinary ground, create this field before any drop_action runs.
+"spill_recovery": "water",                   // (Optional) When recovering a spilled liquid field, return this item id instead of the original liquid.
 "weight": "350 g",                           // Weight, weight in grams, mg and kg can be used - "50 mg", "5 g" or "5 kg". For stackable items (ammo, comestibles) this is the weight per charge.
 "volume": "250 ml",                          // Volume, volume in ml and L can be used - "50 ml" or "2 L". For stackable items (ammo, comestibles) this is the volume of stack_size charges.
 "integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L". Can be negative to reduce parent volume. Clamped at 1% of parent base volume.
@@ -84,6 +86,44 @@
 },
 "repair_difficulty": 2                       // Overrites recipe difficulty being used for repair difficulty
 ```
+
+`spill_field` is intended for liquids. If a liquid item with a `spill_field` is dropped onto
+ordinary ground, the game marks the liquid dirty when appropriate, creates the specified field,
+and then still runs any `drop_action` the item defines.
+
+When a recoverable spill is created, the visible field is only the map representation. The game
+also stores hidden serialized item data on the field so the original liquid's charges, item vars,
+and other item state can be recovered later instead of being reduced to just the field id.
+
+Spill visuals are volume-based rather than charge-count-based. The current implementation treats
+each liter of liquid as one unit of visible spill intensity, with a minimum of one unit for any
+non-zero spill. When additional liquid is poured into an existing connected spill of the same
+field type, the spill deepens existing tiles first by raising field intensity, then expands
+outward into adjacent passable tiles. The visible footprint is capped, so very large spills stop
+growing visually even though their recoverable payload may continue to accumulate.
+
+Recoverable spill payload is stored separately from the visible puddle tiles. In the current
+implementation, each spill event serializes an item and attaches that serialized payload to the
+spill field on the drop center tile. The connected surrounding field tiles are only the visual
+representation of the spill. Multiple spill events into the same puddle can therefore produce one
+connected field cluster that carries multiple hidden serialized liquid payloads.
+
+`spill_recovery` is also intended for liquids. It changes what item type is produced when a
+recoverable spilled field is vacuumed back up. For example, clean water can spill as `fd_water`
+but recover as ordinary `water`.
+
+Recovery works on connected spills of the same field type. When the player vacuums a spill, the
+game flood-fills the connected field cluster starting from the chosen tile, gathers any serialized
+liquid payloads stored on tiles in that cluster, deserializes them back into items, and then
+removes the connected field tiles. A plain field with no serialized spill payload is only a field:
+it will look like a puddle, but it will not yield recoverable items when vacuumed.
+
+In practice, `spill_field` is usually many-to-one. Multiple related liquids can intentionally map
+to the same visible field to avoid JSON bloat and unnecessary field type proliferation. For
+example, `tea`, `coca_tea`, and `sweet_tea` can all spill as `fd_tea`, producing the same visible
+`puddle of tea` field, while their hidden serialized payload still preserves which specific item
+was spilled for recovery purposes. This means you usually do not need a unique field type for every
+liquid variant unless the visible puddle itself needs distinct gameplay or presentation.
 
 #### damage_instance
 

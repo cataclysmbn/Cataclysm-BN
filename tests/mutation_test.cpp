@@ -189,7 +189,9 @@ TEST_CASE(
 }
 
 TEST_CASE("resized rigid armor fits tailed mutants", "[mutations][armor]") {
-    npc dummy;
+    auto dummy = npc{};
+    // This standalone fixture is not registered in an overmap.
+    dummy.set_fake(true);
     clear_character(dummy);
     dummy.set_mutation(trait_id("TAIL_FLUFFY"));
 

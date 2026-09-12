@@ -2138,15 +2138,15 @@ static void burned_ground_parser( mapgen_constructor &m, const point_omt_ms &loc
             m.furn_set( loc, f_ash );
         }
         // everything else is destroyed, ash is added
-    } else if( ter_furn_has_flag( tr, fid, TFLAG_FLAMMABLE ) ||
-               ter_furn_has_flag( tr, fid, TFLAG_FLAMMABLE_HARD ) ) {
+    } else if( tr.is_basic_flammable() || fid.is_basic_flammable() ||
+               tr.is_hard_flammable() || fid.is_hard_flammable() ) {
         if( m.is_bashable( loc ) ) { // one is not enough
             m.destroy( loc );
         }
         if( m.ter( loc ) == t_pit ) {
             m.ter_set( loc, t_pit_shallow );
         }
-    } else if( ter_furn_has_flag( tr, fid, TFLAG_FLAMMABLE_ASH ) ) {
+    } else if( tr.is_ash_flammable() || fid.is_ash_flammable() ) {
         if( m.is_bashable( loc ) ) {
             m.destroy( loc );
         }

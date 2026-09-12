@@ -477,6 +477,8 @@ struct map_data_common_t {
     private:
         std::set<std::string> flags;    // string flags which possibly refer to what's documented above.
         std::bitset<NUM_TERFLAGS> bitflags; // bitfield of -certain- string flags which are heavily checked
+        bool flammable_ash = false;
+        bool flammable_hard = false;
 
     public:
         ter_str_id curtain_transform;
@@ -533,6 +535,7 @@ struct map_data_common_t {
         };
 
         bool transparent = false;
+        bool flammable = false;
 
         const std::set<std::string> &get_flags() const {
             return flags;
@@ -556,6 +559,22 @@ struct map_data_common_t {
 
         bool connects_to( int test_connect_group ) const {
             return connect_group != TERCONN_NONE && connect_group == test_connect_group;
+        }
+
+        auto is_flammable() const -> bool {
+            return flammable;
+        }
+
+        auto is_ash_flammable() const -> bool {
+            return flammable && flammable_ash;
+        }
+
+        auto is_hard_flammable() const -> bool {
+            return flammable && flammable_hard;
+        }
+
+        auto is_basic_flammable() const -> bool {
+            return flammable && !flammable_ash && !flammable_hard;
         }
 
         int symbol() const;

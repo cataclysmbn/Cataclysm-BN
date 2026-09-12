@@ -612,6 +612,7 @@
       [ "gloves_rubber", 15 ],
       [ "gloves_medical", 10 ],
       [ "boots_rubber", 15 ],
+      [ "shoe_covers_noslip", 15 ],
       [ "fishing_waders", 5 ],
       [ "knee_pads", 5 ]
     ]

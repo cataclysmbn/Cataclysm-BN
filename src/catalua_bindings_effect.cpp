@@ -6,6 +6,7 @@
 #include "catalua_luna_doc.h"
 
 #include "effect.h"
+#include "field_type.h"
 
 void cata::detail::reg_effect( sol::state &lua )
 {
@@ -57,6 +58,21 @@ void cata::detail::reg_effect( sol::state &lua )
         SET_FX( set_permanent );
 
         reg_serde_functions( ut );
+    }
+#undef UT_CLASS
+}
+
+void cata::detail::reg_field_type( sol::state &lua )
+{
+#define UT_CLASS field_type
+    {
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::no_constructor
+        );
+        SET_MEMB_RO( moppable );
     }
 #undef UT_CLASS
 }

@@ -31,6 +31,7 @@
 #include "monster.h"
 #include "player_activity.h"
 #include "string_formatter.h"
+#include "string_input_popup.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -38,6 +39,45 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+namespace
+{
+
+constexpr int liquid_transfer_all = -1;
+
+struct liquid_transfer_result {
+    bool handled = false;
+    bool continue_handling = false;
+};
+
+auto serialize_liquid_amount( player_activity &act, const int amount ) -> void
+{
+    act.values.push_back( amount );
+}
+
+auto prompt_for_ground_amount( const item &liquid ) -> int
+{
+    const auto amount = string_input_popup()
+                        .title( string_format(
+                                    vgettext( "Pour how many charges of %1$s onto the ground?  Max: %2$d charge.  (0 to cancel)",
+                                            "Pour how many charges of %1$s onto the ground?  Max: %2$d charges.  (0 to cancel)",
+                                            liquid.charges ),
+                                    liquid.tname(), liquid.charges ) )
+                        .width( 20 )
+                        .text( std::to_string( liquid.charges ) )
+                        .only_digits( true )
+                        .query_int();
+
+    return clamp( amount, 0, liquid.charges );
+}
+
+auto can_partially_pour_on_ground( const item &liquid ) -> bool
+{
+    const item *const parent = liquid.parent_item();
+    return liquid.charges > 1 && ( parent == nullptr || !parent->is_non_resealable_container() );
+}
+
+} // namespace
 
 static void serialize_liquid_source( player_activity &act, vehicle &veh,
                                      int part_id )
@@ -74,6 +114,17 @@ static void serialize_liquid_target( player_activity &act, const tripoint_bub_ms
 
 namespace liquid_handler
 {
+static auto get_liquid_target( item &liquid, int radius,
+                               liquid_dest_opt &target ) -> bool;
+static auto perform_liquid_transfer( item &liquid,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result;
+static auto perform_liquid_transfer( detached_ptr<item> &liquid,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result;
+static auto perform_liquid_transfer( const tripoint_bub_ms &pos,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result;
+static auto perform_liquid_transfer( vehicle *veh, int part_id,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result;
+
 void handle_all_liquid( detached_ptr<item> &&liquid, const int radius )
 {
     // NOLINTNEXTLINE(bugprone-use-after-move)
@@ -88,7 +139,15 @@ void handle_all_liquid( detached_ptr<item> &&liquid, const int radius )
 bool consume_liquid( item &liquid, const int radius )
 {
     const auto original_charges = liquid.charges;
-    while( liquid.charges > 0 && handle_liquid( liquid, radius ) ) {
+    while( liquid.charges > 0 ) {
+        struct liquid_dest_opt liquid_target;
+        if( !get_liquid_target( liquid, radius, liquid_target ) ) {
+            break;
+        }
+        const auto result = perform_liquid_transfer( liquid, liquid_target );
+        if( !result.continue_handling ) {
+            break;
+        }
         // try again with the remaining charges
     }
     return original_charges != liquid.charges;
@@ -98,13 +157,21 @@ bool consume_liquid( detached_ptr<item> &&liquid, const int radius )
 {
     const auto original_charges = liquid->charges;
     // NOLINTNEXTLINE(bugprone-use-after-move)
-    while( liquid && handle_liquid( std::move( liquid ), radius ) ) {
+    while( liquid ) {
+        struct liquid_dest_opt liquid_target;
+        if( !get_liquid_target( *liquid, radius, liquid_target ) ) {
+            break;
+        }
+        const auto result = perform_liquid_transfer( liquid, liquid_target );
+        if( !result.continue_handling ) {
+            break;
+        }
         // try again with the remaining charges
     }
     return !liquid || ( original_charges != liquid->charges );
 }
 
-static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target )
+auto get_liquid_target( item &liquid, const int radius, liquid_dest_opt &target ) -> bool
 {
     if( !liquid.made_of( LIQUID ) ) {
         debugmsg( "Tried to handle_liquid a non-liquid!" );
@@ -240,6 +307,35 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
         }
         target.dest_opt = LD_GROUND;
     } );
+    if( can_partially_pour_on_ground( liquid ) ) {
+        menu.addentry( -1, true, 'G', _( "Pour some on the ground" ) );
+        actions.emplace_back( [&]() {
+            const int chosen_amount = prompt_for_ground_amount( liquid );
+            if( chosen_amount <= 0 ) {
+                add_msg( _( "Never mind." ) );
+                return;
+            }
+
+            const std::string liqstr = string_format( _( "Pour %s where?" ), liquid_name );
+            const std::optional<tripoint_bub_ms> target_pos_ = choose_adjacent( liqstr );
+            if( !target_pos_ ) {
+                return;
+            }
+            target.pos = *target_pos_;
+
+            if( liquid.is_loaded() && liquid.where() == item_location_type::map &&
+                liquid.bub_pos() == target.pos ) {
+                add_msg( m_info, _( "That's where you took it from!" ) );
+                return;
+            }
+            if( !here.can_put_items_ter_furn( target.pos ) ) {
+                add_msg( m_info, _( "You can't pour there!" ) );
+                return;
+            }
+            target.dest_opt = LD_GROUND;
+            target.amount = chosen_amount;
+        } );
+    }
 
     if( liquid.rotten() ) {
         // Pre-select this one as it is the most likely one for rotten liquids
@@ -261,7 +357,8 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
     return true;
 }
 
-static bool perform_liquid_transfer( item &liquid, liquid_dest_opt &target )
+static auto perform_liquid_transfer( item &liquid,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result
 {
     map &here = get_map();
     switch( target.dest_opt ) {
@@ -269,13 +366,16 @@ static bool perform_liquid_transfer( item &liquid, liquid_dest_opt &target )
             liquid.attempt_split( 0, []( detached_ptr<item> &&it ) {
                 return get_player_character().consume_item( std::move( it ) );
             } );
-            return true;
+            return {
+                .handled = true,
+                .continue_handling = liquid.charges > 0,
+            };
         case LD_ITEM:
             liquid.attempt_split( 0, [&target]( detached_ptr<item> &&it ) {
                 return get_player_character().pour_into( *target.it, std::move( it ) );
             } );
             g->u.mod_moves( -100 );
-            return false;
+            return { .handled = true, .continue_handling = false };
         case LD_VEH:
             liquid.attempt_split( 0, [&target]( detached_ptr<item> &&det ) {
                 return g->u.pour_into( *target.veh, std::move( det ) );
@@ -283,84 +383,112 @@ static bool perform_liquid_transfer( item &liquid, liquid_dest_opt &target )
 
             g->u.mod_moves( -1000 ); // consistent with veh_interact::do_refill activity
 
-            return false;
+            return { .handled = true, .continue_handling = false };
         case LD_KEG:
+            liquid.attempt_split( 0, [&target]( detached_ptr<item> &&det ) {
+                return iexamine::pour_into_keg( target.pos, std::move( det ) );
+            } );
+            g->u.mod_moves( -100 );
+            return { .handled = true, .continue_handling = false };
         case LD_GROUND:
-            if( target.dest_opt == LD_KEG ) {
-                liquid.attempt_split( 0, [&target]( detached_ptr<item> &&det ) {
-                    return iexamine::pour_into_keg( target.pos, std::move( det ) );
+            if( target.amount > 0 && target.amount < liquid.charges ) {
+                liquid.attempt_split( target.amount, [&target, &here]( detached_ptr<item> &&det ) {
+                    here.add_item_or_charges( target.pos, std::move( det ) );
+                    return detached_ptr<item>();
                 } );
             } else {
                 here.add_item_or_charges( target.pos, liquid.detach() );
             }
             g->u.mod_moves( -100 );
-            return false;
+            return { .handled = true, .continue_handling = false };
         case LD_NULL:
         default:
-            return false;
+            return { .handled = false, .continue_handling = false };
     }
 }
 
-static bool perform_liquid_transfer( detached_ptr<item> &&liquid, liquid_dest_opt &target )
+static auto perform_liquid_transfer( detached_ptr<item> &liquid,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result
 {
     map &here = get_map();
     Character &you = get_player_character();
     switch( target.dest_opt ) {
         case LD_CONSUME:
             liquid = you.consume_item( std::move( liquid ) );
-            return true;
+            return {
+                .handled = true,
+                .continue_handling = static_cast<bool>( liquid ),
+            };
         case LD_ITEM:
             liquid = you.pour_into( *target.it, std::move( liquid ) );
             you.mod_moves( -100 );
-            return true;
+            return {
+                .handled = true,
+                .continue_handling = static_cast<bool>( liquid ),
+            };
         case LD_VEH:
             liquid = you.pour_into( *target.veh, std::move( liquid ) );
             you.mod_moves( -1000 ); // consistent with veh_interact::do_refill activity
-            return true;
+            return {
+                .handled = true,
+                .continue_handling = static_cast<bool>( liquid ),
+            };
         case LD_KEG:
+            liquid = iexamine::pour_into_keg( target.pos, std::move( liquid ) );
+
+            you.mod_moves( -100 );
+            return {
+                .handled = true,
+                .continue_handling = static_cast<bool>( liquid ),
+            };
         case LD_GROUND:
-            if( target.dest_opt == LD_KEG ) {
-                liquid = iexamine::pour_into_keg( target.pos, std::move( liquid ) );
+            if( target.amount > 0 && target.amount < liquid->charges ) {
+                here.add_item_or_charges( target.pos, liquid->split( target.amount ) );
             } else {
                 here.add_item_or_charges( target.pos, std::move( liquid ) );
             }
 
             you.mod_moves( -100 );
-            return true;
+            return { .handled = true, .continue_handling = false };
         case LD_NULL:
         default:
-            return false;
+            return { .handled = false, .continue_handling = false };
     }
 }
-static bool perform_liquid_transfer( const tripoint_bub_ms &pos, liquid_dest_opt &target )
+static auto perform_liquid_transfer( const tripoint_bub_ms &pos,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result
 {
     map &here = get_map();
     switch( target.dest_opt ) {
         case LD_CONSUME:
             g->u.consume_item( here.water_from( pos ) );
-            return true;
+            return { .handled = true, .continue_handling = false };
         case LD_ITEM:
             g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
             serialize_liquid_source( *g->u.activity, pos );
             serialize_liquid_target( *g->u.activity, *target.it );
-            return true;
+            serialize_liquid_amount( *g->u.activity, target.amount );
+            return { .handled = true, .continue_handling = false };
         case LD_VEH:
             g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
             serialize_liquid_source( *g->u.activity, pos );
             serialize_liquid_target( *g->u.activity, *target.veh );
-            return true;
+            serialize_liquid_amount( *g->u.activity, target.amount );
+            return { .handled = true, .continue_handling = false };
         case LD_KEG:
         case LD_GROUND:
             g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
             serialize_liquid_source( *g->u.activity, pos );
             serialize_liquid_target( *g->u.activity, target.pos );
-            return true;
+            serialize_liquid_amount( *g->u.activity, target.amount );
+            return { .handled = true, .continue_handling = false };
         case LD_NULL:
         default:
-            return false;
+            return { .handled = false, .continue_handling = false };
     }
 }
-static bool perform_liquid_transfer( vehicle *veh, int part_id, liquid_dest_opt &target )
+static auto perform_liquid_transfer( vehicle *veh, int part_id,
+                                     liquid_dest_opt &target ) -> liquid_transfer_result
 {
     item &liquid = veh->part( part_id ).get_base().contents.back();
     switch( target.dest_opt ) {
@@ -368,26 +496,29 @@ static bool perform_liquid_transfer( vehicle *veh, int part_id, liquid_dest_opt 
             liquid.attempt_split( 0, []( detached_ptr<item> &&it ) {
                 return g->u.consume_item( std::move( it ) );
             } );
-            return true;
+            return { .handled = true, .continue_handling = false };
         case LD_ITEM:
             g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
             serialize_liquid_source( *g->u.activity, *veh, part_id );
             serialize_liquid_target( *g->u.activity, *target.it );
-            return true;
+            serialize_liquid_amount( *g->u.activity, target.amount );
+            return { .handled = true, .continue_handling = false };
         case LD_VEH:
             g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
             serialize_liquid_source( *g->u.activity, *veh, part_id );
             serialize_liquid_target( *g->u.activity, *target.veh );
-            return true;
+            serialize_liquid_amount( *g->u.activity, target.amount );
+            return { .handled = true, .continue_handling = false };
         case LD_KEG:
         case LD_GROUND:
             g->u.assign_activity( activity_id( "ACT_FILL_LIQUID" ) );
             serialize_liquid_source( *g->u.activity, *veh, part_id );
             serialize_liquid_target( *g->u.activity, target.pos );
-            return true;
+            serialize_liquid_amount( *g->u.activity, target.amount );
+            return { .handled = true, .continue_handling = false };
         case LD_NULL:
         default:
-            return false;
+            return { .handled = false, .continue_handling = false };
     }
 }
 
@@ -407,7 +538,7 @@ bool handle_liquid( detached_ptr<item> &&liquid, int radius )
     }
     struct liquid_dest_opt liquid_target;
     if( get_liquid_target( *liquid, radius, liquid_target ) ) {
-        return perform_liquid_transfer( std::move( liquid ), liquid_target );
+        return perform_liquid_transfer( liquid, liquid_target ).handled;
     }
     return false;
 }
@@ -425,7 +556,7 @@ bool handle_liquid( item &liquid, const int radius )
     }
     struct liquid_dest_opt liquid_target;
     if( get_liquid_target( liquid, radius, liquid_target ) ) {
-        return perform_liquid_transfer( liquid, liquid_target );
+        return perform_liquid_transfer( liquid, liquid_target ).handled;
     }
     return false;
 }
@@ -446,7 +577,7 @@ bool handle_liquid( const tripoint_bub_ms &pos, int radius )
     }
     struct liquid_dest_opt liquid_target;
     if( get_liquid_target( *liquid, radius, liquid_target ) ) {
-        return perform_liquid_transfer( pos, liquid_target );
+        return perform_liquid_transfer( pos, liquid_target ).handled;
     }
     return false;
 }
@@ -467,7 +598,7 @@ bool handle_liquid( vehicle *veh, int part_id, int radius )
     }
     struct liquid_dest_opt liquid_target;
     if( get_liquid_target( liquid, radius, liquid_target ) ) {
-        return perform_liquid_transfer( veh, part_id, liquid_target );
+        return perform_liquid_transfer( veh, part_id, liquid_target ).handled;
     }
     return false;
 }

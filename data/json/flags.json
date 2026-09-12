@@ -1024,6 +1024,13 @@
     "info": "This gear allows to see <info>actual time</info>."
   },
   {
+    "id": "NOSLIP",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "//": "Provides traction that prevents slipping on slippery fields that would knock the wearer down.",
+    "info": "This clothing provides <info>non-slip footing</info> on slippery surfaces."
+  },
+  {
     "id": "WATERPROOF",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
