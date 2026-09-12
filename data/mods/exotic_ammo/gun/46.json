@@ -33,6 +33,6 @@
       [ "underbarrel", 1 ]
     ],
     "magazine_well": "250 ml",
-    "magazines": [ [ "46", [ "hk46smallmag", "hk46mag", "hk46bigmag" ] ] ]
+    "magazines": [ [ "46", [ "hk46mag", "hk46smallmag", "hk46bigmag" ] ] ]
   }
 ]
