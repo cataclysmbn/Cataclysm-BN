@@ -261,6 +261,7 @@ static constexpr uint8_t get_flood_envelope_by_enum( const sound_vol_for_flood_d
         case sound_vol_for_flood_dist::DEAFENING:
             return ( flood_radius_DEAFENING * 2 ) + 1;
         case sound_vol_for_flood_dist::_LAST:
+        default:
             return ( flood_radius_SILENT * 2 ) + 1;
     }
 }
@@ -302,6 +303,7 @@ static constexpr auto get_flood_radius_by_enum( const enum sound_vol_for_flood_d
         case sound_vol_for_flood_dist::DEAFENING:
             return flood_radius_DEAFENING;
         case sound_vol_for_flood_dist::_LAST:
+        default:
             return flood_radius_SILENT;
     }
 }
@@ -340,6 +342,7 @@ static constexpr auto get_total_check_radius_by_enum( const enum sound_vol_for_f
         case sound_vol_for_flood_dist::DEAFENING:
             return total_check_radius_DEAFENING;
         case sound_vol_for_flood_dist::_LAST:
+        default:
             return total_check_radius_SILENT;
     }
 }
@@ -921,14 +924,19 @@ static constexpr uint8_t get_distance_for_volume_loss( const uint8_t &tile_dista
 static constexpr short get_cumulative_vol_dist_loss( const int &dist1, const int &dist2,
         const short &t_absorp )
 {
-    // One of our potential problem cases.
-    if( dist1 == dist2 ) {
+    // Distance loss is a reduction. Negative values would make a sound louder with range.
+    if( dist1 <= 0 || dist2 <= 0 || dist1 == dist2 ) {
         return 0;
     }
-    const int result = ( std::floor( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION * log10( static_cast<float>
-                                     ( dist2 ) / static_cast<float>( dist1 ) ) ) + ( ( dist2 > dist1 ) ? ( (
-                                             dist2 - dist1 ) * t_absorp ) : 0 ) );
-    return std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), result );
+    if( dist2 < dist1 ) {
+        // Closer than the measurement point: no extra loss, and never a gain.
+        return 0;
+    }
+    const int terrain_term = ( dist2 - dist1 ) * std::max( 0, static_cast<int>( t_absorp ) );
+    const int log_term = static_cast<int>( std::floor( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION * log10(
+            static_cast<float>( dist2 ) / static_cast<float>( dist1 ) ) ) );
+    const int result = std::max( 0, log_term + terrain_term );
+    return static_cast<short>( std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), result ) );
 
 }
 

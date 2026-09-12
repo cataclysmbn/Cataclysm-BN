@@ -541,19 +541,28 @@ struct sound_instance_cache {
     // Returns the corresponding flood envelope volume index provided a bubble tripoint.
     auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
 
+    // Side length of the flood volume vector: (2 * flood_radius) + 1.
+    // Use this (not dist_enum) so envelope tests match the allocated volume[] size.
+    int envelope_side() const {
+        const int radius = flood_radius < 0 ? 0 : flood_radius;
+        return ( 2 * radius ) + 1;
+    }
+
     // Returns true if a given bubble tripoint is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const tripoint_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const int width = envelope_side();
+        const int ex = tp.x() - offset_x;
+        const int ey = tp.y() - offset_y;
+        return ex >= 0 && ey >= 0 && ex < width && ey < width;
     }
     // Returns true if a given bubble point is inside our envelope.
     // X and Y offsets taken from our index point, the bottom left corner of our envelope.
     bool in_envelope( const point_bub_ms &tp ) const {
-        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
-               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
-               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+        const int width = envelope_side();
+        const int ex = tp.x() - offset_x;
+        const int ey = tp.y() - offset_y;
+        return ex >= 0 && ey >= 0 && ex < width && ey < width;
     }
 
     // Returns true if a given point is on the border of the flood envelope.
@@ -562,8 +571,18 @@ struct sound_instance_cache {
                ( p.y() - offset_y ) == 0 || ( p.y() - offset_y ) == ( flood_radius * 2 );
     }
 
-    // Checks if a bubble tripoint is within the floodfill envelope. Returns the volume if true, -1 if not.
-    auto vol_at_tri( const tripoint_bub_ms &tri ) const -> short {return ( in_envelope( tri ) ? volume[p_to_env_index( tri.xy() )] : -1 );}
+    // Heard mdB at a bubble tripoint inside the flood envelope. Returns 0 if outside or if the
+    // volume index would be out of range (never a sentinel live value).
+    auto vol_at_tri( const tripoint_bub_ms &tri ) const -> short {
+        if( !in_envelope( tri ) ) {
+            return 0;
+        }
+        const int idx = p_to_env_index( tri.xy() );
+        if( idx < 0 || static_cast<size_t>( idx ) >= volume.size() ) {
+            return 0;
+        }
+        return volume[idx];
+    }
 
     // NPCs/Monsters/the Player all get a chance to hear a sound.
     // After everyone has heard the sound, it is deleted.

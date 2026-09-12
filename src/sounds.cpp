@@ -300,6 +300,33 @@ static short vol_z_adjust( const tripoint_bub_ms &source, const tripoint_bub_ms 
     }
 };
 
+// Checkvar arrays are always the DEAFENING envelope. Out-of-range indices are treated as
+// invalid tiles (all bits set) so floodfill cannot read off the stack.
+static bool sound_checkvar_in_bounds( const int x, const int y )
+{
+    return x >= 0 && y >= 0 &&
+           x < static_cast<int>( total_check_envelope_DEAFENING ) &&
+           y < static_cast<int>( total_check_envelope_DEAFENING );
+}
+
+// Impossible heard volumes are inaudible. Do not hand callers a sentinel louder than the source.
+static short sanitize_heard_mdB( const int heard_volume, const sound_instance_cache &sound_inst,
+                                 const tripoint_bub_ms &listener, const int distance )
+{
+    const short origin_mdB = dBspl_to_mdBspl( sound_inst.sound.volume );
+    if( heard_volume <= 0 ) {
+        return 0;
+    }
+    if( heard_volume > origin_mdB || heard_volume >= MAXIMUM_VOLUME_ATMOSPHERE ) {
+        debugmsg( "Player given impossibly loud sound! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB, tile volume of %i mdB, distance %i at %i:%i:%i is louder than possible.",
+                  sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
+                  sound_inst.sound.origin.z(), sound_inst.sound.volume, heard_volume, distance, listener.x(),
+                  listener.y(), listener.z() );
+        return 0;
+    }
+    return static_cast<short>( heard_volume );
+}
+
 // Returns a the mdB volume of a given sound cache at some tripoint.
 // If you feed this an invalid tripoint, there is a very good chance it explodes or gives you 0.
 static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub_ms &tri,
@@ -308,13 +335,15 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
 {
     const auto &map = get_map();
     // Oddly enough everything should still work if we get asked for a noise outside of the bubble, with a simple check.
+    const short safe_absorp = std::max( static_cast<short>( 0 ), t_absorp );
+    const int distance = manhattan_dist( sound_inst.origin.xy(), tri.xy() );
 
     // Good idea to track this.
     const bool samez = sound_inst.origin.z() == tri.z();
     // Lets go for our easy solution first.
     if( sound_inst.in_envelope( tri ) && map.inbounds( tri ) ) {
         if( samez ) {
-            return sound_inst.vol_at_tri( tri );
+            return sanitize_heard_mdB( sound_inst.vol_at_tri( tri ), sound_inst, tri, distance );
         } else {
             // Return the loudest of either the tile vol or the vertical escape vol - vol_z_adjust, minimum 0.
             const auto &vertical_escape_vol = ( sound_inst.origin.z() > tri.z() ) ?
@@ -323,11 +352,11 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
             if( zadj >= std::max( sound_inst.vol_at_tri( tri ), vertical_escape_vol ) ) {
                 return 0;
             }
-            return ( std::max( sound_inst.vol_at_tri( tri ), vertical_escape_vol ) - zadj );
+            return sanitize_heard_mdB( std::max( sound_inst.vol_at_tri( tri ),
+                                                 vertical_escape_vol ) - zadj, sound_inst, tri, distance );
         }
     }
     // Use manhattan distance as our flood envelopes are actually squares, not circles.
-    const int distance = manhattan_dist( sound_inst.origin.xy(), tri.xy() );
     const auto dir_index = sounds::direction_index_to_sound_source( sound_inst.origin, tri );
     const auto &san_dir = get_sound_direction_index( dir_index );
     // We know at this point that we are out of the envelope so our distance is greater than our flood radius.
@@ -358,7 +387,7 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
     }
     const int zadj = vol_z_adjust( sound_inst.origin, tri, lineofsight );
     const int cumulative_dist_loss = get_cumulative_vol_dist_loss( sound_inst.flood_radius, distance,
-                                     t_absorp );
+                                     safe_absorp );
     if( ( zadj + cumulative_dist_loss ) > MAXIMUM_VOLUME_ATMOSPHERE ) {
         return 0;
     }
@@ -371,17 +400,7 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
                  sound_inst.sound.origin.z(), tri.x(), tri.y(), tri.z() );
     }
     const int heard_volume = std::max( 0, ( vol_escape  - ( zadj + cumulative_dist_loss ) ) );
-    if( heard_volume > MAXIMUM_VOLUME_ATMOSPHERE ||
-        heard_volume > dBspl_to_mdBspl( sound_inst.sound.volume ) ) {
-        const uint8_t actualdir = ( use_vert_escape &&
-                                    vertical_escape_vol > sound_inst.base_distance_vol_by_dir[san_dir] ) ? ( (
-                                                sound_inst.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
-        add_msg( m_debug,
-                 "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible heard vol in %i direction of %i mdB at a distance of %i manhattan.xt",
-                 sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
-                 sound_inst.sound.origin.z(), sound_inst.sound.volume, actualdir, heard_volume, distance );
-    }
-    return heard_volume;
+    return sanitize_heard_mdB( heard_volume, sound_inst, tri, distance );
 }
 
 // For use when flood filling sounds to allow for Dijkstra-like max-heap processing instead of breadth first, not preserved.
@@ -513,8 +532,9 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
                                                          temp_sound_cache.origin.y() )];
 
         // Set this for use with the slightly cheaper direct line propagation.
-        temp_sound_cache.terrain_sound_absorbtion_at_source = absorption_cache[map_cache.idx(
-                    temp_sound_cache.origin.x(), temp_sound_cache.origin.y() )];
+        temp_sound_cache.terrain_sound_absorbtion_at_source = std::max( static_cast<short>( 0 ),
+                absorption_cache[map_cache.idx(
+                                     temp_sound_cache.origin.x(), temp_sound_cache.origin.y() )] );
         // And lets make a pair of vectors to store our up and down escapes. Stored as volume, distance. We seed the first value at 0,0.
         std::vector<std::pair<const short, const uint8_t>> up_escape_vector = {{0, 0}};
         std::vector<std::pair<const short, const uint8_t>> down_escape_vector = {{0, 0}};
@@ -523,8 +543,7 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         //Initialize our checkvars array
         // We need to check the tiles 1 outside our actual envelope as well.
         // Little bit of shenanagins.
-        const auto vol_enum_index = get_san_dir( static_cast<uint8_t>( vol_enum ) );
-        const auto &actual_check_radius = total_check_radius_by_index[vol_enum_index];
+        const auto actual_check_radius = get_total_check_radius_by_enum( vol_enum );
         // const auto &actual_env_length = total_check_envelop_by_index[vol_enum_index];
         // As our checkvar envelope is of a set size, we need to mark our absolute index position and our "relative" index position.
         const auto checkvar_index_p = temp_sound_cache.origin + point{-total_check_radius_DEAFENING, -total_check_radius_DEAFENING};
@@ -621,6 +640,9 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
 
         auto check_escape = [&]( const int &cv_env_x, const int &cv_env_y, const short & tile_vol,
         const uint8_t &dist ) {
+            if( !sound_checkvar_in_bounds( cv_env_x, cv_env_y ) ) {
+                return;
+            }
             if( checkvars[cv_env_x][cv_env_y][6] && check_up_valid ) {
                 if( !checkvars[cv_env_x][cv_env_y][4] ) {
                     up_escape_vector.push_back( {tile_vol, dist} );
@@ -636,6 +658,9 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         for( uint8_t i : sanitized_sound_direction_indexes ) {
             const auto &tile = adjacent_tiles[i];
             const auto cv_trip = tile + cv_env_rel_ms_adj;
+            if( !sound_checkvar_in_bounds( cv_trip.x(), cv_trip.y() ) ) {
+                continue;
+            }
             const auto &tile_checkvars = checkvars[cv_trip.x()][cv_trip.y()];
             // Lets make sure that we only propagate inbounds
             if( !tile_checkvars.all() ) {
@@ -679,8 +704,14 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         auto check_walls = [&]( const uint8_t &dir ) -> void{
             const auto &wall_dirs = wall_check_by_sdirection[get_san_dir( dir )];
             const auto &wall1_cv_p = adjacent_tiles[wall_dirs.first] + cv_env_rel_ms_adj;
-            const auto &wall1_checkvars = checkvars[wall1_cv_p.x()][wall1_cv_p.y()];
             const auto &wall2_cv_p = adjacent_tiles[wall_dirs.second] + cv_env_rel_ms_adj;
+            if( !sound_checkvar_in_bounds( wall1_cv_p.x(), wall1_cv_p.y() ) ||
+                !sound_checkvar_in_bounds( wall2_cv_p.x(), wall2_cv_p.y() ) )
+            {
+                wall_bools = get_s_wall_bool_pair( false, false );
+                return;
+            }
+            const auto &wall1_checkvars = checkvars[wall1_cv_p.x()][wall1_cv_p.y()];
             const auto &wall2_checkvars = checkvars[wall2_cv_p.x()][wall2_cv_p.y()];
             const auto &wall1 = wall1_checkvars[7];
             const auto &wall2 = wall2_checkvars[7];
@@ -714,6 +745,9 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
                 }
                 auto &adj_tile = adjacent_tiles[adj_tile_dir];
                 const auto adj_tile_cv_env = adj_tile + cv_env_rel_ms_adj;
+                if( !sound_checkvar_in_bounds( adj_tile_cv_env.x(), adj_tile_cv_env.y() ) ) {
+                    continue;
+                }
                 const auto &adj_tile_checkvars = checkvars[adj_tile_cv_env.x()][adj_tile_cv_env.y()];
 
                 // Dont check tiles that are not valid for propagation, i.e. behind the direction of sound, around a corner, out of bound
@@ -768,7 +802,7 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
         // 7   3    For the diagonals, we take the rms volume of the two adjacent cartesian directions.
         // 6 5 4
         auto &escape_direction_vol = temp_sound_cache.base_distance_vol_by_dir;
-        const int envelope_width = get_flood_envelope_by_enum( temp_sound_cache.dist_enum );
+        const int envelope_width = temp_sound_cache.envelope_side();
         const int env_2r = f_radius * 2;
         double vol_tally = 0;
         int non_zero = 0;
@@ -960,21 +994,19 @@ void map::batch_flood_fill_sounds()
 
                 // Set our checkvars to zero before we get too much farther and break stuff.
                 memset( checkvars, 0, sizeof( checkvars ) );
-                sound_instance_cache temp_sound_cache( flooded_sound,
-                                                       get_flood_dist_enum( flooded_sound.volume ),
-                                                       get_flood_radius_by_enum( get_flood_dist_enum(
-                                                               flooded_sound.volume ) ) );
+                const auto vol_enum = get_flood_dist_enum( flooded_sound.volume );
+                sound_instance_cache temp_sound_cache( flooded_sound, vol_enum,
+                                                       get_flood_radius_by_enum( vol_enum ) );
                 auto &svol = temp_sound_cache.volume;
                 auto &f_radius = temp_sound_cache.flood_radius;
                 temp_sound_cache.source_indoors = !outside_cache[map_cache.idx( temp_sound_cache.origin.x(),
                                                                  temp_sound_cache.origin.y() )];
                 auto &escape_vol = temp_sound_cache.base_distance_vol_by_dir;
                 // Set this for use with the slightly cheaper direct line propagation.
-                temp_sound_cache.terrain_sound_absorbtion_at_source = absorption_cache[map_cache.idx(
-                            temp_sound_cache.origin.x(), temp_sound_cache.origin.y() )];
-                const auto vol_enum_index = get_san_dir( static_cast<uint8_t>( get_flood_dist_enum(
-                                                flooded_sound.volume ) ) );
-                const auto &actual_check_radius = total_check_radius_by_index[vol_enum_index];
+                temp_sound_cache.terrain_sound_absorbtion_at_source = std::max( static_cast<short>( 0 ),
+                        absorption_cache[map_cache.idx(
+                                             temp_sound_cache.origin.x(), temp_sound_cache.origin.y() )] );
+                const auto actual_check_radius = get_total_check_radius_by_enum( vol_enum );
                 // const auto &actual_env_length = total_check_envelop_by_index[vol_enum_index];
                 const auto checkvar_index_p = temp_sound_cache.origin + point{-total_check_radius_DEAFENING, -total_check_radius_DEAFENING};
                 // Our checkvar index point is located at 0,0 of our checkvar envelope.
@@ -990,8 +1022,14 @@ void map::batch_flood_fill_sounds()
                 auto check_walls = [&]( const uint8_t &dir ) -> void{
                     const auto &wall_dirs = wall_check_by_sdirection[get_san_dir( dir )];
                     const auto &wall1_cv_p = adjacent_tiles[wall_dirs.first] + cv_env_rel_ms_adj;
-                    const auto &wall1_checkvars = checkvars[wall1_cv_p.x()][wall1_cv_p.y()];
                     const auto &wall2_cv_p = adjacent_tiles[wall_dirs.second] + cv_env_rel_ms_adj;
+                    if( !sound_checkvar_in_bounds( wall1_cv_p.x(), wall1_cv_p.y() ) ||
+                        !sound_checkvar_in_bounds( wall2_cv_p.x(), wall2_cv_p.y() ) )
+                    {
+                        wall_bools = get_s_wall_bool_pair( false, false );
+                        return;
+                    }
+                    const auto &wall1_checkvars = checkvars[wall1_cv_p.x()][wall1_cv_p.y()];
                     const auto &wall2_checkvars = checkvars[wall2_cv_p.x()][wall2_cv_p.y()];
                     const auto &wall1 = wall1_checkvars[7];
                     const auto &wall2 = wall2_checkvars[7];
@@ -1042,6 +1080,10 @@ void map::batch_flood_fill_sounds()
 
                 auto check_escape = [&]( const int &cv_env_x, const int &cv_env_y, const short & tile_vol,
                 const uint8_t &dist ) {
+                    if( !sound_checkvar_in_bounds( cv_env_x, cv_env_y ) ) {
+                        return;
+                    }
+                    const short origin_mdB = dBspl_to_mdBspl( temp_sound_cache.sound.volume );
                     const auto &tilevars = checkvars[cv_env_x][cv_env_y];
                     if( tilevars[6] && check_up_valid ) {
                         if( !tilevars[4] && tile_vol > escape_vol[SDI_UP] ) {
@@ -1050,6 +1092,8 @@ void map::batch_flood_fill_sounds()
                                 vol -= get_cumulative_vol_dist_loss( dist, f_radius,
                                                                      temp_sound_cache.terrain_sound_absorbtion_at_source );
                             }
+                            vol = static_cast<short>( std::max( 0, static_cast<int>( vol ) ) );
+                            vol = std::min( vol, origin_mdB );
                             escape_vol[SDI_UP] = std::max( vol, escape_vol[SDI_UP] );
                         }
                     }
@@ -1059,6 +1103,8 @@ void map::batch_flood_fill_sounds()
                             vol -= get_cumulative_vol_dist_loss( dist, f_radius,
                                                                  temp_sound_cache.terrain_sound_absorbtion_at_source );
                         }
+                        vol = static_cast<short>( std::max( 0, static_cast<int>( vol ) ) );
+                        vol = std::min( vol, origin_mdB );
                         escape_vol[SDI_DOWN] = std::max( vol, escape_vol[SDI_DOWN] );
                     }
                 };
@@ -1078,6 +1124,9 @@ void map::batch_flood_fill_sounds()
                 for( uint8_t i : sanitized_sound_direction_indexes ) {
                     const auto &tile = adjacent_tiles[i];
                     const auto cv_env_tile = tile + cv_env_rel_ms_adj;
+                    if( !sound_checkvar_in_bounds( cv_env_tile.x(), cv_env_tile.y() ) ) {
+                        continue;
+                    }
                     const auto &t_checkvars = checkvars[cv_env_tile.x()][cv_env_tile.y()];
                     // Lets make sure that we only propagate inbounds, and not along the map border. After this we can just check !tile_along_map_border
                     // We know that our initial adjacent tiles will always be inside the envelope.
@@ -1124,6 +1173,9 @@ void map::batch_flood_fill_sounds()
 
                         const auto &adj_tile = adjacent_tiles[adj_tile_dir];
                         const auto adj_tile_cve = adj_tile + cv_env_rel_ms_adj;
+                        if( !sound_checkvar_in_bounds( adj_tile_cve.x(), adj_tile_cve.y() ) ) {
+                            continue;
+                        }
                         const auto &adjt_checkvars = checkvars[adj_tile_cve.x()][adj_tile_cve.y()];
                         // Dont check tiles that are not valid for propagation, i.e. behind the direction of sound, around a corner, or out of bounds.
                         if( temp_sound_cache.in_envelope( adj_tile ) && !adjt_checkvars.all() ) {
@@ -1175,7 +1227,7 @@ void map::batch_flood_fill_sounds()
                 // Probably a cleaner way to do this but oh well.
                 // Less total work than checking if we are at the edge of the envelope, figuring out which side of the envelope, and then incrimenting our bean count every time we propagate a tile.
                 // RMS is sqrt( (x1^2 + x2^2 + ... xn^2)/n )
-                const int envelope_width = get_flood_envelope_by_enum( flood_dist_enum_by_index[vol_enum_index] );
+                const int envelope_width = temp_sound_cache.envelope_side();
                 const int env_2r = f_radius * 2;
                 double vol_tally = 0;
                 int non_zero = 0;
