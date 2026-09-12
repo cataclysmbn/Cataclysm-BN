@@ -250,6 +250,19 @@ class monster : public Creature, public location_visitable<monster>
         // when the caller already has the distance.
         float rate_target( Creature &c, float best, bool smart = false,
                            int precalc_dist = -1 ) const;
+        /**
+         * Z a flying monster should use while fleeing this turn.
+         * Steps at most one z-level toward preferred_z, or one z-level up when
+         * sharing the target's z.  Never adds the current z-delta — that
+         * doubled altitude every flee turn and parked drones at OVERMAP_HEIGHT.
+         */
+        int flying_flee_altitude( int current_z, int target_z ) const;
+        /**
+         * Extra rate_target distance for a target this monster cannot occupy
+         * and cannot melee (open air, |dz| > 1).  Roofs and other floored
+         * tiles return 0 so last-known hunting of a rooftop survivor is unchanged.
+         */
+        int unengageable_altitude_penalty( const Creature &critter ) const;
         void plan();
         /**
          * Snapshot of alive creature pointers passed to compute_plan() so that
