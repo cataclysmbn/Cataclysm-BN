@@ -22,7 +22,7 @@
     "looks_like": "mp5mag",
     "type": "MAGAZINE",
     "name": { "str": "H&K 4.6mm magazine" },
-    "description": "An standard-capacity 30-round magazine for use with H&K's proprietary 4.6x30mm round.",
+    "description": "A standard capacity 30-round magazine for use with H&K's proprietary 4.6x30mm round.",
     "weight": "240 g",
     "volume": "450 ml",
     "price": "55 USD",
