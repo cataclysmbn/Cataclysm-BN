@@ -345,10 +345,10 @@ public:
     /* Contains data for terrain transformer parts */
     transform_terrain_data transform_terrain;
 
-        /*Comfort data for sleeping in vehicles*/
-        int comfort = 0;
-        units::temperature_delta floor_bedding_warmth = 0_c_delta;
-        int bonus_fire_warmth_feet = 300;
+    /*Comfort data for sleeping in vehicles*/
+    int comfort = 0;
+    units::temperature_delta floor_bedding_warmth = 0_c_delta;
+    int bonus_fire_warmth_feet = 300;
 
     /**
      * @name Engine specific functions
