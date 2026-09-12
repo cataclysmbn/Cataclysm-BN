@@ -924,7 +924,7 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
         if (pl_ctrl) {
             if (!snd.empty()) {
                 //~ 1$s - vehicle name, 2$s - part name, 3$s - collision object name, 4$s - sound
-                //message
+                // message
                 add_msg(m_warning, _("Your %1$s's %2$s rams into %3$s with a %4$s"), name,
                         parts[ret.part].name(), ret.target_name, snd);
             } else {

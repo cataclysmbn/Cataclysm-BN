@@ -330,7 +330,7 @@ bool veh_interact::format_reqs(
         bool hasSkill = you.get_skill_level(e.first) >= e.second;
         if (!hasSkill) { ok = false; }
         //~ %1$s represents the internal color name which shouldn't be translated, %2$s is skill
-        //name, and %3$i is skill level
+        // name, and %3$i is skill level
         msg += string_format(
             _("> %1$s%2$s %3$i</color>\n"), status_color(hasSkill), e.first.obj().name(), e.second);
     }
@@ -790,7 +790,7 @@ bool veh_interact::update_part_requirements() {
     if (dif_steering > 0) {
         if (you.get_skill_level(skill_mechanics) < dif_steering) { ok = false; }
         //~ %1$s represents the internal color name which shouldn't be translated, %2$s is skill
-        //name, and %3$i is skill level
+        // name, and %3$i is skill level
         additional_requirements +=
             string_format(
                 _("> %1$s%2$s %3$i</color> for extra steering axles."),
@@ -929,7 +929,7 @@ void veh_interact::do_install() {
 
     std::array<std::function<bool(const vpart_info*)>, 8> tab_filters; // filter for each tab, last
                                                                        // one
-    tab_filters[0] = [&](const vpart_info*) { return true; }; // All
+    tab_filters[0] = [&](const vpart_info*) { return true; };          // All
     tab_filters[1] = [&](const vpart_info* p) {
         auto& part = *p;
         return part.has_flag(VPFLAG_CARGO) && // Cargo
@@ -1844,7 +1844,7 @@ bool veh_interact::can_remove_part(int idx, const Character& who) {
     }
     if (!veh->can_unmount(idx, reason)) {
         //~ %1$s represents the internal color name which shouldn't be translated, %2$s is
-        //pre-translated reason
+        // pre-translated reason
         additional_requirements +=
             string_format(_("> %1$s%2$s</color>"), status_color(false), reason) + "\n";
         ok = false;
