@@ -386,6 +386,47 @@ void monster::wander_to( const tripoint_bub_ms &p, int f )
     }
 }
 
+int monster::flying_flee_altitude( const int current_z, const int target_z ) const
+{
+    int desired_z = current_z;
+    if( type->preferred_z ) {
+        desired_z = *type->preferred_z;
+    } else if( current_z == target_z ) {
+        // Hit-and-run hop: one level, not a rocket.
+        desired_z = current_z + 1;
+    }
+    int result = current_z;
+    if( desired_z > current_z ) {
+        result = current_z + 1;
+    } else if( desired_z < current_z ) {
+        result = current_z - 1;
+    }
+    return clamp( result, -OVERMAP_DEPTH, OVERMAP_HEIGHT );
+}
+
+int monster::unengageable_altitude_penalty( const Creature &critter ) const
+{
+    if( flies() ) {
+        return 0;
+    }
+    const auto from = bub_pos();
+    const auto to = critter.bub_pos();
+    if( std::abs( to.z() - from.z() ) <= 1 ) {
+        return 0;
+    }
+    const map &here = get_map();
+    // Floored tiles (roofs, interiors) stay fully attractive.  Forgetting them
+    // is the "wait on a roof until they wander off" exploit.
+    if( here.has_floor_or_support( to ) ) {
+        return 0;
+    }
+    if( here.has_flag( TFLAG_GOES_UP, from ) || here.has_flag( TFLAG_GOES_DOWN, from ) ||
+        here.has_flag( TFLAG_RAMP_UP, from ) || here.has_flag( TFLAG_RAMP_DOWN, from ) ) {
+        return 0;
+    }
+    return std::max( 15, type->vision_day / 2 );
+}
+
 // Per-turn terrain LOS blocker cache.  This is keyed only by the current
 // positions, and a true result means the real sight check can be rejected early.
 // A false result is not visibility; callers still have to run Creature::sees().
@@ -412,8 +453,10 @@ float monster::rate_target( Creature &c, float best, bool smart, int precalc_dis
         return FLT_MAX;
     }
 
+    const int rated_dist = d + unengageable_altitude_penalty( c );
+
     // Check a very common and cheap case first
-    if( !smart && d >= best ) {
+    if( !smart && rated_dist >= best ) {
         return FLT_MAX;
     }
 
@@ -426,7 +469,7 @@ float monster::rate_target( Creature &c, float best, bool smart, int precalc_dis
     }
 
     if( !smart ) {
-        return int( d );
+        return rated_dist;
     }
 
     float power = c.power_rating();
@@ -437,7 +480,7 @@ float monster::rate_target( Creature &c, float best, bool smart, int precalc_dis
     }
 
     if( power > 0 ) {
-        return int( d ) / power;
+        return rated_dist / power;
     }
 
     return FLT_MAX;
@@ -913,13 +956,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
             const auto away = current_pos - dest;
             auto flee_goal = current_pos + away.xy();
             if( flies() ) {
-                if( const auto preferred_z = type->preferred_z ) {
-                    flee_goal.z() = *preferred_z;
-                } else if( away.z() != 0 ) {
-                    flee_goal.z() = current_pos.z() + away.z();
-                } else {
-                    flee_goal.z() = current_pos.z() + 1;
-                }
+                flee_goal.z() = flying_flee_altitude( current_pos.z(), dest.z() );
             } else {
                 flee_goal.z() = current_pos.z();
             }
@@ -1343,6 +1380,17 @@ monster_action_t monster::decide_action() const
             }
 
             if( !can_z_move ) {
+                // Cannot occupy the tile (grounded monster vs open air) but a
+                // vertical strike may still be legal — roofs fail can_z_attack
+                // above because the upper tile has a floor.
+                const auto *z_target = g->critter_at( candidate, hallucination );
+                if( !pacified && z_target != nullptr &&
+                    attitude_to( *z_target ) == Attitude::A_HOSTILE ) {
+                    next_step = candidate;
+                    has_next_step = true;
+                    action.target = const_cast<Creature *>( z_target );
+                    break;
+                }
                 continue;
             }
 
