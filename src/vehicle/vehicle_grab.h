@@ -1,9 +1,9 @@
 #pragma once
 
-#include <optional>
-
 #include "coordinates.h"
 #include "vpart_position.h"
+
+#include <optional>
 
 class map;
 

@@ -1,19 +1,4 @@
-#include "vehicle.h"
-#include "vehicle_part.h" // IWYU pragma: associated
 #include "vehicle_move.h" // IWYU pragma: associated
-
-#include <cassert>
-#include <algorithm>
-#include <ranges>
-#include <array>
-#include <cmath>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <optional>
-#include <ostream>
-#include <set>
-#include <vector>
 
 #include "action_time_scale.h"
 #include "avatar.h"
@@ -45,8 +30,23 @@
 #include "units_angle.h"
 #include "units_utility.h"
 #include "veh_type.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <ranges>
+#include <set>
+#include <vector>
 static const itype_id fuel_type_muscle( "muscle" );
 static const itype_id fuel_type_animal( "animal" );
 static const itype_id fuel_type_battery( "battery" );

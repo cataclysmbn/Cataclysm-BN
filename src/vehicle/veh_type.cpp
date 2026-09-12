@@ -1,15 +1,5 @@
 #include "veh_type.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <cstdlib>
-#include <memory>
-#include <numeric>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-
 #include "ammo.h"
 #include "assign.h"
 #include "calendar.h"
@@ -41,10 +31,20 @@
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
+#include "vehicle_group.h"
 #include "vehicle_palette.h"
 #include "vehicle_part.h"
-#include "vehicle_group.h"
 #include "weighted_list.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdlib>
+#include <memory>
+#include <numeric>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 class npc;
 

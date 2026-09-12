@@ -1,10 +1,5 @@
 #include "vehicle_functions.h"
 
-#include <algorithm>
-#include <cmath>
-#include <ranges>
-#include <vector>
-
 #include "ammo.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -21,6 +16,11 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+#include <algorithm>
+#include <cmath>
+#include <ranges>
+#include <vector>
 
 static const itype_id fuel_type_battery( "battery" );
 

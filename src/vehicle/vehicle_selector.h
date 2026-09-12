@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
-#include <iosfwd>
-
 #include "coordinates.h"
 #include "visitable.h"
+
+#include <iosfwd>
+#include <vector>
 
 class vehicle;
 

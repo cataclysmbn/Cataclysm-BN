@@ -7,7 +7,7 @@
 #include "mtype.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "vehicle.h"
+#include "vehicle/vehicle.h"
 
 TEST_CASE("mps_cmps_round_trip_converges_to_zero", "[vehicle]") {
     constexpr auto max_iterations = 200;

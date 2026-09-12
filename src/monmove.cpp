@@ -1,27 +1,9 @@
 // Monster movement code; essentially, the AI
 
-#include "monster.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cfloat>
-#include <cmath>
-#include <cstdlib>
-#include <iterator>
-#include <list>
-#include <limits>
-#include <memory>
-#include <optional>
-#include <ostream>
-#include <ranges>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-
 #include "avatar.h"
 #include "behavior.h"
-#include "calendar.h"
 #include "bionics.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_coord.h"
@@ -35,8 +17,9 @@
 #include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
-#include "int_id.h"
 #include "init.h"
+#include "int_id.h"
+#include "legacy_pathfinding.h"
 #include "line.h"
 #include "make_static.h"
 #include "map.h"
@@ -46,16 +29,17 @@
 #include "mattack_common.h"
 #include "messages.h"
 #include "monfaction.h"
+#include "monster.h" // IWYU pragma: associated
 #include "monster_hallucination.h"
 #include "monster_oracle.h"
 #include "mtype.h"
 #include "npc.h"
 #include "options.h"
-#include "legacy_pathfinding.h"
 #include "pathfinding.h"
 #include "pimpl.h"
 #include "player.h"
 #include "point.h"
+#include "profile.h"
 #include "rng.h"
 #include "scent_map.h"
 #include "sounds.h"
@@ -65,10 +49,25 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "profile.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cfloat>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <ranges>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_bouldering( "bouldering" );

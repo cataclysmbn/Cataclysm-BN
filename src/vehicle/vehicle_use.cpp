@@ -43,11 +43,11 @@
 #include "units_mass.h"
 #include "units_temperature.h"
 #include "value_ptr.h"
-#include "veh_interact.h"
 #include "veh_type.h"
+#include "veh_interact.h"
 #include "vehicle.h"
 #include "vehicle_move.h"
-#include "vehicle_part.h" // IWYU pragma: associated
+#include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weather/weather.h"

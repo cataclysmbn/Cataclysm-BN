@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "avatar.h"
 #include "catch/catch.hpp"
 #include "gun_mode.h"
@@ -10,9 +11,8 @@
 #include "state_helpers.h"
 #include "type_id.h"
 #include "units_utility.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
 
 #include <cmath>
 #include <ranges>

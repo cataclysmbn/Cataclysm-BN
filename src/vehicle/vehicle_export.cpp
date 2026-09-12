@@ -1,13 +1,14 @@
-#include <algorithm>
 #include "json.h"
+#include "json_export.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
-#include "json_export.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+#include <algorithm>
 
 namespace
 {

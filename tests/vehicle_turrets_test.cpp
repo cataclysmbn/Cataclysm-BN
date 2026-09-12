@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "ammo.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -18,10 +19,9 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_functions.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_functions.h"
 
 #include <algorithm>
 #include <map>

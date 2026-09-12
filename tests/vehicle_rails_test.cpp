@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
@@ -10,12 +12,10 @@
 #include "stringmaker.h"
 #include "type_id.h"
 #include "units_utility.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_move.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_move.h"
+#include "vehicle/vpart_range.h"
 
 #include <sstream>
 

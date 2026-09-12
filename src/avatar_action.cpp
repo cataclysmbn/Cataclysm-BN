@@ -1,17 +1,5 @@
 #include "avatar_action.h"
 
-#include <algorithm>
-#include <climits>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <ostream>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-#include <numeric>
-
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
@@ -36,10 +24,10 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
-#include "item_functions.h"
 #include "item_contents.h"
-#include "iuse_actor.h"
+#include "item_functions.h"
 #include "itype.h"
+#include "iuse_actor.h"
 #include "line.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -52,7 +40,6 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "utils/pit_trap_helpers.h"
 #include "player_activity.h"
 #include "profile.h"
 #include "projectile.h"
@@ -62,13 +49,26 @@
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
+#include "utils/pit_trap_helpers.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_throw.h"
-#include "vehicle_grab.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_grab.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_throw.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <climits>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <ostream>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 class player;
 

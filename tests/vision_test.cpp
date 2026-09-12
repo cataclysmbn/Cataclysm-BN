@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vpart_position.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "character.h"
@@ -13,10 +15,8 @@
 #include "shadowcasting.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 
 #include <algorithm>

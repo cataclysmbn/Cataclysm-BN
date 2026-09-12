@@ -1,15 +1,5 @@
 #include "mapgen_functions.h"
 
-#include <algorithm>
-#include <array>
-#include <cstdlib>
-#include <initializer_list>
-#include <iterator>
-#include <map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "calendar.h"
 #include "character_id.h"
 #include "debug.h"
@@ -20,10 +10,10 @@
 #include "game_constants.h"
 #include "int_id.h"
 #include "line.h"
-#include "mapgen_constructor.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapgen.h"
+#include "mapgen_constructor.h"
 #include "mapgendata.h"
 #include "mapgenformat.h"
 #include "omdata.h"
@@ -33,8 +23,18 @@
 #include "rng.h"
 #include "string_id.h"
 #include "trap.h"
-#include "vehicle_group.h"
+#include "vehicle/vehicle_group.h"
 #include "weighted_list.h"
+
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <initializer_list>
+#include <iterator>
+#include <map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 static const itype_id itype_hat_hard( "hat_hard" );
 static const itype_id itype_jackhammer( "jackhammer" );

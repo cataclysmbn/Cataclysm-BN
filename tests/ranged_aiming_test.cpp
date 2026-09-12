@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "ballistics.h"
@@ -17,8 +18,7 @@
 #include "projectile.h"
 #include "ranged.h"
 #include "state_helpers.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
 
 #include <algorithm>
 #include <array>

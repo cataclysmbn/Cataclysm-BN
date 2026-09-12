@@ -1,21 +1,3 @@
-#include "vehicle.h"
-#include "vehicle_part.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <memory>
-#include <optional>
-#include <queue>
-#include <string>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "character.h"
 #include "coordinates.h"
@@ -34,7 +16,24 @@
 #include "translations.h"
 #include "type_id.h"
 #include "veh_type.h"
+#include "vehicle.h"
+#include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <memory>
+#include <optional>
+#include <queue>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 /*
  * This file contains code that allows a vehicle to be driven by an in-game character (most

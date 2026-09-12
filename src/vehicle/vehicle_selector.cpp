@@ -1,12 +1,12 @@
 #include "vehicle_selector.h"
 
-#include <algorithm>
-#include <memory>
-#include <optional>
-
 #include "map.h"
 #include "point.h"
 #include "vpart_position.h"
+
+#include <algorithm>
+#include <memory>
+#include <optional>
 
 vehicle_selector::vehicle_selector( const tripoint_bub_ms &pos, int radius, bool accessible,
                                     bool visibility_only )

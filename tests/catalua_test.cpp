@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
@@ -43,9 +44,8 @@
 #include "units_mass.h"
 #include "units_utility.h"
 #include "units_volume.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
 
 #include <memory>
 #include <optional>

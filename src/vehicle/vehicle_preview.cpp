@@ -1,20 +1,20 @@
 #if defined(TILES)
 
-#include "vehicle_preview.h"
+#    include "vehicle_preview.h"
 
-#include <algorithm>
+#    include "cata_tiles.h"
+#    include "cursesport.h"
+#    include "game.h"
+#    include "map.h"
+#    include "output.h"
+#    include "sdltiles.h"
+#    include "units_utility.h"
+#    include "veh_type.h"
+#    include "vehicle.h"
+#    include "vehicle_part.h"
+#    include "vpart_position.h"
 
-#include "cata_tiles.h"
-#include "cursesport.h"
-#include "game.h"
-#include "map.h"
-#include "output.h"
-#include "sdltiles.h"
-#include "units_utility.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#    include <algorithm>
 
 // Local empty string for tile_search_params
 static const std::string empty_string;

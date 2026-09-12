@@ -1,9 +1,4 @@
-#include "vehicle_group.h"
-
-#include <cstddef>
-#include <functional>
-#include <memory>
-#include <utility>
+#include "vehicle/vehicle_group.h"
 
 #include "debug.h"
 #include "json.h"
@@ -18,6 +13,11 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <utility>
 
 using vplacement_id = string_id<VehiclePlacement>;
 

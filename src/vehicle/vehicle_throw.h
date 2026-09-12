@@ -1,9 +1,9 @@
 #pragma once
 
-#include <algorithm>
-
 #include "units.h"
-#include "vehicle.h"
+#include "vehicle/vehicle.h"
+
+#include <algorithm>
 
 namespace vehicle_throw
 {

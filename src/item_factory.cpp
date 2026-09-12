@@ -61,9 +61,9 @@ class player;
 #include "ui.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/wheel_dimensions.h"
 #include "vitamin.h"
-#include "wheel_dimensions.h"
 
 class player;
 struct tripoint;

@@ -43,7 +43,6 @@
 #include "inventory.h"
 #include "json.h"
 #include "lightmap.h"
-#include "npc_class.h"
 #include "magic/magic.h"
 #include "make_static.h"
 #include "mapsharing.h"
@@ -51,6 +50,7 @@
 #include "monster.h"
 #include "mutation.h"
 #include "name.h"
+#include "npc_class.h"
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
@@ -74,7 +74,7 @@
 #include "ui.h"
 #include "ui_manager.h"
 #include "units_utility.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
 #include "worldfactory.h"
 
 static const std::string flag_CHALLENGE( "CHALLENGE" );

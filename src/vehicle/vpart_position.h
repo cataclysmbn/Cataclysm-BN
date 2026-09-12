@@ -1,13 +1,13 @@
 #pragma once
 
+#include "coordinates.h"
+
 #include <cstddef>
 #include <functional>
+#include <limits>
 #include <optional>
 #include <string>
 #include <utility>
-#include <limits>
-
-#include "coordinates.h"
 
 class vehicle;
 struct vehicle_part;

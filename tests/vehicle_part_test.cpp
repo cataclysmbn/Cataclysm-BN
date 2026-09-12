@@ -2,7 +2,7 @@
 #include "damage.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
 
 #include <array>
 

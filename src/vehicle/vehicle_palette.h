@@ -1,19 +1,19 @@
 #pragma once
 
-#include <memory>
-#include <optional>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
 #include "hsv_color.h"
 #include "json.h"
 #include "mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "units_angle.h"
 #include "vehicle_group.h"
 #include "weighted_list.h"
-#include "units_angle.h"
+
+#include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 /**
  *  This class is used for random vehicle color choices

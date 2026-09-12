@@ -1,14 +1,14 @@
 #pragma once
 
+#include "vehicle.h"
+#include "vpart_position.h"
+
 #include <cassert>
 #include <cstddef>
 #include <iterator>
 #include <optional>
 #include <ranges>
 #include <utility>
-
-#include "vpart_position.h"
-#include "vehicle.h"
 
 enum class part_status_flag : int;
 

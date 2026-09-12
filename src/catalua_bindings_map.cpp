@@ -23,9 +23,9 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units_angle.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
 #include "weather/weather.h"
 
 #include <algorithm>

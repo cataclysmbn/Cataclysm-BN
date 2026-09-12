@@ -1,16 +1,7 @@
-#include "vehicle.h"
-#include "vehicle_part.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstdlib>
-#include <algorithm>
-#include <optional>
-#include <set>
-#include <memory>
-
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "itype.h"
@@ -18,11 +9,18 @@
 #include "output.h"
 #include "string_formatter.h"
 #include "translations.h"
-#include "veh_type.h"
-#include "vpart_position.h"
 #include "units.h"
 #include "units_utility.h"
-#include "color.h"
+#include "veh_type.h"
+#include "vehicle.h"
+#include "vehicle_part.h" // IWYU pragma: associated
+#include "vpart_position.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <memory>
+#include <optional>
+#include <set>
 
 static const std::string part_location_structure( "structure" );
 static const itype_id itype_battery( "battery" );

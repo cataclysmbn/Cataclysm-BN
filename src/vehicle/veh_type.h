@@ -1,15 +1,5 @@
 #pragma once
 
-#include <array>
-#include <bitset>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "calendar.h"
 #include "color.h"
 #include "coordinates.h"
@@ -22,6 +12,16 @@
 #include "units.h"
 #include "units_angle.h"
 #include "weighted_list.h"
+
+#include <array>
+#include <bitset>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 class player;
 class JsonObject;

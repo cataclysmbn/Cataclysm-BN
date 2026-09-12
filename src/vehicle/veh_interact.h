@@ -1,10 +1,5 @@
 #pragma once
 
-#include <functional>
-#include <map>
-#include <string>
-#include <vector>
-
 #include "color.h"
 #include "coordinates.h"
 #include "cursesdef.h"
@@ -13,6 +8,11 @@
 #include "memory_fast.h"
 #include "player_activity_ptr.h"
 #include "type_id.h"
+
+#include <functional>
+#include <map>
+#include <string>
+#include <vector>
 
 class player;
 class vpart_info;

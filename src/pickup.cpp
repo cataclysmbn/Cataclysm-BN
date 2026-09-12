@@ -1,18 +1,5 @@
 #include "pickup.h"
 
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <functional>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "auto_pickup.h"
@@ -61,10 +48,23 @@
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <functional>
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
 
 static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
 

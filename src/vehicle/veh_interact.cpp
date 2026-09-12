@@ -1,18 +1,5 @@
 #include "veh_interact.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <functional>
-#include <iostream>
-#include <iterator>
-#include <memory>
-#include <numeric>
-#include <optional>
-#include <set>
-#include <string>
-#include <utility>
-
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "avatar_functions.h"
@@ -65,8 +52,21 @@
 #include "vpart_range.h"
 #include "wheel_dimensions.h"
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
+
 #if defined(TILES)
-#include "vehicle_preview.h"
+#    include "vehicle_preview.h"
 #endif
 
 static const itype_id fuel_type_battery( "battery" );

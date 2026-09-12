@@ -1,15 +1,5 @@
-#include <algorithm>
-#include <cassert>
-#include <cstring>
-#include <iterator>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <utility>
-
 #include "advanced_inv_area.h"
+
 #include "advanced_inv_listitem.h"
 #include "avatar.h"
 #include "enums.h"
@@ -27,10 +17,21 @@
 #include "trap.h"
 #include "type_id.h"
 #include "uistate.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 int advanced_inv_area::get_item_count() const
 {

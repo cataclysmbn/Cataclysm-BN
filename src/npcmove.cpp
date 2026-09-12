@@ -1,35 +1,20 @@
-#include "npc.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cfloat>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <iterator>
-#include <memory>
-#include <numeric>
-#include <ostream>
-#include <tuple>
-#include <unordered_set>
-#include <unordered_map>
-
 #include "action_time_scale.h"
 #include "active_item_cache.h"
 #include "activity_handlers.h"
-#include "creature_tracker.h"
 #include "bionics.h"
 #include "bodypart.h"
-#include "utils/algo.h"
+#include "calendar.h"
+#include "catalua.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
+#include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
-#include "character_turn.h"
 #include "character_id.h"
+#include "character_turn.h"
 #include "clzones.h"
-#include "catalua.h"
-#include "catalua_impl.h"
+#include "creature_tracker.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -58,6 +43,7 @@
 #include "mission.h"
 #include "monster.h"
 #include "mtype.h"
+#include "npc.h" // IWYU pragma: associated
 #include "npc_class.h"
 #include "npctalk.h"
 #include "options.h"
@@ -65,7 +51,6 @@
 #include "overmap_location.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
-#include "calendar.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "profile.h"
@@ -78,13 +63,27 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "utils/algo.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "visitable.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+
+#include <algorithm>
+#include <cfloat>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <ostream>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace
 {

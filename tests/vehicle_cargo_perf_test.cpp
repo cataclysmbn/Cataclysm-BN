@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -9,10 +11,8 @@
 #include "state_helpers.h"
 #include "type_id.h"
 #include "units_volume.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_range.h"
 
 namespace {
 

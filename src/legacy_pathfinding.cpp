@@ -1,35 +1,35 @@
 #include "legacy_pathfinding.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <optional>
-#include <queue>
-#include <ranges>
-#include <set>
-#include <array>
-#include <memory>
-#include <utility>
-#include <vector>
-
 #include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "game_constants.h"
-#include "map.h"
-#include "mapdata.h"
-#include "options.h"
-#include "submap.h"
-#include "trap.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
 #include "line.h"
+#include "map.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
-#include "type_id.h"
+#include "mapdata.h"
+#include "options.h"
 #include "point.h"
+#include "submap.h"
+#include "trap.h"
+#include "type_id.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <memory>
+#include <optional>
+#include <queue>
+#include <ranges>
+#include <set>
+#include <utility>
+#include <vector>
 
 enum astar_state {
     ASL_NONE,

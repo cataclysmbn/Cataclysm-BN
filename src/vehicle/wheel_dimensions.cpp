@@ -1,14 +1,14 @@
 #include "wheel_dimensions.h"
 
-#include <cmath>
-#include <locale>
-#include <sstream>
-#include <string>
-
 #include "json.h"
 #include "options.h"
 #include "string_formatter.h"
 #include "translations.h"
+
+#include <cmath>
+#include <locale>
+#include <sstream>
+#include <string>
 
 namespace wheel_dimensions
 {

@@ -11,6 +11,7 @@
 #include "game_inventory.h"
 #include "handle_liquid.h"
 #include "itype.h"
+#include "locations.h"
 #include "map.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -20,11 +21,10 @@
 #include "player_activity.h"
 #include "skill.h"
 #include "trap.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "locations.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );

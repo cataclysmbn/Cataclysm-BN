@@ -1,17 +1,17 @@
 #pragma once
 
+#include "coordinates.h"
+#include "mapgen.h"
+#include "string_id.h"
+#include "type_id.h"
+#include "units_angle.h"
+#include "weighted_list.h"
+
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "coordinates.h"
-#include "mapgen.h"
-#include "string_id.h"
-#include "type_id.h"
-#include "weighted_list.h"
-#include "units_angle.h"
 
 class JsonObject;
 class VehicleGroup;

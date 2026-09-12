@@ -1,15 +1,5 @@
 #pragma once
 
-#include <array>
-#include <functional>
-#include <map>
-#include <optional>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include "active_item_cache.h"
 #include "calendar.h"
 #include "clzones.h"
@@ -21,6 +11,16 @@
 #include "point.h"
 #include "tileray.h"
 #include "type_id.h"
+
+#include <array>
+#include <functional>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 class avatar;
 class Character;

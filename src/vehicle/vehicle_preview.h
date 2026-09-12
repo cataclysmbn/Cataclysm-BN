@@ -1,13 +1,13 @@
 #pragma once
 
-#include <optional>
-
 #include "cata_tiles.h"
 #include "cursesdef.h"
 #include "point.h"
 #include "sdl_wrappers.h"
 #include "type_id.h"
 #include "units_angle.h"
+
+#include <optional>
 
 class vehicle;
 

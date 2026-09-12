@@ -1,17 +1,5 @@
 #include "map_extras.h"
 
-#include <algorithm>
-#include <array>
-#include <string>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include "auto_note.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -31,12 +19,11 @@
 #include "item_group.h"
 #include "json.h"
 #include "line.h"
-#include "mapgen_constructor.h"
-#include "mapgen_async.h"
-#include "submap_fields.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapgen.h"
+#include "mapgen_async.h"
+#include "mapgen_constructor.h"
 #include "mapgen_functions.h"
 #include "mapgendata.h"
 #include "mongroup.h"
@@ -50,6 +37,7 @@
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "submap_fields.h"
 #include "text_snippets.h"
 #include "thread_pool.h"
 #include "translations.h"
@@ -58,13 +46,25 @@
 #include "type_id_implement.h"
 #include "ui.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_group.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_group.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "weighted_list.h"
+
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 static const itype_id itype_223_casing( "223_casing" );
 static const itype_id itype_762_51_casing( "762_51_casing" );

@@ -1,11 +1,5 @@
 #include "mapgen_color_palette.h"
 
-#include <cstddef>
-#include <functional>
-#include <memory>
-#include <unordered_map>
-#include <utility>
-
 #include "debug.h"
 #include "game_constants.h"
 #include "generic_factory.h"
@@ -21,9 +15,15 @@
 #include "type_id.h"
 #include "type_id_implement.h"
 #include "units_angle.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <unordered_map>
+#include <utility>
 
 namespace
 {

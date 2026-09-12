@@ -1,11 +1,5 @@
 #include "vehicle_palette.h"
 
-#include <cstddef>
-#include <functional>
-#include <memory>
-#include <unordered_map>
-#include <utility>
-
 #include "debug.h"
 #include "game_constants.h"
 #include "generic_factory.h"
@@ -24,6 +18,12 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
+
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <unordered_map>
+#include <utility>
 
 namespace
 {

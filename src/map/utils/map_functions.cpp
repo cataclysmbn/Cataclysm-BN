@@ -1,5 +1,6 @@
 #include "map/utils/map_functions.h"
 
+#include "../../vehicle/vpart_position.h"
 #include "character.h"
 #include "game.h"
 #include "line.h"
@@ -10,8 +11,7 @@
 #include "messages.h"
 #include "monster.h"
 #include "sounds.h"
-#include "veh_type.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
 
 #include <algorithm>
 #include <cstdlib>
