@@ -111,9 +111,7 @@ TEST_CASE("quiet_monster_growl_is_not_impossibly_loud_at_range", "[sound]") {
     const int half = here.getmapsize() * SEEX / 2;
     const auto listener = tripoint_bub_ms(half, half, 0);
     auto source = listener + tripoint_rel_ms(34, 71, 0);
-    if (!here.inbounds(source)) {
-        source = listener + tripoint_rel_ms(20, 20, 0);
-    }
+    if (!here.inbounds(source)) { source = listener + tripoint_rel_ms(20, 20, 0); }
     REQUIRE(here.inbounds(listener));
     REQUIRE(here.inbounds(source));
     REQUIRE(rl_dist(listener, source) > flood_radius_QUIET);
