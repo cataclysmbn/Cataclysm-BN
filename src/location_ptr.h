@@ -38,6 +38,8 @@ class location_ptr
         detached_ptr<T> release();
 
         T *get() const;
+        /// Returns the object, or the item null sentinel if empty, without debugmsg.
+        auto get_or_null() const -> T &; // *NOPAD*
 
         explicit operator bool() const;
 

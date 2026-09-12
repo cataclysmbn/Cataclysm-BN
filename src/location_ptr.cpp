@@ -141,6 +141,15 @@ T *location_ptr<T, error_if_null>::get() const
 }
 
 template<typename T, bool error_if_null>
+auto location_ptr<T, error_if_null>::get_or_null() const -> T &
+{
+    if( ptr ) {
+        return *ptr;
+    }
+    return null_item_reference();
+}
+
+template<typename T, bool error_if_null>
 location_ptr<T, error_if_null>::operator bool() const
 {
     return !!*this;

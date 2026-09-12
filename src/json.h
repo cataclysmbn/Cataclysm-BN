@@ -20,6 +20,7 @@
 #include "memory_fast.h"
 #include "string_id.h"
 #include "detached_ptr.h"
+#include "location_ptr.h"
 #include "safe_reference.h"
 #include "cata_arena.h"
 #include "cata_utility.h"
@@ -692,12 +693,12 @@ class JsonOut
 
         template<typename T>
         void write( const location_ptr<T, true> &v ) {
-            write( *v );
+            write( v.get_or_null() );
         }
 
         template<typename T>
         void write( const location_ptr<T, false> &v ) {
-            write( *v );
+            write( v.get_or_null() );
         }
 
         template<typename T>
