@@ -526,8 +526,20 @@ auto map::resize( int new_mapsize ) -> void
 
 auto map::bind_dimension( const dimension_id &dim ) -> void
 {
+    const auto changed = bound_dimension_ != dim;
     bound_dimension_ = dim;
     refresh_active_submap_view();
+    if( changed ) {
+        // Cached vehicle pointers belong to the old buffer, which may now be unloaded.
+        dirty_vehicle_list.clear();
+        for( auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z ) {
+            clear_vehicle_list( z );
+        }
+        for( const auto p : bubble_submaps() ) {
+            update_vehicle_list( get_submap_at( project_to<coords::ms>( p ) ), p.z() );
+        }
+        reset_vehicle_cache();
+    }
 }
 
 auto map::refresh_active_submap_view() -> void
