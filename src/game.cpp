@@ -318,6 +318,10 @@ auto fling_bash_damage( const Creature &c, const float flvel ) -> int
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_AUTODRIVE( "ACT_AUTODRIVE" );
+static const activity_id ACT_CRAFT( "ACT_CRAFT" );
+static const activity_id ACT_VEHICLE_DECONSTRUCTION( "ACT_VEHICLE_DECONSTRUCTION" );
+static const activity_id ACT_VEHICLE_REPAIR( "ACT_VEHICLE_REPAIR" );
+
 
 static const skill_id skill_melee( "melee" );
 static const skill_id skill_dodge( "dodge" );
@@ -2684,13 +2688,25 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
             }
             return false;
         }
-        if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
-            !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
-            !u.activity->assistants().empty() ) {
-            if( log_activity_skip_state ) {
-                add_msg( "The activity does not support skip state, or you have assistants" );
-            }
+        const auto act_id = u.activity->id();
+        // It should be given autodrive does not
+        if( act_id == ACT_AUTODRIVE ) {
             return false;
+        }
+        // Craft has special turns but is safe.
+        if( act_id != ACT_CRAFT && act_id != ACT_VEHICLE_DECONSTRUCTION &&
+            act_id != ACT_VEHICLE_REPAIR ) {
+            if( !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ) {
+                if( log_activity_skip_state ) {
+                    add_msg( "Activity cannot be time skipped" );
+                }
+                return false;
+            }
+            if( !u.activity->assistants().empty() ) {
+                if( log_activity_skip_state ) {
+                    add_msg( "Assistants prevent time skip" );
+                }
+            }
         }
     }
     if( u.in_vehicle && u.controlling_vehicle ) {
@@ -2917,7 +2933,7 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     }
 
     {
-        u.update_body( action_time_scale::calendar_duration_this_tick() * skipped_turns );
+        u.update_body( time_duration::from_turns( skipped_turns ) );
     }
 
     {
@@ -11979,12 +11995,14 @@ static void butcher_submenu( const std::vector<item *> &corpses, int corpse = -1
     avatar &you = get_avatar();
     const inventory &inv = you.crafting_inventory();
 
-    const int factor = inv.max_quality( quality_id( "BUTCHER" ) );
+    const int factor = std::max( you.max_quality( quality_id( "BUTCHER" ) ),
+                                 inv.max_quality( quality_id( "BUTCHER" ) ) );
     const std::string msg_inv = factor > INT_MIN
                                 ? string_format( _( "Your best tool has <color_cyan>%d butchering</color>." ), factor )
                                 :  _( "You have no butchering tool." );
 
-    const int factor_diss = inv.max_quality( quality_id( "CUT_FINE" ) );
+    const int factor_diss = std::max( you.max_quality( quality_id( "CUT_FINE" ) ),
+                                      inv.max_quality( quality_id( "CUT_FINE" ) ) );
     const std::string msg_inv_diss = factor_diss > INT_MIN
                                      ? string_format( _( "Your best tool has <color_cyan>%d fine cutting</color>." ), factor_diss )
                                      :  _( "You have no fine cutting tool." );
@@ -12923,8 +12941,19 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
     if( !u.has_artifact_with( AEP_STEALTH ) &&
         !u.has_enchantment_flag( enchantment_flag_id( "SILENT" ) ) ) {
-        int volume = u.is_stealthy() ? 30 : 50;
-        volume *= u.mutation_value( "noise_modifier" );
+        int volume = u.is_stealthy() ? 40 : 60;
+        // Used to be a multiplier on tile distance, this approximates that
+        double noisemod = u.mutation_value( "noise_modifier" );
+        if( noisemod < 1 ) {
+            // Just in case someone goes below 0...
+            if( noisemod == 0 ) {
+                volume = 0;
+            } else if( noisemod > 0 ) {
+                volume -= ( 3.0 / noisemod );
+            }
+        } else {
+            volume += ( ( noisemod - 1 ) * 6.0 );
+        }
         volume += u.bonus_from_enchantments( volume, enchantment_value_id( "NOISE" ) );
         if( volume > 0 ) {
             if( u.movement_mode_is( CMM_RUN ) ) {
