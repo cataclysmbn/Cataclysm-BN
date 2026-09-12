@@ -2385,7 +2385,12 @@ auto mapbuffer::climb_difficulty( const tripoint_abs_ms &p,
         }
 
         if( best_difficulty > 5 && tile && has_flag( tile->tile(), "CLIMBABLE" ) ) {
-            best_difficulty = 5;
+            if ( has_flag( tile->tile(), "TREE" ) {
+                best_difficulty = 15;
+            }
+            else {
+                best_difficulty = 5;
+            }
         }
     }
 
