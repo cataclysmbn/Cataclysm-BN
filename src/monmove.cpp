@@ -1384,10 +1384,10 @@ monster_action_t monster::decide_action() const
                     continue;
                 }
                 const auto estimate = here.bash_rating( bash_estimate( candidate ), candidate );
-                if( estimate <= 0 ) {
+                if( estimate <= 0 && !here.has_flag( TFLAG_TREE, candidate ) ) {
                     continue;
                 }
-                if( estimate < 5 ) {
+                if( estimate < 5 && !here.has_flag( TFLAG_TREE, candidate ) ) {
                     bad_choice = true;
                 }
             }
@@ -2085,7 +2085,7 @@ tripoint_bub_ms monster::scent_move() const
             ( ( can_move_to( dest ) && !here.obstructed_by_vehicle_rotation( pos, dest ) ) ||
               ( dest == g->u.bub_pos() ) ||
               ( can_bash && here.is_bashable( dest ) &&
-                here.bash_rating( bash_estimate( dest ), dest ) > 0 ) ) ) {
+                ( here.bash_rating( bash_estimate( dest ), dest ) > 0 || here.has_flag( TFLAG_TREE, candidate ) ) ) ) ) {
             if( ( !fleeing && smell > bestsmell ) || ( fleeing && smell < bestsmell ) ) {
                 smove_count = 0;
                 smoves[smove_count++] = dest;
