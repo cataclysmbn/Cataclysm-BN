@@ -880,7 +880,7 @@ class JsonOut
  * Note that "name" and "description" are passed to gettext for translating.
  * Any members with string information that is displayed directly to the user
  * will need similar treatment, and may also need to be explicitly handled
- * in lang/extract_json_strings.py to be translatable.
+ * in scripts/extract_json_strings.ts to be translatable.
  *
  * The "points" member here is not required.
  * If it is not found in the incoming JSON object,

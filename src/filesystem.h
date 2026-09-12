@@ -82,6 +82,9 @@ const char *eol();
 std::vector<std::string> get_files_from_path( const std::string &pattern,
         const std::string &root_path = "", bool recursive_search = false,
         bool match_extension = false );
+std::vector<std::string> get_files_from_path( const std::vector<std::string> &patterns,
+        const std::string &root_path = "", bool recursive_search = false,
+        bool match_extension = false );
 
 //--------------------------------------------------------------------------------------------------
 /**

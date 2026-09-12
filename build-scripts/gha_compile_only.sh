@@ -59,7 +59,7 @@ if [ -n "$TEST_STAGE" ]
 then
     build-scripts/lint-json.sh
     CMAKE_BUILD_PARALLEL_LEVEL="$num_jobs" build-scripts/format-json.sh
-    git diff --exit-code -- '*.json'
+    git diff --exit-code -- '*.json' '*.jsonc'
     tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 fi
 

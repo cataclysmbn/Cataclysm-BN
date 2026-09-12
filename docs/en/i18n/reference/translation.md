@@ -38,7 +38,7 @@ It also works directly:
 add_msg( _( "You drop the %s." ), the_item_name );
 ```
 
-Strings from the JSON files are extracted by the `lang/extract_json_strings.py` script, and can be
+Strings from JSON and JSONC files are extracted by `scripts/extract_json_strings.ts`, and can be
 translated at run time using `_()`. If translation context is desired for a JSON string,
 `class translation` can be used instead, which is documented below.
 

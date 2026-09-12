@@ -397,6 +397,16 @@ std::vector<std::string> get_files_from_path( const std::string &pattern,
     } );
 }
 
+std::vector<std::string> get_files_from_path( const std::vector<std::string> &patterns,
+        const std::string &root_path, const bool recursive_search, const bool match_extension )
+{
+    return find_file_if_bfs( root_path, recursive_search, [&]( const dirent & entry, bool ) {
+        return std::ranges::any_of( patterns, [&]( const std::string & pattern ) {
+            return name_contains( entry, pattern, match_extension );
+        } );
+    } );
+}
+
 /**
  *  Find directories which containing pattern.
  *  @param pattern Search pattern.

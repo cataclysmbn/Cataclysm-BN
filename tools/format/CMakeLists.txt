@@ -25,17 +25,23 @@ if (UNIX)
         COMMAND find ${CMAKE_SOURCE_DIR}/data -name "\"*.json\"" -print0 |
                 grep -z -v "^${CMAKE_SOURCE_DIR}/data/names/" |
                 xargs -0 -L 1 $<TARGET_FILE:json_formatter>
+        COMMAND find ${CMAKE_SOURCE_DIR}/data -name "\"*.jsonc\"" -type f
+                -not -path "\"${CMAKE_SOURCE_DIR}/data/names/*\""
+                -exec deno fmt --config ${CMAKE_SOURCE_DIR}/deno.jsonc {} +
         DEPENDS json_formatter
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Formatting all JSON files"
+        COMMENT "Formatting all JSON and JSONC files"
     )
 
     add_custom_target(style-json-parallel
         COMMAND find ${CMAKE_SOURCE_DIR}/data -name "\"*.json\"" -print0 |
                 grep -z -v "^${CMAKE_SOURCE_DIR}/data/names/" |
                 xargs -0 -L 1 -P ${NPROC} $<TARGET_FILE:json_formatter>
+        COMMAND find ${CMAKE_SOURCE_DIR}/data -name "\"*.jsonc\"" -type f
+                -not -path "\"${CMAKE_SOURCE_DIR}/data/names/*\""
+                -exec deno fmt --config ${CMAKE_SOURCE_DIR}/deno.jsonc {} +
         DEPENDS json_formatter
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Formatting all JSON files in parallel"
+        COMMENT "Formatting all JSON and JSONC files in parallel"
     )
 endif()
