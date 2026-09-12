@@ -1,17 +1,14 @@
 #include "character_functions.h"
 
-#include <algorithm>
-#include <string>
-#include <utility>
-
 #include "ammo.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "character_martial_arts.h"
 #include "character.h"
+#include "character_martial_arts.h"
 #include "creature.h"
 #include "flag.h"
+#include "flag_trait.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "itype.h"
@@ -29,7 +26,6 @@
 #include "skill.h"
 #include "submap.h"
 #include "trap.h"
-#include "flag_trait.h"
 #include "type_id.h"
 #include "uistate.h"
 #include "veh_type.h"
@@ -37,8 +33,12 @@
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
 #include "vpart_position.h"
-#include "weather_gen.h"
-#include "weather.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm>
+#include <string>
+#include <utility>
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_DEBUG_NODMG( "DEBUG_NODMG" );

@@ -13,7 +13,7 @@
 #include "player_helpers.h"
 #include "state_helpers.h"
 #include "string_id.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #include <memory>
 #include <string>

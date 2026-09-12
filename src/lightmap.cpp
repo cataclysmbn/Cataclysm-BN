@@ -1,31 +1,12 @@
 #include "lightmap.h" // IWYU pragma: associated
-#include "coordinates.h"
-#include "shadowcasting.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <cmath>
-#include <ranges>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <span>
-#include <source_location>
-#include <string>
-#include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "character.h"
+#include "coordinates.h"
 #include "cuboid_rectangle.h"
 #include "field.h"
 #include "fragment_cloud.h" // IWYU pragma: keep
@@ -38,8 +19,8 @@
 #include "itype.h"
 #include "line.h"
 #include "map.h"
-#include "mapbuffer.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "math_defines.h"
 #include "monster.h"
@@ -48,9 +29,9 @@
 #include "player.h"
 #include "point.h"
 #include "profile.h"
+#include "shadowcasting.h" // IWYU pragma: associated
 #include "string_formatter.h"
 #include "submap.h"
-#include "cached_options.h"
 #include "thread_pool.h"
 #include "tileray.h"
 #include "type_id.h"
@@ -60,7 +41,26 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <ranges>
+#include <source_location>
+#include <span>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #if defined( CATA_SDL )
 #include "compute/compute_backend.h"
 #include "compute/gpu_lm.h"

@@ -24,7 +24,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 #include <algorithm>
 #include <memory>

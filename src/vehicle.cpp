@@ -1,30 +1,4 @@
 #include "vehicle.h"
-#include "detached_ptr.h"
-#include "locations.h"
-#include "type_id.h"
-#include "units_mass.h"
-#include "vehicle_part.h" // IWYU pragma: associated
-#include "vpart_position.h" // IWYU pragma: associated
-#include "vpart_range.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <cmath>
-#include <complex>
-#include <cstdint>
-#include <cstdlib>
-#include <list>
-#include <memory>
-#include <numeric>
-#include <optional>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include <ranges>
 
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
@@ -38,6 +12,7 @@
 #include "creature.h"
 #include "cuboid_rectangle.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "distribution_grid.h"
 #include "enums.h"
 #include "event.h"
@@ -53,12 +28,13 @@
 #include "item_group.h"
 #include "itype.h"
 #include "json.h"
+#include "locations.h"
 #include "make_static.h"
 #include "map.h"
-#include "mapgen_constructor.h"
 #include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
+#include "mapgen_constructor.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
@@ -75,12 +51,36 @@
 #include "string_input_popup.h"
 #include "submap.h"
 #include "translations.h"
+#include "type_id.h"
+#include "ui.h"
+#include "units_mass.h"
 #include "units_utility.h"
 #include "veh_type.h"
-#include "vehicle_palette.h"
 #include "vehicle_functions.h"
-#include "weather.h"
-#include "ui.h"
+#include "vehicle_palette.h"
+#include "vehicle_part.h"   // IWYU pragma: associated
+#include "vpart_position.h" // IWYU pragma: associated
+#include "vpart_range.h"    // IWYU pragma: associated
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstdint>
+#include <cstdlib>
+#include <list>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <queue>
+#include <ranges>
+#include <set>
+#include <sstream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 /*
  * Speed up all those if ( blarg == "structure" ) statements that are used everywhere;

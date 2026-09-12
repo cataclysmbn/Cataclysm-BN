@@ -1,9 +1,3 @@
-#include "player.h" // IWYU pragma: associated
-
-#include <array>
-#include <cstdlib>
-#include <memory>
-
 #include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -23,10 +17,11 @@
 #include "mapdata.h"
 #include "martialarts.h"
 #include "messages.h"
-#include "morale_types.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "morale_types.h"
 #include "mutation_data.h"
+#include "player.h" // IWYU pragma: associated
 #include "player_activity.h"
 #include "pldata.h"
 #include "rng.h"
@@ -38,10 +33,14 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
-#include "weather.h"
 #include "vitamin.h"
+#include "weather/weather.h"
+
 #include <algorithm>
+#include <array>
+#include <cstdlib>
 #include <functional>
+#include <memory>
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 

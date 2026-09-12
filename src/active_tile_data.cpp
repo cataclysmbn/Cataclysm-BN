@@ -1,4 +1,5 @@
 #include "active_tile_data.h"
+
 #include "active_tile_data_def.h"
 #include "calendar.h"
 #include "debug.h"
@@ -14,7 +15,7 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_range.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 // TODO: Shouldn't use
 #include "submap.h"

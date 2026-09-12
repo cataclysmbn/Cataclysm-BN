@@ -1,29 +1,14 @@
 #include "panels.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <cstdlib>
-#include <iosfwd>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <string>
-#include <tuple>
-#include <utility>
-
 #include "action.h"
 #include "avatar.h"
 #include "behavior.h"
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "catalua_impl.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua_impl.h"
 #include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
@@ -50,8 +35,8 @@
 #include "overmap.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
-#include "path_info.h"
 #include "panels_utility.h"
+#include "path_info.h"
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
@@ -67,7 +52,22 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <iosfwd>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <tuple>
+#include <utility>
 
 static const trait_id trait_THRESH_FELINE( "THRESH_FELINE" );
 static const trait_id trait_THRESH_BIRD( "THRESH_BIRD" );

@@ -933,7 +933,8 @@
     "verb": "using the mind splicer",
     "rooted": true,
     "no_resume": true,
-    "complex_moves": { "speed": true }
+    "complex_moves": { "speed": true },
+    "bubble_size_effect": "idle"
   },
   {
     "id": "ACT_HACKING",

@@ -1,17 +1,3 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstdint>
-#include <map>
-#include <ranges>
-#include <sstream>
-#include <string>
-#include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "achievement.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -23,6 +9,8 @@
 #include "drop_token.h"
 #include "enum_conversions.h"
 #include "faction.h"
+#include "fluid_grid.h"
+#include "game.h" // IWYU pragma: associated
 #include "game_constants.h"
 #include "hash_utils.h"
 #include "int_id.h"
@@ -40,7 +28,7 @@
 #include "overmap.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
-#include "fluid_grid.h"
+#include "overmapbuffer_registry.h"
 #include "popup.h"
 #include "regional_settings.h"
 #include "scent_map.h"
@@ -48,9 +36,20 @@
 #include "string_id.h"
 #include "translations.h"
 #include "ui_manager.h"
-#include "weather.h"
+#include "weather/weather.h"
 #include "world_type.h"
-#include "overmapbuffer_registry.h"
+
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #if defined(__ANDROID__)
 #include "input.h"

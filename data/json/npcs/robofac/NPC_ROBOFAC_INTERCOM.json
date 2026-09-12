@@ -41,7 +41,7 @@
     "id": "MISSION_ROBOFAC_INTERCOM_1",
     "type": "mission_definition",
     "name": { "str": "Return Field Data" },
-    "description": "Investigate a nearby field and return with Dr. Prado and the robot prototype she was testing.  Failing that, retrieve the I/O recorder stored within the robot.  If the robot remains operational, avoid direct confrontation and use EMP grenades to disable it.",
+    "description": "Investigate a <color_red>nearby field</color> and return with Dr. Prado and the robot prototype she was testing.  Failing that, retrieve the <color_light_blue>I/O recorder</color> stored within the robot.  If the robot remains operational, avoid direct confrontation and use EMP grenades to disable it.",
     "goal": "MGOAL_FIND_ITEM",
     "difficulty": 5,
     "item": "robofac_test_data",
@@ -106,8 +106,8 @@
   {
     "id": "MISSION_ROBOFAC_INTERCOM_2",
     "type": "mission_definition",
-    "name": { "str": "Steal a dead man's mind" },
-    "description": "Find the corpse of a Hub 01's AI researcher and use the mind splicer kit to recover the memories stored inside their memory implant.",
+    "name": { "str": "Steal a Dead Man's Mind" },
+    "description": "Find the corpse of Hub 01's head AI researcher at the <color_red>ambushed convoy</color>, use the mind splicer kit to recover the memories stored inside their memory implant, and copy them onto the <color_light_blue>data card</color>.",
     "goal": "MGOAL_FIND_ITEM",
     "difficulty": 5,
     "item": "mind_scan_robofac",
@@ -128,7 +128,7 @@
           "place_nested": [ { "chunks": [ "robofac_hq_surface_merc_1" ], "x": 3, "y": 10 } ]
         }
       ],
-      "effect": [ { "u_buy_item": "RobofacCoin", "count": 2 } ]
+      "effect": [ { "u_buy_item": "RobofacCoin", "count": 2 }, { "u_sell_item": "mind_splicer" }, { "u_sell_item": "data_card" } ]
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "has_generic_rewards": false,
@@ -140,7 +140,7 @@
       "rejected": "Yes, we recognize that our request is exceptional.  Return if you change your mind.",
       "advice": "You do know what a memory unit looks like, right?  Matte gray, pill-sized, right in front of the corpus callosum.  We suggest a forceps through the eye socket, shaking slightly, then slowly and carefully…",
       "inquire": "Do you have the scan?",
-      "success": "You have our thanks and payment.",
+      "success": "You have our thanks and payment.  We will need the mind splicer back though.",
       "success_lie": "What good does this do us?",
       "failure": "Simply useless…"
     }
@@ -148,12 +148,12 @@
   {
     "id": "MISSION_ROBOFAC_INTERCOM_3",
     "type": "mission_definition",
-    "name": { "str": "Light retrieval" },
-    "description": "Reach the collapsed tower basement, and search the ruins for a photonic circuitry template.  The intercom warned you about heavy enemy presence, and of the existence of a hazardous environment.",
+    "name": { "str": "Light Retrieval" },
+    "description": "Reach the <color_red>collapsed tower basement</color>, and search the ruins for a <color_light_blue>photonic circuitry template</color>.  The intercom warned you about heavy enemy presence, and of the existence of a hazardous environment.",
     "goal": "MGOAL_FIND_ITEM",
     "difficulty": 5,
     "item": "template_photonics",
-    "value": 0,
+    "value": 1000,
     "start": {
       "assign_mission_target": {
         "om_terrain": "office_tower_collapse_b_a0",
@@ -183,14 +183,42 @@
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "has_generic_rewards": false,
+    "followup": "MISSION_ROBOFAC_INTERCOM_4",
     "dialogue": {
       "describe": "…",
-      "offer": "Our facility once sourced advanced photonic circuitry from a nearby robotics manufacturer.  Their building suffered major damage during the portal storms, and collapsed almost entirely.  However, preliminary scouting reveals that the basement prototyping lab likely remains intact.\n\nthe intercom: We ask you to investigate the ruins, and if possible, retrieve a template for the fabrication of said photonic circuitry.",
+      "offer": "Our facility once sourced advanced photonic circuitry from a nearby robotics manufacturer.  Their building suffered major damage during the portal storms, and collapsed almost entirely.  However, preliminary scouting reveals that the basement prototyping lab likely remains intact.  We ask you to investigate the ruins, and if possible, retrieve a template for the fabrication of said photonic circuitry.",
       "accepted": "We expect your success, mercenary.",
       "rejected": "Return if you change your mind.",
       "advice": "The scout drone also revealed extensive heat signatures and high concentrations of toxic compounds within the ruins, plan accordingly.  We are willing to sell you some protective gear at a discount, if you require it.",
       "inquire": "Have you retrieved the blueprints?",
       "success": "Fantastic.  You have our thanks and payment.  The elevator access doors have been opened, and you are now authorized to use the elevator.",
+      "success_lie": "What good does this do us?",
+      "failure": "Simply useless…"
+    }
+  },
+  {
+    "id": "MISSION_ROBOFAC_INTERCOM_4",
+    "type": "mission_definition",
+    "name": { "str": "Bury the Light" },
+    "description": "Reach the <color_red>physics lab</color> and retrieve the document <color_light_blue>PROCEDURE 025-EPSILON</color>.",
+    "goal": "MGOAL_FIND_ITEM",
+    "item": "physics_anomaly_epsilon",
+    "difficulty": 5,
+    "value": 1000,
+    "start": {
+      "assign_mission_target": { "om_terrain": "microlab_portal_elevator_nether_glass", "om_special": "physics_microlab", "z": -10 }
+    },
+    "end": { "effect": [ { "u_buy_item": "RobofacCoin", "count": 4 } ] },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "has_generic_rewards": false,
+    "dialogue": {
+      "describe": "…",
+      "offer": "We have identified the location of an underground classified research facility that our records indicate was dedicated to the study of 'advanced physics'.  We need you to investigate this facility and retrieve a critical document that is likely located inside, titled 'PROCEDURE 025-EPSILON'.",
+      "accepted": "We await results, mercenary.",
+      "rejected": "Return if you change your mind.",
+      "advice": "The lab itself should be similar in format to a standard microlab, and thus is likely only accessible through the subway system.  We have no information as to what could be inside this facility.",
+      "inquire": "Have you found the document?",
+      "success": "Fascinating.  It is possible the portal storms caused a sort of synergy with the anomaly, causing its effects to expand greatly during the initial days of the Cataclysm.  This would align with the development of...",
       "success_lie": "What good does this do us?",
       "failure": "Simply useless…"
     }

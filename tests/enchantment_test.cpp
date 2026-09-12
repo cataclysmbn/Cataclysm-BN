@@ -8,7 +8,7 @@
 #include "player.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 static trait_id trait_CARNIVORE("CARNIVORE");
 static efftype_id effect_debug_clairvoyance("debug_clairvoyance");

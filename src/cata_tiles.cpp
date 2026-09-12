@@ -1,100 +1,97 @@
 #include "units_temperature.h"
 #if defined(TILES)
-#include "cata_tiles.h"
+#    include "action.h"
+#    include "avatar.h"
+#    include "cached_options.h"
+#    include "calendar.h"
+#    include "cata_tiles.h"
+#    include "cata_utility.h"
+#    include "catacharset.h"
+#    include "character.h"
+#    include "character_id.h"
+#    include "character_state_provider.h"
+#    include "clzones.h"
+#    include "cuboid_rectangle.h"
+#    include "cursesdef.h"
+#    include "cursesport.h"
+#    include "debug.h"
+#    include "dynamic_atlas.h"
+#    include "enchantments/enchantment_vision.h"
+#    include "field.h"
+#    include "field_type.h"
+#    include "filesystem.h"
+#    include "flag.h"
+#    include "fstream_utils.h"
+#    include "game.h"
+#    include "game_constants.h"
+#    include "init.h"
+#    include "input.h"
+#    include "int_id.h"
+#    include "item.h"
+#    include "item_factory.h"
+#    include "itype.h"
+#    include "json.h"
+#    include "line.h"
+#    include "make_static.h"
+#    include "map.h"
+#    include "map_memory.h"
+#    include "mapbuffer.h"
+#    include "mapdata.h"
+#    include "mod_tileset.h"
+#    include "monster.h"
+#    include "monstergenerator.h"
+#    include "mtype.h"
+#    include "npc.h"
+#    include "omdata.h"
+#    include "options.h"
+#    include "output.h"
+#    include "overlay_ordering.h"
+#    include "overmap.h"
+#    include "overmap_location.h"
+#    include "overmapbuffer.h"
+#    include "path_info.h"
+#    include "pixel_minimap.h"
+#    include "player.h"
+#    include "profile.h"
+#    include "rect_range.h"
+#    include "scent_map.h"
+#    include "sdl_utils.h"
+#    include "sdl_wrappers.h"
+#    include "sdltiles.h"
+#    include "sounds.h"
+#    include "string_formatter.h"
+#    include "string_id.h"
+#    include "string_utils.h"
+#    include "submap.h"
+#    include "submap_load_manager.h"
+#    include "tileray.h"
+#    include "translations.h"
+#    include "trap.h"
+#    include "travel/travel_destination.h"
+#    include "type_id.h"
+#    include "veh_type.h"
+#    include "vehicle.h"
+#    include "vehicle_part.h"
+#    include "vpart_position.h"
+#    include "weather/weather.h"
+#    include "weighted_list.h"
 
-#include <algorithm>
-#include <array>
-#include <bitset>
-#include <cassert>
-#include <cmath>
-#include <cstdint>
-#include <fstream>
-#include <iterator>
-#include <limits>
-#include <optional>
-#include <set>
-#include <stdexcept>
-#include <string_view>
-#include <tuple>
-#include <unordered_set>
-#include <ranges>
-
-#include "action.h"
-#include "avatar.h"
-#include "cached_options.h"
-#include "calendar.h"
-#include "cata_utility.h"
-#include "character_state_provider.h"
-#include "catacharset.h"
-#include "character.h"
-#include "character_id.h"
-#include "clzones.h"
-#include "cuboid_rectangle.h"
-#include "cursesdef.h"
-#include "cursesport.h"
-#include "debug.h"
-#include "dynamic_atlas.h"
-#include "enchantments/enchantment_vision.h"
-#include "field.h"
-#include "field_type.h"
-#include "flag.h"
-#include "filesystem.h"
-#include "fstream_utils.h"
-#include "game.h"
-#include "game_constants.h"
-#include "input.h"
-#include "int_id.h"
-#include "init.h"
-#include "item.h"
-#include "item_factory.h"
-#include "itype.h"
-#include "json.h"
-#include "line.h"
-#include "make_static.h"
-#include "map.h"
-#include "map_memory.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
-#include "mod_tileset.h"
-#include "monster.h"
-#include "monstergenerator.h"
-#include "mtype.h"
-#include "npc.h"
-#include "omdata.h"
-#include "overmap.h"
-#include "options.h"
-#include "output.h"
-#include "overlay_ordering.h"
-#include "overmap_location.h"
-#include "path_info.h"
-#include "pixel_minimap.h"
-#include "player.h"
-#include "rect_range.h"
-#include "scent_map.h"
-#include "sdl_utils.h"
-#include "sdl_wrappers.h"
-#include "sdltiles.h"
-#include "sounds.h"
-#include "string_formatter.h"
-#include "string_id.h"
-#include "string_utils.h"
-#include "submap.h"
-#include "submap_load_manager.h"
-#include "tileray.h"
-#include "translations.h"
-#include "travel/travel_destination.h"
-#include "trap.h"
-#include "type_id.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-
-#include "vpart_position.h"
-#include "weather.h"
-#include "weighted_list.h"
-#include "overmapbuffer.h"
-
-#include "profile.h"
+#    include <algorithm>
+#    include <array>
+#    include <bitset>
+#    include <cassert>
+#    include <cmath>
+#    include <cstdint>
+#    include <fstream>
+#    include <iterator>
+#    include <limits>
+#    include <optional>
+#    include <ranges>
+#    include <set>
+#    include <stdexcept>
+#    include <string_view>
+#    include <tuple>
+#    include <unordered_set>
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 

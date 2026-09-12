@@ -1,13 +1,5 @@
 #include "submap.h"
 
-#include <algorithm>
-#include <array>
-#include <iterator>
-#include <memory>
-#include <ranges>
-#include <span>
-#include <utility>
-
 #include "debug.h"
 #include "int_id.h"
 #include "lightmap.h"
@@ -19,7 +11,15 @@
 #include "trap.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <iterator>
+#include <memory>
+#include <ranges>
+#include <span>
+#include <utility>
 
 
 const data_vars::data_set submap::EMPTY_VARS{};

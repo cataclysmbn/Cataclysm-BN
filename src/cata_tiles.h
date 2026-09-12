@@ -1,17 +1,5 @@
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
-#include <map>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-#include <variant>
-
 #include "animation.h"
 #include "coordinates.h"
 #include "enums.h"
@@ -23,13 +11,25 @@
 #include "options.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"
-#include "zone_draw_options.h"
 #include "sdl_geometry.h"
 #include "sdl_utils.h"
 #include "sdl_wrappers.h"
 #include "type_id.h"
-#include "weather.h"
+#include "weather/weather.h"
 #include "weighted_list.h"
+#include "zone_draw_options.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <variant>
+#include <vector>
 
 class Character;
 struct char_trait_data;

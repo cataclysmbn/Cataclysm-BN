@@ -1,18 +1,3 @@
-#include <algorithm>
-#include <array>
-#include <cctype>
-#include <cmath>
-#include <cstdlib>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include "action_time_scale.h"
 #include "addiction.h"
 #include "avatar.h"
@@ -58,7 +43,22 @@
 #include "type_id.h"
 #include "units.h"
 #include "units_temperature.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 static const bionic_id bio_dis_acid( "bio_dis_acid" );
 static const bionic_id bio_dis_shock( "bio_dis_shock" );

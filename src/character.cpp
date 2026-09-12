@@ -1,20 +1,4 @@
 #include "character.h"
-#include "calendar.h"
-#include "character_encumbrance.h"
-
-#include <algorithm>
-#include <cctype>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <iterator>
-#include <memory>
-#include <numeric>
-#include <ostream>
-#include <ranges>
-#include <type_traits>
-#include <vector>
-#include <ranges>
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -25,21 +9,23 @@
 #include "avatar_action.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
+#include "character_encumbrance.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
 #include "clothing_utils.h"
 #include "clzones.h"
-#include "craft_command.h"
 #include "construction.h"
 #include "consumption.h"
 #include "coordinates.h"
+#include "craft_command.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
@@ -122,8 +108,21 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm>
+#include <cctype>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <ostream>
+#include <ranges>
+#include <type_traits>
+#include <vector>
 
 struct dealt_projectile_attack;
 

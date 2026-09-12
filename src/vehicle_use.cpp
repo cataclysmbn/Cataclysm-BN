@@ -1,30 +1,12 @@
-#include "character.h"
-#include "units_mass.h"
-#include "vehicle.h"
-#include "vehicle_part.h" // IWYU pragma: associated
-#include "units_temperature.h"
-
-#include <algorithm>
-#include <numeric>
-#include <ranges>
-#include <array>
-#include <cmath>
-#include <cstdlib>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <optional>
-#include <sstream>
-#include <tuple>
-
 #include "action.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "avatar_functions.h"
 #include "bodypart.h"
 #include "catalua.h"
-#include "clzones.h"
+#include "character.h"
 #include "character_functions.h"
+#include "clzones.h"
 #include "color.h"
 #include "debug.h"
 #include "enums.h"
@@ -58,13 +40,30 @@
 #include "string_utils.h"
 #include "translations.h"
 #include "ui.h"
+#include "units_mass.h"
+#include "units_temperature.h"
 #include "value_ptr.h"
 #include "veh_interact.h"
 #include "veh_type.h"
+#include "vehicle.h"
 #include "vehicle_move.h"
+#include "vehicle_part.h" // IWYU pragma: associated
 #include "vpart_position.h"
 #include "vpart_range.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <ranges>
+#include <sstream>
+#include <tuple>
 
 static const activity_id ACT_HOTWIRE_CAR( "ACT_HOTWIRE_CAR" );
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );

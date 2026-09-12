@@ -1,24 +1,5 @@
 #include "sounds.h"
 
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <bitset>
-#include <chrono>
-#include <cmath>
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <memory>
-#include <optional>
-#include <ostream>
-#include <set>
-#include <system_error>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#include <queue>
-
 #include "active_tile_data.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -35,22 +16,26 @@
 #include "itype.h"
 #include "line.h"
 #include "map.h"
-#include "mapbuffer.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "messages.h"
 #include "monfaction.h"
 #include "monster.h"
+#include "mtype.h"
 #include "npc.h"
+#include "omdata.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point.h"
+#include "profile.h"
 #include "rng.h"
 #include "safemode_ui.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "submap.h"
 #include "thread_pool.h"
 #include "translations.h"
 #include "type_id.h"
@@ -60,11 +45,26 @@
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
-#include "weather.h"
-#include "profile.h"
-#include "omdata.h"
-#include "submap.h"
-#include "mtype.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+#include <optional>
+#include <ostream>
+#include <queue>
+#include <set>
+#include <system_error>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #if defined(SDL_SOUND)
 #   include <thread>
