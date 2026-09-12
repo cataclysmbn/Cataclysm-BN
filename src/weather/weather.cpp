@@ -38,7 +38,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "units_temperature.h"
-#include "vpart_position.h"
+#include "vehicle/vpart_position.h"
 #include "weather_gen.h"
 #include "world_type.h"
 

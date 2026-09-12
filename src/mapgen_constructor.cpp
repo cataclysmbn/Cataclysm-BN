@@ -1,10 +1,5 @@
 #include "mapgen_constructor.h"
 
-#include <algorithm>
-#include <climits>
-#include <memory>
-#include <ranges>
-
 #include "artifact.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
@@ -39,12 +34,17 @@
 #include "thread_pool.h"
 #include "trap.h"
 #include "units_utility.h"
-#include "vehicle.h"
-#include "vehicle_group.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_group.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <climits>
+#include <memory>
+#include <ranges>
 
 static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
 static const mongroup_id GROUP_BREATHER( "GROUP_BREATHER" );

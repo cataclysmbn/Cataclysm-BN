@@ -1,30 +1,8 @@
 #pragma once
 
-#include <array>
-#include <bitset>
-#include <climits>
-#include "cata_dynamic_bitset.h"
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <list>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <optional>
-#include <ranges>
-#include <shared_mutex>
-#include <span>
-#include <set>
-#include <source_location>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <variant>
-#include <vector>
-
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_dynamic_bitset.h"
 #include "coordinates.h"
 #include "dimension_info.h"
 #include "enums.h"
@@ -42,11 +20,33 @@
 #include "mapgen_functions.h"
 #include "memory_fast.h"
 #include "shadowcasting.h"
+#include "sounds.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
-#include "sounds.h"
-#include "vpart_position.h"
+#include "vehicle/vpart_position.h"
+
+#include <array>
+#include <bitset>
+#include <climits>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <shared_mutex>
+#include <source_location>
+#include <span>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <variant>
+#include <vector>
 
 
 enum class spawn_disposition;

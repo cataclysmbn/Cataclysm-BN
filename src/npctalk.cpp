@@ -1,30 +1,14 @@
-#include "creature.h"
-#include "dialogue.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <iterator>
-#include <list>
-#include <map>
-#include <memory>
-#include <ostream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
+#include "npctalk.h"
 
 #include "activity_type.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
 #include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
@@ -32,10 +16,12 @@
 #include "clzones.h"
 #include "color.h"
 #include "condition.h"
+#include "creature.h"
 #include "debug.h"
+#include "dialogue.h" // IWYU pragma: associated
 #include "enums.h"
-#include "flag.h"
 #include "faction.h"
+#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"
@@ -47,19 +33,18 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "make_static.h"
 #include "magic/magic.h"
+#include "make_static.h"
 #include "map.h"
 #include "mapgen_functions.h"
 #include "martialarts.h"
-#include "messages.h"
 #include "message_types.h"
+#include "messages.h"
 #include "mission.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "npctalk.h"
 #include "npctrade.h"
 #include "options.h"
 #include "output.h"
@@ -84,11 +69,26 @@
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_AIM( "ACT_AIM" );
 static const activity_id ACT_SOCIALIZE( "ACT_SOCIALIZE" );

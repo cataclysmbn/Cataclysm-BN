@@ -28,7 +28,7 @@
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
-#include "vehicle.h"
+#include "vehicle/vehicle.h"
 
 #include <memory>
 #include <ranges>

@@ -97,13 +97,13 @@
 #include "units_utility.h"
 #include "utils/string_to_int.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/wheel_dimensions.h"
 #include "vitamin.h"
-#include "vpart_position.h"
 #include "weather/weather.h"
 #include "weather/weather_gen.h"
-#include "wheel_dimensions.h"
 
 #include <algorithm>
 #include <array>

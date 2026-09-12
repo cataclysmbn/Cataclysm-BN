@@ -76,9 +76,9 @@
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 #include "weather/weather.h"
 #include "weather/weather_gen.h"
 

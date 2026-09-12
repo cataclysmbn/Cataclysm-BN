@@ -1,7 +1,7 @@
 #include "catch/catch.hpp"
 #include "json.h"
 #include "options_helpers.h"
-#include "wheel_dimensions.h"
+#include "vehicle/wheel_dimensions.h"
 
 #include <sstream>
 #include <string>

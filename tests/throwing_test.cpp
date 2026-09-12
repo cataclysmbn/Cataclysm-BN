@@ -23,7 +23,7 @@
 #include "state_helpers.h"
 #include "test_statistics.h"
 #include "type_id.h"
-#include "vehicle_throw.h"
+#include "vehicle/vehicle_throw.h"
 
 #include <algorithm>
 #include <list>

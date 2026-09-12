@@ -19,7 +19,7 @@
 #include "state_helpers.h"
 #include "timed_event.h"
 #include "units_temperature.h"
-#include "vehicle.h"
+#include "vehicle/vehicle.h"
 #include "weather/weather.h"
 
 #include <string>

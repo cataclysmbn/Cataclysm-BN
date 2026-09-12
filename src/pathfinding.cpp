@@ -1,26 +1,26 @@
 #include "pathfinding.h"
 
+#include "coordinates.h"
+#include "game.h"
+#include "game_constants.h"
+#include "map.h"
+#include "map_iterator.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
+#include "point.h"
+#include "submap.h"
+#include "trap.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
 #include <algorithm>
 #include <memory>
 #include <optional>
 #include <queue>
 #include <ranges>
 #include <vector>
-
-#include "coordinates.h"
-#include "game.h"
-#include "game_constants.h"
-#include "map.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
-#include "map_iterator.h"
-#include "point.h"
-#include "submap.h"
-#include "trap.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
 
 static constexpr std::array<point_rel_ms, 8> DIRS_2D = {
     point_rel_ms::north_east(),

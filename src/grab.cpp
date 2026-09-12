@@ -1,30 +1,29 @@
-#include "coordinates.h"
-#include "enums.h"
-#include "game.h" // IWYU pragma: associated
-
-#include <cstdlib>
-#include <algorithm>
-#include <numeric>
-
 #include "avatar.h"
 #include "character.h"
 #include "character_functions.h"
+#include "coordinates.h"
+#include "debug.h"
+#include "enums.h"
+#include "game.h" // IWYU pragma: associated
 #include "map.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "point.h"
-#include "sounds.h"
-#include "vehicle.h"
-#include "vehicle_grab.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "debug.h"
 #include "rng.h"
+#include "sounds.h"
 #include "tileray.h"
 #include "translations.h"
 #include "units.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_grab.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <numeric>
 
 static const efftype_id effect_harnessed( "harnessed" );
 

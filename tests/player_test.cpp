@@ -1,3 +1,4 @@
+#include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
@@ -16,7 +17,6 @@
 #include "state_helpers.h"
 #include "units.h"
 #include "units_temperature.h"
-#include "vpart_position.h"
 #include "weather/weather.h"
 
 #include <array>

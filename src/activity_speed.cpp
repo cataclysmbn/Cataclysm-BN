@@ -1,15 +1,7 @@
 #include "activity_speed.h"
-#include "activity_speed_adapters.h"
-
-#include <algorithm>
-#include <cmath>
-#include <numbers>
-#include <optional>
-#include <utility>
-#include <variant>
-#include <vector>
 
 #include "action_time_scale.h"
+#include "activity_speed_adapters.h"
 #include "activity_type.h"
 #include "character.h"
 #include "character_functions.h"
@@ -19,9 +11,17 @@
 #include "recipe.h"
 #include "skill.h"
 #include "type_id.h"
-#include "veh_type.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <cmath>
+#include <numbers>
+#include <optional>
+#include <utility>
+#include <variant>
+#include <vector>
 
 static const skill_id stat_speech( "speech" );
 

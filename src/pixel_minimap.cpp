@@ -1,41 +1,41 @@
 #if defined(TILES)
 
-#include "pixel_minimap.h"
+#    include "pixel_minimap.h"
 
-#include <algorithm>
-#include <array>
-#include <bitset>
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-#include <functional>
-#include <iterator>
-#include <limits>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <utility>
-#include <vector>
+#    include "avatar.h"
+#    include "cata_utility.h"
+#    include "character.h"
+#    include "color.h"
+#    include "creature.h"
+#    include "debug.h"
+#    include "game.h"
+#    include "game_constants.h"
+#    include "int_id.h"
+#    include "lightmap.h"
+#    include "map.h"
+#    include "mapdata.h"
+#    include "math_defines.h"
+#    include "monster.h"
+#    include "pixel_minimap_projectors.h"
+#    include "sdl_utils.h"
+#    include "vehicle/vehicle.h"
+#    include "vehicle/vehicle_part.h"
+#    include "vehicle/vpart_position.h"
 
-#include "avatar.h"
-#include "cata_utility.h"
-#include "character.h"
-#include "color.h"
-#include "creature.h"
-#include "debug.h"
-#include "game.h"
-#include "game_constants.h"
-#include "int_id.h"
-#include "lightmap.h"
-#include "map.h"
-#include "mapdata.h"
-#include "math_defines.h"
-#include "monster.h"
-#include "pixel_minimap_projectors.h"
-#include "sdl_utils.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#    include <algorithm>
+#    include <array>
+#    include <bitset>
+#    include <cassert>
+#    include <cmath>
+#    include <cstdlib>
+#    include <functional>
+#    include <iterator>
+#    include <limits>
+#    include <memory>
+#    include <optional>
+#    include <ranges>
+#    include <utility>
+#    include <vector>
 
 extern void set_displaybuffer_rendertarget();
 

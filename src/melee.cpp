@@ -1,31 +1,17 @@
 #include "melee.h"
 
-#include <algorithm>
-#include <numeric>
-#include <array>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <limits>
-#include <map>
-#include <optional>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "avatar_action.h"
 #include "avatar.h"
+#include "avatar_action.h"
 #include "avatar_functions.h"
-#include "bodypart.h"
 #include "bionics.h"
+#include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -64,18 +50,32 @@
 #include "ranged.h"
 #include "rng.h"
 #include "skill.h"
-#include "ui.h"
-#include "ui_manager.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
+#include "ui.h"
+#include "ui_manager.h"
 #include "units.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <limits>
+#include <map>
+#include <numeric>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 static const bionic_id bio_cqb( "bio_cqb" );
 static const bionic_id bio_memory( "bio_memory" );

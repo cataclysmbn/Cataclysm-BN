@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
@@ -13,8 +14,7 @@
 #include "state_helpers.h"
 #include "stringmaker.h"
 #include "submap.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
 
 #include <vector>
 

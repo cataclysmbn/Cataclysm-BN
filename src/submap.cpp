@@ -9,8 +9,8 @@
 #include "profile.h"
 #include "tileray.h"
 #include "trap.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 #include "weather/weather.h"
 
 #include <algorithm>

@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -19,11 +21,9 @@
 #include "overmapbuffer.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_wait.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_wait.h"
 
 #include <algorithm>
 #include <memory>

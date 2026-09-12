@@ -1,14 +1,14 @@
 #include "map/utils/map_utils.h"
 
+#include "../../vehicle/vpart_position.h"
 #include "calendar.h"
 #include "data_vars.h"
 #include "game.h"
 #include "item.h"
 #include "map.h"
 #include "type_id.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
 
 #include <ranges>
 #include <utility>
