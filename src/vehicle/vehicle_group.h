@@ -27,32 +27,29 @@ extern std::unordered_map<vgroup_id, VehicleGroup> vgroups;
  * This class is used to group vehicles together into groups in much the same way as
  *  item groups work.
  */
-class VehicleGroup
-{
-    public:
-        VehicleGroup() = default;
+class VehicleGroup {
+public:
+    VehicleGroup() = default;
 
-        void add_vehicle( const vproto_id &type, const int &probability ) {
-            vehicles.add( type, probability );
-        }
+    void add_vehicle(const vproto_id& type, const int& probability) {
+        vehicles.add(type, probability);
+    }
 
-        const vproto_id &pick() const {
-            return *vehicles.pick();
-        }
+    const vproto_id& pick() const { return *vehicles.pick(); }
 
-        static void load( const JsonObject &jo );
-        static void reset();
-        static void check();
+    static void load(const JsonObject& jo);
+    static void reset();
+    static void check();
 
-    private:
-        weighted_int_list<vproto_id> vehicles;
+private:
+    weighted_int_list<vproto_id> vehicles;
 };
 
 /**
  * The location and facing data needed to place a vehicle onto the map.
  */
 struct VehicleFacings {
-    VehicleFacings( const JsonObject &jo, const std::string &key );
+    VehicleFacings(const JsonObject& jo, const std::string& key);
 
     units::angle pick() const;
 
@@ -60,12 +57,12 @@ struct VehicleFacings {
 };
 
 struct VehicleLocation {
-    VehicleLocation( const jmapgen_int &x, const jmapgen_int &y, const VehicleFacings &facings )
-        : x( x ), y( y ), facings( facings ) {}
+    VehicleLocation(const jmapgen_int& x, const jmapgen_int& y, const VehicleFacings& facings)
+        : x(x),
+          y(y),
+          facings(facings) {}
 
-    units::angle pick_facing() const {
-        return facings.pick();
-    }
+    units::angle pick_facing() const { return facings.pick(); }
 
     point_bub_ms pick_point() const;
     auto pick_omt_point() const -> point_omt_ms;
@@ -81,12 +78,12 @@ struct VehicleLocation {
 struct VehiclePlacement {
     VehiclePlacement() = default;
 
-    void add( const jmapgen_int &x, const jmapgen_int &y, const VehicleFacings &facings ) {
-        locations.emplace_back( x, y, facings );
+    void add(const jmapgen_int& x, const jmapgen_int& y, const VehicleFacings& facings) {
+        locations.emplace_back(x, y, facings);
     }
 
-    const VehicleLocation *pick() const;
-    static void load( const JsonObject &jo );
+    const VehicleLocation* pick() const;
+    static void load(const JsonObject& jo);
     static void reset();
 
     using LocationMap = std::vector<VehicleLocation>;
@@ -99,107 +96,103 @@ struct VehiclePlacement {
  * c++ function. The second is by using data loaded from json.
  */
 
-class VehicleFunction
-{
-    public:
-        virtual ~VehicleFunction() = default;
-        virtual void apply( map &m, const std::string &terrainid, const int &z ) const = 0;
-        virtual auto apply( mapgen_constructor &m, const std::string &terrainid ) const -> void = 0;
+class VehicleFunction {
+public:
+    virtual ~VehicleFunction() = default;
+    virtual void apply(map& m, const std::string& terrainid, const int& z) const = 0;
+    virtual auto apply(mapgen_constructor& m, const std::string& terrainid) const -> void = 0;
 };
 
-using vehicle_gen_pointer = void ( * )( map &, const std::string &, const int & );
-using vehicle_gen_constructor_pointer = void ( * )( mapgen_constructor &, const std::string & );
+using vehicle_gen_pointer = void (*)(map&, const std::string&, const int&);
+using vehicle_gen_constructor_pointer = void (*)(mapgen_constructor&, const std::string&);
 
 struct builtin_vehicle_function {
     vehicle_gen_pointer map_func;
     vehicle_gen_constructor_pointer mapgen_func;
 };
 
-class VehicleFunction_builtin : public VehicleFunction
-{
-    public:
-        VehicleFunction_builtin( const builtin_vehicle_function &funcs ) : funcs( funcs ) {}
-        ~VehicleFunction_builtin() override = default;
+class VehicleFunction_builtin: public VehicleFunction {
+public:
+    VehicleFunction_builtin(const builtin_vehicle_function& funcs): funcs(funcs) {}
+    ~VehicleFunction_builtin() override = default;
 
-        /**
-         * This will invoke the vehicle spawning function on the map.
-         * @param m The map on which to add the vehicle.
-         * @param terrainid The name of the terrain being spawned on.
-         */
-        void apply( map &m, const std::string &terrainid, const int &z ) const override {
-            funcs.map_func( m, terrainid, z );
-        }
+    /**
+     * This will invoke the vehicle spawning function on the map.
+     * @param m The map on which to add the vehicle.
+     * @param terrainid The name of the terrain being spawned on.
+     */
+    void apply(map& m, const std::string& terrainid, const int& z) const override {
+        funcs.map_func(m, terrainid, z);
+    }
 
-        auto apply( mapgen_constructor &m, const std::string &terrainid ) const -> void override {
-            funcs.mapgen_func( m, terrainid );
-        }
+    auto apply(mapgen_constructor& m, const std::string& terrainid) const -> void override {
+        funcs.mapgen_func(m, terrainid);
+    }
 
-    private:
-        builtin_vehicle_function funcs;
+private:
+    builtin_vehicle_function funcs;
 };
 
-class VehicleFunction_json : public VehicleFunction
-{
-    public:
-        VehicleFunction_json( const JsonObject &jo );
-        ~VehicleFunction_json() override = default;
+class VehicleFunction_json: public VehicleFunction {
+public:
+    VehicleFunction_json(const JsonObject& jo);
+    ~VehicleFunction_json() override = default;
 
-        /**
-         * This will invoke the vehicle spawning function on the map.
-         * @param m The map on which to add the vehicle.
-         * @param terrain_name The name of the terrain being spawned on. This is ignored by the json handler.
-         */
-        void apply( map &m, const std::string &terrain_name, const int &z ) const override;
-        auto apply( mapgen_constructor &m, const std::string &terrain_name ) const -> void override;
+    /**
+     * This will invoke the vehicle spawning function on the map.
+     * @param m The map on which to add the vehicle.
+     * @param terrain_name The name of the terrain being spawned on. This is ignored by the json
+     * handler.
+     */
+    void apply(map& m, const std::string& terrain_name, const int& z) const override;
+    auto apply(mapgen_constructor& m, const std::string& terrain_name) const -> void override;
 
-    private:
-        vgroup_id vehicle;
-        jmapgen_int number;
-        int fuel;
-        int status;
+private:
+    vgroup_id vehicle;
+    jmapgen_int number;
+    int fuel;
+    int status;
 
-        std::string placement;
-        std::optional<VehicleLocation> location;
+    std::string placement;
+    std::optional<VehicleLocation> location;
 };
 
 /**
  * This class handles a weighted list of different spawn functions, allowing a single
  * vehicle_spawn to have multiple possibilities.
  */
-class VehicleSpawn
-{
-    public:
-        VehicleSpawn() = default;
+class VehicleSpawn {
+public:
+    VehicleSpawn() = default;
 
-        void add( const double &weight, const shared_ptr_fast<VehicleFunction> &func ) {
-            types.add( func, weight );
-        }
+    void add(const double& weight, const shared_ptr_fast<VehicleFunction>& func) {
+        types.add(func, weight);
+    }
 
-        /**
-         * This will invoke the vehicle spawn on the map.
-         * @param m The map on which to add the vehicle.
-         * @param terrain_name The name of the terrain being spawned on.
-         */
-        void apply( map &m, const std::string &terrain_name, const int &z ) const;
-        auto apply( mapgen_constructor &m, const std::string &terrain_name ) const -> void;
+    /**
+     * This will invoke the vehicle spawn on the map.
+     * @param m The map on which to add the vehicle.
+     * @param terrain_name The name of the terrain being spawned on.
+     */
+    void apply(map& m, const std::string& terrain_name, const int& z) const;
+    auto apply(mapgen_constructor& m, const std::string& terrain_name) const -> void;
 
-        /**
-         * A static helper function. This will invoke the supplied vehicle spawn on the map.
-         * @param id The spawnid to apply
-         * @param m The map on which to add the vehicle.
-         * @param terrain_name The name of the terrain being spawned on.
-         */
-        static void apply( const vspawn_id &id, map &m, const std::string &terrain_name, const int &z );
-        static auto apply( const vspawn_id &id, mapgen_constructor &m,
-                           const std::string &terrain_name ) -> void;
+    /**
+     * A static helper function. This will invoke the supplied vehicle spawn on the map.
+     * @param id The spawnid to apply
+     * @param m The map on which to add the vehicle.
+     * @param terrain_name The name of the terrain being spawned on.
+     */
+    static void apply(const vspawn_id& id, map& m, const std::string& terrain_name, const int& z);
+    static auto apply(const vspawn_id& id, mapgen_constructor& m, const std::string& terrain_name)
+        -> void;
 
-        static void load( const JsonObject &jo );
-        static void reset();
+    static void load(const JsonObject& jo);
+    static void reset();
 
-    private:
-        weighted_float_list<shared_ptr_fast<VehicleFunction>> types;
+private:
+    weighted_float_list<shared_ptr_fast<VehicleFunction>> types;
 
-        using FunctionMap = std::unordered_map<std::string, builtin_vehicle_function>;
-        static FunctionMap builtin_functions;
+    using FunctionMap = std::unordered_map<std::string, builtin_vehicle_function>;
+    static FunctionMap builtin_functions;
 };
-

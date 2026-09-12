@@ -18,30 +18,29 @@
 /**
  *  This class is used for random vehicle color choices
  */
-class VehiclePalette
-{
-    public:
-        VehiclePalette() = default;
+class VehiclePalette {
+public:
+    VehiclePalette() = default;
 
-        static void load_palette( const JsonObject &jo, const std::string &src );
+    static void load_palette(const JsonObject& jo, const std::string& src);
 
-        void load( const JsonObject &jo, const std::string &src );
+    void load(const JsonObject& jo, const std::string& src);
 
-        void check() const;
+    void check() const;
 
-        static void check_definitions();
+    static void check_definitions();
 
-        static void reset();
+    static void reset();
 
-        int fuzzy_to_index( const vpart_id &id ) const;
+    int fuzzy_to_index(const vpart_id& id) const;
 
-        std::vector<RGBColor> pick_colors() const;
+    std::vector<RGBColor> pick_colors() const;
 
-        vpalette_id id;
+    vpalette_id id;
 
-        bool was_loaded;
+    bool was_loaded;
 
-    private:
-        std::vector<weighted_int_list<std::string>> colors;
-        std::map<std::string, int> fuzzy_color_match;
+private:
+    std::vector<weighted_int_list<std::string>> colors;
+    std::map<std::string, int> fuzzy_color_match;
 };

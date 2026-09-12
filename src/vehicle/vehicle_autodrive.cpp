@@ -127,7 +127,7 @@
  * night vision.
  */
 
-static constexpr int OMT_SIZE = coords::map_squares_per( coords::omt );
+static constexpr int OMT_SIZE = coords::map_squares_per(coords::omt);
 static constexpr int NAV_MAP_NUM_OMT = 2;
 static constexpr int NAV_MAP_SIZE_X = NAV_MAP_NUM_OMT * OMT_SIZE;
 static constexpr int NAV_MAP_SIZE_Y = OMT_SIZE;
@@ -137,7 +137,7 @@ static constexpr int NAV_VIEW_SIZE_Y = NAV_MAP_SIZE_Y + 2 * NAV_VIEW_PADDING;
 static constexpr int TURNING_INCREMENT = 15;
 static constexpr int NUM_ORIENTATIONS = 360 / TURNING_INCREMENT;
 // min and max speed in tiles/s
-static constexpr int CMPS_PER_TPS = static_cast<int>( vehicles::cmps_per_tile );
+static constexpr int CMPS_PER_TPS = static_cast<int>(vehicles::cmps_per_tile);
 
 /**
  * Data type representing a vehicle orientation, which corresponds to an angle that is
@@ -152,7 +152,10 @@ enum class orientation : int8_t {
  * Rotation amount which is a multiple of 90 degrees.
  */
 enum class quad_rotation : int {
-    d0 = 0, d90, d180, d270,
+    d0 = 0,
+    d90,
+    d180,
+    d270,
 };
 
 /**
@@ -186,20 +189,18 @@ struct node_address {
     int16_t x;
     int16_t y;
     orientation facing_dir;
-    bool operator== ( const node_address &other ) const {
+    bool operator==(const node_address& other) const {
         return x == other.x && y == other.y && facing_dir == other.facing_dir;
     }
-    point get_point() const {
-        return {x, y};
-    }
+    point get_point() const { return {x, y}; }
 };
 
 struct node_address_hasher {
-    std::size_t operator()( const node_address &addr ) const {
+    std::size_t operator()(const node_address& addr) const {
         std::uint64_t val = addr.x;
-        val = ( val << 16 ) + addr.y;
-        val = ( val << 16 ) + static_cast<int>( addr.facing_dir );
-        return cata::hash64( val );
+        val = (val << 16) + addr.y;
+        val = (val << 16) + static_cast<int>(addr.facing_dir);
+        return cata::hash64(val);
     }
 };
 
@@ -210,9 +211,7 @@ struct node_address_hasher {
 struct scored_address {
     struct node_address addr;
     int16_t score;
-    bool operator> ( const scored_address &other ) const {
-        return score > other.score;
-    }
+    bool operator>(const scored_address& other) const { return score > other.score; }
 };
 
 /*
@@ -237,10 +236,10 @@ struct coord_transformation {
     quad_rotation rotation;
     point post_offset;
 
-    point transform( point p ) const;
-    tripoint transform( point p, int z ) const;
-    orientation transform( orientation dir ) const;
-    node_address transform( point p, orientation dir ) const;
+    point transform(point p) const;
+    tripoint transform(point p, int z) const;
+    orientation transform(orientation dir) const;
+    node_address transform(point p, orientation dir) const;
     coord_transformation inverse() const;
 };
 
@@ -294,76 +293,60 @@ struct auto_navigation_data {
     std::vector<navigation_step> path;
 
     void clear() {
-        current_omt = { 0, 0, -100 };
+        current_omt = {0, 0, -100};
         path.clear();
     }
-    vehicle_profile &profile( orientation dir ) {
-        return profiles.at( static_cast<int>( dir ) );
+    vehicle_profile& profile(orientation dir) { return profiles.at(static_cast<int>(dir)); }
+    const vehicle_profile& profile(orientation dir) const {
+        return profiles.at(static_cast<int>(dir));
     }
-    const vehicle_profile &profile( orientation dir ) const {
-        return profiles.at( static_cast<int>( dir ) );
+    bool& valid_position(orientation dir, point p) {
+        return valid_positions[static_cast<int>(dir)][p.x][p.y];
     }
-    bool &valid_position( orientation dir, point p ) {
-        return valid_positions[static_cast<int>( dir )][p.x][p.y];
+    bool valid_position(orientation dir, point p) const {
+        return valid_positions[static_cast<int>(dir)][p.x][p.y];
     }
-    bool valid_position( orientation dir, point p ) const {
-        return valid_positions[static_cast<int>( dir )][p.x][p.y];
-    }
-    bool valid_position( const node_address &addr ) const {
-        return valid_position( addr.facing_dir, point( addr.x, addr.y ) );
+    bool valid_position(const node_address& addr) const {
+        return valid_position(addr.facing_dir, point(addr.x, addr.y));
     }
 };
 
-enum class collision_check_result : int {
-    ok,
-    no_visibility,
-    close_obstacle,
-    slow_down
-};
+enum class collision_check_result : int { ok, no_visibility, close_obstacle, slow_down };
 
-class vehicle::autodrive_controller
-{
-    public:
-        explicit autodrive_controller( const vehicle &driven_veh, const Character &driver );
-        const Character &get_driver() {
-            return driver;
-        }
-        const auto_navigation_data &get_data() {
-            return data;
-        }
-        void check_safe_speed();
-        std::optional<navigation_step> compute_next_step();
-        collision_check_result check_collision_zone( orientation turn_dir );
-        void reduce_speed();
+class vehicle::autodrive_controller {
+public:
+    explicit autodrive_controller(const vehicle& driven_veh, const Character& driver);
+    const Character& get_driver() { return driver; }
+    const auto_navigation_data& get_data() { return data; }
+    void check_safe_speed();
+    std::optional<navigation_step> compute_next_step();
+    collision_check_result check_collision_zone(orientation turn_dir);
+    void reduce_speed();
 
-    private:
-        const vehicle &driven_veh;
-        const Character &driver;
-        auto_navigation_data data;
+private:
+    const vehicle& driven_veh;
+    const Character& driver;
+    auto_navigation_data data;
 
-        void compute_coordinates();
-        bool check_drivable( tripoint_bub_ms pt ) const;
-        void compute_obstacles();
-        vehicle_profile compute_profile( orientation facing ) const;
-        void compute_valid_positions();
-        void compute_goal_zone();
-        void precompute_data();
-        scored_address compute_node_score( const node_address &addr, const navigation_node &node ) const;
-        void compute_next_nodes( const node_address &addr, const navigation_node &node,
-                                 int target_speed_tps,
-                                 std::vector<std::pair<node_address, navigation_node>> &next_nodes ) const;
-        std::optional<std::vector<navigation_step>> compute_path( int speed_tps ) const;
+    void compute_coordinates();
+    bool check_drivable(tripoint_bub_ms pt) const;
+    void compute_obstacles();
+    vehicle_profile compute_profile(orientation facing) const;
+    void compute_valid_positions();
+    void compute_goal_zone();
+    void precompute_data();
+    scored_address compute_node_score(const node_address& addr, const navigation_node& node) const;
+    void compute_next_nodes(
+        const node_address& addr, const navigation_node& node, int target_speed_tps,
+        std::vector<std::pair<node_address, navigation_node>>& next_nodes) const;
+    std::optional<std::vector<navigation_step>> compute_path(int speed_tps) const;
 };
 
 
-static const std::array<orientation, NUM_ORIENTATIONS> &all_orientations()
-{
+static const std::array<orientation, NUM_ORIENTATIONS>& all_orientations() {
     static const auto orientations_array = [] {
         std::array<orientation, NUM_ORIENTATIONS> ret;
-        for( int i = 0; i < NUM_ORIENTATIONS; i++ )
-        {
-            ret[i] = static_cast<orientation>( i );
-        }
+        for (int i = 0; i < NUM_ORIENTATIONS; i++) { ret[i] = static_cast<orientation>(i); }
         return ret;
     }();
     return orientations_array;
@@ -372,107 +355,85 @@ static const std::array<orientation, NUM_ORIENTATIONS> &all_orientations()
 /*
  * Normalize an orientation value to the range [0, NUM_ORIENTATIONS-1] using modular arithmetic.
  */
-static orientation normalize_orientation( int steering_turns )
-{
+static orientation normalize_orientation(int steering_turns) {
     steering_turns %= NUM_ORIENTATIONS;
     // beware that x % N < 0 when x < 0
-    if( steering_turns < 0 ) {
-        steering_turns += NUM_ORIENTATIONS;
-    }
-    return static_cast<orientation>( steering_turns );
+    if (steering_turns < 0) { steering_turns += NUM_ORIENTATIONS; }
+    return static_cast<orientation>(steering_turns);
 }
 
-static orientation to_orientation( units::angle angle )
-{
-    return normalize_orientation( std::lround( units::to_degrees(
-                                      angle ) / TURNING_INCREMENT ) );
+static orientation to_orientation(units::angle angle) {
+    return normalize_orientation(std::lround(units::to_degrees(angle) / TURNING_INCREMENT));
 }
 
-static std::string to_string( orientation dir )
-{
-    return std::to_string( static_cast<int>( dir ) );
+static std::string to_string(orientation dir) { return std::to_string(static_cast<int>(dir)); }
+
+static orientation operator-(const orientation& dir) {
+    return static_cast<orientation>((NUM_ORIENTATIONS - static_cast<int>(dir)) % NUM_ORIENTATIONS);
 }
 
-static orientation operator- ( const orientation &dir )
-{
-    return static_cast<orientation>( ( NUM_ORIENTATIONS - static_cast<int>
-                                       ( dir ) ) % NUM_ORIENTATIONS );
+static orientation operator+(const orientation& dir1, const orientation& dir2) {
+    return static_cast<orientation>(
+        (static_cast<int>(dir1) + static_cast<int>(dir2)) % NUM_ORIENTATIONS);
 }
 
-static orientation operator+ ( const orientation &dir1, const orientation &dir2 )
-{
-    return static_cast<orientation>( ( static_cast<int>( dir1 ) + static_cast<int>
-                                       ( dir2 ) ) % NUM_ORIENTATIONS );
-}
-
-static orientation operator- ( const orientation &dir1, const orientation &dir2 )
-{
+static orientation operator-(const orientation& dir1, const orientation& dir2) {
     return dir1 + -dir2;
 }
 
-static orientation operator+ ( const orientation &dir, int steering_turns )
-{
-    return dir + normalize_orientation( steering_turns );
+static orientation operator+(const orientation& dir, int steering_turns) {
+    return dir + normalize_orientation(steering_turns);
 }
 
-static quad_rotation operator- ( const quad_rotation &rot )
-{
-    return static_cast<quad_rotation>( ( 4 - static_cast<int>( rot ) ) % 4 );
+static quad_rotation operator-(const quad_rotation& rot) {
+    return static_cast<quad_rotation>((4 - static_cast<int>(rot)) % 4);
 }
 
-static quad_rotation operator+ ( const quad_rotation &rot1, const quad_rotation &rot2 )
-{
-    return static_cast<quad_rotation>( ( static_cast<int>( rot1 ) + static_cast<int>( rot2 ) ) % 4 );
+static quad_rotation operator+(const quad_rotation& rot1, const quad_rotation& rot2) {
+    return static_cast<quad_rotation>((static_cast<int>(rot1) + static_cast<int>(rot2)) % 4);
 }
 
-static quad_rotation operator- ( const quad_rotation &rot1, const quad_rotation &rot2 )
-{
+static quad_rotation operator-(const quad_rotation& rot1, const quad_rotation& rot2) {
     return rot1 + -rot2;
 }
 
-static orientation operator+ ( const orientation &dir, const quad_rotation &rot )
-{
-    return dir + static_cast<orientation>( static_cast<int>( rot ) *  NUM_ORIENTATIONS / 4 );
+static orientation operator+(const orientation& dir, const quad_rotation& rot) {
+    return dir + static_cast<orientation>(static_cast<int>(rot) * NUM_ORIENTATIONS / 4);
 }
 
-static orientation &operator+= ( orientation &dir, const quad_rotation &rot )
-{
+static orientation& operator+=(orientation& dir, const quad_rotation& rot) {
     return dir = dir + rot;
 }
 
-static units::angle to_angle( const orientation &dir )
-{
-    return units::from_degrees( static_cast<int>( dir ) * TURNING_INCREMENT );
+static units::angle to_angle(const orientation& dir) {
+    return units::from_degrees(static_cast<int>(dir) * TURNING_INCREMENT);
 }
 
 /*
  * Returns the difference between two orientation values, normalized to the range
  * [-NUM_ORIENTATIONS/2, NUM_ORIENTATIONS/2) via modular arithmetic.
  */
-static int orientation_diff( const orientation &dir1, const orientation &dir2 )
-{
-    return static_cast<int>( dir1 - dir2 + quad_rotation::d180 ) - NUM_ORIENTATIONS / 2;
+static int orientation_diff(const orientation& dir1, const orientation& dir2) {
+    return static_cast<int>(dir1 - dir2 + quad_rotation::d180) - NUM_ORIENTATIONS / 2;
 }
 
 /*
  * Returns the angle of the given point, which must lie on either axis
  */
-static quad_rotation to_quad_rotation( point pt )
-{
-    if( pt.x > 0 ) {
+static quad_rotation to_quad_rotation(point pt) {
+    if (pt.x > 0) {
         return quad_rotation::d0;
-    } else if( pt.x < 0 ) {
+    } else if (pt.x < 0) {
         return quad_rotation::d180;
-    } else if( pt.y > 0 ) {
+    } else if (pt.y > 0) {
         return quad_rotation::d90;
     } else {
         return quad_rotation::d270;
     }
 }
 
-static node_address make_node_address( point pos, orientation dir )
-{
-    return { static_cast<int16_t>( pos.x ), static_cast<int16_t>( pos.y ), dir };
+static node_address make_node_address(point pos, orientation dir) {
+    return {static_cast<int16_t>(pos.x), static_cast<int16_t>(pos.y), dir};
 }
 
 /*
@@ -480,145 +441,123 @@ static node_address make_node_address( point pos, orientation dir )
  * arithmetic and table lookups since it's used in the inner loop of A*.
  */
 // NOLINTNEXTLINE(cata-xy)
-static orientation approx_orientation( int dx, int dy )
-{
+static orientation approx_orientation(int dx, int dy) {
     orientation ret = orientation::d0;
-    if( dy < 0 ) {
+    if (dy < 0) {
         dx *= -1;
         dy *= -1;
         ret += quad_rotation::d180;
     }
-    if( dx < 0 ) {
-        std::swap( dx, dy );
+    if (dx < 0) {
+        std::swap(dx, dy);
         dy *= -1;
         ret += quad_rotation::d90;
     }
-    if( dy > dx ) {
-        ret = ret + quad_rotation::d90 - approx_orientation( dy, dx );
-    } else if( dy > 0 ) {
+    if (dy > dx) {
+        ret = ret + quad_rotation::d90 - approx_orientation(dy, dx);
+    } else if (dy > 0) {
         static const auto atan_table = [] {
             constexpr int table_size = 101;
             std::array<orientation, table_size> table;
-            for( int i = 0; i <  table_size; i++ )
-            {
-                table[i] = to_orientation( units::from_radians( std::atan( 1.0 * i /
-                                           ( table_size - 1 ) ) ) );
+            for (int i = 0; i < table_size; i++) {
+                table[i] = to_orientation(
+                    units::from_radians(std::atan(1.0 * i / (table_size - 1))));
             }
             return table;
         }();
-        ret = ret + atan_table[ dy * 100 / dx ];
+        ret = ret + atan_table[dy * 100 / dx];
     }
     return ret;
 }
 
-static point rotate( point p, quad_rotation rotation )
-{
-    switch( rotation ) {
+static point rotate(point p, quad_rotation rotation) {
+    switch (rotation) {
         case quad_rotation::d0:
             return p;
         case quad_rotation::d90:
-            return { -p.y - 1, p.x };
+            return {-p.y - 1, p.x};
         case quad_rotation::d180:
-            return { -p.x - 1, -p.y - 1 };  // NOLINT(cata-use-point-arithmetic)
+            return {-p.x - 1, -p.y - 1}; // NOLINT(cata-use-point-arithmetic)
         case quad_rotation::d270:
-            return { p.y, -p.x - 1 };
+            return {p.y, -p.x - 1};
     }
     return p;
 }
 
-point coord_transformation::transform( point p ) const
-{
-    return rotate( p - pre_offset, rotation ) + post_offset;
+point coord_transformation::transform(point p) const {
+    return rotate(p - pre_offset, rotation) + post_offset;
 }
 
-tripoint coord_transformation::transform( point p, int z ) const
-{
-    return tripoint( transform( p ), z );
+tripoint coord_transformation::transform(point p, int z) const { return tripoint(transform(p), z); }
+
+orientation coord_transformation::transform(orientation dir) const { return dir + rotation; }
+
+node_address coord_transformation::transform(point p, orientation dir) const {
+    return make_node_address(transform(p), transform(dir));
 }
 
-orientation coord_transformation::transform( orientation dir ) const
-{
-    return dir + rotation;
+coord_transformation coord_transformation::inverse() const {
+    return {post_offset, -rotation, pre_offset};
 }
 
-node_address coord_transformation::transform( point p, orientation dir ) const
-{
-    return make_node_address( transform( p ), transform( dir ) );
-}
+static int signum(int val) { return (0 < val) - (val < 0); }
 
-coord_transformation coord_transformation::inverse() const
-{
-    return { post_offset, -rotation, pre_offset };
-}
-
-static int signum( int val )
-{
-    return ( 0 < val ) - ( val < 0 );
-}
-
-void vehicle::autodrive_controller::compute_coordinates()
-{
-    data.view_bounds = { point_zero, {NAV_VIEW_SIZE_X, NAV_VIEW_SIZE_Y} };
-    data.nav_bounds = { point_zero, {NAV_MAP_SIZE_X, NAV_MAP_SIZE_Y} };
-    data.next_omt_bounds = { {OMT_SIZE, 0}, {OMT_SIZE * 2, OMT_SIZE} };
+void vehicle::autodrive_controller::compute_coordinates() {
+    data.view_bounds = {point_zero, {NAV_VIEW_SIZE_X, NAV_VIEW_SIZE_Y}};
+    data.nav_bounds = {point_zero, {NAV_MAP_SIZE_X, NAV_MAP_SIZE_Y}};
+    data.next_omt_bounds = {{OMT_SIZE, 0}, {OMT_SIZE * 2, OMT_SIZE}};
 
     const tripoint_rel_omt omt_diff = data.next_omt - data.current_omt;
-    quad_rotation next_dir = to_quad_rotation( omt_diff.raw().xy() );
-    point mid_omt( OMT_SIZE / 2, OMT_SIZE / 2 );
-    const tripoint_abs_ms abs_mid_omt = project_to<coords::ms>( data.current_omt ) + mid_omt;
+    quad_rotation next_dir = to_quad_rotation(omt_diff.raw().xy());
+    point mid_omt(OMT_SIZE / 2, OMT_SIZE / 2);
+    const tripoint_abs_ms abs_mid_omt = project_to<coords::ms>(data.current_omt) + mid_omt;
 
-    data.nav_to_view = { point_zero, quad_rotation::d0, {NAV_VIEW_PADDING, NAV_VIEW_PADDING} } ;
-    data.nav_to_map = { mid_omt, next_dir, abs_mid_omt.raw().xy() };
+    data.nav_to_view = {point_zero, quad_rotation::d0, {NAV_VIEW_PADDING, NAV_VIEW_PADDING}};
+    data.nav_to_map = {mid_omt, next_dir, abs_mid_omt.raw().xy()};
     data.view_to_map = data.nav_to_map;
     data.view_to_map.pre_offset += data.nav_to_view.post_offset;
 }
 
-vehicle_profile vehicle::autodrive_controller::compute_profile( orientation facing ) const
-{
+vehicle_profile vehicle::autodrive_controller::compute_profile(orientation facing) const {
     vehicle_profile ret;
 
-    auto angle = to_angle( facing );
-    tileray tdir( angle );
+    auto angle = to_angle(facing);
+    tileray tdir(angle);
     ret.tdir = tdir;
     std::map<int, std::pair<int, int>> extent_map;
     const auto pivot = driven_veh.pivot_point();
-    for( const vehicle_part &part : driven_veh.parts ) {
-        if( part.removed ) {
-            continue;
-        }
+    for (const vehicle_part& part : driven_veh.parts) {
+        if (part.removed) { continue; }
         point_rel_ms pos;
-        driven_veh.coord_translate( angle, pivot, part.mount, pos );
-        if( !extent_map.contains( pos.y() ) ) {
-            extent_map[pos.y()] = { pos.x(), pos.x() };
+        driven_veh.coord_translate(angle, pivot, part.mount, pos);
+        if (!extent_map.contains(pos.y())) {
+            extent_map[pos.y()] = {pos.x(), pos.x()};
         } else {
-            auto &extent = extent_map[pos.y()];
-            extent.first = std::min( extent.first, pos.x() );
-            extent.second = std::max( extent.second, pos.x() );
+            auto& extent = extent_map[pos.y()];
+            extent.first = std::min(extent.first, pos.x());
+            extent.second = std::max(extent.second, pos.x());
         }
     }
-    for( const auto &extent : extent_map ) {
+    for (const auto& extent : extent_map) {
         const int y = extent.first;
         const int x_min = extent.second.first;
         const int x_max = extent.second.second;
-        for( int x = x_min; x <= x_max; x++ ) {
-            ret.occupied_zone.emplace_back( x, y );
-        }
+        for (int x = x_min; x <= x_max; x++) { ret.occupied_zone.emplace_back(x, y); }
     }
 
     // figure out the maximum amount of displacement that can happen from advancing the
     // tileray a single step by advancing it a bunch of times and reducing the x and y
     // components of the displacement to at most 1
     constexpr int far_advance = 100;
-    tdir.advance( far_advance );
-    const point increment( signum( tdir.dx() ), signum( tdir.dy() ) );
+    tdir.advance(far_advance);
+    const point increment(signum(tdir.dx()), signum(tdir.dy()));
     // compute the subset of vehicle points that would move to previously unoccupied spots
     // (a.k.a. "moving first") when the vehicle moves one step; these are the only points
     // we need to check for collision when the vehicle is moving in this direction
-    const std::unordered_set<point> occupied_set( ret.occupied_zone.begin(), ret.occupied_zone.end() );
-    for( point pt : ret.occupied_zone ) {
-        if( !occupied_set.contains( pt + increment ) ) {
-            ret.collision_points.emplace_back( pt );
-        }
+    const std::unordered_set<point>
+        occupied_set(ret.occupied_zone.begin(), ret.occupied_zone.end());
+    for (point pt : ret.occupied_zone) {
+        if (!occupied_set.contains(pt + increment)) { ret.collision_points.emplace_back(pt); }
     }
     return ret;
 }
@@ -627,14 +566,13 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
 // Return true if the map tile at the given position (in map coordinates)
 // can be driven on (not an obstacle).
 // The logic should match what is in vehicle::part_collision().
-bool vehicle::autodrive_controller::check_drivable( tripoint_bub_ms pt ) const
-{
-    const map &here = get_map();
+bool vehicle::autodrive_controller::check_drivable(tripoint_bub_ms pt) const {
+    const map& here = get_map();
 
     // check if another vehicle is there; tiles occupied by the current
     // vehicle are evidently drivable
-    const optional_vpart_position ovp = here.veh_at( pt );
-    if( ovp ) {
+    const optional_vpart_position ovp = here.veh_at(pt);
+    if (ovp) {
         // Known corner case: some furniture can be driven over, but will collide with
         // wheel parts; if the vehicle starts over such a furniture we'll mark that tile
         // as safe and may collide with it by turning; however if we mark it unsafe
@@ -642,159 +580,140 @@ bool vehicle::autodrive_controller::check_drivable( tripoint_bub_ms pt ) const
         return &ovp->vehicle() == &driven_veh;
     }
 
-    const auto pt_abs = bub_to_abs( pt );
-    const tripoint_abs_omt pt_omt = project_to<coords::omt>( pt_abs );
+    const auto pt_abs = bub_to_abs(pt);
+    const tripoint_abs_omt pt_omt = project_to<coords::omt>(pt_abs);
     // only check visibility for the current OMT, we'll check other OMTs when
     // we reach them
-    if( pt_omt == data.current_omt ) {
+    if (pt_omt == data.current_omt) {
         // driver must see the tile or have seen it before in order to plan a route over it
-        if( !driver.sees( pt ) ) {
-            if( !driver.is_avatar() ) {
+        if (!driver.sees(pt)) {
+            if (!driver.is_avatar()) {
                 return false;
-            } else if( !driver.as_avatar()->has_memorized_tile_for_autodrive( pt_abs ) ) {
+            } else if (!driver.as_avatar()->has_memorized_tile_for_autodrive(pt_abs)) {
                 // apparently open air doesn't get memorized, so pretend it is or else
                 // we can't fly helicopters due to the many unseen tiles behind the driver
-                if( !( data.air_ok && here.ter( pt ) == t_open_air ) ) {
-                    return false;
-                }
+                if (!(data.air_ok && here.ter(pt) == t_open_air)) { return false; }
             }
         }
     }
 
     // check for creatures
     // TODO: padding around monsters
-    Creature *critter = g->critter_at( pt, true );
-    if( critter && driver.sees( *critter ) ) {
-        return false;
-    }
+    Creature* critter = g->critter_at(pt, true);
+    if (critter && driver.sees(*critter)) { return false; }
 
     // don't drive over visible traps
-    if( here.can_see_trap_at( pt, driver ) ) {
-        return false;
-    }
+    if (here.can_see_trap_at(pt, driver)) { return false; }
 
     // check for furniture that hinders movement; furniture with 0 move cost
     // can be driven on
-    const furn_id furniture = here.furn( pt );
-    if( furniture != f_null && furniture.obj().movecost != 0 ) {
-        return false;
-    }
+    const furn_id furniture = here.furn(pt);
+    if (furniture != f_null && furniture.obj().movecost != 0) { return false; }
 
-    const ter_id terrain = here.ter( pt );
-    if( terrain == t_null ) {
-        return false;
-    }
+    const ter_id terrain = here.ter(pt);
+    if (terrain == t_null) { return false; }
     // open air is an obstacle to non-flying vehicles; it is drivable
     // for flying vehicles
-    if( terrain == t_open_air ) {
-        return data.air_ok;
-    }
-    const ter_t &terrain_type = terrain.obj();
+    if (terrain == t_open_air) { return data.air_ok; }
+    const ter_t& terrain_type = terrain.obj();
     // watercraft can drive on water
-    if( data.water_ok && terrain_type.has_flag( TFLAG_SWIMMABLE ) ) {
-        return true;
-    }
+    if (data.water_ok && terrain_type.has_flag(TFLAG_SWIMMABLE)) { return true; }
     // remaining checks are for land-based navigation
-    if( !data.land_ok ) {
-        return false;
-    }
+    if (!data.land_ok) { return false; }
     // NOLINTNEXTLINE(bugprone-branch-clone)
-    if( terrain_type.movecost <= 0 ) {
+    if (terrain_type.movecost <= 0) {
         // walls and other impassable terrain
         return false;
-    } else if( terrain_type.movecost == 2 || terrain_type.has_flag( "NOCOLLIDE" ) ) {
+    } else if (terrain_type.movecost == 2 || terrain_type.has_flag("NOCOLLIDE")) {
         // terrain with neutral move cost or tagged with NOCOLLIDE will never cause
         // collisions
         return true;
-    } else if( terrain_type.bash.str_max >= 0 && !terrain_type.bash.bash_below &&
-               !terrain_type.has_flag( "VEH_TREAT_AS_BASH_BELOW" ) ) {
+    } else if (terrain_type.bash.str_max >= 0 && !terrain_type.bash.bash_below
+               && !terrain_type.has_flag("VEH_TREAT_AS_BASH_BELOW")) {
         // bashable terrain (but not bashable floors) will cause collisions
         return false;
-    } else if( terrain_type.has_flag( TFLAG_LIQUID ) ) {
+    } else if (terrain_type.has_flag(TFLAG_LIQUID)) {
         // water and lava
         return false;
     }
     return true;
 }
 
-void vehicle::autodrive_controller::compute_obstacles()
-{
-    const map &here = get_map();
-    for( int dx = 0; dx < NAV_VIEW_SIZE_X; dx++ ) {
-        for( int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++ ) {
+void vehicle::autodrive_controller::compute_obstacles() {
+    const map& here = get_map();
+    for (int dx = 0; dx < NAV_VIEW_SIZE_X; dx++) {
+        for (int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++) {
             // TODO: store z-values in the nav map and retrieve here (needed for ramp navigation)
-            const auto abs_map_pt = data.view_to_map.transform( point( dx, dy ), data.current_omt.z() );
-            data.is_obstacle[dx][dy] = !check_drivable( abs_to_bub( tripoint_abs_ms( abs_map_pt ) ) );
+            const auto abs_map_pt = data.view_to_map.transform(point(dx, dy), data.current_omt.z());
+            data.is_obstacle[dx][dy] = !check_drivable(abs_to_bub(tripoint_abs_ms(abs_map_pt)));
         }
     }
 }
 
-void vehicle::autodrive_controller::compute_valid_positions()
-{
+void vehicle::autodrive_controller::compute_valid_positions() {
     const coord_transformation veh_rot = {point_zero, -data.nav_to_map.rotation, point_zero};
-    for( orientation facing : all_orientations() ) {
-        const vehicle_profile &profile = data.profile( data.nav_to_map.transform( facing ) );
-        for( int mx = 0; mx < NAV_MAP_SIZE_X; mx++ ) {
-            for( int my = 0; my < NAV_MAP_SIZE_Y; my++ ) {
-                const point nav_pt( mx, my );
+    for (orientation facing : all_orientations()) {
+        const vehicle_profile& profile = data.profile(data.nav_to_map.transform(facing));
+        for (int mx = 0; mx < NAV_MAP_SIZE_X; mx++) {
+            for (int my = 0; my < NAV_MAP_SIZE_Y; my++) {
+                const point nav_pt(mx, my);
                 bool valid = true;
-                for( point veh_pt : profile.occupied_zone ) {
-                    const point view_pt = data.nav_to_view.transform( nav_pt ) + veh_rot.transform(
-                                              veh_pt ) - veh_rot.transform( point_zero );
-                    if( !data.view_bounds.contains( view_pt ) || data.is_obstacle[view_pt.x][view_pt.y] ) {
+                for (point veh_pt : profile.occupied_zone) {
+                    const point view_pt =
+                        data.nav_to_view.transform(nav_pt) + veh_rot.transform(veh_pt)
+                        - veh_rot.transform(point_zero);
+                    if (!data.view_bounds.contains(view_pt)
+                        || data.is_obstacle[view_pt.x][view_pt.y]) {
                         valid = false;
                         break;
                     }
                 }
-                data.valid_position( facing, nav_pt ) = valid;
+                data.valid_position(facing, nav_pt) = valid;
             }
         }
     }
 }
 
-void vehicle::autodrive_controller::compute_goal_zone()
-{
+void vehicle::autodrive_controller::compute_goal_zone() {
     data.goal_zone.clear();
     coord_transformation goal_transform;
-    if( data.next_next_omt != data.next_omt ) {
+    if (data.next_next_omt != data.next_omt) {
         // set the goal at the edge of next_omt and next_next_omt (in next_omt
         // space, pointing towards next_next_omt)
-        const point next_omt_middle( OMT_SIZE + OMT_SIZE / 2, OMT_SIZE / 2 );
+        const point next_omt_middle(OMT_SIZE + OMT_SIZE / 2, OMT_SIZE / 2);
         const tripoint_rel_omt omt_diff = data.next_next_omt - data.next_omt;
-        const quad_rotation rotation = to_quad_rotation( omt_diff.raw().xy() ) - data.nav_to_map.rotation;
+        const quad_rotation rotation =
+            to_quad_rotation(omt_diff.raw().xy()) - data.nav_to_map.rotation;
         goal_transform = {next_omt_middle, rotation, next_omt_middle};
     } else {
         // set the goal at the edge of cur_omt and next_omt (in next_omt space,
         // pointing away from cur_omt)
-        goal_transform = { point( OMT_SIZE - 1, 0 ), quad_rotation::d0, point_zero };
+        goal_transform = {point(OMT_SIZE - 1, 0), quad_rotation::d0, point_zero};
     }
     constexpr int max_turns = NUM_ORIENTATIONS / 8 + 1;
     const int x = 2 * OMT_SIZE - 1;
-    for( int turns = -max_turns; turns <= max_turns; turns++ ) {
+    for (int turns = -max_turns; turns <= max_turns; turns++) {
         const orientation dir = orientation::d0 + turns;
-        static_assert( NAV_MAP_SIZE_Y == OMT_SIZE, "Unexpected nav map size" );
-        for( int y = 0; y < OMT_SIZE; y++ ) {
-            const point pt( x, y );
-            const node_address addr = goal_transform.transform( pt, dir );
-            if( data.valid_position( addr ) ) {
-                data.goal_zone.insert( addr );
-            }
+        static_assert(NAV_MAP_SIZE_Y == OMT_SIZE, "Unexpected nav map size");
+        for (int y = 0; y < OMT_SIZE; y++) {
+            const point pt(x, y);
+            const node_address addr = goal_transform.transform(pt, dir);
+            if (data.valid_position(addr)) { data.goal_zone.insert(addr); }
         }
     }
-    data.goal_points[0] = point( OMT_SIZE, OMT_SIZE / 2 - 1 );
-    data.goal_points[1] = goal_transform.transform( point( x, OMT_SIZE / 2 - 1 ) );
+    data.goal_points[0] = point(OMT_SIZE, OMT_SIZE / 2 - 1);
+    data.goal_points[1] = goal_transform.transform(point(x, OMT_SIZE / 2 - 1));
 }
 
-void vehicle::autodrive_controller::precompute_data()
-{
+void vehicle::autodrive_controller::precompute_data() {
 
     const int MAX_SPEED_TPS = driven_veh.max_autodrive_speed;
-    const tripoint_abs_omt current_omt = project_to<coords::omt>( driven_veh.abs_ms_location() );
+    const tripoint_abs_omt current_omt = project_to<coords::omt>(driven_veh.abs_ms_location());
     const tripoint_abs_omt next_omt = driver.omt_path.back();
-    const tripoint_abs_omt next_next_omt = driver.omt_path.size() >= 2 ?
-                                           driver.omt_path[driver.omt_path.size() - 2] : next_omt;
-    if( current_omt != data.current_omt || next_omt != data.next_omt ||
-        next_next_omt != data.next_next_omt ) {
+    const tripoint_abs_omt next_next_omt =
+        driver.omt_path.size() >= 2 ? driver.omt_path[driver.omt_path.size() - 2] : next_omt;
+    if (current_omt != data.current_omt || next_omt != data.next_omt
+        || next_next_omt != data.next_next_omt) {
         data.current_omt = current_omt;
         data.next_omt = next_omt;
         data.next_next_omt = next_next_omt;
@@ -803,18 +722,16 @@ void vehicle::autodrive_controller::precompute_data()
         data.land_ok = driven_veh.valid_wheel_config();
         data.water_ok = driven_veh.can_float();
         data.air_ok = driven_veh.is_aircraft();
-        data.max_speed_tps = std::min( MAX_SPEED_TPS, driven_veh.safe_velocity() / CMPS_PER_TPS );
-        data.acceleration.resize( data.max_speed_tps );
-        for( int speed_tps = 0; speed_tps < data.max_speed_tps; speed_tps++ ) {
-            data.acceleration[speed_tps] = driven_veh.acceleration( true, speed_tps * CMPS_PER_TPS );
+        data.max_speed_tps = std::min(MAX_SPEED_TPS, driven_veh.safe_velocity() / CMPS_PER_TPS);
+        data.acceleration.resize(data.max_speed_tps);
+        for (int speed_tps = 0; speed_tps < data.max_speed_tps; speed_tps++) {
+            data.acceleration[speed_tps] = driven_veh.acceleration(true, speed_tps * CMPS_PER_TPS);
         }
         // TODO: compute from driver's skill and speed stat
         // TODO: change it during simulation based on vehicle speed and terrain
         // or maybe just keep track of player moves?
         data.max_steer = 1;
-        for( orientation dir : all_orientations() ) {
-            data.profile( dir ) = compute_profile( dir );
-        }
+        for (orientation dir : all_orientations()) { data.profile(dir) = compute_profile(dir); }
 
         // initialize navigation data
         compute_coordinates();
@@ -825,8 +742,7 @@ void vehicle::autodrive_controller::precompute_data()
     }
 }
 
-static navigation_node make_start_node( const node_address &start, const vehicle &driven_veh )
-{
+static navigation_node make_start_node(const node_address& start, const vehicle& driven_veh) {
     navigation_node ret;
     ret.prev = start;
     ret.cost = 0;
@@ -837,406 +753,354 @@ static navigation_node make_start_node( const node_address &start, const vehicle
     return ret;
 }
 
-scored_address vehicle::autodrive_controller::compute_node_score( const node_address &addr,
-        const navigation_node &node ) const
-{
+scored_address vehicle::autodrive_controller::compute_node_score(
+    const node_address& addr, const navigation_node& node) const {
     // TODO: tweak this
     constexpr int cost_mult = 1;
     constexpr int forward_dist_mult = 10;
     constexpr int side_dist_mult = 16;
     constexpr int angle_mult = 2;
     constexpr int nearness_penalty = 15;
-    scored_address ret{ addr, 0 };
+    scored_address ret{addr, 0};
     ret.score += cost_mult * node.cost;
-    if( node.is_goal ) {
-        return ret;
-    }
-    static const point neighbor_deltas[4] = { point_east, point_south, point_west, point_north };
-    for( point neighbor_delta : neighbor_deltas ) {
+    if (node.is_goal) { return ret; }
+    static const point neighbor_deltas[4] = {point_east, point_south, point_west, point_north};
+    for (point neighbor_delta : neighbor_deltas) {
         const point p = addr.get_point() + neighbor_delta;
-        if( !data.nav_bounds.contains( p ) || !data.valid_position( addr.facing_dir, p ) ) {
+        if (!data.nav_bounds.contains(p) || !data.valid_position(addr.facing_dir, p)) {
             ret.score += nearness_penalty;
         }
     }
-    const int omt_index = std::min( std::max( addr.x / OMT_SIZE, 0 ),
-                                    static_cast<int>( data.goal_points.size() ) - 1 );
+    const int omt_index =
+        std::min(std::max(addr.x / OMT_SIZE, 0), static_cast<int>(data.goal_points.size()) - 1);
     const point waypoint_delta = data.goal_points[omt_index] - addr.get_point();
     const point goal_delta = data.goal_points.back() - addr.get_point();
-    const orientation waypoint_dir = approx_orientation( waypoint_delta.x, waypoint_delta.y );
-    ret.score += forward_dist_mult * std::abs( goal_delta.x );
-    ret.score += side_dist_mult * std::abs( goal_delta.y );
-    if( waypoint_delta.x > OMT_SIZE / 4 ) {
-        ret.score += angle_mult * std::abs( orientation_diff( addr.facing_dir, waypoint_dir ) );
+    const orientation waypoint_dir = approx_orientation(waypoint_delta.x, waypoint_delta.y);
+    ret.score += forward_dist_mult * std::abs(goal_delta.x);
+    ret.score += side_dist_mult * std::abs(goal_delta.y);
+    if (waypoint_delta.x > OMT_SIZE / 4) {
+        ret.score += angle_mult * std::abs(orientation_diff(addr.facing_dir, waypoint_dir));
     }
     return ret;
 }
 
 
-void vehicle::autodrive_controller::compute_next_nodes( const node_address &addr,
-        const navigation_node &node, int target_speed_tps,
-        std::vector<std::pair<node_address, navigation_node>> &next_nodes )
-const
-{
+void vehicle::autodrive_controller::compute_next_nodes(
+    const node_address& addr, const navigation_node& node, int target_speed_tps,
+    std::vector<std::pair<node_address, navigation_node>>& next_nodes) const {
     constexpr int move_cost = 0;
     constexpr int steering_cost = 1;
     const int sign = target_speed_tps > 0 ? 1 : -1;
     const int target_speed = target_speed_tps * CMPS_PER_TPS;
     const int cur_omt = addr.x / OMT_SIZE;
     int next_speed = target_speed;
-    int num_tiles_to_move = std::abs( target_speed_tps );
-    if( target_speed_tps > 1 && node.speed < target_speed ) {
-        const int cur_tps = std::min( std::max( node.speed / CMPS_PER_TPS, 0 ), data.max_speed_tps - 1 );
-        next_speed = std::min( std::max<int>( node.speed, 0 ) + data.acceleration[cur_tps], target_speed );
+    int num_tiles_to_move = std::abs(target_speed_tps);
+    if (target_speed_tps > 1 && node.speed < target_speed) {
+        const int cur_tps =
+            std::min(std::max(node.speed / CMPS_PER_TPS, 0), data.max_speed_tps - 1);
+        next_speed =
+            std::min(std::max<int>(node.speed, 0) + data.acceleration[cur_tps], target_speed);
         num_tiles_to_move = next_speed / CMPS_PER_TPS;
     }
-    for( int steer = -data.max_steer; steer <= data.max_steer; steer++ ) {
+    for (int steer = -data.max_steer; steer <= data.max_steer; steer++) {
         node_address next_addr = addr;
         next_addr.facing_dir = addr.facing_dir + steer;
-        tileray tdir = data.profile( next_addr.facing_dir ).tdir;
-        if( steer == 0 ) {
-            tdir.advance( node.tileray_steps );
-        }
+        tileray tdir = data.profile(next_addr.facing_dir).tdir;
+        if (steer == 0) { tdir.advance(node.tileray_steps); }
         bool ok = true;
         bool goal_found = false;
-        for( int i = 0; i < num_tiles_to_move && ok; i++ ) {
-            tdir.advance( sign );
+        for (int i = 0; i < num_tiles_to_move && ok; i++) {
+            tdir.advance(sign);
             next_addr.x += tdir.dx();
             next_addr.y += tdir.dy();
-            if( !data.nav_bounds.contains( next_addr.get_point() ) ) {
+            if (!data.nav_bounds.contains(next_addr.get_point())) {
                 // it's ok to go out of bounds only from the "next" omt and only
                 // after crossing the goal zone
-                if( cur_omt == 0 || !goal_found ) {
-                    ok = false;
-                }
-            } else if( !data.valid_position( next_addr ) ) {
+                if (cur_omt == 0 || !goal_found) { ok = false; }
+            } else if (!data.valid_position(next_addr)) {
                 ok = false;
-            } else if( !goal_found && data.goal_zone.contains( next_addr ) ) {
+            } else if (!goal_found && data.goal_zone.contains(next_addr)) {
                 goal_found = true;
             }
         }
-        if( !ok ) {
-            continue;
-        }
+        if (!ok) { continue; }
         const int next_omt = next_addr.x / OMT_SIZE;
-        if( next_omt < cur_omt ) {
+        if (next_omt < cur_omt) {
             // no going back to a previous omt
             continue;
         }
         navigation_node next_node;
         next_node.prev = addr;
-        next_node.tileray_steps = num_tiles_to_move + ( !steer ? node.tileray_steps : 0 );
+        next_node.tileray_steps = num_tiles_to_move + (!steer ? node.tileray_steps : 0);
         // TODO: improve this
-        next_node.cost = node.cost + move_cost * num_tiles_to_move + ( steer ? steering_cost : 0 );
+        next_node.cost = node.cost + move_cost * num_tiles_to_move + (steer ? steering_cost : 0);
         next_node.speed = next_speed;
         next_node.target_speed_tps = target_speed_tps;
         next_node.is_goal = goal_found;
-        next_nodes.emplace_back( next_addr, next_node );
+        next_nodes.emplace_back(next_addr, next_node);
     }
 }
 
 std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compute_path(
-            int speed_tps ) const
-{
-    if( speed_tps == 0 || speed_tps < -1 ) {
-        return std::nullopt;
-    }
+    int speed_tps) const {
+    if (speed_tps == 0 || speed_tps < -1) { return std::nullopt; }
     // TODO: tweak this
     constexpr size_t max_search_count = 10000;
     std::vector<navigation_step> ret;
     // TODO: check simple reachability first and bail out or set upper bound on node score
     std::unordered_map<node_address, navigation_node, node_address_hasher> known_nodes;
-    std::priority_queue<scored_address, std::vector<scored_address>, std::greater<>>
-            open_set;
+    std::priority_queue<scored_address, std::vector<scored_address>, std::greater<>> open_set;
     const tripoint_abs_ms veh_pos = driven_veh.abs_ms_location();
     const node_address start = data.nav_to_map.inverse().transform(
-                                   veh_pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
-    known_nodes.emplace( start, make_start_node( start, driven_veh ) );
-    open_set.push( scored_address{ start, 0 } );
+        veh_pos.raw().xy(), to_orientation(driven_veh.face.dir()));
+    known_nodes.emplace(start, make_start_node(start, driven_veh));
+    open_set.push(scored_address{start, 0});
     std::vector<std::pair<node_address, navigation_node>> next_nodes;
-    while( !open_set.empty() ) {
+    while (!open_set.empty()) {
         const node_address cur_addr = open_set.top().addr;
         open_set.pop();
-        const navigation_node &cur_node = known_nodes[cur_addr];
-        if( cur_node.is_goal ) {
+        const navigation_node& cur_node = known_nodes[cur_addr];
+        if (cur_node.is_goal) {
             node_address addr = cur_addr;
-            while( !( addr == start ) ) {
-                const navigation_node &node = known_nodes.at( addr );
-                const node_address &prev = node.prev;
-                const tripoint_abs_ms prev_loc( data.nav_to_map.transform( prev.get_point(),
-                                                data.current_omt.z() ) );
-                ret.emplace_back( navigation_step{
-                    prev_loc,
-                    data.nav_to_map.transform( addr.facing_dir ),
-                    node.target_speed_tps
-                } );
+            while (!(addr == start)) {
+                const navigation_node& node = known_nodes.at(addr);
+                const node_address& prev = node.prev;
+                const tripoint_abs_ms prev_loc(
+                    data.nav_to_map.transform(prev.get_point(), data.current_omt.z()));
+                ret.emplace_back(navigation_step{
+                    prev_loc, data.nav_to_map.transform(addr.facing_dir), node.target_speed_tps});
                 addr = prev;
             }
             return ret;
         }
         next_nodes.clear();
-        compute_next_nodes( cur_addr, cur_node, speed_tps, next_nodes );
-        for( const auto &next : next_nodes ) {
-            const node_address &next_addr = next.first;
-            const navigation_node &next_node = next.second;
-            auto iter = known_nodes.find( next_addr );
-            if( iter != known_nodes.end() ) {
-                const navigation_node &other_node = iter->second;
-                if( next_node.cost < other_node.cost ) {
+        compute_next_nodes(cur_addr, cur_node, speed_tps, next_nodes);
+        for (const auto& next : next_nodes) {
+            const node_address& next_addr = next.first;
+            const navigation_node& next_node = next.second;
+            auto iter = known_nodes.find(next_addr);
+            if (iter != known_nodes.end()) {
+                const navigation_node& other_node = iter->second;
+                if (next_node.cost < other_node.cost) {
                     const bool same_dir = cur_addr.facing_dir == next_addr.facing_dir;
-                    const bool dir_multiple_45 = static_cast<int>( next_addr.facing_dir ) % 3 == 0;
-                    if( ( !same_dir && next_node.tileray_steps == 1 ) || dir_multiple_45 ) {
+                    const bool dir_multiple_45 = static_cast<int>(next_addr.facing_dir) % 3 == 0;
+                    if ((!same_dir && next_node.tileray_steps == 1) || dir_multiple_45) {
                         iter->second = next_node;
                     }
                 }
-            } else if( known_nodes.size() < max_search_count ) {
+            } else if (known_nodes.size() < max_search_count) {
                 known_nodes[next_addr] = next_node;
-                open_set.push( compute_node_score( next_addr, next_node ) );
+                open_set.push(compute_node_score(next_addr, next_node));
             }
         }
     }
     return std::nullopt;
 }
 
-vehicle::autodrive_controller::autodrive_controller( const vehicle &driven_veh,
-        const Character &driver ) : driven_veh( driven_veh ), driver( driver )
-{
+vehicle::autodrive_controller::autodrive_controller(
+    const vehicle& driven_veh, const Character& driver)
+    : driven_veh(driven_veh),
+      driver(driver) {
     data.clear();
 }
 
-void vehicle::autodrive_controller::check_safe_speed()
-{
+void vehicle::autodrive_controller::check_safe_speed() {
     // We normally drive at or below the vehicle's "safe speed" (beyond which the engine starts
     // taking damage). We normally determine this at the beginning of path planning and cache it.
     // However, sometimes the vehicle's safe speed may drop (e.g. amphibious vehicle entering
     // water), so this extra check is needed to adjust our max speed.
     int safe_speed_tps = driven_veh.safe_velocity() / CMPS_PER_TPS;
-    if( data.max_speed_tps > safe_speed_tps ) {
-        data.max_speed_tps = safe_speed_tps;
-    }
+    if (data.max_speed_tps > safe_speed_tps) { data.max_speed_tps = safe_speed_tps; }
 }
 
-collision_check_result vehicle::autodrive_controller::check_collision_zone( orientation turn_dir )
-{
+collision_check_result vehicle::autodrive_controller::check_collision_zone(orientation turn_dir) {
     const auto veh_pos = driven_veh.bub_ms_location();
 
     // first check if we have any visibility in front, to prevent blind driving
     tileray face_dir = driven_veh.face;
     face_dir.advance();
-    const point forward_offset( face_dir.dx(), face_dir.dy() );
+    const point forward_offset(face_dir.dx(), face_dir.dy());
     bool blind = true;
-    for( point p : data.profile( to_orientation( face_dir.dir() ) ).collision_points ) {
-        if( driver.sees( veh_pos + forward_offset + p ) ) {
-            blind = false;
-        }
+    for (point p : data.profile(to_orientation(face_dir.dir())).collision_points) {
+        if (driver.sees(veh_pos + forward_offset + p)) { blind = false; }
     }
-    if( blind ) {
-        return collision_check_result::no_visibility;
-    }
+    if (blind) { return collision_check_result::no_visibility; }
 
     // now check the area we're about to move into in 1 step, anything there
     // should force us to stop
-    const vehicle_profile &profile = data.profile( turn_dir );
+    const vehicle_profile& profile = data.profile(turn_dir);
     tileray tdir = driven_veh.face;
-    if( turn_dir != to_orientation( tdir.dir() ) ) {
-        tdir = profile.tdir;
-    }
-    const int speed = std::min( driven_veh.velocity + driven_veh.current_acceleration(),
-                                driven_veh.cruise_velocity );
+    if (turn_dir != to_orientation(tdir.dir())) { tdir = profile.tdir; }
+    const int speed = std::
+        min(driven_veh.velocity + driven_veh.current_acceleration(), driven_veh.cruise_velocity);
     const int speed_tps = speed / CMPS_PER_TPS;
     std::unordered_set<point> collision_zone;
     tdir.advance();
-    point offset( tdir.dx(), tdir.dy() );
-    for( point p : profile.occupied_zone ) {
-        collision_zone.insert( p + offset );
-    }
-    for( point p : collision_zone ) {
-        if( !check_drivable( veh_pos + p ) ) {
-            return collision_check_result::close_obstacle;
-        }
+    point offset(tdir.dx(), tdir.dy());
+    for (point p : profile.occupied_zone) { collision_zone.insert(p + offset); }
+    for (point p : collision_zone) {
+        if (!check_drivable(veh_pos + p)) { return collision_check_result::close_obstacle; }
     }
 
     // finally check the area further ahead; we can still avoid those collisions by reducing speed
     collision_zone.clear();
-    for( int i = 1; i < speed_tps; i++ ) {
+    for (int i = 1; i < speed_tps; i++) {
         tdir.advance();
-        offset += point( tdir.dx(), tdir.dy() );
-        for( point p : profile.collision_points ) {
-            collision_zone.insert( p + offset );
-        }
+        offset += point(tdir.dx(), tdir.dy());
+        for (point p : profile.collision_points) { collision_zone.insert(p + offset); }
     }
-    for( point p : collision_zone ) {
-        if( !driver.sees( veh_pos + p ) ) {
-            return collision_check_result::slow_down;
-        }
-        if( !check_drivable( veh_pos + p ) ) {
-            return collision_check_result::slow_down;
-        }
+    for (point p : collision_zone) {
+        if (!driver.sees(veh_pos + p)) { return collision_check_result::slow_down; }
+        if (!check_drivable(veh_pos + p)) { return collision_check_result::slow_down; }
     }
     return collision_check_result::ok;
 }
 
-void vehicle::autodrive_controller::reduce_speed()
-{
+void vehicle::autodrive_controller::reduce_speed() {
     const int MIN_SPEED_TPS = driven_veh.min_autodrive_speed;
     data.max_speed_tps = MIN_SPEED_TPS;
 }
 
-std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step()
-{
+std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step() {
     precompute_data();
     const int MIN_SPEED_TPS = driven_veh.min_autodrive_speed;
     const tripoint_abs_ms veh_pos = driven_veh.abs_ms_location();
-    while( !data.path.empty() && data.path.back().pos != veh_pos ) {
-        data.path.pop_back();
-    }
-    if( !data.path.empty() && data.path.back().target_speed_tps > data.max_speed_tps ) {
+    while (!data.path.empty() && data.path.back().pos != veh_pos) { data.path.pop_back(); }
+    if (!data.path.empty() && data.path.back().target_speed_tps > data.max_speed_tps) {
         data.path.clear();
     }
-    if( data.path.empty() ) {
-        auto new_path = compute_path( data.max_speed_tps );
-        while( !new_path && data.max_speed_tps > MIN_SPEED_TPS ) {
+    if (data.path.empty()) {
+        auto new_path = compute_path(data.max_speed_tps);
+        while (!new_path && data.max_speed_tps > MIN_SPEED_TPS) {
             // high speed didn't work, try a lower speed
             data.max_speed_tps /= 2;
-            new_path = compute_path( data.max_speed_tps );
+            new_path = compute_path(data.max_speed_tps);
         }
-        if( !new_path ) {
-            return std::nullopt;
-        }
-        data.path.swap( *new_path );
+        if (!new_path) { return std::nullopt; }
+        data.path.swap(*new_path);
     }
     return data.path.back();
 }
 
 
-std::vector<std::tuple<point_rel_ms, int, std::string>> vehicle::get_debug_overlay_data() const
-{
-    static const std::vector<std::string> debug_what = { "valid_position", "omt" };
+std::vector<std::tuple<point_rel_ms, int, std::string>> vehicle::get_debug_overlay_data() const {
+    static const std::vector<std::string> debug_what = {"valid_position", "omt"};
     std::vector<std::tuple<point_rel_ms, int, std::string>> ret;
 
     const tripoint_abs_ms veh_pos = abs_ms_location();
-    if( autodrive_local_target != tripoint_abs_ms::zero() ) {
-        ret.emplace_back( ( autodrive_local_target - veh_pos ).xy(), catacurses::red, "T" );
+    if (autodrive_local_target != tripoint_abs_ms::zero()) {
+        ret.emplace_back((autodrive_local_target - veh_pos).xy(), catacurses::red, "T");
     }
-    for( auto pt_elem : collision_check_points ) {
-        ret.emplace_back( pt_elem - veh_pos.xy(), catacurses::yellow, "C" );
+    for (auto pt_elem : collision_check_points) {
+        ret.emplace_back(pt_elem - veh_pos.xy(), catacurses::yellow, "C");
     }
 
-    if( !active_autodrive_controller ) {
-        return ret;
-    }
-    const auto_navigation_data &data = active_autodrive_controller->get_data();
+    if (!active_autodrive_controller) { return ret; }
+    const auto_navigation_data& data = active_autodrive_controller->get_data();
 
-    const orientation dir = to_orientation( face.dir() );
-    for( const std::string &debug_str : debug_what ) {
-        if( debug_str == "profiles" ) {
-            const vehicle_profile &profile = data.profile( dir );
-            for( point p : profile.occupied_zone ) {
-                if( p.x == 0 && p.y == 0 ) {
-                    ret.emplace_back( p, catacurses::cyan, to_string( dir ) );
+    const orientation dir = to_orientation(face.dir());
+    for (const std::string& debug_str : debug_what) {
+        if (debug_str == "profiles") {
+            const vehicle_profile& profile = data.profile(dir);
+            for (point p : profile.occupied_zone) {
+                if (p.x == 0 && p.y == 0) {
+                    ret.emplace_back(p, catacurses::cyan, to_string(dir));
                 } else {
-                    ret.emplace_back( p, catacurses::green, "x" );
+                    ret.emplace_back(p, catacurses::green, "x");
                 }
             }
-            for( point p : profile.collision_points ) {
-                ret.emplace_back( p, catacurses::red, "o" );
-            }
-        } else if( debug_str == "is_obstacle" ) {
-            for( int dx = 0; dx < NAV_VIEW_SIZE_X; dx++ ) {
-                for( int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++ ) {
+            for (point p : profile.collision_points) { ret.emplace_back(p, catacurses::red, "o"); }
+        } else if (debug_str == "is_obstacle") {
+            for (int dx = 0; dx < NAV_VIEW_SIZE_X; dx++) {
+                for (int dy = 0; dy < NAV_VIEW_SIZE_Y; dy++) {
                     const bool obstacle = data.is_obstacle[dx][dy];
                     const int color = obstacle ? catacurses::red : catacurses::green;
-                    const point pt = data.view_to_map.transform( point( dx, dy ) ) - veh_pos.raw().xy();
-                    ret.emplace_back( pt, color, obstacle ? "o" : "x" );
+                    const point pt = data.view_to_map.transform(point(dx, dy)) - veh_pos.raw().xy();
+                    ret.emplace_back(pt, color, obstacle ? "o" : "x");
                 }
             }
-        } else if( debug_str == "valid_position" ) {
-            const orientation tdir = data.nav_to_map.inverse().transform( dir );
-            for( int dx = 0; dx < NAV_MAP_SIZE_X; dx++ ) {
-                for( int dy = 0; dy < NAV_MAP_SIZE_Y; dy++ ) {
-                    const point nav_pt( dx, dy );
-                    const bool valid = data.valid_position( tdir, nav_pt );
+        } else if (debug_str == "valid_position") {
+            const orientation tdir = data.nav_to_map.inverse().transform(dir);
+            for (int dx = 0; dx < NAV_MAP_SIZE_X; dx++) {
+                for (int dy = 0; dy < NAV_MAP_SIZE_Y; dy++) {
+                    const point nav_pt(dx, dy);
+                    const bool valid = data.valid_position(tdir, nav_pt);
                     const int color = valid ? catacurses::green : catacurses::red;
-                    const point pt = data.nav_to_map.transform( nav_pt ) - veh_pos.raw().xy();
-                    ret.emplace_back( pt, color, to_string( dir ) );
+                    const point pt = data.nav_to_map.transform(nav_pt) - veh_pos.raw().xy();
+                    ret.emplace_back(pt, color, to_string(dir));
                 }
             }
-        } else if( debug_str == "goal_zone" ) {
+        } else if (debug_str == "goal_zone") {
             std::unordered_map<point, bool> goal_map;
-            for( const node_address &addr : data.goal_zone ) {
-                goal_map[addr.get_point()] |= data.nav_to_map.transform( addr.facing_dir ) == dir;
+            for (const node_address& addr : data.goal_zone) {
+                goal_map[addr.get_point()] |= data.nav_to_map.transform(addr.facing_dir) == dir;
             }
-            for( const auto &entry : goal_map ) {
-                const point pt = data.nav_to_map.transform( entry.first ) - veh_pos.raw().xy();
+            for (const auto& entry : goal_map) {
+                const point pt = data.nav_to_map.transform(entry.first) - veh_pos.raw().xy();
                 const int color = entry.second ? catacurses::green : catacurses::yellow + 8;
-                ret.emplace_back( pt, color, "g" );
+                ret.emplace_back(pt, color, "g");
             }
-        } else if( debug_str == "goal_points" ) {
-            for( point p : data.goal_points ) {
-                const point pt = data.nav_to_map.transform( p ) - veh_pos.raw().xy();
-                ret.emplace_back( pt, catacurses::white, "G" );
+        } else if (debug_str == "goal_points") {
+            for (point p : data.goal_points) {
+                const point pt = data.nav_to_map.transform(p) - veh_pos.raw().xy();
+                ret.emplace_back(pt, catacurses::white, "G");
             }
-        } else if( debug_str == "path" ) {
-            for( const auto &step : data.path ) {
-                ret.emplace_back( ( step.pos - veh_pos ).raw().xy(), 8 + catacurses::yellow,
-                                  to_string( step.steering_dir ) );
+        } else if (debug_str == "path") {
+            for (const auto& step : data.path) {
+                ret.emplace_back((step.pos - veh_pos).raw().xy(), 8 + catacurses::yellow,
+                                 to_string(step.steering_dir));
             }
-        } else if( debug_str == "omt" ) {
-            const point offset = ( project_to<coords::ms>( data.current_omt ) - veh_pos ).raw().xy();
-            static const std::vector<point> corners = {point_zero, {0, OMT_SIZE - 1}, {OMT_SIZE - 1, 0}, {OMT_SIZE - 1, OMT_SIZE - 1}};
-            for( point corner : corners ) {
-                ret.emplace_back( corner + offset, catacurses::cyan, "+" );
+        } else if (debug_str == "omt") {
+            const point offset = (project_to<coords::ms>(data.current_omt) - veh_pos).raw().xy();
+            static const std::vector<point> corners =
+                {point_zero, {0, OMT_SIZE - 1}, {OMT_SIZE - 1, 0}, {OMT_SIZE - 1, OMT_SIZE - 1}};
+            for (point corner : corners) {
+                ret.emplace_back(corner + offset, catacurses::cyan, "+");
             }
         }
     }
     return ret;
 }
 
-autodrive_result vehicle::do_autodrive( Character &driver )
-{
-    if( !is_autodriving ) {
+autodrive_result vehicle::do_autodrive(Character& driver) {
+    if (!is_autodriving) { return autodrive_result::abort; }
+    if (!player_in_control(driver) || skidding) {
+        driver.add_msg_if_player(m_warning, _("You lose control as the vehicle starts skidding."));
+        stop_autodriving(false);
         return autodrive_result::abort;
     }
-    if( !player_in_control( driver ) || skidding ) {
-        driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
-        stop_autodriving( false );
-        return autodrive_result::abort;
-    }
-    if( driver.is_avatar() ) {
-        g->refresh_player_visibility_cache_if_needed();
-    }
+    if (driver.is_avatar()) { g->refresh_player_visibility_cache_if_needed(); }
     const tripoint_abs_ms veh_pos = abs_ms_location();
-    const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
-    std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;
-    if( !omt_path.empty() && veh_omt == omt_path.back() ) {
-        omt_path.pop_back();
-    }
-    if( omt_path.empty() ) {
-        stop_autodriving( false );
+    const tripoint_abs_omt veh_omt = project_to<coords::omt>(veh_pos);
+    std::vector<tripoint_abs_omt>& omt_path = driver.omt_path;
+    if (!omt_path.empty() && veh_omt == omt_path.back()) { omt_path.pop_back(); }
+    if (omt_path.empty()) {
+        stop_autodriving(false);
         return autodrive_result::finished;
     }
-    if( !active_autodrive_controller ) {
-        active_autodrive_controller = std::make_shared<autodrive_controller>( *this, driver );
+    if (!active_autodrive_controller) {
+        active_autodrive_controller = std::make_shared<autodrive_controller>(*this, driver);
     }
-    if( &active_autodrive_controller->get_driver() != &driver ) {
-        debugmsg( "Driver changed while auto-driving" );
+    if (&active_autodrive_controller->get_driver() != &driver) {
+        debugmsg("Driver changed while auto-driving");
         stop_autodriving();
         return autodrive_result::abort;
     }
     active_autodrive_controller->check_safe_speed();
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step();
-    if( !next_step ) {
+    if (!next_step) {
         // message handles pathfinding failure either due to obstacles or inability to see
-        driver.add_msg_if_player( _( "Can't see a path forward." ) );
-        stop_autodriving( false );
+        driver.add_msg_if_player(_("Can't see a path forward."));
+        stop_autodriving(false);
         return autodrive_result::abort;
     }
-    if( next_step->pos != veh_pos ) {
-        debugmsg( "compute_next_step returned an invalid result" );
+    if (next_step->pos != veh_pos) {
+        debugmsg("compute_next_step returned an invalid result");
         stop_autodriving();
         return autodrive_result::abort;
     }
-    if( next_step->target_speed_tps == 0 && velocity == 0 ) {
-        stop_autodriving( false );
+    if (next_step->target_speed_tps == 0 && velocity == 0) {
+        stop_autodriving(false);
         return autodrive_result::finished;
     }
     cruise_on = true;
@@ -1244,35 +1108,34 @@ autodrive_result vehicle::do_autodrive( Character &driver )
 
     // check for collisions before we steer, since steering may end our turn
     // which would cause the vehicle to move and maybe crash
-    switch( active_autodrive_controller->check_collision_zone( next_step->steering_dir ) ) {
+    switch (active_autodrive_controller->check_collision_zone(next_step->steering_dir)) {
         case collision_check_result::no_visibility:
-            driver.add_msg_if_player( m_warning, _( "You can't see anything in front of your vehicle!" ) );
+            driver.add_msg_if_player(
+                m_warning, _("You can't see anything in front of your vehicle!"));
             stop_autodriving();
             return autodrive_result::abort;
         case collision_check_result::close_obstacle:
-            driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
-            stop_autodriving( false );
+            driver.add_msg_if_player(m_warning, _("You're about to crash into something!"));
+            stop_autodriving(false);
             return autodrive_result::abort;
         case collision_check_result::slow_down:
             active_autodrive_controller->reduce_speed();
-            if( cruise_velocity > CMPS_PER_TPS ) {
-                cruise_velocity = CMPS_PER_TPS;
-            }
+            if (cruise_velocity > CMPS_PER_TPS) { cruise_velocity = CMPS_PER_TPS; }
             break;
         case collision_check_result::ok:
             break;
     }
 
-    int turn_delta = orientation_diff( next_step->steering_dir, to_orientation( turn_dir ) );
+    int turn_delta = orientation_diff(next_step->steering_dir, to_orientation(turn_dir));
     // pldrive() does not handle steering multiple times in one call correctly
     // call it multiple times, matching how a player controls the vehicle
-    for( int i = 0; i < std::abs( turn_delta ); i++ ) {
-        if( driver.moves <= 0 ) {
+    for (int i = 0; i < std::abs(turn_delta); i++) {
+        if (driver.moves <= 0) {
             // we couldn't steer as many times as we wanted to but there's
             // nothing we can do about it now, hope we don't crash!
             break;
         }
-        pldrive( driver, tripoint_rel_veh{ signum( turn_delta ), 0, 0 } );
+        pldrive(driver, tripoint_rel_veh{signum(turn_delta), 0, 0});
     }
     // Don't do anything else below; the driver's turn may be over (moves <= 0) so
     // any extra actions would be "cheating".
@@ -1280,12 +1143,9 @@ autodrive_result vehicle::do_autodrive( Character &driver )
     return autodrive_result::ok;
 }
 
-void vehicle::stop_autodriving( bool apply_brakes )
-{
-    if( !is_autodriving && !is_patrolling && !is_following ) {
-        return;
-    }
-    if( apply_brakes ) {
+void vehicle::stop_autodriving(bool apply_brakes) {
+    if (!is_autodriving && !is_patrolling && !is_following) { return; }
+    if (apply_brakes) {
         cruise_velocity = 0;
         cruise_on = true;
     }

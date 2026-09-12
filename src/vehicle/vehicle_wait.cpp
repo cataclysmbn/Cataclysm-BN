@@ -2,16 +2,13 @@
 
 #include "vehicle.h"
 
-namespace vehicle_wait
-{
+namespace vehicle_wait {
 
-auto is_wait_blocked_by_movement( const vehicle &veh ) -> bool
-{
-    return ( veh.velocity != 0 || veh.cruise_velocity != 0 ) && !veh.is_flying_in_air();
+auto is_wait_blocked_by_movement(const vehicle& veh) -> bool {
+    return (veh.velocity != 0 || veh.cruise_velocity != 0) && !veh.is_flying_in_air();
 }
 
-auto should_offer_flying_wait_durations( const vehicle &veh ) -> bool
-{
+auto should_offer_flying_wait_durations(const vehicle& veh) -> bool {
     return veh.is_flying_in_air();
 }
 

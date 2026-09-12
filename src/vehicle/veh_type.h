@@ -180,266 +180,257 @@ struct vpart_rotating_light {
     auto arc_width() const -> units::angle;
     auto beam_count() const -> int;
     auto beam_spacing() const -> units::angle;
-    auto direction_at( units::angle base_direction, time_point turn ) const -> units::angle;
+    auto direction_at(units::angle base_direction, time_point turn) const -> units::angle;
 };
 
-class vpart_info
-{
-    private:
-        /** Unique identifier for this part */
-        std::optional<vpslot_engine> engine_info;
-        std::optional<vpslot_wheel> wheel_info;
-        std::optional<vpslot_rotor> rotor_info;
-        std::optional<vpslot_propeller> propeller_info;
-        std::optional<vpslot_wing> wing_info;
-        std::optional<vpslot_balloon> balloon_info;
-        std::optional<vpslot_ladder> ladder_info;
-        std::optional<vpslot_converter> converter_info;
-        std::optional<vpslot_workbench> workbench_info;
-        std::optional<vpslot_crafter> crafter_info;
+class vpart_info {
+private:
+    /** Unique identifier for this part */
+    std::optional<vpslot_engine> engine_info;
+    std::optional<vpslot_wheel> wheel_info;
+    std::optional<vpslot_rotor> rotor_info;
+    std::optional<vpslot_propeller> propeller_info;
+    std::optional<vpslot_wing> wing_info;
+    std::optional<vpslot_balloon> balloon_info;
+    std::optional<vpslot_ladder> ladder_info;
+    std::optional<vpslot_converter> converter_info;
+    std::optional<vpslot_workbench> workbench_info;
+    std::optional<vpslot_crafter> crafter_info;
 
-    public:
-        vpart_id id;
+public:
+    vpart_id id;
 
-        bool was_loaded = false;
+    bool was_loaded = false;
 
-        /** Translated name of a part */
-        std::string name() const;
+    /** Translated name of a part */
+    std::string name() const;
 
-        vpart_id get_id() const {
-            return id;
-        }
+    vpart_id get_id() const { return id; }
 
-        /** base item for this part */
-        itype_id item;
+    /** base item for this part */
+    itype_id item;
 
-        /** What slot of the vehicle tile does this part occupy? */
-        std::string location;
+    /** What slot of the vehicle tile does this part occupy? */
+    std::string location;
 
-        /** Color of part for different states */
-        nc_color color = c_light_gray;
-        nc_color color_broken = c_light_gray;
+    /** Color of part for different states */
+    nc_color color = c_light_gray;
+    nc_color color_broken = c_light_gray;
 
-        RGBColorPair default_color = {};
-        std::optional<RGBColor> light_color;
-        /**
-         * Symbol of part which will be translated as follows:
-         * y, u, n, b to NW, NE, SE, SW lines correspondingly
-         * h, j, c to horizontal, vertical, cross correspondingly
-         */
-        int sym = 0;
-        char sym_broken = '#';
+    RGBColorPair default_color = {};
+    std::optional<RGBColor> light_color;
+    /**
+     * Symbol of part which will be translated as follows:
+     * y, u, n, b to NW, NE, SE, SW lines correspondingly
+     * h, j, c to horizontal, vertical, cross correspondingly
+     */
+    int sym = 0;
+    char sym_broken = '#';
 
-        /** hint to tilesets for what tile to use if this part doesn't have one */
-        std::string looks_like;
+    /** hint to tilesets for what tile to use if this part doesn't have one */
+    std::string looks_like;
 
-        /** Maximum damage part can sustain before being destroyed */
-        int durability = 0;
+    /** Maximum damage part can sustain before being destroyed */
+    int durability = 0;
 
-        /** A text description of the part as a vehicle part */
-        translation description;
+    /** A text description of the part as a vehicle part */
+    translation description;
 
-        /** Damage modifier (percentage) used when damaging other entities upon collision */
-        int dmg_mod = 100;
+    /** Damage modifier (percentage) used when damaging other entities upon collision */
+    int dmg_mod = 100;
 
-        /**
-         * Electrical power, flat rate (watts); positive for generation, negative for consumption
-         * For motor consumption scaled with powertrain demand see @ref energy_consumption instead
-         */
-        int epower = 0;
+    /**
+     * Electrical power, flat rate (watts); positive for generation, negative for consumption
+     * For motor consumption scaled with powertrain demand see @ref energy_consumption instead
+     */
+    int epower = 0;
 
-        /**
-         * Energy consumed by engines and motors (watts) when delivering max @ref power
-         * Includes waste. Gets scaled based on powertrain demand.
-         */
-        int energy_consumption = 0;
+    /**
+     * Energy consumed by engines and motors (watts) when delivering max @ref power
+     * Includes waste. Gets scaled based on powertrain demand.
+     */
+    int energy_consumption = 0;
 
-        /**
-         * For engines and motors this is maximum output (watts)
-         * For alternators is engine power consumed (negative value)
-         */
-        int power = 0;
+    /**
+     * For engines and motors this is maximum output (watts)
+     * For alternators is engine power consumed (negative value)
+     */
+    int power = 0;
 
-        /** Emissions of part */
-        std::set<emit_id> emissions;
+    /** Emissions of part */
+    std::set<emit_id> emissions;
 
-        /** Fuel type of engine or tank */
-        itype_id fuel_type = itype_id::NULL_ID();
+    /** Fuel type of engine or tank */
+    itype_id fuel_type = itype_id::NULL_ID();
 
-        /** Default ammo (for turrets) */
-        itype_id default_ammo = itype_id::NULL_ID();
+    /** Default ammo (for turrets) */
+    itype_id default_ammo = itype_id::NULL_ID();
 
-        /** Volume of a foldable part when folded */
-        units::volume folded_volume = 0_ml;
+    /** Volume of a foldable part when folded */
+    units::volume folded_volume = 0_ml;
 
-        /** Cargo location volume */
-        units::volume size = 0_ml;
+    /** Cargo location volume */
+    units::volume size = 0_ml;
 
-        /** Mechanics skill required to install item */
-        int difficulty = 0;
+    /** Mechanics skill required to install item */
+    int difficulty = 0;
 
-        /** Legacy parts don't specify installation requirements */
-        bool legacy = true;
+    /** Legacy parts don't specify installation requirements */
+    bool legacy = true;
 
-        /** Format the description for display */
-        int format_description( std::string &msg, const nc_color &format_color, int width ) const;
+    /** Format the description for display */
+    int format_description(std::string& msg, const nc_color& format_color, int width) const;
 
-        /** Installation requirements for this component */
-        requirement_data install_requirements() const;
+    /** Installation requirements for this component */
+    requirement_data install_requirements() const;
 
-        /** Required skills to install this component */
-        std::map<skill_id, int> install_skills;
+    /** Required skills to install this component */
+    std::map<skill_id, int> install_skills;
 
-        /** Installation time (in moves) for component (@see install_time), default 1 hour */
-        int install_moves = to_moves<int>( 1_hours );
+    /** Installation time (in moves) for component (@see install_time), default 1 hour */
+    int install_moves = to_moves<int>(1_hours);
 
-        /** Installation time (in moves) for this component accounting for player skills */
-        int install_time( const Character &who ) const;
+    /** Installation time (in moves) for this component accounting for player skills */
+    int install_time(const Character& who) const;
 
-        /** Requirements for removal of this component */
-        requirement_data removal_requirements() const;
+    /** Requirements for removal of this component */
+    requirement_data removal_requirements() const;
 
-        /** Required skills to remove this component */
-        std::map<skill_id, int> removal_skills;
+    /** Required skills to remove this component */
+    std::map<skill_id, int> removal_skills;
 
-        /** Removal time (in moves) for component (@see removal_time), default is half @ref install_moves */
-        int removal_moves = -1;
+    /** Removal time (in moves) for component (@see removal_time), default is half @ref
+     * install_moves */
+    int removal_moves = -1;
 
-        /** Removal time (in moves) for this component accounting for player skills */
-        int removal_time( const Character &who ) const;
+    /** Removal time (in moves) for this component accounting for player skills */
+    int removal_time(const Character& who) const;
 
-        /** Requirements for repair of this component (per level of damage) */
-        requirement_data repair_requirements() const;
+    /** Requirements for repair of this component (per level of damage) */
+    requirement_data repair_requirements() const;
 
-        /** Returns whether or not the part is repairable  */
-        bool is_repairable() const;
+    /** Returns whether or not the part is repairable  */
+    bool is_repairable() const;
 
-        /** Required skills to repair this component */
-        std::map<skill_id, int> repair_skills;
+    /** Required skills to repair this component */
+    std::map<skill_id, int> repair_skills;
 
-        /** Repair time (in moves) to fully repair a component (@see repair_time) */
-        int repair_moves = to_moves<int>( 1_hours );
+    /** Repair time (in moves) to fully repair a component (@see repair_time) */
+    int repair_moves = to_moves<int>(1_hours);
 
-        /** Repair time (in moves) to fully repair this component, accounting for player skills */
-        int repair_time( const Character &who ) const;
+    /** Repair time (in moves) to fully repair this component, accounting for player skills */
+    int repair_time(const Character& who) const;
 
-        /** @ref item_group this part breaks into when destroyed */
-        item_group_id breaks_into_group = item_group_id( "EMPTY_GROUP" );
+    /** @ref item_group this part breaks into when destroyed */
+    item_group_id breaks_into_group = item_group_id("EMPTY_GROUP");
 
-        /** Tool qualities this vehicle part can provide when installed */
-        std::map<quality_id, int> qualities;
+    /** Tool qualities this vehicle part can provide when installed */
+    std::map<quality_id, int> qualities;
 
-        /** seatbelt (str), muffler (%), horn (vol), light (intensity), recharing (power) */
-        int bonus = 0;
+    /** seatbelt (str), muffler (%), horn (vol), light (intensity), recharing (power) */
+    int bonus = 0;
 
-        /** Optional cone rotation data for lights that sweep instead of emitting continuously. */
-        std::optional<vpart_rotating_light> rotating_light;
+    /** Optional cone rotation data for lights that sweep instead of emitting continuously. */
+    std::optional<vpart_rotating_light> rotating_light;
 
-        /** cargo weight modifier (percentage) */
-        int cargo_weight_modifier = 100;
+    /** cargo weight modifier (percentage) */
+    int cargo_weight_modifier = 100;
 
-        /** base weight modifier (percentage) */
-        int weight_modifier = 100;
+    /** base weight modifier (percentage) */
+    int weight_modifier = 100;
 
-        /** Flat decrease of damage of a given type. */
-        resistances damage_reduction;
+    /** Flat decrease of damage of a given type. */
+    resistances damage_reduction;
 
-        /* Contains data for terrain transformer parts */
-        transform_terrain_data transform_terrain;
+    /* Contains data for terrain transformer parts */
+    transform_terrain_data transform_terrain;
 
-        /*Comfort data for sleeping in vehicles*/
-        int comfort = 0;
-        int floor_bedding_warmth = 0;
-        int bonus_fire_warmth_feet = 300;
+    /*Comfort data for sleeping in vehicles*/
+    int comfort = 0;
+    int floor_bedding_warmth = 0;
+    int bonus_fire_warmth_feet = 300;
 
-        /**
-         * @name Engine specific functions
-         *
-         */
-        std::vector<std::string> engine_excludes() const;
-        int engine_m2c() const;
-        float engine_backfire_threshold() const;
-        int engine_backfire_freq() const;
-        int engine_muscle_power_factor() const;
-        float engine_damaged_power_factor() const;
-        int engine_noise_factor() const;
-        std::vector<itype_id> engine_fuel_opts() const;
-        /**
-         * @name Wheel specific functions
-         *
-         */
-        float wheel_rolling_resistance() const;
-        int wheel_area() const;
-        std::vector<std::pair<std::string, int>> wheel_terrain_mod() const;
-        float wheel_or_rating() const;
-        /** @name flight specific functions
-        */
-        int rotor_diameter() const;
-        float lift_coff() const;
-        int propeller_diameter() const;
-        float balloon_height() const;
-        int ladder_length() const;
-        const std::pair<itype_id, int> get_conversion_input() const;
-        const std::pair<itype_id, int> get_conversion_output() const;
-        int get_max_conversions() const;
-        int get_conversion_charges() const;
-        const std::vector<itype_id> craftertools() const;
-        /**
-         * Getter for optional workbench info
-         */
-        const std::optional<vpslot_workbench> &get_workbench_info() const;
+    /**
+     * @name Engine specific functions
+     *
+     */
+    std::vector<std::string> engine_excludes() const;
+    int engine_m2c() const;
+    float engine_backfire_threshold() const;
+    int engine_backfire_freq() const;
+    int engine_muscle_power_factor() const;
+    float engine_damaged_power_factor() const;
+    int engine_noise_factor() const;
+    std::vector<itype_id> engine_fuel_opts() const;
+    /**
+     * @name Wheel specific functions
+     *
+     */
+    float wheel_rolling_resistance() const;
+    int wheel_area() const;
+    std::vector<std::pair<std::string, int>> wheel_terrain_mod() const;
+    float wheel_or_rating() const;
+    /** @name flight specific functions
+     */
+    int rotor_diameter() const;
+    float lift_coff() const;
+    int propeller_diameter() const;
+    float balloon_height() const;
+    int ladder_length() const;
+    const std::pair<itype_id, int> get_conversion_input() const;
+    const std::pair<itype_id, int> get_conversion_output() const;
+    int get_max_conversions() const;
+    int get_conversion_charges() const;
+    const std::vector<itype_id> craftertools() const;
+    /**
+     * Getter for optional workbench info
+     */
+    const std::optional<vpslot_workbench>& get_workbench_info() const;
 
-    private:
-        /** Name from vehicle part definition which if set overrides the base item name */
-        translation name_;
+private:
+    /** Name from vehicle part definition which if set overrides the base item name */
+    translation name_;
 
-        std::set<std::string> flags;
-        // flags checked so often that things slow down due to string cmp
-        std::bitset<NUM_VPFLAGS> bitflags;
+    std::set<std::string> flags;
+    // flags checked so often that things slow down due to string cmp
+    std::bitset<NUM_VPFLAGS> bitflags;
 
-        /** Second field is the multiplier */
-        std::vector<std::pair<requirement_id, int>> install_reqs;
-        std::vector<std::pair<requirement_id, int>> removal_reqs;
-        std::vector<std::pair<requirement_id, int>> repair_reqs;
+    /** Second field is the multiplier */
+    std::vector<std::pair<requirement_id, int>> install_reqs;
+    std::vector<std::pair<requirement_id, int>> removal_reqs;
+    std::vector<std::pair<requirement_id, int>> repair_reqs;
 
-    public:
+public:
+    // z-ordering, inferred from location, cached here
+    int z_order = 0;
+    // Display order in vehicle interact display
+    int list_order = 0;
 
-        // z-ordering, inferred from location, cached here
-        int z_order = 0;
-        // Display order in vehicle interact display
-        int list_order = 0;
+    const std::set<std::string>& get_flags() const { return flags; }
+    bool has_flag(const std::string& flag) const { return flags.contains(flag); }
+    bool has_flag(const vpart_bitflags flag) const { return bitflags.test(flag); }
+    void set_flag(const std::string& flag);
 
-        const std::set<std::string> &get_flags() const {
-            return flags;
-        }
-        bool has_flag( const std::string &flag ) const {
-            return flags.contains( flag );
-        }
-        bool has_flag( const vpart_bitflags flag ) const {
-            return bitflags.test( flag );
-        }
-        void set_flag( const std::string &flag );
+    static void load_engine(
+        std::optional<vpslot_engine>& eptr, const JsonObject& jo, const itype_id& fuel_type);
+    static void load_wheel(std::optional<vpslot_wheel>& whptr, const JsonObject& jo);
+    static void load_workbench(std::optional<vpslot_workbench>& wbptr, const JsonObject& jo);
+    static void load_rotor(std::optional<vpslot_rotor>& roptr, const JsonObject& jo);
+    static void load_wing(std::optional<vpslot_wing>& wptr, const JsonObject& jo);
+    static void load_balloon(std::optional<vpslot_balloon>& balptr, const JsonObject& jo);
+    static void load_ladder(std::optional<vpslot_ladder>& ladptr, const JsonObject& jo);
+    static void load_propeller(std::optional<vpslot_propeller>& proptr, const JsonObject& jo);
+    static void load_crafter(std::optional<vpslot_crafter>& craftptr, const JsonObject& jo);
+    static void load_converter(std::optional<vpslot_converter>& convertptr, const JsonObject& jo);
+    void load(const JsonObject& jo, const std::string& src);
+    void finalize();
+    void check() const;
+    static void load_vehicle_parts(const JsonObject& jo, const std::string& src);
+    static void finalize_all();
+    static void check_consistency();
+    static void reset();
 
-        static void load_engine( std::optional<vpslot_engine> &eptr, const JsonObject &jo,
-                                 const itype_id &fuel_type );
-        static void load_wheel( std::optional<vpslot_wheel> &whptr, const JsonObject &jo );
-        static void load_workbench( std::optional<vpslot_workbench> &wbptr, const JsonObject &jo );
-        static void load_rotor( std::optional<vpslot_rotor> &roptr, const JsonObject &jo );
-        static void load_wing( std::optional<vpslot_wing> &wptr, const JsonObject &jo );
-        static void load_balloon( std::optional<vpslot_balloon> &balptr, const JsonObject &jo );
-        static void load_ladder( std::optional<vpslot_ladder> &ladptr, const JsonObject &jo );
-        static void load_propeller( std::optional<vpslot_propeller> &proptr, const JsonObject &jo );
-        static void load_crafter( std::optional<vpslot_crafter> &craftptr, const JsonObject &jo );
-        static void load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo );
-        void load( const JsonObject &jo, const std::string &src );
-        void finalize();
-        void check() const;
-        static void load_vehicle_parts( const JsonObject &jo, const std::string &src );
-        static void finalize_all();
-        static void check_consistency();
-        static void reset();
-
-        static const std::vector<vpart_info> &get_all();
+    static const std::vector<vpart_info>& get_all();
 };
 
 struct vehicle_item_spawn {
@@ -463,18 +454,18 @@ struct vehicle_prototype {
         vpart_id part;
         int with_ammo = 0;
         std::set<itype_id> ammo_types;
-        std::pair<int, int> ammo_qty = { -1, -1 };
+        std::pair<int, int> ammo_qty = {-1, -1};
         itype_id fuel = itype_id::NULL_ID();
     };
 
     vehicle_prototype();
-    vehicle_prototype( const std::string &name, const std::vector<part_def> &parts,
-                       const std::vector<vehicle_item_spawn> &item_spawns,
-                       std::unique_ptr<vehicle> &&blueprint );
-    vehicle_prototype( vehicle_prototype && ) noexcept ;
+    vehicle_prototype(
+        const std::string& name, const std::vector<part_def>& parts,
+        const std::vector<vehicle_item_spawn>& item_spawns, std::unique_ptr<vehicle>&& blueprint);
+    vehicle_prototype(vehicle_prototype&&) noexcept;
     ~vehicle_prototype();
 
-    vehicle_prototype &operator=( vehicle_prototype && ) noexcept ;
+    vehicle_prototype& operator=(vehicle_prototype&&) noexcept;
 
     std::string name;
     std::vector<part_def> parts;
@@ -487,7 +478,7 @@ struct vehicle_prototype {
 
     std::unique_ptr<vehicle> blueprint;
 
-    static void load( const JsonObject &jo );
+    static void load(const JsonObject& jo);
     static void reset();
     static void finalize();
 
