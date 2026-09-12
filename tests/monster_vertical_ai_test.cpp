@@ -46,17 +46,13 @@ TEST_CASE("flying flee does not rocket altitude", "[monster][ai][zlevel]") {
         CHECK(wasp.flying_flee_altitude(8, 0) == 8);
 
         auto z = 0;
-        for (auto i = 0; i < 4; ++i) {
-            z = wasp.flying_flee_altitude(z, 0);
-        }
+        for (auto i = 0; i < 4; ++i) { z = wasp.flying_flee_altitude(z, 0); }
         CHECK(z <= 1);
     }
 
     SECTION("eyebot sibling uses the same cap") {
         auto z = 0;
-        for (auto i = 0; i < 4; ++i) {
-            z = eyebot.flying_flee_altitude(z, 0);
-        }
+        for (auto i = 0; i < 4; ++i) { z = eyebot.flying_flee_altitude(z, 0); }
         CHECK(z <= 1);
         CHECK(eyebot.flying_flee_altitude(9, 0) == 9);
     }
@@ -80,8 +76,9 @@ TEST_CASE("crow preferred_z is approached one level at a time", "[monster][ai][z
     CHECK(crow.flying_flee_altitude(5, 0) == 4);
 }
 
-TEST_CASE("ground monsters melee open air at dz 1 but not through floors",
-          "[monster][ai][zlevel][melee]") {
+TEST_CASE(
+    "ground monsters melee open air at dz 1 but not through floors",
+    "[monster][ai][zlevel][melee]") {
     setup_open_sky();
 
     const auto ground = tripoint_bub_ms(60, 60, 0);
@@ -114,8 +111,7 @@ TEST_CASE("ground monsters melee open air at dz 1 but not through floors",
     }
 }
 
-TEST_CASE("open air altitude penalty ignores roofs and adjacent hover",
-          "[monster][ai][zlevel]") {
+TEST_CASE("open air altitude penalty ignores roofs and adjacent hover", "[monster][ai][zlevel]") {
     setup_open_sky();
 
     auto& zed = spawn_test_monster("mon_zombie", tripoint_bub_ms(60, 60, 0));
@@ -134,8 +130,7 @@ TEST_CASE("open air altitude penalty ignores roofs and adjacent hover",
     CHECK(wasp.unengageable_altitude_penalty(zed) == 0);
 }
 
-TEST_CASE("zombies prefer a ground survivor over a stratospheric drone",
-          "[monster][ai][zlevel]") {
+TEST_CASE("zombies prefer a ground survivor over a stratospheric drone", "[monster][ai][zlevel]") {
     setup_open_sky();
 
     const auto zed_pos = tripoint_bub_ms(60, 60, 0);
@@ -157,8 +152,9 @@ TEST_CASE("zombies prefer a ground survivor over a stratospheric drone",
     CHECK(plan.goal == get_avatar().bub_pos());
 }
 
-TEST_CASE("unreachable open air target is not dropped when it is the only prey",
-          "[monster][ai][zlevel]") {
+TEST_CASE(
+    "unreachable open air target is not dropped when it is the only prey",
+    "[monster][ai][zlevel]") {
     setup_open_sky();
     put_player_underground();
 
