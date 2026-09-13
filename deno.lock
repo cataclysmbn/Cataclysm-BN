@@ -39,6 +39,7 @@
     "jsr:@std/internal@^1.0.9": "1.0.12",
     "jsr:@std/io@0.225": "0.225.2",
     "jsr:@std/io@0.225.0": "0.225.0",
+    "jsr:@std/path@*": "1.1.4",
     "jsr:@std/path@1": "1.1.2",
     "jsr:@std/path@1.0.8": "1.0.8",
     "jsr:@std/path@1.1.2": "1.1.2",
