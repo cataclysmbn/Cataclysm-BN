@@ -5,8 +5,10 @@
 #include <cstdlib>
 #include <limits>
 
+#include "calendar.h"
 #include "character.h"
 #include "crafting.h"
+#include "crafting_gui.h"
 #include "debug.h"
 #include "enum_conversions.h"
 #include "game_constants.h"
@@ -169,6 +171,38 @@ void craft_command::execute( const tripoint_bub_ms &new_loc )
                 return;
             }
             tool_selections.push_back( ts );
+        }
+    }
+
+    // Compute total volume of raw material inputs from the finalized selections.
+    {
+        const auto total_vol = [&]() {
+            auto acc = 0_ml;
+            for( const auto &sel : item_selections ) {
+                const auto &ic = sel.comp;
+                if( ic.type.is_null() ) {
+                    continue;
+                }
+                const auto cnt = ( ic.count > 0 ) ? ic.count * batch_size : std::abs( ic.count );
+                if( cnt <= 0 ) {
+                    continue;
+                }
+                const auto by_charges = item::count_by_charges( ic.type ) && ic.count > 0;
+                if( by_charges ) {
+                    const auto &ex = *item::spawn_temporary( ic.type, calendar::turn, cnt );
+                    acc += ex.volume();
+                } else {
+                    const auto &ex = *item::spawn_temporary( ic.type );
+                    acc += ex.volume() * cnt;
+                }
+            }
+            return acc;
+        }();
+        if( total_vol > 1000_liter ) {
+            if( !query_large_volume( total_vol ) ) {
+                volume_warning_canceled = true;
+                return;
+            }
         }
     }
 
