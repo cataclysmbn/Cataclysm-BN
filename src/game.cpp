@@ -1869,6 +1869,10 @@ bool game::cleanup_at_end()
     avatar &player_character = get_avatar();
     player_character = avatar();
 
+    // Unload active NPCs before cleaning up safe_reference records.
+    // Without this, cleanup_references() would find live mem_count entries.
+    unload_npcs();
+
     cleanup_references();
     cleanup_arenas();
     DynamicDataLoader::get_instance().unload_data();
