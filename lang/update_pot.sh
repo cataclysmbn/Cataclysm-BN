@@ -23,6 +23,22 @@ then
     exit 1
 fi
 
+SOURCE_FILES=$(mktemp) || exit 1
+
+trap 'rm -f "$SOURCE_FILES"' 0 # Gets rid of "$SOURCE_FILES" on exit
+
+if ! find src \
+  \( -path src/lua -o -path src/sol -o -path src/third-party \) -prune -o \
+  -type f \( -name '*.cpp' -o -name '*.h' \) -print > "$SOURCE_FILES"; then # Should probably use a constant to point to folders/files that shouldn't be targeted.
+    echo "Failed to discover source files." >&2
+    exit 1
+fi
+
+if [ ! -s "$SOURCE_FILES" ]; then
+  echo "No source files found." >&2
+  exit 1
+fi
+
 echo "> Extracting strings from source code"
 xgettext --default-domain="cataclysm-bn" \
          --add-comments="~" \
@@ -39,7 +55,7 @@ xgettext --default-domain="cataclysm-bn" \
          --keyword="pl_translation:1,2,2t" \
          --keyword="pl_translation:1c,2,3,3t" \
          --from-code="UTF-8" \
-         src/*.cpp src/*.h
+         --files-from"$SOURCE_FILES"
 if [ $? -ne 0 ]; then
     echo "Error in xgettext. Aborting"
     exit 1
