@@ -35,8 +35,7 @@ TEST_CASE("npc_book_activity_safe_reference_cleanup", "[npc][safe_reference]") {
     REQUIRE(book.type->book);
 
     // Assign an ACT_READ activity with the book as target.
-    auto act = std::make_unique<player_activity>(ACT_READ, 100, 0,
-                reader.getID().get_value());
+    auto act = std::make_unique<player_activity>(ACT_READ, 100, 0, reader.getID().get_value());
     act->targets.emplace_back(book);
     reader.assign_activity(std::move(act));
 
@@ -45,17 +44,13 @@ TEST_CASE("npc_book_activity_safe_reference_cleanup", "[npc][safe_reference]") {
     REQUIRE(reader.activity->targets.front().is_accessible());
 
     // Clear overmapbuffers so the NPC is only held by active_npc.
-    for_each_overmapbuffer([](const dimension_id&, overmapbuffer& buf) {
-        buf.clear();
-    });
+    for_each_overmapbuffer([](const dimension_id&, overmapbuffer& buf) { buf.clear(); });
 
     // Unload NPCs — reload_npcs() calls unload_npcs() (clearing active_npc,
     // which destroys the NPC and releases its safe_reference) then load_npcs()
     g->reload_npcs();
 
-    const auto debug_msg = capture_debugmsg_during([]() {
-        cleanup_references();
-    });
+    const auto debug_msg = capture_debugmsg_during([]() { cleanup_references(); });
 
     CHECK(debug_msg.find("mem_count") == std::string::npos);
 }
