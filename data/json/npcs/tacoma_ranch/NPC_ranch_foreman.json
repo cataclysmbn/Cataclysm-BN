@@ -152,14 +152,14 @@
           "om_terrain": "ranch_camp_65",
           "//": "Beds in the barn",
           "place_nested": [
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 1 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 5 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 7 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 11 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 13 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 17 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 19 },
-            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 19, "y": 23 }
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 1 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 5 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 7 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 11 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 13 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 17 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 19 },
+            { "chunks": [ "tacoma_commune_makeshift_bed" ], "x": 18, "y": 23 }
           ]
         },
         {
@@ -237,11 +237,7 @@
           "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
           "place_vehicles": [ { "vehicle": "hippie_van", "x": 10, "y": 10, "rotation": 270, "chance": 100 } ]
         },
-        {
-          "om_terrain": "ranch_camp_65",
-          "place_furniture": [ { "furn": "f_bookcase", "x": 17, "y": 11 } ],
-          "place_npcs": [ { "class": "ranch_farmer_1", "x": 19, "y": 20 } ]
-        },
+        { "om_terrain": "ranch_camp_65", "place_npcs": [ { "class": "ranch_farmer_1", "x": 19, "y": 20 } ] },
         { "om_terrain": "ranch_camp_66", "place_npcs": [ { "class": "ranch_woodcutter_1", "x": 4, "y": 11 } ] }
       ]
     }
