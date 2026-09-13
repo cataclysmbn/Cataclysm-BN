@@ -6159,7 +6159,8 @@ struct BodyTemperatureModifiers {
     bool is_in_sunlight;
     units::temperature_delta mutation_heat_low; // Lower heat is applied always
     units::temperature_delta mutation_heat_high;
-    units::temperature_delta mutation_heat_bonus; // Difference between high and low is the "safe" heat - one we only apply if it's beneficial
+    units::temperature_delta
+    mutation_heat_bonus; // Difference between high and low is the "safe" heat - one we only apply if it's beneficial
     int vehicle_wind_speed = 0;
     units::temperature water_temperature;
     double total_windpower;
@@ -6529,15 +6530,15 @@ bool is_bodypart_submerged( const bodypart_id &bp, const BodyTemperatureModifier
 }
 
 auto adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
-                                     const bodypart &bp_stats, units::temperature bp_conv,
-                                     const BodyTemperatureModifiers &body_mods,
-                                     const units::temperature_delta clothing_warmth_adjusted_bonus )
-                                     -> units::temperature
+                                      const bodypart &bp_stats, units::temperature bp_conv,
+                                      const BodyTemperatureModifiers &body_mods,
+                                      const units::temperature_delta clothing_warmth_adjusted_bonus )
+- > units::temperature
 {
     const auto bonus_fire_warmth = units::from_legacy_bodypart_temp_delta( body_mods.best_fire * 500 );
     const auto comfortable_warmth = bonus_fire_warmth + body_mods.lying_warmth;
     const auto bonus_warmth = comfortable_warmth + body_mods.mutation_heat_bonus +
-                             clothing_warmth_adjusted_bonus;
+                              clothing_warmth_adjusted_bonus;
     if( bonus_warmth <= 0_c_delta ) {
         return bp_conv;
     }
@@ -6567,8 +6568,8 @@ auto adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
 }
 
 auto adjust_bp_conv_for_insulation( units::temperature bp_conv,
-                                     const units::temperature_delta clothing_warmth_adjustment )
-                                     -> units::temperature
+                                    const units::temperature_delta clothing_warmth_adjustment )
+- > units::temperature
 {
     // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
     // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
@@ -6632,8 +6633,9 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
         const bool submerged_bp = is_bodypart_submerged( bp, body_mods );
         // Change the ambient temperature into a delta based on comfortable air temperature.
         const auto adjusted_temp = submerged_bp
-            ? units::temperature( body_mods.water_temperature )
-            : units::temperature( BODYTEMP_NORM + ( body_mods.ambient_temperature - body_mods.ambient_norm ) / 5.0 );
+                                   ? units::temperature( body_mods.water_temperature )
+                                   : units::temperature( BODYTEMP_NORM + ( body_mods.ambient_temperature - body_mods.ambient_norm ) /
+                                           5.0 );
 
         // Represents the fact that the body generates heat when it is cold.
         const auto scaled_temperature = logarithmic_range(
@@ -6646,11 +6648,11 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
         const auto warmth_it = body_mods.warmth_per_bp.find( bp );
         const auto clothing_warmth_adjustment = units::from_legacy_bodypart_temp_delta(
                 static_cast<int>( homeostasis_adjustment *
-                ( warmth_it != body_mods.warmth_per_bp.end() ? warmth_it->second : 0 ) ) );
+                                  ( warmth_it != body_mods.warmth_per_bp.end() ? warmth_it->second : 0 ) ) );
         const auto warmth_bonus_it = body_mods.warmth_per_bp_bonus.find( bp );
         const auto clothing_warmth_adjusted_bonus = units::from_legacy_bodypart_temp_delta(
                     static_cast<int>( homeostasis_adjustment *
-                    ( warmth_bonus_it != body_mods.warmth_per_bp_bonus.end() ? warmth_bonus_it->second : 0 ) ) );
+                                      ( warmth_bonus_it != body_mods.warmth_per_bp_bonus.end() ? warmth_bonus_it->second : 0 ) ) );
 
         const auto wind_res_it = body_mods.wind_res_per_bp.find( bp );
         const int wind_res = ( wind_res_it != body_mods.wind_res_per_bp.end() ) ? wind_res_it->second : 0;
@@ -6745,8 +6747,8 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
 
     body_mods.is_in_sunlight = weather::is_in_sunlight( m, _bub_pos, weather.weather_id );
     body_mods.sunlight_warmth = body_mods.is_in_sunlight
-        ? ( weather.weather_id->sun_intensity == sun_intensity_type::high ? 2_c_delta : 1_c_delta )
-        : 0_c_delta;
+                                ? ( weather.weather_id->sun_intensity == sun_intensity_type::high ? 2_c_delta : 1_c_delta )
+                                : 0_c_delta;
 
     body_mods.mutation_heat_low = bodytemp_modifier_traits( true );
     body_mods.mutation_heat_high = bodytemp_modifier_traits( false );
