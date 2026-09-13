@@ -6529,11 +6529,12 @@ bool is_bodypart_submerged( const bodypart_id &bp, const BodyTemperatureModifier
     return false;
 }
 
-auto adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
-                                      const bodypart &bp_stats, units::temperature bp_conv,
-                                      const BodyTemperatureModifiers &body_mods,
-                                      const units::temperature_delta clothing_warmth_adjusted_bonus )
-- > units::temperature
+auto adjust_bp_conv_for_bonus_warmth(
+    Character &chr, const bodypart_id &bp,
+    const bodypart &bp_stats, units::temperature bp_conv,
+    const BodyTemperatureModifiers &body_mods,
+    const units::temperature_delta clothing_warmth_adjusted_bonus
+) -> units::temperature
 {
     const auto bonus_fire_warmth = units::from_legacy_bodypart_temp_delta( body_mods.best_fire * 500 );
     const auto comfortable_warmth = bonus_fire_warmth + body_mods.lying_warmth;
@@ -6568,8 +6569,7 @@ auto adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
 }
 
 auto adjust_bp_conv_for_insulation( units::temperature bp_conv,
-                                    const units::temperature_delta clothing_warmth_adjustment )
-- > units::temperature
+                                    const units::temperature_delta clothing_warmth_adjustment ) -> units::temperature
 {
     // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
     // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
