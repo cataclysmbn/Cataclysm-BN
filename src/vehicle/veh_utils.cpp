@@ -9,6 +9,7 @@
 #include "game_constants.h"
 #include "inventory.h"
 #include "item.h"
+#include "item_contents.h"
 #include "locations.h"
 #include "map.h"
 #include "player.h"
@@ -22,14 +23,43 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <list>
+#include <ranges>
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+namespace {
+namespace ranges = std::ranges;
+
+auto is_liquid_only_container(const item& it) -> bool {
+    if (!it.is_watertight_container()) { return false; }
+    if (it.contents.empty()) { return true; }
+    const auto& inside = it.contents.all_items_top();
+    return ranges::all_of(inside, [](const item* e) { return e != nullptr && e->made_of(LIQUID); });
+}
+
+} // namespace
+
 namespace veh_utils {
+
+auto install_component_filter(const vpart_info& vp) -> std::function<bool(const item&)> {
+    const auto base = vp.item;
+    const auto keep_fluid = vp.has_flag(VPFLAG_FLUIDTANK);
+    return [base, keep_fluid](const item& it) {
+        if (keep_fluid && it.typeId() == base && is_liquid_only_container(it)) { return true; }
+        return is_crafting_component(it);
+    };
+}
+
+auto should_unload_install_component(const vpart_info& vp, const std::vector<item_comp>& comps)
+    -> bool {
+    if (!vp.has_flag(VPFLAG_FLUIDTANK)) { return true; }
+    return std::ranges::none_of(comps, [&](const item_comp& c) { return c.type == vp.item; });
+}
 
 int calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who) {
     const auto iter = vp.install_skills.find(sk);
@@ -57,7 +87,8 @@ vehicle_part& most_repairable_part(vehicle& veh, Character& who, bool only_repai
         if (vpr.part().removed || vpr.part().damage() <= 0) { continue; }
 
         if (vpr.part().is_broken()) {
-            if (info.install_requirements().can_make_with_inventory(inv, is_crafting_component)) {
+            if (info.install_requirements().can_make_with_inventory(
+                    inv, install_component_filter(info))) {
                 repairable_cache[&vpr.part()] = repairable_status::need_replacement;
             }
 
@@ -108,7 +139,10 @@ bool repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) {
     // as they have the handicap of not being able to use the veh interaction menu
     // or able to drag a welding cart etc.
     map_inv.form_from_map(who.bub_pos(), PICKUP_RANGE, &who_c, false, !who.is_npc());
-    if (!reqs.can_make_with_inventory(inv, is_crafting_component)) {
+    const auto comp_filter =
+        pt.is_broken() ? install_component_filter(vp)
+                       : std::function<bool(const item&)>(is_crafting_component);
+    if (!reqs.can_make_with_inventory(inv, comp_filter)) {
         who.add_msg_if_player(
             m_info, _("You don't meet the requirements to repair the %s."), pt.name());
         return false;
@@ -117,8 +151,10 @@ bool repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) {
     // consume items extracting any base item (which we will need if replacing broken part)
     detached_ptr<item> base = item::spawn(vp.item);
     for (const auto& e : reqs.get_components()) {
-        for (auto& obj :
-             who.consume_items(who.select_item_component(e, 1, map_inv), 1, is_crafting_component)) {
+        const auto unload = !pt.is_broken() || should_unload_install_component(vp, e);
+        for (auto& obj : who.consume_items(
+                 who.select_item_component(e, 1, map_inv, false, comp_filter), 1, comp_filter,
+                 unload)) {
             if (obj->typeId() == vp.item) { base = std::move(obj); }
         }
     }

@@ -316,10 +316,10 @@ void veh_interact::allocate_windows() {
 
 bool veh_interact::format_reqs(
     std::string& msg, const requirement_data& reqs, const std::map<skill_id, int>& skills,
-    int moves) const {
+    int moves, const std::function<bool(const item&)>& comp_filter) const {
     auto& you = get_avatar();
     const inventory& inv = you.crafting_inventory();
-    bool ok = reqs.can_make_with_inventory(inv, is_crafting_component);
+    bool ok = reqs.can_make_with_inventory(inv, comp_filter);
 
     msg += _("<color_white>Time required:</color>\n");
     // TODO: better have a from_moves function
@@ -341,7 +341,7 @@ bool veh_interact::format_reqs(
     }
 
     auto comps =
-        reqs.get_folded_components_list(getmaxx(w_msg) - 2, c_white, inv, is_crafting_component);
+        reqs.get_folded_components_list(getmaxx(w_msg) - 2, c_white, inv, comp_filter);
     for (const std::string& line : comps) { msg += line + "\n"; }
     auto tools = reqs.get_folded_tools_list(getmaxx(w_msg) - 2, c_white, inv);
     for (const std::string& line : tools) { msg += line + "\n"; }
@@ -770,7 +770,8 @@ bool veh_interact::update_part_requirements() {
     Character& you = get_player_character();
     std::string nmsg;
     bool ok = format_reqs(
-        nmsg, reqs, sel_vpart_info->install_skills, sel_vpart_info->install_time(*you.as_player()));
+        nmsg, reqs, sel_vpart_info->install_skills, sel_vpart_info->install_time(*you.as_player()),
+        veh_utils::install_component_filter(*sel_vpart_info));
 
     std::string additional_requirements;
     bool lifting_or_jacking_required = false;
@@ -1168,12 +1169,14 @@ void veh_interact::do_repair() {
         bool ok;
         if (pt.is_broken()) {
             ok = format_reqs(
-                nmsg, vp.install_requirements(), vp.install_skills, vp.install_time(you));
+                nmsg, vp.install_requirements(), vp.install_skills, vp.install_time(you),
+                veh_utils::install_component_filter(vp));
         } else {
             if (!vp.repair_requirements().is_empty() && pt.base->max_damage() > 0) {
                 ok = format_reqs(
                     nmsg, vp.repair_requirements() * pt.base->damage_level(4), vp.repair_skills,
-                    vp.repair_time(you) * pt.base->damage() / pt.base->max_damage());
+                    vp.repair_time(you) * pt.base->damage() / pt.base->max_damage(),
+                    is_crafting_component);
             } else {
                 nmsg += colorize(_("This part cannot be repaired"), c_light_red);
                 ok = false;
@@ -1766,7 +1769,8 @@ bool veh_interact::can_remove_part(int idx, const Character& who) {
 
     const auto reqs = sel_vpart_info->removal_requirements();
     bool ok =
-        format_reqs(nmsg, reqs, sel_vpart_info->removal_skills, sel_vpart_info->removal_time(who));
+        format_reqs(nmsg, reqs, sel_vpart_info->removal_skills, sel_vpart_info->removal_time(who),
+                    is_crafting_component);
     std::string additional_requirements;
     bool lifting_or_jacking_required = false;
 
@@ -2116,7 +2120,8 @@ int veh_interact::part_at(tripoint_bub_ms d) {
  */
 bool veh_interact::can_potentially_install(const vpart_info& vpart) {
     return get_avatar().has_trait(trait_DEBUG_HS)
-        || vpart.install_requirements().can_make_with_inventory(crafting_inv, is_crafting_component);
+        || vpart.install_requirements().can_make_with_inventory(
+               crafting_inv, veh_utils::install_component_filter(vpart));
 }
 
 /**
@@ -3021,8 +3026,9 @@ void veh_interact::complete_vehicle(Character& who) {
 
             const auto reqs = vpinfo.install_requirements();
             const auto using_debug_hammerspace = who.has_trait(trait_DEBUG_HS);
+            const auto comp_filter = veh_utils::install_component_filter(vpinfo);
             if (!using_debug_hammerspace
-                && !reqs.can_make_with_inventory(inv, is_crafting_component)) {
+                && !reqs.can_make_with_inventory(inv, comp_filter)) {
                 add_msg(m_info, _("You don't meet the requirements to install the %s."),
                         vpinfo.name());
                 break;
@@ -3033,7 +3039,8 @@ void veh_interact::complete_vehicle(Character& who) {
             } else {
                 // Consume items, extracting the specific base item for the installed part.
                 for (const auto& e : reqs.get_components()) {
-                    for (auto& obj : who.consume_items(e, 1, is_crafting_component)) {
+                    const auto unload = veh_utils::should_unload_install_component(vpinfo, e);
+                    for (auto& obj : who.consume_items(e, 1, comp_filter, unload)) {
                         if (obj->typeId() == vpinfo.item) { base = std::move(obj); }
                     }
                 }

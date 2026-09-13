@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+class item;
 class player;
 class vpart_info;
 struct requirement_data;
@@ -124,7 +125,7 @@ private:
     /** Format list of requirements returning true if all are met */
     bool format_reqs(
         std::string& msg, const requirement_data& reqs, const std::map<skill_id, int>& skills,
-        int moves) const;
+        int moves, const std::function<bool(const item&)>& comp_filter) const;
 
     int part_at(tripoint_bub_ms d);
     void move_cursor(tripoint_rel_veh d, int dstart_at = 0);

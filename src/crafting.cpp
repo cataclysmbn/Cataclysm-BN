@@ -1666,16 +1666,16 @@ static void empty_buckets( Character &p )
 
 std::vector<detached_ptr<item>> Character::consume_items( const comp_selection<item_comp> &is,
                              int batch,
-                             const std::function<bool( const item & )> &filter )
+                             const std::function<bool( const item & )> &filter, bool unload )
 {
-    return consume_items( get_map(), is, batch, bub_pos(), PICKUP_RANGE, filter );
+    return consume_items( get_map(), is, batch, bub_pos(), PICKUP_RANGE, filter, unload );
 }
 
 std::vector<detached_ptr<item>> Character::consume_items( map &m,
                              const comp_selection<item_comp> &is,
                              int batch,
                              const tripoint_bub_ms &origin, int radius,
-                             const std::function<bool( const item & )> &filter )
+                             const std::function<bool( const item & )> &filter, bool unload )
 {
     std::vector<detached_ptr<item>> ret;
 
@@ -1713,7 +1713,9 @@ std::vector<detached_ptr<item>> Character::consume_items( map &m,
             for( detached_ptr<item> &i : tmp ) {
                 as_p.push_back( &*i );
             }
-            remove_ammo( as_p, *this );
+            if( unload ) {
+                remove_ammo( as_p, *this );
+            }
             ret.insert( ret.end(), std::make_move_iterator( tmp.begin() ),
                         std::make_move_iterator( tmp.end() ) );
         }
@@ -1730,7 +1732,9 @@ std::vector<detached_ptr<item>> Character::consume_items( map &m,
             for( detached_ptr<item> &i : tmp ) {
                 as_p.push_back( &*i );
             }
-            remove_ammo( as_p, *this );
+            if( unload ) {
+                remove_ammo( as_p, *this );
+            }
             ret.insert( ret.end(), std::make_move_iterator( tmp.begin() ),
                         std::make_move_iterator( tmp.end() ) );
         }
@@ -1754,12 +1758,12 @@ In that case, consider using select_item_component with 1 pre-created map invent
 to consume_items */
 std::vector<detached_ptr<item>> Character::consume_items( const std::vector<item_comp> &components,
                              int batch,
-                             const std::function<bool( const item & )> &filter )
+                             const std::function<bool( const item & )> &filter, bool unload )
 {
     inventory map_inv;
     map_inv.form_from_map( bub_pos(), PICKUP_RANGE, this );
     return consume_items( select_item_component( components, batch, map_inv, false, filter ), batch,
-                          filter );
+                          filter, unload );
 }
 
 struct avail_tool_comp {

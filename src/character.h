@@ -2593,14 +2593,17 @@ class Character : public Creature, public location_visitable<Character>
                                int batch, inventory &map_inv, bool can_cancel = false,
                                const std::function<bool( const item & )> &filter = return_true<item>, bool player_inv = true );
         std::vector<detached_ptr<item>> consume_items( const comp_selection<item_comp> &is, int batch,
-                                     const std::function<bool( const item & )> &filter = return_true<item> );
+                                     const std::function<bool( const item & )> &filter = return_true<item>,
+                                     bool unload = true );
         std::vector<detached_ptr<item>> consume_items( map &m, const comp_selection<item_comp> &is,
                                      int batch,
                                      const tripoint_bub_ms &origin, int radius,
-                                     const std::function<bool( const item & )> &filter = return_true<item> );
+                                     const std::function<bool( const item & )> &filter = return_true<item>,
+                                     bool unload = true );
         std::vector<detached_ptr<item>> consume_items( const std::vector<item_comp> &components,
                                      int batch = 1,
-                                     const std::function<bool( const item & )> &filter = return_true<item> );
+                                     const std::function<bool( const item & )> &filter = return_true<item>,
+                                     bool unload = true );
         /** Consume tools for the next multiplier * 5% progress of the craft */
         bool craft_consume_tools( item &craft, int mulitplier, bool start_craft );
         void consume_tools( const comp_selection<tool_comp> &tool, int batch );
