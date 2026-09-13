@@ -585,24 +585,17 @@ void use_item( avatar &you, item &used )
 
     you.last_item = used.typeId();
 
-    if( used.is_tool() ) {
-        if( !used.type->has_use() ) {
-            add_msg( _( "You can't do anything interesting with your %s." ), used.tname() );
-            return;
-        }
+    // medication has special logic in consume, so it shouldn't be passed to invoke even though it has an iuse
+    if( used.has_use() && !used.is_medication() ) {
         if( used.has_flag( flag_TEMPORARY_ITEM ) ) {
             you.invoke_item( &used );
-        } else {
-            you.invoke_item( &used, used.bub_pos() );
         }
-
-    } else if( is_pet_food( used ) ) {
         you.invoke_item( &used, used.bub_pos() );
 
     } else if( !used.is_container_empty() && is_pet_food( used.get_contained() ) ) {
         unload_item( you, used );
 
-    } else if( !used.is_craft() && ( used.is_medication() || ( !used.type->has_use() &&
+    } else if( !used.is_craft() && ( used.is_medication() || ( !used.has_use() &&
                                      ( used.is_food() ||
                                        used.get_contained().is_food() ||
                                        used.get_contained().is_medication() ) ) ) ) {
@@ -610,8 +603,6 @@ void use_item( avatar &you, item &used )
 
     } else if( used.is_book() ) {
         you.read( &used );
-    } else if( used.type->has_use() ) {
-        you.invoke_item( &used, used.bub_pos() );
     } else if( used.has_flag( flag_SPLINT ) ) {
         ret_val<bool> need_splint = you.can_wear( used );
         if( need_splint.success() ) {

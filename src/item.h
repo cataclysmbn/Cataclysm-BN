@@ -22,6 +22,7 @@
 #include "game_object.h"
 #include "gun_mode.h"
 #include "io_tags.h"
+#include "iuse.h" // use_function
 #include "item_contents.h"
 #include "kill_tracker.h"
 #include "location_vector.h"
@@ -2263,6 +2264,11 @@ class item : public location_visitable<item>, public game_object<item>
          * Returns true if the item has any use function.
          */
         bool has_use() const;
+        /**
+         * Returns use methods injected by flags present on this item (or its mods)
+         * but not on the item type itself, as declared via the flag's "use_method" field.
+         */
+        auto get_flag_injected_use_methods() const -> std::map<std::string, use_function>;
         /**
          * Returns the pointer to use_function with name use_name assigned to the type of
          * this item or any of its contents. Checks contents recursively.

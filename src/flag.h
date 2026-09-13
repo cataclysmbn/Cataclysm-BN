@@ -451,6 +451,11 @@ class json_flag
             return taste_mod_;
         }
 
+        /** The use method this flag injects when present on a mod but not the base item */
+        std::string use_method() const {
+            return use_method_;
+        }
+
         /** Is this a valid (non-null) flag */
         operator bool() const;
 
@@ -472,6 +477,7 @@ class json_flag
         std::string requires_flag_;
         translation tag_;
         int taste_mod_ = 0;
+        std::string use_method_;
 
         /** Load flag definition from JSON */
         void load( const JsonObject &jo, const std::string &src );

@@ -870,7 +870,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
                 ( *loc ).get_contained().type->has_use() ) {
                 return true;
             }
-            return loc->type->has_use();
+            return loc->has_use();
         }
 
         std::string get_denial( const item *loc ) const override {

@@ -9125,7 +9125,37 @@ void item::gun_cycle_mode()
 
 bool item::has_use() const
 {
-    return type->has_use();
+    return type->has_use() || !get_flag_injected_use_methods().empty();
+}
+
+auto item::get_flag_injected_use_methods() const -> std::map<std::string, use_function>
+{
+    auto result = std::map<std::string, use_function> {};
+    auto candidate_flags = item_tags;
+    auto mods = is_gun() ? gunmods() : toolmods();
+
+    // There's similar logic in has_flag, but it uses scary recursion and a nested function. Also,
+    // it checks if a specific flag exists on an item, where this method GETS all the flags on
+    // an item
+    for( const item *mod : mods ) {
+        for( const flag_id &f : mod->type->item_tags ) {
+            if( f->inherit() ) {
+                candidate_flags.insert( f );
+            }
+        }
+        for( const flag_id &f : mod->item_tags ) {
+            if( f->inherit() ) {
+                candidate_flags.insert( f );
+            }
+        }
+    }
+    for( const flag_id &f : candidate_flags ) {
+        if( type->has_flag( f ) || f->use_method().empty() ) {
+            continue;
+        }
+        result[f->use_method()] = item_controller->usage_from_string( f->use_method() );
+    }
+    return result;
 }
 
 const use_function *item::get_use( const std::string &use_name ) const
