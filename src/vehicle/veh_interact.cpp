@@ -340,8 +340,7 @@ bool veh_interact::format_reqs(
         msg += string_format("> %1$s%2$s</color>", status_color(true), _("NONE")) + "\n";
     }
 
-    auto comps =
-        reqs.get_folded_components_list(getmaxx(w_msg) - 2, c_white, inv, comp_filter);
+    auto comps = reqs.get_folded_components_list(getmaxx(w_msg) - 2, c_white, inv, comp_filter);
     for (const std::string& line : comps) { msg += line + "\n"; }
     auto tools = reqs.get_folded_tools_list(getmaxx(w_msg) - 2, c_white, inv);
     for (const std::string& line : tools) { msg += line + "\n"; }
@@ -1168,9 +1167,8 @@ void veh_interact::do_repair() {
 
         bool ok;
         if (pt.is_broken()) {
-            ok = format_reqs(
-                nmsg, vp.install_requirements(), vp.install_skills, vp.install_time(you),
-                veh_utils::install_component_filter(vp));
+            ok = format_reqs(nmsg, vp.install_requirements(), vp.install_skills,
+                             vp.install_time(you), veh_utils::install_component_filter(vp));
         } else {
             if (!vp.repair_requirements().is_empty() && pt.base->max_damage() > 0) {
                 ok = format_reqs(
@@ -1768,9 +1766,9 @@ bool veh_interact::can_remove_part(int idx, const Character& who) {
     }
 
     const auto reqs = sel_vpart_info->removal_requirements();
-    bool ok =
-        format_reqs(nmsg, reqs, sel_vpart_info->removal_skills, sel_vpart_info->removal_time(who),
-                    is_crafting_component);
+    bool ok = format_reqs(
+        nmsg, reqs, sel_vpart_info->removal_skills, sel_vpart_info->removal_time(who),
+        is_crafting_component);
     std::string additional_requirements;
     bool lifting_or_jacking_required = false;
 
@@ -2120,8 +2118,8 @@ int veh_interact::part_at(tripoint_bub_ms d) {
  */
 bool veh_interact::can_potentially_install(const vpart_info& vpart) {
     return get_avatar().has_trait(trait_DEBUG_HS)
-        || vpart.install_requirements().can_make_with_inventory(
-               crafting_inv, veh_utils::install_component_filter(vpart));
+        || vpart.install_requirements()
+               .can_make_with_inventory(crafting_inv, veh_utils::install_component_filter(vpart));
 }
 
 /**
@@ -3027,8 +3025,7 @@ void veh_interact::complete_vehicle(Character& who) {
             const auto reqs = vpinfo.install_requirements();
             const auto using_debug_hammerspace = who.has_trait(trait_DEBUG_HS);
             const auto comp_filter = veh_utils::install_component_filter(vpinfo);
-            if (!using_debug_hammerspace
-                && !reqs.can_make_with_inventory(inv, comp_filter)) {
+            if (!using_debug_hammerspace && !reqs.can_make_with_inventory(inv, comp_filter)) {
                 add_msg(m_info, _("You don't meet the requirements to install the %s."),
                         vpinfo.name());
                 break;

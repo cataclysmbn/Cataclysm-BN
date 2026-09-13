@@ -171,7 +171,8 @@ TEST_CASE("filled_containers_install_as_vehicle_tanks", "[vehicle][crafting][con
     SECTION("install menu sees a gasoline jerrycan as a 10L tank") {
         you.i_add(item::spawn("wrench"));
         you.i_add(item::spawn("hand_drill"));
-        get_map().add_item_or_charges(you.bub_pos(), spawn_filled_container("jerrycan", "gasoline"));
+        get_map()
+            .add_item_or_charges(you.bub_pos(), spawn_filled_container("jerrycan", "gasoline"));
         you.mod_moves(1);
         const inventory crafting_inv = you.crafting_inventory();
         CHECK_FALSE(crafting_inv.has_components(itype_id("jerrycan"), 1, is_crafting_component));
@@ -183,8 +184,8 @@ TEST_CASE("filled_containers_install_as_vehicle_tanks", "[vehicle][crafting][con
         const auto& tank_medium = vpart_id("tank_medium").obj();
         you.i_add(item::spawn("wrench"));
         you.i_add(item::spawn("hand_drill"));
-        get_map().add_item_or_charges(
-            you.bub_pos(), spawn_filled_container("jerrycan_big", "diesel"));
+        get_map()
+            .add_item_or_charges(you.bub_pos(), spawn_filled_container("jerrycan_big", "diesel"));
         you.mod_moves(1);
         const inventory crafting_inv = you.crafting_inventory();
         CHECK(tank_medium.install_requirements().can_make_with_inventory(
@@ -192,7 +193,8 @@ TEST_CASE("filled_containers_install_as_vehicle_tanks", "[vehicle][crafting][con
     }
 
     SECTION("consuming a filled jerrycan for a tank leaves the gasoline inside") {
-        get_map().add_item_or_charges(you.bub_pos(), spawn_filled_container("jerrycan", "gasoline"));
+        get_map()
+            .add_item_or_charges(you.bub_pos(), spawn_filled_container("jerrycan", "gasoline"));
         you.mod_moves(1);
         std::vector<item_comp> comps{item_comp(itype_id("jerrycan"), 1)};
         std::vector<detached_ptr<item>> used = you.consume_items(comps, 1, tank_filter, false);
@@ -221,8 +223,9 @@ TEST_CASE("filled_containers_install_as_vehicle_tanks", "[vehicle][crafting][con
             map_local_to_abs(here, veh_ptr->bub_part_location(*reference_part));
 
         you.assign_activity(ACT_VEHICLE, 1, static_cast<int>('i'));
-        you.activity->values = {
-            reference_pos.x(), reference_pos.y(), reference_pos.z(), 0, 0, 0, reference_part_index};
+        you.activity->values =
+            {reference_pos.x(),   reference_pos.y(), reference_pos.z(), 0, 0, 0,
+             reference_part_index};
         you.activity->str_values.push_back(install_part_id.str());
         for (const tripoint_abs_ms& p : veh_ptr->get_points(true)) {
             you.activity->coord_set.insert(p);

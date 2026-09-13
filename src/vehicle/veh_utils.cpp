@@ -25,9 +25,9 @@
 #include <cmath>
 #include <functional>
 #include <list>
-#include <ranges>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -87,8 +87,8 @@ vehicle_part& most_repairable_part(vehicle& veh, Character& who, bool only_repai
         if (vpr.part().removed || vpr.part().damage() <= 0) { continue; }
 
         if (vpr.part().is_broken()) {
-            if (info.install_requirements().can_make_with_inventory(
-                    inv, install_component_filter(info))) {
+            if (info.install_requirements()
+                    .can_make_with_inventory(inv, install_component_filter(info))) {
                 repairable_cache[&vpr.part()] = repairable_status::need_replacement;
             }
 
@@ -140,8 +140,9 @@ bool repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) {
     // or able to drag a welding cart etc.
     map_inv.form_from_map(who.bub_pos(), PICKUP_RANGE, &who_c, false, !who.is_npc());
     const auto comp_filter =
-        pt.is_broken() ? install_component_filter(vp)
-                       : std::function<bool(const item&)>(is_crafting_component);
+        pt.is_broken()
+            ? install_component_filter(vp)
+            : std::function<bool(const item&)>(is_crafting_component);
     if (!reqs.can_make_with_inventory(inv, comp_filter)) {
         who.add_msg_if_player(
             m_info, _("You don't meet the requirements to repair the %s."), pt.name());
@@ -152,9 +153,9 @@ bool repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) {
     detached_ptr<item> base = item::spawn(vp.item);
     for (const auto& e : reqs.get_components()) {
         const auto unload = !pt.is_broken() || should_unload_install_component(vp, e);
-        for (auto& obj : who.consume_items(
-                 who.select_item_component(e, 1, map_inv, false, comp_filter), 1, comp_filter,
-                 unload)) {
+        for (auto& obj :
+             who.consume_items(who.select_item_component(e, 1, map_inv, false, comp_filter), 1,
+                               comp_filter, unload)) {
             if (obj->typeId() == vp.item) { base = std::move(obj); }
         }
     }
