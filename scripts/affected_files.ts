@@ -28,25 +28,25 @@ const getDiffs = async (base: string, head: string) => {
 const includeRegex = /#include\s+"([^"]+)"/g
 const getIncludes = (content: string) => Array.from(content.matchAll(includeRegex)).map((x) => x[1])
 
-const sourcePath = (path: string): string => normalize(path.replaceAll("\\", "/"));
+const sourcePath = (path: string): string => normalize(path.replaceAll("\\", "/"))
 
 const getSourceDependencies = (sourceFiles: Set<string>) => async ({ path }: WalkEntry) => {
-    const text = await Deno.readTextFile(path);
-    const source = sourcePath(path);
-    const includes: string[] = [];
+  const text = await Deno.readTextFile(path)
+  const source = sourcePath(path)
+  const includes: string[] = []
 
-    for (const include of getIncludes(text)) {
-        const localPath = join(dirname(source), include);
-        const rootPath = join("src", include);
+  for (const include of getIncludes(text)) {
+    const localPath = join(dirname(source), include)
+    const rootPath = join("src", include)
 
-        if (sourceFiles.has(localPath)) {
-            includes.push(localPath);
-        } else if (sourceFiles.has(rootPath)) {
-            includes.push(rootPath);
-        }
+    if (sourceFiles.has(localPath)) {
+      includes.push(localPath)
+    } else if (sourceFiles.has(rootPath)) {
+      includes.push(rootPath)
     }
+  }
 
-    return [source, includes] as const;
+  return [source, includes] as const
 }
 
 const getAllSourceFiles = async (): Promise<WalkEntry[]> => {
