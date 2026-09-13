@@ -10,7 +10,7 @@ Add graphical tile rendering to the vehicle construction screen as an alternativ
 
 ## Current Architecture
 
-### Vehicle Interaction Screen (`src/veh_interact.cpp`)
+### Vehicle Interaction Screen (`src/vehicle/veh_interact.cpp`)
 
 The current `display_veh()` function (line 2284) uses ASCII rendering:
 
@@ -102,7 +102,7 @@ Key patterns:
 
 ### 1.1 Create Vehicle Preview Adapter Class
 
-**File**: `src/vehicle_preview.h` / `src/vehicle_preview.cpp`
+**File**: `src/vehicle/vehicle_preview.h` / `src/vehicle/vehicle_preview.cpp`
 
 ```cpp
 #if defined(TILES)
@@ -165,7 +165,7 @@ This option:
 
 ### 1.3 Modify `veh_interact` Class
 
-**File**: `src/veh_interact.h`
+**File**: `src/vehicle/veh_interact.h`
 
 Add members:
 
@@ -185,7 +185,7 @@ Add methods:
 
 ### 1.4 Implement `display_veh_tiles()`
 
-**File**: `src/veh_interact.cpp`
+**File**: `src/vehicle/veh_interact.cpp`
 
 ```cpp
 #if defined(TILES)
@@ -267,13 +267,13 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset,
 
 ### New Files
 
-- `src/vehicle_preview.h` - Tile preview adapter class
-- `src/vehicle_preview.cpp` - Tile preview implementation
+- `src/vehicle/vehicle_preview.h` - Tile preview adapter class
+- `src/vehicle/vehicle_preview.cpp` - Tile preview implementation
 
 ### Modified Files
 
-- `src/veh_interact.h` - Add tile preview member
-- `src/veh_interact.cpp` - Integrate tile display
+- `src/vehicle/veh_interact.h` - Add tile preview member
+- `src/vehicle/veh_interact.cpp` - Integrate tile display
 - `src/options.cpp` - Add `VEHICLE_EDIT_TILES` option
 - `CMakeLists.txt` - Add new source files
 

@@ -43,8 +43,8 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units.h"
+#include "vehicle/vpart_position.h"
 #include "visitable.h"
-#include "vpart_position.h"
 
 static const ammo_effect_str_id ammo_effect_ACT_ON_RANGED_HIT( "ACT_ON_RANGED_HIT" );
 static const ammo_effect_str_id ammo_effect_BOUNCE( "BOUNCE" );

@@ -1,17 +1,5 @@
 #include "advanced_inv.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <initializer_list>
-#include <list>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "auto_pickup.h"
@@ -52,9 +40,21 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_utility.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <initializer_list>
+#include <list>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 #if defined(__ANDROID__)
 #   include <SDL3/SDL.h>

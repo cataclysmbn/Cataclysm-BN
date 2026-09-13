@@ -1,14 +1,5 @@
 #include "creature.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstdint>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <optional>
-
 #include "action_time_scale.h"
 #include "anatomy.h"
 #include "avatar.h"
@@ -37,31 +28,40 @@
 #include "line.h"
 #include "locations.h"
 #include "map.h"
+#include "map_iterator.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
-#include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
 #include "output.h"
+#include "overmapbuffer_registry.h"
 #include "player.h"
 #include "point.h"
+#include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "rng.h"
 #include "string_id.h"
 #include "string_utils.h"
 #include "submap_load_manager.h"
-#include "utils/string_to_int.h"
 #include "translations.h"
+#include "utils/string_to_int.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "overmapbuffer_registry.h"
-#include "profile.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <optional>
 
 auto Creature::get_dimension() const -> const dimension_id &
 {

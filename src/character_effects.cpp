@@ -2,8 +2,8 @@
 
 #include "bionics.h"
 #include "calendar.h"
-#include "character_martial_arts.h"
 #include "character.h"
+#include "character_martial_arts.h"
 #include "creature.h"
 #include "handle_liquid.h"
 #include "itype.h"
@@ -16,12 +16,12 @@
 #include "submap.h"
 #include "trap.h"
 #include "type_id.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather_gen.h"
-#include "weather.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
 
 static const trait_id trait_CENOBITE( "CENOBITE" );
 static const trait_id trait_INT_SLIME( "INT_SLIME" );

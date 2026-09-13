@@ -1,15 +1,4 @@
 #include "construction.h"
-#include "construction_partial.h"
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <iterator>
-#include <memory>
-#include <numeric>
-#include <ranges>
-#include <utility>
 
 #include "action.h"
 #include "activity_actor_definitions.h"
@@ -21,6 +10,7 @@
 #include "consistency_report.h"
 #include "construction_category.h"
 #include "construction_group.h"
+#include "construction_partial.h"
 #include "coordinates.h"
 #include "crafting_quality.h"
 #include "cursesdef.h"
@@ -42,9 +32,9 @@
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "messages.h"
+#include "mod_manager.h"
 #include "morale_types.h"
 #include "mtype.h"
-#include "mod_manager.h"
 #include "npc.h"
 #include "options.h"
 #include "output.h"
@@ -65,10 +55,20 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_serde.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <ranges>
+#include <utility>
 
 static const activity_id ACT_MULTIPLE_CONSTRUCTION( "ACT_MULTIPLE_CONSTRUCTION" );
 

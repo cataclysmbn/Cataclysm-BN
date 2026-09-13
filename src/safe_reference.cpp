@@ -1,15 +1,16 @@
 #include "safe_reference.h"
-#include "item.h"
-#include "json.h"
+
+#include "avatar.h"
 #include "character.h"
 #include "coordinates.h"
+#include "game.h"
+#include "item.h"
+#include "json.h"
 #include "map.h"
 #include "map_selector.h"
-#include "avatar.h"
-#include "game.h"
-#include "vpart_position.h"
-#include "vehicle.h"
-#include "vehicle_selector.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
 
 uint64_t save_id_prefix = 0;
 bool save_and_quit = false;

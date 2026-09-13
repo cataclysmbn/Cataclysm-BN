@@ -1,9 +1,3 @@
-#include "player.h" // IWYU pragma: associated
-
-#include <array>
-#include <cstdlib>
-#include <memory>
-
 #include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -23,10 +17,11 @@
 #include "mapdata.h"
 #include "martialarts.h"
 #include "messages.h"
-#include "morale_types.h"
 #include "mongroup.h"
 #include "monster.h"
+#include "morale_types.h"
 #include "mutation_data.h"
+#include "player.h" // IWYU pragma: associated
 #include "player_activity.h"
 #include "pldata.h"
 #include "rng.h"
@@ -38,10 +33,14 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
-#include "weather.h"
 #include "vitamin.h"
+#include "weather/weather.h"
+
 #include <algorithm>
+#include <array>
+#include <cstdlib>
 #include <functional>
+#include <memory>
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 
@@ -418,7 +417,7 @@ static void eff_fun_hot( player &u, effect &it )
             debugmsg( "%s has no head(?!)", u.disp_name() );
             return;
         }
-        int temp_cur = iter->second.get_temp_cur();
+        const auto temp_cur = units::to_legacy_bodypart_temp( iter->second.get_temp_cur() );
         if( one_in( std::max( 25, std::min( 89500, 90000 - temp_cur ) ) ) ) {
             u.vomit();
         }
@@ -1214,12 +1213,12 @@ void Character::hardcoded_effects( effect &it )
             // Cold or heat may wake you up.
             // Player will sleep through cold or heat if fatigued enough
             for( const auto &pr : get_body() ) {
-                int temp_cur = pr.second.get_temp_cur();
-                if( temp_cur < BODYTEMP_VERY_COLD - get_fatigue() / 2 ) {
+                const auto temp_cur = units::to_legacy_bodypart_temp( pr.second.get_temp_cur() );
+                if( temp_cur < units::to_legacy_bodypart_temp( BODYTEMP_VERY_COLD ) - get_fatigue() / 2 ) {
                     if( one_in( 30000 ) ) {
                         add_msg_if_player( _( "You toss and turn trying to keep warm." ) );
                     }
-                    if( temp_cur < BODYTEMP_FREEZING - get_fatigue() / 2 ||
+                    if( temp_cur < units::to_legacy_bodypart_temp( BODYTEMP_FREEZING ) - get_fatigue() / 2 ||
                         one_in( temp_cur * 6 + 30000 ) ) {
                         add_msg_if_player( m_bad, _( "It's too cold to sleep." ) );
                         // Set ourselves up for removal
@@ -1227,11 +1226,11 @@ void Character::hardcoded_effects( effect &it )
                         woke_up = true;
                         break;
                     }
-                } else if( temp_cur > BODYTEMP_VERY_HOT + get_fatigue() / 2 ) {
+                } else if( temp_cur > units::to_legacy_bodypart_temp( BODYTEMP_VERY_HOT ) + get_fatigue() / 2 ) {
                     if( one_in( 30000 ) ) {
                         add_msg_if_player( _( "You toss and turn in the heat." ) );
                     }
-                    if( temp_cur > BODYTEMP_SCORCHING + get_fatigue() / 2 ||
+                    if( temp_cur > units::to_legacy_bodypart_temp( BODYTEMP_SCORCHING ) + get_fatigue() / 2 ||
                         one_in( 90000 - temp_cur ) ) {
                         add_msg_if_player( m_bad, _( "It's too hot to sleep." ) );
                         // Set ourselves up for removal

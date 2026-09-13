@@ -974,6 +974,32 @@
     ]
   },
   {
+    "id": "nested_hk_ump45_retool_40",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "hk_ump45_retool_40", "ammo-group": "on_hand_40", "charges": [ 0, 30 ] },
+      { "item": "ump40mag", "ammo-group": "on_hand_40" },
+      { "item": "ump40mag", "ammo-group": "on_hand_40", "prob": 50 },
+      { "group": "on_hand_40" }
+    ]
+  },
+  {
+    "id": "nested_hk_ump45_retool_9mm",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "hk_ump45_retool_9mm", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
+      { "item": "ump9mag", "ammo-group": "on_hand_9mm" },
+      { "item": "ump9mag", "ammo-group": "on_hand_9mm", "prob": 50 },
+      { "group": "on_hand_9mm" }
+    ]
+  },
+  {
     "id": "nested_mac_10",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

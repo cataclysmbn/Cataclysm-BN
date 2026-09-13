@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vehicle_selector.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "catch/catch.hpp"
@@ -8,10 +10,8 @@
 #include "map_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
 
 #include <list>
 #include <memory>

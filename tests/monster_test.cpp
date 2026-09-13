@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vpart_position.h"
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "catch/catch.hpp"
@@ -20,9 +22,7 @@
 #include "state_helpers.h"
 #include "test_statistics.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
 
 #include <algorithm>
 #include <cmath>

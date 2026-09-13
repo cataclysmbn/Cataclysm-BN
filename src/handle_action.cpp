@@ -1,17 +1,3 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cctype>
-#include <charconv>
-#include <chrono>
-#include <cstdint>
-#include <cstdlib>
-#include <initializer_list>
-#include <optional>
-#include <set>
-#include <sstream>
-#include <utility>
-
 #include "action.h"
 #include "advanced_inv.h"
 #include "animation.h"
@@ -21,12 +7,12 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
-#include "bodypart.h"
 #include "bionics.h"
 #include "bionics_ui.h"
+#include "bodypart.h"
 #include "calendar.h"
-#include "catalua.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_martial_arts.h"
@@ -46,6 +32,7 @@
 #include "field_type.h"
 #include "flag.h"
 #include "fstream_utils.h"
+#include "game.h" // IWYU pragma: associated
 #include "game_constants.h"
 #include "game_inventory.h"
 #include "gamemode.h"
@@ -90,25 +77,37 @@
 #include "scores_ui.h"
 #include "sounds.h"
 #include "string_formatter.h"
-#include "string_utils.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
-#include "type_id.h"
 #include "travel/travel_destination.h"
+#include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
-#include "utils/url.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_grab.h"
-#include "vehicle_part.h"
-#include "vehicle_wait.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "weather.h"
+#include "utils/url.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_grab.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_wait.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+#include "weather/weather.h"
 #include "worldfactory.h"
+
+#include <algorithm>
+#include <cctype>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
+#include <cstdlib>
+#include <initializer_list>
+#include <optional>
+#include <set>
+#include <sstream>
+#include <utility>
 
 static const activity_id ACT_FERTILIZE_PLOT( "ACT_FERTILIZE_PLOT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );

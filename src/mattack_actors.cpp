@@ -1,11 +1,5 @@
 #include "mattack_actors.h"
 
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <memory>
-#include <optional>
-
 #include "ammo_effect.h"
 #include "assign.h"
 #include "avatar.h"
@@ -18,9 +12,9 @@
 #include "generic_factory.h"
 #include "gun_mode.h"
 #include "int_id.h"
+#include "item.h"
 #include "itype.h"
 #include "iuse_actor.h"
-#include "item.h"
 #include "json.h"
 #include "line.h"
 #include "map.h"
@@ -36,9 +30,15 @@
 #include "rng.h"
 #include "sounds.h"
 #include "translations.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_range.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <optional>
 
 static const efftype_id effect_badpoison( "badpoison" );
 static const efftype_id effect_bite( "bite" );

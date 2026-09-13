@@ -90,9 +90,9 @@
 #include "action.h"
 #include "inventory.h"
 #include "map.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 #include "worldfactory.h"
 #endif
 

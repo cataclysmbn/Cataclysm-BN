@@ -672,6 +672,13 @@
     ]
   },
   {
+    "id": "hk_ump45_retool_9mm",
+    "copy-from": "hk_ump45",
+    "type": "GUN",
+    "name": "H&K UMP",
+    "default_mods": [ "retool_ump45_9mm" ]
+  },
+  {
     "id": "smg_luty",
     "copy-from": "smg_base",
     "type": "GUN",

@@ -5,18 +5,16 @@
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
-#include "distribution_grid.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
-#include "character_stat.h"
 #include "character_martial_arts.h"
-#include "character.h"
+#include "character_stat.h"
 #include "creature.h"
+#include "distribution_grid.h"
 #include "enchantments/enchantment.h"
 #include "flag.h"
 #include "flag_trait.h"
@@ -24,25 +22,28 @@
 #include "handle_liquid.h"
 #include "itype.h"
 #include "iuse.h"
-#include "mutation.h"
-#include "overmapbuffer.h"
 #include "make_static.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "morale.h"
+#include "mutation.h"
+#include "overmapbuffer.h"
 #include "player.h"
 #include "player_activity.h"
+#include "profile.h"
 #include "rng.h"
 #include "submap.h"
 #include "trap.h"
 #include "type_id.h"
 #include "units_temperature.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather_gen.h"
-#include "weather.h"
-#include "profile.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
 #include <algorithm>
 
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
@@ -1082,7 +1083,7 @@ void update_body_wetness( Character &who, const w_point &weather )
         int drying_chance = pr.second.get_drench_capacity();
         // Body temperature affects duration of wetness
         // Note: Using temp_conv rather than temp_cur, to better approximate environment
-        int temp_conv = pr.second.get_temp_conv();
+        const auto temp_conv = pr.second.get_temp_conv();
         if( temp_conv >= BODYTEMP_SCORCHING ) {
             drying_chance *= 2;
         } else if( temp_conv >= BODYTEMP_VERY_HOT ) {

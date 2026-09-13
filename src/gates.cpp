@@ -1,13 +1,5 @@
 #include "gates.h"
 
-#include <algorithm>
-#include <array>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
@@ -33,9 +25,17 @@
 #include "type_id.h"
 #include "type_id_implement.h"
 #include "units.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
 
 // Gates namespace
 

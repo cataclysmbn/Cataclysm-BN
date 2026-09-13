@@ -1,19 +1,19 @@
 #pragma once
 
+#include "enums.h"
+#include "mapdata.h"
+#include "memory_fast.h"
+#include "string_id.h"
+#include "type_id.h"
+#include "weather/weather_gen.h"
+#include "weighted_list.h"
+
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "enums.h"
-#include "mapdata.h"
-#include "memory_fast.h"
-#include "string_id.h"
-#include "type_id.h"
-#include "weather_gen.h"
-#include "weighted_list.h"
 
 class JsonObject;
 

@@ -1,25 +1,11 @@
 #include "ranged.h"
 
-#include <algorithm>
-#include <numeric>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
-
 #include "activity_actor_definitions.h"
 #include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -28,7 +14,6 @@
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "cached_options.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -69,9 +54,9 @@
 #include "point.h"
 #include "projectile.h"
 #include "rng.h"
+#include "shape_impl.h"
 #include "skill.h"
 #include "sounds.h"
-#include "shape_impl.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
@@ -82,10 +67,25 @@
 #include "units_angle.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <set>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 struct ammo_effect;
 

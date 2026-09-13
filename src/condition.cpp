@@ -1,18 +1,5 @@
 #include "condition.h"
 
-#include <climits>
-#include <cstddef>
-#include <functional>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -38,9 +25,22 @@
 #include "recipe_groups.h"
 #include "string_id.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <climits>
+#include <cstddef>
+#include <functional>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 class recipe;
 

@@ -1,28 +1,8 @@
-#include "activity_handlers.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-#include <cstdlib>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <numeric>
-#include <optional>
-#include <queue>
-#include <set>
-#include <sstream>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
-#include <ranges>
-
 #include "activity_actor_definitions.h"
+#include "activity_handlers.h" // IWYU pragma: associated
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
-#include "utils/algo.h"
 #include "character.h"
 #include "character_functions.h"
 #include "clzones.h"
@@ -49,6 +29,7 @@
 #include "iuse.h"
 #include "line.h"
 #include "map.h"
+#include "map/utils/map_utils.h"
 #include "map_iterator.h"
 #include "map_selector.h"
 #include "mapdata.h"
@@ -56,8 +37,8 @@
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
-#include "output.h"
 #include "options.h"
+#include "output.h"
 #include "overmapbuffer.h"
 #include "pickup.h"
 #include "pickup_token.h"
@@ -67,22 +48,40 @@
 #include "requirements.h"
 #include "ret_val.h"
 #include "rng.h"
+#include "skill.h"
 #include "stomach.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
-#include "skill.h"
 #include "translations.h"
 #include "trap.h"
 #include "units.h"
+#include "utils/algo.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
-#include "vpart_position.h"
-#include "weather.h"
-#include "map/utils/map_utils.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <queue>
+#include <ranges>
+#include <set>
+#include <sstream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace views = std::views;
 

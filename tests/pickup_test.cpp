@@ -1,3 +1,4 @@
+#include "../src/vehicle/vpart_position.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "item.h"
@@ -5,8 +6,7 @@
 #include "pickup.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
 
 #include <algorithm>
 

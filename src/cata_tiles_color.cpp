@@ -1,16 +1,15 @@
 #if defined(TILES)
-#include "cata_tiles.h"
-
-#include "map.h"
-#include "monster.h"
-#include "character.h"
-#include "field.h"
-#include "color.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "omdata.h"
+#    include "cata_tiles.h"
+#    include "character.h"
+#    include "color.h"
+#    include "field.h"
+#    include "map.h"
+#    include "monster.h"
+#    include "omdata.h"
+#    include "vehicle/veh_type.h"
+#    include "vehicle/vehicle.h"
+#    include "vehicle/vehicle_part.h"
+#    include "vehicle/vpart_position.h"
 
 static constexpr RGBColor RGB_NO_COLOR = TILESET_NO_COLOR;
 

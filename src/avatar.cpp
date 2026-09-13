@@ -1,30 +1,18 @@
 #include "avatar.h"
 
-#include <algorithm>
-#include <array>
-#include <climits>
-#include <cstdlib>
-#include <iterator>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <utility>
-
 #include "action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
+#include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
-#include "catacharset.h"
 #include "character.h"
 #include "character_effects.h"
-#include "character_id.h"
 #include "character_functions.h"
+#include "character_id.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
 #include "color.h"
@@ -39,17 +27,18 @@
 #include "game.h"
 #include "game_constants.h"
 #include "help.h"
-#include "inventory.h"
 #include "init.h"
+#include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_factory.h"
-#include "locations.h"
 #include "itype.h"
 #include "iuse.h"
 #include "kill_tracker.h"
-#include "make_static.h"
+#include "legacy_pathfinding.h"
+#include "locations.h"
 #include "magic/magic_teleporter_list.h"
+#include "make_static.h"
 #include "map.h"
 #include "map_memory.h"
 #include "martialarts.h"
@@ -63,7 +52,6 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
-#include "legacy_pathfinding.h"
 #include "player.h"
 #include "player_activity.h"
 #include "recipe.h"
@@ -76,8 +64,20 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <climits>
+#include <cstdlib>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <utility>
 
 static const activity_id ACT_READ( "ACT_READ" );
 

@@ -1,3 +1,5 @@
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vehicle_selector.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -21,10 +23,8 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
-#include "weather.h"
+#include "vehicle/vehicle.h"
+#include "weather/weather.h"
 
 #include <algorithm>
 #include <memory>

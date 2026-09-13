@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -13,9 +14,8 @@
 #include "rot.h"
 #include "state_helpers.h"
 #include "units_temperature.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "weather.h"
+#include "vehicle/vehicle.h"
+#include "weather/weather.h"
 
 #include <memory>
 #include <ranges>

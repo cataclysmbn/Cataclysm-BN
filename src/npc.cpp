@@ -1,27 +1,18 @@
 #include "npc.h"
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <functional>
-#include <limits>
-#include <memory>
-
 #include "action_time_scale.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "character.h"
-#include "character_id.h"
-#include "character_functions.h"
-#include "character_martial_arts.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "character.h"
+#include "character_functions.h"
+#include "character_id.h"
+#include "character_martial_arts.h"
 #include "clzones.h"
 #include "damage.h"
 #include "debug.h"
@@ -44,6 +35,7 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "json.h"
+#include "legacy_pathfinding.h"
 #include "locations.h"
 #include "magic/magic.h"
 #include "map.h"
@@ -64,7 +56,6 @@
 #include "overmap.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
-#include "legacy_pathfinding.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "ranged.h"
@@ -80,12 +71,21 @@
 #include "translations.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "visitable.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+
+#include <algorithm>
+#include <cassert>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <functional>
+#include <limits>
+#include <memory>
 
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );

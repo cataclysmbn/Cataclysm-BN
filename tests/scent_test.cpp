@@ -5,8 +5,8 @@
 #include "map_helpers.h"
 #include "scent_map.h"
 #include "state_helpers.h"
-#include "veh_type.h"
-#include "vehicle.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
 
 void old_scent_map_update(
     const tripoint_bub_ms& center, map& m,

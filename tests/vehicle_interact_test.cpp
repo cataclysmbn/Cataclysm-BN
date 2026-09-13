@@ -1,3 +1,6 @@
+#include "../src/vehicle/veh_interact.h"
+#include "../src/vehicle/vehicle_part.h"
+#include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -12,12 +15,9 @@
 #include "requirements.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "veh_interact.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_range.h"
 
 #include <algorithm>
 #include <memory>

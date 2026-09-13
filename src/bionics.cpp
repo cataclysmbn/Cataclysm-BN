@@ -1,20 +1,8 @@
 #include "bionics.h"
 
-#include <algorithm> //std::min
-#include <array>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <forward_list>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <type_traits>
-
 #include "action.h"
 #include "action_time_scale.h"
+#include "active_tile_data_def.h"
 #include "activity_actor_definitions.h"
 #include "assign.h"
 #include "avatar.h"
@@ -33,6 +21,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
+#include "distribution_grid.h"
 #include "effect.h"
 #include "enchantments/enchantment.h"
 #include "enchantments/enchantment_condition.h"
@@ -73,28 +62,38 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
-#include "type_id_implement.h"
-#include "requirements.h"
 #include "regen.h"
+#include "requirements.h"
 #include "rng.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "teleport.h"
 #include "translations.h"
+#include "type_id_implement.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather.h"
-#include "weather_gen.h"
-#include "active_tile_data_def.h"
-#include "action_time_scale.h"
-#include "distribution_grid.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm> //std::min
+#include <array>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <forward_list>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <type_traits>
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 

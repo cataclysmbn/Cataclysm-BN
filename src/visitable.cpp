@@ -1,21 +1,13 @@
 #include "visitable.h"
 
-#include <algorithm>
-#include <climits>
-#include <limits>
-#include <map>
-#include <memory>
-#include <unordered_map>
-#include <utility>
-
 #include "active_item_cache.h"
 #include "bionics.h"
 #include "character.h"
 #include "debug.h"
 #include "inventory.h"
 #include "item.h"
-#include "itype.h"
 #include "item_contents.h"
+#include "itype.h"
 #include "make_static.h"
 #include "map.h"
 #include "map_selector.h"
@@ -29,10 +21,18 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+
+#include <algorithm>
+#include <climits>
+#include <limits>
+#include <map>
+#include <memory>
+#include <unordered_map>
+#include <utility>
 
 static const itype_id itype_apparatus( "apparatus" );
 static const itype_id itype_toolset( "toolset" );

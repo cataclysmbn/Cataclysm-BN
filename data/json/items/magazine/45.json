@@ -125,7 +125,7 @@
     "name": { "str": "UMP45 magazine" },
     "description": "A straight, double-stack plastic box magazine for the UMP sub-machine gun in .45 ACP.  Holds 25 rounds.",
     "weight": "150 g",
-    "volume": "750 ml",
+    "volume": "500 ml",
     "price": "4950 cent",
     "price_postapoc": "1 USD",
     "material": "plastic",

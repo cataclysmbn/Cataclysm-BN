@@ -1,19 +1,5 @@
 #include "editmap.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <cstring>
-#include <exception>
-#include <iosfwd>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <tuple>
-#include <typeinfo>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -31,15 +17,15 @@
 #include "item.h"
 #include "line.h"
 #include "map.h"
-#include "mapbuffer.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "mapgen_constructor.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
-#include "options.h"
 #include "omdata.h"
+#include "options.h"
 #include "output.h"
 #include "overmapbuffer.h"
 #include "scent_map.h"
@@ -54,9 +40,23 @@
 #include "ui.h"
 #include "ui_manager.h"
 #include "uistate.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <exception>
+#include <iosfwd>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <tuple>
+#include <typeinfo>
+#include <utility>
+#include <vector>
 
 static auto editmap_boundaries() -> half_open_cuboid<tripoint_bub_ms>
 {

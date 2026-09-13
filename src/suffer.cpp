@@ -1,18 +1,3 @@
-#include <algorithm>
-#include <array>
-#include <cctype>
-#include <cmath>
-#include <cstdlib>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 #include "action_time_scale.h"
 #include "addiction.h"
 #include "avatar.h"
@@ -58,7 +43,22 @@
 #include "type_id.h"
 #include "units.h"
 #include "units_temperature.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 static const bionic_id bio_dis_acid( "bio_dis_acid" );
 static const bionic_id bio_dis_shock( "bio_dis_shock" );
@@ -465,7 +465,7 @@ void Character::suffer_while_awake( const int current_stim )
     }
 }
 
-static void set_bodytemp( Character &who, int bodytemp )
+static auto set_bodytemp( Character &who, units::temperature bodytemp ) -> void
 {
     for( auto &pr : who.get_body() ) {
         if( pr.first == body_part_eyes ) {
@@ -1980,13 +1980,13 @@ void Character::apply_wetness_morale( const units::temperature &temperature )
             debugmsg( "%s has no body part %s", disp_name().c_str(), elem.first.c_str() );
             continue;
         }
-        int temp_cur = iter->second.get_temp_cur();
+        const auto temp_cur = iter->second.get_temp_cur();
         // Clamp to [COLD,HOT] and cast to double
-        const double part_temperature =
+        const auto part_temperature =
             std::min( BODYTEMP_HOT, std::max( BODYTEMP_COLD, temp_cur ) );
         // 0.0 at COLD, 1.0 at HOT
-        const double part_mod = ( part_temperature - BODYTEMP_COLD ) /
-                                ( BODYTEMP_HOT - BODYTEMP_COLD );
+        const auto part_mod = ( part_temperature - BODYTEMP_COLD ) /
+                              ( ( BODYTEMP_HOT - BODYTEMP_COLD ) * 1.0 );
         // Average of global and part temperature modifiers, each in range [-1.0, 1.0]
         double scaled_temperature = ( global_temperature_mod + part_mod ) / 2;
 

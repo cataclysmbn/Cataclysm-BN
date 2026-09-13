@@ -1,18 +1,3 @@
-#include <algorithm>
-#include <array>
-#include <ranges>
-#include <bitset>
-#include <cstddef>
-#include <list>
-#include <memory>
-#include <optional>
-#include <queue>
-#include <set>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
-
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -38,6 +23,7 @@
 #include "make_static.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "mapbuffer.h"
 #include "mapdata.h"
 #include "material.h"
 #include "messages.h"
@@ -45,26 +31,40 @@
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
-#include "mapbuffer.h"
 #include "overmapbuffer.h"
-#include "submap_fields.h"
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
+#include "profile.h"
 #include "rng.h"
 #include "scent_block.h"
 #include "string_id.h"
 #include "submap.h"
+#include "submap_fields.h"
 #include "teleport.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather.h"
-#include "profile.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <bitset>
+#include <cstddef>
+#include <list>
+#include <memory>
+#include <optional>
+#include <queue>
+#include <ranges>
+#include <set>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 static const itype_id itype_rm13_armor_on( "rm13_armor_on" );
 static const itype_id itype_rock( "rock" );

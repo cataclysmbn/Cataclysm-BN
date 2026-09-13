@@ -1,3 +1,4 @@
+#include "../src/vehicle/vehicle_part.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -14,8 +15,7 @@
 #include "player_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/vehicle.h"
 
 /** food items are counted by charges */
 static auto get_single_food_item(const tripoint_bub_ms& pos) -> const item& {

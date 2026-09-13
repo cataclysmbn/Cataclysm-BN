@@ -114,6 +114,9 @@ is reported to callbacks as absolute map-square coordinates.
 - auto_needs( false ) : If true, the character will automatically eat and drink from specific
   auto_consume zones during long activities.
 
+- rest_amount( 0.0 ) : How restful the activity is with respects to HP recovery. A rest_amount
+  of 0.2 gives 20% of the HP recovery sleeping would give while the activity is being performed.
+
 ## Termination
 
 There are several ways an activity can be ended:

@@ -8,7 +8,7 @@
 #include "player.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 static trait_id trait_CARNIVORE("CARNIVORE");
 static efftype_id effect_debug_clairvoyance("debug_clairvoyance");
@@ -908,7 +908,7 @@ TEST_CASE("Climate Control enchantments", "[magic][enchantment]") {
         wear_item(guy, "test_relic_socks_of_hand_climate");
 
         REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
-                == BODYTEMP_COLD + 500);
+                == BODYTEMP_COLD + 1_c_delta);
     }
 
     SECTION("Two climate control heating items") {
@@ -917,7 +917,7 @@ TEST_CASE("Climate Control enchantments", "[magic][enchantment]") {
         wear_item(guy, "test_relic_socks_of_hand_cold_climate");
 
         REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
-                == BODYTEMP_COLD + 1000);
+                == BODYTEMP_COLD + 2_c_delta);
     }
 
     SECTION("Base enchantments dont stack") {
@@ -925,6 +925,6 @@ TEST_CASE("Climate Control enchantments", "[magic][enchantment]") {
         wear_item(guy, "test_relic_socks_of_climate");
 
         REQUIRE(guy.temp_corrected_by_climate_control(BODYTEMP_COLD, bodypart_id("hand_l"))
-                == BODYTEMP_COLD + 500);
+                == BODYTEMP_COLD + 1_c_delta);
     }
 }

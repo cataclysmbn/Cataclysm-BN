@@ -235,6 +235,24 @@
     "flags": [ "MAG_COMPACT" ]
   },
   {
+    "id": "ump40mag",
+    "looks_like": "ump45mag",
+    "type": "MAGAZINE",
+    "name": { "str": "UMP40 magazine" },
+    "description": "A straight, double-stack plastic box magazine for the UMP sub-machine gun in .40 S&W.  Holds 30 rounds.",
+    "weight": "250 g",
+    "volume": "500 ml",
+    "price": "4950 cent",
+    "price_postapoc": "1 USD",
+    "material": "plastic",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": "40",
+    "capacity": 30,
+    "reliability": 9,
+    "flags": [ "MAG_COMPACT" ]
+  },
+  {
     "id": "kriss_mag",
     "looks_like": "tdi_mag",
     "type": "MAGAZINE",

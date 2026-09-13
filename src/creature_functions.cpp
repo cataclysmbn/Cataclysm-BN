@@ -1,18 +1,19 @@
-#include <algorithm>
-#include <set>
-#include <vector>
-
 #include "creature_functions.h"
+
 #include "avatar.h"
 #include "coordinates.h"
 #include "game.h"
+#include "line.h"
 #include "map.h"
 #include "map_iterator.h"
-#include "line.h"
-#include "vehicle.h"
 #include "monster.h"
 #include "npc.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <set>
+#include <vector>
 
 
 namespace

@@ -1,14 +1,14 @@
 #include "activity_speed_adapters.h"
 
-#include <utility>
-
 #include "construction.h"
 #include "mapdata.h"
 #include "recipe.h"
 #include "requirements.h"
 #include "units_mass.h"
 #include "units_volume.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
+
+#include <utility>
 
 workbench_info_wrapper::workbench_info_wrapper( furn_workbench_info f_info )
     : multiplier( f_info.multiplier ), allowed_mass( f_info.allowed_mass ),

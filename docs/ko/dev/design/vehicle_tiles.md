@@ -10,7 +10,7 @@
 
 ## 현재 아키텍처
 
-### 차량 상호작용 화면 (`src/veh_interact.cpp`)
+### 차량 상호작용 화면 (`src/vehicle/veh_interact.cpp`)
 
 현재 `display_veh()` 함수(2284번째 줄)는 ASCII 렌더링을 사용합니다:
 
@@ -102,7 +102,7 @@ public:
 
 ### 1.1 차량 미리보기 어댑터 클래스 생성
 
-**파일**: `src/vehicle_preview.h` / `src/vehicle_preview.cpp`
+**파일**: `src/vehicle/vehicle_preview.h` / `src/vehicle/vehicle_preview.cpp`
 
 ```cpp
 #if defined(TILES)
@@ -165,7 +165,7 @@ private:
 
 ### 1.3 `veh_interact` 클래스 수정
 
-**파일**: `src/veh_interact.h`
+**파일**: `src/vehicle/veh_interact.h`
 
 멤버 추가:
 
@@ -185,7 +185,7 @@ private:
 
 ### 1.4 `display_veh_tiles()` 구현
 
-**파일**: `src/veh_interact.cpp`
+**파일**: `src/vehicle/veh_interact.cpp`
 
 ```cpp
 #if defined(TILES)
@@ -267,13 +267,13 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset,
 
 ### 새 파일
 
-- `src/vehicle_preview.h` - 타일 미리보기 어댑터 클래스
-- `src/vehicle_preview.cpp` - 타일 미리보기 구현
+- `src/vehicle/vehicle_preview.h` - 타일 미리보기 어댑터 클래스
+- `src/vehicle/vehicle_preview.cpp` - 타일 미리보기 구현
 
 ### 수정된 파일
 
-- `src/veh_interact.h` - 타일 미리보기 멤버 추가
-- `src/veh_interact.cpp` - 타일 디스플레이 통합
+- `src/vehicle/veh_interact.h` - 타일 미리보기 멤버 추가
+- `src/vehicle/veh_interact.cpp` - 타일 디스플레이 통합
 - `src/options.cpp` - `VEHICLE_EDIT_TILES` 옵션 추가
 - `CMakeLists.txt` - 새 소스 파일 추가
 

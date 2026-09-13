@@ -1,7 +1,9 @@
 #include "locations.h"
 
 #include "character.h"
+#include "debug.h"
 #include "detached_ptr.h"
+#include "game.h"
 #include "item.h"
 #include "itype.h"
 #include "iuse_actor.h"
@@ -13,14 +15,12 @@
 #include "player.h"
 #include "rot.h"
 #include "submap.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "veh_type.h"
-#include "weather.h"
-#include "game.h"
-#include "debug.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+#include "weather/weather.h"
 
 namespace
 {

@@ -1,6 +1,5 @@
-#include <queue>
-
 #include "enums.h"
+#include "explosion.h"
 #include "game.h"
 #include "line.h"
 #include "map.h"
@@ -9,11 +8,11 @@
 #include "ranged.h"
 #include "rng.h"
 #include "shape.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
-#include "explosion.h"
+#include <queue>
 
 struct tripoint_distance {
     tripoint_distance( const tripoint_bub_ms &p, int distance_squared )

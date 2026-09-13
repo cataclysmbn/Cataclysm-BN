@@ -1,20 +1,4 @@
 #include "character.h"
-#include "calendar.h"
-#include "character_encumbrance.h"
-
-#include <algorithm>
-#include <cctype>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <iterator>
-#include <memory>
-#include <numeric>
-#include <ostream>
-#include <ranges>
-#include <type_traits>
-#include <vector>
-#include <ranges>
 
 #include "action.h"
 #include "action_time_scale.h"
@@ -25,21 +9,23 @@
 #include "avatar_action.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
+#include "character_encumbrance.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
 #include "clothing_utils.h"
 #include "clzones.h"
-#include "craft_command.h"
 #include "construction.h"
 #include "consumption.h"
 #include "coordinates.h"
+#include "craft_command.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
@@ -114,16 +100,29 @@
 #include "units_temperature.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_interact.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
+#include "vehicle/veh_interact.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "vitamin.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm>
+#include <cctype>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <ostream>
+#include <ranges>
+#include <type_traits>
+#include <vector>
 
 struct dealt_projectile_attack;
 
@@ -424,8 +423,8 @@ std::string enum_to_string<character_movemode>( character_movemode data )
 
 } // namespace io
 
-static void temp_equalizer( Character &c, const bodypart_str_id &bp1_id,
-                            const bodypart_str_id &bp2_id )
+static auto temp_equalizer( Character &c, const bodypart_str_id &bp1_id,
+                            const bodypart_str_id &bp2_id ) -> void
 {
     auto iter_lhs = c.get_body().find( bp1_id );
     if( iter_lhs == c.get_body().end() ) {
@@ -440,7 +439,8 @@ static void temp_equalizer( Character &c, const bodypart_str_id &bp1_id,
     // If bp1 is warmer, it will lose heat
     bodypart &bp1 = iter_lhs->second;
     bodypart &bp2 = iter_rhs->second;
-    int diff = static_cast<int>( ( bp2.get_temp_cur() - bp1.get_temp_cur() ) * 0.001 );
+    const auto diff = units::from_legacy_bodypart_temp_delta( static_cast<int>(
+                          units::to_legacy_bodypart_temp_delta( bp2.get_temp_cur() - bp1.get_temp_cur() ) * 0.001 ) );
     bp1.set_temp_cur( bp1.get_temp_cur() + diff );
     bp2.set_temp_cur( bp2.get_temp_cur() - diff );
 }
@@ -6146,26 +6146,22 @@ HURRICANE : 185 mph (880 hPa) [Ref: Hurricane Wilma]
 struct BodyTemperatureModifiers {
     // NOTE : visit weather.h for some details on the numbers used
     units::temperature ambient_temperature;
-    int ambient_temperature_celsius;
-    int ambient_norm; // In bodytemp units
+    units::temperature ambient_norm;
     int air_humidity;
     int best_fire;
     bool has_pyromania; // This does not belong here
     int heat_radiation; // Note: this is included in @ref weather::get_temperature(), so don't add to bodytemp!
-    int lying_warmth;
+    units::temperature_delta lying_warmth;
     bool sheltered;
     bool submerged;
     bool submerged_low;
-    int sunlight_warmth;
+    units::temperature_delta sunlight_warmth;
     bool is_in_sunlight;
-    int sun_intensity;
-    int mutation_heat_low; // Lower heat is applied always
-    int mutation_heat_high;
-    int mutation_heat_bonus; // Difference between high and low is the "safe" heat - one we only apply if it's beneficial
+    units::temperature_delta mutation_heat_low; // Lower heat is applied always
+    units::temperature_delta mutation_heat_high;
+    units::temperature_delta mutation_heat_bonus; // Difference between high and low is the "safe" heat - one we only apply if it's beneficial
     int vehicle_wind_speed = 0;
     units::temperature water_temperature;
-    int water_temperature_celsius;
-    int water_temperature_scaled; // Scaled so that 0C is 0 (FREEZING) and 30C is 5k (NORM).
     double total_windpower;
 
     // Worn items are not split by bp, so using a map prevents having to iterate all worn items for each bp
@@ -6204,7 +6200,8 @@ std::map<bodypart_id, int> get_wind_resistance( const Character &chr,
 }
 
 
-void warn_temp_change( Character &chr, const bodypart_id &bp, int temp_before, int temp_after )
+void warn_temp_change( Character &chr, const bodypart_id &bp, units::temperature temp_before,
+                       units::temperature temp_after )
 {
     // Warn the player if condition worsens
     // HACK: we want overall temperature change, including equalization, and temp_conv
@@ -6256,7 +6253,8 @@ void equalize_temperature( Character &chr )
 
 }
 
-void warn_wind_chill( const bodypart_id &bp, const int bp_conv, const int bp_wind_chill )
+void warn_wind_chill( const bodypart_id &bp, const units::temperature bp_conv,
+                      const int bp_wind_chill )
 {
     // Warn the player that wind is going to be a problem.
     // But only if it can be a problem, no need to spam player with "wind chills your scorching body"
@@ -6282,7 +6280,7 @@ void wake_if_hypothermia( Character &chr, const bodypart_id &bp, bodypart &bp_st
     // Otherwise, if any other body part is BODYTEMP_VERY_COLD, or 31C
     // AND you have frostbite, then that also prevents you from sleeping
     if( chr.in_sleep_state() ) {
-        int curr_temperature = bp_stats.get_temp_cur();
+        const auto curr_temperature = bp_stats.get_temp_cur();
         if( bp == body_part_torso && curr_temperature <= BODYTEMP_COLD &&
             !chr.has_enchantment_flag( ench_flag_NO_THERMAL_WAKE ) ) {
             add_msg( m_warning, _( "Your shivering prevents you from sleeping." ) );
@@ -6296,11 +6294,11 @@ void wake_if_hypothermia( Character &chr, const bodypart_id &bp, bodypart &bp_st
 }
 
 void apply_comfort_morale( Character &chr, const bodypart_id &bp, const bodypart &bp_stats,
-                           const int comfortable_warmth )
+                           const units::temperature_delta comfortable_warmth )
 {
     // Morale bonus for comfiness - only if actually comfy (not too warm/cold)
     // Spread the morale bonus in time.
-    if( comfortable_warmth > 0 &&
+    if( comfortable_warmth > 0_c_delta &&
         // TODO: make this simpler and use time_duration/time_point
         to_turn<int>( calendar::turn ) % to_turns<int>( 1_minutes ) == to_turns<int>
         ( 1_minutes * bp->token ) / to_turns<int>( 1_minutes * num_bp ) &&
@@ -6530,22 +6528,25 @@ bool is_bodypart_submerged( const bodypart_id &bp, const BodyTemperatureModifier
     return false;
 }
 
-int adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
-                                     const bodypart &bp_stats, int bp_conv, const BodyTemperatureModifiers &body_mods,
-                                     const int clothing_warmth_adjusted_bonus )
+auto adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
+                                     const bodypart &bp_stats, units::temperature bp_conv,
+                                     const BodyTemperatureModifiers &body_mods,
+                                     const units::temperature_delta clothing_warmth_adjusted_bonus )
+                                     -> units::temperature
 {
-
-    int bonus_fire_warmth = body_mods.best_fire * 500;
-    const int comfortable_warmth = bonus_fire_warmth + body_mods.lying_warmth;
-    const int bonus_warmth = comfortable_warmth + body_mods.mutation_heat_bonus +
+    const auto bonus_fire_warmth = units::from_legacy_bodypart_temp_delta( body_mods.best_fire * 500 );
+    const auto comfortable_warmth = bonus_fire_warmth + body_mods.lying_warmth;
+    const auto bonus_warmth = comfortable_warmth + body_mods.mutation_heat_bonus +
                              clothing_warmth_adjusted_bonus;
-    if( bonus_warmth <= 0 ) {
+    if( bonus_warmth <= 0_c_delta ) {
         return bp_conv;
     }
     // Approximate bp_conv needed to reach comfortable temperature in this very turn
     // Basically inverted formula for temp_cur below
-    int desired = 501 * BODYTEMP_NORM - 499 * bp_stats.get_temp_cur();
-    if( std::abs( BODYTEMP_NORM - desired ) < 1000 ) {
+    auto desired = units::from_legacy_bodypart_temp(
+                       501 * units::to_legacy_bodypart_temp( BODYTEMP_NORM ) -
+                       499 * units::to_legacy_bodypart_temp( bp_stats.get_temp_cur() ) );
+    if( units::abs( BODYTEMP_NORM - desired ) < 2_c_delta ) {
         desired = BODYTEMP_NORM; // Ensure that it converges
     } else if( desired > BODYTEMP_HOT ) {
         desired = BODYTEMP_HOT; // Cap excess at sane temperature
@@ -6558,27 +6559,28 @@ int adjust_bp_conv_for_bonus_warmth( Character &chr, const bodypart_id &bp,
         bp_conv = desired;
     } else {
         // Use all the heat
-        bp_conv += bonus_warmth;
+        bp_conv = bp_conv + bonus_warmth;
     }
 
     apply_comfort_morale( chr, bp, bp_stats, comfortable_warmth );
     return bp_conv;
 }
 
-int adjust_bp_conv_for_insulation( int bp_conv, const int clothing_warmth_adjustment )
+auto adjust_bp_conv_for_insulation( units::temperature bp_conv,
+                                     const units::temperature_delta clothing_warmth_adjustment )
+                                     -> units::temperature
 {
     // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
     // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
     if( bp_conv >= BODYTEMP_NORM ) {
-        int bp_without_clothes = bp_conv - clothing_warmth_adjustment;
+        const auto bp_without_clothes = bp_conv - clothing_warmth_adjustment;
         if( bp_without_clothes >= BODYTEMP_NORM ) {
             // If the heat is above normal, clothes start to contribute less
-            bp_conv -= clothing_warmth_adjustment / 2;
+            bp_conv = bp_conv - clothing_warmth_adjustment / 2;
         } else {
             // Do the same to any clothing that contributes to above normal
-            int clothes_to_norm = BODYTEMP_NORM - bp_without_clothes;
-            bp_conv -= ( clothing_warmth_adjustment - clothes_to_norm ) / 2;
-
+            const auto clothes_to_norm = BODYTEMP_NORM - bp_without_clothes;
+            bp_conv = bp_conv - ( clothing_warmth_adjustment - clothes_to_norm ) / 2;
         }
     }
     return bp_conv;
@@ -6628,39 +6630,44 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
         }
 
         const bool submerged_bp = is_bodypart_submerged( bp, body_mods );
-        // This adjusts the temperature scale to match the bodytemp scale
-        const int adjusted_temp = submerged_bp ?
-                                  body_mods.water_temperature_scaled :
-                                  ( body_mods.ambient_temperature_celsius - body_mods.ambient_norm );
+        // Change the ambient temperature into a delta based on comfortable air temperature.
+        const auto adjusted_temp = submerged_bp
+            ? units::temperature( body_mods.water_temperature )
+            : units::temperature( BODYTEMP_NORM + ( body_mods.ambient_temperature - body_mods.ambient_norm ) / 5.0 );
 
         // Represents the fact that the body generates heat when it is cold.
-        double scaled_temperature = logarithmic_range( BODYTEMP_VERY_COLD, BODYTEMP_VERY_HOT,
-                                    bp_stats.get_temp_cur() );
+        const auto scaled_temperature = logarithmic_range(
+                                            units::to_legacy_bodypart_temp( BODYTEMP_VERY_COLD ),
+                                            units::to_legacy_bodypart_temp( BODYTEMP_VERY_HOT ),
+                                            units::to_legacy_bodypart_temp( bp_stats.get_temp_cur() ) );
 
         // Produces a smooth curve between 30.0 and 60.0.
-        double homeostasis_adjustment = 30.0 * ( 1.0 + scaled_temperature );
+        const auto homeostasis_adjustment = 30.0 * ( 1.0 + scaled_temperature );
         const auto warmth_it = body_mods.warmth_per_bp.find( bp );
-        const int clothing_warmth_adjustment = static_cast<int>( homeostasis_adjustment *
-                                               ( warmth_it != body_mods.warmth_per_bp.end() ? warmth_it->second : 0 ) );
+        const auto clothing_warmth_adjustment = units::from_legacy_bodypart_temp_delta(
+                static_cast<int>( homeostasis_adjustment *
+                ( warmth_it != body_mods.warmth_per_bp.end() ? warmth_it->second : 0 ) ) );
         const auto warmth_bonus_it = body_mods.warmth_per_bp_bonus.find( bp );
-        const int clothing_warmth_adjusted_bonus = static_cast<int>( homeostasis_adjustment *
-                ( warmth_bonus_it != body_mods.warmth_per_bp_bonus.end() ? warmth_bonus_it->second : 0 ) );
+        const auto clothing_warmth_adjusted_bonus = units::from_legacy_bodypart_temp_delta(
+                    static_cast<int>( homeostasis_adjustment *
+                    ( warmth_bonus_it != body_mods.warmth_per_bp_bonus.end() ? warmth_bonus_it->second : 0 ) ) );
 
         const auto wind_res_it = body_mods.wind_res_per_bp.find( bp );
         const int wind_res = ( wind_res_it != body_mods.wind_res_per_bp.end() ) ? wind_res_it->second : 0;
         double bp_windpower = body_mods.total_windpower * ( 1 - wind_res / 100.0 );
-        int bp_wind_chill = submerged_bp ? 0 : get_local_windchill( units::to_fahrenheit(
-                                body_mods.ambient_temperature ),
-                            body_mods.air_humidity,
-                            bp_windpower );
+        const int bp_wind_chill = submerged_bp ? 0 : get_local_windchill( units::to_fahrenheit(
+                                      body_mods.ambient_temperature ),
+                                  body_mods.air_humidity,
+                                  bp_windpower );
+        const auto bugged_windchill = units::from_celsius_delta( bp_wind_chill * 100.0 / 500.0 );
 
         // Convergent temperature is affected by ambient temperature,
         // clothing warmth, and body wetness.
-        int bp_conv = adjusted_temp
-                      + bp_wind_chill * 100
-                      + clothing_warmth_adjustment
-                      + body_mods.mutation_heat_low
-                      + body_mods.sunlight_warmth;
+        auto bp_conv = adjusted_temp
+                       + bugged_windchill
+                       + clothing_warmth_adjustment
+                       + body_mods.mutation_heat_low
+                       + body_mods.sunlight_warmth;
 
         if( bp_stats.get_frostbite_timer() > 0 ) {
             bp_stats.set_frostbite_timer( bp_stats.get_frostbite_timer() - std::min( 5,
@@ -6674,16 +6681,20 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
         // The current temperature model can't account for water temperature conduction well
         // Hack: cut non-water effects by 80% when in water
         if( submerged_bp ) {
-            bp_conv = ( ( bp_conv - adjusted_temp ) / 5 ) + adjusted_temp;
+            const auto legacy_adjusted_temp = units::to_legacy_bodypart_temp( adjusted_temp );
+            bp_conv = units::from_legacy_bodypart_temp( ( units::to_legacy_bodypart_temp( bp_conv ) -
+                      legacy_adjusted_temp ) / 5 + legacy_adjusted_temp );
         }
 
         bp_conv = adjust_bp_conv_for_insulation( bp_conv, clothing_warmth_adjustment );
         // FINAL CALCULATION : Increments current body temperature towards convergent.
-        const int temp_before = bp_stats.get_temp_cur();
-        const int temp_difference = temp_before - bp_conv; // Negative if the player is warming up.
-        int rounding_error = 0;
+        const auto temp_before = bp_stats.get_temp_cur();
+        const auto legacy_bp_conv = units::to_legacy_bodypart_temp( bp_conv );
+        const auto legacy_temp_difference = units::to_legacy_bodypart_temp( temp_before ) -
+                                            legacy_bp_conv; // Negative if the player is warming up.
+        auto rounding_error = 0;
         // If temp_diff is small, the player cannot warm up due to rounding errors. This fixes that.
-        if( temp_difference < 0 && temp_difference > -600 ) {
+        if( legacy_temp_difference < 0 && legacy_temp_difference > -600 ) {
             rounding_error = 1;
         }
         // exp(-0.001) : half life of 60 minutes, exp(-0.002) : half life of 30 minutes,
@@ -6692,10 +6703,10 @@ void update_bodytemp_bps( Character &chr, BodyTemperatureModifiers &body_mods )
         static const double change_mult_water = std::exp( -0.008 );
         const double change_mult = submerged_bp ? change_mult_water : change_mult_air;
         if( bp_stats.get_temp_cur() != bp_conv ) {
-            bp_stats.set_temp_cur( static_cast<int>( temp_difference * change_mult ) + bp_conv +
-                                   rounding_error );
+            bp_stats.set_temp_cur( units::from_legacy_bodypart_temp(
+                                       static_cast<int>( legacy_temp_difference * change_mult ) + legacy_bp_conv + rounding_error ) );
         }
-        const int temp_after = bp_stats.get_temp_cur();
+        const auto temp_after = bp_stats.get_temp_cur();
 
         apply_temp_effects( chr, bp, bp_stats );
         apply_frostbite( chr, bp, bp_stats, body_mods );
@@ -6722,9 +6733,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     const w_point &weather_point = get_weather().get_precise();
     auto body_mods = BodyTemperatureModifiers();
     body_mods.ambient_temperature = weather.get_temperature( abs_pos() );
-    body_mods.ambient_temperature_celsius = units::to_millidegree_celsius(
-            body_mods.ambient_temperature ) / 10;
-    body_mods.ambient_norm = 1900 - BODYTEMP_NORM;
+    body_mods.ambient_norm = 19_c;
     body_mods.sheltered = weather::is_sheltered( m, _bub_pos );
     body_mods.air_humidity = get_local_humidity( weather_point.humidity, weather.weather_id,
                              body_mods.sheltered );
@@ -6732,12 +6741,12 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     body_mods.best_fire = get_heat_radiation( _bub_pos, true );
     body_mods.has_pyromania = has_trait( trait_PYROMANIA );
     body_mods.heat_radiation = get_heat_radiation( _bub_pos, false );
-    body_mods.lying_warmth = can_use_floor_warmth() ? floor_warmth( _bub_pos ) : 0;
+    body_mods.lying_warmth = can_use_floor_warmth() ? floor_warmth( _bub_pos ) : 0_c_delta;
 
     body_mods.is_in_sunlight = weather::is_in_sunlight( m, _bub_pos, weather.weather_id );
-    body_mods.sun_intensity = weather.weather_id->sun_intensity == sun_intensity_type::high ? 1000 :
-                              500;
-    body_mods.sunlight_warmth = body_mods.is_in_sunlight ? body_mods.sun_intensity : 0;
+    body_mods.sunlight_warmth = body_mods.is_in_sunlight
+        ? ( weather.weather_id->sun_intensity == sun_intensity_type::high ? 2_c_delta : 1_c_delta )
+        : 0_c_delta;
 
     body_mods.mutation_heat_low = bodytemp_modifier_traits( true );
     body_mods.mutation_heat_high = bodytemp_modifier_traits( false );
@@ -6747,10 +6756,10 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     body_mods.submerged = !in_vehicle && ter_at_pos->has_flag( TFLAG_DEEP_WATER );
     body_mods.submerged_low = !in_vehicle && ( body_mods.submerged ||
                               ter_at_pos->has_flag( TFLAG_SWIMMABLE ) );
-    body_mods.water_temperature = weather.get_water_temperature( abs_pos() );
-    body_mods.water_temperature_celsius = units::to_millidegree_celsius( body_mods.water_temperature ) /
-                                          10;
-    body_mods.water_temperature_scaled = body_mods.water_temperature_celsius * 5 / 3;
+    const auto water_temperature_raw = units::to_millidegree_celsius(
+                                           weather.get_water_temperature( abs_pos() ) ) / 10;
+    // Rescale so that 0C is BODYTEMP legacy 0 and 30C is BODYTEMP_NORM.
+    body_mods.water_temperature = units::from_legacy_bodypart_temp( water_temperature_raw * 5 / 3 );
 
     const optional_vpart_position vp = m.veh_at( _bub_pos );
     if( vp ) {
@@ -6780,19 +6789,19 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     update_bodytemp_bps( *this, body_mods );
 }
 
-int Character::get_part_temp_cur( const bodypart_id &id ) const
+auto Character::get_part_temp_cur( const bodypart_id &id ) const -> units::temperature
 {
     return get_part( id ).get_temp_cur();
 }
 
-void Character::set_part_temp_cur( const bodypart_id &id, int temp )
+auto Character::set_part_temp_cur( const bodypart_id &id, units::temperature temp ) -> void
 {
     get_part( id ).set_temp_cur( temp );
 }
 
-std::map<bodypart_id, int> Character::get_temp_cur()
+auto Character::get_temp_cur() -> std::map<bodypart_id, units::temperature>
 {
-    std::map<bodypart_id, int> temps;
+    auto temps = std::map<bodypart_id, units::temperature> {};
 
     for( auto &pr : get_body() ) {
         bodypart &bp = pr.second;
@@ -6801,7 +6810,7 @@ std::map<bodypart_id, int> Character::get_temp_cur()
     return temps;
 }
 
-void Character::set_temp_cur( int temp )
+auto Character::set_temp_cur( units::temperature temp ) -> void
 {
     for( auto &pr : get_body() ) {
         bodypart &bp = pr.second;
@@ -7702,9 +7711,20 @@ float Character::mutation_armor( bodypart_id bp, const damage_unit &du ) const
 
 float Character::rest_quality() const
 {
-    // Just a placeholder for now.
-    // TODO: Waiting/reading/being unconscious on bed/sofa/grass
-    return has_effect( effect_sleep ) ? 1.0f : 0.0f;
+    // TODO: Make comfort (bed, sofa, blankets, etc) contribute to rest, both while asleep and awake
+    float rest_rate = 0.0f;
+    const float activity_rest = activity->get_rest_amount();
+
+    if( activity_rest > 0.0f ) {
+        rest_rate += activity_rest;
+    }
+
+    if( has_effect( effect_sleep ) ) {
+        // Can be reduced below 1 once comfort is involved
+        rest_rate += 1.0f;
+    }
+
+    return clamp( rest_rate, 0.0f, 1.0f );
 }
 
 bodypart_str_id Character::bp_to_hp( const bodypart_str_id &bp )
@@ -10970,35 +10990,35 @@ bool Character::can_use_floor_warmth() const
     return in_sleep_state() || has_activity( allowed_activities );
 }
 
-int Character::floor_bedding_warmth( const tripoint_bub_ms &pos )
+auto Character::floor_bedding_warmth( const tripoint_bub_ms &pos ) -> units::temperature_delta
 {
     map &here = get_map();
     const trap &trap_at_pos = here.tr_at( pos );
     const ter_id ter_at_pos = here.ter( pos );
     const furn_id furn_at_pos = here.furn( pos );
-    int floor_bedding_warmth = 0;
+    auto floor_bedding_warmth = 0_c_delta;
 
     const optional_vpart_position vp = here.veh_at( pos );
     const std::optional<vpart_reference> boardable = vp.part_with_feature( "BOARDABLE", true );
     // Search the floor for bedding
     if( furn_at_pos != f_null ) {
-        floor_bedding_warmth += furn_at_pos.obj().floor_bedding_warmth;
+        floor_bedding_warmth = floor_bedding_warmth + furn_at_pos.obj().floor_bedding_warmth;
     } else if( !trap_at_pos.is_null() ) {
-        floor_bedding_warmth += trap_at_pos.floor_bedding_warmth;
+        floor_bedding_warmth = floor_bedding_warmth + trap_at_pos.floor_bedding_warmth;
     } else if( boardable ) {
-        floor_bedding_warmth += boardable->info().floor_bedding_warmth;
+        floor_bedding_warmth = floor_bedding_warmth + boardable->info().floor_bedding_warmth;
     } else if( ter_at_pos == t_improvised_shelter ) {
-        floor_bedding_warmth -= 500;
+        floor_bedding_warmth = floor_bedding_warmth - 1_c_delta;
     } else {
-        floor_bedding_warmth -= 2000;
+        floor_bedding_warmth = floor_bedding_warmth - 4_c_delta;
     }
 
     return floor_bedding_warmth;
 }
 
-int Character::floor_item_warmth( const tripoint_bub_ms &pos )
+auto Character::floor_item_warmth( const tripoint_bub_ms &pos ) -> units::temperature_delta
 {
-    int item_warmth = 0;
+    auto item_warmth = 0_c_delta;
 
     const auto warm = [&item_warmth]( const auto & stack ) {
         for( const item * const &elem : stack ) {
@@ -11010,7 +11030,8 @@ int Character::floor_item_warmth( const tripoint_bub_ms &pos )
             if( elem->volume() > 250_ml &&
                 ( elem->covers( bodypart_id( "torso" ) ) || elem->covers( bodypart_id( "leg_l" ) ) ||
                   elem->covers( bodypart_id( "leg_r" ) ) ) ) {
-                item_warmth += 60 * elem->get_warmth() * elem->volume() / 2500_ml;
+                item_warmth += units::from_legacy_bodypart_temp_delta(
+                                   60 * elem->get_warmth() * elem->volume() / 2500_ml );
             }
         }
     };
@@ -11031,58 +11052,75 @@ int Character::floor_item_warmth( const tripoint_bub_ms &pos )
     return item_warmth;
 }
 
-int Character::floor_warmth( const tripoint_bub_ms &pos ) const
+auto Character::floor_warmth( const tripoint_bub_ms &pos ) const -> units::temperature_delta
 {
-    const int item_warmth = floor_item_warmth( pos );
-    int bedding_warmth = floor_bedding_warmth( pos );
+    const auto item_warmth = floor_item_warmth( pos );
+    auto bedding_warmth = floor_bedding_warmth( pos );
 
     // If the PC has fur, etc, that will apply too
-    int floor_mut_warmth = bodytemp_modifier_traits_floor();
+    const auto floor_mut_warmth = bodytemp_modifier_traits_floor();
     // DOWN does not provide floor insulation, though.
     // Better-than-light fur or being in one's shell does.
-    if( ( !( has_trait( trait_DOWN ) ) ) && ( floor_mut_warmth >= 200 ) ) {
-        bedding_warmth = std::max( 0, bedding_warmth );
+    if( ( !( has_trait( trait_DOWN ) ) ) && ( floor_mut_warmth >= 0.4_c_delta ) ) {
+        bedding_warmth = std::max( 0_c_delta, bedding_warmth );
     }
     return ( item_warmth + bedding_warmth + floor_mut_warmth );
 }
 
-int Character::bodytemp_modifier_traits( bool overheated ) const
+auto Character::bodytemp_modifier_traits( bool overheated ) const -> units::temperature_delta
 {
-    int mod = 0;
+    auto mod = 0_c_delta;
     for( const trait_id &iter : get_mutations() ) {
-        mod += overheated ? iter->bodytemp_min : iter->bodytemp_max;
+        mod = mod + ( overheated ? iter->bodytemp_min : iter->bodytemp_max );
     }
-    mod += overheated ? bonus_from_enchantments( mod, enchantment_value_id( "BODYTEMP_MIN" ) ) :
-           bonus_from_enchantments( mod, enchantment_value_id( "BODYTEMP_MAX" ) );
+    const auto enchantment_bonus = [this]( const units::temperature_delta base,
+    const enchantment_value_id & value ) -> units::temperature_delta {
+        return units::from_legacy_bodypart_temp_delta(
+            bonus_from_enchantments( units::to_legacy_bodypart_temp_delta( base ), value ) );
+    };
+    mod += overheated ? enchantment_bonus( mod, enchantment_value_id( "BODYTEMP_MIN" ) ) :
+           enchantment_bonus( mod, enchantment_value_id( "BODYTEMP_MAX" ) );
     return mod;
 }
 
-int Character::bodytemp_modifier_traits_floor() const
+auto Character::bodytemp_modifier_traits_floor() const -> units::temperature_delta
 {
-    int mod = 0;
+    auto mod = 0_c_delta;
     for( const trait_id &iter : get_mutations() ) {
-        mod += iter->bodytemp_sleep;
+        mod = mod + iter->bodytemp_sleep;
     }
-    mod += bonus_from_enchantments( mod, enchantment_value_id( "BODYTEMP_SLEEP" ) );
+    const auto enchantment_bonus = [this]( const units::temperature_delta base,
+    const enchantment_value_id & value ) -> units::temperature_delta {
+        return units::from_legacy_bodypart_temp_delta(
+            bonus_from_enchantments( units::to_legacy_bodypart_temp_delta( base ), value ) );
+    };
+    mod += enchantment_bonus( mod, enchantment_value_id( "BODYTEMP_SLEEP" ) );
     return mod;
 }
 
-int Character::temp_corrected_by_climate_control( int temperature, bodypart_id id )
+auto Character::temp_corrected_by_climate_control( units::temperature temperature,
+        bodypart_id id ) ->
+units::temperature
 {
     // Climate Control eases the effects of high and low ambient temps
+    const auto enchantment_bonus = [this]( const units::temperature base,
+    const enchantment_value_id & value ) -> units::temperature_delta {
+        return units::from_legacy_bodypart_temp_delta(
+            bonus_from_enchantments( units::to_legacy_bodypart_temp( base ), value ) );
+    };
     if( temperature > BODYTEMP_NORM ) {
-        temperature -= bonus_from_enchantments( temperature,
-                                                enchantment_value_id( "CLIMATE_CONTROL_COOLING_" + to_upper_case( id.id().str() ) ) );
+        temperature = temperature - enchantment_bonus( temperature,
+                      enchantment_value_id( "CLIMATE_CONTROL_COOLING_" + to_upper_case( id.id().str() ) ) );
         if( in_climate_control() ) {
-            temperature -= 1250;
+            temperature = temperature - units::from_legacy_bodypart_temp_delta( 1250 );
         }
         return std::max( BODYTEMP_NORM, temperature );
     } else {
         if( in_climate_control() ) {
-            temperature += 1250;
+            temperature = temperature + units::from_legacy_bodypart_temp_delta( 1250 );
         }
-        temperature += bonus_from_enchantments( temperature,
-                                                enchantment_value_id( "CLIMATE_CONTROL_HEATING_" + to_upper_case( id.id().str() ) ) );
+        temperature = temperature + enchantment_bonus( temperature,
+                      enchantment_value_id( "CLIMATE_CONTROL_HEATING_" + to_upper_case( id.id().str() ) ) );
         return std::min( BODYTEMP_NORM, temperature );
     }
     return temperature;

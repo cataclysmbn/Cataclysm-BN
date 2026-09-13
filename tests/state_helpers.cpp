@@ -6,7 +6,7 @@
 #include "map_helpers.h"
 #include "name.h"
 #include "player_helpers.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 namespace {
 

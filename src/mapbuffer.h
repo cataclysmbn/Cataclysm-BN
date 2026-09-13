@@ -1,5 +1,18 @@
 #pragma once
 
+#include "calendar.h"
+#include "coordinates.h"
+#include "creature_tracker.h"
+#include "dimension_info.h"
+#include "game_constants.h"
+#include "item_stack.h"
+#include "mapgen_functions.h"
+#include "memory_fast.h"
+#include "point.h"
+#include "submap_load_manager.h"
+#include "type_id.h"
+#include "vehicle/vpart_position.h"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -17,19 +30,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include "calendar.h"
-#include "coordinates.h"
-#include "creature_tracker.h"
-#include "dimension_info.h"
-#include "game_constants.h"
-#include "item_stack.h"
-#include "mapgen_functions.h"
-#include "memory_fast.h"
-#include "point.h"
-#include "submap_load_manager.h"
-#include "type_id.h"
-#include "vpart_position.h"
 
 class submap;
 class active_tile_data;

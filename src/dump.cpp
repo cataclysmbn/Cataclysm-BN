@@ -1,17 +1,8 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cmath>
-#include <exception>
-#include <iostream>
-#include <iterator>
-#include <set>
-#include <utility>
-
 #include "avatar.h"
 #include "consumption.h"
 #include "damage.h"
 #include "flat_set.h"
+#include "game.h" // IWYU pragma: associated
 #include "init.h"
 #include "item.h"
 #include "item_factory.h"
@@ -28,10 +19,18 @@
 #include "skill.h"
 #include "translations.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 #include "vitamin.h"
+
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <iostream>
+#include <iterator>
+#include <set>
+#include <utility>
 
 bool game::dump_stats( const std::string &what, dump_mode mode,
                        const std::vector<std::string> &opts )
