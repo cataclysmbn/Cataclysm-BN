@@ -14642,7 +14642,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
             }
         }
     } else {
-        if( u.get_stamina() < move_cost ) {
+        if( u.get_stamina() < move_cost * 3 ) {
             add_msg( m_bad, _( "You are too exhausted to climb." ) );
             return;
         }
@@ -14651,12 +14651,12 @@ void game::vertical_move( int movez, bool force, bool peeking )
             if( g->slip_down() ) {
                 move_cost = std::max( 100, rng( 1, move_cost ) );
                 u.moves -= move_cost;
-                u.burn_move_stamina( move_cost );
+                u.mod_stamina( -move_cost * 3 );
                 return;
             }
         }
         u.moves -= move_cost;
-        u.burn_move_stamina( move_cost );
+        u.mod_stamina( -move_cost * 3 );
     }
     for( const auto &np : npcs_to_bring ) {
         if( np->in_vehicle ) {
