@@ -1383,7 +1383,15 @@ monster_action_t monster::decide_action() const
                     continue;
                 }
                 const auto estimate = here.bash_rating( bash_estimate( candidate ), candidate );
-                if( estimate <= 0 ) {
+                bool enemy_above = false;
+                const auto *critter_above = g->critter_at( candidate + tripoint_above, hallucination );
+                if( here.inbounds_z( candidate.z() + 1 ) && critter_above != nullptr ) {
+                    const auto att = attitude_to( *critter_above );
+                    if( att == Attitude::A_HOSTILE && sees( candidate + tripoint_above ) ) {
+                        enemy_above = true;
+                    }
+                }
+                if( estimate <= 0 && !enemy_above ) {
                     continue;
                 }
                 if( estimate < 5 ) {

@@ -822,7 +822,6 @@ jobs:
           $target = if ("${{ matrix.tiles }}" -eq "true") { "cata_test-tiles" } else { "cata_test" }
           cmake --build $buildDir --target $target --config Release
 
-
       # Upload artifacts
       - name: Upload packaged build artifact
         if: inputs.upload-artifacts && matrix.upload-artifact == true
