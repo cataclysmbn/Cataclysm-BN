@@ -55,6 +55,8 @@
 #include "magic/magic.h"
 #include "map.h"
 #include "mapbuffer.h"
+#include "mapbuffer_registry.h"
+#include "mapdata.h"
 #include "martialarts.h"
 #include "material.h"
 #include "melee.h"
@@ -829,6 +831,7 @@ auto item::prepare_for_location_removal() -> void
                 .root_cellar = tile->get_ter() == t_rootcellar,
                 .fridge = furn.has_flag( TFLAG_FRIDGE ),
                 .freezer = furn.has_flag( TFLAG_FREEZER ),
+                .incubator = furn.has_flag( TFLAG_INCUBATOR ),
             } );
         } else {
             storage_temperature = rot::temp::for_location( get_map(), *this );
@@ -2121,6 +2124,12 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
                     case temperature_flag::TEMP_HEATER: {
                         temperature_description = _( "* Current storage conditions <bad>do not</bad> "
                                                      "protect this item from rot." );
+                    }
+                    break;
+                    case temperature_flag::TEMP_INCUBATOR: {
+                        temperature_description = _( "* Current storage conditions <bad>accelerate</bad> this "
+                                                     "item\'s decay. It will go bad in <info>%s</info>." );
+                        print_freshness_duration = true;
                     }
                     break;
                     case temperature_flag::TEMP_FRIDGE:
@@ -6600,6 +6609,8 @@ auto temperature_flag_to_highest_temperature( temperature_flag temperature ) -> 
         case temperature_flag::TEMP_NORMAL:
         case temperature_flag::TEMP_HEATER:
             return units::temperature_max;
+        case temperature_flag::TEMP_INCUBATOR:
+            return temperatures::hot;
         case temperature_flag::TEMP_FRIDGE:
             return temperatures::fridge;
         case temperature_flag::TEMP_FREEZER:
@@ -10129,6 +10140,30 @@ auto item::actualize_rot( detached_ptr<item> &&self,
     return actualize_rot( std::move( self ), context, false );
 }
 
+// ALL ROT HAPPENS HERE (unless I missed some)
+auto item::do_rot_step( detached_ptr<item> &&self,
+                        const rot_context &context,
+                        const bool seals, player *carrier ) -> detached_ptr<item>
+{
+    auto removed_snapshot = self->is_comestible() || self->is_corpse() ?
+                            item::spawn( *self ) : detached_ptr<item>();
+
+    auto result = process_rot( std::move( self ), {
+        .seals = seals,
+        .carrier = carrier,
+        .context = context,
+    } );
+
+    if( !result && removed_snapshot ) {
+        map &here = get_map();
+        MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).handle_rotten_away_item(
+        context.position, *removed_snapshot, {
+            .mode = mapbuffer_lookup_mode::resident_only,
+        } );
+    }
+    return result;
+}
+
 auto item::actualize_rot( detached_ptr<item> &&self,
                           const rot_context &context, const bool seals ) -> detached_ptr<item>
 {
@@ -10142,11 +10177,7 @@ auto item::actualize_rot( detached_ptr<item> &&self,
         return std::move( self );
     }
     if( self->goes_bad() ) {
-        return process_rot( std::move( self ), {
-            .seals = seals,
-            .carrier = nullptr,
-            .context = context,
-        } );
+        return do_rot_step( std::move( self ), context, seals, nullptr );
     } else if( self->type->container && self->type->container->preserves ) {
         // Containers like tin cans preserve all items inside; they do not rot at all.
         return std::move( self );
@@ -10352,6 +10383,8 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
             return std::min( temperature, temperatures::freezer );
         case temperature_flag::TEMP_HEATER:
             return std::max( temperature, temperatures::normal );
+        case temperature_flag::TEMP_INCUBATOR:
+            return std::max( temperature, temperatures::hot );
         case temperature_flag::TEMP_ROOT_CELLAR:
             return temperatures::root_cellar;
         default:
@@ -11413,16 +11446,12 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     // Rot automatically applies ticks, no need to catch up
     if( ( self->is_food() || self->is_corpse() ) ) {
         ZoneScopedN( "item_process_rot" );
-        auto removed_snapshot = self->is_comestible() || self->is_corpse() ?
-                                item::spawn( *self ) : detached_ptr<item>();
-        self = process_rot( std::move( self ), seals, pos, carrier, flag, weather_generator );
-        // If the item has rotted away, then self becomes a null pointer.
-        if( !self && removed_snapshot ) {
-            MAPBUFFER_REGISTRY.get( here.get_bound_dimension() ).handle_rotten_away_item(
-            map_local_to_abs( here, pos ), *removed_snapshot, {
-                .mode = mapbuffer_lookup_mode::resident_only,
-            } );
-        }
+        self = do_rot_step( std::move( self ), {
+            .position = bub_to_abs( pos ),
+            .temperature = flag,
+            .weather = &weather_generator,
+            .local_temperature = g != nullptr && !g->new_game ? here.get_temperature( pos ) : 0,
+        }, seals, carrier );
     }
     return std::move( self );
 }

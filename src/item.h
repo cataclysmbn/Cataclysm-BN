@@ -2476,6 +2476,9 @@ class item : public location_visitable<item>, public game_object<item>
                                    const rot_context &context, bool seals ) -> detached_ptr<item>;
         static auto process_rot( detached_ptr<item> &&self,
                                  const absolute_rot_process_options &options ) -> detached_ptr<item>;
+        static auto do_rot_step( detached_ptr<item> &&self,
+                                 const rot_context &context,
+                                 bool seals, player *carrier ) -> detached_ptr<item>;
         auto is_in_preserving_container() const -> bool;
         auto is_in_sealing_container() const -> bool;
         auto mark_rot_checked_now() -> void;

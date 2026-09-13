@@ -1036,6 +1036,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_incubator",
+    "name": "Plug In Incubator"
+  },
+  {
+    "type": "construction_group",
     "id": "install_plut_generator",
     "name": "Plug In Plutonium Generator"
   },

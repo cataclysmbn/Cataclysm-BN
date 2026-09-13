@@ -14,6 +14,21 @@
     "color": "light_cyan"
   },
   {
+    "id": "incubator",
+    "type": "TOOL",
+    "looks_like": "f_incubator",
+    "name": "incubator",
+    "description": "A large incubator, with removable racks for storing eggs.",
+    "weight": "30 kg",
+    "volume": "110000 ml",
+    "price": "500 USD",
+    "price_postapoc": "5 USD",
+    "material": "steel",
+    "symbol": "{",
+    "color": "brown",
+    "category": "scrap_electronics"
+  },
+  {
     "id": "fridge",
     "type": "TOOL",
     "looks_like": "f_fridge",

@@ -358,6 +358,7 @@ enum ter_bitflags : int {
     TFLAG_SUSPENDED,
     TFLAG_FRIDGE,
     TFLAG_FREEZER,
+    TFLAG_INCUBATOR,
     TFLAG_ELEVATOR,
     TFLAG_NO_MEMORY,
     TFLAG_ROAD,

@@ -177,6 +177,7 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "SUSPENDED",                TFLAG_SUSPENDED },      // This furniture is suspended between other terrain, and will cause a cascading failure on break.
         { "FRIDGE",                   TFLAG_FRIDGE },         // This is an active fridge.
         { "FREEZER",                  TFLAG_FREEZER },        // This is an active freezer.
+        { "INCUBATOR",                TFLAG_INCUBATOR },      // This is an active incubator.
         { "ELEVATOR",                 TFLAG_ELEVATOR },       // This is an elevator.
         { "NO_MEMORY",                TFLAG_NO_MEMORY },      // This should not be added to map memory
         { "ROAD",                     TFLAG_ROAD },           // Some floors have this flag, as do some passable transformation of otherwise impassible terrain/furniture. Very notably, open doors.

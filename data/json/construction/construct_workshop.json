@@ -377,6 +377,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridincubator",
+    "group": "install_incubator",
+    "category": "WORKSHOP",
+    "required_skills": [  ],
+    "time": "10 m",
+    "qualities": [  ],
+    "components": [ [ [ "incubator", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_incubator"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridplut_generator",
     "group": "install_plut_generator",
     "category": "WORKSHOP",

@@ -3236,5 +3236,87 @@
       "sound_fail": "clang!",
       "items": [ { "item": "dna_editor", "count": 1 } ]
     }
+  },
+  {
+    "type": "furniture",
+    "abstract": "f_incubator_base",
+    "name": "abstract incubator",
+    "looks_like": "f_incubator",
+    "symbol": "H",
+    "description": "Abstract furniture.  If you see this, something went wrong.",
+    "color": "brown",
+    "move_cost_mod": -1,
+    "coverage": 90,
+    "required_str": -1,
+    "flags": [ "CONTAINER", "PLACE_ITEM", "BLOCKSDOOR", "MINEABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "incubator", "count": 1 } ] },
+    "max_volume": "50 L",
+    "bash": {
+      "str_min": 8,
+      "str_max": 50,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "sheet_metal", "count": [ 1, 2 ] },
+        { "item": "sheet_metal_small", "count": [ 4, 6 ] },
+        { "item": "steel_chunk", "count": [ 0, 1 ] },
+        { "item": "scrap", "count": [ 1, 4 ] },
+        { "item": "cable", "charges": [ 1, 2 ] },
+        { "item": "motor_tiny", "prob": 25 },
+        { "item": "element", "count": [ 1, 2 ] }
+      ],
+      "//": "Variable reduction since might hit more or less material.",
+      "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50 }
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_incubator_off",
+    "copy-from": "f_incubator_base",
+    "name": "incubator (off)",
+    "symbol": "H",
+    "description": "Put things in here to make them hot. Technically for eggs.  It is switched off.",
+    "examine_action": "transform",
+    "transforms_into": "f_incubator",
+    "prompt": "Switch on the incubator.",
+    "message": "You switch on the incubator.",
+    "color": "brown"
+  },
+  {
+    "type": "furniture",
+    "id": "f_incubator",
+    "name": "incubator",
+    "copy-from": "f_incubator_base",
+    "symbol": "H",
+    "description": "Put things in here to make them hot. Technically for eggs.  It has no power.",
+    "examine_action": "transform",
+    "transforms_into": "f_incubator_off",
+    "prompt": "Switch off the incubator.",
+    "message": "You switch off the incubator.",
+    "active": [ "charge_watcher", { "min_power": 10, "transform": { "id": "f_incubator_on", "msg": "The incubator starts up." } } ],
+    "color": "brown"
+  },
+  {
+    "type": "furniture",
+    "id": "f_incubator_on",
+    "name": "incubator (on)",
+    "copy-from": "f_incubator_base",
+    "symbol": "H",
+    "description": "Put things in here to make them hot. Technically for eggs.  It is switched on.",
+    "examine_action": "transform",
+    "transforms_into": "f_incubator_off",
+    "prompt": "Switch off the incubator.",
+    "message": "You switch off the incubator.",
+    "color": "brown",
+    "extend": { "flags": [ "INCUBATOR" ] },
+    "//": "Please keep steady_consumer to 300 s or more to avoid lag.",
+    "active": [
+      "steady_consumer",
+      {
+        "power": 10,
+        "consume_every": "600 s",
+        "transform": { "id": "f_incubator", "msg": "The incubator shuts down." }
+      }
+    ]
   }
 ]

@@ -179,6 +179,7 @@ auto temperature_flag_at_tile( const submap &sm, const point_sm_ms &local ) -> t
         .root_cellar = sm.get_ter( local ) == t_rootcellar,
         .fridge = furn.has_flag( TFLAG_FRIDGE ),
         .freezer = furn.has_flag( TFLAG_FREEZER ),
+        .incubator = furn.has_flag( TFLAG_INCUBATOR ),
     } );
 }
 
@@ -275,24 +276,30 @@ auto rotten_item_spawn( const actualize_tile_options &options, const item &sourc
         return;
     }
 
-    const auto chance = static_cast<int>( comestible->rot_spawn_chance *
-                                          get_option<float>( "CARRION_SPAWNRATE" ) );
-    if( rng( 0, 100 ) >= chance ) {
-        return;
+    bool spawned = false;
+    for( int i = 0; i < source.count(); i++ ) {
+        const auto chance = static_cast<int>( comestible->rot_spawn_chance *
+                                              get_option<float>( "CARRION_SPAWNRATE" ) );
+        if( rng( 0, 100 ) >= chance ) {
+            continue;
+        }
+
+        const auto spawn_details = MonsterGroupManager::GetResultFromGroup( comestible->rot_spawn );
+        const auto disposition = source.has_own_flag( flag_SPAWN_FRIENDLY ) ?
+                                 spawn_disposition::SpawnDisp_Pet :
+                                 spawn_disposition::SpawnDisp_Default;
+        add_spawn_to_submap( {
+            .sm = options.sm,
+            .local = options.local,
+            .type = spawn_details.name,
+            .disposition = disposition,
+        } );
+
+        spawned = true;
     }
 
-    const auto spawn_details = MonsterGroupManager::GetResultFromGroup( comestible->rot_spawn );
-    const auto disposition = source.has_own_flag( flag_SPAWN_FRIENDLY ) ?
-                             spawn_disposition::SpawnDisp_Pet :
-                             spawn_disposition::SpawnDisp_Default;
-    add_spawn_to_submap( {
-        .sm = options.sm,
-        .local = options.local,
-        .type = spawn_details.name,
-        .disposition = disposition,
-    } );
-
-    if( !options.active_bubble_pos || g == nullptr || !g->u.sees( *options.active_bubble_pos ) ) {
+    if( !spawned || !options.active_bubble_pos || g == nullptr ||
+        !g->u.sees( *options.active_bubble_pos ) ) {
         return;
     }
 
@@ -308,7 +315,6 @@ auto rotten_item_spawn( const actualize_tile_options &options, const item &sourc
 auto remove_rotten_items( const actualize_tile_options &options,
                           location_vector<item> &items ) -> void
 {
-    auto decayed_corpses = std::vector<detached_ptr<item>> {};
     const auto temperature = temperature_flag_at_tile( options.sm, options.local );
     items.remove_with( [&]( detached_ptr<item> &&it ) {
         if( !it ) {
@@ -319,29 +325,16 @@ auto remove_rotten_items( const actualize_tile_options &options,
             debugmsg( "remove_rotten_items: item with null type at %s", options.abs_pos.to_string() );
             return std::move( it );
         }
-        const auto can_spawn_rot = it->is_comestible();
-        const auto can_decay_corpse = it->is_corpse();
-        auto removed_snapshot = can_spawn_rot || can_decay_corpse ?
-                                item::spawn( *it ) : detached_ptr<item>();
+
         it = item::actualize_rot( std::move( it ), {
             .position = options.abs_pos,
             .temperature = temperature,
             .weather = &get_weather(),
             .local_temperature = options.sm.get_temperature(),
         } );
-        if( !it ) {
-            if( can_spawn_rot && removed_snapshot ) {
-                rotten_item_spawn( options, *removed_snapshot );
-            } else if( can_decay_corpse && removed_snapshot ) {
-                decayed_corpses.push_back( std::move( removed_snapshot ) );
-            }
-        }
+
         return std::move( it );
     } );
-
-    for( const auto &corpse : decayed_corpses ) {
-        handle_decayed_corpse( options, *corpse );
-    }
 }
 
 auto fill_funnels( const actualize_tile_options &options ) -> void

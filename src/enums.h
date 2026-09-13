@@ -75,6 +75,7 @@ struct enum_traits<creature_size> {
 
 enum class temperature_flag : int {
     TEMP_NORMAL = 0,
+    TEMP_INCUBATOR,
     TEMP_HEATER,
     TEMP_FRIDGE,
     TEMP_FREEZER,

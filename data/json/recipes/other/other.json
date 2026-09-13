@@ -619,6 +619,29 @@
   },
   {
     "type": "recipe",
+    "result": "incubator",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "40 m",
+    "reversible": true,
+    "decomp_learn": 4,
+    "book_learn": [ [ "textbook_mechanics", 4 ], [ "manual_mechanics", 4 ], [ "textbook_fabrication", 4 ] ],
+    "using": [ [ "soldering_standard", 20 ], [ "welding_standard", 5 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "sheet_metal", 3 ] ],
+      [ [ "sheet_metal_small", 2 ] ],
+      [ [ "steel_chunk", 2 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "thermostat", 1 ] ],
+      [ [ "motor_tiny", 1 ] ],
+      [ [ "element", 2 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "oven",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
