@@ -789,6 +789,36 @@
     "components": [ [ [ "scrap", 3 ] ] ]
   },
   {
+    "result": "ump40mag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 4 ] ],
+    "difficulty": 4,
+    "time": "60 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 3 ] ] ]
+  },
+  {
+    "result": "ump9mag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 4 ] ],
+    "difficulty": 4,
+    "time": "60 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 3 ] ] ]
+  },
+  {
     "result": "tec9mag",
     "type": "recipe",
     "category": "CC_WEAPON",

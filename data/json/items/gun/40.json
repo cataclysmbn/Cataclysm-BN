@@ -213,6 +213,13 @@
     "magazines": [ [ "40", [ "glock40mag", "glock40bigmag", "glock40drum50rd" ] ] ]
   },
   {
+    "id": "hk_ump45_retool_40",
+    "copy-from": "hk_ump45",
+    "type": "GUN",
+    "name": "H&K UMP",
+    "default_mods": [ "retool_ump45_40" ]
+  },
+  {
     "id": "kriss_vector",
     "copy-from": "smg_base",
     "looks_like": "TDI",
