@@ -4,6 +4,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "construction.h"
 #include "coordinates.h"
 #include "game.h"
 #include "inventory.h"
@@ -12,6 +13,8 @@
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "recipe.h"
+#include "recipe_dictionary.h"
 #include "requirements.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -146,4 +149,93 @@ TEST_CASE("debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_inte
 
     REQUIRE(installed_battery != all_parts.end());
     CHECK(installed_battery->part().ammo_remaining() == installed_battery->part().ammo_capacity());
+}
+
+static detached_ptr<item> spawn_tool_with_cell(const std::string& id) {
+    detached_ptr<item> tool = item::spawn(id);
+    const itype_id ammo = tool->ammo_default();
+    REQUIRE_FALSE(ammo.is_null());
+    tool->ammo_set(ammo, -1);
+    REQUIRE(tool->magazine_current() != nullptr);
+    return tool;
+}
+
+TEST_CASE("loaded_tools_install_and_craft_as_components", "[vehicle][crafting][construction]") {
+    clear_all_state();
+    avatar& you = get_avatar();
+    clear_avatar();
+    you.setpos(tripoint_bub_ms(60, 60, 0));
+    you.wear_item(item::spawn("backpack"), false);
+
+    SECTION("vehicle install sees a charged water purifier") {
+        you.i_add(item::spawn("screwdriver"));
+        you.i_add(spawn_tool_with_cell("water_purifier"));
+        you.mod_moves(1);
+        const inventory crafting_inv = you.crafting_inventory();
+        CHECK(crafting_inv.has_components(
+            itype_id("water_purifier"), 1, is_crafting_component));
+        CHECK(vpart_id("water_purifier")
+              ->install_requirements()
+              .can_make_with_inventory(crafting_inv, is_crafting_component));
+    }
+
+    SECTION("vehicle install sees a charged flashlight as aisle lights") {
+        you.i_add(item::spawn("screwdriver"));
+        you.i_add(spawn_tool_with_cell("flashlight"));
+        you.mod_moves(1);
+        const inventory crafting_inv = you.crafting_inventory();
+        CHECK(vpart_id("aisle_lights")
+              ->install_requirements()
+              .can_make_with_inventory(crafting_inv, is_crafting_component));
+    }
+
+    SECTION("grid water purifier construction sees a charged purifier") {
+        you.i_add(spawn_tool_with_cell("water_purifier"));
+        you.mod_moves(1);
+        const inventory crafting_inv = you.crafting_inventory();
+        const construction& con = construction_str_id("constr_gridwater_purifier").obj();
+        bool found_purifier = false;
+        for (const auto& opts : con.requirements.obj().get_components()) {
+            for (const item_comp& comp : opts) {
+                if (comp.type == itype_id("water_purifier")) {
+                    found_purifier = true;
+                    CHECK(comp.has(crafting_inv, is_crafting_component, 1));
+                }
+            }
+        }
+        REQUIRE(found_purifier);
+    }
+
+    SECTION("kitchen buddy recipe sees a charged purifier") {
+        you.i_add(spawn_tool_with_cell("water_purifier"));
+        you.mod_moves(1);
+        const inventory crafting_inv = you.crafting_inventory();
+        const recipe& rec = recipe_id("craftrig").obj();
+        bool found_purifier = false;
+        for (const auto& opts : rec.simple_requirements().get_components()) {
+            for (const item_comp& comp : opts) {
+                if (comp.type == itype_id("water_purifier")) {
+                    found_purifier = true;
+                    CHECK(comp.has(crafting_inv, rec.get_component_filter(), 1));
+                }
+            }
+        }
+        REQUIRE(found_purifier);
+    }
+
+    SECTION("consuming a charged purifier returns the battery cell") {
+        detached_ptr<item> loaded = spawn_tool_with_cell("water_purifier");
+        const itype_id mag = loaded->magazine_default();
+        REQUIRE_FALSE(mag.is_null());
+        you.i_add(std::move(loaded));
+        REQUIRE_FALSE(player_has_item_of_type(mag.str()));
+
+        std::vector<item_comp> comps{item_comp(itype_id("water_purifier"), 1)};
+        std::vector<detached_ptr<item>> used = you.consume_items(comps, 1, is_crafting_component);
+
+        REQUIRE(used.size() == 1);
+        CHECK(used[0]->typeId() == itype_id("water_purifier"));
+        CHECK(used[0]->magazine_current() == nullptr);
+        CHECK(player_has_item_of_type(mag.str()));
+    }
 }

@@ -9787,6 +9787,23 @@ bool item::allow_crafting_component() const
         return valid;
     }
 
+    // Tools with inserted magazines (battery cells, etc) still count as components.
+    // consume_items already returns those magazines via remove_ammo.
+    if( is_tool() ) {
+        bool valid = true;
+        visit_items( [&]( const item * it ) {
+            if( this == it ) {
+                return VisitResponse::NEXT;
+            }
+            if( it->is_magazine() || ( it->is_toolmod() && it->is_irremovable() ) ) {
+                return VisitResponse::NEXT;
+            }
+            valid = false;
+            return VisitResponse::ABORT;
+        } );
+        return valid;
+    }
+
     return contents.empty();
 }
 

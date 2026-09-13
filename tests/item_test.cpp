@@ -413,3 +413,63 @@ TEST_CASE("gunmod_weight_volume_test", "[item][gunmod]") {
         CHECK(gun->volume() == std::max(v0 - 999_ml, v0 / 100));
     }
 }
+
+TEST_CASE("magazine_tools_are_crafting_components", "[item][crafting]") {
+    SECTION("empty water purifier counts") {
+        item& purifier = *item::spawn_temporary("water_purifier");
+        REQUIRE(purifier.is_tool());
+        REQUIRE(purifier.contents.empty());
+        CHECK(is_crafting_component(purifier));
+    }
+
+    SECTION("water purifier with a charged battery cell counts") {
+        item& purifier = *item::spawn_temporary("water_purifier");
+        const itype_id ammo = purifier.ammo_default();
+        REQUIRE_FALSE(ammo.is_null());
+        purifier.ammo_set(ammo, -1);
+        REQUIRE(purifier.magazine_current() != nullptr);
+        CHECK(is_crafting_component(purifier));
+    }
+
+    SECTION("water purifier with an empty battery cell still inserted counts") {
+        item& purifier = *item::spawn_temporary("water_purifier");
+        const itype_id mag = purifier.magazine_default();
+        REQUIRE_FALSE(mag.is_null());
+        purifier.put_in(item::spawn(mag));
+        REQUIRE(purifier.magazine_current() != nullptr);
+        REQUIRE(purifier.ammo_remaining() == 0);
+        CHECK(is_crafting_component(purifier));
+    }
+
+    SECTION("flashlight with a battery cell counts") {
+        item& light = *item::spawn_temporary("flashlight");
+        const itype_id ammo = light.ammo_default();
+        REQUIRE_FALSE(ammo.is_null());
+        light.ammo_set(ammo, -1);
+        REQUIRE(light.magazine_current() != nullptr);
+        CHECK(is_crafting_component(light));
+    }
+
+    SECTION("UPS-modded welder does not count") {
+        item& welder = *item::spawn_temporary("welder", calendar::start_of_cataclysm, 0);
+        welder.put_in(item::spawn("battery_ups"));
+        REQUIRE_FALSE(welder.toolmods().empty());
+        CHECK_FALSE(is_crafting_component(welder));
+    }
+
+    SECTION("filled jerrycan still does not count") {
+        detached_ptr<item> can = item::spawn("jerrycan");
+        can->fill_with(item::spawn("water"), -1);
+        REQUIRE_FALSE(can->contents.empty());
+        CHECK_FALSE(is_crafting_component(*can));
+    }
+
+    SECTION("loaded gun still counts") {
+        item& gun = *item::spawn_temporary("glock_19");
+        REQUIRE(gun.is_gun());
+        const itype_id ammo = gun.ammo_default();
+        REQUIRE_FALSE(ammo.is_null());
+        gun.ammo_set(ammo, -1);
+        CHECK(is_crafting_component(gun));
+    }
+}
