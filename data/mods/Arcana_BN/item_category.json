@@ -1,0 +1,9 @@
+[
+  {
+    "id": "arcane_components",
+    "type": "ITEM_CATEGORY",
+    "name": { "str": "ARCANE COMPONENTS" },
+    "zone": "LOOT_VALUABLES",
+    "sort_rank": 24
+  }
+]
