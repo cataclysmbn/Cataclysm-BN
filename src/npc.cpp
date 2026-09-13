@@ -1032,7 +1032,7 @@ void npc::finish_read( item *it )
     // NPCs don't need to identify the book or learn recipes yet.
     // NPCs don't read to other NPCs yet.
     const bool display_messages = my_fac->id == faction_id( "your_followers" ) &&
-                                  g->u.sees( *this );
+                                  g->u.sees( bub_pos() );
     bool continuous = false; //whether to continue reading or not
 
     int book_fun_for = character_funcs::get_book_fun_for( *this, book );
@@ -1156,7 +1156,7 @@ void npc::do_npc_read()
             return;
         }
         if( can_read( *loc, fail_reasons ) ) {
-            if( g->u.sees( *this ) ) {
+            if( g->u.sees( bub_pos() ) ) {
                 add_msg( m_info, _( "%s starts reading." ), disp_name() );
             }
             start_read( *loc, pl );
