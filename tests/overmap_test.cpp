@@ -28,7 +28,7 @@ TEST_CASE("city building selection preserves empty bins", "[overmap][city]") {
          &settings.urban_shops, &settings.parks,        &settings.finales};
     const auto special = overmap_special_id("test_crater");
     REQUIRE(special.is_valid());
-    auto expected = overmap_special_id::NULL_ID();
+    auto expected = overmap_special_id("null");
 
     SECTION("empty bins") {}
     SECTION("zero weight bins") {
