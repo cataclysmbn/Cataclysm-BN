@@ -48,6 +48,7 @@
 #include "iteminfo_format_utils.h"
 #include "iteminfo_query.h"
 #include "itype.h"
+#include "item_type_match.h"
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
@@ -9739,7 +9740,8 @@ detached_ptr<item> item::use_amount( detached_ptr<item> &&self, const itype_id &
     int old_quantity = quantity;
 
     self->remove_items_with( [&]( detached_ptr<item> &&a ) {
-        if( quantity > 0  && a->typeId() == it && filter( *a ) ) {
+        if( quantity > 0  && item_matches_itype( *a, it ) && filter( *a ) ) {
+            normalize_consumed_item( *a, it );
             used.push_back( std::move( a ) );
             quantity--;
             return VisitResponse::SKIP;
@@ -9751,7 +9753,8 @@ detached_ptr<item> item::use_amount( detached_ptr<item> &&self, const itype_id &
         self->on_contents_changed();
     }
 
-    if( quantity > 0 && self->typeId() == it && filter( *self ) ) {
+    if( quantity > 0 && item_matches_itype( *self, it ) && filter( *self ) ) {
+        normalize_consumed_item( *self, it );
         used.push_back( std::move( self ) );
         quantity--;
         return detached_ptr<item>();

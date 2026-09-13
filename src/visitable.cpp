@@ -7,6 +7,7 @@
 #include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
+#include "item_type_match.h"
 #include "itype.h"
 #include "make_static.h"
 #include "map.h"
@@ -1033,7 +1034,7 @@ static int charges_of_internal( const T &self, const M &main, const itype_id &id
     self.visit_items( [&]( const item * e ) {
         if( filter( *e ) ) {
             if( e->is_tool() ) {
-                if( e->typeId() == id ) {
+                if( item_matches_itype( *e, id ) ) {
                     // includes charges from any included magazine.
                     qty = sum_no_wrap( qty, e->ammo_remaining() );
                     if( e->has_flag( STATIC( flag_id( "USE_UPS" ) ) ) ) {
@@ -1085,16 +1086,30 @@ int visitable<inventory>::charges_of( const itype_id &what, int limit,
         return std::min( qty, limit );
     }
     const auto &binned = static_cast<const inventory *>( this )->get_binned_items();
-    const auto iter = binned.find( what );
-    if( iter == binned.end() ) {
-        return 0;
-    }
-
     int res = 0;
-    for( const item *it : iter->second ) {
-        res = sum_no_wrap( res, charges_of_internal( *it, *this, what, limit, filter, visitor ) );
-        if( res >= limit ) {
-            break;
+    const auto add_charges_from_bin = [&]( const auto &stack ) {
+        for( const item *it : stack ) {
+            res = sum_no_wrap( res, charges_of_internal( *it, *this, what, limit, filter, visitor ) );
+            if( res >= limit ) {
+                return false;
+            }
+        }
+        return true;
+    };
+    if( const auto iter = binned.find( what ); iter != binned.end() ) {
+        if( !add_charges_from_bin( iter->second ) ) {
+            return std::min( limit, res );
+        }
+    }
+    if( what.is_valid() && what->tool ) {
+        for( const auto &kv : binned ) {
+            if( kv.first == what || kv.second.empty() ||
+                !item_matches_itype( *kv.second.front(), what ) ) {
+                continue;
+            }
+            if( !add_charges_from_bin( kv.second ) ) {
+                break;
+            }
         }
     }
     return std::min( limit, res );
@@ -1177,7 +1192,7 @@ static int amount_of_internal( const T &self, const itype_id &id, bool pseudo, i
 {
     int qty = 0;
     self.visit_items( [&qty, &id, &pseudo, &limit, &filter]( const item * e ) {
-        if( ( id.str() == "any" || e->typeId() == id ) && filter( *e ) && ( pseudo ||
+        if( ( id.str() == "any" || item_matches_itype( *e, id ) ) && filter( *e ) && ( pseudo ||
                 !e->has_flag( STATIC( flag_id( "PSEUDO" ) ) ) ) ) {
             qty = sum_no_wrap( qty, 1 );
         }
@@ -1200,11 +1215,6 @@ int visitable<inventory>::amount_of( const itype_id &what, bool pseudo, int limi
                                      const std::function<bool( const item & )> &filter ) const
 {
     const auto &binned = static_cast<const inventory *>( this )->get_binned_items();
-    const auto iter = binned.find( what );
-    if( iter == binned.end() && what != itype_id( "any" ) ) {
-        return 0;
-    }
-
     int res = 0;
     if( what.str() == "any" ) {
         for( const auto &kv : binned ) {
@@ -1215,15 +1225,34 @@ int visitable<inventory>::amount_of( const itype_id &what, bool pseudo, int limi
                 }
             }
         }
-    } else {
-        for( const item *it : iter->second ) {
+        return std::min( limit, res );
+    }
+
+    const auto add_amount_from_bin = [&]( const auto &stack ) {
+        for( const item *it : stack ) {
             res = sum_no_wrap( res, it->amount_of( what, pseudo, limit, filter ) );
             if( res >= limit ) {
+                return false;
+            }
+        }
+        return true;
+    };
+    if( const auto iter = binned.find( what ); iter != binned.end() ) {
+        if( !add_amount_from_bin( iter->second ) ) {
+            return std::min( limit, res );
+        }
+    }
+    if( what.is_valid() && what->tool ) {
+        for( const auto &kv : binned ) {
+            if( kv.first == what || kv.second.empty() ||
+                !item_matches_itype( *kv.second.front(), what ) ) {
+                continue;
+            }
+            if( !add_amount_from_bin( kv.second ) ) {
                 break;
             }
         }
     }
-
     return std::min( limit, res );
 }
 

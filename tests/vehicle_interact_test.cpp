@@ -12,6 +12,7 @@
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "recipe.h"
 #include "requirements.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -146,4 +147,85 @@ TEST_CASE("debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_inte
 
     REQUIRE(installed_battery != all_parts.end());
     CHECK(installed_battery->part().ammo_remaining() == installed_battery->part().ammo_capacity());
+}
+
+TEST_CASE("on_tools_count_as_off_crafting_components", "[vehicle][crafting]") {
+    clear_all_state();
+    avatar& you = get_avatar();
+    clear_avatar();
+    you.setpos(tripoint_bub_ms(60, 60, 0));
+    you.wear_item(item::spawn("backpack"), false);
+
+    SECTION("inventory sees a lit flashlight as a flashlight") {
+        you.i_add(item::spawn("flashlight_on"));
+        you.mod_moves(1);
+        const inventory crafting_inv = you.crafting_inventory();
+        CHECK(crafting_inv.has_components(itype_id("flashlight"), 1, is_crafting_component));
+        const auto& lights = vpart_id("aisle_lights").obj();
+        CHECK(lights.install_requirements().can_make_with_inventory(
+            crafting_inv, is_crafting_component));
+    }
+
+    SECTION("headlamp recipe sees a lit flashlight") {
+        you.i_add(item::spawn("flashlight_on"));
+        you.mod_moves(1);
+        const inventory crafting_inv = you.crafting_inventory();
+        const recipe& rec = recipe_id("wearable_light").obj();
+        bool found_light = false;
+        for (const auto& opts : rec.simple_requirements().get_components()) {
+            for (const item_comp& comp : opts) {
+                if (comp.type == itype_id("flashlight")) {
+                    found_light = true;
+                    CHECK(comp.has(crafting_inv, rec.get_component_filter(), 1));
+                }
+            }
+        }
+        REQUIRE(found_light);
+    }
+
+    SECTION("consuming a lit flashlight as a flashlight turns it off") {
+        you.i_add(item::spawn("flashlight_on"));
+        you.mod_moves(1);
+        std::vector<item_comp> comps{item_comp(itype_id("flashlight"), 1)};
+        std::vector<detached_ptr<item>> used = you.consume_items(comps, 1, is_crafting_component);
+        REQUIRE(used.size() == 1);
+        CHECK(used[0]->typeId() == itype_id("flashlight"));
+        CHECK_FALSE(used[0]->is_active());
+    }
+
+    SECTION("vehicle install accepts a lit flashlight for aisle lights") {
+        map& here = get_map();
+        const tripoint_bub_ms vehicle_origin(60, 60, 0);
+        you.setpos(vehicle_origin + point_south);
+        you.i_add(item::spawn("screwdriver"));
+        you.i_add(item::spawn("flashlight_on"));
+        you.mod_moves(1);
+
+        vehicle* veh_ptr = here.add_vehicle(vproto_id("bicycle"), vehicle_origin, 0_degrees, 0, 0);
+        REQUIRE(veh_ptr != nullptr);
+
+        const auto install_part_id = vpart_id("aisle_lights");
+        const auto reference_part_index = 0;
+        const auto reference_part = &veh_ptr->part(reference_part_index);
+        const auto reference_pos =
+            map_local_to_abs(here, veh_ptr->bub_part_location(*reference_part));
+
+        you.assign_activity(ACT_VEHICLE, 1, static_cast<int>('i'));
+        you.activity->values = {
+            reference_pos.x(), reference_pos.y(), reference_pos.z(), 0, 0, 0, reference_part_index};
+        you.activity->str_values.push_back(install_part_id.str());
+        for (const tripoint_abs_ms& p : veh_ptr->get_points(true)) {
+            you.activity->coord_set.insert(p);
+        }
+
+        veh_interact::complete_vehicle(you);
+
+        const auto all_parts = veh_ptr->get_all_parts();
+        const auto installed = std::find_if(
+            all_parts.begin(), all_parts.end(), [&install_part_id](const vpart_reference& part) {
+                return part.info().get_id() == install_part_id;
+            });
+        REQUIRE(installed != all_parts.end());
+        CHECK(installed->part().get_base().typeId() == itype_id("flashlight"));
+    }
 }

@@ -4,6 +4,7 @@
 #include "enums.h"
 #include "flag.h"
 #include "item.h"
+#include "item_type_match.h"
 #include "itype.h"
 #include "math_defines.h"
 #include "ret_val.h"
@@ -411,5 +412,29 @@ TEST_CASE("gunmod_weight_volume_test", "[item][gunmod]") {
 
         CHECK(gun->weight() == std::max(w0 - 999_gram, w0 / 100));
         CHECK(gun->volume() == std::max(v0 - 999_ml, v0 / 100));
+    }
+}
+
+TEST_CASE("on_tools_match_their_off_itype", "[item][crafting]") {
+    SECTION("flashlight_on counts as flashlight") {
+        detached_ptr<item> on = item::spawn("flashlight_on");
+        CHECK(item_matches_itype(*on, itype_id("flashlight")));
+        CHECK(item_matches_itype(*on, itype_id("flashlight_on")));
+    }
+
+    SECTION("heavy_flashlight_on does not count as a regular flashlight") {
+        detached_ptr<item> on = item::spawn("heavy_flashlight_on");
+        CHECK(item_matches_itype(*on, itype_id("heavy_flashlight")));
+        CHECK_FALSE(item_matches_itype(*on, itype_id("flashlight")));
+    }
+
+    SECTION("electric lantern on counts as electric lantern") {
+        detached_ptr<item> on = item::spawn("electric_lantern_on");
+        CHECK(item_matches_itype(*on, itype_id("electric_lantern")));
+    }
+
+    SECTION("an armed gas grenade does not count as an empty canister") {
+        detached_ptr<item> armed = item::spawn("gasbomb_makeshift_act");
+        CHECK_FALSE(item_matches_itype(*armed, itype_id("canister_empty")));
     }
 }
