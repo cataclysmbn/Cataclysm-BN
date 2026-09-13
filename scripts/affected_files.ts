@@ -11,6 +11,7 @@ import { partition } from "jsr:@std/collections"
 import { walk, type WalkEntry, type WalkOptions } from "jsr:@std/fs"
 import { Command } from "@cliffy/command"
 import { changedFilesFromGit, type PullFileStatus } from "./git_changed_files.ts"
+import { dirname, join, normalize } from "jsr:@std/path/posix"
 
 const paths = ["src", "tests"]
 
@@ -27,10 +28,25 @@ const getDiffs = async (base: string, head: string) => {
 const includeRegex = /#include\s+"([^"]+)"/g
 const getIncludes = (content: string) => Array.from(content.matchAll(includeRegex)).map((x) => x[1])
 
-const getSourceDependencies = (nameToPath: Map<string, string>) => async ({ path }: WalkEntry) => {
-  const text = await Deno.readTextFile(path)
-  const includes = getIncludes(text).map((x) => nameToPath.get(x)!)
-  return [path, includes] as const
+const sourcePath = (path: string): string => normalize(path.replaceAll("\\", "/"));
+
+const getSourceDependencies = (sourceFiles: Set<string>) => async ({ path }: WalkEntry) => {
+    const text = await Deno.readTextFile(path);
+    const source = sourcePath(path);
+    const includes: string[] = [];
+
+    for (const include of getIncludes(text)) {
+        const localPath = join(dirname(source), include);
+        const rootPath = join("src", include);
+
+        if (sourceFiles.has(localPath)) {
+            includes.push(localPath);
+        } else if (sourceFiles.has(rootPath)) {
+            includes.push(rootPath);
+        }
+    }
+
+    return [source, includes] as const;
 }
 
 const getAllSourceFiles = async (): Promise<WalkEntry[]> => {
@@ -48,8 +64,8 @@ type Deps = Map<string, Set<string>>
  * creates mapping between header file and all source files that include it
  */
 const getAllDependencies = async (xs: WalkEntry[]): Promise<Deps> => {
-  const nameToPath = new Map(xs.map((x) => [x.name, x.path]))
-  const ys = await Promise.all(xs.map(getSourceDependencies(nameToPath)))
+  const sourceFiles = new Set(xs.map((x) => sourcePath(x.path)))
+  const ys = await Promise.all(xs.map(getSourceDependencies(sourceFiles)))
 
   const deps: Deps = new Map()
   for (const [path, includes] of ys) {
