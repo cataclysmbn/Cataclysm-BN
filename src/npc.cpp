@@ -1078,15 +1078,15 @@ void npc::finish_read( item *it )
 
         if( skill_level != originalSkillLevel ) {
             g->events().send<event_type::gains_skill_level>( getID(), skill, skill_level.level() );
+            // NPC continue reading until they can no longer learn from the book.
+            if( skill_level == reading->level ) {
+                revert_after_activity();
+                return;
+            }
             if( display_messages ) {
                 add_msg( m_good, _( "%s increases their %s level." ), disp_name(), skill_name );
-                // NPC continue reading until they can no longer learn from the book.
-                if( skill_level == reading->level ) {
-                    revert_after_activity();
-                    return;
-                }
-                continuous = true;
             }
+            continuous = true;
         } else {
             continuous = true;
             if( display_messages ) {
