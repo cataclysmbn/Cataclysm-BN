@@ -491,6 +491,7 @@ class overmap
 
         // Initialize
         void init_layers();
+        auto load_pruned_overmap_stash( const dimension_id &dim_id ) -> void;
         // open existing overmap, or generate a new one
         auto open( const dimension_id &dim_id, overmap_special_batch &enabled_specials ) -> void;
     public:
