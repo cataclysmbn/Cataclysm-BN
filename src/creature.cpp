@@ -1354,10 +1354,9 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
                 if( !is_immune_effect( effect_bleed ) ) {
-                    if ( is_monster() ) {
+                    if( is_monster() ) {
                         add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage / 15 ), bp.id() );
-                    }
-                    else {
+                    } else {
                         add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
                     }
                 }
@@ -1369,10 +1368,9 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
                 if( !is_immune_effect( effect_bleed ) ) {
-                    if ( is_monster() ) {
+                    if( is_monster() ) {
                         add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage / 15 ), bp.id() );
-                    }
-                    else {
+                    } else {
                         add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
                     }
                 }
