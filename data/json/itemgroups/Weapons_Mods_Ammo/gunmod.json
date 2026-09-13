@@ -49,6 +49,8 @@
       [ "retool_ar15_300blk", 40 ],
       [ "retool_mcx_223", 40 ],
       [ "retool_mcx_762", 40 ],
+      [ "retool_ump45_40", 40 ],
+      [ "retool_ump45_9mm", 40 ],
       [ "g36_stanag_adapter", 40 ],
       [ "aug_nato_conversion", 40 ],
       [ "breacher_grip", 10 ],
