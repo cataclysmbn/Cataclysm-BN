@@ -21,6 +21,7 @@
 #include "catalua_luna_doc.h"
 #include "catalua_serde.h"
 #include "character.h"
+#include "character_martial_arts.h"
 #include "crafting.h"
 #include "craft_command.h"
 #include "creature.h"
@@ -1271,6 +1272,9 @@ void cata::detail::reg_character( sol::state &lua )
 
         luna::set_fx( ut, "knows_recipe", []( const UT_CLASS & utObj, const recipe_id & rec ) -> bool { return utObj.knows_recipe( &( rec.obj() ) ); } );
         luna::set_fx( ut, "learn_recipe", []( UT_CLASS & utObj, const recipe_id & rec ) -> void { utObj.learn_recipe( &( rec.obj() ) ); } );
+
+        luna::set_fx( ut, "knows_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> bool { return utObj.martial_arts_data->has_martialart( ma_type_id ); } );
+        luna::set_fx( ut, "learn_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> void { utObj.martial_arts_data->add_martialart( ma_type_id ); } );
 
         SET_FX_T( suffer, void() );
 

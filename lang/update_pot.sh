@@ -55,7 +55,7 @@ xgettext --default-domain="cataclysm-bn" \
          --keyword="pl_translation:1,2,2t" \
          --keyword="pl_translation:1c,2,3,3t" \
          --from-code="UTF-8" \
-         --files-from"$SOURCE_FILES"
+         --files-from="$SOURCE_FILES"
 if [ $? -ne 0 ]; then
     echo "Error in xgettext. Aborting"
     exit 1
