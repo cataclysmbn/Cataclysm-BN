@@ -18,7 +18,8 @@
 
 struct itype;
 
-static constexpr auto deterministic_dps_seed = 0U;
+// Zero leaves the RNG unchanged instead of seeding it.
+static constexpr auto deterministic_dps_seed = 1U;
 
 static auto reset_dps_rng() -> void { rng_set_engine_seed(deterministic_dps_seed); }
 
@@ -119,8 +120,9 @@ static auto check_accuracy_dps(
     CHECK(dps_wpn3 > dps_wpn2);
 }
 TEST_CASE("effective damage per second", "[effective][dps]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
     clear_all_state();
-    rng_set_engine_seed(0);
+    reset_dps_rng();
     avatar& dummy = g->u;
     clear_character(dummy);
 
@@ -189,8 +191,9 @@ TEST_CASE("effective damage per second", "[effective][dps]") {
 }
 
 TEST_CASE("effective vs actual damage per second", "[actual][dps]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
     clear_all_state();
-    rng_set_engine_seed(0);
+    reset_dps_rng();
     avatar& dummy = g->u;
     clear_character(dummy);
 
@@ -224,8 +227,9 @@ TEST_CASE("effective vs actual damage per second", "[actual][dps]") {
 }
 
 TEST_CASE("accuracy increases success", "[accuracy][dps]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
     clear_all_state();
-    rng_set_engine_seed(0);
+    reset_dps_rng();
     avatar& dummy = g->u;
     clear_character(dummy);
 
