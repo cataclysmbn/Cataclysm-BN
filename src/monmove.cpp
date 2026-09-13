@@ -1390,7 +1390,6 @@ monster_action_t monster::decide_action() const
                     if( att == Attitude::A_HOSTILE && sees( candidate + tripoint_above ) ) {
                         enemy_above = true;
                     }
-
                 }
                 if( estimate <= 0 && !enemy_above ) {
                     continue;
