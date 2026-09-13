@@ -14642,13 +14642,21 @@ void game::vertical_move( int movez, bool force, bool peeking )
             }
         }
     } else {
-        u.moves -= move_cost;
+        if( u.get_stamina() < move_cost ) {
+            add_msg( m_bad, _( "You are too exhausted to climb." ) );
+            return;
+        }
         // Risk of failing, simple stuff like ladders are exempt
         if( climbing && movez == 1 && m.climb_difficulty( u.bub_pos() ) > 1 ) {
             if( g->slip_down() ) {
+                move_cost = std::max( 100, rng( 1, move_cost ) );
+                u.moves -= move_cost;
+                u.burn_move_stamina( move_cost );
                 return;
             }
         }
+        u.moves -= move_cost;
+        u.burn_move_stamina( move_cost );
     }
     for( const auto &np : npcs_to_bring ) {
         if( np->in_vehicle ) {
