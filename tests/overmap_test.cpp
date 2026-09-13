@@ -1,6 +1,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
+#include "debug.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "map_helpers.h"
@@ -10,6 +11,7 @@
 #include "overmap_special.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
+#include "regional_settings.h"
 #include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -18,6 +20,36 @@
 #include <array>
 #include <memory>
 #include <vector>
+
+TEST_CASE("city building selection preserves empty bins", "[overmap][city]") {
+    auto settings = city_settings{};
+    const auto bins =
+        {&settings.houses,      &settings.urban_houses, &settings.shops,
+         &settings.urban_shops, &settings.parks,        &settings.finales};
+    const auto special = overmap_special_id("test_crater");
+    REQUIRE(special.is_valid());
+    auto expected = overmap_special_id::NULL_ID();
+
+    SECTION("empty bins") {}
+    SECTION("zero weight bins") {
+        for (auto* bin : bins) { bin->add(special, 0); }
+    }
+    SECTION("populated bins") {
+        expected = special;
+        for (auto* bin : bins) { bin->add(special, 1); }
+    }
+    for (auto* bin : bins) { bin->finalize(); }
+
+    const auto messages = capture_debugmsg_during([&]() {
+        CHECK(settings.pick_house() == expected);
+        CHECK(settings.pick_urban_house() == expected);
+        CHECK(settings.pick_shop() == expected);
+        CHECK(settings.pick_urban_shop() == expected);
+        CHECK(settings.pick_park() == expected);
+        CHECK(settings.pick_finale() == expected);
+    });
+    CHECK(messages.empty());
+}
 
 TEST_CASE("set_and_get_overmap_scents", "[overmap]") {
     clear_all_state();

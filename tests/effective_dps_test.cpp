@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "item.h"
@@ -20,6 +21,16 @@ struct itype;
 static constexpr auto deterministic_dps_seed = 0U;
 
 static auto reset_dps_rng() -> void { rng_set_engine_seed(deterministic_dps_seed); }
+
+TEST_CASE("DPS RNG reset repeats the trial sequence", "[dps][rng]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
+    rng_set_engine_seed(GENERATE(1U, 1789231266U));
+    reset_dps_rng();
+    const auto expected = rng_get_engine();
+    rng_bits();
+    reset_dps_rng();
+    CHECK(rng_get_engine() == expected);
+}
 
 // Run a large number of trials of a player attacking a monster with a given weapon,
 // and return the average damage done per second.
