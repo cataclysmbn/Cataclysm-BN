@@ -13,6 +13,7 @@ import { assertEquals } from "@std/assert"
 import { pooledMap } from "@std/async"
 import { emptyDir, ensureDir } from "@std/fs"
 import { basename, join } from "@std/path"
+import { watchTest } from "./test-watchdog.ts"
 
 type Mode = "auto" | "file-tags" | "tiles" | "legacy"
 
@@ -297,20 +298,20 @@ const runShard = async (
   const env: Record<string, string> = compute === undefined
     ? {}
     : { CATA_TEST_COMPUTE_ACCELERATION: compute }
-  const result = await commandOutput(options.testBin, [
-    ...testOpts,
-    `--user-dir=${userDir}`,
-    filter,
-  ], env)
-  if (result.stdout) {
-    console.log(result.stdout.trimEnd())
-  }
-  if (result.stderr) {
-    console.error(result.stderr.trimEnd())
-  }
+  const code = await watchTest({
+    command: options.testBin,
+    args: [...testOpts, `--user-dir=${userDir}`, filter],
+    env: { ...env, CATA_TEST_PROGRESS: "1" },
+    name: shard.name,
+    directory: Deno.env.get("CATA_TEST_DIAGNOSTICS_DIR") ?? "test-diagnostics",
+    timeoutMs: parsePositiveInt(
+      "CATA_TEST_SHARD_TIMEOUT_SECONDS",
+      Deno.env.get("CATA_TEST_SHARD_TIMEOUT_SECONDS") ?? "1800",
+    ) * 1000,
+  })
   const elapsed = Math.round((Date.now() - start) / 1000)
-  console.log(`Finished shard ${shard.name} in ${elapsed}s with status ${result.code}`)
-  return result.code
+  console.log(`Finished shard ${shard.name} in ${elapsed}s with status ${code}`)
+  return code
 }
 
 const run = async (options: Options): Promise<number> => {

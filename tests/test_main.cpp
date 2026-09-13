@@ -300,6 +300,20 @@ static std::string extract_user_dir(std::vector<const char*>& arg_vec) {
 struct CataListener: Catch::TestEventListenerBase {
     using TestEventListenerBase::TestEventListenerBase;
 
+    auto testCaseStarting(Catch::TestCaseInfo const& info) -> void override {
+        TestEventListenerBase::testCaseStarting(info);
+        if (std::getenv("CATA_TEST_PROGRESS")) {
+            stream << "[test-start] " << info.name << " seed=" << m_config->rngSeed() << std::endl;
+        }
+    }
+
+    auto testCaseEnded(Catch::TestCaseStats const& stats) -> void override {
+        if (std::getenv("CATA_TEST_PROGRESS")) {
+            stream << "[test-end] " << stats.testInfo.name << std::endl;
+        }
+        TestEventListenerBase::testCaseEnded(stats);
+    }
+
     void sectionStarting(Catch::SectionInfo const& sectionInfo) override {
         TestEventListenerBase::sectionStarting(sectionInfo);
         // Initialize the cata RNG with the Catch seed for reproducible tests

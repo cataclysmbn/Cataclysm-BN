@@ -5,6 +5,7 @@
 #include "point.h"
 #include "type_id.h"
 #include <memory>
+#include <mutex>
 #include <filesystem>
 #include <span>
 
@@ -23,7 +24,8 @@ struct lua_state_deleter {
     void operator()( lua_state *state ) const;
 };
 
-static std::mutex lua_lock;
+/// Share one lock across translation units; Lua callbacks can synchronously re-enter hooks.
+inline auto lua_lock = std::recursive_mutex {};
 
 bool has_lua();
 int get_lua_api_version();
