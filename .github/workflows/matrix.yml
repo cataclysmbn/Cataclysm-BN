@@ -32,6 +32,7 @@ jobs:
       should_skip_code: ${{ steps.skip_code_check.outputs.should_skip }}
       should_skip_data: ${{ steps.skip_data_check.outputs.should_skip }}
       should_skip_platform: ${{ steps.skip_platform_check.outputs.should_skip }}
+      reuse_runtime_artifacts: ${{ steps.runtime_artifacts.outputs.reuse }}
     steps:
       - id: skip_code_check
         uses: fkirc/skip-duplicate-actions@master
@@ -45,6 +46,81 @@ jobs:
         uses: fkirc/skip-duplicate-actions@master
         with:
           paths_ignore: '["docs/**", "doxygen_doc/**", "lgtm/**", "utilities/**", "scripts/**", "**.md", "**.mdx"]'
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+      - uses: denoland/setup-deno@v2
+        if: github.event_name == 'pull_request'
+        with: { cache: true }
+      - id: runtime_artifacts
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: deno run --allow-env --allow-net=api.github.com scripts/reuse_runtime_artifact.ts --check-reuse
+
+  runtime_artifacts:
+    needs: skip-duplicates
+    if: github.event_name == 'pull_request' && needs.skip-duplicates.outputs.reuse_runtime_artifacts == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {
+              platform: linux,
+              os: ubuntu-latest,
+              artifact: linux-tiles-x64,
+              ext: tar.gz,
+              version-label: "pr-${{ github.event.pull_request.number }}",
+            }
+          - {
+              platform: windows,
+              os: ubuntu-latest,
+              artifact: windows-tiles-x64-msvc,
+              ext: zip,
+              version-label: experimental,
+            }
+          - {
+              platform: macos,
+              os: macos-15-intel,
+              artifact: osx-tiles-x64,
+              ext: dmg,
+              version-label: experimental,
+            }
+          - {
+              platform: android,
+              os: ubuntu-latest,
+              artifact: android-x64,
+              ext: apk,
+              version-label: experimental,
+            }
+    name: reuse ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with: { cache: true }
+      - name: Add Android build tools to PATH
+        if: matrix.platform == 'android'
+        run: echo "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)" >> "$GITHUB_PATH"
+      - name: Merge runtime data into base artifact
+        id: reuse
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          deno run --allow-read --allow-write --allow-run --allow-env --allow-net=api.github.com,release-assets.githubusercontent.com scripts/reuse_runtime_artifact.ts \
+            --platform "${{ matrix.platform }}" \
+            --artifact "${{ matrix.artifact }}" \
+            --ext "${{ matrix.ext }}" \
+            --version-label "${{ matrix.version-label }}"
+      - uses: actions/upload-artifact@v4.6.0
+        with:
+          name: ${{ matrix.artifact }}-pr-${{ github.event.pull_request.number }}
+          path: ${{ steps.reuse.outputs.path }}
+          if-no-files-found: error
 
   shader-artifacts:
     needs: skip-duplicates
@@ -285,7 +361,7 @@ jobs:
 
   builds:
     needs: skip-duplicates
-    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' && needs.skip-duplicates.outputs.reuse_runtime_artifacts != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental
