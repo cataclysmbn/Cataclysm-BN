@@ -172,11 +172,10 @@ TEST_CASE("loaded_tools_install_and_craft_as_components", "[vehicle][crafting][c
         you.i_add(spawn_tool_with_cell("water_purifier"));
         you.mod_moves(1);
         const inventory crafting_inv = you.crafting_inventory();
-        CHECK(crafting_inv.has_components(
-            itype_id("water_purifier"), 1, is_crafting_component));
+        CHECK(crafting_inv.has_components(itype_id("water_purifier"), 1, is_crafting_component));
         CHECK(vpart_id("water_purifier")
-              ->install_requirements()
-              .can_make_with_inventory(crafting_inv, is_crafting_component));
+                  ->install_requirements()
+                  .can_make_with_inventory(crafting_inv, is_crafting_component));
     }
 
     SECTION("vehicle install sees a charged flashlight as aisle lights") {
@@ -185,8 +184,8 @@ TEST_CASE("loaded_tools_install_and_craft_as_components", "[vehicle][crafting][c
         you.mod_moves(1);
         const inventory crafting_inv = you.crafting_inventory();
         CHECK(vpart_id("aisle_lights")
-              ->install_requirements()
-              .can_make_with_inventory(crafting_inv, is_crafting_component));
+                  ->install_requirements()
+                  .can_make_with_inventory(crafting_inv, is_crafting_component));
     }
 
     SECTION("grid water purifier construction sees a charged purifier") {
