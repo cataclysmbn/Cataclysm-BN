@@ -7365,9 +7365,9 @@ int Character::visibility( bool, int ) const
         stealth_modifier += crouching_bonus;
     };
     int const prone_bonus = 50;
-    if( g->u.movement_mode_is( CMM_PRONE ) ) {
+    if( ( g->u.movement_mode_is( CMM_PRONE ) ) ) {
         stealth_modifier += prone_bonus;
-    }
+    };
     map &here = get_map();
     int const camo_modifier = 50;
     if( worn_with_flag( flag_NATURE_CAMO ) && ( here.has_flag( "PLOWABLE", bub_pos() ) ||
