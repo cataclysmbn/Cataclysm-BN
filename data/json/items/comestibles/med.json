@@ -1435,7 +1435,7 @@
     "charges": 10,
     "stack_size": 10,
     "//": "This gives it a benefit even when Simplified Nutrition mod is used.",
-    "healthy": 5
+    "healthy": 4
   },
   {
     "id": "inj_vitb",
