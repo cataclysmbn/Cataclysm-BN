@@ -199,6 +199,7 @@
     "price": "2 USD",
     "price_postapoc": "50 cent",
     "bashing": 5,
+    "thrown_damage": [ { "damage_type": "bash", "amount": 5 } ],
     "material": "wood",
     "symbol": ";",
     "color": "brown",
