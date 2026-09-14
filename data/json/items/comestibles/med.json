@@ -1360,6 +1360,8 @@
     "price_postapoc": "20 USD",
     "charges": 20,
     "stack_size": 20,
+    "//": "This gives it a benefit even when Simplified Nutrition mod is used.",
+    "healthy": 5,
     "symbol": "!",
     "color": "magenta",
     "use_action": {
@@ -1431,7 +1433,9 @@
     "price_postapoc": "10 USD",
     "fun": 4,
     "charges": 10,
-    "stack_size": 10
+    "stack_size": 10,
+    "//": "This gives it a benefit even when Simplified Nutrition mod is used.",
+    "healthy": 5
   },
   {
     "id": "inj_vitb",
