@@ -4235,7 +4235,7 @@ int iuse::portable_game( player *p, item *it, bool t, const tripoint_bub_ms & )
         }
 
         if( game_score != 0 ) {
-            p->add_morale( MORALE_GAME, game_score, 60, 2_hours, 30_minutes, true );
+            p->add_morale( MORALE_GAME, game_score, 20, 3_hours, 30_minutes, true );
         }
     }
     return 0;

@@ -1758,8 +1758,8 @@ void activity_handlers::forage_finish( player_activity *act, player *p )
 void activity_handlers::generic_game_do_turn( player_activity * /*act*/, player *p )
 {
     if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
-        // So 30 points per play
-        p->add_morale( MORALE_GAME, 2, 60, 2_hours, 30_minutes, true );
+        // So 20 points per play
+        p->add_morale( MORALE_GAME, 2, 20, 3_hours, 30_minutes, true );
         return;
     }
 }
