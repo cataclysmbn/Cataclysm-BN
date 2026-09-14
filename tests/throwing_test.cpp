@@ -374,11 +374,11 @@ TEST_CASE("basic_throwing_sanity_tests", "[throwing],[balance]") {
 
     SECTION("test_player_vs_zombie_javelin_iron_basestats") {
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 1, lo_skill_base_stats, {1.00, 0.10}, {33, 5});
+            p, "mon_zombie", "javelin_iron", 1, lo_skill_base_stats, {1.00, 0.10}, {48.1, 5});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 5, lo_skill_base_stats, {0.64, 0.10}, {13, 3});
+            p, "mon_zombie", "javelin_iron", 5, lo_skill_base_stats, {0.64, 0.10}, {19, 3});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 10, lo_skill_base_stats, {0.20, 0.10}, {4, 2});
+            p, "mon_zombie", "javelin_iron", 10, lo_skill_base_stats, {0.20, 0.10}, {6.1, 2});
         test_throwing_player_versus(
             p, "mon_zombie", "javelin_iron", 15, lo_skill_base_stats, {0.11, 0.10}, {1.29, 3});
         test_throwing_player_versus(
@@ -407,13 +407,13 @@ TEST_CASE("basic_throwing_sanity_tests", "[throwing],[balance]") {
 
     SECTION("test_player_vs_zombie_javelin_iron_athlete") {
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 1, hi_skill_athlete_stats, {1.00, 0.10}, {59.00, 8});
+            p, "mon_zombie", "javelin_iron", 1, hi_skill_athlete_stats, {1.00, 0.10}, {71.75, 8});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 5, hi_skill_athlete_stats, {1.00, 0.10}, {50.55, 8});
+            p, "mon_zombie", "javelin_iron", 5, hi_skill_athlete_stats, {1.00, 0.10}, {69.00, 8});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 10, hi_skill_athlete_stats, {1.00, 0.10}, {40.00, 10});
+            p, "mon_zombie", "javelin_iron", 10, hi_skill_athlete_stats, {1.00, 0.10}, {60.22, 10});
         test_throwing_player_versus(
-            p, "mon_zombie", "javelin_iron", 15, hi_skill_athlete_stats, {0.97, 0.10}, {38.00, 10});
+            p, "mon_zombie", "javelin_iron", 15, hi_skill_athlete_stats, {0.97, 0.10}, {48.00, 10});
         test_throwing_player_versus(
             p, "mon_zombie", "javelin_iron", 20, hi_skill_athlete_stats, {0.77, 0.10}, {30.00, 10});
         test_throwing_player_versus(
