@@ -1705,8 +1705,9 @@ void monster::execute_action( const monster_action_t &action )
     }
 
     if( resolved_action.kind == monster_action_kind::stumble ) {
-        stumble();
         moves = 0;
+        stumble();
+        this->path.clear();
         return;
     }
 
@@ -2504,7 +2505,7 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
                                                        destination ) : calc_movecost( bub_pos(),
                                                                destination ) );
         if( cost > 0.0f ) {
-            moves = 0;
+            moves -= static_cast<int>( std::ceil( cost ) );;
         } else {
             return false;
         }
