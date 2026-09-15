@@ -2822,6 +2822,8 @@ void monster::stumble()
             }
         }
     }
+    debugmsg( "Current monster moves at '%s'",
+              moves );
 }
 
 void monster::knock_back_to( const tripoint_bub_ms &to )
