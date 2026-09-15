@@ -2494,8 +2494,7 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
         // is consistent even if the monster stumbles,
         // and the same regardless of the distance measurement mode.
         // Note: Keep this as float here or else it will cancel valid moves
-        const float cost = stagger_adjustment *
-                           static_cast<float>( climbs() &&
+        const float cost = static_cast<float>( climbs() &&
                                                g->m.has_flag( TFLAG_NO_FLOOR, p ) ? calc_climb_cost( bub_pos(),
                                                        destination ) : calc_movecost( bub_pos(),
                                                                destination ) );
@@ -2791,9 +2790,6 @@ void monster::stumble()
 
     map &here = get_map();
 
-    debugmsg( "Current monster moves at '%s'",
-        moves );
-    
     std::vector<tripoint_bub_ms> valid_stumbles;
     valid_stumbles.reserve( 11 );
     const bool avoid_water = has_flag( MF_NO_BREATHE ) && !swims() && !has_flag( MF_AQUATIC );
