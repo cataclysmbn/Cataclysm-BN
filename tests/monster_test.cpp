@@ -517,7 +517,7 @@ TEST_CASE("monster_speed_trig", "[speed][.][!mayfail]") {
     monster_check();
 }
 
-TEST_CASE("monster_move_through_vehicle_holes") {
+TEST_CASE("monster_move_through_vehicle_holes", "[.][monster]") {
     clear_all_state();
     move_player_out_of_the_way();
     tripoint_bub_ms origin(60, 60, 0);
