@@ -1179,9 +1179,9 @@ monster_action_t monster::decide_action() const
             ( ( current_attitude == MATT_FOLLOW ||
                 ( has_flag( MF_KEEP_DISTANCE ) && current_attitude != MATT_FLEE ) ) &&
               rl_dist( pos, goal ) <= type->tracking_distance ) ) {
-            // Consume 100 moves and stumble; execute_action handles the writes.
+            // Consume all moves and stumble; execute_action handles the writes.
             action.kind          = monster_action_kind::idle;
-            action.move_cost     = 100;
+            action.move_cost     = moves;
             action.needs_stumble = true;
             return action;
         }
@@ -1451,7 +1451,7 @@ monster_action_t monster::decide_action() const
         } else {
             // No viable step: stumble in place (matches original else branch).
             action.kind          = monster_action_kind::idle;
-            action.move_cost     = 100;
+            action.move_cost     = moves;
             action.needs_stumble = true;
         }
     }
