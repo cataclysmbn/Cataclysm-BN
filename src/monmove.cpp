@@ -2504,7 +2504,7 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
                                                        destination ) : calc_movecost( bub_pos(),
                                                                destination ) );
         if( cost > 0.0f ) {
-            moves -= static_cast<int>( std::ceil( cost ) );
+            moves = 0;
         } else {
             return false;
         }
