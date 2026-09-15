@@ -129,6 +129,8 @@ class world
                             file_write_fn writer ) const;
         bool write_overmap_player_visibility( const std::string &dim_id, const point_abs_om &p,
                                               file_write_fn writer );
+        bool read_map_entry( const std::string &path, file_read_fn reader ) const;
+        bool delete_map_entry( const std::string &path ) const;
 
         bool read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
                                  file_read_json_fn reader );

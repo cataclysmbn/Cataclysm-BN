@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -489,6 +490,7 @@ class sqlite_map_db
         auto begin_transaction() -> void;
         auto commit_transaction() -> void;
         auto write( const std::string &path, file_write_fn writer ) -> void;
+        auto erase( const std::string &path ) -> bool;
         auto exists( const std::string &path ) const -> bool;
         auto read( const std::string &path, file_read_fn reader, bool optional ) const -> bool;
         auto read_json( const std::string &path, file_read_json_fn reader, bool optional ) const -> bool;
@@ -542,6 +544,20 @@ auto sqlite_map_db::write( const std::string &path, file_write_fn writer ) -> vo
     const auto payload = make_db_write_payload( path, writer );
     const auto lock = std::lock_guard<std::mutex>( write_mutex_ );
     write_payload_to_db( writer_db_, payload );
+}
+
+auto sqlite_map_db::erase( const std::string &path ) -> bool
+{
+    const auto lock = std::lock_guard<std::mutex>( write_mutex_ );
+    sqlite3_stmt *stmt = nullptr;
+    if( sqlite3_prepare_v2( writer_db_, "DELETE FROM files WHERE path = ?", -1, &stmt, nullptr ) !=
+        SQLITE_OK ) {
+        return false;
+    }
+    sqlite3_bind_text( stmt, 1, path.c_str(), -1, SQLITE_TRANSIENT );
+    const auto ret = sqlite3_step( stmt );
+    sqlite3_finalize( stmt );
+    return ret == SQLITE_DONE;
 }
 
 auto sqlite_map_db::exists( const std::string &path ) const -> bool
@@ -791,6 +807,22 @@ bool world::write_overmap_player_visibility( const std::string &dim_id, const po
     } else {
         return write_to_player_file( fname, writer );
     }
+}
+
+bool world::read_map_entry( const std::string &path, file_read_fn reader ) const
+{
+    if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
+        return map_db->read( path, reader, true );
+    }
+    return read_from_file( path, reader, true );
+}
+
+bool world::delete_map_entry( const std::string &path ) const
+{
+    if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
+        return map_db->erase( path );
+    }
+    return std::filesystem::remove( info->folder_path() + "/" + path );
 }
 
 bool world::read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
