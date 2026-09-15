@@ -1775,6 +1775,41 @@ struct mutable_overmap_placement_rule {
     }
 };
 
+auto normalize_overmap_origin_range( inclusive_cuboid<tripoint_om_omt> range )
+- > inclusive_cuboid<tripoint_om_omt>
+{
+    if( range.p_min.x() > range.p_max.x() ) {
+        std::swap( range.p_min.x(), range.p_max.x() );
+    }
+    if( range.p_min.y() > range.p_max.y() ) {
+        std::swap( range.p_min.y(), range.p_max.y() );
+    }
+    if( range.p_min.z() > range.p_max.z() ) {
+        std::swap( range.p_min.z(), range.p_max.z() );
+    }
+    return range;
+}
+
+auto load_overmap_origin_range( const JsonValue &value )
+- > inclusive_cuboid<tripoint_om_omt>
+{
+    if( value.test_array() ) {
+        auto point = tripoint_om_omt();
+        value.read( point, true );
+        return inclusive_cuboid<tripoint_om_omt>( point, point );
+    }
+    if( value.test_object() ) {
+        auto jo = value.get_object();
+        auto range = inclusive_cuboid<tripoint_om_omt>();
+        mandatory( jo, false, "from", range.p_min );
+        mandatory( jo, false, "to", range.p_max );
+        return normalize_overmap_origin_range( range );
+    }
+
+    value.throw_error(
+        R"(overmap_origin must be a point [x, y, z] or an object with "from" and "to")" );
+}
+
 struct mutable_overmap_placement_rule_remainder {
     const mutable_overmap_placement_rule *parent;
     int max = INT_MAX;
@@ -2870,6 +2905,11 @@ void overmap_special::load( const JsonObject &jo, const std::string &src )
 
         assign( jo, "city_sizes", constraints_.city_size, strict );
         assign( jo, "city_distance", constraints_.city_distance, strict );
+        if( jo.has_member( "overmap_origin" ) ) {
+            constraints_.overmap_origin = load_overmap_origin_range( jo.get_member( "overmap_origin" ) );
+        } else if( !was_loaded ) {
+            constraints_.overmap_origin.reset();
+        }
     }
 
     assign( jo, "spawns", monster_spawns_, strict );
@@ -6888,6 +6928,11 @@ int overmap::place_special_attempt( const overmap_special &special, const int ma
 
     int placed = 0;
     for( auto p = points.begin(); p != points.end(); ) {
+        if( !special.get_constraints().allows_origin( *p ) ) {
+            ++p;
+            continue;
+        }
+
         const city &nearest_city = get_nearest_city( *p );
 
         // City check is the fastest => it goes first.
