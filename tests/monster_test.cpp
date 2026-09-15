@@ -525,7 +525,7 @@ TEST_CASE("monster_move_through_vehicle_holes") {
     get_map().add_vehicle(vproto_id("apc"), origin, -45_degrees, 0, 0);
 
     tripoint_bub_ms mon_origin = origin + tripoint_rel_ms(-2, 1, 0);
-    monster& zombie = spawn_test_monster("mon_zombie", mon_origin);
+    monster& zombie = spawn_test_monster("mon_zombie_soldier", mon_origin);
     zombie.move_to(mon_origin + tripoint_north_west, false, false, 0.0f);
 
     const monster* m = g->critter_at<monster>(mon_origin);
