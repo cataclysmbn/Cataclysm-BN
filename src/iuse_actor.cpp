@@ -100,6 +100,7 @@
 #include "visitable.h"
 #include "vitamin.h"
 #include "weather/weather.h"
+#include "world.h"
 #include "world_type.h"
 
 #include <algorithm>
@@ -7188,6 +7189,10 @@ void iuse_dimension_travel::load( const JsonObject &obj )
 
 int iuse_dimension_travel::use( player &p, item &it, bool, const tripoint_bub_ms &pos ) const
 {
+    if( g->get_active_world()->info->world_save_format == save_format::V1 ) {
+        popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
+        return true;
+    }
     dimension_travel( p, it, pos );
     return need_charges;
 }
@@ -7320,6 +7325,10 @@ void iuse_pocket_dimension::load( const JsonObject &obj )
 
 int iuse_pocket_dimension::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
+    if( g->get_active_world()->info->world_save_format == save_format::V1 ) {
+        popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
+        return true;
+    }
     // If pocket is not initialized, initialize it on first use
     if( !it.pocket_dim.has_value() || !it.pocket_dim->pocket_info.has_value() ||
         !it.pocket_dim->pocket_info->is_initialized ) {

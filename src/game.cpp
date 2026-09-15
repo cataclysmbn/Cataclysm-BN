@@ -179,6 +179,7 @@
 #include "vehicle/vpart_range.h"
 #include "wcwidth.h"
 #include "weather/weather.h"
+#include "world.h"
 #include "world_type.h"
 #include "worldfactory.h"
 
@@ -14815,6 +14816,10 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
                                 const std::optional<tripoint_abs_sm> &load_pos,
                                 const std::function<void()> &pre_load_callback ) -> bool
 {
+    if( get_active_world()->info->world_save_format == save_format::V1 ) {
+        popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
+        return true;
+    }
     // Flush any items pending deferred deletion before switching dimensions.
     // Without this, zombie item pointers in cata_arena can persist across the
     // dimension transition and cause use-after-free crashes when the new
