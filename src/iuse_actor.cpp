@@ -15,7 +15,6 @@
 #include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
@@ -1251,15 +1250,12 @@ int place_monster_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &p
         newmon.no_extra_death_drops = true;
         it.deactivate();
     }
-    {
-        std::unique_lock lock( cata::lua_lock );
-        cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
-            params["creature"] = &newmon;
-        } );
-        cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
-            params["monster"] = &newmon;
-        } );
-    }
+    cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
+        params["creature"] = &newmon;
+    } );
+    cata::run_hooks( "on_monster_spawn", [&]( sol::table & params ) {
+        params["monster"] = &newmon;
+    } );
     if( place_random ) {
         // place_critter_around returns the same pointer as its parameter (or null)
         // Allow position to be different from the player for tossed or launched items

@@ -5,7 +5,9 @@
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
-#include "catalua.h"
+#include "distribution_grid.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -609,7 +611,6 @@ void Character::process_one_effect( effect &it, bool is_new )
     // Speed and stats are handled in recalc_speed_bonus and reset_stats respectively
 
     if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
-        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_character_effect_added", [ &, this ]( auto & params ) {
             params["char"] = this;
             params["effect"] = &it;
@@ -617,7 +618,6 @@ void Character::process_one_effect( effect &it, bool is_new )
     }
 
     if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
-        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_character_effect", [ &, this ]( auto & params ) {
             params["char"] = this;
             params["effect"] = &it;
@@ -878,7 +878,6 @@ void Character::reset_stats()
     recalc_sight_limits();
     recalc_speed_bonus();
 
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
         params["character"] = this;
     } );

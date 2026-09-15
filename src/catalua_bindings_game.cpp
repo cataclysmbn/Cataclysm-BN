@@ -285,15 +285,15 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
 
     DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
-    luna::set_fx( lib, "inv_map_splice", []( sol::this_state lua_this, sol::table opts ) -> item* {
-        sol::state_view lua( lua_this );
+    luna::set_fx( lib, "inv_map_splice", []( sol::table opts ) -> item* {
         auto title = opts.get<std::string>( "title" );
         auto failure = opts.get<std::string>( "failure" );
         auto radius = opts.get_or<int>( "radius", PICKUP_RANGE );
         auto fn = opts.get<sol::protected_function>( "check" );
+        auto &state = *DynamicDataLoader::get_instance().lua.get();
         return g->inv_map_splice( [&]( const item & e )
         {
-            auto params = lua.create_table();
+            auto params = state.lua.create_table();
             params["item"] = &e;
             sol::protected_function_result res = fn( params );
 

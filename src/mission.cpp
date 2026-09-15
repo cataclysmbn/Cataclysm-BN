@@ -11,7 +11,6 @@
 #include <utility>
 
 #include "avatar.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "creature.h"
 #include "debug.h"
@@ -260,7 +259,6 @@ void mission::assign( avatar &u )
         }
         type->start( this );
         status = mission_status::in_progress;
-        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_mission_start", [&]( auto & params ) {
             params["mission_type"] = this->type;
             params["mission"] = this;
@@ -276,7 +274,6 @@ void mission::fail()
     }
 
     type->fail( this );
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_mission_end", [&]( auto & params ) {
         params["mission_type"] = this->type;
         params["mission"] = this;
@@ -378,7 +375,6 @@ void mission::wrap_up()
     }
 
     type->end( this );
-    std::unique_lock lock( cata::lua_lock );
     cata::run_hooks( "on_mission_end", [&]( auto & params ) {
         params["mission_type"] = this->type;
         params["mission"] = this;

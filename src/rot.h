@@ -15,7 +15,6 @@ struct tile_flags {
     bool root_cellar = false;
     bool fridge = false;
     bool freezer = false;
-    bool incubator = false;
 };
 
 /** Resolve the rot temperature modifier for map terrain/furniture storage. */

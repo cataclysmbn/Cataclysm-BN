@@ -3846,8 +3846,7 @@ void overmap::move_hordes()
         if( ( mg.abs_pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
             auto used_hook_target = false;
 
-            std::unique_lock lock( cata::lua_lock );
-            if( auto *state = cata::get_active_lua_state() ) {
+            if( auto *state = DynamicDataLoader::get_instance().lua.get() ) {
                 auto &lua = state->lua;
                 auto game = lua.globals()["game"];
                 auto behaviours_obj = game["horde_behaviours"].get<sol::object>();

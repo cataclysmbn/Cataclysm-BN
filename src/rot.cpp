@@ -1,6 +1,5 @@
 #include "rot.h"
 
-#include "enums.h"
 #include "item.h"
 #include "map.h"
 #include "vehicle/veh_type.h"
@@ -21,9 +20,6 @@ auto for_tile( const tile_flags &flags ) -> temperature_flag
     }
     if( flags.fridge ) {
         return temperature_flag::TEMP_FRIDGE;
-    }
-    if( flags.incubator ) {
-        return temperature_flag::TEMP_INCUBATOR;
     }
 
     return temperature_flag::TEMP_NORMAL;
@@ -46,7 +42,6 @@ auto for_location( const map &m, const item &loc ) -> temperature_flag
                 .root_cellar = m.ter( pos ) == t_rootcellar,
                 .fridge = m.has_flag_furn( TFLAG_FRIDGE, pos ),
                 .freezer = m.has_flag_furn( TFLAG_FREEZER, pos ),
-                .incubator = m.has_flag_furn( TFLAG_INCUBATOR, pos )
             } );
         }
         case item_location_type::vehicle: {

@@ -138,7 +138,8 @@ void run_deferred_mapgen_hooks()
         if( batch.empty() ) {
             return;
         }
-        cata::run_on_mapgen_postprocess_hooks_batch( *constructor, batch );
+        cata::run_on_mapgen_postprocess_hooks_batch(
+            *DynamicDataLoader::get_instance().lua, *constructor, batch );
         batch.clear();
     };
 

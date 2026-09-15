@@ -1,7 +1,6 @@
 #include "mapgen_constructor.h"
 
 #include "artifact.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "computer.h"
@@ -1213,7 +1212,6 @@ auto mapgen_constructor::place_npc( const point_omt_ms &p, const string_id<npc_t
     temp->toggle_trait( trait_NPC_STATIC_NPC );
     get_overmapbuffer( get_bound_dimension() ).insert_npc( temp );
     if( !is_pool_worker_thread() ) {
-        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
             params["creature"] = temp.get();
         } );

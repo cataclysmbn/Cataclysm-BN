@@ -81,21 +81,27 @@ TEST_CASE("auto_consume_priority", "[auto_consume][food][zone]") {
 
         create_zone("AUTO_EAT");
 
-        auto meat = item::spawn_temporary("meat_cooked", calendar::turn, 5); // shelf life: 2 days
-        auto meat_pos = zone_origin;
-        auto nuts = item::spawn_temporary("pine_nuts", calendar::turn, 5); // shelf life: 3 seasons
-        auto nuts_pos = zone_origin + tripoint_east;
-        auto hardtack = item::spawn_temporary("hardtack", calendar::turn, 5); // shelf life: 6 years
-        auto hardtack_pos = zone_origin + tripoint_east * 2;
+        auto expiring_soon =
+            item::spawn_temporary("test_auto_consume_food_soon", calendar::turn, 5);
+        const auto expiring_soon_pos = zone_origin;
+        auto expiring_later =
+            item::spawn_temporary("test_auto_consume_food_later", calendar::turn, 5);
+        const auto expiring_later_pos = zone_origin + tripoint_east;
+        auto expiring_last =
+            item::spawn_temporary("test_auto_consume_food_last", calendar::turn, 5);
+        const auto expiring_last_pos = zone_origin + tripoint_east * 2;
 
-        place_items({{meat, meat_pos}, {nuts, nuts_pos}, {hardtack, hardtack_pos}});
+        place_items(
+            {{expiring_soon, expiring_soon_pos},
+             {expiring_later, expiring_later_pos},
+             {expiring_last, expiring_last_pos}});
 
         CHECK(auto_eat(5));
-        check_item_count({{meat_pos, 0}, {nuts_pos, 5}, {hardtack_pos, 5}});
+        check_item_count({{expiring_soon_pos, 0}, {expiring_later_pos, 5}, {expiring_last_pos, 5}});
         CHECK(auto_eat(5));
-        check_item_count({{meat_pos, 0}, {nuts_pos, 0}, {hardtack_pos, 5}});
+        check_item_count({{expiring_soon_pos, 0}, {expiring_later_pos, 0}, {expiring_last_pos, 5}});
         CHECK(auto_eat(5));
-        check_item_count({{meat_pos, 0}, {nuts_pos, 0}, {hardtack_pos, 0}});
+        check_item_count({{expiring_soon_pos, 0}, {expiring_later_pos, 0}, {expiring_last_pos, 0}});
 
         // check that the player has consumed the food
         CHECK(you.stomach.get_calories() > 1000);

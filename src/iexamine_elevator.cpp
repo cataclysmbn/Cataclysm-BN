@@ -1,4 +1,3 @@
-#include "catalua.h"
 #include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "coordinates.h"
@@ -238,16 +237,13 @@ void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
     const auto this_omt = project_to<coords::omt>( bub_to_abs( examp ) );
     const auto om_terrain = get_overmapbuffer( here.get_bound_dimension() ).ter_existing(
                                 this_omt ).id().str();
-    {
-        std::unique_lock lock( cata::lua_lock );
-        const auto hook_results = cata::run_hooks( "on_elevator_try_use", [&]( auto & params ) {
-            params["player"] = &p;
-            params["pos"] = cata::detail::lua_coords::to_lua( examp );
-            params["om_terrain"] = om_terrain;
-        }, { .exit_early = true } );
-        if( !hook_results.get_or( "allowed", true ) ) {
-            return;
-        }
+    const auto hook_results = cata::run_hooks( "on_elevator_try_use", [&]( auto & params ) {
+        params["player"] = &p;
+        params["pos"] = cata::detail::lua_coords::to_lua( examp );
+        params["om_terrain"] = om_terrain;
+    }, { .exit_early = true } );
+    if( !hook_results.get_or( "allowed", true ) ) {
+        return;
     }
 
     const auto sm_orig = abs_to_bub( project_to<coords::ms>( this_omt ) );

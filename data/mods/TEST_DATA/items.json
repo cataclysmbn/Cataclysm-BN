@@ -446,6 +446,48 @@
     "fun": 2
   },
   {
+    "type": "COMESTIBLE",
+    "id": "test_auto_consume_food_soon",
+    "name": { "str": "TEST auto-consume food expiring soon" },
+    "description": "An auto-consume priority test fixture with a short shelf life.",
+    "weight": "30 g",
+    "volume": "250 ml",
+    "color": "brown",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "spoils_in": "2 days",
+    "calories": 100,
+    "charges": 1
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_auto_consume_food_later",
+    "name": { "str": "TEST auto-consume food expiring later" },
+    "description": "An auto-consume priority test fixture with a medium shelf life.",
+    "weight": "30 g",
+    "volume": "250 ml",
+    "color": "brown",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "spoils_in": "3 days",
+    "calories": 100,
+    "charges": 1
+  },
+  {
+    "type": "COMESTIBLE",
+    "id": "test_auto_consume_food_last",
+    "name": { "str": "TEST auto-consume food expiring last" },
+    "description": "An auto-consume priority test fixture with a long shelf life.",
+    "weight": "30 g",
+    "volume": "250 ml",
+    "color": "brown",
+    "symbol": "%",
+    "comestible_type": "FOOD",
+    "spoils_in": "4 days",
+    "calories": 100,
+    "charges": 1
+  },
+  {
     "id": "test_jug_plastic",
     "type": "CONTAINER",
     "category": "container",

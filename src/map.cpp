@@ -11,7 +11,6 @@
 #include "calendar.h"
 #include "cata_cartesian_product.h"
 #include "cata_utility.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -9065,7 +9064,6 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
                 monster *const placed = g->place_critter_at( make_shared_fast<monster>( tmp ), p );
                 if( placed ) {
                     placed->on_load();
-                    std::unique_lock lock( cata::lua_lock );
                     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
                         params["creature"] = placed;
                     } );

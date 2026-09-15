@@ -44,8 +44,7 @@
 namespace {
 
 bool run_can_make_callback(const std::string id, const std::string ench_id) {
-    std::unique_lock lock(cata::lua_lock);
-    auto& state = *cata::get_active_lua_state();
+    auto& state = *DynamicDataLoader::get_instance().lua.get();
     auto func = cata::get_lua_callback(state, "enchanter_can_make", id);
     if (!func) {
         debugmsg("Lua callback %s for `enchanter_can_make` does not exist. Defaulting to true", id);
@@ -66,8 +65,7 @@ bool run_can_make_callback(const std::string id, const std::string ench_id) {
 }
 
 bool run_can_use_on_callback(const std::string id, const std::string ench_id, const item& itm) {
-    std::unique_lock lock(cata::lua_lock);
-    auto& state = *cata::get_active_lua_state();
+    auto& state = *DynamicDataLoader::get_instance().lua.get();
     auto func = cata::get_lua_callback(state, "enchanter_can_use_on", id);
     if (!func) {
         debugmsg("Lua callback %s for `enchanter_can_use_on` does not exist. Defaulting to true",

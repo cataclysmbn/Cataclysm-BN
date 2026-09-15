@@ -8,7 +8,6 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -1194,19 +1193,16 @@ void complete_craft( Character &who, item &craft )
         if( food_contained.is_comestible() ) {
             food_contained.set_kcal_mult( cooking_kcal_mult );
         }
-        {
-            std::unique_lock lock( cata::lua_lock );
-            cata::run_hooks( "on_craft_result", [&]( auto & params ) {
-                params["crafter"] = &who;
-                params["craft"] = &craft;
-                params["item"] = &food_contained;
-                params["recipe"] = &making;
-                params["batch_size"] = batch_size;
-                params["hot_result"] = should_heat;
-                params["dehydrated_result"] = is_dehydrated;
-                params["crafting_menu"] = false;
-            } );
-        }
+        cata::run_hooks( "on_craft_result", [&]( auto & params ) {
+            params["crafter"] = &who;
+            params["craft"] = &craft;
+            params["item"] = &food_contained;
+            params["recipe"] = &making;
+            params["batch_size"] = batch_size;
+            params["hot_result"] = should_heat;
+            params["dehydrated_result"] = is_dehydrated;
+            params["crafting_menu"] = false;
+        } );
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
             food_contained.set_flag( flag_NUTRIENT_OVERRIDE );

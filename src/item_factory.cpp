@@ -21,8 +21,6 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
-#include "catalua.h"
-#include "catalua_impl.h"
 #include "color.h"
 #include "coordinates.h"
 #include "damage.h"
@@ -3330,7 +3328,7 @@ bool Item_factory::load_string( std::vector<std::string> &vec, const JsonObject 
 
 namespace
 {
-auto load_postprocessors( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bool
+auto load_active( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bool
 {
     const bool result = obj.has_bool( "active" ) && obj.get_bool( "active" );
     if( result ) {
@@ -3338,53 +3336,6 @@ auto load_postprocessors( std::vector<ItemFn> &xs, const JsonObject &obj ) -> bo
             it->activate();
             return std::move( it );
         } );
-    }
-    if( obj.has_string( "postprocessor" ) ) {
-        const std::string postprocess = obj.get_string( "postprocessor" );
-        xs.emplace_back( [postprocess]( detached_ptr<item> &&it ) {
-            auto &loader = DynamicDataLoader::get_instance();
-            if( !loader.is_data_finalized() ) {
-                // We ignore these functions during checks
-                return std::move( it );
-            }
-            auto &state = *loader.lua.get();
-            auto func = cata::get_lua_callback( state, "itemgroup_postprocessors", postprocess );
-            if( !func ) {
-                debugmsg( "Lua callback %s for `itemgroup_postprocessors does not exist.", postprocess );
-                return std::move( it );
-            }
-            auto params = state.lua.create_table();
-            params["item"] = &*it;
-            sol::protected_function_result res = func( params );
-
-            check_func_result( res );
-            return std::move( it );
-        } );
-        return true;
-    } else if( obj.has_array( "postprocessor" ) ) {
-        for( const std::string postprocess : obj.get_array( "postprocessor" ) ) {
-            xs.emplace_back( [postprocess]( detached_ptr<item> &&it ) {
-                auto &loader = DynamicDataLoader::get_instance();
-                if( !loader.is_data_finalized() ) {
-                    // We ignore these functions during checks
-                    return std::move( it );
-                }
-                std::unique_lock lock( cata::lua_lock );
-                auto &state = *cata::get_active_lua_state();
-                auto func = cata::get_lua_callback( state, "itemgroup_postprocessors", postprocess );
-                if( !func ) {
-                    debugmsg( "Lua callback %s for `itemgroup_postprocessors does not exist.", postprocess );
-                    return std::move( it );
-                }
-                auto params = state.lua.create_table();
-                params["item"] = &*it;
-                sol::protected_function_result res = func( params );
-
-                check_func_result( res );
-                return std::move( it );
-            } );
-        }
-        return true;
     }
     return result;
 }
@@ -3434,7 +3385,7 @@ void Item_factory::add_entry( Item_group &ig, const JsonObject &obj )
     use_modifier |= load_sub_ref( modifier.ammo, obj, "ammo", ig );
     use_modifier |= load_sub_ref( modifier.container, obj, "container", ig );
     use_modifier |= load_sub_ref( modifier.contents, obj, "contents", ig );
-    use_modifier |= load_postprocessors( modifier.postprocess_fns, obj );
+    use_modifier |= load_active( modifier.postprocess_fns, obj );
 
     std::vector<std::string> custom_flags;
     use_modifier |= load_string( custom_flags, obj, "custom-flags" );

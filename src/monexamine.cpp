@@ -11,7 +11,6 @@
 #include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "cata_utility.h"
@@ -667,27 +666,24 @@ bool monexamine::pet_menu( monster &z )
         }
     }
 
-    {
-        std::unique_lock lock( cata::lua_lock );
-        const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
-        [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
-        for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
-            if( !result.is<sol::table>() ) { continue; }
+    const auto hook_results = cata::run_hooks( "on_monster_get_examine_menu_entries",
+    [&]( auto & params ) { params["avatar"] = &you; params["monster"] = &z; } );
+    for( const auto results = cata::get_hook_results( hook_results ); const auto result : results ) {
+        if( !result.is<sol::table>() ) { continue; }
 
-            const sol::table &entries_table = result.as<sol::table>();
-            const int size = entries_table.size();
-            for( int j = 1; j <= size; ++j ) {
-                sol::optional<sol::table> entry_opt = entries_table[j];
-                if( !entry_opt.has_value() ) {
-                    debugmsg( "Empty entry at index %d", j );
-                    continue;
-                }
-
-                const sol::table &entry = *entry_opt;
-                std::string id = entry.get<std::string>( "menu_id" );
-                std::string label = entry.get<std::string>( "menu_label" );
-                lua_entries.emplace_back( id, label );
+        const sol::table &entries_table = result.as<sol::table>();
+        const int size = entries_table.size();
+        for( int j = 1; j <= size; ++j ) {
+            sol::optional<sol::table> entry_opt = entries_table[j];
+            if( !entry_opt.has_value() ) {
+                debugmsg( "Empty entry at index %d", j );
+                continue;
             }
+
+            const sol::table &entry = *entry_opt;
+            std::string id = entry.get<std::string>( "menu_id" );
+            std::string label = entry.get<std::string>( "menu_label" );
+            lua_entries.emplace_back( id, label );
         }
     }
 
@@ -853,7 +849,6 @@ bool monexamine::pet_menu( monster &z )
         if( cb_actor ) {
             cb_actor->call_on_examine_menu_entry( you, z, entry_str_id );
         }
-        std::unique_lock lock( cata::lua_lock );
         cata::run_hooks( "on_monster_examine_menu_entry", [&](
         auto & params ) { params["avatar"] = &you; params["monster"] = &z; params["entry"] = entry_str_id; } );
     }

@@ -5,10 +5,9 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "cata_utility.h"
-#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "cata_utility.h"
 #include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
@@ -1209,18 +1208,15 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
 
     decide_needs();
 
-    {
-        std::unique_lock lock( cata::lua_lock );
-        const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &, this]( auto & params ) {
-            params["npc"] = this;
-            params["next_topic"] = d.topic_stack.back().id;
-        } );
-        for( const auto &result : hook_results ) {
-            if( !result.second.is<sol::table>() ) { continue; };
-            auto new_topic = result.second.as<sol::table>().get<std::string>( "result" );
-            if( !new_topic.empty() && new_topic != d.topic_stack.back().id ) {
-                d.add_topic( new_topic );
-            }
+    const auto hook_results = cata::run_hooks( "on_dialogue_start", [ &, this]( auto & params ) {
+        params["npc"] = this;
+        params["next_topic"] = d.topic_stack.back().id;
+    } );
+    for( const auto &result : hook_results ) {
+        if( !result.second.is<sol::table>() ) { continue; };
+        auto new_topic = result.second.as<sol::table>().get<std::string>( "result" );
+        if( !new_topic.empty() && new_topic != d.topic_stack.back().id ) {
+            d.add_topic( new_topic );
         }
     }
     if( enforce_first_topic ) { d.add_topic( chatbin.first_topic ); }
@@ -1244,20 +1240,17 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
         }
         talk_topic next = d.opt( d_win, name, d.topic_stack.back() );
 
+        const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &, this]( auto & params ) {
+            params["npc"] = this;
+            params["next_topic"] = next.id;
+        } );
         auto final_result = d.topic_stack.back().id;
-        {
-            std::unique_lock lock( cata::lua_lock );
-            const auto hook_results = cata::run_hooks( "on_dialogue_option", [ &, this]( auto & params ) {
-                params["npc"] = this;
-                params["next_topic"] = next.id;
-            } );
-            for( const auto &result : hook_results ) {
-                if( !result.second.is<sol::table>() ) { continue; };
-                final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
-                // Allow higher priority topics to veto, but still trigger subsequent calls?
-                // auto allowed = result.second.as<sol::table>().get<sol::object>( "allowed" );
-                // if ( allowed.is<bool>() && !allowed.as<bool>() ) { break; };
-            }
+        for( const auto &result : hook_results ) {
+            if( !result.second.is<sol::table>() ) { continue; };
+            final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
+            // Allow higher priority topics to veto, but still trigger subsequent calls?
+            // auto allowed = result.second.as<sol::table>().get<sol::object>( "allowed" );
+            // if ( allowed.is<bool>() && !allowed.as<bool>() ) { break; };
         }
         if( !final_result.empty() && final_result != d.topic_stack.back().id ) {
             next = talk_topic( final_result );

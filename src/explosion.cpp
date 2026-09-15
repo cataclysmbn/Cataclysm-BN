@@ -3,6 +3,8 @@
 #include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -1626,15 +1628,12 @@ void explosion_funcs::regular( const queued_explosion &qe )
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
 
-    {
-        std::unique_lock lock( cata::lua_lock );
-        cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
-            params["pos"] = cata::detail::lua_coords::to_lua( p );
-            params["damage"] = ex.damage;
-            params["radius"] = static_cast<int>( ex.radius );
-            params["fire"] = ex.fire;
-        } );
-    }
+    cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
+        params["pos"] = cata::detail::lua_coords::to_lua( p );
+        params["damage"] = ex.damage;
+        params["radius"] = static_cast<int>( ex.radius );
+        params["fire"] = ex.fire;
+    } );
 
     // Explosions are very, very loud. A *small* landmine going off is about 155dB 1m away.
     // An antipersonel grenade/flashbang going off 1m away is about 170-180dB.

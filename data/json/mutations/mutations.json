@@ -5014,8 +5014,8 @@
     "types": [ "HEALING" ],
     "changes_to": [ "ROT2" ],
     "category": [ "ELFA" ],
-    "healing_awake": -0.002,
-    "healing_resting": -0.25
+    "healing_awake": -0.1,
+    "healing_resting": -0.1
   },
   {
     "type": "mutation",
@@ -5023,12 +5023,13 @@
     "name": { "str": "Deterioration" },
     "points": -8,
     "bodytemp_modifiers": [ -750, -750 ],
-    "description": "Your body is very slowly wasting away.",
+    "description": "Your body is slowly wasting away, and your wounds heal noticeably slower.",
     "types": [ "HEALING" ],
     "prereqs": [ "ROT1" ],
     "changes_to": [ "ROT3" ],
     "category": [ "CHIMERA" ],
-    "healing_awake": -0.02
+    "healing_awake": -0.2,
+    "healing_resting": -0.2
   },
   {
     "type": "mutation",
@@ -5036,11 +5037,12 @@
     "name": { "str": "Disintegration" },
     "points": -10,
     "bodytemp_modifiers": [ -1500, -1500 ],
-    "description": "Your body is slowly wasting away!",
+    "description": "Your body is wasting away! You need good medical care, and you need it more often.",
     "types": [ "HEALING" ],
     "prereqs": [ "ROT2" ],
     "category": [ "ALPHA" ],
-    "healing_awake": -0.08
+    "healing_awake": -0.3,
+    "healing_resting": -0.3
   },
   {
     "type": "mutation",
