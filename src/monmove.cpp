@@ -2791,6 +2791,9 @@ void monster::stumble()
 
     map &here = get_map();
 
+    debugmsg( "Current monster moves at '%s'",
+        moves );
+    
     std::vector<tripoint_bub_ms> valid_stumbles;
     valid_stumbles.reserve( 11 );
     const bool avoid_water = has_flag( MF_NO_BREATHE ) && !swims() && !has_flag( MF_AQUATIC );
@@ -2824,8 +2827,6 @@ void monster::stumble()
             }
         }
     }
-    debugmsg( "Current monster moves at '%s'",
-              moves );
 }
 
 void monster::knock_back_to( const tripoint_bub_ms &to )
