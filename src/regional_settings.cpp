@@ -1270,35 +1270,17 @@ void regional_settings::finalize()
     }
 }
 
-overmap_special_id city_settings::pick_house() const
-{
-    return houses.pick()->id;
-}
+auto city_settings::pick_house() const -> overmap_special_id { return houses.pick(); }
 
-overmap_special_id city_settings::pick_urban_house() const
-{
-    return urban_houses.pick()->id;
-}
+auto city_settings::pick_urban_house() const -> overmap_special_id { return urban_houses.pick(); }
 
-overmap_special_id city_settings::pick_shop() const
-{
-    return shops.pick()->id;
-}
+auto city_settings::pick_shop() const -> overmap_special_id { return shops.pick(); }
 
-overmap_special_id city_settings::pick_urban_shop() const
-{
-    return urban_shops.pick()->id;
-}
+auto city_settings::pick_urban_shop() const -> overmap_special_id { return urban_shops.pick(); }
 
-overmap_special_id city_settings::pick_park() const
-{
-    return parks.pick()->id;
-}
+auto city_settings::pick_park() const -> overmap_special_id { return parks.pick(); }
 
-overmap_special_id city_settings::pick_finale() const
-{
-    return finales.pick()->id;
-}
+auto city_settings::pick_finale() const -> overmap_special_id { return finales.pick(); }
 
 void city_settings::finalize()
 {

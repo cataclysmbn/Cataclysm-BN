@@ -177,9 +177,9 @@ TEST_CASE("flung creatures only trigger landing traps if they cannot fly", "[thr
 
 TEST_CASE("flung creatures take damage when they slam into a wall", "[throwing][impact]") {
     clear_all_state();
-    clear_map();
-
     g->u.setpos(tripoint_bub_ms{10, 10, 0});
+    // Moving the avatar can load submaps outside the previously cleared area.
+    clear_map();
 
     auto& here = g->m;
     const auto source = tripoint_bub_ms{40, 30, 0};

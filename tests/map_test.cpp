@@ -1053,6 +1053,37 @@ TEST_CASE("monster_tracker_uses_absolute_positions") {
     CHECK(g->critter_at<monster>(player_shifted_monster_pos) == nullptr);
 }
 
+TEST_CASE("binding_dimensions_rebuilds_vehicle_caches", "[map][vehicle][dimension]") {
+    clear_all_state();
+    auto& here = get_map();
+    const auto original_dim = here.get_bound_dimension();
+    const auto other_dim = dimension_id("vehicle_cache_rebinding");
+    const auto cleanup = on_out_of_scope([&]() {
+        here.bind_dimension(original_dim);
+        MAPBUFFER_REGISTRY.unload_dimension(other_dim);
+        clear_vehicles();
+    });
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    here.ter_set(pos, ter_id("t_floor"));
+    auto* const veh = here.add_vehicle(vproto_id("none"), pos, 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
+    REQUIRE(veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical")) >= 0);
+    here.add_vehicle_to_cache(veh);
+    REQUIRE(here.get_cache_ref(0).vehicle_list.contains(veh));
+    REQUIRE_FALSE(here.get_vehicles().empty());
+
+    here.bind_dimension(other_dim);
+    CHECK(here.get_cache_ref(0).vehicle_list.empty());
+    CHECK(here.get_cache_ref(0).veh_cached_parts.empty());
+    CHECK(here.get_vehicles().empty());
+
+    here.bind_dimension(original_dim);
+    CHECK(here.get_cache_ref(0).vehicle_list.contains(veh));
+    CHECK_FALSE(here.get_vehicles().empty());
+    here.bind_dimension(original_dim);
+    CHECK(here.get_cache_ref(0).vehicle_list.contains(veh));
+}
+
 TEST_CASE("placed_monsters_inherit_bound_dimension") {
     clear_all_state();
 
