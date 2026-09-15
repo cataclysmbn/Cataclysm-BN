@@ -488,18 +488,6 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         sleepy -= current_stim;
     }
 
-    if( one_in( 3 ) ) {
-        if( comfort_info.level >= comfort_level::very_comfortable ) {
-            who.add_msg_if_player( "You feel very comfortable." );
-        } else if( comfort_info.level >= comfort_level::comfortable ) {
-            who.add_msg_if_player( "You feel comfortable." );
-        } else if( comfort_info.level >= comfort_level::slightly_comfortable ) {
-            who.add_msg_if_player( "You feel slightly comfortable." );
-        } else {
-            who.add_msg_if_player( "You feel uncomfortable." );
-        }
-    }
-
     return sleepy;
 }
 
