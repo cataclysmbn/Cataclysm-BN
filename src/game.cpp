@@ -4146,11 +4146,6 @@ bool game::load( const save_t &name )
     validate_npc_followers();
     validate_mounted_npcs();
     validate_linked_vehicles();
-    // Re-read the bubble-size option for the submap-loader request.
-    // Do NOT call m.resize() here — the grid is already filled by unserialize().
-    // setup() already called init_bubble_config() + m.resize().
-    init_bubble_config();
-    reality_bubble_radius_ = g_half_mapsize;
     // Old saves can have duplicate authority for in-bubble monsters: one copy in
     // active_monsters and another in overmap monster_map.  Purge the stale overmap
     // buckets before update_map() gets a chance to spawn newly-entered submaps.

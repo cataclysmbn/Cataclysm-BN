@@ -241,6 +241,13 @@ auto game::unserialize( std::istream &fin ) -> bool
         auto saved_reality_bubble_size = g_reality_bubble_size;
         const auto has_saved_reality_bubble_size = data.read( "reality_bubble_size",
                 saved_reality_bubble_size );
+        if( has_saved_reality_bubble_size ) {
+            // For all saves post bubble size changing PR with a bubble size
+            resize_reality_bubble_to( saved_reality_bubble_size );
+        } else {
+            // Otherwise: default initialization
+            resize_reality_bubble();
+        }
         auto saved_player_abs = tripoint_abs_ms::zero();
         auto has_saved_player_abs = false;
         if( data.has_object( "player" ) ) {
