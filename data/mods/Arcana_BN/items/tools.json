@@ -1282,6 +1282,7 @@
   {
     "id": "staff_druidic",
     "type": "TOOL",
+    "category": "tools",
     "weapon_category": [ "BATONS" ],
     "name": { "str": "druidic staff", "str_pl": "druidic staves" },
     "description": "A short wooden staff decorated with engraved silver, depicting a mixture of exotic natural scenes and various holy symbols.  It is said to represent the instincts deep within the heart, tempered by restraint and reason.  Using it can repair and fortify items made of various plant or animal products and stone, but not more refined materials like metal or glass.",
