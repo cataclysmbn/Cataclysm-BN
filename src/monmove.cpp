@@ -1178,9 +1178,9 @@ monster_action_t monster::decide_action() const
             ( ( current_attitude == MATT_FOLLOW ||
                 ( has_flag( MF_KEEP_DISTANCE ) && current_attitude != MATT_FLEE ) ) &&
               rl_dist( pos, goal ) <= type->tracking_distance ) ) {
-            // Consume all moves and stumble; execute_action handles the writes.
+            // Consume 100 moves and stumble; execute_action handles the writes.
             action.kind          = monster_action_kind::idle;
-            action.move_cost     = moves;
+            action.move_cost     = 100;
             action.needs_stumble = true;
             return action;
         }
@@ -1450,7 +1450,7 @@ monster_action_t monster::decide_action() const
         } else {
             // No viable step: stumble in place (matches original else branch).
             action.kind          = monster_action_kind::idle;
-            action.move_cost     = moves;
+            action.move_cost     = 100;
             action.needs_stumble = true;
         }
     }
@@ -1704,9 +1704,8 @@ void monster::execute_action( const monster_action_t &action )
     }
 
     if( resolved_action.kind == monster_action_kind::stumble ) {
-        moves = 0;
         stumble();
-        this->path.clear();
+        moves = 0;
         return;
     }
 
@@ -2818,7 +2817,7 @@ void monster::stumble()
                here.has_flag( TFLAG_SWIMMABLE, dest ) &&
                !here.has_flag( TFLAG_SWIMMABLE, bub_pos() ) ) &&
             ( g->critter_at( dest, is_hallucination() ) == nullptr ) ) {
-            if( move_to( dest, true, false, 1.0f ) ) {
+            if( move_to( dest, true, false ) ) {
                 break;
             }
         }
