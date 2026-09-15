@@ -2820,7 +2820,7 @@ void monster::stumble()
                here.has_flag( TFLAG_SWIMMABLE, dest ) &&
                !here.has_flag( TFLAG_SWIMMABLE, bub_pos() ) ) &&
             ( g->critter_at( dest, is_hallucination() ) == nullptr ) ) {
-            if( move_to( dest, true, false ) ) {
+            if( move_to( dest, true, false, 1.0f ) ) {
                 break;
             }
         }
