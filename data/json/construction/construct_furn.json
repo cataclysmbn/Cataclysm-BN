@@ -169,7 +169,7 @@
     "pre_special": "check_empty",
     "post_furniture": "f_warehouse_shelf"
   },
-    {
+  {
     "type": "construction",
     "id": "constr_utility_shelf",
     "group": "build_utility_shelf",
