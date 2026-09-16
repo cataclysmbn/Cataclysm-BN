@@ -85,6 +85,9 @@ static const mtype_id mon_chicken( "mon_chicken" );
 static const mtype_id mon_cow( "mon_cow" );
 static const mtype_id mon_horse( "mon_horse" );
 
+static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
+static const trait_id trait_NPC_STARTING_NPC( "NPC_STARTING_NPC" );
+
 struct itype;
 
 void spawn_animal( npc &p, const mtype_id &mon );
@@ -352,7 +355,10 @@ void talk_function::stop_guard( npc &p )
 {
     if( !p.is_player_ally() ) {
         p.set_attitude( NPCATT_NULL );
-        p.set_mission( NPC_MISSION_NULL );
+        // Don't let static NPCs start acting like dynamic NPCs.
+        if( !p.has_trait( trait_NPC_STARTING_NPC ) && !p.has_trait( trait_NPC_STATIC_NPC ) ) {
+            p.set_mission( NPC_MISSION_NULL );
+        }
         return;
     }
     p.set_attitude( NPCATT_FOLLOW );
@@ -746,10 +752,15 @@ void talk_function::leave( npc &p )
     if( new_solo_fac ) {
         new_solo_fac->known_by_u = true;
     }
-    p.chatbin.first_topic = "TALK_STRANGER_NEUTRAL";
+    p.chatbin.first_topic = "TALK_STRANGER_FRIENDLY";
     p.set_attitude( NPCATT_NULL );
-    p.mission = NPC_MISSION_NULL;
-    p.long_term_goal_action();
+    // Static NPCs should resume remaining static, dynanic NPCs resume acting dynamic.
+    if( p.has_trait( trait_NPC_STARTING_NPC ) || p.has_trait( trait_NPC_STATIC_NPC ) ) {
+        p.mission = NPC_MISSION_GUARD;
+    } else {
+        p.mission = NPC_MISSION_NULL;
+        p.long_term_goal_action();
+    }
 }
 
 void talk_function::stop_following( npc &p )
