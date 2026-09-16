@@ -492,7 +492,7 @@ void DynamicDataLoader::initialize()
 }
 
 void DynamicDataLoader::load_data_from_path( const std::string &path, const std::string &src,
-        loading_ui &ui )
+        loading_ui &ui, const bool mod_interactions )
 {
     assert( !finalized && "Can't load additional data after finalization.  Must be unloaded first." );
     // We assume that each folder is consistent in itself,
@@ -502,7 +502,26 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
     // But not the other way round.
 
     // get a list of all files in the directory
-    str_vec files = get_files_from_path( ".json", path, true, true );
+    str_vec files;
+    if( mod_interactions ) {
+        std::string general_mod_interact_path = path + "/mod_interactions";
+        if( dir_exist( general_mod_interact_path ) ) {
+            auto &mods = world_generator->active_world->info->active_mod_order;
+            for( mod_id mod_info_id : mods ) {
+                std::string mod_interact_path = general_mod_interact_path + "/" + mod_info_id.str();
+                if( dir_exist( mod_interact_path ) ) {
+                    str_vec mod_compat_files = get_files_from_path( ".json", mod_interact_path, true, true );
+                    files.insert( files.end(), mod_compat_files.begin(), mod_compat_files.end() );
+                }
+            }
+        }
+        if( files.empty() ) {
+            return;
+        }
+    } else {
+        files = get_files_from_path_exclude( ".json", "mod_interactions", path, true, true );
+    }
+
     if( files.empty() ) {
         std::ifstream tmp( path.c_str(), std::ios::in );
         if( tmp ) {
@@ -922,7 +941,12 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     cata::reg_lua_icallback_actors( *loader.lua, *item_controller );
 
     for( const mod_id &mod : available ) {
-        loader.load_data_from_path( mod->path, mod.str(), ui );
+        loader.load_data_from_path( mod->path, mod.str(), ui, false );
+        ui.proceed();
+    }
+    ui.show();
+    for( const mod_id &mod : available ) {
+        loader.load_data_from_path( mod->path, mod.str(), ui, true );
         ui.proceed();
     }
 
@@ -1121,5 +1145,5 @@ void init::load_soundpack_files( const std::string &soundpack_path )
     // It's not a mod, so we avoid the regular mod loading routines.
     // clear_loaded_data() is not needed here, tileset gets loaded on game init before any mods
     loading_ui ui( false );
-    DynamicDataLoader::get_instance().load_data_from_path( soundpack_path, "sound_core", ui );
+    DynamicDataLoader::get_instance().load_data_from_path( soundpack_path, "sound_core", ui, false );
 }
