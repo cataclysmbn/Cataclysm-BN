@@ -952,6 +952,7 @@
     "difficulty": 2,
     "time": "5 m",
     "reversible": true,
+    "autolearn": [ [ "mechanics", 3 ] ],
     "book_learn": [ [ "textbook_mechanics", 1 ], [ "mag_mechanics", 2 ] ],
     "components": [
       [ [ "wrench", 1 ] ],
