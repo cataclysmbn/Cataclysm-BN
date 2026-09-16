@@ -157,13 +157,13 @@ Ultica are planned for the future.
 
 <details><summary>Before</summary>
 
-![](.\img\alternative_external_mutation_before.png)
+![](./img/alternative_external_mutation_before.png)
 
 </details>
 
 <details><summary>After</summary>
 
-![](.\img\alternative_external_mutation_after.png)
+![](./img/alternative_external_mutation_after.png)
 
 </details>
 
