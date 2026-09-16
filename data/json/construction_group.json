@@ -736,6 +736,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_utility_shelf",
+    "name": "Build Utility Shelf"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rain_collector",
     "name": "Build Rain Collector"
   },
