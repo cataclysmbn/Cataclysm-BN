@@ -1,30 +1,20 @@
 #include "mondefense.h"
 
-#include <algorithm>
-#include <cstddef>
-#include <list>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
 #include "creature.h"
 #include "creature_tracker.h"
 #include "damage.h"
-#include "effect.h"
-#include "game.h"
-#include "map.h"
-#include "map_iterator.h"
 #include "dispersion.h"
+#include "effect.h"
 #include "enums.h"
+#include "game.h"
 #include "gun_mode.h"
 #include "item.h"
 #include "line.h"
+#include "map/map.h"
+#include "map_iterator.h"
 #include "mattack_actors.h"
 #include "mattack_common.h"
 #include "messages.h"
@@ -39,6 +29,16 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 static const ammo_effect_str_id ammo_effect_DRAW_AS_LINE( "DRAW_AS_LINE" );
 static const ammo_effect_str_id ammo_effect_NO_DAMAGE_SCALING( "NO_DAMAGE_SCALING" );

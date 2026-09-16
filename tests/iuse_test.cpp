@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "cached_options.h"
@@ -9,7 +10,6 @@
 #include "game.h"
 #include "item.h"
 #include "itype.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "morale_types.h"
 #include "player_helpers.h"

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <vector>
-
 #include "coordinates.h"
 #include "item.h"
 #include "type_id.h"
 #include "units.h"
+
+#include <vector>
 
 class submap;
 class mapbuffer;
@@ -14,8 +14,8 @@ class mapbuffer;
  * Create byproducts of item combustion.  Pure function — no map context needed.
  * Appends newly spawned items to @p out.
  */
-void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel,
-                          const units::mass &burned_mass );
+void create_burnproducts(
+    std::vector<detached_ptr<item>>& out, const item& fuel, const units::mass& burned_mass);
 
 /**
  * Process all fields in a single loaded submap.
@@ -43,6 +43,5 @@ void create_burnproducts( std::vector<detached_ptr<item>> &out, const item &fuel
  * @return  true if any fire field remains alive after processing.
  *          world_tick() uses this to request adjacent submap loading.
  */
-auto process_fields_in_submap( const dimension_id &dim, submap &sm,
-                               const tripoint_abs_sm &pos,
-                               mapbuffer &mb ) -> bool;
+auto process_fields_in_submap(
+    const dimension_id& dim, submap& sm, const tripoint_abs_sm& pos, mapbuffer& mb) -> bool;

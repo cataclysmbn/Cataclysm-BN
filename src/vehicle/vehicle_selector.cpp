@@ -1,6 +1,6 @@
 #include "vehicle_selector.h"
 
-#include "map.h"
+#include "map/map.h"
 #include "point.h"
 #include "vpart_position.h"
 

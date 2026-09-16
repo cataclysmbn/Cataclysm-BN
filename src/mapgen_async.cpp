@@ -1,5 +1,20 @@
 #include "mapgen_async.h"
 
+#include "auto_note.h"
+#include "catalua.h"
+#include "color.h"
+#include "init.h"
+#include "map/map.h"
+#include "map/mapbuffer_registry.h"
+#include "map_extras.h"
+#include "mapgen_constructor.h"
+#include "options.h"
+#include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
+#include "point.h"
+#include "string_formatter.h"
+#include "string_id.h"
+
 #include <algorithm>
 #include <atomic>
 #include <memory>
@@ -8,21 +23,6 @@
 #include <ranges>
 #include <utility>
 #include <vector>
-
-#include "auto_note.h"
-#include "catalua.h"
-#include "color.h"
-#include "init.h"
-#include "map.h"
-#include "map_extras.h"
-#include "mapbuffer_registry.h"
-#include "mapgen_constructor.h"
-#include "options.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
-#include "point.h"
-#include "string_formatter.h"
-#include "string_id.h"
 
 namespace
 {

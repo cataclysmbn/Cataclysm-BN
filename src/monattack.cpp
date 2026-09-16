@@ -1,20 +1,5 @@
 #include "monattack.h"
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <list>
-#include <map>
-#include <memory>
-#include <ostream>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "ballistics.h"
@@ -34,7 +19,6 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
-#include "field_type.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "fungal_effects.h"
@@ -48,10 +32,12 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/legacy_pathfinding.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map/utils/map_functions.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "martialarts.h"
 #include "material.h"
 #include "memorial_logger.h"
@@ -64,7 +50,6 @@
 #include "name.h"
 #include "npc.h"
 #include "output.h"
-#include "legacy_pathfinding.h"
 #include "player.h"
 #include "point.h"
 #include "projectile.h"
@@ -82,6 +67,21 @@
 #include "units.h"
 #include "value_ptr.h"
 #include "weighted_list.h"
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <list>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
 

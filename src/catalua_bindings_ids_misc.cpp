@@ -1,9 +1,8 @@
 #include "catalua_bindings_ids_common.h"
-
 #include "enchantments/enchantment_flag.h"
 #include "enchantments/enchantment_value.h"
-#include "emit.h"
 #include "fault.h"
+#include "map/emit.h"
 #include "martialarts.h"
 #include "mod_manager.h"
 #include "mongroup.h"

@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -7,7 +8,6 @@
 #include "game.h"
 #include "itype.h"
 #include "iuse_actor.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"

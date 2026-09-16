@@ -4,7 +4,7 @@
 #include "coordinates.h"
 #include "game.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "monster.h"
 #include "npc.h"

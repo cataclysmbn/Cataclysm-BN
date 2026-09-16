@@ -37,7 +37,7 @@
 #include "itype.h"
 #include "line.h"
 #include "magic/magic.h"
-#include "map.h"
+#include "map/map.h"
 #include "material.h"
 #include "math_defines.h"
 #include "messages.h"

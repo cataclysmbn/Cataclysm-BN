@@ -1,11 +1,5 @@
 #include "timed_event.h"
 
-#include <algorithm>
-#include <array>
-#include <memory>
-#include <optional>
-#include <vector>
-
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -13,13 +7,14 @@
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
+#include "faction.h"
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "memorial_logger.h"
 #include "messages.h"
 #include "monster.h"
@@ -31,7 +26,12 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
-#include "faction.h"
+
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <optional>
+#include <vector>
 
 static const itype_id itype_petrified_eye( "petrified_eye" );
 

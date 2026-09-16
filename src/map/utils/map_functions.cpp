@@ -1,17 +1,17 @@
 #include "map/utils/map_functions.h"
 
-#include "../../vehicle/vpart_position.h"
 #include "character.h"
 #include "game.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
 #include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
 #include "messages.h"
 #include "monster.h"
 #include "sounds.h"
 #include "vehicle/veh_type.h"
+#include "vehicle/vpart_position.h"
 
 #include <algorithm>
 #include <cstdlib>

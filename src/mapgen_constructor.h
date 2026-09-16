@@ -1,7 +1,16 @@
 #pragma once
 
-#include <functional>
+#include "calendar.h"
+#include "coordinates.h"
+#include "data_vars.h"
+#include "map/map.h"
+#include "mapgen_functions.h"
+#include "point.h"
+#include "type_id.h"
+#include "units_angle.h"
+
 #include <climits>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <span>
@@ -9,15 +18,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include "calendar.h"
-#include "coordinates.h"
-#include "data_vars.h"
-#include "map.h"
-#include "mapgen_functions.h"
-#include "point.h"
-#include "type_id.h"
-#include "units_angle.h"
 
 class computer;
 class field_entry;

@@ -1,9 +1,9 @@
+#include "../src/map/map.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game_constants.h"
-#include "lightmap.h"
 #include "line.h" // For rl_dist.
-#include "map.h"
+#include "map/lightmap.h"
 #include "rng.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"

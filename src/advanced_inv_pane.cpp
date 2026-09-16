@@ -7,7 +7,7 @@
 #include "item_contents.h"
 #include "item_search.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/map.h"
 #include "options.h"
 #include "player.h"
 #include "uistate.h"

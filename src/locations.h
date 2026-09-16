@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mapbuffer_registry.h"
 #include "coordinates.h"
+#include "map/mapbuffer_registry.h"
 #include "type_id.h"
 
 class item;

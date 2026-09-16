@@ -7,8 +7,8 @@
 #include "game.h"
 #include "game_constants.h"
 #include "line.h"
+#include "map/map.h"
 #include "translations.h"
-#include "map.h"
 #include "world.h"
 const memorized_terrain_tile mm_submap::default_tile { "", 0, 0 };
 const int mm_submap::default_symbol = 0;

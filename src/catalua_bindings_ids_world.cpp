@@ -1,8 +1,7 @@
-#include "catalua_bindings_ids_common.h"
-
 #include "ammo_effect.h"
+#include "catalua_bindings_ids_common.h"
 #include "magic/magic.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "monstergenerator.h"
 #include "mutation.h"
 #include "omdata.h"

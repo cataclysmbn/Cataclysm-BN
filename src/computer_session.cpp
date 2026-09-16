@@ -1,13 +1,5 @@
 #include "computer_session.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <string>
-#include <utility>
-
 #include "avatar.h"
 #include "calendar.h"
 #include "character_id.h"
@@ -17,7 +9,6 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
-#include "field_type.h"
 #include "flag.h"
 #include "game.h"
 #include "game_constants.h"
@@ -27,9 +18,10 @@
 #include "item.h"
 #include "item_contents.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "mission.h"
 #include "monster.h"
@@ -51,6 +43,14 @@
 #include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 
 static const efftype_id effect_amigara( "amigara" );
 

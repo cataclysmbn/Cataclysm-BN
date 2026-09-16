@@ -1,7 +1,5 @@
 #include "teleport.h"
 
-#include <memory>
-
 #include "avatar.h"
 #include "calendar.h"
 #include "creature.h"
@@ -10,13 +8,15 @@
 #include "event.h"
 #include "event_bus.h"
 #include "game.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "player.h"
 #include "point.h"
 #include "rng.h"
 #include "translations.h"
 #include "type_id.h"
+
+#include <memory>
 
 static const flag_id json_flag_DIMENSIONAL_ANCHOR( "DIMENSIONAL_ANCHOR" );
 

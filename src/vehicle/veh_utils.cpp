@@ -10,7 +10,7 @@
 #include "inventory.h"
 #include "item.h"
 #include "locations.h"
-#include "map.h"
+#include "map/map.h"
 #include "player.h"
 #include "point.h"
 #include "requirements.h"

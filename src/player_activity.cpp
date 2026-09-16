@@ -1,11 +1,4 @@
 #include "player_activity.h"
-#include "memory_fast.h"
-#include "player_activity_ptr.h"
-
-#include <algorithm>
-#include <array>
-#include <memory>
-#include <utility>
 
 #include "action_time_scale.h"
 #include "activity_actor.h"
@@ -14,8 +7,8 @@
 #include "activity_type.h"
 #include "avatar.h"
 #include "calendar.h"
-#include "catalua.h"
 #include "cata_utility.h"
+#include "catalua.h"
 #include "character.h"
 #include "character_turn.h"
 #include "color.h"
@@ -27,10 +20,12 @@
 #include "game.h"
 #include "item.h"
 #include "itype.h"
-#include "map.h"
+#include "map/map.h"
+#include "memory_fast.h"
 #include "npc.h"
 #include "options.h"
 #include "player.h"
+#include "player_activity_ptr.h"
 #include "profile.h"
 #include "recipe.h"
 #include "rng.h"
@@ -40,7 +35,11 @@
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
-#include "memory_fast.h"
+
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <utility>
 
 using metric = std::pair<units::mass, units::volume>;
 

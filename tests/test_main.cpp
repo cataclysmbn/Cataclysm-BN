@@ -17,6 +17,7 @@
 #    define CATCH_CONFIG_IMPL_ONLY
 #endif
 #define CATCH_CONFIG_RUNNER
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -29,7 +30,6 @@
 #include "init.h"
 #include "language.h"
 #include "loading_ui.h"
-#include "map.h"
 #include "mod_manager.h"
 #include "options.h"
 #include "output.h"

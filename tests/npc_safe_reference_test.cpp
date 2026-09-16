@@ -5,7 +5,7 @@
 #include "game.h"
 #include "item.h"
 #include "itype.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_helpers.h"
 #include "npc.h"
 #include "overmapbuffer.h"

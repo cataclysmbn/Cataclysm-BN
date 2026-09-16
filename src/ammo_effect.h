@@ -1,13 +1,13 @@
 #pragma once
 
+#include "explosion.h"
+#include "map/field_type.h"
+#include "string_id.h"
+#include "type_id.h"
+
 #include <cstddef>
 #include <string>
 #include <vector>
-
-#include "explosion.h"
-#include "field_type.h"
-#include "string_id.h"
-#include "type_id.h"
 
 class JsonObject;
 

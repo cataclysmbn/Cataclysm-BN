@@ -1,14 +1,14 @@
 #pragma once
 
+#include "coordinates.h"
+#include "map/map.h"
+
 #include <functional>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
-#include <optional>
-
-#include "coordinates.h"
-#include "map.h"
 
 struct tripoint;
 struct point;

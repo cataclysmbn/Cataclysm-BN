@@ -1,19 +1,12 @@
 #include "monexamine.h"
 
-#include <climits>
-#include <map>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
-#include "cata_utility.h"
 #include "character.h"
 #include "debug.h"
 #include "enums.h"
@@ -22,7 +15,7 @@
 #include "item.h"
 #include "itype.h"
 #include "iuse.h"
-#include "map.h"
+#include "map/map.h"
 #include "material.h"
 #include "messages.h"
 #include "monster.h"
@@ -39,6 +32,13 @@
 #include "ui.h"
 #include "units.h"
 #include "value_ptr.h"
+
+#include <climits>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 
 static const quality_id qual_shear( "SHEAR" );

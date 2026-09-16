@@ -2,7 +2,7 @@
 
 #include "debug.h"
 #include "json.h"
-#include "map.h"
+#include "map/map.h"
 #include "mapgen_constructor.h"
 #include "memory_fast.h"
 #include "options.h"

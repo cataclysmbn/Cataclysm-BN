@@ -9,7 +9,7 @@
 #include "game.h"
 #include "game_constants.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "monster.h"
 #include "mtype.h"
 #include "options.h"

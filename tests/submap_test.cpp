@@ -1,8 +1,8 @@
+#include "../src/map/submap.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game_constants.h"
 #include "int_id.h"
-#include "submap.h"
 #include "type_id.h"
 
 TEST_CASE("submap rotation", "[submap]") {

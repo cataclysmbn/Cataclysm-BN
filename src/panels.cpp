@@ -27,7 +27,7 @@
 #include "json.h"
 #include "lua_sidebar_widgets.h"
 #include "magic/magic.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "omdata.h"
 #include "options.h"

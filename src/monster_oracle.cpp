@@ -1,10 +1,11 @@
-#include <memory>
+#include "monster_oracle.h"
 
 #include "behavior.h"
-#include "map.h"
-#include "mapdata.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "monster.h"
-#include "monster_oracle.h"
+
+#include <memory>
 
 namespace behavior
 {

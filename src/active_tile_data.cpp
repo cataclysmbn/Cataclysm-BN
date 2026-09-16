@@ -8,17 +8,17 @@
 #include "item.h"
 #include "itype.h"
 #include "json.h"
-#include "map.h"
-#include "mapbuffer.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap_load_manager.h"
 #include "rng.h"
-#include "submap_load_manager.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 
 // TODO: Shouldn't use
-#include "submap.h"
+#include "map/submap.h"
 
 static const itype_id itype_battery( "battery" );
 

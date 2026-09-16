@@ -1,5 +1,6 @@
 #include "player_helpers.h"
 
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "catch/catch.hpp"
@@ -13,7 +14,6 @@
 #include "item.h"
 #include "itype.h"
 #include "make_static.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "material.h"
 #include "npc.h"

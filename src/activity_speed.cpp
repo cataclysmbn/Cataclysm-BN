@@ -7,7 +7,7 @@
 #include "character_functions.h"
 #include "character_stat.h"
 #include "game.h"
-#include "map.h"
+#include "map/map.h"
 #include "recipe.h"
 #include "skill.h"
 #include "type_id.h"

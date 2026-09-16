@@ -1,8 +1,8 @@
 #pragma once
 
-#include "point.h"
 #include "item.h"
-#include "map.h"
+#include "map/map.h"
+#include "point.h"
 
 // Checks if items at position are haulable
 bool has_haulable_items( const tripoint_bub_ms &pos );

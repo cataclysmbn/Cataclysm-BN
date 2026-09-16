@@ -1,11 +1,12 @@
 #pragma once
 
-#include "map.h"
-#include "mapgen.h"
 #include "catalua_sol.h"
 #include "catalua_sol_fwd.h"
+#include "map/map.h"
+#include "mapgen.h"
 #include "ret_val.h"
 #include "sol/sol.hpp"
+
 #include <lua.h>
 
 /** Dynamic mapgeniuse_actor provided by Lua. */

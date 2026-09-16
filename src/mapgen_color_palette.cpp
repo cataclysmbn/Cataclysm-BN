@@ -5,7 +5,7 @@
 #include "generic_factory.h"
 #include "hsv_color.h"
 #include "json.h"
-#include "map.h"
+#include "map/map.h"
 #include "memory_fast.h"
 #include "options.h"
 #include "point.h"

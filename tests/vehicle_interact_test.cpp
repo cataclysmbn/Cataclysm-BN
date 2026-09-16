@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/veh_interact.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vpart_position.h"
@@ -8,7 +9,6 @@
 #include "game.h"
 #include "inventory.h"
 #include "item.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"

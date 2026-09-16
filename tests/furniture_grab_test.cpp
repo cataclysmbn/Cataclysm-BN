@@ -1,3 +1,5 @@
+#include "../src/map/map.h"
+#include "../src/map/mapdata.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
@@ -6,9 +8,7 @@
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
-#include "map.h"
 #include "map_helpers.h"
-#include "mapdata.h"
 #include "state_helpers.h"
 #include "type_id.h"
 

@@ -1,7 +1,7 @@
 #include "rot.h"
 
 #include "item.h"
-#include "map.h"
+#include "map/map.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"

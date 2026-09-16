@@ -1,12 +1,12 @@
 #include "batch_turns.h"
 
 #include "calendar.h"
-#include "field.h"
-#include "field_type.h"
 #include "game_constants.h"
 #include "item.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/submap.h"
 #include "profile.h"
-#include "submap.h"
 #include "vehicle/vehicle.h"
 
 #include <algorithm>

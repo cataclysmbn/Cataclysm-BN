@@ -1,18 +1,18 @@
 #pragma once
 
+#include "calendar.h"
+#include "coordinates.h"
+#include "map/submap_load_manager.h"
+#include "memory_fast.h"
+#include "point.h"
+#include "type_id.h"
+
 #include <array>
 #include <cstdint>
 #include <map>
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include "calendar.h"
-#include "coordinates.h"
-#include "memory_fast.h"
-#include "point.h"
-#include "submap_load_manager.h"
-#include "type_id.h"
 
 class Character;
 class map;

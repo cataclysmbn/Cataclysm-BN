@@ -1,17 +1,5 @@
 #include "main_menu.h"
 
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <exception>
-#include <functional>
-#include <istream>
-#include <memory>
-#include <ctime>
-#include <optional>
-
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "cata_utility.h"
@@ -25,11 +13,12 @@
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "game_info.h"
 #include "gamemode.h"
 #include "get_version.h"
 #include "help.h"
 #include "loading_ui.h"
-#include "mapbuffer.h"
+#include "map/mapbuffer.h"
 #include "mapsharing.h"
 #include "messages.h"
 #include "newcharacter.h"
@@ -46,11 +35,22 @@
 #include "string_formatter.h"
 #include "text_snippets.h"
 #include "translations.h"
-#include "ui_manager.h"
 #include "ui.h"
+#include "ui_manager.h"
 #include "wcwidth.h"
 #include "worldfactory.h"
-#include "game_info.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+#include <exception>
+#include <functional>
+#include <istream>
+#include <memory>
+#include <optional>
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,

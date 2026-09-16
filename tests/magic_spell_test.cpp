@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
@@ -5,7 +6,6 @@
 #include "game.h"
 #include "magic/magic.h"
 #include "magic/spell_targeting.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "player_helpers.h"

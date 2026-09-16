@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
@@ -15,7 +16,6 @@
 #include "item.h"
 #include "itype.h"
 #include "iuse.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "npc.h"
 #include "options_helpers.h"

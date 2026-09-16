@@ -1,20 +1,12 @@
-#include "catalua_bindings.h"
-#include "catalua_coord.h"
-
-#include <climits>
-#include <iterator>
-#include <ranges>
-#include <sstream>
-#include <string_view>
-
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "catalua.h"
+#include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
-#include "calendar.h"
+#include "catalua_coord.h"
 #include "catalua_impl.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
@@ -22,22 +14,22 @@
 #include "catalua_serde.h"
 #include "character.h"
 #include "character_martial_arts.h"
-#include "crafting.h"
 #include "craft_command.h"
+#include "crafting.h"
 #include "creature.h"
 #include "damage.h"
 #include "disease.h"
 #include "enums.h"
-#include "field.h"
-#include "field_type.h"
 #include "flag.h"
-#include "make_static.h"
 #include "flag_trait.h"
 #include "game.h"
 #include "inventory.h"
 #include "json.h"
 #include "magic/magic.h"
-#include "map.h"
+#include "make_static.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
 #include "monfaction.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -50,8 +42,14 @@
 #include "recipe.h"
 #include "requirements.h"
 #include "skill.h"
-#include "type_id.h"
 #include "trap.h"
+#include "type_id.h"
+
+#include <climits>
+#include <iterator>
+#include <ranges>
+#include <sstream>
+#include <string_view>
 
 LUNA_VAL( player_activity, "PlayerActivity" )
 

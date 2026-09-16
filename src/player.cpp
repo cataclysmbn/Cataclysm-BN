@@ -1,17 +1,17 @@
 #include "player.h"
 
-#include <map>
-#include <memory>
-#include <string>
-
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "output.h"
 #include "string_id.h"
 #include "vitamin.h"
+
+#include <map>
+#include <memory>
+#include <string>
 
 static auto update_map_after_player_setpos( player &who,
         const tripoint_abs_ms &old_pos ) -> void

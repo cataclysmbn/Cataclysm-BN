@@ -2,7 +2,7 @@
 
 #include "coordinates.h"
 #include "item_stack.h"
-#include "map.h"
+#include "map/map.h"
 
 class item;
 class monster;

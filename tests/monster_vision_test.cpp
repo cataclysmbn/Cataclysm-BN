@@ -1,9 +1,9 @@
+#include "../src/map/map.h"
+#include "../src/map/mapdata.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "game.h"
-#include "map.h"
 #include "map_helpers.h"
-#include "mapdata.h"
 #include "monster.h"
 #include "state_helpers.h"
 

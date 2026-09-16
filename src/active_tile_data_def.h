@@ -1,13 +1,13 @@
 #pragma once
 
-#include <optional>
-#include <string>
-
 #include "active_tile_data.h"
 #include "coordinates.h"
+#include "map/submap_load_manager.h"
 #include "point.h"
-#include "submap_load_manager.h"
 #include "type_id.h"
+
+#include <optional>
+#include <string>
 
 namespace active_tiles
 {

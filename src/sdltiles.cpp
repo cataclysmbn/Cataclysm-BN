@@ -1,77 +1,78 @@
 #if defined(TILES)
 
-#include "cursesdef.h" // IWYU pragma: associated
-#include "sdltiles.h" // IWYU pragma: associated
+#    include "sdltiles.h" // IWYU pragma: associated
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <exception>
-#include <fstream>
-#include <iterator>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <stack>
-#include <stdexcept>
-#include <type_traits>
-#include <unordered_map>
-#include <vector>
-#include "avatar.h"
-#include "cata_tiles.h"
-#include "cata_utility.h"
-#include "catacharset.h"
-#include "color.h"
-#include "color_loader.h"
-#include "cuboid_rectangle.h"
-#include "cursesport.h"
-#include "debug.h"
-#include "dynamic_atlas.h"
-#include "filesystem.h"
-#include "font_loader.h"
-#include "game.h"
-#include "game_ui.h"
-#include "get_version.h"
-#include "hash_utils.h"
-#include "input.h"
-#include "runtime_handlers.h"
-#include "json.h"
-#include "make_static.h"
-#include "mapbuffer.h"
-#include "mission.h"
-#include "npc.h"
-#include "options.h"
-#include "output.h"
-#include "overmap_location.h"
-#include "overmap_label.h"
-#include "overmap_label_note.h"
-#include "note_label_utils.h"
-#include "overmap_special.h"
-#include "overmap_ui.h"
-#include "overmapbuffer.h"
-#include "regional_settings.h"
-#include "mongroup.h"
-#include "path_info.h"
-#include "point.h"
-#include "profile.h"
-#include "rng.h"
-#include "sdl_wrappers.h"
-#include "sdl_geometry.h"
-#include "sdl_utils.h"
-#include "sdl_font.h"
-#include "sdlsound.h"
-#include "string_formatter.h"
-#include "uistate.h"
-#include "ui_manager.h"
-#include "wcwidth.h"
-#include "worldfactory.h"
+#    include "avatar.h"
+#    include "cata_tiles.h"
+#    include "cata_utility.h"
+#    include "catacharset.h"
+#    include "color.h"
+#    include "color_loader.h"
+#    include "cuboid_rectangle.h"
+#    include "cursesdef.h" // IWYU pragma: associated
+#    include "cursesport.h"
+#    include "debug.h"
+#    include "dynamic_atlas.h"
+#    include "filesystem.h"
+#    include "font_loader.h"
+#    include "game.h"
+#    include "game_ui.h"
+#    include "get_version.h"
+#    include "hash_utils.h"
+#    include "input.h"
+#    include "json.h"
+#    include "make_static.h"
+#    include "map/mapbuffer.h"
+#    include "mission.h"
+#    include "mongroup.h"
+#    include "note_label_utils.h"
+#    include "npc.h"
+#    include "options.h"
+#    include "output.h"
+#    include "overmap_label.h"
+#    include "overmap_label_note.h"
+#    include "overmap_location.h"
+#    include "overmap_special.h"
+#    include "overmap_ui.h"
+#    include "overmapbuffer.h"
+#    include "path_info.h"
+#    include "point.h"
+#    include "profile.h"
+#    include "regional_settings.h"
+#    include "rng.h"
+#    include "runtime_handlers.h"
+#    include "sdl_font.h"
+#    include "sdl_geometry.h"
+#    include "sdl_utils.h"
+#    include "sdl_wrappers.h"
+#    include "sdlsound.h"
+#    include "string_formatter.h"
+#    include "ui_manager.h"
+#    include "uistate.h"
+#    include "wcwidth.h"
+#    include "worldfactory.h"
+
+#    include <algorithm>
+#    include <array>
+#    include <cassert>
+#    include <climits>
+#    include <cmath>
+#    include <cstdint>
+#    include <cstring>
+#    include <exception>
+#    include <fstream>
+#    include <iterator>
+#    include <limits>
+#    include <map>
+#    include <memory>
+#    include <optional>
+#    include <ranges>
+#    include <set>
+#    include <stack>
+#    include <stdexcept>
+#    include <type_traits>
+#    include <unordered_map>
+#    include <vector>
 
 #if defined(__linux__)
 #   include <cstdlib> // getenv()/setenv()
@@ -89,7 +90,7 @@
 
 #include "action.h"
 #include "inventory.h"
-#include "map.h"
+#include "map/map.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"

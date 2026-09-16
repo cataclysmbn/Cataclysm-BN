@@ -20,10 +20,10 @@
 #include "init.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
 #include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
 #include "mapgen.h"
 #include "mapgen_constructor.h"
 #include "mapgen_functions.h"
@@ -68,6 +68,7 @@
 #include <cstddef>
 #include <cstring>
 #include <exception>
+#include <map/submap.h>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -75,7 +76,6 @@
 #include <point.h>
 #include <ranges>
 #include <set>
-#include <submap.h>
 #include <tuple>
 #include <unordered_set>
 #include <vector>

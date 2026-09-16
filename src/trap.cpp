@@ -1,9 +1,5 @@
 #include "trap.h"
 
-#include <memory>
-#include <set>
-#include <vector>
-
 #include "assign.h"
 #include "bodypart.h"
 #include "character.h"
@@ -18,13 +14,17 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "mapgen_functions.h"
 #include "point.h"
 #include "rng.h"
 #include "string_id.h"
 #include "translations.h"
+
+#include <memory>
+#include <set>
+#include <vector>
 
 static const skill_id skill_traps( "traps" );
 

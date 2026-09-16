@@ -1,20 +1,20 @@
 #include "material.h"
 
-#include <algorithm>
-#include <iterator>
-#include <map>
-#include <set>
-#include <string>
-
 #include "assign.h"
 #include "debug.h"
 #include "generic_factory.h"
 #include "item.h"
 #include "json.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id_implement.h"
+
+#include <algorithm>
+#include <iterator>
+#include <map>
+#include <set>
+#include <string>
 
 namespace
 {

@@ -1,22 +1,22 @@
 #include "shadowcasting.h" // IWYU pragma: associated
 
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <cmath>
-#include <mutex>
-#include <cstring>
-#include <cstdint>
-
 #include "cached_options.h"
 #include "cata_unreachable.h"
 #include "game_constants.h"
 #include "line.h"
-#include "lightmap.h"
+#include "map/lightmap.h"
 #include "point.h"
 #include "profile.h"
 #include "string_formatter.h"
 #include "thread_pool.h"
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <mutex>
 
 // ── four_quadrants ────────────────────────────────────────────────────────────
 

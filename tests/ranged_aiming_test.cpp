@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -8,7 +9,6 @@
 #include "dispersion.h"
 #include "game.h"
 #include "item.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"

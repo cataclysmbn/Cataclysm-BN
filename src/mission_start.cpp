@@ -1,10 +1,3 @@
-#include "mission.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <memory>
-#include <optional>
-#include <vector>
-
 #include "avatar.h"
 #include "computer.h"
 #include "debug.h"
@@ -13,10 +6,11 @@
 #include "int_id.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
+#include "mission.h" // IWYU pragma: associated
 #include "name.h"
 #include "npc.h"
 #include "npc_class.h"
@@ -27,6 +21,11 @@
 #include "rng.h"
 #include "string_formatter.h"
 #include "translations.h"
+
+#include <algorithm>
+#include <memory>
+#include <optional>
+#include <vector>
 
 static const itype_id itype_software_hacking( "software_hacking" );
 static const itype_id itype_software_math( "software_math" );

@@ -1,7 +1,7 @@
+#include "../src/map/map.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
 #include "mtype.h"

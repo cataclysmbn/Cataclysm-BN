@@ -1,11 +1,11 @@
 #pragma once
 
+#include "coordinates.h"
+#include "map/submap_load_manager.h"
+
 #include <map>
 #include <string>
 #include <utility>
-
-#include "coordinates.h"
-#include "submap_load_manager.h"
 
 /**
  * Manages fire-spread load requests for out-of-bubble simulation.

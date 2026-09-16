@@ -15,7 +15,7 @@
 #include "game_constants.h"
 #include "int_id.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "mapgendata.h"
 #include "memory_fast.h"

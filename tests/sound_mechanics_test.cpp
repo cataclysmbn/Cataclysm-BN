@@ -1,5 +1,5 @@
+#include "../src/map/map.h"
 #include "catch/catch.hpp"
-#include "map.h"
 #include "sounds.h"
 
 #include <array>

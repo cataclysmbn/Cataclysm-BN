@@ -1,30 +1,26 @@
-#include <cstdint>
-#include <ctime>
-#include <chrono>
-
 #include "catalua_bindings.h"
-#include "catalua_bindings_utils.h"
-#include "catalua.h"
-#include "catalua_log.h"
-#include "catalua_luna_doc.h"
-#include "catalua_luna.h"
 
 #include "action.h"
 #include "artifact.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua.h"
+#include "catalua_bindings_utils.h"
+#include "catalua_log.h"
+#include "catalua_luna.h"
+#include "catalua_luna_doc.h"
 #include "character.h"
 #include "creature.h"
 #include "damage.h"
 #include "distribution_grid.h"
 #include "enum_conversions.h"
 #include "enums.h"
-#include "field_type.h"
 #include "game.h"
 #include "hsv_color.h"
 #include "itype.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
 #include "martialarts.h"
 #include "material.h"
 #include "mission.h"
@@ -40,13 +36,17 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
+#include "units/sound.h"
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
-#include "units/sound.h"
 #include "units_temperature.h"
 #include "units_volume.h"
 #include "vitamin.h"
+
+#include <chrono>
+#include <cstdint>
+#include <ctime>
 
 std::vector<std::string> luna::detail::current_comment;
 

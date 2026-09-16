@@ -17,7 +17,7 @@
 #include "game.h"
 #include "item_contents.h"
 #include "itype.h"
-#include "map.h"
+#include "map/map.h"
 #include "material.h"
 #include "messages.h"
 #include "monster.h"

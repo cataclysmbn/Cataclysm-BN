@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "calendar.h"
@@ -11,7 +12,6 @@
 #include "inventory.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "material.h"
 #include "monster.h"

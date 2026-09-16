@@ -1,21 +1,11 @@
-#include "npctalk.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstddef>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "character_id.h"
 #include "character_display.h"
+#include "character_id.h"
 #include "character_martial_arts.h"
 #include "debug.h"
 #include "enums.h"
@@ -28,13 +18,14 @@
 #include "item.h"
 #include "line.h"
 #include "magic/magic.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "mission.h"
 #include "monster.h"
 #include "morale_types.h"
 #include "mutation.h"
 #include "npc.h"
+#include "npctalk.h" // IWYU pragma: associated
 #include "npctrade.h"
 #include "output.h"
 #include "overmap.h"
@@ -48,6 +39,14 @@
 #include "string_id.h"
 #include "translations.h"
 #include "ui.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
 
 static const activity_id ACT_FIND_MOUNT( "ACT_FIND_MOUNT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );

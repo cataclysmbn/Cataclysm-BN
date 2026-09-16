@@ -15,9 +15,9 @@
 #include "iexamine.h"
 #include "inventory_ui.h" // auto inventory blocking
 #include "locations.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "material.h"
 #include "messages.h" //for rust message
 #include "npc.h"

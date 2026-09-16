@@ -1,20 +1,20 @@
 #include "creature_tracker.h"
 
-#include <algorithm>
-#include <cassert>
-#include <ostream>
-#include <string>
-#include <utility>
-
 #include "debug.h"
 #include "explosion_queue.h"
-#include "map.h"
+#include "map/map.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "mtype.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "type_id.h"
+
+#include <algorithm>
+#include <cassert>
+#include <ostream>
+#include <string>
+#include <utility>
 
 #define dbg(x) DebugLogFL((x),DC::Game)
 

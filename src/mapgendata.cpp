@@ -1,12 +1,10 @@
 #include "mapgendata.h"
 
-#include <algorithm>
-
 #include "all_enum_values.h"
 #include "debug.h"
 #include "int_id.h"
+#include "map/mapdata.h"
 #include "mapgen_constructor.h"
-#include "mapdata.h"
 #include "omdata.h"
 #include "overmap_special.h"
 #include "overmapbuffer.h"
@@ -14,6 +12,8 @@
 #include "point.h"
 #include "regional_settings.h"
 #include "type_id.h"
+
+#include <algorithm>
 
 static const regional_settings dummy_regional_settings;
 

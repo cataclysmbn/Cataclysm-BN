@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -8,7 +9,6 @@
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
 #include "item.h"
 #include "itype.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "requirements.h"
 #include "rot.h"

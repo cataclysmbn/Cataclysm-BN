@@ -1,3 +1,4 @@
+#include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vehicle_selector.h"
 #include "avatar.h"
@@ -8,7 +9,6 @@
 #include "flag.h"
 #include "game.h"
 #include "item.h"
-#include "map.h"
 #include "map_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"

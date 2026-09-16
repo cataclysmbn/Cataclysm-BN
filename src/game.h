@@ -1,5 +1,24 @@
 #pragma once
 
+#include "action.h"
+#include "calendar.h"
+#include "character_id.h"
+#include "coordinates.h"
+#include "creature.h"
+#include "cursesdef.h"
+#include "dimension_info.h"
+#include "enums.h"
+#include "game_constants.h"
+#include "location_vector.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap_load_manager.h"
+#include "memory_fast.h"
+#include "pimpl.h"
+#include "point.h"
+#include "type_id.h"
+#include "zone_draw_options.h"
+
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -18,25 +37,6 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-
-#include "action.h"
-#include "calendar.h"
-#include "character_id.h"
-#include "coordinates.h"
-#include "creature.h"
-#include "dimension_info.h"
-#include "cursesdef.h"
-#include "enums.h"
-#include "game_constants.h"
-#include "mapdata.h"
-#include "memory_fast.h"
-#include "pimpl.h"
-#include "point.h"
-#include "submap_load_manager.h"
-#include "zone_draw_options.h"
-#include "type_id.h"
-#include "location_vector.h"
-#include "mapbuffer.h"
 
 class Character;
 class Creature_tracker;

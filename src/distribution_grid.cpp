@@ -1,23 +1,24 @@
-#include <unordered_set>
-#include <algorithm>
-#include <climits>
-#include <cstdint>
-#include <ranges>
-
-#include "utils/algo.h"
-#include "character.h"
-#include "debug.h"
 #include "distribution_grid.h"
+
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
-#include "map.h"
-#include "mapbuffer.h"
+#include "character.h"
+#include "debug.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap.h"
 #include "messages.h"
-#include "submap.h"
 #include "options.h"
 #include "overmapbuffer.h"
 #include "overmapbuffer_registry.h"
 #include "profile.h"
+#include "utils/algo.h"
+
+#include <algorithm>
+#include <climits>
+#include <cstdint>
+#include <ranges>
+#include <unordered_set>
 
 distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global_submap_coords,
                                       mapbuffer &buffer ) :

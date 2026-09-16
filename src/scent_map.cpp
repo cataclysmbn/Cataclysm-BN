@@ -1,10 +1,5 @@
 #include "scent_map.h"
 
-#include <algorithm>
-#include <cassert>
-#include <cstdlib>
-#include <span>
-
 #include "assign.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -14,14 +9,19 @@
 #include "debug.h"
 #include "game.h"
 #include "generic_factory.h"
-#include "map.h"
-#include "mapbuffer.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/submap.h"
 #include "options.h"
 #include "output.h"
 #include "profile.h"
 #include "string_id.h"
-#include "submap.h"
 #include "thread_pool.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
+#include <span>
 
 static constexpr int SCENT_RADIUS = 40;
 

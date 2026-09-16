@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../calendar.h"
-#include "../coordinates.h"
-#include "../units_temperature.h"
+#include "calendar.h"
+#include "coordinates.h"
+#include "units_temperature.h"
 #include "weather_type.h"
 
 #include <string>

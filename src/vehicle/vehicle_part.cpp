@@ -11,7 +11,7 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "locations.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "npc.h"
 #include "string_formatter.h"

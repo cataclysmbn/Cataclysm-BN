@@ -5,7 +5,7 @@
 #    include "cata_tiles.h"
 #    include "cursesport.h"
 #    include "game.h"
-#    include "map.h"
+#    include "map/map.h"
 #    include "output.h"
 #    include "sdltiles.h"
 #    include "units_utility.h"
