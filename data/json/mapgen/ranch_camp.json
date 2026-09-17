@@ -536,6 +536,7 @@
     "type": "mapgen",
     "method": "json",
     "om_terrain": [ [ "ranch_camp_55", "ranch_camp_56", "ranch_camp_57" ], [ "ranch_camp_64", "ranch_camp_65", "ranch_camp_66" ] ],
+    "//": "The barn being empty is intentional; do not put anything in it.",
     "object": {
       "fill_ter": "t_dirt",
       "rows": [
@@ -589,34 +590,10 @@
         "..%..................................../W;;;;W;;;;W;;;;W;;;;W;;;;W;;;;W."
       ],
       "palettes": [ "ranch_camp" ],
-      "items": { ";": { "item": "farming_tools", "chance": 1 }, "0": { "item": "cattlefodder", "chance": 5, "repeat": 10 } },
+      "items": { "0": { "item": "cattlefodder", "chance": 5, "repeat": 10 } },
       "place_item": [
-        { "item": "cattlefodder", "x": [ 41, 44 ], "y": [ 25, 29 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 41, 44 ], "y": [ 31, 35 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 41, 44 ], "y": [ 37, 41 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 41, 44 ], "y": [ 43, 47 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 51, 54 ], "y": [ 25, 29 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 56, 59 ], "y": [ 25, 29 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 66, 69 ], "y": [ 25, 29 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 66, 69 ], "y": [ 31, 35 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 66, 69 ], "y": [ 37, 41 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 51, 54 ], "y": [ 43, 47 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 56, 59 ], "y": [ 43, 47 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 66, 69 ], "y": [ 43, 47 ], "amount": [ 0, 2 ] },
-        { "item": "cattlefodder", "x": [ 51, 54 ], "y": [ 35, 37 ], "amount": [ 0, 1 ] },
-        { "item": "cattlefodder", "x": [ 56, 59 ], "y": [ 35, 37 ], "amount": [ 0, 1 ] },
         { "item": "birdfood", "x": [ 62, 64 ], "y": 5, "amount": [ 0, 1 ], "repeat": [ 3, 6 ] },
         { "item": "stepladder", "x": 65, "y": 5 }
-      ],
-      "place_monster": [
-        { "monster": "mon_horse", "x": [ 42, 43 ], "y": [ 25, 47 ], "repeat": [ 2, 4 ], "chance": 10 },
-        { "monster": "mon_cow", "x": [ 67, 68 ], "y": [ 25, 47 ], "repeat": [ 2, 4 ], "chance": 10 },
-        { "monster": "mon_pig", "x": [ 52, 58 ], "y": [ 26, 28 ], "repeat": [ 2, 4 ], "chance": 10 },
-        { "monster": "mon_pig", "x": [ 52, 58 ], "y": [ 26, 28 ], "repeat": [ 2, 4 ], "chance": 10 },
-        { "monster": "mon_sheep", "x": [ 52, 58 ], "y": 36, "repeat": [ 2, 4 ], "chance": 10 },
-        { "monster": "mon_sheep", "x": [ 52, 58 ], "y": 36, "repeat": [ 2, 4 ], "chance": 10 },
-        { "monster": "mon_chicken", "x": [ 52, 58 ], "y": [ 44, 46 ], "repeat": [ 2, 6 ], "chance": 10 },
-        { "monster": "mon_chicken", "x": [ 52, 58 ], "y": [ 44, 46 ], "repeat": [ 2, 6 ], "chance": 10 }
       ]
     }
   },
