@@ -187,7 +187,8 @@
       { "item": "tool_rdx_charge", "prob": 10 },
       { "item": "solar_panel_v3", "prob": 10 },
       { "item": "embryo_empty", "prob": 10 },
-      { "item": "portal", "prob": 10 }
+      { "item": "portal", "prob": 10 },
+      { "item": "hover_repulsor", "prob": 10 }
     ]
   },
   {
