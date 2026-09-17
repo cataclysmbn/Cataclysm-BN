@@ -68,7 +68,10 @@
       { "type": "COMPONENT_ID", "condition": "ketchup", "name": "sausage with ketchup" },
       { "type": "COMPONENT_ID", "condition": "mayonnaise", "name": "sausage with mayonnaise" },
       { "type": "COMPONENT_ID", "condition": "mustard", "name": "sausage with mustard" },
-      { "type": "COMPONENT_ID", "condition": "horseradish", "name": "sausage with horseradish" }
+      { "type": "COMPONENT_ID", "condition": "horseradish", "name": "sausage with horseradish" },
+      { "type": "COMPONENT_ID", "condition": "butter", "name": "%s with butter" },
+      { "type": "COMPONENT_ID", "condition": "sauerkraut", "name": "%s with sauerkraut" },
+      { "type": "COMPONENT_ID", "condition": "soysauce", "name": "%s with soy sauce" }
     ],
     "copy-from": "sausage_cooked",
     "fun": 8,

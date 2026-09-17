@@ -414,6 +414,9 @@
       { "type": "COMPONENT_ID", "condition": "mayonnaise", "name": { "str": "%s with mayonnaise" } },
       { "type": "COMPONENT_ID", "condition": "mustard", "name": { "str": "%s with mustard" } },
       { "type": "COMPONENT_ID", "condition": "horseradish", "name": { "str": "%s with horseradish" } },
+      { "type": "COMPONENT_ID", "condition": "butter", "name": "%s with butter" },
+      { "type": "COMPONENT_ID", "condition": "sauerkraut", "name": "%s with sauerkraut" },
+      { "type": "COMPONENT_ID", "condition": "soysauce", "name": "%s with soy sauce" },
       { "type": "COMPONENT_ID", "condition": "salt", "name": { "str": "salted boiled egg" } }
     ],
     "copy-from": "boiled_egg",

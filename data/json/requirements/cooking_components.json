@@ -627,7 +627,9 @@
         [ "wild_herbs", 1 ],
         [ "soysauce", 1 ],
         [ "garlic_clove", 1 ],
-        [ "chili_pepper_roasted", 1 ]
+        [ "chili_pepper_roasted", 1 ],
+        [ "chilly-p", 1 ],
+        [ "curry_powder", 1 ]
       ]
     ]
   },
@@ -978,7 +980,7 @@
   {
     "id": "condiment_lite",
     "type": "requirement",
-    "//": " condiments that go well with sausage or boiled egg",
+    "//": " just the most 'vanilla' options",
     "components": [ [ [ "mayonnaise", 1 ], [ "mustard", 1 ], [ "ketchup", 1 ], [ "horseradish", 1 ] ] ]
   },
   {

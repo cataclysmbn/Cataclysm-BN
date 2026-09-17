@@ -2649,7 +2649,7 @@
       [ [ "milk_standard_raw", 1, "LIST" ], [ "con_milk", 1 ], [ "can_coconut", 1 ] ],
       [ [ "batter", 4, "LIST" ] ],
       [ [ "salt", 1 ] ],
-      [ [ "seasoning_mild", 1, "LIST" ], [ "chilly-p", 1 ], [ "curry_powder", 1 ] ]
+      [ [ "seasoning_mild", 1, "LIST" ] ]
     ]
   },
   {
@@ -3120,7 +3120,7 @@
     "skill_used": "cooking",
     "time": "15 s",
     "autolearn": true,
-    "components": [ [ [ "sausage_cooked", 1, "LIST" ] ], [ [ "condiment_lite", 1, "LIST" ] ] ]
+    "components": [ [ [ "sausage_cooked", 1, "LIST" ] ], [ [ "condiment", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",
