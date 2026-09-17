@@ -298,6 +298,7 @@
     "sub": "welder",
     "max_charges": 1000,
     "charges_per_use": 5,
+    "qualities": [ [ "WELD", 2 ] ],
     "use_action": [
       {
         "type": "repair_item",
