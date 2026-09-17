@@ -15,7 +15,7 @@
 #include "iteminfo_query.h"
 #include "map/map.h"
 #include "map/mapbuffer_registry.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "mongroup.h"
 #include "monster.h"

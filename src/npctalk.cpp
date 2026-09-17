@@ -35,7 +35,7 @@
 #include "magic/magic.h"
 #include "make_static.h"
 #include "map/map.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "martialarts.h"
 #include "message_types.h"
 #include "messages.h"

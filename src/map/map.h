@@ -17,7 +17,7 @@
 #include "lru_cache.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "memory_fast.h"
 #include "shadowcasting.h"
 #include "sounds.h"

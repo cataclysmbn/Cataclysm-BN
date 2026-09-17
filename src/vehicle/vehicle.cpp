@@ -35,7 +35,7 @@
 #include "map/mapdata.h"
 #include "map/submap.h"
 #include "map_iterator.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"

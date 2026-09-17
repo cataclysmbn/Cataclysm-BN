@@ -6,7 +6,7 @@
 #include "dimension_info.h"
 #include "game_constants.h"
 #include "item_stack.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "memory_fast.h"
 #include "point.h"
 #include "submap_load_manager.h"

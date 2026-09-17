@@ -5,7 +5,7 @@
 #include "magic/magic_ter_furn_transform.h"
 #include "map/map.h"
 #include "map/mapdata.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "type_id_implement.h"

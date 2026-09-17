@@ -1,7 +1,7 @@
 #pragma once
 
 #include "coordinates.h"
-#include "mapgen.h"
+#include "mapgen/mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "units_angle.h"

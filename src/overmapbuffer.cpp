@@ -17,7 +17,7 @@
 #include "line.h"
 #include "map/map.h"
 #include "map_iterator.h"
-#include "mapgendata.h"
+#include "mapgen/mapgendata.h"
 #include "memory_fast.h"
 #include "mongroup.h"
 #include "monster.h"

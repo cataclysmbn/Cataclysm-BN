@@ -1,20 +1,18 @@
 #pragma once
 
+#include "coordinates.h"
+#include "type_id.h"
+
 #include <cstddef>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "coordinates.h"
-#include "type_id.h"
-
 class mapgen_constructor;
 struct point;
 
-namespace mapf
-{
-template<typename ID>
-class format_effect;
+namespace mapf {
+template <typename ID> class format_effect;
 
 /**
  * Set terrain and furniture on the supplied mapgen surface.
@@ -27,21 +25,19 @@ class format_effect;
  *   A newline character continues on the next line (resets `x` to \p startx and increments `y`).
  * @param start Coordinates in the map where to start drawing \p cstr.
  */
-void formatted_set_simple( mapgen_constructor *m, const point_omt_ms &start, const char *cstr,
-                           const format_effect<ter_id> &ter_b, const format_effect<furn_id> &furn_b );
+void formatted_set_simple(
+    mapgen_constructor* m, const point_omt_ms& start, const char* cstr,
+    const format_effect<ter_id>& ter_b, const format_effect<furn_id>& furn_b);
 
-template<typename ID>
-class format_effect
-{
-    private:
-        std::string characters;
-        std::vector<ID> determiners;
+template <typename ID> class format_effect {
+private:
+    std::string characters;
+    std::vector<ID> determiners;
 
-    public:
-        format_effect( const std::string &chars,
-                       std::vector<ID> dets );
+public:
+    format_effect(const std::string& chars, std::vector<ID> dets);
 
-        ID translate( char c ) const;
+    ID translate(char c) const;
 };
 
 /**
@@ -61,26 +57,23 @@ class format_effect
  * \endcode
  */
 /**@{*/
-template<size_t N, typename ...Args>
-inline format_effect<ter_id> ter_bind( const char ( &characters )[N], Args... ids )
-{
+template <size_t N, typename... Args>
+inline format_effect<ter_id> ter_bind(const char (&characters)[N], Args... ids) {
     // Note to self: N contains the 0-char at the end of a string literal!
-    static_assert( N % 2 == 0, "list of characters to bind to must be odd, e.g. \"a b c\"" );
-    static_assert( N / 2 == sizeof...( Args ),
-                   "list of characters to bind to must match the size of the remaining arguments" );
-    return format_effect<ter_id>( characters, { std::forward<Args>( ids )... } );
+    static_assert(N % 2 == 0, "list of characters to bind to must be odd, e.g. \"a b c\"");
+    static_assert(N / 2 == sizeof...(Args),
+                  "list of characters to bind to must match the size of the remaining arguments");
+    return format_effect<ter_id>(characters, {std::forward<Args>(ids)...});
 }
 
-template<size_t N, typename ...Args>
-inline format_effect<furn_id> furn_bind( const char ( &characters )[N], Args... ids )
-{
+template <size_t N, typename... Args>
+inline format_effect<furn_id> furn_bind(const char (&characters)[N], Args... ids) {
     // Note to self: N contains the 0-char at the end of a string literal!
-    static_assert( N % 2 == 0, "list of characters to bind to must be odd, e.g. \"a b c\"" );
-    static_assert( N / 2 == sizeof...( Args ),
-                   "list of characters to bind to must match the size of the remaining arguments" );
-    return format_effect<furn_id>( characters, { std::forward<Args>( ids )... } );
+    static_assert(N % 2 == 0, "list of characters to bind to must be odd, e.g. \"a b c\"");
+    static_assert(N / 2 == sizeof...(Args),
+                  "list of characters to bind to must match the size of the remaining arguments");
+    return format_effect<furn_id>(characters, {std::forward<Args>(ids)...});
 }
 /**@}*/
 
-} //END NAMESPACE mapf
-
+} // END NAMESPACE mapf

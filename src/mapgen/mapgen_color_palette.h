@@ -2,11 +2,11 @@
 
 #include "hsv_color.h"
 #include "json.h"
-#include "mapgen/mapgen.h"
+#include "mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "units_angle.h"
-#include "vehicle_group.h"
+#include "vehicle/vehicle_group.h"
 #include "weighted_list.h"
 
 #include <memory>
@@ -18,9 +18,9 @@
 /**
  *  This class is used for random vehicle color choices
  */
-class VehiclePalette {
+class MapgenColorPalette {
 public:
-    VehiclePalette() = default;
+    MapgenColorPalette() = default;
 
     static void load_palette(const JsonObject& jo, const std::string& src);
 
@@ -32,15 +32,18 @@ public:
 
     static void reset();
 
-    int fuzzy_to_index(const vpart_id& id) const;
+    std::optional<RGBColor> pick_color(unsigned int seed) const;
 
-    std::vector<RGBColor> pick_colors() const;
-
-    vpalette_id id;
+    mpalette_id id;
 
     bool was_loaded;
 
+    static mpalette_id define_new_palette(const JsonObject& obj);
+
 private:
-    std::vector<weighted_int_list<std::string>> colors;
-    std::map<std::string, int> fuzzy_color_match;
+    weighted_int_list<std::string> colors;
+
+    static mpalette_id get_unique_id();
+
+    static int next_id;
 };

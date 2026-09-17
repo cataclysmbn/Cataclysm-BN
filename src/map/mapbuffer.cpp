@@ -24,7 +24,7 @@
 #include "map_iterator.h"
 #include "map_mutation_hooks.h"
 #include "mapdata.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "mongroup.h"
 #include "monster.h"

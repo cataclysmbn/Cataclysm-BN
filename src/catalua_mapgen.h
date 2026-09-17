@@ -3,7 +3,7 @@
 #include "catalua_sol.h"
 #include "catalua_sol_fwd.h"
 #include "map/map.h"
-#include "mapgen.h"
+#include "mapgen/mapgen.h"
 #include "ret_val.h"
 #include "sol/sol.hpp"
 

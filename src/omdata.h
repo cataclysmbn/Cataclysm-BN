@@ -1,28 +1,28 @@
 #pragma once
 
+#include "catacharset.h"
+#include "color.h"
+#include "coordinates.h"
+#include "cuboid_rectangle.h"
+#include "enum_bitset.h"
+#include "int_id.h"
+#include "mapgen/mapgen_parameter.h"
+#include "numeric_interval.h"
+#include "om_direction.h"
+#include "point.h"
+#include "string_id.h"
+#include "translations.h"
+#include "type_id.h"
+
+#include <array>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <list>
 #include <optional>
 #include <set>
-#include <vector>
-#include <array>
 #include <string>
-
-#include "cuboid_rectangle.h"
-#include "catacharset.h"
-#include "color.h"
-#include "numeric_interval.h"
-#include "coordinates.h"
-#include "enum_bitset.h"
-#include "int_id.h"
-#include "om_direction.h"
-#include "mapgen_parameter.h"
-#include "point.h"
-#include "string_id.h"
-#include "translations.h"
-#include "type_id.h"
+#include <vector>
 
 struct city;
 class overmap_land_use_code;
