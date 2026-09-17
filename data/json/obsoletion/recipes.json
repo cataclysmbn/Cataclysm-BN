@@ -2340,5 +2340,20 @@
     "type": "recipe",
     "result": "xlkevlar",
     "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "jet_thruster",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "vtol_thruster",
+    "obsolete": true
+  },
+  {
+    "type": "recipe",
+    "result": "hover_repulsor",
+    "obsolete": true
   }
 ]
