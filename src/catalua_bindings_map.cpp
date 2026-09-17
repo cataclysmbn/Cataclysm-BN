@@ -15,7 +15,7 @@
 #include "map/field.h"
 #include "map/map.h"
 #include "map_iterator.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "npc.h"
 #include "overmap.h"
 #include "sol/sol.hpp"

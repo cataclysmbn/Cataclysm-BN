@@ -1,7 +1,7 @@
 #pragma once
 
 #include "coordinates.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "point.h"
 #include "type_id.h"
 

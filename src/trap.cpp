@@ -16,7 +16,7 @@
 #include "line.h"
 #include "map/map.h"
 #include "map_iterator.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "point.h"
 #include "rng.h"
 #include "string_id.h"

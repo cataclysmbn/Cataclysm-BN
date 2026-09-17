@@ -56,6 +56,7 @@
       [ "SAW_W", 1 ],
       [ "SAW_M", 2 ],
       [ "SAW_M_FINE", 1 ],
+      [ "WELD", 2 ],
       [ "WRENCH", 2 ],
       [ "WRENCH_FINE", 1 ],
       [ "PULL", 1 ],
@@ -298,6 +299,7 @@
     "sub": "welder",
     "max_charges": 1000,
     "charges_per_use": 5,
+    "qualities": [ [ "WELD", 2 ] ],
     "use_action": [
       {
         "type": "repair_item",

@@ -1,5 +1,20 @@
 #pragma once
 
+#include "coordinates.h"
+#include "cube_direction.h"
+#include "enum_conversions.h"
+#include "enums.h"
+#include "game_constants.h"
+#include "mapgen/mapgendata.h"
+#include "memory_fast.h"
+#include "mongroup.h"
+#include "omdata.h"
+#include "overmap_types.h" // IWYU pragma: keep
+#include "pimpl.h"
+#include "point.h"
+#include "string_id.h"
+#include "type_id.h"
+
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -17,21 +32,6 @@
 #include <utility>
 #include <vector>
 #include <weighted_list.h>
-
-#include "coordinates.h"
-#include "cube_direction.h"
-#include "enums.h"
-#include "enum_conversions.h"
-#include "game_constants.h"
-#include "mapgendata.h"
-#include "memory_fast.h"
-#include "mongroup.h"
-#include "omdata.h"
-#include "overmap_types.h" // IWYU pragma: keep
-#include "pimpl.h"
-#include "point.h"
-#include "string_id.h"
-#include "type_id.h"
 
 class JsonIn;
 class JsonObject;

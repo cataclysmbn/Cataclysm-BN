@@ -18,7 +18,7 @@
 #include "map/mapbuffer.h"
 #include "map/mapbuffer_registry.h"
 #include "map_helpers.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"

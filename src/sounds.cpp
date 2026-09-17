@@ -953,7 +953,7 @@ void map::batch_flood_fill_sounds()
             if( flooded_sound.origin.z() != z ) {
                 // We still floodfill these sounds out later, just when we get to the right z-level.
                 continue;
-            } else if( flooded_sound.volume < 7 ) {
+            } else if( flooded_sound.volume < 7 || !inbounds( flooded_sound.origin ) ) {
                 num_invalidated_sounds++;
                 continue;
             } else {

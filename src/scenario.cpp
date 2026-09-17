@@ -1,21 +1,20 @@
 #include "scenario.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <algorithm>
-
 #include "debug.h"
 #include "generic_factory.h"
 #include "json.h"
-#include "map_extras.h"
+#include "mapgen/map_extras.h"
 #include "mission.h"
 #include "mutation.h"
 #include "profession.h"
+#include "rng.h"
+#include "start_location.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id_implement.h"
-#include "rng.h"
-#include "start_location.h"
+
+#include <algorithm>
+#include <cstdlib>
 
 namespace
 {

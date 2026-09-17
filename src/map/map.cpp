@@ -62,7 +62,7 @@
 #include "map_selector.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
-#include "mapgen_async.h"
+#include "mapgen/mapgen_async.h"
 #include "math_defines.h"
 #include "memory_fast.h"
 #include "messages.h"

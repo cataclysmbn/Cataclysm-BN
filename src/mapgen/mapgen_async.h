@@ -1,13 +1,12 @@
 #pragma once
 
-#include <string>
-
 #include "calendar.h"
 #include "coordinates.h"
 #include "type_id.h"
 
-namespace cata
-{
+#include <string>
+
+namespace cata {
 struct lua_state;
 } // namespace cata
 
@@ -24,9 +23,9 @@ struct lua_state;
  * the same mapgen surface it would have received on the main thread.
  */
 struct deferred_mapgen_hook {
-    dimension_id      dim;
-    tripoint_abs_omt  omt_pos;
-    time_point        when;
+    dimension_id dim;
+    tripoint_abs_omt omt_pos;
+    time_point when;
 };
 
 /**
@@ -38,15 +37,15 @@ struct deferred_mapgen_hook {
  * logic that would have run inline on the main thread.
  */
 struct deferred_autonote {
-    dimension_id      dim;
-    tripoint_abs_omt  omt_pos;
-    std::string       extra_id;   // raw string backing a string_id<map_extra>
+    dimension_id dim;
+    tripoint_abs_omt omt_pos;
+    std::string extra_id; // raw string backing a string_id<map_extra>
 };
 
 /** Push a hook entry from a worker thread (thread-safe).
  *  No-op if no on_mapgen_postprocess hooks are registered — avoids queuing
  *  deferred entries that will be discarded anyway. */
-void push_deferred_mapgen_hook( deferred_mapgen_hook h );
+void push_deferred_mapgen_hook(deferred_mapgen_hook h);
 
 /**
  * Update the cached flag used by push_deferred_mapgen_hook() to decide
@@ -56,7 +55,7 @@ void push_deferred_mapgen_hook( deferred_mapgen_hook h );
  * loading (i.e. after init::load_main_lua_scripts).  Thread-safe write via
  * std::atomic — no Android fallback needed (plain bool, not atomic_ref).
  */
-void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state );
+void refresh_mapgen_postprocess_hook_presence(cata::lua_state& state);
 
 /**
  * Drain all deferred hooks and run each one on the main thread.
@@ -75,7 +74,7 @@ void run_deferred_mapgen_hooks();
 bool mapgen_hooks_registered();
 
 /** Push an autonote entry from a worker thread (thread-safe). */
-void push_deferred_autonote( deferred_autonote entry );
+void push_deferred_autonote(deferred_autonote entry);
 
 /**
  * Drain all deferred autonotes and process each on the main thread.

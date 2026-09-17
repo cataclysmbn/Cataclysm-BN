@@ -1,12 +1,3 @@
-#include <algorithm>
-#include <cassert>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "debug.h"
 #include "dialogue.h"
@@ -16,7 +7,7 @@
 #include "json.h"
 #include "line.h"
 #include "map_iterator.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "messages.h"
 #include "mission.h"
 #include "npc.h"
@@ -28,6 +19,15 @@
 #include "rng.h"
 #include "translations.h"
 #include "type_id.h"
+
+#include <algorithm>
+#include <cassert>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 static tripoint_abs_omt reveal_destination( const std::string &type, overmapbuffer &omb )
 {

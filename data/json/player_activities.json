@@ -118,7 +118,7 @@
     "special": true,
     "auto_needs": true,
     "bubble_size_effect": "mobile",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_GENERIC_GAME",
@@ -127,7 +127,7 @@
     "rooted": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_GAME",
@@ -136,7 +136,7 @@
     "rooted": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_WAIT",
@@ -148,7 +148,7 @@
     "auto_needs": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_WASH_SELF",
@@ -158,7 +158,7 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_CRAFT",
@@ -353,7 +353,7 @@
     "rooted": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_WAIT_WEATHER",
@@ -364,7 +364,7 @@
     "auto_needs": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_FIRSTAID",
@@ -381,7 +381,7 @@
     "suspendable": false,
     "complex_moves": { "light": true, "morale": true, "speed": true, "skills": [ [ "survival" ] ], "stats": [ [ "PER" ] ] },
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_PICKAXE",
@@ -432,7 +432,7 @@
     "verb": "training",
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_MAKE_ZLAVE",
@@ -703,7 +703,7 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_WAIT_STAMINA",
@@ -713,7 +713,7 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_CLEAR_RUBBLE",
@@ -729,7 +729,7 @@
     "rooted": true,
     "complex_moves": { "speed": true, "stats": [ [ "INT" ] ] },
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_HACKSAW",
@@ -881,7 +881,7 @@
     "no_resume": true,
     "verbose_tooltip": false,
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_EAT_MENU",
@@ -922,7 +922,7 @@
     "no_resume": true,
     "complex_moves": { "speed": true },
     "bubble_size_effect": "idle",
-    "rest_amount": 0.2
+    "rest_amount": 0.1
   },
   {
     "id": "ACT_CONSUME_DRINK_MENU",

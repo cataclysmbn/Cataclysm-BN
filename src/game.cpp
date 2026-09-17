@@ -13890,6 +13890,7 @@ void game::resize_reality_bubble_to( int new_size )
     // Compute the new top-left abs_sub so load_map centers on the player.
     const auto new_abs_sub = player_abs_sm.xy() +
                              point_rel_sm( -g_half_mapsize, -g_half_mapsize );
+    sounds::shift_sound_positions( project_to<coords::ms>( m.get_abs_sub() - new_abs_sub ) );
 
     // Reload the map around the player; this fills the submap cache, recreates load requests,
     // rebuilds distribution_grid_tracker and fluid_grid.
