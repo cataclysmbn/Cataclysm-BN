@@ -10,9 +10,9 @@
     "item": "jet_thruster",
     "propeller_diameter": 10,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
-      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ], [ "steel_tiny", 3 ] ] }
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ], [ "steel_tiny", 3 ] ] }
     },
     "durability": 350,
     "damage_modifier": 50,
@@ -41,9 +41,9 @@
     "rotor_diameter": 5,
     "propeller_diameter": 5,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
-      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ], [ "steel_tiny", 3 ] ] }
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ], [ "steel_tiny", 3 ] ] }
     },
     "durability": 350,
     "description": "This is a vertical takeoff and landing (VTOL) propulsion system used in military VTOL aircraft.  It provides both lift for taking off and thrust when in the air.",
@@ -64,11 +64,11 @@
     "color": "cyan",
     "rotor_diameter": 15,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 10 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 10 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "install": { "skills": [ [ "mechanics", 10 ] ], "time": "4 h", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 10 ] ], "time": "4 h", "using": [ [ "vehicle_weld_removal", 10 ] ] },
       "repair": {
         "skills": [ [ "mechanics", 10 ] ],
-        "time": "60 m",
+        "time": "4 h",
         "using": [
           [ "welding_standard", 20 ],
           [ "soldering_standard", 10 ],
