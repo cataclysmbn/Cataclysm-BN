@@ -56,6 +56,7 @@
       [ "SAW_W", 1 ],
       [ "SAW_M", 2 ],
       [ "SAW_M_FINE", 1 ],
+      [ "WELD", 2 ],
       [ "WRENCH", 2 ],
       [ "WRENCH_FINE", 1 ],
       [ "PULL", 1 ],
