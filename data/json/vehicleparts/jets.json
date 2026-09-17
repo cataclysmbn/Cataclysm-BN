@@ -6,19 +6,19 @@
     "color": "light_gray",
     "type": "vehicle_part",
     "name": "jet thruster",
-    "description": "This jet propulsion module is a concentrated embodiment of military-grade aerospace engineering.  Originally designed for use as the primary propulsion system and altitude control mechanism in next-generation jet fighters, it boasts an overwhelming thrust-to-weight ratio that far surpasses that of conventional internal combustion engines.",
+    "description": "This is a jet propulsion module used in military fighter jets.  It provides extremely high thrust.",
     "item": "jet_thruster",
     "propeller_diameter": 10,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
-      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ], [ "steel_tiny", 3 ] ] }
     },
-    "durability": 120,
-    "damage_modifier": 80,
-    "breaks_into": [ { "item": "scrap", "count": [ 10, 20 ] } ],
+    "durability": 350,
+    "damage_modifier": 50,
+    "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
     "flags": [ "PROPELLER", "SHOCK_RESISTANT" ],
-    "damage_reduction": { "bash": 10 }
+    "damage_reduction": { "all": 35 }
   },
   {
     "id": "jet_thruster_external",
@@ -41,9 +41,9 @@
     "rotor_diameter": 5,
     "propeller_diameter": 5,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
-      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "3 h", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "3 h", "using": [ [ "welding_standard", 20 ], [ "steel_tiny", 3 ] ] }
     },
     "durability": 350,
     "description": "This is a vertical takeoff and landing (VTOL) propulsion system used in military VTOL aircraft.  It provides both lift for taking off and thrust when in the air.",
@@ -64,17 +64,26 @@
     "color": "cyan",
     "rotor_diameter": 15,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
-      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+      "install": { "skills": [ [ "mechanics", 10 ] ], "time": "4 h", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 10 ] ], "time": "4 h", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 10 ] ],
+        "time": "4 h",
+        "using": [
+          [ "welding_standard", 20 ],
+          [ "soldering_standard", 10 ],
+          [ "vehicle_repair_superalloy", 2 ],
+          [ "vehicle_repair_electronics", 2 ]
+        ]
+      }
     },
     "height": 350,
     "durability": 300,
     "wheel_type": "off-road",
     "contact_area": 1000,
-    "description": "This is a lightweight hover repulsor module mounted on the underside of a vehicle.  It offers unparalleled maneuverability, allowing the vehicle to glide and fly effortlessly over rough terrain and obstacles.  Though originally intended to be frictionless, unknown antigrav phenomena nonetheless causes vehicles to experience a force similar to friction.",
+    "description": "This is an experimental hover repulsor module mounted on the underside of a vehicle.  It allows the vehicle to glide and fly over rough terrain and obstacles.  Though originally thought to be frictionless, unknown antigrav phenomena nonetheless causes vehicles to experience a force similar to friction when near the ground.",
     "damage_modifier": 50,
-    "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
+    "breaks_into": [ { "item": "e_scrap", "count": [ 15, 30 ] }, { "item": "alloy_sheet", "count": [ 8, 16 ] } ],
     "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED", "TRAP_PROOF" ],
     "damage_reduction": { "all": 40 }
   }
