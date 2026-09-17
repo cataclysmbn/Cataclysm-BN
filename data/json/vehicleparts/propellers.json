@@ -36,10 +36,10 @@
     "item": "wood_propeller_item",
     "propeller_diameter": 2,
     "requirements": {
-      "install": { "skills": [ [ "mechanics", 5 ] ], "time": "2 h", "using": [ [ "vehicle_nail_install", 20 ] ] },
-      "removal": { "skills": [ [ "mechanics", 5 ] ], "time": "2 h", "using": [ [ "vehicle_nail_removal", 1 ] ] },
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "2 h", "using": [ [ "vehicle_nail_install", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "2 h", "using": [ [ "vehicle_nail_removal", 1 ] ] },
       "repair": {
-        "skills": [ [ "mechanics", 6 ] ],
+        "skills": [ [ "mechanics", 7 ] ],
         "time": "2 h",
         "using": [ [ "nail_any_adhesive", 10 ], [ "wood_structural_small", 1 ] ]
       }
