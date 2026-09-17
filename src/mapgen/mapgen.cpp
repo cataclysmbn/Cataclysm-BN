@@ -2045,7 +2045,7 @@ public:
         : type(jsi.get_member("vehicle")),
           chance(jsi, "chance", 1, 1)
           //, rotation( jsi.get_int( "rotation", 0 ) ) // unless there is a way for the json parser
-          //to
+          // to
           // return a single int as a list, we have to manually check this in the constructor below
           ,
           fuel(jsi.get_int("fuel", -1)),

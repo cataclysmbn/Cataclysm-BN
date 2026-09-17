@@ -366,13 +366,14 @@ static bool mx_helicopter(mapgen_constructor& m, const tripoint_abs_omt& abs_off
                     if (m.ter(p)->is_diggable()) { m.ter_set(p, t_dirtmound); }
                 }
 
-            } else if (one_in(4 + (std::abs(p.x() - c.x()) + (std::abs(p.y() - c.y()))))) { // 1 in
-                                                                                            // 10
-                                                                                            // chance
-                                                                                            // of
-                                                                                            // being
-                                                                                            // wreckage
-                                                                                            // anyway
+            } else if (
+                one_in(4 + (std::abs(p.x() - c.x()) + (std::abs(p.y() - c.y()))))) { // 1 in
+                                                                                     // 10
+                                                                                     // chance
+                                                                                     // of
+                                                                                     // being
+                                                                                     // wreckage
+                                                                                     // anyway
                 m.make_rubble(p, f_wreckage);
                 if (!one_in(3)) {
                     if (m.ter(p)->is_diggable()) { m.ter_set(p, t_dirtmound); }
