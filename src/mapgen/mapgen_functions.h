@@ -42,14 +42,14 @@ struct mapgen_result {
  * Calculates the coordinates of a rotated point.
  * Should match the `mapgen_*` rotation.
  */
-tripoint_omt_ms rotate_point(const tripoint_omt_ms& p, int rotations);
+auto rotate_point(const tripoint_omt_ms& p, int rotations) -> tripoint_omt_ms;
 
-int terrain_type_to_nesw_array(oter_id terrain_type, bool array[4]);
+auto terrain_type_to_nesw_array(oter_id terrain_type, bool array[4]) -> int;
 
 using building_gen_pointer = void (*)(mapgendata&);
 building_gen_pointer get_mapgen_cfunction(const std::string& ident);
-ter_id grass_or_dirt();
-ter_id clay_or_sand();
+auto grass_or_dirt() -> ter_id;
+auto clay_or_sand() -> ter_id;
 
 // helper functions for mapgen.cpp, so that we can avoid having a massive switch statement (sorta)
 void mapgen_null(mapgendata& dat);
@@ -91,25 +91,25 @@ void mremove_trap(mapgen_constructor* m, const point_omt_ms&);
 void mtrap_set(mapgen_constructor* m, const point_omt_ms&, trap_id type);
 void madd_field(mapgen_constructor* m, const point_omt_ms&, field_type_id type, int intensity);
 
-mapgen_update_func add_mapgen_update_func(const JsonObject& jo, bool& defer);
-bool run_mapgen_update_func(
+auto add_mapgen_update_func(const JsonObject& jo, bool& defer) -> mapgen_update_func;
+auto run_mapgen_update_func(
     const std::string& update_mapgen_id, const tripoint_abs_omt& omt_pos, mission* miss = nullptr,
-    bool cancel_on_collision = true);
-bool run_mapgen_update_func(
-    const std::string& update_mapgen_id, mapgendata& dat, bool cancel_on_collision = true);
-bool run_mapgen_func(const std::string& mapgen_id, mapgendata& dat);
+    bool cancel_on_collision = true) -> bool;
+auto run_mapgen_update_func(
+    const std::string& update_mapgen_id, mapgendata& dat, bool cancel_on_collision = true) -> bool;
+auto run_mapgen_func(const std::string& mapgen_id, mapgendata& dat) -> bool;
 auto pick_mapgen_func(const std::string& mapgen_id) -> std::shared_ptr<mapgen_function>;
 auto mapgen_function_needs_main_thread(const std::shared_ptr<mapgen_function>& func) -> bool;
 auto mapgen_has_any_direct_lua_generator() -> bool;
 auto mapgen_id_has_direct_lua_generator(const std::string& mapgen_id) -> bool;
-std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_update(
-    const std::string& update_mapgen_id);
-mapgen_parameters get_map_special_params(const std::string& mapgen_id);
+auto get_changed_ids_from_update(const std::string& update_mapgen_id)
+    -> std::pair<std::map<ter_id, int>, std::map<furn_id, int>>;
+auto get_map_special_params(const std::string& mapgen_id) -> mapgen_parameters;
 
 void resolve_regional_terrain_and_furniture(const mapgendata& dat);
 
 namespace mapgen {
 
-bool has_update_id(const mapgen_id& id);
+auto has_update_id(const mapgen_id& id) -> bool;
 
 } // namespace mapgen

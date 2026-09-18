@@ -271,7 +271,7 @@ private:
     weighted_int_list<std::shared_ptr<mapgen_function>> weights_;
 
 public:
-    int add(const std::shared_ptr<mapgen_function>& ptr) {
+    auto add(const std::shared_ptr<mapgen_function>& ptr) -> int {
         assert(ptr);
         if (std::find(mapgens_.begin(), mapgens_.end(), ptr) != mapgens_.end()) {
             debugmsg("Adding duplicate mapgen to container!");
@@ -288,7 +288,7 @@ public:
      * @p hardcoded_weight Weight for an additional entry. If that entry is chosen,
      * false is returned. If unsure, just use 0 for it.
      */
-    bool generate(mapgendata& dat, const int hardcoded_weight) const {
+    auto generate(mapgendata& dat, const int hardcoded_weight) const -> bool {
         ZoneScopedN("mapgen_container_generate");
         const auto ptr = pick(hardcoded_weight);
         if (!ptr) { return false; }
@@ -345,8 +345,8 @@ public:
         for (auto& mapgen_function_ptr : weights_) { mapgen_function_ptr.obj->check(key); }
     }
 
-    mapgen_parameters get_mapgen_params(
-        mapgen_parameter_scope scope, const std::string& context) const {
+    auto get_mapgen_params(mapgen_parameter_scope scope, const std::string& context) const
+        -> mapgen_parameters {
         mapgen_parameters result;
         for (const weighted_object<int, std::shared_ptr<mapgen_function>>& p : weights_) {
             result.check_and_merge(p.obj->get_mapgen_params(scope), context);
@@ -361,7 +361,7 @@ private:
     bool any_direct_lua_generator_ = false;
 
     /// Collect all the possible and expected keys that may get used with @ref pick.
-    static std::set<std::string> get_usages() {
+    static auto get_usages() -> std::set<std::string> {
         std::set<std::string> result;
         for (const oter_t& elem : overmap_terrains::get_all()) {
             result.insert(elem.get_mapgen_id());
@@ -421,13 +421,14 @@ public:
      * Note that the entry itself may not contain any valid mapgen instance
      * (could all have been removed via @ref erase).
      */
-    bool has(const std::string& key) const { return mapgens_.contains(key); }
+    auto has(const std::string& key) const -> bool { return mapgens_.contains(key); }
     /// @see mapgen_basic_container::add
-    int add(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) {
+    auto add(const std::string& key, const std::shared_ptr<mapgen_function>& ptr) -> int {
         return mapgens_[key].add(ptr);
     }
     /// @see mapgen_basic_container::generate
-    bool generate(mapgendata& dat, const std::string& key, const int hardcoded_weight = 0) const {
+    auto generate(mapgendata& dat, const std::string& key, const int hardcoded_weight = 0) const
+        -> bool {
         const auto iter = mapgens_.find(disable_mapgen ? "test" : key);
         if (iter == mapgens_.end()) { return false; }
         return iter->second.generate(dat, hardcoded_weight);
@@ -444,7 +445,7 @@ public:
         return iter->second.has_direct_lua_generator();
     }
     auto has_any_direct_lua_generator() const -> bool { return any_direct_lua_generator_; }
-    mapgen_parameters get_map_special_params(const std::string& key) const {
+    auto get_map_special_params(const std::string& key) const -> mapgen_parameters {
         const auto iter = mapgens_.find(key);
         if (iter == mapgens_.end()) { return mapgen_parameters(); }
         return iter->second.get_mapgen_params(
@@ -567,8 +568,9 @@ static void set_mapgen_defer(
 /*
  * load a single mapgen json structure; this can be inside an overmap_terrain, or on it's own.
  */
-std::shared_ptr<mapgen_function> load_mapgen_function(
-    const JsonObject& jio, const point_rel_omt& offset, const point_rel_omt& total) {
+auto load_mapgen_function(
+    const JsonObject& jio, const point_rel_omt& offset, const point_rel_omt& total)
+    -> std::shared_ptr<mapgen_function> {
     int mgweight = jio.get_int("weight", 1000);
     if (mgweight <= 0 || jio.get_bool("disabled", false)) {
         jio.allow_omitted_members();
@@ -699,15 +701,15 @@ void reset_mapgens() {
 ///// 2 - right after init() finishes parsing all game json and terrain info/etc is set..
 /////   ...parse more json! (mapgen_function_json)
 
-size_t mapgen_function_json_base::calc_index(const point_rel_ms& p) const {
+auto mapgen_function_json_base::calc_index(const point_rel_ms& p) const -> size_t {
     if (p.x() >= mapgensize.x()) { debugmsg("invalid value %zu for x in calc_index", p.x()); }
     if (p.y() >= mapgensize.y()) { debugmsg("invalid value %zu for y in calc_index", p.y()); }
     return p.y() * mapgensize.y() + p.x();
 }
 
-static bool common_check_bounds(
+static auto common_check_bounds(
     const jmapgen_int& x, const jmapgen_int& y, const point_rel_ms& mapgensize,
-    const JsonObject& jso) {
+    const JsonObject& jso) -> bool {
     half_open_rectangle<point_rel_ms> bounds(point_rel_ms::zero(), mapgensize);
     if (!bounds.contains(point_rel_ms(x.val, y.val))) { return false; }
 
@@ -729,8 +731,8 @@ void mapgen_function_json_base::merge_non_nest_parameters_into(
     params.check_and_merge(parameters, outer_context, mapgen_parameter_scope::nest);
 }
 
-bool mapgen_function_json_base::check_inbounds(
-    const jmapgen_int& x, const jmapgen_int& y, const JsonObject& jso) const {
+auto mapgen_function_json_base::check_inbounds(
+    const jmapgen_int& x, const jmapgen_int& y, const JsonObject& jso) const -> bool {
     return common_check_bounds(x, y, mapgensize, jso);
 }
 
@@ -795,7 +797,7 @@ jmapgen_int::jmapgen_int(const JsonObject& jo, const std::string& tag, int def_v
     }
 }
 
-int jmapgen_int::get() const { return val == valmax ? val : rng(val, valmax); }
+auto jmapgen_int::get() const -> int { return val == valmax ? val : rng(val, valmax); }
 
 /*
  * Turn json gobbldigook into machine friendly gobbldigook, for applying
@@ -916,8 +918,8 @@ void mapgen_function_json_base::finalize_parameters_common() {
     objects.merge_parameters_into(parameters, "");
 }
 
-mapgen_arguments mapgen_function_json_base::get_args(
-    const mapgendata& md, mapgen_parameter_scope scope) const {
+auto mapgen_function_json_base::get_args(const mapgendata& md, mapgen_parameter_scope scope) const
+    -> mapgen_arguments {
     return parameters.get_args(md, scope);
 }
 
@@ -960,39 +962,47 @@ map_key::map_key(const JsonMember& member): str(member.name()) {
     if (utf8_width(str) != 1) { member.throw_error("format map key must be 1 column"); }
 }
 
-template <typename T> static bool is_null_helper(const string_id<T>& id) { return id.is_null(); }
+template <typename T> static auto is_null_helper(const string_id<T>& id) -> bool {
+    return id.is_null();
+}
 
-template <typename T> static bool is_null_helper(const int_id<T>& id) { return id.id().is_null(); }
+template <typename T> static auto is_null_helper(const int_id<T>& id) -> bool {
+    return id.id().is_null();
+}
 
-static bool is_null_helper(const std::string&) { return false; }
+static auto is_null_helper(const std::string&) -> bool { return false; }
 
 template <typename T> struct make_null_helper;
 
 template <> struct make_null_helper<std::string> {
-    std::string operator()() const { return {}; }
+    auto operator()() const -> std::string { return {}; }
 };
 
 template <typename T> struct make_null_helper<string_id<T>> {
-    string_id<T> operator()() const { return string_id<T>::NULL_ID(); }
+    auto operator()() const -> string_id<T> { return string_id<T>::NULL_ID(); }
 };
 
 template <typename T> struct make_null_helper<int_id<T>> {
-    int_id<T> operator()() const { return string_id<T>::NULL_ID().id(); }
+    auto operator()() const -> int_id<T> { return string_id<T>::NULL_ID().id(); }
 };
 
-template <typename T> static string_id<T> to_string_id_helper(const string_id<T>& id) { return id; }
+template <typename T> static auto to_string_id_helper(const string_id<T>& id) -> string_id<T> {
+    return id;
+}
 
-template <typename T> static string_id<T> to_string_id_helper(const int_id<T>& id) {
+template <typename T> static auto to_string_id_helper(const int_id<T>& id) -> string_id<T> {
     return id.id();
 }
 
-static std::string to_string_id_helper(const std::string& s) { return s; }
+static auto to_string_id_helper(const std::string& s) -> std::string { return s; }
 
-template <typename T> static bool is_valid_helper(const string_id<T>& id) { return id.is_valid(); }
+template <typename T> static auto is_valid_helper(const string_id<T>& id) -> bool {
+    return id.is_valid();
+}
 
-template <typename T> static bool is_valid_helper(const int_id<T>&) { return true; }
+template <typename T> static auto is_valid_helper(const int_id<T>&) -> bool { return true; }
 
-static bool is_valid_helper(const std::string&) { return true; }
+static auto is_valid_helper(const std::string&) -> bool { return true; }
 
 // Mapgen often uses various id values.  Usually these are specified verbatim
 // as strings, but they can also be parameterized.  This class encapsulates
@@ -1007,15 +1017,16 @@ public:
 
     struct value_source {
         virtual ~value_source() = default;
-        virtual Id get(const mapgendata&) const = 0;
+        virtual auto get(const mapgendata&) const -> Id = 0;
         virtual void check(const std::string& /*oter_name*/, const mapgen_parameters&) const {};
         virtual void check_consistent_with(
             const value_source&, const std::string& context) const = 0;
-        virtual std::vector<StringId> all_possible_results(const mapgen_parameters&) const = 0;
+        virtual auto all_possible_results(const mapgen_parameters&) const
+            -> std::vector<StringId> = 0;
     };
 
     struct null_source: value_source {
-        Id get(const mapgendata&) const override { return make_null_helper<Id>{}(); }
+        auto get(const mapgendata&) const -> Id override { return make_null_helper<Id>{}(); }
 
         void check_consistent_with(
             const value_source& o, const std::string& context) const override {
@@ -1026,7 +1037,8 @@ public:
             }
         }
 
-        std::vector<StringId> all_possible_results(const mapgen_parameters&) const override {
+        auto all_possible_results(const mapgen_parameters&) const
+            -> std::vector<StringId> override {
             return {make_null_helper<StringId>{}()};
         }
     };
@@ -1038,7 +1050,7 @@ public:
 
         explicit id_source(const Id_unless_string& s): id(s) {}
 
-        Id get(const mapgendata&) const override { return id; }
+        auto get(const mapgendata&) const -> Id override { return id; }
 
         void check(const std::string& context, const mapgen_parameters&) const override {
             if (!is_valid_helper(id)) {
@@ -1059,7 +1071,8 @@ public:
             }
         }
 
-        std::vector<StringId> all_possible_results(const mapgen_parameters&) const override {
+        auto all_possible_results(const mapgen_parameters&) const
+            -> std::vector<StringId> override {
             return {to_string_id_helper(id)};
         }
     };
@@ -1072,7 +1085,7 @@ public:
             jo.read("fallback", fallback, false);
         }
 
-        Id get(const mapgendata& dat) const override {
+        auto get(const mapgendata& dat) const -> Id override {
             if (fallback) {
                 return Id(dat.get_arg_or<StringId>(param_name, *fallback));
             } else {
@@ -1117,7 +1130,8 @@ public:
             }
         }
 
-        std::vector<StringId> all_possible_results(const mapgen_parameters& params) const override {
+        auto all_possible_results(const mapgen_parameters& params) const
+            -> std::vector<StringId> override {
             auto param_it = params.map.find(param_name);
             if (param_it == params.map.end()) {
                 return {};
@@ -1139,7 +1153,7 @@ public:
             load_weighted_list(jo.get_member("distribution"), list, 1);
         }
 
-        Id get(const mapgendata&) const override { return *list.pick(); }
+        auto get(const mapgendata&) const -> Id override { return *list.pick(); }
 
         void check(const std::string& context, const mapgen_parameters&) const override {
             for (const weighted_object<int, StringId>& wo : list) {
@@ -1164,7 +1178,8 @@ public:
             }
         }
 
-        std::vector<StringId> all_possible_results(const mapgen_parameters&) const override {
+        auto all_possible_results(const mapgen_parameters&) const
+            -> std::vector<StringId> override {
             std::vector<StringId> result;
             for (const weighted_object<int, StringId>& wo : list) { result.push_back(wo.obj); }
             return result;
@@ -1184,7 +1199,7 @@ public:
             jo.read("cases", cases, true);
         }
 
-        Id get(const mapgendata& dat) const override {
+        auto get(const mapgendata& dat) const -> Id override {
             std::string based_on = on->get(dat);
             auto it = cases.find(based_on);
             if (it == cases.end()) {
@@ -1243,7 +1258,8 @@ public:
             }
         }
 
-        std::vector<StringId> all_possible_results(const mapgen_parameters&) const override {
+        auto all_possible_results(const mapgen_parameters&) const
+            -> std::vector<StringId> override {
             std::vector<StringId> result;
             for (const std::pair<const std::string, StringId>& p : cases) {
                 result.push_back(p.second);
@@ -1286,7 +1302,7 @@ public:
         }
     }
 
-    bool is_null() const { return is_null_; }
+    auto is_null() const -> bool { return is_null_; }
 
     void check(const std::string& context, const mapgen_parameters& params) const {
         source_->check(context, params);
@@ -1295,8 +1311,8 @@ public:
         source_->check_consistent_with(*other.source_, context);
     }
 
-    Id get(const mapgendata& dat) const { return source_->get(dat); }
-    std::vector<StringId> all_possible_results(const mapgen_parameters& params) const {
+    auto get(const mapgendata& dat) const -> Id { return source_->get(dat); }
+    auto all_possible_results(const mapgen_parameters& params) const -> std::vector<StringId> {
         return source_->all_possible_results(params);
     }
 
@@ -1315,7 +1331,7 @@ private:
 
 namespace io {
 
-template <> std::string enum_to_string<mapgen_parameter_scope>(mapgen_parameter_scope v) {
+template <> auto enum_to_string<mapgen_parameter_scope>(mapgen_parameter_scope v) -> std::string {
     switch (v) {
         // *INDENT-OFF*
         case mapgen_parameter_scope::overmap_special:
@@ -1349,14 +1365,14 @@ void mapgen_parameter::deserialize(JsonIn& jsin) {
     default_ = make_shared_fast<mapgen_value<std::string>>(jo.get_member("default"));
 }
 
-cata_variant_type mapgen_parameter::type() const { return type_; }
+auto mapgen_parameter::type() const -> cata_variant_type { return type_; }
 
-cata_variant mapgen_parameter::get(const mapgendata& md) const {
+auto mapgen_parameter::get(const mapgendata& md) const -> cata_variant {
     return cata_variant::from_string(type_, default_->get(md));
 }
 
-std::vector<std::string> mapgen_parameter::all_possible_values(
-    const mapgen_parameters& params) const {
+auto mapgen_parameter::all_possible_values(const mapgen_parameters& params) const
+    -> std::vector<std::string> {
     return default_->all_possible_results(params);
 }
 
@@ -1397,7 +1413,7 @@ auto mapgen_parameters::add_unique_parameter(
     return map.emplace(candidate_name, mapgen_parameter(def, type, scope)).first;
 }
 
-mapgen_parameters mapgen_parameters::params_for_scope(mapgen_parameter_scope scope) const {
+auto mapgen_parameters::params_for_scope(mapgen_parameter_scope scope) const -> mapgen_parameters {
     mapgen_parameters result;
     for (const std::pair<const std::string, mapgen_parameter>& p : map) {
         const mapgen_parameter& param = p.second;
@@ -1406,8 +1422,8 @@ mapgen_parameters mapgen_parameters::params_for_scope(mapgen_parameter_scope sco
     return result;
 }
 
-mapgen_arguments mapgen_parameters::get_args(
-    const mapgendata& md, mapgen_parameter_scope scope) const {
+auto mapgen_parameters::get_args(const mapgendata& md, mapgen_parameter_scope scope) const
+    -> mapgen_arguments {
     std::unordered_map<std::string, cata_variant> result;
     for (const std::pair<const std::string, mapgen_parameter>& p : map) {
         const mapgen_parameter& param = p.second;
@@ -1443,7 +1459,7 @@ public:
     // PieceType, they *can not* be of any other type.
     std::vector<PieceType> alternatives;
     jmapgen_alternatively() = default;
-    mapgen_phase phase() const override {
+    auto phase() const -> mapgen_phase override {
         if (alternatives.empty()) { return mapgen_phase::default_; }
         return alternatives[0].phase();
     }
@@ -1462,7 +1478,8 @@ public:
     void apply(const mapgendata& dat, const jmapgen_int& x, const jmapgen_int& y) const override {
         if (const auto chosen = random_entry_opt(alternatives)) { chosen->get().apply(dat, x, y); }
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 };
@@ -1477,7 +1494,7 @@ public:
     shared_ptr_fast<const jmapgen_piece> underlying_piece;
     std::vector<mapgen_constraint<Value>> constraints;
 
-    mapgen_phase phase() const override { return underlying_piece->phase(); }
+    auto phase() const -> mapgen_phase override { return underlying_piece->phase(); }
     void check(const std::string& context, const mapgen_parameters& params) const override {
         underlying_piece->check(context, params);
     }
@@ -1562,7 +1579,7 @@ class jmapgen_faction: public jmapgen_piece {
 public:
     mapgen_value<faction_id> id;
     jmapgen_faction(const JsonObject& jsi): id(jsi.get_member("id")) {}
-    mapgen_phase phase() const override { return mapgen_phase::faction_ownership; }
+    auto phase() const -> mapgen_phase override { return mapgen_phase::faction_ownership; }
     void apply(const mapgendata& dat, const jmapgen_int& x, const jmapgen_int& y) const override {
         faction_id chosen_id = id.get(dat);
         if (chosen_id.is_null()) { return; }
@@ -1615,12 +1632,13 @@ public:
         }
         dat.m.set_signage(r, signtext);
     }
-    std::string apply_all_tags(std::string signtext, const std::string& cityname) const {
+    auto apply_all_tags(std::string signtext, const std::string& cityname) const -> std::string {
         replace_city_tag(signtext, cityname);
         replace_name_tags(signtext);
         return signtext;
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 };
@@ -1664,7 +1682,7 @@ public:
         }
         dat.m.set_graffiti(r, graffiti);
     }
-    std::string apply_all_tags(std::string graffiti, const std::string& cityname) const {
+    auto apply_all_tags(std::string graffiti, const std::string& cityname) const -> std::string {
         replace_city_tag(graffiti, cityname);
         replace_name_tags(graffiti);
         return graffiti;
@@ -1692,7 +1710,8 @@ public:
         if (chosen_id.is_null()) { return; }
         dat.m.place_vending(r, chosen_id, reinforced);
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 
@@ -1718,7 +1737,8 @@ public:
             dat.m.place_toilet(r, charges);
         }
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 };
@@ -1764,7 +1784,8 @@ public:
             dat.m.place_gas_pump(r, charges, chosen_fuel);
         }
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 };
@@ -2077,7 +2098,8 @@ public:
         dat.m.add_vehicle(chosen_id, point_omt_ms(x.get(), y.get()), random_entry(rotation), fuel,
                           status, true, locked, has_keys, place_beyond_bounds);
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 
@@ -2196,7 +2218,8 @@ public:
         const auto actual_loc = point_omt_ms(x.get(), y.get());
         dat.m.trap_set(actual_loc, chosen_id);
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 
@@ -2243,7 +2266,7 @@ public:
             id = mapgen_value<furn_id>(jsv);
         }
     }
-    mapgen_phase phase() const override { return mapgen_phase::furniture; }
+    auto phase() const -> mapgen_phase override { return mapgen_phase::furniture; }
     void apply(const mapgendata& dat, const jmapgen_int& x, const jmapgen_int& y) const override {
         furn_id chosen_id = id.get(dat);
         if (chosen_id.id().is_null()) { return; }
@@ -2261,7 +2284,8 @@ public:
             }
         }
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 
@@ -2310,8 +2334,8 @@ public:
         }
     }
 
-    bool is_nop() const override { return id.is_null(); }
-    mapgen_phase phase() const override { return mapgen_phase::terrain; }
+    auto is_nop() const -> bool override { return id.is_null(); }
+    auto phase() const -> mapgen_phase override { return mapgen_phase::terrain; }
 
     void apply(const mapgendata& dat, const jmapgen_int& x, const jmapgen_int& y) const override {
         ter_id chosen_id = id.get(dat);
@@ -2352,7 +2376,8 @@ public:
             }
         }
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 
@@ -2462,7 +2487,8 @@ public:
         // The default access denied message is defined in computer's constructor
         if (!access_denied.empty()) { cpu->set_access_denied_msg(access_denied.translated()); }
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 };
@@ -2588,7 +2614,8 @@ public:
         furn_id chosen_furn = furniture.get(dat);
         dat.m.furn_set(point_omt_ms(x.get(), y.get()), chosen_furn);
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         return dat.m.veh_at(point_omt_ms(p.x(), p.y())).has_value();
     }
 };
@@ -2605,7 +2632,7 @@ public:
     jmapgen_translate(const JsonObject& jsi)
         : from(jsi.get_member("from")),
           to(jsi.get_member("to")) {}
-    mapgen_phase phase() const override { return mapgen_phase::transform; }
+    auto phase() const -> mapgen_phase override { return mapgen_phase::transform; }
     void apply(
         const mapgendata& dat, const jmapgen_int& /*x*/, const jmapgen_int& /*y*/) const override {
         ter_id chosen_from = from.get(dat);
@@ -2647,7 +2674,7 @@ public:
 class jmapgen_remove_all: public jmapgen_piece {
 public:
     jmapgen_remove_all(const JsonObject& /*jo*/) {}
-    mapgen_phase phase() const override { return mapgen_phase::removal; }
+    auto phase() const -> mapgen_phase override { return mapgen_phase::removal; }
     void apply(const mapgendata& dat, const jmapgen_int& x, const jmapgen_int& y) const override {
 
         const point_omt_ms start = point_omt_ms(x.val, y.val);
@@ -2695,7 +2722,7 @@ private:
             }
         }
 
-        bool test(const mapgendata& dat) const {
+        auto test(const mapgendata& dat) const -> bool {
             for (const std::pair<const direction, cata::flat_set<oter_type_str_id>>& p :
                  neighbors) {
                 const direction dir = p.first;
@@ -2731,7 +2758,7 @@ private:
             // TODO: check join ids are valid
         }
 
-        bool test(const mapgendata& dat) const {
+        auto test(const mapgendata& dat) const -> bool {
             for (const std::pair<const cube_direction, cata::flat_set<std::string>>& p :
                  neighbors) {
                 const cube_direction dir = p.first;
@@ -2772,7 +2799,7 @@ private:
             }
         }
 
-        bool test(const mapgendata& dat) const {
+        auto test(const mapgendata& dat) const -> bool {
             for (const auto& p : neighbors) {
                 const om_direction::type dir = p.first;
                 const std::set<overmap_connection_id>& allowed_connections = p.second;
@@ -2814,7 +2841,7 @@ public:
         if (jsi.has_member("rotation")) { rotation = jmapgen_int(jsi, "rotation"); }
     }
 
-    const weighted_int_list<std::string>& get_entries(const mapgendata& dat) const {
+    auto get_entries(const mapgendata& dat) const -> const weighted_int_list<std::string>& {
         if (neighbor_oters.test(dat) && neighbor_joins.test(dat)
             && neighbor_connections.test(dat)) {
             return entries;
@@ -2833,7 +2860,7 @@ public:
             return resolved_else_entries;
         }
     }
-    mapgen_phase phase() const override { return mapgen_phase::nested_mapgen; }
+    auto phase() const -> mapgen_phase override { return mapgen_phase::nested_mapgen; }
     auto finalize() const -> void override {
         resolved_entries.clear();
         resolved_else_entries.clear();
@@ -2887,7 +2914,8 @@ public:
         neighbor_joins.check(oter_name);
         neighbor_connections.check(oter_name);
     }
-    bool has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const override {
+    auto has_vehicle_collision(const mapgendata& dat, const point_rel_ms& p) const
+        -> bool override {
         const nested_mapgen_ref_list& selected_entries = get_resolved_entries(dat);
 
         if (selected_entries.empty()) { return false; }
@@ -2938,7 +2966,7 @@ jmapgen_objects::jmapgen_objects(
       mapgensize(mapsize),
       total_size(tot_size) {}
 
-bool jmapgen_objects::check_bounds(const jmapgen_place& place, const JsonObject& jso) {
+auto jmapgen_objects::check_bounds(const jmapgen_place& place, const JsonObject& jso) -> bool {
     return common_check_bounds(place.x, place.y, mapgensize, jso);
 }
 
@@ -3146,7 +3174,7 @@ void mapgen_palette::load_place_mapings(
 
 static std::map<palette_id, mapgen_palette> palettes;
 
-template <> const mapgen_palette& string_id<mapgen_palette>::obj() const {
+template <> auto string_id<mapgen_palette>::obj() const -> const mapgen_palette& {
     auto it = palettes.find(*this);
     if (it == palettes.end()) {
         static const mapgen_palette null_palette;
@@ -3155,7 +3183,9 @@ template <> const mapgen_palette& string_id<mapgen_palette>::obj() const {
     return it->second;
 }
 
-template <> bool string_id<mapgen_palette>::is_valid() const { return palettes.contains(*this); }
+template <> auto string_id<mapgen_palette>::is_valid() const -> bool {
+    return palettes.contains(*this);
+}
 
 void mapgen_palette::check() {
     std::string context = "palette " + id.str();
@@ -3172,8 +3202,8 @@ void mapgen_palette::check() {
     }
 }
 
-mapgen_palette mapgen_palette::load_temp(
-    const JsonObject& jo, const std::string& src, const std::string& context) {
+auto mapgen_palette::load_temp(
+    const JsonObject& jo, const std::string& src, const std::string& context) -> mapgen_palette {
     return load_internal(jo, src, context, false, true);
 }
 
@@ -3184,7 +3214,7 @@ void mapgen_palette::load(const JsonObject& jo, const std::string& src) {
     palettes[ret.id] = ret;
 }
 
-const mapgen_palette& mapgen_palette::get(const palette_id& id) {
+auto mapgen_palette::get(const palette_id& id) -> const mapgen_palette& {
     const auto iter = palettes.find(id);
     if (iter != palettes.end()) { return iter->second; }
 
@@ -3261,9 +3291,9 @@ void mapgen_palette::add(const mapgen_palette& rh, const add_palette_context& co
     parameters.check_and_merge(rh.parameters, actual_context);
 }
 
-mapgen_palette mapgen_palette::load_internal(
+auto mapgen_palette::load_internal(
     const JsonObject& jo, const std::string&, const std::string& context, bool require_id,
-    bool allow_recur) {
+    bool allow_recur) -> mapgen_palette {
     mapgen_palette new_pal;
     auto& format_placings = new_pal.format_placings;
     auto& keys_with_terrain = new_pal.keys_with_terrain;
@@ -3342,7 +3372,7 @@ mapgen_palette::add_palette_context::add_palette_context(
     : context(ctx),
       parameters(params) {}
 
-bool mapgen_function_json::setup_internal(const JsonObject& jo) {
+auto mapgen_function_json::setup_internal(const JsonObject& jo) -> bool {
     // Just to make sure no one does anything stupid
     if (jo.has_member("mapgensize")) {
         jo.throw_error("\"mapgensize\" only allowed for nested mapgen");
@@ -3362,7 +3392,7 @@ bool mapgen_function_json::setup_internal(const JsonObject& jo) {
     return fill_ter != t_null || predecessor_mapgen != oter_str_id::NULL_ID();
 }
 
-bool mapgen_function_json_nested::setup_internal(const JsonObject& jo) {
+auto mapgen_function_json_nested::setup_internal(const JsonObject& jo) -> bool {
     // Mandatory - nested mapgen must be explicitly sized
     if (jo.has_array("mapgensize")) {
         JsonArray jarr = jo.get_array("mapgensize");
@@ -3416,7 +3446,7 @@ void mapgen_function_json_base::setup_common() {
     }
 }
 
-bool mapgen_function_json_base::setup_common(const JsonObject& jo) {
+auto mapgen_function_json_base::setup_common(const JsonObject& jo) -> bool {
     bool fallback_terrain_exists = setup_internal(jo);
     JsonArray parray;
     JsonArray sparray;
@@ -3558,7 +3588,7 @@ void mapgen_function_json_nested::check(const std::string& oter_name) const {
     check_common(oter_name);
 }
 
-static bool check_furn(const furn_id& id, const std::string& context) {
+static auto check_furn(const furn_id& id, const std::string& context) -> bool {
     const furn_t& furn = id.obj();
     if (furn.has_flag("PLANT")) {
         debugmsg("json mapgen for %s specifies furniture %s, which has flag "
@@ -3616,9 +3646,9 @@ void jmapgen_objects::merge_parameters_into(
  * (set|line|square)_(ter|furn|trap|radiation); simple (x, y, int) or (x1,y1,x2,y2, int) functions
  * TODO: optimize, though gcc -O2 optimizes enough that splitting the switch has no effect
  */
-bool jmapgen_setmap::apply(
+auto jmapgen_setmap::apply(
     const mapgendata& dat, const point_rel_ms& offset,
-    std::function<point_omt_ms(const point_omt_ms&)> func) const {
+    std::function<point_omt_ms(const point_omt_ms&)> func) const -> bool {
     if (chance != 1 && !one_in(chance)) { return true; }
 
     const auto get = [](const jmapgen_int& v, int offset) { return v.get() + offset; };
@@ -3719,8 +3749,8 @@ bool jmapgen_setmap::apply(
     return true;
 }
 
-bool jmapgen_setmap::has_vehicle_collision(
-    const mapgendata& dat, const point_rel_ms& offset) const {
+auto jmapgen_setmap::has_vehicle_collision(const mapgendata& dat, const point_rel_ms& offset) const
+    -> bool {
     const auto get = [](const jmapgen_int& v, int v_offset) { return v.get() + v_offset; };
     const auto x_get = std::bind(get, x, offset.x());
     const auto y_get = std::bind(get, y, offset.y());
@@ -3753,8 +3783,8 @@ bool jmapgen_setmap::has_vehicle_collision(
     return false;
 }
 
-bool mapgen_function_json_base::has_vehicle_collision(
-    const mapgendata& dat, const point_rel_ms& offset) const {
+auto mapgen_function_json_base::has_vehicle_collision(
+    const mapgendata& dat, const point_rel_ms& offset) const -> bool {
     for (const jmapgen_setmap& elem : setmap_points) {
         if (elem.has_vehicle_collision(dat, offset)) { return true; }
     }
@@ -3839,7 +3869,8 @@ void mapgen_function_json::generate(mapgendata& md) {
     }
 }
 
-mapgen_parameters mapgen_function_json::get_mapgen_params(mapgen_parameter_scope scope) const {
+auto mapgen_function_json::get_mapgen_params(mapgen_parameter_scope scope) const
+    -> mapgen_parameters {
     return parameters.params_for_scope(scope);
 }
 
@@ -3926,8 +3957,8 @@ void jmapgen_objects::apply(
     }
 }
 
-bool jmapgen_objects::has_vehicle_collision(
-    const mapgendata& dat, const point_rel_ms& offset) const {
+auto jmapgen_objects::has_vehicle_collision(const mapgendata& dat, const point_rel_ms& offset) const
+    -> bool {
     for (auto& obj : objects) {
         auto where = obj.first;
         where.offset(-offset);
@@ -5351,8 +5382,8 @@ void map::place_vending(const tripoint_bub_ms& p, const item_group_id& type, boo
     }
 }
 
-character_id map::place_npc(
-    const tripoint_bub_ms& p, const string_id<npc_template>& type, bool force) {
+auto map::place_npc(const tripoint_bub_ms& p, const string_id<npc_template>& type, bool force)
+    -> character_id {
     if (!force && !get_option<bool>("STATIC_NPC")) {
         return character_id(); // Do not generate an npc.
     }
@@ -5388,10 +5419,10 @@ void map::apply_faction_ownership(
 
 // A chance of 100 indicates that items should always spawn,
 // the item group should be responsible for determining the amount of items.
-std::vector<item*> map::place_items(
+auto map::place_items(
     const item_group_id& loc, const int chance, const tripoint_bub_ms& p1,
     const tripoint_bub_ms& p2, const bool ongrass, const time_point& turn, const int magazine,
-    const int ammo) {
+    const int ammo) -> std::vector<item*> {
     // TODO: implement for 3D
     std::vector<item*> res;
     itype_id it;
@@ -5503,8 +5534,9 @@ std::vector<item*> map::place_items(
     return res;
 }
 
-std::vector<item*> map::put_items_from_loc(
-    const item_group_id& loc, const tripoint_bub_ms& p, const time_point& turn) {
+auto map::put_items_from_loc(
+    const item_group_id& loc, const tripoint_bub_ms& p, const time_point& turn)
+    -> std::vector<item*> {
     std::vector<detached_ptr<item>> items = item_group::items_from(loc, turn);
     std::vector<item*> ret;
     ret.reserve(items.size());
@@ -5536,10 +5568,10 @@ void map::add_spawn(
     place_on_submap->spawns.push_back(tmp);
 }
 
-vehicle* map::add_vehicle(
+auto map::add_vehicle(
     const std::variant<vgroup_id, vproto_id>& type_, const tripoint_bub_ms& p,
     const units::angle dir, const int veh_fuel, const int veh_status, const bool merge_wrecks,
-    std::optional<bool> locked, std::optional<bool> has_keys) {
+    std::optional<bool> locked, std::optional<bool> has_keys) -> vehicle* {
     constexpr auto pos_selector = []<typename T>(const T& v, int z) -> tripoint_bub_ms {
         if constexpr (std::is_same_v<T, point_bub_ms>) {
             return tripoint_bub_ms(v, z);
@@ -5609,8 +5641,8 @@ vehicle* map::add_vehicle(
  * @param merge_wrecks Whether crashed vehicles become part of each other
  * @return The vehicle that was finally placed.
  */
-std::unique_ptr<vehicle> map::add_vehicle_to_map(
-    std::unique_ptr<vehicle> veh, const bool merge_wrecks) {
+auto map::add_vehicle_to_map(std::unique_ptr<vehicle> veh, const bool merge_wrecks)
+    -> std::unique_ptr<vehicle> {
     // We only want to check once per square, so loop over all structural parts
     std::vector<int> frame_indices = veh->all_standalone_parts();
 
@@ -5696,7 +5728,8 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
     return veh;
 }
 
-computer* map::add_computer(const tripoint_bub_ms& p, const std::string& name, int security) {
+auto map::add_computer(const tripoint_bub_ms& p, const std::string& name, int security)
+    -> computer* {
     return get_mapbuffer().add_computer(
         map_local_to_abs(*this, p),
         {
@@ -5797,7 +5830,7 @@ void map::rotate(int turns, const bool setpos_safe) {
 }
 
 // Hideous function, I admit...
-bool connects_to(const oter_id& there, int dir) {
+auto connects_to(const oter_id& there, int dir) -> bool {
     switch (dir) {
         // South
         case 2:
@@ -6022,17 +6055,19 @@ void update_mapgen_function_json::check(const std::string& oter_name) const {
     check_common(oter_name);
 }
 
-bool update_mapgen_function_json::setup_update(const JsonObject& jo) { return setup_common(jo); }
+auto update_mapgen_function_json::setup_update(const JsonObject& jo) -> bool {
+    return setup_common(jo);
+}
 
-bool update_mapgen_function_json::setup_internal(const JsonObject& /*jo*/) {
+auto update_mapgen_function_json::setup_internal(const JsonObject& /*jo*/) -> bool {
     fill_ter = t_null;
     /* update_mapgen doesn't care about fill_ter or rows */
     return true;
 }
 
-bool update_mapgen_function_json::update_map(
+auto update_mapgen_function_json::update_map(
     const tripoint_abs_omt& omt_pos, const tripoint_rel_ms& offset, mission* miss,
-    bool verify) const {
+    bool verify) const -> bool {
     if (omt_pos == overmap::invalid_tripoint) {
         debugmsg("Mapgen update function called with overmap::invalid_tripoint");
         return false;
@@ -6047,8 +6082,8 @@ bool update_mapgen_function_json::update_map(
     return update_map(md, offset.xy(), verify);
 }
 
-bool update_mapgen_function_json::update_map(
-    const mapgendata& md, const point_rel_ms& offset, const bool verify) const {
+auto update_mapgen_function_json::update_map(
+    const mapgendata& md, const point_rel_ms& offset, const bool verify) const -> bool {
     mapgendata md_with_params(md, get_args(md, mapgen_parameter_scope::omt), flags);
 
     class rotation_guard {
@@ -6086,7 +6121,7 @@ bool update_mapgen_function_json::update_map(
     return true;
 }
 
-mapgen_update_func add_mapgen_update_func(const JsonObject& jo, bool& defer) {
+auto add_mapgen_update_func(const JsonObject& jo, bool& defer) -> mapgen_update_func {
     if (jo.has_string("mapgen_update_id")) {
         const std::string mapgen_update_id = jo.get_string("mapgen_update_id");
         const auto update_function =
@@ -6110,9 +6145,9 @@ mapgen_update_func add_mapgen_update_func(const JsonObject& jo, bool& defer) {
     return update_function;
 }
 
-bool run_mapgen_update_func(
+auto run_mapgen_update_func(
     const std::string& update_mapgen_id, const tripoint_abs_omt& omt_pos, mission* miss,
-    bool cancel_on_collision) {
+    bool cancel_on_collision) -> bool {
     const auto update_function = update_mapgen.find(update_mapgen_id);
 
     if (update_function == update_mapgen.end() || update_function->second.empty()) { return false; }
@@ -6120,15 +6155,15 @@ bool run_mapgen_update_func(
         ->update_map(omt_pos, tripoint_rel_ms::zero(), miss, cancel_on_collision);
 }
 
-bool run_mapgen_update_func(
-    const std::string& update_mapgen_id, mapgendata& dat, const bool cancel_on_collision) {
+auto run_mapgen_update_func(
+    const std::string& update_mapgen_id, mapgendata& dat, const bool cancel_on_collision) -> bool {
     const auto update_function = update_mapgen.find(update_mapgen_id);
     if (update_function == update_mapgen.end() || update_function->second.empty()) { return false; }
     return update_function->second[0]->update_map(dat, point_rel_ms::zero(), cancel_on_collision);
 }
 
-std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_update(
-    const std::string& update_mapgen_id) {
+auto get_changed_ids_from_update(const std::string& update_mapgen_id)
+    -> std::pair<std::map<ter_id, int>, std::map<furn_id, int>> {
     const int fake_map_z = -9;
 
     std::map<ter_id, int> terrains;
@@ -6164,7 +6199,7 @@ std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_up
     return std::make_pair(terrains, furnitures);
 }
 
-bool run_mapgen_func(const std::string& mapgen_id, mapgendata& dat) {
+auto run_mapgen_func(const std::string& mapgen_id, mapgendata& dat) -> bool {
     ZoneScopedN("run_mapgen_func");
     return oter_mapgen.generate(dat, mapgen_id);
 }
@@ -6190,21 +6225,21 @@ auto mapgen_id_has_direct_lua_generator(const std::string& mapgen_id) -> bool {
     return oter_mapgen.has_direct_lua_generator(mapgen_id);
 }
 
-mapgen_parameters get_map_special_params(const std::string& mapgen_id) {
+auto get_map_special_params(const std::string& mapgen_id) -> mapgen_parameters {
     return oter_mapgen.get_map_special_params(mapgen_id);
 }
 
-int register_mapgen_function(const std::string& key) {
+auto register_mapgen_function(const std::string& key) -> int {
     if (const auto ptr = get_mapgen_cfunction(key)) {
         return oter_mapgen.add(key, std::make_shared<mapgen_function_builtin>(ptr));
     }
     return -1;
 }
 
-bool has_mapgen_for(const std::string& key) { return oter_mapgen.has(key); }
+auto has_mapgen_for(const std::string& key) -> bool { return oter_mapgen.has(key); }
 
 namespace mapgen {
 
-bool has_update_id(const mapgen_id& id) { return update_mapgen.contains(id); }
+auto has_update_id(const mapgen_id& id) -> bool { return update_mapgen.contains(id); }
 
 } // namespace mapgen

@@ -32,18 +32,18 @@ public:
 
     static void reset();
 
-    std::optional<RGBColor> pick_color(unsigned int seed) const;
+    auto pick_color(unsigned int seed) const -> std::optional<RGBColor>;
 
     mpalette_id id;
 
     bool was_loaded;
 
-    static mpalette_id define_new_palette(const JsonObject& obj);
+    static auto define_new_palette(const JsonObject& obj) -> mpalette_id;
 
 private:
     weighted_int_list<std::string> colors;
 
-    static mpalette_id get_unique_id();
+    static auto get_unique_id() -> mpalette_id;
 
     static int next_id;
 };

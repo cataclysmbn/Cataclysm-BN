@@ -37,7 +37,7 @@ private:
 public:
     format_effect(const std::string& chars, std::vector<ID> dets);
 
-    ID translate(char c) const;
+    auto translate(char c) const -> ID;
 };
 
 /**
@@ -58,7 +58,7 @@ public:
  */
 /**@{*/
 template <size_t N, typename... Args>
-inline format_effect<ter_id> ter_bind(const char (&characters)[N], Args... ids) {
+inline auto ter_bind(const char (&characters)[N], Args... ids) -> format_effect<ter_id> {
     // Note to self: N contains the 0-char at the end of a string literal!
     static_assert(N % 2 == 0, "list of characters to bind to must be odd, e.g. \"a b c\"");
     static_assert(N / 2 == sizeof...(Args),
@@ -67,7 +67,7 @@ inline format_effect<ter_id> ter_bind(const char (&characters)[N], Args... ids) 
 }
 
 template <size_t N, typename... Args>
-inline format_effect<furn_id> furn_bind(const char (&characters)[N], Args... ids) {
+inline auto furn_bind(const char (&characters)[N], Args... ids) -> format_effect<furn_id> {
     // Note to self: N contains the 0-char at the end of a string literal!
     static_assert(N % 2 == 0, "list of characters to bind to must be odd, e.g. \"a b c\"");
     static_assert(N / 2 == sizeof...(Args),

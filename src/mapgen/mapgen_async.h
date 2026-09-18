@@ -71,7 +71,7 @@ void run_deferred_mapgen_hooks();
 
 /** Returns true if any on_mapgen_postprocess Lua hooks are registered.
  *  Safe to call from any thread (relaxed atomic load). */
-bool mapgen_hooks_registered();
+auto mapgen_hooks_registered() -> bool;
 
 /** Push an autonote entry from a worker thread (thread-safe). */
 void push_deferred_autonote(deferred_autonote entry);

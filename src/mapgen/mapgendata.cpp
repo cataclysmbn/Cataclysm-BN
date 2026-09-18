@@ -139,7 +139,7 @@ void mapgendata::fill(int val) {
     nw_fac = val;
 }
 
-int& mapgendata::dir(int dir_in) {
+auto mapgendata::dir(int dir_in) -> int& {
     switch (dir_in) {
         case 0:
             return n_fac;
@@ -170,7 +170,7 @@ void mapgendata::square_groundcover(const point_omt_ms& p1, const point_omt_ms& 
 
 void mapgendata::fill_groundcover() const { m.draw_fill_background(default_groundcover); }
 
-bool mapgendata::is_groundcover(const ter_id& iid) const {
+auto mapgendata::is_groundcover(const ter_id& iid) const -> bool {
     for (const auto& pr : default_groundcover) {
         if (pr.obj == iid) { return true; }
     }
@@ -178,12 +178,12 @@ bool mapgendata::is_groundcover(const ter_id& iid) const {
     return false;
 }
 
-ter_id mapgendata::groundcover() const {
+auto mapgendata::groundcover() const -> ter_id {
     const ter_id* tid = default_groundcover.pick();
     return tid != nullptr ? *tid : t_null;
 }
 
-const oter_id& mapgendata::neighbor_at(om_direction::type dir) const {
+auto mapgendata::neighbor_at(om_direction::type dir) const -> const oter_id& {
     // TODO: De-uglify, implement proper conversion somewhere
     switch (dir) {
         case om_direction::type::north:
@@ -202,12 +202,12 @@ const oter_id& mapgendata::neighbor_at(om_direction::type dir) const {
     return north();
 }
 
-bool mapgendata::has_join(const cube_direction dir, const std::string& join_id) const {
+auto mapgendata::has_join(const cube_direction dir, const std::string& join_id) const -> bool {
     auto it = joins.find(dir);
     return it != joins.end() && it->second == join_id;
 }
 
-const oter_id& mapgendata::neighbor_at(direction dir) const {
+auto mapgendata::neighbor_at(direction dir) const -> const oter_id& {
     // TODO: De-uglify, implement proper conversion somewhere
     switch (dir) {
         case direction::NORTH:
@@ -238,4 +238,4 @@ const oter_id& mapgendata::neighbor_at(direction dir) const {
     return north();
 }
 
-bool mapgendata::has_flag(const flag_id& id) const { return flags.contains(id); }
+auto mapgendata::has_flag(const flag_id& id) const -> bool { return flags.contains(id); }

@@ -40,9 +40,9 @@ public:
     nc_color color = c_red;
     std::optional<std::string> looks_like;
 
-    std::string get_symbol() const { return utf32_to_utf8(symbol); }
-    std::string name() const { return _name.translated(); }
-    std::string description() const { return _description.translated(); }
+    auto get_symbol() const -> std::string { return utf32_to_utf8(symbol); }
+    auto name() const -> std::string { return _name.translated(); }
+    auto description() const -> std::string { return _description.translated(); }
 
     // Used by generic_factory
     bool was_loaded = false;
@@ -58,8 +58,8 @@ namespace MapExtras {
 using FunctionMap = std::unordered_map<std::string, map_extra_pointer>;
 
 map_extra_pointer get_function(const std::string& name);
-FunctionMap all_functions();
-std::vector<std::string> get_all_function_names();
+auto all_functions() -> FunctionMap;
+auto get_all_function_names() -> std::vector<std::string>;
 
 void apply_function(
     const string_id<map_extra>& id, mapgen_constructor& m, const tripoint_abs_omt& abs_sub);
@@ -73,6 +73,6 @@ void reset();
 void debug_spawn_test();
 
 /// This function provides access to all loaded map extras.
-const generic_factory<map_extra>& mapExtraFactory();
+auto mapExtraFactory() -> const generic_factory<map_extra>&;
 
 } // namespace MapExtras

@@ -51,7 +51,9 @@ void refresh_mapgen_postprocess_hook_presence(cata::lua_state& state) {
     g_has_mapgen_hooks.store(cata::has_mapgen_postprocess_hooks(state), std::memory_order_relaxed);
 }
 
-bool mapgen_hooks_registered() { return g_has_mapgen_hooks.load(std::memory_order_relaxed); }
+auto mapgen_hooks_registered() -> bool {
+    return g_has_mapgen_hooks.load(std::memory_order_relaxed);
+}
 
 void push_deferred_autonote(deferred_autonote entry) {
     std::lock_guard<std::mutex> lk(g_autonote_mutex);

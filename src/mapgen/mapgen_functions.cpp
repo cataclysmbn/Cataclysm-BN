@@ -48,7 +48,7 @@ static const mongroup_id GROUP_ZOMBIE("GROUP_ZOMBIE");
 
 class npc_template;
 
-tripoint_omt_ms rotate_point(const tripoint_omt_ms& p, int rotations) {
+auto rotate_point(const tripoint_omt_ms& p, int rotations) -> tripoint_omt_ms {
     if (p.x() < 0 || p.x() >= SEEX * 2 || p.y() < 0 || p.y() >= SEEY * 2) {
         debugmsg("Point out of range: %d,%d,%d", p.x(), p.y(), p.z());
         // Mapgen is vulnerable, don't supply invalid points, debugmsg is enough
@@ -140,12 +140,12 @@ building_gen_pointer get_mapgen_cfunction(const std::string& ident) {
     return iter == pointers.end() ? nullptr : iter->second;
 }
 
-ter_id grass_or_dirt() {
+auto grass_or_dirt() -> ter_id {
     if (one_in(4)) { return t_grass; }
     return t_dirt;
 }
 
-ter_id clay_or_sand() {
+auto clay_or_sand() -> ter_id {
     if (one_in(16)) { return t_alluvial_deposit; }
     if (one_in(16)) { return t_sand; }
     return t_clay;
@@ -398,7 +398,7 @@ void mapgen_hive(mapgendata& dat) {
     if (is_center) { m->place_npc(point_omt_ms(SEEX, SEEY), string_id<npc_template>("apis")); }
 }
 
-int terrain_type_to_nesw_array(oter_id terrain_type, bool array[4]) {
+auto terrain_type_to_nesw_array(oter_id terrain_type, bool array[4]) -> int {
     // count and mark which directions the road goes
     const auto& oter(*terrain_type);
     int num_dirs = 0;
@@ -443,7 +443,7 @@ static void coord_rotate_cw(int& x, int& y, int rot) {
     }
 }
 
-static bool compare_neswx(bool* a1, std::initializer_list<int> a2) {
+static auto compare_neswx(bool* a1, std::initializer_list<int> a2) -> bool {
     return std::equal(std::begin(a2), std::end(a2), a1, [](int a, bool b) {
         return static_cast<bool>(a) == b;
     });

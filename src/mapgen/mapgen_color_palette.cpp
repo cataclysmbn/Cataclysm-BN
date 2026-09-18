@@ -37,7 +37,7 @@ void MapgenColorPalette::load_palette(const JsonObject& jo, const std::string& s
 
 int MapgenColorPalette::next_id = 0;
 
-mpalette_id MapgenColorPalette::define_new_palette(const JsonObject& obj) {
+auto MapgenColorPalette::define_new_palette(const JsonObject& obj) -> mpalette_id {
     MapgenColorPalette pal = MapgenColorPalette();
     pal.load(obj, "");
     pal.id = get_unique_id();
@@ -45,7 +45,7 @@ mpalette_id MapgenColorPalette::define_new_palette(const JsonObject& obj) {
     return pal.id;
 }
 
-mpalette_id MapgenColorPalette::get_unique_id() {
+auto MapgenColorPalette::get_unique_id() -> mpalette_id {
     static const std::string unique_prefix = "\u01F7 ";
     while (true) {
         const mpalette_id new_group = mpalette_id(unique_prefix + std::to_string(next_id++));
@@ -72,7 +72,7 @@ void MapgenColorPalette::check() const {
     }
 }
 
-std::optional<RGBColor> MapgenColorPalette::pick_color(unsigned int seed) const {
+auto MapgenColorPalette::pick_color(unsigned int seed) const -> std::optional<RGBColor> {
     std::string colorstr = *colors.pick(seed);
     std::optional<RGBColor> color = RGBColor::try_parse(colorstr);
     return color;

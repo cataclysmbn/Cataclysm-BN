@@ -31,10 +31,10 @@ struct mapgen_arguments {
 namespace mapgendata_detail {
 
 // helper to get a variant value with any variant being extractable as a string
-template <typename Result> inline Result extract_variant_value(const cata_variant& v) {
+template <typename Result> inline auto extract_variant_value(const cata_variant& v) -> Result {
     return v.get<Result>();
 }
-template <> inline std::string extract_variant_value<std::string>(const cata_variant& v) {
+template <> inline auto extract_variant_value<std::string>(const cata_variant& v) -> std::string {
     return v.get_string();
 }
 
@@ -96,7 +96,7 @@ public:
     static constexpr dummy_settings_t dummy_settings = {};
 
     /** Return the overmapbuffer bound to this generation context. */
-    overmapbuffer& get_overmapbuffer() const { return omapbuf_; }
+    auto get_overmapbuffer() const -> overmapbuffer& { return omapbuf_; }
 
     mapgendata(mapgen_constructor&, dummy_settings_t);
 
@@ -128,37 +128,37 @@ public:
      */
     mapgendata(const mapgendata& other, const mapgen_arguments&, const std::set<flag_id>&);
 
-    const oter_id& terrain_type() const { return terrain_type_; }
-    float monster_density() const { return density_; }
-    const time_point& when() const { return when_; }
-    ::mission* mission() const { return mission_; }
-    int zlevel() const { return pos.z(); }
+    auto terrain_type() const -> const oter_id& { return terrain_type_; }
+    auto monster_density() const -> float { return density_; }
+    auto when() const -> const time_point& { return when_; }
+    auto mission() const -> ::mission* { return mission_; }
+    auto zlevel() const -> int { return pos.z(); }
 
     void set_dir(int dir_in, int val);
     void fill(int val);
-    int& dir(int dir_in);
-    const oter_id& north() const { return t_nesw[0]; }
-    const oter_id& east() const { return t_nesw[1]; }
-    const oter_id& south() const { return t_nesw[2]; }
-    const oter_id& west() const { return t_nesw[3]; }
-    const oter_id& neast() const { return t_nesw[4]; }
-    const oter_id& seast() const { return t_nesw[5]; }
-    const oter_id& swest() const { return t_nesw[6]; }
-    const oter_id& nwest() const { return t_nesw[7]; }
-    const oter_id& above() const { return t_above; }
-    const oter_id& below() const { return t_below; }
-    const oter_id& neighbor_at(om_direction::type dir) const;
-    const oter_id& neighbor_at(direction) const;
+    auto dir(int dir_in) -> int&;
+    auto north() const -> const oter_id& { return t_nesw[0]; }
+    auto east() const -> const oter_id& { return t_nesw[1]; }
+    auto south() const -> const oter_id& { return t_nesw[2]; }
+    auto west() const -> const oter_id& { return t_nesw[3]; }
+    auto neast() const -> const oter_id& { return t_nesw[4]; }
+    auto seast() const -> const oter_id& { return t_nesw[5]; }
+    auto swest() const -> const oter_id& { return t_nesw[6]; }
+    auto nwest() const -> const oter_id& { return t_nesw[7]; }
+    auto above() const -> const oter_id& { return t_above; }
+    auto below() const -> const oter_id& { return t_below; }
+    auto neighbor_at(om_direction::type dir) const -> const oter_id&;
+    auto neighbor_at(direction) const -> const oter_id&;
     void fill_groundcover() const;
     void square_groundcover(const point_omt_ms& p1, const point_omt_ms& p2) const;
-    ter_id groundcover() const;
-    bool is_groundcover(const ter_id& iid) const;
+    auto groundcover() const -> ter_id;
+    auto is_groundcover(const ter_id& iid) const -> bool;
 
-    bool has_join(const cube_direction, const std::string& join_id) const;
+    auto has_join(const cube_direction, const std::string& join_id) const -> bool;
 
-    bool has_flag(const flag_id& id) const;
+    auto has_flag(const flag_id& id) const -> bool;
 
-    template <typename Result> Result get_arg(const std::string& name) const {
+    template <typename Result> auto get_arg(const std::string& name) const -> Result {
         auto it = mapgen_args_.map.find(name);
         if (it == mapgen_args_.map.end()) {
             debugmsg("No such parameter \"%s\"", name);
@@ -168,7 +168,7 @@ public:
     }
 
     template <typename Result>
-    Result get_arg_or(const std::string& name, const Result& fallback) const {
+    auto get_arg_or(const std::string& name, const Result& fallback) const -> Result {
         auto it = mapgen_args_.map.find(name);
         if (it == mapgen_args_.map.end()) { return fallback; }
         return mapgendata_detail::extract_variant_value<Result>(it->second);
