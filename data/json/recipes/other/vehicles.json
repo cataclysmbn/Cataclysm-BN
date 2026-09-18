@@ -2666,7 +2666,6 @@
       { "id": "HV_INSULATION", "level": 1 },
       { "id": "VOLT_MEASURE", "level": 1 }
     ],
-    "tools": [ [ [ "3d_printer_advanced", 80 ] ] ],
     "components": [
       [ [ "amplifier", 2 ] ],
       [ [ "power_supply", 4 ] ],
