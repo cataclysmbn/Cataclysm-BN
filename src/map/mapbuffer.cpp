@@ -179,16 +179,12 @@ auto add_spawn_to_submap(const add_submap_spawn_options& options) -> void {
 }
 
 auto handle_decayed_corpse(const actualize_tile_options& options, const item& corpse) -> void {
-    const auto* const dead_monster = corpse.get_corpse_mon();
-    if (dead_monster == nullptr) {
-        debugmsg("Corpse at tripoint %s has no associated monster?!", options.abs_pos.to_string());
-        return;
-    }
-
-    auto decayed_weight_grams = to_gram(dead_monster->weight);
+    // Both callers require is_corpse(), which guarantees a monster definition.
+    const auto& dead_monster = *corpse.get_corpse_mon();
+    auto decayed_weight_grams = to_gram(dead_monster.weight);
     decayed_weight_grams *= rng_float(0.5, 0.9);
 
-    for (const auto& entry : dead_monster->harvest.obj()) {
+    for (const auto& entry : dead_monster.harvest.obj()) {
         if (entry.type == "bionic" || entry.type == "bionic_group" || entry.type == "blood") {
             continue;
         }
@@ -235,8 +231,8 @@ auto handle_decayed_corpse(const actualize_tile_options& options, const item& co
 }
 
 auto rotten_item_spawn(const actualize_tile_options& options, const item& source) -> void {
-    if (options.active_bubble_pos && g != nullptr
-        && g->critter_at(*options.active_bubble_pos) != nullptr) {
+    // active_reality_bubble_local only returns a position when g is available.
+    if (options.active_bubble_pos && g->critter_at(*options.active_bubble_pos) != nullptr) {
         return;
     }
 
@@ -259,9 +255,7 @@ auto rotten_item_spawn(const actualize_tile_options& options, const item& source
         .disposition = disposition,
     });
 
-    if (!options.active_bubble_pos || g == nullptr || !g->u.sees(*options.active_bubble_pos)) {
-        return;
-    }
+    if (!options.active_bubble_pos || !g->u.sees(*options.active_bubble_pos)) { return; }
 
     if (source.is_seed()) {
         add_msg(m_warning, _("Something has crawled out of the %s plants!"),
@@ -277,10 +271,8 @@ auto remove_rotten_items(const actualize_tile_options& options, location_vector<
     auto decayed_corpses = std::vector<detached_ptr<item>>{};
     const auto temperature = temperature_flag_at_tile(options.sm, options.local);
     items.remove_with([&](detached_ptr<item>&& it) {
-        if (!it) {
-            debugmsg("remove_rotten_items: null item pointer at %s", options.abs_pos.to_string());
-            return std::move(it);
-        }
+        // location_vector never inserts null pointers; it preserves invalid types
+        // for this diagnostic without dereferencing them during detachment.
         if (!it->type) {
             debugmsg("remove_rotten_items: item with null type at %s", options.abs_pos.to_string());
             return std::move(it);
@@ -298,9 +290,11 @@ auto remove_rotten_items(const actualize_tile_options& options, location_vector<
                 .local_temperature = options.sm.get_temperature(),
             });
         if (!it) {
-            if (can_spawn_rot && removed_snapshot) {
+            // Only perishable food or corpses can be removed by actualize_rot;
+            // both have a snapshot. Containers and nonperishables are retained.
+            if (can_spawn_rot) {
                 rotten_item_spawn(options, *removed_snapshot);
-            } else if (can_decay_corpse && removed_snapshot) {
+            } else {
                 decayed_corpses.push_back(std::move(removed_snapshot));
             }
         }
