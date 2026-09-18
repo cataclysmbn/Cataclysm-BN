@@ -12,6 +12,9 @@ fmt-cpp *FILES:
 fmt-json *FILES:
     build-scripts/fmt.sh json {{FILES}}
 
+fmt-return *PATHS:
+    build-scripts/format-trailing-return.sh {{PATHS}}
+
 fmt-docs:
     build-scripts/fmt.sh docs
 
