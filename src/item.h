@@ -83,6 +83,11 @@ struct damage_unit;
 struct fire_data;
 class weather_manager;
 
+namespace rot
+{
+class shelf_life;
+}
+
 enum damage_type : int;
 enum clothing_mod_type : int;
 
@@ -999,7 +1004,7 @@ class item : public location_visitable<item>, public game_object<item>
         /** whether an item is perishable (can rot), even if it is currently in a preserving container */
         bool goes_bad_after_opening( bool strict = false ) const;
 
-        /** Get the shelf life of the item*/
+        /// Intrinsic shelf life; smoking/milling pauses progress, not perishability.
         time_duration get_shelf_life() const;
 
         /** Update @ref rot from current location without removing rotten-away items. */
@@ -1010,7 +1015,8 @@ class item : public location_visitable<item>, public game_object<item>
                          const weather_manager &weather_generator ) -> void;
         auto update_rot( const rot_context &context ) -> void;
 
-        /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
+        /// Finite rot relative to shelf life, or zero for nonperishables.
+        /// Finished component records are read without advancing their clocks.
         double get_relative_rot() const;
 
         /** Set current item @ref rot relative to shelf life (no-op if item does not spoil) */
@@ -1030,19 +1036,13 @@ class item : public location_visitable<item>, public game_object<item>
         int spoilage_sort_order() const;
 
         /** an item is fresh if it is capable of rotting but still has a long shelf life remaining */
-        bool is_fresh() const {
-            return goes_bad() && get_relative_rot() < 0.1;
-        }
+        auto is_fresh() const -> bool;
 
         /** an item is about to become rotten when shelf life has nearly elapsed */
-        bool is_going_bad() const {
-            return get_relative_rot() > 0.9;
-        }
+        auto is_going_bad() const -> bool;
 
         /** returns true if item is now rotten after all shelf life has elapsed */
-        bool rotten() const {
-            return get_relative_rot() > 1.0;
-        }
+        auto rotten() const -> bool;
 
         /**
          * Whether the item has enough rot that it should get removed.
@@ -1051,13 +1051,8 @@ class item : public location_visitable<item>, public game_object<item>
          */
         bool has_rotten_away() const;
 
-        time_duration get_rot() const {
-            const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
-            return rot;
-        }
-        void mod_rot( const time_duration &val ) {
-            rot += val;
-        }
+        auto get_rot() const -> time_duration;
+        auto mod_rot( const time_duration &val ) -> void;
 
         /** Time for this item to be fully fermented. */
         time_duration brewing_time() const;
@@ -2459,6 +2454,27 @@ class item : public location_visitable<item>, public game_object<item>
         const std::vector<relic_recharge> &get_relic_recharge_scheme() const;
 
     private:
+        enum class component_rot_state : unsigned char { none, live, snapshot };
+        // A counted-stack callback borrows a copy, not a new simulation object.
+        // This transient role is neither copied nor serialized.
+        component_rot_state borrowed_rot_state = component_rot_state::none;
+        class scoped_component_rot
+        {
+                cache_reference<item> target;
+            public:
+                scoped_component_rot( item *value, component_rot_state state );
+                ~scoped_component_rot();
+                scoped_component_rot( const scoped_component_rot &/*source*/ ) = delete;
+                auto operator=( const scoped_component_rot &/*source*/ ) -> scoped_component_rot & =
+                    delete; // *NOPAD*
+        };
+        auto component_rot_status() const -> component_rot_state;
+        auto rot_is_suspended() const -> bool;
+        auto restart_rot_after_snapshot() -> void;
+        auto copy_rot_from( const item &source ) -> void;
+        auto calc_rot_interval( time_point time, units::temperature temperature,
+                                const rot::shelf_life &shelf_life ) const -> time_duration;
+
         struct absolute_rot_process_options {
             bool seals = false;
             player *carrier = nullptr;

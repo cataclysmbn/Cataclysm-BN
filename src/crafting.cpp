@@ -1101,11 +1101,6 @@ void item::inherit_flags( const std::vector<item *> &parents, const recipe &maki
     }
 }
 
-static auto component_relative_rot( const item *component ) -> double
-{
-    return component != nullptr && component->goes_bad() ? component->get_relative_rot() : 0.0;
-}
-
 static auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
 {
     namespace ranges = std::ranges;
@@ -1113,7 +1108,7 @@ static auto highest_component_relative_rot( const std::vector<item *> &component
     if( components.empty() ) {
         return 0.0;
     }
-    return ranges::max( components | transform( component_relative_rot ) );
+    return ranges::max( components | transform( &item::get_relative_rot ) );
 }
 
 void complete_craft( Character &who, item &craft )

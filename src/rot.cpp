@@ -31,19 +31,21 @@ auto for_location( const map &m, const item &loc ) -> temperature_flag
         return temperature_flag::TEMP_NORMAL;
     }
 
-    switch( loc.where() ) {
+    const auto type = loc.where();
+    if( type == item_location_type::map ) {
+        const auto pos = loc.bub_pos();
+        return for_tile( {
+            .root_cellar = m.ter( pos ) == t_rootcellar,
+            .fridge = m.has_flag_furn( TFLAG_FRIDGE, pos ),
+            .freezer = m.has_flag_furn( TFLAG_FREEZER, pos ),
+        } );
+    }
+
+    switch( type ) {
         case item_location_type::character:
             return temperature_flag::TEMP_NORMAL;
         case item_location_type::monster:
             return temperature_flag::TEMP_NORMAL;
-        case item_location_type::map: {
-            const auto pos = loc.bub_pos();
-            return for_tile( {
-                .root_cellar = m.ter( pos ) == t_rootcellar,
-                .fridge = m.has_flag_furn( TFLAG_FRIDGE, pos ),
-                .freezer = m.has_flag_furn( TFLAG_FREEZER, pos ),
-            } );
-        }
         case item_location_type::vehicle: {
             auto pos = loc.bub_pos();
             optional_vpart_position veh = m.veh_at( pos );
@@ -65,7 +67,7 @@ auto for_location( const map &m, const item &loc ) -> temperature_flag
             return for_location( m, *parent );
         }
         default:
-            debugmsg( "Invalid item location %d", static_cast<int>( loc.where() ) );
+            debugmsg( "Invalid item location %d", static_cast<int>( type ) );
             return temperature_flag::TEMP_NORMAL;
     }
 }
