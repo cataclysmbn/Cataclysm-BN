@@ -1464,6 +1464,19 @@ auto process_fields_in_submap(
                 // create_hot_air() skipped — render/audio effect only.
             }
 
+            // ---- fd_cleaner ------------------------------------------
+            if (!is_newborn && cur_fd_type_id == fd_cleaner) {
+                const auto dx = rng(-1, 1);
+                const auto dy = rng(-1, 1);
+                auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
+                if (dst.valid()) {
+                    const auto& dfield = dst.get_field();
+                    if ( dfield.is_dangerous() && ( dfield.phase == phase_id::GAS )) {
+                        remove_field( dst, dfield );
+                    }
+                }
+            }
+            
             // ---- fd_shock_vent ------------------------------------------
             if (!is_newborn && cur_fd_type_id == fd_shock_vent) {
                 if (cur.get_field_intensity() > 1) {
