@@ -1471,8 +1471,11 @@ auto process_fields_in_submap(
                 auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
                 if (dst.valid()) {
                     const auto& dfield = dst.get_field();
-                    if ( dfield.is_dangerous() && ( dfield.phase == phase_id::GAS )) {
-                        remove_field( dst, dfield );
+                    for (const auto& fld : dfield) {
+                      const auto& cur_fld = fld.second.get_field_type();
+                      if( cur_fld->is_dangerous() && cur_fld->phase == phase_id::GAS ) {
+                        dfield.remove_field(cur_fld);
+                      }
                     }
                 }
             }
