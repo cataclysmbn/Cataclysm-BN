@@ -1433,17 +1433,12 @@
   {
     "id": "fd_gas_remover",
     "type": "field_type",
-    "intensity_levels": [ { "name": " ", "sym": " ", "dangerous": false, "transparent": true, "translucency": 1 } ],
-    "decay_amount_factor": 15,
-    "gas_absorption_factor": 0,
-    "percent_spread": 0,
-    "dirty_transparency_cache": false,
-    "has_fume": true,
+    "intensity_levels": [ { "name": "ionizing field", "sym": "#", "dangerous": false } ],
+    "dirty_transparency_cache": true,
     "priority": 1,
-    "half_life": "1 seconds",
-    "phase": "gas",
+    "half_life": "2 turns",
+    "phase": "plasma",
     "display_items": true,
-    "display_field": false,
-    "looks_like": "fd_fog"
+    "display_field": true
   }
 ]
