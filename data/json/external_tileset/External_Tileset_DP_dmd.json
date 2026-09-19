@@ -215,7 +215,8 @@
           { "id": [ "crocs", "overlay_wielded_crocs" ], "fg": 124 },
           { "id": "overlay_worn_crocs", "fg": 125 },
           { "id": [ "crocs_sport", "overlay_wielded_crocs_sport" ], "fg": 126 },
-          { "id": "overlay_worn_crocs_sport", "fg": 127 }
+          { "id": "overlay_worn_crocs_sport", "fg": 127 },
+          { "id": "fd_gas_remover", "fg": 128 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
