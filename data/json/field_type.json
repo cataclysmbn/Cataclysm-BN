@@ -1433,9 +1433,7 @@
   {
     "id": "fd_gas_remover",
     "type": "field_type",
-    "intensity_levels": [
-      { "name": " ", "sym": " ", "dangerous": false, "transparent": true, "translucency": 1 }
-    ],
+    "intensity_levels": [ { "name": " ", "sym": " ", "dangerous": false, "transparent": true, "translucency": 1 } ],
     "decay_amount_factor": 15,
     "gas_absorption_factor": 0,
     "percent_spread": 0,
