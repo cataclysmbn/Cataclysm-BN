@@ -831,7 +831,7 @@
     "time": 1
   },
   {
-    "id": "bio_janitor",
+    "id": "bio_gas_remover",
     "type": "bionic",
     "name": { "str": "Contaminant Decay Accelerator" },
     "description": "When active, this bionic emits a low energy electric field, causing dangerous airborne particles such as smoke and poison gas within a 5 tile radius to ionize and dissipate rapidly.",
