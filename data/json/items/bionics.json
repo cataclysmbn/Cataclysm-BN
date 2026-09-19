@@ -678,7 +678,7 @@
     "id": "bio_gas_remover",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
-    "name": { "str": "Contaminant Decay Accelerator CBM" },
+    "name": { "str": "Contaminant Particle Ionizer CBM" },
     "looks_like": "bio_int_enhancer",
     "description": "When active, this bionic emits a low energy electric field, causing dangerous airborne particles such as smoke and poison gas within a 5 tile radius to ionize and dissipate rapidly.",
     "price": "8500 USD",
