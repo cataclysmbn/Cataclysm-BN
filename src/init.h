@@ -134,10 +134,12 @@ class DynamicDataLoader
          * that file, don't check extension).
          * @param src String identifier for mod this data comes from
          * @param ui Finalization status display.
+         * @param mod_interactions Ignore or load folders under `mod_interactions`
          * @throws std::exception on all kind of errors.
          */
         /*@{*/
-        void load_data_from_path( const std::string &path, const std::string &src, loading_ui &ui );
+        void load_data_from_path( const std::string &path, const std::string &src, loading_ui &ui,
+                                  const bool mod_interactions = true );
         /*@}*/
         /**
          * Deletes and unloads all the data previously loaded with
