@@ -1464,8 +1464,8 @@ auto process_fields_in_submap(
                 // create_hot_air() skipped — render/audio effect only.
             }
 
-            // ---- fd_cleaner ------------------------------------------
-            if (!is_newborn && cur_fd_type_id == fd_cleaner) {
+            // ---- fd_gas_remover ------------------------------------------
+            if (!is_newborn && cur_fd_type_id == fd_gas_remover) {
                 const auto dx = rng(-1, 1);
                 const auto dy = rng(-1, 1);
                 auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
