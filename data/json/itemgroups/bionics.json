@@ -104,7 +104,8 @@
       [ "bio_blaster", 5 ],
       [ "bio_reactor", 10 ],
       [ "bio_electrosense", 10 ],
-      [ "bio_minirose", 5 ]
+      [ "bio_minirose", 5 ],
+      [ "bio_gas_remover", 10 ]
     ]
   },
   {
@@ -230,7 +231,8 @@
       [ "afs_bio_dopamine_stimulators", 10 ],
       [ "bio_atomic_battery", 5 ],
       [ "bio_atomic_battery_upgrade", 5 ],
-      [ "bio_electrosense", 10 ]
+      [ "bio_electrosense", 10 ],
+      [ "bio_gas_remover", 10 ]
     ]
   },
   {
@@ -259,7 +261,8 @@
       [ "bio_shock_absorber", 5 ],
       [ "bio_targeting", 10 ],
       [ "bio_ups", 15 ],
-      [ "bio_weight", 15 ]
+      [ "bio_weight", 15 ],
+      [ "bio_gas_remover", 10 ]
     ]
   },
   {
@@ -331,7 +334,8 @@
       [ "afs_bio_dopamine_stimulators", 10 ],
       [ "bio_atomic_battery", 5 ],
       [ "bio_atomic_battery_upgrade", 5 ],
-      [ "bio_electrosense", 10 ]
+      [ "bio_electrosense", 10 ],
+      [ "bio_gas_remover", 10 ]
     ]
   },
   {
@@ -401,7 +405,8 @@
       [ "bio_atomic_battery", 5 ],
       [ "bio_atomic_battery_upgrade", 5 ],
       [ "bio_reactor", 5 ],
-      [ "bio_electrosense", 10 ]
+      [ "bio_electrosense", 10 ],
+      [ "bio_gas_remover", 10 ]
     ]
   },
   {
@@ -421,7 +426,8 @@
       [ "bio_shock_absorber", 20 ],
       [ "bio_soporific", 20 ],
       [ "bio_electrosense", 5 ],
-      [ "bio_cable_mkII", 5 ]
+      [ "bio_cable_mkII", 5 ],
+      [ "bio_gas_remover", 5 ]
     ]
   },
   {
@@ -467,7 +473,8 @@
       [ "bio_jointservo", 10 ],
       [ "bio_underwater_propellers", 10 ],
       [ "bio_soporific", 2 ],
-      [ "bio_electrosense", 8 ]
+      [ "bio_electrosense", 8 ],
+      [ "bio_gas_remover", 8 ]
     ]
   },
   {
@@ -575,7 +582,8 @@
       [ "bio_reactor_upgrade", 10 ],
       [ "bio_cable_mkII", 10 ],
       [ "bio_cable_upgrade", 10 ],
-      [ "bio_minirose", 5 ]
+      [ "bio_minirose", 5 ],
+      [ "bio_gas_remover", 10 ]
     ]
   },
   {

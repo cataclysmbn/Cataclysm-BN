@@ -169,6 +169,14 @@
     "chance": 100
   },
   {
+    "id": "emit_gas_remover_field",
+    "type": "emit",
+    "field": "fd_gas_remover",
+    "intensity": 1,
+    "qty": 100,
+    "chance": 100
+  },
+  {
     "id": "emit_shock_burst",
     "type": "emit",
     "//": "small cloud of lightning",

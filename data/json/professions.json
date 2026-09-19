@@ -4418,6 +4418,7 @@
       "bio_infrared",
       "bio_faraday",
       "bio_batteries",
+      "bio_gas_remover",
       "bio_power_storage_mkII",
       "bio_power_storage_mkII"
     ],

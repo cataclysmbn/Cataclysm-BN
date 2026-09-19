@@ -670,9 +670,20 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Artificial Night Generator CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "When active, this bionic eliminates all light within a 15 tile radius through destructive interference.",
+    "description": "When active, this bionic eliminates all light within a 2 tile radius through destructive interference.",
     "price": "8500 USD",
     "difficulty": 5
+  },
+  {
+    "id": "bio_gas_remover",
+    "copy-from": "bionic_general",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Contaminant Particle Ionizer CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "When active, this bionic emits a low energy electric field, causing dangerous airborne particles such as smoke and poison gas within a 5 tile radius to ionize and dissipate rapidly.",
+    "price": "8500 USD",
+    "weight": "300 g",
+    "difficulty": 6
   },
   {
     "id": "bio_night_vision",
