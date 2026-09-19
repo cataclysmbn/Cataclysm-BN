@@ -82,6 +82,9 @@ const char *eol();
 std::vector<std::string> get_files_from_path( const std::string &pattern,
         const std::string &root_path = "", bool recursive_search = false,
         bool match_extension = false );
+/// Find JSON and JSONC files in one breadth-first traversal.
+auto get_json_files_from_path( const std::string &root_path,
+                               bool recursive_search = false ) -> std::vector<std::string>;
 
 //--------------------------------------------------------------------------------------------------
 /**

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# Extract JSON strings from base game and in-repo mods
+# Extract JSON, JSONC, and Lua strings from base game and in-repo mods
 
-lang/extract_json_strings.py \
+deno run --allow-read --allow-write --allow-run scripts/extract_json_strings.ts \
     --project "cataclysm-bn" \
     --tracked-only \
     --warn-unused-types \

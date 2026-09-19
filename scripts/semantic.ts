@@ -8,6 +8,7 @@
  */
 
 import { walk } from "@std/fs"
+import { parse as parseJsonc } from "@std/jsonc"
 import { asynciter } from "$asynciter/mod.ts"
 import * as YAML from "@std/yaml/unstable-stringify"
 import { outdent } from "$outdent/mod.ts"
@@ -54,22 +55,22 @@ const parseModinfos = (xs: unknown[]) =>
   })
 
 /**
- * @param path Path to `modinfo.json` file.
+ * @param path Path to a `modinfo.json` or `modinfo.jsonc` file.
  * @returns Mod ID or `undefined` if file is invalid.
  */
 export const extractModinfo = (path: string): Promise<string | undefined> =>
   Deno
     .readTextFile(path)
-    .then(JSON.parse)
-    .then(parseModinfos)
+    .then(parseJsonc)
+    .then((xs) => parseModinfos(xs as unknown[]))
     .then((xs) => xs[0])
 
 /** List of all mod IDs. */
 export const allModIds = await asynciter(walk("data/mods", {
   maxDepth: 2,
   includeDirs: false,
-  exts: [".json"],
-  match: [/modinfo\.json/],
+  exts: [".json", ".jsonc"],
+  match: [/modinfo\.jsonc?$/],
   skip: [/bn/],
 }))
   .map(({ path }) => path)

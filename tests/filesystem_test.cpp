@@ -3,11 +3,42 @@
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "game.h"
+#include "mod_manager.h"
 #include "path_info.h"
 #include "string_formatter.h"
 #include "world.h"
 
+#include <filesystem>
+#include <fstream>
 #include <sstream>
+
+TEST_CASE("jsonc_file_discovery", "[filesystem][json]") {
+    namespace fs = std::filesystem;
+    const auto root = fs::temp_directory_path() / ("bn_jsonc_" + get_pid_string());
+    REQUIRE(fs::create_directory(root));
+    const auto cleanup = on_out_of_scope([&root]() { fs::remove_all(root); });
+    REQUIRE(fs::create_directory(root / "nested"));
+    for (const auto& name :
+         {"a.jsonc", "b.json", "ignored.json.bak", "ignored.jsonc.bak", "nested/child.jsonc"}) {
+        auto file = std::ofstream(root / name);
+        file << "[]";
+        REQUIRE(file.good());
+    }
+    const auto files = get_json_files_from_path(root.generic_string(), true);
+    REQUIRE(files.size() == 3);
+    CHECK(files[0] == (root / "a.jsonc").generic_string());
+    CHECK(files[1] == (root / "b.json").generic_string());
+    CHECK(files[2] == (root / "nested/child.jsonc").generic_string());
+    CHECK(get_json_files_from_path(root.generic_string()).size() == 2);
+
+    auto manifest = std::ofstream(root / "modinfo.jsonc");
+    manifest << R"([ /* manifest */ { "type": "MOD_INFO", "id": "jsonc_test",
+        "name": "JSONC test", "description": "Test", "category": "misc_additions" } ])";
+    manifest.close();
+    const auto mods = mod_management::load_mods_from(root.generic_string());
+    REQUIRE(mods.size() == 1);
+    CHECK(mods.front().ident == mod_id("jsonc_test"));
+}
 
 static auto str_to_hex(const std::string& s) -> std::string {
     std::stringstream ss;

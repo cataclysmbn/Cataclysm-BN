@@ -27,7 +27,7 @@ Deno.test("selectEntries accepts stale lock versions", () => {
   assertEquals(entries[0].version, "2.0.0")
 })
 
-Deno.test("bundle extracts mods, skips excluded soundpacks, and writes credits", async () => {
+Deno.test("bundle extracts mods, recognizes JSONC markers, skips excluded soundpacks, and writes credits", async () => {
   const outputRoot = await Deno.makeTempDir()
   try {
     const locks = [
@@ -35,6 +35,11 @@ Deno.test("bundle extracts mods, skips excluded soundpacks, and writes credits",
         id: "demo_mod",
         version: "1.0.0",
         url: await zipUrl({ "ArchiveRoot/NestedMod/modinfo.json": "[]" }),
+      },
+      {
+        id: "demo_mod_jsonc",
+        version: "1.0.0",
+        url: await zipUrl({ "ArchiveRoot/JsoncMod/modinfo.jsonc": "[ // JSONC marker fixture\n]" }),
       },
       {
         id: "demo_sound",
@@ -50,6 +55,14 @@ Deno.test("bundle extracts mods, skips excluded soundpacks, and writes credits",
         package_type: "mod" as const,
         license: "CC0",
         source: { extract_path: "NestedMod" },
+      },
+      {
+        id: "demo_mod_jsonc",
+        version: "1.0.0",
+        display_name: "Demo JSONC Mod",
+        package_type: "mod" as const,
+        license: "CC0",
+        source: { extract_path: "JsoncMod" },
       },
       {
         id: "demo_sound",
@@ -68,8 +81,9 @@ Deno.test("bundle extracts mods, skips excluded soundpacks, and writes credits",
       excludedPackageTypes: new Set(["soundpack"]),
     })
 
-    assertEquals(entries.map((entry) => entry.id), ["demo_mod"])
+    assertEquals(entries.map((entry) => entry.id), ["demo_mod", "demo_mod_jsonc"])
     assertEquals(await exists(join(outputRoot, "data/mods/NestedMod/modinfo.json")), true)
+    assertEquals(await exists(join(outputRoot, "data/mods/JsoncMod/modinfo.jsonc")), true)
     assertEquals(await exists(join(outputRoot, "data/sound/SoundRoot/soundpack.txt")), false)
     const credits = await Deno.readTextFile(
       join(outputRoot, "data/mods/external-mods-CREDITS.txt"),

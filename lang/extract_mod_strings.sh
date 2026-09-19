@@ -1,5 +1,5 @@
-# Extract strings from JSONs in this folder
+# Extract strings from JSON, JSONC, and Lua files in this folder
 mkdir -p lang
-python3 extract_json_strings.py -i ./ -o lang/extracted_strings.pot
-python3 dedup_pot_file.py lang/extracted_strings.pot
+deno run --allow-read --allow-write --allow-run scripts/extract_json_strings.ts -i ./ -o lang/extracted_strings.pot
+deno run --allow-read --allow-write scripts/pot_tools.ts dedup lang/extracted_strings.pot
 echo Done!

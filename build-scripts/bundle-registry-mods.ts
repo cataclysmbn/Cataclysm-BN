@@ -52,7 +52,10 @@ const loadJson = async <T>(schema: v.GenericSchema<T>, pathOrUrl: string): Promi
 }
 
 const pathParts = (path: string) => path.split(/[\\/]/).filter((part) => part && part !== ".")
-const markerFiles = { mod: ["modinfo.json"], soundpack: ["soundpack.txt", "soundpack.json"] }
+const markerFiles = {
+  mod: ["modinfo.json", "modinfo.jsonc"],
+  soundpack: ["soundpack.txt", "soundpack.json"],
+}
 const packageType = (entry: RegistryEntry) => entry.package_type ?? "mod"
 const logEntry = (entry: BundleEntry) =>
   console.log(`${entry.id}: ${entry.display_name} (${packageType(entry)})`)

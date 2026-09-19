@@ -37,7 +37,7 @@ const char *translated = _( "text marked for translation" )
 add_msg( _( "You drop the %s." ), the_item_name );
 ```
 
-JSON 파일의 문자열은 `lang/extract_json_strings.py` 스크립트에 의해 추출되며, `_()`를 사용하여
+JSON 및 JSONC 파일의 문자열은 `scripts/extract_json_strings.ts` 스크립트에 의해 추출되며, `_()`를 사용하여
 런타임 중에 번역할 수 있습니다. JSON 문자열에 대한 번역 컨텍스트가 필요한 경우, 아래에 설명된
 `class translation`을 대신 사용할 수 있습니다.
 

@@ -42,7 +42,7 @@ struct language_info {
      * Current choices are m (male), f (female), n (neuter).
      *
      * As appropriate we might add e.g. a (animate) or c (common).
-     * New genders must be added to all_genders in lang/extract_json_strings.py
+     * New genders must be added to allGenders in scripts/extract_json_strings.ts
      * and src/language.cpp.
      *
      * The primary purpose of this is for NPC dialogue which might depend on

@@ -1,0 +1,9 @@
+[
+  {
+    "type": "GENERIC",
+    "id": "fixture_item",
+    "name": { "str": "fixture item", "str_pl": "fixture items", "//~": "item name note" },
+    "description": "A fixture item.",
+    "use_action": { "msg": "Fixture use action." }
+  }
+]

@@ -81,7 +81,7 @@ else
         # Because some mods might be mutually incompatible we might need to run a few times.
         blacklist=build-scripts/mod_test_blacklist
 
-        ./build-scripts/get_all_mods.py $blacklist | \
+        deno run --allow-read build-scripts/get_all_mods.ts $blacklist | \
             while read -r mods
             do
                 run_test ./tests/cata_test '(all_mods)=> ' '~*' --user-dir=all_modded --mods="${mods}"

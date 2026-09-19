@@ -203,7 +203,7 @@ jobs:
         if: ${{ env.SKIP == 'false' && env.TEST_STAGE == '1' }}
         run: |
           build-scripts/format-json.sh
-          git diff --exit-code -- '*.json'
+          git diff --exit-code -- '*.json' '*.jsonc'
           tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*/*/*
 
       - name: create Linux tiles playtest package
@@ -245,7 +245,7 @@ jobs:
           # Run test with all mods (test-stage only)
           if [ "${{ env.TEST_STAGE }}" = "1" ]; then
             blacklist=build-scripts/mod_test_blacklist
-            ./build-scripts/get_all_mods.py $blacklist | \
+            deno run --allow-read build-scripts/get_all_mods.ts $blacklist | \
               while read -r mods; do
                 $test_bin $test_opts '~*' --user-dir=all_modded --mods="${mods}"
               done

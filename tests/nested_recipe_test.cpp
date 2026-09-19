@@ -12,7 +12,8 @@
 // Test that nested recipes correctly check if child recipes are known
 TEST_CASE("nested_recipe_known_check", "[crafting][nested][recipe]") {
     clear_all_state();
-    avatar& dummy = get_avatar();
+    // Clearing skills does not forget recipes learned by earlier tests.
+    auto dummy = avatar();
     clear_character(dummy);
 
     // backpack_hiking has difficulty 4 and autolearn: true

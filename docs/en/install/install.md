@@ -32,7 +32,7 @@
   <img width="1914" height="937" alt="image" src="https://github.com/user-attachments/assets/37052212-929d-4459-b383-a665d10f500e" />
 
 - Same as what we did for the base game, drag & drop the mod file(s) in `/gamefolder/mods/`
-- _A mod folder must have a modinfo.json file, you need to drag & drop the folder that contains it_
+- _A mod folder must have a modinfo.json or modinfo.jsonc file; drag & drop the folder that contains it_
   <img width="1917" height="1076" alt="image" src="https://github.com/user-attachments/assets/da63f3ff-40e5-44c2-82cc-15bcb3e3e9b2" />
 
 - The mod is installed!
