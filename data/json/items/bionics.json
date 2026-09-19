@@ -675,7 +675,7 @@
     "difficulty": 5
   },
   {
-    "id": "bio_janitor",
+    "id": "bio_gas_remover",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
     "name": { "str": "Contaminant Decay Accelerator CBM" },
