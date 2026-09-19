@@ -2,12 +2,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <iterator>
 #include <map>
 
 #include "addiction.h"
 #include "calendar.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "generic_factory.h"
@@ -22,12 +24,15 @@
 #include "pldata.h"
 #include "translations.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 
 namespace
 {
 generic_factory<profession> all_profs( "profession" );
 const profession_id generic_profession_id( "unemployed" );
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( profession, all_profs );
 
 static class json_item_substitution
 {
@@ -56,25 +61,13 @@ static class json_item_substitution
         };
         std::map<itype_id, std::vector<substitution>> substitutions;
         std::vector<std::pair<itype_id, trait_requirements>> bonuses;
+        std::vector<std::pair<item_group_id, trait_requirements>> itemgroup_bonuses;
     public:
-        std::vector<itype_id> get_bonus_items( const std::vector<trait_id> &traits ) const;
+        std::vector<detached_ptr<item>> get_bonus_items( const std::vector<trait_id> &traits,
+                                     const std::set<itype_id> &no_bonus ) const;
         std::vector<detached_ptr<item>> get_substitution( const item &it,
                                      const std::vector<trait_id> &traits ) const;
 } item_substitutions;
-
-/** @relates string_id */
-template<>
-const profession &string_id<profession>::obj() const
-{
-    return all_profs.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<profession>::is_valid() const
-{
-    return all_profs.is_valid( *this );
-}
 
 profession::profession()
     : _name_male( no_translation( "null" ) ),
@@ -237,7 +230,7 @@ void profession::load( const JsonObject &jo, const std::string & )
                                      "collection" );
         }
     }
-    optional( jo, was_loaded, "no_bonus", no_bonus );
+    optional( jo, was_loaded, "no_bonus", no_bonus, auto_flags_reader<itype_id> {} );
 
     optional( jo, was_loaded, "starting_cash", _starting_cash );
 
@@ -249,9 +242,12 @@ void profession::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "traits", _starting_traits, auto_flags_reader<trait_id> {} );
     optional( jo, was_loaded, "forbidden_traits", _forbidden_traits, auto_flags_reader<trait_id> {} );
     optional( jo, was_loaded, "forbidden_bionics", _forbidden_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "forbidden_spells", _forbidden_spells, auto_flags_reader<spell_id> {} );
     optional( jo, was_loaded, "allowed_traits", _allowed_traits, auto_flags_reader<trait_id> {} );
     optional( jo, was_loaded, "allowed_bionics", _allowed_bionics, auto_flags_reader<bionic_id> {} );
+    optional( jo, was_loaded, "allowed_spells", _allowed_spells, auto_flags_reader<spell_id> {} );
     optional( jo, was_loaded, "forbids_bionics", _forbids_bionics );
+    optional( jo, was_loaded, "forbids_spells", _forbids_spells );
     optional( jo, was_loaded, "flags", flags, auto_flags_reader<> {} );
 
     optional( jo, was_loaded, "missions", _missions, auto_flags_reader<mission_type_id> {} );
@@ -324,8 +320,10 @@ void profession::check_definition() const
     check_item_definitions( legacy_starting_items );
     check_item_definitions( legacy_starting_items_female );
     check_item_definitions( legacy_starting_items_male );
-    if( !no_bonus.is_empty() && !no_bonus.is_valid() ) {
-        debugmsg( "no_bonus item '%s' is not an itype_id", no_bonus.c_str() );
+    for( const auto &no_bonus_id : no_bonus ) {
+        if( !no_bonus_id.is_valid() ) {
+            debugmsg( "no_bonus item '%s' is not an itype_id", no_bonus_id.c_str() );
+        }
     }
 
     if( !item_group::group_is_defined( _starting_items ) ) {
@@ -362,6 +360,18 @@ void profession::check_definition() const
     for( auto &t : _allowed_bionics ) {
         if( !t.is_valid() ) {
             debugmsg( "bionic %s for profession %s does not exist", t.c_str(), id.c_str() );
+        }
+    }
+
+    for( auto &t : _forbidden_spells ) {
+        if( !t.is_valid() ) {
+            debugmsg( "spell %s for profession %s does not exist", t.c_str(), id.c_str() );
+        }
+    }
+
+    for( auto &t : _allowed_spells ) {
+        if( !t.is_valid() ) {
+            debugmsg( "spell %s for profession %s does not exist", t.c_str(), id.c_str() );
         }
     }
     for( const auto &elem : _starting_pets ) {
@@ -481,18 +491,10 @@ std::vector<detached_ptr<item>> profession::items( bool male,
                    std::make_move_iterator( group_gender.begin() ),
                    std::make_move_iterator( group_gender.end() ) );
 
-    std::vector<itype_id> bonus = item_substitutions.get_bonus_items( traits );
-    for( const itype_id &elem : bonus ) {
-        if( elem != no_bonus ) {
-            auto bonus_item = item::spawn( elem, advanced_spawn_time(), item::default_charges_tag {} );
-            if( !bonus_item->magazine_current() &&
-                bonus_item->magazine_default() != itype_id::NULL_ID() ) {
-                bonus_item->put_in( item::spawn( bonus_item->magazine_default(),
-                                                 bonus_item->birthday() ) );
-            }
-            result.push_back( std::move( bonus_item ) );
-        }
-    }
+    std::vector<detached_ptr<item>> bonus = item_substitutions.get_bonus_items( traits, no_bonus );
+    result.insert( result.end(),
+                   std::make_move_iterator( bonus.begin() ),
+                   std::make_move_iterator( bonus.end() ) );
     for( auto iter = result.begin(); iter != result.end(); ) {
         auto sub = item_substitutions.get_substitution( **iter, traits );
         if( !sub.empty() ) {
@@ -592,6 +594,16 @@ bool profession::forbids_bionics() const
 {
     return _forbids_bionics;
 }
+
+std::set<spell_id> profession::get_allowed_spells() const
+{
+    return _allowed_spells;
+}
+
+bool profession::forbids_spells() const
+{
+    return _forbids_spells;
+}
 profession::StartingSkillList profession::skills() const
 {
     return _starting_skills;
@@ -638,6 +650,16 @@ bool profession::is_allowed_bionic( const bionic_id &bionic ) const
     return _allowed_bionics.contains( bionic );
 }
 
+bool profession::is_forbidden_spell( const spell_id &spell ) const
+{
+    return _forbidden_spells.contains( spell );
+}
+
+bool profession::is_allowed_spell( const spell_id &spell ) const
+{
+    return _allowed_spells.contains( spell );
+}
+
 std::map<spell_id, int> profession::spells() const
 {
     return _starting_spells;
@@ -654,6 +676,7 @@ void json_item_substitution::reset()
 {
     substitutions.clear();
     bonuses.clear();
+    itemgroup_bonuses.clear();
 }
 
 json_item_substitution::substitution::info::info( const JsonValue &value )
@@ -683,7 +706,9 @@ json_item_substitution::trait_requirements::trait_requirements( const JsonObject
 void json_item_substitution::load( const JsonObject &jo )
 {
     const bool item_mode = jo.has_string( "item" );
-    const std::string title = jo.get_string( item_mode ? "item" : "trait" );
+    const bool itemgroup_mode = jo.has_string( "item_group" );
+    const std::string title = jo.get_string( item_mode ? "item" : itemgroup_mode ? "item_group" :
+                              "trait" );
 
     auto check_duplicate_item = [&]( const itype_id & it ) {
         return substitutions.contains( it ) ||
@@ -710,6 +735,12 @@ void json_item_substitution::load( const JsonObject &jo )
                 s.infos.emplace_back( info );
             }
             substitutions[itype_id( title )].push_back( s );
+        }
+    } else if( itemgroup_mode ) {
+        if( jo.has_member( "bonus" ) ) {
+            itemgroup_bonuses.emplace_back( item_group::load_item_group( jo.get_member( "item_group" ),
+                                            "collection" ),
+                                            trait_requirements( jo.get_object( "bonus" ) ) );
         }
     } else {
         for( const JsonObject sub : jo.get_array( "sub" ) ) {
@@ -818,13 +849,28 @@ std::vector<detached_ptr<item>> json_item_substitution::get_substitution( const 
     return ret;
 }
 
-std::vector<itype_id> json_item_substitution::get_bonus_items( const std::vector<trait_id>
-        &traits ) const
+std::vector<detached_ptr<item>> json_item_substitution::get_bonus_items( const std::vector<trait_id>
+                             &traits, const std::set<itype_id> &no_bonus ) const
 {
-    std::vector<itype_id> ret;
+    std::vector<detached_ptr<item>> ret;
     for( const auto &pair : bonuses ) {
+        if( pair.second.meets_condition( traits ) && !no_bonus.contains( pair.first ) ) {
+            auto bonus_item = item::spawn( pair.first, advanced_spawn_time(), item::default_charges_tag {} );
+            if( !bonus_item->magazine_current() &&
+                bonus_item->magazine_default() != itype_id::NULL_ID() ) {
+                bonus_item->put_in( item::spawn( bonus_item->magazine_default(), bonus_item->birthday() ) );
+            }
+            ret.push_back( std::move( bonus_item ) );
+        }
+    }
+    for( const auto &pair : itemgroup_bonuses ) {
         if( pair.second.meets_condition( traits ) ) {
-            ret.push_back( pair.first );
+            auto items = item_group::items_from( pair.first );
+            for( auto &bonus_item : items ) {
+                if( !no_bonus.contains( bonus_item->typeId() ) ) {
+                    ret.push_back( std::move( bonus_item ) );
+                }
+            }
         }
     }
     return ret;

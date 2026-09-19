@@ -51,7 +51,7 @@ There are a couple of guidelines we suggest sticking to:
 
 ### C++
 
-Code style is enforced across the codebase by `astyle`. See
+C++ style is enforced by the repository formatter helpers. Run `just fmt` before committing; see
 [CODE_STYLE](./../dev/explanation/code_style.md) for details.
 
 ### JSON
@@ -272,6 +272,12 @@ It is not required to solve or reference an open issue to file a PR, however, if
 to explain the problem your PR is solving in full detail.
 
 ### AI-assisted pull requests
+
+> [!CAUTION]
+> PR summary must be written by a human. PRs with AI-generated summary will be closed without warning. This is because
+>
+> 1. those summaries are almost always of low quality, and hard to read for reviewers
+> 2. it usually indicates that the PR author vibe-coded the PR and doesn't understand what the PR does.
 
 If AI coding assistants contributed to a PR, the PR description must disclose the use of AI.
 

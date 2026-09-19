@@ -125,6 +125,7 @@ enum character_movemode : int {
     CMM_WALK = 0,
     CMM_RUN,
     CMM_CROUCH,
+    CMM_PRONE,
     CMM_COUNT
 };
 
@@ -525,10 +526,10 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Getters/setters for body part temperature.
          *  This could go under Creature, but Character is the class with update_bodytemp. */
-        int  get_part_temp_cur( const bodypart_id &id ) const;
-        void set_part_temp_cur( const bodypart_id &id, int temp );
-        std::map<bodypart_id, int> get_temp_cur();
-        void set_temp_cur( int temp );
+        auto get_part_temp_cur( const bodypart_id &id ) const -> units::temperature;
+        auto set_part_temp_cur( const bodypart_id &id, units::temperature temp ) -> void;
+        auto get_temp_cur() -> std::map<bodypart_id, units::temperature>;
+        auto set_temp_cur( units::temperature temp ) -> void;
 
         /** Define blood loss (in percents) */
         int blood_loss( const bodypart_id &bp ) const;
@@ -576,7 +577,8 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns character luminosity based on the brightest active item they are carrying */
         float active_light() const;
 
-        bool sees_with_specials( const Creature &critter ) const;
+        enchantment_vision_id sees_with_specials( const Creature &critter,
+                const bool force_path = false ) const;
 
         /** Bitset of all the body parts covered only with items with `flag` (or nothing) */
         body_part_set exclusive_flag_coverage( const flag_id &flag ) const;
@@ -600,6 +602,7 @@ class Character : public Creature, public location_visitable<Character>
          * Handles end-of-turn processing.
          */
         void process_turn() override;
+        auto action_move_factor() const -> int override;
         /** Processes human-specific effects of effects before calling Creature::process_effects(). */
         void process_effects_internal() override;
         /** Handles the still hard-coded effects. */
@@ -607,7 +610,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Processes human-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
         /** Process active items */
-        void process_items();
+        void process_items( int turns = 1 );
 
         /** Recalculates HP after a change to max strength */
         void recalc_hp();
@@ -629,6 +632,10 @@ class Character : public Creature, public location_visitable<Character>
          * to simulate glare, etc, night vision only works if you are in the dark.
          */
         float get_vision_threshold( float light_level ) const;
+        /**
+         * Returns the vision range of night vision
+         */
+        float night_vision_sight_range() const;
         /**
          * Flag encumbrance for updating.
         */
@@ -675,6 +682,18 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns a random valid technique */
         matec_id pick_technique( Creature &t, const item &weap,
                                  bool crit, bool dodge_counter, bool block_counter );
+        struct technique_query_options {
+            Creature &target;
+            const item &weapon;
+            bool critical_hit = false;
+            bool dodge_counter = false;
+            bool block_counter = false;
+            bool use_weighting = true;
+            bool allow_counter_techniques = false;
+            bool allow_defensive_techniques = false;
+        };
+        /** Returns all valid techniques for the current combat context */
+        std::vector<matec_id> get_valid_techniques( const technique_query_options &options );
         void perform_technique( const ma_technique &technique, Creature &t, damage_instance &di,
                                 int &move_cost );
 
@@ -794,6 +813,9 @@ class Character : public Creature, public location_visitable<Character>
         bool has_base_trait( const trait_id &b ) const;
         /** Returns true if player has a trait with a flag */
         bool has_trait_flag( const trait_flag_str_id &b ) const;
+
+        bool has_trait_type( const std::string &mut_type ) const;
+
         /** Returns true if character has a trait which cancels the entered trait. */
         bool has_opposite_trait( const trait_id &flag ) const;
 
@@ -920,9 +942,19 @@ class Character : public Creature, public location_visitable<Character>
         void rebuild_mutation_cache();
 
         /**
+         * Checks weather we have an enchantment flag
+         */
+        bool has_enchantment_flag( enchantment_flag_id value ) const;
+        /**
          * Calculate bonus from enchantments for given base value.
          */
-        double bonus_from_enchantments( double base, enchant_vals::mod value, bool round = false ) const;
+        double bonus_from_enchantments( double base, enchantment_value_id value, bool round = false ) const;
+
+        /** Returns true if the player has an enchantment with that fake item */
+        bool has_enchantment_with_fake( const itype_id &it ) const;
+
+        /** Returns all fake items from currently active enchantments */
+        std::set<itype_id> get_enchantment_fake_items() const;
 
         /** Returns true if the player has any martial arts buffs attached */
         bool has_mabuff( const mabuff_id &buff_id ) const;
@@ -1276,8 +1308,6 @@ class Character : public Creature, public location_visitable<Character>
 
         detached_ptr<item> inv_remove_item( item * );
 
-        units::volume inv_volume() const;
-
         void inv_unsort();
 
         void inv_clear();
@@ -1572,8 +1602,12 @@ class Character : public Creature, public location_visitable<Character>
         std::vector<overlay_entry> get_overlay_ids() const;
 
         // --------------- Skill Stuff ---------------
+        // These are calling the following with no_enchant = false -> for catalua bindings
         int get_skill_level( const skill_id &ident ) const;
         int get_skill_level( const skill_id &ident, const item &context ) const;
+
+        int get_skill_level( const skill_id &ident, const bool no_enchant ) const;
+        int get_skill_level( const skill_id &ident, const item &context, const bool no_enchant ) const;
 
         const SkillLevelMap &get_all_skills() const;
         SkillLevel &get_skill_level_object( const skill_id &ident );
@@ -1644,7 +1678,6 @@ class Character : public Creature, public location_visitable<Character>
         bool is_rad_immune() const;
         /** Returns true if the player is immune to throws */
         bool is_throw_immune() const;
-
         /**
          * Returns >0 if character is sitting/lying and relatively inactive.
          * 1 represents sleep on comfortable bed, so anything above that should be rare.
@@ -1716,7 +1749,7 @@ class Character : public Creature, public location_visitable<Character>
         efftype_id last_emote;
 
         // bio_portal_tap: persistent link to a powered portal for passive bionic charging.
-        std::string bio_portal_tap_dim_id;
+        dimension_id bio_portal_tap_dim_id;
         tripoint_abs_ms bio_portal_tap_pos;
         bool bio_portal_tap_linked = false;
 
@@ -2041,18 +2074,19 @@ class Character : public Creature, public location_visitable<Character>
          * Warmth from terrain, furniture, vehicle furniture and traps.
          * Can be negative.
          **/
-        static int floor_bedding_warmth( const tripoint_bub_ms &pos );
+        static auto floor_bedding_warmth( const tripoint_bub_ms &pos ) -> units::temperature_delta;
         /** Warmth from clothing on the floor **/
-        static int floor_item_warmth( const tripoint_bub_ms &pos );
+        static auto floor_item_warmth( const tripoint_bub_ms &pos ) -> units::temperature_delta;
         /** Final warmth from the floor **/
-        int floor_warmth( const tripoint_bub_ms &pos ) const;
+        auto floor_warmth( const tripoint_bub_ms &pos ) const -> units::temperature_delta;
 
         /** Correction factor of the body temperature due to traits and mutations **/
-        int bodytemp_modifier_traits( bool overheated ) const;
+        auto bodytemp_modifier_traits( bool overheated ) const -> units::temperature_delta;
         /** Correction factor of the body temperature due to traits and mutations for player lying on the floor **/
-        int bodytemp_modifier_traits_floor() const;
+        auto bodytemp_modifier_traits_floor() const -> units::temperature_delta;
         /** Value of the body temperature corrected by climate control **/
-        int temp_corrected_by_climate_control( int temperature ) const;
+        auto temp_corrected_by_climate_control( units::temperature temperature,
+                                                bodypart_id id ) -> units::temperature;
 
         bool in_sleep_state() const override;
 
@@ -2165,7 +2199,7 @@ class Character : public Creature, public location_visitable<Character>
          * depending on choice of ingredients */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const item &, const recipe_id &,
-            const cata::flat_set<flag_id> &extra_flags = {} ) const;
+        const cata::flat_set<flag_id> &extra_flags = {} ) const;
         /** Same, but across arbitrary recipes */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const itype_id &, const cata::flat_set<flag_id> &extra_flags = {} ) const;

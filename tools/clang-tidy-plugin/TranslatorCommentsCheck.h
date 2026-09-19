@@ -9,35 +9,32 @@
 #include <memory>
 #include <set>
 
-namespace clang
-{
+namespace clang {
 class CompilerInstance;
 
-namespace tidy
-{
+namespace tidy {
 class ClangTidyContext;
 
-namespace cata
-{
+namespace cata {
 
-class TranslatorCommentsCheck : public ClangTidyCheck
-{
-    public:
-        TranslatorCommentsCheck( StringRef Name, ClangTidyContext *Context );
-        ~TranslatorCommentsCheck();
+class TranslatorCommentsCheck: public ClangTidyCheck {
+public:
+    TranslatorCommentsCheck(StringRef Name, ClangTidyContext* Context);
+    ~TranslatorCommentsCheck();
 
-        void registerPPCallbacks( const SourceManager &, Preprocessor *, Preprocessor * ) override;
-        void registerMatchers( ast_matchers::MatchFinder *Finder ) override;
-        void check( const ast_matchers::MatchFinder::MatchResult &Result ) override;
-        void onEndOfTranslationUnit() override;
+    void registerPPCallbacks(const SourceManager&, Preprocessor*, Preprocessor*) override;
+    void registerMatchers(ast_matchers::MatchFinder* Finder) override;
+    void check(const ast_matchers::MatchFinder::MatchResult& Result) override;
+    void onEndOfTranslationUnit() override;
 
-        std::set<SourceLocation> MarkedStrings;
-        bool MatchingStarted;
-    private:
-        class TranslatorCommentsHandler;
+    std::set<SourceLocation> MarkedStrings;
+    bool MatchingStarted;
 
-        std::unique_ptr<TranslatorCommentsHandler> Handler;
-        class TranslationMacroCallback;
+private:
+    class TranslatorCommentsHandler;
+
+    std::unique_ptr<TranslatorCommentsHandler> Handler;
+    class TranslationMacroCallback;
 };
 
 } // namespace cata

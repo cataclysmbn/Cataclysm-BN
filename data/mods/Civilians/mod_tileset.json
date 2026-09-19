@@ -28,18 +28,20 @@
           {
             "id": "mon_civilian_police",
             "fg": [
+              { "weight": 3, "sprite": 4 },
               { "weight": 3, "sprite": 5 },
               { "weight": 3, "sprite": 6 },
               { "weight": 3, "sprite": 7 },
-              { "weight": 3, "sprite": 8 }
+              { "weight": 3, "sprite": 8 },
+              { "weight": 3, "sprite": 9 }
             ],
             "rotates": true
           }
         ],
         "sprite_width": 32,
-        "sprite_height": 32,
+        "sprite_height": 48,
         "sprite_offset_x": 0,
-        "sprite_offset_y": 0
+        "sprite_offset_y": -16
       },
       {
         "file": "gfx/fighters.png",
@@ -47,10 +49,10 @@
           {
             "id": "mon_civilian_zombiefighter",
             "fg": [
-              { "weight": 3, "sprite": 9 },
               { "weight": 3, "sprite": 10 },
               { "weight": 3, "sprite": 11 },
-              { "weight": 3, "sprite": 12 }
+              { "weight": 3, "sprite": 12 },
+              { "weight": 3, "sprite": 13 }
             ],
             "rotates": true
           }
@@ -66,10 +68,303 @@
           {
             "id": "mon_civilian_icu",
             "fg": [
-              { "weight": 3, "sprite": 13 },
               { "weight": 3, "sprite": 14 },
               { "weight": 3, "sprite": 15 },
-              { "weight": 3, "sprite": 16 }
+              { "weight": 3, "sprite": 16 },
+              { "weight": 3, "sprite": 17 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/child.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_child",
+            "fg": [
+              { "weight": 3, "sprite": 18 },
+              { "weight": 3, "sprite": 19 },
+              { "weight": 3, "sprite": 20 },
+              { "weight": 3, "sprite": 21 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_bow.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_bow",
+            "fg": [
+              { "weight": 3, "sprite": 22 },
+              { "weight": 3, "sprite": 23 },
+              { "weight": 3, "sprite": 24 },
+              { "weight": 3, "sprite": 25 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_crossbow.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_crossbow",
+            "fg": [
+              { "weight": 3, "sprite": 26 },
+              { "weight": 3, "sprite": 27 },
+              { "weight": 3, "sprite": 28 },
+              { "weight": 3, "sprite": 29 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_pistol.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_pistol",
+            "fg": [
+              { "weight": 3, "sprite": 30 },
+              { "weight": 3, "sprite": 31 },
+              { "weight": 3, "sprite": 32 },
+              { "weight": 3, "sprite": 33 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_fighter.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_fighter",
+            "fg": [
+              { "weight": 3, "sprite": 34 },
+              { "weight": 3, "sprite": 35 },
+              { "weight": 3, "sprite": 36 },
+              { "weight": 3, "sprite": 37 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_guardian_shotgun.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_guardian_shotgun",
+            "fg": [
+              { "weight": 3, "sprite": 38 },
+              { "weight": 3, "sprite": 39 },
+              { "weight": 3, "sprite": 40 },
+              { "weight": 3, "sprite": 41 },
+              { "weight": 3, "sprite": 42 },
+              { "weight": 3, "sprite": 43 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_guardian_smg.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_guardian_smg",
+            "fg": [
+              { "weight": 3, "sprite": 44 },
+              { "weight": 3, "sprite": 45 },
+              { "weight": 3, "sprite": 46 },
+              { "weight": 3, "sprite": 47 },
+              { "weight": 3, "sprite": 48 },
+              { "weight": 3, "sprite": 49 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/survivor_child.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_child",
+            "fg": [
+              { "weight": 3, "sprite": 50 },
+              { "weight": 3, "sprite": 51 },
+              { "weight": 3, "sprite": 52 },
+              { "weight": 3, "sprite": 53 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_elite_bow.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_elite_bow",
+            "fg": [
+              { "weight": 3, "sprite": 54 },
+              { "weight": 3, "sprite": 55 },
+              { "weight": 3, "sprite": 56 },
+              { "weight": 3, "sprite": 57 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_elite_crossbow.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_elite_crossbow",
+            "fg": [
+              { "weight": 3, "sprite": 58 },
+              { "weight": 3, "sprite": 59 },
+              { "weight": 3, "sprite": 60 },
+              { "weight": 3, "sprite": 61 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_elite_pistol.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_elite_pistol",
+            "fg": [
+              { "weight": 3, "sprite": 62 },
+              { "weight": 3, "sprite": 63 },
+              { "weight": 3, "sprite": 64 },
+              { "weight": 3, "sprite": 65 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_elite_fighter.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_elite_fighter",
+            "fg": [
+              { "weight": 3, "sprite": 66 },
+              { "weight": 3, "sprite": 67 },
+              { "weight": 3, "sprite": 68 },
+              { "weight": 3, "sprite": 69 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "gfx/civilian_survivor_guardian_elite_rifle.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_guardian_elite_rifle",
+            "fg": [
+              { "weight": 3, "sprite": 70 },
+              { "weight": 3, "sprite": 71 },
+              { "weight": 3, "sprite": 72 },
+              { "weight": 3, "sprite": 73 },
+              { "weight": 3, "sprite": 74 },
+              { "weight": 3, "sprite": 75 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 48,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": -16
+      },
+      {
+        "file": "gfx/civilian_survivor_guardian_elite_AR.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_guardian_elite_AR",
+            "fg": [
+              { "weight": 3, "sprite": 76 },
+              { "weight": 3, "sprite": 77 },
+              { "weight": 3, "sprite": 78 },
+              { "weight": 3, "sprite": 79 },
+              { "weight": 3, "sprite": 80 },
+              { "weight": 3, "sprite": 81 }
+            ],
+            "rotates": true
+          }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 48,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": -16
+      },
+      {
+        "file": "gfx/survivor_child_elite.png",
+        "tiles": [
+          {
+            "id": "mon_civilian_survivor_child_elite",
+            "fg": [
+              { "weight": 3, "sprite": 82 },
+              { "weight": 3, "sprite": 83 },
+              { "weight": 3, "sprite": 84 },
+              { "weight": 3, "sprite": 85 }
             ],
             "rotates": true
           }

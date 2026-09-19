@@ -1116,7 +1116,7 @@
     "id": "shock_foil",
     "type": "TOOL",
     "copy-from": "fencing_foil_sharpened",
-    "name": { "str": "electrified foil (off)" },
+    "name": { "str": "electrified foil (off)", "str_pl": "electrified foils (off)" },
     "description": "The modifications made to this fencing foil may not be sporting, but they might give you an edge in this final competition.  Extra effort has been made to insulate the grip and a high voltage stun gun has been attached to the guard, wired through the electronic scoring circuit to the tip.  Activate the switch to elecrocute your foes!",
     "ammo": "battery",
     "price_postapoc": "1250 cent",
@@ -1130,20 +1130,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1210,20 +1197,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1289,20 +1263,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1439,20 +1400,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1659,9 +1607,7 @@
       "need_dry": true
     },
     "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
-    "magazines": [
-      [ "battery", [ "heavy_battery_cell", "heavy_plus_battery_cell", "heavy_atomic_battery_cell", "heavy_disposable_cell" ] ]
-    ],
+    "magazines": [ [ "battery", [ "heavy_battery_cell" ] ] ],
     "magazine_well": "1000 ml"
   },
   {
@@ -1875,12 +1821,7 @@
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
     "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -1963,17 +1904,17 @@
     "type": "GENERIC",
     "copy-from": "knife_combat",
     "name": { "str": "carbon fiber knife" },
-    "description": "A custom 3D-printed combat knife made out of carbon fiber.  It is more lightweight than a normal knife thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
+    "description": "A custom 3D-printed combat knife made out of carbon fiber and a steel edge.  It is more lightweight than a normal knife thanks to its method of manufacturing.",
     "weight": "300 g",
-    "material": [ "carbon_fiber" ]
+    "material": [ "carbon_fiber", "steel" ]
   },
   {
     "id": "sword_carbon",
     "type": "GENERIC",
     "copy-from": "katana",
     "name": { "str": "carbon fiber katana" },
-    "description": "A custom 3D-printed single-bladed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed single-bladed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1981,8 +1922,8 @@
     "type": "GENERIC",
     "copy-from": "broadsword",
     "name": { "str": "carbon fiber sword" },
-    "description": "A custom 3D-printed double-bladed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed double-bladed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1990,8 +1931,8 @@
     "type": "GENERIC",
     "copy-from": "nodachi",
     "name": { "str": "carbon fiber nodachi" },
-    "description": "A custom 3D-printed single-bladed two-handed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed single-bladed two-handed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1999,8 +1940,8 @@
     "type": "GENERIC",
     "copy-from": "zweihander",
     "name": { "str": "carbon fiber greatsword" },
-    "description": "A custom 3D-printed two-handed sword made out of carbon fiber.  It is more lightweight than a normal sword thanks to its method of manufacturing, but it can only be repaired using a 3D printer.",
-    "material": [ "carbon_fiber" ],
+    "description": "A custom 3D-printed two-handed sword made out of carbon fiber and a steel edge.  It is more lightweight than a normal sword thanks to its method of manufacturing.",
+    "material": [ "carbon_fiber", "steel" ],
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -2015,8 +1956,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "poison",
@@ -2039,8 +1979,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "poison_paralyze",

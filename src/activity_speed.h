@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -86,9 +87,8 @@ class activity_speed
         }
 
         //Returns total amonut of moves based on factors
-        inline int moves_per_turn() const {
-            return std::max( 1.0f, std::roundf( total() * 100.0f ) );
-        }
+        auto moves_per_turn() const -> int;
+        auto calendar_moves_per_turn() const -> int;
 
         //Calculates all factors
         void calc_all_moves( Character &who );

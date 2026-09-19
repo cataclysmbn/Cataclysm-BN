@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-read --allow-write
+#!/usr/bin/env -S deno run --allow-read --allow-write --allow-run=git --allow-env
 
 /**
  * @module
@@ -6,28 +6,20 @@
  * gets list of all affected files
  */
 
-import { walk, type WalkEntry, type WalkOptions } from "jsr:@std/fs"
 import { MuxAsyncIterator } from "jsr:@std/async"
 import { partition } from "jsr:@std/collections"
-import { Octokit, type RestEndpointMethodTypes } from "https://esm.sh/@octokit/rest@21.0.2"
+import { walk, type WalkEntry, type WalkOptions } from "jsr:@std/fs"
 import { Command } from "@cliffy/command"
+import { changedFilesFromGit, type PullFileStatus } from "./git_changed_files.ts"
+import { dirname, join, normalize } from "jsr:@std/path/posix"
 
 const paths = ["src", "tests"]
 
-type ListFileResponse = RestEndpointMethodTypes["pulls"]["listFiles"]["response"]["data"][number]
+const ACMRT: Set<PullFileStatus> = new Set(["added", "copied", "modified", "renamed", "changed"])
+const getDiffs = async (base: string, head: string) => {
+  const pathsFilter = new RegExp(`^(?:${paths.join("|")})/.*\\.(?:cpp|h|hpp)$`)
 
-const ACMRT: Set<ListFileResponse["status"]> = new Set(
-  ["added", "copied", "modified", "renamed", "changed"],
-)
-const octokit = new Octokit({ auth: Deno.env.get("GITHUB_TOKEN") })
-const getDiffs = async (pr: number) => {
-  const res = await octokit.paginate(
-    octokit.rest.pulls.listFiles,
-    { owner: "cataclysmbn", repo: "Cataclysm-BN", pull_number: pr },
-  )
-  const pathsFilter = new RegExp(`(^${paths.join("|")})/.*\\.(cpp|h|hpp)`)
-
-  return res
+  return (await changedFilesFromGit({ base, head }))
     .filter((x) => ACMRT.has(x.status))
     .map((x) => x.filename)
     .filter((x) => pathsFilter.test(x))
@@ -36,10 +28,25 @@ const getDiffs = async (pr: number) => {
 const includeRegex = /#include\s+"([^"]+)"/g
 const getIncludes = (content: string) => Array.from(content.matchAll(includeRegex)).map((x) => x[1])
 
-const getSourceDependencies = (nameToPath: Map<string, string>) => async ({ path }: WalkEntry) => {
+const sourcePath = (path: string): string => normalize(path.replaceAll("\\", "/"))
+
+const getSourceDependencies = (sourceFiles: Set<string>) => async ({ path }: WalkEntry) => {
   const text = await Deno.readTextFile(path)
-  const includes = getIncludes(text).map((x) => nameToPath.get(x)!)
-  return [path, includes] as const
+  const source = sourcePath(path)
+  const includes: string[] = []
+
+  for (const include of getIncludes(text)) {
+    const localPath = join(dirname(source), include)
+    const rootPath = join("src", include)
+
+    if (sourceFiles.has(localPath)) {
+      includes.push(localPath)
+    } else if (sourceFiles.has(rootPath)) {
+      includes.push(rootPath)
+    }
+  }
+
+  return [source, includes] as const
 }
 
 const getAllSourceFiles = async (): Promise<WalkEntry[]> => {
@@ -57,8 +64,8 @@ type Deps = Map<string, Set<string>>
  * creates mapping between header file and all source files that include it
  */
 const getAllDependencies = async (xs: WalkEntry[]): Promise<Deps> => {
-  const nameToPath = new Map(xs.map((x) => [x.name, x.path]))
-  const ys = await Promise.all(xs.map(getSourceDependencies(nameToPath)))
+  const sourceFiles = new Set(xs.map((x) => sourcePath(x.path)))
+  const ys = await Promise.all(xs.map(getSourceDependencies(sourceFiles)))
 
   const deps: Deps = new Map()
   for (const [path, includes] of ys) {
@@ -71,12 +78,14 @@ const getAllDependencies = async (xs: WalkEntry[]): Promise<Deps> => {
 
 const main = new Command()
   .description("gets list of all affected files for use in clang-tidy.")
-  .arguments("<pr:number>")
+  .arguments("[pr:number]")
+  .option("--base <rev:string>", "Base git revision", { default: "origin/main" })
+  .option("--head <rev:string>", "Head git revision", { default: "HEAD" })
   .option("-o, --output <file>", "Output file to save template to")
-  .action(async ({ output }, pr) => {
+  .action(async ({ base, head, output }) => {
     const [deps, [headers, src]] = await Promise.all([
       getAllSourceFiles().then(getAllDependencies),
-      getDiffs(pr).then((xs) => partition(xs, (x) => x.endsWith(".h"))),
+      getDiffs(base, head).then((xs) => partition(xs, (x) => x.endsWith(".h"))),
     ])
     // console.log(deps)
     console.log({ src, headers })

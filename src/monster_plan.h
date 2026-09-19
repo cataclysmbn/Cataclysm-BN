@@ -1,10 +1,18 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "coordinates.h"
 #include "point.h"
 #include "type_id.h"
+
+class Creature;
+
+enum class monster_plan_goal_kind : uint8_t {
+    none,
+    target_last_known,
+};
 
 /**
  * Captures the complete output of monster::compute_plan().
@@ -26,9 +34,15 @@ struct monster_plan_t {
     //
     // LOGIC-1: setting local_goal = pos() inside compute_plan() is equivalent
     // to unset_dest(), because unset_dest() is defined as set_goal(pos()) and
-    // apply_plan() commits via set_goal(plan.goal).  No separate
-    // "unset_dest_requested" flag is necessary.
+    // apply_plan() commits with set_goal().  No separate unset flag is needed.
     tripoint_bub_ms goal;
+    monster_plan_goal_kind goal_kind = monster_plan_goal_kind::none;
+
+    // Same-turn memory from the planning pass.  This is not live visibility:
+    // callers may use it to preserve movement intent, but attacks still
+    // revalidate against current state.
+    Creature *observed_target = nullptr;
+    tripoint_bub_ms observed_target_pos = tripoint_bub_ms::zero();
 
     // Wander state.  Only written when swarm dispersal logic fires;
     // apply_plan only updates wander_pos/wandf when this flag is set.

@@ -1,24 +1,20 @@
 #include "timed_event.h"
 
-#include <algorithm>
-#include <array>
-#include <memory>
-#include <optional>
-#include <vector>
-
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "debug.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
+#include "faction.h"
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "memorial_logger.h"
 #include "messages.h"
 #include "monster.h"
@@ -30,7 +26,12 @@
 #include "text_snippets.h"
 #include "translations.h"
 #include "type_id.h"
-#include "faction.h"
+
+#include <algorithm>
+#include <array>
+#include <memory>
+#include <optional>
+#include <vector>
 
 static const itype_id itype_petrified_eye( "petrified_eye" );
 
@@ -124,7 +125,7 @@ void timed_event::actualize()
                     if( horizontal ) {
                         monp.x() = rng( fault_point->x(), fault_point->x() + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point_bub_ms( monp.x(), fault_point->y() + n ) ) == t_rock_floor ) {
+                            if( g->m.ter( tripoint_bub_ms( monp.x(), fault_point->y() + n, monp.z() ) ) == t_rock_floor ) {
                                 monp.y() = fault_point->y() + n;
                             }
                         }
@@ -132,7 +133,7 @@ void timed_event::actualize()
                         // Vertical fault
                         monp.y() = rng( fault_point->y(), fault_point->y() + 2 * SEEY - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point_bub_ms( fault_point->x() + n, monp.y() ) ) == t_rock_floor ) {
+                            if( g->m.ter( tripoint_bub_ms( fault_point->x() + n, monp.y(), monp.z() ) ) == t_rock_floor ) {
                                 monp.x() = fault_point->x() + n;
                             }
                         }
@@ -263,8 +264,8 @@ void timed_event::per_turn()
                     // We're safely indoors!
                     return;
                 }
-                g->place_critter_at( mon_eyebot, tripoint_bub_ms( place, g->u.bub_pos().z() ) );
-                if( g->u.sees( tripoint_bub_ms( place, g->u.bub_pos().z() ) ) ) {
+                g->place_critter_at( mon_eyebot, place );
+                if( g->u.sees( place ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really
@@ -275,16 +276,17 @@ void timed_event::per_turn()
 
         case TIMED_EVENT_SPAWN_WYRMS:
             if( g->get_levz() >= 0 ) {
-                when -= 1_turns;
+                when -= action_time_scale::calendar_duration_this_tick();
                 return;
             }
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) && !g->u.is_deaf() ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) &&
+                !g->u.is_deaf() ) {
                 add_msg( m_warning, _( "You hear screeches from the rock above and around you!" ) );
             }
             break;
 
         case TIMED_EVENT_AMIGARA:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The entire cavern shakes!" ) );
             }
             break;
@@ -298,7 +300,7 @@ void timed_event::per_turn()
                 }
             }
 
-            if( calendar::once_every( 10_seconds ) && faults ) {
+            if( action_time_scale::once_every_this_tick( 10_seconds ) && faults ) {
                 add_msg( m_info, "You hear someone whispering \"%s\"",
                          SNIPPET.random_from_category( "amigara_whispers" ).value_or( translation() ) );
             }
@@ -306,7 +308,7 @@ void timed_event::per_turn()
         break;
 
         case TIMED_EVENT_TEMPLE_OPEN:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The earth rumbles." ) );
             }
             break;

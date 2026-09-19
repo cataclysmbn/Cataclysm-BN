@@ -249,70 +249,76 @@ void JsonObject::throw_error( const std::string &err ) const
     jsin->error( err );
 }
 
-void JsonObject::show_warning( const std::string &err ) const
+void JsonObject::show_warning( const std::string &err, bool debug ) const
 {
 #ifndef CATA_IN_TOOL
     try {
         throw_error( err );
     } catch( const std::exception &e ) {
-        debugmsg( "%s", e.what() );
+        debugmsg_of( debug ? DL::Debug : DL::Error, "%s", e.what() );
     }
 #else
     ( void )err;
+    ( void )debug;
 #endif // CATA_IN_TOOL
 }
 
-void JsonObject::show_warning( const std::string &err, const std::string &name ) const
+void JsonObject::show_warning( const std::string &err, const std::string &name,
+                               const bool debug ) const
 {
 #ifndef CATA_IN_TOOL
     try {
         throw_error( err, name );
     } catch( const std::exception &e ) {
-        debugmsg( "%s", e.what() );
+        debugmsg_of( debug ? DL::Debug : DL::Error, "%s", e.what() );
     }
 #else
     ( void )err;
     ( void )name;
+    ( void )debug;
 #endif // CATA_IN_TOOL
 }
 
-void JsonArray::show_warning( const std::string &err )
+void JsonArray::show_warning( const std::string &err, const bool debug )
 {
 #ifndef CATA_IN_TOOL
     try {
         throw_error( err );
     } catch( const std::exception &e ) {
-        debugmsg( "%s", e.what() );
+        debugmsg_of( debug ? DL::Debug : DL::Error, "%s", e.what() );
     }
 #else
     ( void )err;
+    ( void )debug;
 #endif // CATA_IN_TOOL
 }
 
-void JsonArray::show_warning( const std::string &err, int idx )
+void JsonArray::show_warning( const std::string &err, int idx, const bool debug )
 {
 #ifndef CATA_IN_TOOL
     try {
         throw_error( err, idx );
     } catch( const std::exception &e ) {
-        debugmsg( "%s", e.what() );
+        debugmsg_of( debug ? DL::Debug : DL::Error, "%s", e.what() );
     }
 #else
     ( void )err;
     ( void )idx;
+    ( void )debug;
 #endif // CATA_IN_TOOL
 }
 
-void JsonValue::show_warning( const std::string &err ) const
+void JsonValue::show_warning( const std::string &err, const bool debug ) const
 {
 #ifndef CATA_IN_TOOL
     try {
         throw_error( err );
     } catch( const std::exception &e ) {
-        debugmsg( "%s", e.what() );
+        debugmsg_of( debug ? DL::Debug : DL::Error, "%s", e.what() );
     }
 #else
     ( void )err;
+    ( void )debug;
 #endif // CATA_IN_TOOL
 }
 

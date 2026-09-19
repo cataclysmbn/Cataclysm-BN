@@ -20,6 +20,7 @@
     "damage": { "damage_type": "stab", "amount": 50, "armor_penetration": 10 },
     "dispersion": 200,
     "loudness": 0,
+    "speed": 340,
     "effects": [ "RECYCLED", "NON_FOULING" ]
   },
   {
@@ -39,6 +40,7 @@
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ],
     "range": 30,
     "loudness": 0,
+    "speed": 340,
     "damage": { "damage_type": "stab", "amount": 50, "armor_penetration": 30 }
   }
 ]

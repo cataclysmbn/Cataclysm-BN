@@ -1,25 +1,11 @@
 #include "ranged.h"
 
-#include <algorithm>
-#include <numeric>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
-
 #include "activity_actor_definitions.h"
 #include "animation.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -27,7 +13,6 @@
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "cached_options.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -37,6 +22,8 @@
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
+#include "enchantments/enchantment.h"
+#include "enchantments/enchantment_vision.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -49,9 +36,8 @@
 #include "item_functions.h"
 #include "itype.h"
 #include "line.h"
-#include "magic.h"
-#include "magic_enchantment.h"
-#include "map.h"
+#include "magic/magic.h"
+#include "map/map.h"
 #include "material.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -67,9 +53,9 @@
 #include "point.h"
 #include "projectile.h"
 #include "rng.h"
+#include "shape_impl.h"
 #include "skill.h"
 #include "sounds.h"
-#include "shape_impl.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
@@ -80,10 +66,25 @@
 #include "units_angle.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <set>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 struct ammo_effect;
 
@@ -159,6 +160,8 @@ static const bionic_id bio_ups( "bio_ups" );
 static const trait_id trait_LASER_GUIDED( "LASER_GUIDED" );
 static const trait_id trait_PYROMANIA( "PYROMANIA" );
 static const trait_id trait_NORANGEDCRIT( "NO_RANGED_CRIT" );
+
+static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNARMED" );
 
 // not to confuse with item flags (json_flag)
 static const std::string flag_SHOOT_ME( "SHOOT_ME" );
@@ -382,6 +385,20 @@ auto gunmod_find_with(
     return res != gunmods.end() ? *res : nullptr;
 }
 
+auto clamp_range_to_reality_bubble( const tripoint_bub_ms &src, const int range ) -> int
+{
+    auto &here = get_map();
+    const auto bubble_edge_x = SEEX * here.getmapsize() - 1;
+    const auto bubble_edge_y = SEEY * here.getmapsize() - 1;
+    const auto max_range = static_cast<int>( std::round( std::max( {
+        rl_dist_exact( src, tripoint_bub_ms( 0, 0, src.z() ) ),
+        rl_dist_exact( src, tripoint_bub_ms( bubble_edge_x, 0, src.z() ) ),
+        rl_dist_exact( src, tripoint_bub_ms( 0, bubble_edge_y, src.z() ) ),
+        rl_dist_exact( src, tripoint_bub_ms( bubble_edge_x, bubble_edge_y, src.z() ) ),
+    } ) ) );
+    return std::min( std::max( 1, range ), max_range );
+}
+
 } // namespace
 
 class target_ui
@@ -393,6 +410,8 @@ class target_ui
             Fire,
             Throw,
             ThrowBlind,
+            ThrowCreature,
+            ThrowVehicle,
             Turrets,
             TurretManual,
             Reach,
@@ -406,8 +425,10 @@ class target_ui
         TargetMode mode = TargetMode::Fire;
         // Weapon being fired/thrown
         item *relevant = nullptr;
-        // Cached selection range from player's position
+        // Cached selection range from the targeting source.
         int range = 0;
+        // Clamp cursor selection to live reality-bubble bounds.
+        bool limit_to_reality_bubble = false;
         // Turret being manually fired
         turret_data *turret = nullptr;
         // Turrets being fired (via vehicle controls)
@@ -424,6 +445,8 @@ class target_ui
         aim_activity_actor *activity = nullptr;
         // Generator of AoE shapes
         std::optional<shape_factory> shape_gen;
+        // Preferred initial cursor position.
+        std::optional<tripoint_bub_ms> initial_target;
 
         // Initialize UI and run the event loop
         target_handler::trajectory run();
@@ -450,7 +473,7 @@ class target_ui
         const itype *ammo = nullptr;
         // Current trajectory
         std::vector<tripoint_bub_ms> traj;
-        // Aiming source (player's position)
+        // Aiming source.
         tripoint_bub_ms src;
         // Aiming destination (cursor position)
         // Use set_cursor_pos() to modify
@@ -461,8 +484,6 @@ class target_ui
         // List of visible hostile targets
         std::vector<Creature *> targets;
 
-        // 'true' if map has z levels and 3D fov is on
-        bool allow_zlevel_shift = false;
         // Snap camera to cursor. Can be permanently toggled in settings
         // or temporarily in this window
         bool snap_to_target = false;
@@ -666,6 +687,34 @@ target_handler::trajectory target_handler::mode_throw( avatar &you, item &releva
     return ui.run();
 }
 
+target_handler::trajectory target_handler::mode_throw_creature( avatar &you,
+        const Creature &thrown_creature, int range )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::ThrowCreature;
+    ui.range = clamp_range_to_reality_bubble( thrown_creature.bub_pos(), std::max( 1, range ) );
+    ui.limit_to_reality_bubble = true;
+    ui.initial_target = thrown_creature.bub_pos();
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
+target_handler::trajectory target_handler::mode_throw_vehicle( avatar &you,
+        const tripoint_bub_ms &grabbed_part_pos, int range )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::ThrowVehicle;
+    ui.range = clamp_range_to_reality_bubble( grabbed_part_pos, std::max( 1, range ) );
+    ui.limit_to_reality_bubble = true;
+    ui.initial_target = grabbed_part_pos;
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
 target_handler::trajectory target_handler::mode_reach( avatar &you, item &weapon )
 {
     target_ui ui = target_ui();
@@ -673,6 +722,18 @@ target_handler::trajectory target_handler::mode_reach( avatar &you, item &weapon
     ui.mode = target_ui::TargetMode::Reach;
     ui.relevant = &weapon;
     ui.range = weapon.reach_range( you );
+
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
+    return ui.run();
+}
+
+target_handler::trajectory target_handler::mode_unarmed_reach( avatar &you )
+{
+    target_ui ui = target_ui();
+    ui.you = &you;
+    ui.mode = target_ui::TargetMode::Reach;
+    ui.relevant = item::spawn_temporary( itype_id( "fake_hands" ) );
+    ui.range = 1 + you.bonus_from_enchantments( 1, ench_val_REACH_RANGE_UNARMED );
 
     restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
     return ui.run();
@@ -775,24 +836,31 @@ double Creature::ranged_target_size() const
         return 0.0;
     }
     bool is_crouched = false;
+    bool is_prone = false;
     if( Character *ch = const_cast<Creature &>( *this ).as_character() ) {
         if( ch->movement_mode_is( CMM_CROUCH ) ) {
             is_crouched = true;
         }
+        if( ch->movement_mode_is( CMM_PRONE ) ) {
+            is_prone = true;
+        }
     }
-    if( has_flag( MF_HARDTOSHOOT ) || is_crouched ) {
+    if( has_flag( MF_HARDTOSHOOT ) || is_crouched || is_prone ) {
         switch( get_size() ) {
             case creature_size::tiny:
                 // We can't be smaller than tiny, but we can make the hit rate lower.
                 return 0.05;
             case creature_size::small:
-                return occupied_tile_fraction( creature_size::tiny );
+                return is_prone ? 0.05 : occupied_tile_fraction( creature_size::tiny );
             case creature_size::medium:
-                return occupied_tile_fraction( creature_size::small );
+                return is_prone ? occupied_tile_fraction( creature_size::tiny )
+                       : occupied_tile_fraction( creature_size::small );
             case creature_size::large:
-                return occupied_tile_fraction( creature_size::medium );
+                return is_prone ? occupied_tile_fraction( creature_size::small )
+                       : occupied_tile_fraction( creature_size::medium );
             case creature_size::huge:
-                return occupied_tile_fraction( creature_size::large );
+                return is_prone ? occupied_tile_fraction( creature_size::medium )
+                       : occupied_tile_fraction( creature_size::large );
             default:
                 break;
         }
@@ -1024,7 +1092,7 @@ void npc::pretend_fire( npc *source, int shots, item &gun )
 }
 
 
-namespace
+namespace ranged
 {
 
 auto is_mountable( const map &m, const tripoint_bub_ms &pos ) -> bool
@@ -1056,8 +1124,16 @@ auto can_use_heavy_weapon( const Character &who, const map &m, const tripoint_bu
     if( who.is_mounted() && who.mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
         return true;
     }
+    if( who.movement_mode_is( CMM_PRONE ) ) {
+        return true;
+    }
     return is_mountable_nearby( m, pos );
 }
+
+} // namespace ranged
+
+namespace
+{
 
 auto firing_vehicle( map &here, const Character &who ) -> vehicle * // *NOPAD*
 {
@@ -1161,7 +1237,7 @@ auto apply_gun_recoil_to_vehicle( map &here, const Character &who, const tripoin
 dispersion_sources calculate_dispersion( const map &m, const Character &who, const item &gun,
         int at_recoil, bool burst )
 {
-    const bool bipod = can_use_heavy_weapon( who, m, who.bub_pos() );
+    const bool bipod = ranged::can_use_heavy_weapon( who, m, who.bub_pos() );
 
     const int gun_recoil = gun.gun_recoil( bipod );
     const int eff_recoil = at_recoil + ( burst ? ranged::burst_penalty( who, gun, gun_recoil ) : 0 );
@@ -1175,23 +1251,41 @@ static int calc_gun_volume( const item &gun )
     // Inherit suppressor modifiers if relevant (e.g. KSG second mag) but still use current ammo
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
-    // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
-    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will make a sonic boom.
-    int noise = parent.type->gun->loudness;
-    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
-    if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
+    const bool am_dat = gun.ammo_data();
+    // Start our noise at zero.
+    int noise = 0;
+    int speed = parent.gun_speed( am_dat );
+    bool suppressed = false;
+    if( am_dat ) {
+        noise = gun.ammo_data()->ammo->loudness;
         // Speed of sound at sea level is around 343 meters per second.
         // While it would be ideal to be based on speed of sound
         // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
         // NOTE: If supersonic ever gets implented, use it here
-        noise = std::min( 160, noise );
+        noise += parent.type->gun->loudness;
+    } else {
+        // If we dont have an ammo, assume that we are not a firearm/we are a fake monster item or something
+        noise = parent.type->gun->loudness;
     }
+    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
     for( const auto mod : parent.gunmods() ) {
+        if( mod->type->gunmod->loudness < -20 ) {
+            suppressed = true;
+        }
         noise += mod->type->gunmod->loudness;
     }
+    if( suppressed ) {
+        // Speed of sound in atmosphere @ seat level is 343 m/s
+        if( speed < 344 ) {
+            // We are suppressed and subsonic. We take the least of 100 or current noise minus 15.
+            noise = std::min( 100, noise - 15 );
+        } else {
+            // We are suppressed but still super sonic. Cap our volume to 120.
+            noise = std::min( 120, noise );
+        }
+    }
 
-
+    noise = std::min( 191, noise );
     // Cap it like it gets capped when making a sound
     noise = std::max( noise, 0 );
     return noise;
@@ -1283,15 +1377,21 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         const auto shot_half_angle = get_shot_half_angle( gun );
 
         // Apply enchantment bonuses to projectile
-        int base_bullet_damage = static_cast<int>( projectile.impact.type_damage( DT_BULLET ) );
-        int ench_damage_bonus = who.bonus_from_enchantments( base_bullet_damage,
-                                enchant_vals::mod::RANGED_DAMAGE_BULLET, true );
-        if( ench_damage_bonus != 0 ) {
-            projectile.impact.add_damage( DT_BULLET, ench_damage_bonus );
+        // Iterate over every damage type
+        for( auto &projectile_damage : projectile.impact ) {
+            int base_damage = projectile_damage.amount;
+            int base_penetrate = projectile_damage.res_pen;
+            int ench_damage_bonus = who.bonus_from_enchantments( base_damage,
+                                    enchantment_value_id( "RANGED_DAMAGE_" + projectile_damage.get_internal_name() ) );
+            int ench_penetrate_bonus = who.bonus_from_enchantments( base_damage,
+                                       enchantment_value_id( "RANGED_ARMOR_PENETRATION_" + projectile_damage.get_internal_name() ) );
+            if( ench_damage_bonus != 0 || ench_penetrate_bonus != 0 ) {
+                projectile_damage.amount += ench_damage_bonus;
+                projectile_damage.res_pen += ench_penetrate_bonus;
+            }
         }
-
         int ench_range_bonus = who.bonus_from_enchantments( projectile.range,
-                               enchant_vals::mod::RANGED_RANGE, true );
+                               enchantment_value_id( "RANGED_RANGE" ), true );
         // Ensure range doesn't go below 1
         projectile.range = std::max( 1, projectile.range + ench_range_bonus );
 
@@ -1434,12 +1534,12 @@ int ranged::fire_gun( Character &who, const tripoint_bub_ms &target, int max_sho
         const Character &shooter = who;
         // Now actually apply recoil for the future shots
         // But only for one shot, because bursts kinda suck
-        int gun_recoil = gun.gun_recoil( can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
+        int gun_recoil = gun.gun_recoil( ranged::can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) );
 
         // If user is currently able to fire a mounted gun freely, penalize dispersion
         // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
         if( gun.has_flag( flag_MOUNTED_GUN ) &&
-            !can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
+            !ranged::can_use_heavy_weapon( shooter, here, shooter.bub_pos() ) ) {
             if( who.get_size() == creature_size::large ) {
                 gun_recoil = gun_recoil * 2;
             } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -1512,6 +1612,13 @@ int throw_cost( const Character &c, const item &to_throw )
     move_cost += skill_cost;
     move_cost -= dexbonus;
     move_cost *= c.mutation_value( "attackcost_modifier" );
+
+    // First apply weapon enchant
+    move_cost += to_throw.bonus_from_enchantments( c, move_cost,
+                 enchantment_value_id( "ITEM_THROW_ATTACK_COST" ), true );
+    // Then apply character enchant
+    move_cost += c.bonus_from_enchantments( move_cost, enchantment_value_id( "THROW_ATTACK_COST" ),
+                                            true );
 
     return std::max( 25, move_cost );
 }
@@ -1684,8 +1791,6 @@ int throwing_dispersion( const Character &c, const item &to_throw, Creature *cri
     return std::max( 0, dispersion );
 }
 
-namespace
-{
 auto throw_damage_projectile( const item &it, const int skill, const int str ) -> projectile
 {
     const units::mass weight = it.weight();
@@ -1706,11 +1811,21 @@ auto throw_damage_projectile( const item &it, const int skill, const int str ) -
 
     return proj;
 }
-} // namespace
 
 auto throw_damage( const item &it, const int skill, const int str ) -> int
 {
     return throw_damage_projectile( it, skill, str ).impact.total_damage();
+}
+
+auto throw_stamina_cost( const Character &thrower, const item &item ) -> int
+{
+    // Previously calculated as 2_gram * std::max( 1, str_cur )
+    // using 16_gram normalizes it to 8 str. Same effort expenditure
+    // for being able to throw farther.
+    const int weight_cost = item.weight() / ( 16_gram );
+    const int encumbrance_cost = roll_remainder(
+                                     ( thrower.encumb( body_part_arm_l ) + thrower.encumb( body_part_arm_r ) ) * 2.0f );
+    return weight_cost + encumbrance_cost - thrower.get_skill_level( skill_throw ) + 50;
 }
 
 dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &target,
@@ -1726,14 +1841,6 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
     const units::volume volume = thrown.volume();
     const units::mass weight = thrown.weight();
 
-    // Previously calculated as 2_gram * std::max( 1, str_cur )
-    // using 16_gram normalizes it to 8 str. Same effort expenditure
-    // for being able to throw farther.
-    const int weight_cost = weight / ( 16_gram );
-    const int encumbrance_cost = roll_remainder( ( who.encumb( body_part_arm_l ) + who.encumb(
-                                     body_part_arm_r ) ) * 2.0f );
-    const int stamina_cost = ( weight_cost + encumbrance_cost - throwing_skill + 50 ) * -1;
-
     bool throw_assist = false;
     int throw_assist_str = 0;
     if( who.is_mounted() ) {
@@ -1745,6 +1852,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
         }
     }
     if( !throw_assist ) {
+        const int stamina_cost = throw_stamina_cost( who, thrown ) * -1;
         who.mod_stamina( stamina_cost );
     }
 
@@ -1894,6 +2002,9 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
         // Increase aim at the cost of moves
         you.mod_moves( -1 );
         you.recoil = std::max( min_recoil, you.recoil - aim_amount );
+    } else {
+        // If aim is already maxed, we're just waiting, so pass the turn.
+        you.set_moves( 0 );
     }
 }
 
@@ -2125,25 +2236,15 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
     return line_number;
 }
 
-// Whether player character knows creature's position and can roughly track it with the aim cursor
-static auto outside_visible_z_range( const tripoint_bub_ms &from,
-                                     const tripoint_bub_ms &to ) -> bool
-{
-    return get_map().has_zlevels() && fov_3d &&
-           std::abs( from.z() - to.z() ) > fov_3d_z_range;
-}
-
 static bool pl_sees( const Creature &cr )
 {
     Character &u = get_player_character();
-    if( outside_visible_z_range( u.bub_pos(), cr.bub_pos() ) ) {
-        return false;
-    }
-    return u.sees( cr ) || u.sees_with_infrared( cr ) || u.sees_with_specials( cr );
+    return u.sees( cr ) || u.sees_with_infrared( cr ) ||
+           u.sees_with_specials( cr ) != enchantment_vision_id::NULL_ID();
 }
 
 // Handle capping aim level when the player cannot see the target tile or there is nothing to aim at.
-static double calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
+double ranged::calculate_aim_cap( const Character &p, const tripoint_bub_ms &target )
 {
     double min_recoil = 0.0;
     const Creature *victim = g->critter_at( target, true );
@@ -2172,7 +2273,7 @@ static int print_aim( const Character &p, const catacurses::window &w, int line_
     dispersion_sources dispersion = ranged::get_weapon_dispersion( p, weapon );
     dispersion.add_range( ranged::recoil_vehicle( p ) );
 
-    const double min_recoil = calculate_aim_cap( p, pos );
+    const double min_recoil = ranged::calculate_aim_cap( p, pos );
     const double effective_recoil = ranged::effective_dispersion( p,
                                     p.primary_weapon().sight_dispersion() );
     const double min_dispersion = std::max( min_recoil, effective_recoil );
@@ -2357,7 +2458,8 @@ int ranged::time_to_attack( const Character &p, const item &firing, const item *
     int base_time = std::max( info.min_time,
                               info.base_time - info.time_reduction_per_level * p.get_skill_level( skill_used ) + RAS_time );
     // Apply enchantment bonus to reload time
-    int ench_reload_bonus = p.bonus_from_enchantments( base_time, enchant_vals::mod::RANGED_RELOAD_TIME,
+    int ench_reload_bonus = p.bonus_from_enchantments( base_time,
+                            enchantment_value_id( "RANGED_RELOAD_TIME" ),
                             true );
     // Ensure we don't go below minimum time even with enchantments
     return std::max( info.min_time, base_time + ench_reload_bonus );
@@ -2603,12 +2705,13 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     dispersion.add_range( dispersion_from_skill( avgSkill, weapon_dispersion ) );
 
-    if( who.has_bionic( bio_targeting ) ) {
-        dispersion.add_multiplier( 0.75 );
-    }
     // If we're crouched, it's easier to steady our aim.
     if( who.movement_mode_is( CMM_CROUCH ) ) {
         dispersion.add_multiplier( 0.75 );
+    }
+    // If we're prone, even more stable aim.
+    if( who.movement_mode_is( CMM_PRONE ) ) {
+        dispersion.add_multiplier( 0.5 );
     }
 
     // Remotely-fired turrets with installed laser designator
@@ -2627,7 +2730,8 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
 
     // If user is currently able to fire a mounted gun freely, penalize dispersion
     // HEAVY_WEAPON_SUPPORT flag has highest penalty, Large mutants lower penalty, no penalty for Huge mutants.
-    if( obj.has_flag( flag_MOUNTED_GUN ) && !can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
+    if( obj.has_flag( flag_MOUNTED_GUN ) &&
+        !ranged::can_use_heavy_weapon( who, get_map(), who.bub_pos() ) ) {
         if( who.get_size() == creature_size::large ) {
             dispersion.add_range( 500 );
         } else if( who.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) &&
@@ -2639,7 +2743,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     // Apply enchantment bonus to dispersion
     int base_dispersion = static_cast<int>( dispersion.max() );
     int ench_dispersion_bonus = who.bonus_from_enchantments( base_dispersion,
-                                enchant_vals::mod::RANGED_DISPERSION, true );
+                                enchantment_value_id( "RANGED_DISPERSION" ), true );
     dispersion.add_range( ench_dispersion_bonus );
 
     return dispersion;
@@ -2768,7 +2872,7 @@ double ranged::recoil_total( const Character &who )
 {
     double base_recoil = who.recoil + recoil_vehicle( who );
     double ench_recoil_bonus = who.bonus_from_enchantments( base_recoil,
-                               enchant_vals::mod::RANGED_RECOIL );
+                               enchantment_value_id( "RANGED_RECOIL" ) );
     // Recoil cannot be negative
     return std::max( 0.0, base_recoil + ench_recoil_bonus );
 }
@@ -2793,11 +2897,6 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        if( outside_visible_z_range( shooter_pos, critter_pos ) )
-        {
-            return false;
-        }
-
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
         if( range <= 1 && shooter_pos.z() != critter_pos.z() && shooter_pos.xy() != critter_pos.xy() )
@@ -2805,7 +2904,8 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        if( !c.sees( critter ) && !c.sees_with_infrared( critter ) )
+        if( !c.sees( critter ) && !c.sees_with_infrared( critter ) &&
+            c.sees_with_specials( critter, true ).is_null() )
         {
             return false;
         }
@@ -2886,8 +2986,10 @@ target_handler::trajectory target_ui::run()
     }
 
     map &here = get_map();
+    // Target lists and saved-target reacquisition use Character::sees before
+    // the targeting UI gets its first redraw.
+    g->refresh_player_visibility_cache_if_needed( true );
     // Load settings
-    allow_zlevel_shift = here.has_zlevels() && get_option<bool>( "FOV_3D" );
     snap_to_target = get_option<bool>( "SNAP_TO_TARGET" );
     if( mode == TargetMode::Turrets ) {
         // Due to how cluttered the display would become, disable it by default
@@ -2942,6 +3044,9 @@ target_handler::trajectory target_ui::run()
 
     // Initialize cursor position
     src = you->bub_pos();
+    if( ( mode == TargetMode::ThrowCreature || mode == TargetMode::ThrowVehicle ) && initial_target ) {
+        src = *initial_target;
+    }
     update_target_list();
 
     if( activity && activity->abort_if_no_targets && targets.empty() ) {
@@ -2960,7 +3065,7 @@ target_handler::trajectory target_ui::run()
             attack_was_confirmed = false;
         }
     } else {
-        initial_dst = choose_initial_target();
+        initial_dst = initial_target.value_or( choose_initial_target() );
     }
     set_cursor_pos( initial_dst );
     if( dst != initial_dst ) {
@@ -3105,7 +3210,7 @@ target_handler::trajectory target_ui::run()
             activity->action = timed_out_action;
             activity->snap_to_target = snap_to_target;
             activity->shifting_view = shifting_view;
-            activity->aiming_at_critter = !!dst_critter;
+            activity->aiming_at_critter = dst_critter != nullptr || you->last_target.lock() != nullptr;
             break;
         }
         case ExitCode::Reload: {
@@ -3169,10 +3274,8 @@ void target_ui::init_window_and_input()
     ctxt.register_action( "zoom_out" );
     ctxt.register_action( "zoom_in" );
     ctxt.register_action( "TOGGLE_MOVE_CURSOR_VIEW" );
-    if( allow_zlevel_shift ) {
-        ctxt.register_action( "LEVEL_UP" );
-        ctxt.register_action( "LEVEL_DOWN" );
-    }
+    ctxt.register_action( "LEVEL_UP" );
+    ctxt.register_action( "LEVEL_DOWN" );
     if( mode == TargetMode::Fire || mode == TargetMode::TurretManual || ( mode == TargetMode::Shape &&
             relevant->is_gun() ) ) {
         ctxt.register_action( "SWITCH_MODE" );
@@ -3259,7 +3362,17 @@ bool target_ui::handle_cursor_movement( const std::string &action, bool &skip_re
 
 bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
 {
+    const auto refresh_dst_critter = [this]() {
+        if( src != dst ) {
+            Creature *const cr = g->critter_at( dst, true );
+            dst_critter = cr && pl_sees( *cr ) ? cr : nullptr;
+        } else {
+            dst_critter = nullptr;
+        }
+    };
+
     if( dst == new_pos ) {
+        refresh_dst_critter();
         return false;
     }
     if( status == Status::OutOfAmmo && new_pos != src ) {
@@ -3274,10 +3387,16 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     if( new_pos != src ) {
         // On Z axis, make sure we do not exceed map boundaries
         valid_pos.z() = clamp( valid_pos.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
-        // Or current view range
-        valid_pos.z() = clamp( valid_pos.z() - src.z(), -fov_3d_z_range, fov_3d_z_range ) + src.z();
 
         new_traj = here.find_clear_path( src, valid_pos );
+        if( limit_to_reality_bubble && !is_in_reality_bubble_bounds( valid_pos ) ) {
+            using namespace std::views;
+            const auto reversed_traj = new_traj | reverse;
+            const auto clamped_it = std::ranges::find_if( reversed_traj, []( const tripoint_bub_ms & p ) {
+                return is_in_reality_bubble_bounds( p );
+            } );
+            valid_pos = clamped_it != std::ranges::end( reversed_traj ) ? *clamped_it : src;
+        }
         if( range == 1 ) {
             // We should always be able to hit adjacent squares
             if( square_dist( src, valid_pos ) > 1 ) {
@@ -3345,16 +3464,7 @@ bool target_ui::set_cursor_pos( const tripoint_bub_ms &new_pos )
     }
 
     // Cache creature under cursor
-    if( src != dst ) {
-        Creature *cr = g->critter_at( dst, true );
-        if( cr && pl_sees( *cr ) ) {
-            dst_critter = cr;
-        } else {
-            dst_critter = nullptr;
-        }
-    } else {
-        dst_critter = nullptr;
-    }
+    refresh_dst_critter();
 
     // Update mode-specific stuff
     if( mode == TargetMode::Fire ) {
@@ -3458,13 +3568,12 @@ tripoint_bub_ms target_ui::choose_initial_target()
 
 bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
 {
-    if( critter ) {
-        // Try to re-acquire the creature
-        shared_ptr_fast<Creature> cr = you->last_target.lock();
-        if( cr && pl_sees( *cr ) && dist_fn( cr->bub_pos() ) <= range ) {
-            new_dst = cr->bub_pos();
-            return true;
-        }
+    // Prefer creature identity over the saved tile.  If aiming_at_critter was
+    // lost for one UI pass, last_target still tells us what the aim was tracking.
+    const auto cr = you->last_target.lock();
+    if( cr && pl_sees( *cr ) && dist_fn( cr->bub_pos() ) <= range ) {
+        new_dst = cr->bub_pos();
+        return true;
     }
 
     if( !you->last_target_pos.has_value() ) {
@@ -3473,8 +3582,8 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
     }
 
     // Try to re-acquire target tile or tile where the target creature used to be
-    auto local_lt = get_map().abs_to_bub( *you->last_target_pos );
-    if( !outside_visible_z_range( src, local_lt ) && dist_fn( local_lt ) <= range ) {
+    auto local_lt = abs_to_bub( *you->last_target_pos );
+    if( dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in
         return !critter && !g->critter_at( local_lt, true );
@@ -3520,7 +3629,7 @@ int target_ui::dist_fn( const tripoint_bub_ms &p )
 
 void target_ui::set_last_target()
 {
-    you->last_target_pos = get_map().bub_to_abs( dst );
+    you->last_target_pos = bub_to_abs( dst );
     if( dst_critter ) {
         you->last_target = g->shared_from( *dst_critter );
     } else {
@@ -3639,7 +3748,9 @@ void target_ui::cycle_targets( int direction )
 
 void target_ui::set_view_offset( const tripoint_rel_ms &new_offset )
 {
-    tripoint_rel_ms new_( new_offset.xy(), clamp( new_offset.z(), -fov_3d_z_range, fov_3d_z_range ) );
+    tripoint_rel_ms new_( new_offset.xy(),
+                          clamp( new_offset.z(), -OVERMAP_DEPTH - src.z(),
+                                 OVERMAP_HEIGHT - src.z() ) );
     new_.z() = clamp( new_.z() + src.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT ) - src.z();
 
     bool changed_z = you->view_offset.z() != new_.z();
@@ -3678,7 +3789,7 @@ void target_ui::recalc_aim_turning_penalty()
     if( lt_ptr ) {
         curr_recoil_pos = lt_ptr->bub_pos();
     } else if( you->last_target_pos ) {
-        curr_recoil_pos = get_map().abs_to_bub( *you->last_target_pos );
+        curr_recoil_pos = abs_to_bub( *you->last_target_pos );
     } else {
         curr_recoil_pos = src;
     }
@@ -3834,7 +3945,7 @@ bool target_ui::action_aim()
 {
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = calculate_aim_cap( *you, dst );
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     for( int i = 0; i < 10; ++i ) {
         do_aim( *you, *relevant, min_recoil );
     }
@@ -3860,7 +3971,7 @@ bool target_ui::action_aim_and_shoot( const std::string &action )
     int aim_threshold = it->threshold;
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = calculate_aim_cap( *you, dst );
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     do {
         do_aim( *you, relevant ? *relevant : null_item_reference(), min_recoil );
     } while( you->moves > 0 && you->recoil > aim_threshold &&
@@ -3918,14 +4029,11 @@ void target_ui::draw_terrain_overlay()
     if( mode != TargetMode::Turrets && dst != src ) {
         std::vector<tripoint_bub_ms> this_z = filter_this_z( traj );
 
-        // Draw a highlighted trajectory only if we can see the endpoint.
-        // Provides feedback to the player, but avoids leaking information
-        // about tiles they can't see.
-        g->draw_line( dst, center, this_z );
+        g->draw_line( dst, center, this_z, true );
     }
 
-    // Since draw_line does nothing if destination is not visible,
-    // cursor also disappears. Draw it explicitly.
+    // TILES draw_line uses a target endpoint sprite.  Keep the cursor explicit
+    // so aiming at empty tiles and z-level edges has the normal cursor marker.
     if( dst.z() == center.z() ) {
         g->draw_cursor( dst );
     }
@@ -4031,6 +4139,10 @@ std::string target_ui::uitext_title()
             return string_format( _( "Throwing %s" ), relevant->tname() );
         case TargetMode::ThrowBlind:
             return string_format( _( "Blind throwing %s" ), relevant->tname() );
+        case TargetMode::ThrowCreature:
+            return _( "Throwing creature" );
+        case TargetMode::ThrowVehicle:
+            return _( "Shoving vehicle" );
         default:
             return _( "Set target" );
     }
@@ -4038,8 +4150,11 @@ std::string target_ui::uitext_title()
 
 std::string target_ui::uitext_fire()
 {
-    if( mode == TargetMode::Throw || mode == TargetMode::ThrowBlind ) {
+    if( mode == TargetMode::Throw || mode == TargetMode::ThrowBlind ||
+        mode == TargetMode::ThrowCreature ) {
         return to_translation( "[Hotkey] to throw", "to throw" ).translated();
+    } else if( mode == TargetMode::ThrowVehicle ) {
+        return to_translation( "[Hotkey] to shove", "to shove" ).translated();
     } else if( mode == TargetMode::Reach ) {
         return to_translation( "[Hotkey] to attack", "to attack" ).translated();
     } else if( mode == TargetMode::Spell ) {
@@ -4184,9 +4299,7 @@ void target_ui::panel_cursor_info( int &text_y )
 
     std::vector<std::string> labels;
     labels.push_back( label_range );
-    if( allow_zlevel_shift ) {
-        labels.push_back( string_format( _( "Elevation: %d" ), dst.z() - src.z() ) );
-    }
+    labels.push_back( string_format( _( "Elevation: %d" ), dst.z() - src.z() ) );
     labels.push_back( string_format( _( "Targets: %d" ), targets.size() ) );
 
     nc_color col = c_light_gray;
@@ -4321,10 +4434,18 @@ void target_ui::panel_target_info( int &text_y, bool fill_with_blank_if_no_targe
             text_y += max_lines;
         } else {
             std::vector<std::string> buf;
-            if( you->sees_with_infrared( *dst_critter ) ) {
+            enchantment_vision_id special = you->sees_with_specials( *dst_critter );
+            if( special != enchantment_vision_id::NULL_ID() ) {
+                if( special->use_normal_mon_tile() ) {
+                    int fix_for_print_info = max_lines - 2;
+                    dst_critter->print_info( w_target, text_y, fix_for_print_info, 1 );
+                    text_y += max_lines;
+                } else {
+                    buf.emplace_back( special->get_mon_desc( *dst_critter ) );
+                }
+
+            } else if( you->sees_with_infrared( *dst_critter ) ) {
                 dst_critter->describe_infrared( buf );
-            } else if( you->sees_with_specials( *dst_critter ) ) {
-                dst_critter->describe_specials( buf );
             }
             for( size_t i = 0; i < static_cast<size_t>( max_lines ); i++, text_y++ ) {
                 if( i >= buf.size() ) {
@@ -4514,7 +4635,7 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
 
     if( gmode->has_flag( flag_MOUNTED_GUN ) ) {
         const Character &shooter = you;
-        if( !can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
+        if( !ranged::can_use_heavy_weapon( shooter, m, shooter.bub_pos() ) &&
             !( you.get_size() > creature_size::medium ) &&
             !you.worn_with_flag( flag_HEAVY_WEAPON_SUPPORT ) ) {
             messages.push_back( string_format(
@@ -4682,7 +4803,7 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // Apply enchantment bonus to aim speed
 
     double ench_aim_bonus = who.bonus_from_enchantments( aim_speed,
-                            enchant_vals::mod::RANGED_AIM_SPEED );
+                            enchantment_value_id( "RANGED_AIM_SPEED" ) );
 
     // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
     // so applying the max value once more.

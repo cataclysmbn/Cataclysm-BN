@@ -1,0 +1,210 @@
+#include "magic/magic_teleporter_list.h"
+
+#include "avatar.h"
+#include "bodypart.h"
+#include "calendar.h"
+#include "catacharset.h"
+#include "character.h"
+#include "color.h"
+#include "coordinates.h"
+#include "cursesdef.h"
+#include "enums.h"
+#include "game.h"
+#include "json.h"
+#include "line.h"
+#include "map/map.h"
+#include "map_iterator.h"
+#include "messages.h"
+#include "output.h"
+#include "panels.h"
+#include "string_formatter.h"
+#include "string_input_popup.h"
+#include "translations.h"
+#include "type_id.h"
+#include "ui.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <map>
+#include <memory>
+#include <utility>
+
+static auto popup_string(std::string& result, std::string& title) -> bool {
+    string_input_popup popup;
+    popup.title(title);
+    popup.text("").only_digits(false);
+    popup.query();
+    if (popup.canceled()) { return false; }
+    result = popup.text();
+    return true;
+}
+
+auto teleporter_list::activate_teleporter(const tripoint_abs_omt& omt_pt, const tripoint_bub_ms&)
+    -> bool {
+    std::string point_name;
+    std::string title = _("Name this gate.");
+    popup_string(point_name, title);
+    return known_teleporters.emplace(omt_pt, point_name).second;
+}
+
+void teleporter_list::deactivate_teleporter(
+    const tripoint_abs_omt& omt_pt, const tripoint_bub_ms&) {
+    known_teleporters.erase(omt_pt);
+}
+
+// returns the first valid teleport location near a teleporter
+static auto find_valid_teleporters_omt(const tripoint_abs_omt& omt_pt)
+    -> std::optional<tripoint_omt_ms> {
+    // this is the top left hand square of the global absolute coordinate
+    // of the overmap terrain we want to try to teleport to.
+    // an OMT is SEEX * SEEY in size
+    const auto sm_pt = project_to<coords::sm>(omt_pt.xy());
+    mapbuffer& buf = get_map().get_mapbuffer();
+    auto omt_view = buf.get_abs_omt_view(omt_pt, {.mode = mapbuffer_lookup_mode::load_from_disk});
+
+    if (!omt_view || !omt_view->has_any_submap()) { return std::nullopt; }
+
+    for (point_omt_sm submap_tile : point_range(point_omt_sm(0, 0), point_omt_sm(1, 1))) {
+        auto submap_view = omt_view->get_submap_view(submap_tile);
+        if (!submap_view) { return std::nullopt; }
+        for (point_sm_ms submap_map_square : submap_view->tiles()) {
+            auto furn = submap_view->tile(submap_map_square).get_furn();
+            if (furn.is_valid()) {
+                if (furn->has_flag("TRANSLOCATOR")) {
+                    return tripoint_omt_ms(
+                        project_combine(submap_tile, submap_map_square), omt_pt.z());
+                }
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+auto teleporter_list::place_avatar_overmap(Character& you, const tripoint_abs_omt& omt_pt) const
+    -> bool {
+    std::optional<tripoint_omt_ms> omt_dest = find_valid_teleporters_omt(omt_pt);
+    if (!omt_dest) { return false; }
+    // WARN: Legacy hack here
+    // Dont know how to do it any better though
+    const auto local_dest = tripoint_bub_ms(
+        omt_dest->x() + g_half_mapsize_x, omt_dest->y() + g_half_mapsize_y, omt_dest->z());
+    you.add_effect(efftype_id("ignore_fall_damage"), 1_seconds, bodypart_str_id::NULL_ID(), 0, true);
+    g->place_player_overmap(omt_pt);
+    g->place_player(local_dest);
+    return true;
+}
+
+void teleporter_list::translocate(const std::set<tripoint_bub_ms>& targets) {
+    if (known_teleporters.empty()) {
+        // we can't go somewhere if we don't know how to get there!
+        add_msg(m_bad, _("No translocator target known."));
+        return;
+    }
+    std::optional<tripoint_abs_omt> omt_dest = choose_teleport_location();
+    if (!omt_dest) {
+        add_msg(_("Teleport canceled."));
+        return;
+    }
+
+    bool valid_targets = false;
+    for (const tripoint_bub_ms& pt : targets) {
+        Character* you = g->critter_at<Character>(pt);
+
+        if (you && you->is_avatar()) {
+            valid_targets = true;
+            if (!place_avatar_overmap(*you, *omt_dest)) {
+                add_msg(_("Failed to teleport.  Teleporter obstructed or destroyed."));
+                deactivate_teleporter(*omt_dest, pt);
+            }
+        }
+    }
+
+    if (!valid_targets) { add_msg(_("No valid targets to teleport.")); }
+}
+
+auto teleporter_list::knows_translocator(const tripoint_abs_omt& omt_pos) const -> bool {
+    return known_teleporters.contains(omt_pos);
+}
+
+void teleporter_list::serialize(JsonOut& json) const {
+    json.start_object();
+
+    json.member("known_teleporters");
+    json.start_array();
+    for (std::pair<tripoint_abs_omt, std::string> pair : known_teleporters) {
+        json.start_object();
+        json.member("position", pair.first);
+        json.member("name", pair.second);
+        json.end_object();
+    }
+    json.end_array();
+
+    json.end_object();
+}
+
+void teleporter_list::deserialize(JsonIn& jsin) {
+    JsonObject data = jsin.get_object();
+
+    for (JsonObject jo : data.get_array("known_teleporters")) {
+        tripoint_abs_omt temp_pos;
+        jo.read("position", temp_pos);
+        std::string name;
+        jo.read("name", name);
+
+        known_teleporters.emplace(temp_pos, name);
+    }
+}
+
+class teleporter_callback: public uilist_callback {
+private:
+    // to make it easier to get the callback from the known_teleporters
+    std::map<int, tripoint_abs_omt> index_pairs;
+
+public:
+    teleporter_callback(std::map<int, tripoint_abs_omt>& ip): index_pairs(ip) {}
+    void refresh(uilist* menu) override {
+        const int entnum = menu->selected;
+        const int start_x = menu->w_width - menu->pad_right;
+        mvwputch(menu->window, point(start_x, 0), c_magenta, LINE_OXXX);
+        mvwputch(menu->window, point(start_x, menu->w_height - 1), c_magenta, LINE_XXOX);
+        for (int i = 1; i < menu->w_height - 1; i++) {
+            mvwputch(menu->window, point(start_x, i), c_magenta, LINE_XOXO);
+        }
+        if (entnum >= 0 && static_cast<size_t>(entnum) < index_pairs.size()) {
+            avatar& player_character = get_avatar();
+            overmap_ui::draw_overmap_chunk(
+                menu->window, player_character, index_pairs[entnum], point(start_x + 1, 1), 29, 21);
+            int dist = rl_dist(player_character.abs_omt_pos(), index_pairs[entnum]);
+            mvwprintz(menu->window, point(start_x + 2, 1), c_white,
+                      string_format(_("Distance: %d %s"), dist, index_pairs[entnum].to_string()));
+        }
+        wnoutrefresh(menu->window);
+    }
+};
+
+auto teleporter_list::choose_teleport_location() -> std::optional<tripoint_abs_omt> {
+    std::optional<tripoint_abs_omt> ret = std::nullopt;
+
+    uilist teleport_selector;
+    teleport_selector.w_height_setup = 24;
+
+    int index = 0;
+    int column_width = 25;
+    std::map<int, tripoint_abs_omt> index_pairs;
+    for (const std::pair<const tripoint_abs_omt, std::string>& gate : known_teleporters) {
+        teleport_selector.addentry(index, true, 0, gate.second);
+        column_width = std::max(column_width, utf8_width(gate.second));
+        index_pairs.emplace(index, gate.first);
+        index++;
+    }
+    teleporter_callback cb(index_pairs);
+    teleport_selector.callback = &cb;
+    teleport_selector.w_width_setup = 38 + column_width;
+    teleport_selector.pad_right_setup = 33;
+    teleport_selector.title = _("Choose Translocator Gate");
+
+    teleport_selector.query();
+
+    if (teleport_selector.ret >= 0) { ret = index_pairs[teleport_selector.ret]; }
+    return ret;
+}

@@ -16,5 +16,25 @@
     "time": "15 m",
     "qualities": [ { "id": "SAW_M", "level": 1 } ],
     "components": [ [ [ "hard_steel_armor", 8 ] ], [ [ "ceramic_armor", 8 ] ] ]
+  },
+  {
+    "result": "cargo_rack",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 1 ],
+    "difficulty": 1,
+    "time": "15 m",
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "WRENCH", "level": 1 } ],
+    "components": [ [ [ "steel_lump", 80 ] ], [ [ "rope_6", 20 ] ] ]
+  },
+  {
+    "result": "cargo_rack_carbon",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "skills_required": [ "mechanics", 1 ],
+    "time": "15 m",
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [ [ [ "frame_carbon", 6 ] ], [ [ "rope_6", 20 ] ] ]
   }
 ]

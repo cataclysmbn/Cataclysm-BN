@@ -27,6 +27,31 @@
   },
   {
     "type": "recipe",
+    "result": "bio_minirose",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_CBMS",
+    "skill_used": "electronics",
+    "skills_required": [ [ "firstaid", 7 ], [ "launcher", 5 ] ],
+    "difficulty": 10,
+    "time": "8 h",
+    "book_learn": [ [ "recipe_lab_elec", 8 ], [ "recipe_mil_augs", 8 ] ],
+    "using": [ [ "soldering_standard", 80 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 } ],
+    "tools": [ [ [ "autoclave", 5000 ], [ "fake_autoclave", -1 ] ], [ [ "small_repairkit", 20 ], [ "large_repairkit", 10 ] ] ],
+    "components": [
+      [ [ "mininuke", 1 ] ],
+      [ [ "processor", 1 ] ],
+      [ [ "self_monitoring_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "cable", 4 ] ],
+      [ [ "burnt_out_bionic", 1 ] ],
+      [ [ "water", 8 ], [ "water_clean", 8 ] ],
+      [ [ "pouch_autoclave", 1 ] ]
+    ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "type": "recipe",
     "result": "bio_armor_arms",
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_CBMS",

@@ -127,13 +127,34 @@ class recipe_subset
 
         enum class search_type {
             name,
+
+            tool,
+            component,
+            quality,
+            reversible,
+
             skill,
             primary_skill,
-            component,
-            tool,
-            quality,
+
+            byproduct,
             quality_result,
-            description_result
+            description_result,
+
+            damage_total,
+            damage_bash,
+            damage_cut,
+            damage_pierce,
+
+            protection_bash,
+            protection_cut,
+            protection_ballistic,
+            protection_acid,
+            protection_fire,
+            protection_env,
+
+            warmth,
+            storage,
+            encumbrance,
         };
 
         /** Find marked favorite recipes */
@@ -152,10 +173,11 @@ class recipe_subset
         std::vector<const recipe *> expanded() const;
 
         /** Find recipes matching query (left anchored partial matches are supported) */
-        std::vector<const recipe *> search( const std::string &txt,
-                                            search_type key = search_type::name ) const;
+        std::vector<const recipe *> search( const search_type key, const std::string &txt,
+                                            const std::function<bool( int )> *cond, bool mode ) const;
         /** Find recipes matching query and return a new recipe_subset */
-        recipe_subset reduce( const std::string &txt, search_type key = search_type::name ) const;
+        recipe_subset reduce( const search_type key, const std::string &txt,
+                              const std::function<bool( int )> *cond, bool mode ) const;
         /** Set intersection between recipe_subsets */
         recipe_subset intersection( const recipe_subset &subset ) const;
         /** Set difference between recipe_subsets */

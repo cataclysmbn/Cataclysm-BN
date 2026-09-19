@@ -1,24 +1,22 @@
 #include "character_functions.h"
 
-#include <algorithm>
-#include <string>
-#include <utility>
-
 #include "ammo.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
-#include "character_martial_arts.h"
 #include "character.h"
+#include "character_martial_arts.h"
 #include "creature.h"
 #include "flag.h"
+#include "flag_trait.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "itype.h"
 #include "iuse_actor.h"
 #include "make_static.h"
+#include "map/map_selector.h"
+#include "map/submap.h"
 #include "map_iterator.h"
-#include "map_selector.h"
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
@@ -27,17 +25,20 @@
 #include "ranged.h"
 #include "rng.h"
 #include "skill.h"
-#include "submap.h"
 #include "trap.h"
-#include "flag_trait.h"
+#include "type_id.h"
 #include "uistate.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
-#include "vpart_position.h"
-#include "weather_gen.h"
-#include "weather.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm>
+#include <string>
+#include <utility>
 
 static const trait_id trait_CHLOROMORPH( "CHLOROMORPH" );
 static const trait_id trait_DEBUG_NODMG( "DEBUG_NODMG" );
@@ -81,6 +82,8 @@ static const itype_id itype_UPS( "UPS" );
 static const skill_id skill_throw( "throw" );
 
 static const quality_id qual_SLEEP_AID( "SLEEP_AID" );
+
+static const enchantment_value_id ench_val_UNCANNY_DODGE( "UNCANNY_DODGE" );
 
 namespace character_funcs
 {
@@ -248,8 +251,10 @@ float fine_detail_vision_mod( const Character &who, const tripoint_bub_ms &p )
           !who.has_trait( trait_PER_SLIME_OK ) ) ) {
         return 11.0;
     }
-    // Regular NV trait isn't enough to help at all, while Full Night Vision allows reading at a penalty
-    float nvbonus = who.mutation_value( "night_vision_range" ) >= 8 ? 4 : 0;
+    // Previously above 8 added 4 to help night vision reading on mutations
+    // Thusly nearsight help to night vision ratio is 2
+    float nvbonus = who.night_vision_sight_range() / 2;
+
     // Scale linearly as light level approaches LIGHT_AMBIENT_LIT.
     // If we're actually a source of light, assume we can direct it where we need it.
     // Therefore give a hefty bonus relative to ambient light.
@@ -483,18 +488,6 @@ int rate_sleep_spot( const Character &who, const tripoint_bub_ms &p )
         sleepy -= current_stim;
     }
 
-    if( one_in( 3 ) ) {
-        if( comfort_info.level >= comfort_level::very_comfortable ) {
-            who.add_msg_if_player( "You feel very comfortable." );
-        } else if( comfort_info.level >= comfort_level::comfortable ) {
-            who.add_msg_if_player( "You feel comfortable." );
-        } else if( comfort_info.level >= comfort_level::slightly_comfortable ) {
-            who.add_msg_if_player( "You feel slightly comfortable." );
-        } else {
-            who.add_msg_if_player( "You feel uncomfortable." );
-        }
-    }
-
     return sleepy;
 }
 
@@ -719,11 +712,23 @@ bool try_wield_contents( Character &who, item &container, item *internal_item, b
 
 bool try_uncanny_dodge( Character &who )
 {
-    const units::energy trigger_cost = bio_uncanny_dodge->power_trigger;
-    if( who.get_power_level() < trigger_cost || !who.has_active_bionic( bio_uncanny_dodge ) ) {
+    if( who.has_active_bionic( bio_uncanny_dodge ) ) {
+        const units::energy trigger_cost = bio_uncanny_dodge->power_trigger;
+        if( who.get_power_level() < trigger_cost ) {
+            return false;
+        }
+        who.mod_power_level( -trigger_cost );
+    } else if( who.get_stamina() > 100 ) {
+        float ench_chance = who.bonus_from_enchantments( 0.0, ench_val_UNCANNY_DODGE );
+        if( ench_chance < rng_float( 0.0, 1.0 ) ) {
+            return false;
+        }
+        // NOTE: Potential improvement, allow lua hook to burn resources
+        who.mod_stamina( -100 );
+    } else {
         return false;
     }
-    who.mod_power_level( -trigger_cost );
+
     bool is_u = who.is_avatar();
     bool seen = is_u || get_player_character().sees( who );
     // If successful, dodge for free. If we already burned bonus dodges this turn then get_dodge fails and we're overwhelmed.

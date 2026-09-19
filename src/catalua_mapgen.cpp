@@ -1,13 +1,15 @@
 #include "catalua_mapgen.h"
+
 #include "catalua.h"
 #include "catalua_impl.h"
-#include "init.h"
-#include "player.h"
 #include "game.h"
-#include "mapgendata.h"
+#include "init.h"
+#include "mapgen/mapgen_constructor.h"
+#include "mapgen/mapgendata.h"
+#include "player.h"
 #include "profile.h"
-#include "thread_pool.h"
 #include "sol/sol.hpp"
+#include "thread_pool.h"
 
 #include <cassert>
 

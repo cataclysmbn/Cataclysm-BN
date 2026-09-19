@@ -106,9 +106,12 @@
     "id": "sanguine_cult_crafting",
     "type": "item_group",
     "items": [
+      [ "silver_glyph", 7 ],
+      [ "scroll_blank", 3 ],
       [ "vacutainer", 25 ],
       [ "pot", 5 ],
       [ "bowl_clay", 10 ],
+      [ "retort_copper", 5 ],
       [ "candle", 5 ],
       [ "matches", 5 ],
       { "item": "silver_small", "prob": 20, "charges": [ 25, 100 ] },

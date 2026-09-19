@@ -11,6 +11,7 @@
 #include "generic_factory.h"
 #include "debug.h"
 #include "json.h"
+#include "type_id_implement.h"
 
 using namespace behavior;
 
@@ -83,11 +84,7 @@ generic_factory<behavior::node_t> behavior_factory( "behavior" );
 std::list<node_data> temp_node_data;
 } // namespace
 
-template<>
-const node_t &string_id<node_t>::obj() const
-{
-    return behavior_factory.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( behavior::node_t, behavior_factory );
 
 void behavior::load_behavior( const JsonObject &jo, const std::string &src )
 {

@@ -299,9 +299,9 @@
     "sort_rank": -200
   },
   {
-    "id": "BIONICS",
+    "id": "MISC_USABLES",
     "type": "ITEM_CATEGORY",
-    "name": { "str": "USABLE BIONICS" },
+    "name": { "str": "USABLE THINGS" },
     "sort_rank": 0
   }
 ]

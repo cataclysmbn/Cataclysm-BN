@@ -12,7 +12,7 @@
     "material": "steel",
     "range": 6,
     "dispersion": 300,
-    "loudness": 5,
+    "loudness": 45,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "valid_mod_locations": [
       [ "accessories", 1 ],
@@ -41,7 +41,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 10 },
     "dispersion": 240,
     "durability": 9,
-    "loudness": 3,
+    "loudness": 40,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "valid_mod_locations": [
       [ "accessories", 4 ],

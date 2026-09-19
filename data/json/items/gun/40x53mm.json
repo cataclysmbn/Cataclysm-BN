@@ -18,6 +18,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 1 },
     "dispersion": 180,
     "reload": 400,
+    "loudness": -20,
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
@@ -28,6 +29,7 @@
       [ "underbarrel", 1 ]
     ],
     "modes": [ [ "DEFAULT", "semi", 1, "NPC_AVOID" ], [ "AUTO", "auto", 2, "NPC_AVOID" ] ],
+    "magazine_well": "75 ml",
     "magazines": [ [ "40x53mm", [ "belt40mm" ] ] ],
     "flags": [ "MOUNTED_GUN" ]
   },

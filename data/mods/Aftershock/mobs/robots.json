@@ -103,7 +103,7 @@
     "melee_skill": 2,
     "melee_dice": 1,
     "melee_dice_sides": 4,
-    "special_attacks": [ [ "SEARCHLIGHT", 1 ] ],
+    "special_attacks": [ [ "PHOTOGRAPH", 1 ], [ "SEARCHLIGHT", 1 ] ],
     "luminance": 60,
     "melee_cut": 12,
     "armor_bash": 2,
@@ -401,7 +401,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -433,7 +433,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -464,7 +464,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -495,7 +495,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -527,7 +527,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ],
     "extend": { "flags": [ "DROPS_AMMO" ] }
@@ -559,7 +559,7 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },
@@ -607,7 +607,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -5,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 20
+        "targeting_volume": "46 dB"
       }
     ]
   },
@@ -636,7 +636,7 @@
         "laser_lock": true,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },
@@ -665,9 +665,53 @@
         "targeting_cost": 200,
         "targeting_timeout_extend": -10,
         "targeting_sound": "\"Hostile detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
+  },
+  {
+    "id": "mon_wraitheon_isohypsa",
+    "type": "MONSTER",
+    "copy-from": "mon_advbot_base",
+    "name": { "str": "Wraitheon Isohypsa" },
+    "description": "A bulky aerial drone with an advanced AI overwatch unit and a bulbous carapace mostly dedicated to mounting high-resolution sensors.  As an autonomous drone control platform, the Isohypsa is principally meant to coordinate and enhance the combat capabilities of simpler Wraitheon robots in lieu of human operators.",
+    "default_faction": "defense_bot",
+    "symbol": "y",
+    "diff": 20,
+    "speed": 100,
+    "color": "light_red",
+    "armor_bash": 20,
+    "armor_cut": 30,
+    "armor_fire": 15,
+    "armor_bullet": 35,
+    "morale": 20,
+    "luminance": 20,
+    "tracking_distance": 20,
+    "extend": { "flags": [ "FIREPROOF", "PACIFIST", "KEEP_DISTANCE", "FLIES" ] },
+    "special_attacks": [
+      {
+        "type": "spell",
+        "spell_data": { "id": "isohypsa_buff", "hit_self": true },
+        "cooldown": 5,
+        "monster_message": "The Isohypsa emits a rapid sequence of sibilant tones!"
+      }
+    ]
+  },
+  {
+    "id": "mon_wraitheon_kaburaya",
+    "copy-from": "base_drone",
+    "type": "MONSTER",
+    "name": { "str": "Wraitheon Kabura-ya" },
+    "description": "A microplane drone designed to seek enemy personnel before detonating at close range.",
+    "default_faction": "defense_bot",
+    "diff": 10,
+    "speed": 250,
+    "color": "green",
+    "armor_cut": 4,
+    "armor_bullet": 3,
+    "revert_to_itype": "bot_wraitheon_kaburaya",
+    "starting_ammo": { "afs_kaburaya_bomb": 1 },
+    "special_attacks": [ [ "KAMIKAZE", 0 ] ]
   },
   {
     "id": "mon_advbot_emp",
@@ -690,7 +734,7 @@
         "targeting_cost": 10,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"Hostile Detected.\"",
-        "targeting_volume": 10
+        "targeting_volume": "40 dB"
       }
     ]
   },

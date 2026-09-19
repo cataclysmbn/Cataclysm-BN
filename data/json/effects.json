@@ -201,6 +201,12 @@
   },
   {
     "type": "effect_type",
+    "id": "pet_bonding",
+    "name": [ "Pet Bonding" ],
+    "desc": [ "AI tag used for bonding with pet critters.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
     "id": "paid",
     "name": [ "Paid" ],
     "desc": [ "AI tag used for paid critters.  This is a bug if you have it." ]
@@ -298,6 +304,15 @@
   },
   {
     "type": "effect_type",
+    "id": "eyebot_depleted",
+    "name": [ "Eyebot Depleted" ],
+    "permanent": true,
+    "desc": [
+      "Marks a non-friendly eyebot as having already summoned reinforcements, preventing it from doing so again.  This is a bug if you have it."
+    ]
+  },
+  {
+    "type": "effect_type",
     "id": "monster_disarmed",
     "name": [ "Disarmed" ],
     "desc": [ "AI tag for a monster's attacks being disabled due to disarming tecs.  This is a bug if you have it." ],
@@ -311,7 +326,8 @@
     "desc": [ "You're knocked to the ground.  You have to get up before you can move." ],
     "apply_message": "You're knocked to the floor!",
     "rating": "bad",
-    "show_in_info": true
+    "show_in_info": true,
+    "base_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": -4 } ] } ]
   },
   {
     "type": "effect_type",
@@ -409,7 +425,8 @@
     "desc": [ "Your footing is unstable.  It's more difficult to fight while standing here." ],
     "apply_message": "You try to keep your balance.",
     "rating": "bad",
-    "permanent": true
+    "permanent": true,
+    "base_enchantments": [ { "values": [ { "value": "MELEE_HIT", "multiply": -0.25 } ] } ]
   },
   {
     "type": "effect_type",
@@ -877,6 +894,16 @@
     "name": [ "Irradiation triangle" ],
     "desc": [ "This irradiates you every 15 minutes while aboveground so long as you have it in your inventory!" ],
     "base_mods": { "rad_min": [ 1 ], "rad_max": [ 3 ], "rad_tick": [ 900 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "debug_knowledge",
+    "max_intensity": 100,
+    "int_add_val": 1,
+    "name": [ "Pure Insanity" ],
+    "desc": [ "This causes you to become more and more insane" ],
+    "base_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ],
+    "scaling_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1582,7 +1609,8 @@
     "apply_message": "You feel lightheaded.",
     "morale": "morale_high",
     "base_mods": { "per_mod": [ -1 ], "morale": [ 10 ] },
-    "blood_analysis_description": "Intoxicant: THC"
+    "blood_analysis_description": "Intoxicant: THC",
+    "base_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.9 } ] } ]
   },
   {
     "type": "effect_type",
@@ -1788,8 +1816,9 @@
     "name": [ "Grabbed" ],
     "desc": [ "You have been grabbed by an attack.\nYou are being held in place, and dodging is harder." ],
     "rating": "bad",
-    "max_duration": "2 s",
-    "max_intensity": 2,
+    "max_duration": "1 d",
+    "max_intensity": 15,
+    "flags": [ "GRAB" ],
     "base_mods": { "speed_mod": [ -15 ] },
     "scaling_mods": { "speed_mod": [ -5 ] },
     "show_in_info": true
@@ -1799,8 +1828,9 @@
     "id": "grabbing",
     "name": [ "Grabbing" ],
     "desc": [ "Grabbing another creature and holding them in place." ],
-    "max_duration": "2 s",
+    "max_duration": "1 d",
     "max_intensity": 15,
+    "flags": [ "GRAB_FILTER" ],
     "show_in_info": true
   },
   {
@@ -2333,6 +2363,12 @@
     "max_intensity": 1000,
     "int_dur_factor": "1 s",
     "rating": "bad"
+  },
+  {
+    "type": "effect_type",
+    "id": "drone_marker",
+    "//": "Used by friendly eyebots to designate targets that become temporarily visible to the player if they have the right items or bionics.",
+    "max_duration": "1 m"
   },
   {
     "type": "effect_type",

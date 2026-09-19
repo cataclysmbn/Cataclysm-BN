@@ -19,6 +19,24 @@
     "flags": [ "MAG_COMPACT" ]
   },
   {
+    "id": "ump9mag",
+    "looks_like": "mp5mag",
+    "type": "MAGAZINE",
+    "name": { "str": "UMP9 magazine" },
+    "description": "A curved, double-stack plastic box magazine for the UMP sub-machine gun in 9x19mm.  Holds 30 rounds.",
+    "weight": "200 g",
+    "volume": "500 ml",
+    "price": "4950 cent",
+    "price_postapoc": "1 USD",
+    "material": "plastic",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": "9mm",
+    "capacity": 30,
+    "reliability": 8,
+    "flags": [ "MAG_COMPACT" ]
+  },
+  {
     "id": "glockbigmag",
     "looks_like": "glock17_17",
     "type": "MAGAZINE",
@@ -599,5 +617,22 @@
     "capacity": 40,
     "reliability": 9,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "9mm_speedloader6",
+    "looks_like": "38_speedloader",
+    "type": "MAGAZINE",
+    "name": { "str": "9x19mm 6-round speedloader" },
+    "description": "This speedloader can hold 6 rounds of 9x19mm Parabellum and quickly reload a compatible revolver.",
+    "weight": "72 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "1 USD",
+    "material": "steel",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": [ "9mm" ],
+    "capacity": 6,
+    "flags": [ "SPEEDLOADER" ]
   }
 ]

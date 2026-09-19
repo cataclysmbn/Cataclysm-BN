@@ -30,20 +30,7 @@
         "fake_item": "fake_ecig"
       }
     ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -155,12 +142,7 @@
     "material": "plastic",
     "ammo": "battery",
     "power_draw": 9000,
-    "magazines": [
-      [
-        "battery",
-        [ "light_minus_battery_cell", "light_minus_disposable_cell", "light_battery_cell", "light_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_minus_battery_cell", "light_battery_cell" ] ] ],
     "charges_per_use": 1,
     "flags": [ "NO_INGEST" ],
     "use_action": {

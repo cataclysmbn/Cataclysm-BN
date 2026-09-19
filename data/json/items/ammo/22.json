@@ -8,6 +8,8 @@
     "//": "Hollowpoint damage increase of 25%",
     "damage": { "damage_type": "bullet", "amount": 20, "armor_penetration": 0 },
     "relative": { "range": 3 },
+    "loudness": 148,
+    "speed": 500,
     "proportional": { "recoil": 1.2 }
   },
   {
@@ -27,10 +29,11 @@
     "ammo_type": "22",
     "casing": "22_casing",
     "range": 13,
-    "//": "Base damage of 12, balance increase of one-third.",
-    "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 9 },
+    "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 7 },
     "dispersion": 60,
     "recoil": 150,
+    "loudness": 142,
+    "speed": 370,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -38,7 +41,7 @@
     "copy-from": "22_cphp",
     "type": "AMMO",
     "name": { "str": ".22 rat-shot" },
-    "description": "A .22 caliber cartridge loaded with very small pieces of shot contained within a fragmenting plastic capsule.  It has an extremely short range and penetration ability, but it can hit targets with greater ease.",
+    "description": "A .22 caliber cartridge loaded with very small pieces of shot contained within a fragmenting plastic capsule.  It has an extremely short range and penetration ability, but it can hit targets with greater ease.  Also, it is subsonic, and thus works well with suppressors.",
     "count": 100,
     "price_postapoc": "4 USD",
     "dispersion": 0,
@@ -46,6 +49,8 @@
     "damage": { "damage_type": "bullet", "amount": 2, "armor_penetration": 1 },
     "shot": { "count": 10, "half_angle": 15 },
     "proportional": { "recoil": 0.334 },
+    "loudness": 140,
+    "speed": 300,
     "extend": { "effects": [ "SHOT", "NOGIB" ] }
   },
   {

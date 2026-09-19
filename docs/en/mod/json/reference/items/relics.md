@@ -15,7 +15,7 @@ Relic data object can contain the following fields:
 "moves": 100,                   // (optional) Activation move cost (default 100)
 "charges_per_activation": 1,    // (optional) Charges per activation (default 1)
 "active_effects": [ {}, ... ],  // (optional) Spells executed on activation (identical to `hit_you_effect`, see [MAGIC.md](MAGIC.md/#hit_you_effect))
-"passive_effects": [ {}, ... ], // (optional) List of passive effects (enchantments), see [MAGIC.md](MAGIC.md/#enchantments)
+"passive_effects": [ {}, ... ], // (optional) List of passive effects (enchantments), see [ENCHANTMENTS.md](ENCHANTMENTS.md)
 "recharge_scheme": [ {}, ... ], // (optional) List of recharge methods, see below
 }
 ```

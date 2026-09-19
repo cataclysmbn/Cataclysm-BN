@@ -30,7 +30,7 @@
 #include "game.h"
 #include "item.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
@@ -43,8 +43,8 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units.h"
+#include "vehicle/vpart_position.h"
 #include "visitable.h"
-#include "vpart_position.h"
 
 static const ammo_effect_str_id ammo_effect_ACT_ON_RANGED_HIT( "ACT_ON_RANGED_HIT" );
 static const ammo_effect_str_id ammo_effect_BOUNCE( "BOUNCE" );
@@ -179,7 +179,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         }
         if( proj.has_effect( ammo_effect_ACT_ON_RANGED_HIT ) ) {
             // Don't drop if it exploded
-            drop = item::process( std::move( drop ), nullptr, attack.end_point, true );
+            drop = item::process( std::move( drop ), nullptr, attack.end_point, true, 1 );
         }
 
         map &here = get_map();
@@ -350,9 +350,6 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     const bool do_draw_line = proj.has_effect( ammo_effect_DRAW_AS_LINE ) ||
                               get_option<bool>( "BULLETS_AS_LASERS" );
     const bool null_source = proj.has_effect( ammo_effect_NULL_SOURCE );
-    // Determines whether it can penetrate obstacles
-    const bool is_bullet = proj_arg.speed >= 200 &&
-                           !proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES );
 
     const auto is_thrown = proj.has_effect( ammo_effect_THROWN );
     const auto *thrown_item = proj.get_drop();
@@ -639,7 +636,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
                     here.add_splatter_trail( critter->bloodType(), tp, dest );
                 }
                 sfx::do_projectile_hit( *attack.hit_critter );
-                has_momentum = proj.impact.total_damage() > 0 && is_bullet;
+                has_momentum = proj.impact.total_damage() > 0 &&
+                               !proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES );
 
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );
                 // Force embed based on damage after overpenetration penalties

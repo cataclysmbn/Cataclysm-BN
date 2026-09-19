@@ -1,19 +1,18 @@
 #include "batch_turns.h"
 
+#include "calendar.h"
+#include "game_constants.h"
+#include "item.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/submap.h"
+#include "profile.h"
+#include "vehicle/vehicle.h"
+
 #include <algorithm>
 #include <bitset>
 #include <cstddef>
 #include <ranges>
-
-#include "profile.h"
-
-#include "calendar.h"
-#include "game_constants.h"
-#include "field.h"
-#include "field_type.h"
-#include "item.h"
-#include "submap.h"
-#include "vehicle.h"
 
 /**
  * Compute the expected number of intensity drops after adding @p elapsed_turns
@@ -144,10 +143,12 @@ void run_submap_batch_turns( submap &sm, int n )
         return;
     }
     batch_turns_field( sm, n );
-    batch_turns_items( sm, n );
+    // Currently processing items does not work for all types ( charge reducers do not work )
+    // Thus this is currently disfunctional
+    // batch_turns_items( sm, n );
     for( const auto &veh_ptr : sm.vehicles ) {
         if( veh_ptr ) {
-            veh_ptr->update_time( calendar::turn );
+            veh_ptr->update_time( calendar::turn, true );
         }
     }
 }

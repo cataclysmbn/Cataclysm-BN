@@ -158,6 +158,23 @@ local new_npc = map:place_npc(place_point, "thug")
 new_npc:erase()
 ```
 
+### Reacting when control swaps to an NPC
+
+Use `on_control_npc` when a mod needs to refresh state after the player takes
+control of a follower NPC. The hook runs after the swap, so read the currently
+controlled character with `gapi.get_avatar()`.
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_control_npc", function(...) return mod.on_control_npc(...) end)
+
+mod.on_control_npc = function(params)
+    local controlled = gapi.get_avatar()
+
+    gapi.add_msg(MsgType.good, string.format("Now controlling %s.", controlled:get_name()))
+end
+```
+
 ## Weather Hooks
 
 ### Reacting to weather changes

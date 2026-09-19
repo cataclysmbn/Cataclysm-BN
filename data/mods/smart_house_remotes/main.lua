@@ -35,17 +35,27 @@ mod.remote_wireless_range = 24
 mod.remote_wireless_range_z = 2
 
 -- Get abs omt of remote's base
-mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, TripointAbsOmt.new(0, 0, 0)) end
+---@param item Item
+---@return TripointAbsOmt
+mod.get_remote_base_omt = function(item)
+  local default_omt = TripointAbsOmt.new(0, 0, 0):raw()
+  return TripointAbsOmt.new(item:get_var_tri(mod.var_base, default_omt))
+end
 
 -- Get abs ms of remote's base
----@type fun(item: Item): Tripoint
+---@param item Item
+---@return TripointAbsMs
 mod.get_remote_base_abs_ms = function(item)
   local p_omt = mod.get_remote_base_omt(item)
-  return p_omt:to_ms() + PointRelMs.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
+  local p_ms = p_omt:to_ms()
+  local center_ms = p_ms + PointRelMs.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
+  return center_ms
 end
 
 -- Set remote's base abs omt
-mod.set_remote_base = function(item, p_omt) item:set_var_tri(mod.var_base, p_omt) end
+---@param item Item
+---@param p_omt TripointAbsOmt
+mod.set_remote_base = function(item, p_omt) item:set_var_tri(mod.var_base, p_omt:raw()) end
 
 -- Look for spawned remotes and bind them to given omt
 ---@param params OnMapgenPostprocessParams
@@ -57,14 +67,10 @@ mod.on_mapgen_postprocess_hook = function(params)
   local item_id = mod.item_id
   for y = 0, mapsize - 1 do
     for x = 0, mapsize - 1 do
-      local p = TripointBubMs.new(x, y, 0)
-      -- TODO: Check whether using has_items_at() gives a speedup in Lua.
-      --       In C++, it's supposed to be faster then !i_at( p ).empty()
-      if map:has_items_at(p) then
-        local items = map:get_items_at(p):as_item_stack():items()
-        for _, item in ipairs(items) do
-          if item:get_type():str() == item_id then mod.set_remote_base(item, p_omt) end
-        end
+      local p = PointOmtMs.new(x, y)
+      local items = map:get_items_at(p):as_item_stack():items()
+      for _, item in ipairs(items) do
+        if item:get_type():str() == item_id then mod.set_remote_base(item, p_omt) end
       end
     end
   end
@@ -300,7 +306,7 @@ mod.iuse_function = function(params)
   local _who = params.user
   local item = params.item
   local pos = params.pos
-  local user_pos = gapi.get_map():bub_to_abs(pos)
+  local user_pos = gapi.bub_to_abs(pos)
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
   --[[
@@ -312,14 +318,13 @@ mod.iuse_function = function(params)
     ]]
 
   local base_pos = mod.get_remote_base_abs_ms(item)
-  ---@cast base_pos Tripoint
 
   -- Check distance to wireless base the remote is bound to.
   -- The base does not physically exist in game world, but we imagine
   -- it's tucked away into a hoouse wall or something.
   if
     math.abs(user_pos.z - base_pos.z) > mod.remote_wireless_range_z
-    or user_pos:rl_dist(base_pos) > mod.remote_wireless_range
+    or (user_pos:rl_dist(base_pos) or math.maxinteger) > mod.remote_wireless_range
   then
     mod.show_no_signal_error()
     return 0

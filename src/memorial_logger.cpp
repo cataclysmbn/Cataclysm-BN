@@ -26,7 +26,7 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "kill_tracker.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "martialarts.h"
 #include "messages.h"
 #include "monstergenerator.h"

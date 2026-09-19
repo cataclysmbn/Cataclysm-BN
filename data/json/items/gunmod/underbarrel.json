@@ -441,8 +441,8 @@
   {
     "id": "M6_shotgun",
     "type": "GUNMOD",
-    "name": { "str": "M6 Survival Gun shotgun" },
-    "description": "The integrated 12 gauge shotgun barrel of the Chiappa M6 Survival Gun.  It's irremovable.",
+    "name": { "str": "M6 Aircrew Survival Weapon shotgun" },
+    "description": "The integrated .410 shotgun barrel of the M6 Aircrew Survival Weapon.  It's irremovable.",
     "volume": "0 ml",
     "price": "0 cent",
     "price_postapoc": "0 cent",
@@ -452,7 +452,7 @@
     "location": "underbarrel",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ] ],
     "gun_data": {
-      "ammo": "shot",
+      "ammo": "410shot",
       "skill": "shotgun",
       "range": 1,
       "dispersion": 320,

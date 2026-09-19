@@ -4,13 +4,12 @@
 #include <functional>
 #include <memory>
 
-#include "detached_ptr.h"
 #include "coordinates.h"
+#include "detached_ptr.h"
+#include "type_id.h"
 
 template<typename T>
 class location;
-
-struct tripoint;
 
 class item;
 
@@ -276,6 +275,8 @@ class location_vector
         void remove_with( std::function < detached_ptr<T>( detached_ptr<T> && ) > cb );
 
         void move_by( const tripoint_rel_ms &offset );
+
+        void set_dimension( const dimension_id &dim );
 
         void init_location( location<T> *new_loc );
 

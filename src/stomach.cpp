@@ -12,8 +12,8 @@
 void nutrients::min_in_place( const nutrients &r )
 {
     kcal = std::min( kcal, r.kcal );
-    for( const std::pair<const vitamin_id, vitamin> &vit_pair : vitamin::all() ) {
-        const vitamin_id &vit = vit_pair.first;
+    for( const auto &vit_obj : vitamin::all() ) {
+        const vitamin_id &vit = vit_obj.id;
         int other = r.get_vitamin( vit );
         if( other == 0 ) {
             vitamins.erase( vit );
@@ -29,8 +29,8 @@ void nutrients::min_in_place( const nutrients &r )
 void nutrients::max_in_place( const nutrients &r )
 {
     kcal = std::max( kcal, r.kcal );
-    for( const std::pair<const vitamin_id, vitamin> &vit_pair : vitamin::all() ) {
-        const vitamin_id &vit = vit_pair.first;
+    for( const vitamin &vit_obj : vitamin::all() ) {
+        const vitamin_id &vit = vit_obj.id;
         int other = r.get_vitamin( vit );
         if( other != 0 ) {
             int &val = vitamins[vit];
@@ -55,8 +55,8 @@ bool nutrients::operator==( const nutrients &r ) const
     }
     // Can't just use vitamins == r.vitamins, because there might be zero
     // entries in the map, which need to compare equal to missing entries.
-    for( const std::pair<const vitamin_id, vitamin> &vit_pair : vitamin::all() ) {
-        const vitamin_id &vit = vit_pair.first;
+    for( const vitamin &vit_obj : vitamin::all() ) {
+        const vitamin_id &vit = vit_obj.id;
         if( get_vitamin( vit ) != r.get_vitamin( vit ) ) {
             return false;
         }

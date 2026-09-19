@@ -31,6 +31,7 @@
     "dispersion": 120,
     "dont_recover_one_in": 800,
     "loudness": 0,
+    "speed": 200,
     "effects": [ "NON_FOULING" ],
     "flags": [ "NO_SALVAGE" ]
   }

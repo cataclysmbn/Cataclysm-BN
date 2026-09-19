@@ -612,7 +612,9 @@
       { "group": "tinware", "prob": 10 },
       [ "shield_riot", 5 ],
       [ "pirate_flag", 5 ],
-      [ "professional_chemical_thrower", 5 ]
+      [ "professional_chemical_thrower", 5 ],
+      [ "chestrig", 5 ],
+      [ "belt_magazine", 5 ]
     ]
   },
   {
@@ -728,6 +730,8 @@
       [ "bfipowder", 20 ],
       [ "sheath", 10 ],
       [ "bootsheath", 10 ],
+      [ "chestrig", 10 ],
+      [ "belt_magazine", 10 ],
       [ "survnote", 1 ],
       [ "solarpack", 1 ],
       [ "tourist_table", 5 ],
@@ -841,6 +845,8 @@
       { "group": "softdrinks_canned", "prob": 244 },
       { "item": "bbgun", "prob": 30 },
       { "item": "bb", "prob": 30 },
+      { "item": "paintballgun", "prob": 15 },
+      { "item": "paintball", "prob": 15 },
       { "item": "portable_game", "prob": 60 },
       { "item": "game_watch", "prob": 15 },
       { "item": "deck_of_cards", "prob": 25 },
@@ -1046,7 +1052,8 @@
       { "item": "box_small", "prob": 30 },
       { "item": "rag", "prob": 20 },
       { "item": "bag_plastic", "prob": 15 },
-      { "item": "bag_zipper", "prob": 5 },
+      { "item": "bag_zipper_small", "prob": 5 },
+      { "item": "bag_zipper", "prob": 2 },
       { "item": "news_regional", "prob": 15 },
       { "item": "mag_news", "prob": 15 }
     ]
@@ -1725,7 +1732,8 @@
       [ "backpack", 5 ],
       [ "plastic_shopping_bag", 10 ],
       [ "bag_plastic", 15 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "basket_laundry", 30 ]
     ]
   },
@@ -1809,7 +1817,8 @@
       [ "gloves_rubber", 25 ],
       [ "rag_bloody", 10 ],
       [ "bag_plastic", 10 ],
-      [ "bag_zipper", 10 ],
+      [ "bag_zipper_small", 10 ],
+      [ "bag_zipper", 5 ],
       [ "string_6", 5 ]
     ]
   },
@@ -1831,7 +1840,8 @@
       [ "rag", 15 ],
       [ "rag_bloody", 2 ],
       [ "bag_plastic", 10 ],
-      [ "bag_zipper", 10 ],
+      [ "bag_zipper_small", 10 ],
+      [ "bag_zipper", 5 ],
       [ "jerky", 40 ]
     ]
   },

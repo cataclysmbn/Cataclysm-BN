@@ -14,6 +14,7 @@
 #include "item.h"
 #include "json.h"
 #include "npc.h"
+#include "type_id_implement.h"
 #include "rng.h"
 
 enum legacy_mission_type_id {
@@ -109,15 +110,6 @@ static const std::map<std::string, std::function<void( mission * )>> mission_fun
         { "place_priest_diary", mission_start::place_priest_diary },
         { "place_deposit_box", mission_start::place_deposit_box },
         { "find_safety", mission_start::find_safety },
-        { "ranch_nurse_1", mission_start::ranch_nurse_1 },
-        { "ranch_nurse_2", mission_start::ranch_nurse_2 },
-        { "ranch_nurse_3", mission_start::ranch_nurse_3 },
-        { "ranch_nurse_4", mission_start::ranch_nurse_4 },
-        { "ranch_nurse_5", mission_start::ranch_nurse_5 },
-        { "ranch_nurse_6", mission_start::ranch_nurse_6 },
-        { "ranch_nurse_7", mission_start::ranch_nurse_7 },
-        { "ranch_nurse_8", mission_start::ranch_nurse_8 },
-        { "ranch_nurse_9", mission_start::ranch_nurse_9 },
         { "ranch_scavenger_1", mission_start::ranch_scavenger_1 },
         { "ranch_scavenger_2", mission_start::ranch_scavenger_2 },
         { "ranch_scavenger_3", mission_start::ranch_scavenger_3 },
@@ -198,19 +190,7 @@ std::string enum_to_string<mission_goal>( mission_goal data )
 generic_factory<mission_type> mission_type_factory( "mission_type" );
 static DynamicDataLoader::deferred_json deferred;
 
-/** @relates string_id */
-template<>
-const mission_type &string_id<mission_type>::obj() const
-{
-    return mission_type_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<mission_type>::is_valid() const
-{
-    return mission_type_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( mission_type, mission_type_factory );
 
 void mission_type::load_mission_type( const JsonObject &jo, const std::string &src )
 {

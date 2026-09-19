@@ -17,7 +17,7 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "json.h"
-#include "magic.h"
+#include "magic/magic.h"
 #include "mission.h"
 #include "mtype.h"
 #include "mutation.h"

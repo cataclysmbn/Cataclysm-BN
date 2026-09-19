@@ -17,7 +17,7 @@
     "ammo": "nail",
     "range": 1,
     "dispersion": 800,
-    "loudness": 10,
+    "loudness": 90,
     "clip_size": 20,
     "reload": 200,
     "ranged_damage": { "damage_type": "stab", "amount": 1 },
@@ -42,7 +42,7 @@
     "ranged_damage": { "damage_type": "stab", "amount": 15, "armor_penetration": 20 },
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "AUTO", "auto", 3 ] ],
     "dispersion": 180,
-    "loudness": 5,
+    "loudness": 60,
     "durability": 5,
     "ups_charges": 20,
     "magazines": [ [ "nail", [ "nailmag" ] ] ]
@@ -61,7 +61,7 @@
     "skill": "rifle",
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "AUTO", "auto", 3 ] ],
     "clip_size": 0,
-    "loudness": 7,
+    "loudness": 80,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],

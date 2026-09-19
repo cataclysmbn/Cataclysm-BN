@@ -1,22 +1,10 @@
-#include "debug_menu.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstddef>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
-#include <ranges>
-
 #include "bionics.h"
 #include "calendar.h"
 #include "catacharset.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "debug_menu.h" // IWYU pragma: associated
 #include "flag.h"
 #include "flat_set.h"
 #include "game.h"
@@ -24,7 +12,7 @@
 #include "item.h"
 #include "item_factory.h"
 #include "itype.h"
-#include "map.h"
+#include "map/map.h"
 #include "monster.h"
 #include "monstergenerator.h"
 #include "mtype.h"
@@ -43,6 +31,17 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_energy.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <string>
+#include <vector>
 
 class wish_mutate_callback: public uilist_callback
 {

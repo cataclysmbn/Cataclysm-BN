@@ -7,7 +7,6 @@
         "denoland.vscode-deno",
         // Formatters
         "dprint.dprint",
-        "chiehyu.vscode-astyle",
         "cdda-toys.cdda-json-formatter",
         // Git
         "mhutchie.git-graph",

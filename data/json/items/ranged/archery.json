@@ -16,6 +16,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5, "armor_multiplier": 2 },
     "dispersion": 250,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 2
   },
@@ -37,6 +38,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.8, "armor_penetration": 10, "armor_multiplier": 0.75 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 30
   },
@@ -58,6 +60,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.2 },
     "dispersion": 250,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35,
     "effects": [ "BEANBAG" ]
@@ -80,6 +83,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 10,
     "effects": [ "NOGIB" ]
@@ -102,6 +106,7 @@
     "ammo_type": "arrow",
     "dispersion": 110,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 25
   },
@@ -123,6 +128,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75, "armor_multiplier": 1.5 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 6
   },
@@ -144,6 +150,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.5 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35,
     "effects": [ "NOGIB" ]
@@ -167,6 +174,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 8
@@ -190,6 +198,7 @@
     "effects": [ "POISON" ],
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -222,6 +231,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 1.15 },
     "dispersion": 150,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -244,6 +254,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 1, "armor_multiplier": 1.5 },
     "dispersion": 100,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "show_stats": true,
     "dont_recover_one_in": 20
@@ -267,6 +278,7 @@
     "range": 2,
     "dispersion": 75,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 35
   },
@@ -290,6 +302,7 @@
     "range": 2,
     "dispersion": 75,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 40
   },
@@ -313,6 +326,7 @@
     "range": 2,
     "dispersion": 75,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "dont_recover_one_in": 45,
     "effects": [ "NOGIB" ]
@@ -336,6 +350,7 @@
     "range": 4,
     "dispersion": 50,
     "loudness": 0,
+    "speed": 100,
     "count": 10,
     "stack_size": 10,
     "dont_recover_one_in": 30
@@ -358,6 +373,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.1 },
     "dispersion": 285,
     "loudness": 0,
+    "speed": 100,
     "count": 5,
     "effects": [ "COOKOFF", "EXPLOSIVE_SMALL" ]
   },
@@ -397,6 +413,7 @@
     "damage": { "damage_type": "stab", "damage_multiplier": 0.75 },
     "dispersion": 285,
     "loudness": 0,
+    "speed": 100,
     "count": 5,
     "effects": [ "IGNITE" ]
   },
@@ -410,7 +427,7 @@
     "price": "150 cent",
     "material": "wood",
     "extend": { "flags": [ "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ] },
-    "loudness": 8,
+    "loudness": 50,
     "weight": "1360 g",
     "volume": "2500 ml",
     "price_postapoc": "50 cent",
@@ -438,7 +455,7 @@
     "price_postapoc": "5 USD",
     "bashing": 6,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 10 },
-    "loudness": 6,
+    "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 28 },
     "range": 10,
     "dispersion": 1000,
@@ -450,7 +467,7 @@
     "looks_like": "longbow",
     "type": "GUN",
     "name": { "str": "compound bow" },
-    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by fairly strong archers.  Currently set to a medium weight.",
+    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by fairly strong archers.  Currently set to a medium weight, activate it to choose between a lower or higher draw weight.",
     "price": "550 USD",
     "material": [ "steel", "plastic" ],
     "extend": { "flags": [ "STR_DRAW" ] },
@@ -460,52 +477,82 @@
     "price_postapoc": "35 USD",
     "bashing": 8,
     "to_hit": 1,
-    "loudness": 10,
+    "loudness": 60,
     "ranged_damage": { "damage_type": "stab", "amount": 41 },
     "range": 18,
     "dispersion": 850,
     "durability": 6,
-    "use_action": {
-      "menu_text": "Tighten Limbs",
-      "type": "transform",
-      "target": "compbow_high",
-      "qualities_needed": { "SCREW_FINE": 1 },
-      "msg": "You tighten the limbs, increasing the strength of the bow."
-    }
+    "use_action": [
+      {
+        "menu_text": "Tighten Limbs",
+        "type": "transform",
+        "target": "compbow_high",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You tighten the limbs, increasing the strength of the bow."
+      },
+      {
+        "menu_text": "Loosen Limbs",
+        "type": "transform",
+        "target": "compbow_low",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You loosen the limbs, decreasing the strength of the bow.",
+        "internal_name": "loosen_limbs"
+      }
+    ]
   },
   {
     "id": "compbow_high",
     "copy-from": "compbow",
     "type": "GUN",
     "name": { "str": "compound bow (high)", "str_pl": "compound bows (high)" },
-    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by very strong archers.  Currently set to a high weight, and ready to cause some real damage - if you can draw it.",
+    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by very strong archers.  Currently set to a high weight, and ready to cause some real damage - if you can draw it.  Activate it to adjust it to lower draw weights.",
     "min_strength": 11,
     "ranged_damage": { "damage_type": "stab", "amount": 50 },
     "range": 20,
-    "use_action": {
-      "menu_text": "Loosen Limbs",
-      "type": "transform",
-      "target": "compbow_low",
-      "qualities_needed": { "SCREW_FINE": 1 },
-      "msg": "You loosen the limbs, decreasing the strength of the bow."
-    }
+    "use_action": [
+      {
+        "menu_text": "Loosen Limbs (low)",
+        "type": "transform",
+        "target": "compbow_low",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You loosen the limbs, decreasing the strength of the bow significantly."
+      },
+      {
+        "menu_text": "Loosen Limbs (medium)",
+        "type": "transform",
+        "target": "compbow_low",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You loosen the limbs, decreasing the strength of the bow.",
+        "internal_name": "tighten_limbs_medium"
+      }
+    ]
   },
   {
     "id": "compbow_low",
     "copy-from": "compbow",
     "type": "GUN",
     "name": { "str": "compound bow (low)", "str_pl": "compound bows (low)" },
-    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by average archers.  Currently set to a low weight, making it much easier to draw.",
+    "description": "A high-power bow with shaped cams and extra cables for high velocity shots that can be used effectively by average archers.  Currently set to a low weight, making it much easier to draw.  Activate it to adjust it to higher draw weights.",
     "min_strength": 7,
     "ranged_damage": { "damage_type": "stab", "amount": 32 },
     "range": 16,
-    "use_action": {
-      "menu_text": "Tighten Limbs",
-      "type": "transform",
-      "target": "compbow",
-      "qualities_needed": { "SCREW_FINE": 1 },
-      "msg": "You tighten the limbs, increasing the strength of the bow."
-    }
+    "use_action": [
+      {
+        "menu_text": "Tighten Limbs (medium)",
+        "type": "transform",
+        "target": "compbow",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You tighten the limbs, increasing the strength of the bow."
+      },
+      {
+        "menu_text": "Tighten Limbs (high)",
+        "type": "transform",
+        "target": "compbow_high",
+        "qualities_needed": { "SCREW_FINE": 1 },
+        "msg": "You tighten the limbs, increasing the strength of the bow significantly.",
+        "internal_name": "tighten_limbs_high"
+      }
+    ]
   },
   {
     "id": "compositebow",
@@ -523,7 +570,7 @@
     "price_postapoc": "40 USD",
     "bashing": 12,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 25 },
-    "loudness": 8,
+    "loudness": 55,
     "ranged_damage": { "damage_type": "stab", "amount": 36 },
     "range": 24,
     "dispersion": 950,
@@ -543,7 +590,7 @@
     "price_postapoc": "30 USD",
     "bashing": 8,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 15 },
-    "loudness": 6,
+    "loudness": 45,
     "ranged_damage": { "damage_type": "stab", "amount": 28 },
     "range": 12
   },
@@ -562,7 +609,7 @@
     "price_postapoc": "30 USD",
     "bashing": 10,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 20 },
-    "loudness": 8,
+    "loudness": 50,
     "ranged_damage": { "damage_type": "stab", "amount": 35 },
     "range": 22,
     "dispersion": 1000,
@@ -581,8 +628,8 @@
     "price_postapoc": "20 USD",
     "bashing": 15,
     "armor_data": { "covers": [ "torso" ], "encumbrance": 25 },
-    "loudness": 16,
-    "reload_noise_volume": 4,
+    "loudness": 65,
+    "reload_noise_volume": "32 dB",
     "ranged_damage": { "damage_type": "stab", "amount": 56, "armor_penetration": 2 },
     "range": 26,
     "dispersion": 1190,
@@ -605,8 +652,8 @@
     "price_postapoc": "30 USD",
     "armor_data": { "covers": [ "torso" ], "encumbrance": 30 },
     "bashing": 17,
-    "reload_noise_volume": 4,
-    "loudness": 20,
+    "reload_noise_volume": "32 dB",
+    "loudness": 65,
     "durability": 8,
     "ranged_damage": { "damage_type": "stab", "amount": 60, "armor_penetration": 2 },
     "range": 28,

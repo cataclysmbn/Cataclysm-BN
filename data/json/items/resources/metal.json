@@ -108,7 +108,8 @@
     "material": [ "aluminum" ],
     "symbol": ",",
     "color": "light_gray",
-    "qualities": [ [ "HAMMER", 1 ] ]
+    "qualities": [ [ "HAMMER", 1 ] ],
+    "flags": [ "NO_SALVAGE" ]
   },
   {
     "id": "bismuth",
@@ -217,7 +218,7 @@
     "price_postapoc": "50 cent",
     "count": 100,
     "stack_size": 100,
-    "container": "bag_zipper",
+    "container": "bag_zipper_small",
     "material": [ "powder" ],
     "symbol": "=",
     "color": "dark_gray",

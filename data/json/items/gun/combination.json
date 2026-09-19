@@ -48,5 +48,38 @@
     "barrel_volume": "500 ml",
     "built_in_mods": [ "combination_gun_shotgun_pipe" ],
     "extend": { "flags": "NEVER_JAMS" }
+  },
+  {
+    "id": "m6_asw",
+    "copy-from": "rifle_1shot",
+    "looks_like": "combination_gun",
+    "type": "GUN",
+    "name": { "str": "M6 Aircrew Survival Weapon" },
+    "description": "A lightweight combination rifle, combining a .22 rimfire barrel with .410 shotgun barrel, and designed to fold for compact storage.  Produced for military aircraft pilots who might be stranded after a crash, later produced commercially by various companies.",
+    "weight": "2 kg",
+    "volume": "1750 ml",
+    "price": "595 USD",
+    "price_postapoc": "1250 cent",
+    "bashing": 6,
+    "material": "steel",
+    "ammo": "22",
+    "ranged_damage": { "damage_type": "bullet", "amount": 1 },
+    "durability": 7,
+    "clip_size": 1,
+    "barrel_volume": "500 ml",
+    "built_in_mods": [ "folding_stock", "M6_shotgun" ],
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "barrel", 1 ],
+      [ "bore", 1 ],
+      [ "grip", 1 ],
+      [ "mechanism", 4 ],
+      [ "magazine", 1 ],
+      [ "rail", 2 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "underbarrel", 1 ]
+    ],
+    "flags": [ "NEEDS_UNFOLD" ]
   }
 ]

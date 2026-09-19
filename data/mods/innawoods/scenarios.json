@@ -1,0 +1,8 @@
+[
+  {
+    "type": "scenario",
+    "id": "wilderness",
+    "copy-from": "wilderness",
+    "delete": { "allowed_locs": [ "sloc_campsite", "sloc_campground" ] }
+  }
+]

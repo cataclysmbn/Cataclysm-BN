@@ -44,7 +44,7 @@
         "targeting_cost": 1,
         "targeting_timeout_extend": -1,
         "targeting_sound": "\"TARGET *zZzZzz* ACQUIRED.\"",
-        "targeting_volume": 70,
+        "targeting_volume": "57 dB",
         "no_ammo_sound": "*zZzzz*-TARGET ACQUIRED.  *beeeeeeeeep*.  OUT OF AMMO.-*zZzZ*"
       }
     ],

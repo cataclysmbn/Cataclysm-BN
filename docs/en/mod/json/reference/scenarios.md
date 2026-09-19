@@ -119,9 +119,6 @@ Lists of trait/mutation ids. Traits in "forbidden_traits" are forbidden and can'
 the character creation. Traits in "forced_traits" are automatically added to character. Traits in
 "traits" enables them to be chosen, even if they are not starting traits.
 
-Mods can modify this via "add:traits" / "add:forced_traits" / "add:forbidden_traits" and
-"remove:traits" / "remove:forced_traits" / "remove:forbidden_traits".
-
 ## `bionics", "forced_bionics", "forbidden_bionics`
 
 (optional, array of strings)
@@ -130,8 +127,12 @@ Lists of trait/mutation ids. Bionics in "forbidden_bionics" are forbidden and ca
 the character creation. bionics in "forced_bionics" are automatically added to character. Bionics in
 "bionics" enables them to be chosen, even if they are not starting bionics.
 
-Mods can modify this via "add:bionics" / "add:forced_bionics" / "add:forbidden_bionics" and
-"remove:bionics" / "remove:forced_bionics" / "remove:forbidden_bionics".
+## `spells", "forbidden_spells`
+
+(optional, array of strings)
+
+Lists of trait/mutation ids. Spells in "forbidden_spells" are forbidden and can't be selected during
+the character creation. Spells in spells" enables them to be chosen, even if they are not starting spells.
 
 ## `forbids_bionics`
 

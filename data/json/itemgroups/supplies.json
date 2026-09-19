@@ -64,6 +64,7 @@
     "id": "paint",
     "type": "item_group",
     "items": [
+      [ "spray_can", 100 ],
       [ "r_paint", 45 ],
       [ "g_paint", 45 ],
       [ "b_paint", 45 ],
@@ -536,6 +537,12 @@
     ]
   },
   {
+    "id": "anvils_any",
+    "type": "item_group",
+    "//": "Level 3 anvil quality, used for the MISSION_ISHERWOOD_CARLOS_1 quest",
+    "items": [ [ "anvil", 100 ], [ "anvil_bronze", 100 ] ]
+  },
+  {
     "id": "file_room",
     "type": "item_group",
     "items": [
@@ -702,7 +709,7 @@
       {
         "distribution": [
           { "item": "hardtack", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 50 },
-          { "item": "flour", "charges": [ 1, 20 ], "container-item": "bag_canvas_small", "prob": 25 },
+          { "item": "flour", "charges": [ 1, 40 ], "container-item": "bag_canvas_small", "prob": 25 },
           { "item": "dry_beans", "charges": [ 1, 12 ], "container-item": "bag_canvas_small", "prob": 25 }
         ],
         "prob": 75

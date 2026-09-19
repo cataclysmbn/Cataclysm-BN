@@ -449,6 +449,13 @@
     "autonote": true
   },
   {
+    "id": "mx_swat_truck",
+    "type": "map_extra",
+    "name": "SWAT Truck",
+    "description": "A SWAT truck.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_swat_truck" }
+  },
+  {
     "id": "mx_mass_grave",
     "type": "map_extra",
     "name": "Mass Grave",

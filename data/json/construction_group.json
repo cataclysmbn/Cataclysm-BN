@@ -736,6 +736,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_utility_shelf",
+    "name": "Build Utility Shelf"
+  },
+  {
+    "type": "construction_group",
     "id": "build_rain_collector",
     "name": "Build Rain Collector"
   },
@@ -1236,6 +1241,11 @@
   },
   {
     "type": "construction_group",
+    "id": "constr_wall_paintable_standard",
+    "name": "Build Dark Plastered Wooden Wall"
+  },
+  {
+    "type": "construction_group",
     "id": "place_arc_welder",
     "name": "Plug In Arc Welder"
   },
@@ -1671,8 +1681,18 @@
   },
   {
     "type": "construction_group",
+    "id": "build_bathtub",
+    "name": "Build Bathtub"
+  },
+  {
+    "type": "construction_group",
     "id": "build_bathtub_money",
     "name": "Fill Bathtub with Money"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_shower",
+    "name": "Build Shower Booth"
   },
   {
     "type": "construction_group",
@@ -1923,10 +1943,5 @@
     "type": "construction_group",
     "id": "place_roulette",
     "name": "Place Roulette Table"
-  },
-  {
-    "type": "construction_group",
-    "id": "build_bathtub",
-    "name": "Build Bathtub"
   }
 ]

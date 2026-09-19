@@ -148,6 +148,7 @@
     "description": "A cleansing agent made into bars.",
     "volume": "250 ml",
     "weight": "90 g",
+    "flags": [ "BODY_CLEANSER" ],
     "ammo_type": "soap",
     "count": 10,
     "stack_size": 10
@@ -276,6 +277,7 @@
     "range": 10,
     "dispersion": 14,
     "loudness": 0,
+    "speed": 20,
     "to_hit": -1,
     "qualities": [ [ "HAMMER", 1 ], [ "SANDING", 1 ] ],
     "dont_recover_one_in": 80,
@@ -299,6 +301,7 @@
     "range": 10,
     "dispersion": 14,
     "loudness": 0,
+    "speed": 36,
     "count": 10,
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
   },
@@ -320,6 +323,7 @@
     "range": 20,
     "dispersion": 12,
     "loudness": 0,
+    "speed": 36,
     "count": 40,
     "flags": [ "SHATTERS" ],
     "effects": [ "NEVER_MISFIRES" ]
@@ -343,6 +347,7 @@
     "range": 18,
     "dispersion": 12,
     "loudness": 0,
+    "speed": 36,
     "count": 20,
     "effects": [ "NEVER_MISFIRES" ]
   },
@@ -365,6 +370,7 @@
     "range": 15,
     "dispersion": 14,
     "loudness": 0,
+    "speed": 36,
     "count": 50,
     "dont_recover_one_in": 1000,
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
@@ -388,6 +394,7 @@
     "count": 500,
     "stack_size": 200,
     "loudness": 0,
+    "speed": 200,
     "effects": [ "NOGIB", "NEVER_MISFIRES", "NON_FOULING" ]
   },
   {
@@ -443,6 +450,8 @@
     "range": 80,
     "dispersion": 5,
     "recoil": 30,
+    "speed": 1600,
+    "loudness": 188,
     "effects": [ "EXPLOSIVE_HUGE", "TRAIL" ]
   },
   {
@@ -463,6 +472,7 @@
     "range": 12,
     "count": 25,
     "loudness": 60,
+    "speed": 300,
     "effects": [ "INCENDIARY" ],
     "flags": [ "UNRECOVERABLE" ],
     "fuel": {
@@ -488,6 +498,8 @@
     "damage": { "damage_type": "heat", "amount": 9, "armor_penetration": 2 },
     "range": 6,
     "dispersion": 120,
+    "speed": 300,
+    "loudness": 120,
     "phase": "liquid",
     "ammo_type": "c_hydrogen",
     "fuel": {
@@ -496,7 +508,7 @@
       "explosion_data": { "chance_hot": 2, "chance_cold": 2, "factor": 0.5, "fiery": true, "size_factor": 0.1 }
     },
     "effects": [ "INCENDIARY" ],
-    "flags": [ "NO_DROP", "IRREMOVABLE" ]
+    "flags": [ "DESTROY_ON_DROP", "IRREMOVABLE" ]
   },
   {
     "type": "AMMO",
@@ -656,6 +668,7 @@
     "range": 10,
     "dispersion": 7,
     "loudness": 0,
+    "speed": 15,
     "dont_recover_one_in": 2,
     "effects": [ "BEANBAG", "NEVER_MISFIRES", "NON_FOULING" ]
   },
@@ -737,7 +750,7 @@
     "ammo_type": "charcoal",
     "count": 50,
     "stack_size": 10,
-    "fuel": { "energy": 1.6 },
+    "fuel": { "energy": 13 },
     "flags": [ "TINDER" ]
   },
   {
@@ -977,6 +990,7 @@
     "dispersion": 180,
     "recoil": 130,
     "loudness": 60,
+    "speed": 250,
     "effects": [ "COOKOFF", "TRAIL" ]
   },
   {
@@ -997,6 +1011,7 @@
     "dispersion": 170,
     "recoil": 130,
     "loudness": 60,
+    "speed": 250,
     "effects": [ "COOKOFF", "TRAIL", "EXPLOSIVE" ]
   },
   {
@@ -1017,6 +1032,7 @@
     "dispersion": 200,
     "recoil": 130,
     "loudness": 60,
+    "speed": 250,
     "effects": [ "COOKOFF", "TRAIL", "NAPALM" ]
   },
   {
@@ -1118,6 +1134,7 @@
     "range": 20,
     "dispersion": 15,
     "loudness": 0,
+    "speed": 36,
     "count": 7,
     "effects": [ "NEVER_MISFIRES" ],
     "use_action": "RPGDIE"
@@ -1140,6 +1157,7 @@
     "range": 15,
     "dispersion": 10,
     "loudness": 0,
+    "speed": 36,
     "count": 7,
     "effects": [ "NEVER_MISFIRES" ],
     "use_action": "RPGDIE"
@@ -1179,6 +1197,7 @@
     "range": 14,
     "dispersion": 10,
     "loudness": 0,
+    "speed": 36,
     "to_hit": -1,
     "dont_recover_one_in": 1000,
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
@@ -1208,7 +1227,7 @@
     "looks_like": "javelin",
     "type": "AMMO",
     "name": { "str": "wooden atlatl dart" },
-    "description": "A long, flexible dart for a spear-thrower, with a fire-hardened sharpened point.",
+    "description": "A long, flexible dart for a spear-thrower, with a fire-hardened sharpened point.  Too thin and light to be very effective if thrown by hand.",
     "weight": "70 g",
     "volume": "100 ml",
     "color": "brown",
@@ -1217,10 +1236,10 @@
     "count": 1,
     "ammo_type": "atlatl",
     "range": 15,
+    "speed": 20,
     "damage": { "damage_type": "stab", "amount": 10, "armor_penetration": 1 },
     "dispersion": 80,
     "loudness": 0,
-    "thrown_damage": [ { "damage_type": "bash", "amount": 2 }, { "damage_type": "stab", "amount": 6 } ],
     "dont_recover_one_in": 25,
     "flags": [ "STAB" ],
     "price": "10 USD",
@@ -1233,13 +1252,12 @@
     "looks_like": "javelin_iron",
     "type": "AMMO",
     "name": { "str": "iron atlatl dart" },
-    "description": "A long, flexible dart for a spear-thrower, with an iron spear point.",
+    "description": "A long, flexible dart for a spear-thrower, with an iron spear point.  Too thin and light to be very effective if thrown by hand.",
     "weight": "170 g",
     "color": "light_gray",
     "bashing": 2,
     "cutting": 9,
-    "damage": { "damage_type": "stab", "amount": 20, "armor_penetration": 5 },
-    "thrown_damage": [ { "damage_type": "bash", "amount": 3 }, { "damage_type": "stab", "amount": 9 } ],
+    "damage": { "damage_type": "stab", "amount": 19, "armor_penetration": 5 },
     "price": "25 USD",
     "price_postapoc": "1 USD",
     "dont_recover_one_in": 40
@@ -1250,13 +1268,12 @@
     "looks_like": "javelin_stone",
     "type": "AMMO",
     "name": { "str": "stone atlatl dart" },
-    "description": "A long, flexible dart for a spear-thrower, with a small stone spearhead.",
+    "description": "A long, flexible dart for a spear-thrower, with a small stone spearhead.  Too thin and light to be very effective if thrown by hand.",
     "weight": "150 g",
     "color": "light_gray",
     "bashing": 1,
     "cutting": 7,
-    "damage": { "damage_type": "stab", "amount": 13, "armor_penetration": 3 },
-    "thrown_damage": [ { "damage_type": "bash", "amount": 1 }, { "damage_type": "stab", "amount": 7 } ],
+    "damage": { "damage_type": "stab", "amount": 12, "armor_penetration": 3 },
     "price": "15 USD",
     "price_postapoc": "80 cent",
     "dont_recover_one_in": 30
@@ -1267,13 +1284,12 @@
     "looks_like": "javelin_copper",
     "type": "AMMO",
     "name": { "str": "copper atlatl dart" },
-    "description": "A long, flexible dart for a spear-thrower, with a copper spear point.",
+    "description": "A long, flexible dart for a spear-thrower, with a copper spear point.  Too thin and light to be very effective if thrown by hand.",
     "weight": "200 g",
     "color": "light_red",
     "bashing": 3,
     "cutting": 8,
     "damage": { "damage_type": "stab", "amount": 16, "armor_penetration": 3 },
-    "thrown_damage": [ { "damage_type": "bash", "amount": 3 }, { "damage_type": "stab", "amount": 8 } ],
     "price": "20 USD",
     "price_postapoc": "90 cent",
     "dont_recover_one_in": 35

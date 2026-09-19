@@ -1,30 +1,10 @@
 #include "iuse.h"
 
-#include <algorithm>
-#include <array>
-#include <bitset>
-#include <climits>
-#include <cmath>
-#include <cstdlib>
-#include <exception>
-#include <functional>
-#include <iterator>
-#include <list>
-#include <map>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "action.h"
+#include "action_time_scale.h"
+#include "active_tile_data_def.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
-#include "active_tile_data_def.h"
 #include "animation.h"
 #include "artifact.h"
 #include "avatar.h"
@@ -49,11 +29,10 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
-#include "field.h"
-#include "field_type.h"
 #include "flag.h"
-#include "fstream_utils.h"
 #include "flat_set.h"
+#include "fluid_grid.h"
+#include "fstream_utils.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "game_constants.h"
@@ -71,10 +50,12 @@
 #include "json.h"
 #include "line.h"
 #include "locations.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "mapdata.h"
 #include "martialarts.h"
 #include "memorial_logger.h"
 #include "memory_fast.h"
@@ -82,7 +63,6 @@
 #include "monattack.h"
 #include "mongroup.h"
 #include "monster.h"
-#include "fluid_grid.h"
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -102,6 +82,7 @@
 #include "requirements.h"
 #include "ret_val.h"
 #include "rng.h"
+#include "skill.h"
 #include "sounds.h"
 #include "speech.h"
 #include "string_formatter.h"
@@ -117,16 +98,36 @@
 #include "ui.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "visitable.h"
-#include "skill.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
+
+#include <algorithm>
+#include <array>
+#include <bitset>
+#include <climits>
+#include <cmath>
+#include <cstdlib>
+#include <exception>
+#include <functional>
+#include <iterator>
+#include <list>
+#include <map>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_BURROW( "ACT_BURROW" );
 static const activity_id ACT_CHOP_LOGS( "ACT_CHOP_LOGS" );
@@ -195,6 +196,7 @@ static const efftype_id effect_music( "music" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_paincysts( "paincysts" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonded( "pet_bonded" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_riding( "riding" );
@@ -236,6 +238,7 @@ static const itype_id itype_arrow_flamming( "arrow_flamming" );
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_barometer( "barometer" );
 static const itype_id itype_c4armed( "c4armed" );
+static const itype_id itype_c4_breaching_armed( "c4_breaching_armed" );
 static const itype_id itype_canister_empty( "canister_empty" );
 static const itype_id itype_cig( "cig" );
 static const itype_id itype_cigar( "cigar" );
@@ -351,7 +354,6 @@ static const mtype_id mon_spore( "mon_spore" );
 static const mtype_id mon_vortex( "mon_vortex" );
 static const mtype_id mon_wasp( "mon_wasp" );
 
-static const bionic_id bio_digestion( "bio_digestion" );
 static const bionic_id bio_eye_optic( "bio_eye_optic" );
 static const bionic_id bio_shock( "bio_shock" );
 
@@ -943,7 +945,7 @@ int iuse::blech( player *p, item *it, bool, const tripoint_bub_ms & )
 
 int iuse::blech_because_unclean( player *p, item *it, bool, const tripoint_bub_ms & )
 {
-    if( !p->is_npc()  && !p->has_bionic( bio_digestion ) ) {
+    if( !p->is_npc()  && !p->has_enchantment_flag( enchantment_flag_id( "CONSUME_UNCLEAN" ) ) ) {
         if( it->made_of( LIQUID ) ) {
             if( !p->query_yn( _( "This looks unclean, sure you want to drink it?" ) ) ) {
                 return 0;
@@ -1562,7 +1564,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( _( petfood.feed ), mon.get_name() );
         }
 
-        mon.make_pet();
+        mon.make_pet( *p->as_character() );
 
         // Apply well_fed effect to improve monster productivity
         // This effect increases reproduction rate, milk production, growth speed, and HP recovery
@@ -1581,6 +1583,7 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
         }
 
         p->consume_charges( *it, 1 );
+        mon.on_pet_bonding( p->as_character() );
         return 0;
     }
 
@@ -1696,10 +1699,9 @@ int iuse::remove_all_mods( player *p, item *, bool, const tripoint_bub_ms & )
 int iuse::good_fishing_spot( const tripoint_bub_ms &pos )
 {
     int fishable_locations = g->get_fishable_locations( 60, pos ).size();
-    map &here = get_map();
     const oter_id &cur_omt =
         get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
-                    here.bub_to_abs( pos ) ) ) );
+                    bub_to_abs( pos ) ) ) );
     std::string om_id = cur_omt.id().c_str();
     if( fishable_locations < 100 && !g->m.has_flag( "CURRENT", pos ) &&
         om_id.find( "river_" ) == std::string::npos && !cur_omt->is_lake() &&
@@ -1780,7 +1782,7 @@ int iuse::fishing_rod( player *p, item *it, bool, const tripoint_bub_ms & )
     p->activity->coord_set.reserve( fishable_locations.size() );
     std::ranges::transform( fishable_locations, std::inserter( p->activity->coord_set,
                             p->activity->coord_set.end() ),
-    []( const tripoint_bub_ms & pnt ) { return g->m.bub_to_abs( pnt ); } );
+    []( const tripoint_bub_ms & pnt ) { return bub_to_abs( pnt ); } );
     return 0;
 }
 
@@ -2242,63 +2244,64 @@ int iuse::note_bionics( player *p, item *it, bool t, const tripoint_bub_ms &pos 
     }
 
     // Try to minimize the use of has_enough_charges() because it's kind of expensive.
-    bool no_charges = false;
-    for( const tripoint_bub_ms &pt : here.points_in_radius( pos, PICKUP_RANGE ) ) {
-        if( !here.has_items( pt ) || !p->sees( pt ) ) {
+    auto no_charges = false;
+    auto visibility_cache_updated = false;
+    for( const auto corpse : here.get_active_items_in_radius( pos, PICKUP_RANGE,
+            special_item_type::bionic_scannable_corpse ) ) {
+        if( corpse == nullptr || !corpse->is_corpse() ||
+            corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
             continue;
         }
-        for( item * const &corpse : here.i_at( pt ) ) {
-            if( !corpse->is_corpse() ||
-                corpse->get_var( "bionics_scanned_by", -1 ) == p->getID().get_value() ) {
+        const auto pt = corpse->bub_pos();
+        if( !visibility_cache_updated && here.visibility_caches_dirty() ) {
+            here.update_visibility_cache( p->bub_pos().z() );
+            visibility_cache_updated = true;
+        }
+        if( !p->sees( pt ) ) {
+            continue;
+        }
+
+        using namespace std::views;
+        namespace ranges = std::ranges;
+        auto cbms = corpse->get_components()
+                    | filter( &item::is_bionic )
+                    | ranges::to<std::vector>();
+
+        auto charges = std::max( 1, static_cast<int>( cbms.size() ) );
+        charges -= it->ammo_consume( charges, pos );
+        if( possess && it->has_flag( flag_USE_UPS ) ) {
+            if( p->use_charges_if_avail( itype_UPS, charges ) ) {
+                charges = 0;
+            }
+        }
+        if( charges ) {
+            p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
+                                  corpse->display_name().c_str() );
+            if( !p->has_enough_charges( *it, false ) ) {
+                no_charges = true;
+                break;
+            } else {
                 continue;
             }
-
-            std::vector<const item *> cbms;
-            for( const item * const &maybe_cbm : corpse->get_components() ) {
-                if( maybe_cbm->is_bionic() ) {
-                    cbms.push_back( maybe_cbm );
-                }
-            }
-
-            int charges = static_cast<int>( cbms.size() );
-            charges -= it->ammo_consume( charges, pos );
-            if( possess && it->has_flag( flag_USE_UPS ) ) {
-                if( p->use_charges_if_avail( itype_UPS, charges ) ) {
-                    charges = 0;
-                }
-            }
-            if( charges ) {
-                p->add_msg_if_player( m_bad, "Your %s doesn't have enough power for the %s", it->tname(),
-                                      corpse->display_name().c_str() );
-                if( !p->has_enough_charges( *it, false ) ) {
-                    no_charges = true;
-                    break;
-                } else {
-                    continue;
-                }
-            }
-
-            corpse->set_var( "bionics_scanned_by", p->getID().get_value() );
-            if( !cbms.empty() ) {
-                corpse->set_flag( flag_CBM_SCANNED );
-                std::string bionics_string =
-                    enumerate_as_string( cbms.begin(), cbms.end(),
-                []( const item * entry ) -> std::string {
-                    return entry->display_name();
-                }, enumeration_conjunction::none );
-                //~ %1 is corpse name, %2 is direction, %3 is bionic name
-                p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
-                                      corpse->display_name().c_str(),
-                                      direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
-                                      bionics_string.c_str()
-                                    );
-            }
         }
-        if( no_charges ) {
-            it->revert( p );
-            it->deactivate();
-            return 0;
+
+        corpse->set_var( "bionics_scanned_by", p->getID().get_value() );
+        if( !cbms.empty() ) {
+            corpse->set_flag( flag_CBM_SCANNED );
+            auto bionics_string = enumerate_as_string( cbms.begin(), cbms.end(),
+            []( const auto entry ) { return entry->type_name(); }, enumeration_conjunction::none );
+            //~ %1 is corpse name, %2 is direction, %3 is bionic name
+            p->add_msg_if_player( m_good, _( "A %1$s located %2$s contains %3$s." ),
+                                  corpse->display_name().c_str(),
+                                  direction_name( direction_from( p->bub_pos(), pt ) ).c_str(),
+                                  bionics_string.c_str()
+                                );
         }
+    }
+    if( no_charges ) {
+        it->revert( p );
+        it->deactivate();
+        return 0;
     }
 
     return 0;
@@ -2541,7 +2544,7 @@ int iuse::makemound( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( g->m.has_flag( flag_PLOWABLE, pnt ) && !g->m.has_flag( flag_PLANT, pnt ) ) {
         p->add_msg_if_player( _( "You start churning up the earth here." ) );
         p->assign_activity( ACT_CHURN, 18000, -1, p->get_item_position( it ) );
-        p->activity->placement = g->m.bub_to_abs( pnt );
+        p->activity->placement = bub_to_abs( pnt );
         return it->type->charges_to_use();
     } else {
         p->add_msg_if_player( _( "You can't churn up this ground." ) );
@@ -2944,7 +2947,7 @@ int iuse::jackhammer( player *p, item *it, bool, const tripoint_bub_ms &pos )
 
     p->assign_activity( ACT_JACKHAMMER, moves );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
     p->add_msg_if_player( _( "You start drilling into the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
 
@@ -2983,7 +2986,7 @@ int iuse::pick_lock( player *p, item *it, bool, const tripoint_bub_ms &pos )
     }
 
     you.assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_item( duration,
-                         *it, g->m.bub_to_abs( *target ) ) ) );
+                         *it, bub_to_abs( *target ) ) ) );
     return it->type->charges_to_use();
 }
 
@@ -3036,7 +3039,7 @@ int iuse::pickaxe( player *p, item *it, bool, const tripoint_bub_ms &pos )
 
     p->assign_activity( ACT_PICKAXE, moves, -1 );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
     p->add_msg_if_player( _( "You strike the %1$s with your %2$s." ),
                           g->m.tername( pnt ), it->tname() );
     return 0; // handled when the activity finishes
@@ -3513,6 +3516,21 @@ int iuse::c4( player *p, item *it, bool, const tripoint_bub_ms & )
     return it->type->charges_to_use();
 }
 
+int iuse::c4_breaching( player *p, item *it, bool, const tripoint_bub_ms & )
+{
+    int time;
+    bool got_value = query_int( time, _( "Set the timer to (0 to cancel)?" ) );
+    if( !got_value || time <= 0 ) {
+        p->add_msg_if_player( _( "Never mind." ) );
+        return 0;
+    }
+    p->add_msg_if_player( _( "You set the timer to %d." ), time );
+    it->convert( itype_c4_breaching_armed );
+    it->charges = time;
+    it->activate();
+    return it->type->charges_to_use();
+}
+
 int iuse::acidbomb_act( player *p, item *it, bool, const tripoint_bub_ms &pos )
 {
     if( !p->has_item( *it ) ) {
@@ -3928,7 +3946,7 @@ void iuse::play_music( player &p, const tripoint_bub_ms &source, const int volum
     // the other characters around should be able to profit as well.
     const bool do_effects = p.can_hear( source, volume ) && !p.has_effect( effect_sleep );
     std::string sound = "music";
-    if( calendar::once_every( 1_hours ) ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
         // Every 5 minutes, describe the music
         const std::string music = get_music_description();
         if( !music.empty() ) {
@@ -4217,7 +4235,7 @@ int iuse::portable_game( player *p, item *it, bool t, const tripoint_bub_ms & )
         }
 
         if( game_score != 0 ) {
-            p->add_morale( MORALE_GAME, game_score, 60, 2_hours, 30_minutes, true );
+            p->add_morale( MORALE_GAME, game_score, 20, 3_hours, 30_minutes, true );
         }
     }
     return 0;
@@ -4301,7 +4319,8 @@ int iuse::dog_whistle( player *p, item *it, bool, const tripoint_bub_ms & )
     }
     p->add_msg_if_player( _( "You blow your dog whistle." ) );
     for( monster &critter : g->all_monsters() ) {
-        if( critter.friendly != 0 && critter.has_flag( MF_DOGFOOD ) ) {
+        if( critter.friendly != 0 && ( critter.has_flag( MF_DOGFOOD ) ||
+                                       critter.has_flag( MF_DOG_WHISTLE ) ) ) {
             bool u_see = g->u.sees( critter );
             if( critter.has_effect( effect_docile ) ) {
                 if( u_see ) {
@@ -4347,7 +4366,7 @@ int iuse::blood_draw( player *p, item *it, bool, const tripoint_bub_ms & )
     const mtype *mt = nullptr;
     bool drew_blood = false;
     bool acid_blood = false;
-    for( auto &map_it : g->m.i_at( p->bub_pos().xy() ) ) {
+    for( auto &map_it : g->m.i_at( p->bub_pos() ) ) {
         if( map_it->is_corpse() ) {
             bool has_blood = false;
             mt = map_it->get_mtype();
@@ -4445,7 +4464,7 @@ int iuse::mind_splicer( player *p, item *it, bool, const tripoint_bub_ms & )
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
     }
-    for( auto &map_it : g->m.i_at( p->bub_pos().xy() ) ) {
+    for( auto &map_it : g->m.i_at( p->bub_pos() ) ) {
         if( map_it->typeId() == itype_rmi2_corpse &&
             query_yn( _( "Use the mind splicer kit on the %s?" ), colorize( map_it->tname(),
                       map_it->color_in_inventory() ) ) ) {
@@ -4489,7 +4508,7 @@ void iuse::cut_log_into_planks( player &p )
     p.add_msg_if_player( _( "You cut the log into planks." ) );
 
     p.assign_activity( ACT_CHOP_PLANKS, moves, -1 );
-    p.activity->placement = g->m.bub_to_abs( p.bub_pos() );
+    p.activity->placement = p.abs_pos();
 }
 
 int iuse::lumber( player *p, item *it, bool t, const tripoint_bub_ms & )
@@ -4585,7 +4604,7 @@ int iuse::chop_tree( player *p, item *it, bool t, const tripoint_bub_ms & )
 
     p->assign_activity( ACT_CHOP_TREE, moves, -1, p->get_item_position( it ) );
     p->activity->add_tool( it );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
 
     return it->type->charges_to_use();
 }
@@ -4631,7 +4650,7 @@ int iuse::chop_logs( player *p, item *it, bool t, const tripoint_bub_ms & )
     moves = moves * ( 10 - helpers.size() ) / 10;
 
     p->assign_activity( ACT_CHOP_LOGS, moves, -1, p->get_item_position( it ) );
-    p->activity->placement = g->m.bub_to_abs( pnt );
+    p->activity->placement = bub_to_abs( pnt );
     p->activity->add_tool( it );
 
     return it->type->charges_to_use();
@@ -6126,7 +6145,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 {
     if( t ) {
         if( !it->get_var( "EIPC_MUSIC_ON" ).empty() && ( it->ammo_remaining() > 0 ) ) {
-            if( calendar::once_every( 5_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
                 it->ammo_consume( 1, p->bub_pos() );
             }
 
@@ -7072,7 +7091,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint_bub_ms &aim
     // TODO: fix point types
     const oter_id &cur_ter =
         get_overmapbuffer( get_map().get_bound_dimension() ).ter( tripoint_abs_omt( project_to<coords::omt>(
-                    g->m.bub_to_abs( aim_point ) ) ) );
+                    bub_to_abs( aim_point ) ) ) );
     std::string overmap_desc = string_format( _( "In the background you can see a %s" ),
                                colorize( cur_ter->get_name(), cur_ter->get_color() ) );
     if( outside_tiles_num == total_tiles_num ) {
@@ -7627,7 +7646,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     if( t ) {
 
-        if( g->m.has_flag( "SWIMMABLE", pos.xy() ) ) {
+        if( g->m.has_flag( TFLAG_SWIMMABLE, pos ) ) {
             it->unset_flag( flag_NO_UNWIELD );
             it->ammo_unset();
             it->deactivate();
@@ -7670,7 +7689,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             }
         }
 
-        if( calendar::once_every( 1_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             sound_event se;
             se.origin = p->bub_pos();
             se.volume = 70;
@@ -7732,7 +7751,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 int iuse::foodperson( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {
     if( t ) {
-        if( calendar::once_every( 1_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             const SpeechBubble &speech = get_speech( "foodperson_mask" );
             sound_event se;
             se.origin = pos;
@@ -7898,9 +7917,7 @@ static void emit_radio_signal( player &p, const flag_id &signal )
         return VisitResponse::NEXT;
     };
 
-    int z_min = g->m.has_zlevels() ? -OVERMAP_DEPTH : 0;
-    int z_max = g->m.has_zlevels() ? OVERMAP_HEIGHT : 0;
-    for( int zlev = z_min; zlev <= z_max; zlev++ ) {
+    for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; zlev++ ) {
         for( auto loc : g->m.points_on_zlevel( zlev ) ) {
             // Items on ground
             map_cursor mc( loc );
@@ -8231,7 +8248,7 @@ static tripoint_abs_ms process_map_connection( const Character *who, cable_state
         return tripoint_abs_ms_min;
     }
     map &here = get_map();
-    const auto posp = here.bub_to_abs( *posp_ );
+    const auto posp = bub_to_abs( *posp_ );
 
     switch( state ) {
         case state_vehicle: {
@@ -8327,7 +8344,7 @@ static void set_cable_active( player *const who, item *const it,
     data.set_vars( it );
     it->activate();
     it->attempt_detach( [&who]( detached_ptr<item> &&e ) {
-        return item::process( std::move( e ), who, who->bub_pos(), false );
+        return item::process( std::move( e ), who, who->bub_pos(), false, 1 );
     } );
     who->mod_moves( -15 );
 };
@@ -8686,7 +8703,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint_bub_ms & )
         // TODO: Don't output air temp if we aren't near air
         if( g->m.has_flag( TFLAG_SWIMMABLE, p->bub_pos() ) ) {
             const units::temperature water_temp = weather.get_cur_weather_gen().get_water_temperature(
-                    tripoint_abs_ms( here.bub_to_abs( p->bub_pos() ) ),
+                    tripoint_abs_ms( p->abs_pos() ),
                     calendar::turn, calendar::config, g->get_seed() );
             p->add_msg_if_player( m_neutral, _( "Water temperature: %s." ),
                                   print_temperature( water_temp ) );
@@ -8924,10 +8941,6 @@ int iuse::capture_monster_act( player *p, item *it, bool, const tripoint_bub_ms 
 
 int iuse::ladder( player *p, item *, bool, const tripoint_bub_ms & )
 {
-    if( !g->m.has_zlevels() ) {
-        debugmsg( "Ladder can't be used in non-z-level mode" );
-        return 0;
-    }
     if( p->is_mounted() ) {
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return 0;
@@ -9017,7 +9030,9 @@ int iuse::craft( player *p, item *it, bool, const tripoint_bub_ms & )
                          it->get_cached_tool_selections(),
                          it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
                      );
-        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+        auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
+        craft_activity->targets.emplace_back( it );
+        p->assign_activity( std::move( craft_activity ) );
     }
 
     return 0;
@@ -9146,7 +9161,7 @@ int iuse::toggle_ups_charging( player *p, item *it, bool, const tripoint_bub_ms 
 
 int iuse::report_grid_charge( player *p, item *, bool, const tripoint_bub_ms &pos )
 {
-    const tripoint_abs_ms pos_abs( get_map().bub_to_abs( pos ) );
+    const tripoint_abs_ms pos_abs( bub_to_abs( pos ) );
     const distribution_grid &gr = get_distribution_grid_tracker().grid_at( pos_abs );
     const int amt = gr.get_resource();
     const auto stat = gr.get_power_stat();
@@ -9175,8 +9190,7 @@ int iuse::report_grid_charge( player *p, item *, bool, const tripoint_bub_ms &po
 
 int iuse::report_grid_connections( player *p, item *, bool, const tripoint_bub_ms &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs(
-                                   pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -9203,7 +9217,7 @@ int iuse::report_grid_connections( player *p, item *, bool, const tripoint_bub_m
 auto iuse::report_fluid_grid_connections( player *p, item *, bool,
         const tripoint_bub_ms &pos ) -> int
 {
-    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
     const auto fluid_stats = fluid_grid::storage_stats_at( pos_abs );
 
@@ -9246,8 +9260,7 @@ auto iuse::report_fluid_grid_connections( player *p, item *, bool,
 
 int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint_bub_ms &pos )
 {
-    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs(
-                                   pos ) ) );
+    tripoint_abs_omt pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     std::vector<tripoint_rel_omt> connections = get_overmapbuffer(
                 p->get_dimension() ).electric_grid_connectivity_at(
                 pos_abs );
@@ -9349,7 +9362,7 @@ int iuse::modify_grid_connections( player *p, item *it, bool, const tripoint_bub
 auto iuse::modify_fluid_grid_connections( player *p, item *it, bool,
         const tripoint_bub_ms &pos ) -> int
 {
-    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( get_map().bub_to_abs( pos ) ) );
+    const auto pos_abs = project_to<coords::omt>( tripoint_abs_ms( bub_to_abs( pos ) ) );
     const auto connections = fluid_grid::grid_connectivity_at( pos_abs );
 
     uilist ui;
@@ -9504,7 +9517,7 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // Only triggers every 1 minute so that fatigue isn't ridiculous
-            if( calendar::once_every( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 2_minutes ) ) {
                 p->add_morale( MORALE_FEELING_GOOD, 1, 30, 20_minutes, 10_minutes, true );
                 p->mod_fatigue( 1 );
             }

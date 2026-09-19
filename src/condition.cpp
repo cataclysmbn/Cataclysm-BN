@@ -1,18 +1,5 @@
 #include "condition.h"
 
-#include <climits>
-#include <cstddef>
-#include <functional>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
-
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -25,8 +12,8 @@
 #include "item_category.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
-#include "mapdata.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "mission.h"
 #include "npc.h"
 #include "overmap.h"
@@ -38,9 +25,22 @@
 #include "recipe_groups.h"
 #include "string_id.h"
 #include "type_id.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <climits>
+#include <cstddef>
+#include <functional>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 class recipe;
 
@@ -739,6 +739,14 @@ void conditional_t<T>::set_npc_train_styles()
 }
 
 template<class T>
+void conditional_t<T>::set_npc_is_sleepy()
+{
+    condition = []( const T & d ) {
+        return d.beta->get_fatigue() >= fatigue_levels::tired;
+    };
+}
+
+template<class T>
 void conditional_t<T>::set_at_safe_space()
 {
     condition = []( const T & d ) {
@@ -1136,6 +1144,8 @@ conditional_t<T>::conditional_t( const std::string &type )
         set_has_activity( is_npc );
     } else if( type == "npc_is_riding" ) {
         set_is_riding( is_npc );
+    } else if( type == "npc_is_sleepy" ) {
+        set_npc_is_sleepy();
     } else if( type == "is_day" ) {
         set_is_day();
     } else if( type == "u_has_stolen_item" ) {

@@ -62,7 +62,18 @@
       "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "flags": [ "MOUNTABLE" ],
-    "damage_reduction": { "all": 52 }
+    "damage_reduction": { "all": 52 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "abstract": "frame_wood",
@@ -84,7 +95,18 @@
         "using": [ [ "nail_any_adhesive", 2 ], [ "wood_structural_small", 1 ] ]
       }
     },
-    "damage_reduction": { "all": 52 }
+    "damage_reduction": { "all": 52 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "abstract": "frame_wood_light",
@@ -105,7 +127,18 @@
         "using": [ [ "nail_any_adhesive", 1 ], [ "vehicle_repair_small_wood", 4 ] ]
       }
     },
-    "damage_reduction": { "all": 46 }
+    "damage_reduction": { "all": 46 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "abstract": "hdframe",
@@ -123,7 +156,18 @@
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "10 m", "using": [ [ "welding_standard", 10 ], [ "steel_tiny", 2 ] ] }
     },
     "flags": [ "MOUNTABLE" ],
-    "damage_reduction": { "all": 112 }
+    "damage_reduction": { "all": 112 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "abstract": "xlframe",
@@ -145,7 +189,18 @@
       }
     },
     "flags": [ "MOUNTABLE" ],
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "abstract": "frame_plastic",
@@ -164,7 +219,18 @@
       "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "using": [ [ "soldering_standard", 5 ], [ "plastics", 1 ] ] }
     },
     "flags": [ "MOUNTABLE" ],
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "abstract": "frame_carbon",
@@ -187,7 +253,18 @@
       }
     },
     "flags": [ "FOLDABLE", "MOUNTABLE", "SHOCK_RESISTANT" ],
-    "damage_reduction": { "all": 62 }
+    "damage_reduction": { "all": 62 },
+    "shapes": [
+      { "direction": "cover", "symbol": "^" },
+      { "direction": "horizontal", "symbol": "h" },
+      { "direction": "horizontal_2", "symbol": "=" },
+      { "direction": "ne", "symbol": "u" },
+      { "direction": "nw", "symbol": "y" },
+      { "direction": "se", "symbol": "n" },
+      { "direction": "sw", "symbol": "b" },
+      { "direction": "vertical", "symbol": "j" },
+      { "direction": "vertical_2", "symbol": "H" }
+    ]
   },
   {
     "id": "frame_wood_deck",
@@ -335,48 +412,6 @@
     }
   },
   {
-    "id": "frame_cover",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
-    "id": "frame_wood_cover",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
-    "id": "frame_wood_light_cover",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
-    "id": "hdframe_cover",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
-    "id": "xlframe_cover",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
-    "id": "frame_plastic_cover",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
-    "id": "frame_carbon_cover",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "^"
-  },
-  {
     "id": "frame_cross",
     "copy-from": "frame",
     "type": "vehicle_part",
@@ -424,341 +459,5 @@
     "type": "vehicle_part",
     "symbol": "c",
     "extend": { "flags": [ "INITIAL_PART" ] }
-  },
-  {
-    "id": "frame_horizontal",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "frame_wood_horizontal",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "frame_wood_light_horizontal",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "hdframe_horizontal",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "xlframe_horizontal",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "frame_plastic_horizontal",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "frame_carbon_horizontal",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "h"
-  },
-  {
-    "id": "frame_horizontal_2",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "frame_wood_horizontal_2",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "frame_wood_light_horizontal_2",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "hdframe_horizontal_2",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "xlframe_horizontal_2",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "frame_plastic_horizontal_2",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "frame_carbon_horizontal_2",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "="
-  },
-  {
-    "id": "frame_ne",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "frame_wood_ne",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "frame_wood_light_ne",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "hdframe_ne",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "xlframe_ne",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "frame_plastic_ne",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "frame_carbon_ne",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "frame_nw",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "frame_wood_nw",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "frame_wood_light_nw",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "hdframe_nw",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "xlframe_nw",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "frame_plastic_nw",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "frame_carbon_nw",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "y"
-  },
-  {
-    "id": "frame_se",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "frame_wood_se",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "frame_wood_light_se",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "hdframe_se",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "xlframe_se",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "frame_plastic_se",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "frame_carbon_se",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "n"
-  },
-  {
-    "id": "frame_sw",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "frame_wood_sw",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "frame_wood_light_sw",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "hdframe_sw",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "xlframe_sw",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "frame_plastic_sw",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "frame_carbon_sw",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "b"
-  },
-  {
-    "id": "frame_vertical",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "frame_wood_vertical",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "frame_wood_light_vertical",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "hdframe_vertical",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "xlframe_vertical",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "frame_plastic_vertical",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "frame_carbon_vertical",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "j"
-  },
-  {
-    "id": "frame_vertical_2",
-    "copy-from": "frame",
-    "type": "vehicle_part",
-    "symbol": "H"
-  },
-  {
-    "id": "frame_wood_vertical_2",
-    "copy-from": "frame_wood",
-    "type": "vehicle_part",
-    "symbol": "H"
-  },
-  {
-    "id": "frame_wood_light_vertical_2",
-    "copy-from": "frame_wood_light",
-    "type": "vehicle_part",
-    "symbol": "H"
-  },
-  {
-    "id": "hdframe_vertical_2",
-    "copy-from": "hdframe",
-    "type": "vehicle_part",
-    "symbol": "H"
-  },
-  {
-    "id": "xlframe_vertical_2",
-    "copy-from": "xlframe",
-    "type": "vehicle_part",
-    "symbol": "H"
-  },
-  {
-    "id": "frame_plastic_vertical_2",
-    "copy-from": "frame_plastic",
-    "type": "vehicle_part",
-    "symbol": "H"
-  },
-  {
-    "id": "frame_carbon_vertical_2",
-    "copy-from": "frame_carbon",
-    "type": "vehicle_part",
-    "symbol": "H"
   }
 ]

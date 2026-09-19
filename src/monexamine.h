@@ -42,4 +42,3 @@ void deactivate_pet( monster &z );
 */
 void milk_source( monster &source_mon );
 } // namespace monexamine
-

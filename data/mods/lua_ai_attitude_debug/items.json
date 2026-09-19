@@ -1,0 +1,42 @@
+[
+  {
+    "id": "lua_ai_debug_remote",
+    "type": "TOOL",
+    "name": { "str": "Lua AI debug remote" },
+    "description": "A throwaway remote that spawns the Lua debug drone and cycles its attitude modes for quick testing.",
+    "symbol": ";",
+    "color": "light_cyan",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "plastic" ],
+    "techniques": [  ],
+    "qualities": [  ],
+    "max_charges": 0,
+    "initial_charges": 0,
+    "charges_per_use": 0,
+    "turns_per_charge": 0,
+    "use_action": [ "LUA_AI_DEBUG_REMOTE" ]
+  },
+  {
+    "id": "lua_ai_debug_selector",
+    "type": "TOOL",
+    "name": { "str": "Lua AI debug selector" },
+    "description": "Cycles the debug drone behavior mode and applies it to nearby Lua debug drones.",
+    "symbol": ";",
+    "color": "light_blue",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "weight": "100 g",
+    "volume": "250 ml",
+    "material": [ "plastic" ],
+    "techniques": [  ],
+    "qualities": [  ],
+    "max_charges": 0,
+    "initial_charges": 0,
+    "charges_per_use": 0,
+    "turns_per_charge": 0,
+    "use_action": [ "LUA_AI_DEBUG_SELECTOR" ]
+  }
+]

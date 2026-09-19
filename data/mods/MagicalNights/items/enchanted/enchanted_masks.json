@@ -30,7 +30,7 @@
     "max_charges": 12,
     "charges_per_use": 12,
     "use_action": { "type": "cast_spell", "spell_id": "invisibility", "no_fail": true, "level": 15, "need_worn": true },
-    "artifact_data": { "charge_type": "ARTC_TIME" }
+    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "1 h", "rate": 1 } ] }
   },
   {
     "type": "TOOL_ARMOR",
@@ -44,8 +44,6 @@
     "environmental_protection": 6,
     "flags": [ "FANCY", "WATER_FRIENDLY", "SUN_GLASSES", "FIX_NEARSIGHT", "FIX_FARSIGHT", "ZOOM" ],
     "qualities": [ [ "GLARE", 2 ] ],
-    "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "values": [ { "value": "PERCEPTION", "multiply": 0.25 } ] } ]
-    }
+    "relic_data": { "passive_effects": [ { "conditions": [ "WORN" ], "values": [ { "value": "PERCEPTION", "multiply": 0.25 } ] } ] }
   }
 ]

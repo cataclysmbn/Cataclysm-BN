@@ -1,12 +1,5 @@
 #include "recipe.h"
 
-#include <algorithm>
-#include <cmath>
-#include <iterator>
-#include <numeric>
-#include <optional>
-#include <sstream>
-
 #include "assign.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -18,7 +11,7 @@
 #include "item.h"
 #include "itype.h"
 #include "json.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "output.h"
 #include "skill.h"
 #include "string_formatter.h"
@@ -28,6 +21,13 @@
 #include "type_id.h"
 #include "uistate.h"
 #include "units.h"
+
+#include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <numeric>
+#include <optional>
+#include <sstream>
 
 
 static const itype_id itype_hotplate( "hotplate" );

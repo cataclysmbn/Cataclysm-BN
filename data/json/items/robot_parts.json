@@ -207,8 +207,8 @@
   {
     "type": "GENERIC",
     "id": "copbot_chassis",
-    "name": { "str_sp": "secubot chassis" },
-    "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of a police or military bot.",
+    "name": { "str_sp": "TALON chassis" },
+    "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of a military bot.",
     "symbol": "c",
     "color": "light_gray",
     "weight": "20000 g",
@@ -216,6 +216,21 @@
     "price": "1 kUSD",
     "price_postapoc": "1 USD",
     "material": [ "steel", "superalloy" ],
+    "category": "spare_parts"
+  },
+  {
+    "type": "GENERIC",
+    "id": "policebot_chassis",
+    "name": { "str_sp": "police bot chassis" },
+    "looks_like": "copbot_chassis",
+    "description": "What's left when you remove all moving parts and electronics.  It's the skeleton and armor of a police bot.",
+    "symbol": "c",
+    "color": "light_gray",
+    "weight": "20000 g",
+    "volume": "40000 ml",
+    "price": "1 kUSD",
+    "price_postapoc": "1 USD",
+    "material": [ "steel" ],
     "category": "spare_parts"
   },
   {

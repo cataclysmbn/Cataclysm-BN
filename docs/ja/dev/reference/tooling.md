@@ -1,41 +1,36 @@
 # 開発者向けツール
 
-## コードスタイル (astyle)
+## コードスタイル (C++)
 
-ソースコードの自動フォーマットは、
-[Artistic Style](http://astyle.sourceforge.net/)（略して astyle）によって実行されます。
+C++ フォーマットはトップレベルの `src/*.cpp` と `src/*.h` にのみ [Artistic Style](http://astyle.sourceforge.net/) を使います。他のほとんどの C++ ファイルには [clang-format](https://clang.llvm.org/docs/ClangFormat.html) を使います。`tools/clang-tidy-plugin/test/` のようなフォーマッタ依存の fixture は変更しません。ファイルごとのツール選択はリポジトリの helper に任せてください。
 
-システムまたは個人の好みに応じて、コードベースでこれを呼び出す方法は複数あります。
-
-### astyle を直接呼び出す
-
-`astyle` のみがインストールされている場合は、以下を使用します。
+### C++ フォーマットを呼び出す
 
 ```sh
-astyle --options=.astylerc --recursive src/*.cpp,*.h tests/*.cpp,*.h tools/*.cpp,*.h
+just fmt
+# または C++ のみ
+just fmt-cpp
 ```
 
-### CMake を介して astyle を呼び出す
+### CMake を介して C++ フォーマットを呼び出す
 
-CMake ビルドツリーを設定済みの場合は、以下を使用します。
+CMake ビルドツリーを設定済みで `bash` を利用できる場合、このターゲットは同じ C++ helper を呼び出します。
 
 ```sh
-cmake --build build --target astyle
+cmake --build <build-dir> --target format
 ```
 
-### pre-commit hook を介して astyle を呼び出す
+### pre-commit hook を介してフォーマットを呼び出す
 
-関連するすべてのツールがインストールされている場合は、これらのコマンドを Git の pre-commit フック（通常は `.git/hooks/pre-commit`）に追加することで、Git にコードと JSON のスタイルのチェックを自動的に実行させることができます。
+任意の hook をインストールしてください。
 
 ```sh
-git diff --cached --name-only -z HEAD | grep -z 'data/.*\.json' | \
-    xargs -r -0 -L 1 ./tools/format/json_formatter.[ce]* || exit 1
-
-astyle --options=.astylerc --dry-run -X -Q src/*.cpp src/*.h tests/*.cpp tests/*.h tools/*/*.cpp tools/*/*.h || exit 1
+just hooks-setup
 ```
 
 ### Visual Studio 向け Astyle 拡張機能
 
+トップレベルの `src/*.cpp` と `src/*.h` にのみ使ってください。リポジトリのスタイルには `just fmt-cpp` を使ってください。
 Visual Studio Marketplace に astyle 拡張機能はありますが、VS2019 または VS2022 で私たちの目的に対して正しく機能することが確認されているものは（まだ）ありません。
 
 #### Visual Studio 2022
@@ -101,7 +96,7 @@ VS2019 の手順に従ってソースからコンパイルすることもでき�
 
 Cataclysm には
 [clang-tidy 設定ファイル](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.clang-tidy)
-があり、`clang-tidy` が利用可能であれば、コードベースの静的解析を実行するためにそれを実行できます。CI では LLVM 18 の `clang-tidy` でテストを行っているため、最も一貫した結果を得るには、そのバージョンを使用することをお勧めします。
+があり、`clang-tidy` が利用可能であれば、コードベースの静的解析を実行するためにそれを実行できます。CI では LLVM 22 の `clang-tidy` でテストを行っているため、最も一貫した結果を得るには、そのバージョンを使用することをお勧めします。
 
 これを実行するには、いくつかのオプションがあります。
 
@@ -133,7 +128,7 @@ grep '"file": "' build/compile_commands.json | \
 
 ```sh
 sudo apt-get install \
-  clang-18 libclang-18-dev llvm-18 llvm-18-dev clang-tidy-18
+  clang-22 libclang-22-dev llvm-22 llvm-22-dev clang-tidy-22
 ```
 
 ビルドを設定する際に、cmake フラグに `CATA_CLANG_TIDY_PLUGIN=ON` を追加します。

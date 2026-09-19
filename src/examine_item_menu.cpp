@@ -1,25 +1,25 @@
 #include "examine_item_menu.h"
 
-#include <vector>
-#include <string>
-
 #include "auto_pickup.h"
-#include "avatar_action.h"
 #include "avatar.h"
+#include "avatar_action.h"
 #include "avatar_functions.h"
 #include "crafting.h"
 #include "game_inventory.h"
-#include "map.h"
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
 #include "itype.h"
+#include "map/map.h"
 #include "messages.h"
 #include "output.h"
-#include "salvage.h"
 #include "recipe_dictionary.h"
 #include "rot.h"
+#include "salvage.h"
 #include "ui_manager.h"
+
+#include <string>
+#include <vector>
 //#include "handle_action.cpp"
 #include "utils/url.h"
 #include "options.h"
@@ -62,7 +62,7 @@ bool run(
 
     int info_area_scroll_pos = 0;
     constexpr int info_area_scroll_step = 3;
-    temperature_flag temperature = rot::temperature_flag_for_location( get_map(), itm );
+    temperature_flag temperature = rot::temp::for_location( get_map(), itm );
     std::vector<iteminfo> item_info_vals = itm.info( temperature );
     std::vector<iteminfo> dummy_compare;
     item_info_data data( itm.tname(), itm.type_name(), item_info_vals, dummy_compare,

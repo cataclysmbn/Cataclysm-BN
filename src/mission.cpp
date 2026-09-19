@@ -70,7 +70,7 @@ mission *mission::reserve_new( const mission_type_id &type, const character_id &
     if( npc_id.is_valid() ) {
         const npc *giver = g->find_npc( npc_id );
         if( giver != nullptr ) {
-            tmp.dimension_id_ = giver->get_dimension();
+            tmp.set_dimension( giver->get_dimension() );
         }
     }
     // TODO: Warn about overwrite?
@@ -603,7 +603,7 @@ const itype_id &mission::get_item_id() const
     return item_id;
 }
 
-const std::string &mission::get_dimension() const
+auto mission::get_dimension() const -> const dimension_id &
 {
     return dimension_id_;
 }

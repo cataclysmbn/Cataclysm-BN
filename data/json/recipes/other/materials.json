@@ -564,10 +564,22 @@
         [ "bottle_folding", 4 ],
         [ "plastic_six_dice", 10 ],
         [ "bag_zipper", 10 ],
+        [ "bag_zipper_small", 40 ],
         [ "cup_plastic", 10 ],
         [ "bag_plastic", 10 ]
       ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "plastic_scrap",
+    "id_suffix": "from_zipper_bags",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "time": "6 s",
+    "autolearn": true,
+    "components": [ [ [ "bag_zipper_small", 4 ] ] ]
   },
   {
     "type": "recipe",

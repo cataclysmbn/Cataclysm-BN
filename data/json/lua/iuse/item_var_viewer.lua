@@ -80,10 +80,14 @@ local function is_item_choice(selected) return selected.type == "item" or select
 ---@return nil
 local function set_subject_var(selected, key, value)
   if is_item_choice(selected) then
-    selected.subject:set_var_str(key, value)
+    local subject = selected.subject
+    ---@cast subject Item
+    subject:set_var_str(key, value)
     return
   end
-  selected.subject:set_value(key, value)
+  local subject = selected.subject
+  ---@cast subject Creature
+  subject:set_value(key, value)
 end
 
 ---@param selected ItemVarViewerChoice
@@ -91,10 +95,14 @@ end
 ---@return nil
 local function remove_subject_var(selected, key)
   if is_item_choice(selected) then
-    selected.subject:erase_var(key)
+    local subject = selected.subject
+    ---@cast subject Item
+    subject:erase_var(key)
     return
   end
-  selected.subject:remove_value(key)
+  local subject = selected.subject
+  ---@cast subject Creature
+  subject:remove_value(key)
 end
 
 ---@param title string
@@ -205,7 +213,7 @@ local function manage_vars(selected)
   end
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): integer
+---@type fun(params: ItemUseParams): integer
 viewer.menu = function(params)
   local who = params.user
   local item = params.item
@@ -263,7 +271,7 @@ viewer.menu = function(params)
   push_choice(player_label, player_choice)
 
   local map = gapi.get_map()
-  ---@type Tripoint[]
+  ---@type TripointBubMs[]
   local points = map:points_in_radius(pos, 5)
   ---@type table<string, boolean>
   local seen_monsters = {}

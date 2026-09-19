@@ -235,6 +235,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_build_fortification_domestic",
+    "group": "build_fortification",
+    "//": "Build on top of half-built wall",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "time": "60 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ], [ { "id": "SMOOTH", "level": 1 } ] ],
+    "components": [ [ [ "wood_panel", 1 ] ], [ [ "nail", 12 ] ], [ [ "mortar_build", 1 ], [ "mortar_adobe", 1 ] ] ],
+    "pre_terrain": "t_wall_half_domestic",
+    "post_terrain": "t_fortification_domestic"
+  },
+  {
+    "type": "construction",
     "id": "constr_carve_fortification_wood",
     "group": "carve_fortification",
     "//": "Carve out of existing wall",
@@ -249,7 +262,7 @@
     "byproducts": [
       { "item": "2x4", "count": [ 1, 3 ] },
       { "item": "splinter", "charges": [ 1, 8 ] },
-      { "item": "splinter", "count": [ 1, 4 ] }
+      { "item": "nail", "charges": [ 1, 4 ] }
     ],
     "pre_terrain": "t_wall_wood",
     "post_terrain": "t_fortification_wood"
@@ -322,6 +335,110 @@
     "byproducts": [ { "item": "material_soil", "count": [ 2, 5 ] }, { "item": "adobe_brick", "count": [ 0, 2 ] } ],
     "pre_terrain": "t_adobe_brick_wall",
     "post_terrain": "t_fortification_adobe"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall",
+    "post_terrain": "t_fortification_domestic"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_r",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_r",
+    "post_terrain": "t_fortification_domestic_r"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_w",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_w",
+    "post_terrain": "t_fortification_domestic_w"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_b",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_b",
+    "post_terrain": "t_fortification_domestic_b"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_g",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_g",
+    "post_terrain": "t_fortification_domestic_g"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_y",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_y",
+    "post_terrain": "t_fortification_domestic_y"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_P",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_P",
+    "post_terrain": "t_fortification_domestic_P"
+  },
+  {
+    "type": "construction",
+    "id": "constr_carve_fortification_domestic_p",
+    "group": "carve_fortification",
+    "//": "Carve out of existing wall, allowed to be 1 level lower than making the wall since this is more adhoc",
+    "category": "REINFORCE",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "8 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ] ],
+    "byproducts": [ { "item": "splinter", "charges": [ 1, 3 ] }, { "item": "nail", "charges": [ 1, 2 ] } ],
+    "pre_terrain": "t_wall_p",
+    "post_terrain": "t_fortification_domestic_p"
   },
   {
     "type": "construction",

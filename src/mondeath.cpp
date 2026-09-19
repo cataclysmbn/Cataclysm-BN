@@ -1,17 +1,5 @@
 #include "mondeath.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
-
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -19,7 +7,6 @@
 #include "creature.h"
 #include "enums.h"
 #include "explosion_queue.h"
-#include "field_type.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "harvest.h"
@@ -32,7 +19,8 @@
 #include "kill_tracker.h"
 #include "line.h"
 #include "make_static.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "mattack_actors.h"
 #include "mattack_common.h"
@@ -53,6 +41,18 @@
 #include "units.h"
 #include "value_ptr.h"
 #include "weighted_list.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 static const efftype_id effect_ai_controlled( "ai_controlled" );
 static const efftype_id effect_amigara( "amigara" );
@@ -93,6 +93,8 @@ static const trait_flag_str_id trait_flag_PRED2( "PRED2" );
 static const trait_flag_str_id trait_flag_PRED3( "PRED3" );
 static const trait_flag_str_id trait_flag_PRED4( "PRED4" );
 
+static const enchantment_value_id ench_val_OVERKILL( "OVERKILL" );
+
 void mdeath::normal( monster &z )
 {
     if( z.no_corpse_quiet ) {
@@ -109,7 +111,12 @@ void mdeath::normal( monster &z )
     }
 
     const int max_hp = std::max( z.get_hp_max(), 1 );
-    const float overflow_damage = std::max( -z.get_hp(), 0 );
+    float overflow_damage = -z.get_hp();
+    player *ch = dynamic_cast<player *>( z.get_killer() );
+    if( ch ) {
+        overflow_damage += ch->bonus_from_enchantments( overflow_damage, ench_val_OVERKILL );
+    }
+    overflow_damage = std::max( overflow_damage, 0.0f );
     const float corpse_damage = 2.5 * overflow_damage / max_hp;
     const bool pulverized = corpse_damage > 5 && overflow_damage > z.get_hp_max();
 
@@ -704,8 +711,13 @@ void mdeath::broken( monster &z )
     g->m.add_item_or_charges( z.bub_pos(), std::move( broken_mon ) );
     //TODO!: push up these temporaries
     if( z.type->has_flag( MF_DROPS_AMMO ) ) {
+        auto processed_ammo_ids = std::set<itype_id> {};
         for( const std::pair<const itype_id, int> &ammo_entry : z.type->starting_ammo ) {
-            if( z.ammo[ammo_entry.first] > 0 ) {
+            for( const auto &slot_ammo_id : z.ammo_slot_items( ammo_entry.first ) ) {
+                if( processed_ammo_ids.contains( slot_ammo_id ) || z.ammo[slot_ammo_id] <= 0 ) {
+                    continue;
+                }
+                processed_ammo_ids.insert( slot_ammo_id );
                 bool spawned = false;
                 for( const std::pair<const std::string, mtype_special_attack> &attack : z.type->special_attacks ) {
                     if( attack.second->id == "gun" ) {
@@ -713,7 +725,7 @@ void mdeath::broken( monster &z )
                                                             ( attack.second.get() )->gun_type );
                         bool same_ammo = false;
                         for( const ammotype &at : gun.ammo_types() ) {
-                            if( at == item::spawn_temporary( ammo_entry.first )->ammo_type() ) {
+                            if( at == item::spawn_temporary( slot_ammo_id )->ammo_type() ) {
                                 same_ammo = true;
                                 break;
                             }
@@ -721,11 +733,11 @@ void mdeath::broken( monster &z )
                         const bool uses_mags = !gun.magazine_compatible().empty();
                         if( same_ammo && uses_mags ) {
                             std::vector<detached_ptr<item>> mags;
-                            int ammo_count = z.ammo[ammo_entry.first];
+                            int ammo_count = z.ammo[slot_ammo_id];
                             while( ammo_count > 0 ) {
                                 detached_ptr<item> mag = item::spawn( gun.type->magazine_default.find( item::spawn_temporary(
-                                        ammo_entry.first )->ammo_type() )->second );
-                                mag->ammo_set( ammo_entry.first,
+                                        slot_ammo_id )->ammo_type() )->second );
+                                mag->ammo_set( slot_ammo_id,
                                                std::min( ammo_count, mag->type->magazine->capacity ) );
                                 ammo_count -= mag->type->magazine->capacity;
                                 mags.push_back( std::move( mag ) );
@@ -737,7 +749,7 @@ void mdeath::broken( monster &z )
                     }
                 }
                 if( !spawned ) {
-                    g->m.spawn_item( z.bub_pos(), ammo_entry.first, z.ammo[ammo_entry.first], 1,
+                    g->m.spawn_item( z.bub_pos(), slot_ammo_id, z.ammo[slot_ammo_id], 1,
                                      calendar::turn );
                 }
             }

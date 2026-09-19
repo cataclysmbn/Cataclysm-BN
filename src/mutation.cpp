@@ -1,14 +1,5 @@
 #include "mutation.h"
 
-#include <algorithm>
-#include <cmath>
-#include <algorithm>
-#include <cstdlib>
-#include <iterator>
-#include <memory>
-#include <numeric>
-#include <unordered_set>
-
 #include "avatar_action.h"
 #include "bionics.h"
 #include "catalua_icallback_actor.h"
@@ -17,20 +8,20 @@
 #include "creature.h"
 #include "debug.h"
 #include "effect.h"
+#include "enchantments/enchantment.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
-#include "field_type.h"
 #include "game.h"
 #include "handle_liquid.h"
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
 #include "make_static.h"
-#include "magic_enchantment.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "math_defines.h"
 #include "memorial_logger.h"
 #include "monster.h"
@@ -45,6 +36,14 @@
 #include "units.h"
 #include "weighted_list.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
+#include <unordered_set>
+
 using TraitSet = std::set<trait_id>;
 
 static const activity_id ACT_TREE_COMMUNION( "ACT_TREE_COMMUNION" );
@@ -52,7 +51,6 @@ static const activity_id ACT_TREE_COMMUNION( "ACT_TREE_COMMUNION" );
 static const efftype_id effect_accumulated_mutagen( "accumulated_mutagen" );
 static const efftype_id effect_stunned( "stunned" );
 
-static const trait_id trait_BURROW( "BURROW" );
 static const trait_id trait_CARNIVORE( "CARNIVORE" );
 static const trait_id trait_CHAOTIC_BAD( "CHAOTIC_BAD" );
 static const trait_id trait_DEX_ALPHA( "DEX_ALPHA" );
@@ -147,6 +145,14 @@ bool Character::has_trait_flag( const trait_flag_str_id &b ) const
     return std::ranges::any_of( cached_mutations,
     [&b]( const mutation_branch * mut ) -> bool {
         return mut->flags.contains( b );
+    } );
+}
+
+bool Character::has_trait_type( const std::string &mut_type ) const
+{
+    return std::ranges::any_of( cached_mutations,
+    [&mut_type]( const mutation_branch * mut ) -> bool {
+        return mut->types.contains( mut_type );
     } );
 }
 
@@ -573,11 +579,6 @@ void Character::activate_mutation( const trait_id &mut )
     if( mut == trait_WEB_WEAVER ) {
         g->m.add_field( bub_pos(), fd_web, 1 );
         add_msg_if_player( _( "You start spinning web with your spinnerets!" ) );
-    } else if( mut == trait_BURROW ) {
-        tdata.powered = false;
-        item *burrowing_item = item::spawn_temporary( itype_id( "fake_burrowing" ) );
-        invoke_item( burrowing_item );
-        return;  // handled when the activity finishes
     } else if( mut == trait_SLIMESPAWNER ) {
         monster *const slime = g->place_critter_around( mtype_id( "mon_player_blob" ), bub_pos(), 1 );
         if( !slime ) {

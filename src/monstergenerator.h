@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "catalua.h"
+#include "catalua_icallback_actor.h"
 #include "catalua_type_operators.h"
 #include "enum_bitset.h"
 #include "enums.h"
@@ -68,6 +70,9 @@ class MonsterGenerator
 
         void check_monster_definitions() const;
 
+        void resolve_lua_monster_callbacks(
+            const std::map<std::string, std::unique_ptr<lua_monster_callback_actor>> &actors );
+
         const std::vector<mtype> &get_all_mtypes() const;
         mtype_id get_valid_hallucination() const;
         friend struct mtype;
@@ -108,9 +113,8 @@ class MonsterGenerator
         std::map<std::string, mon_action_death> death_map;
         std::map<std::string, mon_action_defend> defense_map;
         std::map<std::string, mtype_special_attack> attack_map;
+        std::map<mtype_id, std::unique_ptr<lua_monster_callback_actor>> lua_monster_actors;
 };
 
 void load_monster_adjustment( const JsonObject &jsobj );
 void reset_monster_adjustment();
-
-

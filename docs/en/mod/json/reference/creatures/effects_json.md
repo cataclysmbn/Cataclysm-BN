@@ -409,6 +409,18 @@ effect can hurt the player.
 Type of morale effect provided. Mandatory if there is a morale effect, must not be specified
 otherwise.
 
+### Enchantments
+
+```json
+"base_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ],
+"scaling_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ]
+```
+
+Either an inline effect or a enchantment string id
+Must be an array
+Scaling is added once for each intensity above 1
+Base is added once when effect is applied
+
 ### Other effects on removal
 
 ```json

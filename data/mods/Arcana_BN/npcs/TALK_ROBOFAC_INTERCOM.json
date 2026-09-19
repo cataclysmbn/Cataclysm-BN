@@ -122,7 +122,7 @@
   {
     "id": "TALK_ROBOFAC_INTERCOM_GM_PRELUDE",
     "type": "talk_topic",
-    "dynamic_line": "I would be reluctant to describe it as supernatural, but anomalous is perhaps appropriate.  Recent information suggests that there may be a new rash of attacks by some unknown xenoforms.  I haven't had the opportunity to gather extensive data on this, but I did recently discuss something with my superiors regarding a recent patrol fending off creatures that don't fit the usual patterns.  I suppose I'll relay that information to your benefactors."
+    "dynamic_line": "If you insist, I'll answer your inquiry.  We've been keeping a log of incident reports from our external contacts, and lately there has been a noticeable upward trend in hostile encounters, showing a particular regional density indicative of a dimensional fatigue incident.  I'll have the incident logs forwarded to your interested parties.  It would be in our best interests for our contacts to be able to do their work unhindered."
   },
   {
     "id": "TALK_ROBOFAC_INTERCOM_MISSION_4",

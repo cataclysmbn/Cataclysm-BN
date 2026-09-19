@@ -17,6 +17,8 @@
     "damage": { "damage_type": "bullet", "amount": 80 },
     "dispersion": 30,
     "recoil": 2000,
+    "loudness": 120,
+    "speed": 80,
     "effects": [ "COOKOFF", "NEVER_MISFIRES" ]
   },
   {
@@ -29,7 +31,7 @@
     "weight": "68 g",
     "damage": { "damage_type": "bash", "amount": 20 },
     "casing": "40x46mm_casing",
-    "loudness": 80,
+    "loudness": 70,
     "extend": { "effects": [ "LARGE_BEANBAG" ] }
   },
   {
@@ -41,7 +43,7 @@
     "weight": "230 g",
     "damage": { "damage_type": "bullet", "amount": 125, "armor_penetration": 30 },
     "casing": "40x46mm_casing",
-    "loudness": 80,
+    "loudness": 120,
     "extend": { "effects": [ "AMMO_M433_HEDP", "NO_PENETRATE_OBSTACLES" ] }
   },
   {
@@ -52,6 +54,7 @@
     "description": "A 40x46mm buckshot load, designed for use in thick vegetation or room clearing.",
     "weight": "120 g",
     "range": 24,
+    "loudness": 100,
     "damage": { "damage_type": "bullet", "amount": 12, "armor_penetration": 6 },
     "shot": { "count": 10, "half_angle": 5 },
     "proportional": { "recoil": 1.2 },

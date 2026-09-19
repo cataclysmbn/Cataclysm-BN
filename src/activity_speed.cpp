@@ -1,5 +1,19 @@
 #include "activity_speed.h"
+
+#include "action_time_scale.h"
 #include "activity_speed_adapters.h"
+#include "activity_type.h"
+#include "character.h"
+#include "character_functions.h"
+#include "character_stat.h"
+#include "game.h"
+#include "map/map.h"
+#include "recipe.h"
+#include "skill.h"
+#include "type_id.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,19 +22,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include "activity_type.h"
-#include "character.h"
-#include "character_functions.h"
-#include "character_stat.h"
-#include "game.h"
-#include "map.h"
-#include "recipe.h"
-#include "skill.h"
-#include "type_id.h"
-#include "veh_type.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
 
 static const skill_id stat_speech( "speech" );
 
@@ -50,6 +51,19 @@ inline static float refine_factor( float speed, int denom = 1, float min = -75.0
 
     //speed to factor
     return speed / 100.0f;
+}
+
+auto activity_speed::moves_per_turn() const -> int
+{
+    return std::max( 1, static_cast<int>(
+                         std::roundf( total() * action_time_scale::activity_progress_per_tick() ) ) );
+}
+
+auto activity_speed::calendar_moves_per_turn() const -> int
+{
+    return std::max( 1, static_cast<int>(
+                         std::roundf( total() *
+                                      action_time_scale::activity_progress_per_calendar_turn() ) ) );
 }
 
 void activity_speed::calc_moves( const Character &who )

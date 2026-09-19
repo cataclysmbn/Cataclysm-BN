@@ -16,7 +16,7 @@
     "type": "enchantment",
     "id": "ENCH_DRAGONBLOOD_ELEMENTAL_AFFINITY",
     "condition": "ALWAYS",
-    "values": [ { "value": "ARMOR_COLD", "multiply": 0.5 } ],
+    "values": [ { "value": "ARMOR_COLD", "multiply": 0.5 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 2500 } ],
     "ench_effects": [ { "effect": "heat_ward_dragonblood", "intensity": 1 } ]
   },
   {

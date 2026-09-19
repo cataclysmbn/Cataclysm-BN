@@ -41,6 +41,7 @@
 #include "iuse_actor.h"
 #include "json.h"
 #include "sounds.h"
+#include "type_id.h"
 
 class player;
 #include "material.h"
@@ -58,9 +59,9 @@ class player;
 #include "ui.h"
 #include "units.h"
 #include "value_ptr.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/wheel_dimensions.h"
 #include "vitamin.h"
-#include "wheel_dimensions.h"
 
 class player;
 struct tripoint;
@@ -249,11 +250,11 @@ void Item_factory::finalize_pre( itype &obj )
         obj.price_post = obj.price;
     }
     // use base volume if integral volume unspecified
-    if( obj.integral_volume < 0_ml ) {
+    if( obj.integral_volume == -1_ml ) {
         obj.integral_volume = obj.volume;
     }
     // use base weight if integral weight unspecified
-    if( obj.integral_weight < 0_gram ) {
+    if( obj.integral_weight == -1_gram ) {
         obj.integral_weight = obj.weight;
     }
     // for ammo and comestibles stack size defaults to count of initial charges
@@ -286,19 +287,13 @@ void Item_factory::finalize_pre( itype &obj )
         return f.str().starts_with( "LIGHT_" );
     } );
 
-    // Set max volume for containers to prevent integer overflow
-    if( obj.container && obj.container->contains > 10000_liter ) {
-        debugmsg( obj.id.str() + " storage volume is too large, reducing to 10000 liters" );
-        obj.container->contains = 10000_liter;
-    }
-
     if( obj.ammo ) {
-        // for ammo not specifying loudness (or an explicit zero) derive value from other properties
+        // for ammo not specifying loudness (or an explicit less than zero) derive value from other properties
         // 343 is the speed of sound in atmosphere, but guns are still loud.
-        // Very few firearms have projectiles with speeds lower than 200m/s, so we use that as the cutoff.
+        // Very few firearms have projectiles with speeds lower than 342m/s, so we use that as the cutoff.
         // For reference, arrows/bolts are sub 140 speed.
         if( obj.ammo->loudness < 0 ) {
-            if( obj.ammo->speed > 200 ) {
+            if( obj.ammo->speed > 342 ) {
                 // TODO: Overhaul base noise algorithm. The min/floor/log10 is a stopgap to make firearm noise from tile vol to dB spl.
                 // Basing noise off of range/damage/AP results in wildly varying tile volumes, pistols that cannot deafen the user and .308 rifles that will always deafen all NPCs with no hearing protection in the reality bubble.
                 obj.ammo->loudness = obj.ammo->range * 2;
@@ -541,10 +536,10 @@ void Item_factory::finalize_pre( itype &obj )
 
             // For comestibles composed of multiple edible materials we calculate the average.
             for( const auto &v : vitamin::all() ) {
-                if( !vitamins.contains( v.first ) ) {
+                if( !vitamins.contains( v.id ) ) {
                     for( const auto &m : mat ) {
-                        double amount = m->vitamin( v.first ) * healthy / mat.size();
-                        vitamins[v.first] += std::ceil( amount );
+                        double amount = m->vitamin( v.id ) * healthy / mat.size();
+                        vitamins[v.id] += std::ceil( amount );
                     }
                 }
             }
@@ -585,6 +580,10 @@ void Item_factory::finalize_pre( itype &obj )
 
     for( auto &e : obj.use_methods ) {
         e.second.get_actor_ptr()->finalize( obj.id );
+    }
+
+    if( obj.relic_data ) {
+        obj.relic_data->finalize();
     }
 
     if( obj.drop_action.get_actor_ptr() != nullptr ) {
@@ -692,6 +691,26 @@ void Item_factory::finalize_post( itype &obj )
         }
     }
 
+    if( !obj.magazines.empty() ) {
+        for( const auto &[mag, mags_like] : magazines_like ) {
+            for( const auto [ammotype, mags] : obj.magazines ) {
+                if( mags.contains( mag ) ) {
+                    obj.magazines[ammotype].insert( mags_like.begin(), mags_like.end() );
+                }
+            }
+        }
+    }
+    if( obj.mod && !obj.mod->magazine_adaptor.empty() ) {
+        for( const auto &[mag, mags_like] : magazines_like ) {
+            for( const auto [ammotype, mags] : obj.mod->magazine_adaptor ) {
+                if( mags.contains( mag ) ) {
+                    obj.mod->magazine_adaptor[ammotype].insert( mags_like.begin(), mags_like.end() );
+                }
+            }
+        }
+
+    }
+
     if( obj.comestible ) {
         for( const std::pair<diseasetype_id, int> elem : obj.comestible->contamination ) {
             const diseasetype_id dtype = elem.first;
@@ -784,7 +803,7 @@ void Item_factory::finalize_item_blacklist()
         }
 
         for( std::pair<const item_group_id, std::unique_ptr<Item_spawn_data>> &g : m_template_groups ) {
-            g.second->replace_item( migrate.first, migrate.second.replace );
+            g.second->replace_item( migrate.first, migrate.second.replace, g.first.str() );
         }
 
         // replace migrated items in requirements
@@ -946,6 +965,7 @@ void Item_factory::init()
     add_iuse( "BLECH_BECAUSE_UNCLEAN", &iuse::blech_because_unclean );
     add_iuse( "BOLTCUTTERS", &iuse::boltcutters );
     add_iuse( "C4", &iuse::c4 );
+    add_iuse( "C4_BREACHING", &iuse::c4_breaching );
     add_iuse( "TOW_ATTACH", &iuse::tow_attach );
     add_iuse( "CABLE_ATTACH", &iuse::cable_attach );
     add_iuse( "CAMERA", &iuse::camera );
@@ -1140,6 +1160,7 @@ void Item_factory::init()
     add_actor( std::make_unique<hand_crank_actor>() );
     add_actor( std::make_unique<sex_toy_actor>() );
     add_actor( std::make_unique<train_skill_actor>() );
+    // Obsolete
     add_actor( std::make_unique<iuse_music_player>() );
     add_actor( std::make_unique<iuse_prospect_pick>() );
     add_actor( std::make_unique<iuse_reveal_contents>() );
@@ -1445,13 +1466,23 @@ void Item_factory::check_definitions() const
                     for( const auto &pr : type->mod->magazine_adaptor ) {
                         acceptable_ammo.insert( pr.first );
                     }
-                    auto &acceptable_magazines = !type->mod->magazine_adaptor.empty()
-                                                 ? type->mod->magazine_adaptor
-                                                 : target->magazines;
-                    for( const ammotype &ammo : acceptable_ammo ) {
-                        if( !acceptable_magazines.contains( ammo ) ) {
-                            msg += string_format( "gunmod can be applied to %s, which has no magazines for ammo %s\n",
-                                                  t.c_str(), ammo.str() );
+                    // Only check magazine compatibility if either the mod provides
+                    // magazine adaptors or the target gun uses external magazines.
+                    // Guns with only internal clip_size (no magazine_well, no magazines
+                    // map) load rounds directly and don't need magazine entries for the
+                    // converted ammo type.
+                    bool mod_has_adaptor = !type->mod->magazine_adaptor.empty();
+                    bool gun_uses_magazines = !target->magazines.empty() ||
+                                              target->magazine_well > 0_ml;
+                    if( mod_has_adaptor || gun_uses_magazines ) {
+                        auto &acceptable_magazines = mod_has_adaptor
+                                                     ? type->mod->magazine_adaptor
+                                                     : target->magazines;
+                        for( const ammotype &ammo : acceptable_ammo ) {
+                            if( !acceptable_magazines.contains( ammo ) ) {
+                                msg += string_format( "gunmod can be applied to %s, which has no magazines for ammo %s\n",
+                                                      t.c_str(), ammo.str() );
+                            }
                         }
                     }
                 }
@@ -1808,7 +1839,8 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "dispersion", dispersion );
     assign( jo, "recoil", recoil );
     optional( jo, was_loaded, "count", def_charges, 1 );
-    optional( jo, was_loaded, "loudness", loudness, -1 );
+    assign( jo, "loudness", loudness, false, -1,
+            191 ); // Measured in dB spl. -1 means the game will auto comp the loudness.
     assign( jo, "effects", ammo_effects );
     optional( jo, was_loaded, "show_stats", force_stat_display, std::nullopt );
     optional( jo, was_loaded, "shape", shape, std::nullopt );
@@ -1820,7 +1852,7 @@ void islot_ammo::load( const JsonObject &jo )
     }
     assign( jo, "aimedcritmaxbonus", aimedcritmaxbonus );
     assign( jo, "aimedcritbonus", aimedcritbonus );
-    assign( jo, "speed", speed );
+    assign( jo, "speed", speed, false, 0, 299792458 ); // Capped at the speed of light.
 }
 
 void islot_ammo::deserialize( JsonIn &jsin )
@@ -1941,7 +1973,7 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "clip_size", slot.clip, strict, 0 );
     assign( jo, "reload", slot.reload_time, strict, 0 );
     assign( jo, "reload_noise", slot.reload_noise, strict );
-    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0, 191 );
+    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0_dB, 191_dB );
     // Depreciated alias, use barrel_volume instead.
     assign( jo, "barrel_length", slot.barrel_volume, strict, 0_ml );
     assign( jo, "barrel_volume", slot.barrel_volume, strict, 0_ml );
@@ -1962,10 +1994,8 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
         }
     }
     // Depreciated alias, use reload_noise_dB_volume instead.
-    if( jo.has_int( "reload_noise_volume" ) ) {
-        int volume = jo.get_int( "reload_noise_volume" );
-        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
-        slot.reload_noise_volume = volume;
+    if( jo.has_member( "reload_noise_volume" ) ) {
+        assign( jo, "reload_noise_volume", slot.reload_noise_volume, strict, 0_dB, 191_dB );
     }
     assign( jo, "modes", slot.modes );
 }
@@ -2365,7 +2395,7 @@ void Item_factory::load( islot_comestible &slot, const JsonObject &jo, const std
         if( relative.has_int( "vitamins" ) ) {
             // allows easy specification of 'fortified' comestibles
             for( auto &v : vitamin::all() ) {
-                slot.default_nutrition.vitamins[ v.first ] += relative.get_int( "vitamins" );
+                slot.default_nutrition.vitamins[ v.id ] += relative.get_int( "vitamins" );
             }
         } else if( relative.has_array( "vitamins" ) ) {
             for( JsonArray pair : relative.get_array( "vitamins" ) ) {
@@ -2448,6 +2478,7 @@ void Item_factory::load( islot_gunmod &slot, const JsonObject &jo, const std::st
     assign( jo, "ammo_to_fire_multiplier", slot.ammo_to_fire_multiplier );
     assign( jo, "ammo_to_fire_modifier", slot.ammo_to_fire_modifier );
     assign( jo, "weight_multiplier", slot.weight_multiplier );
+    assign( jo, "volume_multiplier", slot.volume_multiplier );
     assign( jo, "speed", slot.speed );
     assign( jo, "aimedcritbonus", slot.aimedcritbonus );
     assign( jo, "aimedcritmaxbonus", slot.aimedcritmaxbonus );
@@ -2504,6 +2535,16 @@ void Item_factory::load( islot_magazine &slot, const JsonObject &jo, const std::
     assign( jo, "reliability", slot.reliability, strict, 0, 10 );
     assign( jo, "reload_time", slot.reload_time, strict, 0 );
     assign( jo, "linkage", slot.linkage, strict );
+
+    if( jo.has_string( "reloads_like" ) ) {
+        itype_id source = itype_id( jo.get_string( "reloads_like" ) );
+        if( magazines_like.contains( source ) ) {
+            magazines_like[source].insert( itype_id( jo.get_string( "id" ) ) );
+        } else {
+            magazines_like[source] = { itype_id( jo.get_string( "id" ) ) };
+
+        }
+    }
 }
 
 void Item_factory::load_magazine( const JsonObject &jo, const std::string &src )
@@ -2654,12 +2695,12 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
 
     assign( jo, "category", def.category_force, strict );
     assign( jo, "weight", def.weight, strict, 0_gram );
-    assign( jo, "integral_weight", def.integral_weight, strict, 0_gram );
+    assign( jo, "integral_weight", def.integral_weight );
     assign( jo, "volume", def.volume );
+    assign( jo, "integral_volume", def.integral_volume );
     assign( jo, "price", def.price, false, 0_cent );
     assign( jo, "price_postapoc", def.price_post, false, 0_cent );
     assign( jo, "stackable", def.stackable_, strict );
-    assign( jo, "integral_volume", def.integral_volume );
     assign( jo, "bashing", def.melee[DT_BASH], strict, 0 );
     assign( jo, "cutting", def.melee[DT_CUT], strict, 0 );
     assign( jo, "to_hit", def.m_to_hit, strict );
@@ -2670,6 +2711,7 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     assign( jo, "min_intelligence", def.min_int );
     assign( jo, "min_perception", def.min_per );
     assign( jo, "emits", def.emits );
+    assign( jo, "light_color", def.light_color );
     assign( jo, "magazine_well", def.magazine_well );
     assign( jo, "explode_in_fire", def.explode_in_fire );
     assign( jo, "solar_efficiency", def.solar_efficiency );
@@ -3053,6 +3095,7 @@ void Item_factory::clear()
     gun_tools.clear();
     repair_actions.clear();
     repair_tools.clear();
+    magazines_like.clear();
     tool_subtypes.clear();
 
     item_blacklist.clear();
@@ -3518,6 +3561,7 @@ void Item_factory::emplace_usage( std::map<std::string, use_function> &container
 std::pair<std::string, use_function> Item_factory::usage_from_object( const JsonObject &obj )
 {
     auto type = obj.get_string( "type" );
+    auto internal_name = obj.get_string( "internal_name", type );
 
     if( type == "repair_item" ) {
         type = obj.get_string( "item_action_type" );
@@ -3525,6 +3569,7 @@ std::pair<std::string, use_function> Item_factory::usage_from_object( const Json
             add_actor( std::make_unique<repair_item_actor>( type ) );
             repair_actions.insert( type );
         }
+        internal_name = type;
     }
 
     use_function method = usage_from_string( type );
@@ -3534,7 +3579,10 @@ std::pair<std::string, use_function> Item_factory::usage_from_object( const Json
     }
 
     method.get_actor_ptr()->load( obj );
-    return std::make_pair( type, method );
+    if( obj.has_string( "menu_text" ) ) {
+        method.get_actor_ptr()->set_name( obj.get_string( "menu_text" ) );
+    }
+    return std::make_pair( internal_name, method );
 }
 
 use_function Item_factory::usage_from_string( const std::string &type ) const

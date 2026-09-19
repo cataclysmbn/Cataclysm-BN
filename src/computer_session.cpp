@@ -1,13 +1,5 @@
 #include "computer_session.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <functional>
-#include <memory>
-#include <optional>
-#include <string>
-#include <utility>
-
 #include "avatar.h"
 #include "calendar.h"
 #include "character_id.h"
@@ -17,7 +9,6 @@
 #include "event.h"
 #include "event_bus.h"
 #include "explosion.h"
-#include "field_type.h"
 #include "flag.h"
 #include "game.h"
 #include "game_constants.h"
@@ -27,9 +18,10 @@
 #include "item.h"
 #include "item_contents.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "mission.h"
 #include "monster.h"
@@ -51,6 +43,14 @@
 #include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
 
 static const efftype_id effect_amigara( "amigara" );
 
@@ -240,9 +240,7 @@ static void remove_submap_turrets()
     map &here = get_map();
     for( monster &critter : g->all_monsters() ) {
         // Check 1) same overmap coords, 2) turret, 3) hostile
-        if( project_to<coords::omt>( here.bub_to_abs( critter.bub_pos() ) ) == project_to<coords::omt>
-            ( here.bub_to_abs(
-                  g->u.bub_pos() ) ) &&
+        if( project_to<coords::omt>( critter.abs_pos() ) == project_to<coords::omt>( g->u.abs_pos() ) &&
             critter.has_flag( MF_CONSOLE_DESPAWN ) &&
             critter.attitude_to( g->u ) == Attitude::A_HOSTILE ) {
             g->remove_zombie( critter );

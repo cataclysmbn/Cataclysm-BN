@@ -58,6 +58,10 @@ void draw_sdl_text_outlined( const sdl_text_outline_options &opts );
 const SDL_Renderer_Ptr &get_sdl_renderer();
 const SDL_Window_Ptr &get_sdl_window();
 
+/// Installs the renderer returned by get_sdl_renderer(); tests must provide one
+/// before loading tilesets (the game sets it up in init_interface()).
+auto set_sdl_renderer( SDL_Renderer_Ptr r ) -> void;
+
 #endif // TILES
 
 

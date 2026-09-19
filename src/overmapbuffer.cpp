@@ -1,19 +1,4 @@
 #include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
-
-#include <algorithm>
-#include <atomic>
-#include <cassert>
-#include <climits>
-#include <cstdint>
-#include <iterator>
-#include <list>
-#include <map>
-#include <optional>
-#include <queue>
-#include <future>
-#include <ranges>
-#include <vector>
 
 #include "avatar.h"
 #include "batch_turns.h"
@@ -21,39 +6,54 @@
 #include "cata_utility.h"
 #include "character_id.h"
 #include "color.h"
-#include "map_iterator.h"
-#include "numeric_interval.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
+#include "fluid_grid.h"
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
 #include "line.h"
-#include "map.h"
-#include "mapgendata.h"
+#include "map/map.h"
+#include "map_iterator.h"
+#include "mapgen/mapgendata.h"
 #include "memory_fast.h"
 #include "mongroup.h"
 #include "monster.h"
 #include "npc.h"
+#include "numeric_interval.h"
 #include "overmap.h"
 #include "overmap_connection.h"
 #include "overmap_special.h"
 #include "overmap_types.h"
+#include "overmapbuffer_registry.h"
 #include "popup.h"
+#include "profile.h"
 #include "rng.h"
 #include "simple_pathfinding.h"
-#include "thread_pool.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "thread_pool.h"
 #include "translations.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "profile.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 #include "world.h"
-#include "fluid_grid.h"
+
+#include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <climits>
+#include <cstdint>
+#include <future>
+#include <iterator>
+#include <list>
+#include <map>
+#include <optional>
+#include <queue>
+#include <ranges>
+#include <vector>
 
 class map_extra;
 
@@ -293,7 +293,7 @@ void overmapbuffer::fix_npcs( overmap &new_overmap )
     }
 }
 
-void overmapbuffer::save( const std::string &dim_id )
+auto overmapbuffer::save( const dimension_id &dim_id ) -> void
 {
     read_lock<std::shared_mutex> _l( mutex );
 
@@ -1643,8 +1643,7 @@ std::vector<shared_ptr_fast<npc>> overmapbuffer::get_npcs_near_player( int radiu
     // get_npcs_near needs submap coordinates
     tripoint_abs_sm plpos = project_to<coords::sm>( plpos_omt );
     // INT_MIN is a (a bit ugly) way to inform get_npcs_near not to filter by z-level
-    const int zpos = get_map().has_zlevels() ? INT_MIN : plpos.z();
-    return get_npcs_near( tripoint_abs_sm( plpos.xy(), zpos ), radius );
+    return get_npcs_near( tripoint_abs_sm( plpos.xy(), INT_MIN ), radius );
 }
 
 std::vector<overmap *> overmapbuffer::get_overmaps_near( const tripoint_abs_sm &location,
@@ -1924,7 +1923,7 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         monster &this_monster = monster_entry.second;
         const auto ms = this_monster.abs_pos();
         const map &here = get_map();
-        const auto local = here.abs_to_bub( ms );
+        const auto local = abs_to_bub( ms );
         if( !here.inbounds( local ) ) {
             debugmsg( "Monster at bub( %s, %s, %s ), abs( %s, %s, %s ) was out of bounds. Skipping spawn",
                       local.x(), local.y(), local.z(), ms.x(), ms.y(), ms.z() );

@@ -1,0 +1,107 @@
+[
+  {
+    "id": "ALWAYS",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "always",
+    "condition_info": "At all times"
+  },
+  {
+    "id": "DAWN",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "dawn",
+    "condition_info": "At dawn"
+  },
+  {
+    "id": "DAY",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "day",
+    "condition_info": "During the day"
+  },
+  {
+    "id": "DUSK",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "dusk",
+    "condition_info": "At dusk"
+  },
+  {
+    "id": "NIGHT",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "night",
+    "condition_info": "During the night"
+  },
+  {
+    "id": "ACTIVE",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "active",
+    "condition_info": "While active"
+  },
+  {
+    "id": "INACTIVE",
+    "type": "enchantment_condition",
+    "condition_type": "global",
+    "condition_function": "inactive",
+    "condition_info": "While inactive"
+  },
+  {
+    "id": "INSIDE",
+    "type": "enchantment_condition",
+    "condition_type": "character",
+    "condition_function": "inside",
+    "condition_info": "While inside"
+  },
+  {
+    "id": "OUTSIDE",
+    "type": "enchantment_condition",
+    "condition_type": "character",
+    "condition_function": "outside",
+    "condition_info": "While outside"
+  },
+  {
+    "id": "UNDERGROUND",
+    "type": "enchantment_condition",
+    "condition_type": "character",
+    "condition_function": "underground",
+    "condition_info": "While underground"
+  },
+  {
+    "id": "ABOVEGROUND",
+    "type": "enchantment_condition",
+    "condition_type": "character",
+    "condition_function": "aboveground",
+    "condition_info": "While aboveground"
+  },
+  {
+    "id": "UNDERWATER",
+    "type": "enchantment_condition",
+    "condition_type": "character",
+    "condition_function": "underwater",
+    "condition_info": "While underwater"
+  },
+  {
+    "id": "HELD",
+    "type": "enchantment_condition",
+    "condition_type": "item_and_character",
+    "condition_function": "has",
+    "condition_info": "While held"
+  },
+  {
+    "id": "WIELD",
+    "type": "enchantment_condition",
+    "condition_type": "item_and_character",
+    "condition_function": "wield",
+    "condition_info": "While wielded"
+  },
+  {
+    "id": "WORN",
+    "type": "enchantment_condition",
+    "condition_type": "item_and_character",
+    "condition_function": "worn",
+    "condition_info": "While worn"
+  }
+]

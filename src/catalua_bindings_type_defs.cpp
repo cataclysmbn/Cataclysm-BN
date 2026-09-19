@@ -1,13 +1,11 @@
+#include "bodypart.h"
 #include "catalua_bindings.h"
-
 #include "catalua_bindings_utils.h"
 #include "catalua_luna_doc.h"
-
-#include "bodypart.h"
 #include "damage.h"
 #include "faction.h"
 #include "itype.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "material.h"
 #include "mtype.h"
 #include "type_id.h"

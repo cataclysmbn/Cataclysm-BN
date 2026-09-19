@@ -44,6 +44,8 @@ std::string enum_to_string<cata_variant_type>( cata_variant_type type )
         case cata_variant_type::bool_: return "bool";
         case cata_variant_type::character_id: return "character_id";
         case cata_variant_type::character_movemode: return "character_movemode";
+        case cata_variant_type::enchantment_value_id: return "enchantment_value_id";
+        case cata_variant_type::enchantment_flag_id: return "enchantment_flag_id";
         case cata_variant_type::efftype_id: return "efftype_id";
         case cata_variant_type::flag_id: return "flag_id";
         case cata_variant_type::faction_id: return "faction_id";
@@ -55,6 +57,7 @@ std::string enum_to_string<cata_variant_type>( cata_variant_type type )
         case cata_variant_type::item_group_id: return "item_group_id";
         case cata_variant_type::itype_id: return "itype_id";
         case cata_variant_type::matype_id: return "matype_id";
+        case cata_variant_type::mpalette_id: return "mpalette_id";
         case cata_variant_type::mongroup_id: return "mongroup_id";
         case cata_variant_type::mtype_id: return "mtype_id";
         case cata_variant_type::mutagen_technique: return "mutagen_technique";

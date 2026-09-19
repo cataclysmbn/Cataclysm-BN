@@ -231,6 +231,7 @@ typename location_vector<T>::iterator location_vector<T>::erase( typename
     }
     T *subject = *it;
     typename std::vector<T *>::iterator ret = contents.erase( it.it );
+    subject->prepare_for_location_removal();
     subject->remove_location();
 
     detached_ptr<T> local;
@@ -394,6 +395,7 @@ typename std::vector<detached_ptr<T>> location_vector<T>::clear()
     }
     std::vector<detached_ptr<T>> ret;
     for( item * const &i : contents ) {
+        i->prepare_for_location_removal();
         i->remove_location();
         ret.push_back( detached_ptr( i ) );
     }
@@ -412,6 +414,7 @@ void location_vector<T>::remove_with( std::function < detached_ptr<T>( detached_
     for( auto it = contents.begin(); it != contents.end(); ) {
         item &as_item = **it;
         location<T> *saved_loc = ( *it )->loc;
+        ( *it )->prepare_for_location_removal();
         ( *it )->remove_location();
         ( *it )->saved_loc = saved_loc;
         detached_ptr<T> original( *it );
@@ -449,6 +452,17 @@ void location_vector<T>::move_by( const tripoint_rel_ms &offset )
         return;
     }
     tile_loc->move_by( offset );
+}
+
+template<typename T>
+void location_vector<T>::set_dimension( const dimension_id &dim )
+{
+    auto tile_loc = dynamic_cast<tile_item_location *>( &*loc );
+    if( !tile_loc ) {
+        debugmsg( "Tried to set_dimension on a non-tile location" );
+        return;
+    }
+    tile_loc->set_dimension( dim );
 }
 
 template<typename T>

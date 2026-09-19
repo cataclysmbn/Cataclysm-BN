@@ -450,12 +450,7 @@
       "type": "transform"
     },
     "flags": [ "DURABLE_MELEE", "SHEATH_SPEAR" ],
-    "magazines": [
-      [
-        "battery",
-        [ "medium_plus_battery_cell", "medium_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "medium_plus_battery_cell", "medium_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -772,20 +767,7 @@
       "need_charges_msg": "The %s's batteries are dead.",
       "target": "shock_staff_on"
     },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml",
     "extend": { "flags": [ "COMBAT_NPC_USE" ] }
   },
@@ -924,20 +906,7 @@
       "target": "shocktonfa_on"
     },
     "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP", "COMBAT_NPC_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1023,16 +992,16 @@
     "weapon_category": [ "CLUBS", "MORNINGSTARS" ],
     "name": "spiked survivor club",
     "description": "A wooden club with bands of iron or loops of wire and spikes carefully hammered onto it.  While it's not as effective or fancy as a proper mace or morningstar, its history throughout medieval and even early modern battlefields is noteworthy.  It was also known as a trench club during world war 1.",
-    "volume": "1450 ml",
-    "weight": "1500 g",
+    "volume": "1250 ml",
+    "weight": "1300 g",
     "color": "dark_gray",
     "symbol": "/",
     "flags": [ "NONCONDUCTIVE", "BELT_CLIP", "DURABLE_MELEE", "STAB" ],
     "techniques": [ "SWEEP", "WBLOCK_1" ],
     "material": [ "wood", "iron" ],
-    "bashing": 27,
-    "cutting": 6,
-    "to_hit": 1,
+    "bashing": 22,
+    "cutting": 3,
+    "to_hit": 2,
     "price": "500 USD",
     "price_postapoc": "15 USD"
   },
@@ -1050,14 +1019,12 @@
     "id": "spike_staff",
     "type": "GENERIC",
     "copy-from": "i_staff",
-    "looks_like": "spear_spike",
     "name": "spiked survivor staff",
     "description": "A wooden staff with metal bands or a length of wire wrapped onto both ends and various nails or spikes attached to it, including a single wicked spike at the top.  Makeshift weapons have a long history throughout warfare, from the trench clubs of World War 1 to the staffs used by medieval peasants, and hopefully it will help you survive too.",
-    "weapon_category": [ "QUARTERSTAVES", "SPEARS" ],
     "bashing": 27,
     "cutting": 8,
-    "weight": "1525 g",
-    "extend": { "flags": [ "STAB", "REACH_ATTACK", "SPEAR" ] }
+    "weight": "1625 g",
+    "extend": { "flags": [ "STAB" ] }
   },
   {
     "type": "GENERIC",
@@ -1097,6 +1064,7 @@
     "name": { "str": "battletorch (lit)", "str_pl": "battletorches (lit)" },
     "description": "This is a sturdy wood bat, wrapped in gasoline-soaked rags and flame-resistant Nomex fabric.  It is burning brightly, and makes it much easier to see the baselines at night games (It also makes the umpire FAR more likely to call a ball instead of a strike).",
     "color": "red",
+    "light_color": "#ffb05f",
     "turns_per_charge": 20,
     "revert_to": "battletorch_done",
     "//": "Roughly +25% fire damage",

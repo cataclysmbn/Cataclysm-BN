@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <optional>
 
 #include "coordinates.h"
@@ -8,12 +9,15 @@
 
 class avatar;
 class Character;
+class Creature;
 class item;
 class map;
 class turret_data;
 
 namespace avatar_action
 {
+
+using melee_action_callback = std::function < auto() -> void >;
 
 /** Eat food or fuel  'E' (or 'a') */
 void eat( avatar &you );
@@ -36,7 +40,11 @@ bool ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest );
 /** Handles swimming by the player. Called by avatar_action::move(). */
 void swim( map &m, avatar &you, const tripoint_bub_ms &p );
 
-void autoattack( avatar &you, map &m );
+auto handle_melee_action( const melee_action_callback &callback ) -> void;
+auto melee_attack_while_handling_manual_combat_mode( avatar &you, Creature &target ) -> void;
+auto autoattack( avatar &you, map &m ) -> void;
+auto toggle_manual_combat_mode() -> void;
+auto is_manual_combat_mode() -> bool;
 
 void mend( avatar &you, item *loc );
 
@@ -111,4 +119,3 @@ void plthrow( avatar &you, item *loc,
 // Use item; also tries E,R,W  'a'
 void use_item( avatar &you, item *loc = nullptr );
 } // namespace avatar_action
-

@@ -1152,8 +1152,8 @@ void it_artifact_tool::deserialize( const JsonObject &jo )
             materials.emplace_back( id );
         }
     }
-    assign( jo, "volume", volume, false, 1_ml );
-    assign( jo, "weight", weight, false, 1_gram );
+    assign( jo, "volume", volume, false );
+    assign( jo, "weight", weight, false );
     melee[DT_BASH] = jo.get_int( "melee_dam" );
     melee[DT_CUT] = jo.get_int( "melee_cut" );
     m_to_hit = jo.get_int( "m_to_hit" );
@@ -1262,8 +1262,8 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
             materials.emplace_back( id );
         }
     }
-    assign( jo, "volume", volume, false, 1_ml );
-    assign( jo, "weight", weight, false, 1_gram );
+    assign( jo, "volume", volume, false );
+    assign( jo, "weight", weight, false );
     melee[DT_BASH] = jo.get_int( "melee_dam" );
     melee[DT_CUT] = jo.get_int( "melee_cut" );
     m_to_hit = jo.get_int( "m_to_hit" );
@@ -1278,7 +1278,7 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
     armor->thickness = jo.get_int( "material_thickness" );
     armor->env_resist = jo.get_int( "env_resist" );
     armor->warmth = jo.get_int( "warmth" );
-    assign( jo, "storage", armor->storage, false, 1_ml );
+    assign( jo, "storage", armor->storage, false );
 
     for( const int entry : jo.get_array( "effects_worn" ) ) {
         artifact->effects_worn.push_back( static_cast<art_effect_passive>( entry ) );

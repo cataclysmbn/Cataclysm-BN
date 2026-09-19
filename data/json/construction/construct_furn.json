@@ -171,6 +171,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_utility_shelf",
+    "group": "build_utility_shelf",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 2 ] ],
+    "time": "60 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "components": [ [ [ "pipe", 8 ] ], [ [ "sheet_metal_small", 6 ] ], [ [ "plastic_chunk", 12 ] ] ],
+    "pre_special": "check_empty",
+    "post_furniture": "f_utility_shelf"
+  },
+  {
+    "type": "construction",
     "id": "constr_rack_coat",
     "group": "build_coat_rack",
     "category": "FURN",
@@ -908,6 +920,19 @@
     "pre_special": "check_empty",
     "dark_craftable": true,
     "post_furniture": "f_clay_storage"
+  },
+  {
+    "type": "construction",
+    "id": "constr_shower",
+    "group": "build_shower",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 2 ], [ "mechanics", 1 ] ],
+    "time": "60 m",
+    "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "components": [ [ [ "pipe", 6 ] ], [ [ "sheet_metal", 2 ], [ "scrap", 8 ] ], [ [ "water_faucet", 1 ] ] ],
+    "pre_special": "check_empty",
+    "dark_craftable": true,
+    "post_furniture": "f_shower"
   },
   {
     "type": "construction",

@@ -1,43 +1,45 @@
 #include "monster.h"
 
-#include <algorithm>
-#include <cmath>
-#include <limits>
-#include <memory>
-#include <optional>
-#include <tuple>
-#include <unordered_map>
-
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
+#include "catalua_icallback_actor.h"
+#include "catalua_impl.h"
 #include "catalua_sol.h"
 #include "character.h"
 #include "coordinates.h"
+#include "creature.h"
 #include "creature_tracker.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "effect.h"
 #include "enums.h"
-#include "event_bus.h"
 #include "event.h"
+#include "event_bus.h"
 #include "explosion.h"
-#include "field_type.h"
 #include "flag.h"
 #include "flat_set.h"
-#include "game_constants.h"
 #include "game.h"
+#include "game_constants.h"
+#include "init.h"
 #include "int_id.h"
-#include "item_group.h"
 #include "item.h"
 #include "item_category.h"
+#include "item_factory.h"
+#include "item_group.h"
 #include "itype.h"
 #include "line.h"
 #include "locations.h"
 #include "make_static.h"
-#include "mapdata.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "map_iterator.h"
+#include "mattack_actors.h"
 #include "mattack_common.h"
 #include "melee.h"
 #include "messages.h"
@@ -56,18 +58,30 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
+#include "profile.h"
 #include "projectile.h"
 #include "rng.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
-#include "submap.h"
 #include "text_snippets.h"
 #include "translations.h"
 #include "trap.h"
-#include "weather.h"
-#include "profile.h"
+#include "type_id.h"
+#include "units_utility.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <cmath>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
 
 static const ammo_effect_str_id ammo_effect_WHIP( "WHIP" );
 
@@ -83,12 +97,50 @@ static const efftype_id effect_corroding( "corroding" );
 static const efftype_id effect_dazed( "dazed" );
 static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_docile( "docile" );
+
+namespace
+{
+
+auto compatible_ammo_for_gun( const gun_actor &gun_attack ) -> std::vector<itype_id>
+{
+    namespace ranges = std::ranges;
+
+    if( !gun_attack.ammo_types.empty() ) {
+        return gun_attack.ammo_types;
+    }
+
+    const auto gun = item::spawn_temporary( gun_attack.gun_type );
+    if( !gun ) {
+        return {};
+    }
+
+    auto compatible_ammo = std::vector<itype_id> {};
+    const auto default_ammo = gun->ammo_default();
+    if( !default_ammo.is_null() ) {
+        compatible_ammo.push_back( default_ammo );
+    }
+
+    const auto gun_ammo_types = gun->ammo_types();
+    for( const auto *const ammo_item : item_controller->find( [&gun_ammo_types](
+    const itype & candidate ) {
+    return candidate.ammo != nullptr && gun_ammo_types.contains( candidate.ammo->type );
+    } ) ) {
+        if( !ranges::contains( compatible_ammo, ammo_item->get_id() ) ) {
+            compatible_ammo.push_back( ammo_item->get_id() );
+        }
+    }
+
+    return compatible_ammo;
+}
+
+} // namespace
 static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_emp( "emp" );
 static const efftype_id effect_feral_infighting_punishment( "feral_infighting_punishment" );
 static const efftype_id effect_feral_killed_recently( "feral_killed_recently" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_grabbing( "grabbing" );
+static const efftype_id effect_has_bag( "has_bag" );
 static const efftype_id effect_heavysnare( "heavysnare" );
 static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_in_pit( "in_pit" );
@@ -100,11 +152,13 @@ static const efftype_id effect_no_sight( "no_sight" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_pacified( "pacified" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_pet_bonding( "pet_bonding" );
 static const efftype_id effect_tpollen( "tpollen" );
 static const efftype_id effect_paralyzepoison( "paralyzepoison" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_run( "run" );
+static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_smoke( "smoke" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_supercharged( "supercharged" );
@@ -126,6 +180,22 @@ static const species_id PLANT( "PLANT" );
 static const species_id ROBOT( "ROBOT" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
+namespace
+{
+
+auto adjacent_grabber_for( const monster &target ) -> Creature *
+{
+    for( const auto &p : get_map().points_in_radius( target.bub_pos(), 1, 0 ) ) {
+        Creature *const grabber = g->critter_at<Creature>( p );
+        if( grabber != nullptr && grabber != &target && grabber->has_effect( effect_grabbing ) ) {
+            return grabber;
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
+
 static const trait_id trait_ANIMALDISCORD( "ANIMALDISCORD" );
 static const trait_id trait_ANIMALDISCORD2( "ANIMALDISCORD2" );
 static const trait_id trait_ANIMALEMPATH( "ANIMALEMPATH" );
@@ -140,6 +210,76 @@ static const trait_id trait_PHEROMONE_INSECT( "PHEROMONE_INSECT" );
 static const trait_id trait_PHEROMONE_MAMMAL( "PHEROMONE_MAMMAL" );
 static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
+
+namespace
+{
+
+auto report_missing_lua_attitude( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua monster attitude function '%s' is not defined", method );
+}
+
+auto report_invalid_lua_attitude_return( const std::string &method, const sol::object &value,
+        sol::state &lua ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    const auto type_name = get_luna_type( value );
+    const auto raw_name = type_name.value_or(
+                              std::string( sol::type_name( lua, value.get_type() ) ) );
+    debugmsg( "Lua monster attitude function '%s' returned %s, expected MonsterAttitude",
+              method, raw_name );
+}
+
+auto get_lua_monster_attitude( const monster &mon,
+                               const Character *target ) -> std::optional<monster_attitude>
+{
+    const auto &lua_method = mon.type->lua_attitude;
+    if( !lua_method ) {
+        return std::nullopt;
+    }
+
+    auto *lua_state = DynamicDataLoader::get_instance().lua.get();
+    if( lua_state == nullptr ) {
+        return std::nullopt;
+    }
+
+    sol::state &lua = lua_state->lua;
+    sol::object ref = lua.globals()["game"]["monster_attitude_functions"][*lua_method];
+    if( ref.get_type() != sol::type::function ) {
+        report_missing_lua_attitude( *lua_method );
+        return std::nullopt;
+    }
+
+    auto func = ref.as<sol::protected_function>();
+    const auto target_ref = target != nullptr
+                            ? sol::make_object( lua, target )
+                            : sol::make_object( lua, sol::lua_nil );
+    sol::protected_function_result res = func( &mon, target_ref );
+    check_func_result( res );
+    if( !res.valid() ) {
+        return std::nullopt;
+    }
+
+    const auto value = res.get<sol::object>();
+    if( value.get_type() == sol::type::lua_nil ) {
+        return std::nullopt;
+    }
+    if( value.get_type() != sol::type::number ) {
+        report_invalid_lua_attitude_return( *lua_method, value, lua );
+        return std::nullopt;
+    }
+
+    return value.as<monster_attitude>();
+}
+
+} // namespace
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
 struct pathfinding_settings;
@@ -236,8 +376,8 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
 monster::monster( const mtype_id &id ) : monster()
 {
     type = &id.obj();
-    moves = type->speed;
     Creature::set_speed_base( type->speed );
+    add_action_move_credit( type->speed, action_move_factor() );
     hp = type->hp;
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
@@ -291,6 +431,7 @@ monster::monster( const monster &source ) : Creature( source ),
     lastseen_turn = source.lastseen_turn;
     staircount = source.staircount;
     ammo = source.ammo;
+    upgrade_time = source.upgrade_time;
 
     for( const item * const &it : source.corpse_components ) {
         corpse_components.push_back( item::spawn( *it ) );
@@ -314,6 +455,10 @@ monster::monster( const monster &source ) : Creature( source ),
     path = source.path;
     effect_cache = source.effect_cache;
     summon_time_limit = source.summon_time_limit;
+    training_level = source.training_level;
+    bonded_character_id = source.bonded_character_id;
+    pet_bond_level = source.pet_bond_level;
+    monster_flags = source.monster_flags;
 
     set_tied_item( item::spawn( *source.tied_item ) );
     set_tack_item( item::spawn( *source.tack_item ) );
@@ -328,7 +473,7 @@ monster::~monster() = default;
 
 auto monster::setpos( const tripoint_bub_ms &p ) -> void
 {
-    setpos( get_map().bub_to_abs( p ) );
+    setpos( map_local_to_abs( get_map(), p ) );
 }
 
 auto monster::setpos( const tripoint_abs_ms &p ) -> void
@@ -337,11 +482,10 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
         return;
     }
 
-    const auto new_bub_pos = get_map().abs_to_bub( p );
     const auto wandering = is_wandering();
-    g->update_zombie_pos( *this, new_bub_pos );
+    g->update_zombie_pos( *this, p );
     pos_abs = p;
-    if( has_effect( effect_ridden ) && mounted_player && mounted_player->bub_pos() != bub_pos() ) {
+    if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
     }
@@ -350,9 +494,9 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 }
 
-tripoint_bub_ms monster::bub_pos() const
+auto monster::bub_pos() const -> tripoint_bub_ms
 {
-    return get_map().abs_to_bub( pos_abs );
+    return abs_to_bub( pos_abs );
 }
 
 auto monster::abs_pos() const -> tripoint_abs_ms
@@ -379,8 +523,9 @@ void monster::poly( const mtype_id &id )
     reproduces = type->reproduces;
 
     // HACK: We should know if the monster is in the bubble instead of checking it like this
-    if( g->critter_tracker->temporary_id( *this ) >= 0 ) {
-        g->critter_tracker->update_faction( *this );
+    auto &tracker = get_mapbuffer().creature_tracker();
+    if( tracker.temporary_id( *this ) >= 0 ) {
+        tracker.update_faction( *this );
     }
 }
 
@@ -426,6 +571,15 @@ void monster::allow_upgrade()
 int monster::next_upgrade_time()
 {
     if( type->age_grow > 0 ) {
+        const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
+        if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
+            return std::max( 1, static_cast<int>( std::ceil( type->age_grow *
+                                                  calendar::season_ratio() ) ) );
+        }
+        if( type->has_flag( MF_ANIMAL ) ) {
+            return std::max( 1, static_cast<int>( std::ceil( type->age_grow * scaling /
+                                                  100.0 ) ) );
+        }
         return type->age_grow;
     }
     const int scaled_half_life = type->half_life * get_option<float>( "MONSTER_UPGRADE_FACTOR" );
@@ -520,10 +674,21 @@ void monster::try_reproduce()
     if( !type->baby_timer ) {
         return;
     }
+    time_duration baby_timer_scaling = *type->baby_timer;
+    const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
+    if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
+        baby_timer_scaling = time_duration::from_days( std::max( 1,
+                             static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
+                                               calendar::season_ratio() ) ) ) );
+    } else if( type->has_flag( MF_ANIMAL ) ) {
+        baby_timer_scaling = time_duration::from_days( std::max( 1,
+                             static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
+                                               scaling / 100.0 ) ) ) );
+    }
 
     if( !baby_timer ) {
         // Assume this is a freshly spawned monster (because baby_timer is not set yet), set the point when it reproduce to somewhere in the future.
-        baby_timer.emplace( calendar::turn + *type->baby_timer );
+        baby_timer.emplace( calendar::turn + baby_timer_scaling );
     }
 
     bool season_spawn = false;
@@ -561,7 +726,7 @@ void monster::try_reproduce()
         if( ( season_match && female && one_in( chance ) ) ) {
             reproduce();
         }
-        *baby_timer += *type->baby_timer;
+        *baby_timer += baby_timer_scaling;
     }
 }
 
@@ -656,8 +821,70 @@ void monster::refill_udders()
 
 auto monster::spawn( const tripoint_bub_ms &p ) -> void
 {
-    pos_abs = get_map().bub_to_abs( p );
+    pos_abs = map_local_to_abs( get_map(), p );
     unset_dest();
+}
+
+auto monster::ammo_slot_items( const itype_id &ammo_id ) const -> std::vector<itype_id>
+{
+    namespace ranges = std::ranges;
+
+    auto slot_items = std::vector<itype_id> { ammo_id };
+    for( const auto &[special_name, special_attack] : type->special_attacks ) {
+        static_cast<void>( special_name );
+        if( special_attack->id != "gun" ) {
+            continue;
+        }
+        const auto *const gun_attack = dynamic_cast<const gun_actor *>( special_attack.get() );
+        if( gun_attack == nullptr ) {
+            continue;
+        }
+        const auto compatible_ammo = compatible_ammo_for_gun( *gun_attack );
+        if( !ranges::contains( compatible_ammo, ammo_id ) ) {
+            continue;
+        }
+        for( const auto &compatible_ammo_id : compatible_ammo ) {
+            if( !ranges::contains( slot_items, compatible_ammo_id ) ) {
+                slot_items.push_back( compatible_ammo_id );
+            }
+        }
+    }
+    return slot_items;
+}
+
+auto monster::ammo_capacity_for_slot( const itype_id &ammo_id ) const -> int
+{
+    if( const auto iter = type->starting_ammo.find( ammo_id ); iter != type->starting_ammo.end() ) {
+        return iter->second;
+    }
+    return 0;
+}
+
+auto monster::ammo_count_for_slot( const itype_id &ammo_id ) const -> int
+{
+    auto total_ammo = 0;
+    for( const auto &slot_ammo_id : ammo_slot_items( ammo_id ) ) {
+        if( const auto iter = ammo.find( slot_ammo_id ); iter != ammo.end() ) {
+            total_ammo += iter->second;
+        }
+    }
+    return total_ammo;
+}
+
+auto monster::loaded_ammo_for_slot( const itype_id &ammo_id ) const -> itype_id
+{
+    auto selected_ammo = itype_id {};
+    auto selected_count = 0;
+    for( const auto &slot_ammo_id : ammo_slot_items( ammo_id ) ) {
+        const auto current_count = ammo.contains( slot_ammo_id ) ? ammo.at( slot_ammo_id ) : 0;
+        const auto prefer_current = current_count > selected_count ||
+                                    ( current_count == selected_count && slot_ammo_id == ammo_id );
+        if( prefer_current ) {
+            selected_ammo = slot_ammo_id;
+            selected_count = current_count;
+        }
+    }
+    return selected_count > 0 ? selected_ammo : itype_id {};
 }
 
 std::string monster::get_name() const
@@ -823,6 +1050,40 @@ static std::pair<std::string, nc_color> speed_description( float mon_speed_ratin
     return std::make_pair( _( "Unknown" ), c_white );
 }
 
+/// How many process_turn ticks until leftover moves are positive (can_act).
+/// Empty when the card should stay qualitative-only (immobile / inattentive).
+static std::optional<std::pair<std::string, nc_color>> action_readiness_description(
+            const monster &mon )
+{
+    if( mon.has_flag( MF_IMMOBILE ) ) {
+        return std::nullopt;
+    }
+    if( get_avatar().has_trait( trait_INATTENTIVE ) ) {
+        return std::nullopt;
+    }
+
+    const int cur_moves = mon.get_moves();
+    if( cur_moves > 0 ) {
+        return std::make_pair( _( "It can act right now." ), c_red );
+    }
+
+    const int64_t credit = static_cast<int64_t>( mon.get_speed() ) *
+                           action_time_scale::monster_tick_action_factor() /
+                           action_time_scale::factor_denominator;
+    if( credit <= 0 ) {
+        return std::make_pair( _( "It is not recovering." ), c_dark_gray );
+    }
+
+    // can_act() requires moves > 0.
+    const int64_t need = static_cast<int64_t>( 1 ) - cur_moves;
+    const int turns = static_cast<int>( ( need + credit - 1 ) / credit );
+    if( turns <= 1 ) {
+        return std::make_pair( _( "It will be ready next turn." ), c_yellow );
+    }
+    return std::make_pair( string_format( _( "It will be ready in %d turns." ), turns ),
+                           c_light_green );
+}
+
 int monster::print_info( const catacurses::window &w, int vStart, int vLines, int column ) const
 {
     const int vEnd = vStart + vLines;
@@ -856,9 +1117,15 @@ int monster::print_info( const catacurses::window &w, int vStart, int vLines, in
     const auto speed_desc = speed_description( speed_rating(), has_flag( MF_IMMOBILE ) );
     mvwprintz( w, point( column, ++vStart ), speed_desc.second, speed_desc.first );
 
+    if( const auto ready = action_readiness_description( *this ) ) {
+        mvwprintz( w, point( column, ++vStart ), ready->second, ready->first );
+    }
+
     if( debug_mode ) {
         mvwprintz( w, point( column, ++vStart ), c_light_gray,
                    _( " Difficulty " ) + std::to_string( type->difficulty ) );
+        mvwprintz( w, point( column, ++vStart ), c_light_gray,
+                   string_format( _( "Moves: %d  Speed: %d" ), get_moves(), get_speed() ) );
     }
     if( display_mod_source ) {
         const std::string mod_src = enumerate_as_string( type->src.begin(),
@@ -945,6 +1212,9 @@ std::string monster::extended_description() const
                 speed_rating(),
                 has_flag( MF_IMMOBILE ) );
     ss += colorize( speed_desc.first, speed_desc.second ) + "\n";
+    if( const auto ready = action_readiness_description( *this ) ) {
+        ss += colorize( ready->first, ready->second ) + "\n";
+    }
 
     ss += "--\n";
     ss += "<color_light_gray>" + type->get_description() + "</color>\n";
@@ -969,7 +1239,7 @@ std::string monster::extended_description() const
     std::string_view if_empty = "" ) {
         std::string flag_descriptions = enumerate_as_string( flags_names.begin(),
         flags_names.end(), [this]( const flag_description & fd ) {
-            return type->has_flag( fd.first ) ? fd.second : "";
+            return type->has_flag( fd.first ) || monster_flags.contains( fd.first ) ? fd.second : "";
         } );
         if( !flag_descriptions.empty() ) {
             ss += string_format( format, flag_descriptions ) + "\n";
@@ -1032,6 +1302,23 @@ std::string monster::extended_description() const
         ss += std::string( _( "It has a head." ) ) + "\n";
     }
 
+    if( is_pet() ) {
+        if( bonded_character_id == g->u.getID() ) {
+            ss += string_format( _( "It regards you as family. (%s)\n" ), pet_bond_level );
+        } else if( pet_bond_level > 5 ) {
+            ss += string_format( _( "It really likes you. (%s)\n" ), pet_bond_level );
+        } else if( pet_bond_level > 2 ) {
+            ss += string_format( _( "It likes you. (%s)\n" ), pet_bond_level );
+        } else if( pet_bond_level > 0 ) {
+            ss += string_format( _( "It is curious about you. (%s)\n" ), pet_bond_level );
+        } else {
+            ss += string_format( _( "It is unsure about you. (%s)\n" ), pet_bond_level );
+        }
+        ss += string_format( _( "It carries %s / %s\n" ),
+                             static_cast<int>( convert_weight( get_carried_weight() ) ),
+                             static_cast<int>( convert_weight( weight_capacity() ) ) );
+    }
+
     if( training_level > 0 && type->pet_training ) {
         const auto training_adj = []( float ratio ) -> const std::string {
             if( ratio > 1.5f )
@@ -1056,6 +1343,9 @@ std::string monster::extended_description() const
             ss += string_format( _( "It is %s more agile than normal." ), training_adj( dodge_ratio ) ) + "\n";
         }
     }
+    if( monster_flags.contains( m_flag::MF_COMBAT_MOUNT ) ) {
+        ss += _( "It has been trained for combat and will not be scared easily.\n" );
+    }
 
     ss += "--\n";
     ss += std::string( _( "In melee, you can expect to:" ) ) + "\n";
@@ -1065,6 +1355,7 @@ std::string monster::extended_description() const
 
     if( debug_mode ) {
         ss += string_format( _( "Current Speed: %1$d" ), get_speed() ) + "\n";
+        ss += string_format( _( "Current Moves: %1$d" ), get_moves() ) + "\n";
         ss += string_format( _( "Anger: %1$d" ), anger ) + "\n";
         if( !faction_anger.empty() ) {
             ss += string_format( _( "Anger by faction:" ) ) + "\n";
@@ -1147,6 +1438,30 @@ bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) co
 bool monster::has_flag( const m_flag f ) const
 {
     return type->has_flag( f ) || monster_flags.contains( f );
+}
+
+bool monster::sees( const Creature &ch ) const
+{
+    if( type->clairvoyance > 0 ) {
+        const int wanted_range = rl_dist( bub_pos(), ch.bub_pos() );
+        // Clairvoyance is now pretty cheap, so we can check it early
+        if( wanted_range < type->clairvoyance ) {
+            return true;
+        }
+    }
+    return Creature::sees( ch );
+}
+bool monster::sees( const tripoint_bub_ms &t, bool is_player, int range_mod ) const
+{
+    if( type->clairvoyance > 0 ) {
+        const int wanted_range = rl_dist( bub_pos(), t );
+
+        // Clairvoyance is now pretty cheap, so we can check it early
+        if( wanted_range < type->clairvoyance ) {
+            return true;
+        }
+    }
+    return Creature::sees( t, is_player, range_mod );
 }
 
 bool monster::can_see() const
@@ -1299,12 +1614,14 @@ detached_ptr<item> monster::set_tack_item( detached_ptr<item> &&to )
 {
     if( to && to->typeId() != itype_id::NULL_ID() ) {
         has_processable_items = true;
+        add_effect( effect_saddled, 1_turns );
     }
     return tack_item.swap( std::move( to ) );
 }
 
 detached_ptr<item> monster::remove_tack_item()
 {
+    remove_effect( effect_saddled );
     return set_tack_item( detached_ptr<item>() );
 }
 
@@ -1341,12 +1658,17 @@ detached_ptr<item> monster::set_armor_item( detached_ptr<item> &&to )
 {
     if( to && to->typeId() != itype_id::NULL_ID() ) {
         has_processable_items = true;
+        add_effect( effect_monster_armor, 1_turns );
     }
     return armor_item.swap( std::move( to ) );
 }
 
 detached_ptr<item> monster::remove_armor_item()
 {
+    if( armor_item ) {
+        armor_item->erase_var( "pet_armor" );
+        remove_effect( effect_monster_armor );
+    }
     return set_armor_item( detached_ptr<item>() );
 }
 
@@ -1362,12 +1684,14 @@ detached_ptr<item> monster::set_storage_item( detached_ptr<item> &&to )
 {
     if( to && to->typeId() != itype_id::NULL_ID() ) {
         has_processable_items = true;
+        add_effect( effect_has_bag, 1_turns );
     }
     return storage_item.swap( std::move( to ) );
 }
 
 detached_ptr<item> monster::remove_storage_item()
 {
+    remove_effect( effect_has_bag );
     return set_storage_item( detached_ptr<item>() );
 }
 
@@ -1528,6 +1852,10 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
 
 auto monster::attitude( const Character *u ) const -> monster_attitude
 {
+    if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
+        return *lua_attitude;
+    }
+
     if( friendly != 0 ) {
         if( has_effect( effect_docile ) ) {
             return MATT_FPASSIVE;
@@ -1552,18 +1880,6 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     }
 
     const auto *np = u == nullptr ? nullptr : u->as_npc();
-    if( np != nullptr ) {
-        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
-        if( faction_att == MFA_FRIENDLY ) {
-            return MATT_FRIEND;
-        }
-        if( faction_att == MFA_NEUTRAL ) {
-            return MATT_IGNORE;
-        }
-        if( faction_att == MFA_HATE ) {
-            return MATT_ATTACK;
-        }
-    }
 
     int effective_anger  = anger;
     int effective_morale = morale;
@@ -1689,6 +2005,17 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
             return MATT_IGNORE;
         }
+    } else if( u != nullptr && u->is_npc() ) {
+        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+        if( effective_anger < 10 && faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
     }
 
     if( effective_morale < 0 ) {
@@ -1712,6 +2039,10 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     if( u != nullptr && !aggro_character && !u->is_monster() &&
         !( has_flag( MF_FACTION_MEMORY ) && effective_anger >= 10 ) ) {
         return MATT_IGNORE;
+    }
+
+    if( has_flag( MF_KEEP_DISTANCE ) && rl_dist( bub_pos(), goal ) < type->tracking_distance ) {
+        return MATT_FLEE;
     }
 
     return MATT_ATTACK;
@@ -1950,6 +2281,10 @@ bool monster::is_immune_effect( const efftype_id &effect ) const
 
     if( effect == effect_tpollen ) {
         return type->in_species( PLANT );
+    }
+
+    if( effect == effect_blind ) {
+        return !has_flag( MF_SEES );
     }
 
     // Used by screecher zombies to prevent dazing monsters that can't hear
@@ -2514,6 +2849,11 @@ bool monster::move_effects( bool )
         }
     }
     if( has_effect( effect_grabbed ) ) {
+        Creature *const grabber = adjacent_grabber_for( *this );
+        if( grabber == nullptr ) {
+            remove_effect( effect_grabbed );
+            return true;
+        }
         if( dice( type->melee_dice + type->melee_sides, 3 ) < get_effect_int( effect_grabbed ) ||
             !one_in( 4 ) ) {
             return false;
@@ -2522,6 +2862,7 @@ bool monster::move_effects( bool )
                 add_msg( _( "The %s breaks free from the grab!" ), name() );
             }
             remove_effect( effect_grabbed );
+            grabber->remove_effect( effect_grabbing );
         }
     }
     return true;
@@ -2869,7 +3210,7 @@ void monster::decrement_summon_timer()
     if( *summon_time_limit <= 0_turns ) {
         die( nullptr );
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
 }
 
@@ -2880,7 +3221,7 @@ void monster::process_turn()
     decrement_summon_timer();
     if( !is_hallucination() ) {
         for( const std::pair<const emit_id, time_duration> &e : type->emit_fields ) {
-            if( !calendar::once_every( e.second ) ) {
+            if( !action_time_scale::once_every_this_tick( e.second ) ) {
                 continue;
             }
             const emit_id emid = e.first;
@@ -2909,23 +3250,27 @@ void monster::process_turn()
             continue;
         }
 
-        if( local_attack_data.cooldown > 0 ) {
-            local_attack_data.cooldown--;
-        }
+        local_attack_data.cooldown = std::max( 0, local_attack_data.cooldown -
+                                               action_time_scale::calendar_turns_this_tick() );
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
-        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
-            const player *const p = g->critter_at<player>( dest );
-            if( p && p->has_effect( effect_grabbed ) ) {
+        auto found_grabbed_target = false;
+        for( const auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
+            const Creature *const target = g->critter_at<Creature>( dest );
+            if( target != nullptr && target != this && target->has_effect( effect_grabbed ) ) {
+                found_grabbed_target = true;
                 add_effect( effect_grabbing, 2_turns );
             }
         }
+        if( !found_grabbed_target ) {
+            remove_effect( effect_grabbing );
+        }
     }
     // We update electrical fields here since they act every turn.
-    if( has_flag( MF_ELECTRIC_FIELD ) ) {
+    if( !is_hallucination() && has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
-            if( calendar::once_every( 10_turns ) ) {
+            if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sound_event se;
                 se.origin = bub_pos();
                 se.volume = 50;
@@ -3001,7 +3346,8 @@ void monster::process_turn()
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 }
                 add_effect( effect_supercharged, 12_hours );
-            } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
+            } else if( has_effect( effect_supercharged ) &&
+                       action_time_scale::once_every_this_tick( 5_turns ) ) {
                 sound_event se;
                 se.origin = bub_pos();
                 se.volume = 80;
@@ -3015,8 +3361,16 @@ void monster::process_turn()
             }
         }
     }
-
+    if( is_pet() ) {
+        // Only pets can upgrade in range of the player, monsters only upgrade on load.
+        try_upgrade( false );
+    }
     Creature::process_turn();
+}
+
+auto monster::action_move_factor() const -> int
+{
+    return action_time_scale::monster_tick_action_factor();
 }
 
 void monster::batch_turns( int n )
@@ -3119,6 +3473,7 @@ void monster::die( Creature *nkiller )
         // *only* set to true in this function!
         return;
     }
+
     // We were carrying a creature, deposit the rider
     if( has_effect( effect_ridden ) && mounted_player ) {
         mounted_player->forced_dismount();
@@ -3195,6 +3550,12 @@ void monster::die( Creature *nkiller )
             p->remove_effect( effect_grabbed );
         }
     }
+    if( has_effect( effect_grabbed ) ) {
+        if( Creature *const grabber = adjacent_grabber_for( *this ) ) {
+            grabber->remove_effect( effect_grabbing );
+        }
+        remove_effect( effect_grabbed );
+    }
     if( !is_hallucination() ) {
         for( detached_ptr<item> &it : inv.clear() ) {
             g->m.add_item_or_charges( bub_pos(), std::move( it ) );
@@ -3205,7 +3566,7 @@ void monster::die( Creature *nkiller )
     if( !is_hallucination() && has_flag( MF_QUEEN ) ) {
         // The submap coordinates of this monster, monster groups coordinates are
         // submap coordinates.
-        const auto abssub = project_to<coords::sm>( g->m.bub_to_abs( bub_pos() ) );
+        const auto abssub = project_to<coords::sm>( abs_pos() );
         // Do it for overmap above/below too
         for( const auto &p : points_in_radius( abssub, g_half_mapsize, 1 ) ) {
             // TODO: fix point types
@@ -3320,7 +3681,7 @@ static void process_item_valptr( item *ptr, monster &mon )
 {
     if( ptr && ptr->needs_processing() ) {
         ptr->attempt_detach( [&mon]( detached_ptr<item> &&it ) {
-            return item::process( std::move( it ), nullptr, mon.bub_pos(), false );
+            return item::process( std::move( it ), nullptr, mon.bub_pos(), false, 1 );
         } );
     }
 }
@@ -3331,7 +3692,7 @@ void monster::process_items()
     if( !inv.empty() ) {
         inv.remove_with( [this]( detached_ptr<item> &&it ) {
             if( it->needs_processing() ) {
-                return item::process( std::move( it ), nullptr, bub_pos(), false );
+                return item::process( std::move( it ), nullptr, bub_pos(), false, 1 );
             }
             return std::move( it );
         } );
@@ -3376,12 +3737,17 @@ void monster::drop_items_on_death()
     if( is_hallucination() ) {
         return;
     }
-    if( !type->death_drops ) {
+    if( type->death_drops.empty() ) {
         return;
     }
 
-    auto items = item_group::items_from( type->death_drops,
+    auto items = item_group::items_from( type->death_drops.front(),
                                          calendar::start_of_cataclysm );
+    for( const item_group_id &death_drop : type->death_drops | std::views::drop( 1 ) ) {
+        auto group_items = item_group::items_from( death_drop,
+                           calendar::start_of_cataclysm );
+        std::ranges::move( group_items, std::back_inserter( items ) );
+    }
 
     // Apply both global and category-specific spawn rates
     const auto global_spawn_rate = get_option<float>( "ITEM_SPAWNRATE" );
@@ -3492,6 +3858,12 @@ void monster::process_one_effect( effect &it, bool is_new )
             apply_damage( nullptr, bodypart_id( "torso" ), dam );
         } else {
             it.set_duration( 0_turns );
+        }
+    } else if( id == effect_bleed ) {
+        int intense = it.get_intensity();
+        if( one_in( 9 / intense ) ) {
+            apply_damage( nullptr, bodypart_id( "torso" ), 3 );
+            bleed();
         }
     } else if( id == effect_run ) {
         effect_cache[FLEEING] = true;
@@ -3649,13 +4021,46 @@ void monster::make_ally( const monster &z )
 void monster::make_pet()
 {
     friendly = -1;
-    g->critter_tracker->update_faction( *this );
+    get_mapbuffer().creature_tracker().update_faction( *this );
     add_effect( effect_pet, 1_turns );
+}
+
+void monster::make_pet( Character &actor )
+{
+    // There is another call of make_pet in spawn_monsters_submap so the original call remains
+    make_pet();
+    if( const auto _lua_callbacks = type->lua_callbacks ) {
+        _lua_callbacks->call_on_tame( actor, *this );
+    }
+
+    cata::run_hooks( "on_monster_tame", [&](
+    auto & params ) { params["avatar"] = &actor; params["monster"] = *this; }
+                   );
 }
 
 bool monster::is_pet() const
 {
     return ( friendly == -1 && has_effect( effect_pet ) );
+}
+
+void monster::on_pet_bonding( Character *ch )
+{
+    if( has_effect( effect_pet_bonding ) && !one_in( 3 ) ) {
+        // Prevent spamming bond, this should raise over time.
+        // Still give a chance to increase as it may not be obvious.
+        return;
+    }
+
+    if( pet_bond_level >= pet_bond_max_level ) {
+        return;
+    }
+
+    add_effect( effect_pet_bonding, time_duration::from_hours( 8 ) );
+    pet_bond_level = std::clamp( pet_bond_level + 1, 0, pet_bond_max_level );
+    if( pet_bond_level == pet_bond_max_level ) {
+        bonded_character_id = ch->getID();
+        ch->add_msg_if_player( m_good, _( "%s has bonded with you!" ), get_name() );
+    }
 }
 
 bool monster::is_hallucination() const
@@ -3982,23 +4387,23 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     int max_error = ( goodhearing ) ? 0 : 2;
     if( volume < -1000 ) {
         // -10dB or greater below ambient
-        max_error = ( goodhearing ) ? 8 : 16;
+        max_error = ( goodhearing ) ? 8 : 0;
 
     } else if( volume < 0 ) {
         // -10 - 0 dB below ambient
-        max_error = ( goodhearing ) ? 6 : 12;
+        max_error = ( goodhearing ) ? 6 : 0;
 
     } else if( volume < 1000 ) {
         // 0-10dB greater than ambient
-        max_error = ( goodhearing ) ? 4 : 10;
+        max_error = ( goodhearing ) ? 5 : 12;
 
     } else if( volume < 2000 ) {
         // 10-20dB greater than ambient
-        max_error = ( goodhearing ) ? 3 : 8;
+        max_error = ( goodhearing ) ? 4 : 10;
 
     } else if( volume < 4000 ) {
         // 20-40dB greater than ambient
-        max_error = ( goodhearing ) ? 2 : 6;
+        max_error = ( goodhearing ) ? 3 : 8;
 
     } else if( volume < 8000 ) {
         // 40-80dB greater than ambient
@@ -4193,4 +4598,12 @@ auto monster::get_faction_anger( mfaction_id target_faction ) const -> int
 
     auto it = faction_anger.find( target_faction );
     return ( it != faction_anger.end() ) ? it->second : 0;
+}
+
+const lua_monster_callback_actor *monster::get_lua_callbacks() const
+{
+    if( type && type->lua_callbacks ) {
+        return type->lua_callbacks;
+    }
+    return nullptr;
 }

@@ -125,60 +125,6 @@ The following ammo types are (or will soon be) available in in-repo mods
 - `545x39` 5.45x39mm
 - `270win` .270 winchester
 
-### Effects
-
-- `ACIDBOMB` Leaves a pool of acid on detonation.
-- `BEANBAG` Stuns the target.
-- `BLACKPOWDER` May clog up the gun with blackpowder fouling, which will also cause rust.
-- `BLINDS_EYES` Blinds the target if it hits the head (ranged projectiles can't actually hit the
-  eyes at the moment).
-- `BOUNCE` Inflicts target with `bounced` effect and rebounds to a nearby target without this
-  effect.
-- `COOKOFF` Explodes when lit on fire.
-- `CUSTOM_EXPLOSION` Explosion as specified in `"explosion"` field of used ammo. See `JSON_INFO.md`.
-- `DRAW_AS_LINE` Doesn't go through regular bullet animation, instead draws a line and the bullet on
-  its end for one frame.
-- `EXPLOSIVE_BIG` Large explosion without any shrapnel.
-- `EXPLOSIVE_HUGE` Huge explosion without any shrapnel.
-- `EXPLOSIVE` Explodes without any shrapnel.
-- `FLAME` Very small explosion that lights fires.
-- `FLARE` Lights the target on fire.
-- `FLASHBANG` Blinds and deafens nearby targets.
-- `FRAG` Small explosion that spreads shrapnel.
-- `INCENDIARY` Lights target on fire.
-- `LARGE_BEANBAG` Heavily stuns the target.
-- `LASER` Creates a trail of laser (the field type)
-- `LIGHTNING` Creates a trail of lightning.
-- `MININUKE_MOD` Small thermo-nuclear detonation that leaves behind radioactive fallout.
-- `MUZZLE_SMOKE` Generate a small cloud of smoke at the source.
-- `NAPALM` Explosion that spreads fire.
-- `NEVER_MISFIRES` Firing ammo without this flag may trigger a misfiring, this is independent of the
-  weapon flags.
-- `NOGIB` Prevents overkill damage on the target (target won't explode into gibs, see also the
-  monster flag NO_GIBS).
-- `NO_PENETRATE_OBSTACLES` Prevents a projectile from going through a tile with obstacles, such as
-  chainlink fences or dressers.
-- `TANGLE` When this projectile hits a target, it has a chance to tangle them up and immobilise
-  them.
-- `NO_EMBED` When an item would be spawned from the projectile, it will always be spawned on the
-  ground rather than in monster's inventory. Implied for active thrown items. Doesn't do anything on
-  projectiles that do not drop items.
-- `NO_ITEM_DAMAGE` Will not damage items on the map even when it otherwise would try to.
-- `PLASMA` Creates a trail of superheated plasma.
-- `RECOVER_[X]` Has a (X-1/X) chance to create a single charge of the used ammo at the point of
-  impact.
-- `RECYCLED` (For handmade ammo) causes the gun to misfire sometimes, this independent of the weapon
-  flags.
-- `SHOT` Multiple smaller pellets; less effective against armor but increases chance to hit and no
-  point-blank penalty
-- `SMOKE_BIG` Generates a large cloud of smoke at the target.
-- `SMOKE` Generates a cloud of smoke at the target.
-- `STREAM_BIG` Leaves a trail of intense fire fields.
-- `STREAM` Leaves a trail of fire fields.
-- `TRAIL` Creates a trail of smoke.
-- `WIDE` Prevents `HARDTOSHOOT` monster flag from having any effect. Implied by `SHOT` or liquid
-  ammo.
-
 ## Armor
 
 ### Covers
@@ -221,6 +167,7 @@ to find which flags work elsewhere.
   cooler depending on ambient and bodily temperature.
 - `COLLAR` This piece of clothing has a wide collar that can keep your mouth warm.
 - `DEAF` Makes the player deaf.
+- `DRONE_CAM` Allows you to see targets marked by friendly drones such as eyebots.
 - `ELECTRIC_IMMUNE` This gear completely protects you from electric discharges.
 - `FANCY` Wearing this clothing gives a morale bonus if the player doesn't have the
   `Fashion Deficient` trait.
@@ -247,6 +194,7 @@ to find which flags work elsewhere.
 - `POWERARMOR_EXO` Marks the item as the main exoskeleton for power armor.
 - `POWERARMOR_EXTERNAL` Marks the item as external pieces that cover body parts the exoskeleton
   doesn't.
+- `POWERARMOR_PLATING` Marks the item as external armor plates that are worn over the exoskeleton.
 - `POWERARMOR_MOD` Marks the item as a power armour mod that is worn onto an exoskeleton/external
   piece.
 - `POWERARMOR_COMPATIBLE` Makes item compatible with power armor despite other parameters causing
@@ -325,6 +273,7 @@ to find which flags work elsewhere.
 - `BOLTCUTTERS` Use your town key to gain access anywhere.
 - `BREAK_STICK` Breaks long stick into two.
 - `C4` Arm the C4.
+- 'C4_BREACHING' Arm the C4 breaching charge.
 - `CABLE_ATTACH` This item is a cable spool. Use it to try to attach to a vehicle.
 - `CAN_GOO` Release a little blob buddy.
 - `CAPTURE_MONSTER_ACT` Capture and encapsulate a monster. The associated action is also used for
@@ -554,6 +503,8 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BARRICADABLE_DOOR` Door that can be barricaded.
 - `BARRICADABLE_WINDOW_CURTAINS`
 - `BARRICADABLE_WINDOW` Window that can be barricaded.
+- `BASH_TRANSFORM` If this furniture possesses the `transform` examine action, bashing has a chance
+  to trigger (e.g. flipping tables).
 - `BASHABLE` Players + Monsters can bash this.
 - `BLOCK_WIND` This terrain will block the effects of wind.
 - `BURROWABLE` Burrowing monsters can travel under this terrain, while most others can't (e.g.
@@ -736,12 +687,14 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
   it's active.
 - `BIONIC_GUN` ... This bionic is a gun bionic and activating it will fire it. Prevents all other
   activation effects.
+- `CRAFT_WITH_FULL_MAG` ... This item crafts with a full set of ammo
 - `COMBAT_NPC_ON` ... The "on" state for Items that NPCs will use in combat
 - `COMBAT_NPC_USE` ... Items and CBMs that NPCs will activate when in combat
 - `CORPSE` ... Flag used to spawn various human corpses during the mapgen.
 - `DANGEROUS` ... NPCs will not accept this item. Explosion iuse actor implies this flag. Implies
   "NPC_THROW_NOW".
 - `DESTROY_ON_DECHARGE` ... This item should be destroyed if loses charges.
+- `DESTROY_ON_DROP` ... When dropped on the ground, it will be destroyed.
 - `DURABLE_MELEE` ... Item is made to hit stuff and it does it well, so it's considered to be a lot
   tougher than other weapons made of the same materials.
 - `FAKE_MILL` ... Item is a fake item, to denote a partially milled product by @ref
@@ -791,6 +744,7 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `SLEEP_IGNORE` ... This item is not shown as before-sleep warning.
 - `SLOW_WIELD` ... Has an additional time penalty upon wielding. For melee weapons and guns this is
   offset by the relevant skill. Stacks with "NEEDS_UNFOLD".
+- `SECRET_ENCHANTMENTS` ... Enchantments on this item aren't shown in item info.
 - `TACK` ... Item can be used as tack for a mount.
 - `TIE_UP` ... Item can be used to tie up a creature.
 - `TINDER` ... This item can be used as tinder for lighting a fire with a REQUIRES_TINDER flagged
@@ -810,8 +764,10 @@ List of known flags, used in both `terrain.json` and `furniture.json`.
 - `BIPOD` Handling bonus only applies on MOUNTABLE map/vehicle tiles. Does not include wield time
   penalty (see SLOW_WIELD).
 - `CHARGE` Has to be charged to fire. Higher charges do more damage.
-- `COLLAPSIBLE_STOCK` Reduces weapon volume proportional to the base size of the gun (excluding any
-  mods). Does not include wield time penalty (see NEEDS_UNFOLD).
+- `COLLAPSIBLE_STOCK` **DEPRECATED**: Use `volume_multiplier` in gunmod definitions instead.
+  Previously reduced weapon volume proportional to the base size of the gun (excluding any
+  mods). `volume_multiplier: 0.67` replicates the old behavior. Does not include wield time
+  penalty (see NEEDS_UNFOLD).
 - `CONSUMABLE` Makes a gunpart have a chance to get damaged depending on ammo fired, and definable
   fields 'consume_chance' and 'consume_divisor'.
 - `CROSSBOW` Counts as a crossbow for the purpose of gunmod compatibility. Default behavior is to
@@ -1139,6 +1095,8 @@ Multiple death functions can be used. Not all combinations make sense.
 - `PAY_BOT` Creature can be turned into a pet for a limited time in exchange of e-money.
 - `PET_MOUNTABLE` Creature can be ridden or attached to an harness.
 - `PET_HARNESSABLE`Creature can be attached to an harness.
+- `POLICE_EYEBOT` Changes the behavior of the `PHOTOGRAPH` special attack. Without it, the attack will only
+  do anything if the user is friendly, with it non-friendly bots can summon reinforcements.
 - `MOUNTABLE_STAIRS` Player can go up/down stairs while riding this creature.
 - `MOUNTABLE_LADDER` Player can go up/down stairs that have the difficult_z flag while riding this creature.
 - `MOUNTABLE_OBSTACLES` Player can travel over fences/doors while riding this creature.
@@ -1146,6 +1104,7 @@ Multiple death functions can be used. Not all combinations make sense.
 - `MOUNTABLE_LEDGE` Player can jump down ledges while riding this creature.
 - `NULL` Source use only.
 - `PACIFIST` That monster will never do melee attacks.
+- `KEEP_DISTANCE` Monster will try to keep `tracking_distance` number of tiles between it and its current target.
 - `PARALYZE` Attack may paralyze the player with venom.
 - `PLASTIC` Reduces Bashing damage taken by 50%, 66% or 75%. Randomly selected with each hit.
 - `POISON` Poisonous to eat.
@@ -1255,7 +1214,8 @@ example, impale and scratch.
 - `PARROT_AT_DANGER` Performs the same function as PARROT, but only if the creature sees an angry
   monster from a hostile faction.
 - `PAID_BOT` For creature with PAY_BOT flag, removes the ally status when the pet effect runs out.
-- `PHOTOGRAPH` Photograph the player. Causes a robot attack?
+- `PHOTOGRAPH` If friendly, scans the surrounding area to mark targets for the player. If non-friendly,
+  photographs the player and summons reinforcements if user has the `POLICE_EYEBOT` flag, otherwise no effect.
 - `PLANT` Fungal spores take seed and grow into a fungaloid.
 - `PULL_METAL_WEAPON` Pull weapon that's made of iron or steel from the player's hand.
 - `RANGED_PULL` Pull targets towards attacker.
@@ -1430,6 +1390,12 @@ These branches are also the valid entries for the categories of `dreams` in `dre
 - `GENERIC_LOOT` This is a place that may contain any of the above, but at a lower frequency -
   usually a house.
 - `IS_BRIDGE` Will be expanded to a bridge in mapgen, terrains with the id of this object followed by _under, _road, head_ground and head_ramp must be defined, and _center_under may also be defined.
+
+## Mapgen
+
+#### Flags
+
+- `ERASE_ALL_BEFORE_PLACING_TERRAIN` In the name, removes vehicles fields furniture and items before placing terrain down
 
 ## Recipes
 

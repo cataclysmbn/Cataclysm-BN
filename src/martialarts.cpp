@@ -1,14 +1,5 @@
 #include "martialarts.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <iterator>
-#include <map>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <utility>
-
 #include "avatar.h"
 #include "character.h"
 #include "character_martial_arts.h"
@@ -25,7 +16,7 @@
 #include "item_factory.h"
 #include "itype.h"
 #include "json.h"
-#include "map.h"
+#include "map/map.h"
 #include "messages.h"
 #include "mutation.h"
 #include "output.h"
@@ -38,8 +29,18 @@
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "type_id_implement.h"
 #include "ui_manager.h"
 #include "value_ptr.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
 
 static const skill_id skill_unarmed( "unarmed" );
 
@@ -57,18 +58,10 @@ generic_factory<martialart> martialarts( "martial art style" );
 generic_factory<ma_buff> ma_buffs( "martial art buff" );
 } // namespace
 
-template<>
-const weapon_category &weapon_category_id::obj() const
-{
-    return weapon_category_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool weapon_category_id::is_valid() const
-{
-    return weapon_category_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( weapon_category, weapon_category_factory );
+IMPLEMENT_STRING_AND_INT_IDS( ma_technique, ma_techniques );
+IMPLEMENT_STRING_AND_INT_IDS( martialart, martialarts );
+IMPLEMENT_STRING_AND_INT_IDS( ma_buff, ma_buffs );
 
 void weapon_category::load_weapon_categories( const JsonObject &jo, const std::string &src )
 {
@@ -220,6 +213,7 @@ void ma_technique::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "knockback_dist", knockback_dist, 0 );
     optional( jo, was_loaded, "knockback_spread", knockback_spread, 0 );
     optional( jo, was_loaded, "powerful_knockback", powerful_knockback, false );
+    optional( jo, was_loaded, "controlled_knockback", controlled_knockback, false );
     optional( jo, was_loaded, "knockback_follow", knockback_follow, false );
 
     optional( jo, was_loaded, "aoe", aoe, "" );
@@ -227,23 +221,6 @@ void ma_technique::load( const JsonObject &jo, const std::string &src )
 
     reqs.load( jo, src );
     bonuses.load( jo );
-}
-
-// Not implemented on purpose (martialart objects have no integer id)
-// int_id<T> string_id<mabuff>::id() const;
-
-/** @relates string_id */
-template<>
-const ma_technique &string_id<ma_technique>::obj() const
-{
-    return ma_techniques.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ma_technique>::is_valid() const
-{
-    return ma_techniques.is_valid( *this );
 }
 
 void ma_buff::load( const JsonObject &jo, const std::string &src )
@@ -263,23 +240,6 @@ void ma_buff::load( const JsonObject &jo, const std::string &src )
 
     reqs.load( jo, src );
     bonuses.load( jo );
-}
-
-// Not implemented on purpose (martialart objects have no integer id)
-// int_id<T> string_id<mabuff>::id() const;
-
-/** @relates string_id */
-template<>
-const ma_buff &string_id<ma_buff>::obj() const
-{
-    return ma_buffs.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<ma_buff>::is_valid() const
-{
-    return ma_buffs.is_valid( *this );
 }
 
 void load_martial_art( const JsonObject &jo, const std::string &src )
@@ -342,23 +302,6 @@ void martialart::load( const JsonObject &jo, const std::string & )
 
     optional( jo, was_loaded, "arm_block_with_bio_armor_arms", arm_block_with_bio_armor_arms, false );
     optional( jo, was_loaded, "leg_block_with_bio_armor_legs", leg_block_with_bio_armor_legs, false );
-}
-
-// Not implemented on purpose (martialart objects have no integer id)
-// int_id<T> string_id<martialart>::id() const;
-
-/** @relates string_id */
-template<>
-const martialart &string_id<martialart>::obj() const
-{
-    return martialarts.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<martialart>::is_valid() const
-{
-    return martialarts.is_valid( *this );
 }
 
 std::vector<matype_id> all_martialart_types()
@@ -540,7 +483,8 @@ bool ma_requirements::is_valid_character( const Character &u ) const
     }
 
     for( const auto &pr : min_skill ) {
-        if( ( cqb ? 5 : u.get_skill_level( pr.first ) ) < pr.second ) {
+        if( ( cqb ? std::max( u.get_skill_level(
+                                  pr.first ), BIO_CQB_LEVEL ) : u.get_skill_level( pr.first ) ) < pr.second ) {
             return false;
         }
     }
@@ -602,7 +546,7 @@ std::string ma_requirements::get_description( bool buff ) const
         min_skill.end(), []( const std::pair<skill_id, int>  &pr ) {
             int player_skill = get_player_character().get_skill_level( skill_id( pr.first ) );
             if( get_player_character().has_active_bionic( bio_cqb ) ) {
-                player_skill = BIO_CQB_LEVEL;
+                player_skill = std::max( player_skill, BIO_CQB_LEVEL );;
             }
             return string_format( "%s: <stat>%d</stat>/<stat>%d</stat>", pr.first->name(), player_skill,
                                   pr.second );
@@ -696,6 +640,7 @@ ma_technique::ma_technique()
     knockback_dist = 0;
     knockback_spread = 0; // adding randomness to knockback, like tec_throw
     powerful_knockback = false;
+    controlled_knockback = false;
     knockback_follow = false; // player follows the knocked-back party into their former tile
 
     // offensive
@@ -1080,7 +1025,8 @@ bool character_martial_arts::can_leg_block( const Character &owner ) const
 {
     const martialart &ma = style_selected.obj();
     ///\EFFECT_UNARMED increases ability to perform leg block
-    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? 5 : owner.get_skill_level(
+    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? std::max( owner.get_skill_level(
+                            skill_unarmed ), BIO_CQB_LEVEL ) : owner.get_skill_level(
                             skill_unarmed );
 
     // Success conditions.
@@ -1099,7 +1045,8 @@ bool character_martial_arts::can_arm_block( const Character &owner ) const
 {
     const martialart &ma = style_selected.obj();
     ///\EFFECT_UNARMED increases ability to perform arm block
-    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? 5 : owner.get_skill_level(
+    int unarmed_skill = owner.has_active_bionic( bio_cqb ) ? std::max( owner.get_skill_level(
+                            skill_unarmed ), BIO_CQB_LEVEL ) : owner.get_skill_level(
                             skill_unarmed );
 
     // Success conditions.
@@ -1507,6 +1454,11 @@ std::string ma_technique::get_description() const
                                knockback_dist, vgettext( "tile", "tiles", knockback_dist ) ) + "\n";
     }
 
+    if( controlled_knockback ) {
+        dump += _( "* Can <info>control</info> the knockback direction in manual combat mode." ) +
+                std::string( "\n" );
+    }
+
     if( knockback_follow ) {
         dump += _( "* Will <info>follow</info> enemies after knockback." ) + std::string( "\n" );
     }
@@ -1573,7 +1525,7 @@ bool ma_style_callback::key( const input_context &ctxt, const input_event &event
             ma.leg_block_with_bio_armor_legs || ma.leg_block != 99 ) {
             int unarmed_skill =  get_player_character().get_skill_level( skill_unarmed );
             if( get_player_character().has_active_bionic( bio_cqb ) ) {
-                unarmed_skill = BIO_CQB_LEVEL;
+                unarmed_skill = std::max( unarmed_skill, BIO_CQB_LEVEL );
             }
             if( ma.arm_block_with_bio_armor_arms ) {
                 buffer += _( "You can <info>arm block</info> by installing the <info>Arms Alloy Plating CBM</info>" );

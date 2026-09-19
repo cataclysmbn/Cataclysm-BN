@@ -192,6 +192,7 @@
       { "item": "carbine_flintlock", "prob": 3 },
       { "item": "rifle_flintlock", "prob": 3 },
       { "item": "longrifle_flintlock", "prob": 3 },
+      { "item": "combination_gun", "prob": 3 },
       { "item": "shotgun_paper", "prob": 4 },
       { "item": "helmet_steel", "prob": 5 },
       { "item": "boxing_gloves", "prob": 12 },
@@ -221,6 +222,7 @@
       { "item": "carbine_flintlock", "prob": 3 },
       { "item": "rifle_flintlock", "prob": 3 },
       { "item": "longrifle_flintlock", "prob": 3 },
+      { "item": "combination_gun", "prob": 3 },
       { "item": "shotgun_paper", "prob": 4 },
       { "item": "helmet_steel", "prob": 5 },
       { "group": "antique_medieval_arms", "prob": 20 }
@@ -313,6 +315,7 @@
       { "item": "carbine_flintlock", "prob": 3 },
       { "item": "rifle_flintlock", "prob": 3 },
       { "item": "longrifle_flintlock", "prob": 3 },
+      { "item": "combination_gun", "prob": 3 },
       { "item": "shotgun_paper", "prob": 4 },
       { "item": "petrified_eye", "prob": 2 },
       { "item": "ji", "prob": 1 },

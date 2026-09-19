@@ -41,6 +41,15 @@
     "use_action": { "type": "place_monster", "monster_id": "mon_shadow_summoned_fake", "place_randomly": true }
   },
   {
+    "id": "fake_arcana_curved_claws",
+    "//": "Fake item that provides Dragonblood mutants with an innate source of cutting quality, needed to cast Sanguine Marks.",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str_sp": "draconic claws" },
+    "flags": [ "TRADER_AVOID", "ENCHANTMENT_TOOLS" ],
+    "qualities": [ [ "CUT", 1 ] ]
+  },
+  {
     "id": "bot_seraphic_mimic",
     "type": "TOOL",
     "name": { "str": "Archon mimic" },
@@ -137,9 +146,7 @@
     "looks_like": "small_relic",
     "color": "yellow",
     "flags": [ "MAGIC_FOCUS", "USE_PLAYER_ENERGY", "NO_SALVAGE" ],
-    "relic_data": {
-      "passive_effects": [ { "has": "WIELD", "condition": "ALWAYS", "values": [ { "value": "MANA_REGEN", "multiply": 0.25 } ] } ]
-    },
+    "relic_data": { "passive_effects": [ { "conditions": [ "WIELD" ], "values": [ { "value": "MANA_REGEN", "multiply": 0.25 } ] } ] },
     "use_action": [
       "MEDITATE",
       {
@@ -147,7 +154,8 @@
         "spell_id": "arcana_item_chalice_offering",
         "no_fail": true,
         "need_wielding": true,
-        "level": 0
+        "level": 0,
+        "menu_text": "Convert life force into blood essence"
       }
     ]
   },
@@ -159,7 +167,7 @@
     "weapon_category": [ "KNIVES" ],
     "name": { "str": "silver athame" },
     "description": "An ornate silver dagger, seemingly made for ritual purposes.  It seems sharper than silver has any right to be.  It can be used to perform a ritual converting your life force into blood essence.  Doing so will take 5 minutes, inflicting blood loss and damage at the end, as well as potential consequences if overused…",
-    "weight": "1302 g",
+    "weight": "600 g",
     "volume": "750 ml",
     "price": "240 USD",
     "price_postapoc": "20 USD",
@@ -178,7 +186,8 @@
         "spell_id": "arcana_item_athame_sanguine_art",
         "no_fail": true,
         "need_wielding": true,
-        "level": 0
+        "level": 0,
+        "menu_text": "Convert life force into blood essence"
       }
     ],
     "flags": [ "STAB", "SHEATH_KNIFE", "USE_PLAYER_ENERGY", "NO_SALVAGE" ]
@@ -209,8 +218,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_sun_sword_daze",
@@ -346,8 +354,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "values": [ { "value": "MOVE_COST", "add": -25 } ],
           "hit_you_effect": [
             {
@@ -1019,7 +1026,7 @@
       "fields_radius": 3,
       "fields_min_intensity": 3,
       "fields_max_intensity": 3,
-      "sound_volume": 1,
+      "sound_volume": "20 dB",
       "sound_msg": "Drip.",
       "no_deactivate_msg": "You can't dispel the effect.  Might want to try throwing it instead.",
       "explosion": { "damage": 125, "radius": 3 }
@@ -1034,7 +1041,7 @@
     "weapon_category": [ "DUELING_SWORDS" ],
     "name": { "str": "shrike's misericorde" },
     "description": "An ornate silver weapon featuring a thin blade and two flintlock barrels built into the guard.  Its strikes inflict victims with a deathly chill.  Activating it will transform it into a more compact form, allowing its user to load and fire it.  Its pistol form will impart a freezing effect on shots fired from it, including otherworldly damage that can bypass mundane armor, though robots and certain supernatural monsters will only suffer the bullet's normal damage.",
-    "weight": "2 kg",
+    "weight": "1250 g",
     "volume": "1500 ml",
     "price": "1000 USD",
     "price_postapoc": "50 USD",
@@ -1063,8 +1070,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_shrike_misericorde_chill",
@@ -1109,8 +1115,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_bane_staff_venom",
@@ -1126,7 +1131,16 @@
     "charges_per_use": 2,
     "ammo": "essence_blood_type",
     "relative": { "weight": "230 g" },
-    "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_lichhook", "no_fail": true, "need_wielding": true, "level": 0 } ],
+    "use_action": [
+      {
+        "type": "cast_spell",
+        "spell_id": "arcana_item_lichhook",
+        "no_fail": true,
+        "need_wielding": true,
+        "level": 0,
+        "menu_text": "Immobilize victim"
+      }
+    ],
     "extend": { "flags": [ "NO_SALVAGE", "SHEATH_SWORD" ] }
   },
   {
@@ -1168,6 +1182,7 @@
     "repairs_like": "candle_warding",
     "symbol": ",",
     "color": "white",
+    "light_color": "#b8ffc0",
     "use_action": [
       {
         "target": "candle_warding",
@@ -1184,7 +1199,7 @@
     "id": "transmutation_crucible",
     "type": "TOOL",
     "name": { "str": "transmutation crucible" },
-    "description": "A small container made out of a polished, glassy material resembling stone.  A shimmer of precious metal occasionally appears within the surface, as though its internal structure flowed like liquid.  Deploying it will create a temporary workspace of shifting earth, providing a hard surface usable as an anvil as well as shifting stones that can assist in metalworking and alchemy.  It can be examined afterward to reclaim it.\n\nWhen deployed it provides the following:\n* Level 3 anvil quality.\n* Level 2 boiling quality.\n* Level 2 chemical making quality.\n* Level 1 containing quality.\n* Level 1 hot containing quality.\n* Level 1 food cooking quality.",
+    "description": "A small container made out of a polished, glassy material resembling stone.  A shimmer of precious metal occasionally appears within the surface, as though its internal structure flowed like liquid.  Deploying it will create a temporary workspace of shifting earth, providing a hard surface usable as an anvil as well as shifting stones that can assist in metalworking and alchemy.  It can be examined afterward to reclaim it.\n\nWhen deployed it provides the following:\n* Level 3 anvil quality.\n* Level 2 boiling quality.\n* Level 2 chemical making quality.\n* Level 1 containing quality.\n* Level 1 hot containing quality.\n* Level 1 food cooking quality.\n* Level 1 distilling quality.",
     "weight": "1700 g",
     "volume": "1500 ml",
     "price": "6000 USD",
@@ -1203,7 +1218,15 @@
     "type": "TOOL",
     "copy-from": "fake_item",
     "name": { "str": "deployed transmutation crucible" },
-    "qualities": [ [ "ANVIL", 3 ], [ "COOK", 1 ], [ "CHEM", 2 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 1 ] ]
+    "qualities": [
+      [ "ANVIL", 3 ],
+      [ "COOK", 1 ],
+      [ "CHEM", 2 ],
+      [ "BOIL", 2 ],
+      [ "CONTAIN", 1 ],
+      [ "CONTAIN_HOT", 1 ],
+      [ "DISTILL", 1 ]
+    ]
   },
   {
     "id": "dimensional_warp_trap",
@@ -1242,11 +1265,10 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "mutations": [ "SCHIZOPHRENIC" ],
-          "ench_effects": [ { "effect": "arcana_clairvoyance_hidden", "intensity": 1 } ],
           "values": [
+            { "value": "CLAIRVOYANCE", "max": 40 },
             { "value": "INTELLIGENCE", "add": 4 },
             { "value": "PERCEPTION", "add": 2 },
             { "value": "MANA_REGEN", "multiply": 0.25 }
@@ -1419,6 +1441,26 @@
         "tool_quality": 20,
         "cost_scaling": 0,
         "move_cost": 1000
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "bronze",
+          "brass",
+          "silver",
+          "gold",
+          "platinum",
+          "superalloy",
+          "glass"
+        ],
+        "skill": "fabrication",
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ]
       }
     ],
     "flags": [ "ALLOWS_REMOTE_USE", "NO_SALVAGE" ]
@@ -1553,7 +1595,12 @@
     "max_charges": 24,
     "ammo": "essence_blood_type",
     "relic_data": {
-      "passive_effects": [ { "has": "WIELD", "condition": "ACTIVE", "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 } ] } ]
+      "passive_effects": [
+        {
+          "conditions": [ "WIELD", "ACTIVE" ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5, "hit_self": true } ]
+        }
+      ]
     },
     "use_action": [
       {
@@ -1609,9 +1656,11 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
-          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 5 }, { "id": "arcana_react_moonstone_touch", "once_in": 10 } ],
+          "conditions": [ "WIELD" ],
+          "hit_you_effect": [
+            { "id": "arcana_react_drain_life", "once_in": 5, "hit_self": true },
+            { "id": "arcana_react_moonstone_touch", "once_in": 10 }
+          ],
           "hit_me_effect": [
             {
               "id": "arcana_react_shadowy_shield",
@@ -1622,9 +1671,8 @@
           ]
         },
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
-          "values": [ { "value": "ARMOR_COLD", "multiply": -0.5 } ],
+          "conditions": [ "WIELD", "ACTIVE" ],
+          "values": [ { "value": "ARMOR_COLD", "multiply": -1.0 }, { "value": "CLIMATE_CONTROL_HEATING", "add": 1500 } ],
           "ench_effects": [ { "effect": "cold_ward", "intensity": 1 } ]
         }
       ]
@@ -1678,12 +1726,18 @@
     "max_charges": 10,
     "charges_per_use": 1,
     "ammo": "essence_pure_type",
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_ritual_blade", "no_fail": true, "need_wielding": true, "level": 0 },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_ritual_blade",
+      "no_fail": true,
+      "need_wielding": true,
+      "level": 0,
+      "menu_text": "Offer power to the Beyond"
+    },
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "values": [ { "value": "INTELLIGENCE", "add": 4 }, { "value": "MANA_REGEN", "multiply": 0.5 } ]
         }
       ],
@@ -1695,6 +1749,7 @@
       ]
     },
     "techniques": [ "WBLOCK_1", "WIDE", "BRUTAL", "SWEEP" ],
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 4 ] ],
     "flags": [ "UNBREAKABLE_MELEE", "NO_SALVAGE", "MAGIC_FOCUS", "NONCONDUCTIVE", "SHEATH_SWORD" ]
   },
   {
@@ -1758,10 +1813,9 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "mutations": [ "ARCANA_STAFF_EFFECT" ],
-          "hit_you_effect": [ { "id": "arcana_react_sanguine_staff_drain" } ]
+          "hit_you_effect": [ { "id": "arcana_react_sanguine_staff_drain", "hit_self": true }, { "id": "arcana_react_sanguine_staff_drain_2" } ]
         }
       ],
       "recharge_scheme": [
@@ -1816,11 +1870,10 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_EFFECT" ],
           "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
-          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved", "hit_self": true }, { "id": "arcana_react_drain_life_improved_2" } ],
           "intermittent_activation": { "effects": [ { "frequency": "3 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
         }
@@ -1880,11 +1933,10 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ACTIVE",
+          "conditions": [ "WIELD", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_EFFECT" ],
           "values": [ { "value": "STRENGTH", "add": 4 }, { "value": "DEXTERITY", "add": 2 } ],
-          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved" } ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life_improved", "hit_self": true }, { "id": "arcana_react_drain_life_improved_2" } ],
           "intermittent_activation": { "effects": [ { "frequency": "3 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
         }

@@ -50,6 +50,8 @@
     "dispersion": 150,
     "recoil": 49500,
     "count": 15,
+    "speed": 1100,
+    "loudness": 182,
     "effects": [ "AMMO_25MM_HEI", "INCENDIARY", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true
   },
@@ -73,6 +75,8 @@
     "dispersion": 125,
     "recoil": 43750,
     "count": 15,
+    "speed": 1345,
+    "loudness": 183,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -94,6 +98,8 @@
     "dispersion": 200,
     "recoil": 52000,
     "count": 10,
+    "speed": 1100,
+    "loudness": 182,
     "effects": [ "COOKOFF", "RECYCLED" ]
   },
   {
@@ -162,6 +168,8 @@
     "dispersion": 150,
     "recoil": 375000,
     "count": 1,
+    "speed": 1000,
+    "loudness": 184,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
     "explosion": { "damage": 100, "radius": 2 }
@@ -187,6 +195,8 @@
     "dispersion": 175,
     "recoil": 350000,
     "count": 1,
+    "speed": 1478,
+    "loudness": 186,
     "effects": [ "COOKOFF", "INCENDIARY" ]
   },
   {
@@ -208,6 +218,8 @@
     "dispersion": 250,
     "recoil": 300000,
     "count": 1,
+    "speed": 1478,
+    "loudness": 186,
     "effects": [ "COOKOFF", "RECYCLED" ]
   },
   {
@@ -230,6 +242,8 @@
     "type": "AMMO",
     "name": { "str_sp": "reloaded 105mm HE" },
     "description": "A 105mm shell with a new electric primer installed, loaded with a homemade explosive round.  Obsolete or not, it packs quite a punch.",
+    "speed": 1000,
+    "loudness": 184,
     "proportional": {
       "price_postapoc": 1.25,
       "weight": 0.9,
@@ -275,6 +289,8 @@
     "dispersion": 200,
     "recoil": 900000,
     "count": 1,
+    "speed": 1140,
+    "loudness": 186,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
     "explosion": { "damage": 150, "radius": 3 }
@@ -299,6 +315,8 @@
     "dispersion": 225,
     "recoil": 787500,
     "count": 1,
+    "speed": 1630,
+    "loudness": 187,
     "effects": [ "COOKOFF", "INCENDIARY" ]
   },
   {
@@ -321,6 +339,8 @@
     "dispersion": 150,
     "recoil": 225000,
     "count": 1,
+    "speed": 1410,
+    "loudness": 186,
     "effects": [ "COOKOFF", "SHOT", "RECYCLED" ]
   },
   {
@@ -356,6 +376,8 @@
     "dispersion": 300,
     "recoil": 450000,
     "count": 1,
+    "speed": 1200,
+    "loudness": 186,
     "effects": [ "COOKOFF", "RECYCLED" ]
   },
   {
@@ -422,6 +444,8 @@
     "dispersion": 275,
     "recoil": 1031250,
     "count": 1,
+    "speed": 1000,
+    "loudness": 190,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
     "explosion": { "damage": 200, "radius": 5 }
@@ -445,6 +469,8 @@
     "dispersion": 300,
     "recoil": 1050000,
     "count": 1,
+    "speed": 1000,
+    "loudness": 190,
     "effects": [ "AMMO_155MM_FRAG", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true
   },
@@ -467,6 +493,8 @@
     "dispersion": 200,
     "recoil": 400000,
     "count": 1,
+    "speed": 1000,
+    "loudness": 190,
     "effects": [ "COOKOFF", "SHOT", "RECYCLED" ]
   },
   {
@@ -501,6 +529,8 @@
     "dispersion": 400,
     "recoil": 800000,
     "count": 1,
+    "speed": 1000,
+    "loudness": 190,
     "effects": [ "COOKOFF", "RECYCLED" ]
   },
   {
@@ -566,6 +596,8 @@
     "dispersion": 800,
     "recoil": 800000,
     "count": 1,
+    "speed": 1000,
+    "loudness": 190,
     "effects": [ "COOKOFF", "RECYCLED", "MININUKE_MOD", "NO_PENETRATE_OBSTACLES" ]
   },
   {

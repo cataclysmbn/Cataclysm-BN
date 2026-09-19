@@ -50,7 +50,18 @@
     "move_cost_mod": -1,
     "coverage": 60,
     "required_str": -1,
-    "crafting_pseudo_item": [ "fake_oven", "fake_chemistry_set", "fake_gridelectrolysis_kit", "pot", "pan" ],
+    "crafting_pseudo_item": [
+      "fake_oven",
+      "fake_chemistry_set",
+      "fake_gridelectrolysis_kit",
+      "fake_gridfood_processor",
+      "fake_griddehydrator",
+      "fake_gridvac_sealer",
+      "fake_gridwater_purifier",
+      "press",
+      "pot",
+      "pan"
+    ],
     "flags": [ "BLOCKSDOOR", "MINEABLE", "EASY_DECONSTRUCT", "TRANSPARENT" ],
     "deconstruct": {
       "items": [
@@ -95,7 +106,7 @@
     "move_cost_mod": -1,
     "coverage": 60,
     "required_str": -1,
-    "crafting_pseudo_item": [ "fake_gridforge", "fake_gridkiln" ],
+    "crafting_pseudo_item": [ "fake_gridforge", "fake_gridkiln", "fake_gridwelder", "fake_gridsolderingiron" ],
     "flags": [ "BLOCKSDOOR", "MINEABLE", "EASY_DECONSTRUCT", "TRANSPARENT" ],
     "deconstruct": {
       "items": [

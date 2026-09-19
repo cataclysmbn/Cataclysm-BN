@@ -16,12 +16,16 @@ build
 !build-scripts
 !build-data
 build-data/gettext
+build-data/mesa
+build-data/mesa*
+build-data/mesa/*
 test_user_dir*
 /build-start-time
 /cmake-build-debug/
 /config/
 /data/*.template
 /data/mods/user-default-mods.json
+/data/shaders/
 /dep/
 /doxygen_doc/html/*
 /doxygen_doc/latex/*
@@ -55,7 +59,8 @@ cataclysmdda-*
 debug.log
 logg.txt
 
-# Generated Lua docs (see `deno task docs:gen`)
+# Generated docs (see `deno task docs:gen`)
+/docs/en/dev/reference/cli_options.md
 /docs/en/mod/lua/reference/lua.md
 /lua_annotations.lua
 

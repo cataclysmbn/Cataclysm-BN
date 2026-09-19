@@ -1,17 +1,8 @@
-#include "game.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cmath>
-#include <exception>
-#include <iostream>
-#include <iterator>
-#include <set>
-#include <utility>
-
 #include "avatar.h"
 #include "consumption.h"
 #include "damage.h"
 #include "flat_set.h"
+#include "game.h" // IWYU pragma: associated
 #include "init.h"
 #include "item.h"
 #include "item_factory.h"
@@ -28,10 +19,18 @@
 #include "skill.h"
 #include "translations.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 #include "vitamin.h"
+
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <iostream>
+#include <iterator>
+#include <set>
+#include <utility>
 
 bool game::dump_stats( const std::string &what, dump_mode mode,
                        const std::vector<std::string> &opts )
@@ -115,7 +114,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             "Name", "Volume", "Weight", "Stack", "Calories", "Quench", "Healthy"
         };
         for( const auto &v : vitamin::all() ) {
-            header.push_back( v.second.name() );
+            header.push_back( v.name() );
         }
         auto dump = [&rows]( const item & obj ) {
             std::vector<std::string> r;
@@ -128,7 +127,7 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             r.push_back( std::to_string( obj.get_comestible()->healthy ) );
             auto vits = obj.get_comestible()->default_nutrition.vitamins;
             for( const auto &v : vitamin::all() ) {
-                r.push_back( std::to_string( vits[ v.first ] ) );
+                r.push_back( std::to_string( vits[ v.id ] ) );
             }
             rows.push_back( r );
         };
@@ -293,8 +292,8 @@ bool game::dump_stats( const std::string &what, dump_mode mode,
             r.push_back( std::to_string( obj.size / units::legacy_volume_factor ) );
             rows.push_back( r );
         };
-        for( const auto &e : vpart_info::all() ) {
-            dump( e.second );
+        for( const auto &vp : vpart_info::get_all() ) {
+            dump( vp );
         }
 
     } else {

@@ -218,6 +218,13 @@ hostility on detection)
 Monster morale. Defines how low monster HP can get before it retreats. This number is treated as %
 of their max HP.
 
+## "tracking_distance"
+
+(integer, optional, default `8`)
+
+Distance in tiles that the monster keeps between itself and its current target when it has the
+`KEEP_DISTANCE` flag. This also controls how close following monsters approach their goal.
+
 ## "aggro_character"
 
 (bool, optional, default true)
@@ -225,6 +232,63 @@ of their max HP.
 If the monster will differentiate between monsters and characters (NPC, Player) when deciding on
 targets - if false the monster will ignore characters regardless of current anger/morale until a
 character trips and anger trigger. Resets randomly when the monster is at its base anger level.
+
+## "lua_attitude"
+
+(string, optional)
+
+If set, uses a Lua function from `game.monster_attitude_functions` to determine the monster's
+attitude instead of the default C++ logic. The Lua function is called with `(monster, target)`,
+where `target` can be `nil`, and should return a `MonsterAttitude` value. Returning `nil` falls back
+to the default behavior.
+
+```json
+"lua_attitude": "my_attitude"
+```
+
+```lua
+game.monster_attitude_functions["my_attitude"] = function(mon, target)
+  if target ~= nil and target:is_avatar() then
+    return MonsterAttitude.MATT_ATTACK
+  end
+  return nil
+end
+```
+
+## "lua_ai"
+
+(string, optional)
+
+If set, runs a Lua function from `game.monster_ai_functions` each monster turn. The function
+is called with `(monster)` and should return a boolean: `true` means Lua handled the turn and
+the default C++ AI is skipped, `false` or `nil` falls back to the default AI.
+
+```json
+"lua_ai": "my_ai"
+```
+
+```lua
+game.monster_ai_functions["my_ai"] = function(mon)
+  local avatar = gapi.get_avatar()
+  if avatar ~= nil then
+    local function sign(val)
+      if val > 0 then
+        return 1
+      end
+      if val < 0 then
+        return -1
+      end
+      return 0
+    end
+    local pos = mon:get_pos_ms()
+    local tgt = avatar:get_pos_ms()
+    local step = Tripoint.new(pos.x + sign(tgt.x - pos.x), pos.y + sign(tgt.y - pos.y), pos.z)
+    mon:set_target(avatar)
+    mon:move_to(step, false, true, 1.0)
+  end
+  return true
+end
+```
 
 ## "speed"
 
@@ -239,6 +303,11 @@ are slower.
 
 Used as the acceptable rider vs. mount weight percentage ratio. Defaults to "0.3", which means the
 mount is capable of carrying riders weighing <= 30% of the mount's weight.
+
+## "mountable_pixels_up"
+
+(int, optional)
+Used as the number of pixels upward to place the player when the mount is mounted
 
 ## "melee_skill"
 
@@ -257,13 +326,13 @@ Monster dodge skill. 0 to 10 in base game. See GAME_BALANCE.txt for an explanati
 
 (array of objects, optional)
 
-| Property            | Description                                                                                                                                                                 |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `damage_type`       | Type of damage. Valid entries: `"true"`, `"bash"`, `"cut"`, `"stab"`, `"bullet"`, `"biological"`, `"acid"`, `"heat"`, `"cold"`, `"dark"`, `"light"`, `"psi"`, `"electric"`. |
-| `amount`            | Amount of damage dealt.                                                                                                                                                     |
-| `armor_penetration` | Amount of armor ignored by this damage instance.                                                                                                                            |
-| `armor_multiplier`  | Multiplier applied to `armor_penetration`.                                                                                                                                  |
-| `damage_multiplier` | Multiplier applied to `amount`.                                                                                                                                             |
+| Property            | Description                                                                       |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `damage_type`       | Type of damage. See [damage types](/mod/json/reference/misc/damage/#damage-types) |
+| `amount`            | Amount of damage dealt.                                                           |
+| `armor_penetration` | Amount of armor ignored by this damage instance.                                  |
+| `armor_multiplier`  | Multiplier applied to `armor_penetration`.                                        |
+| `damage_multiplier` | Multiplier applied to `amount`.                                                   |
 
 ```json
 "melee_damage": [ { "damage_type": "electric", "amount": 4.0, "armor_penetration": 1, "armor_multiplier": 1.2, "damage_multiplier": 1.4 } ],
@@ -302,6 +371,12 @@ Monster protection from bashing, cutting, stabbing, acid, fire, cold and electri
 
 Vision range in full daylight and in total darkness.
 
+## "clairvoyance"
+
+(integer, optional)
+
+Clairvoyance vision range
+
 ## "luminance"
 
 (integer, optional)
@@ -328,6 +403,8 @@ Can freely be a collection to imply two weapons wielded in both hands, as items 
 
 An item group that is used to spawn items when the monster dies. This can be an inlined item group,
 see ITEM_SPAWN.md. The default subtype is "distribution".
+
+Use `"extend": { "death_drops": ... }` in an inherited or overridden monster to add another drop group without replacing existing death drops. A top-level `"death_drops"` member replaces inherited death drops.
 
 ## "death_function"
 

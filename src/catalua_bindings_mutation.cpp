@@ -117,6 +117,7 @@ void cata::detail::mod_mutation_branch( sol::state &lua )
         SET_MEMB_RO( healthy_rate );
         SET_MEMB_RO( stealth_modifier );
         SET_MEMB_RO( night_vision_range );
+        SET_MEMB_RO( local_detail_sight );
         SET_MEMB_RO( temperature_speed_modifier );
         SET_MEMB_RO( metabolism_modifier );
         SET_MEMB_RO( thirst_modifier );

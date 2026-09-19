@@ -168,7 +168,7 @@
     "volume": "210 ml",
     "bashing": 1,
     "to_hit": 1,
-    "loudness": 2,
+    "loudness": 4,
     "range": 30,
     "dispersion": 100,
     "durability": 10
@@ -251,7 +251,7 @@
       "fields_radius": 2,
       "fields_min_intensity": 3,
       "fields_max_intensity": 3,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Hiss.",
       "no_deactivate_msg": "The acidic liquid mass is bubbling away! It's about to burst!",
       "explosion": {
@@ -304,7 +304,7 @@
     "range": 10,
     "dispersion": 1000,
     "ranged_damage": { "damage_type": "electric", "amount": 10, "armor_penetration": 4 },
-    "loudness": 20,
+    "loudness": 55,
     "modes": [ [ "DEFAULT", "semi", 1 ] ],
     "ammo_effects": [ "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES", "DRAW_AS_LINE", "WIDE", "EMP" ]
   }

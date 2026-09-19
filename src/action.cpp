@@ -1,15 +1,5 @@
 #include "action.h"
 
-#include <algorithm>
-#include <climits>
-#include <istream>
-#include <iterator>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <utility>
-
 #include "avatar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -18,6 +8,7 @@
 #include "creature.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "enum_conversions.h"
 #include "flag.h"
 #include "game.h"
 #include "iexamine.h"
@@ -25,9 +16,9 @@
 #include "item.h"
 #include "item_functions.h"
 #include "lua_action_menu.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "options.h"
 #include "output.h"
@@ -40,10 +31,20 @@
 #include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <climits>
+#include <istream>
+#include <iterator>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <set>
+#include <utility>
 
 static const quality_id qual_BUTCHER( "BUTCHER" );
 static const quality_id qual_CUT_FINE( "CUT_FINE" );
@@ -55,6 +56,179 @@ static const std::string flag_SEALED( "SEALED" );
 static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 
 static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
+#define PAIR(x) case x: return #x;
+template<>
+std::string io::enum_to_string<action_id>( action_id data )
+{
+    switch( data ) {
+            PAIR( ACTION_NULL )
+            PAIR( ACTION_SELECT )
+            PAIR( ACTION_SEC_SELECT )
+            PAIR( ACTION_PAUSE )
+            PAIR( ACTION_TIMEOUT )
+            PAIR( ACTION_MOVE_FORTH )
+            PAIR( ACTION_MOVE_FORTH_RIGHT )
+            PAIR( ACTION_MOVE_RIGHT )
+            PAIR( ACTION_MOVE_BACK_RIGHT )
+            PAIR( ACTION_MOVE_BACK )
+            PAIR( ACTION_MOVE_BACK_LEFT )
+            PAIR( ACTION_MOVE_LEFT )
+            PAIR( ACTION_MOVE_FORTH_LEFT )
+            PAIR( ACTION_MOVE_DOWN )
+            PAIR( ACTION_MOVE_UP )
+            PAIR( ACTION_CYCLE_MOVE )
+            PAIR( ACTION_RESET_MOVE )
+            PAIR( ACTION_TOGGLE_RUN )
+            PAIR( ACTION_TOGGLE_CROUCH )
+            PAIR( ACTION_TOGGLE_PRONE )
+            PAIR( ACTION_OPEN_MOVEMENT )
+            PAIR( ACTION_TOGGLE_MAP_MEMORY )
+            PAIR( ACTION_CENTER )
+            PAIR( ACTION_SHIFT_N )
+            PAIR( ACTION_SHIFT_NE )
+            PAIR( ACTION_SHIFT_E )
+            PAIR( ACTION_SHIFT_SE )
+            PAIR( ACTION_SHIFT_S )
+            PAIR( ACTION_SHIFT_SW )
+            PAIR( ACTION_SHIFT_W )
+            PAIR( ACTION_SHIFT_NW )
+
+            PAIR( ACTION_OPEN )
+            PAIR( ACTION_CLOSE )
+            PAIR( ACTION_SMASH )
+            PAIR( ACTION_EXAMINE )
+            PAIR( ACTION_JUMP )
+            PAIR( ACTION_PICKUP )
+            PAIR( ACTION_PICKUP_ALL )
+            PAIR( ACTION_PICKUP_FEET )
+            PAIR( ACTION_GRAB )
+            PAIR( ACTION_HAUL )
+            PAIR( ACTION_BUTCHER )
+            PAIR( ACTION_CHAT )
+            PAIR( ACTION_LOOK )
+            PAIR( ACTION_PEEK )
+            PAIR( ACTION_LIST_ITEMS )
+            PAIR( ACTION_ZONES )
+            PAIR( ACTION_LOOT )
+
+            PAIR( ACTION_INVENTORY )
+            PAIR( ACTION_ADVANCEDINV )
+            PAIR( ACTION_COMPARE )
+            PAIR( ACTION_ORGANIZE )
+            PAIR( ACTION_USE )
+            PAIR( ACTION_USE_WIELDED )
+            PAIR( ACTION_WEAR )
+            PAIR( ACTION_TAKE_OFF )
+            PAIR( ACTION_EAT )
+            PAIR( ACTION_OPEN_CONSUME )
+            PAIR( ACTION_READ )
+            PAIR( ACTION_WIELD )
+            PAIR( ACTION_PICK_STYLE )
+            PAIR( ACTION_RELOAD_ITEM )
+            PAIR( ACTION_RELOAD_WEAPON )
+            PAIR( ACTION_RELOAD_WIELDED )
+            PAIR( ACTION_UNLOAD )
+            PAIR( ACTION_UNLOAD_ALL )
+            PAIR( ACTION_MEND )
+            PAIR( ACTION_THROW )
+            PAIR( ACTION_FIRE )
+            PAIR( ACTION_FIRE_BURST )
+            PAIR( ACTION_SELECT_FIRE_MODE )
+            PAIR( ACTION_SELECT_DEFAULT_AMMO )
+            PAIR( ACTION_CAST_SPELL )
+            PAIR( ACTION_CAST_LAST_SPELL )
+            PAIR( ACTION_DROP )
+            PAIR( ACTION_DIR_DROP )
+            PAIR( ACTION_BIONICS )
+            PAIR( ACTION_MUTATIONS )
+            PAIR( ACTION_SORT_ARMOR )
+            PAIR( ACTION_AUTOATTACK )
+            PAIR( ACTION_TOGGLE_MANUAL_COMBAT_MODE )
+
+            PAIR( ACTION_WAIT )
+            PAIR( ACTION_CRAFT )
+            PAIR( ACTION_RECRAFT )
+            PAIR( ACTION_LONGCRAFT )
+            PAIR( ACTION_CONSTRUCT )
+            PAIR( ACTION_DISASSEMBLE )
+            PAIR( ACTION_SALVAGE )
+            PAIR( ACTION_SLEEP )
+            PAIR( ACTION_CONTROL_VEHICLE )
+            PAIR( ACTION_TOGGLE_AUTO_TRAVEL_MODE )
+            PAIR( ACTION_TOGGLE_SAFEMODE )
+            PAIR( ACTION_TOGGLE_AUTOSAFE )
+            PAIR( ACTION_TOGGLE_THIEF_MODE )
+            PAIR( ACTION_IGNORE_ENEMY )
+            PAIR( ACTION_WHITELIST_ENEMY )
+            PAIR( ACTION_SAVE )
+            PAIR( ACTION_QUICKSAVE )
+            PAIR( ACTION_QUICKLOAD )
+            PAIR( ACTION_SUICIDE )
+
+            PAIR( ACTION_PL_INFO )
+            PAIR( ACTION_MAP )
+            PAIR( ACTION_SKY )
+            PAIR( ACTION_MISSIONS )
+            PAIR( ACTION_SCORES )
+            PAIR( ACTION_FACTIONS )
+            PAIR( ACTION_MORALE )
+            PAIR( ACTION_MESSAGES )
+            PAIR( ACTION_OPEN_WIKI )
+            PAIR( ACTION_OPEN_HHG )
+            PAIR( ACTION_HELP )
+            PAIR( ACTION_MAIN_MENU )
+            PAIR( ACTION_DIARY )
+            PAIR( ACTION_KEYBINDINGS )
+            PAIR( ACTION_OPTIONS )
+            PAIR( ACTION_AUTOPICKUP )
+            PAIR( ACTION_AUTONOTES )
+            PAIR( ACTION_SAFEMODE )
+            PAIR( ACTION_COLOR )
+            PAIR( ACTION_WORLD_MODS )
+            PAIR( ACTION_DISTRACTION_MANAGER )
+
+            PAIR( ACTION_TOGGLE_CHARACTER_PREVIEW_CLOTHES )
+
+            PAIR( ACTION_TOGGLE_FULLSCREEN )
+            PAIR( ACTION_DEBUG )
+            PAIR( ACTION_LUA_CONSOLE )
+            PAIR( ACTION_LUA_RELOAD )
+            PAIR( ACTION_DISPLAY_SCENT )
+            PAIR( ACTION_DISPLAY_SCENT_TYPE )
+            PAIR( ACTION_TOGGLE_DEBUG_MODE )
+            PAIR( ACTION_ZOOM_OUT )
+            PAIR( ACTION_ZOOM_IN )
+            PAIR( ACTION_ACTIONMENU )
+            PAIR( ACTION_ITEMACTION )
+            PAIR( ACTION_TOGGLE_PIXEL_MINIMAP )
+            PAIR( ACTION_TOGGLE_PANEL_ADM )
+            PAIR( ACTION_PANEL_MGMT )
+            PAIR( ACTION_RELOAD_TILESET )
+            PAIR( ACTION_TOGGLE_AUTO_FEATURES )
+            PAIR( ACTION_TOGGLE_AUTO_PULP_BUTCHER )
+            PAIR( ACTION_TOGGLE_AUTO_MINING )
+            PAIR( ACTION_TOGGLE_AUTO_FORAGING )
+            PAIR( ACTION_TOGGLE_AUTO_PICKUP )
+            PAIR( ACTION_DISPLAY_TEMPERATURE )
+            PAIR( ACTION_DISPLAY_VEHICLE_AI )
+            PAIR( ACTION_DISPLAY_VISIBILITY )
+            PAIR( ACTION_DISPLAY_LIGHTING )
+            PAIR( ACTION_DISPLAY_RADIATION )
+            PAIR( ACTION_DISPLAY_TRANSPARENCY )
+            PAIR( ACTION_DISPLAY_OUTSIDE )
+            PAIR( ACTION_DISPLAY_SUBMAP_GRID )
+            PAIR( ACTION_DISPLAY_SOUND_ABSORPTION )
+            PAIR( ACTION_DISPLAY_SOUND_WALLS )
+            PAIR( ACTION_TOGGLE_ZONE_OVERLAY )
+            PAIR( ACTION_DISPLAY_TILES_NO_VFX )
+            PAIR( ACTION_TOGGLE_HOUR_TIMER )
+            PAIR( ACTION_SWAP_TO_NPC )
+        case NUM_ACTIONS:
+            break;
+    }
+    debugmsg( "Invalid action_id" );
+    return "null";
+}
 
 class inventory;
 
@@ -127,6 +301,8 @@ std::string action_ident( action_id act )
             return "toggle_run";
         case ACTION_TOGGLE_CROUCH:
             return "toggle_crouch";
+        case ACTION_TOGGLE_PRONE:
+            return "toggle_prone";
         case ACTION_OPEN_MOVEMENT:
             return "open_movement";
         case ACTION_OPEN:
@@ -137,6 +313,8 @@ std::string action_ident( action_id act )
             return "smash";
         case ACTION_EXAMINE:
             return "examine";
+        case ACTION_JUMP:
+            return "jump";
         case ACTION_ADVANCEDINV:
             return "advinv";
         case ACTION_PICKUP:
@@ -353,6 +531,8 @@ std::string action_ident( action_id act )
             return "SEC_SELECT";
         case ACTION_AUTOATTACK:
             return "autoattack";
+        case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+            return "toggle_manual_combat_mode";
         case ACTION_MAIN_MENU:
             return "main_menu";
         case ACTION_DIARY:
@@ -651,7 +831,7 @@ bool can_examine_at( const tripoint_bub_ms &p )
     }
 
     Creature *c = g->critter_at( p );
-    if( c != nullptr && p != u.bub_pos() ) {
+    if( c != nullptr && ( p != u.bub_pos() || u.is_mounted() ) ) {
         return true;
     }
 
@@ -691,6 +871,8 @@ bool can_interact_at( action_id action, const tripoint_bub_ms &p )
             return can_move_vertical_at( p, -1 );
         case ACTION_EXAMINE:
             return can_examine_at( p );
+        case ACTION_JUMP:
+            return iexamine::can_jump_over_tile( get_avatar(), p );
         case ACTION_PICKUP:
         case ACTION_PICKUP_ALL:
         case ACTION_PICKUP_FEET:
@@ -792,7 +974,7 @@ action_id handle_action_menu()
             action_weightings[ACTION_CYCLE_MOVE] = 400;
         }
         // Only prioritize fire weapon options if we're wielding a ranged weapon.
-        if( g->u.primary_weapon().is_gun() || g->u.primary_weapon().has_flag( flag_REACH_ATTACK ) ) {
+        if( g->u.primary_weapon().is_gun() || g->u.primary_weapon().reach_range( g->u ) > 1 ) {
             action_weightings[ACTION_FIRE] = 350;
         }
     }
@@ -804,6 +986,10 @@ action_id handle_action_menu()
     // If we're already crouching, make it simple to toggle crouching to off.
     if( g->u.movement_mode_is( CMM_CROUCH ) ) {
         action_weightings[ACTION_TOGGLE_CROUCH] = 300;
+    }
+    // If we're already prone, make it simple to toggle prone to off.
+    if( g->u.movement_mode_is( CMM_PRONE ) ) {
+        action_weightings[ACTION_TOGGLE_PRONE] = 300;
     }
 
     map &here = get_map();
@@ -965,7 +1151,7 @@ action_id handle_action_menu()
             register_lua_action_entries( category_id );
         } else if( category_id == "interact" ) {
             register_actions( {
-                ACTION_EXAMINE, ACTION_SMASH, ACTION_MOVE_DOWN, ACTION_MOVE_UP,
+                ACTION_EXAMINE, ACTION_JUMP, ACTION_SMASH, ACTION_MOVE_DOWN, ACTION_MOVE_UP,
                 ACTION_OPEN, ACTION_CLOSE, ACTION_CHAT, ACTION_PICKUP,
                 ACTION_PICKUP_ALL, ACTION_PICKUP_FEET, ACTION_GRAB, ACTION_HAUL, ACTION_BUTCHER, ACTION_LOOT,
             } );
@@ -973,7 +1159,7 @@ action_id handle_action_menu()
         } else if( category_id == "combat" ) {
             register_actions( {
                 ACTION_CYCLE_MOVE, ACTION_RESET_MOVE, ACTION_TOGGLE_RUN, ACTION_TOGGLE_CROUCH,
-                ACTION_OPEN_MOVEMENT, ACTION_FIRE, ACTION_RELOAD_ITEM, ACTION_RELOAD_WEAPON,
+                ACTION_TOGGLE_PRONE, ACTION_OPEN_MOVEMENT, ACTION_FIRE, ACTION_RELOAD_ITEM, ACTION_RELOAD_WEAPON,
                 ACTION_RELOAD_WIELDED, ACTION_CAST_SPELL, ACTION_CAST_LAST_SPELL,
                 ACTION_SELECT_FIRE_MODE,
                 ACTION_SELECT_DEFAULT_AMMO, ACTION_THROW, ACTION_FIRE_BURST, ACTION_PICK_STYLE,

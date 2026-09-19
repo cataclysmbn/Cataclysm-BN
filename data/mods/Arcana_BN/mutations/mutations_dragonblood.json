@@ -170,7 +170,6 @@
     "id": "ARCANA_FIREAFFINITY",
     "name": { "str": "Elemental Affinity" },
     "points": 2,
-    "bodytemp_modifiers": [ -2500, 0 ],
     "description": "Your body feels abnormally comfortable around heat and flame, letting you tolerate its heat for longer, and reducing direct damage from fire.  You also no longer suffer any loss of speed from overheating, though other symptoms of heatstroke will still affect you.  In exchange however, any form of supernatural cold will be more harmful to you, including the touch of shadowy monsters from Beyond.",
     "valid": false,
     "category": [ "DRAGONBLOOD" ],
@@ -335,14 +334,16 @@
     "points": 2,
     "visibility": 3,
     "ugliness": 2,
-    "description": "You have sharply curved claws on the ends of your fingers, making your unarmed attacks more dangerous.  However, they do prevent wearing gloves unless they're fingerless.",
+    "description": "You have sharply curved claws on the ends of your fingers, making your unarmed attacks more dangerous and allowing you to perform basic cutting tasks.  However, they do prevent wearing gloves unless they're fingerless.",
     "valid": false,
     "butchering_quality": 9,
     "types": [ "CLAWS" ],
     "category": [ "DRAGONBLOOD" ],
+    "restricts_gear": [ "hand_l", "hand_r" ],
     "allowed_items": [ "ALLOWS_CLAWS" ],
     "cut_dmg_bonus": 7,
-    "flags": [ "UNARMED_BONUS" ]
+    "flags": [ "UNARMED_BONUS" ],
+    "mut_enchantments": [ { "fake_items": [ "fake_arcana_curved_claws" ] } ]
   },
   {
     "type": "mutation",

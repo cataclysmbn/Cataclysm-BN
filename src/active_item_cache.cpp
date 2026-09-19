@@ -16,16 +16,16 @@ static auto reset_queue_state( active_item_queue &queue ) -> void
 
 void active_item_cache::remove( const item *it )
 {
-    for( auto &list : active_items ) {
-        active_item_queue &queue = list.second;
-        int count = 0;
-        queue.items.erase( std::remove_if( queue.items.begin(),
-        queue.items.end(), [it, &count, &queue]( const cache_reference<item> &active_item ) {
+    for( auto &[processing_speed, queue] : active_items ) {
+        static_cast<void>( processing_speed );
+        auto count = 0;
+        std::erase_if( queue.items,
+        [it, &count, &queue]( const auto & active_item ) {
             if( !active_item ) {
                 count++;
                 return true;
             }
-            item *const target = &*active_item;
+            const auto target = &*active_item;
             if( !target || target == it ) {
                 if( count >= queue.cursor ) {
                     queue.cursor = std::max( 0, queue.cursor - 1 );
@@ -35,34 +35,44 @@ void active_item_cache::remove( const item *it )
             }
             count++;
             return false;
-        } ), queue.items.end() );
+        } );
         if( queue.items.empty() ) {
             reset_queue_state( queue );
         }
     }
-    if( it->can_revive() ) {
-        std::vector<cache_reference<item>> &corpse = special_items[ special_item_type::corpse ];
-        corpse.erase( std::remove( corpse.begin(), corpse.end(), it ), corpse.end() );
-    }
-    if( it->get_use( "explosion" ) ) {
-        std::vector<cache_reference<item>> &explosive = special_items[ special_item_type::explosive ];
-        explosive.erase( std::remove( explosive.begin(), explosive.end(), it ), explosive.end() );
-    }
+    const auto remove_special = [this, it]( const special_item_type type ) {
+        auto &items = special_items[type];
+        std::erase_if( items, [it]( const auto & ref ) { return ref == it; } );
+    };
+    remove_special( special_item_type::corpse );
+    remove_special( special_item_type::bionic_scannable_corpse );
+    remove_special( special_item_type::explosive );
 }
 
 void active_item_cache::add( item &it )
 {
     // If the item is already in the cache for some reason, don't add a second reference
-    active_item_queue &queue = active_items[it.processing_speed()];
-    std::vector<cache_reference<item>> &target_list = queue.items;
-    if( std::find( target_list.begin(), target_list.end(), it ) != target_list.end() ) {
+    auto &queue = active_items[it.processing_speed()];
+    auto &target_list = queue.items;
+    const auto references_item = [&it]( const auto & active_item ) { return active_item == it; };
+    if( std::ranges::any_of( target_list, references_item ) ) {
         return;
+    }
+    const auto is_cached_elsewhere = [&queue, &references_item]( const auto & active_entry ) {
+        return &active_entry.second != &queue &&
+               std::ranges::any_of( active_entry.second.items, references_item );
+    };
+    if( std::ranges::any_of( active_items, is_cached_elsewhere ) ) {
+        remove( &it );
     }
     if( target_list.empty() ) {
         queue.last_processed_turn = to_turn<int>( calendar::turn );
     }
     if( it.can_revive() ) {
         special_items[ special_item_type::corpse ].emplace_back( it );
+    }
+    if( it.is_corpse() ) {
+        special_items[ special_item_type::bionic_scannable_corpse ].emplace_back( it );
     }
     if( it.get_use( "explosion" ) ) {
         special_items[ special_item_type::explosive ].emplace_back( it );
@@ -113,6 +123,20 @@ std::vector<item *> active_item_cache::get()
         }
         if( queue.items.empty() ) {
             reset_queue_state( queue );
+        }
+    }
+    return all_cached_items;
+}
+
+auto active_item_cache::get_const() const -> std::vector<const item *>
+{
+    auto all_cached_items = std::vector<const item *> {};
+    for( const auto &kv : active_items ) {
+        const active_item_queue &queue = kv.second;
+        for( const auto &active_item : queue.items ) {
+            if( active_item ) {
+                all_cached_items.push_back( &*active_item );
+            }
         }
     }
     return all_cached_items;

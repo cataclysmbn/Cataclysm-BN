@@ -1,9 +1,5 @@
 #include "trap.h"
 
-#include <memory>
-#include <set>
-#include <vector>
-
 #include "assign.h"
 #include "bodypart.h"
 #include "character.h"
@@ -12,16 +8,23 @@
 #include "event.h"
 #include "event_bus.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "int_id.h"
 #include "item.h"
+#include "itype.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
 #include "map_iterator.h"
+#include "mapgen/mapgen_functions.h"
 #include "point.h"
 #include "rng.h"
 #include "string_id.h"
 #include "translations.h"
+
+#include <memory>
+#include <set>
+#include <vector>
 
 static const skill_id skill_traps( "traps" );
 
@@ -93,6 +96,17 @@ const std::vector<const trap *> &trap::get_funnels()
     return funnel_traps;
 }
 
+void trap::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_itrap_actor>> &actors )
+{
+    for( const trap &mb : trap_factory.get_all() ) {
+        auto it = actors.find( mb.id.str() );
+        if( it != actors.end() ) {
+            mb.lua_callbacks = it->second.get();
+        }
+    }
+}
+
 size_t trap::count()
 {
     return trap_factory.size();
@@ -116,7 +130,8 @@ void trap::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "difficulty", difficulty );
     optional( jo, was_loaded, "trap_radius", trap_radius, 0 );
     // TODO: Is there a generic_factory version of this?
-    act = trap_function_from_string( jo.get_string( "action" ) );
+    mandatory( jo, was_loaded, "action", act_string );
+    act = trap_function_from_string( act_string );
 
     optional( jo, was_loaded, "map_regen", map_regen, "none" );
     optional( jo, was_loaded, "benign", benign, false );
@@ -124,9 +139,11 @@ void trap::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "always_invisible", always_invisible, false );
     optional( jo, was_loaded, "funnel_radius", funnel_radius_mm, 0 );
     optional( jo, was_loaded, "comfort", comfort, 0 );
-    optional( jo, was_loaded, "floor_bedding_warmth", floor_bedding_warmth, 0 );
+    auto legacy_floor_bedding_warmth = units::to_legacy_bodypart_temp_delta( floor_bedding_warmth );
+    optional( jo, was_loaded, "floor_bedding_warmth", legacy_floor_bedding_warmth, 0 );
+    floor_bedding_warmth = units::from_legacy_bodypart_temp_delta( legacy_floor_bedding_warmth );
     optional( jo, was_loaded, "spell_data", spell_data );
-    assign( jo, "trigger_weight", trigger_weight );
+    optional( jo, was_loaded, "trigger_weight", trigger_weight, mass_reader(), -1_gram );
     if( was_loaded && jo.has_member( "copy-from" ) && looks_like.empty() ) {
         looks_like = jo.get_string( "copy-from" );
     }
@@ -175,7 +192,7 @@ void trap::load( const JsonObject &jo, const std::string & )
         vehicle_data.chance = jv.get_int( "chance", 100 );
         vehicle_data.damage = jv.get_int( "damage", 0 );
         vehicle_data.shrapnel = jv.get_int( "shrapnel", 0 );
-        vehicle_data.sound_volume = jv.get_int( "sound_volume", 0 );
+        assign( jv, "sound_volume", vehicle_data.sound_volume );
         jv.read( "sound", vehicle_data.sound );
         vehicle_data.sound_type = jv.get_string( "sound_type", "" );
         vehicle_data.sound_variant = jv.get_string( "sound_variant", "" );
@@ -291,7 +308,7 @@ void trap::trigger_aftermath( map &m, const tripoint_bub_ms &p ) const
         const itype_id &item_type = std::get<0>( i );
         const int quantity = std::get<1>( i );
         const int charges = std::get<2>( i );
-        m.spawn_item( p.xy(), item_type, quantity, charges );
+        m.spawn_item( p, item_type, quantity, charges );
     }
     if( m.tr_at( p ).remove_trap_when_triggered() ) {
         m.remove_trap( p );
@@ -304,7 +321,7 @@ void trap::on_disarmed( map &m, const tripoint_bub_ms &p ) const
         const itype_id &item_type = std::get<0>( i );
         const int quantity = std::get<1>( i );
         const int charges = std::get<2>( i );
-        m.spawn_item( p.xy(), item_type, quantity, charges );
+        m.spawn_item( p, item_type, quantity, charges );
     }
     for( const tripoint_bub_ms &dest : m.points_in_radius( p, trap_radius ) ) {
         m.remove_trap( dest );
@@ -359,13 +376,45 @@ tr_glass_pit;
 
 void trap::check_consistency()
 {
-    for( const auto &t : trap_factory.get_all() ) {
-        for( auto &i : t.components ) {
-            const itype_id &item_type = std::get<0>( i );
-            if( !item_type.is_valid() ) {
-                debugmsg( "trap %s has unknown item as component %s", t.id.str(), item_type.str() );
+    trap_factory.check();
+}
+
+void trap::check() const
+{
+    for( auto &[ item_type, quantity, charges] : components ) {
+        if( !item_type.is_valid() ) {
+            debugmsg( "trap %s has unknown item %s as a component", id.str(), item_type.str() );
+        } else {
+            if( !item_type->count_by_charges() && charges != 1 ) {
+                debugmsg( "trap %s tries to give charges to component item %s which doesn't support charges",
+                          id.str(), item_type.str() );
             }
         }
+    }
+    for( auto &[item_type, quantity, charges] : trigger_components ) {
+        if( !item_type.is_valid() ) {
+            debugmsg( "trap %s has unknown item %s as a trigger component", id.str(), item_type.str() );
+        } else {
+            if( !item_type->count_by_charges() && charges != 1 ) {
+                debugmsg( "trap %s tries to give charges to trigger component item %s which doesn't support charges",
+                          id.str(), item_type.str() );
+            }
+        }
+    }
+    for( auto &[ item_type, chance] : vehicle_data.spawn_items ) {
+        if( !item_type.is_valid() ) {
+            debugmsg( "trap %s has unknown item %s as a vehicle data spawn item", id.str(), item_type.str() );
+        }
+    }
+    if( !vehicle_data.set_trap.is_valid() ) {
+        debugmsg( "trap %s has unknown trap %s as a vehicle data set trap", id.str(),
+                  vehicle_data.set_trap.str() );
+    }
+    if( funnel_radius_mm < 0 ) {
+        debugmsg( "trap %s has negative funnel radius %s", id.str(), funnel_radius_mm );
+    }
+    if( act_string == "map_regen" && !mapgen::has_update_id( map_regen ) ) {
+        debugmsg( "trap %s has invalid update mapgen id %s.", id.str(), map_regen );
     }
 }
 

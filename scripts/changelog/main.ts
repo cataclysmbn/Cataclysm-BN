@@ -45,7 +45,7 @@ const commitsSection = (changelog: Commit[]) => {
 
   Object.assign(messages, regularMessages)
 
-  return asSections(messages)
+  return asSections(messages) || "- no changes"
 }
 
 const authorsSection = (changelog: Commit[]) => {
@@ -131,6 +131,7 @@ const main = new Command()
     "Same as git log --until. Accepts dates, SHAs, or tags (e.g., 2024-10-01, HEAD, v0.2)",
     { default: "today" },
   )
+  .option("-r, --range <rev>", "Same as git log revision range (e.g., v0.1..HEAD)")
   .option("-o, --output <file>", "Output file to save changelog to")
   .option("-q, --quiet", "Do not print the changelog to stdout")
   .option("-f, --format <format>", "Output format (reddit or default)", {
@@ -146,13 +147,14 @@ const main = new Command()
       Generate a changelog from git commits.
 
       usage (at project root): deno task changelog --since 2024-09-22 --until 2024-09-30
+      usage with revision range: deno task changelog --range 2024-09-22..HEAD
 
       For reddit format, switch to Markdown Editor when pasting the output into Reddit.
     `)
-  .action(async ({ since, until, output, quiet = false, format }) => {
+  .action(async ({ since, until, range, output, quiet = false, format }) => {
     const log = quiet ? () => {} : console.log
 
-    const commits = await readCommits({ since, until })
+    const commits = await readCommits(range ? { range } : { since, until })
     log(`${commits.length} commits found`)
 
     const changelog = format === "reddit" ? redditTemplate(commits) : commitsSection(commits)

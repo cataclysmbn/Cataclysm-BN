@@ -13,5 +13,23 @@
     "name": "NO_VITAMINS",
     "stype": "bool",
     "value": true
+  },
+  {
+    "type": "ITEM_BLACKLIST",
+    "items": [ "calcium_tablet", "bonemeal_tablet", "flavored_bonemeal_tablet", "inj_vitb", "inj_iron" ]
+  },
+  {
+    "id": "vitamins",
+    "copy-from": "vitamins",
+    "type": "COMESTIBLE",
+    "name": "multivitamin",
+    "description": "Essential dietary nutrients conveniently packaged in pill form.  An option of last resort when a balanced diet is not possible."
+  },
+  {
+    "id": "gummy_vitamins",
+    "copy-from": "gummy_vitamins",
+    "type": "COMESTIBLE",
+    "name": "gummy vitamin",
+    "description": "Essential dietary nutrients conveniently packaged in a fruit-flavored chewy candy form.  An option of last resort when a balanced diet is not possible."
   }
 ]

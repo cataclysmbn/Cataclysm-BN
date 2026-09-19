@@ -38,20 +38,7 @@
     "turns_per_charge": 5,
     "proportional": { "weight": 0.21, "volume": 0.25, "price": 0.2 },
     "use_action": "RADIOCONTROL",
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -66,7 +53,7 @@
     "charges_per_use": 1,
     "proportional": { "weight": 0.73, "volume": 0.75, "price": 0.8 },
     "use_action": "RADIOCAR",
-    "magazines": [ [ "battery", [ "light_minus_disposable_cell", "light_minus_battery_cell", "light_minus_atomic_battery_cell" ] ] ]
+    "magazines": [ [ "battery", [ "light_minus_disposable_cell", "light_minus_battery_cell" ] ] ]
   },
   {
     "id": "radio_car_on",
@@ -114,20 +101,7 @@
     "charges_per_use": 1,
     "flags": [ "WEATHER_FORECAST" ],
     "use_action": [ "RADIO_OFF", "WEATHER_TOOL" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -159,20 +133,7 @@
     "ammo": "battery",
     "charges_per_use": 1,
     "flags": [ "TWO_WAY_RADIO" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -193,20 +154,7 @@
     "charges_per_use": 1,
     "turns_per_charge": 10,
     "use_action": "REMOTEVEH",
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   }
 ]

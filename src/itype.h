@@ -1,5 +1,26 @@
 #pragma once
 
+#include "bodypart.h" // body_part::num_bp
+#include "calendar.h"
+#include "catalua_type_operators.h"
+#include "color.h" // nc_color
+#include "coordinates.h"
+#include "damage.h"
+#include "data_vars.h"
+#include "enums.h" // point
+#include "explosion.h"
+#include "game_constants.h"
+#include "hsv_color.h"
+#include "iuse.h" // use_function
+#include "map/mapdata.h"
+#include "pldata.h" // add_type
+#include "shape.h"
+#include "stomach.h"
+#include "translations.h"
+#include "type_id.h"
+#include "units.h"
+#include "value_ptr.h"
+
 #include <array>
 #include <iosfwd>
 #include <map>
@@ -9,26 +30,6 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#include "bodypart.h" // body_part::num_bp
-#include "calendar.h"
-#include "catalua_type_operators.h"
-#include "coordinates.h"
-#include "color.h" // nc_color
-#include "damage.h"
-#include "data_vars.h"
-#include "enums.h" // point
-#include "explosion.h"
-#include "game_constants.h"
-#include "iuse.h" // use_function
-#include "mapdata.h"
-#include "pldata.h" // add_type
-#include "shape.h"
-#include "stomach.h"
-#include "translations.h"
-#include "type_id.h"
-#include "units.h"
-#include "value_ptr.h"
 
 class Item_factory;
 class item;
@@ -40,6 +41,7 @@ class lua_iequippable_actor;
 class lua_istate_actor;
 class lua_imelee_actor;
 class lua_iranged_actor;
+class lua_itrap_actor;
 class player;
 class relic;
 template <typename E> struct enum_traits;
@@ -472,12 +474,6 @@ struct common_ranged_data {
     * A bonus of 0.25 is +25% damage, up to the crit mult max.
     */
     double aimedcritbonus = 0.0;
-    /**
-    * Speed of the projectile, in meters per second. Speed of sound in game is roughly 331
-    * Supersonic projectiles can not be fully suppressed.
-    * This is placed here so that guns and gunmods can effect projectile speed.
-    */
-    int speed = 1000;
 };
 
 struct islot_engine {
@@ -545,13 +541,18 @@ struct islot_gun : common_ranged_data {
      * Volume of the noise made when reloading this weapon.
      * Base reload volume set to 40dB spl. Below 20dB spl is effectively silent.
      */
-    int reload_noise_volume = 40;
+    units::sound reload_noise_volume = 40_dB;
 
     /** Maximum aim achievable using base weapon sights */
     int sight_dispersion = 30;
 
-    /** Modifies base loudness as provided by the currently loaded ammo */
+    /** Modifies base loudness as provided by the currently loaded ammo. Measured in dB spl */
     int loudness = 0;
+    /**
+    * Modification to the base speed of the weapon projectile, in meters per second. Speed of sound in game is roughly 343 m/s
+    * Supersonic projectiles can not be fully suppressed.
+    */
+    int speed = 0;
 
     /**
      * If this uses UPS charges, how many (per shoot), 0 for no UPS charges at all.
@@ -627,8 +628,13 @@ struct islot_gunmod : common_ranged_data {
      */
     int aim_speed = -1;
 
-    /** Modifies base loudness as provided by the currently loaded ammo */
+    /** Modifies base loudness as provided by the currently loaded ammo. Measured in dB spl */
     int loudness = 0;
+    /**
+    * Modification to the base speed of the weapon projectile, in meters per second. Speed of sound in game is roughly 343 m/s
+    * Supersonic projectiles can not be fully suppressed.
+    */
+    int speed = 0;
 
     /** How many moves does this gunmod take to install? */
     int install_time = 0;
@@ -647,6 +653,9 @@ struct islot_gunmod : common_ranged_data {
 
     /** Increases gun weight by this many times */
     float weight_multiplier = 1.0f;
+
+    /** Increases gun volume by this many times (replaces COLLAPSIBLE_STOCK flag) */
+    float volume_multiplier = 1.0f;
 
     /** Firing modes added to or replacing those of the base gun */
     std::map<gun_mode_id, gun_modifier_data> mode_modifier;
@@ -753,6 +762,12 @@ struct islot_ammo : common_ranged_data {
      * appropriate value is calculated based upon the other properties of the ammo
      */
     int loudness = -1;
+    /**
+    * Speed of the projectile, in meters per second. Speed of sound in game is roughly 343 m/s
+    * Supersonic projectiles can not be fully suppressed.
+    * This is placed here so that guns and gunmods can effect projectile speed.
+    */
+    int speed = 1000;
 
     /** Recoil (per shot), roughly equivalent to kinetic energy (in Joules) */
     int recoil = 0;
@@ -1000,6 +1015,7 @@ struct itype {
         const lua_istate_actor *istate_callbacks = nullptr;
         const lua_imelee_actor *imelee_callbacks = nullptr;
         const lua_iranged_actor *iranged_callbacks = nullptr;
+        const lua_itrap_actor *itrap_callbacks = nullptr;
 
         /** Fields to emit when item is in active state */
         std::set<emit_id> emits;
@@ -1081,6 +1097,7 @@ struct itype {
         int m_to_hit  = 0;  // To-hit bonus for melee combat; -5 to 5 is reasonable
 
         unsigned light_emission = 0;   // Exactly the same as item_tags LIGHT_*, this is for lightmap.
+        std::optional<RGBColor> light_color;
 
         /** If set via JSON forces item category to this (preventing automatic assignment) */
         item_category_id category_force;

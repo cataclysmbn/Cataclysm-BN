@@ -4,20 +4,16 @@
 #include <clang-tidy/ClangTidy.h>
 #include <clang-tidy/ClangTidyCheck.h>
 
-namespace clang
-{
-namespace tidy
-{
-namespace cata
-{
+namespace clang {
+namespace tidy {
+namespace cata {
 
 /// Finds and fixes header guards.
 /// Based loosely on the LLVM version.
-class CataHeaderGuardCheck : public ClangTidyCheck
-{
-    public:
-        CataHeaderGuardCheck( StringRef Name, ClangTidyContext *Context );
-        void registerPPCallbacks( const SourceManager &, Preprocessor *, Preprocessor * ) override;
+class CataHeaderGuardCheck: public ClangTidyCheck {
+public:
+    CataHeaderGuardCheck(StringRef Name, ClangTidyContext* Context);
+    void registerPPCallbacks(const SourceManager&, Preprocessor*, Preprocessor*) override;
 };
 
 } // namespace cata

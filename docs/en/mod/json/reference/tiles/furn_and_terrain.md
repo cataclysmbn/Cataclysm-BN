@@ -177,6 +177,31 @@ it for the purpose of surgery.
 (Optional) Dispenses infinite amounts of specified liquid item when interacted. Must be used with
 `"examine_action": "liquid_source"` to work.
 
+#### `enchanter_info`
+
+(Optional) array of enchant info objects
+The following is an enchant info object
+
+```jsonc
+{
+  "id": "CVD_DIAMOND_CUT", // Id of the enchantment info, used for saveload ( mandatory )
+  "name": "Cutting Diamonds", // Display name on the enchantment ui ( mandatory )
+  "enchant": "ENCH_CVD_MACHINE_CUT", // Enchantment id to give ( mandatory )
+  "time_to_enchant": "10 minutes", // Time duration of the enchantment ( mandatory )
+  "volume_per_time": "250 ml", // Every x volume will multiply time required
+  "volume_time_effect": true, // Weather `volume_per_time` is used
+  "using": "cvd_diamond", // Requirement info ( mandatory )
+  "volume_per_batch": "250 ml", // Every x volume will multiply requirement info
+  "volume_batch_effect": true, // Weather `volume_per_batch` is used
+  "count_var": "DIAMONDIZE", // Item variable for counting how many can be applied
+  "max_count": 10, // Maximum count
+  "applied_flag": "DIAMOND", // Flag to apply ( generally useful for editing description)
+  "can_use_on": "cvd_machine", // Name of the `enchanter_can_use_on` lua function ( params: ench_id, item ); Checked per item
+  "can_make": "cvd_machine", // Name of the `enchanter_can_make` lua function ( params: ench_id ); Checked once per menu opening
+  "required_skills": [ { "skill": "magic", "level": 2 } ] // Array of skills needed to do this
+},
+```
+
 #### `default_vars`
 
 (Optional) Default string variables for objects, always a string string pair; Can be used to store arbitrary data or for some data for iuses such as

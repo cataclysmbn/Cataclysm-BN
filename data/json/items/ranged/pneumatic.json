@@ -21,7 +21,8 @@
     "durability": 7,
     "clip_size": 150,
     "reload": 500,
-    "loudness": 9,
+    "loudness": 60,
+    "speed": 200,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "barrel", 1 ],
@@ -53,14 +54,14 @@
     "recoil": 350,
     "durability": 7,
     "clip_size": 10,
-    "loudness": 16,
+    "loudness": 65,
     "extend": { "flags": [ "RELOAD_ONE" ] }
   },
   {
     "id": "tihar",
     "copy-from": "rifle_pneumatic",
     "type": "GUN",
-    "reload_noise_volume": 8,
+    "reload_noise_volume": "38 dB",
     "color": "light_gray",
     "name": { "str": "pneumatic assault rifle" },
     "description": "A multistroke pneumatic rifle handcrafted from scrap.  Be careful where you reload it, pumping air into the tank takes a few seconds.  It is pretty quiet and quite deadly.",
@@ -77,14 +78,14 @@
     "recoil": 300,
     "clip_size": 20,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
-    "loudness": 14
+    "loudness": 62
   },
   {
     "id": "pneumatic_shotgun",
     "looks_like": "pipe_double_shotgun",
     "type": "GUN",
     "weapon_category": [ "SHOTGUNS", "PNEUMATIC" ],
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "dark_gray",
     "name": { "str": "pneumatic shotgun" },
@@ -106,7 +107,7 @@
     "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
     "clip_size": 2,
     "reload": 1000,
-    "loudness": 22,
+    "loudness": 68,
     "valid_mod_locations": [
       [ "accessories", 4 ],
       [ "grip", 1 ],

@@ -1,5 +1,31 @@
 #include "visitable.h"
 
+#include "active_item_cache.h"
+#include "bionics.h"
+#include "character.h"
+#include "debug.h"
+#include "inventory.h"
+#include "item.h"
+#include "item_contents.h"
+#include "itype.h"
+#include "make_static.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/submap.h"
+#include "monster.h"
+#include "mtype.h"
+#include "mutation.h"
+#include "pimpl.h"
+#include "player.h"
+#include "point.h"
+#include "type_id.h"
+#include "units.h"
+#include "value_ptr.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+
 #include <algorithm>
 #include <climits>
 #include <limits>
@@ -7,31 +33,6 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
-
-#include "active_item_cache.h"
-#include "bionics.h"
-#include "character.h"
-#include "debug.h"
-#include "inventory.h"
-#include "item.h"
-#include "itype.h"
-#include "item_contents.h"
-#include "make_static.h"
-#include "map.h"
-#include "map_selector.h"
-#include "monster.h"
-#include "mtype.h"
-#include "mutation.h"
-#include "pimpl.h"
-#include "player.h"
-#include "point.h"
-#include "submap.h"
-#include "units.h"
-#include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vehicle_selector.h"
 
 static const itype_id itype_apparatus( "apparatus" );
 static const itype_id itype_toolset( "toolset" );
@@ -48,6 +49,8 @@ static const bionic_id bio_ups( "bio_ups" );
 static const flag_id flag_BIONIC_ARMOR_INTERFACE( "BIONIC_ARMOR_INTERFACE" );
 static const flag_id flag_IS_UPS( "IS_UPS" );
 static const flag_id flag_BIONIC_TOOLS( "BIONIC_TOOLS" );
+static const flag_id flag_ENCHANTMENT_TOOLS( "ENCHANTMENT_TOOLS" );
+static const flag_id flag_USES_BIONIC_POWER( "USES_BIONIC_POWER" );
 
 /** @relates visitable */
 template <typename T>
@@ -273,6 +276,23 @@ bool visitable<Character>::has_quality( const quality_id &qual, int level, int q
             qty--;
         }
     }
+    for( const auto it : self->get_enchantment_fake_items() ) {
+        for( const auto &[itqual, lev] : it->qualities ) {
+            if( qual != itqual || lev < level ) { continue; }
+            if( qty <= 1 ) {
+                return true;
+            }
+            qty--;
+        }
+    }
+    if( qual == qual_BUTCHER ) {
+        for( const trait_id &mut : self->get_mutations() ) {
+            if( mut->butchering_quality > level ) {
+                if( qty <= 1 ) { return true; }
+                qty--;
+            }
+        }
+    }
 
     return qty <= 0 ? true : has_quality_internal( *this, qual, level, qty ) == qty;
 }
@@ -326,10 +346,17 @@ int visitable<Character>::max_quality( const quality_id &qual ) const
     for( const auto &bio : *self->my_bionics ) {
         res = std::max( res, bio.get_quality( qual ) );
     }
+    for( const auto it : self->get_enchantment_fake_items() ) {
+        if( it->qualities.contains( qual ) ) {
+            res = std::max( res, it->qualities.at( qual ) );
+        }
+    }
 
     if( qual == qual_BUTCHER ) {
         for( const trait_id &mut : self->get_mutations() ) {
-            res = std::max( res, mut->butchering_quality );
+            if( mut->butchering_quality > 0 ) {
+                res = std::max( res, mut->butchering_quality );
+            }
         }
     }
 
@@ -402,15 +429,24 @@ VisitResponse visitable<T>::visit_items( const std::function<VisitResponse( item
 
 
 
-static VisitResponse visit_internal( std::function < VisitResponse( detached_ptr<item> &&e ) >
-                                     filter, location_vector<item> &items )
+namespace
 {
-    VisitResponse last = VisitResponse::NEXT;
-    items.remove_with( [&last, &filter]( detached_ptr<item> &&e ) {
+
+auto visit_internal( std::function < VisitResponse( detached_ptr<item> &&e ) > filter,
+                     location_vector<item> &items ) -> bool
+{
+    auto last = VisitResponse::NEXT;
+    auto processing_changed = false;
+    items.remove_with( [&last, &processing_changed, &filter]( detached_ptr<item> &&e ) {
         if( last == VisitResponse::ABORT ) {
             return std::move( e );
         }
+        const auto needs_processing_before = e != nullptr && e->needs_processing();
         last = filter( std::move( e ) );
+        // NOLINTNEXTLINE(bugprone-use-after-move)
+        if( e != nullptr && e->needs_processing() != needs_processing_before ) {
+            processing_changed = true;
+        }
         // NOLINTNEXTLINE(bugprone-use-after-move)
         if( last == VisitResponse::NEXT && e ) {
             e->contents.remove_items_with( [&last, &filter]( detached_ptr<item> &&e ) {
@@ -423,8 +459,10 @@ static VisitResponse visit_internal( std::function < VisitResponse( detached_ptr
         }
         return std::move( e );
     } );
-    return last == VisitResponse::ABORT ? VisitResponse::ABORT : VisitResponse::NEXT;
+    return processing_changed;
 }
+
+} // namespace
 
 // Specialize visitable<T>::visit_items() for each class that will implement the visitable interface
 
@@ -657,7 +695,16 @@ detached_ptr<item> location_visitable<T>::remove_item( item &it )
 void item_contents::remove_items_with( const std::function < VisitResponse(
         detached_ptr<item> && ) > &filter )
 {
-    visit_internal( filter, items );
+    const auto old_size = items.size();
+    const auto processing_changed = visit_internal( filter, items );
+    if( items.size() == old_size && !processing_changed ) {
+        return;
+    }
+    if( owner != nullptr ) {
+        owner->invalidate_processing_cache_upwards();
+    } else {
+        invalidate_processing_cache();
+    }
 }
 
 /** @relates visitable */
@@ -1096,8 +1143,8 @@ int visitable<Character>::charges_of( const itype_id &what, int limit,
         }
     }
 
-    if( what == itype_voltmeter_bionic ) {
-        if( p && p->has_bionic( bio_electrosense_voltmeter ) ) {
+    if( what->has_flag( flag_ENCHANTMENT_TOOLS ) ) {
+        if( p && p->has_enchantment_with_fake( what ) && what->has_flag( flag_USES_BIONIC_POWER ) ) {
             return std::min( units::to_kilojoule( p->get_power_level() ), limit );
         } else {
             return 0;
@@ -1201,7 +1248,8 @@ int visitable<Character>::amount_of( const itype_id &what, bool pseudo, int limi
         return 1;
     }
 
-    if( what == itype_voltmeter_bionic && pseudo && self->has_bionic( bio_electrosense_voltmeter ) ) {
+    if( what->has_flag( flag_ENCHANTMENT_TOOLS ) && pseudo &&
+        self->has_enchantment_with_fake( what ) ) {
         return 1;
     }
 

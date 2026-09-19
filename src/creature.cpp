@@ -1,13 +1,6 @@
 #include "creature.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstdlib>
-#include <map>
-#include <memory>
-#include <optional>
-
+#include "action_time_scale.h"
 #include "anatomy.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -23,42 +16,108 @@
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
-#include "field.h"
 #include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
 #include "item.h"
 #include "json.h"
-#include "lightmap.h"
 #include "line.h"
 #include "locations.h"
-#include "map.h"
+#include "map/field.h"
+#include "map/lightmap.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "map/mapdata.h"
+#include "map/submap_load_manager.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
 #include "output.h"
+#include "overmapbuffer_registry.h"
 #include "player.h"
 #include "point.h"
+#include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "rng.h"
 #include "string_id.h"
 #include "string_utils.h"
 #include "translations.h"
+#include "utils/string_to_int.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "overmapbuffer_registry.h"
-#include "profile.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
-const std::string &Creature::get_dimension() const
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <map>
+#include <memory>
+#include <optional>
+
+auto Creature::get_dimension() const -> const dimension_id &
 {
     return g_active_dimension_id;
+}
+
+auto Creature::set_dimension( const dimension_id &dim_id ) -> void
+{
+    if( dim_id != get_dimension() ) {
+        debugmsg( "This creature type does not own dimension state" );
+    }
+    invalidate_mapbuffer_cache();
+}
+
+auto Creature::get_mapbuffer() const -> mapbuffer &
+{
+    const auto &dim_id = get_dimension();
+    if( cached_mapbuffer_ != nullptr ) {
+        const auto registry_generation = MAPBUFFER_REGISTRY.generation();
+        if( cached_mapbuffer_dim_ == dim_id &&
+            cached_mapbuffer_generation_ == registry_generation ) {
+            return *cached_mapbuffer_;
+        }
+    }
+
+    mapbuffer &buffer = MAPBUFFER_REGISTRY.get( dim_id );
+    cached_mapbuffer_ = &buffer;
+    cached_mapbuffer_dim_ = dim_id;
+    cached_mapbuffer_generation_ = MAPBUFFER_REGISTRY.generation();
+    return buffer;
+}
+
+auto Creature::find_mapbuffer() const -> mapbuffer *
+{
+    const auto &dim_id = get_dimension();
+    auto registry_generation = std::size_t{};
+    if( cached_mapbuffer_ != nullptr ) {
+        registry_generation = MAPBUFFER_REGISTRY.generation();
+        if( cached_mapbuffer_dim_ == dim_id &&
+            cached_mapbuffer_generation_ == registry_generation ) {
+            return cached_mapbuffer_;
+        }
+    } else {
+        registry_generation = MAPBUFFER_REGISTRY.generation();
+    }
+
+    cached_mapbuffer_ = MAPBUFFER_REGISTRY.find( dim_id );
+    cached_mapbuffer_dim_ = dim_id;
+    cached_mapbuffer_generation_ = registry_generation;
+    return cached_mapbuffer_;
+}
+
+auto Creature::invalidate_mapbuffer_cache() const -> void
+{
+    cached_mapbuffer_ = nullptr;
+    cached_mapbuffer_dim_ = dimension_id();
+    cached_mapbuffer_generation_ = 0;
 }
 
 static const ammo_effect_str_id ammo_effect_APPLY_SAP( "APPLY_SAP" );
@@ -79,6 +138,7 @@ static const ammo_effect_str_id ammo_effect_TANGLE( "TANGLE" );
 static const ammo_effect_str_id ammo_effect_THROWN( "THROWN" );
 
 static const efftype_id effect_badpoison( "badpoison" );
+static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_blind( "blind" );
 static const efftype_id effect_bounced( "bounced" );
 static const efftype_id effect_downed( "downed" );
@@ -156,6 +216,7 @@ Creature::Creature( const Creature &source )
     speed_base = source.speed_base;
 
     speed_bonus = source.speed_bonus;
+    move_credit_remainder = source.move_credit_remainder;
     speed_mult = source.speed_mult;
     dodge_bonus = source.dodge_bonus;
     block_bonus = source.block_bonus;
@@ -244,8 +305,21 @@ void Creature::process_turn()
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
-        moves += get_speed();
+        add_action_move_credit( get_speed(), action_move_factor() );
     }
+}
+
+auto Creature::add_action_move_credit( const int base_moves, const int action_factor ) -> void
+{
+    const auto move_credit = static_cast<int64_t>( base_moves ) * action_factor +
+                             move_credit_remainder;
+    moves += move_credit / action_time_scale::factor_denominator;
+    move_credit_remainder = move_credit % action_time_scale::factor_denominator;
+}
+
+auto Creature::action_move_factor() const -> int
+{
+    return action_time_scale::factor_denominator;
 }
 
 void Creature::batch_turns( int n )
@@ -295,8 +369,6 @@ bool Creature::is_dangerous_field( const field_entry &entry ) const
 
 bool Creature::sees( const Creature &critter ) const
 {
-    ZoneScoped;
-
     // Creatures always see themselves (simplifies drawing).
     if( &critter == this ) {
         return true;
@@ -311,10 +383,6 @@ bool Creature::sees( const Creature &critter ) const
 
     // Creatures in different dimensions cannot see each other.
     if( get_dimension() != critter.get_dimension() ) {
-        return false;
-    }
-
-    if( !fov_3d && !debug_mode && bub_pos().z() != critter.bub_pos().z() ) {
         return false;
     }
 
@@ -346,9 +414,10 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
     if( ch != nullptr ) {
-        if( ch->movement_mode_is( CMM_CROUCH ) ) {
+        if( ch->movement_mode_is( CMM_CROUCH ) || ch->movement_mode_is( CMM_PRONE ) ) {
             const int coverage = here.obstacle_coverage( bub_pos(), critter.bub_pos() );
-            if( coverage < 30 ) {
+            const int threshold = ch->movement_mode_is( CMM_PRONE ) ? 15 : 30;
+            if( coverage < threshold ) {
                 return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
             }
             float size_modifier = 1.0;
@@ -380,13 +449,8 @@ bool Creature::sees( const Creature &critter ) const
     return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
+bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
 {
-    ZoneScoped;
-    if( !fov_3d && bub_pos().z() != t.z() ) {
-        return false;
-    }
-
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.
@@ -412,10 +476,13 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
     }
     const auto range_max = tl_range.range_max;
+    const auto wanted_range = rl_dist( bub_pos(), t );
+    if( wanted_range > range_max ) {
+        return false;
+    }
     const auto ambient = here.ambient_light_at( t );
     const auto range_cur = sight_range( ambient );
     const auto range_min = std::min( range_cur, range_max );
-    const auto wanted_range = rl_dist( bub_pos(), t );
     const auto natural_light = g->natural_light_level( t.z() );
     const auto is_lit = ambient > natural_light;
     if( wanted_range <= range_min ||
@@ -427,22 +494,7 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         if( range_mod > 0 ) {
             range = std::min( range, range_mod );
         }
-        if( is_avatar && bub_pos().z() == t.z() ) {
-            // Only use seen_cache when on the same z-level
-            // Special case monster -> player visibility, forcing it to be symmetric with player vision.
-            const auto player_visibility_factor = g->u.visibility() / 100.0f;
-            const auto adj_range = static_cast<int>( std::floor( range * player_visibility_factor ) );
-            const auto &_mc = here.get_cache_ref( bub_pos().z() );
-            // seen_cache is only valid within the render area; out-of-render entities
-            // are not visible to the player by definition.
-            if( !_mc.inbounds( bub_pos().xy() ) ) {
-                return false;
-            }
-            return adj_range >= wanted_range &&
-                   _mc.seen_cache[_mc.idx( bub_pos().x(), bub_pos().y() )] > LIGHT_TRANSPARENCY_SOLID;
-        } else {
-            return here.sees( bub_pos(), t, range );
-        }
+        return here.sees( bub_pos(), t, range );
     } else {
         return false;
     }
@@ -789,7 +841,6 @@ auto get_stun_srength( const projectile &proj, creature_size size ) -> int
 void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
                                        dealt_projectile_attack &attack )
 {
-
     const double missed_by = attack.missed_by;
     if( missed_by >= 1.0 ) {
         // Total miss.
@@ -828,12 +879,15 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     const double ammo_severity_bonus = proj.aimedcritbonus;
     const double ammo_severity_max_bonus = proj.aimedcritmaxbonus;
 
+    // Targeting UI teardown can dirty the SDL visibility cache just before a shot resolves.
+    // Ranged damage messages depend on the same visibility query, so refresh it here first.
+    g->refresh_player_visibility_cache_if_needed();
     const bool u_see_this = g->u.sees( *this );
 
     const int avoid_roll = dodge_roll();
     // Do dice(10, speed) instead of dice(speed, 10) because speed could potentially be > 10000
-    // Most monster projectiles have a speed of 10, thrown objects cap out around 8? Any projectile from a "gun" has 1000.
-    // Todo? Make doding at point blank range possible though difficult. Not dodging the bullet, dodging the barrel etc.
+    // Most monster projectiles have a speed of 10m/s, thrown objects cap out around 20. Arrows are generally 100m/s. Any projectile from a "gun" has 1000.
+    // TODO: Overhaul this because the chances of dodging even the slowest projectiles is almost nil unless you have extremely high dex + dodge skill.
     const int diff_roll = dice( 10, proj.speed );
     const double dodge_acc_adjustment = avoid_roll / static_cast<double>( diff_roll );
     // Partial dodge, capped at [0.0, 1.0], added to missed_by
@@ -1071,6 +1125,10 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
 
     // If we have a shield, it might passively block ranged impacts
     block_ranged_hit( source, bp_hit, impact );
+    // If the shield negated something like an acid splash, remove that here.
+    if( proj.has_effect( ammo_effect_BLINDS_EYES ) && impact.total_damage() <= 0 ) {
+        proj.remove_effect( ammo_effect_BLINDS_EYES );
+    }
     // If the projectile survives, both it and the launcher get credit for the kill.
     dealt_dam = deal_damage( source, bp_hit, impact, source_weapon, attack.proj.get_drop() );
     dealt_dam.bp_hit = bp_hit.id();
@@ -1129,15 +1187,16 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
 
     // at least `dealt_dam` doesn't get mutated after this point
     const int total_damage = dealt_dam.total_damage();
-    const int env_resist = get_env_resist( bp_hit );
 
-    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES );
-    const int blind_strength = should_blind ? total_damage - env_resist : 0;
+    const bool should_blind = proj.has_effect( ammo_effect_BLINDS_EYES ) &&
+                              ( bp_hit == bodypart_str_id( "head" ) || bp_hit == bodypart_str_id( "eyes" ) );
+    const int blind_strength = should_blind ? total_damage - get_env_resist( body_part_eyes ) : 0;
     if( should_blind ) {
         const auto blind_duration = blind_strength > 0 ? rng( 3_turns, 10_turns ) : rng( 1_turns, 3_turns );
         // TODO: Change this to require bp_eyes
         add_env_effect( effect_blind, body_part_eyes, 5, blind_duration );
     }
+    const int env_resist = get_env_resist( bp_hit );
 
     const int sap_strength = proj.has_effect( ammo_effect_APPLY_SAP ) ? total_damage - env_resist : 0;
     if( sap_strength > 0 ) {
@@ -1183,6 +1242,13 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
     check_dead_state();
     attack.hit_critter = this;
     attack.missed_by = goodhit;
+    if( sourceplayer || sourcenpc ) {
+        cata::run_hooks( "on_creature_attacked_by_character", [ &, this]( auto & params ) {
+            params["char"] = source;
+            params["target"] = this;
+            params["success"] = true;
+        } );
+    }
 }
 
 void Creature::deal_projectile_attack( Creature *source, dealt_projectile_attack &attack )
@@ -1283,6 +1349,30 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
         case DT_BULLET:
             // Volatile enemies sometimes go up
             set_volatiles_on_fire( 16 );
+            // Cause bleed if high damage goes through armor and enemy is made of flesh
+            if( adjusted_damage > 15 ) {
+                if( !is_immune_effect( effect_bleed ) ) {
+                    if( is_monster() ) {
+                        add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
+                    } else {
+                        add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                    }
+                }
+            }
+            break;
+
+        case DT_CUT:
+        case DT_STAB:
+            // Cause bleed if high damage goes through armor and enemy is made of flesh
+            if( adjusted_damage > 15 ) {
+                if( !is_immune_effect( effect_bleed ) ) {
+                    if( is_monster() ) {
+                        add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
+                    } else {
+                        add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                    }
+                }
+            }
             break;
 
         case DT_ACID:
@@ -1493,10 +1583,6 @@ void Creature::clear_effects()
             remove_effect( elem.first, _effect_it.first );
         }
     }
-}
-bool Creature::remove_effect( const efftype_id &eff_id )
-{
-    return remove_effect( eff_id, bodypart_str_id::NULL_ID() );
 }
 bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &bp )
 {
@@ -1801,6 +1887,12 @@ std::string Creature::get_value( const std::string &key ) const
     auto it = values.find( key );
     return ( it == values.end() ) ? "" : it->second;
 }
+
+auto Creature::get_value_as_int( const std::string &key ) const -> std::optional<int>
+{
+    return string_utils::string_to_int( get_value( key ) );
+}
+
 auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
 {
     return values;
@@ -1874,6 +1966,7 @@ void Creature::mod_moves( int nmoves )
 void Creature::set_moves( int nmoves )
 {
     moves = nmoves;
+    move_credit_remainder = 0;
 }
 
 bool Creature::in_sleep_state() const
@@ -2553,20 +2646,24 @@ effects_map Creature::get_all_effects() const
 
 tripoint_abs_ms Creature::abs_pos() const
 {
-    return get_map().bub_to_abs( bub_pos() );
+    return bub_to_abs( bub_pos() );
 }
 
 void Creature::setpos( const tripoint_abs_ms &pos )
 {
-    setpos( get_map().abs_to_bub( pos ) );
+    setpos( abs_to_bub( pos ) );
 }
 
 bool Creature::is_loaded() const
 {
-    return get_map().get_submap_at( bub_pos() ) != nullptr;
+    auto *const buffer = find_mapbuffer();
+    if( buffer == nullptr ) {
+        return false;
+    }
+    return buffer->lookup_submap_in_memory( project_to<coords::sm>( abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
-    return get_map().is_position_simulated( bub_pos() );
+    return submap_loader.is_simulated( get_dimension(), project_to<coords::sm>( abs_pos() ) );
 }

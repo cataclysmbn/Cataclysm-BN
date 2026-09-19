@@ -14,6 +14,7 @@
     "material": [ "plastic", "aluminum" ],
     "symbol": ",",
     "color": "light_green",
+    "light_color": "#b8ffc0",
     "use_action": { "target": "atomic_lamp_off", "msg": "You close the lamp's cover.", "menu_text": "Close cover", "type": "transform" },
     "flags": [ "LIGHT_20", "LEAK_DAM", "RADIOACTIVE", "DURABLE_MELEE", "ALLOWS_REMOTE_USE" ]
   },
@@ -32,6 +33,7 @@
     "material": [ "plastic", "aluminum" ],
     "symbol": ",",
     "color": "light_green",
+    "light_color": "#b8ffc0",
     "use_action": {
       "target": "atomic_lamp",
       "active": true,
@@ -164,20 +166,7 @@
       "need_charges_msg": "The lantern has no batteries."
     },
     "flags": [ "RADIO_MODABLE", "ALLOWS_REMOTE_USE" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_minus_battery_cell",
-          "light_minus_disposable_cell",
-          "light_minus_atomic_battery_cell",
-          "light_battery_cell",
-          "light_disposable_cell",
-          "light_plus_battery_cell",
-          "light_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_minus_battery_cell", "light_battery_cell" ] ] ],
     "magazine_well": "500 ml"
   },
   {
@@ -214,20 +203,7 @@
       "need_charges": 1,
       "need_charges_msg": "The flashlight's batteries are dead."
     },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
     "magazine_well": "100 ml"
   },
   {
@@ -405,20 +381,7 @@
       "need_charges": 1,
       "need_charges_msg": "The heavy duty flashlight's batteries are dead."
     },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_disposable_cell",
-          "light_minus_disposable_cell",
-          "light_plus_battery_cell",
-          "light_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -478,20 +441,7 @@
       "need_charges": 1,
       "type": "transform"
     },
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ]
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ]
   },
   {
     "id": "oil_lamp",
@@ -592,7 +542,7 @@
       "need_charges_msg": "The reading light winks out.",
       "type": "transform"
     },
-    "magazines": [ [ "battery", [ "light_minus_disposable_cell", "light_minus_battery_cell", "light_minus_atomic_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_minus_disposable_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "100 ml"
   },
   {
@@ -632,20 +582,7 @@
       "type": "transform"
     },
     "flags": [ "RADIO_ACTIVATION", "RADIOSIGNAL_2" ],
-    "magazines": [
-      [
-        "battery",
-        [
-          "light_battery_cell",
-          "light_plus_battery_cell",
-          "light_minus_battery_cell",
-          "light_atomic_battery_cell",
-          "light_minus_atomic_battery_cell",
-          "light_minus_disposable_cell",
-          "light_disposable_cell"
-        ]
-      ]
-    ],
+    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -696,6 +633,7 @@
     "name": { "str": "torch (lit)", "str_pl": "torches (lit)" },
     "description": "This is a large stick, wrapped in rags that are soaked with a flammable material.  It is burning, producing plenty of light.",
     "color": "red",
+    "light_color": "#ffb05f",
     "turns_per_charge": 20,
     "revert_to": "torch_done",
     "thrown_damage": [ { "damage_type": "heat", "amount": 4 } ],

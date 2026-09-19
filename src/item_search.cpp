@@ -180,7 +180,7 @@ std::function<bool( const itype & )> itype_filter_from_string( const std::string
 std::pair<std::string, std::string> get_both( const std::string &a )
 {
     size_t split_mark = a.find( ';' );
-    return std::make_pair( a.substr( 0, split_mark - 1 ),
+    return std::make_pair( a.substr( 0, split_mark ),
                            a.substr( split_mark + 1 ) );
 }
 

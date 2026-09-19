@@ -2,29 +2,6 @@
 
 // IWYU pragma: no_include <cxxabi.h>
 
-#include <algorithm>
-#include <numeric>
-#include <array>
-#include <chrono>
-#include <csignal>
-#include <cstdint>
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
-#include <iterator>
-#include <limits>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-#include <fstream>
-
 #include "action.h"
 #include "artifact.h"
 #include "avatar.h"
@@ -43,7 +20,6 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
-#include "thread_pool.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -51,6 +27,7 @@
 #include "filesystem.h"
 #include "game.h"
 #include "game_constants.h"
+#include "game_info.h"
 #include "game_inventory.h"
 #include "input.h"
 #include "inventory.h"
@@ -59,12 +36,14 @@
 #include "json.h"
 #include "json_export.h"
 #include "language.h"
-#include "magic.h"
-#include "map.h"
-#include "map_extras.h"
+#include "magic/magic.h"
+#include "map/map.h"
+#include "map/mapbuffer_registry.h"
 #include "map_iterator.h"
-#include "mapgen.h"
-#include "mapgendata.h"
+#include "mapgen/map_extras.h"
+#include "mapgen/mapgen.h"
+#include "mapgen/mapgen_constructor.h"
+#include "mapgen/mapgendata.h"
 #include "martialarts.h"
 #include "memory_fast.h"
 #include "messages.h"
@@ -79,6 +58,7 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
+#include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
@@ -95,6 +75,7 @@
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
+#include "thread_pool.h"
 #include "trait_group.h"
 #include "translations.h"
 #include "type_id.h"
@@ -104,16 +85,37 @@
 #include "units.h"
 #include "units_utility.h"
 #include "utils/url.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "veh_type.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 #include "vitamin.h"
-#include "vpart_position.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
 #include "weighted_list.h"
-#include "game_info.h"
-#include "overmap_special.h"
+
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <csignal>
+#include <cstdint>
+#include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 static const mtype_id mon_generator( "mon_generator" );
 
@@ -527,13 +529,11 @@ void spawn_nested_mapgen()
             return;
         }
 
-        map &here = get_map();
-        const tripoint_abs_ms abs_ms = here.bub_to_abs( *where );
+        const auto abs_ms = bub_to_abs( *where );
         const tripoint_abs_omt abs_omt = project_to<coords::omt>( abs_ms );
-        const tripoint_abs_sm abs_sub = project_to<coords::sm>( abs_ms );
 
-        map target_map;
-        target_map.load( abs_sub, true );
+        mapgen_constructor target_map( MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ) );
+        target_map.load( abs_omt );
         const auto local_ms = project_remain<coords::omt>( abs_ms ).remainder;
         mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
                        get_overmapbuffer( target_map.get_bound_dimension() ) );
@@ -542,9 +542,9 @@ void spawn_nested_mapgen()
             return;
         }
         const auto nested_offset = point_rel_ms( local_ms.x(), local_ms.y() );
-        ( *ptr )->nest( md, nested_offset );
+        ( *ptr )->nest( md, nested_offset, 0 );
         g->load_npcs();
-        here.invalidate_map_cache( g->get_levz() );
+        get_map().invalidate_map_cache( g->get_levz() );
     }
 }
 
@@ -996,7 +996,7 @@ void character_edit_menu( Character &c )
 
             const auto &vits = vitamin::all();
             for( const auto &v : vits ) {
-                smenu.addentry( -1, true, 0, "%s: %d", v.second.name(), p.vitamin_get( v.first ) );
+                smenu.addentry( -1, true, 0, "%s: %d", v.name(), p.vitamin_get( v.id ) );
             }
 
             smenu.query();
@@ -1038,8 +1038,8 @@ void character_edit_menu( Character &c )
                         smenu.ret < static_cast<int>( vits.size() + non_vitamin_entries ) ) {
                         auto iter = std::next( vits.begin(), smenu.ret - non_vitamin_entries );
                         if( query_int( value, _( "Set %s to?  Currently: %d" ),
-                                       iter->second.name(), p.vitamin_get( iter->first ) ) ) {
-                            p.vitamin_set( iter->first, value );
+                                       iter->name(), p.vitamin_get( iter->id ) ) ) {
+                            p.vitamin_set( iter->id, value );
                         }
                     }
             }
@@ -1112,7 +1112,6 @@ void character_edit_menu( Character &c )
                     if( p.is_mounted() ) {
                         p.mounted_creature->setpos( *newpos );
                     }
-                    g->update_map( g->u );
                 }
             }
         }
@@ -2157,11 +2156,9 @@ void debug()
             if( mx_choice >= 0 && mx_choice < static_cast<int>( mx_str.size() ) ) {
                 const tripoint_abs_omt where_omt( ui::omap::choose_point() );
                 if( where_omt != overmap::invalid_tripoint ) {
-                    tripoint_abs_sm where_sm = project_to<coords::sm>( where_omt );
-                    tinymap mx_map;
-                    // TODO: fix point types
-                    mx_map.load( where_sm, false );
-                    MapExtras::apply_function( mx_str[mx_choice], mx_map, where_sm );
+                    mapgen_constructor mx_map( MAPBUFFER_REGISTRY.get( m.get_bound_dimension() ) );
+                    mx_map.load( where_omt );
+                    MapExtras::apply_function( mx_str[mx_choice], mx_map, where_omt );
                     g->load_npcs();
                     m.invalidate_map_cache( g->get_levz() );
                 }
@@ -2327,9 +2324,7 @@ void debug()
         }
         case DEBUG_DUMP_TILES: {
 #if defined(TILES) && defined(DYNAMIC_ATLAS)
-            tilecontext->current_tileset()->texture_atlas()->readback_load();
             tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
-            tilecontext->current_tileset()->texture_atlas()->readback_clear();
 #endif
             break;
         }

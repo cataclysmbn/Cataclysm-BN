@@ -413,6 +413,7 @@
     "price": "80 USD",
     "price_postapoc": "250 cent",
     "material": "carbon_fiber",
+    "looks_like": "stanag30",
     "symbol": "#",
     "color": "light_gray",
     "ammo_type": [ "223", "300blk" ],

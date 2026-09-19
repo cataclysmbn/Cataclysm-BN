@@ -51,7 +51,7 @@
     "ammo": "battery",
     "charges_per_use": 10,
     "use_action": "HAIRKIT",
-    "magazines": [ [ "battery", [ "light_minus_battery_cell", "light_minus_atomic_battery_cell", "light_minus_disposable_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {

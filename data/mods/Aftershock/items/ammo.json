@@ -16,7 +16,8 @@
     "dispersion": 100,
     "count": 80,
     "stack_size": 80,
-    "loudness": 9,
+    "loudness": 50,
+    "speed": 20,
     "effects": [ "NEVER_MISFIRES" ]
   },
   {
@@ -36,7 +37,8 @@
     "dispersion": 100,
     "count": 1,
     "stack_size": 3,
-    "loudness": 9,
+    "loudness": 0,
+    "speed": 299000000,
     "effects": [ "NEVER_MISFIRES" ]
   }
 ]

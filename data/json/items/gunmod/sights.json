@@ -89,6 +89,35 @@
     "flags": [ "DISABLE_SIGHTS" ]
   },
   {
+    "id": "hybrid_sight",
+    "type": "GUNMOD",
+    "name": { "str": "hybrid holographic sight" },
+    "//": "EOTech HHS-1",
+    "description": "Used extensively by military forces, it increases accuracy and weight.  This sight combines a holographic sight with a toggleable 3x magnifier, allowing effective usage at short and medium range.",
+    "weight": "635 g",
+    "volume": "385 ml",
+    "integral_volume": "200 ml",
+    "price": "680 USD",
+    "price_postapoc": "950 cent",
+    "material": [ "plastic", "steel" ],
+    "symbol": ":",
+    "color": "dark_gray",
+    "location": "sights",
+    "mod_target_category": [
+      [ "RIFLES" ],
+      [ "MACHINE_GUNS" ],
+      [ "GATLING_GUNS" ],
+      [ "M_XBOWS" ],
+      [ "GRENADE_LAUNCHERS" ],
+      [ "ROCKET_LAUNCHERS" ],
+      [ "FLAMETHROWERS" ],
+      [ "SPRAY_GUNS" ]
+    ],
+    "sight_dispersion": 8,
+    "aim_speed": 9,
+    "flags": [ "DISABLE_SIGHTS", "ZOOM" ]
+  },
+  {
     "id": "improve_sights",
     "type": "GUNMOD",
     "name": { "str_sp": "iron sights" },

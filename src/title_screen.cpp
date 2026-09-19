@@ -150,8 +150,8 @@ struct title_scan_options {
     std::string option_prefix;
     std::string root;
     const std::vector<std::string> &languages;
-    std::optional<mod_id> mod;
-    std::optional<std::string> mod_name;
+    std::optional<mod_id> mod = std::nullopt;
+    std::optional<std::string> mod_name = std::nullopt;
     bool skip_root_language_titles;
 };
 
@@ -254,7 +254,7 @@ std::vector<title_candidate>
 {
     auto candidates = std::map<std::string, title_candidate> {};
 
-    add_title_files_from_root( candidates, title_scan_options{
+    add_title_files_from_root( candidates, {
         .option_prefix = builtin_option_prefix,
         .root = PATH_INFO::datadir() + "title/",
         .languages = languages,
@@ -267,7 +267,8 @@ std::vector<title_candidate>
             mod_name = ident.str();
         }
         for( const auto &root : get_mod_search_roots( mod ) ) {
-            add_title_files_from_root( candidates, title_scan_options{
+            add_title_files_from_root( candidates, {
+                .option_prefix = mod_option_prefix,
                 .root = root,
                 .languages = languages,
                 .mod = ident,

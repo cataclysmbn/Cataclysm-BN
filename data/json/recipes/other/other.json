@@ -173,7 +173,7 @@
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [
       [ [ "c_hydrogen_gas", 25 ] ],
-      [ [ "bag_plastic", 12 ], [ "bag_zipper", 12 ] ],
+      [ [ "bag_plastic", 12 ], [ "bag_zipper", 12 ], [ "bag_zipper_small", 48 ] ],
       [ [ "rope_natural_short", 1, "LIST" ] ],
       [ [ "plastic_sheet", 1 ] ]
     ]
@@ -400,7 +400,7 @@
     "skill_used": "cooking",
     "difficulty": 2,
     "time": "1 m",
-    "charges": 20,
+    "charges": 10,
     "autolearn": true,
     "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
     "batch_time_factors": [ 75, 1 ],
@@ -408,7 +408,8 @@
       [ [ "r_paint", 1 ], [ "p_paint", 1 ] ],
       [ [ "g_paint", 1 ], [ "y_paint", 1 ] ],
       [ [ "b_paint", 1 ], [ "c_paint", 1 ] ],
-      [ [ "w_paint", 1 ], [ "k_paint", 1 ] ]
+      [ [ "w_paint", 1 ], [ "k_paint", 1 ] ],
+      [ [ "chem_butane", 75 ] ]
     ]
   },
   {
@@ -461,6 +462,20 @@
     "book_learn": [ [ "welding_book", 2 ] ],
     "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
     "components": [ [ [ "weldtank", 1 ] ], [ [ "oxyacetylene", 240 ] ] ]
+  },
+  {
+    "result": "spray_can",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "5 m",
+    "book_learn": [ [ "welding_book", 2 ] ],
+    "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
+    "//": "Refills an existing can, working like welding tank recipe",
+    "components": [ [ [ "spray_can", 1 ] ], [ [ "spray_paint", 20 ] ] ],
+    "flags": [ "CRAFT_WITH_FULL_MAG" ]
   },
   {
     "type": "recipe",

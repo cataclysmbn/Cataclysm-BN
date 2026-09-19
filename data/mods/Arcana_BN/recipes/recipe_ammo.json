@@ -427,7 +427,7 @@
     "type": "recipe",
     "category": "CC_ARCANA",
     "subcategory": "CSC_ARCANA_AMMO",
-    "skill_used": "fabrication",
+    "skill_used": "magic",
     "difficulty": 4,
     "skills_required": [ [ "fabrication", 2 ], [ "gun", 1 ] ],
     "time": "1 m",

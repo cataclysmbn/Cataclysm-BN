@@ -1,14 +1,14 @@
 #pragma once
 
+#include "coordinates.h"
+#include "map/map.h"
+
 #include <functional>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
-#include <optional>
-
-#include "coordinates.h"
-#include "map.h"
 
 struct tripoint;
 struct point;
@@ -62,6 +62,8 @@ enum action_id : int {
     ACTION_TOGGLE_RUN,
     /** Toggle crouch on/off */
     ACTION_TOGGLE_CROUCH,
+    /** Toggle prone on/off */
+    ACTION_TOGGLE_PRONE,
     /** Open movement mode menu */
     ACTION_OPEN_MOVEMENT,
     /**@}*/
@@ -100,6 +102,8 @@ enum action_id : int {
     ACTION_SMASH,
     /** Examine or pick up items from adjacent square */
     ACTION_EXAMINE,
+    /** Jump across a single adjacent tile */
+    ACTION_JUMP,
     /** Pick up items from one current/adjacent square */
     ACTION_PICKUP,
     /** Pick up items from all current/adjacent squares */
@@ -192,6 +196,8 @@ enum action_id : int {
     ACTION_SORT_ARMOR,
     /** Auto select and attack hostile creature within range */
     ACTION_AUTOATTACK,
+    /** Toggle whether bump attacks open the manual attack menu */
+    ACTION_TOGGLE_MANUAL_COMBAT_MODE,
     /**@}*/
 
     // Long-term / special actions
@@ -360,6 +366,10 @@ enum action_id : int {
     /** Not an action, serves as count of enumerated actions */
     NUM_ACTIONS
     /**@}*/
+};
+template<>
+struct enum_traits<action_id> {
+    static constexpr action_id last = action_id::NUM_ACTIONS;
 };
 
 /**

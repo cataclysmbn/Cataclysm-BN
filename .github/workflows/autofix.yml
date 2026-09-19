@@ -21,6 +21,7 @@ permissions:
 
 env:
   DENO_DIR: /home/runner/.cache/deno
+  LLVM_VERSION: "22"
 
 jobs:
   autofix:
@@ -35,7 +36,20 @@ jobs:
       - env: { DEBIAN_FRONTEND: noninteractive }
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends astyle clang-format cmake ninja-build gettext ccache
+          sudo apt-get install -y --no-install-recommends astyle gettext
+
+      - name: Setup C++ format tools
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: llvm-${{ env.LLVM_VERSION }}
+          clang-format: ${{ env.LLVM_VERSION }}
+          cmake: true
+          ninja: true
+          ccache: true
+          setup-cpp: false
+
+      - name: Show clang-format version
+        run: clang-format --version
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
@@ -46,11 +60,8 @@ jobs:
           path: ${{ env.DENO_DIR }}
           key: deno-${{ hashFiles('deno.lock') }}
 
-      - name: configure cmake for formatting
-        run: cmake --preset lint
-
       - name: format C++ files
-        run: cmake --build build --target format
+        run: build-scripts/format-cpp.sh
 
       - name: format Markdown and TypeScript files
         run: deno fmt
@@ -59,7 +70,7 @@ jobs:
         run: deno task dprint fmt
 
       - name: format JSON
-        run: cmake --build build --target style-json-parallel
+        run: build-scripts/format-json.sh
 
       # autofix.ci cannot edit .github directory due to security reasons
       - name: unstage .github
@@ -96,14 +107,17 @@ jobs:
         run: |
           # deno lint
           deno test --allow-read --allow-env=npm_package_config_libvips,TILESET_PYTHON --allow-ffi
+
+      - name: check generated semantic PR config
+        run: |
           deno run --allow-read --allow-write scripts/semantic.ts
+          git diff --exit-code -- .github/semantic.yml
 
   lint:
     if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-slim
     permissions:
       contents: read
-      issues: write
       pull-requests: write
 
     steps:
@@ -112,6 +126,33 @@ jobs:
           github.event.action == 'edited' ||
           github.event.action == 'reopened'
         uses: scarf005/conventional-prs@v0.5.1
+
+      - name: Checkout base docs warning script
+        if: always() && github.event.pull_request.head.ref != github.event.repository.default_branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout: |
+            docs
+            scripts/docs_translation_warning.ts
+            scripts/git_changed_files.ts
+            deno.jsonc
+            deno.lock
+
+      - name: Setup Deno for docs warning
+        if: always() && github.event.pull_request.head.ref != github.event.repository.default_branch
+        continue-on-error: true
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
+      - name: Update docs translation PR body
+        if: always() && github.event.pull_request.head.ref != github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ref=refs/remotes/pull/${{ github.event.pull_request.number }}/merge
+          git fetch --no-tags --filter=blob:none --depth=2 origin "+refs/pull/${{ github.event.pull_request.number }}/merge:$ref" || exit 0
+          deno task docs:translation-warning ${{ github.event.pull_request.number }} --base "$ref^1" --head "$ref" || true
 
       - name: Comment and close pull request
         if: >-

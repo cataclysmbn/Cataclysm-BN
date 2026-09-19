@@ -264,5 +264,12 @@
     "info": "If true, always display the mana in the sidebar. Primarily useful for magic-related mods.",
     "stype": "bool",
     "value": false
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "SKILL_TRAINING_SPEED",
+    "info": "A multiplier on the amount of XP you gain from skills. 0 completely disables it (a la skills through kills)",
+    "stype": "float",
+    "value": 1.0
   }
 ]

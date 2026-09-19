@@ -1,16 +1,15 @@
 #include "catalua_bindings.h"
-#include "catalua_coord.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_coord.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
-
-#include "map.h"
-#include "mapgen.h"
-#include "mapgendata.h"
+#include "map/map.h"
+#include "mapgen/mapgen.h"
+#include "mapgen/mapgendata.h"
 #include "om_direction.h"
-#include "ui.h"
 #include "popup.h"
 #include "string_input_popup.h"
+#include "ui.h"
 
 void cata::detail::reg_mapgendata( sol::state &lua )
 {

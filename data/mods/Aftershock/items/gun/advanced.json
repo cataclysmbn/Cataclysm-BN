@@ -2,7 +2,7 @@
   {
     "abstract": "robogun_base",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": "base robogun",
     "description": "This is a pseudo item for monster attacks.  If you see this, it's a bug.",
     "material": [ "steel", "plastic" ],

@@ -836,6 +836,34 @@
     "components": [ [ [ "plastic_chunk", 1 ] ] ]
   },
   {
+    "result": "bag_zipper_small",
+    "type": "recipe",
+    "result_mult": 40,
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "15 m",
+    "autolearn": true,
+    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 2, "LIST" ] ] ],
+    "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
+    "result": "bag_zipper_small",
+    "type": "recipe",
+    "result_mult": 40,
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_CONTAINERS",
+    "id_suffix": "printed",
+    "skill_used": "computer",
+    "difficulty": 1,
+    "skills_required": [ [ "fabrication", 3 ] ],
+    "autolearn": true,
+    "time": "1 m",
+    "using": [ [ "3d_printing_standard", 1 ] ],
+    "components": [ [ [ "plastic_chunk", 1 ] ] ]
+  },
+  {
     "type": "recipe",
     "result": "dehydrator_tray",
     "category": "CC_OTHER",

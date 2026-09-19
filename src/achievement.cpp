@@ -19,6 +19,7 @@
 #include "skill.h"
 #include "stats_tracker.h"
 #include "string_formatter.h"
+#include "type_id_implement.h"
 
 // Some details about how achievements work
 // ========================================
@@ -57,19 +58,7 @@ generic_factory<achievement> achievement_factory( "achievement" );
 
 } // namespace
 
-/** @relates string_id */
-template<>
-const achievement &string_id<achievement>::obj() const
-{
-    return achievement_factory.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<achievement>::is_valid() const
-{
-    return achievement_factory.is_valid( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( achievement, achievement_factory );
 
 namespace io
 {

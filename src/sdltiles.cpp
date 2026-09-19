@@ -1,76 +1,78 @@
 #if defined(TILES)
 
-#include "cursesdef.h" // IWYU pragma: associated
-#include "sdltiles.h" // IWYU pragma: associated
+#    include "sdltiles.h" // IWYU pragma: associated
 
-#include <algorithm>
-#include <array>
-#include <cassert>
-#include <climits>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <exception>
-#include <fstream>
-#include <iterator>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <set>
-#include <stack>
-#include <stdexcept>
-#include <type_traits>
-#include <unordered_map>
-#include <vector>
-#include "avatar.h"
-#include "cata_tiles.h"
-#include "cata_utility.h"
-#include "catacharset.h"
-#include "color.h"
-#include "color_loader.h"
-#include "cuboid_rectangle.h"
-#include "cursesport.h"
-#include "debug.h"
-#include "dynamic_atlas.h"
-#include "filesystem.h"
-#include "font_loader.h"
-#include "game.h"
-#include "game_ui.h"
-#include "get_version.h"
-#include "hash_utils.h"
-#include "input.h"
-#include "runtime_handlers.h"
-#include "json.h"
-#include "make_static.h"
-#include "mapbuffer.h"
-#include "mission.h"
-#include "npc.h"
-#include "options.h"
-#include "output.h"
-#include "overmap_location.h"
-#include "overmap_label.h"
-#include "overmap_label_note.h"
-#include "note_label_utils.h"
-#include "overmap_special.h"
-#include "overmap_ui.h"
-#include "overmapbuffer.h"
-#include "regional_settings.h"
-#include "mongroup.h"
-#include "path_info.h"
-#include "point.h"
-#include "rng.h"
-#include "sdl_wrappers.h"
-#include "sdl_geometry.h"
-#include "sdl_utils.h"
-#include "sdl_font.h"
-#include "sdlsound.h"
-#include "string_formatter.h"
-#include "uistate.h"
-#include "ui_manager.h"
-#include "wcwidth.h"
-#include "worldfactory.h"
+#    include "avatar.h"
+#    include "cata_tiles.h"
+#    include "cata_utility.h"
+#    include "catacharset.h"
+#    include "color.h"
+#    include "color_loader.h"
+#    include "cuboid_rectangle.h"
+#    include "cursesdef.h" // IWYU pragma: associated
+#    include "cursesport.h"
+#    include "debug.h"
+#    include "dynamic_atlas.h"
+#    include "filesystem.h"
+#    include "font_loader.h"
+#    include "game.h"
+#    include "game_ui.h"
+#    include "get_version.h"
+#    include "hash_utils.h"
+#    include "input.h"
+#    include "json.h"
+#    include "make_static.h"
+#    include "map/mapbuffer.h"
+#    include "mission.h"
+#    include "mongroup.h"
+#    include "note_label_utils.h"
+#    include "npc.h"
+#    include "options.h"
+#    include "output.h"
+#    include "overmap_label.h"
+#    include "overmap_label_note.h"
+#    include "overmap_location.h"
+#    include "overmap_special.h"
+#    include "overmap_ui.h"
+#    include "overmapbuffer.h"
+#    include "path_info.h"
+#    include "point.h"
+#    include "profile.h"
+#    include "regional_settings.h"
+#    include "rng.h"
+#    include "runtime_handlers.h"
+#    include "sdl_font.h"
+#    include "sdl_geometry.h"
+#    include "sdl_utils.h"
+#    include "sdl_wrappers.h"
+#    include "sdlsound.h"
+#    include "string_formatter.h"
+#    include "ui_manager.h"
+#    include "uistate.h"
+#    include "wcwidth.h"
+#    include "worldfactory.h"
+
+#    include <algorithm>
+#    include <array>
+#    include <cassert>
+#    include <climits>
+#    include <cmath>
+#    include <cstdint>
+#    include <cstring>
+#    include <exception>
+#    include <fstream>
+#    include <iterator>
+#    include <limits>
+#    include <map>
+#    include <memory>
+#    include <optional>
+#    include <ranges>
+#    include <set>
+#    include <stack>
+#    include <stdexcept>
+#    include <type_traits>
+#    include <unordered_map>
+#    include <vector>
 
 #if defined(__linux__)
 #   include <cstdlib> // getenv()/setenv()
@@ -88,10 +90,10 @@
 
 #include "action.h"
 #include "inventory.h"
-#include "map.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "map/map.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 #include "worldfactory.h"
 #endif
 
@@ -322,6 +324,7 @@ static void WinCreate()
                           "Failed to initialize accelerated renderer, falling back to software rendering" ) ) {
             software_renderer = true;
         } else {
+            dbg( DL::Info ) << "Initialized SDL with Renderer: " << SDL_GetRendererName( renderer.get() );
             if( get_option<bool>( "VSYNC" ) ) {
                 SDL_SetRenderVSync( renderer.get(), 1 );
             }
@@ -2789,7 +2792,7 @@ void handle_finger_input( Uint64 ticks )
     float dist = std::sqrt( delta_x * delta_x + delta_y * delta_y ); // in pixel space
     bool handle_diagonals = touch_input_context.is_action_registered( "LEFTUP" );
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
-    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" )*std::max( WindowWidth,
+    if( dist > ( get_option<float>( "ANDROID_DEADZONE_RANGE" ) * std::max( WindowWidth,
                  WindowHeight ) ) ) {
         if( !handle_diagonals ) {
             if( delta_x >= 0 && delta_y >= 0 ) {
@@ -2994,6 +2997,10 @@ static void CheckMessages()
                 // If we're already crouching, make it simple to toggle crouching to off.
                 if( g->u.movement_mode_is( CMM_CROUCH ) ) {
                     actions.insert( ACTION_TOGGLE_CROUCH );
+                }
+                // If we're already prone, make it simple to toggle prone to off.
+                if( g->u.movement_mode_is( CMM_PRONE ) ) {
+                    actions.insert( ACTION_TOGGLE_PRONE );
                 }
 
                 // We're not already running or in combat, so remove cycle walk/run
@@ -3948,6 +3955,7 @@ void input_manager::pump_events()
 // is simply a wrapper around this.
 input_event input_manager::get_input_event()
 {
+    ZoneScopedN( "sdl_input_get_input_event" );
     previously_pressed_key = 0;
 
     // standards note: getch is sometimes required to call refresh
@@ -3957,10 +3965,12 @@ input_event input_manager::get_input_event()
     // we can skip it if `needupdate` is false to improve performance during mouse
     // move events.
     if( needupdate ) {
+        ZoneScopedN( "sdl_input_wrefresh" );
         wrefresh( catacurses::stdscr );
     }
 
     if( inputdelay < 0 ) {
+        ZoneScopedN( "sdl_input_wait_blocking" );
         do {
             CheckMessages();
             if( last_input.type != input_event_t::error ) {
@@ -3969,6 +3979,7 @@ input_event input_manager::get_input_event()
             SDL_Delay( 1 );
         } while( last_input.type == input_event_t::error );
     } else if( inputdelay > 0 ) {
+        ZoneScopedN( "sdl_input_wait_timed" );
         Uint64 starttime = SDL_GetTicks();
         Uint64 endtime = 0;
         bool timedout = false;
@@ -3985,6 +3996,7 @@ input_event input_manager::get_input_event()
             }
         } while( !timedout );
     } else {
+        ZoneScopedN( "sdl_input_poll_once" );
         CheckMessages();
     }
 
@@ -4276,6 +4288,11 @@ HWND getWindowHandle()
 const SDL_Renderer_Ptr &get_sdl_renderer()
 {
     return renderer;
+}
+
+auto set_sdl_renderer( SDL_Renderer_Ptr r ) -> void
+{
+    renderer = std::move( r );
 }
 
 const SDL_Window_Ptr &get_sdl_window()

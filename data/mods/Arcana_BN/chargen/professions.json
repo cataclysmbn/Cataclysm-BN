@@ -1,5 +1,10 @@
 [
   {
+    "type": "profession_item_substitutions",
+    "trait": "ARCANA_DRAGONCLAWS",
+    "sub": [ { "item": "gloves_leather", "new": [ "gloves_fingerless" ] } ]
+  },
+  {
     "type": "item_group",
     "subtype": "collection",
     "//": "Arcanist professions start with a relevant essence holding the equivalent of two essence per profession point cost, minus any loaded into their primary weapon if any.",
@@ -15,8 +20,8 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "starting_mana_gem_8_essence",
-    "entries": [ { "item": "essence", "charges": 8 } ]
+    "id": "starting_mana_gem_6_essence",
+    "entries": [ { "item": "essence", "charges": 6 } ]
   },
   {
     "type": "item_group",
@@ -33,14 +38,14 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "starting_mana_gem_290_dull_essence",
-    "entries": [ { "item": "essence_dull", "charges": 290 } ]
+    "id": "starting_mana_gem_350_dull_essence",
+    "entries": [ { "item": "essence_dull", "charges": 350 } ]
   },
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "starting_mana_gem_237_dull_essence",
-    "entries": [ { "item": "essence_dull", "charges": 237 } ]
+    "id": "starting_mana_gem_297_dull_essence",
+    "entries": [ { "item": "essence_dull", "charges": 297 } ]
   },
   {
     "type": "item_group",
@@ -81,8 +86,8 @@
   {
     "type": "item_group",
     "subtype": "collection",
-    "id": "starting_mana_gem_520_dull_essence",
-    "entries": [ { "item": "essence_dull", "charges": 520 } ]
+    "id": "starting_mana_gem_540_dull_essence",
+    "entries": [ { "item": "essence_dull", "charges": 540 } ]
   },
   {
     "type": "item_group",
@@ -100,7 +105,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "bandolier_flintlock_shrike",
-    "entries": [ { "item": "flintlock_ammo", "charges": 20 } ]
+    "entries": [ { "item": "flintlock_ammo", "charges": 28 } ]
   },
   {
     "type": "item_group",
@@ -147,8 +152,8 @@
     "id": "arcanist_alchemist",
     "name": "Alchemist",
     "description": "You studied under a well-learned scholar, a seeker of the fabled elixir of life.  Despite the tutelage of a master alchemist, you never got any closer to finishing the great work.",
-    "points": 2,
-    "skills": [ { "level": 5, "name": "cooking" }, { "level": 1, "name": "firstaid" } ],
+    "points": 3,
+    "skills": [ { "level": 5, "name": "cooking" }, { "level": 2, "name": "magic" } ],
     "items": {
       "both": {
         "items": [
@@ -160,14 +165,15 @@
           "gloves_fingerless",
           "mbag",
           "matches",
-          "chemistry_set_basic",
-          "red_black_vulnerary",
+          "pot",
+          "retort_copper",
+          "strength_potion",
           "chem_ethanol",
           "bottle_glass",
           "book_potioncraft"
         ],
         "entries": [
-          { "item": "mana_gem", "contents-group": "starting_mana_gem_4_essence" },
+          { "item": "mana_gem", "contents-group": "starting_mana_gem_6_essence" },
           { "item": "punch_dagger", "container-item": "sheath" }
         ]
       },
@@ -175,6 +181,15 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST" ],
+    "//": "Allow spells that can be learned from History of Alchemy, plus a couple thematic scenario spells.",
+    "allowed_spells": [
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_healing",
+      "arcana_magic_might",
+      "arcana_magic_poison_armor",
+      "arcana_magic_surge_adrenaline"
+    ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -183,7 +198,7 @@
     "name": "Scribe",
     "description": "You were a well-read scholar, learning the basics of giving true power to the written word.  You dreamt of great archives holding forbidden knowledge, but all you have seen lately is a ruined world.",
     "points": 2,
-    "skills": [ { "level": 2, "name": "magic" }, { "level": 2, "name": "fabrication" } ],
+    "skills": [ { "level": 3, "name": "magic" }, { "level": 2, "name": "fabrication" } ],
     "items": {
       "both": {
         "items": [
@@ -209,6 +224,18 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST" ],
+    "//": "Allow spells that can be learned from The Six Pillars.",
+    "allowed_spells": [
+      "arcana_magic_cold_ward",
+      "arcana_magic_consecrate",
+      "arcana_magic_dark_lance",
+      "arcana_magic_earthweaving",
+      "arcana_magic_eclipse",
+      "arcana_magic_elemental_burst",
+      "arcana_magic_phase_shield",
+      "arcana_magic_summon_giant_centipedes",
+      "arcana_magic_sundering_quake"
+    ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -218,12 +245,13 @@
     "description": "You have beheld true power, as a member of the Sanguine Order.  Power from within, as well as power from beyond.  But at what cost?",
     "points": 4,
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 3, "name": "magic" },
-      { "level": 1, "name": "firstaid" },
-      { "level": 1, "name": "gun" },
-      { "level": 1, "name": "melee" },
-      { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 2, "name": "firstaid" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "melee" },
+      { "level": 3, "name": "stabbing" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -233,6 +261,7 @@
           "socks",
           "boots",
           "backpack",
+          "spearsling",
           "revenant_crown",
           "waterskin",
           "matches",
@@ -240,7 +269,7 @@
           "book_bloodmagic"
         ],
         "entries": [
-          { "item": "bloodscourge", "ammo-item": "essence_blood", "charges": 15, "custom-flags": [ "auto_wield" ] },
+          { "item": "bloodscourge", "charges": 15, "custom-flags": [ "auto_wield" ] },
           { "item": "mana_gem_blood", "contents-group": "starting_mana_gem_9_blood_essence" },
           { "item": "blood_athame", "container-item": "sheath" }
         ]
@@ -249,6 +278,16 @@
       "female": [ "bra", "panties", "skirt" ]
     },
     "traits": [ "PROF_SANGUINE" ],
+    "//": "Sanguinist characters in general gain access to any spell that can be learned in Sanguine Codex.",
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -256,13 +295,13 @@
     "id": "arcanist_magehunter",
     "name": "Mage Hunter",
     "description": "You were a member of The Cleansing Flame, a religious order.  The end of all has come.  The barrier between worlds has been shattered.  The dead hunger for the living.  But you will not give in.",
-    "points": 4,
+    "points": 5,
     "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 4, "name": "magic" },
-      { "level": 2, "name": "melee" },
-      { "level": 2, "name": "bashing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -277,13 +316,15 @@
           "somen_clairvoyance",
           "holy_symbol",
           "backpack",
+          "axe_ring",
           "waterskin",
           "matches",
+          "bowl_clay",
           "book_hexenhammer"
         ],
         "entries": [
           { "item": "hexenhammer", "charges": 3, "custom-flags": [ "auto_wield" ] },
-          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_237_dull_essence" },
+          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_297_dull_essence" },
           { "item": "knife_hunting", "container-item": "sheath" }
         ]
       },
@@ -291,7 +332,18 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME" ],
+    "//": "Cleansing Flame characters in general gain access to any spell that can be learned in The Cleansing Flame.",
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -300,7 +352,12 @@
     "name": "Dark Priest",
     "description": "He From Beyond The Veil calls to you, to your brothers and sisters.  And the faithful, those who remain at least, shall bring him into this world.",
     "points": 6,
-    "skills": [ { "level": 5, "name": "magic" }, { "level": 2, "name": "gun" }, { "level": 2, "name": "dodge" } ],
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 5, "name": "magic" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "dodge" }
+    ],
     "items": {
       "both": {
         "items": [
@@ -318,7 +375,7 @@
           "book_sacrifice"
         ],
         "entries": [
-          { "item": "thunder_sigil", "ammo-item": "essence", "charges": 5, "custom-flags": [ "auto_wield" ] },
+          { "item": "thunder_sigil", "charges": 5, "custom-flags": [ "auto_wield" ] },
           { "item": "mana_gem", "contents-group": "starting_mana_gem_7_essence" },
           { "item": "copper_knife", "container-item": "sheath" }
         ]
@@ -326,6 +383,15 @@
       "female": [ "chestwrap" ]
     },
     "traits": [ "PROF_CHALICE" ],
+    "//": "Keeper characters in general gain access to any spell that can be learned in Oaths to The Chalice.",
+    "allowed_spells": [
+      "arcana_magic_free_action",
+      "arcana_magic_insight",
+      "arcana_magic_lightning_ward",
+      "arcana_magic_shockstorm",
+      "arcana_magic_might",
+      "arcana_magic_phase_shield"
+    ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -336,10 +402,14 @@
     "spells": [ { "id": "arcana_magic_summon_shadow", "level": 1 }, { "id": "arcana_magic_summon_shadow_snake", "level": 1 } ],
     "points": 7,
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 6, "name": "magic" },
       { "level": 5, "name": "fabrication" },
       { "level": 3, "name": "survival" },
-      { "level": 2, "name": "dodge" }
+      { "level": 2, "name": "cooking" },
+      { "level": 2, "name": "melee" },
+      { "level": 2, "name": "bashing" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -351,6 +421,7 @@
           "gloves_leather",
           "knit_scarf",
           "backpack",
+          "spearsling",
           "waterskin",
           "triffid_garland",
           "matches",
@@ -373,6 +444,8 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_ARCANIST2" ],
+    "//": "Summoners can opt to start with any summoning Magic Sign they don't already get for free.",
+    "allowed_spells": [ "arcana_magic_summon_giant_centipedes", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -382,10 +455,14 @@
     "description": "You had been a apprentice within the Sanguine Order, in particular a sect that sought to research mastery over creatures from Beyond.  Your mentor and peers did not live to see this research bear fruit, leaving you to pursue what they left incomplete.",
     "points": 6,
     "skills": [
+      { "level": 2, "name": "swimming" },
       { "level": 5, "name": "magic" },
       { "level": 3, "name": "cooking" },
-      { "level": 1, "name": "firstaid" },
-      { "level": 1, "name": "survival" }
+      { "level": 2, "name": "firstaid" },
+      { "level": 1, "name": "survival" },
+      { "level": 3, "name": "melee" },
+      { "level": 3, "name": "unarmed" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -417,6 +494,15 @@
       "ARCANA_DRAGONCLAWS",
       "ARCANA_INNERHEAT"
     ],
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -427,18 +513,18 @@
     "spells": [ { "id": "arcana_magic_harden_senses", "level": 1 } ],
     "points": 8,
     "skills": [
-      { "level": 2, "name": "swimming" },
+      { "level": 3, "name": "swimming" },
       { "level": 3, "name": "fabrication" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "magic" },
-      { "level": 3, "name": "melee" },
-      { "level": 2, "name": "throw" },
-      { "level": 2, "name": "stabbing" },
-      { "level": 2, "name": "dodge" },
-      { "level": 2, "name": "pistol" },
+      { "level": 5, "name": "gun" },
+      { "level": 5, "name": "magic" },
+      { "level": 5, "name": "melee" },
+      { "level": 5, "name": "throw" },
+      { "level": 5, "name": "stabbing" },
+      { "level": 5, "name": "dodge" },
+      { "level": 5, "name": "pistol" },
       { "level": 1, "name": "mechanics" },
-      { "level": 1, "name": "survival" },
-      { "level": 1, "name": "firstaid" }
+      { "level": 2, "name": "survival" },
+      { "level": 2, "name": "firstaid" }
     ],
     "items": {
       "both": {
@@ -458,7 +544,6 @@
           { "item": "bloodaxe", "ammo-item": "essence_blood", "charges": 5, "container-item": "axe_ring" },
           { "item": "shrike_misericorde", "charges": 2, "container-item": "scabbard" },
           { "item": "flintlock_pouch", "contents-group": "bandolier_flintlock_shrike" },
-          { "item": "flintlock_ammo", "charges": 8 },
           { "item": "mana_gem_blood", "contents-group": "starting_mana_gem_43_blood_essence" },
           { "item": "blindfold", "custom-flags": [ "no_auto_equip" ] },
           { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] }
@@ -468,6 +553,15 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_SANGUINE" ],
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -485,19 +579,19 @@
       "bio_tools",
       "bio_batteries",
       "bio_infolink",
-      "bio_life_sign_suppression",
+      "bio_essence_surge_cell",
       "bio_power_storage_mkII"
     ],
     "skills": [
       { "level": 2, "name": "swimming" },
-      { "level": 4, "name": "magic" },
+      { "level": 5, "name": "magic" },
       { "level": 3, "name": "cooking" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "melee" },
-      { "level": 2, "name": "pistol" },
-      { "level": 2, "name": "computer" },
-      { "level": 2, "name": "electronics" },
-      { "level": 2, "name": "cutting" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "pistol" },
+      { "level": 4, "name": "computer" },
+      { "level": 3, "name": "electronics" },
+      { "level": 4, "name": "cutting" },
       { "level": 2, "name": "fabrication" }
     ],
     "items": {
@@ -530,7 +624,17 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -555,16 +659,15 @@
       "bio_power_storage_mkII"
     ],
     "skills": [
-      { "level": 2, "name": "swimming" },
-      { "level": 4, "name": "magic" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "melee" },
-      { "level": 3, "name": "dodge" },
-      { "level": 2, "name": "pistol" },
-      { "level": 2, "name": "rifle" },
-      { "level": 2, "name": "shotgun" },
-      { "level": 3, "name": "unarmed" },
-      { "level": 2, "name": "computer" }
+      { "level": 3, "name": "swimming" },
+      { "level": 5, "name": "magic" },
+      { "level": 5, "name": "gun" },
+      { "level": 5, "name": "melee" },
+      { "level": 5, "name": "dodge" },
+      { "level": 5, "name": "pistol" },
+      { "level": 5, "name": "shotgun" },
+      { "level": 5, "name": "unarmed" },
+      { "level": 4, "name": "computer" }
     ],
     "items": {
       "both": {
@@ -582,10 +685,10 @@
           "book_hexenhammer"
         ],
         "entries": [
-          { "item": "ethereal_crossbow", "charges": 80, "contents-item": "shoulder_strap" },
+          { "item": "ethereal_hand_crossbow", "container-item": "holster", "charges": 40 },
           { "item": "holster", "contents-group": "1911_gun_arcane_purifier" },
           { "item": "legpouch_large", "contents-group": "1911_mags_arcane_purifier" },
-          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_520_dull_essence" },
+          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_540_dull_essence" },
           { "item": "45_acp", "charges": 9 },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_shotgun_shot_00_arcana" }
         ]
@@ -594,7 +697,17 @@
       "female": [ "bra", "panties" ]
     },
     "traits": [ "PROF_CLEANSINGFLAME2" ],
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
     "forbidden_bionics": [ "bio_rift_focus_projector", "bio_life_sign_suppression" ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ],
     "flags": [ "SCEN_ONLY" ]
   },
   {
@@ -606,14 +719,14 @@
     "spells": [ { "id": "arcana_magic_temporal_aura", "level": 1 } ],
     "skills": [
       { "level": 2, "name": "swimming" },
-      { "level": 2, "name": "fabrication" },
+      { "level": 3, "name": "fabrication" },
       { "level": 3, "name": "tailor" },
       { "level": 2, "name": "cooking" },
-      { "level": 5, "name": "magic" },
-      { "level": 2, "name": "gun" },
-      { "level": 3, "name": "melee" },
-      { "level": 2, "name": "stabbing" },
-      { "level": 3, "name": "dodge" },
+      { "level": 6, "name": "magic" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "stabbing" },
+      { "level": 4, "name": "dodge" },
       { "level": 3, "name": "survival" }
     ],
     "items": {
@@ -647,6 +760,14 @@
       },
       "female": [ "chestwrap" ]
     },
+    "allowed_spells": [
+      "arcana_magic_free_action",
+      "arcana_magic_insight",
+      "arcana_magic_lightning_ward",
+      "arcana_magic_shockstorm",
+      "arcana_magic_might",
+      "arcana_magic_phase_shield"
+    ],
     "traits": [ "PROF_CHALICE2" ],
     "flags": [ "SCEN_ONLY" ]
   },
@@ -686,16 +807,16 @@
     "copy-from": "prof_feral_unemployed",
     "name": "Feral Mage Hunter",
     "description": "You were a member of The Cleansing Flame, a religious order.  The end of all has come.  You'll continue your order's work, purging every last heretic and consecrating every artifact, until there is nothing left.",
-    "points": 5,
+    "points": 6,
     "traits": [ "PROF_CLEANSINGFLAME", "PROF_FERAL" ],
     "skills": [
       { "level": 2, "name": "swimming" },
       { "level": 4, "name": "magic" },
-      { "level": 2, "name": "melee" },
-      { "level": 2, "name": "gun" },
-      { "level": 1, "name": "pistol" },
-      { "level": 2, "name": "bashing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "pistol" },
+      { "level": 4, "name": "bashing" },
+      { "level": 4, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -710,20 +831,32 @@
           "somen_clairvoyance_xl",
           "holy_symbol",
           "backpack",
+          "spearsling",
           "waterskin",
           "matches",
+          "bowl_clay",
           "book_hexenhammer"
         ],
         "entries": [
-          { "item": "hexenhammer", "charges": 10, "custom-flags": [ "auto_wield" ] },
+          { "item": "lucern_hexenhammer", "charges": 10, "custom-flags": [ "auto_wield" ] },
           { "item": "ethereal_hand_crossbow", "container-item": "holster" },
-          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_290_dull_essence" },
+          { "item": "mana_gem_dull", "contents-group": "starting_mana_gem_350_dull_essence" },
           { "item": "knife_hunting", "container-item": "sheath" }
         ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boy_shorts" ]
-    }
+    },
+    "allowed_spells": [
+      "arcana_magic_overgrowth",
+      "arcana_magic_heat_ward",
+      "arcana_magic_ward_against_evil",
+      "arcana_magic_clairvoyance",
+      "arcana_magic_consecrate",
+      "arcana_magic_healing",
+      "arcana_magic_earthweaving"
+    ],
+    "forbidden_spells": [ "arcana_magic_clarity_blood", "arcana_magic_serpentine_shield", "arcana_magic_summon_skeletal_dog" ]
   },
   {
     "type": "profession",
@@ -734,27 +867,47 @@
     "points": 5,
     "traits": [ "PROF_SANGUINE", "PROF_FERAL" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 3, "name": "magic" },
-      { "level": 1, "name": "firstaid" },
-      { "level": 2, "name": "gun" },
-      { "level": 1, "name": "throw" },
-      { "level": 1, "name": "melee" },
-      { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 2, "name": "firstaid" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "throw" },
+      { "level": 3, "name": "melee" },
+      { "level": 3, "name": "stabbing" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
-        "items": [ "socks", "armor_wyrm", "backpack", "revenant_crown", "waterskin", "matches", "bowl_clay", "book_bloodmagic" ],
+        "items": [
+          "socks",
+          "armor_wyrm",
+          "backpack",
+          "spearsling",
+          "revenant_crown",
+          "waterskin",
+          "matches",
+          "bowl_clay",
+          "book_bloodmagic"
+        ],
         "entries": [
-          { "item": "bloodscourge", "ammo-item": "essence_blood", "charges": 15, "custom-flags": [ "auto_wield" ] },
-          { "item": "bloodaxe", "ammo-item": "essence_blood", "container-item": "axe_ring" },
+          { "item": "bloodscourge", "charges": 15, "custom-flags": [ "auto_wield" ] },
+          { "item": "bloodaxe", "container-item": "axe_ring" },
           { "item": "mana_gem_blood", "contents-group": "starting_mana_gem_15_blood_essence" },
           { "item": "blood_athame", "container-item": "sheath" }
         ]
       },
       "male": [ "boxer_briefs" ],
       "female": [ "bra", "panties" ]
-    }
+    },
+    "allowed_spells": [
+      "arcana_magic_confuse_monster",
+      "arcana_magic_conjure_acid",
+      "arcana_magic_agility",
+      "arcana_magic_clarity_blood",
+      "arcana_magic_serpentine_shield",
+      "arcana_magic_dark_lance"
+    ],
+    "forbidden_spells": [ "arcana_magic_healing", "arcana_magic_overgrowth", "arcana_magic_ward_against_evil" ]
   },
   {
     "type": "profession",
@@ -765,11 +918,12 @@
     "points": 7,
     "traits": [ "PROF_CHALICE", "PROF_FERAL" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 5, "name": "magic" },
-      { "level": 2, "name": "gun" },
-      { "level": 2, "name": "dodge" },
-      { "level": 2, "name": "melee" },
-      { "level": 1, "name": "stabbing" }
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "dodge" },
+      { "level": 4, "name": "melee" },
+      { "level": 4, "name": "stabbing" }
     ],
     "items": {
       "both": {
@@ -790,12 +944,20 @@
         "entries": [
           { "item": "spear_pestilence", "container-item": "spearsling" },
           { "item": "thunder_sigil", "ammo-item": "essence", "charges": 5, "custom-flags": [ "auto_wield" ] },
-          { "item": "mana_gem", "contents-group": "starting_mana_gem_8_essence" },
+          { "item": "mana_gem", "contents-group": "starting_mana_gem_9_essence" },
           { "item": "copper_knife", "container-item": "sheath" }
         ]
       },
       "female": [ "chestwrap" ]
-    }
+    },
+    "allowed_spells": [
+      "arcana_magic_free_action",
+      "arcana_magic_insight",
+      "arcana_magic_lightning_ward",
+      "arcana_magic_shockstorm",
+      "arcana_magic_might",
+      "arcana_magic_phase_shield"
+    ]
   },
   {
     "type": "profession",
@@ -807,12 +969,14 @@
     "points": 8,
     "traits": [ "PROF_ARCANIST2", "PROF_FERAL" ],
     "skills": [
+      { "level": 1, "name": "swimming" },
       { "level": 6, "name": "magic" },
       { "level": 5, "name": "fabrication" },
       { "level": 3, "name": "survival" },
-      { "level": 2, "name": "dodge" },
+      { "level": 2, "name": "cooking" },
       { "level": 2, "name": "melee" },
-      { "level": 1, "name": "bashing" }
+      { "level": 2, "name": "bashing" },
+      { "level": 3, "name": "dodge" }
     ],
     "items": {
       "both": {
@@ -824,6 +988,7 @@
           "gloves_leather",
           "knit_scarf",
           "backpack",
+          "spearsling",
           "waterskin",
           "triffid_garland_empowered",
           "matches",
@@ -844,6 +1009,7 @@
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
-    }
+    },
+    "allowed_spells": [ "arcana_magic_summon_giant_centipedes", "arcana_magic_summon_skeletal_dog" ]
   }
 ]

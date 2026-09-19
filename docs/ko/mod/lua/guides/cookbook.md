@@ -158,6 +158,23 @@ local new_npc = map:place_npc(place_point, "thug")
 new_npc:erase()
 ```
 
+### NPC 조종 전환에 반응하기
+
+플레이어가 동료 NPC 조종으로 전환한 뒤 모드 상태를 갱신해야 할 때
+`on_control_npc` 훅을 사용합니다. 이 훅은 전환 후 실행되므로 현재 조종
+중인 캐릭터는 `gapi.get_avatar()`로 읽습니다.
+
+```lua
+local mod = game.mod_runtime[game.current_mod]
+game.add_hook("on_control_npc", function(...) return mod.on_control_npc(...) end)
+
+mod.on_control_npc = function(params)
+    local controlled = gapi.get_avatar()
+
+    gapi.add_msg(MsgType.good, string.format("이제 %s을(를) 조종합니다.", controlled:get_name()))
+end
+```
+
 ## 날씨 훅
 
 ### 날씨 변화에 반응하기

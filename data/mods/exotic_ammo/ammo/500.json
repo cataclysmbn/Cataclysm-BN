@@ -16,9 +16,12 @@
     "ammo_type": "500",
     "casing": "500_casing",
     "range": 16,
-    "damage": { "damage_type": "bullet", "amount": 55, "armor_penetration": 8 },
+    "//": "Balanced as FMJ",
+    "damage": { "damage_type": "bullet", "amount": 55, "armor_penetration": 24 },
     "dispersion": 30,
     "recoil": 3000,
+    "loudness": 160,
+    "speed": 380,
     "effects": [ "COOKOFF" ]
   },
   {

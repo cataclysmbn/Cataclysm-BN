@@ -506,7 +506,7 @@
       [ "boots", 100 ],
       [ "pants", 100 ],
       [ "jacket_army", 100 ],
-      [ "chestrig", 75 ],
+      [ "belt_magazine", 75 ],
       [ "rucksack", 50 ],
       { "distribution": [ { "item": "helmet_steel", "prob": 75 }, { "item": "beret", "prob": 25 } ] }
     ]
@@ -890,7 +890,11 @@
       [ "creepy_doll", 3 ],
       [ "portable_game", 5 ],
       [ "whistle", 3 ],
-      [ "shark_plush", 4 ]
+      [ "shark_plush", 4 ],
+      [ "bb", 8 ],
+      [ "bbgun", 10 ],
+      [ "paintball", 4 ],
+      [ "paintballgun", 5 ]
     ]
   },
   {
@@ -1067,7 +1071,8 @@
       [ "bottle_plastic", 30 ],
       [ "plastic_shopping_bag", 40 ],
       [ "bag_plastic", 25 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       { "item": "paper", "prob": 30, "charges": [ 1, 50 ] },
       [ "rolling_paper", 20 ],
       [ "rag_bloody", 20 ],
@@ -1100,7 +1105,8 @@
       { "item": "glass_shard", "prob": 30, "count": [ 0, 1 ] },
       [ "plastic_shopping_bag", 40 ],
       [ "bag_plastic", 25 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "rag_bloody", 20 ],
       [ "9mm_casing", 20 ],
       [ "38_casing", 20 ],
@@ -1128,7 +1134,8 @@
       [ "leather_belt", 30 ],
       [ "plastic_shopping_bag", 40 ],
       [ "bag_plastic", 25 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "shot_hull", 30 ],
       [ "hat_ball", 30 ],
       [ "hat_newsboy", 20 ],
@@ -1199,7 +1206,8 @@
       [ "can_drink_unsealed", 30 ],
       [ "bottle_plastic", 30 ],
       [ "bag_plastic", 25 ],
-      [ "bag_zipper", 5 ],
+      [ "bag_zipper_small", 5 ],
+      [ "bag_zipper", 2 ],
       [ "sharp_rock", 30 ],
       [ "box_cigarette", 20 ],
       [ "rag_bloody", 20 ],

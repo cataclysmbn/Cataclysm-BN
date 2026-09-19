@@ -1,29 +1,21 @@
-#include "trap.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cassert>
-#include <memory>
-#include <unordered_map>
-#include <utility>
-
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "character.h"
+#include "character_functions.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
 #include "explosion.h"
-#include "character_functions.h"
 #include "game.h"
 #include "game_constants.h"
 #include "int_id.h"
 #include "item.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
@@ -36,6 +28,13 @@
 #include "teleport.h"
 #include "timed_event.h"
 #include "translations.h"
+#include "trap.h" // IWYU pragma: associated
+
+#include <algorithm>
+#include <cassert>
+#include <memory>
+#include <unordered_map>
+#include <utility>
 
 static const skill_id skill_throw( "throw" );
 
@@ -322,7 +321,6 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
                 z->setpos( g->u.bub_pos() );
             }
             g->u.moves -= 150;
-            g->update_map( g->u );
         } else {
             z->stumble();
         }
@@ -340,9 +338,6 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
             n->setpos( random_entry( valid ) );
         }
         n->moves -= 150;
-        if( c == &g->u ) {
-            g->update_map( g->u );
-        }
         if( !n->is_mounted() ) {
             ///\EFFECT_DEX decreases chance of taking damage from a tripwire trap
             if( rng( 5, 20 ) > n->dex_cur ) {
@@ -1134,9 +1129,6 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
         p->add_msg_player_or_npc( m_good, _( "You pull yourself to safety!" ),
                                   _( "<npcname> steps on a sinkhole, but manages to pull themselves to safety." ) );
         p->setpos( random_entry( safe ) );
-        if( p == &g->u ) {
-            g->update_map( *p );
-        }
 
         return true;
     }
@@ -1198,37 +1190,6 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
     monster *m = dynamic_cast<monster *>( c );
     if( m != nullptr && m->flies() ) {
         return false;
-    }
-    if( !g->m.has_zlevels() ) {
-        if( c == &g->u ) {
-            if( !character_funcs::can_fly( get_avatar() ) ) {
-                add_msg( m_warning, _( "You fall down a level!" ) );
-                g->vertical_move( -1, true );
-                if( get_avatar().has_trait( trait_WINGS_BIRD ) || ( one_in( 2 ) &&
-                        get_avatar().has_trait( trait_WINGS_BUTTERFLY ) ) ) {
-                    add_msg( _( "You flap your wings and flutter down gracefully." ) );
-                } else if( get_avatar().has_trait( trait_WEB_RAPPEL ) ) {
-                    add_msg( _( "You quickly spin a line of silk and rappel down." ) );
-                } else if( get_avatar().has_active_bionic( bio_shock_absorber ) ) {
-                    add_msg( m_info,
-                             _( "You hit the ground hard, but your shock absorbers handle the impact admirably!" ) );
-                } else {
-                    get_avatar().impact( 20, p );
-                }
-            }
-        } else {
-            c->add_msg_if_npc( _( "<npcname> falls down a level!" ) );
-            auto dest = c->bub_pos();
-            dest.z()--;
-            c->impact( 20, dest );
-            c->setpos( dest );
-            if( m != nullptr ) {
-                g->despawn_monster( *m );
-            }
-        }
-        // Unlikely you'd want a single-use ledge, but could allow for skylights breaking and spawning glass.
-        g->m.tr_at( p ).trigger_aftermath( g->m, p );
-        return true;
     }
 
     int height = 0;
@@ -1524,6 +1485,7 @@ bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
                                     g->m.tr_at( p ).name() );
     const spell trap_spell = g->m.tr_at( p ).spell_data.get_spell( 0 );
     npc dummy;
+    dummy.spawn_at_sm( project_to<coords::sm>( critter->abs_pos() ) );
     trap_spell.cast_all_effects( dummy, critter->bub_pos() );
     trap_spell.make_sound( p, dummy );
     g->m.tr_at( p ).trigger_aftermath( g->m, p );
@@ -1569,6 +1531,51 @@ bool trapfunc::snake( const tripoint_bub_ms &p, Creature *, item * )
     return true;
 }
 
+static bool lua_trap_can_trigger_check( const Character &target, const trap &trap,
+                                        const tripoint_bub_ms &loc )
+{
+    // Lua itrap can_trigger prevents triggering when returning false
+    if( const auto *itrap_cb = trap.lua_callbacks ) {
+        if( !itrap_cb->call_can_trigger( target, trap, loc ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void lua_trap_on_trigger( Character &target, trap &trap, const tripoint_bub_ms &loc )
+{
+    if( const auto *itrap_cb = trap.lua_callbacks ) {
+        itrap_cb->call_on_trigger( target, trap, loc );
+    }
+}
+
+static void lua_trap_on_trigger_aftermath( Character &target, trap &trap,
+        const tripoint_bub_ms &loc )
+{
+    if( const auto *itrap_cb = trap.lua_callbacks ) {
+        itrap_cb->call_on_trigger_aftermath( target, trap, loc );
+    }
+}
+
+bool trapfunc::lua( const tripoint_bub_ms &p, Creature *target, item * )
+{
+    const auto character = target->as_character();
+    auto trap = g->m.tr_at( p );
+    if( !lua_trap_can_trigger_check( *character, trap, p ) ) {
+        return false;
+    }
+    lua_trap_on_trigger( *character, trap, p );
+
+    // This is to respect other json fields, like remove_on_trigger
+    trap.trigger_aftermath( g->m, p );
+
+    lua_trap_on_trigger_aftermath( *character, trap, p );
+    return true;
+}
+
+
+
 /**
  * Takes the name of a trap function and returns a function pointer to it.
  * @param function_name The name of the trapfunc function to find.
@@ -1612,7 +1619,8 @@ const trap_function &trap_function_from_string( const std::string &function_name
             { "map_regen", trapfunc::map_regen },
             { "drain", trapfunc::drain },
             { "spell", trapfunc::cast_spell },
-            { "snake", trapfunc::snake }
+            { "snake", trapfunc::snake },
+            { "lua", trapfunc::lua }
         }
     };
 

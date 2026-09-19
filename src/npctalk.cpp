@@ -1,29 +1,13 @@
-#include "creature.h"
-#include "dialogue.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <iterator>
-#include <list>
-#include <map>
-#include <memory>
-#include <ostream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <utility>
-#include <vector>
+#include "npctalk.h"
 
 #include "activity_type.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
 #include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
@@ -31,10 +15,12 @@
 #include "clzones.h"
 #include "color.h"
 #include "condition.h"
+#include "creature.h"
 #include "debug.h"
+#include "dialogue.h" // IWYU pragma: associated
 #include "enums.h"
-#include "flag.h"
 #include "faction.h"
+#include "flag.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"
@@ -46,19 +32,18 @@
 #include "itype.h"
 #include "json.h"
 #include "line.h"
+#include "magic/magic.h"
 #include "make_static.h"
-#include "magic.h"
-#include "map.h"
-#include "mapgen_functions.h"
+#include "map/map.h"
+#include "mapgen/mapgen_functions.h"
 #include "martialarts.h"
-#include "messages.h"
 #include "message_types.h"
+#include "messages.h"
 #include "mission.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "npctalk.h"
 #include "npctrade.h"
 #include "options.h"
 #include "output.h"
@@ -77,16 +62,32 @@
 #include "string_utils.h"
 #include "text_snippets.h"
 #include "translations.h"
+#include "type_id.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
 #include "value_ptr.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 static const activity_id ACT_AIM( "ACT_AIM" );
 static const activity_id ACT_SOCIALIZE( "ACT_SOCIALIZE" );
@@ -108,11 +109,6 @@ static const zone_type_id zone_type_npc_investigate_only( "NPC_INVESTIGATE_ONLY"
 static const zone_type_id zone_type_npc_no_investigate( "NPC_NO_INVESTIGATE" );
 
 static const skill_id skill_speech( "speech" );
-
-static const bionic_id bio_armor_eyes( "bio_armor_eyes" );
-static const bionic_id bio_deformity( "bio_deformity" );
-static const bionic_id bio_face_mask( "bio_face_mask" );
-static const bionic_id bio_voice( "bio_voice" );
 
 static const trait_id trait_DEBUG_MIND_CONTROL( "DEBUG_MIND_CONTROL" );
 static const trait_id trait_PROF_FOODP( "PROF_FOODP" );
@@ -722,11 +718,11 @@ void game::chat()
             const auto &to = p.value();
             if( npcselect == follower_count ) {
                 for( npc *them : followers ) {
-                    them->goto_to_this_pos = here.bub_to_abs( to );
+                    them->goto_to_this_pos = bub_to_abs( to );
                 }
                 yell_msg = _( "Everyone move there!" );
             } else {
-                followers[npcselect]->goto_to_this_pos = here.bub_to_abs( to );
+                followers[npcselect]->goto_to_this_pos = bub_to_abs( to );
                 yell_msg = string_format( _( "Move there, %s!" ), followers[npcselect]->get_name() );
             }
             break;
@@ -886,7 +882,7 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
         return;
     }
 
-    const auto s_abs_pos = here.bub_to_abs( sound.origin );
+    const auto s_abs_pos = bub_to_abs( sound.origin );
     const std::string &description = sound.description.empty() ? _( "a noise" ) : sound.description;
 
     const auto &source_monster = sound.from_monster;
@@ -1832,13 +1828,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 3;
             chance += u_mods.lie;
 
-            //come on, who would suspect a robot of lying?
-            if( u.has_bionic( bio_voice ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_face_mask ) ) {
-                chance += 20;
-            }
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "LIE" ) );
             break;
         case TALK_TRIAL_PERSUADE:
             chance += character_effects::talk_skill( u ) -
@@ -1846,15 +1836,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 2 + p.op_of_u.value;
             chance += u_mods.persuade;
 
-            if( u.has_bionic( bio_face_mask ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_deformity ) ) {
-                chance -= 50;
-            }
-            if( u.has_bionic( bio_voice ) ) {
-                chance -= 20;
-            }
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "PERSUADE" ) );
             break;
         case TALK_TRIAL_INTIMIDATE:
             chance += character_effects::intimidation( u ) -
@@ -1862,18 +1844,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.fear * 2 - p.personality.bravery * 2;
             chance += u_mods.intimidate;
 
-            if( u.has_bionic( bio_face_mask ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_armor_eyes ) ) {
-                chance += 10;
-            }
-            if( u.has_bionic( bio_deformity ) ) {
-                chance += 20;
-            }
-            if( u.has_bionic( bio_voice ) ) {
-                chance += 20;
-            }
+            chance += u.bonus_from_enchantments( chance, enchantment_value_id( "INTIMIDATE" ) );
             break;
         case TALK_TRIAL_NONE:
             chance = 100;
@@ -3236,6 +3207,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( npc_die ),
             WRAP( npc_thankful ),
             WRAP( clear_overrides ),
+            WRAP( go_to_sleep ),
             WRAP( nothing )
 #undef WRAP
         }

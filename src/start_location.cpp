@@ -1,25 +1,23 @@
 #include "start_location.h"
 
-#include <algorithm>
-#include <climits>
-#include <memory>
-
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "coordinates.h"
 #include "debug.h"
 #include "enum_conversions.h"
-#include "field_type.h"
 #include "game.h"
 #include "game_constants.h"
 #include "generic_factory.h"
 #include "int_id.h"
 #include "json.h"
-#include "map.h"
-#include "map_extras.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/mapbuffer_registry.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
+#include "mapgen/map_extras.h"
+#include "mapgen/mapgen_constructor.h"
 #include "output.h"
 #include "overmap.h"
 #include "overmap_special.h"
@@ -29,6 +27,11 @@
 #include "point.h"
 #include "rng.h"
 #include "string_id.h"
+#include "type_id_implement.h"
+
+#include <algorithm>
+#include <climits>
+#include <memory>
 
 class item;
 
@@ -39,26 +42,7 @@ namespace
 generic_factory<start_location> all_start_locations( "start locations" );
 } // namespace
 
-/** @relates string_id */
-template<>
-const start_location &string_id<start_location>::obj() const
-{
-    return all_start_locations.obj( *this );
-}
-
-/** @relates string_id */
-template<>
-bool string_id<start_location>::is_valid() const
-{
-    return all_start_locations.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-int_id<start_location> string_id<start_location>::id() const
-{
-    return all_start_locations.convert( *this, int_id<start_location>( INVALID_CID ) );
-}
+IMPLEMENT_STRING_AND_INT_IDS( start_location, all_start_locations );
 
 std::string start_location::name() const
 {
@@ -96,6 +80,13 @@ void start_location::load( const JsonObject &jo, const std::string & )
         _omt_types.emplace_back( ter, ter_match_type );
     }
     optional( jo, was_loaded, "flags", _flags, auto_flags_reader<> {} );
+
+    if( jo.has_object( "absolute_place_location" ) ) {
+        const auto &obj = jo.get_object( "absolute_place_location" );
+        absolute_place_location = point_abs_om( obj.get_int( "x" ), obj.get_int( "y" ) );
+    } else if( !was_loaded ) {
+        absolute_place_location = point_abs_om( 0, 0 );
+    }
 }
 
 void start_location::check() const
@@ -195,9 +186,8 @@ static void board_up( map &m, const tripoint_range<tripoint_bub_ms> &range )
     }
 }
 
-void start_location::prepare_map( tinymap &m ) const
+void start_location::prepare_map( map &m, const int &z ) const
 {
-    const int z = m.get_abs_sub().z();
     if( flags().contains( "BOARDED" ) ) {
         m.build_outside_cache( z );
         board_up( m, m.points_on_zlevel( z ) );
@@ -211,7 +201,7 @@ tripoint_abs_omt start_location::find_player_initial_location() const
     // Spiral out from the world origin scanning for a compatible starting location,
     // creating overmaps as necessary.
     const int radius = 3;
-    std::vector<point_abs_om> overmaps = closest_points_first( point_abs_om(), radius );
+    std::vector<point_abs_om> overmaps = closest_points_first( absolute_place_location, radius );
     // Shuffle 8 first ones after (0,0) so that (0,0) retains priority, but if not so that we don't always start at (1,0)
     std::shuffle( overmaps.begin() + 1, overmaps.begin() + 8, rng_get_engine() );
     for( const point_abs_om &omp : overmaps ) {
@@ -271,10 +261,9 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
 {
     // Now prepare the initial map (change terrain etc.)
     const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
-    tinymap player_start;
-    // TODO: fix point types
-    player_start.load( player_location, false );
-    prepare_map( player_start );
+    map player_start( 2 );
+    player_start.load( player_location.xy(), false );
+    prepare_map( player_start, omtstart.z() );
 }
 
 /** Helper for place_player
@@ -337,14 +326,14 @@ static int rate_location( map &m, const tripoint_bub_ms &p, const bool must_be_i
     return area;
 }
 
-void start_location::place_player( player &u ) const
+void start_location::place_player( player &u, const int &z ) const
 {
     // Need the "real" map with it's inside/outside cache and the like.
     map &m = g->m;
     // Start us off somewhere in the center of the map
-    u.setpos( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, g->get_levz() ) );
-    m.invalidate_map_cache( m.get_abs_sub().z() );
-    m.build_map_cache( m.get_abs_sub().z() );
+    u.setpos( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, z ) );
+    m.invalidate_map_cache( z );
+    m.build_map_cache( z );
     const bool must_be_inside = !flags().contains( "ALLOW_OUTSIDE" );
     ///\EFFECT_STR allows player to start behind less-bashable furniture and terrain
     // TODO: Allow using items here
@@ -356,7 +345,7 @@ void start_location::place_player( player &u ) const
     int best_rate = 0;
     // In which attempt did this area get checked?
     // We can overwrite earlier attempts, but not start in them
-    auto &start_lc = m.access_cache( g->get_levz() );
+    auto &start_lc = m.access_cache( z );
     const int checked_sy = start_lc.cache_y;
     auto checked = std::vector<int>( static_cast<size_t>( start_lc.cache_x ) * checked_sy, 0 );
 
@@ -404,7 +393,7 @@ void start_location::burn( const tripoint_abs_omt &/*omtstart*/, const size_t co
                            const int rad ) const
 {
     // Ignite flammable interior tiles on the live reality-bubble map (g->m). A
-    // throwaway single-z tinymap cannot model the z+1 roof level its outside cache
+    // throwaway single-z detached map cannot model the z+1 roof level its outside cache
     // depends on, so build_outside_cache() ends up marking every tile "outside" and
     // burn() selects nothing (see #9169). g->m is a full multi-z map, so its outside
     // cache is computed correctly here, mirroring how the sibling place_player() works.
@@ -433,14 +422,11 @@ void start_location::burn( const tripoint_abs_omt &/*omtstart*/, const size_t co
 }
 
 void start_location::add_map_extra( const tripoint_abs_omt &omtstart,
-                                    const std::string &map_extra ) const
+                                    const string_id<map_extra> &map_extra ) const
 {
-    const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
-    tinymap m;
-    m.load( player_location, false );
-
-    // TODO: fix point types
-    MapExtras::apply_function( map_extra, m, player_location );
+    mapgen_constructor m( MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() ) );
+    m.load( omtstart );
+    MapExtras::apply_function( map_extra, m, omtstart );
 }
 
 void start_location::handle_heli_crash( player &u ) const
@@ -480,12 +466,11 @@ void start_location::handle_heli_crash( player &u ) const
 static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &type,
                           float expected_points )
 {
-    const tripoint_abs_sm spawn_location = project_to<coords::sm>( omtstart );
-    tinymap m;
-    m.load( spawn_location, false );
-    // map::place_spawns internally multiplies density by rng(10, 50)
+    mapgen_constructor m( MAPBUFFER_REGISTRY.get( mapbuffer_registry::primary_dimension_id() ) );
+    m.load( omtstart );
+    // place_spawns internally multiplies density by rng(10, 50)
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
-    m.place_spawns( type, 1, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ),
+    m.place_spawns( type, 1, point_omt_ms::zero(), point_omt_ms( SEEX * 2 - 1, SEEY * 2 - 1 ),
                     density );
 }
 

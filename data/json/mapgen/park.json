@@ -298,6 +298,8 @@
       "items": { "&": { "item": "trash", "chance": 75, "repeat": [ 2, 7 ] } },
       "place_item": [
         { "item": "bag_plastic", "x": 10, "y": 11, "repeat": [ 10, 50 ] },
+        { "item": "bag_zipper_small", "x": 10, "y": 11, "repeat": [ 5, 25 ] },
+        { "item": "bag_zipper", "x": 10, "y": 11, "repeat": [ 2, 12 ] },
         { "item": "feces_dog", "x": [ 3, 20 ], "y": [ 3, 20 ], "chance": 200 },
         { "item": "feces_dog", "x": 3, "y": 10, "repeat": [ 1, 10 ] },
         { "item": "feces_dog", "x": 10, "y": 3, "repeat": [ 1, 10 ] },

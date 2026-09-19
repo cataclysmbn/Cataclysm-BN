@@ -1,32 +1,35 @@
-#include "catalua_bindings.h"
-#include "catalua_coord.h"
-
-#include <ranges>
-
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "calendar.h"
 #include "catalua.h"
+#include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_coord.h"
 #include "catalua_impl.h"
 #include "catalua_log.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
+#include "catalua_serde.h"
 #include "character.h"
+#include "character_martial_arts.h"
+#include "craft_command.h"
+#include "crafting.h"
 #include "creature.h"
 #include "damage.h"
 #include "disease.h"
 #include "enums.h"
-#include "field.h"
-#include "field_type.h"
 #include "flag.h"
-#include "make_static.h"
 #include "flag_trait.h"
 #include "game.h"
 #include "inventory.h"
-#include "magic.h"
-#include "map.h"
+#include "json.h"
+#include "magic/magic.h"
+#include "make_static.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
 #include "monfaction.h"
 #include "monster.h"
 #include "morale_types.h"
@@ -34,15 +37,119 @@
 #include "mutation.h"
 #include "npc.h"
 #include "player.h"
+#include "player_activity.h"
 #include "pldata.h"
 #include "recipe.h"
 #include "requirements.h"
 #include "skill.h"
-#include "type_id.h"
 #include "trap.h"
+#include "type_id.h"
+
+#include <climits>
+#include <iterator>
+#include <ranges>
+#include <sstream>
+#include <string_view>
+
+LUNA_VAL( player_activity, "PlayerActivity" )
+
+namespace
+{
+
+constexpr std::string_view lua_activity_data_prefix = "lua_activity_data:";
+constexpr std::string_view lua_activity_on_finish_prefix = "lua_activity_on_finish:";
+constexpr std::string_view lua_activity_on_turn_prefix = "lua_activity_on_turn:";
+
+auto serialize_lua_activity_data( const sol::optional<sol::table> &maybe_data ) -> std::string
+{
+    if( !maybe_data ) {
+        return {};
+    }
+
+    auto buffer = std::ostringstream{};
+    auto jsout = JsonOut( buffer );
+    cata::serialize_lua_table( *maybe_data, jsout );
+    return buffer.str();
+}
+
+struct lua_activity_options {
+    activity_id activity;
+    time_duration duration;
+    std::string on_finish;
+    std::string on_turn;
+    std::optional<tripoint_bub_ms> pos;
+    std::string name;
+    bool interruptable = true;
+    std::string data;
+};
+
+auto parse_lua_activity_options( const sol::table &opts ) -> lua_activity_options
+{
+    const auto pos = opts.get<sol::optional<tripoint_bub_ms>>( "pos" );
+    const auto on_finish = opts.get<sol::optional<std::string>>( "on_finish" );
+    const auto on_turn = opts.get<sol::optional<std::string>>( "on_turn" );
+    const auto interruptable = opts.get<sol::optional<bool>>( "interruptable" );
+    auto result = lua_activity_options{
+        .activity = opts.get<activity_id>( "type" ),
+        .duration = opts.get<time_duration>( "duration" ),
+        .on_finish = on_finish.value_or( "" ),
+        .on_turn = on_turn.value_or( "" ),
+        .pos = pos ? std::make_optional( *pos ) : std::nullopt,
+        .name = opts.get_or<std::string>( "name", "" ),
+        .interruptable = interruptable.value_or( true ),
+        .data = {},
+    };
+    const auto data = opts.get<sol::optional<sol::table>>( "data" );
+    result.data = serialize_lua_activity_data( data );
+    return result;
+}
+
+auto make_lua_activity( const lua_activity_options &opts ) -> std::unique_ptr<player_activity>
+{
+    auto act = std::make_unique<player_activity>( opts.activity, to_moves<int>( opts.duration ), -1,
+               INT_MIN, opts.name );
+    act->interruptable_with_kb = opts.interruptable;
+    if( !opts.on_finish.empty() ) {
+        act->str_values.push_back( std::string{ lua_activity_on_finish_prefix } + opts.on_finish );
+    }
+    if( !opts.on_turn.empty() ) {
+        act->str_values.push_back( std::string{ lua_activity_on_turn_prefix } + opts.on_turn );
+    }
+    if( !opts.data.empty() ) {
+        act->str_values.push_back( std::string{ lua_activity_data_prefix } + opts.data );
+    }
+    auto append_pos = [&act]( const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+        const auto abs_pos = bub_to_abs( pos );
+        act->coords.push_back( abs_pos );
+        return abs_pos;
+    };
+    if( opts.pos ) {
+        act->placement = append_pos( *opts.pos );
+    }
+    return act;
+}
+
+auto reg_player_activity( sol::state &lua ) -> void
+{
+    auto ut = luna::new_usertype<player_activity>( lua, luna::no_bases, luna::no_constructor );
+    luna::set( ut, "moves_total", &player_activity::moves_total );
+    luna::set( ut, "moves_left", &player_activity::moves_left );
+    luna::set( ut, "interruptable_with_kb", &player_activity::interruptable_with_kb );
+    luna::set( ut, "name", &player_activity::name );
+    luna::set_prop( ut, "coords", []( const player_activity & act ) -> std::vector<tripoint_abs_ms> {
+        return act.coords;
+    } );
+    luna::set_fx( ut, "id", []( const player_activity & act ) -> activity_id { return act.id(); } );
+    luna::set_fx( ut, "id_str", []( const player_activity & act ) -> std::string {
+        return act.id().str();
+    } );
+}
+
+} // namespace
 
 void cata::detail::reg_creature_family( sol::state &lua )
 {
+    reg_player_activity( lua );
     reg_creature( lua );
     reg_monster( lua );
     reg_character( lua );
@@ -119,17 +226,25 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_N_T( bub_pos, "get_pos_ms", tripoint_bub_ms() const );
 
+        SET_FX_N_T( bub_pos, "bub_pos", tripoint_bub_ms() const );
+
+        SET_FX_N_T( abs_pos, "abs_pos", tripoint_abs_ms() const );
+
         SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint_bub_ms & ) );
+
+        luna::set_fx( ut, "set_pos",
+                      sol::overload(
+        []( Creature & cr, const tripoint_bub_ms & p ) -> void { cr.setpos( p ); },
+        []( Creature & cr, const tripoint_abs_ms & p ) -> void { cr.setpos( p ); }
+                      ) );
 
         luna::set_fx( ut, "has_effect", []( const Creature & cr, const efftype_id & eff,
         sol::optional<const bodypart_str_id &> bpid ) -> bool {
             if( bpid.has_value() )
             {
                 return cr.has_effect( eff, *bpid );
-            } else
-            {
-                return cr.has_effect( eff );
             }
+            return cr.has_effect( eff );
         } );
 
         luna::set_fx( ut, "get_effect", []( Creature & cr, const efftype_id & eff,
@@ -344,15 +459,112 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( flies, bool() const );
         SET_FX_T( climbs, bool() const );
         SET_FX_T( swims, bool() const );
+        SET_FX_T( made_of, bool( const material_id & ) const );
 
         SET_FX_T( move_target, tripoint_bub_ms() );
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint_bub_ms & p, int f ) );
-        SET_FX_T( move_to, bool( const tripoint_bub_ms & p, bool force, bool step_on_critter,
-                                 float stagger_adjustment ) );
+        luna::set_fx( ut, "add_armor_item", []( monster & m, detached_ptr<item> &armor ) { return m.set_armor_item( std::move( armor ) ); } );
+        luna::set_fx( ut, "get_armor_item", []( monster & m ) { return m.get_armor_item(); } );
+        luna::set_fx( ut, "remove_armor_item", []( monster & m ) { return m.remove_armor_item(); } );
+
+        luna::set_fx( ut, "add_saddle_item", []( monster & m, detached_ptr<item> &saddle ) { return m.set_tack_item( std::move( saddle ) ); } );
+        luna::set_fx( ut, "get_saddle_item", []( monster & m ) { return m.get_tack_item() ; } );
+        luna::set_fx( ut, "remove_saddle_item", []( monster & m ) {return m.remove_tack_item();} );
+
+        luna::set_fx( ut, "add_storage_item", []( monster & m, detached_ptr<item> &storage ) { return m.set_storage_item( std::move( storage ) ) ;} );
+        luna::set_fx( ut, "get_storage_item", []( monster & m ) { return m.get_storage_item() ;} );
+        luna::set_fx( ut, "remove_storage_item", []( monster & m ) { return m.remove_storage_item() ;} );
+
+        luna::set_fx( ut, "add_battery_item", []( monster & m, detached_ptr<item> &storage ) { return m.set_battery_item( std::move( storage ) ) ;} );
+        luna::set_fx( ut, "get_battery_item", []( monster & m ) { return m.get_battery_item() ;} );
+        luna::set_fx( ut, "remove_battery_item", []( monster & m ) { return m.remove_battery_item() ;} );
+
+        luna::set_fx( ut, "set_move_target", sol::overload(
+        []( monster & mon, const tripoint_bub_ms & p ) -> void {
+            mon.set_dest( p );
+        },
+        []( monster & mon, const tripoint & p ) -> void {
+            mon.set_dest( tripoint_bub_ms( p ) );
+        } ) );
+        luna::set_fx( ut, "set_target", []( monster & mon, Creature * target ) -> void {
+            if( target == nullptr )
+            {
+                mon.unset_dest();
+                return;
+            }
+            mon.set_dest( target->bub_pos() );
+        } );
+        luna::set_fx( ut, "clear_move_target", []( monster & mon ) -> void {
+            mon.unset_dest();
+        } );
+        luna::set_fx( ut, "run_normal_ai_turn", []( monster & mon ) -> void {
+            mon.plan();
+            const auto action = mon.decide_action();
+            mon.execute_action( action );
+        } );
+        luna::set_fx( ut, "move_to", sol::overload(
+                          []( monster & mon, const tripoint_bub_ms & p, bool force, bool step_on_critter,
+        float stagger_adjustment ) -> bool {
+            return mon.move_to( p, force, step_on_critter, stagger_adjustment );
+        },
+        []( monster & mon, const tripoint & p, bool force, bool step_on_critter,
+            float stagger_adjustment ) -> bool {
+            return mon.move_to( tripoint_bub_ms( p ), force, step_on_critter, stagger_adjustment );
+        } ) );
+        luna::set_fx( ut, "bash_at", sol::overload(
+        []( monster & mon, const tripoint_bub_ms & p ) -> bool {
+            return mon.bash_at( p );
+        },
+        []( monster & mon, const tripoint & p ) -> bool {
+            return mon.bash_at( tripoint_bub_ms( p ) );
+        } ) );
 
         SET_FX_T( attitude, monster_attitude( const Character * ) const );
+        luna::set_fx( ut, "set_attitude", []( monster & mon, monster_attitude att ) -> void {
+            static const auto effect_docile = efftype_id( "docile" );
+            static const auto effect_pacified = efftype_id( "pacified" );
+            switch( att )
+            {
+                case MATT_FLEE:
+                    mon.anger = 0;
+                    mon.morale = -100;
+                    break;
+                case MATT_ATTACK:
+                    mon.anger = 100;
+                    mon.morale = 100;
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_IGNORE:
+                    mon.anger = 0;
+                    mon.morale = 0;
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_FOLLOW:
+                    mon.anger = 5;
+                    mon.morale = -5;
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_FRIEND:
+                    mon.make_friendly();
+                    mon.remove_effect( effect_docile );
+                    mon.remove_effect( effect_pacified );
+                    break;
+                case MATT_FPASSIVE:
+                    mon.make_friendly();
+                    mon.add_effect( effect_docile, 1_turns );
+                    break;
+                case MATT_ZLAVE:
+                    mon.add_effect( effect_pacified, 1_turns );
+                    break;
+                default:
+                    break;
+            }
+        } );
 
         SET_FX_T( heal, int( int, bool ) );
 
@@ -370,6 +582,11 @@ void cata::detail::reg_monster( sol::state &lua )
             if( it == nullptr ) { return; }
             detached_ptr<item> ptr = item::spawn( *it );
             m.add_item( std::move( ptr ) );
+        } );
+        luna::set_fx( ut, "add_detached_item", []( monster & m, detached_ptr<item> &it )
+        {
+            if( !it ) { return; }
+            m.add_item( std::move( it ) );
         } );
         SET_FX_T( remove_item, detached_ptr<item>( item * ) );
         SET_FX_T( clear_items, std::vector<detached_ptr<item>>() );
@@ -488,17 +705,41 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( has_watch, bool() const );
 
-        // These are named with 'BTU' (body temperature units) because other
-        // body temperature measurements might/can/should be added later.
-        DOC( "Gets the current temperature of a specific body part (in Body Temperature Units)." );
-        SET_FX_N_T( get_part_temp_cur, "get_part_temp_btu", int( const bodypart_id & id ) const );
-        DOC( "Sets a specific body part to a given temperature (in Body Temperature Units)." );
-        SET_FX_N_T( set_part_temp_cur, "set_part_temp_btu", void( const bodypart_id & id, int temp ) );
-        DOC( "Gets all bodyparts and their associated temperatures (in Body Temperature Units)." );
-        // May want to remove the 'resolve' call, but it clarifies the type...
-        luna::set_fx( ut, "get_temp_btu", sol::resolve< std::map<bodypart_id, int>() >( &UT_CLASS::get_temp_cur ) );
-        DOC( "Sets ALL body parts on a creature to the given temperature (in Body Temperature Units)." );
-        SET_FX_N_T( set_temp_cur, "set_temp_btu", void( int temp ) );
+        DOC( "Gets the current temperature of a specific body part in Celsius." );
+        SET_FX_N_T( get_part_temp_cur, "get_part_temp_celsius", units::temperature( const bodypart_id & id ) const );
+        DOC( "Sets a specific body part to a temperature in Celsius." );
+        SET_FX_N_T( set_part_temp_cur, "set_part_temp_celsius", void( const bodypart_id & id, units::temperature temp ) );
+        DOC( "Gets all bodyparts and their associated temperatures in Celsius." );
+        luna::set_fx( ut, "get_temp_celsius", sol::resolve< std::map<bodypart_id, units::temperature>() >( &UT_CLASS::get_temp_cur ) );
+        DOC( "Sets ALL body parts on a creature to the given temperature in Celsius." );
+        SET_FX_N_T( set_temp_cur, "set_temp_celsius", void( units::temperature temp ) );
+
+        // These legacy functions are named with 'BTU' (body temperature units).
+        DOC( "Deprecated: use get_part_temp_celsius instead. Gets the current temperature of a specific body part in legacy Body Temperature Units." );
+        luna::set_fx( ut, "get_part_temp_btu", static_cast<int ( * )( const UT_CLASS &, const bodypart_id & )>(
+        []( const UT_CLASS & charac, const bodypart_id & id ) -> int {
+            return units::to_legacy_bodypart_temp( charac.get_part_temp_cur( id ) );
+        } ) );
+        DOC( "Deprecated: use set_part_temp_celsius instead. Sets a specific body part to a given legacy Body Temperature Units value." );
+        luna::set_fx( ut, "set_part_temp_btu", static_cast<void ( * )( UT_CLASS &, const bodypart_id &, int )>(
+        []( UT_CLASS & charac, const bodypart_id & id, int temp ) -> void {
+            charac.set_part_temp_cur( id, units::from_legacy_bodypart_temp( temp ) );
+        } ) );
+        DOC( "Deprecated: use get_temp_celsius instead. Gets all bodyparts and their associated temperatures in legacy Body Temperature Units." );
+        luna::set_fx( ut, "get_temp_btu", static_cast<std::map<bodypart_id, int>( * )( UT_CLASS & )>(
+        []( UT_CLASS & charac ) -> std::map<bodypart_id, int> {
+            auto legacy_temps = std::map<bodypart_id, int>{};
+            for( const auto &[bp, temp] : charac.get_temp_cur() )
+            {
+                legacy_temps.emplace( bp, units::to_legacy_bodypart_temp( temp ) );
+            }
+            return legacy_temps;
+        } ) );
+        DOC( "Deprecated: use set_temp_celsius instead. Sets ALL body parts on a creature to the given legacy Body Temperature Units value." );
+        luna::set_fx( ut, "set_temp_btu", static_cast<void ( * )( UT_CLASS &, int )>(
+        []( UT_CLASS & charac, int temp ) -> void {
+            charac.set_temp_cur( units::from_legacy_bodypart_temp( temp ) );
+        } ) );
 
         SET_FX_T( blood_loss, int( const bodypart_id & bp ) const );
 
@@ -539,6 +780,8 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( has_base_trait, bool( const trait_id & b ) const );
 
         SET_FX_T( has_trait_flag, bool( const trait_flag_str_id & b ) const );
+
+        SET_FX_T( has_trait_type, bool( const std::string & mut_type ) const );
 
         SET_FX_T( has_opposite_trait, bool( const trait_id & flag ) const );
 
@@ -623,10 +866,6 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( mutation_ok, bool( const trait_id &, bool, bool ) const );
 
         SET_FX_T( mutate_category, void( const mutation_category_id & ) );
-
-        SET_FX_T( mutate_towards, bool( std::vector<trait_id>, int ) );
-
-        SET_FX_T( mutate_towards, bool( const trait_id & ) );
 
         luna::set_fx( ut, "mutate_towards", sol::overload(
                           sol::resolve<bool( std::vector<trait_id>, int )>( &UT_CLASS::mutate_towards ),
@@ -935,6 +1174,15 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( assign_activity,
                   void( const activity_id &, int, int, int, const std::string & ) );
 
+        DOC( "Assigns a Lua-backed activity with opts.type, opts.duration, optional opts.on_finish, optional opts.on_turn, optional opts.data, optional opts.pos, optional opts.name, and optional opts.interruptable." );
+        luna::set_fx( ut, "assign_lua_activity", []( UT_CLASS & c, const sol::table & opts ) -> void {
+            c.assign_activity( make_lua_activity( parse_lua_activity_options( opts ) ) );
+        } );
+
+        luna::set_fx( ut, "get_activity", []( UT_CLASS & c ) -> player_activity * {
+            return c.activity.get();
+        } );
+
         SET_FX_T( has_activity, bool( const activity_id & type ) const );
 
         SET_FX_T( cancel_activity, void() );
@@ -1009,9 +1257,12 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( is_wearing_helmet, bool() const );
 
         SET_FX_T( get_morale_level, int() const );
-        SET_FX_T( add_morale,
-                  void( const morale_type &, int, int, const time_duration &, const time_duration &,
-                        bool, const itype * ) );
+        luna::set_fx( ut, "add_morale", []( UT_CLASS & c, const morale_type & type, int bonus,
+                                            int max_bonus, const time_duration & duration,
+                                            const time_duration & decay_start, bool capped,
+        sol::optional<const itype *> item_type ) -> void {
+            c.add_morale( type, bonus, max_bonus, duration, decay_start, capped, item_type.value_or( nullptr ) );
+        } );
         SET_FX_T( has_morale, bool( const morale_type & ) const );
         SET_FX_T( get_morale, int( const morale_type & ) const );
         SET_FX_T( rem_morale, void( const morale_type & ) );
@@ -1022,6 +1273,9 @@ void cata::detail::reg_character( sol::state &lua )
         luna::set_fx( ut, "knows_recipe", []( const UT_CLASS & utObj, const recipe_id & rec ) -> bool { return utObj.knows_recipe( &( rec.obj() ) ); } );
         luna::set_fx( ut, "learn_recipe", []( UT_CLASS & utObj, const recipe_id & rec ) -> void { utObj.learn_recipe( &( rec.obj() ) ); } );
 
+        luna::set_fx( ut, "knows_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> bool { return utObj.martial_arts_data->has_martialart( ma_type_id ); } );
+        luna::set_fx( ut, "learn_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> void { utObj.martial_arts_data->add_martialart( ma_type_id ); } );
+
         SET_FX_T( suffer, void() );
 
         SET_FX_T( irradiate, bool( float rads, bool bypass ) );
@@ -1030,7 +1284,6 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX( knows_trap );
 
         DOC( "Character learns that the given trap is on the given tripoint. If the trap is null, the character learns that there is no trap there." );
-        SET_FX( add_known_trap );
         luna::set_fx( ut, "add_known_trap", []( UT_CLASS & c, const tripoint_bub_ms & p, const trap_id & tr )
         {
             c.add_known_trap( p, tr.obj() );
@@ -1057,8 +1310,22 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX( bodypart_exposure );
 
+        luna::set_fx( ut, "drench", []( UT_CLASS & c, const int saturation,
+                                        const std::vector<bodypart_id> &parts, const bool ignore_waterproof )
+        {
+            auto drenched_parts = body_part_set();
+            drenched_parts.fill( parts );
+            c.drench( saturation, drenched_parts, ignore_waterproof );
+        } );
 
-        SET_FX( use_charges );
+        luna::set_fx( ut, "use_charges", sol::overload(
+        []( UT_CLASS & c, const itype_id & what, int qty ) -> std::vector<detached_ptr<item>> {
+            return c.use_charges( what, qty );
+        },
+        []( UT_CLASS & c, const itype_id & what, int qty,
+        const sol::function & filter ) -> std::vector<detached_ptr<item>> {
+            return c.use_charges( what, qty, [&filter]( const item & it ) { return filter( it ); } );
+        } ) );
         SET_FX( use_charges_if_avail );
 
         DOC( "Returns the crafting inventory for this character (includes nearby items)" );
@@ -1068,6 +1335,23 @@ void cata::detail::reg_character( sol::state &lua )
 
         DOC( "Invalidates the cached crafting inventory" );
         SET_FX_T( invalidate_crafting_inventory, void() );
+
+        DOC( "Consumes a requirement's items from the inventory" );
+        luna::set_fx( ut, "consume_requirement", []( UT_CLASS & ch, const requirement_data & req, const sol::table & opts ) -> bool {
+            int range = opts.get_or( "range", PICKUP_RANGE );
+            int size = opts.get_or( "count", 1 );
+            inventory map_inv;
+            map_inv.form_from_map( ch.bub_pos(), range );
+            for( const auto &it : req.get_components() )
+            {
+                auto chosen = ch.select_item_component( it, size, map_inv, true );
+                if( chosen.use_from == usage_from::cancel ) {
+                    return false;
+                }
+                ch.consume_items( chosen, size );
+            }
+            return true;
+        } );
 
         DOC( "Consumes items from inventory based on item component list" );
         luna::set_fx( ut, "consume_items", []( UT_CLASS & ch, const std::vector<item_comp> &components ) -> void {
@@ -1079,6 +1363,11 @@ void cata::detail::reg_character( sol::state &lua )
             ch.consume_tools( tools );
         } );
 
+        DOC( "Gets the bonus from the enchantment value. Doesn't handle max logic itself." );
+        luna::set_fx( ut, "bonus_from_enchantments", []( UT_CLASS & ch, const double base, const enchantment_value_id & ench_val_id, sol::optional<bool> round ) -> double {
+            return ch.bonus_from_enchantments( base, ench_val_id, round.value_or( false ) );
+        } );
+        SET_FX( has_enchantment_flag );
     }
 #undef UT_CLASS // #define UT_CLASS Character
 
@@ -1258,6 +1547,22 @@ void cata::detail::reg_npc( sol::state &lua )
         SET_FX_T( can_open_door, bool( const tripoint_bub_ms &, bool ) const );
 
         SET_FX_T( can_move_to, bool( const tripoint_bub_ms &, bool ) const );
+
+        DOC( "Attempts to move the NPC to an adjacent map square." );
+        luna::set_fx( ut, "move_to", []( UT_CLASS & npchar, const tripoint_bub_ms & pos,
+        sol::optional<bool> no_bashing ) -> void {
+            npchar.move_to( pos, no_bashing.value_or( false ), nullptr );
+        } );
+        luna::set_fx( ut, "set_move_target", sol::overload(
+                          []( npc & npchar, const tripoint_bub_ms & p,
+        sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
+            return npchar.update_path( p, no_bashing.value_or( false ), force.value_or( true ) );
+        },
+        []( npc & npchar, const tripoint & p,
+            sol::optional<bool> no_bashing, sol::optional<bool> force ) -> bool {
+            return npchar.update_path( tripoint_bub_ms( p ), no_bashing.value_or( false ),
+                                       force.value_or( true ) );
+        } ) );
 
         SET_FX_T( saw_player_recently, bool() const );
 

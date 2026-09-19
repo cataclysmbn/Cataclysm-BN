@@ -481,7 +481,7 @@
     "difficulty": 8,
     "time": "80 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
-    "components": [ [ [ "leather", 20 ] ], [ [ "silver_small", 400 ] ], [ [ "material_sand", 6 ] ], [ [ "essence_dull", 400 ] ] ]
+    "components": [ [ [ "leather", 20 ] ], [ [ "silver_small", 180 ] ], [ [ "material_sand", 6 ] ], [ [ "essence_dull", 400 ] ] ]
   },
   {
     "result": "armor_wyrm_berserker",
@@ -562,7 +562,7 @@
     "difficulty": 4,
     "time": "40 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
-    "components": [ [ [ "gold_small", 625 ] ], [ [ "essence_dull", 60 ] ] ]
+    "components": [ [ [ "gold_small", 500 ] ], [ [ "essence_dull", 60 ] ] ]
   },
   {
     "result": "robe_shadow",
@@ -618,7 +618,7 @@
     "difficulty": 7,
     "time": "70 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
-    "components": [ [ [ "gold_small", 300 ] ], [ [ "silver_small", 100 ] ], [ [ "essence_dull", 150 ] ] ]
+    "components": [ [ [ "gold_small", 150 ] ], [ [ "silver_small", 50 ] ], [ [ "essence_dull", 150 ] ] ]
   },
   {
     "result": "blood_athame",
@@ -627,7 +627,7 @@
     "difficulty": 2,
     "time": "20 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
-    "components": [ [ [ "silver_small", 400 ] ], [ [ "essence_dull", 30 ] ] ]
+    "components": [ [ [ "silver_small", 180 ] ], [ [ "essence_dull", 30 ] ] ]
   },
   {
     "result": "armor_wyrm",
@@ -853,7 +853,7 @@
     "difficulty": 6,
     "time": "60 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
-    "components": [ [ [ "scrap", 10 ] ], [ [ "silver_small", 500 ] ], [ [ "essence_dull", 120 ] ] ]
+    "components": [ [ [ "scrap", 10 ] ], [ [ "silver_small", 300 ] ], [ [ "essence_dull", 120 ] ] ]
   },
   {
     "result": "shrike_misericorde_folded",
@@ -862,7 +862,7 @@
     "difficulty": 6,
     "time": "60 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
-    "components": [ [ [ "scrap", 10 ] ], [ [ "silver_small", 500 ] ], [ [ "essence_dull", 120 ] ] ]
+    "components": [ [ [ "scrap", 10 ] ], [ [ "silver_small", 300 ] ], [ [ "essence_dull", 120 ] ] ]
   },
   {
     "result": "lichhook",
@@ -1619,7 +1619,7 @@
     "time": "70 m",
     "tools": [ [ [ "hexenhammer", -1 ] ] ],
     "components": [
-      [ [ "gold_small", 625 ] ],
+      [ [ "gold_small", 500 ] ],
       [ [ "scrap", 25 ] ],
       [ [ "e_scrap", 4 ] ],
       [ [ "copper", 50 ] ],

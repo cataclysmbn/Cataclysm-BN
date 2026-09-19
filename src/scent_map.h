@@ -51,7 +51,7 @@ class scent_map
         // one non-zero scent value. Keyed by dimension_id to match MAPBUFFER_REGISTRY.
         // Populated by raw_scent_set(); pruned by decay() once all values reach zero.
         // Lets decay() skip the full mapbuffer scan for each dimension.
-        std::map<std::string, std::set<tripoint_abs_sm>> scent_submaps_;
+        std::map<dimension_id, std::set<tripoint_abs_sm>> scent_submaps_;
 
     public:
         scent_map( const game &g, map &m ) : gm( g ), m_( m ) { }
@@ -93,5 +93,4 @@ class scent_map
         /// Silently no-ops for any unloaded submap position.
         auto raw_scent_set( int x, int y, int z, int value ) -> void;
 };
-
 

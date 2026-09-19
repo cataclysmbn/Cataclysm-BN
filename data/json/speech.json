@@ -3292,5 +3292,59 @@
     ],
     "sound": "\"I bet five dollars this guy doesn't last another thirty seconds!\"",
     "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
+    "sound": "\"Suspect in sight!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
+    "sound": "\"You're going down, dead or alive!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
+    "sound": "\"Stop resisting!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_swat_boss_commander", "mon_feral_swat_boss_shieldman", "mon_feral_swat_boss_grenadier" ],
+    "sound": "\"Watch your crossfire!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_swat_boss_shieldman",
+    "sound": "\"Stay behind me!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_swat_boss_shieldman",
+    "sound": "\"Nothing's getting through this shield, give up!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_swat_boss_grenadier",
+    "sound": "\"Tear gas ready!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_swat_boss_grenadier",
+    "sound": "\"I'm gonna flush them out!\"",
+    "volume": 70
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_swat_boss_cloaker",
+    "sound": "\"WULULULULU!\"",
+    "volume": 90
   }
 ]

@@ -16,10 +16,11 @@
 #include "action.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
+#include "action_time_scale.h"
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after repair_activity_actor.
-#include "activity_handlers.h"
 #include "active_tile_data_def.h"
+#include "activity_handlers.h"
 #include "ammo.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -31,11 +32,10 @@
 #include "cata_unreachable.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua.h"
 #include "character.h"
 #include "character_functions.h"
-#include "data_vars.h"
-#include "detached_ptr.h"
-#include "flag.h"
+#include "cloning_utils.h"
 #include "color.h"
 #include "construction.h"
 #include "construction_group.h"
@@ -43,15 +43,19 @@
 #include "craft_command.h"
 #include "cursesdef.h"
 #include "damage.h"
+#include "data_vars.h"
 #include "debug.h"
+#include "detached_ptr.h"
+#include "dimension_info.h"
 #include "distribution_grid.h"
 #include "effect.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
-#include "field_type.h"
+#include "flag.h"
 #include "flat_set.h"
 #include "flood_fill.h"
+#include "fluid_grid.h"
 #include "fungal_effects.h"
 #include "game.h"
 #include "game_constants.h"
@@ -67,39 +71,40 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "line.h"
-#include "magic_teleporter_list.h"
-#include "map.h"
+#include "magic/magic_teleporter_list.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
+#include "map/utils/map_functions.h"
+#include "map/utils/map_utils.h"
 #include "map_iterator.h"
-#include "map_selector.h"
-#include "map_functions.h"
-#include "map_utils.h"
-#include "mapdata.h"
-#include "mapbuffer.h"
-#include "mapbuffer_registry.h"
 #include "material.h"
 #include "messages.h"
-#include "submap.h"
-#include "monster.h"
 #include "mongroup.h"
+#include "monster.h"
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
 #include "options.h"
 #include "output.h"
+#include "overmap.h"
 #include "overmapbuffer.h"
 #include "pickup.h"
-#include "fluid_grid.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "point.h"
 #include "recipe.h"
+#include "recipe_dictionary.h"
 #include "relic.h"
 #include "requirements.h"
 #include "rng.h"
 #include "sounds.h"
-#include "cloning_utils.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -111,16 +116,13 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_utility.h"
-#include "recipe_dictionary.h"
 #include "value_ptr.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
 #include "world_type.h"
-#include "dimension_info.h"
-#include "overmap.h"
-#include "veh_type.h"
 
 static const activity_id ACT_ATM( "ACT_ATM" );
 static const activity_id ACT_CLEAR_RUBBLE( "ACT_CLEAR_RUBBLE" );
@@ -269,8 +271,9 @@ void iexamine::cvdmachine( player &p, const tripoint_bub_ms & )
     }
 
     // Require materials proportional to selected item volume
-    auto qty = loc->volume() / units::legacy_volume_factor;
-    qty = std::max( 1, qty );
+    const auto volume_ratio = loc->volume() / units::legacy_volume_factor;
+    const auto volume_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( volume_qty, decltype( volume_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "cvd_diamond" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -345,8 +348,12 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         menu.text = _( "Choose a recipe:" );
         for( size_t i = 0; i < recipe_ids.size(); ++i ) {
             itype_id item = itype_id( recipe_ids[i] );
+            const auto volume_ratio = item->volume / 250_ml;
+            const auto min_charge_units = decltype( volume_ratio ) { 1 };
+            const auto max_charge_units = decltype( volume_ratio ) { INT_MAX / 5 };
+            const auto charge_units = std::clamp( volume_ratio, min_charge_units, max_charge_units );
             auto button_text = string_format( "%s [%d]", item->nname( 1 ),
-                                              std::max( 1, item->volume / 250_ml ) * 5 );
+                                              static_cast<int>( charge_units * 5 ) );
             menu.addentry( i, true, -1, button_text );
         }
         menu.query();
@@ -378,7 +385,9 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    auto qty = std::max( 1, new_item->volume() / 250_ml );
+    const auto volume_ratio = new_item->volume() / 250_ml;
+    const auto requested_qty = std::max( volume_ratio, decltype( volume_ratio ) { 1 } );
+    const auto qty = static_cast<int>( std::min( requested_qty, decltype( requested_qty ) { INT_MAX } ) );
     auto reqs = *requirement_id( "nanofabricator" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -510,7 +519,7 @@ void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
 void iexamine::translocator( player &, const tripoint_bub_ms &examp )
 {
     // TODO: fix point types
-    const tripoint_abs_omt omt_loc( project_to<coords::omt>( get_map().bub_to_abs( examp ) ) );
+    const tripoint_abs_omt omt_loc( project_to<coords::omt>( bub_to_abs( examp ) ) );
     avatar &player_character = get_avatar();
     const bool activated = player_character.translocators->knows_translocator( omt_loc );
     if( !activated ) {
@@ -1194,9 +1203,8 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
         }
         for( monster &critter : g->all_monsters() ) {
             // Check 1) same overmap coords, 2) turret, 3) hostile
-            if( project_to<coords::omt>( here.bub_to_abs( critter.bub_pos() ) ) == project_to<coords::omt>
-                ( here.bub_to_abs(
-                      examp ) ) &&
+            if( project_to<coords::omt>( critter.abs_pos() ) == project_to<coords::omt>(
+                    bub_to_abs( examp ) ) &&
                 critter.has_flag( MF_ID_CARD_DESPAWN ) &&
                 critter.attitude_to( p ) == Attitude::A_HOSTILE ) {
                 g->remove_zombie( critter );
@@ -1377,12 +1385,6 @@ void iexamine::chainfence( player &p, const tripoint_bub_ms &examp )
         here.unboard_vehicle( p.bub_pos() );
     }
     p.setpos( examp );
-    if( examp.x() < g_half_mapsize_x || examp.y() < g_half_mapsize_y ||
-        examp.x() >= g_half_mapsize_x + SEEX || examp.y() >= g_half_mapsize_y + SEEY ) {
-        if( p.is_player() ) {
-            g->update_map( p );
-        }
-    }
 }
 
 /**
@@ -1421,7 +1423,7 @@ void iexamine::deployed_furniture( player &p, const tripoint_bub_ms &pos )
     }
     p.add_msg_if_player( m_info, _( "You take down the %s." ),
                          here.furn( pos ).obj().name() );
-    take_down_deployed_furniture( pos, pos );
+    map_funcs::take_down_deployed_furniture( pos, pos );
 }
 
 static std::pair<itype_id, const deploy_tent_actor *> find_tent_itype( const furn_str_id &id )
@@ -1649,7 +1651,8 @@ void iexamine::safe( player &p, const tripoint_bub_ms &examp )
     auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
-    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
+    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) &&
+        !p.movement_mode_is( CMM_PRONE ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
             apply_prying_tool( p, prying_tool, examp );
@@ -1713,7 +1716,8 @@ void iexamine::gunsafe_el( player &p, const tripoint_bub_ms &examp )
     auto *prying_tool = find_best_prying_tool( p );
     const int target_diff = here.has_furn( examp ) ? here.furn( examp )->pry.pry_quality : here.ter(
                                 examp )->pry.pry_quality;
-    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) ) {
+    if( target_diff > 0 && prying_tool && !p.movement_mode_is( CMM_CROUCH ) &&
+        !p.movement_mode_is( CMM_PRONE ) ) {
         // keep going in case we have a prying tool that can't be used against the target, so we can try lockpicking
         if( prying_tool->get_quality( quality_id( "PRY" ) ) >= target_diff ) {
             apply_prying_tool( p, prying_tool, examp );
@@ -1777,7 +1781,7 @@ static bool pick_lock( player &p, const tripoint_bub_ms &examp )
             p.mod_power_level( -bio_lockpick->power_activate );
             p.add_msg_if_player( m_info, _( "You activate your %s." ), bio_lockpick->name );
             p.assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_bionic(
-                                   item::spawn( bio_lockpick->fake_item ), here.bub_to_abs( examp ) ) ) );
+                                   item::spawn( bio_lockpick->fake_item ), bub_to_abs( examp ) ) ) );
             return true;
         } else {
             p.add_msg_if_player( m_info, _( "You don't have enough power to activate your %s." ),
@@ -1804,7 +1808,8 @@ void iexamine::locked_object( player &p, const tripoint_bub_ms &examp )
 
     // if the furniture/terrain is also lockpickable
     // try lockpicking first if we're crouched
-    if( lockpick_activity_actor::is_pickable( examp ) && p.movement_mode_is( CMM_CROUCH ) ) {
+    if( lockpick_activity_actor::is_pickable( examp ) && ( p.movement_mode_is( CMM_CROUCH ) ||
+            p.movement_mode_is( CMM_PRONE ) ) ) {
         if( pick_lock( p, examp ) ) {
             return;
         }
@@ -1955,7 +1960,7 @@ void iexamine::transform( player &p, const tripoint_bub_ms &pos )
             case 2: {
                 add_msg( m_info, _( "You take down the %s." ),
                          g->m.furnname( pos ) );
-                take_down_deployed_furniture( pos, pos );
+                map_funcs::take_down_deployed_furniture( pos, pos );
                 return;
             }
             case 3: {
@@ -2062,7 +2067,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
     }
 
     if( here.can_open_door( &p, examp, true ) ) {
-        g->peek( examp );
+        g->peek( examp - p.bub_pos() );
         p.add_msg_if_player( _( "You peek through the peephole." ) );
     } else {
         // Peek through the peephole, or open the door.
@@ -2072,7 +2077,7 @@ void iexamine::door_peephole( player &p, const tripoint_bub_ms &examp )
         } );
         if( choice == 0 ) {
             // Peek
-            g->peek( examp );
+            g->peek( examp - p.bub_pos() );
             p.add_msg_if_player( _( "You peek through the peephole." ) );
         } else if( choice == 1 ) {
             here.open_door( &p, examp, true );
@@ -2614,7 +2619,7 @@ void iexamine::plant_seed( player &p, const tripoint_bub_ms &examp, const itype_
 {
     std::unique_ptr<player_activity> act = std::make_unique<player_activity>( ACT_PLANT_SEED,
                                            to_moves<int>( 30_seconds ) );
-    act->placement = get_map().bub_to_abs( examp );
+    act->placement = bub_to_abs( examp );
     act->str_values.emplace_back( seed_id );
     p.assign_activity( std::move( act ) );
 }
@@ -3345,7 +3350,7 @@ void iexamine::fireplace( player &p, const tripoint_bub_ms &examp )
             }
             p.add_msg_if_player( m_info, _( "You take down the %s." ),
                                  here.furnname( examp ) );
-            take_down_deployed_furniture( examp, examp );
+            map_funcs::take_down_deployed_furniture( examp, examp );
             return;
         }
         case 4: {
@@ -3687,7 +3692,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
     const auto can_disconnect_tank = disconnected_variant && p.has_amount( itype_plumber_toolkit, 1 );
     const auto notify_contents_changed = [&]( const tripoint_bub_ms & where ) {
         if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
-            fluid_grid::on_contents_changed( here.bub_to_abs( where ) );
+            fluid_grid::on_contents_changed( bub_to_abs( where ) );
         }
     };
     const auto tank_contains_only_water = [&]( const tripoint_bub_ms & where ) -> bool {
@@ -3705,7 +3710,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
         return true;
     };
     const auto transfer_tank_liquid_to_grid = [&]( const tripoint_bub_ms & where ) {
-        const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( where ) );
+        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( where ) );
         auto items = here.i_at( where );
         std::ranges::for_each( items, [&]( item * it ) {
             if( it != nullptr && it->made_of( LIQUID ) ) {
@@ -3716,7 +3721,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
     };
 
     if( is_plumbed_tank ) {
-        const auto pos_abs_ms = here.bub_to_abs( examp );
+        const auto pos_abs_ms = bub_to_abs( examp );
         const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
         const auto clean_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water_clean );
         const auto dirty_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water );
@@ -3955,22 +3960,22 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 if( !connected_variant ) {
                     return;
                 }
-                const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+                const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( examp ) );
                 if( !confirm_fluid_grid_contamination_for_items( pos_abs_omt, here.i_at( examp ) ) ) {
                     return;
                 }
                 here.furn_set( examp, *connected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 transfer_tank_liquid_to_grid( examp );
                 add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
                 return;
             } else if( selectmenu.ret == DISCONNECT_FROM_FLUID_GRID ) {
-                fluid_grid::disconnect_tank( here.bub_to_abs( examp ) );
+                fluid_grid::disconnect_tank( bub_to_abs( examp ) );
                 if( !disconnected_variant ) {
                     return;
                 }
                 here.furn_set( examp, *disconnected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
                 return;
             } else if( selectmenu.ret < 0 ) {
@@ -4080,7 +4085,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
         selectmenu.text = _( "Select an action" );
         selectmenu.query();
 
-        const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( examp ) );
         switch( selectmenu.ret ) {
             case DISPENSE:
                 if( liquid_handler::handle_liquid( **items.begin() ) ) {
@@ -4117,7 +4122,11 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 }
                 detached_ptr<item> tmp = item::spawn( drink.typeId(), calendar::turn, charges_held );
                 tmp = pour_into_keg( examp, std::move( tmp ) );
-                p.use_charges( drink.typeId(), charges_held - tmp->charges );
+                if( tmp ) { // tmp->charges contains the charges left after pouring into the keg
+                    p.use_charges( drink.typeId(), charges_held - tmp->charges );
+                } else { // tmp being empty means all charges were used up
+                    p.use_charges( drink.typeId(), charges_held );
+                }
                 add_msg( _( "You fill the %1$s with %2$s." ), keg_name, drink_nname );
                 notify_contents_changed( examp );
                 p.moves -= to_moves<int>( 10_seconds );
@@ -4142,19 +4151,19 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                     return;
                 }
                 here.furn_set( examp, *connected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 transfer_tank_liquid_to_grid( examp );
                 add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
                 return;
             }
 
             case DISCONNECT_FROM_FLUID_GRID:
-                fluid_grid::disconnect_tank( here.bub_to_abs( examp ) );
+                fluid_grid::disconnect_tank( bub_to_abs( examp ) );
                 if( !disconnected_variant ) {
                     return;
                 }
                 here.furn_set( examp, *disconnected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
                 return;
 
@@ -4180,7 +4189,7 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos,
     const auto is_plumbed = is_fluid_grid_tank( here.furn( pos ).obj() );
     const auto notify_contents_changed = [&]( const tripoint_bub_ms & where ) {
         if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
-            fluid_grid::on_contents_changed( here.bub_to_abs( where ) );
+            fluid_grid::on_contents_changed( bub_to_abs( where ) );
         }
     };
     const auto keg_name = here.name( pos );
@@ -4191,7 +4200,7 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos,
             add_msg( _( "The %s only accepts water." ), keg_name );
             return std::move( liquid );
         }
-        const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( pos ) );
+        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( pos ) );
         if( !confirm_fluid_grid_contamination( pos_abs_omt, liquid->typeId() ) ) {
             return std::move( liquid );
         }
@@ -4493,7 +4502,7 @@ void iexamine::shrub_wildveggies( player &p, const tripoint_bub_ms &examp )
     ///\EFFECT_PER randomly speeds up foraging
     move_cost /= rng( std::max( 4, p.per_cur ), 4 + p.per_cur * 2 );
     p.assign_activity( ACT_FORAGE, move_cost, 0 );
-    p.activity->placement = here.bub_to_abs( examp );
+    p.activity->placement = bub_to_abs( examp );
     p.activity->auto_resume = true;
     return;
 }
@@ -4648,7 +4657,7 @@ void iexamine::trap( player &p, const tripoint_bub_ms &examp )
                 }
             } else {
                 p.assign_activity( std::make_unique<player_activity>( std::make_unique<construction_activity_actor>
-                                   ( here.bub_to_abs( examp ) ) ) );
+                                   ( bub_to_abs( examp ) ) ) );
                 return;
             }
         } else {
@@ -4723,7 +4732,7 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
         return;
     }
 
-    const auto pos_abs_ms = here.bub_to_abs( examp );
+    const auto pos_abs_ms = bub_to_abs( examp );
     const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
 
     const auto available_liquid = std::ranges::find_if( fluid_grid.allowed_liquids,
@@ -4766,6 +4775,24 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
     }
 
     fluid_grid::drain_liquid_charges( pos_abs_omt, liquid_type, used );
+}
+
+auto iexamine::lua_examine( player &p, const tripoint_bub_ms &examp ) -> void
+{
+    map &here = get_map();
+    const auto &furn = here.furn( examp ).obj();
+    if( !furn.examine_action_id.empty() ) {
+        cata::run_lua_examine( furn.examine_action_id, p, examp );
+        return;
+    }
+
+    const auto &ter = here.ter( examp ).obj();
+    if( !ter.examine_action_id.empty() ) {
+        cata::run_lua_examine( ter.examine_action_id, p, examp );
+        return;
+    }
+
+    debugmsg( "Lua examine called at %s without a Lua examine action id", examp.to_string() );
 }
 
 std::vector<itype> furn_t::crafting_pseudo_item_types() const
@@ -4992,7 +5019,7 @@ void iexamine::reload_furniture( player &p, const tripoint_bub_ms &examp )
 void iexamine::use_furn_fake_item( player &p, const tripoint_bub_ms &examp )
 {
     map &m = get_map();
-    const tripoint_abs_ms abspos( m.bub_to_abs( examp ) );
+    const tripoint_abs_ms abspos( bub_to_abs( examp ) );
 
     if( !m.has_furn( examp ) ) {
         debugmsg( "lost furniture at %s", examp.to_string() );
@@ -5122,7 +5149,7 @@ void iexamine::curtains( player &p, const tripoint_bub_ms &examp )
     const int choice = window_menu.ret;
     if( choice == 0 ) {
         // Peek
-        g->peek( examp );
+        g->peek( examp - p.bub_pos() );
         p.add_msg_if_player( _( "You carefully peek through the curtains." ) );
     } else if( choice == 1 ) {
         // Mr. Gorbachev, tear down those curtains!
@@ -5578,8 +5605,385 @@ void iexamine::pay_gas( player &p, const tripoint_bub_ms &examp )
     }
 }
 
-void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
+namespace
 {
+
+struct jump_over_tile_state {
+    tripoint_abs_ms examp = tripoint_abs_ms::zero();
+    tripoint_abs_ms dest = tripoint_abs_ms::zero();
+};
+
+static constexpr auto jump_over_tile_base_move_cost = 200;
+static constexpr auto jump_over_tile_min_strength = 4;
+static constexpr auto jump_over_tile_stamina_burn_ratio = 14;
+static const auto dashing_effect = efftype_id( "dashing" );
+static const auto effect_downed = efftype_id( "downed" );
+
+auto jump_over_tile_carried_weight_percentage( const player &p ) -> int
+{
+    const auto carried_weight_grams = units::to_gram( p.weight_carried() );
+    const auto carry_capacity_grams = units::to_gram( std::max( p.weight_capacity(), 1_gram ) );
+    return std::clamp( static_cast<int>( carried_weight_grams * 100 / carry_capacity_grams ), 0, 100 );
+}
+
+auto scale_jump_over_tile_cost_round_up( const int value, const int numerator,
+        const int denominator ) -> int
+{
+    return divide_round_up( value * numerator, denominator );
+}
+
+auto jump_over_tile_move_cost( const player &p ) -> int
+{
+    return p.run_cost( jump_over_tile_base_move_cost );
+}
+
+auto jump_over_tile_stamina_cost( const player &p, const int move_cost ) -> int
+{
+    const auto base_stamina_cost = scale_jump_over_tile_cost_round_up(
+                                       get_option<int>( "PLAYER_BASE_STAMINA_BURN_RATE" ) * move_cost,
+                                       jump_over_tile_stamina_burn_ratio, 100 );
+    return scale_jump_over_tile_cost_round_up(
+               base_stamina_cost, 100 + jump_over_tile_carried_weight_percentage( p ), 100 );
+}
+
+auto get_jump_over_tile_state( const player &p,
+                               const tripoint_bub_ms &examp_bub ) -> jump_over_tile_state
+{
+    const auto examp = bub_to_abs( examp_bub );
+    const auto impulse = ( examp - p.abs_pos() ).xy() * 2;
+    return {
+        .examp = examp,
+        .dest = p.abs_pos() + impulse,
+    };
+}
+
+auto jump_over_tile_has_stumble_risk( const map &here,
+                                      const tripoint_bub_ms &jumped_tile ) -> bool
+{
+    return here.has_flag( "WINDOW", jumped_tile ) || here.has_furn( jumped_tile );
+}
+
+auto jump_over_tile_bashes_window( const map &here, const player &p,
+                                   const tripoint_bub_ms &jumped_tile ) -> bool
+{
+    if( !here.impassable( jumped_tile ) || !here.has_flag( "WINDOW", jumped_tile ) ||
+        !here.is_bashable_ter( jumped_tile ) ) {
+        return false;
+    }
+
+    const auto &bash = here.ter( jumped_tile ).obj().bash;
+    if( !bash.ter_set ) {
+        return false;
+    }
+
+    return ( bash.ter_set->movecost > 0 ||
+             bash.ter_set->has_flag( TFLAG_THIN_OBSTACLE ) ||
+             bash.ter_set->has_flag( TFLAG_SMALL_PASSAGE ) ) &&
+           here.bash_rating( p.get_str(), jumped_tile ) > 0;
+}
+
+auto jump_over_tile_can_cross_impassable( const map &here, const player &p,
+        const tripoint_bub_ms &jumped_tile ) -> bool
+{
+    return here.has_flag( flag_CLIMB_SIMPLE, jumped_tile ) ||
+           jump_over_tile_bashes_window( here, p, jumped_tile );
+}
+
+auto jump_over_tile_can_land_on_ledge( mapbuffer &buffer,
+                                       const tripoint_abs_ms &landing_tile ) -> bool
+{
+    const auto tile_reader = buffer.make_abs_tile_reader();
+    const auto landing = tile_reader.get_tile( landing_tile );
+    if( !landing ) {
+        return false;
+    }
+
+    if( landing->get_trap() != tr_ledge && landing->get_ter_t().trap != tr_ledge ) {
+        return false;
+    }
+
+    return buffer.valid_move( landing_tile, landing_tile + tripoint_rel_ms::below(),
+    { .flying = true } );
+}
+
+auto bash_window_for_jump( map &here, const player &p,
+                           const tripoint_bub_ms &jumped_tile ) -> bool
+{
+    const auto bash = bash_params{
+        .strength = std::max( p.get_str(), 1 ),
+        .silent = false,
+        .destroy = false,
+        .bash_floor = false,
+        .roll = static_cast<float>( rng_float( 0, 1.0f ) ),
+        .bashing_from_above = false,
+        .caused_by_player = p.is_avatar(),
+    };
+    const auto bash_result = here.bash( jumped_tile, bash );
+    return bash_result.success && !here.impassable( jumped_tile );
+}
+
+auto jump_over_tile_window_cut_bodyparts( const player &p ) -> std::vector<bodypart_id>
+{
+    static const auto risky_bodyparts = std::array{
+        bodypart_id( "hand_l" ), bodypart_id( "hand_r" ),
+        bodypart_id( "arm_l" ), bodypart_id( "arm_r" ),
+        bodypart_id( "leg_l" ), bodypart_id( "leg_r" ),
+        bodypart_id( "torso" )
+    };
+    namespace ranges = std::ranges;
+    using namespace std::views;
+
+    return risky_bodyparts
+    | filter( [&p]( const bodypart_id & bp ) {
+        return !p.wearing_something_on( bp );
+    } )
+    | ranges::to<std::vector>();
+}
+
+auto maybe_cut_from_smashing_window( player &p,
+                                     const std::string &obstacle_name ) -> void
+{
+    const auto exposed_bodyparts = jump_over_tile_window_cut_bodyparts( p );
+    if( exposed_bodyparts.empty() ) {
+        return;
+    }
+
+    if( one_in( 3 ) || x_in_y( 1 + p.dex_cur / 2.0, 40 ) ||
+        ( p.mutation_value( "movecost_obstacle_modifier" ) <= 0.5f && !one_in( 4 ) ) ||
+        ( p.has_trait( trait_id( "THICKSKIN" ) ) && one_in( 8 ) ) ) {
+        return;
+    }
+
+    const auto bp = random_entry( exposed_bodyparts );
+    const auto damaged_bp = bp->main_part.id();
+    if( p.deal_damage( nullptr, bp, damage_instance( DT_CUT, rng( 1, 10 ) ) ).total_damage() > 0 ) {
+        add_msg( m_bad, _( "You smash through the %1$s and cut your %2$s on the broken glass!" ),
+                 obstacle_name, body_part_name_accusative( damaged_bp ) );
+    }
+}
+
+auto maybe_cut_from_sharp_jump_terrain( player &p, map &here,
+                                        const tripoint_bub_ms &sharp_tile ) -> void
+{
+    if( !here.has_flag( "SHARP", sharp_tile ) || here.veh_at( sharp_tile ) ) {
+        return;
+    }
+
+    if( one_in( 3 ) || x_in_y( 1 + p.dex_cur / 2.0, 40 ) ||
+        ( p.mutation_value( "movecost_obstacle_modifier" ) <= 0.5f && !one_in( 4 ) ) ||
+        ( p.has_trait( trait_id( "THICKSKIN" ) ) && one_in( 8 ) ) ) {
+        return;
+    }
+
+    const auto bp = p.get_random_body_part();
+    const auto damaged_bp = bp->main_part.id();
+    if( p.deal_damage( nullptr, bp, damage_instance( DT_CUT, rng( 1, 10 ) ) ).total_damage() > 0 ) {
+        add_msg( m_bad, _( "You cut your %1$s on the %2$s as you leap over it!" ),
+                 body_part_name_accusative( damaged_bp ),
+                 here.has_flag_ter( "SHARP", sharp_tile ) ? here.tername( sharp_tile ) : here.furnname(
+                     sharp_tile ) );
+        if( one_in( 2 ) && !p.is_immune_effect( effect_bleed ) ) {
+            p.add_effect( effect_bleed, rng( 2_minutes, 5_minutes ), bp.id() );
+        }
+    }
+}
+
+auto jump_over_tile_stumble_roll( const player &p ) -> bool
+{
+    if( p.has_trait( trait_id( "PARKOUR" ) ) ) {
+        return false;
+    }
+
+    auto climb = p.dex_cur;
+    if( p.has_trait( trait_BADKNEES ) ) {
+        climb /= 2;
+    }
+    if( p.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
+        climb = static_cast<int>( climb / p.mutation_value( "movecost_obstacle_modifier" ) );
+    }
+    return one_in( std::max( climb, 1 ) );
+}
+
+auto apply_jump_stumble_fall_damage( player &p ) -> void
+{
+    static const auto stumble_bps = std::array{
+        bodypart_id( "hand_l" ), bodypart_id( "hand_r" ),
+        bodypart_id( "leg_l" ), bodypart_id( "leg_r" ),
+    };
+
+    for( const auto &bp : stumble_bps ) {
+        p.deal_damage( nullptr, bp, damage_instance( DT_BASH, rng( 1, 2 ) ) );
+    }
+}
+
+auto confirm_dangerous_jump_landing( const player &p,
+                                     const tripoint_abs_ms &dest ) -> bool
+{
+    if( !p.is_avatar() ) {
+        return true;
+    }
+
+    if( get_option<std::string>( "DANGEROUS_TERRAIN_WARNING_PROMPT" ) == "IGNORE" ) {
+        return true;
+    }
+
+    return g->prompt_dangerous_tile( abs_to_bub( dest ), _( "Really jump into %s?" ), false );
+}
+
+auto confirm_crash_through_window( const player &p,
+                                   const std::string &obstacle_name ) -> bool
+{
+    if( !p.is_avatar() ) {
+        return true;
+    }
+
+    return query_yn( _( "Crash through the %s?" ), obstacle_name );
+}
+
+auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
+                              const bool show_messages ) -> bool
+{
+    const auto jump_state = get_jump_over_tile_state( p, examp_bub );
+    const auto dir = jump_state.examp - p.abs_pos();
+    if( jump_state.examp == p.abs_pos() || dir.z() != 0 ||
+        std::abs( dir.x() ) > 1 || std::abs( dir.y() ) > 1 ) {
+        return false;
+    }
+
+    if( !iexamine::can_start_jump_over_tile( p, show_messages ) ) {
+        return false;
+    }
+
+    auto &buffer = p.get_mapbuffer();
+    auto &here = get_map();
+    const auto jumped_tile = abs_to_bub( jump_state.examp );
+    if( here.impassable( jumped_tile ) &&
+        !jump_over_tile_can_cross_impassable( here, p, jumped_tile ) ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You cannot jump through the %s." ),
+                     here.obstacle_name( jumped_tile ) );
+        }
+        return false;
+    }
+
+    if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
+        if( blocking_creature->get_size() >= p.get_size() ) {
+            if( show_messages ) {
+                add_msg( m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
+            }
+            return false;
+        }
+    }
+
+    const auto landing_tile = abs_to_bub( jump_state.dest );
+    if( here.impassable( landing_tile ) &&
+        !jump_over_tile_can_land_on_ledge( buffer, jump_state.dest ) ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You cannot land there - the %s is blocking the way." ),
+                     here.obstacle_name( landing_tile ) );
+        }
+        return false;
+    }
+
+    if( const auto blocking_creature = buffer.creature_at( jump_state.dest ) ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
+                     blocking_creature->disp_name() );
+        }
+        return false;
+    }
+
+    return true;
+}
+
+} // namespace
+
+auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messages ) -> bool
+{
+    if( p.get_str() < jump_over_tile_min_strength ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
+        }
+        return false;
+    }
+
+    const auto stamina_cost = jump_over_tile_stamina_cost( p, jump_over_tile_move_cost( p ) );
+    if( p.get_stamina() < stamina_cost ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You're too exhausted to jump over an obstacle." ) );
+        }
+        return false;
+    }
+
+    return true;
+}
+
+auto iexamine::can_jump_over_tile( const player &p, const tripoint_bub_ms &examp ) -> bool
+{
+    return can_jump_over_tile_impl( p, examp, false );
+}
+
+auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
+{
+    if( p.in_vehicle ) {
+        if( !character_funcs::can_fly( p ) &&
+            !query_yn( _( "Do you really want to jump off the vehicle?" ) ) ) {
+            return false;
+        }
+    }
+
+    if( !can_jump_over_tile_impl( p, examp, true ) ) {
+        return false;
+    }
+
+    const auto jump_state = get_jump_over_tile_state( p, examp );
+    if( !confirm_dangerous_jump_landing( p, jump_state.dest ) ) {
+        return false;
+    }
+
+    if( p.in_vehicle ) {
+        get_map().unboard_vehicle( p.bub_pos() );
+    }
+
+    const auto move_cost = jump_over_tile_move_cost( p );
+    const auto stamina_cost = jump_over_tile_stamina_cost( p, move_cost );
+    auto &here = get_map();
+    const auto jumped_tile = abs_to_bub( jump_state.examp );
+    const auto jumped_obstacle_name = here.name( jumped_tile );
+    const auto bashed_window = jump_over_tile_bashes_window( here, p, jumped_tile );
+    if( bashed_window && !confirm_crash_through_window( p, jumped_obstacle_name ) ) {
+        return false;
+    }
+    const auto stumbled = ( bashed_window || jump_over_tile_has_stumble_risk( here, jumped_tile ) ) &&
+                          jump_over_tile_stumble_roll( p );
+    p.mod_moves( -move_cost );
+    p.mod_stamina( -stamina_cost, false );
+    if( bashed_window ) {
+        if( !bash_window_for_jump( here, p, jumped_tile ) ) {
+            add_msg( m_warning, _( "You fail to crash through the %s." ), jumped_obstacle_name );
+            return false;
+        }
+        add_msg( m_info, _( "You crash through the %s." ), jumped_obstacle_name );
+        maybe_cut_from_smashing_window( p, jumped_obstacle_name );
+    } else {
+        add_msg( m_info, _( "You leap across." ) );
+        maybe_cut_from_sharp_jump_terrain( p, here, jumped_tile );
+    }
+    p.setpos( jump_state.dest );
+    if( stumbled ) {
+        add_msg( m_bad, _( "You misjudge the leap past %s and crash to the ground." ),
+                 jumped_obstacle_name );
+        apply_jump_stumble_fall_damage( p );
+        p.add_effect( effect_downed, rng( 2_turns, 3_turns ), bodypart_str_id::NULL_ID(), 0, true );
+    }
+    here.creature_on_trap( p, false );
+    return true;
+}
+
+void iexamine::ledge( player &p, const tripoint_bub_ms &examp_bub )
+{
+    const auto examp = bub_to_abs( examp_bub );
+    const auto dir = ( examp - p.abs_pos() ).xy();
     enum ledge_action : int { jump_over, climb_down, pull_up_rope, spin_web_bridge };
     if( p.in_vehicle ) {
         if( !character_funcs::can_fly( p ) &&
@@ -5588,19 +5992,26 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
         }
         get_map().unboard_vehicle( p.bub_pos() );
     }
-    if( get_map().ter( p.bub_pos() ).id().str() == "t_open_air" && !character_funcs::can_fly( p ) ) {
-        auto where = p.bub_pos();
-        auto below = where;
-        below.z()--;
+    auto &buffer = p.get_mapbuffer();
+    const auto tile_reader = buffer.make_abs_tile_reader();
+    const auto player_tile = tile_reader.get_tile( p.abs_pos() );
+    if( player_tile && player_tile->get_ter() == t_open_air &&
+        !character_funcs::can_fly( p ) ) {
+        auto where = p.abs_pos();
+        auto below = where + tripoint_rel_ms::below();
 
         // Keep going down until we find a tile that is NOT open air
-        while( get_map().ter( below ).id().str() == "t_open_air" &&
-               get_map().valid_move( where, below, false, true ) ) {
-            where.z()--;
-            below.z()--;
+        while( true ) {
+            const auto below_tile = tile_reader.get_tile( below );
+            if( !below_tile || below_tile->get_ter() != t_open_air ||
+                !buffer.valid_move( where, below, { .flying = true } ) ) {
+                break;
+            }
+            where += tripoint_rel_ms::below();
+            below += tripoint_rel_ms::below();
         }
         // where now represents the first NON-open-air tile or the last valid move before hitting one
-        const int height = p.bub_pos().z() - below.z();
+        const int height = p.abs_pos().z() - below.z();
 
         if( height > 0 ) {
             g->vertical_move( -height, true );  // fall onto the solid tile
@@ -5615,46 +6026,29 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
     //if the tile below has a grappling hook, you can pull it up
     auto below_rope = examp;
     below_rope.z()--;
-    if( get_map().has_flag_furn( "REMOVE_FROM_ABOVE", below_rope ) ) {
+    const auto below_rope_tile = tile_reader.get_tile( below_rope );
+    std::optional<std::string> below_rope_name;
+    if( below_rope_tile && below_rope_tile->get_furn_t().has_flag( "REMOVE_FROM_ABOVE" ) ) {
+        below_rope_name = below_rope_tile->get_furn().obj().name();
         cmenu.addentry( ledge_action::pull_up_rope, true, 'r', _( "Pull up the %s." ),
-                        get_map().furn( below_rope ).obj().name() );
+                        *below_rope_name );
     }
     if( p.has_trait( trait_WEB_BRIDGE ) ) {
         cmenu.addentry( ledge_action::spin_web_bridge, true, 'w', _( "Spin Web Bridge." ) );
     }
 
     cmenu.query();
-
-    map &here = get_map();
     switch( cmenu.ret ) {
         case ledge_action::jump_over: {
-            tripoint_bub_ms dest( p.bub_pos().x() + 2 * sgn( examp.x() - p.bub_pos().x() ),
-                                  p.bub_pos().y() + 2 * sgn( examp.y() - p.bub_pos().y() ),
-                                  p.bub_pos().z() );
-            if( p.get_str() < 4 ) {
-                add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
-            } else if( 100 * p.weight_carried() / p.weight_capacity() > 25 ) {
-                add_msg( m_warning, _( "You are too burdened to jump over an obstacle." ) );
-            } else if( !here.valid_move( examp, dest, false, true ) ) {
-                add_msg( m_warning, _( "You cannot jump over an obstacle - something is blocking the way." ) );
-            } else if( g->critter_at( dest ) ) {
-                add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
-                         g->critter_at( dest )->disp_name() );
-            } else if( here.ter( dest ).obj().trap == tr_ledge ) {
-                add_msg( m_warning, _( "You are not going to jump over an obstacle only to fall down." ) );
-            } else {
-                add_msg( m_info, _( "You jump over an obstacle." ) );
-                p.setpos( dest );
-            }
+            iexamine::jump_over_tile( p, examp_bub );
             break;
         }
         case ledge_action::climb_down: {
             auto where = examp;
-            auto below = examp;
-            below.z()--;
-            while( here.valid_move( where, below, false, true ) ) {
-                where.z()--;
-                below.z()--;
+            auto below = where + tripoint_rel_ms::below();
+            while( buffer.valid_move( where, below, { .flying = true } ) ) {
+                where += tripoint_rel_ms::below();
+                below += tripoint_rel_ms::below();
             }
 
             const int height = examp.z() - where.z();
@@ -5664,7 +6058,7 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             }
 
             const bool has_grapnel = p.has_amount( itype_grapnel, 1 );
-            const auto climb_cost = map_funcs::climbing_cost( here, where, examp );
+            const auto climb_cost = map_funcs::climbing_cost( buffer, where, examp );
             const auto fall_mod = p.fall_damage_mod();
             const std::string query_str = vgettext( "Looks like %d story.  Jump down?",
                                                     "Looks like %d stories.  Jump down?",
@@ -5731,14 +6125,13 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
                 // One tile of falling less (possibly zero)
                 g->vertical_move( -1, true );
             }
-            here.creature_on_trap( p );
+            buffer.creature_on_trap( p );
             break;
         }
         case ledge_action::pull_up_rope: {
-            map &here = get_map();
             p.add_msg_if_player( m_info, _( "You pull up the %s." ),
-                                 here.furn( below_rope ).obj().name() );
-            take_down_deployed_furniture( below_rope, p.bub_pos() );
+                                 below_rope_name.value_or( std::string{} ) );
+            map_funcs::take_down_deployed_furniture( buffer, below_rope, p.abs_pos() );
             break;
         }
         case ledge_action::spin_web_bridge: {
@@ -5746,13 +6139,13 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             if( !can_use_mutation_warn( trait_WEB_BRIDGE, p ) ) {
                 break;
             }
-            const int range = 6; //this means we could web across a gap of 5.
-            int success_range = 0;
-            bool success = false;
-            for( int i = 2; i <= range; i++ ) {
+            static constexpr auto range = 6; //this means we could web across a gap of 5.
+            auto success_range = 0;
+            auto success = false;
+            for( const auto i : std::views::iota( 2, range + 1 ) ) {
                 //break at the first non empty space encountered
-                if( g->m.ter( tripoint_bub_ms( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
-                                               p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ), p.bub_pos().z() ) ) != t_open_air ) {
+                const auto tile = tile_reader.get_tile( p.abs_pos() + dir * i );
+                if( !tile || tile->get_ter() != t_open_air ) {
                     success_range = i;
                     success = true;
                     break;
@@ -5761,12 +6154,8 @@ void iexamine::ledge( player &p, const tripoint_bub_ms &examp )
             if( !success ) {
                 p.add_msg_if_player( _( "There is nothing for your to attach your web to!" ) );
             } else {
-                for( int i = 1; i < success_range; i++ ) {
-                    tripoint_bub_ms dest( p.bub_pos().x() + i * sgn( examp.x() - p.bub_pos().x() ),
-                                          p.bub_pos().y() + i * sgn( examp.y() - p.bub_pos().y() ),
-                                          p.bub_pos().z() );
-
-                    g->m.ter_set( dest, t_web_bridge );
+                for( const auto i : std::views::iota( 1, success_range ) ) {
+                    buffer.set_ter( p.abs_pos() + dir * i, t_web_bridge );
                 }
                 p.mutation_spend_resources( trait_WEB_BRIDGE );
             }
@@ -5980,7 +6369,8 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
         }
     } else if( patient.activity->id() == activity_id( "ACT_OPERATION" ) ) {
         popup( _( "Operation underway.  Please wait until the end of the current procedure.  Estimated time remaining: %s." ),
-               to_string( time_duration::from_turns( patient.activity->moves_left / 100 ) ) );
+               to_string( time_duration::from_turns(
+                              action_time_scale::activity_turns_for_progress( patient.activity->moves_left ) ) ) );
         p.add_msg_if_player( m_info, _( "The autodoc is working on %s." ), patient.disp_name() );
         return;
     }
@@ -6086,7 +6476,9 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
                                                 surgery_duration * weight;
 
             if( patient.can_install_bionics( ( *itemtype ), installer, true, has_install_program ? 10 : -1 ) ) {
-                const time_duration duration = itemtype->bionic->difficulty * 20_minutes;
+                const auto duration = time_duration::from_turns(
+                                          action_time_scale::activity_turns_for_progress(
+                                              to_moves<int>( itemtype->bionic->difficulty * 20_minutes ) ) );
                 patient.introduce_into_anesthesia( duration, installer, needs_anesthesia );
                 bionic->detach();
                 if( needs_anesthesia ) {
@@ -6158,7 +6550,9 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
             }
 
             if( patient.can_uninstall_bionic( bid, installer, true ) ) {
-                const time_duration duration = difficulty * 20_minutes;
+                const auto duration = time_duration::from_turns(
+                                          action_time_scale::activity_turns_for_progress(
+                                              to_moves<int>( difficulty * 20_minutes ) ) );
                 patient.introduce_into_anesthesia( duration, installer, needs_anesthesia );
                 if( needs_anesthesia ) {
                     p.consume_tools( anesth_kit, volume_anesth );
@@ -7602,7 +7996,7 @@ void iexamine::dimensional_portal( player &p, const tripoint_bub_ms &examp )
 
 void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 {
-    tripoint_abs_ms abspos( g->m.bub_to_abs( examp ) );
+    tripoint_abs_ms abspos( bub_to_abs( examp ) );
     battery_tile *battery = active_tiles::furn_at<battery_tile>( abspos );
     if( battery != nullptr ) {
         add_msg( m_info, _( "This battery stores %d kJ of electric power." ), battery->get_resource() );
@@ -7613,8 +8007,8 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 {
-    const tripoint_abs_ms abs_pos( g->m.bub_to_abs( examp ) );
-    const std::string local_dim = g->m.get_bound_dimension();
+    const tripoint_abs_ms abs_pos( bub_to_abs( examp ) );
+    const auto local_dim = g->m.get_bound_dimension();
 
     // Look up the grid_link_tile for this portal.  Access through the correct
     // mapbuffer so this works regardless of which dimension the player is in.
@@ -7644,12 +8038,12 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
     } else if( glt->paused ) {
         status = string_format(
                      _( "Status: PAUSED — insufficient power\nTarget: [%s] (%d,%d,%d)" ),
-                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_dim_id.is_empty() ? _( "primary" ) : glt->target_dim_id.str(),
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     } else {
         status = string_format(
                      _( "Status: Active\nTarget: [%s] (%d,%d,%d)" ),
-                     glt->target_dim_id.empty() ? _( "primary" ) : glt->target_dim_id,
+                     glt->target_dim_id.is_empty() ? _( "primary" ) : glt->target_dim_id.str(),
                      glt->target_pos.raw().x, glt->target_pos.raw().y, glt->target_pos.raw().z );
     }
 
@@ -7691,13 +8085,14 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 
     switch( menu.ret ) {
         case 0: { // Attune keycard
-            keycard->set_var( "portal_target_dim", local_dim );
+            keycard->set_var( "portal_target_dim", local_dim.str() );
             keycard->set_var( "portal_target_pos", abs_pos );
             add_msg( m_info, _( "You attune the keycard to this power portal." ) );
             break;
         }
         case 1: { // Link using keycard
-            const std::string target_dim = keycard->get_var( "portal_target_dim", std::string{} );
+            const auto target_dim = dimension_id( keycard->get_var( "portal_target_dim",
+                                                  std::string{} ) );
             const auto target_pos = keycard->get_var( "portal_target_pos", tripoint_abs_ms::zero() );
             if( target_pos == abs_pos && target_dim == local_dim ) {
                 add_msg( m_bad, _( "You can't link a portal to itself." ) );
@@ -7762,12 +8157,12 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
         }
         case 4: { // Unlink
             const tripoint_abs_ms old_target_pos    = glt->target_pos;
-            const std::string     old_target_dim_id = glt->target_dim_id;
+            const auto old_target_dim_id = glt->target_dim_id;
             // Sever local side first.
             local_tracker.remove_export_node( abs_pos );
             glt->linked = false;
             glt->paused = false;
-            glt->target_dim_id.clear();
+            glt->target_dim_id = dimension_id();
             // Always update the remote grid_link_tile (submap may be resident
             // via load handles even if the remote tracker was destroyed).
             {
@@ -7782,7 +8177,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
                         if( rglt != nullptr ) {
                             rglt->linked = false;
                             rglt->paused = false;
-                            rglt->target_dim_id.clear();
+                            rglt->target_dim_id = dimension_id();
                         }
                     }
                 }
@@ -7802,7 +8197,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 
 void iexamine::portal( player &p, const tripoint_bub_ms &examp )
 {
-    const tripoint_abs_ms abs_pos( get_map().bub_to_abs( examp ) );
+    const tripoint_abs_ms abs_pos( bub_to_abs( examp ) );
 
     portal_tile *pt = active_tiles::furn_at<portal_tile>( abs_pos );
     if( pt == nullptr ) {
@@ -7816,7 +8211,7 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
             return;
         }
         // Generate the dynamic special in the target dimension at a random overmap location.
-        const std::string &tdim = pt->target_dim_id;
+        const auto &tdim = pt->target_dim_id;
         auto &omb = get_overmapbuffer( tdim );
         // Pick an origin far enough from the player so the generated area doesn't overlap.
         const tripoint_abs_omt gen_origin( rng( 50, 100 ), rng( 50, 100 ), 0 );
@@ -7884,8 +8279,8 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
     p.add_msg_if_player( m_good, _( "You step through the portal." ) );
 
     // Resolve destination world_type.
-    auto wt_id = world_type_id( pt->target_dim_id );
-    if( pt->target_dim_id.empty() ) {
+    auto wt_id = world_type_id( pt->target_dim_id.str() );
+    if( pt->target_dim_id.is_empty() ) {
         wt_id = world_types::get_default();
     }
 
@@ -7894,19 +8289,18 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
 
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
-    auto entry_local = get_map().abs_to_bub( pt->target_pos );
-    p.setpos( entry_local );
-    g->update_map( p );
+    p.setpos( pt->target_pos );
 }
 
 void iexamine::migo_nerve_cluster( player &p, const tripoint_bub_ms &examp )
 {
-    map &here = get_map();
     if( query_yn( _( "This looks important.  Tear open nerve cluster?" ) ) ) {
+        auto &buffer = p.get_mapbuffer();
+        const auto pos = p.abs_pos() + ( examp - p.bub_pos() );
         p.mod_moves( -200 );
         add_msg( _( "You grab hold of a sinewy tendril and wrench it loose!" ) );
-        map_funcs::migo_nerve_cage_removal( here, examp, false );
-        here.furn_set( examp, furn_id( "f_alien_scar" ) );
+        map_funcs::migo_nerve_cage_removal( buffer, pos, false );
+        buffer.set_furn( pos, furn_id( "f_alien_scar" ) );
     }
 }
 
@@ -7933,7 +8327,7 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
     map &here = get_map();
     const furn_id furniture = here.furn( pos );
     data_vars::data_set *vars = here.furn_vars( pos );
-    const tripoint_abs_ms abspos( here.bub_to_abs( pos ) );
+    const tripoint_abs_ms abspos( bub_to_abs( pos ) );
     auto grid = get_distribution_grid_tracker().grid_at( abspos );
     int battery = grid.get_resource();
     enum {
@@ -8110,6 +8504,7 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
         }
     }
 }
+
 /**
  * Given then name of one of the above functions, returns the matching function
  * pointer. If no match is found, defaults to iexamine::none but prints out a
@@ -8119,6 +8514,10 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
  */
 iexamine_function iexamine_function_from_string( const std::string &function_name )
 {
+    if( function_name.rfind( "lua:", 0 ) == 0 ) {
+        return &iexamine::lua_examine;
+    }
+
     static const std::map<std::string, iexamine_function> function_map = {{
             { "none", &iexamine::none },
             { "deployed_furniture", &iexamine::deployed_furniture },
@@ -8182,6 +8581,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "clean_water_source", &iexamine::clean_water_source },
             { "liquid_source", &iexamine::liquid_source },
             { "fluid_grid_fixture", &iexamine::fluid_grid_fixture },
+            { "lua_examine", &iexamine::lua_examine },
             { "reload_furniture", &iexamine::reload_furniture },
             { "use_furn_fake_item", &iexamine::use_furn_fake_item },
             { "curtains", &iexamine::curtains },
@@ -8211,6 +8611,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "migo_nerve_cluster", &iexamine::migo_nerve_cluster },
             { "cardreader_plutgen", &iexamine::cardreader_plutgen },
             { "multicooker", &iexamine::multicooker },
+            { "enchanter", &iexamine::enchanter },
         }
     };
 

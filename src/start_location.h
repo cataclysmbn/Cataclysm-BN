@@ -8,12 +8,14 @@
 
 #include "coordinates.h"
 #include "enums.h"
+#include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 
 class JsonObject;
+class map;
 class player;
-class tinymap;
+class map_extra;
 struct tripoint;
 
 class start_location
@@ -45,7 +47,7 @@ class start_location
         /**
          * Place the player somewhere in the reality bubble (g->m).
          */
-        void place_player( player &u ) const;
+        void place_player( player &u, const int &z ) const;
         /**
          * Burn random terrain / furniture with FLAMMABLE or FLAMMABLE_ASH tag.
          * Doors and windows are excluded.
@@ -57,7 +59,7 @@ class start_location
         /**
          * Adds a map extra, see map_extras.h and map_extras.cpp. Look at the namespace MapExtras and class map_extras.
          */
-        void add_map_extra( const tripoint_abs_omt &omtstart, const std::string &map_extra ) const;
+        void add_map_extra( const tripoint_abs_omt &omtstart, const string_id<map_extra> &map_extra ) const;
 
         void handle_heli_crash( player &u ) const;
 
@@ -71,8 +73,9 @@ class start_location
         translation _name;
         std::vector<std::pair<std::string, ot_match_type>> _omt_types;
         std::set<std::string> _flags;
+        point_abs_om absolute_place_location;
 
-        void prepare_map( tinymap &m ) const;
+        void prepare_map( map &m, const int &z ) const;
 };
 
 namespace start_locations
@@ -86,5 +89,3 @@ void reset();
 const std::vector<start_location> &get_all();
 
 } // namespace start_locations
-
-

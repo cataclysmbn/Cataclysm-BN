@@ -83,9 +83,9 @@
         "description": "Sliding footwork enhances the crushing continuity of your attacks.\n\nArmor penetration increased by 100% of Strength.",
         "melee_allowed": true,
         "flat_bonuses": [
-          { "stat": "arpen", "type": "bash", "scaling-stat": "str", "scale": 0.75 },
-          { "stat": "arpen", "type": "cut", "scaling-stat": "str", "scale": 0.75 },
-          { "stat": "arpen", "type": "stab", "scaling-stat": "str", "scale": 0.75 }
+          { "stat": "arpen", "type": "bash", "scaling-stat": "str", "scale": 1 },
+          { "stat": "arpen", "type": "cut", "scaling-stat": "str", "scale": 1 },
+          { "stat": "arpen", "type": "stab", "scaling-stat": "str", "scale": 1 }
         ]
       }
     ],
@@ -134,7 +134,7 @@
         "flat_bonuses": [
           { "stat": "hit", "scaling-stat": "str", "scale": 0.15 },
           { "stat": "arpen", "type": "bash", "scaling-stat": "str", "scale": 1.25 },
-          { "stat": "arpen", "type": "cut", "scaling-stat": "str", "scale": 2.25 },
+          { "stat": "arpen", "type": "cut", "scaling-stat": "str", "scale": 1.25 },
           { "stat": "arpen", "type": "stab", "scaling-stat": "str", "scale": 1.25 }
         ],
         "buff_duration": 1
@@ -570,7 +570,7 @@
         "name": "Kick stance",
         "description": "You have adopted a stance which allows for greater mobility and stability.  Your hands are in a guard position with elbows forward to protect yourself.\n\nBlocked damage reduced by 25% of Strength.\n+1.0 Dodging skill",
         "unarmed_allowed": true,
-        "flat_bonuses": [ { "stat": "block", "scaling-stat": "str", "scale": 0.5 }, { "stat": "dodge", "scale": 1 } ]
+        "flat_bonuses": [ { "stat": "block", "scaling-stat": "str", "scale": 0.25 }, { "stat": "dodge", "scale": 1 } ]
       }
     ],
     "techniques": [

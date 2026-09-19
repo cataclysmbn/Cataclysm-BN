@@ -1,28 +1,23 @@
 #include "mattack_actors.h"
 
-#include <algorithm>
-#include <functional>
-#include <limits>
-#include <memory>
-#include <optional>
-
 #include "ammo_effect.h"
+#include "assign.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "creature.h"
 #include "creature_functions.h"
 #include "enums.h"
-#include "field_type.h"
 #include "game.h"
 #include "generic_factory.h"
 #include "gun_mode.h"
 #include "int_id.h"
+#include "item.h"
 #include "itype.h"
 #include "iuse_actor.h"
-#include "item.h"
 #include "json.h"
 #include "line.h"
-#include "map.h"
+#include "map/field_type.h"
+#include "map/map.h"
 #include "map_iterator.h"
 #include "material.h"
 #include "messages.h"
@@ -35,9 +30,15 @@
 #include "rng.h"
 #include "sounds.h"
 #include "translations.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_range.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_range.h"
+
+#include <algorithm>
+#include <functional>
+#include <limits>
+#include <memory>
+#include <optional>
 
 static const efftype_id effect_badpoison( "badpoison" );
 static const efftype_id effect_bite( "bite" );
@@ -512,7 +513,17 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
 {
     obj.read( "gun_type", gun_type, true );
 
-    obj.read( "ammo_type", ammo_type );
+    ammo_types.clear();
+    if( obj.has_array( "ammo_type" ) ) {
+        for( JsonValue ammo_entry : obj.get_array( "ammo_type" ) ) {
+            const auto ammo_id = itype_id( ammo_entry.get_string() );
+            if( !std::ranges::contains( ammo_types, ammo_id ) ) {
+                ammo_types.push_back( ammo_id );
+            }
+        }
+    } else if( obj.has_string( "ammo_type" ) ) {
+        ammo_types.push_back( itype_id( obj.get_string( "ammo_type" ) ) );
+    }
 
     if( obj.has_array( "fake_skills" ) ) {
         for( JsonArray cur : obj.get_array( "fake_skills" ) ) {
@@ -564,13 +575,8 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
         targeting_sound = _( "Beep." );
     }
 
-    if( obj.has_int( "targeting_volume" ) ) {
-        int volume = obj.get_int( "targeting_volume" );
-        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
-        targeting_volume = volume;
-    }
-
-    obj.read( "targeting_volume_dB", targeting_volume );
+    assign( obj, "targeting_volume", targeting_volume );
+    assign( obj, "targeting_volume_dB", targeting_volume );
 
     obj.read( "laser_lock", laser_lock );
 
@@ -599,8 +605,8 @@ namespace
 
 auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_bub_ms>
 {
-    const auto is_different_plane = []( const wrapped_vehicle & v, const monster & m ) -> bool {
-        return !fov_3d && v.pos.z() != m.bub_pos().z();
+    const auto is_different_plane = []( const wrapped_vehicle & /*v*/, const monster & /*m*/ ) -> bool {
+        return false;
     };
 
     map &here = get_map();
@@ -733,10 +739,10 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
                                   !target.has_effect( effect_was_laserlocked );
 
     if( not_targeted || not_laser_locked ) {
-        if( targeting_volume > 0 && !targeting_sound.empty() ) {
+        if( targeting_volume > 0_dB && !targeting_sound.empty() ) {
             sound_event se;
             se.origin = z.bub_pos();
-            se.volume = targeting_volume;
+            se.volume = units::to_decibel( targeting_volume );
             se.category = sounds::sound_t::alarm;
             se.description = _( targeting_sound );
             se.from_monster = true;
@@ -776,7 +782,9 @@ void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
     detached_ptr<item> gun = item::spawn( gun_type );
     gun->gun_set_mode( mode );
 
-    itype_id ammo = ammo_type ? ammo_type : gun->ammo_default();
+    const auto ammo_slot = !ammo_types.empty() ? ammo_types.front() : gun->ammo_default();
+    const auto loaded_ammo = z.loaded_ammo_for_slot( ammo_slot );
+    const auto ammo = loaded_ammo.is_empty() ? ammo_slot : loaded_ammo;
     if( ammo ) {
         gun->ammo_set( ammo, z.ammo[ammo] );
     }

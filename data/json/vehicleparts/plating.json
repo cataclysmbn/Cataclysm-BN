@@ -163,9 +163,10 @@
     },
     "flags": [ "ARMOR" ],
     "breaks_into": [
-      { "item": "steel_lump", "count": [ 4, 6 ] },
-      { "item": "steel_chunk", "count": [ 4, 6 ] },
-      { "item": "scrap", "count": [ 4, 6 ] }
+      { "item": "steel_lump", "count": [ 2, 3 ] },
+      { "item": "steel_chunk", "count": [ 2, 3 ] },
+      { "item": "scrap", "count": [ 2, 3 ] },
+      { "item": "hard_steel_armor", "count": [ 3, 6 ] }
     ],
     "damage_reduction": { "all": 75 }
   },
@@ -187,9 +188,10 @@
     },
     "flags": [ "ARMOR" ],
     "breaks_into": [
-      { "item": "steel_lump", "count": [ 4, 6 ] },
-      { "item": "steel_chunk", "count": [ 4, 6 ] },
-      { "item": "scrap", "count": [ 4, 6 ] },
+      { "item": "steel_lump", "count": [ 2, 3 ] },
+      { "item": "steel_chunk", "count": [ 2, 3 ] },
+      { "item": "scrap", "count": [ 2, 3 ] },
+      { "item": "hard_steel_armor", "count": [ 2, 4 ] },
       { "item": "ceramic_armor", "count": [ 0, 4 ] }
     ],
     "damage_reduction": { "all": 70, "cut": 95, "stab": 88 }

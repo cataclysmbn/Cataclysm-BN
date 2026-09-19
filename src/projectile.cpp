@@ -1,19 +1,19 @@
 #include "projectile.h"
 
+#include "ammo_effect.h"
+#include "explosion.h"
+#include "game.h"
+#include "item.h"
+#include "json.h"
+#include "map/map.h"
+#include "map_iterator.h"
+#include "rng.h"
+#include "string_id.h"
+
 #include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
-
-#include "ammo_effect.h"
-#include "explosion.h"
-#include "game.h"
-#include "json.h"
-#include "item.h"
-#include "map.h"
-#include "map_iterator.h"
-#include "rng.h"
-#include "string_id.h"
 
 projectile::projectile() : custom_explosion( nullptr )
 { }

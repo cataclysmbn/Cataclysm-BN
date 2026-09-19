@@ -14,13 +14,9 @@ mod.change_hairstyle_function = function(params)
   local function get_hair_trait_type(mut_raw)
     if not mut_raw then return nil end
 
-    local success, types = pcall(function() return mut_raw:mutation_types() end)
-    if success and types then
-      for k, v in pairs(types) do
-        local t = (type(v) == "string") and v or k
-        if t == "hair_style" then return "hair_style" end
-        if t == "hair_color" then return "hair_color" end
-      end
+    for _, t in pairs(mut_raw:mutation_types()) do
+      if t == "hair_style" then return "hair_style" end
+      if t == "hair_color" then return "hair_color" end
     end
 
     local id_str = mut_raw.id:str()

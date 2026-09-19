@@ -38,7 +38,7 @@
     "type": "item_group",
     "id": "mags_cop",
     "//": "Standard issue police magazines.",
-    "items": [ [ "fn57mag", 15 ], [ "hk46mag", 5 ] ]
+    "items": [ [ "fn57mag", 15 ], [ "hk46mag", 10 ], [ "hk46smallmag", 5 ] ]
   },
   {
     "type": "item_group",
@@ -50,7 +50,7 @@
     "type": "item_group",
     "id": "mags_smg_rare",
     "//": "Aftermarket or otherwise uncommon SMG magazines excluding milspec.",
-    "items": [ [ "fnp90mag", 50 ], [ "360_200_mag", 5 ], [ "hk46bigmag", 5 ], [ "hk46mag", 55 ] ]
+    "items": [ [ "fnp90mag", 50 ], [ "360_200_mag", 5 ], [ "hk46mag", 10 ], [ "hk46bigmag", 5 ], [ "hk46smallmag", 5 ] ]
   },
   {
     "type": "item_group",
@@ -62,7 +62,7 @@
     "type": "item_group",
     "id": "mags_milspec",
     "//": "Current military specification magazines.",
-    "items": [ [ "hk46mag", 15 ], [ "hk46bigmag", 5 ] ]
+    "items": [ [ "hk46mag", 15 ], [ "hk46smallmag", 10 ], [ "hk46bigmag", 5 ] ]
   },
   {
     "type": "item_group",

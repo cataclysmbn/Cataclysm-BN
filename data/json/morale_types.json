@@ -65,6 +65,21 @@
     "text": "Good feeling"
   },
   {
+    "id": "morale_shower",
+    "type": "morale_type",
+    "text": "Had shower"
+  },
+  {
+    "id": "morale_bath",
+    "type": "morale_type",
+    "text": "Had bath"
+  },
+  {
+    "id": "morale_cleansed_self",
+    "type": "morale_type",
+    "text": "Cleansed self"
+  },
+  {
     "id": "morale_support",
     "type": "morale_type",
     "text": "Supported"

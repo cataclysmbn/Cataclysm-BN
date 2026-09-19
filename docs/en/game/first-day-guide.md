@@ -1,4 +1,4 @@
-# New player guide
+# First Day Guide
 
 > [!TIP]
 > Should you be confused with keybindings at any time, use `?` to check your keybindings in game, or

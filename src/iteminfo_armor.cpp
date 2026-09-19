@@ -3,7 +3,7 @@
 #include <string>
 #include "avatar.h"
 #include "catacharset.h"
-#include "cata_algo.h"
+#include "utils/algo.h"
 #include "item.h"
 #include "flag.h"
 #include "iteminfo_query.h"

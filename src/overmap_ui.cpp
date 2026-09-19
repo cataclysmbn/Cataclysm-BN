@@ -43,12 +43,13 @@
 #include "input.h"
 #include "int_id.h"
 #include "line.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapbuffer.h"
 #include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mission.h"
 #include "messages.h"
+#include "mission.h"
 #include "mongroup.h"
+#include "note_label_utils.h"
 #include "npc.h"
 #include "omdata.h"
 #include "options.h"
@@ -56,9 +57,9 @@
 #include "overmap.h"
 #include "overmap_label.h"
 #include "overmap_label_note.h"
+#include "overmap_special.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
-#include "overmap_special.h"
 #include "player_activity.h"
 #include "regional_settings.h"
 #include "rng.h"
@@ -73,13 +74,12 @@
 #include "ui.h"
 #include "ui_manager.h"
 #include "uistate.h"
-#include "note_label_utils.h"
 #include "units.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather.h"
-#include "weather_gen.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+#include "weather/weather_gen.h"
 #include "world_type.h"
 
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
@@ -1594,7 +1594,7 @@ static void draw_om_sidebar(
     std::string dim_name;
     if( const dimension_info *dim = g->get_current_dimension_info() ) {
         dim_name = dim->display_name.empty()
-                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->dimension_id )
+                   ? ( dim->world_type.is_valid() ? dim->world_type.obj().name.translated() : dim->id.str() )
                    : dim->display_name;
     }
     mvwprintz( wbar, point( 1, getmaxy( wbar ) - 2 ), c_cyan, dim_name );
@@ -1818,7 +1818,7 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs, const tripo
 
         mvwprintz( w_search, point( 1, 3 ), c_light_blue, _( "Direction:" ) );
         mvwprintz( w_search, point( align_width, 3 ), c_light_red, "%d %s",
-                   trig_dist( orig, tripoint_abs_omt( locations[i], orig.z() ) ),
+                   static_cast<int>( trig_dist( orig, tripoint_abs_omt( locations[i], orig.z() ) ) ),
                    direction_name_short( direction_from( orig, tripoint_abs_omt( locations[i], orig.z() ) ) ) );
 
         if( locations.size() > 1 ) {
@@ -2093,16 +2093,13 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
     }
 }
 
-static float overmap_zoom_level = DEFAULT_TILESET_ZOOM;
-
 static tripoint_abs_omt display( const tripoint_abs_omt &orig,
                                  const draw_data_t &data = draw_data_t() )
 {
-    const float previous_zoom = g->get_zoom();
-    g->set_zoom( overmap_zoom_level );
-    on_out_of_scope reset_zoom( [&]() {
-        overmap_zoom_level = g->get_zoom();
-        g->set_zoom( previous_zoom );
+    // the overmap context may be shared with the main view's; each view re-asserts zoom on takeover
+    g->reapply_overmap_zoom();
+    on_out_of_scope reset_zoom( []() {
+        g->reapply_zoom();
         g->mark_main_ui_adaptor_resize();
     } );
 

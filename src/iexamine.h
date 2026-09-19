@@ -87,6 +87,7 @@ void trap( player &p, const tripoint_bub_ms &examp );
 void water_source( player &p, const tripoint_bub_ms &examp );
 void clean_water_source( player &, const tripoint_bub_ms &examp );
 void liquid_source( player &p, const tripoint_bub_ms &examp );
+auto lua_examine( player &p, const tripoint_bub_ms &examp ) -> void;
 void kiln_empty( player &p, const tripoint_bub_ms &examp );
 void kiln_full( player &p, const tripoint_bub_ms &examp );
 void arcfurnace_empty( player &p, const tripoint_bub_ms &examp );
@@ -103,6 +104,9 @@ void curtains( player &p, const tripoint_bub_ms &examp );
 void sign( player &p, const tripoint_bub_ms &examp );
 void pay_gas( player &p, const tripoint_bub_ms &examp );
 void ledge( player &p, const tripoint_bub_ms &examp );
+auto can_start_jump_over_tile( const player &p, const bool show_messages = false ) -> bool;
+auto can_jump_over_tile( const player &p, const tripoint_bub_ms &examp ) -> bool;
+auto jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool;
 void autodoc( player &p, const tripoint_bub_ms &examp );
 void translocator( player &p, const tripoint_bub_ms &examp );
 void on_smoke_out( const tripoint_bub_ms &examp,
@@ -119,6 +123,7 @@ void check_power( player &p, const tripoint_bub_ms &examp );
 void migo_nerve_cluster( player &p, const tripoint_bub_ms &examp );
 void cardreader_plutgen( player &p, const tripoint_bub_ms &examp );
 void multicooker( player &p, const tripoint_bub_ms &pos );
+void enchanter( player &p, const tripoint_bub_ms &pos );
 
 detached_ptr<item> pour_into_keg( const tripoint_bub_ms &pos, detached_ptr<item> &&liquid );
 std::optional<tripoint_bub_ms> getGasPumpByNumber( const tripoint_bub_ms &p, int number );

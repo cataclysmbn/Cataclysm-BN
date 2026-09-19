@@ -1,29 +1,14 @@
 #include "panels.h"
 
-#include <algorithm>
-#include <array>
-#include <cmath>
-#include <cstddef>
-#include <cstdlib>
-#include <iosfwd>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <optional>
-#include <ranges>
-#include <string>
-#include <tuple>
-#include <utility>
-
 #include "action.h"
 #include "avatar.h"
 #include "behavior.h"
 #include "bodypart.h"
 #include "cached_options.h"
 #include "calendar.h"
-#include "catalua_impl.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "catalua_impl.h"
 #include "character.h"
 #include "character_effects.h"
 #include "character_functions.h"
@@ -41,8 +26,8 @@
 #include "item.h"
 #include "json.h"
 #include "lua_sidebar_widgets.h"
-#include "magic.h"
-#include "map.h"
+#include "magic/magic.h"
+#include "map/map.h"
 #include "messages.h"
 #include "omdata.h"
 #include "options.h"
@@ -50,11 +35,12 @@
 #include "overmap.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
-#include "path_info.h"
 #include "panels_utility.h"
+#include "path_info.h"
 #include "player.h"
 #include "pldata.h"
 #include "point.h"
+#include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "tileray.h"
@@ -63,10 +49,25 @@
 #include "ui_manager.h"
 #include "units.h"
 #include "units_utility.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "weather.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "weather/weather.h"
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <iosfwd>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <optional>
+#include <ranges>
+#include <string>
+#include <tuple>
+#include <utility>
 
 static const trait_id trait_THRESH_FELINE( "THRESH_FELINE" );
 static const trait_id trait_THRESH_BIRD( "THRESH_BIRD" );
@@ -543,7 +544,7 @@ static std::string get_temp( const avatar &u )
 {
     std::string temp;
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
-        u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
         temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
     }
     if( temp.empty() ) {
@@ -650,37 +651,37 @@ static std::pair<nc_color, int> morale_stat( const avatar &u )
 
 struct temp_delta_extremes {
     temp_delta_extremes( bodypart_str_id extreme_cur_bp,
-                         int extreme_cur_temp,
+                         units::temperature extreme_cur_temp,
                          bodypart_str_id extreme_conv_bp,
-                         int extreme_conv_temp ) :
+                         units::temperature extreme_conv_temp ) :
         extreme_cur_bp( extreme_cur_bp ),
         extreme_cur_temp( extreme_cur_temp ),
         extreme_conv_bp( extreme_conv_bp ),
         extreme_conv_temp( extreme_conv_temp )
     {}
     bodypart_str_id extreme_cur_bp;
-    int extreme_cur_temp;
+    units::temperature extreme_cur_temp;
     bodypart_str_id extreme_conv_bp;
-    int extreme_conv_temp;
+    units::temperature extreme_conv_temp;
 };
 
-static temp_delta_extremes temp_delta( const avatar &u )
+static auto temp_delta( const avatar &u ) -> temp_delta_extremes
 {
-    bodypart_str_id extreme_cur_bp;
-    int current_bp_extreme = BODYTEMP_NORM;
-    bodypart_str_id extreme_conv_bp;
-    int conv_bp_extreme = BODYTEMP_NORM;
+    auto extreme_cur_bp = bodypart_str_id{};
+    auto current_bp_extreme = BODYTEMP_NORM;
+    auto extreme_conv_bp = bodypart_str_id{};
+    auto conv_bp_extreme = BODYTEMP_NORM;
     for( const auto &pr : u.get_body() ) {
-        int temp_cur = pr.second.get_temp_cur();
-        if( std::abs( temp_cur - BODYTEMP_NORM ) >
-            std::abs( current_bp_extreme - BODYTEMP_NORM ) ) {
+        const auto temp_cur = pr.second.get_temp_cur();
+        if( units::abs( temp_cur - BODYTEMP_NORM ) >
+            units::abs( current_bp_extreme - BODYTEMP_NORM ) ) {
             extreme_cur_bp = pr.first;
             current_bp_extreme = temp_cur;
         }
 
-        int temp_conv = pr.second.get_temp_conv();
-        if( std::abs( temp_conv - BODYTEMP_NORM ) >
-            std::abs( conv_bp_extreme - BODYTEMP_NORM ) ) {
+        const auto temp_conv = pr.second.get_temp_conv();
+        if( units::abs( temp_conv - BODYTEMP_NORM ) >
+            units::abs( conv_bp_extreme - BODYTEMP_NORM ) ) {
             extreme_conv_bp = pr.first;
             conv_bp_extreme = temp_conv;
         }
@@ -688,7 +689,7 @@ static temp_delta_extremes temp_delta( const avatar &u )
     return temp_delta_extremes( extreme_cur_bp, current_bp_extreme, extreme_conv_bp, conv_bp_extreme );
 }
 
-static int define_temp_level( const int lvl )
+static auto define_temp_level( const units::temperature lvl ) -> int
 {
     if( lvl > BODYTEMP_SCORCHING ) {
         return 7;
@@ -709,7 +710,7 @@ static int define_temp_level( const int lvl )
 static std::string temp_delta_string( const avatar &u )
 {
     std::string temp_message;
-    temp_delta_extremes temp_struct = temp_delta( u );
+    const auto temp_struct = temp_delta( u );
     // Assign zones for comparisons
     const int cur_zone = define_temp_level( temp_struct.extreme_cur_temp );
     const int conv_zone = define_temp_level( temp_struct.extreme_conv_temp );
@@ -739,7 +740,7 @@ static std::pair<nc_color, std::string> temp_delta_arrows( const avatar &u )
 {
     std::string temp_message;
     nc_color temp_color = c_white;
-    temp_delta_extremes temp_struct = temp_delta( u );
+    const auto temp_struct = temp_delta( u );
     // Assign zones for comparisons
     const int cur_zone = define_temp_level( temp_struct.extreme_cur_temp );
     const int conv_zone = define_temp_level( temp_struct.extreme_conv_temp );
@@ -776,8 +777,8 @@ static std::pair<nc_color, std::string> temp_stat( const avatar &u )
 {
     /// Find hottest/coldest bodypart
     // Calculate the most extreme body temperatures
-    temp_delta_extremes temp_struct = temp_delta( u );
-    int extreme_cur_temp = temp_struct.extreme_cur_temp;
+    const auto temp_struct = temp_delta( u );
+    const auto extreme_cur_temp = temp_struct.extreme_cur_temp;
 
     // printCur the hottest/coldest bodypart
     std::string temp_string;
@@ -1124,6 +1125,8 @@ static nc_color move_mode_color( avatar &u )
         return c_red;
     } else if( u.movement_mode_is( CMM_CROUCH ) ) {
         return c_light_blue;
+    } else if( u.movement_mode_is( CMM_PRONE ) ) {
+        return c_brown;
     } else {
         return c_light_gray;
     }
@@ -1135,11 +1138,51 @@ static std::string move_mode_string( avatar &u )
         return pgettext( "movement-type", "R" );
     } else if( u.movement_mode_is( CMM_CROUCH ) ) {
         return pgettext( "movement-type", "C" );
+    } else if( u.movement_mode_is( CMM_PRONE ) ) {
+        return pgettext( "movement-type", "P" );
     } else {
         return pgettext( "movement-type", "W" );
     }
 }
 
+static std::string get_sound( const avatar &u )
+{
+    std::string snd;
+    const std::string sound_option = get_option<std::string>( "SOUND_DISPLAY_TYPE" );
+    if( sound_option == "decibels" ) {
+        snd = std::to_string( u.volume );
+    } else if( sound_option == "relative_decibels" ) {
+        // Stolen from sounds::process_sounds
+        const weather_manager &weather = get_weather();
+        // Weather sound attenuation * 2, which we add to ambient noise. sound_attn ranges from 0-8
+        const short weather_vol = ( weather.weather_id->sound_attn );
+        const short wind_volume = ( std::min( 150, weather.windspeed ) );
+        const short INDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                           2 * weather_vol ) ) / 100;
+        // We also use this as the base ambient to measure horde signals against.
+        const short OUTDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                            wind_volume + weather_vol ) ) / 100;
+        snd = std::to_string( u.volume - ( !get_map().is_outside( u.bub_pos() ) ? INDOOR_AMBIENT :
+                                           OUTDOOR_AMBIENT ) );
+    } else if( sound_option == "tiles" ) {
+        // Stolen from sounds::process_sounds
+        const weather_manager &weather = get_weather();
+        // Weather sound attenuation * 2, which we add to ambient noise. sound_attn ranges from 0-8
+        const int weather_vol = ( weather.weather_id->sound_attn );
+        const int wind_volume = ( std::min( 150, weather.windspeed ) );
+        const int INDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                         2 * weather_vol ) ) / 100;
+        // We also use this as the base ambient to measure horde signals against.
+        const int OUTDOOR_AMBIENT = ( AMBIENT_VOLUME_ABOVEGROUND + dBspl_to_mdBspl(
+                                          wind_volume + weather_vol ) ) / 100;
+        const int AMBIENT = get_map().is_outside( u.bub_pos() ) ?
+                            OUTDOOR_AMBIENT :
+                            INDOOR_AMBIENT;
+        const int dist_to_ambient = average_minvol_distance( 0, ( u.volume - AMBIENT ) * 100, 0, 0 );
+        snd = std::to_string( dist_to_ambient );
+    }
+    return snd;
+}
 static void draw_stealth( avatar &u, const catacurses::window &w )
 {
     werase( w );
@@ -1152,7 +1195,7 @@ static void draw_stealth( avatar &u, const catacurses::window &w )
         mvwprintz( w, point( 22, 0 ), c_red, _( "DEAF" ) );
     } else {
         mvwprintz( w, point( 20, 0 ), c_light_gray, _( "Sound:" ) );
-        const std::string snd = std::to_string( u.volume );
+        std::string snd = get_sound( u );
         mvwprintz( w, point( 30 - utf8_width( snd ), 0 ), u.volume != 0 ? c_yellow : c_light_gray, snd );
     }
 
@@ -1398,7 +1441,7 @@ static void draw_char_narrow( avatar &u, const catacurses::window &w )
     std::string movecost = std::to_string( u.movecounter ) + "(" + move_char + ")";
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
-    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, get_sound( u ) );
 
     // print stamina
     auto needs_pair = std::make_pair( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second,
@@ -1443,7 +1486,7 @@ static void draw_char_wide( avatar &u, const catacurses::window &w )
     bool m_style = get_option<std::string>( "MORALE_STYLE" ) == "horizontal";
     std::string smiley = morale_emotion( morale_pair.second, get_face_type( u ), m_style );
 
-    mvwprintz( w, point( 8, 0 ), c_light_gray, std::to_string( u.volume ) );
+    mvwprintz( w, point( 8, 0 ), c_light_gray, get_sound( u ) );
     mvwprintz( w, point( 23, 0 ), morale_pair.first, "%s", smiley );
     mvwprintz( w, point( 38, 0 ), focus_color( u.focus_pool ), "%s", u.focus_pool );
 
@@ -1707,7 +1750,7 @@ static void draw_sound_labels( const avatar &u, const catacurses::window &w )
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Sound:" ) );
     if( !u.is_deaf() ) {
-        mvwprintz( w, point( 8, 0 ), c_yellow, std::to_string( u.volume ) );
+        mvwprintz( w, point( 8, 0 ), c_yellow, get_sound( u ) );
     } else {
         mvwprintz( w, point( 8, 0 ), c_red, _( "Deaf!" ) );
     }
@@ -1720,7 +1763,7 @@ static void draw_sound_narrow( const avatar &u, const catacurses::window &w )
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Sound:" ) );
     if( !u.is_deaf() ) {
-        mvwprintz( w, point( 8, 0 ), c_yellow, std::to_string( u.volume ) );
+        mvwprintz( w, point( 8, 0 ), c_yellow, get_sound( u ) );
     } else {
         mvwprintz( w, point( 8, 0 ), c_red, _( "Deaf!" ) );
     }
@@ -1760,7 +1803,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
-        u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
         std::string temp = print_temperature( weather.get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31 - utf8_width( temp ), 5 ), c_light_gray, temp );
     }
@@ -2222,7 +2265,7 @@ static void draw_lighting_classic( const avatar &u, const catacurses::window &w 
 
     if( !u.is_deaf() ) {
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Sound:" ) );
-        mvwprintz( w, point( 38, 0 ), c_yellow, std::to_string( u.volume ) );
+        mvwprintz( w, point( 38, 0 ), c_yellow, get_sound( u ) );
     } else {
         mvwprintz( w, point( 31, 0 ), c_red, _( "Deaf!" ) );
     }
@@ -2292,7 +2335,7 @@ static void draw_time_classic( const avatar &u, const catacurses::window &w )
     }
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
-        u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
         std::string temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Temp : " ) + temp );
     }
@@ -2443,7 +2486,7 @@ static std::vector<window_panel> initialize_default_compact_panels()
     ret.emplace_back( draw_messages_classic, translate_marker( "Log" ), -2, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Compass" ), 8, 32, true );
     ret.emplace_back( draw_compass, translate_marker( "Comp.Compass" ), 3, 32, false );
-    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
@@ -2479,7 +2522,7 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
                       true );
     ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
                       false );
-    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
+    ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 32, false );
 #if defined(TILES)
     ret.emplace_back( draw_mminimap, translate_marker( "Map" ), -1, 32, true,
                       default_render, true );
@@ -2514,7 +2557,7 @@ static std::vector<window_panel> initialize_default_label_panels()
     ret.emplace_back( draw_armor_comp, translate_marker( "comp.Armor" ), 1, 32, false );
     ret.emplace_back( draw_compass_padding, translate_marker( "Compass" ), 8, 44,
                       true );
-    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 32,
+    ret.emplace_back( draw_compass_padding, translate_marker( "Comp.Compass" ), 3, 44,
                       false );
     ret.emplace_back( draw_simple_compass, translate_marker( "Sim.Compass" ), 1, 44, false );
 #if defined(TILES)

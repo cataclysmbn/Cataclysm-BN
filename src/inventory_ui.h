@@ -22,6 +22,7 @@
 #include "pimpl.h"
 #include "units.h"
 #include "pickup_token.h"
+#include "type_id.h"
 
 class Character;
 class player;
@@ -291,6 +292,7 @@ class inventory_column
 
         /** Selects the specified location. */
         bool select( const item *loc );
+        auto select_position_if_item_type( size_t new_index, const itype_id &type ) -> bool;
 
         /**
          * Change the selection.
@@ -457,7 +459,7 @@ class inventory_selector
         void add_map_items( const tripoint_bub_ms &target );
         void add_vehicle_items( const tripoint_bub_ms &target );
         void add_nearby_items( int radius = 1 );
-        void add_bionics_items( Character &character );
+        void add_fake_items( Character &character );
         /** Remove all items */
         void clear_items();
         /** Assigns a title that will be shown on top of the menu. */
@@ -582,6 +584,11 @@ class inventory_selector
          * @return true on success.
          */
         bool select( const item *loc );
+        auto select_item_type( const itype_id &type ) -> bool;
+        auto select_item_type( const itype_id &type, size_t preferred_column ) -> bool;
+        auto select_position_if_item_type( std::pair<size_t, size_t> position,
+                                           const itype_id &type ) -> bool;
+        auto restore_selection( std::pair<size_t, size_t> position, const itype_id &type ) -> bool;
 
         const inventory_entry &get_selected() {
             return get_active_column().get_selected();
@@ -608,6 +615,8 @@ class inventory_selector
         void set_active_column( size_t index );
 
         inventory_column own_gear_column;    // Column for own gear (weapon, armor) items
+        inventory_column own_inv_column;     // Column for own inventory items
+        inventory_column map_column;         // Column for map and vehicle items
     protected:
         size_t get_columns_width( const std::vector<inventory_column *> &columns ) const;
         /** @return Percentage of the window occupied by columns */
@@ -651,9 +660,6 @@ class inventory_selector
         size_t active_column_index;
         std::list<item_category> categories;
         navigation_mode mode;
-
-        inventory_column own_inv_column;     // Column for own inventory items
-        inventory_column map_column;         // Column for map and vehicle items
 
         const int border = 1;                // Width of the window border
         std::string filter;

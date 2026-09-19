@@ -7,6 +7,7 @@
 #include "clone_ptr.h"
 #include "coordinates.h"
 #include "type_id.h"
+#include "translations.h"
 #include "units.h"
 
 class map;
@@ -90,6 +91,7 @@ int capture_monster_act( player *, item *, bool, const tripoint_bub_ms & );
 int debug_grenade( player *, item *, bool, const tripoint_bub_ms & );
 int debug_grenade_act( player *, item *, bool, const tripoint_bub_ms & );
 int c4( player *, item *, bool, const tripoint_bub_ms & );
+int c4_breaching( player *, item *, bool, const tripoint_bub_ms & );
 int arrow_flammable( player *, item *, bool, const tripoint_bub_ms & );
 int acidbomb_act( player *, item *, bool, const tripoint_bub_ms & );
 int grenade_inc_act( player *, item *, bool, const tripoint_bub_ms & );
@@ -222,6 +224,8 @@ class iuse_actor
 {
     protected:
         iuse_actor( const std::string &type, int cost = -1 ) : type( type ), cost( cost ) {}
+        bool use_local_display_name = false;
+        translation display_name;
 
     public:
         /**
@@ -259,6 +263,12 @@ class iuse_actor
          * Returns the translated name of the action. It is used for the item action menu.
          */
         virtual std::string get_name() const;
+
+        void set_name( std::string name ) {
+            use_local_display_name = true;
+            display_name = to_translation( name );
+        }
+
         /**
          * Finalizes the actor. Must be called after all items are loaded.
          */

@@ -1,0 +1,241 @@
+#include "mapgendata.h"
+
+#include "all_enum_values.h"
+#include "debug.h"
+#include "int_id.h"
+#include "map/mapdata.h"
+#include "mapgen_constructor.h"
+#include "omdata.h"
+#include "overmap_special.h"
+#include "overmapbuffer.h"
+#include "overmapbuffer_registry.h"
+#include "point.h"
+#include "regional_settings.h"
+#include "type_id.h"
+
+#include <algorithm>
+
+static const regional_settings dummy_regional_settings;
+
+void mapgen_arguments::merge(const mapgen_arguments& other) {
+    for (const std::pair<const std::string, cata_variant>& p : other.map) {
+        map[p.first] = p.second;
+    }
+}
+
+void mapgen_arguments::serialize(JsonOut& jo) const { jo.write(map); }
+
+void mapgen_arguments::deserialize(JsonIn& ji) { ji.read(map, true); }
+
+mapgendata::mapgendata(mapgen_constructor& mp, dummy_settings_t)
+    : density_(0),
+      when_(calendar::turn),
+      mission_(nullptr),
+      omapbuf_(get_primary_overmapbuffer()),
+      pos(tripoint_zero),
+      region(dummy_regional_settings),
+      m(mp),
+      default_groundcover(region.default_groundcover) {
+    oter_id any = oter_id("field");
+    t_above = t_below = terrain_type_ = any;
+    std::ranges::fill(t_nesw, any);
+}
+
+mapgendata::mapgendata(
+    const tripoint_abs_omt& over, mapgen_constructor& mp, const float density,
+    const time_point& when, ::mission* const miss, overmapbuffer& omap)
+    : terrain_type_(omap.ter(over)),
+      density_(density),
+      when_(when),
+      mission_(miss),
+      omapbuf_(omap),
+      t_above(omap.ter(over + tripoint_above)),
+      t_below(omap.ter(over + tripoint_below)),
+      pos(over),
+      region(omap.get_settings(over)),
+      m(mp),
+      default_groundcover(region.default_groundcover) {
+    bool ignore_rotation = terrain_type_->has_flag(oter_flags::ignore_rotation_for_adjacency);
+    int rotation = ignore_rotation ? 0 : terrain_type_->get_rotation();
+    auto set_neighbour = [&](int index, direction dir) {
+        t_nesw[index] = omap.ter(over + displace(dir).rotate(rotation));
+    };
+    set_neighbour(0, direction::NORTH);
+    set_neighbour(1, direction::EAST);
+    set_neighbour(2, direction::SOUTH);
+    set_neighbour(3, direction::WEST);
+    set_neighbour(4, direction::NORTHEAST);
+    set_neighbour(5, direction::SOUTHEAST);
+    set_neighbour(6, direction::SOUTHWEST);
+    set_neighbour(7, direction::NORTHWEST);
+    for (cube_direction dir : all_enum_values<cube_direction>()) {
+        if (std::string* join = omap.join_used_at({over, dir})) {
+            cube_direction rotated_dir = dir - rotation;
+            joins.emplace(rotated_dir, *join);
+        }
+    }
+    if (auto args = omap.get_or_init_mapgen_args(over, *this, terrain_type_.id().str())) {
+        mapgen_args_ = std::move(*args);
+    }
+}
+
+mapgendata::mapgendata(const mapgendata& other, const oter_id& other_id): mapgendata(other) {
+    terrain_type_ = other_id;
+}
+
+mapgendata::mapgendata(const mapgendata& other, const mapgen_arguments& mapgen_args)
+    : mapgendata(other) {
+    mapgen_args_.merge(mapgen_args);
+}
+
+mapgendata::mapgendata(
+    const mapgendata& other, const mapgen_arguments& mapgen_args,
+    const std::set<flag_id>& other_flags)
+    : mapgendata(other) {
+    mapgen_args_.merge(mapgen_args);
+    flags = other_flags;
+}
+
+void mapgendata::set_dir(int dir_in, int val) {
+    switch (dir_in) {
+        case 0:
+            n_fac = val;
+            break;
+        case 1:
+            e_fac = val;
+            break;
+        case 2:
+            s_fac = val;
+            break;
+        case 3:
+            w_fac = val;
+            break;
+        case 4:
+            ne_fac = val;
+            break;
+        case 5:
+            se_fac = val;
+            break;
+        case 6:
+            sw_fac = val;
+            break;
+        case 7:
+            nw_fac = val;
+            break;
+        default:
+            debugmsg("Invalid direction for mapgendata::set_dir.  dir_in = %d", dir_in);
+            break;
+    }
+}
+
+void mapgendata::fill(int val) {
+    n_fac = val;
+    e_fac = val;
+    s_fac = val;
+    w_fac = val;
+    ne_fac = val;
+    se_fac = val;
+    sw_fac = val;
+    nw_fac = val;
+}
+
+auto mapgendata::dir(int dir_in) -> int& {
+    switch (dir_in) {
+        case 0:
+            return n_fac;
+        case 1:
+            return e_fac;
+        case 2:
+            return s_fac;
+        case 3:
+            return w_fac;
+        case 4:
+            return ne_fac;
+        case 5:
+            return se_fac;
+        case 6:
+            return sw_fac;
+        case 7:
+            return nw_fac;
+        default:
+            debugmsg("Invalid direction for mapgendata::set_dir.  dir_in = %d", dir_in);
+            // return something just so the compiler doesn't freak out. Not really correct, though.
+            return n_fac;
+    }
+}
+
+void mapgendata::square_groundcover(const point_omt_ms& p1, const point_omt_ms& p2) const {
+    m.draw_square_ter(default_groundcover, p1, p2);
+}
+
+void mapgendata::fill_groundcover() const { m.draw_fill_background(default_groundcover); }
+
+auto mapgendata::is_groundcover(const ter_id& iid) const -> bool {
+    for (const auto& pr : default_groundcover) {
+        if (pr.obj == iid) { return true; }
+    }
+
+    return false;
+}
+
+auto mapgendata::groundcover() const -> ter_id {
+    const ter_id* tid = default_groundcover.pick();
+    return tid != nullptr ? *tid : t_null;
+}
+
+auto mapgendata::neighbor_at(om_direction::type dir) const -> const oter_id& {
+    // TODO: De-uglify, implement proper conversion somewhere
+    switch (dir) {
+        case om_direction::type::north:
+            return north();
+        case om_direction::type::east:
+            return east();
+        case om_direction::type::south:
+            return south();
+        case om_direction::type::west:
+            return west();
+        default:
+            break;
+    }
+
+    debugmsg("Tried to get neighbor from invalid direction %d", dir);
+    return north();
+}
+
+auto mapgendata::has_join(const cube_direction dir, const std::string& join_id) const -> bool {
+    auto it = joins.find(dir);
+    return it != joins.end() && it->second == join_id;
+}
+
+auto mapgendata::neighbor_at(direction dir) const -> const oter_id& {
+    // TODO: De-uglify, implement proper conversion somewhere
+    switch (dir) {
+        case direction::NORTH:
+            return north();
+        case direction::EAST:
+            return east();
+        case direction::SOUTH:
+            return south();
+        case direction::WEST:
+            return west();
+        case direction::NORTHEAST:
+            return neast();
+        case direction::SOUTHEAST:
+            return seast();
+        case direction::SOUTHWEST:
+            return swest();
+        case direction::NORTHWEST:
+            return nwest();
+        case direction::ABOVECENTER:
+            return above();
+        case direction::BELOWCENTER:
+            return below();
+        default:
+            break;
+    }
+
+    debugmsg("Neighbor not supported for direction %d", io::enum_to_string(dir));
+    return north();
+}
+
+auto mapgendata::has_flag(const flag_id& id) const -> bool { return flags.contains(id); }

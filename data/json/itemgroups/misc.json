@@ -258,7 +258,8 @@
       { "item": "medical_tape", "charges": 20 },
       { "item": "disinfectant", "charges": 10, "container-item": "bottle_plastic_small" },
       { "item": "bandages", "charges": 6 },
-      { "item": "medical_gauze", "charges": 6 }
+      { "item": "medical_gauze", "charges": 6 },
+      { "item": "booklet_firstaid" }
     ]
   },
   {

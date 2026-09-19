@@ -65,7 +65,8 @@
       [ "smokebomb", 50 ],
       [ "dynamite", 50 ],
       [ "mininuke", 5 ],
-      [ "c4", 50 ]
+      [ "c4", 50 ],
+      [ "c4_breaching", 30 ]
     ]
   }
 ]

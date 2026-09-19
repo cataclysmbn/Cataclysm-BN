@@ -251,5 +251,22 @@
     "category": "veh_parts",
     "price": "30 USD",
     "price_postapoc": "50 cent"
+  },
+  {
+    "type": "GENERIC",
+    "id": "vehicle_shower",
+    "name": { "str": "vehicle shower" },
+    "description": "A compact shower head and drain that can be attached to a water tank.",
+    "looks_like": "f_shower",
+    "weight": "2500 g",
+    "to_hit": -1,
+    "color": "light_gray",
+    "symbol": ";",
+    "material": [ "steel", "plastic" ],
+    "volume": "2 L",
+    "bashing": 2,
+    "category": "veh_parts",
+    "price": "60 USD",
+    "price_postapoc": "1 USD"
   }
 ]

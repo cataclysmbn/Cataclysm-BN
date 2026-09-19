@@ -121,9 +121,9 @@ static constexpr short SOUND_MINIMUM_VOLUME_FOR_PROPAGATION = 2000;
 // Cache this because we call it every time we check a sound to see if a monster hears it, which adds up quickly.
 static constexpr short SOUND_ABSORPTION_PER_ZLEV = 4200;
 // The base ambient volume above ground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
-static constexpr short AMBIENT_VOLUME_ABOVEGROUND = 4500;
+static constexpr short AMBIENT_VOLUME_ABOVEGROUND = 3500;
 // The base ambient volume underground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
-static constexpr short AMBIENT_VOLUME_UNDERGROUND = 3500;
+static constexpr short AMBIENT_VOLUME_UNDERGROUND = 2500;
 
 // Well made residential walls with sound proofing materials can have transmission loss values of upwards of 63 dB.
 // STC ratings (in dB of sound reduction) range from 25 to 55+
@@ -443,8 +443,9 @@ void load_sound_effects( const JsonObject &jsobj );
 void load_sound_effect_preload( const JsonObject &jsobj );
 void load_playlist( const JsonObject &jsobj );
 void play_variant_sound( const std::string &id, const std::string &variant, int volume,
-                         units::angle angle, double pitch_min = -1.0, double pitch_max = -1.0 );
-void play_variant_sound( const std::string &id, const std::string &variant, int volume );
+                         units::angle angle, double pitch_min = -1.0, double pitch_max = -1.0, const bool stacks = false );
+void play_variant_sound( const std::string &id, const std::string &variant, int volume,
+                         const bool stacks = true );
 void play_ambient_variant_sound( const std::string &id, const std::string &variant, int volume,
                                  channel channel, int fade_in_duration, double pitch = -1.0, int loops = -1 );
 void play_activity_sound( const std::string &id, const std::string &variant, int volume );

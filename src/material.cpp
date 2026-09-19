@@ -1,19 +1,20 @@
 #include "material.h"
 
-#include <algorithm>
-#include <iterator>
-#include <map>
-#include <set>
-#include <string>
-
 #include "assign.h"
 #include "debug.h"
 #include "generic_factory.h"
 #include "item.h"
 #include "json.h"
-#include "mapdata.h"
+#include "map/mapdata.h"
 #include "string_id.h"
 #include "translations.h"
+#include "type_id_implement.h"
+
+#include <algorithm>
+#include <iterator>
+#include <map>
+#include <set>
+#include <string>
 
 namespace
 {
@@ -22,19 +23,7 @@ generic_factory<material_type> material_data( "material" );
 
 } // namespace
 
-/** @relates string_id */
-template<>
-bool string_id<material_type>::is_valid() const
-{
-    return material_data.is_valid( *this );
-}
-
-/** @relates string_id */
-template<>
-const material_type &string_id<material_type>::obj() const
-{
-    return material_data.obj( *this );
-}
+IMPLEMENT_STRING_AND_INT_IDS( material_type, material_data );
 
 material_type::material_type() :
     id( material_id::NULL_ID() ),

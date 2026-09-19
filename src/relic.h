@@ -5,8 +5,8 @@
 
 #include "coordinates.h"
 #include "json_source_location.h"
-#include "magic.h"
-#include "magic_enchantment.h"
+#include "magic/magic.h"
+#include "enchantments/enchantment.h"
 #include "translations.h"
 
 class Creature;
@@ -137,6 +137,8 @@ class relic
         }
 
         void check() const;
+
+        void finalize();
 };
 
 namespace relic_funcs

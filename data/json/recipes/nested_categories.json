@@ -140,11 +140,41 @@
   {
     "type": "nested_category",
     "id": "nested_throwing",
-    "nested_name": "primitive throwers",
+    "nested_name": "throwables",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_NESTED",
-    "description": "Simple slings and throwing tools.",
-    "nested_category_data": [ "throwing_stick", "bolas", "net", "sling", "slingshot", "bullwhip" ]
+    "description": "Weapons that can be thrown effectively.",
+    "nested_category_data": [
+      "bolas",
+      "net",
+      "lawn_dart",
+      "throwing_axe",
+      "throwing_knife",
+      "shuriken",
+      "throwing_stick",
+      "atlatl_dart_wood",
+      "atlatl_dart_iron",
+      "atlatl_dart_stone",
+      "atlatl_dart_copper",
+      "pointy_stick",
+      "pointy_stick_long",
+      "javelin",
+      "javelin_iron",
+      "javelin_stone",
+      "javelin_copper",
+      "knife_combat",
+      "tomahawk_primitive",
+      "tomahawk_copper"
+    ]
+  },
+  {
+    "type": "nested_category",
+    "id": "nested_throwers",
+    "nested_name": "throwers",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_NESTED",
+    "description": "Throwing tools.",
+    "nested_category_data": [ "sling", "sling_cord", "slingshot", "atlatl", "staff_sling" ]
   },
   {
     "type": "nested_category",

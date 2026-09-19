@@ -43,5 +43,26 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "EMITTER" ],
     "emissions": [ "emit_smoke_plume" ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_metal_cold_vent",
+    "name": "running ventilation shutters",
+    "description": "A large panel set into the reinforced metal wall.  Somehow still running despite the chaos, blasting a wave of bitterly cold air into the facility.",
+    "looks_like": "t_metal_ventilation_shutter",
+    "symbol": "=",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "coverage": 100,
+    "required_str": -1,
+    "flags": [ "EMITTER" ],
+    "emissions": [ "emit_cold_air4_blast" ],
+    "bash": {
+      "str_min": 50,
+      "str_max": 100,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [ { "item": "scrap", "count": [ 8, 16 ] } ]
+    }
   }
 ]

@@ -1,30 +1,18 @@
 #include "avatar.h"
 
-#include <algorithm>
-#include <array>
-#include <climits>
-#include <cstdlib>
-#include <iterator>
-#include <list>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <utility>
-
 #include "action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
+#include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
-#include "cata_utility.h"
-#include "catacharset.h"
 #include "character.h"
 #include "character_effects.h"
-#include "character_id.h"
 #include "character_functions.h"
+#include "character_id.h"
 #include "character_martial_arts.h"
 #include "character_stat.h"
 #include "color.h"
@@ -39,18 +27,19 @@
 #include "game.h"
 #include "game_constants.h"
 #include "help.h"
-#include "inventory.h"
 #include "init.h"
+#include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
 #include "item_factory.h"
-#include "locations.h"
 #include "itype.h"
 #include "iuse.h"
 #include "kill_tracker.h"
+#include "locations.h"
+#include "magic/magic_teleporter_list.h"
 #include "make_static.h"
-#include "magic_teleporter_list.h"
-#include "map.h"
+#include "map/legacy_pathfinding.h"
+#include "map/map.h"
 #include "map_memory.h"
 #include "martialarts.h"
 #include "messages.h"
@@ -63,7 +52,6 @@
 #include "options.h"
 #include "output.h"
 #include "overmap.h"
-#include "legacy_pathfinding.h"
 #include "player.h"
 #include "player_activity.h"
 #include "recipe.h"
@@ -76,14 +64,25 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
+
+#include <algorithm>
+#include <array>
+#include <climits>
+#include <cstdlib>
+#include <iterator>
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <utility>
 
 static const activity_id ACT_READ( "ACT_READ" );
 
 static const bionic_id bio_eye_optic( "bio_eye_optic" );
 static const bionic_id bio_memory( "bio_memory" );
-static const bionic_id bio_infolink( "bio_infolink" );
 
 static const efftype_id effect_alarm_clock( "alarm_clock" );
 static const efftype_id effect_contacts( "contacts" );
@@ -128,7 +127,7 @@ avatar::~avatar() = default;
 avatar::avatar( avatar && )  noexcept = default;
 avatar &avatar::operator=( avatar && ) noexcept = default;
 
-const std::string &avatar::get_dimension() const
+auto avatar::get_dimension() const -> const dimension_id &
 {
     return g->get_current_dimension_id();
 }
@@ -156,6 +155,9 @@ void avatar::control_npc( npc &np )
         shadow_npc->op_of_u.value = 10;
         shadow_npc->set_attitude( NPCATT_FOLLOW );
     }
+    const auto controlled_npc_pos = np.abs_pos();
+    const auto previous_avatar_pos = abs_pos();
+    const bool avatar_was_dead = Character::is_dead_state();
     npc tmp;
     std::string save_id = get_save_id();
     // move avatar character data into shadow npc
@@ -194,18 +196,31 @@ void avatar::control_npc( npc &np )
     // the avatar character is no longer a follower NPC
     g->remove_npc_follower( getID() );
     // the previous avatar character is now a follower (unless they're dead)
-    if( np.is_dead_state() ) {
-        // The swapped-out character was dead, so kill the NPC properly
+    const bool swapped_out_character_was_dead = avatar_was_dead || np.is_dead_state();
+    // swap_character moved raw position data without running npc::setpos().
+    // Put the NPC object back at its old absolute location first so setpos()
+    // can update overmapbuffer membership when the old avatar body is restored.
+    np.Character::setpos( controlled_npc_pos );
+    np.setpos( previous_avatar_pos );
+    if( swapped_out_character_was_dead ) {
+        // Keep the newly controlled avatar in the current reality bubble while
+        // the swapped-out dead character runs death side effects.
+        setpos( previous_avatar_pos );
         np.die( nullptr );
     } else {
         g->add_npc_follower( np.getID() );
         np.set_fac( faction_id( "your_followers" ) );
+        // After the swap the avatar already has controlled_npc_pos, so a plain
+        // setpos( controlled_npc_pos ) would be a no-op and skip update_map().
+        Character::setpos( previous_avatar_pos );
     }
     // perception and mutations may have changed, so reset light level caches
     g->reset_light_level();
-    // center the map on the new avatar character
-    g->vertical_shift( bub_pos().z() );
-    g->update_map( *this );
+    // setpos() keeps the loaded map window aligned with the new avatar.
+    setpos( controlled_npc_pos );
+    cata::run_hooks( "on_control_npc", [ & ]( auto & params ) {
+        params["npc"] = &np;
+    } );
 }
 
 void avatar::toggle_map_memory()
@@ -220,12 +235,12 @@ bool avatar::should_show_map_memory()
 
 bool avatar::save_map_memory()
 {
-    return player_map_memory->save( g->m.bub_to_abs( tripoint_bub_ms( bub_pos() ) ) );
+    return player_map_memory->save( abs_pos() );
 }
 
 void avatar::load_map_memory()
 {
-    player_map_memory->load( g->m.bub_to_abs( tripoint_bub_ms( bub_pos() ) ) );
+    player_map_memory->load( abs_pos() );
 }
 
 void avatar::clear_map_memory()
@@ -1096,7 +1111,7 @@ void avatar::wake_up()
             add_msg( _( "It looks like you woke up before your alarm." ) );
             remove_effect( effect_alarm_clock );
         } else if( has_effect( effect_slept_through_alarm ) ) {
-            if( has_bionic( bio_infolink ) ) {
+            if( has_enchantment_flag( enchantment_flag_id( "INTERNAL_ALARMCLOCK" ) ) ) {
                 add_msg( m_warning, _( "It looks like you've slept through your internal alarm…" ) );
             } else {
                 add_msg( m_warning, _( "It looks like you've slept through the alarm…" ) );
@@ -1275,8 +1290,12 @@ void avatar::set_movement_mode( character_movemode new_mode )
                     add_msg( _( "You nudge your steed into a steady trot." ) );
                 }
             } else {
-                // Spend moves to stand up if crouched, otherwise just stop running.
-                if( move_mode == CMM_CROUCH ) {
+                // Spend moves to stand up if crouched or prone, otherwise just stop running.
+                if( move_mode == CMM_PRONE ) {
+                    mod_moves( -300 );
+                    recoil = MAX_RECOIL;
+                    add_msg( _( "You get up from the ground." ) );
+                } else if( move_mode == CMM_CROUCH ) {
                     mod_moves( -100 );
                     recoil = MAX_RECOIL;
                     add_msg( _( "You stand up." ) );
@@ -1298,8 +1317,12 @@ void avatar::set_movement_mode( character_movemode new_mode )
                         add_msg( _( "You spur your steed into a gallop." ) );
                     }
                 } else {
-                    // Spend moves to stand up if crouched, otherwise just stop running.
-                    if( move_mode == CMM_CROUCH ) {
+                    // Spend moves to stand up if crouched or prone, otherwise just stop running.
+                    if( move_mode == CMM_PRONE ) {
+                        mod_moves( -300 );
+                        recoil = MAX_RECOIL;
+                        add_msg( _( "You get up from the ground and start running." ) );
+                    } else if( move_mode == CMM_CROUCH ) {
                         mod_moves( -100 );
                         recoil = MAX_RECOIL;
                         add_msg( _( "You stand up and start running." ) );
@@ -1329,11 +1352,45 @@ void avatar::set_movement_mode( character_movemode new_mode )
                 }
             } else {
                 // Don't spend moves if we were already crouching.
-                if( move_mode != CMM_CROUCH ) {
+                if( move_mode != CMM_CROUCH && move_mode != CMM_PRONE ) {
                     recoil = MAX_RECOIL;
                     mod_moves( -100 );
+                    add_msg( _( "You start crouching." ) );
+                } else if( move_mode == CMM_PRONE ) {
+                    recoil = MAX_RECOIL;
+                    mod_moves( -200 );
+                    add_msg( _( "You rise from prone to a crouch." ) );
                 }
-                add_msg( _( "You start crouching." ) );
+            }
+            break;
+        }
+        case CMM_PRONE: {
+            if( is_mounted() ) {
+                if( mounted_creature->has_flag( MF_RIDEABLE_MECH ) ) {
+                    add_msg( m_bad, _( "Your mech cannot go prone." ) );
+                } else {
+                    add_msg( m_bad, _( "You cannot go prone while mounted." ) );
+                }
+                return;
+            }
+            if( controlling_vehicle ) {
+                add_msg( m_bad, _( "You cannot go prone while driving." ) );
+                return;
+            }
+            if( is_hauling() ) {
+                stop_hauling();
+            }
+            // Spend moves to go prone — cost depends on current stance
+            if( move_mode == CMM_CROUCH ) {
+                mod_moves( -200 );
+                recoil = MAX_RECOIL;
+                add_msg( _( "You go prone from a crouching position." ) );
+            } else if( move_mode != CMM_PRONE ) {
+                mod_moves( -300 );
+                recoil = MAX_RECOIL;
+                add_msg( _( "You drop to the ground." ) );
+            } else {
+                add_msg( _( "You are already prone." ) );
             }
             break;
         }
@@ -1341,8 +1398,9 @@ void avatar::set_movement_mode( character_movemode new_mode )
             return;
         }
     }
-    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ) {
-        // crouching affects visibility
+    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ||
+        move_mode == CMM_PRONE || new_mode == CMM_PRONE ) {
+        // crouching and prone affect visibility
         get_map().set_seen_cache_dirty( bub_pos().z() );
     }
     move_mode = new_mode;
@@ -1363,6 +1421,15 @@ void avatar::toggle_crouch_mode()
         set_movement_mode( CMM_WALK );
     } else {
         set_movement_mode( CMM_CROUCH );
+    }
+}
+
+void avatar::toggle_prone_mode()
+{
+    if( move_mode == CMM_PRONE ) {
+        set_movement_mode( CMM_WALK );
+    } else {
+        set_movement_mode( CMM_PRONE );
     }
 }
 

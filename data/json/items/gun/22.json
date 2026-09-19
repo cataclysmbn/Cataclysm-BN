@@ -77,24 +77,6 @@
     "flags": [ "RELOAD_ONE", "NEVER_JAMS", "RELOAD_EJECT" ]
   },
   {
-    "id": "rifle_22",
-    "copy-from": "rifle_home_made",
-    "type": "GUN",
-    "name": { "str": "pipe rifle: .22", "str_pl": "pipe rifles: .22" },
-    "description": "A home-made rifle.  It is simply a pipe attached to a stock, with a hammer to strike the single round it holds.",
-    "weight": "1953 g",
-    "volume": "1750 ml",
-    "price": "100 USD",
-    "price_postapoc": "5 USD",
-    "bashing": 10,
-    "ascii_picture": "sm_pipe_gun",
-    "material": [ "steel", "wood" ],
-    "color": "brown",
-    "ammo": "22",
-    "blackpowder_tolerance": 96,
-    "barrel_volume": "500 ml"
-  },
-  {
     "id": "ruger_1022",
     "copy-from": "rifle_base",
     "type": "GUN",
@@ -198,7 +180,7 @@
     "material": [ "budget_steel" ],
     "color": "dark_gray",
     "ammo": "22",
-    "magazine_well": "55 ml",
+    "magazine_well": "75 ml",
     "dispersion": 600,
     "durability": 5,
     "min_cycle_recoil": 39,

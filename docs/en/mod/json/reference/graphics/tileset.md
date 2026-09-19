@@ -586,7 +586,7 @@ For a crouch effect, you might paint the lower portion of the modifier with gree
 
 1. Start with a base UV Identity image:
 
-<img src=".\img\uv_identity.png" width="128" height="128">
+<img src="./img/uv_identity.png" width="128" height="128">
 
 2. Shift pixels around based on translation, rotation, scale, etc. to cause that effect to the result
 3. Paint green channel to shift pixels vertically (< 127 = up, > 127 = down)
@@ -596,23 +596,23 @@ As this method may be harder to intuit, here's some examples:
 <details><summary>Standing</summary>
 As you can see, "standing" is the normal state, so the UV image is not edited.
 
-<img src=".\img\uv_identity.png" width="256" height="256">
-<img src=".\img\uv_identity_result.png" width="256" height="256">
+<img src="./img/uv_identity.png" width="256" height="256">
+<img src="./img/uv_identity_result.png" width="256" height="256">
 </details>
 
 <details><summary>Crouching</summary>
 It may be hard to notice, but the pixels just below the character have been adjusted, and the topmost pixels are missing. Most of the UVs have been lowered.
 
-<img src=".\img\uv_crouch.png" width="256" height="256">
-<img src=".\img\uv_crouch_result.png" width="256" height="256">
+<img src="./img/uv_crouch.png" width="256" height="256">
+<img src="./img/uv_crouch_result.png" width="256" height="256">
 </details>
 </details>
 
 <details><summary>Lying Down</summary>
 This is dead simple. There are some small adjustements to the back to lie flatter, but this largely boils down to rotating the entire UV image and moving it down slightly.
 
-<img src=".\img\uv_lying_down.png" width="256" height="256">
-<img src=".\img\uv_lying_down_result.png" width="256" height="256">
+<img src="./img/uv_lying_down.png" width="256" height="256">
+<img src="./img/uv_lying_down_result.png" width="256" height="256">
 </details>
 
 ---

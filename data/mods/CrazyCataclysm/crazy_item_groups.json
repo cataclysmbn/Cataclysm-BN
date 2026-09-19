@@ -34,6 +34,57 @@
   {
     "type": "item_group",
     "id": "guns_pistol_common",
-    "items": [ [ "yeet_cannon", 12 ] ]
+    "items": [ { "group": "nested_yeet_cannon", "prob": 12 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "carried_guns_pistol_common",
+    "items": [ { "group": "everyday_yeet_cannon", "prob": 12 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_pistol_common_display",
+    "items": [ { "item": "yeet_cannon", "prob": 12, "charges-min": 0, "charges-max": 0 } ]
+  },
+  {
+    "id": "nested_yeet_cannon",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "yeet_cannon", "ammo-group": "on_hand_9mm", "charges": [ 0, 8 ] },
+      { "group": "nested_hptc9_mag" },
+      { "group": "nested_hptc9_mag", "prob": 50 },
+      { "group": "on_hand_9mm" }
+    ]
+  },
+  {
+    "id": "everyday_yeet_cannon",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "yeet_cannon", "ammo-group": "on_hand_9mm", "charges": [ 0, 8 ] },
+      { "group": "nested_hptc9_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_hptc9_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "profession_carry_bonus",
+    "subtype": "distribution",
+    "ammo": 100,
+    "magazine": 100,
+    "entries": [
+      {
+        "collection": [
+          { "item": "yeet_cannon", "container-item": "holster" },
+          { "item": "legpouch_large", "contents-item": [ "hptc9mag_8rd", "hptc9mag_8rd" ] }
+        ],
+        "prob": 12
+      }
+    ]
   }
 ]

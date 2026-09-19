@@ -27,7 +27,7 @@ local apply_craft_enjoyment_bonus = function(params)
   item:set_var_num("comestible_fun", cooked_fun)
 end
 
----@param params OnCraftResultParams
+---@type fun(params: OnCraftResultParams)
 M.on_craft_result = apply_craft_enjoyment_bonus
 
 return M

@@ -44,6 +44,19 @@
   },
   {
     "type": "terrain",
+    "id": "t_test_indestructible_wall",
+    "name": "indestructible test wall",
+    "description": "A test-only wall that blocks movement and cannot be bashed down.",
+    "looks_like": "t_wall",
+    "symbol": "LINE_OXOX",
+    "color": "blue",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "t_flat_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL" ]
+  },
+  {
+    "type": "terrain",
     "id": "t_fragile_floor",
     "copy-from": "t_floor",
     "name": "fragile floor",

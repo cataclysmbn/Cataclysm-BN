@@ -15,6 +15,7 @@
 #include "overmap_location.h"
 #include "debug.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "weighted_list.h"
 namespace
 {
@@ -22,6 +23,8 @@ namespace
 generic_factory<overmap_connection> connections( "overmap connection" );
 
 } // namespace
+
+IMPLEMENT_STRING_AND_INT_IDS( overmap_connection, connections );
 
 namespace io
 {
@@ -47,18 +50,6 @@ static const std::map<std::string, overmap_connection::subtype::flag> connection
 = {
     { "ORTHOGONAL", overmap_connection::subtype::flag::orthogonal },
 };
-
-template<>
-bool string_id<overmap_connection>::is_valid() const
-{
-    return connections.is_valid( *this );
-}
-
-template<>
-const overmap_connection &string_id<overmap_connection>::obj() const
-{
-    return connections.obj( *this );
-}
 
 bool overmap_connection::subtype::allows_terrain( const oter_id &oter ) const
 {

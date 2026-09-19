@@ -1,11 +1,5 @@
 #include "gamemode_tutorial.h" // IWYU pragma: associated
 
-#include <array>
-#include <cstdlib>
-#include <memory>
-#include <optional>
-#include <string>
-
 #include "action.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -16,9 +10,9 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
-#include "map.h"
+#include "map/map.h"
+#include "map/mapdata.h"
 #include "map_iterator.h"
-#include "mapdata.h"
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"
@@ -31,7 +25,13 @@
 #include "trap.h"
 #include "type_id.h"
 #include "units.h"
-#include "weather.h"
+#include "weather/weather.h"
+
+#include <array>
+#include <cstdlib>
+#include <memory>
+#include <optional>
+#include <string>
 
 static const itype_id itype_cig( "cig" );
 static const itype_id itype_codeine( "codeine" );
@@ -148,12 +148,9 @@ bool tutorial_game::init()
     you.i_add( item::spawn( "lighter", calendar::start_of_cataclysm ) );
     you.set_skill_level( skill_gun, 5 );
     you.set_skill_level( skill_melee, 5 );
-    g->load_map( project_to<coords::sm>( lp_abs ) );
+    g->load_map( project_to<coords::sm>( lp_abs.xy() ) );
     const auto z = you.bub_pos().z();
     you.setpos( tripoint_bub_ms( 2, 4, z ) );
-
-    // This shifts the view to center the players pos
-    g->update_map( you );
     return true;
 }
 
@@ -182,7 +179,7 @@ void tutorial_game::per_turn()
 
     map &here = get_map();
     if( !tutorials_seen[tut_lesson::LESSON_BUTCHER] ) {
-        for( const item * const &it : here.i_at( g->u.bub_pos().xy() ) ) {
+        for( const item * const &it : here.i_at( g->u.bub_pos() ) ) {
             if( it->is_corpse() ) {
                 add_message( tut_lesson::LESSON_BUTCHER );
                 break;
@@ -212,7 +209,7 @@ void tutorial_game::per_turn()
         }
     }
 
-    if( !here.i_at( g->u.bub_pos().xy() ).empty() ) {
+    if( !here.i_at( g->u.bub_pos() ).empty() ) {
         add_message( tut_lesson::LESSON_PICKUP );
     }
 }

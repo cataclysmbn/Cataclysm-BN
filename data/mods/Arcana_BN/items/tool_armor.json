@@ -92,10 +92,12 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
-          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
-          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+          "conditions": [ "WORN", "ACTIVE" ],
+          "values": [
+            { "value": "BONUS_DODGE", "add": 2 },
+            { "value": "CLAIRVOYANCE", "max": 20 },
+            { "value": "FLASH_PROTECTION", "max": 20 }
+          ]
         }
       ]
     },
@@ -126,7 +128,7 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND" ] },
     "adv_hearing_protection": 65
   },
   {
@@ -154,10 +156,12 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
-          "values": [ { "value": "BONUS_DODGE", "add": 2 } ],
-          "ench_effects": [ { "effect": "mask_blind_immunity", "intensity": 1 }, { "effect": "arcana_clairvoyance_plus_hidden", "intensity": 1 } ]
+          "conditions": [ "WORN", "ACTIVE" ],
+          "values": [
+            { "value": "BONUS_DODGE", "add": 2 },
+            { "value": "CLAIRVOYANCE", "max": 20 },
+            { "value": "FLASH_PROTECTION", "max": 20 }
+          ]
         }
       ]
     },
@@ -187,7 +191,7 @@
       "menu_text": "Turn off",
       "type": "transform"
     },
-    "extend": { "flags": [ "SUN_GLASSES", "BLIND", "IR_EFFECT" ] },
+    "extend": { "flags": [ "SUN_GLASSES", "BLIND" ] },
     "adv_hearing_protection": 65
   },
   {
@@ -237,8 +241,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "mutations": [ "EATDEAD", "ARCANA_TOXINIMMUNE" ],
           "ench_effects": [ { "effect": "revenant_hunger", "intensity": 1 } ]
         }
@@ -295,7 +298,7 @@
     "ammo": "essence_type",
     "material_thickness": 6,
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "arcana_invis_lesser", "intensity": 1 } ] } ]
+      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "ench_effects": [ { "effect": "arcana_invis_lesser", "intensity": 1 } ] } ]
     },
     "use_action": [
       {
@@ -356,7 +359,7 @@
     "charges_per_use": 1,
     "ammo": "essence_type",
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "arcana_invis_lesser", "intensity": 1 } ] } ]
+      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "ench_effects": [ { "effect": "arcana_invis_lesser", "intensity": 1 } ] } ]
     },
     "use_action": [
       {
@@ -482,8 +485,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "values": [
             { "value": "ARMOR_BASH", "add": -10 },
             { "value": "ARMOR_CUT", "add": -10 },
@@ -494,7 +496,8 @@
             { "value": "ARMOR_LIGHT", "multiply": -0.5 },
             { "value": "ARMOR_DARK", "multiply": -0.5 },
             { "value": "ARMOR_PSI", "multiply": -0.5 },
-            { "value": "ARMOR_ACID", "multiply": -0.5 }
+            { "value": "ARMOR_ACID", "multiply": -0.5 },
+            { "value": "CLIMATE_CONTROL", "add": 750 }
           ]
         }
       ]
@@ -528,7 +531,6 @@
     },
     "extend": {
       "flags": [
-        "CLIMATE_CONTROL",
         "LIGHT_60",
         "NO_TAKEOFF",
         "PSYSHIELD_PARTIAL",
@@ -563,13 +565,8 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
-          "values": [
-            { "value": "ARMOR_HEAT", "multiply": -1.0 },
-            { "value": "ARMOR_STAB", "multiply": -1.0 },
-            { "value": "ARMOR_BULLET", "multiply": -0.9 }
-          ]
+          "conditions": [ "WORN", "ACTIVE" ],
+          "values": [ { "value": "ARMOR_BULLET", "multiply": -0.9 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ]
         }
       ]
     },
@@ -589,7 +586,8 @@
         "spell_id": "arcana_item_jade_hauberk_healing",
         "no_fail": true,
         "level": 0,
-        "need_worn": true
+        "need_worn": true,
+        "menu_text": "Heal yourself"
       }
     ],
     "relative": { "weight": "3020 g", "price": "550 USD", "material_thickness": 1 },
@@ -609,17 +607,7 @@
     "use_action": { "target": "hauberk_jade", "msg": "The glow emanating from your jade hauberk fades.", "type": "transform" },
     "qualities": [ [ "GLARE", 1 ] ],
     "extend": {
-      "flags": [
-        "GAS_PROOF",
-        "RAD_PROOF",
-        "SUN_GLASSES",
-        "CUT_IMMUNE",
-        "STAB_IMMUNE",
-        "HEAT_IMMUNE",
-        "CLIMATE_CONTROL",
-        "UNBREAKABLE",
-        "COMBAT_NPC_ON"
-      ]
+      "flags": [ "GAS_PROOF", "RAD_PROOF", "SUN_GLASSES", "CUT_IMMUNE", "STAB_IMMUNE", "HEAT_IMMUNE", "UNBREAKABLE", "COMBAT_NPC_ON" ]
     }
   },
   {
@@ -650,8 +638,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
+          "conditions": [ "WORN", "ACTIVE" ],
           "mutations": [ "ARCANA_BERSERK_ARMOR_EFFECT" ],
           "values": [ { "value": "INTELLIGENCE", "add": -2 }, { "value": "PERCEPTION", "add": -2 }, { "value": "BONUS_DODGE", "add": 1 } ],
           "hit_me_effect": [
@@ -718,9 +705,8 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WORN",
-          "condition": "ACTIVE",
-          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 } ],
+          "conditions": [ "WORN", "ACTIVE" ],
+          "values": [ { "value": "ARMOR_HEAT", "multiply": -0.5 }, { "value": "CLIMATE_CONTROL_COOLING", "add": 1500 } ],
           "ench_effects": [ { "effect": "heat_ward", "intensity": 1 } ]
         }
       ]
@@ -747,7 +733,7 @@
     "turns_per_charge": 150,
     "revert_to": "jade_wreath",
     "use_action": { "target": "jade_wreath", "msg": "The glowing carvings on the jade wreath fade.", "type": "transform" },
-    "extend": { "flags": [ "CLIMATE_CONTROL", "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
+    "extend": { "flags": [ "TRADER_AVOID", "NO_TAKEOFF", "COMBAT_NPC_ON" ] }
   },
   {
     "id": "meteoric_talisman",
@@ -775,7 +761,7 @@
       "type": "transform"
     },
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "lightning_ward", "intensity": 1 } ] } ]
+      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "ench_effects": [ { "effect": "lightning_ward", "intensity": 1 } ] } ]
     },
     "flags": [ "FANCY", "NO_SALVAGE", "COMBAT_NPC_USE", "MISSION_ITEM" ]
   },
@@ -848,7 +834,7 @@
       "type": "transform"
     },
     "relic_data": {
-      "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "ench_effects": [ { "effect": "cleric_warding", "intensity": 1 } ] } ]
+      "passive_effects": [ { "conditions": [ "WORN", "ACTIVE" ], "ench_effects": [ { "effect": "cleric_warding", "intensity": 1 } ] } ]
     },
     "extend": { "flags": [ "NO_SALVAGE", "PSYSHIELD_PARTIAL", "COMBAT_NPC_USE", "MISSION_ITEM" ] }
   },

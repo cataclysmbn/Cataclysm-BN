@@ -326,6 +326,7 @@
         "........."
       ],
       "palettes": [ "lab_palette" ],
+      "terrain": { "C": "t_thconc_floor" },
       "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": { "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] } }
     }
@@ -349,6 +350,7 @@
         "........."
       ],
       "palettes": [ "lab_palette" ],
+      "terrain": { "C": "t_thconc_floor" },
       "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": {
         "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] },
@@ -376,6 +378,7 @@
         "cccc.cccc"
       ],
       "palettes": [ "lab_palette" ],
+      "terrain": { "C": "t_thconc_floor" },
       "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": {
         "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] },

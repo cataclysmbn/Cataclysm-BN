@@ -217,6 +217,7 @@
     "id": "bio_cable_upgrade",
     "bionic_id": "bio_cable_mkII",
     "copy-from": "bionic_general",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Cable Charger Upgrade CBM" },
     "description": "A kit for upgrading a pre-installed cable charger with enhanced power throughput.",
@@ -427,6 +428,18 @@
     "price": "7200 USD",
     "weight": "500 g",
     "difficulty": 5
+  },
+  {
+    "id": "bio_minirose",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Minirose CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "An implanted dead man's switch and mininuke payload. Detonates upon death or manual trigger. You wouldn't want to use it, unless you'd like to demonstrate the bottomless malice within the human heart to a certain ant.",
+    "price": "10 kUSD",
+    "weight": "23 kg",
+    "volume": "16 L",
+    "difficulty": 10
   },
   {
     "id": "bio_flashlight",
@@ -689,7 +702,7 @@
     "type": "BIONIC_ITEM",
     "name": { "str": "Sensory Dulling CBM" },
     "looks_like": "bio_int_enhancer",
-    "description": "This module lets the user's nervous system inhibit pain signals, allowing them to dull their senses at will.  However, the use of this system may cause delayed reaction times and drowsiness.",
+    "description": "This module lets the user's nervous system inhibit pain signals, allowing them to dull their senses at will.  This also means the user does not need anesthesia when undergoing bionic surgery with an Autodoc.  However, the use of this system may cause delayed reaction times and drowsiness.",
     "price": "2 kUSD",
     "weight": "300 g",
     "difficulty": 4
@@ -849,6 +862,7 @@
   {
     "id": "bio_atomic_battery",
     "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Atomic Battery CBM" },
     "description": " Effectively a plutonium fuel cell converted into an alphavoltaic battery, this bionic will provide a limitless source of power at a steady 50 watts when active, with only minimal exposure to radiation while in use.",
@@ -859,6 +873,7 @@
     "id": "bio_atomic_battery_upgrade",
     "bionic_id": "bio_reactor",
     "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Atomic Battery Upgrade CBM" },
     "description": "A kit for upgrading a pre-installed atomic battery into a Microreactor, providing options for significantly more power generation potential and fuel capacity at the cost of increased radiation exposure.",
@@ -1119,6 +1134,16 @@
     "installation_data": "AID_bio_weight"
   },
   {
+    "id": "bio_storage",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Internal Storage CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "Space inside your chest cavity has been converted into a storage area.  You may carry an extra 2 liters of volume.",
+    "price": "4 kUSD",
+    "difficulty": 7
+  },
+  {
     "id": "bio_shock_absorber",
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
@@ -1326,6 +1351,24 @@
     "description": "Part of the autodoc's 'Cyborg Identity Package', this bionic gives the user a creepy robot voice.",
     "weight": "100 g",
     "difficulty": 5
+  },
+  {
+    "id": "bio_grossfood",
+    "copy-from": "bionic_general_faulty",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Taste Fouler" },
+    "description": "A broken and mis-wired module that would cause food and drink to taste terrible.",
+    "weight": "100 g",
+    "difficulty": 7
+  },
+  {
+    "id": "bio_sleep_shutdown",
+    "copy-from": "bionic_general_faulty",
+    "type": "BIONIC_ITEM",
+    "name": { "str_sp": "Sleep Mode Shutdown CBM" },
+    "description": "This CBM completely shuts down all communication between the user's brain and the rest of their body when they fall asleep, preventing them from waking up under any circumstance until their natural sleep cycle completes.  An inability to trigger its effects manually makes it useless as an anesthesia substitute.",
+    "weight": "100 g",
+    "difficulty": 10
   },
   {
     "id": "bn_bio_solar",

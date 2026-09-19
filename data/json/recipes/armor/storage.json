@@ -61,6 +61,18 @@
     "components": [ [ [ "fabric_hides_any", 15, "LIST" ] ] ]
   },
   {
+    "result": "belt_magazine",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "time": "40 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 15 ] ],
+    "components": [ [ [ "fabric_hides_any", 8, "LIST" ] ] ]
+  },
+  {
     "result": "axe_ring",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -596,7 +608,7 @@
     "autolearn": true,
     "using": [ [ "cordage", 2 ] ],
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ] ] ]
+    "components": [ [ [ "bag_plastic", 8 ], [ "bag_zipper", 8 ], [ "bag_zipper_small", 32 ] ] ]
   },
   {
     "result": "quiver",

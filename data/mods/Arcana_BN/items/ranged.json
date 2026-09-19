@@ -6,7 +6,7 @@
     "weapon_category": [ "FIST_WEAPONS", "ENERGY_WEAPONS" ],
     "name": { "str": "symbol of judgment", "str_pl": "symbols of judgment" },
     "description": "A golden band decorated with a trident motif, and inlaid with silver.  Just small enough to grasp the band in your palm, prongs between the fingers.  Holding it gives you the vague sense that this is a holy symbol, dedicated to something not of this world.  Firing it calls forth lightning.",
-    "weight": "1100 g",
+    "weight": "900 g",
     "volume": "750 ml",
     "price": "1500 USD",
     "price_postapoc": "100 USD",
@@ -78,12 +78,18 @@
     "modes": [ [ "DEFAULT", "single", 1 ], [ "BURST", "triple", 3 ] ],
     "ammo_effects": [ "FLAME", "STREAM", "IGNITE" ],
     "techniques": [ "WBLOCK_1", "RAPID" ],
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_sparks", "no_fail": true, "level": 0, "need_wielding": true },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_sparks",
+      "no_fail": true,
+      "level": 0,
+      "need_wielding": true,
+      "menu_text": "Ignite something"
+    },
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_bloodscourge_fire",
@@ -113,10 +119,10 @@
     "type": "GUN",
     "category": "weapons",
     "weapon_category": [ "PISTOLS", "STILETTOS" ],
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "name": { "str": "shrike's misericorde (pistol)", "str_pl": "shrike's misericordes (pistol)" },
     "description": "An ornate silver weapon combining two flintlock barrels with a thin blade.  It's folded into its more compact pistol form, allowing it to be loaded and fired.  Its shots are imbued with a deathly chill.  The damage it adds to shots can ignore mundane armor, but robots and certain otherworldly monsters will only suffer the bullet's regular damage.  Activate it to revert back to blade form, making it better suited for melee but preventing you from being able to load or fire it.",
-    "weight": "2 kg",
+    "weight": "1250 g",
     "volume": "500 ml",
     "price": "1000 USD",
     "price_postapoc": "50 USD",
@@ -155,8 +161,7 @@
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_shrike_misericorde_chill",
@@ -197,7 +202,7 @@
     "skill": "rifle",
     "range": 30,
     "ranged_damage": { "damage_type": "stab", "amount": 60, "armor_penetration": 25 },
-    "loudness": 5,
+    "loudness": 45,
     "dispersion": 150,
     "durability": 6,
     "clip_size": 60,
@@ -227,7 +232,7 @@
     "skill": "pistol",
     "range": 15,
     "ranged_damage": { "damage_type": "stab", "amount": 40, "armor_penetration": 20 },
-    "loudness": 5,
+    "loudness": 45,
     "dispersion": 300,
     "durability": 6,
     "clip_size": 50,
@@ -258,7 +263,7 @@
     "skill": "rifle",
     "range": 60,
     "ranged_damage": { "damage_type": "stab", "amount": 160, "armor_penetration": 75 },
-    "loudness": 10,
+    "loudness": 55,
     "dispersion": 75,
     "durability": 6,
     "clip_size": 120,
@@ -303,17 +308,23 @@
     "ranged_damage": { "damage_type": "heat", "amount": 600, "armor_penetration": 25 },
     "dispersion": 200,
     "durability": 10,
-    "loudness": 500,
+    "loudness": 186,
     "clip_size": 1,
     "reload": 200,
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_sparks", "no_fail": true, "level": 0, "need_wielding": true },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_sparks",
+      "no_fail": true,
+      "level": 0,
+      "need_wielding": true,
+      "menu_text": "Ignite something"
+    },
     "ammo_effects": [ "NAPALM_CLAW", "NO_PENETRATE_OBSTACLES" ],
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
-          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 3 } ],
+          "conditions": [ "WIELD" ],
+          "hit_you_effect": [ { "id": "arcana_react_drain_life", "once_in": 3, "hit_self": true } ],
           "intermittent_activation": { "effects": [ { "frequency": "25 minutes", "spell_effects": [ { "id": "arcana_react_evil_mimic" } ] } ] },
           "ench_effects": [ { "effect": "arcana_evil_mimic_active", "intensity": 1 } ]
         }
@@ -362,14 +373,13 @@
     "ranged_damage": { "damage_type": "acid", "amount": 80, "armor_penetration": 10 },
     "dispersion": 250,
     "durability": 10,
-    "loudness": 75,
+    "loudness": 60,
     "clip_size": 8,
     "reload": 200,
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "hit_you_effect": [
             {
               "id": "arcana_react_bane_staff_venom",
@@ -398,7 +408,7 @@
     "id": "electrothermal_arc_cannon",
     "looks_like": "plasma_rifle",
     "type": "GUN",
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "weapon_category": [ "RIFLES", "ENERGY_WEAPONS" ],
     "name": { "str": "electrothermal arc cannon" },
     "description": "An advanced, though somewhat bulky, energy weapon exploiting exotic phenomenon.  Fires an anomalous bolt of energy that can jump from target to target, generating an electrothermal effect that leaves burning plasma and explosive bursts of electricity in its wake.  Highly indiscriminate, but equally destructive if used in a target-rich environment.",
@@ -417,7 +427,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 50 },
     "dispersion": 60,
     "durability": 7,
-    "loudness": 35,
+    "loudness": 55,
     "ups_charges": 120,
     "reload": 0,
     "valid_mod_locations": [
@@ -437,7 +447,7 @@
     "looks_like": "laser_rifle",
     "type": "GUN",
     "weapon_category": [ "RIFLES", "ENERGY_WEAPONS" ],
-    "reload_noise_volume": 10,
+    "reload_noise_volume": "40 dB",
     "symbol": "(",
     "color": "light_blue",
     "name": { "str": "rift focus cannon" },
@@ -463,7 +473,7 @@
     "to_hit": -1,
     "range": 60,
     "ranged_damage": { "damage_type": "dark", "amount": 1200 },
-    "loudness": 50,
+    "loudness": 65,
     "dispersion": 20,
     "durability": 7,
     "clip_size": 1,
@@ -490,11 +500,11 @@
     "flags": [ "NEVER_JAMS" ],
     "skill": "pistol",
     "durability": 10,
-    "range": 7,
+    "range": 10,
     "dispersion": 7500,
     "sight_dispersion": 1000,
-    "//": "Roughly half the damage of closest weapon equivalent, rounded up.",
-    "ranged_damage": { "damage_type": "heat", "amount": 13, "armor_penetration": 5 }
+    "//": "Half the damage of a hellfire staff, and half the arpen rounded up.",
+    "ranged_damage": { "damage_type": "heat", "amount": 20, "armor_penetration": 2 }
   },
   {
     "id": "monster_lightning_fake",
@@ -502,7 +512,7 @@
     "type": "GUN",
     "copy-from": "fake_item",
     "name": { "str": "monster lightning weapon" },
-    "description": "Used to give the Host of the Archon a specific degree of inaccuracy.  If you encounter one of these in the wild, it's a bug.",
+    "description": "Used to give the Host of the Archon a specific degree of inaccuracy, and to nerf his damage to not be an immediate instakill.  If you encounter one of these in the wild, it's a bug.",
     "ammo_effects": [ "NEVER_MISFIRES", "LIGHTNING" ],
     "flags": [ "NEVER_JAMS" ],
     "skill": "pistol",
@@ -510,8 +520,9 @@
     "range": 25,
     "dispersion": 5000,
     "sight_dispersion": 1000,
-    "loudness": 50,
-    "ranged_damage": { "damage_type": "electric", "amount": 38, "armor_penetration": 10 }
+    "loudness": 65,
+    "//": "One-third the damage of a symbol of judgment, for balance purposes because 120 would be way too strong to be fair to throw at the player.",
+    "ranged_damage": { "damage_type": "electric", "amount": 40, "armor_penetration": 5 }
   },
   {
     "id": "monster_hammer_fake",
@@ -543,6 +554,7 @@
     "range": 20,
     "dispersion": 5000,
     "sight_dispersion": 1000,
+    "//": "Half that of the bionic rift focus weapon.",
     "ranged_damage": { "damage_type": "dark", "amount": 20 }
   },
   {
@@ -559,7 +571,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 120, "armor_penetration": 10 },
     "dispersion": 300,
     "durability": 10,
-    "loudness": 5,
+    "loudness": 40,
     "reload": 500,
     "ammo_effects": [ "WIDE", "AMMO_DRAGONFIRE_ARCANA", "IGNITE" ],
     "flags": [ "NEVER_JAMS", "TRADER_AVOID" ]
@@ -581,7 +593,7 @@
     "ranged_damage": { "damage_type": "heat", "amount": 30 },
     "dispersion": 90,
     "durability": 10,
-    "loudness": 9,
+    "loudness": 45,
     "ammo_effects": [ "AMMO_ELECTROTHERMAL_LIGHTNING", "AMMO_ELECTROTHERMAL_FIRE_SMALL", "BOUNCE", "NO_PENETRATE_OBSTACLES" ],
     "flags": [ "NEVER_JAMS", "TRADER_AVOID", "USES_BIONIC_POWER", "PYROMANIAC_WEAPON" ]
   },
@@ -602,7 +614,7 @@
     "ranged_damage": { "damage_type": "dark", "amount": 40 },
     "dispersion": 30,
     "durability": 10,
-    "loudness": 9,
+    "loudness": 45,
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "burst", 3 ] ],
     "ammo_effects": [ "LASER", "BLINDS_EYES", "BEANBAG", "AMMO_RIFT_FOCUS_SHADOWS", "AMMO_RIFT_FOCUS_TINDALOS" ],
     "flags": [ "NEVER_JAMS", "TRADER_AVOID", "USES_BIONIC_POWER" ]
@@ -612,7 +624,7 @@
     "weapon_category": [ "ENERGY_WEAPONS" ],
     "looks_like": "ar15",
     "type": "GUN",
-    "reload_noise_volume": 2,
+    "reload_noise_volume": "26 dB",
     "name": { "str": "rift focus weapon system" },
     "description": "This is the integral weapon system for the Anomaly Recon Mech, focusing a small-scale hole in reality into a powerful beam.  Potent but useless against some anomalous monsters, and carries the risk of opening temporary holes in reality.  Activating this weapon will let you launch a dazzling ghostly flare, illuminating an area in exchange for draining fatigue.  This flare will inflict similar forms of supernatural harm on anything caught in its radius.",
     "weight": "12500 g",
@@ -629,14 +641,13 @@
     "ranged_damage": { "damage_type": "dark", "amount": 160 },
     "dispersion": 15,
     "durability": 8,
-    "loudness": 50,
+    "loudness": 65,
     "ups_charges": 240,
     "reload": 0,
     "relic_data": {
       "passive_effects": [
         {
-          "has": "WIELD",
-          "condition": "ALWAYS",
+          "conditions": [ "WIELD" ],
           "values": [
             { "value": "ARMOR_BASH", "add": -25 },
             { "value": "ARMOR_CUT", "add": -35 },
@@ -649,7 +660,14 @@
         }
       ]
     },
-    "use_action": { "type": "cast_spell", "spell_id": "arcana_item_mech_flare", "no_fail": true, "level": 0, "need_wielding": true },
+    "use_action": {
+      "type": "cast_spell",
+      "spell_id": "arcana_item_mech_flare",
+      "no_fail": true,
+      "level": 0,
+      "need_wielding": true,
+      "menu_text": "Launch flare"
+    },
     "ammo_effects": [ "LASER", "PLASMA_BUBBLE", "BLINDS_EYES", "BEANBAG", "AMMO_RIFT_FOCUS_SHADOWS", "AMMO_RIFT_FOCUS_TINDALOS" ],
     "flags": [
       "NO_UNLOAD",

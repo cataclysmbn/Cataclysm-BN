@@ -14,6 +14,7 @@
 #include "json.h"
 #include "pldata.h"
 #include "type_id.h"
+#include "type_id_implement.h"
 #include "locations.h"
 
 const bodypart_str_id body_part_head( "head" );
@@ -108,6 +109,7 @@ namespace
 generic_factory<body_part_type> body_part_factory( "body part" );
 
 } // namespace
+IMPLEMENT_STRING_AND_INT_IDS( body_part_type, body_part_factory );
 
 bool is_legacy_bodypart_id( const std::string &id )
 {
@@ -170,52 +172,6 @@ static body_part legacy_id_to_enum( const std::string &legacy_id )
 
     return iter->second;
 }
-
-/**@relates string_id*/
-template<>
-bool string_id<body_part_type>::is_valid() const
-{
-    return body_part_factory.is_valid( *this );
-}
-
-/** @relates int_id */
-template<>
-bool int_id<body_part_type>::is_valid() const
-{
-    return body_part_factory.is_valid( *this );
-}
-
-/**@relates string_id*/
-template<>
-const body_part_type &string_id<body_part_type>::obj() const
-{
-    return body_part_factory.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const body_part_type &int_id<body_part_type>::obj() const
-{
-    return body_part_factory.obj( *this );
-}
-
-/** @relates int_id */
-template<>
-const bodypart_str_id &int_id<body_part_type>::id() const
-{
-    return body_part_factory.convert( *this );
-}
-
-/**@relates string_id*/
-template<>
-bodypart_id string_id<body_part_type>::id() const
-{
-    return body_part_factory.convert( *this, bodypart_id( 0 ) );
-}
-
-/** @relates int_id */
-template<>
-int_id<body_part_type>::int_id( const string_id<body_part_type> &id ) : _id( id.id() ) {}
 
 body_part get_body_part_token( const std::string &id )
 {
@@ -574,8 +530,8 @@ void bodypart::serialize( JsonOut &json ) const
     json.member( "hp_max", hp_max );
     json.member( "damage_bandaged", damage_bandaged );
     json.member( "damage_disinfected", damage_disinfected );
-    json.member( "temp_cur", temp_cur );
-    json.member( "temp_conv", temp_conv );
+    json.member( "temp_cur", units::to_legacy_bodypart_temp( temp_cur ) );
+    json.member( "temp_conv", units::to_legacy_bodypart_temp( temp_conv ) );
     json.member( "frostbite_timer", frostbite_timer );
     json.member( "wetness", wetness );
     json.end_object();
@@ -589,8 +545,12 @@ void bodypart::deserialize( JsonIn &jsin )
     jo.read( "hp_max", hp_max, true );
     jo.read( "damage_bandaged", damage_bandaged, true );
     jo.read( "damage_disinfected", damage_disinfected, true );
-    jo.read( "temp_cur", temp_cur, true );
-    jo.read( "temp_conv", temp_conv, false );
+    if( auto legacy_temp_cur = int{}; jo.read( "temp_cur", legacy_temp_cur, true ) ) {
+        temp_cur = units::from_legacy_bodypart_temp( legacy_temp_cur );
+    }
+    if( auto legacy_temp_conv = int{}; jo.read( "temp_conv", legacy_temp_conv, false ) ) {
+        temp_conv = units::from_legacy_bodypart_temp( legacy_temp_conv );
+    }
     jo.read( "frostbite_timer", frostbite_timer, true );
     jo.read( "wetness", wetness, true );
 }

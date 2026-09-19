@@ -29,8 +29,8 @@
 "phase": "solid",                            // (Optional, default = "solid") What phase it is
 "weight": "350 g",                           // Weight, weight in grams, mg and kg can be used - "50 mg", "5 g" or "5 kg". For stackable items (ammo, comestibles) this is the weight per charge.
 "volume": "250 ml",                          // Volume, volume in ml and L can be used - "50 ml" or "2 L". For stackable items (ammo, comestibles) this is the volume of stack_size charges.
-"integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L".
-"integral_weight": 0,                        // Weight added to base item when item is integrated into another (eg. a gunmod integrated to a gun)
+"integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L". Can be negative to reduce parent volume. Clamped at 1% of parent base volume.
+"integral_weight": 0,                        // Weight added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Can be negative to reduce parent weight. Clamped at 1% of parent base weight.
 "rigid": false,                              // For non-rigid items volume (and for worn items encumbrance) increases proportional to contents
 "insulation": 1,                             // (Optional, default = 1) If container or vehicle part, how much insulation should it provide to the contents
 "price": 100,                                // Used when bartering with NPCs. For stackable items (ammo, comestibles) this is the price for stack_size charges. Can use string "cent" "USD" or "kUSD".
@@ -137,6 +137,7 @@
 "reliability" : 8,               // How reliable this this magazine on a range of 0 to 10? (see GAME_BALANCE.md)
 "reload_time" : 100,             // How long it takes to load each unit of ammo into the magazine
 "linkage" : "ammolink"           // If set one linkage (of given type) is dropped for each unit of ammo consumed (set for disintegrating ammo belts)
+"reloads_like": "light_minus_battery_cell" // If set, anything that takes that itype as a magazine will also take this itype
 ```
 
 ### Armor
@@ -160,8 +161,8 @@ Armor can be defined like this:
 "power_armor" : false, // If this is a power armor item (those are special).
 "valid_mods" : ["steel_padded"], // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
 "resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
-"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, but increases the deafening volume threshold by twice its given amount. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with garunteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
-"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will increase the deafening volume threshold by its given amount without dampening other sounds. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
+"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, including deafening sounds. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with guaranteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. ~40 dB spl total protection will protect against most gunfire, 80 will protect against almost any sound. Cumulative with other items with this quality.
+"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will reduce the damaging volume of deafening sounds by its given amount without dampening other sounds.  Cumulative with other items with this quality.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:
@@ -532,6 +533,8 @@ Guns can be defined like this:
 "barrel_volume": "30 mL",  // Amount of volume lost when the barrel is sawn. Approximately 250 ml per IRL inch is a decent approximation.
 "barrel_length": "30 mL",  // Depreciated alias of barrel_volume, which should be used instead for clarity.
 "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ] ],  // The valid locations for gunmods and the mount of slots for that location.
+"loudness_modifier": 4,    // Optional field increasing or decreasing base ammo loudness, measured in dB spl.
+"speed": 100               // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 ```
 
 Alternately, every item (book, tool, armor, even food) can be used as gun if it has gun_data:
@@ -601,7 +604,9 @@ Gun mods can be defined like this:
 "mode_modifier": [ [ "AUTO", "auto", 5 ] ],       // Optional. Array of [mode_id, mode_name, burst_size, [...flags]?] arrays. Adds firing modes to the weapon. Optional flags array can include "MELEE", "REACH_ATTACK", etc.
 "damage_modifier": -1,         // Optional field increasing or decreasing base gun damage
 "dispersion_modifier": 15,     // Optional field increasing or decreasing base gun dispersion
-"loudness_modifier": 4,        // Optional field increasing or decreasing base guns loudness
+"loudness_modifier": 4,        // Optional field increasing or decreasing base ammo loudness, measured in dB spl.
+"speed": 100,                  // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
+"speed": 100,                  // Optional field increasing or decreasing base ammo speed in meters per second. Speed of sound is taken at 343 meters per second.
 "range_modifier": 2,           // Optional field increasing or decreasing base gun range
 "recoil_modifier": -100,       // Optional field increasing or decreasing base gun recoil
 "ups_charges_modifier": 200,   // Optional field increasing or decreasing base gun UPS consumption (per shot) by adding given value
@@ -610,6 +615,8 @@ Gun mods can be defined like this:
 "ammo_to_fire_multiplier": 2.5, // Optional field increasing or decreasing main ammo consumed per shot by multiplying by given value
 "reload_modifier": -10,        // Optional field increasing or decreasing base gun reload time in percent
 "min_str_required_mod": 14,    // Optional field increasing or decreasing minimum strength required to use gun
+"weight_multiplier": 0.75,     // Optional field increasing or decreasing the weight of the parent gun by multiplying. 1.0 means no change, 0.75 means 25% lighter.
+"volume_multiplier": 0.67,     // Optional field increasing or decreasing the volume of the parent gun by multiplying. 1.0 means no change, 0.67 means ~33% reduction. Replaces the deprecated COLLAPSIBLE_STOCK flag.
 ```
 
 Alternately, every item (book, tool, armor, even food) can be used as a gunmod if it has
@@ -856,6 +863,18 @@ machines.
 The contents of use_action fields can either be a string indicating a built-in function to call when
 the item is activated (defined in iuse.cpp), or one of several special definitions that invoke a
 more structured function.
+
+All object defined use actions support the following two types.
+
+```jsonc
+"use_action": {
+  "menu_text": "xyz", // What string is shown in the activate menu
+  // Unique key for the iuse, defaults to the `type`
+  // Note: This should only be used on repeated type definitions
+  // WARN: This does not work on `repair_item` iuse actors -> they have their own special `item_action_type`
+  "internal_name": "test"
+}
+```
 
 ```json
 "use_action": {

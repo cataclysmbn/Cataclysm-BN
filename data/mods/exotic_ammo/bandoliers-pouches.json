@@ -160,7 +160,7 @@
     "name": { "str": "rifle bandolier" },
     "use_action": {
       "type": "bandolier",
-      "capacity": 25,
+      "capacity": 30,
       "ammo": [
         "22",
         "223",

@@ -160,11 +160,11 @@
     "id": "FASTHEALER",
     "name": { "str": "Fast Healer" },
     "points": 2,
-    "description": "Your wounds heal themselves quicker than usual.  You heal 50% faster whilst asleep, and 20% faster whilst awake.  Your broken limbs also heal twice as fast.",
+    "description": "Your wounds heal themselves quicker than usual.  Sleep and medicine heal you 50% faster, and you even heal a little while awake.  Your broken limbs also heal less poorly without splints.",
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL", "CHIMERA" ],
+    "category": [ "MEDICAL" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5
@@ -214,7 +214,8 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL", "CHIMERA" ]
+    "category": [ "MEDICAL", "CHIMERA" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.33 } ] } ]
   },
   {
     "type": "mutation",
@@ -235,7 +236,8 @@
     "points": 1,
     "description": "Your system is rather tolerant of poisons and toxins, and most will affect you less.",
     "starting_trait": true,
-    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ]
+    "category": [ "INSECT", "SERPENT", "SLIME", "SPIDER", "MEDICAL" ],
+    "mut_enchantments": [ { "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -364,7 +366,8 @@
     "description": "You are less likely to throw up from food poisoning, alcohol, etc.  If you throw up despite this, you won't suffer any residual nausea.",
     "starting_trait": true,
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "WEAKSTOMACH" ]
+    "cancels": [ "WEAKSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -427,7 +430,17 @@
     "description": "Whether due to a lifetime of exposure or through simple willpower, it's harder for you to become addicted to substances, and easier to rid yourself of these addictions.",
     "starting_trait": true,
     "valid": false,
-    "cancels": [ "ADDICTIVE" ]
+    "cancels": [ "ADDICTIVE" ],
+    "//": "10800 == 3 hours shorter per intensity, 14400 == 4 hours longer per addition",
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "ADDICTION_STRENGTH", "multiply": -0.5 },
+          { "value": "ADDICTION_TIME_PER_ADDITION", "add": 14400 },
+          { "value": "ADDICTION_TIME_PER_INTENSITY", "add": 10800 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -529,12 +542,13 @@
     "//": "Can't change the ID as that breaks save-compatibility.",
     "name": { "str": "Scout" },
     "points": 1,
-    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range.",
+    "description": "You're an excellent navigator and your ability to recognize distant landmarks is unmatched.  Your sight radius on the overmap extends beyond the normal range, and distant details are easier for you to resolve.",
     "valid": false,
     "starting_trait": true,
     "category": [ "BIRD", "MOUSE" ],
     "cancels": [ "MYOPIC", "UNOBSERVANT" ],
-    "overmap_sight": 5
+    "overmap_sight": 5,
+    "local_detail_sight": 10
   },
   {
     "type": "mutation",
@@ -727,14 +741,15 @@
     "description": "Without glasses, your seeing radius is severely reduced!  However, you are guaranteed to start with a pair of glasses.",
     "starting_trait": true,
     "cancels": [ "URSINE_EYE", "EAGLEEYED", "HYPEROPIC" ],
-    "category": [ "BEAST", "TROGLOBITE", "URSINE" ]
+    "category": [ "BEAST", "TROGLOBITE", "URSINE" ],
+    "mut_enchantments": [ { "flags": [ "NEARSIGHTED" ] } ]
   },
   {
     "type": "mutation",
     "id": "SLOWHEALER",
     "name": { "str": "Slow Healer" },
     "points": -2,
-    "description": "Your wounds heal a little slower than most.  Your HP whilst asleep heals at 75% of the regular rate.",
+    "description": "Your wounds heal a little slower than most.  Your HP heals at 75% of the regular rate.",
     "starting_trait": true,
     "types": [ "HEALING" ],
     "healing_resting": -0.25
@@ -744,7 +759,7 @@
     "id": "SLOWHEALER2",
     "name": { "str": "Poor Healer" },
     "points": -4,
-    "description": "Your health recovery is severely impaired.  Your HP whilst asleep heals at 33% of the regular rate.",
+    "description": "Your health recovery is severely impaired.  Your HP heals at 33% of the regular rate.",
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
@@ -756,7 +771,7 @@
     "id": "SLOWHEALER3",
     "name": { "str": "Imperceptive Healer" },
     "points": -8,
-    "description": "Wounds are incredibly dangerous to you, as they barely heal at all.  Your HP whilst asleep heals at 10% of the regular rate.",
+    "description": "Wounds are incredibly dangerous to you, as they barely heal at all.  Your HP heals at 10% of the regular rate.",
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
@@ -780,7 +795,8 @@
     "points": -1,
     "description": "You're quite the heavy sleeper.  Noises are unlikely to wake you up.",
     "changes_to": [ "HEAVYSLEEPER2" ],
-    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ]
+    "category": [ "INSECT", "PLANT", "MEDICAL", "LUPINE" ],
+    "mut_enchantments": [ { "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 2 }, { "value": "SLEEP_DB_RESIST", "add": 30 } ] } ]
   },
   {
     "type": "mutation",
@@ -845,6 +861,7 @@
     "points": -6,
     "description": "You never learned to read!  Books and computers are off-limits to you.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "valid": false,
     "purifiable": false,
     "cancels": [ "FASTREADER", "SLOWREADER", "PROF_DICEMASTER", "LOVES_BOOKS" ]
@@ -998,7 +1015,8 @@
     "starting_trait": true,
     "social_modifiers": { "intimidate": -2 },
     "category": [ "BIRD", "RAPTOR" ],
-    "cancels": [ "TOUGH" ]
+    "cancels": [ "TOUGH" ],
+    "mut_enchantments": [ { "values": [ { "value": "HEALTH_POINTS_HEAD", "multiply": -0.2 } ] } ]
   },
   {
     "type": "mutation",
@@ -1018,7 +1036,17 @@
     "starting_trait": true,
     "valid": false,
     "category": [ "MEDICAL", "MOUSE", "RABBIT" ],
-    "cancels": [ "NONADDICTIVE" ]
+    "cancels": [ "NONADDICTIVE" ],
+    "//": "-14400 == 4 hours longer per intensity, -3600 == 1 hours shorter per addition",
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "ADDICTION_STRENGTH", "multiply": 1 },
+          { "value": "ADDICTION_TIME_PER_ADDITION", "add": -3600 },
+          { "value": "ADDICTION_TIME_PER_INTENSITY", "add": -14400 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -1145,7 +1173,7 @@
     "description": "You make more noise while walking.",
     "starting_trait": true,
     "cancels": [ "LIGHTSTEP" ],
-    "noise_modifier": 2
+    "mut_enchantments": [ { "values": [ { "value": "NOISE", "add": 12 } ] } ]
   },
   {
     "type": "mutation",
@@ -1216,7 +1244,8 @@
     "points": -1,
     "description": "You are more likely to throw up from food poisoning, alcohol, etc.",
     "changes_to": [ "NAUSEA" ],
-    "cancels": [ "STRONGSTOMACH" ]
+    "cancels": [ "STRONGSTOMACH" ],
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -1360,7 +1389,8 @@
     "description": "Your eyes still bulge, yet your pupils look different somehow.  Water doesn't seem to cause any trouble at all, though.",
     "leads_to": [ "NIGHTVISION3" ],
     "cancels": [ "BIRD_EYE", "LIZ_EYE", "FEL_EYE", "URSINE_EYE", "COMPOUND_EYES", "ELFAEYES" ],
-    "category": [ "CEPHALOPOD" ]
+    "category": [ "CEPHALOPOD" ],
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -1409,7 +1439,8 @@
     "prereqs": [ "NIGHTVISION3" ],
     "cancels": [ "LIZ_IR" ],
     "category": [ "INSECT", "TROGLOBITE", "SPIDER" ],
-    "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ]
+    "threshreq": [ "THRESH_INSECT", "THRESH_TROGLOBITE", "THRESH_SPIDER" ],
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
@@ -1432,14 +1463,15 @@
     "description": "Your optic nerves and brain have mutated to catch up with your eyes, allowing you to see in the infrared spectrum.",
     "prereqs": [ "LIZ_EYE" ],
     "cancels": [ "ELFA_NV", "ELFA_FNV", "FEL_NV", "INFRARED" ],
-    "category": [ "LIZARD", "SERPENT", "RAPTOR" ]
+    "category": [ "LIZARD", "SERPENT", "RAPTOR" ],
+    "mut_enchantments": [ { "special_vision": [ "INFRARED" ] } ]
   },
   {
     "type": "mutation",
     "id": "FASTHEALER2",
     "name": { "str": "Very Fast Healer" },
     "points": 4,
-    "description": "Your flesh regenerates slowly, and you will regain HP even when not sleeping.",
+    "description": "Your flesh regenerates slowly.  You will regain HP at a moderate rate even when not sleeping, and sleep and medicine will heal you 50% more.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER" ],
     "changes_to": [ "REGEN" ],
@@ -1453,7 +1485,7 @@
     "id": "REGEN",
     "name": { "str": "Regeneration" },
     "points": 6,
-    "description": "Your flesh regenerates from wounds incredibly quickly.  You heal 150% faster whilst asleep and 200% faster whilst awake.  You do not require splints to heal broken limbs.",
+    "description": "Your flesh regenerates from wounds incredibly quickly.  You constantly regenerate HP at a rapid rate, and sleep and medicine heal you 150% more.  You do not require splints to heal broken limbs.",
     "types": [ "HEALING" ],
     "prereqs": [ "FASTHEALER2" ],
     "category": [ "SLIME", "TROGLOBITE" ],
@@ -1580,7 +1612,8 @@
     "description": "You have a set of clear lenses which lower over your eyes while underwater, allowing you to see as though you were wearing goggles.  Slightly decreases wet penalties.",
     "prereqs": [ "EYEBULGE" ],
     "category": [ "LIZARD", "FISH" ],
-    "wet_protection": [ { "part": "eyes", "neutral": 1 } ]
+    "wet_protection": [ { "part": "eyes", "neutral": 1 } ],
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -1663,7 +1696,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 2, "bash": 3, "bullet": 1 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -1691,7 +1725,8 @@
       { "part": "torso", "ignored": 60 }
     ],
     "armor": [ { "parts": "ALL", "cut": 3, "bash": 5, "bullet": 2 } ],
-    "speed_modifier": 0.8
+    "speed_modifier": 0.8,
+    "mut_enchantments": [ { "values": [ { "value": "BLISTER_COUNT", "add": -20 } ] } ]
   },
   {
     "type": "mutation",
@@ -2275,7 +2310,8 @@
       { "part": "hand_r", "ignored": 3 },
       { "part": "torso", "ignored": 20 }
     ],
-    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ]
+    "armor": [ { "parts": "ALL", "cut": 3, "stab": 3, "bullet": 3, "heat": 1 } ],
+    "mut_enchantments": [ { "values": [ { "value": "BLISTER_COUNT", "add": -5 } ] } ]
   },
   {
     "type": "mutation",
@@ -2344,7 +2380,8 @@
     "prereqs": [ "PLANTSKIN", "BARK" ],
     "prereqs2": [ "LEAVES" ],
     "threshreq": [ "THRESH_PLANT" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "mut_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 4 } ] } ]
   },
   {
     "type": "mutation",
@@ -2713,7 +2750,8 @@
     "points": 1,
     "description": "Your body is unusually inhospitable to parasitic lifeforms.  You will never become infested with internal parasites.",
     "starting_trait": true,
-    "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ]
+    "category": [ "ELFA", "CHIMERA", "MEDICAL", "SLIME" ],
+    "mut_enchantments": [ { "flags": [ "FOOD_PARASITE_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -2895,7 +2933,8 @@
     "prereqs": [ "PAINRESIST" ],
     "prereqs2": [ "STOCKY_TROGLO" ],
     "threshreq": [ "THRESH_TROGLOBITE" ],
-    "category": [ "TROGLOBITE" ]
+    "category": [ "TROGLOBITE" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -2916,7 +2955,8 @@
     "points": 2,
     "description": "Your digestive system is specialized to allow you to consume decaying material.  You can eat rotten food, albeit for less nutrition than usual.",
     "cancels": [ "HERBIVORE", "RUMINANT" ],
-    "category": [ "TROGLOBITE", "CHIMERA" ]
+    "category": [ "TROGLOBITE", "CHIMERA" ],
+    "mut_enchantments": [ { "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE" ] } ]
   },
   {
     "type": "mutation",
@@ -2931,7 +2971,8 @@
     "threshreq": [ "THRESH_PLANT" ],
     "cancels": [ "HERBIVORE", "CARNIVORE", "GRAZER" ],
     "leads_to": [ "CHLOROMORPH" ],
-    "category": [ "PLANT" ]
+    "category": [ "PLANT" ],
+    "mut_enchantments": [ { "flags": [ "EAT_ROTTEN", "EAT_ROTTEN_MORALE", "ONLY_EAT_ROTTEN" ] } ]
   },
   {
     "type": "mutation",
@@ -2995,7 +3036,8 @@
     "prereqs": [ "POISRESIST" ],
     "threshreq": [ "THRESH_CHIMERA", "THRESH_RAT", "THRESH_MOUSE", "THRESH_SERPENT" ],
     "category": [ "RAT", "CHIMERA", "MOUSE", "SERPENT" ],
-    "kcal_scale": 0.15
+    "kcal_scale": 0.15,
+    "mut_enchantments": [ { "flags": [ "FOOD_POISON_IMMUNE" ] } ]
   },
   {
     "type": "mutation",
@@ -3009,7 +3051,7 @@
     "prereqs2": [ "INCISORS" ],
     "threshreq": [ "THRESH_RAT", "THRESH_RABBIT" ],
     "category": [ "RAT", "RABBIT" ],
-    "active": true
+    "mut_enchantments": [ { "fake_items": [ "fake_burrowing" ] } ]
   },
   {
     "type": "mutation",
@@ -3151,7 +3193,8 @@
     "starts_active": true,
     "restricts_gear": [ "head" ],
     "allowed_items": [ "ALLOWS_HORNS" ],
-    "allow_soft_gear": true
+    "allow_soft_gear": true,
+    "mut_enchantments": [ { "special_vision": [ "GROUNDED_SONAR" ] } ]
   },
   {
     "type": "mutation",
@@ -3170,6 +3213,7 @@
     "name": { "str": "Stubby Tail" },
     "points": 0,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 1,
     "description": "You have a short, stubby tail, like a rabbit's.  It serves no purpose.",
     "types": [ "TAIL" ],
@@ -3181,6 +3225,8 @@
     "id": "TAIL_FIN",
     "name": { "str": "Tail Fin" },
     "points": -2,
+    "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 4,
     "description": "You have a fin-like tail.  It allows you to swim more quickly, but prevents wearing non-fabric pants.  Slightly increases wet benefits.",
     "types": [ "TAIL" ],
@@ -3199,6 +3245,7 @@
     "name": { "str": "Long Tail" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 6,
     "description": "You have a long, graceful tail, like that of a big cat.  It improves your balance, making your ability to dodge higher, but prevents wearing non-fabric pants.",
     "types": [ "TAIL" ],
@@ -3217,6 +3264,7 @@
     "name": { "str": "Cattle Tail" },
     "points": -1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 6,
     "description": "You have a long tail with a tuft on the end.  You find yourself instinctively swatting away flies with it, though it's not as effective at balancing you as you'd like.  Prevents wearing non-fabric pants.",
     "types": [ "TAIL" ],
@@ -3234,6 +3282,7 @@
     "name": { "str": "Rodent Tail" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 6,
     "description": "You have a long but hairless tail.  It's a pretty effective balancing aid, but does look, uh, ratty.  Prevents wearing non-fabric pants.",
     "types": [ "TAIL" ],
@@ -3249,6 +3298,8 @@
     "id": "TAIL_THICK",
     "name": { "str": "Thick Tail" },
     "points": 1,
+    "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 8,
     "description": "You have a long, thick, lizardlike tail.  It helps you balance a bit but also makes a serviceable whip.  Prevents wearing non-fabric pants.",
     "types": [ "TAIL" ],
@@ -3287,6 +3338,7 @@
     "name": { "str": "Fluffy Tail" },
     "points": 2,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 7,
     "description": "You have a long, fluffy-furred tail.  It greatly improves your balance, making your ability to dodge much higher.  Prevents wearing non-fabric pants.",
     "types": [ "TAIL" ],
@@ -3436,7 +3488,16 @@
     "purifiable": false,
     "prereqs": [ "MASOCHIST_MED" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [
+      {
+        "values": [
+          { "value": "PAIN_PENALTY_STR", "multiply": -1 },
+          { "value": "PAIN_PENALTY_DEX", "multiply": -1 },
+          { "value": "PAIN_PENALTY_SPD", "multiply": -0.5 }
+        ]
+      }
+    ]
   },
   {
     "type": "mutation",
@@ -3450,7 +3511,8 @@
     "prereqs2": [ "PAINREC1" ],
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
     "threshreq": [ "THRESH_MEDICAL" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": -0.1 } ] } ]
   },
   {
     "type": "mutation",
@@ -3461,7 +3523,8 @@
     "starting_trait": true,
     "//": "The MORE_PAIN mutations will always increase the pain you receive by at least 1.",
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN2" ]
+    "changes_to": [ "MORE_PAIN2" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.25 } ] } ]
   },
   {
     "type": "mutation",
@@ -3471,7 +3534,8 @@
     "description": "Your body experiences pain out of proportion to the physical causes.  Pain dealt to you is increased by 50%.",
     "prereqs": [ "MORE_PAIN" ],
     "cancels": [ "PAINRESIST", "NOPAIN" ],
-    "changes_to": [ "MORE_PAIN3" ]
+    "changes_to": [ "MORE_PAIN3" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 0.5 } ] } ]
   },
   {
     "type": "mutation",
@@ -3480,7 +3544,8 @@
     "points": -5,
     "description": "Your body reacts cripplingly to any source of pain.  Pain dealt to you is doubled.",
     "prereqs": [ "MORE_PAIN2" ],
-    "cancels": [ "PAINRESIST", "NOPAIN" ]
+    "cancels": [ "PAINRESIST", "NOPAIN" ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_GAIN", "multiply": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -3619,7 +3684,7 @@
     "type": "mutation",
     "id": "WINGS_BIRD",
     "name": { "str": "Bird Wings" },
-    "points": 2,
+    "points": 3,
     "visibility": 4,
     "ugliness": 2,
     "cost": 100,
@@ -3724,6 +3789,7 @@
     "name": { "str": "Canine Ears" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 4,
     "ugliness": -2,
     "description": "You've grown an extra pair of canine ears.  They enhance your hearing, allowing you to hear at greater distances.",
@@ -3739,6 +3805,7 @@
     "name": { "str": "Lupine Ears" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 4,
     "ugliness": -2,
     "description": "Your hearing has evolved further and is now on par with that of wolves.  You can hear things significantly farther away.",
@@ -3753,6 +3820,7 @@
     "name": { "str": "Feline Ears" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 4,
     "ugliness": -2,
     "description": "You've grown an extra pair of feline ears.  You find it easier to tune in on sounds from afar.  They are also very fluffy!",
@@ -3767,6 +3835,7 @@
     "name": { "str": "Ursine Ears" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 4,
     "ugliness": -2,
     "description": "You've grown an extra pair of ursine ears.  You can hear things a little farther away.",
@@ -3793,6 +3862,7 @@
     "name": { "str": "Rodent Ears" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 6,
     "ugliness": -2,
     "description": "Your extra pair of ears are huge, round, and gray!  They're rather fascinating, and help you hear from a much greater distance.",
@@ -4191,7 +4261,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "armor": [ { "parts": "ALL", "bash": -3 } ]
+    "armor": [ { "parts": "ALL", "bash": -3 } ],
+    "mut_enchantments": [ { "values": [ { "value": "PAIN_PENALTY_INT", "multiply": -0.8 } ] } ]
   },
   {
     "type": "mutation",
@@ -4263,7 +4334,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "passive_mods": { "per_mod": -8 }
+    "passive_mods": { "per_mod": -8 },
+    "mut_enchantments": [ { "values": [ { "value": "FLASH_PROTECTION", "max": 3 } ] } ]
   },
   {
     "type": "mutation",
@@ -4280,7 +4352,8 @@
     "prereqs2": [ "AMORPHOUS" ],
     "threshreq": [ "THRESH_SLIME" ],
     "category": [ "SLIME" ],
-    "passive_mods": { "per_mod": 5 }
+    "passive_mods": { "per_mod": 5 },
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT" ], "values": [ { "value": "FLASH_PROTECTION", "max": 8 } ] } ]
   },
   {
     "type": "mutation",
@@ -4457,11 +4530,11 @@
     "type": "mutation",
     "id": "WINGS_BAT",
     "name": { "str": "Bat Wings" },
-    "points": -1,
+    "points": 1,
     "mixed_effect": true,
     "visibility": 9,
     "ugliness": 4,
-    "description": "You have a pair of large, leathery wings.  While you can fly short distances with them, it's more taxing than more aerodynamic wings would be.  They also hinder your balance, reducing your ability to dodge.",
+    "description": "You have a pair of large, leathery wings.  While you can fly short distances with them, it's more taxing than more aerodynamic wings would be.  They also hinder your balance, severely reducing your ability to dodge.",
     "cost": 150,
     "stamina": true,
     "active": true,
@@ -4478,11 +4551,11 @@
     "type": "mutation",
     "id": "WINGS_BUTTERFLY",
     "name": { "str": "Butterfly Wings" },
-    "points": -1,
+    "points": 1,
     "mixed_effect": true,
     "visibility": 10,
     "ugliness": -2,
-    "description": "You have a very large pair of brightly-colored, very beautiful wings that allow flight across short distances.  They make balancing tricky, but they certainly catch air and attention!",
+    "description": "You have a very large pair of brightly-colored, very beautiful wings that allow flight across short distances.  They make balancing tricky, making dodging much harder, but they certainly catch air and attention, and allow you to move faster overall.",
     "valid": false,
     "purifiable": false,
     "encumbrance_always": [ [ "torso", 10 ] ],
@@ -4768,7 +4841,8 @@
     "prereqs": [ "WEAKSTOMACH" ],
     "changes_to": [ "VOMITOUS" ],
     "category": [ "ALPHA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4778,7 +4852,8 @@
     "description": "You have a major digestive disorder.  Though it causes you to vomit frequently, you have found that you can trigger your vomit reflex on demand, too.",
     "prereqs": [ "NAUSEA" ],
     "category": [ "SLIME", "RAT", "MEDICAL", "ELFA" ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "values": [ { "value": "VOMIT_MOD", "multiply": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -4836,7 +4911,7 @@
     "name": { "str": "Rapid Metabolism" },
     "points": -2,
     "valid": false,
-    "description": "You require more resources than most, but heal more rapidly as well.  Provides weak regeneration even when not asleep.",
+    "description": "You require more food and sleep than most, but heal more rapidly as well.  Provides weak regeneration even when not asleep.",
     "types": [ "HEALING" ],
     "cancels": [ "LIGHTEATER", "COLDBLOOD", "COLDBLOOD2", "COLDBLOOD3", "COLDBLOOD4", "WAKEFUL", "WAKEFUL2", "WAKEFUL3" ],
     "prereqs": [ "HUNGER" ],
@@ -4927,7 +5002,8 @@
     "description": "You could probably sleep through a firefight.",
     "valid": false,
     "prereqs": [ "HEAVYSLEEPER" ],
-    "category": [ "BEAST", "LUPINE" ]
+    "category": [ "BEAST", "LUPINE" ],
+    "mut_enchantments": [ { "values": [ { "value": "SLEEP_PAIN_THRESH", "add": 5 }, { "value": "SLEEP_DB_RESIST", "add": 50 } ] } ]
   },
   {
     "type": "mutation",
@@ -4950,8 +5026,8 @@
     "types": [ "HEALING" ],
     "changes_to": [ "ROT2" ],
     "category": [ "ELFA" ],
-    "healing_awake": -0.002,
-    "healing_resting": -0.25
+    "healing_awake": -0.1,
+    "healing_resting": -0.1
   },
   {
     "type": "mutation",
@@ -4959,12 +5035,13 @@
     "name": { "str": "Deterioration" },
     "points": -8,
     "bodytemp_modifiers": [ -750, -750 ],
-    "description": "Your body is very slowly wasting away.",
+    "description": "Your body is slowly wasting away, and your wounds heal noticeably slower.",
     "types": [ "HEALING" ],
     "prereqs": [ "ROT1" ],
     "changes_to": [ "ROT3" ],
     "category": [ "CHIMERA" ],
-    "healing_awake": -0.02
+    "healing_awake": -0.2,
+    "healing_resting": -0.2
   },
   {
     "type": "mutation",
@@ -4972,11 +5049,12 @@
     "name": { "str": "Disintegration" },
     "points": -10,
     "bodytemp_modifiers": [ -1500, -1500 ],
-    "description": "Your body is slowly wasting away!",
+    "description": "Your body is wasting away! You need good medical care, and you need it more often.",
     "types": [ "HEALING" ],
     "prereqs": [ "ROT2" ],
     "category": [ "ALPHA" ],
-    "healing_awake": -0.08
+    "healing_awake": -0.3,
+    "healing_resting": -0.3
   },
   {
     "type": "mutation",
@@ -5218,7 +5296,7 @@
     "points": 2,
     "visibility": 7,
     "ugliness": 6,
-    "description": "Your body is coated with a fine slime.  Protects from long-term effects of acid, though not short-term ones.  Greatly increases wet benefits.",
+    "description": "Your body is coated with a fine slime.  Protects from long-term effects of acid, though not short-term ones. It also protects from other sources of slime.  Greatly increases wet benefits.",
     "leads_to": [ "SLIME_HANDS" ],
     "changes_to": [ "VISCOUS" ],
     "category": [ "FISH", "SLIME", "TROGLOBITE", "CEPHALOPOD" ],
@@ -5233,7 +5311,8 @@
       { "part": "hand_l", "neutral": 2, "good": 3 },
       { "part": "hand_r", "neutral": 2, "good": 3 },
       { "part": "torso", "neutral": 14, "good": 26 }
-    ]
+    ],
+    "mut_enchantments": [ { "immune_fields": [ "fd_slime" ] } ]
   },
   {
     "type": "mutation",
@@ -5295,7 +5374,8 @@
     "active": true,
     "cost": 40,
     "hunger": true,
-    "thirst": true
+    "thirst": true,
+    "mut_enchantments": [ { "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 8 } ] } ]
   },
   {
     "type": "mutation",
@@ -5851,7 +5931,8 @@
     "category": [ "CEPHALOPOD" ],
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 6, "cut": 14, "bullet": 5 } ],
+    "mut_enchantments": [ { "values": [ { "value": "CARRY_STORAGE", "add": 4000 } ] } ]
   },
   {
     "type": "mutation",
@@ -5871,7 +5952,11 @@
     "wet_protection": [ { "part": "torso", "ignored": 26 } ],
     "active": true,
     "restricts_gear": [ "torso" ],
-    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ]
+    "armor": [ { "parts": "torso", "bash": 9, "cut": 17, "bullet": 5 } ],
+    "mut_enchantments": [
+      { "conditions": [ "INACTIVE" ], "values": [ { "value": "CARRY_STORAGE", "add": 6000 } ] },
+      { "conditions": [ "ACTIVE" ], "values": [ { "value": "CROWD_CRUSH_RESIST", "add": 8 } ] }
+    ]
   },
   {
     "type": "mutation",
@@ -6177,6 +6262,7 @@
     "name": { "str": "Rabbit Ears" },
     "points": 1,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 9,
     "ugliness": -1,
     "description": "Your ears have grown into tall, flexible and pretty rabbit ears.  They're are slender and enhance your hearing beyond the normal range.",
@@ -6192,6 +6278,7 @@
     "name": { "str": "Rabbit Tail" },
     "points": 0,
     "starting_trait": true,
+    "random_starting_trait": false,
     "visibility": 1,
     "ugliness": -1,
     "description": "Your stubby tail has become fuzzy and more round.  It looks adorable, but doesn't seem to serve another purpose beyond that.",
@@ -6345,7 +6432,8 @@
     "category": [ "FISH" ],
     "threshreq": [ "THRESH_FISH" ],
     "armor": [ { "parts": "eyes", "cut": 3, "bash": 1 } ],
-    "active": true
+    "active": true,
+    "mut_enchantments": [ { "flags": [ "UNDERWATER_SIGHT", "SLEEP_SIGHT" ] } ]
   },
   {
     "type": "mutation",
@@ -6384,7 +6472,8 @@
     "points": 2,
     "description": "A network of jelly-filled electroreceptors, like that of a shark, have grown throughout your face and nose.  They are very sensitive to magnetic fields, allowing you to see robots and creatures charged with electricity through walls, but being shocked will seriously mess you up.",
     "category": [ "FISH" ],
-    "mixed_effect": true
+    "mixed_effect": true,
+    "mut_enchantments": [ { "special_vision": [ "ELECTROSENSE" ] } ]
   },
   {
     "type": "mutation",
@@ -6802,6 +6891,15 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_INFINITE_SPEED",
+    "name": { "str": "Debug Infinite Speed" },
+    "points": 99,
+    "valid": false,
+    "description": "The only problem with being faster than light is that you always live in darkness.",
+    "debug": true
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_CLOAK",
     "name": { "str": "Debug Invisibility" },
     "points": 99,
@@ -6834,7 +6932,8 @@
     "points": 99,
     "valid": false,
     "description": "Be vewwy vewwy quiet.  We're hunting bugs.",
-    "debug": true
+    "debug": true,
+    "mut_enchantments": [ { "flags": [ "SILENT" ] } ]
   },
   {
     "type": "mutation",
@@ -6955,7 +7054,8 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, using ranged weapons is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
-    "cancels": [ "GUNSHY" ],
+    "random_starting_trait": false,
+    "cancels": [ "GUNSHY", "GUNNUT", "CARRY_PERMIT" ],
     "valid": false
   },
   {
@@ -6965,7 +7065,19 @@
     "points": -4,
     "description": "Whether from personal choice or childhood trauma, using firearms is completely off-limits to you, even if your life depended on it.  Other ranged weapons, however, are totally fine.",
     "starting_trait": true,
-    "cancels": [ "BRAWLER" ],
+    "random_starting_trait": false,
+    "cancels": [ "BRAWLER", "GUNNUT", "CARRY_PERMIT" ],
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "GUNNUT",
+    "name": { "str": "Gun Nut" },
+    "points": -4,
+    "description": "REAL survivors use guns!  You refuse to use crude bows, crossbows, or other primitive ranged weapons even if your life depends on it.",
+    "starting_trait": true,
+    "random_starting_trait": false,
+    "cancels": [ "BRAWLER", "GUNSHY" ],
     "valid": false
   },
   {
@@ -6985,6 +7097,7 @@
     "points": -8,
     "description": "Whether from personal choice or childhood trauma, traveling with vehicles is off-limits to you, even if your life depended on it.",
     "starting_trait": true,
+    "random_starting_trait": false,
     "valid": false,
     "purifiable": false
   },
@@ -7074,5 +7187,52 @@
     "valid": false,
     "purifiable": false,
     "profession": true
+  },
+  {
+    "type": "mutation",
+    "id": "CARRY_PERMIT",
+    "name": { "str": "Carry Permit" },
+    "points": 1,
+    "starting_trait": true,
+    "description": "You prepared for trouble as best as you could, though it might not be enough for the end of the world.  In addition to any weapons your profession might start with, you start with a randomly-selected common pistol and some spare mags.  (Note: What you see in character creation does not reflect what it will select at game start.)",
+    "cancels": [ "BRAWLER", "GUNSHY" ],
+    "valid": false,
+    "purifiable": false
+  },
+  {
+    "type": "mutation",
+    "id": "BLIND",
+    "name": { "str": "Blind" },
+    "points": -12,
+    "description": "You're totally blind, requiring you to cautiously feel out your surroundings.  Prevents crafting and construction aside from simple tasks that can be done blindfolded, and hinders many other actions as well.",
+    "starting_trait": true,
+    "random_starting_trait": false,
+    "valid": false,
+    "//": "Has both because `prevents` has no impact on character creation.",
+    "cancels": [
+      "NIGHTVISION",
+      "NIGHTVISION2",
+      "NIGHTVISION3",
+      "ELFA_NV",
+      "ELFA_FNV",
+      "FEL_NV",
+      "URSINE_EYE",
+      "EAGLEEYED",
+      "MYOPIC",
+      "HYPEROPIC"
+    ],
+    "prevents": [
+      "NIGHTVISION",
+      "NIGHTVISION2",
+      "NIGHTVISION3",
+      "ELFA_NV",
+      "ELFA_FNV",
+      "FEL_NV",
+      "URSINE_EYE",
+      "EAGLEEYED",
+      "MYOPIC",
+      "HYPEROPIC"
+    ],
+    "mut_enchantments": [ { "flags": [ "BLIND" ] } ]
   }
 ]

@@ -75,7 +75,7 @@
     "use_action": {
       "type": "explosion",
       "no_deactivate_msg": "You've already lit the fuse - what are you waiting for?",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "explosion": { "fragment": { "impact": { "damage_type": "bullet", "amount": 50, "armor_multiplier": 3 }, "range": 5 } }
     },
@@ -86,7 +86,7 @@
     "type": "TOOL",
     "category": "weapons",
     "name": { "str": "C-4 explosive" },
-    "description": "This is military grade RDX composition explosive.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer.",
+    "description": "This is military grade RDX composition explosive, made of a bundle of demolition blocks, meant to breach heavily reinforced bunkers and destroy large structures.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer.",
     "weight": "1570 g",
     "volume": "1 L",
     "price": "90 USD",
@@ -103,7 +103,7 @@
     "type": "TOOL",
     "category": "weapons",
     "name": { "str": "C-4 explosive (armed)", "str_pl": "C-4 explosives (armed)" },
-    "description": "This is military grade RDX composition explosive.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer, which is currently ticking down.",
+    "description": "This is military grade RDX composition explosive, made of a bundle of demolition blocks, meant to breach heavily reinforced bunkers and destroy large structures.  A label reads: \"Highly explosive, use with extreme caution!\" It comes with a small timer, which is currently ticking down.",
     "weight": "1570 g",
     "volume": "1 L",
     "price": "0 cent",
@@ -116,10 +116,52 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
       "explosion": { "damage": 200, "radius": 6 }
+    },
+    "flags": [ "TRADER_AVOID", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "c4_breaching",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "C-4 breaching charge" },
+    "description": "This is military grade RDX composition explosive.  It has been formed into a charge meant to breach walls and doors without causing undue structural damage.  It comes with a small timer.",
+    "weight": "400 g",
+    "volume": "250 ml",
+    "price": "6 USD",
+    "price_postapoc": "2 USD",
+    "to_hit": -4,
+    "material": [ "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "use_action": "C4_BREACHING",
+    "flags": [ "GRENADE", "ALLOWS_REMOTE_USE" ]
+  },
+  {
+    "id": "c4_breaching_armed",
+    "type": "TOOL",
+    "category": "weapons",
+    "name": { "str": "C-4 breaching charge (armed)", "str_pl": "C-4 breaching charges (armed)" },
+    "description": "This is military grade RDX composition explosive.  It has been formed into a charge meant to breach walls and doors without causing undue structural damage.  It comes with a small timer, which is currently ticking down.",
+    "weight": "400 g",
+    "volume": "250 ml",
+    "price": "0 cent",
+    "to_hit": -4,
+    "material": [ "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "initial_charges": 9,
+    "max_charges": 9,
+    "turns_per_charge": 1,
+    "use_action": {
+      "type": "explosion",
+      "sound_volume": "20 dB",
+      "sound_msg": "Tick.",
+      "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
+      "explosion": { "damage": 200, "radius": 1 }
     },
     "flags": [ "TRADER_AVOID", "ALLOWS_REMOTE_USE" ]
   },
@@ -171,7 +213,7 @@
     "explosion": { "damage": 100, "radius": 6 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "damage": 100, "radius": 6 }
@@ -236,7 +278,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": {
@@ -299,7 +341,7 @@
       "draw_explosion_radius": 10,
       "draw_explosion_color": "light_blue",
       "emp_blast_radius": 10,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "explosion": { "damage": 50, "radius": 7 },
       "no_deactivate_msg": "You've already activated the %s, try throwing it instead."
@@ -357,7 +399,7 @@
     "explosion": { "damage": 150, "radius": 6 },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": { "damage": 150, "radius": 6 }
@@ -482,7 +524,7 @@
     "use_action": {
       "type": "explosion",
       "do_flashbang": true,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin, try throwing it instead."
     },
@@ -584,7 +626,7 @@
       "fields_radius": 6,
       "fields_min_intensity": 1,
       "fields_max_intensity": 3,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Hiss.",
       "no_deactivate_msg": "You've already armed the %s, try throwing it instead."
     },
@@ -635,13 +677,13 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead.",
       "explosion": {
-        "damage": 40,
-        "radius": 3,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 80, "armor_multiplier": 2 }, "range": 6 }
+        "damage": 70,
+        "radius": 2,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.8 }, "range": 7 }
       }
     },
     "flags": [ "BOMB", "TRADER_AVOID" ]
@@ -696,7 +738,7 @@
       "draw_explosion_radius": 4,
       "draw_explosion_color": "light_blue",
       "emp_blast_radius": 4,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin, try throwing it instead."
     },
@@ -900,7 +942,7 @@
     "turns_per_charge": 1,
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "sssssh.",
       "no_deactivate_msg": "You've already lit the %s's fuse; try throwing it instead.",
       "explosion": {
@@ -962,7 +1004,7 @@
       "fields_radius": 24,
       "fields_min_intensity": 3,
       "fields_max_intensity": 3,
-      "sound_volume": 2,
+      "sound_volume": "26 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
       "explosion": {
@@ -1091,7 +1133,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "ssss...",
       "no_deactivate_msg": "You've already lit the %s, try throwing it instead.",
       "explosion": {
@@ -1151,7 +1193,7 @@
       "draw_explosion_radius": 4,
       "draw_explosion_color": "cyan",
       "scrambler_blast_radius": 4,
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already pulled the %s's pin; try throwing it instead."
     },
@@ -1237,7 +1279,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already lit the fuse - run!",
       "explosion": {
@@ -1304,7 +1346,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - run!",
       "explosion": {
@@ -1375,7 +1417,7 @@
     },
     "use_action": {
       "type": "explosion",
-      "sound_volume": 0,
+      "sound_volume": "20 dB",
       "sound_msg": "Kshhh.",
       "no_deactivate_msg": "You've already lit the fuse - clear the area immediately!",
       "explosion": {
@@ -1435,7 +1477,7 @@
       "fields_radius": 2,
       "fields_min_intensity": 2,
       "fields_max_intensity": 3,
-      "sound_volume": 5,
+      "sound_volume": "33 dB",
       "sound_msg": "Hsssss.",
       "no_deactivate_msg": "You've already lit the fuse - get rid of it immediately!",
       "explosion": { "damage": 1 }

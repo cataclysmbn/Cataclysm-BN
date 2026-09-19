@@ -20,6 +20,7 @@
 #include "point.h"
 #include "translations.h"
 #include "type_id.h"
+#include "units/body_temperature.h"
 #include "value_ptr.h"
 
 class Character;
@@ -92,6 +93,7 @@ struct mutation_branch {
         // Whether it has positive as well as negative effects.
         bool mixed_effect  = false;
         bool startingtrait = false;
+        bool randomstartingtrait = true;
         bool activated     = false;
         // Should it activate as soon as it is gained?
         bool starts_active = false;
@@ -116,9 +118,9 @@ struct mutation_branch {
         // costs are consumed every cooldown turns,
         int cooldown   = 0;
         // bodytemp elements:
-        int bodytemp_min = 0;
-        int bodytemp_max = 0;
-        int bodytemp_sleep = 0;
+        units::temperature_delta bodytemp_min = 0_c_delta;
+        units::temperature_delta bodytemp_max = 0_c_delta;
+        units::temperature_delta bodytemp_sleep = 0_c_delta;
         // Pain Recovery per turn:
         float pain_recovery = 0.0f;
         // Healing per turn
@@ -188,6 +190,9 @@ struct mutation_branch {
         /** Night vision range (in tiles), added to NV from stats. Only the highest value from all mutations applies. */
         float night_vision_range = 0.0f;
 
+        /** Local detail sight range bonus, applied before reality-bubble visibility scaling. */
+        float local_detail_sight = 0.0f;
+
         // Speed lowers--or raises--for every X F (X C) degrees below or above 65 F (18.3 C)
         float temperature_speed_modifier = 0.0f;
         // Scales total kcal character can hold. 1.0 doubles, -0.5 halves.
@@ -253,6 +258,7 @@ struct mutation_branch {
         std::map<spell_id, int> spells_learned;
         /** mutation enchantments */
         std::vector<enchantment_id> enchantments;
+        std::vector<enchantment> mut_enchantments;
     private:
         std::string raw_spawn_item_message;
     public:
@@ -565,5 +571,4 @@ mutagen_attempt mutagen_common_checks( Character &guy, const item &it, bool stro
 
 void test_crossing_threshold( Character &guy, const mutation_category_trait &m_category,
                               const unsigned short tier );
-
 

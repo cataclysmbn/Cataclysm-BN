@@ -954,7 +954,7 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "hk_mp5", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
+      { "item": "hk_mp5sd", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
       { "group": "nested_mp5_mag" },
       { "group": "nested_mp5_mag", "prob": 50 },
       { "group": "on_hand_9mm" }
@@ -971,6 +971,32 @@
       { "item": "ump45mag", "ammo-group": "on_hand_45" },
       { "item": "ump45mag", "ammo-group": "on_hand_45", "prob": 50 },
       { "group": "on_hand_45" }
+    ]
+  },
+  {
+    "id": "nested_hk_ump45_retool_40",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "hk_ump45_retool_40", "ammo-group": "on_hand_40", "charges": [ 0, 30 ] },
+      { "item": "ump40mag", "ammo-group": "on_hand_40" },
+      { "item": "ump40mag", "ammo-group": "on_hand_40", "prob": 50 },
+      { "group": "on_hand_40" }
+    ]
+  },
+  {
+    "id": "nested_hk_ump45_retool_9mm",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "hk_ump45_retool_9mm", "ammo-group": "on_hand_9mm", "charges": [ 0, 30 ] },
+      { "item": "ump9mag", "ammo-group": "on_hand_9mm" },
+      { "item": "ump9mag", "ammo-group": "on_hand_9mm", "prob": 50 },
+      { "group": "on_hand_9mm" }
     ]
   },
   {
@@ -1019,8 +1045,8 @@
     "subtype": "collection",
     "entries": [
       { "item": "kriss_vector", "ammo-group": "on_hand_40", "charges": [ 0, 30 ] },
-      { "group": "nested_kriss_vector_mag", "charges-min": 0 },
-      { "group": "nested_kriss_vector_mag", "charges-min": 0, "prob": 50 },
+      { "group": "nested_kriss_vector_mag", "ammo-group": "on_hand_40", "charges-min": 0 },
+      { "group": "nested_kriss_vector_mag", "ammo-group": "on_hand_40", "charges-min": 0, "prob": 50 },
       { "group": "on_hand_40" }
     ]
   },
@@ -1829,6 +1855,19 @@
     ]
   },
   {
+    "id": "nested_sig_mcx",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "acr_300blk", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ] },
+      { "group": "nested_stanag_mag_300" },
+      { "group": "nested_stanag_mag_300", "prob": 50 },
+      { "group": "on_hand_300BLK" }
+    ]
+  },
+  {
     "id": "nested_ak47",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -2314,6 +2353,54 @@
       { "group": "nested_stanag_carbon_mag", "ammo-group": "on_hand_223" },
       { "group": "nested_stanag_carbon_mag", "ammo-group": "on_hand_223", "prob": 50 },
       { "group": "on_hand_223" }
+    ]
+  },
+  {
+    "id": "nested_pipe_rifle",
+    "type": "item_group",
+    "//": "Pipe rifle with a caliber conversion kit pre-installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "pipe_rifle", "contents-group": "gunmod_pipe_conversion" } ]
+  },
+  {
+    "id": "nested_pipe_pistol",
+    "type": "item_group",
+    "//": "Pipe pistol with a caliber conversion kit pre-installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "pipe_pistol", "contents-group": "gunmod_pipe_conversion" } ]
+  },
+  {
+    "id": "nested_2_shot_special",
+    "type": "item_group",
+    "//": "2-shot special with a caliber conversion kit pre-installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "2_shot_special", "contents-group": "gunmod_pipe_conversion" } ]
+  },
+  {
+    "id": "nested_handmade_carbine",
+    "type": "item_group",
+    "//": "Handmade carbine with 50% chance of a caliber conversion kit or BAR mag adapter installed.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "handmade_carbine", "contents-group": "gunmod_hc_mods", "prob": 50 },
+      { "item": "handmade_carbine", "prob": 50 }
+    ]
+  },
+  {
+    "id": "nested_smg_luty",
+    "type": "item_group",
+    "//": "Luty SMG with 50% chance of a caliber conversion kit installed.",
+    "subtype": "distribution",
+    "entries": [ { "item": "smg_luty", "contents-group": "gunmod_luty_conversion", "prob": 50 }, { "item": "smg_luty", "prob": 50 } ]
+  },
+  {
+    "id": "nested_handmade_revolver",
+    "type": "item_group",
+    "//": "Handmade revolver with 50% chance of a caliber conversion kit installed.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "handmade_revolver", "contents-group": "gunmod_hmr_conversion", "prob": 50 },
+      { "item": "handmade_revolver", "prob": 50 }
     ]
   }
 ]

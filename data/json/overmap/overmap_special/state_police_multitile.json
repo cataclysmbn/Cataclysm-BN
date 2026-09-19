@@ -235,19 +235,24 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "state_police_0_0",
-      "state_police_1_0",
-      "state_police_z1_0_0",
-      "state_police_z1_1_0",
-      "state_police_z2_0_0",
-      "state_police_z2_1_0"
-    ],
+    "id": [ "state_police_0_0", "state_police_z1_0_0", "state_police_z2_0_0" ],
     "name": "state police station",
     "sym": "P",
     "color": "blue",
     "see_cost": 5,
     "extras": "build",
-    "mondensity": 2
+    "mondensity": 2,
+    "looks_like": "police_1"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "state_police_1_0", "state_police_z1_1_0", "state_police_z2_1_0" ],
+    "name": "state police station",
+    "sym": "P",
+    "color": "blue",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2,
+    "looks_like": "s_lot"
   }
 ]

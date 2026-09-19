@@ -433,7 +433,7 @@
   {
     "id": "TALK_DENY_EQUIPMENT",
     "type": "talk_topic",
-    "dynamic_line": "<no>.",
+    "dynamic_line": "<no>",
     "responses": [
       { "text": "Okay, okay, sorry.", "topic": "TALK_NONE", "effect": "deny_equipment" },
       { "text": "Okay, fine, bye.", "topic": "TALK_DONE", "effect": "deny_equipment" }

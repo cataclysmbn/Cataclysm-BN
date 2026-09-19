@@ -1,0 +1,7 @@
+[
+  {
+    "type": "region_overlay",
+    "regions": [ "all" ],
+    "map_extras": { "road": { "extras": { "mx_wraitheon_droneswarm": 10 } } }
+  }
+]

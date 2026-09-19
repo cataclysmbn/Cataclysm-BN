@@ -1,21 +1,11 @@
-#include "npctalk.h" // IWYU pragma: associated
-
-#include <algorithm>
-#include <cstddef>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
-#include "character_id.h"
 #include "character_display.h"
+#include "character_id.h"
 #include "character_martial_arts.h"
 #include "debug.h"
 #include "enums.h"
@@ -27,14 +17,15 @@
 #include "game_inventory.h"
 #include "item.h"
 #include "line.h"
-#include "magic.h"
-#include "map.h"
+#include "magic/magic.h"
+#include "map/map.h"
 #include "messages.h"
 #include "mission.h"
 #include "monster.h"
 #include "morale_types.h"
 #include "mutation.h"
 #include "npc.h"
+#include "npctalk.h" // IWYU pragma: associated
 #include "npctrade.h"
 #include "output.h"
 #include "overmap.h"
@@ -48,6 +39,14 @@
 #include "string_id.h"
 #include "translations.h"
 #include "ui.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
 
 static const activity_id ACT_FIND_MOUNT( "ACT_FIND_MOUNT" );
 static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
@@ -85,6 +84,9 @@ static const flag_id flag_BIONIC_WEAPON( "BIONIC_WEAPON" );
 static const mtype_id mon_chicken( "mon_chicken" );
 static const mtype_id mon_cow( "mon_cow" );
 static const mtype_id mon_horse( "mon_horse" );
+
+static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
+static const trait_id trait_NPC_STARTING_NPC( "NPC_STARTING_NPC" );
 
 struct itype;
 
@@ -358,7 +360,10 @@ void talk_function::stop_guard( npc &p )
 {
     if( !p.is_player_ally() ) {
         p.set_attitude( NPCATT_NULL );
-        p.set_mission( NPC_MISSION_NULL );
+        // Don't let static NPCs start acting like dynamic NPCs.
+        if( !p.has_trait( trait_NPC_STARTING_NPC ) && !p.has_trait( trait_NPC_STATIC_NPC ) ) {
+            p.set_mission( NPC_MISSION_NULL );
+        }
         return;
     }
     p.set_attitude( NPCATT_FOLLOW );
@@ -380,6 +385,7 @@ void talk_function::wake_up( npc &p )
     p.remove_effect( effect_lying_down );
     p.remove_effect( effect_npc_suspend );
     p.remove_effect( effect_sleep );
+    p.sleep_at_this_pos = std::nullopt;
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
@@ -639,9 +645,9 @@ void talk_function::buy_10_logs( npc &p )
     }
 
     const tripoint_abs_omt site = random_entry( places_om );
-    tinymap bay;
-    bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 10 );
+    map bay( 2 );
+    bay.load( project_to<coords::sm>( site.xy() ), false );
+    bay.spawn_item( tripoint_bub_ms( 7, 15, site.z() ), "log", 10 );
 
     p.add_effect( effect_currently_busy, 1_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -671,9 +677,9 @@ void talk_function::buy_100_logs( npc &p )
     }
 
     const tripoint_abs_omt site = random_entry( places_om );
-    tinymap bay;
-    bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 100 );
+    map bay( 2 );
+    bay.load( project_to<coords::sm>( site.xy() ), false );
+    bay.spawn_item( tripoint_bub_ms( 7, 15, site.z() ), "log", 100 );
 
     p.add_effect( effect_currently_busy, 7_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -751,10 +757,15 @@ void talk_function::leave( npc &p )
     if( new_solo_fac ) {
         new_solo_fac->known_by_u = true;
     }
-    p.chatbin.first_topic = "TALK_STRANGER_NEUTRAL";
+    p.chatbin.first_topic = "TALK_STRANGER_FRIENDLY";
     p.set_attitude( NPCATT_NULL );
-    p.mission = NPC_MISSION_NULL;
-    p.long_term_goal_action();
+    // Static NPCs should resume remaining static, dynanic NPCs resume acting dynamic.
+    if( p.has_trait( trait_NPC_STARTING_NPC ) || p.has_trait( trait_NPC_STATIC_NPC ) ) {
+        p.mission = NPC_MISSION_GUARD;
+    } else {
+        p.mission = NPC_MISSION_NULL;
+        p.long_term_goal_action();
+    }
 }
 
 void talk_function::stop_following( npc &p )
@@ -991,4 +1002,9 @@ void talk_function::npc_thankful( npc &p )
 void talk_function::clear_overrides( npc &p )
 {
     p.rules.clear_overrides();
+}
+
+void talk_function::go_to_sleep( npc &p )
+{
+    p.execute_action( "npc_sleep" );
 }

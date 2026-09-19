@@ -45,11 +45,26 @@ using ascii_art_id = string_id<ascii_art>;
 class disease_type;
 using diseasetype_id = string_id<disease_type>;
 
+class dimension;
+using dimension_id = string_id<dimension>;
+
 class emit;
 using emit_id = string_id<emit>;
 
 class enchantment;
 using enchantment_id = string_id<enchantment>;
+
+class enchantment_value;
+using enchantment_value_id = string_id<enchantment_value>;
+
+class enchantment_flag;
+using enchantment_flag_id = string_id<enchantment_flag>;
+
+class enchantment_condition;
+using enchantment_condition_id = string_id<enchantment_condition>;
+
+class enchantment_vision;
+using enchantment_vision_id = string_id<enchantment_vision>;
 
 class fault;
 using fault_id = string_id<fault>;
@@ -91,6 +106,10 @@ using matec_id = string_id<ma_technique>;
 
 class mapgen_palette;
 using palette_id = string_id<mapgen_palette>;
+
+class MapgenColorPalette;
+using mpalette_id = string_id<MapgenColorPalette>;
+
 
 class material_type;
 using material_id = string_id<material_type>;
@@ -227,5 +246,4 @@ using flag_id = string_id<json_flag>;
 class json_trait_flag;
 using trait_flag_id = int_id<json_trait_flag>;
 using trait_flag_str_id = string_id<json_trait_flag>;
-
 
