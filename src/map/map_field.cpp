@@ -1472,14 +1472,14 @@ auto process_fields_in_submap(
                 if (dst.valid()) {
                     const auto& dfield = dst.get_field();
                     for (const auto& fld : dfield) {
-                      const auto& cur_fld = fld.second.get_field_type();
-                      if( cur_fld->is_dangerous() && cur_fld->phase == phase_id::GAS ) {
-                        dfield.remove_field(cur_fld);
-                      }
+                        const auto& cur_fld = fld.second.get_field_type();
+                        if (cur_fld->is_dangerous() && cur_fld->phase == phase_id::GAS) {
+                            dfield.remove_field(cur_fld);
+                        }
                     }
                 }
             }
-            
+
             // ---- fd_shock_vent ------------------------------------------
             if (!is_newborn && cur_fd_type_id == fd_shock_vent) {
                 if (cur.get_field_intensity() > 1) {
