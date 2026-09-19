@@ -1459,7 +1459,8 @@
       { "group": "swimmer_pants", "prob": 20 },
       { "group": "swimmer_head", "prob": 20 },
       { "group": "magazines", "prob": 20 },
-      [ "flip_flops", 30 ]
+      [ "flip_flops", 30 ],
+      [ "crocs", 30 ]
     ]
   },
   {
