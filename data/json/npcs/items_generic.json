@@ -171,6 +171,7 @@
       [ "sneakers", 20 ],
       [ "lowtops", 20 ],
       [ "flip_flops", 10 ],
+      [ "crocs", 10 ],
       [ "leathersandals", 5 ]
     ]
   },
@@ -188,6 +189,7 @@
       [ "sneakers", 20 ],
       [ "lowtops", 20 ],
       [ "flip_flops", 10 ],
+      [ "crocs", 10 ],
       [ "leathersandals", 5 ],
       [ "heels", 5 ],
       [ "thigh_high_boots", 10 ],
