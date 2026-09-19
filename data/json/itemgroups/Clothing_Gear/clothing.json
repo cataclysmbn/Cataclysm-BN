@@ -1501,6 +1501,7 @@
       [ "thigh_high_boots", 20 ],
       [ "boots", 70 ],
       [ "flip_flops", 35 ],
+      [ "crocs", 35 ],
       [ "lowtops", 45 ],
       [ "dress_shoes", 50 ],
       [ "dance_shoes", 5 ],
@@ -1765,6 +1766,7 @@
       [ "thigh_high_boots", 40 ],
       [ "boots", 100 ],
       [ "flip_flops", 50 ],
+      [ "crocs", 50 ],
       [ "lowtops", 100 ],
       [ "dress_shoes", 50 ],
       [ "dance_shoes", 20 ],
@@ -2058,7 +2060,7 @@
   {
     "type": "item_group",
     "id": "swimmer_shoes",
-    "items": [ [ "flip_flops", 80 ], [ "swim_fins", 20 ] ]
+    "items": [ [ "flip_flops", 40 ], [ "crocs", 40 ], [ "swim_fins", 20 ] ]
   },
   {
     "type": "item_group",
@@ -3516,6 +3518,7 @@
       { "item": "bastsandals", "prob": 20 },
       { "item": "straw_sandals", "prob": 20 },
       { "item": "flip_flops", "prob": 40 },
+      { "item": "crocs", "prob": 40 },
       { "item": "leathersandals", "prob": 35 }
     ]
   },
