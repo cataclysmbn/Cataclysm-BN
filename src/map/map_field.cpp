@@ -1470,7 +1470,7 @@ auto process_fields_in_submap(
                 const auto dy = rng(-1, 1);
                 auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
                 if (dst.valid()) {
-                    const auto& dfield = dst.get_field();
+                    auto& dfield = dst.get_field();
                     for (const auto& fld : dfield) {
                         const auto& cur_fld = fld.second.get_field_type();
                         if (cur_fld->is_dangerous() && cur_fld->phase == phase_id::GAS) {
