@@ -831,6 +831,17 @@
     "time": 1
   },
   {
+    "id": "bio_janitor",
+    "type": "bionic",
+    "name": { "str": "Contaminant Decay Accelerator" },
+    "description": "When active, this bionic emits a low energy electric field, causing dangerous airborne particles such as smoke and poison gas within a 5 tile radius to ionize and dissipate rapidly.",
+    "occupied_bodyparts": [ [ "torso", 16 ] ],
+    "points": 5,
+    "flags": [ "BIONIC_TOGGLED" ],
+    "act_cost": "9 kJ",
+    "react_cost": "9 kJ"
+  },
+  {
     "id": "bio_night_vision",
     "type": "bionic",
     "name": { "str": "Implanted Night Vision" },
