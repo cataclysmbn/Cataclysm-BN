@@ -299,7 +299,7 @@ field_type_id fd_null, fd_blood, fd_bile, fd_gibs_flesh, fd_gibs_veggy, fd_web, 
     fd_blood_invertebrate, fd_gibs_insect, fd_gibs_invertebrate, fd_cigsmoke, fd_weedsmoke,
     fd_cracksmoke, fd_methsmoke, fd_bees, fd_incendiary, fd_relax_gas, fd_fungal_haze, fd_cold_air1,
     fd_cold_air2, fd_cold_air3, fd_cold_air4, fd_hot_air1, fd_hot_air2, fd_hot_air3, fd_hot_air4,
-    fd_fungicidal_gas, fd_insecticidal_gas, fd_smoke_vent, fd_tindalos_rift;
+    fd_fungicidal_gas, fd_insecticidal_gas, fd_smoke_vent, fd_tindalos_rift, fd_gas_remover;
 
 void field_types::set_field_type_ids() {
     fd_null = field_type_id("fd_null");
@@ -354,6 +354,7 @@ void field_types::set_field_type_ids() {
     fd_insecticidal_gas = field_type_id("fd_insecticidal_gas");
     fd_smoke_vent = field_type_id("fd_smoke_vent");
     fd_tindalos_rift = field_type_id("fd_tindalos_rift");
+    fd_gas_remover = field_type_id("fd_gas_remover");
 }
 
 auto field_types::get_field_type_by_legacy_enum(int legacy_enum_id) -> field_type {
