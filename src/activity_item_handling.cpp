@@ -2349,7 +2349,7 @@ static bool dissect_corpse_activity( player &p, const tripoint_bub_ms &src_loc,
             elem->set_var( "activity_var", p.name );
             p.assign_activity( ACT_DISSECT, 0, true );
             p.activity->targets.emplace_back( elem );
-            p.activity->placement = here.bub_to_abs( src_loc );
+            p.activity->placement = bub_to_abs( src_loc );
             return true;
         }
     }
