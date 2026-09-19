@@ -1429,5 +1429,23 @@
     "display_items": true,
     "display_field": true,
     "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_gas_remover",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": " ", "sym": " ", "dangerous": false, "transparent": true, "translucency": 1 }
+    ],
+    "decay_amount_factor": 15,
+    "gas_absorption_factor": 0,
+    "percent_spread": 0,
+    "dirty_transparency_cache": false,
+    "has_fume": true,
+    "priority": 1,
+    "half_life": "1 seconds",
+    "phase": "gas",
+    "display_items": true,
+    "display_field": false,
+    "looks_like": "fd_fog"
   }
 ]
