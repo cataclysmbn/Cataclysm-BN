@@ -10,4 +10,11 @@ gapi.add_on_every_x_hook(TimeDuration.from_turns(10), function(params)
   if mod and mod.on_every_10_turns_civilian_update then mod.on_every_10_turns_civilian_update() end
 end)
 
+gapi.register_action_menu_entry({
+  id = "civilians_configure_options",
+  name = "Configure Civilians",
+  category = "misc",
+  fn = function() mod.configure_options() end,
+})
+
 gdebug.log_info("Civilians: Preload complete. Hooks registered.")
