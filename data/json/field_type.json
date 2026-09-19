@@ -1413,8 +1413,8 @@
     "id": "fd_fog_kraken",
     "type": "field_type",
     "intensity_levels": [
-      { "name": "mist", "sym": "~", "dangerous": false, "transparent": false, "translucency": 1 },
-      { "name": "fog", "translucency": 1 },
+      { "name": "mysterious haze", "sym": "~", "dangerous": false, "transparent": false, "translucency": 1 },
+      { "name": "mysterious mist", "translucency": 1 },
       { "name": "mysterious fog", "translucency": 10 }
     ],
     "decay_amount_factor": 15,
@@ -1423,7 +1423,7 @@
     "outdoor_age_speedup": "5 minutes",
     "dirty_transparency_cache": true,
     "has_fume": true,
-    "priority": 8,
+    "priority": 9,
     "half_life": "50 minutes",
     "phase": "gas",
     "display_items": true,
