@@ -322,7 +322,7 @@
     "type": "GENERIC",
     "id": "portable_nanofab",
     "looks_like": "f_control_station",
-    "name": { "str": "Portable nanofabricator" },
+    "name": { "str": "portable nanofabricator" },
     "description": "Two become one. Standing on the shoulders of the old world's giants, you have taken a step forward and become one yourself. A giant of the new world.",
     "material": [ "steel" ],
     "symbol": "%",
