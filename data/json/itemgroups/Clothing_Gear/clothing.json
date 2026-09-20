@@ -23,7 +23,10 @@
     "entries": [
       {
         "distribution": [
-          { "distribution": [ { "item": "sunglasses", "prob": 60 }, { "item": "aviators", "prob": 20 }, { "item": "fancy_sunglasses", "prob": 20 } ], "prob": 25 },
+          {
+            "distribution": [ { "item": "sunglasses", "prob": 60 }, { "item": "aviators", "prob": 20 }, { "item": "fancy_sunglasses", "prob": 20 } ],
+            "prob": 25
+          },
           {
             "collection": [
               {
