@@ -398,7 +398,7 @@
     "copy-from": "f_table",
     "name": "flipped table",
     "description": "Not so good for eating on, but will buy you a few more seconds before the zombies eat you.  Examine to set it back up for more civilized uses.",
-    "symbol": "#",
+    "symbol": "X",
     "color": "red",
     "move_cost_mod": -1,
     "coverage": 50,
