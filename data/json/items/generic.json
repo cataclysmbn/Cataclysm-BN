@@ -311,7 +311,7 @@
     "type": "GENERIC",
     "id": "nanofab_body_item",
     "name": { "str": "Dismantled nanofabricator body" },
-    "description": "One half of a dismantled nanofabricator. Pre-Cataclysm tech, the kind that would've revolutionized the old world. Without its counterpart, it's just a six-hundred-kilogram paperweight.",
+    "description": "One half of a dismantled nanofabricator.  Pre-Cataclysm tech, the kind that would've revolutionized the old world.  Without its counterpart, it's just a two-hundred-fifty-kilogram paperweight.",
     "material": [ "steel" ],
     "symbol": "%",
     "color": "dark_gray",
