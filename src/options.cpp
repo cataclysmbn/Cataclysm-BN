@@ -191,6 +191,11 @@ options_manager::options_manager()
                 }
             }
         },
+        {
+            "TREE_SWAY", {
+                "TREE_SWAY", { {"false", "off" }, {"true", "30" }, {"no", "off" }, {"yes", "30" } }
+            }
+        },
     };
 
     enable_json( "DEFAULT_REGION" );
@@ -1993,6 +1998,18 @@ void options_manager::add_options_graphics()
        );
 
     get_option( "ANIMATION_RAIN" ).setPrerequisite( "ANIMATIONS" );
+
+    add( "TREE_SWAY", graphics, translate_marker( "Plant sway" ),
+    translate_marker( "Trees and shrubs sway with the wind and weather.  Higher rates look smoother but redraw the map more often.  Off disables the effect.  No extra tileset art required." ), {
+        { "off", to_translation( "Off" ) },
+        { "8", to_translation( "Low (8 fps)" ) },
+        { "30", to_translation( "Medium (30 fps)" ) },
+        { "60", to_translation( "High (60 fps)" ) },
+    },
+    "30"
+       );
+
+    get_option( "TREE_SWAY" ).setPrerequisite( "ANIMATIONS" );
 
     add( "ANIMATION_PROJECTILES", graphics, translate_marker( "Projectile animation" ),
          translate_marker( "If true, will display animations for projectiles like bullets, arrows, and thrown items." ),

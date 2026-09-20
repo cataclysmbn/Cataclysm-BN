@@ -78,6 +78,7 @@
 #include "scores_ui.h"
 #include "sounds.h"
 #include "speech_bubble.h"
+#include "sprite_fx.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
@@ -420,6 +421,7 @@ input_context game::get_player_input( std::string &action )
         invalidate_main_ui_adaptor(); // We want to redraw at least once.
 
         do {
+            const auto anim_frame_start = std::chrono::steady_clock::now();
             if( animate_weather ) {
                 ZoneScopedN( "get_player_input_weather_anim_frame" );
                 invalidate_main_ui_adaptor();
@@ -463,9 +465,11 @@ input_context game::get_player_input( std::string &action )
             }
             // We don't cache these checks as their result may change after 1st redraw
             auto needs_map_animation = false;
+            auto needs_terrain_animation = false;
             {
                 ZoneScopedN( "get_player_input_map_anim_check" );
-                needs_map_animation = minimap_requires_animation() || terrain_requires_animation();
+                needs_terrain_animation = terrain_requires_animation();
+                needs_map_animation = minimap_requires_animation() || needs_terrain_animation;
             }
             if( needs_map_animation ) {
                 // TODO: we redraw *everything* just to animate a couple blinking dots
@@ -499,7 +503,19 @@ input_context game::get_player_input( std::string &action )
             {
                 ZoneScopedN( "get_player_input_handle_mouseview" );
                 if( needs_timed_poll ) {
-                    ctxt.set_timeout( 125 );
+                    if( needs_terrain_animation ) {
+                        // Spend leftover frame budget waiting for input so draw-time
+                        // jitter does not stack on a fixed sleep. Plant sway quality
+                        // sets the budget; other idle tiles keep the old 8 Hz poll.
+                        const auto sway_budget = plant_sway_frame_budget_ms(
+                                                     get_option<std::string>( "TREE_SWAY" ) );
+                        const auto budget_ms = sway_budget.value_or( 125 );
+                        const auto draw_ms = static_cast<int>( std::chrono::duration_cast<std::chrono::milliseconds>(
+                                              std::chrono::steady_clock::now() - anim_frame_start ).count() );
+                        ctxt.set_timeout( std::max( 1, budget_ms - draw_ms ) );
+                    } else {
+                        ctxt.set_timeout( 125 );
+                    }
                 } else {
                     ctxt.reset_timeout();
                 }

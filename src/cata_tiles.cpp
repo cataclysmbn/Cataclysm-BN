@@ -61,6 +61,7 @@
 #    include "sdl_wrappers.h"
 #    include "sdltiles.h"
 #    include "sounds.h"
+#    include "sprite_fx.h"
 #    include "string_formatter.h"
 #    include "string_id.h"
 #    include "string_utils.h"
@@ -74,12 +75,14 @@
 #    include "vehicle/vehicle_part.h"
 #    include "vehicle/vpart_position.h"
 #    include "weather/weather.h"
+#    include "weather/weather_type.h"
 #    include "weighted_list.h"
 
 #    include <algorithm>
 #    include <array>
 #    include <bitset>
 #    include <cassert>
+#    include <chrono>
 #    include <cmath>
 #    include <cstdint>
 #    include <fstream>
@@ -92,6 +95,7 @@
 #    include <string_view>
 #    include <tuple>
 #    include <unordered_set>
+#    include <vector>
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
@@ -336,6 +340,65 @@ void idle_animation_manager::prepare_for_redraw()
     auto value = now_ms.time_since_epoch();
     // Aiming roughly at the standard 60 frames per second
     frame = value.count() / 17;
+}
+
+auto texture::render_geometry( const SDL_Renderer_Ptr &renderer,
+                               const sprite_fx_mesh &mesh ) const -> bool
+{
+    if( mesh.vertices.empty() || mesh.indices.empty() || !sdl_texture_ptr ) {
+        return false;
+    }
+
+    auto tex_w = 0.0f;
+    auto tex_h = 0.0f;
+    if( !SDL_GetTextureSize( sdl_texture_ptr.get(), &tex_w, &tex_h ) || tex_w <= 0.0f ||
+        tex_h <= 0.0f ) {
+        return false;
+    }
+
+    auto r = uint8_t{ 255 };
+    auto g = uint8_t{ 255 };
+    auto b = uint8_t{ 255 };
+    auto a = uint8_t{ 255 };
+    get_color_mod( &r, &g, &b );
+    get_alpha_mod( &a );
+    const auto color = SDL_FColor{
+        static_cast<float>( r ) / 255.0f,
+        static_cast<float>( g ) / 255.0f,
+        static_cast<float>( b ) / 255.0f,
+        static_cast<float>( a ) / 255.0f
+    };
+
+    auto verts = std::vector<SDL_Vertex> {};
+    verts.reserve( mesh.vertices.size() );
+    for( const auto &src : mesh.vertices ) {
+        verts.push_back( SDL_Vertex{
+            .position = SDL_FPoint{ src.x, src.y },
+            .color = color,
+            .tex_coord = SDL_FPoint{
+                ( srcrect.x + srcrect.w * src.u ) / tex_w,
+                ( srcrect.y + srcrect.h * src.v ) / tex_h
+            }
+        } );
+    }
+
+    return SDL_RenderGeometry( renderer.get(), sdl_texture_ptr.get(), verts.data(),
+                               static_cast<int>( verts.size() ), mesh.indices.data(),
+                               static_cast<int>( mesh.indices.size() ) );
+}
+
+static auto plant_sway_weather_at( const map &here, const tripoint_bub_ms &p ) -> plant_sway_weather
+{
+    const auto &wm = get_weather();
+    auto precip_rank = 0;
+    if( wm.weather_id.is_valid() ) {
+        precip_rank = static_cast<int>( wm.weather_id.obj().precip );
+    }
+    return plant_sway_weather{
+        .windspeed_mph = wm.windspeed,
+        .precip_rank = precip_rank,
+        .sheltered = !here.is_outside( p ),
+    };
 }
 
 struct tile_render_info {
@@ -3248,6 +3311,13 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     idle_animations.set_enabled( get_option<bool>( "ANIMATIONS" ) );
     idle_animations.prepare_for_redraw();
+    plant_sway_enabled = idle_animations.enabled() &&
+                         plant_sway_frame_budget_ms( get_option<std::string>( "TREE_SWAY" ) ).has_value();
+    if( plant_sway_enabled ) {
+        static const auto sway_clock_start = std::chrono::steady_clock::now();
+        plant_sway_elapsed_ms = static_cast<int>( std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - sway_clock_start ).count() );
+    }
 
     //set up a default tile for the edges outside the render area
     visibility_type offscreen_type = VIS_DARK;
@@ -4874,6 +4944,29 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
                                          ( fx_type == tileset_fx_type::none ||
                                            fx_type == tileset_fx_type::shadow );
 
+    auto render_copy_or_sway = [&]( const texture * tex, const int rotation,
+    const SDL_FlipMode flip ) {
+        const auto use_sway = is_fg &&
+                              active_sprite_fx.kind == sprite_fx_kind::sway &&
+                              rotation == 0 &&
+                              flip == SDL_FLIP_NONE;
+        if( !use_sway ) {
+            return tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        }
+        idle_animations.mark_present();
+        const auto mesh = build_sway_mesh( sprite_fx_rect{
+            .x = static_cast<float>( destination.x ),
+            .y = static_cast<float>( destination.y ),
+            .w = static_cast<float>( destination.w ),
+            .h = static_cast<float>( destination.h )
+        }, active_sprite_fx );
+        if( mesh.vertices.empty() ) {
+            return tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        }
+        const auto geo_ok = tex->render_geometry( renderer, mesh );
+        return geo_ok ? true : tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+    };
+
     auto render_dynamic_light_tint = [&]( const int rotation, const SDL_FlipMode flip ) {
         uint8_t old_r = 255;
         uint8_t old_g = 255;
@@ -4887,7 +4980,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
         sprite_tex->set_blend_mode( SDL_BLENDMODE_ADD );
         sprite_tex->set_color_mod( light_tint.color.r, light_tint.color.g, light_tint.color.b );
         sprite_tex->set_alpha_mod( light_tint.alpha );
-        const auto ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        const auto ret = render_copy_or_sway( sprite_tex, rotation, flip );
 
         sprite_tex->set_color_mod( old_r, old_g, old_b );
         sprite_tex->set_alpha_mod( old_alpha );
@@ -4900,7 +4993,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
 
         // UV warping is now handled in get_or_default, so we just render normally
         sprite_tex->set_alpha_mod( 255 );
-        ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        ret = render_copy_or_sway( sprite_tex, rotation, flip );
         if( should_apply_light_tint && !render_dynamic_light_tint( rotation, flip ) ) {
             ret = 0;
         }
@@ -4912,7 +5005,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
                     effective_warp_hash, tile_offset );
             if( overlay_tex ) {
                 overlay_tex->set_alpha_mod( std::min( 192, overlay_count ) );
-                overlay_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+                render_copy_or_sway( overlay_tex, rotation, flip );
                 overlay_tex->set_alpha_mod( 255 );
             }
         }
@@ -5229,6 +5322,26 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
     const ter_id &t = here.ter( p );
     const auto [bgCol, fgCol] = get_terrain_color( t.obj(), here, p );
 
+    auto draw_id = [&]( const auto & obj, const tile_search_params & tile, const lit_level draw_ll,
+    const bool nv ) {
+        if( plant_sway_enabled && draw_ll != lit_level::MEMORIZED ) {
+            active_sprite_fx = make_plant_sway_fx( {
+                .elapsed_ms = plant_sway_elapsed_ms,
+                .weather = plant_sway_weather_at( here, p ),
+                .x = p.x(),
+                .y = p.y(),
+                .tree = obj.has_flag( TFLAG_TREE ),
+                .young = obj.has_flag( TFLAG_YOUNG ),
+                .shrub = obj.has_flag( TFLAG_SHRUB ),
+            } );
+        }
+        const auto drawn = draw_from_id_string(
+                               tile, p, bgCol, fgCol,
+                               draw_ll, nv, z_drop, false, height_3d );
+        active_sprite_fx = {};
+        return drawn;
+    };
+
     // first memorize the actual terrain
     if( t && !invisible[0] ) {
         int subtile = 0;
@@ -5259,17 +5372,13 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
             if( t == t_open_air ) {
                 if( tileset_ptr && tileset_ptr->find_tile_type( tname ) ) {
                     const auto tile = tile_search_params{ tname, C_TERRAIN, empty_string, 0, 0 };
-                    return draw_from_id_string(
-                               tile, p, bgCol, fgCol,
-                               ll, true, z_drop, false, height_3d );
+                    return draw_id( t.obj(), tile, ll, true );
                 }
                 return true;
             }
 
             const auto tile = tile_search_params{ .id = tname, .category = C_TERRAIN, .subcategory = empty_string, .subtile = subtile, .rota = rotation };
-            return draw_from_id_string(
-                       tile, p, bgCol, fgCol,
-                       ll, true, z_drop, false, height_3d );
+            return draw_id( t.obj(), tile, ll, true );
         }
     }
     if( invisible[0] ? overridden : neighborhood_overridden ) {
@@ -5292,9 +5401,7 @@ bool cata_tiles::draw_terrain( const tripoint_bub_ms &p, const lit_level ll, int
             const lit_level lit = overridden ? lit_level::LIT : ll;
             const bool nv = !overridden;
             const tile_search_params tile { tname, C_TERRAIN, empty_string, subtile, rotation };
-            return draw_from_id_string(
-                       tile, p, bgCol, fgCol,
-                       lit, nv, z_drop, false, height_3d );
+            return draw_id( t2.obj(), tile, lit, nv );
         }
     } else if( invisible[0] ) {
         // try drawing memory if invisible and not overridden
@@ -5329,6 +5436,26 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
     const furn_id &f = here.furn( p );
     const auto [bgCol, fgCol] = get_furniture_color( f.obj(), here, p );
 
+    auto draw_id = [&]( const auto & obj, const tile_search_params & tile, const lit_level draw_ll,
+    const bool nv ) {
+        if( plant_sway_enabled && draw_ll != lit_level::MEMORIZED ) {
+            active_sprite_fx = make_plant_sway_fx( {
+                .elapsed_ms = plant_sway_elapsed_ms,
+                .weather = plant_sway_weather_at( here, p ),
+                .x = p.x(),
+                .y = p.y(),
+                .tree = obj.has_flag( TFLAG_TREE ),
+                .young = obj.has_flag( TFLAG_YOUNG ),
+                .shrub = obj.has_flag( TFLAG_SHRUB ),
+            } );
+        }
+        const auto drawn = draw_from_id_string(
+                               tile, p, bgCol, fgCol,
+                               draw_ll, nv, z_drop, false, height_3d );
+        active_sprite_fx = {};
+        return drawn;
+    };
+
     // first memorize the actual furniture
     if( f && !invisible[0] ) {
         const int neighborhood[4] = {
@@ -5354,9 +5481,7 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
         // draw the actual furniture if there's no override
         if( !neighborhood_overridden ) {
             const tile_search_params tile { fname, C_FURNITURE, empty_string, subtile, rotation};
-            return draw_from_id_string(
-                       tile, p, bgCol, fgCol,
-                       ll, true, z_drop, false, height_3d );
+            return draw_id( f.obj(), tile, ll, true );
         }
     }
     if( invisible[0] ? overridden : neighborhood_overridden ) {
@@ -5393,9 +5518,7 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
             const lit_level lit = overridden ? lit_level::LIT : ll;
             const bool nv = !overridden;
             const tile_search_params tile { fname, C_FURNITURE, empty_string, subtile, rotation };
-            return draw_from_id_string(
-                       tile, p, bgCol, fgCol,
-                       lit, nv, z_drop, false, height_3d );
+            return draw_id( f2.obj(), tile, lit, nv );
         }
     } else if( invisible[0] ) {
         // try drawing memory if invisible and not overridden

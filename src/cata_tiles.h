@@ -14,6 +14,7 @@
 #include "sdl_geometry.h"
 #include "sdl_utils.h"
 #include "sdl_wrappers.h"
+#include "sprite_fx.h"
 #include "type_id.h"
 #include "weather/weather.h"
 #include "weighted_list.h"
@@ -209,6 +210,9 @@ class texture
         int get_color_mod( uint8_t *r, uint8_t *g, uint8_t *b ) const {
             return SDL_GetTextureColorMod( sdl_texture_ptr.get(), r, g, b );
         }
+
+        /// Draw a sprite-local mesh with atlas UV remapping via SDL_RenderGeometry.
+        auto render_geometry( const SDL_Renderer_Ptr &renderer, const sprite_fx_mesh &mesh ) const -> bool;
 };
 
 enum class tint_blend_mode : uint8_t {
@@ -1213,6 +1217,11 @@ class cata_tiles
 
         // Active warp hash for character rendering (0 if none)
         size_t active_warp_hash = TILESET_NO_WARP;
+
+        // Per-draw cosmetic deformation. Set around one terrain/furniture blit, then cleared.
+        sprite_fx active_sprite_fx{};
+        bool plant_sway_enabled = false;
+        int plant_sway_elapsed_ms = 0;
 
         pimpl<pixel_minimap> minimap;
 
