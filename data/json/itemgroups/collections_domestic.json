@@ -853,6 +853,7 @@
       { "item": "sunglasses", "prob": 90 },
       { "item": "fitover_sunglasses", "prob": 60 },
       { "item": "fancy_sunglasses", "prob": 5 },
+      { "item": "aviators", "prob": 5 },
       { "item": "glasses_reading", "prob": 90 },
       { "item": "glasses_bifocal", "prob": 90 },
       { "item": "towel", "prob": 40 },
