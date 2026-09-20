@@ -23,7 +23,7 @@
     "entries": [
       {
         "distribution": [
-          { "distribution": [ { "item": "sunglasses", "prob": 80 }, { "item": "fancy_sunglasses", "prob": 20 } ], "prob": 25 },
+          { "distribution": [ { "item": "sunglasses", "prob": 60 }, { "item": "aviators", "prob": 20 }, { "item": "fancy_sunglasses", "prob": 20 } ], "prob": 25 },
           {
             "collection": [
               {
@@ -405,7 +405,7 @@
           { "distribution": [ { "item": "briefs" }, { "item": "boxer_briefs" }, { "item": "boxer_shorts" } ] }
         ]
       },
-      { "distribution": [ { "item": "fancy_sunglasses", "prob": 95 }, { "item": "glasses_bal", "prob": 5 } ] },
+      { "distribution": [ { "item": "aviators", "prob": 95 }, { "item": "glasses_bal", "prob": 5 } ] },
       { "group": "clothing_watch", "prob": 85 },
       { "item": "army_powered_earmuffs", "prob": 25 },
       { "item": "goggles_ir", "prob": 10 }
@@ -2042,6 +2042,7 @@
       [ "goggles_swim", 90 ],
       [ "wetsuit_hood", 30 ],
       [ "fancy_sunglasses", 1 ],
+      [ "aviators", 1 ],
       [ "rebreather", 1 ],
       [ "fitover_sunglasses", 5 ],
       [ "sunglasses", 10 ]
