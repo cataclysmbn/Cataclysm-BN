@@ -309,6 +309,7 @@
         "effects": [ { "id": "slimed", "duration": 40 } ]
       }
     ],
+    "grab_strength": 2,
     "death_function": [ "ACID", "NORMAL" ],
     "upgrades": { "half_life": 42, "into_group": "GROUP_NULL", "into": "mon_zombie_ichor_brute" },
     "extend": { "flags": [ "ACIDPROOF", "ACID_BLOOD" ], "harvest": "zombie_acid" }
