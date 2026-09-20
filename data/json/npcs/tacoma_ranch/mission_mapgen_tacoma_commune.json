@@ -939,9 +939,9 @@
       },
       "furniture": { "r": "f_rack_wood" },
       "place_item": [
-        { "item": "log", "x": 4, "y": 1 },
-        { "item": "log", "x": 4, "y": 2, "amount": 2 },
-        { "item": "log", "x": 4, "y": 3 },
+        { "item": "log", "x": 4, "y": 0 },
+        { "item": "log", "x": 4, "y": 1, "amount": 2 },
+        { "item": "log", "x": 4, "y": 2 },
         { "item": "log", "x": 1, "y": 1, "amount": [ 1, 5 ] },
         { "item": "log", "x": 2, "y": 1, "amount": [ 1, 5 ] },
         { "item": "2x4", "x": 4, "y": 8, "amount": [ 1, 10 ] }
