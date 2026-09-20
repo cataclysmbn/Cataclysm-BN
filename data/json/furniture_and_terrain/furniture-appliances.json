@@ -67,7 +67,7 @@
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50 }
     }
-        }
+        },
   {
     "type": "furniture",
     "id": "f_air_filter",

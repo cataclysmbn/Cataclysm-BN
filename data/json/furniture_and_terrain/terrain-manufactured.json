@@ -535,7 +535,7 @@
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "PLACE_ITEM", "ADV_DECONSTRUCT" ],
+    "flags": [ "PLACE_ITEM", "NANOFAB_BODY", "ADV_DECONSTRUCT" ],
     "deconstruct": {
       "ter_set": "t_floor",
       "items": [
@@ -577,6 +577,8 @@
     "looks_like": "t_console",
     "move_cost": 0,
     "coverage": 50,
+    "flags": [ "WALL", "NOITEM", "PERMEABLE" ],
+    "examine_action": "nanofab",
     "deconstruct": {
       "ter_set": "t_concrete",
       "items": [
