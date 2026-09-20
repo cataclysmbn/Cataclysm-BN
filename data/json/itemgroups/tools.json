@@ -599,5 +599,6 @@
     "items": [
       { "group": "mechanics", "prob": 75 },
       { "item": "spray_can" , "prob": 25, "count": [1,3] }
+    ]
   }
 ]
