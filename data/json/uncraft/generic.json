@@ -1966,6 +1966,13 @@
     "flags": [ "BLIND_EASY" ]
   },
   {
+    "result": "aviators",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "glass_tinted", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
     "result": "felt_patch",
     "type": "uncraft",
     "time": "6 m",
