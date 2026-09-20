@@ -45,12 +45,7 @@
       { "id": "WRENCH", "level": 2 },
       { "id": "WRENCH_FINE", "level": 1 }
     ],
-    "components": [
-      [ [ "nanofab_item", 1 ] ],
-      [ [ "cable", 500 ] ],
-      [ [ "nanofab_body_item", 1 ] ],
-      [ [ "power_supply", 1 ] ]
-    ]
+    "components": [ [ [ "nanofab_item", 1 ] ], [ [ "cable", 500 ] ], [ [ "nanofab_body_item", 1 ] ], [ [ "power_supply", 1 ] ] ]
   },
   {
     "type": "recipe",

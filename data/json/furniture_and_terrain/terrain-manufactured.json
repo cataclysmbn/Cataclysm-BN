@@ -535,7 +535,7 @@
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "PLACE_ITEM", "ADV_DECONSTRUCT"],
+    "flags": [ "PLACE_ITEM", "ADV_DECONSTRUCT" ],
     "deconstruct": {
       "ter_set": "t_floor",
       "items": [
