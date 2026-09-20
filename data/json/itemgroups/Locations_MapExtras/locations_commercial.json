@@ -246,6 +246,7 @@
       [ "goggles_ir", 1 ],
       [ "glasses_monocle", 2 ],
       [ "fancy_sunglasses", 15 ],
+      [ "aviators", 15 ],
       [ "fc_hairpin", 5 ],
       [ "barrette", 5 ],
       [ "pearl_collar", 1 ],
@@ -1142,6 +1143,7 @@
           { "item": "sunglasses", "prob": 25 },
           { "item": "fitover_sunglasses", "prob": 20 },
           { "item": "fancy_sunglasses", "prob": 20 },
+          { "item": "aviators", "prob": 20 },
           { "item": "canteen", "prob": 20 },
           { "item": "camelbak", "prob": 20 }
         ]
