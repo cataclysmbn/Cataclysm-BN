@@ -240,6 +240,7 @@
       [ "sunglasses", 30 ],
       [ "fitover_sunglasses", 20 ],
       [ "fancy_sunglasses", 5 ],
+      [ "aviators", 5 ],
       [ "glasses_reading", 30 ],
       [ "shavingkit", 20 ],
       [ "elec_hairtrimmer", 10 ],
