@@ -298,6 +298,40 @@
   },
   {
     "type": "GENERIC",
+    "id": "nanofab_item",
+    "name": { "str": "Dismantled nanofabricator" },
+    "description": "The other half of a dismantled nanofabricator. Together, they could be made whole again. This was supposed to be the future. Should've been. Could've been...",
+    "material": [ "steel" ],
+    "symbol": "%",
+    "color": "dark_gray",
+    "volume": "248000 ml",
+    "weight": "250 kg"
+  },
+  {
+    "type": "GENERIC",
+    "id": "nanofab_body_item",
+    "name": { "str": "Dismantled nanofabricator body" },
+    "description": "One half of a dismantled nanofabricator. Pre-Cataclysm tech, the kind that would've revolutionized the old world. Without its counterpart, it's just a six-hundred-kilogram paperweight.",
+    "material": [ "steel" ],
+    "symbol": "%",
+    "color": "dark_gray",
+    "volume": "190000 ml",
+    "weight": "250 kg"
+  },
+  {
+    "type": "GENERIC",
+    "id": "portable_nanofab",
+    "looks_like": "f_control_station",
+    "name": { "str": "Portable nanofabricator" },
+    "description": "Two become one. Standing on the shoulders of the old world's giants, you have taken a step forward and become one yourself. A giant of the new world.",
+    "material": [ "steel" ],
+    "symbol": "%",
+    "color": "dark_gray",
+    "volume": "300000 ml",
+    "weight": "480 kg"
+  },
+  {
+    "type": "GENERIC",
     "id": "superglue",
     "category": "chems",
     "symbol": ",",
