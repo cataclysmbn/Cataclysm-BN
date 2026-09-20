@@ -300,7 +300,7 @@
     "type": "GENERIC",
     "id": "nanofab_item",
     "name": { "str": "dismantled nanofabricator control panel" },
-    "description": "The control panel of a dismantled nanofabricator.  Must be attached to the body to make the nanofabricator work again.",
+    "description": "The control panel from a dismantled nanofabricator.  Must be attached to the body to make the nanofabricator work again.",
     "material": [ "steel" ],
     "symbol": "%",
     "color": "dark_gray",
