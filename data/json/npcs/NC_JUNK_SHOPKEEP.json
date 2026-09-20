@@ -69,7 +69,6 @@
       { "item": "mask_gas", "prob": 25 },
       { "item": "mask_filter", "prob": 20 },
       { "item": "sunglasses", "prob": 15 },
-      { "item": "aviators", "prob": 5 },
       { "item": "glasses_safety", "prob": 15 },
       { "item": "goggles_ski", "prob": 5 },
       { "item": "tacvest", "prob": 20 },
