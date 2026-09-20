@@ -537,7 +537,7 @@
     "coverage": 65,
     "flags": [ "PLACE_ITEM", "NANOFAB_BODY", "ADV_DECONSTRUCT" ],
     "deconstruct": {
-      "ter_set": "t_floor",
+      "ter_set": "t_strconc_floor",
       "items": [
         { "item": "nanofab_body_item", "charges": 1 },
         { "item": "power_supply", "charges": [ 3, 3 ] },
@@ -580,7 +580,7 @@
     "flags": [ "WALL", "NOITEM", "PERMEABLE" ],
     "examine_action": "nanofab",
     "deconstruct": {
-      "ter_set": "t_concrete",
+      "ter_set": "t_strconc_floor",
       "items": [
         { "item": "nanofab_item", "charges": 1 },
         { "item": "power_supply", "charges": [ 3, 3 ] },
