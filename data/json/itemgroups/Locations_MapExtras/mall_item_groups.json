@@ -141,6 +141,7 @@
       [ "glasses_bifocal", 30 ],
       [ "glasses_safety", 30 ],
       [ "fancy_sunglasses", 5 ],
+      [ "aviators", 5 ],
       [ "glasses_reading", 50 ],
       [ "glasses_eye", 85 ]
     ]
