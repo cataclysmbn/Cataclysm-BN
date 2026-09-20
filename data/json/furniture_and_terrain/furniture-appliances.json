@@ -40,7 +40,7 @@
   {
     "type": "furniture",
     "id": "f_nanofab_portable",
-    "name": "Portable nanofabricator unit",
+    "name": "portable nanofabricator unit",
     "description": "An ugly amalgamation, grafted together from a nanofabricator body and its interface console.  Needless to say, it's significantly more fragile, but it's more compact and portable.  Somewhat.",
     "symbol": "%",
     "bgcolor": "white",
