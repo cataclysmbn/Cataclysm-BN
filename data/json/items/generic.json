@@ -299,8 +299,8 @@
   {
     "type": "GENERIC",
     "id": "nanofab_item",
-    "name": { "str": "Dismantled nanofabricator" },
-    "description": "The other half of a dismantled nanofabricator. Together, they could be made whole again. This was supposed to be the future. Should've been. Could've been...",
+    "name": { "str": "dismantled nanofabricator control panel" },
+    "description": "The control panel of a dismantled nanofabricator.  Must be attached to the body to make the nanofabricator work again.",
     "material": [ "steel" ],
     "symbol": "%",
     "color": "dark_gray",
@@ -310,8 +310,8 @@
   {
     "type": "GENERIC",
     "id": "nanofab_body_item",
-    "name": { "str": "Dismantled nanofabricator body" },
-    "description": "One half of a dismantled nanofabricator.  Pre-Cataclysm tech, the kind that would've revolutionized the old world.  Without its counterpart, it's just a two-hundred-fifty-kilogram paperweight.",
+    "name": { "str": "dismantled nanofabricator body" },
+    "description": "The machinery from a dismantled nanofabricator.  This massive column of advanced 3d printers and robotic assemblers is useless without its control panel.",
     "material": [ "steel" ],
     "symbol": "%",
     "color": "dark_gray",

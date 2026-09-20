@@ -28,7 +28,7 @@
     "category": "CC_ELECTRONIC",
     "subcategory": "CSC_ELECTRONIC_OTHER",
     "skill_used": "electronics",
-    "skills_required": [ [ "computer", 8 ], [ "mechanics", 8 ] ],
+    "skills_required": [ [ "computer", 8 ], [ "mechanics", 8 ], [ "fabrication", 8 ] ],
     "difficulty": 10,
     "time": "24 h",
     "reversible": true,
