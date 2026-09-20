@@ -415,6 +415,7 @@
     "melee_dice": 2,
     "melee_dice_sides": 6,
     "melee_cut": 5,
+    "grab_strength": 2,
     "special_attacks": [
       [ "GRAB", 5 ],
       {
@@ -459,6 +460,7 @@
     "morale": 10,
     "melee_skill": 3,
     "melee_dice_sides": 5,
+    "grab_strength": 3,
     "special_attacks": [
       [ "GRAB", 8 ],
       {
@@ -510,6 +512,7 @@
     "melee_dice": 3,
     "melee_dice_sides": 6,
     "melee_damage": [ { "damage_type": "stab", "amount": 15, "armor_penetration": 25 } ],
+    "grab_strength": 4,
     "special_attacks": [
       [ "GRAB_DRAG", 12 ],
       {
