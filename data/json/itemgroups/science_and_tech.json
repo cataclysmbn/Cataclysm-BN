@@ -355,10 +355,6 @@
     "items": [
       { "group": "ammo_atomic_batteries", "prob": 10 },
       { "group": "ammo_atomic_batteries_full", "prob": 10 },
-      [ "screwdriver", 40 ],
-      [ "screwdriver_set", 40 ],
-      [ "wrench", 30 ],
-      [ "pliers", 20 ],
       [ "jumpsuit", 20 ],
       [ "mask_dust", 65 ],
       [ "wrapped_rad_badge", 15 ],
