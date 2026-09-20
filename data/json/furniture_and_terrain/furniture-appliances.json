@@ -56,7 +56,11 @@
       "str_max": 50,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
-      "items": [ { "item": "scrap", "count": [ 20, 70 ] }, { "item": "e_scrap", "count": [ 20, 70 ] }, { "item": "plut_cell", "count": [ 10, 20 ] } ],
+      "items": [
+        { "item": "scrap", "count": [ 20, 70 ] },
+        { "item": "e_scrap", "count": [ 20, 70 ] },
+        { "item": "plut_cell", "count": [ 10, 20 ] }
+      ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50 }
     }

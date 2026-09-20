@@ -47,7 +47,13 @@
       { "id": "VOLT_MEASURE", "level": 1 },
       { "id": "HV_INSULATION", "level": 1 }
     ],
-    "components": [ [ [ "nanofab_item", 1 ] ], [ [ "cable", 500 ] ], [ [ "huge_atomic_battery_cell", 1 ] ], [ [ "nanofab_body_item", 1 ] ], [ [ "power_supply", 1 ] ] ]
+    "components": [
+      [ [ "nanofab_item", 1 ] ],
+      [ [ "cable", 500 ] ],
+      [ [ "huge_atomic_battery_cell", 1 ] ],
+      [ [ "nanofab_body_item", 1 ] ],
+      [ [ "power_supply", 1 ] ]
+    ]
   },
   {
     "type": "recipe",
