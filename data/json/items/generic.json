@@ -323,7 +323,7 @@
     "id": "portable_nanofab",
     "looks_like": "f_control_station",
     "name": { "str": "portable nanofabricator" },
-    "description": "Two become one. Standing on the shoulders of the old world's giants, you have taken a step forward and become one yourself. A giant of the new world.",
+    "description": "A massive nanofabricator manufacturing column and it's control panel combined together into a semi-portable unit.",
     "material": [ "steel" ],
     "symbol": "%",
     "color": "dark_gray",
