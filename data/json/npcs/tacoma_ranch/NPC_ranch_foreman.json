@@ -299,8 +299,7 @@
         },
         {
           "om_terrain": "ranch_camp_58",
-          "translate_ter": [ { "from": "t_underbrush", "to": "t_dirt", "x": 0, "y": 0 } ],
-          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_4" ], "x": 0, "y": 2 } ]
+          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_4" ], "x": 0, "y": 0 } ]
         },
         {
           "om_terrain": "ranch_camp_67",
@@ -340,7 +339,7 @@
         },
         {
           "om_terrain": "ranch_camp_58",
-          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_5" ], "x": 0, "y": 2 } ],
+          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_5" ], "x": 0, "y": 0 } ],
           "set": [ { "point": "terrain", "id": "t_pit", "x": 6, "y": 18 } ]
         },
         {
@@ -381,7 +380,7 @@
       "update_mapgen": [
         {
           "om_terrain": "ranch_camp_58",
-          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_6" ], "x": 0, "y": 2 } ],
+          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_6" ], "x": 0, "y": 0 } ],
           "set": [ { "point": "terrain", "id": "t_covered_well", "x": 6, "y": 18 } ]
         },
         {
@@ -437,7 +436,7 @@
         },
         {
           "om_terrain": "ranch_camp_58",
-          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_7" ], "x": 0, "y": 2 } ],
+          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_7" ], "x": 0, "y": 0 } ],
           "//": "finish the well",
           "set": [
             { "square": "terrain", "id": "t_sidewalk", "x": 5, "y": 17, "x2": 7, "y2": 19 },
@@ -486,7 +485,8 @@
         },
         {
           "om_terrain": "ranch_camp_58",
-          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_8_done" ], "x": 0, "y": 2 } ]
+          "//": "finish the lumbermill",
+          "place_nested": [ { "chunks": [ "tacoma_commune_lumbermill_8_done" ], "x": 0, "y": 0 } ]
         },
         {
           "om_terrain": "ranch_camp_59",
