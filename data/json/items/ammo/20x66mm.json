@@ -55,7 +55,7 @@
     "range": 20,
     "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 4, "armor_multiplier": 1.5 },
     "dispersion": 120,
-    "effects": [ "COOKOFF", "EXPLOSIVE_TINY", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "COOKOFF", "AMMO_20x66_EXP", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "id": "20x66_flare",
