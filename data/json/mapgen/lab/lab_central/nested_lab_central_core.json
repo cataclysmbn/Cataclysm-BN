@@ -1548,7 +1548,7 @@
         "                  "
       ],
       "palettes": [ "central_lab_palette" ],
-      "items": { "r": [ { "item": "bionics", "chance": 50, "repeat": 2 }, { "item": "autodoc_installation_programs", "chance": 25 } ] }
+      "items": { "r": [ { "item": "bionics", "chance": 50 }, { "item": "autodoc_installation_programs", "chance": 25 } ] }
     }
   },
   {
@@ -1558,13 +1558,13 @@
     "object": {
       "mapgensize": [ 18, 9 ],
       "rows": [
-        "u   999    999   u",
+        "u   999{{{{999   u",
         "     h      h     ",
-        "{                {",
-        "{                {",
-        "{   rrr    rrr   {",
-        "{                {",
-        "{    U      U    {",
+        "                  ",
+        "                  ",
+        "    rrr    rrr    ",
+        "                  ",
+        "     U      U     ",
         "                  ",
         "                  "
       ],
@@ -1572,6 +1572,27 @@
       "furniture": { "U": "f_standing_tank" },
       "liquids": { "U": { "liquid": "mutagen", "amount": [ 100, 200 ] } },
       "items": { "{": { "item": "books_bank_vault", "chance": 50 }, "r": { "item": "mutagens", "chance": 50, "repeat": 4 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_storage_18x9",
+    "object": {
+      "mapgensize": [ 18, 9 ],
+      "rows": [
+        "u                 u",
+        "                  ",
+        "  rr  rr  rr  rr  ",
+        "  rr  rr  rr  rr  ",
+        "  rr  rr  rr  rr  ",
+        "  rr  rr  rr  rr  ",
+        "  rr  rr  rr  rr  ",
+        "                  ",
+        "                  "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "items": { "r": [ { "item": "military", "chance": 50 }, { "item": "energy_weapon_armory", "chance": 10 } ] }
     }
   },
   {
