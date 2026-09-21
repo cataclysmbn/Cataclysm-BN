@@ -311,7 +311,7 @@
     "type": "GENERIC",
     "id": "nanofab_body_item",
     "name": { "str": "dismantled nanofabricator body" },
-    "description": "The machinery from a dismantled nanofabricator.  This massive column of advanced 3d printers and robotic assemblers is useless without its control panel.",
+    "description": "The machinery from a dismantled nanofabricator.  This massive column of advanced 3D printers and robotic assemblers is useless without its control panel.",
     "material": [ "steel" ],
     "symbol": "%",
     "color": "dark_gray",
