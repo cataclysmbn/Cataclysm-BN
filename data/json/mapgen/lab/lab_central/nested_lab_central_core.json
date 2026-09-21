@@ -1413,5 +1413,219 @@
       "palettes": [ "central_lab_palette" ],
       "terrain": { "1": "t_conveyor" }
     }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_22x14",
+    "//": "Variations on finale content for the endgame lab.  Note: should not contain mininukes, since the player is expected to put in the effort to obtain those elsewhere to get the good ending, and it'd be silly for them to spawn sitting practically right outside the finale they're used in.",
+    "object": {
+      "mapgensize": [ 22, 14 ],
+      "rows": [
+        "u#                  #u",
+        "##                  ##",
+        "                      ",
+        "                      ",
+        "    ||||||==7|||||    ",
+        "    |r          r|    ",
+        "    |r 6      6 r|    ",
+        "    |r 6      6 r|    ",
+        "!!!!|r          r|!!!!",
+        "|++|||WWWWWWWWWW|||++|",
+        "!!!!!  99999999   !!!!",
+        "         h  h         ",
+        "                      ",
+        "                      "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "|": "t_strconc_wall", "+": "t_door_metal_interior_locked" },
+      "monster": { "u": { "monster": "mon_turret_medium" } },
+      "place_nested": [ { "chunks": [ "central_lab_minifinale_fabrication_12x4" ], "x": 5, "y": 5 } ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 1, 20 ], "y": [ 11, 12 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_fabrication_12x4",
+    "object": {
+      "mapgensize": [ 12, 4 ],
+      "rows": [
+        "            ",
+        "   1    1   ",
+        "   2    2   ",
+        "            "
+      ],
+      "terrain": { "1": "t_nanofab", "2": "t_nanofab_body" },
+      "place_loot": [
+        { "item": "standard_template_construct", "x": 0, "y": [ 0, 3 ], "chance": 75, "repeat": 6 },
+        { "item": "nanomaterial", "x": 11, "y": [ 0, 3 ], "chance": 75, "repeat": 6 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_fabrication_12x4",
+    "object": {
+      "mapgensize": [ 12, 4 ],
+      "rows": [
+        "            ",
+        "   1    1   ",
+        "   2    2   ",
+        "            "
+      ],
+      "terrain": { "1": "t_nanoforge", "2": "t_nanoforge_body" },
+      "place_loot": [
+        { "item": "sheet_metal", "x": 0, "y": [ 0, 3 ], "chance": 75, "repeat": 6 },
+        { "item": "alloy_sheet", "x": 0, "y": [ 0, 3 ], "chance": 75, "repeat": 6 },
+        { "item": "nanomaterial", "x": 11, "y": [ 0, 3 ], "chance": 75, "repeat": 6 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_fabrication_12x4",
+    "object": {
+      "mapgensize": [ 12, 4 ],
+      "rows": [
+        "            ",
+        "   1    1   ",
+        "   2    2   ",
+        "            "
+      ],
+      "terrain": { "1": "f_cvdmachine", "2": "t_cvdbody" },
+      "place_loot": [
+        { "group": "microlab_storage_cvd_hydrogen", "x": 0, "y": [ 0, 3 ], "chance": 75, "repeat": 6 },
+        { "group": "microlab_storage_cvd_carbon", "x": 11, "y": [ 0, 3 ], "chance": 75, "repeat": 6 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_22x14",
+    "object": {
+      "mapgensize": [ 22, 14 ],
+      "rows": [
+        "|--------------------|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-                  -|",
+        "|-##     !!!!     ##-|",
+        "|-u#     !  !     #u-|",
+        "|---------==---------|",
+        "|||||||||-!!7|||||||||"
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "-": "t_strconc_wall" },
+      "monster": { "u": { "monster": "mon_turret_medium" } },
+      "place_nested": [ { "chunks": [ "central_lab_minifinale_storage_18x9" ], "x": 2, "y": 1 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_storage_18x9",
+    "object": {
+      "mapgensize": [ 18, 9 ],
+      "rows": [
+        "u rrrrrr  rrrrrr u",
+        "                  ",
+        "                  ",
+        "  rrrrrr  rrrrrr  ",
+        "                  ",
+        "                  ",
+        "  rrrrrr  rrrrrr  ",
+        "                  ",
+        "                  "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "items": { "r": [ { "item": "bionics", "chance": 50, "repeat": 2 }, { "item": "autodoc_installation_programs", "chance": 25 } ] }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_storage_18x9",
+    "object": {
+      "mapgensize": [ 18, 9 ],
+      "rows": [
+        "u   999    999   u",
+        "     h      h     ",
+        "{                {",
+        "{                {",
+        "{   rrr    rrr   {",
+        "{                {",
+        "{    U      U    {",
+        "                  ",
+        "                  "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "furniture": { "U": "f_standing_tank" },
+      "liquids": { "U": { "liquid": "mutagen", "amount": [ 100, 200 ] } },
+      "items": { "{": { "item": "books_bank_vault", "chance": 50 }, "r": { "item": "mutagens", "chance": 50, "repeat": 4 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_22x14",
+    "object": {
+      "mapgensize": [ 22, 14 ],
+      "rows": [
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "items": { "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_22x14",
+    "object": {
+      "mapgensize": [ 22, 14 ],
+      "rows": [
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      ",
+        "                      "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "items": { "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+    }
   }
 ]

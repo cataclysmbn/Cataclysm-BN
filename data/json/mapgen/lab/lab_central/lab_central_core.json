@@ -990,45 +990,32 @@
       "rows": [
         "------------------------",
         "||||||||||||||||||||||||",
-        "=       =      =       =",
-        "=       =      =       =",
-        "=       =      =       =",
-        "=       +      +       =",
-        "=       =      =       =",
-        "=       =      =       =",
-        "=       =      =       =",
-        "=========      =========",
-        "=    =            =    =",
-        "+    +            +    +",
-        "+    +            +    +",
-        "=    =    u  u    =    =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
+        "=                      =",
         "===========++===========",
-        "= 6666666 u  u 6666666 =",
-        "=  h h h        h h h  =",
-        "=                      =",
-        "= CCCCCCC      CCCCCCC =",
-        "+ CCCCCCC      CCCCCCC +",
-        "+ CCCCCCC      CCCCCCC +",
-        "= CCCCCCC      CCCCCCC =",
-        "=                      =",
+        "=666666666u  u666666666=",
+        "= h h h h      h h h h =",
+        "+                      +",
+        "+                      +",
+        "=CCCCCCCC      CCCCCCCC=",
+        "=CCCCCCCCu    uCCCCCCCC=",
         "==========    =========="
       ],
       "palettes": [ "central_lab_palette" ],
       "terrain": { "=": "t_strconc_wall" },
-      "place_nested": [
-        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
-        { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 1,
-          "y": 10
-        },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 19,
-          "y": 10
-        }
-      ]
+      "place_nested": [ { "chunks": [ "central_lab_minifinale_22x14" ], "x": 1, "y": 2 } ]
     }
   },
   {
