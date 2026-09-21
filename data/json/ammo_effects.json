@@ -430,6 +430,16 @@
     }
   },
   {
+    "id": "AMMO_SHOT_HE",
+    "type": "ammo_effect",
+    "explosion": { "damage": 50, "radius": 1 }
+  },
+  {
+    "id": "AMMO_20x66_EXP",
+    "type": "ammo_effect",
+    "explosion": { "damage": 70, "radius": 1 }
+  },
+  {
     "id": "AMMO_25MM_HEI",
     "type": "ammo_effect",
     "explosion": {
