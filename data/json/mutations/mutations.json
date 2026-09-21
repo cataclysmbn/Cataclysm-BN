@@ -2852,7 +2852,7 @@
     "name": { "str": "Padded Feet" },
     "points": 1,
     "visibility": 1,
-    "description": "The bottoms of your feet are strongly padded.  If you're not wearing footwear, you'll receive a 10% bonus to movement speed.",
+    "description": "The bottoms of your feet are strongly padded.  If you're not wearing any shoes, you'll receive a 10% bonus to movement speed.",
     "types": [ "LEGS" ],
     "category": [ "BEAST", "URSINE", "FELINE", "LUPINE" ]
   },
