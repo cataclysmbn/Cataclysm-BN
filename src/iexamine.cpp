@@ -5869,7 +5869,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
         p.add_msg_if_player( m_warning, _( "You cannot jump from water." ) );
         return false;
     }
-    // small mutants can vault over zombies, otherwise just smaller creatures, and wings allow you to vault over anything
+
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
         if( blocking_creature->get_size() >= p.get_size() ) {
             p.add_msg_if_player( m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
@@ -5922,8 +5922,9 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
 
     if( p.has_effect( effect_grabbed ) ) {
         p.add_msg_if_player( m_bad, _( "You can't jump while being grabbed!" ) );
+        return false;
     }
-    return false;
+
 
     return true;
 }
