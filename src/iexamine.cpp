@@ -5872,7 +5872,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
         return false;
     }
     // fish mutants get to act like dolphins
-    if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait ( trait_THRESH_FISH ) ) {
+    if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait( trait_THRESH_FISH ) ) {
         if( show_messages ) {
             add_msg( m_warning, _( "You cannot jump from water." ) );
         }
@@ -5930,25 +5930,25 @@ auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messag
 
     if( p.get_working_leg_count() < 2 ) {
         if( show_messages ) {
-                    add_msg( m_bad, _( "You need two functional legs to jump." ) );
+            add_msg( m_bad, _( "You need two functional legs to jump." ) );
         }
         return false;
     }
 
     if( p.is_mounted() ) {
         if( show_messages ) {
-                    add_msg (m_bad, _( "Your steed cannot jump this far.") );
-        return false;
+            add_msg( m_bad, _( "Your steed cannot jump this far." ) );
+            return false;
         }
     }
 
     if( p.has_effect( effect_grabbed ) ) {
-        if ( show_messages ) {
-                    add_msg (m_bad, _( "You can't jump while being grabbed!" ) );
+        if( show_messages ) {
+            add_msg( m_bad, _( "You can't jump while being grabbed!" ) );
         }
     }
-        return false;
-    
+    return false;
+
     return true;
 }
 
