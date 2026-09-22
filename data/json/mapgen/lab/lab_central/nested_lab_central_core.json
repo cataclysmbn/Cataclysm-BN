@@ -1581,7 +1581,7 @@
     "object": {
       "mapgensize": [ 18, 9 ],
       "rows": [
-        "u                 u",
+        "u                u",
         "                  ",
         "  rr  rr  rr  rr  ",
         "  rr  rr  rr  rr  ",
@@ -1602,51 +1602,82 @@
     "object": {
       "mapgensize": [ 22, 14 ],
       "rows": [
+        "u                    u",
+        "  CCCCCCCCCCCCCCCCCC  ",
+        "  CCCCCCCCCCCCCCCCCC  ",
         "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
+        "  ||WWWWW|++|WWWWW||  ",
+        "  |                |  ",
+        "  W                W  ",
+        "  W                W  ",
+        "  W                W  ",
+        "  W                W  ",
+        "  |                |  ",
+        "  ||WWWWW|++|WWWWW||  ",
         "                      ",
         "                      "
       ],
       "palettes": [ "central_lab_palette" ],
-      "items": { "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
-      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+      "terrain": { "|": "t_strconc_wall" },
+      "place_nested": [ { "chunks": [ "central_lab_minifinale_workstation_16x6" ], "x": 3, "y": 5 } ]
     }
   },
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "central_lab_minifinale_22x14",
+    "nested_mapgen_id": "central_lab_minifinale_workstation_16x6",
     "object": {
-      "mapgensize": [ 22, 14 ],
+      "mapgensize": [ 16, 6 ],
       "rows": [
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      ",
-        "                      "
+        "9              r",
+        "9   dd    {{{  r",
+        "96  dh         r",
+        "91  dh         r",
+        "9   dd    {{{  r",
+        "9              r"
       ],
       "palettes": [ "central_lab_palette" ],
-      "items": { "e": { "item": "magazines", "chance": 50, "repeat": 4 } },
-      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 14 ], "y": [ 5, 14 ], "chance": 50 } ]
+      "terrain": { "1": "f_artifact_analyzer_console" },
+      "place_loot": [
+        { "item": "sample_t_substrate", "x": 4, "y": [ 1, 4 ], "chance": 100 },
+        { "item": "log_immersion27", "x": 4, "y": [ 1, 4 ], "chance": 100 },
+        { "item": "HAADF_t_substrate", "x": 4, "y": [ 1, 4 ], "chance": 100 },
+        { "item": "report_t_substrate", "x": 4, "y": [ 1, 4 ], "chance": 100 },
+        { "item": "dimensional_anchor", "x": 15, "y": 0, "chance": 100 },
+        { "item": "phase_immersion_suit", "x": 15, "y": 0, "chance": 100 },
+        { "group": "portal_room_gear", "x": 15, "y": [ 3, 5 ], "chance": 50, "repeat": 6 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_minifinale_workstation_16x6",
+    "object": {
+      "mapgensize": [ 16, 6 ],
+      "rows": [
+        "                ",
+        " rr         1  1",
+        " rr       6     ",
+        " rr       2     ",
+        "            1  1",
+        "                "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "1": "t_radio_tower", "2": "t_radio_controls", "1": "f_artifact_analyzer_console" },
+      "computers": {
+        "6": {
+          "name": "Sub-prime Contact Console",
+          "access_denied": "ERROR!  Access denied!  Unauthorized access will be met with lethal force!",
+          "security": 2,
+          "options": [
+            { "name": "Toggle Portal", "action": "portal", "security": 8 },
+            { "name": "Activate Resonance Cascade", "action": "cascade", "security": 10 }
+          ],
+          "failures": [ { "action": "damage" }, { "action": "secubots" } ]
+        }
+      },
+      "items": { "r": { "item": "portal_room_gear", "chance": 50, "repeat": 4 } }
     }
   }
 ]
