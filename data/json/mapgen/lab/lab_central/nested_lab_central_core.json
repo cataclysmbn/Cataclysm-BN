@@ -1639,7 +1639,7 @@
       ],
       "palettes": [ "central_lab_palette" ],
       "furniture": { "1": "f_artifact_analyzer_console" },
-      "items": { "}": { "item": "books_bank_vault", "chance": 50 } }
+      "items": { "}": { "item": "books_bank_vault", "chance": 50 } },
       "place_loot": [
         { "item": "sample_t_substrate", "x": [ 4, 6 ], "y": 3, "chance": 100 },
         { "item": "log_immersion27", "x": [ 4, 6 ], "y": 3, "chance": 100 },
