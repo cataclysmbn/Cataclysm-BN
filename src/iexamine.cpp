@@ -136,6 +136,7 @@ static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_bouldering( "bouldering" );
 static const efftype_id effect_disinfected( "disinfected" );
 static const efftype_id effect_earphones( "earphones" );
+static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_pblue( "pblue" );
 static const efftype_id effect_pkill2( "pkill2" );
@@ -5871,7 +5872,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
         return false;
     }
     // fish mutants get to act like dolphins
-    if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait ( THRESH_FISH ) ) {
+    if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait ( trait_THRESH_FISH ) ) {
         if( show_messages ) {
             add_msg( m_warning, _( "You cannot jump from water." ) );
         }
@@ -5941,7 +5942,7 @@ auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messag
         }
     }
 
-    if( p->has_effect( effect_grabbed ) ) {
+    if( p.has_effect( effect_grabbed ) ) {
         if ( show_messages ) {
                     add_msg (m_bad, _( "You can't jump while being grabbed!" ) );
         }
