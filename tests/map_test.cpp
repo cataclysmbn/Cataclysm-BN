@@ -521,7 +521,7 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
         g->u.set_str_bonus(0);
         g->u.str_cur = g->u.get_str();
 
-        CHECK_FALSE(iexamine::can_start_jump_over_tile(g->u, true));
+        CHECK_FALSE(iexamine::can_start_jump_over_tile(g->u));
     }
 
     SECTION("cannot start when stamina is below the jump cost") {
@@ -531,7 +531,7 @@ TEST_CASE("jump_over_tile_is_generic_but_reuses_ledge_landing_rules", "[map][mov
         REQUIRE(required_stamina > 0);
         g->u.set_stamina(required_stamina - 1);
 
-        CHECK_FALSE(iexamine::can_start_jump_over_tile(g->u, true));
+        CHECK_FALSE(iexamine::can_start_jump_over_tile(g->u));
         CHECK_FALSE(iexamine::can_jump_over_tile(g->u, middle));
         CHECK_FALSE(iexamine::jump_over_tile(g->u, middle));
         CHECK(g->u.bub_pos() == origin);

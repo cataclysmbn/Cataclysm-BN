@@ -730,7 +730,7 @@ static void close()
 static auto jump() -> void
 {
     auto &you = get_avatar();
-    if( !iexamine::can_start_jump_over_tile( you, true ) ) {
+    if( !iexamine::can_start_jump_over_tile( you ) ) {
         return;
     }
 

@@ -128,6 +128,48 @@ bool can_noclip( const Character &ch )
     return ch.has_trait( trait_id( "DEBUG_NOCLIP" ) );
 }
 
+bool has_wings( Character &ch )
+{
+
+    // if the player can noclip, flying is technically a part of that
+    if( can_noclip( ch ) ) {
+        return true;
+    }
+
+    for( const auto &w : ch.worn ) {
+        if( ( w->is_active() && w->has_flag( flag_ALLOWS_FLIGHT ) ) ||
+            w->has_flag( flag_ALWAYS_ALLOWS_FLIGHT ) ) {
+            return true;
+        }
+    }
+
+    Creature *mc = ch.mounted_creature.get();
+    if( mc && mc->has_flag( MF_FLIES ) ) {
+        return true;
+    }
+
+    for( const trait_id &mid : ch.get_mutations() ) {
+        auto it = ch.my_mutations.find( mid->id );
+        if( it != ch.my_mutations.end() ) {
+            if( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && ( can_use_mutation( mid, ch ) )
+                ||  mid->flags.contains( trait_flag_FLIGHT_ALWAYS_ACTIVE ) ) {
+                return true;
+            } else if( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && !can_use_mutation( mid, ch ) ) {
+                ch.deactivate_mutation( mid );
+                return false;
+            }
+        }
+    }
+    for( const bionic &bio : *ch.my_bionics ) {
+        if( bio.info().has_flag( flag_id( "BIONIC_FLIGHT" ) ) &&
+            ch.get_power_level() > units::from_kilojoule( 0 ) ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool can_fly( Character &ch )
 {
 
