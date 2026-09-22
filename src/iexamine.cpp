@@ -134,6 +134,7 @@ static const efftype_id effect_antibiotic( "antibiotic" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_disinfected( "disinfected" );
+static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_earphones( "earphones" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
@@ -5621,7 +5622,6 @@ static constexpr auto jump_over_tile_base_move_cost = 200;
 static constexpr auto jump_over_tile_min_strength = 4;
 static constexpr auto jump_over_tile_stamina_burn_ratio = 14;
 static const auto dashing_effect = efftype_id( "dashing" );
-static const auto effect_downed = efftype_id( "downed" );
 
 auto jump_over_tile_carried_weight_percentage( const player &p ) -> int
 {
