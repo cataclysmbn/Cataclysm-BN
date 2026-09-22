@@ -5922,7 +5922,7 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
         return false;
     }
 
-    if( p.has_effect( effect_downed || p.movement_mode_is( CMM_PRONE ) ) ) {
+    if( p.has_effect( effect_downed ) || p.movement_mode_is( CMM_PRONE ) ) {
         p.add_msg_if_player( m_bad, _( "You need to stand up in order to jump!" ) );
         return false;
     }
