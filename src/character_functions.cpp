@@ -170,7 +170,7 @@ bool has_wings( Character &ch )
     return false;
 }
 
-bool can_fly( Character &ch )
+bool can_fly( const Character &ch )
 {
 
     // if the player can noclip, flying is technically a part of that

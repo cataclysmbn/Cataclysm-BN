@@ -5846,7 +5846,7 @@ auto confirm_crash_through_window( const player &p,
     return query_yn( _( "Crash through the %s?" ), obstacle_name );
 }
 
-auto can_jump_over_tile_impl( player &p, const tripoint_bub_ms &examp_bub ) -> bool
+auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub ) -> bool
 {
     const auto jump_state = get_jump_over_tile_state( p, examp_bub );
     const auto dir = jump_state.examp - p.abs_pos();
