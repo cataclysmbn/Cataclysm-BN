@@ -5801,7 +5801,7 @@ auto jump_over_tile_stumble_roll( const player &p ) -> bool
         climb /= 2;
     }
     if( p.has_effect( effect_bouldering ) ) {
-        climb * 0.8
+        climb * 0.8;
     }
     if( p.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
         climb = static_cast<int>( climb / p.mutation_value( "movecost_obstacle_modifier" ) );
