@@ -5934,7 +5934,7 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
 
 auto iexamine::can_jump_over_tile( const player &p, const tripoint_bub_ms &examp ) -> bool
 {
-    return can_jump_over_tile_impl( p, example );
+    return can_jump_over_tile_impl( p, examp );
 }
 
 auto iexamine::jump_over_tile( player &p, const tripoint_bub_ms &examp ) -> bool
