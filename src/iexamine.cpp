@@ -134,6 +134,7 @@ static const efftype_id effect_antibiotic( "antibiotic" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_disinfected( "disinfected" );
+static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_earphones( "earphones" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
@@ -141,8 +142,10 @@ static const efftype_id effect_pblue( "pblue" );
 static const efftype_id effect_pkill2( "pkill2" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_strong_antibiotic( "strong_antibiotic" );
+static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_teleglow( "teleglow" );
 static const efftype_id effect_weak_antibiotic( "weak_antibiotic" );
+static const efftype_id effect_zapped( "zapped" );
 
 static const itype_id itype_2x4( "2x4" );
 static const itype_id itype_arm_splint( "arm_splint" );
@@ -5862,11 +5865,6 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
         !jump_over_tile_can_cross_impassable( here, p, jumped_tile ) ) {
         return false;
     }
-    // fish mutants get to act like dolphins
-    if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait( trait_THRESH_FISH ) ) {
-        p.add_msg_if_player( m_warning, _( "You cannot jump from water." ) );
-        return false;
-    }
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
         if( blocking_creature->get_size() >= p.get_size() ) {
@@ -5908,15 +5906,25 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
     }
 
     if( p.is_mounted() ) {
-        p.add_msg_if_player( m_bad, _( "Your steed cannot jump this far." ) );
+        p.add_msg_if_player( m_warning, _( "Your steed cannot jump this far." ) );
         return false;
     }
 
-    if( p.has_effect( effect_grabbed ) ) {
-        p.add_msg_if_player( m_bad, _( "You can't jump while being grabbed!" ) );
+    // fish mutants get to act like dolphins
+    if( here.has_flag( "DEEP_WATER", p.bub_pos() ) && !p.has_trait( trait_THRESH_FISH ) ) {
+        p.add_msg_if_player( m_warning, _( "You cannot jump from water." ) );
+        return false;
+    }
+    // a generic return for things you generally can't jump from
+    if( p.has_effect( effect_grabbed ) || p.has_effect( effect_zapped ) || p.has_effect( effect_stunned ) ) {
+        p.add_msg_if_player( m_bad, _( "You can't jump in your current state!" ) );
         return false;
     }
 
+    if( p.has_effect( effect_downed || p.movement_mode_is( CMM_PRONE ) ) ) {
+        p.add_msg_if_player( m_bad, _( "You need to stand up in order to jump!" ) );
+        return false;
+    }
 
     return true;
 }
