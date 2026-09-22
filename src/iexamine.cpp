@@ -5861,7 +5861,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
     if( here.impassable( jumped_tile ) &&
         !jump_over_tile_can_cross_impassable( here, p, jumped_tile ) ) {
         p.add_msg_if_player( m_warning, _( "You cannot jump through the %s." ),
-                     here.obstacle_name( jumped_tile ) );
+                             here.obstacle_name( jumped_tile ) );
         return false;
     }
     // fish mutants get to act like dolphins
@@ -5872,7 +5872,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
         if( blocking_creature->get_size() >= p.get_size() ) {
-            p.add_msg_if_player(  m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
+            p.add_msg_if_player( m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
             return false;
         }
     }
@@ -5881,13 +5881,14 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
     if( here.impassable( landing_tile ) &&
         !jump_over_tile_can_land_on_ledge( buffer, jump_state.dest ) ) {
         p.add_msg_if_player( m_warning, _( "You cannot land there - the %s is blocking the way." ),
-                     here.obstacle_name( landing_tile ) );
+                             here.obstacle_name( landing_tile ) );
         return false;
     }
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.dest ) ) {
-        p.add_msg_if_player( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
-                     blocking_creature->disp_name() );
+        p.add_msg_if_player( m_warning,
+                             _( "You cannot jump over an obstacle - there is %s blocking the way." ),
+                             blocking_creature->disp_name() );
         return false;
     }
 
@@ -5916,7 +5917,7 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
 
     if( p.is_mounted() ) {
         p.add_msg_if_player( m_bad, _( "Your steed cannot jump this far." ) );
-            return false;
+        return false;
     }
 
     if( p.has_effect( effect_grabbed ) ) {
