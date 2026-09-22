@@ -335,7 +335,7 @@ local function run_calm_dance_turn(mon, serialize_tripoint_abs_ms, deserialize_t
   mon:set_value("lua_dance_index", tostring((idx % #dance_points) + 1))
   mon:set_value("lua_dance_anchor_abs", serialize_tripoint_abs_ms(anchor_abs))
   if gapi.rng(1, 4) == 1 then
-    gapi.play_variant_sound("music", "dancer", 30)
+    gapi.play_variant_sound("music", "dancer", 30, true)
   else
     gapi.add_msg(MsgType.info, "♪ beep boop dance ♪")
   end
