@@ -48,7 +48,6 @@ public:
         -> bool override {
         const auto current_key = event.get_first_input();
         if (context.fallback_index != -1 && current_key == context.opening_key) {
-            // Select the first entry on the list.
             menu->ret = context.fallback_index;
             return true;
         }
@@ -211,8 +210,7 @@ auto query_menu(const player& who, item& base, std::vector<item_reload_option> o
 
     const auto base_ammo_type = ammotype(base.ammo_default().str());
     const auto last_ammo = uistate.lastreload[base_ammo_type];
-    // Keep the opening key so that pressing it twice, for example r-r for reload, always picks
-    // the first option on the list.
+    // Keep the key that opened this menu for hotkey assignment.
     const auto opening_key = inp_mngr.get_previously_pressed_key();
     auto hotkeys = reload_ui::prepare_hotkeys(last_ammo, opening_key);
 
