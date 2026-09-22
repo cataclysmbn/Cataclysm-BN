@@ -7019,7 +7019,7 @@ static void smoker_activate( player &p, const tripoint_bub_ms &examp )
 
 void iexamine::mill_finalize( player &, const tripoint_bub_ms &examp, const time_point &start_time )
 {
-        
+    map &here = get_map();
     const furn_id cur_mill_type = here.furn( examp );
     furn_id next_mill_type = f_null;
     if( cur_mill_type == f_wind_mill_active ) {
