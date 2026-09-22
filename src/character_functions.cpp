@@ -128,7 +128,7 @@ bool can_noclip( const Character &ch )
     return ch.has_trait( trait_id( "DEBUG_NOCLIP" ) );
 }
 
-bool has_wings( Character &ch )
+bool has_wings( const Character &ch )
 {
 
     // if the player can noclip, flying is technically a part of that
@@ -170,7 +170,7 @@ bool has_wings( Character &ch )
     return false;
 }
 
-bool can_fly( const Character &ch )
+bool can_fly( Character &ch )
 {
 
     // if the player can noclip, flying is technically a part of that
