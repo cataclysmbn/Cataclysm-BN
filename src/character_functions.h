@@ -37,8 +37,6 @@ void siphon( Character &ch, vehicle &veh, const itype_id &desired_liquid );
 
 bool can_noclip( const Character &ch );
 
-bool has_wings( const Character &ch );
-
 bool can_fly( Character &ch );
 
 auto is_driving( const Character &p ) -> bool;

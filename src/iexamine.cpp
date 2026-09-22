@@ -5875,7 +5875,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub 
     }
     // small mutants can vault over zombies, otherwise just smaller creatures, and wings allow you to vault over anything
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
-        if( blocking_creature->get_size() >= p.get_size() || character_funcs::has_wings( p ) ) {
+        if( blocking_creature->get_size() >= p.get_size() ) {
             p.add_msg_if_player( m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
             return false;
         }
