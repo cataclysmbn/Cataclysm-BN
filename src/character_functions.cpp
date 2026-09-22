@@ -154,9 +154,6 @@ bool has_wings( const Character &ch )
             if( ( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && ( can_use_mutation( mid, ch ) ) )
                 ||  mid->flags.contains( trait_flag_FLIGHT_ALWAYS_ACTIVE ) ) {
                 return true;
-            } else if( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && !can_use_mutation( mid, ch ) ) {
-                ch.deactivate_mutation( mid );
-                return false;
             }
         }
     }
