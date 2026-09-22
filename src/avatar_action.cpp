@@ -44,6 +44,8 @@
 #include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
+#include "reload/reload.h"
+#include "reload/reload_ui.h"
 #include "ret_val.h"
 #include "rng.h"
 #include "string_formatter.h"
@@ -1509,18 +1511,27 @@ static item_reload_option favorite_ammo_or_select(
     const player &u, item &it, bool empty, bool prompt )
 {
     if( u.ammo_location ) {
-        std::vector<item_reload_option> ammo_list;
-        if( character_funcs::list_ammo( u, it, ammo_list, empty, false ) ) {
+        const auto discovery = reload::discover_ammo( u, it, {
+            .include_empty_mags = empty,
+            .include_potential = false
+        } );
+        if( discovery.ammo_match_found ) {
             const auto is_favorite_and_compatible = [&it, &u]( const item_reload_option & opt ) {
                 return opt.ammo == &*u.ammo_location && it.can_reload_with( opt.ammo->typeId() );
             };
-            auto iter = std::find_if( ammo_list.begin(), ammo_list.end(), is_favorite_and_compatible );
-            if( iter != ammo_list.end() ) {
+            const auto iter = std::ranges::find_if( discovery.options, is_favorite_and_compatible );
+            if( iter != discovery.options.end() ) {
                 return *iter;
             }
         }
     }
-    return character_funcs::select_ammo( u, it, prompt, empty );
+    return reload_ui::select_ammo( u, it, {
+        .prompt = prompt,
+        .discovery = {
+            .include_empty_mags = empty,
+            .include_potential = false
+        }
+    } );
 }
 
 static bool can_reload_item_or_mods( const avatar &you, const item &itm )
@@ -1688,9 +1699,11 @@ void avatar_action::reload_weapon( bool try_everything )
                ( bp->get_reload_time() * ( bp->ammo_capacity() - bp->ammo_remaining() ) );
     } );
     for( item *&candidate : reloadables ) {
-        std::vector<item_reload_option> ammo_list;
-        character_funcs::list_ammo( u, *candidate, ammo_list, false, false );
-        if( !ammo_list.empty() ) {
+        const auto discovery = reload::discover_ammo( u, *candidate, {
+            .include_empty_mags = false,
+            .include_potential = false
+        } );
+        if( !discovery.options.empty() ) {
             reload( *candidate, false, false );
             return;
         }
@@ -1703,7 +1716,7 @@ void avatar_action::reload_weapon( bool try_everything )
     vehicle *veh = veh_pointer_or_null( here.veh_at( u.bub_pos() ) );
     turret_data turret;
     if( veh && ( turret = veh->turret_query( u.abs_pos() ) ) && turret.can_reload() ) {
-        item_reload_option opt = character_funcs::select_ammo( u, turret.base(), true );
+        auto opt = reload_ui::select_ammo( u, turret.base(), { .prompt = true } );
         if( opt ) {
             u.assign_activity( std::make_unique<player_activity>( activity_id( "ACT_RELOAD" ), opt.moves(),
                                opt.qty() ) );

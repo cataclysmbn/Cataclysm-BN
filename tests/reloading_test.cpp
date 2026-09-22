@@ -2,23 +2,36 @@
 #include "avatar_action.h"
 #include "avatar_functions.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "coordinates.h"
 #include "flag.h"
 #include "inventory.h"
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
+#include "map/map.h"
 #include "player.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "point.h"
+#include "reload/reload.h"
+#include "safe_reference.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "uistate.h"
+#include "units.h"
 #include "value_ptr.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 
 #include <climits>
+#include <map>
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
+#include <vector>
 
 static const itype_id itype_glock_19("glock_19");
 static const itype_id itype_glockmag("glockmag");
@@ -286,4 +299,80 @@ TEST_CASE("automatic_reloading_action", "[reload],[gun]") {
             }
         }
     }
+}
+
+TEST_CASE("preferred_reload_source_bypasses_prompt", "[reload][gun]") {
+    clear_all_state();
+    auto& who = get_avatar();
+    auto& preferred = who.i_add(item::spawn("38_special", calendar::start_of_cataclysm, 3));
+    auto alternate_owner = item::spawn("38_speedloader", calendar::start_of_cataclysm, 0);
+    alternate_owner->put_in(item::spawn("38_special", calendar::start_of_cataclysm, 6));
+    auto& alternate = who.i_add(std::move(alternate_owner));
+    auto& gun = who.i_add(item::spawn("sw_619", calendar::start_of_cataclysm, 0));
+    REQUIRE(gun.can_reload_with(preferred.typeId()));
+    REQUIRE(gun.can_reload_with(alternate.typeId()));
+    who.ammo_location = &preferred;
+
+    const auto history_key = ammotype(gun.ammo_default().str());
+    const auto restore_history = restore_on_out_of_scope<std::map<ammotype, itype_id>>(
+        uistate.lastreload);
+    const auto previous_history = itype_id("9mm");
+    uistate.lastreload[history_key] = previous_history;
+
+    avatar_action::reload(gun, true);
+
+    REQUIRE(who.activity);
+    CHECK(who.activity->id() == activity_id("ACT_RELOAD"));
+    REQUIRE(who.activity->targets.size() == 2);
+    CHECK(&*who.activity->targets.front() == &gun);
+    CHECK(&*who.activity->targets.back() == &preferred);
+    CHECK(who.activity->index == 1);
+
+    process_activity(who);
+
+    CHECK_FALSE(who.activity);
+    CHECK(gun.ammo_remaining() == 1);
+    CHECK(gun.ammo_current() == preferred.typeId());
+    CHECK(preferred.charges == 2);
+    CHECK(alternate.ammo_remaining() == 6);
+    CHECK(uistate.lastreload[history_key] == previous_history);
+}
+
+TEST_CASE("reload_player_handoff_accounting", "[reload]") {
+    clear_all_state();
+    auto& who = get_avatar();
+    auto& base = who.i_add(item::spawn("combination_gun", calendar::start_of_cataclysm, 0));
+    auto* target = base.gunmod_find(itype_id("combination_gun_shotgun"));
+    REQUIRE(target);
+    auto& ammo = who.i_add(item::spawn("shot_00", calendar::start_of_cataclysm, 6));
+    const auto source = safe_reference<item>(ammo);
+
+    const auto without_parent = item_reload_option(&who, target, target, ammo);
+    const auto option = item_reload_option(&who, target, &base, ammo);
+    REQUIRE(base.get_reload_time() > 0);
+    REQUIRE(option.moves() - without_parent.moves() == base.get_reload_time());
+    const auto expected_activity_cost = without_parent.moves() + base.get_reload_time();
+
+    avatar_action::reload(base, false, false);
+
+    REQUIRE(who.activity);
+    CHECK(who.activity->id() == activity_id("ACT_RELOAD"));
+    REQUIRE(who.activity->targets.size() == 2);
+    CHECK(&*who.activity->targets[0] == target);
+    CHECK(&*who.activity->targets[1] == &ammo);
+    CHECK(who.activity->index == 1);
+    CHECK(who.activity->moves_total == expected_activity_cost);
+    CHECK(who.activity->moves_left == expected_activity_cost);
+    CHECK(target->ammo_remaining() == 0);
+    CHECK(ammo.charges == 6);
+
+    process_activity(who);
+
+    CHECK_FALSE(who.activity);
+    REQUIRE(source);
+    CHECK(target->ammo_remaining() == 1);
+    CHECK(target->ammo_current() == ammo.typeId());
+    CHECK(ammo.charges == 5);
+    CHECK(base.ammo_remaining() == 0);
+    CHECK(target->parent_item() == &base);
 }

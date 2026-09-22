@@ -56,6 +56,8 @@
 #include "profile.h"
 #include "projectile.h"
 #include "ranged.h"
+#include "reload/reload.h"
+#include "reload/reload_selection.h"
 #include "ret_val.h"
 #include "rng.h"
 #include "sounds.h"
@@ -1832,7 +1834,7 @@ void npc::check_or_reload_cbm()
     if( !checklist.empty() ) {
         for( auto& [bid, itm] : checklist ) {
             bionic &bio = get_bionic_state( bid );
-            const item *it_loc = character_funcs::select_ammo( *this, *itm ).ammo;
+            const item *it_loc = reload_selection::prepare( *this, *itm ).selected.ammo;
             if( it_loc && wants_to_reload_with( *itm, *it_loc, ai_cache.danger > 0 ) ) {
                 do_reload( *itm );
                 bio.ammo_loaded =
@@ -1864,7 +1866,7 @@ item &npc::find_reloadable()
         if( !wants_to_reload( *this, *node ) ) {
             return VisitResponse::NEXT;
         }
-        const auto it_loc = character_funcs::select_ammo( *this, *node ).ammo;
+        const auto it_loc = reload_selection::prepare( *this, *node ).selected.ammo;
         if( it_loc && wants_to_reload_with( *node, *it_loc, ai_cache.danger > 0 ) ) {
             reloadable = node;
             return VisitResponse::ABORT;
@@ -1901,7 +1903,7 @@ item *npc::find_usable_ammo( item &weap )
         return nullptr;
     }
 
-    auto loc = character_funcs::select_ammo( *this, weap ).ammo;
+    auto loc = reload_selection::prepare( *this, weap ).selected.ammo;
     if( !loc || !wants_to_reload_with( weap, *loc, ai_cache.danger > 0 ) ) {
         return nullptr;
     }
@@ -5023,7 +5025,7 @@ void npc::do_reload( item &it )
         move_pause();
         return;
     }
-    item_reload_option reload_opt = character_funcs::select_ammo( *this, it );
+    auto reload_opt = reload_selection::prepare( *this, it ).selected;
 
     if( !reload_opt ) {
         debugmsg( "do_reload failed: no usable ammo for %s", it.tname() );

@@ -77,6 +77,8 @@
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
+#include "reload/reload.h"
+#include "reload/reload_ui.h"
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
@@ -3115,7 +3117,7 @@ bool bandolier_actor::reload( player &p, item &obj ) const
         return item_reload_option( &p, &obj, &obj, *e );
     } );
 
-    item_reload_option sel = character_funcs::select_ammo( p, obj, std::move( opts ) );
+    auto sel = reload_ui::select_ammo( p, obj, std::move( opts ) );
     if( !sel ) {
         return false; // canceled menu
     }
@@ -3223,7 +3225,7 @@ int ammobelt_actor::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         return 0;
     }
 
-    item_reload_option opt = character_funcs::select_ammo( p, *mag, true );
+    auto opt = reload_ui::select_ammo( p, *mag, { .prompt = true } );
     if( opt ) {
         p.assign_activity( ACT_RELOAD, opt.moves(), opt.qty() );
         p.activity->targets.emplace_back( &*mag );

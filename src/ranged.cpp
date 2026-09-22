@@ -50,6 +50,8 @@
 #include "panels.h"
 #include "player.h"
 #include "player_activity.h"
+#include "reload/reload.h"
+#include "reload/reload_ui.h"
 #include "point.h"
 #include "projectile.h"
 #include "rng.h"
@@ -4650,7 +4652,13 @@ auto ranged::gunmode_checks_weapon( avatar &you, const map &m, std::vector<std::
 
 void ranged::prompt_select_default_ammo_for( avatar &u, item &w )
 {
-    item_reload_option opt = character_funcs::select_ammo( u, w, false, true, true );
+    auto opt = reload_ui::select_ammo( u, w, {
+        .prompt = false,
+        .discovery = {
+            .include_empty_mags = true,
+            .include_potential = true
+        }
+    } );
     if( opt ) {
         if( u.ammo_location && opt.ammo == &*u.ammo_location ) {
             u.add_msg_if_player( _( "Cleared ammo preferences for %s." ), w.tname() );
