@@ -134,7 +134,6 @@ static const efftype_id effect_antibiotic( "antibiotic" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_disinfected( "disinfected" );
-static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_earphones( "earphones" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
@@ -5911,6 +5910,7 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
     }
 
     // fish mutants get to act like dolphins
+    auto &here = get_map();
     if( here.has_flag( "DEEP_WATER", p.bub_pos() ) && !p.has_trait( trait_THRESH_FISH ) ) {
         p.add_msg_if_player( m_warning, _( "You cannot jump from water." ) );
         return false;
@@ -7019,7 +7019,7 @@ static void smoker_activate( player &p, const tripoint_bub_ms &examp )
 
 void iexamine::mill_finalize( player &, const tripoint_bub_ms &examp, const time_point &start_time )
 {
-    map &here = get_map();
+        
     const furn_id cur_mill_type = here.furn( examp );
     furn_id next_mill_type = f_null;
     if( cur_mill_type == f_wind_mill_active ) {
