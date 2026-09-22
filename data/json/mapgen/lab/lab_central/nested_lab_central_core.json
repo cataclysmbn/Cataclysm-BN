@@ -1495,7 +1495,8 @@
         "   2    2   ",
         "            "
       ],
-      "terrain": { "1": "f_cvdmachine", "2": "t_cvdbody" },
+      "terrain": { "2": "t_cvdbody" },
+      "furniture": { "1": "f_cvdmachine" },
       "place_loot": [
         { "group": "microlab_storage_cvd_hydrogen", "x": 0, "y": [ 0, 3 ], "chance": 75, "repeat": 6 },
         { "group": "microlab_storage_cvd_carbon", "x": 11, "y": [ 0, 3 ], "chance": 75, "repeat": 6 }
@@ -1630,19 +1631,20 @@
       "mapgensize": [ 16, 6 ],
       "rows": [
         "9              r",
-        "9   dd    {{{  r",
-        "96  dh         r",
-        "91  dh         r",
-        "9   dd    {{{  r",
+        "9              r",
+        "96   h     }}  r",
+        "91  ddd    }}  r",
+        "9              r",
         "9              r"
       ],
       "palettes": [ "central_lab_palette" ],
-      "terrain": { "1": "f_artifact_analyzer_console" },
+      "furniture": { "1": "f_artifact_analyzer_console" },
+      "items": { "}": { "item": "books_bank_vault", "chance": 50 } }
       "place_loot": [
-        { "item": "sample_t_substrate", "x": 4, "y": [ 1, 4 ], "chance": 100 },
-        { "item": "log_immersion27", "x": 4, "y": [ 1, 4 ], "chance": 100 },
-        { "item": "HAADF_t_substrate", "x": 4, "y": [ 1, 4 ], "chance": 100 },
-        { "item": "report_t_substrate", "x": 4, "y": [ 1, 4 ], "chance": 100 },
+        { "item": "sample_t_substrate", "x": [ 4, 6 ], "y": 3, "chance": 100 },
+        { "item": "log_immersion27", "x": [ 4, 6 ], "y": 3, "chance": 100 },
+        { "item": "HAADF_t_substrate", "x": [ 4, 6 ], "y": 3, "chance": 100 },
+        { "item": "report_t_substrate", "x": [ 4, 6 ], "y": 3, "chance": 100 },
         { "item": "dimensional_anchor", "x": 15, "y": 0, "chance": 100 },
         { "item": "phase_immersion_suit", "x": 15, "y": 0, "chance": 100 },
         { "group": "portal_room_gear", "x": 15, "y": [ 3, 5 ], "chance": 50, "repeat": 6 }
