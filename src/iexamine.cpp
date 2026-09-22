@@ -5791,7 +5791,7 @@ auto maybe_cut_from_sharp_jump_terrain( player &p, map &here,
 }
 
 auto jump_over_tile_stumble_roll( const player &p ) -> bool
-{
+{   
     if( p.has_trait( trait_id( "PARKOUR" ) ) ) {
         return false;
     }
@@ -5842,8 +5842,7 @@ auto confirm_crash_through_window( const player &p,
     return query_yn( _( "Crash through the %s?" ), obstacle_name );
 }
 
-auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
-                              const bool show_messages ) -> bool
+auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub ) -> bool
 {
     const auto jump_state = get_jump_over_tile_state( p, examp_bub );
     const auto dir = jump_state.examp - p.abs_pos();
@@ -5852,7 +5851,7 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
         return false;
     }
 
-    if( !iexamine::can_start_jump_over_tile( p, show_messages ) ) {
+    if( !iexamine::can_start_jump_over_tile( p ) ) {
         return false;
     }
 
@@ -5861,25 +5860,19 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
     const auto jumped_tile = abs_to_bub( jump_state.examp );
     if( here.impassable( jumped_tile ) &&
         !jump_over_tile_can_cross_impassable( here, p, jumped_tile ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot jump through the %s." ),
+        p.add_msg_if_player( m_warning, _( "You cannot jump through the %s." ),
                      here.obstacle_name( jumped_tile ) );
-        }
         return false;
     }
     // fish mutants get to act like dolphins
     if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait( trait_THRESH_FISH ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot jump from water." ) );
-        }
+        p.add_msg_if_player( m_warning, _( "You cannot jump from water." ) );
         return false;
     }
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
         if( blocking_creature->get_size() >= p.get_size() ) {
-            if( show_messages ) {
-                add_msg( m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
-            }
+            p.add_msg_if_player(  m_warning, _( "You cannot jump over %s." ), blocking_creature->disp_name() );
             return false;
         }
     }
@@ -5887,18 +5880,14 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
     const auto landing_tile = abs_to_bub( jump_state.dest );
     if( here.impassable( landing_tile ) &&
         !jump_over_tile_can_land_on_ledge( buffer, jump_state.dest ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot land there - the %s is blocking the way." ),
+        p.add_msg_if_player( m_warning, _( "You cannot land there - the %s is blocking the way." ),
                      here.obstacle_name( landing_tile ) );
-        }
         return false;
     }
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.dest ) ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
+        p.add_msg_if_player( m_warning, _( "You cannot jump over an obstacle - there is %s blocking the way." ),
                      blocking_creature->disp_name() );
-        }
         return false;
     }
 
@@ -5907,41 +5896,31 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
 
 } // namespace
 
-auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messages ) -> bool
+auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
 {
     if( p.get_str() < jump_over_tile_min_strength ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You are too weak to jump over an obstacle." ) );
-        }
+        p.add_msg_if_player( m_warning, _( "You are too weak to jump over an obstacle." ) );
         return false;
     }
 
     const auto stamina_cost = jump_over_tile_stamina_cost( p, jump_over_tile_move_cost( p ) );
     if( p.get_stamina() < stamina_cost ) {
-        if( show_messages ) {
-            add_msg( m_warning, _( "You're too exhausted to jump over an obstacle." ) );
-        }
+        p.add_msg_if_player( m_warning, _( "You're too exhausted to jump over an obstacle." ) );
         return false;
     }
 
     if( p.get_working_leg_count() < 2 ) {
-        if( show_messages ) {
-            add_msg( m_bad, _( "You need two functional legs to jump." ) );
-        }
+        p.add_msg_if_player( m_bad, _( "You need two functional legs to jump." ) );
         return false;
     }
 
     if( p.is_mounted() ) {
-        if( show_messages ) {
-            add_msg( m_bad, _( "Your steed cannot jump this far." ) );
+        p.add_msg_if_player( m_bad, _( "Your steed cannot jump this far." ) );
             return false;
-        }
     }
 
     if( p.has_effect( effect_grabbed ) ) {
-        if( show_messages ) {
-            add_msg( m_bad, _( "You can't jump while being grabbed!" ) );
-        }
+        p.add_msg_if_player( m_bad, _( "You can't jump while being grabbed!" ) );
     }
     return false;
 
