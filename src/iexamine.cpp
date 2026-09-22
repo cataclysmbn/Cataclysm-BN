@@ -5916,7 +5916,8 @@ auto iexamine::can_start_jump_over_tile( const player &p ) -> bool
         return false;
     }
     // a generic return for things you generally can't jump from
-    if( p.has_effect( effect_grabbed ) || p.has_effect( effect_zapped ) || p.has_effect( effect_stunned ) ) {
+    if( p.has_effect( effect_grabbed ) || p.has_effect( effect_zapped ) ||
+        p.has_effect( effect_stunned ) ) {
         p.add_msg_if_player( m_bad, _( "You can't jump in your current state!" ) );
         return false;
     }
