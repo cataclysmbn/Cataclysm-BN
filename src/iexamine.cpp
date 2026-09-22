@@ -133,6 +133,7 @@ static const activity_id ACT_PLANT_SEED( "ACT_PLANT_SEED" );
 static const efftype_id effect_antibiotic( "antibiotic" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
+static const efftype_id effect_bouldering( "bouldering" );
 static const efftype_id effect_disinfected( "disinfected" );
 static const efftype_id effect_earphones( "earphones" );
 static const efftype_id effect_infected( "infected" );
@@ -212,6 +213,7 @@ static const trait_id trait_M_DEPENDENT( "M_DEPENDENT" );
 static const trait_id trait_M_FERTILE( "M_FERTILE" );
 static const trait_id trait_M_SPORES( "M_SPORES" );
 static const trait_id trait_PROBOSCIS( "PROBOSCIS" );
+static const trait_id trait_THRESH_FISH( "THRESH_FISH" );
 static const trait_id trait_THRESH_MARLOSS( "THRESH_MARLOSS" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_WEB_BRIDGE( "WEB_BRIDGE" );
@@ -5798,6 +5800,9 @@ auto jump_over_tile_stumble_roll( const player &p ) -> bool
     if( p.has_trait( trait_BADKNEES ) ) {
         climb /= 2;
     }
+    if( p.has_effect( effect_bouldering ) ) {
+        climb * 0.8
+    }
     if( p.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
         climb = static_cast<int>( climb / p.mutation_value( "movecost_obstacle_modifier" ) );
     }
@@ -5865,6 +5870,13 @@ auto can_jump_over_tile_impl( const player &p, const tripoint_bub_ms &examp_bub,
         }
         return false;
     }
+    // fish mutants get to act like dolphins
+    if( here.has_flag( "LIQUID", p.bub_pos() ) && !p.has_trait ( THRESH_FISH ) ) {
+        if( show_messages ) {
+            add_msg( m_warning, _( "You cannot jump from water." ) );
+        }
+        return false;
+    }
 
     if( const auto blocking_creature = buffer.creature_at( jump_state.examp ) ) {
         if( blocking_creature->get_size() >= p.get_size() ) {
@@ -5915,6 +5927,20 @@ auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messag
         return false;
     }
 
+    if( p.get_working_leg_count() < 2 ) {
+        if( show_messages ) {
+                    add_msg( m_bad, _( "You need two functional legs to jump." ) );
+        }
+        return false;
+    }
+
+    if( p->has_effect( effect_grabbed ) ) {
+        if ( show_messages ) {
+                    add_msg (m_bad, _ ( "You can't jump while being grabbed! " );)
+        }
+    }
+        return false;
+    
     return true;
 }
 
