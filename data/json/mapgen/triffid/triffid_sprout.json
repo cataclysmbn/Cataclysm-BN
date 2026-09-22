@@ -1,0 +1,41 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "triffid_sprout" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_region_groundcover_urban",
+      "rows": [
+        "  ?           I     ?   ",
+        "    I  ?   I   X  ?  I  ",
+        "  *  X   ?      ^       ",
+        "     ?                  ",
+        "    ^   X    I   ^  *   ",
+        "  I X I I  X ^ .###X X  ",
+        "  X ? ? ^X ####.##### X ",
+        "  IX###########.#####   ",
+        "    ##########..~##^ I  ",
+        "   I^##.~.~~~..~~##?X  ^",
+        " ?  ?##........~~###    ",
+        "   X###~~~......~###^I  ",
+        "I  I###~.......~~###    ",
+        "    ###~~~...~~~~##? X  ",
+        "   ^###~~~~..~~~~##^    ",
+        "  ? ###~~~~.~~~~~##XI   ",
+        "   ?X##~~~~~~~~~~##X  ? ",
+        "  X  ###############I   ",
+        "  ?  ##^?####IXX^###X   ",
+        "   ?         ?     X   I",
+        "   I   X   I    *       ",
+        "                    ?   ",
+        " IX  X  I   I       I   ",
+        "     I ?        I       "
+      ],
+      "palettes": [ "triffid" ],
+      "place_monster": [ { "monster": "mon_triffid_queen", "x": 11, "y": 11, "chance": 100 } ],
+      "place_loot": [ { "group": "map_extra_corpse", "x": 11, "y": 11 } ],
+      "place_items": [ { "item": "mon_zombie_survivor_elite_death_drops", "chance": 100, "x": 11, "y": 11 } ]
+    }
+  }
+]
