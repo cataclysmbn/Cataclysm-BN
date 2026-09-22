@@ -5791,7 +5791,7 @@ auto maybe_cut_from_sharp_jump_terrain( player &p, map &here,
 }
 
 auto jump_over_tile_stumble_roll( const player &p ) -> bool
-{   
+{
     if( p.has_trait( trait_id( "PARKOUR" ) ) ) {
         return false;
     }
