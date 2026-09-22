@@ -133,7 +133,6 @@ static const activity_id ACT_PLANT_SEED( "ACT_PLANT_SEED" );
 static const efftype_id effect_antibiotic( "antibiotic" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
-static const efftype_id effect_bouldering( "bouldering" );
 static const efftype_id effect_disinfected( "disinfected" );
 static const efftype_id effect_earphones( "earphones" );
 static const efftype_id effect_grabbed( "grabbed" );
@@ -5800,9 +5799,6 @@ auto jump_over_tile_stumble_roll( const player &p ) -> bool
     auto climb = p.dex_cur;
     if( p.has_trait( trait_BADKNEES ) ) {
         climb /= 2;
-    }
-    if( p.has_effect( effect_bouldering ) ) {
-        climb * 0.8;
     }
     if( p.mutation_value( "movecost_obstacle_modifier" ) != 0.0f ) {
         climb = static_cast<int>( climb / p.mutation_value( "movecost_obstacle_modifier" ) );
