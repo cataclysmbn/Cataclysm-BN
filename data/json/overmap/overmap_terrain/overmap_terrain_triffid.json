@@ -154,5 +154,15 @@
     "color": "green",
     "see_cost": 5,
     "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "triffid_sprout",
+    "copy-from": "generic_city_building",
+    "name": "triffid sprout",
+    "sym": "T",
+    "color": "light_red",
+    "looks_like": "triffid_grove",
+    "extend": { "flags": [ "RISK_HIGH" ] }
   }
 ]
