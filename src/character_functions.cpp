@@ -151,7 +151,7 @@ bool has_wings( const Character &ch )
     for( const trait_id &mid : ch.get_mutations() ) {
         auto it = ch.my_mutations.find( mid->id );
         if( it != ch.my_mutations.end() ) {
-            if( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && ( can_use_mutation( mid, ch ) )
+            if( ( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && ( can_use_mutation( mid, ch ) ) )
                 ||  mid->flags.contains( trait_flag_FLIGHT_ALWAYS_ACTIVE ) ) {
                 return true;
             } else if( mid->flags.contains( trait_flag_MUTATION_FLIGHT ) && !can_use_mutation( mid, ch ) ) {
