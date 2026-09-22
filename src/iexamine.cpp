@@ -5943,7 +5943,7 @@ auto iexamine::can_start_jump_over_tile( const player &p, const bool show_messag
 
     if( p->has_effect( effect_grabbed ) ) {
         if ( show_messages ) {
-                    add_msg (m_bad, _( "You can't jump while being grabbed!" );)
+                    add_msg (m_bad, _( "You can't jump while being grabbed!" ) );
         }
     }
         return false;
