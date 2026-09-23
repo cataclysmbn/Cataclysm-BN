@@ -8,8 +8,6 @@
 
 namespace reload_selection {
 auto order_ammo(std::vector<item_reload_option>& options) -> void {
-    // Sort in order of move cost (ascending), then remaining ammo (descending), with empty
-    // magazines always last.
     std::ranges::
         stable_sort(options, [](const item_reload_option& lhs, const item_reload_option& rhs) {
             return lhs.ammo->ammo_remaining() > rhs.ammo->ammo_remaining();
@@ -37,7 +35,6 @@ auto prepare(const player& who, item& base, selection_options options) -> select
     }
 
     order_ammo(discovery.options);
-    // Unconditionally suppress the prompt if there's only one option.
     if (!options.prompt && discovery.options.size() == 1) {
         return {.outcome = selection_outcome::automatic, .selected = discovery.options.front()};
     }
