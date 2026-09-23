@@ -6,6 +6,7 @@
 #include "map/map.h"
 #include "map_helpers.h"
 #include "npc.h"
+#include "player_helpers.h"
 #include "reload/reload.h"
 #include "reload/reload_selection.h"
 #include "reload/reload_ui.h"
@@ -36,7 +37,8 @@ TEST_CASE("reload_selection_supplied_options", "[reload][reload_selection]") {
     }
 
     SECTION("an NPC receives the first supplied option without sorting or rediscovery") {
-        auto who = npc{};
+        auto& who = spawn_npc({50, 50, 0},"test_talker");
+        clear_character(who);
         who.setpos(get_avatar().bub_pos());
         auto& cheap = who.i_add(item::spawn("38_special", calendar::start_of_cataclysm, 6));
         auto expensive_owner = item::spawn("38_special", calendar::start_of_cataclysm, 1);
@@ -229,7 +231,8 @@ TEST_CASE("reload_stable_ordering", "[reload][reload_selection]") {
 
 TEST_CASE("reload_npc_empty_selection", "[reload][reload_selection]") {
     clear_all_state();
-    auto who = npc{};
+    auto& who = spawn_npc({50, 50, 0},"test_talker");
+    clear_character(who);
     who.setpos(get_avatar().bub_pos());
     const auto restore_history = restore_on_out_of_scope<std::map<ammotype, itype_id>>(
         uistate.lastreload);
@@ -387,7 +390,8 @@ TEST_CASE("reload_discovery_respects_magazine_parent_ammo", "[reload][reload_sel
 
 TEST_CASE("reload_nonempty_precedes_cheaper_empty", "[reload][reload_selection]") {
     clear_all_state();
-    auto who = npc{};
+    auto& who = spawn_npc({50, 50, 0},"test_talker");
+    clear_character(who);
     who.setpos(get_avatar().bub_pos());
     auto& gun = who.i_add(item::spawn("glock_19", calendar::start_of_cataclysm, 0));
     auto& empty = who.i_add(item::spawn("glockmag", calendar::start_of_cataclysm, 0));
