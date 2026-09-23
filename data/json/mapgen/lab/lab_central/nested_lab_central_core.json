@@ -2,6 +2,28 @@
   {
     "type": "mapgen",
     "method": "json",
+    "nested_mapgen_id": "central_lab_crate_special_1x1",
+    "//": "Place a single crate, used for randomization of storage areas.",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "C" ],
+      "furniture": { "C": [ "f_cardboard_box", "f_crate_c" ] },
+      "mapping": {
+        "C": {
+          "items": [
+            { "item": "robots", "chance": 50 },
+            { "item": "supplies_electronics", "chance": 50 },
+            { "item": "tools_robotics", "chance": 25 },
+            { "item": "science", "chance": 25 },
+            { "item": "schematics", "chance": 10 }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "central_lab_layout_a_20x20",
     "//": "These chunks determine the overall layout of each individual cell of the core lab, dividing the space up in different ways and spawning rooms inside of different sizes.  This variant spawns the interesting stuff directly since it's just one big room, while other variants below are more deeply nested.",
     "object": {
@@ -306,16 +328,7 @@
       "palettes": [ "central_lab_palette" ],
       "terrain": { "&": "t_gates_mech_control" },
       "furniture": { "X": [ "f_cardboard_box", "f_crate_c" ] },
-      "mapping": {
-        "X": {
-          "items": [
-            { "item": "robots", "chance": 50 },
-            { "item": "supplies_electronics", "chance": 50 },
-            { "item": "tools_robotics", "chance": 25 },
-            { "item": "schematics", "chance": 10 }
-          ]
-        }
-      }
+      "nested": { "X": { "chunks": [ "null", "central_lab_crate_special_1x1" ] } }
     }
   },
   {
@@ -397,41 +410,51 @@
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "central_lab_layout_a_20x20",
-    "//": "Todo: Potential room variants include: ruined leftovers of an unidentified room with uncontained nether outbreak and portal",
     "object": {
       "mapgensize": [ 20, 20 ],
       "rows": [
-        "       |    |       ",
-        "       |    |       ",
-        "       ||++||       ",
-        "|+|||W||u  u||W|||+|",
-        "   |            |   ",
-        "   W            W   ",
-        "   |            |   ",
-        "  ||            ||  ",
-        "  |u    u  u    u|  ",
-        "  +      ??      +  ",
-        "  +      ??      +  ",
-        "  |u    u  u    u|  ",
-        "  ||            ||  ",
-        "   |            |   ",
-        "   W            W   ",
-        "   |            |   ",
-        "||+||W||u  u||W||+||",
-        "       ||++||       ",
-        "       |    |       ",
-        "       |    |       "
+        "ccccccc|    |ccccccc",
+        "      c|    |c      ",
+        "      c||++||c      ",
+        "||+//W//u  u//W//+||",
+        "   /666      666/   ",
+        "   W6h        h6W   ",
+        "   /6          6/   ",
+        "  //   11  11   //  ",
+        "  /u   11^^11   u/  ",
+        "  +     ^^^^     +  ",
+        "  +     ^^^^     +  ",
+        "  /u   11^^11   u/  ",
+        "  //   11  11   //  ",
+        "   /6          6/   ",
+        "   W6h        h6W   ",
+        "   /666      666/   ",
+        "||+//W//u  u//W//+||",
+        "      c||++||c      ",
+        "      c|    |c      ",
+        "ccccccc|    |ccccccc"
       ],
       "palettes": [ "central_lab_palette" ],
-      "furniture": { " ": [ [ "f_null", 19 ], "f_wreckage" ] },
-      "place_nested": [
-        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 0, "rotation": 1 },
-        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 0, "rotation": 2 },
-        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 12 },
-        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 12, "rotation": 3 }
-      ],
-      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
+      "terrain": { "|": "t_strconc_wall", "/": "t_strconc_wall", "?": "t_rock_floor", "1": "t_machinery_electronic" },
+      "furniture": { " ": [ [ "f_null", 9 ], "f_wreckage" ], "^": [ "f_null", [ "f_wreckage", 4 ] ] },
+      "place_traps": [ { "trap": "tr_portal", "x": [ 9, 10 ], "y": [ 9, 10 ] } ],
+      "nested": {
+        "/": { "chunks": [ [ "null", 80 ], [ "central_lab_destroyed_1x1", 20 ] ] },
+        "W": { "chunks": [ [ "null", 75 ], [ "central_lab_destroyed_1x1", 25 ] ] },
+        "1": { "chunks": [ [ "null", 60 ], [ "central_lab_destroyed_1x1", 40 ] ] },
+        "6": { "chunks": [ [ "null", 60 ], [ "central_lab_destroyed_1x1", 40 ] ] },
+        "h": { "chunks": [ [ "null", 60 ], [ "central_lab_destroyed_1x1", 40 ] ] }
+      },
+      "mapping": { "c": { "items": { "item": "teleport", "chance": 50 } } },
+      "place_monster": [ { "group": "GROUP_NETHER_PORTAL", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 2, 4 ] } ]
     }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_destroyed_1x1",
+    "//": "Bash this specific tile.",
+    "object": { "mapgensize": [ 1, 1 ], "set": [ { "point": "bash", "x": 0, "y": 0 } ] }
   },
   {
     "type": "mapgen",
