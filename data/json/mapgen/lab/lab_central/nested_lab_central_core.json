@@ -145,7 +145,6 @@
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "central_lab_layout_a_20x20",
-    "//": "Todo: Potential room variants include: large storage area with classic sealed storage rooms containing spicier than normal goodies, ruined leftovers of an unidentified room with uncontained nether outbreak and portal",
     "object": {
       "mapgensize": [ 20, 20 ],
       "rows": [
@@ -207,6 +206,232 @@
         { "point": "bash", "x": 11, "y": 13 },
         { "square": "radiation", "amount": 100, "x": 0, "y": 0, "x2": 19, "y2": 19 }
       ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "        u  u        ",
+        "                    ",
+        "                    ",
+        "        u  u        ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    ",
+        "                    "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 0, "rotation": 1 },
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 0, "rotation": 2 },
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 12 },
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 12, "rotation": 3 }
+ ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_8x8",
+    "object": {
+      "mapgensize": [ 8, 8 ],
+      "rows": [
+        "JJJjjjJJ",
+        "r      J",
+        "r      J",
+        "CCCCC  j",
+        "CCCCC  j",
+        "CCCCC  j",
+        "CCCCC  J",
+        "CCCCCrrJ"
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "J": "t_chainfence", "j": "t_chaingate_c" },
+      "items": { "r": { "item": "science", "chance": 50, "repeat": 3 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_8x8",
+    "object": {
+      "mapgensize": [ 8, 8 ],
+      "rows": [
+        "|    &||",
+        "||===|||",
+        "       |",
+        " CCCCC |",
+        " CCCCC |",
+        " CCCCC |",
+        " CCCCC |",
+        " CCCCC |"
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "&": "t_gates_mech_control" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_8x8",
+    "object": {
+      "mapgensize": [ 8, 8 ],
+      "rows": [
+        "|    &||",
+        "||===|||",
+        "       |",
+        " XXXXX |",
+        " XXXXX |",
+        " XXXXX |",
+        " XXXXX |",
+        " XXXXX |"
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "terrain": { "&": "t_gates_mech_control" },
+      "furniture": { "X": [ "f_cardboard_box", "f_crate_c" ] },
+      "mapping": {
+        "X": {
+          "items": [
+            { "item": "robots", "chance": 50 },
+            { "item": "supplies_electronics", "chance": 50 },
+            { "item": "tools_robotics", "chance": 25 },
+            { "item": "schematics", "chance": 10 }
+          ]
+        }
+      }
+
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_8x8",
+    "object": {
+      "mapgensize": [ 8, 8 ],
+      "rows": [
+        "||  6|||",
+        "-||=||-|",
+        "-|u u|-|",
+        "-|r r|-|",
+        "-|r r|-|",
+        "-|rrr|-|",
+        "-|||||-|",
+        "-------|"
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "computers": {
+        "6": {
+          "name": "Bionic Vault",
+          "access_denied": "ERROR!  Access denied!  Unauthorized access will be met with lethal force!",
+          "security": 1,
+          "options": [
+            { "name": "MANIFEST", "action": "list_bionics", "security": 0 },
+            { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
+          ],
+          "failures": [ { "action": "damage" }, { "action": "secubots" }, { "action": "shutdown" } ]
+        }
+      },
+      "mapping": {
+        "r": {
+          "items": [
+            { "item": "bionics_common", "chance": 50 },
+            { "item": "bionic_power_storage_mil", "chance": 25 },
+            { "item": "bionics", "chance": 10 },
+            { "item": "autodoc_installation_programs", "chance": 25 }
+          ]
+        }
+      },
+      "monster": { "u": { "monster": "mon_turret_medium" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_mini_room_8x8",
+    "object": {
+      "mapgensize": [ 8, 8 ],
+      "rows": [
+        "||  6|||",
+        "-||=||-|",
+        "-|u u|-|",
+        "-|r r|-|",
+        "-|r r|-|",
+        "-|rrr|-|",
+        "-|||||-|",
+        "-------|"
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "mapping": { "r": { "items": { "item": "mut_iv", "chance": 50, "repeat": 2 } } },
+      "computers": {
+        "6": {
+          "name": "Advanced PE012 Samples",
+          "security": 1,
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 5 },
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
+          ],
+          "failures": [ { "action": "damage" }, { "action": "manhacks" }, { "action": "shutdown" } ]
+        }
+      },
+      "monster": { "u": { "monster": "mon_turret_medium" } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "central_lab_layout_a_20x20",
+    "//": "Todo: Potential room variants include: ruined leftovers of an unidentified room with uncontained nether outbreak and portal",
+    "object": {
+      "mapgensize": [ 20, 20 ],
+      "rows": [
+        "       |    |       ",
+        "       |    |       ",
+        "       ||++||       ",
+        "|+|||W||u  u||W|||+|",
+        "   |            |   ",
+        "   W            W   ",
+        "   |            |   ",
+        "  ||            ||  ",
+        "  |u    u  u    u|  ",
+        "  +      ??      +  ",
+        "  +      ??      +  ",
+        "  |u    u  u    u|  ",
+        "  ||            ||  ",
+        "   |            |   ",
+        "   W            W   ",
+        "   |            |   ",
+        "||+||W||u  u||W||+||",
+        "       ||++||       ",
+        "       |    |       ",
+        "       |    |       "
+      ],
+      "palettes": [ "central_lab_palette" ],
+      "furniture": { " ": [ [ "f_null", 19 ], "f_wreckage" ] },
+      "place_nested": [
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 0, "rotation": 1 },
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 0, "rotation": 2 },
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 12 },
+        { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 12, "rotation": 3 }
+ ],
+      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
     }
   },
   {
@@ -367,7 +592,7 @@
         "                    "
       ],
       "palettes": [ "central_lab_palette" ],
-      "terrain": { "|": "t_strconc_wall" },
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_20x7" ], "x": 0, "y": 0 },
         { "chunks": [ "central_lab_mini_room_20x7" ], "x": 0, "y": 13 },
@@ -1549,7 +1774,13 @@
         "                  "
       ],
       "palettes": [ "central_lab_palette" ],
-      "items": { "r": [ { "item": "bionics", "chance": 50 }, { "item": "autodoc_installation_programs", "chance": 25 } ] }
+      "items": {
+        "r": [
+          { "item": "bionics", "chance": 50 },
+          { "item": "bionic_power_storage_mil", "chance": 25 },
+          { "item": "autodoc_installation_programs", "chance": 10 }
+        ]
+      }
     }
   },
   {
@@ -1666,7 +1897,7 @@
         "                "
       ],
       "palettes": [ "central_lab_palette" ],
-      "terrain": { "1": "t_radio_tower", "2": "t_radio_controls", "1": "f_artifact_analyzer_console" },
+      "terrain": { "1": "t_radio_tower", "2": "t_radio_controls" },
       "computers": {
         "6": {
           "name": "Sub-prime Contact Console",
