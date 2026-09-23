@@ -48,5 +48,18 @@
       { "monster": "mon_zombie_child_fungus", "freq": 50, "cost_multiplier": 0 },
       { "monster": "mon_fungaloid_seeder", "freq": 0, "cost_multiplier": 0 }
     ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_FUNGI_BUDS",
+    "default": "mon_zombie_fungus",
+    "monsters": [
+      { "monster": "mon_fungaloid", "freq": 20, "cost_multiplier": 0 },
+      { "monster": "mon_fungaloid_young", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_fungal_blossom", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_boomer_fungus", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_child_fungus", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_fungaloid_seeder", "freq": 0, "cost_multiplier": 0 }
+    ]
   }
 ]
