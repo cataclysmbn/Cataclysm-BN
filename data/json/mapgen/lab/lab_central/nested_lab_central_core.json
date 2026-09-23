@@ -242,7 +242,7 @@
         { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 0, "rotation": 2 },
         { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 12 },
         { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 12, "rotation": 3 }
- ],
+      ],
       "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
     }
   },
@@ -316,7 +316,6 @@
           ]
         }
       }
-
     }
   },
   {
@@ -430,7 +429,7 @@
         { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 0, "rotation": 2 },
         { "chunks": [ "central_lab_mini_room_8x8" ], "x": 0, "y": 12 },
         { "chunks": [ "central_lab_mini_room_8x8" ], "x": 12, "y": 12, "rotation": 3 }
- ],
+      ],
       "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 5, 18 ], "y": [ 5, 18 ], "repeat": [ 1, 2 ] } ]
     }
   },
