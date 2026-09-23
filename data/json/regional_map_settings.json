@@ -843,9 +843,9 @@
         "cs_city_dump_small": 100,
         "cs_open_sewer": 100,
         "trailerpark_city": 10,
-        "triffid_sprout": 50,
-        "mi-go_foward_camp": 25,
-        "fungal_buds": 50
+        "triffid_sprout": 35,
+        "mi-go_foward_camp": 20,
+        "fungal_buds": 35
       },
       "shops": {
         "bus_station": 200,
