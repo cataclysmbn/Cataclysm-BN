@@ -59,7 +59,8 @@
       { "monster": "mon_fungal_blossom", "freq": 100, "cost_multiplier": 0 },
       { "monster": "mon_boomer_fungus", "freq": 50, "cost_multiplier": 0 },
       { "monster": "mon_zombie_child_fungus", "freq": 50, "cost_multiplier": 0 },
-      { "monster": "mon_fungaloid_seeder", "freq": 0, "cost_multiplier": 0 }
+      { "monster": "mon_fungaloid_seeder", "freq": 0, "cost_multiplier": 0 },
+      { "monster": "mon_skeleton_hulk_fungus", "freq": 100, "cost_multiplier": 0, "starts": 336 }
     ]
   }
 ]
