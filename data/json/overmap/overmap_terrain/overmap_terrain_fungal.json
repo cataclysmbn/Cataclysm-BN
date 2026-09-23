@@ -28,5 +28,16 @@
     "see_cost": 5,
     "extras": "marloss",
     "flags": [ "NO_ROTATE", "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "fungal_buds",
+    "copy-from": "generic_city_building",
+    "name": "fungal buds",
+    "sym": "T",
+    "color": "cyan",
+    "looks_like": "fungal_flowers",
+    "extras": "marloss",
+    "extend": { "flags": [ "NO_ROTATE", "RISK_HIGH" ] }
   }
 ]
