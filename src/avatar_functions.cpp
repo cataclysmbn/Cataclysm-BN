@@ -1,5 +1,6 @@
 #include "avatar_functions.h"
 
+#include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "character_functions.h"
@@ -454,13 +455,13 @@ void gunmod_add( avatar &you, item &gun, item &mod )
 
     const int moves = !you.has_trait( trait_DEBUG_HT ) ? mod.type->gunmod->install_time : 0;
 
-    you.assign_activity( activity_id( "ACT_GUNMOD_ADD" ), moves, -1, 0, tool );
-    you.activity->targets.emplace_back( &gun );
-    you.activity->targets.emplace_back( &mod );
-    you.activity->values.push_back( 0 ); // dummy value
-    you.activity->values.push_back( roll ); // chance of success (%)
-    you.activity->values.push_back( risk ); // chance of damage (%)
-    you.activity->values.push_back( qty ); // tool charges
+    you.assign_activity( std::make_unique<player_activity>(
+                             std::make_unique<gunmod_add_actor>(
+                                 roll, risk, qty, tool,
+                                 safe_reference<item>( &gun ), safe_reference<item>( &mod )
+                             )
+                         ) );
+    you.activity->get_actor()->progress.emplace( "installing gunmod", moves );
 }
 
 bool gunmod_remove( avatar &you, item &gun, item &mod )
@@ -593,11 +594,11 @@ void use_item( avatar &you, item &used )
         if( used.has_flag( flag_TEMPORARY_ITEM ) ) {
             you.invoke_item( &used );
         } else {
-            you.invoke_item( &used, used.bub_pos() );
+            you.invoke_item( &used );
         }
 
     } else if( is_pet_food( used ) ) {
-        you.invoke_item( &used, used.bub_pos() );
+        you.invoke_item( &used );
 
     } else if( !used.is_container_empty() && is_pet_food( used.get_contained() ) ) {
         unload_item( you, used );
@@ -611,7 +612,7 @@ void use_item( avatar &you, item &used )
     } else if( used.is_book() ) {
         you.read( &used );
     } else if( used.type->has_use() ) {
-        you.invoke_item( &used, used.bub_pos() );
+        you.invoke_item( &used );
     } else if( used.has_flag( flag_SPLINT ) ) {
         ret_val<bool> need_splint = you.can_wear( used );
         if( need_splint.success() ) {
@@ -840,7 +841,7 @@ bool unload_item( avatar &you, item &loc )
 
     // Turn off any active tools
     if( target->is_tool() && target->is_active() && target->ammo_remaining() == 0 ) {
-        target->type->invoke( you, *target, you.bub_pos() );
+        target->type->invoke( you, *target, you.abs_pos() );
     }
 
     add_msg( _( "You unload your %s." ), target->tname() );
@@ -855,8 +856,8 @@ std::vector<npc *> list_potential_theft_witnesses( avatar &you, const faction_id
         // Only owners care about theft of their property
         if( guy.get_faction() &&
             guy.get_faction()->id == owners &&
-            rl_dist( guy.bub_pos(), you.bub_pos() ) < g_max_view_distance &&
-            guy.sees( you.bub_pos() )
+            rl_dist( guy.abs_pos(), you.abs_pos() ) < g_max_view_distance &&
+            guy.sees( you.abs_pos() )
           ) {
             witnesses.push_back( &guy );
         }

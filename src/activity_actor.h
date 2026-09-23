@@ -14,7 +14,10 @@
 class avatar;
 class Character;
 class JsonIn;
+class JsonObject;
 class JsonOut;
+class monster;
+class npc;
 class player_activity;
 class inventory;
 
@@ -307,6 +310,16 @@ namespace activity_actors
 // defined in activity_actor.cpp
 extern const std::unordered_map<activity_id, std::unique_ptr<activity_actor>( * )( JsonIn & )>
 deserialize_functions;
+
+/**
+ * Dispatch table for legacy (pre-actor) save migration.
+ * Each function reads from the player_activity-level JsonObject
+ * (which has "values", "coords", "str_values", etc.) and returns
+ * a fully constructed actor, or nullptr if the legacy data is invalid.
+ */
+extern const
+std::unordered_map<activity_id, std::unique_ptr<activity_actor>( * )( const JsonObject & )>
+legacy_deserialize_functions;
 
 } // namespace activity_actors
 

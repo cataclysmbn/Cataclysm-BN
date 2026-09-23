@@ -6,7 +6,7 @@
 #include "game.h"
 #include "json.h"
 #include "line.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "mapgen/mapgen_functions.h"
 #include "messages.h"
 #include "mission.h"

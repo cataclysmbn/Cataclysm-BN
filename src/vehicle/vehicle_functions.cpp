@@ -1,4 +1,4 @@
-#include "vehicle_functions.h"
+#include "vehicle/vehicle_functions.h"
 
 #include "ammo.h"
 #include "avatar.h"
@@ -11,11 +11,11 @@
 #include "sounds.h"
 #include "translations.h"
 #include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 
 #include <algorithm>
 #include <cmath>
@@ -60,7 +60,7 @@ auto check_reload_timing(
             add_msg(m_debug, "Autoload: Empty gun found ammo, starting cycle at turn %lld",
                     current_turn);
 
-            if (get_avatar().sees(veh.bub_ms_location())) {
+            if (get_avatar().sees(veh.abs_ms_location())) {
                 add_msg(_("The %1$s's autoloader begins reloading %2$s into %3$s."), veh.name,
                         ammo_item.tname(), turret_name);
                 sfx::play_variant_sound(
@@ -129,7 +129,7 @@ void perform_reload(
     gun.item_vars().set("autoloader_cycle_start", 0); // Reset cycle
 
     // Feedback
-    if (get_avatar().sees(veh.bub_ms_location())) {
+    if (get_avatar().sees(veh.abs_ms_location())) {
         add_msg(_("The %1$s's autoloader reloaded %2$s into %3$s."), veh.name, item_name,
                 turret_name);
         sfx::play_variant_sound("reload", "end", sfx::get_heard_volume(veh.bub_ms_location(), 85));

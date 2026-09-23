@@ -34,6 +34,32 @@
 #include <unordered_map>
 #include <utility>
 
+#include "active_item_cache.h"
+#include "bionics.h"
+#include "character.h"
+#include "debug.h"
+#include "inventory.h"
+#include "item.h"
+#include "itype.h"
+#include "item_contents.h"
+#include "make_static.h"
+#include "map/map.h"
+#include "map/map_selector.h"
+#include "monster.h"
+#include "mtype.h"
+#include "mutation.h"
+#include "pimpl.h"
+#include "player.h"
+#include "point.h"
+#include "map/submap.h"
+#include "type_id.h"
+#include "units.h"
+#include "value_ptr.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vehicle_selector.h"
+
 static const itype_id itype_apparatus( "apparatus" );
 static const itype_id itype_toolset( "toolset" );
 static const itype_id itype_voltmeter_bionic( "voltmeter_bionic" );

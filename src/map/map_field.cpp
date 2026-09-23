@@ -7,10 +7,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "effect.h"
-#include "emit.h"
 #include "enums.h"
-#include "field.h"
-#include "field_type.h"
 #include "fire.h"
 #include "fungal_effects.h"
 #include "game.h"
@@ -21,10 +18,15 @@
 #include "itype.h"
 #include "line.h"
 #include "make_static.h"
-#include "map.h"
-#include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
+#include "map/emit.h"
+#include "map/field.h"
+#include "map/field_type.h"
+#include "map/map.h"
+#include "map/map_iterator.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
+#include "map/submap_fields.h"
 #include "material.h"
 #include "messages.h"
 #include "mongroup.h"
@@ -39,8 +41,6 @@
 #include "rng.h"
 #include "scent_block.h"
 #include "string_id.h"
-#include "submap.h"
-#include "submap_fields.h"
 #include "teleport.h"
 #include "translations.h"
 #include "type_id.h"
@@ -113,7 +113,7 @@ void create_burnproducts(
 }
 
 // Use a helper for a bit less boilerplate
-auto map::burn_body_part(player& u, field_entry& cur, body_part bp_token, const int scale) -> int {
+int map::burn_body_part(player& u, field_entry& cur, body_part bp_token, const int scale) {
     bodypart_str_id bp = convert_bp(bp_token);
     int total_damage = 0;
     const int intensity = cur.get_field_intensity();
@@ -131,11 +131,11 @@ auto map::burn_body_part(player& u, field_entry& cur, body_part bp_token, const 
 }
 
 
-auto ter_furn_has_flag(const ter_t& ter, const furn_t& furn, const ter_bitflags flag) -> bool {
+bool ter_furn_has_flag(const ter_t& ter, const furn_t& furn, const ter_bitflags flag) {
     return ter.has_flag(flag) || furn.has_flag(flag);
 }
 
-static inline auto check_flammable(const map_data_common_t& t) -> bool {
+static inline bool check_flammable(const map_data_common_t& t) {
     return t.has_flag(TFLAG_FLAMMABLE) || t.has_flag(TFLAG_FLAMMABLE_ASH)
         || t.has_flag(TFLAG_FLAMMABLE_HARD);
 }
@@ -797,8 +797,8 @@ void map::monster_in_field(monster& z) {
     }
 }
 
-auto map::get_wind_blockers(const int& winddirection, const tripoint_bub_ms& pos)
-    -> std::tuple<maptile, maptile, maptile> {
+std::tuple<maptile, maptile, maptile> map::get_wind_blockers(
+    const int& winddirection, const tripoint_bub_ms& pos) {
     static const std::array<std::pair<int, std::tuple<point, point, point>>, 9> outputs = {
         {{330, std::make_tuple(point_east, point_north_east, point_south_east)},
          {301, std::make_tuple(point_south_east, point_east, point_south)},
@@ -890,7 +890,8 @@ void map::propagate_field(
                     closed.insert(pt);
                     continue;
                 }
-                if (!obstructed_by_vehicle_rotation(gp.second, pt)) {
+                if (!get_mapbuffer()
+                         .obstructed_by_vehicle_rotation(bub_to_abs(gp.second), bub_to_abs(pt))) {
                     open.emplace(static_cast<float>(rl_dist(center, pt)), pt);
                 }
             }
@@ -915,7 +916,9 @@ struct SubTile {
     [[nodiscard]] auto get_field() const -> field& { return sm->get_field(local); }
     [[nodiscard]] auto get_ter_t() const -> const ter_t& { return sm->get_ter(local).obj(); }
     [[nodiscard]] auto get_furn_t() const -> const furn_t& { return sm->get_furn(local).obj(); }
-    [[nodiscard]] auto get_items() const -> location_vector<item>& { return sm->get_items(local); }
+    [[nodiscard]] auto get_items() const -> location_vector<item>& {
+        return sm->get_items(local);
+    } // *NOPAD*
 };
 
 struct field_cache_dirty_context {
@@ -1462,22 +1465,6 @@ auto process_fields_in_submap(
                     if (dst_has_flammable) { sub_add_field(dst, fd_fire, 1, 0_turns); }
                 }
                 // create_hot_air() skipped — render/audio effect only.
-            }
-
-            // ---- fd_gas_remover ------------------------------------------
-            if (!is_newborn && cur_fd_type_id == fd_gas_remover) {
-                const auto dx = rng(-1, 1);
-                const auto dy = rng(-1, 1);
-                auto dst = neighbor_tile(&sm, pos, local, {dx, dy}, mb);
-                if (dst.valid()) {
-                    auto& dfield = dst.get_field();
-                    for (const auto& fld : dfield) {
-                        const auto& cur_fld = fld.second.get_field_type();
-                        if (cur_fld->is_dangerous() && cur_fld->phase == phase_id::GAS) {
-                            dfield.remove_field(cur_fld);
-                        }
-                    }
-                }
             }
 
             // ---- fd_shock_vent ------------------------------------------

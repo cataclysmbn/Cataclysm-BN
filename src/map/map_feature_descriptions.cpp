@@ -1,4 +1,4 @@
-#include "map_feature_descriptions.h"
+#include "map/map_feature_descriptions.h"
 
 #include "json.h"
 
@@ -9,8 +9,7 @@ namespace map_feature_descriptions {
 namespace {
 std::vector<map_feature_description> descriptions;
 
-auto parse_test_type(const std::string& test, const JsonObject& jo)
-    -> map_feature_description::test_type {
+map_feature_description::test_type parse_test_type(const std::string& test, const JsonObject& jo) {
     if (test == "bashable") { return map_feature_description::test_type::bashable; }
     if (test == "diggable") { return map_feature_description::test_type::diggable; }
     if (test == "flag") { return map_feature_description::test_type::flag; }
@@ -33,9 +32,7 @@ void load_map_feature_descriptions(const JsonObject& jo) {
     }
 }
 
-auto get_map_feature_descriptions() -> const std::vector<map_feature_description>& {
-    return descriptions;
-}
+const std::vector<map_feature_description>& get_map_feature_descriptions() { return descriptions; }
 
 void reset_map_feature_descriptions() { descriptions.clear(); }
 

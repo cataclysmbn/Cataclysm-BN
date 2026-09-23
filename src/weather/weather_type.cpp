@@ -1,11 +1,11 @@
-#include "weather_type.h"
+#include "weather/weather_type.h"
 
 #include "bodypart.h"
 #include "game_constants.h"
 #include "generic_factory.h"
 #include "type_id_implement.h"
 #include "units_serde.h"
-#include "weather.h"
+#include "weather/weather.h"
 
 namespace {
 generic_factory<weather_type> weather_type_factory("weather_type");
@@ -14,7 +14,7 @@ generic_factory<weather_type> weather_type_factory("weather_type");
 IMPLEMENT_STRING_AND_INT_IDS(weather_type, weather_type_factory);
 
 namespace io {
-template <> auto enum_to_string<precip_class>(precip_class data) -> std::string {
+template <> std::string enum_to_string<precip_class>(precip_class data) {
     switch (data) {
         case precip_class::none:
             return "none";
@@ -33,7 +33,7 @@ template <> auto enum_to_string<precip_class>(precip_class data) -> std::string 
     abort();
 }
 
-template <> auto enum_to_string<sun_intensity_type>(sun_intensity_type data) -> std::string {
+template <> std::string enum_to_string<sun_intensity_type>(sun_intensity_type data) {
     switch (data) {
         case sun_intensity_type::none:
             return "none";
@@ -51,8 +51,7 @@ template <> auto enum_to_string<sun_intensity_type>(sun_intensity_type data) -> 
 }
 
 template <>
-auto enum_to_string<weather_time_requirement_type>(weather_time_requirement_type data)
-    -> std::string {
+std::string enum_to_string<weather_time_requirement_type>(weather_time_requirement_type data) {
     switch (data) {
         case weather_time_requirement_type::day:
             return "day";
@@ -67,8 +66,7 @@ auto enum_to_string<weather_time_requirement_type>(weather_time_requirement_type
     abort();
 }
 
-template <>
-auto enum_to_string<weather_sound_category>(weather_sound_category data) -> std::string {
+template <> std::string enum_to_string<weather_sound_category>(weather_sound_category data) {
     switch (data) {
         case weather_sound_category::drizzle:
             return "drizzle";
@@ -241,9 +239,7 @@ void weather_types::reset() { weather_type_factory.reset(); }
 
 void weather_types::finalize_all() { weather_type_factory.finalize(); }
 
-auto weather_types::get_all() -> const std::vector<weather_type>& {
-    return weather_type_factory.get_all();
-}
+const std::vector<weather_type>& weather_types::get_all() { return weather_type_factory.get_all(); }
 
 void weather_types::check_consistency() { weather_type_factory.check(); }
 

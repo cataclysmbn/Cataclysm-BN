@@ -1,8 +1,9 @@
-#include "../src/map/map.h"
 #include "avatar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
+#include "map/map.h"
+#include "map_helpers.h"
 #include "options_helpers.h"
 #include "sounds.h"
 #include "state_helpers.h"
@@ -23,20 +24,20 @@ struct sound_direction_case {
 } // namespace
 
 TEST_CASE("sound_direction_index_matches_compass_directions", "[sound]") {
-    const auto source = tripoint_bub_ms(60, 60, 0);
+    const auto source = bub_test_origin();
     const auto cases = std::array<sound_direction_case, 12>{{
-        {tripoint_bub_ms(50, 50, 0), SDI_NW, "northwest"},
-        {tripoint_bub_ms(60, 50, 0), SDI_N, "north"},
-        {tripoint_bub_ms(70, 50, 0), SDI_NE, "northeast"},
-        {tripoint_bub_ms(70, 60, 0), SDI_E, "east"},
-        {tripoint_bub_ms(70, 70, 0), SDI_SE, "southeast"},
-        {tripoint_bub_ms(60, 70, 0), SDI_S, "south"},
-        {tripoint_bub_ms(50, 70, 0), SDI_SW, "southwest"},
-        {tripoint_bub_ms(50, 60, 0), SDI_W, "west"},
-        {tripoint_bub_ms(70, 59, 0), SDI_E, "slightly north of east"},
-        {tripoint_bub_ms(70, 61, 0), SDI_E, "slightly south of east"},
-        {tripoint_bub_ms(50, 59, 0), SDI_W, "slightly north of west"},
-        {tripoint_bub_ms(50, 61, 0), SDI_W, "slightly south of west"},
+        {source + point_rel_ms(-10, -10), SDI_NW, "northwest"},
+        {source + point_rel_ms(0, -10), SDI_N, "north"},
+        {source + point_rel_ms(10, -10), SDI_NE, "northeast"},
+        {source + point_rel_ms(10, 0), SDI_E, "east"},
+        {source + point_rel_ms(10, 10), SDI_SE, "southeast"},
+        {source + point_rel_ms(0, 10), SDI_S, "south"},
+        {source + point_rel_ms(-10, 10), SDI_SW, "southwest"},
+        {source + point_rel_ms(-10, 0), SDI_W, "west"},
+        {source + point_rel_ms(10, -1), SDI_E, "slightly north of east"},
+        {source + point_rel_ms(10, 1), SDI_E, "slightly south of east"},
+        {source + point_rel_ms(-10, -1), SDI_W, "slightly north of west"},
+        {source + point_rel_ms(-10, 1), SDI_W, "slightly south of west"},
     }};
 
     for (const auto& test_case : cases) {
@@ -45,8 +46,10 @@ TEST_CASE("sound_direction_index_matches_compass_directions", "[sound]") {
               == test_case.expected);
     }
 
-    CHECK(sounds::direction_index_to_sound_source(source, tripoint_bub_ms(60, 60, -1)) == SDI_DOWN);
-    CHECK(sounds::direction_index_to_sound_source(source, tripoint_bub_ms(60, 60, 1)) == SDI_UP);
+    CHECK(sounds::direction_index_to_sound_source(source, source + tripoint_rel_ms::below())
+          == SDI_DOWN);
+    CHECK(sounds::direction_index_to_sound_source(source, source + tripoint_rel_ms::above())
+          == SDI_UP);
 }
 
 TEST_CASE("sound_filter_key_distinguishes_noise_fear", "[sound]") {
@@ -80,7 +83,7 @@ TEST_CASE("queued_sounds_outside_resized_map_are_discarded", "[sound][resize]") 
         REQUIRE(here.inbounds(source));
         sounds::sound(
             {.volume = 50,
-             .origin = source,
+             .origin = bub_to_abs(source),
              .category = sounds::sound_t::movement,
              .description = "gasping",
              .movement_noise = true,
@@ -91,8 +94,8 @@ TEST_CASE("queued_sounds_outside_resized_map_are_discarded", "[sound][resize]") 
 
     const auto& instances = here.m_sound_cache.sound_instances;
     REQUIRE(instances.size() == 2);
-    CHECK(instances[0].origin == sources[3]);
-    CHECK(instances[1].origin == sources[4]);
+    CHECK(instances[0].sound.origin == bub_to_abs(sources[3]));
+    CHECK(instances[1].sound.origin == bub_to_abs(sources[4]));
     here.batch_flood_fill_sounds();
     CHECK(instances.size() == 2);
 }
@@ -123,7 +126,7 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     const auto cached_absolute = map_local_to_abs(here, cached_source);
     sounds::sound(
         {.volume = 50,
-         .origin = cached_source,
+         .origin = cached_absolute,
          .category = sounds::sound_t::movement,
          .description = "footsteps",
          .from_player = true});
@@ -147,7 +150,7 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
         for (const auto& source : sources) {
             sounds::sound(
                 {.volume = 50,
-                 .origin = source,
+                 .origin = bub_to_abs(source),
                  .category = sounds::sound_t::movement,
                  .description = "gasping",
                  .from_monster = true});
@@ -159,21 +162,21 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
         g->on_options_changed();
         REQUIRE(here.getmapsize() == 9);
         REQUIRE(instances.size() == 1);
-        REQUIRE(map_local_to_abs(here, instances.front().origin) == cached_absolute);
+        REQUIRE(instances.front().sound.origin == cached_absolute);
         CHECK(here.m_sound_cache.sound_list_filtered.empty());
-        CHECK(instances.front().vol_at_tri(instances.front().origin) == cached_volume);
+        CHECK(instances.front().vol_at_tri(abs_to_bub(instances.front().sound.origin))
+              == cached_volume);
 
         here.batch_flood_fill_sounds();
         REQUIRE(instances.size() == retained_absolute.size());
         for (const auto& sound : instances) {
-            CHECK(here.inbounds(sound.origin));
-            CHECK(sound.origin == sound.sound.origin);
-            CHECK(std::ranges::contains(retained_absolute, map_local_to_abs(here, sound.origin)));
+            CHECK(here.inbounds(abs_to_bub(sound.sound.origin)));
+            CHECK(std::ranges::contains(retained_absolute, sound.sound.origin));
         }
 
         sounds::sound(
             {.volume = 50,
-             .origin = instances.front().origin,
+             .origin = instances.front().sound.origin,
              .category = sounds::sound_t::movement,
              .description = "gasping",
              .from_monster = true});
@@ -184,11 +187,11 @@ TEST_CASE("sounds_keep_absolute_positions_when_reality_bubble_resizes", "[sound]
     here.batch_flood_fill_sounds();
     REQUIRE(instances.size() == retained_absolute.size() + 1);
     for (const auto& sound : instances) {
-        CHECK(here.inbounds(sound.origin));
-        CHECK(sound.origin == sound.sound.origin);
-        CHECK(std::ranges::contains(retained_absolute, map_local_to_abs(here, sound.origin)));
+        CHECK(here.inbounds(abs_to_bub(sound.sound.origin)));
+        CHECK(std::ranges::contains(retained_absolute, sound.sound.origin));
     }
-    CHECK(instances.front().origin == cached_source);
-    CHECK(instances.front().vol_at_tri(cached_source) == cached_volume);
-    CHECK(instances.back().origin == cached_source);
+    CHECK(instances.front().sound.origin == cached_absolute);
+    CHECK(
+        instances.front().vol_at_tri(abs_to_bub(instances.front().sound.origin)) == cached_volume);
+    CHECK(instances.back().sound.origin == cached_absolute);
 }

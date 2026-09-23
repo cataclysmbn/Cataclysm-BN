@@ -1,7 +1,7 @@
 #pragma once
 
-#include "vehicle.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
 
 #include <cassert>
 #include <cstddef>
@@ -51,7 +51,7 @@ public:
     }
 
     vehicle_part_iterator(const vehicle_part_iterator&) = default;
-    auto operator=(const vehicle_part_iterator&) -> vehicle_part_iterator& = default;
+    vehicle_part_iterator& operator=(const vehicle_part_iterator&) = default;
 
     auto operator*() const -> reference {
         assert(vp_);
@@ -63,7 +63,7 @@ public:
         return &*vp_;
     }
 
-    auto operator++() -> vehicle_part_iterator& {
+    auto operator++() -> vehicle_part_iterator& { // *NOPAD*
         assert(vp_);
         skip_to_next_valid(vp_->part_index() + 1);
         return *this;
@@ -114,7 +114,9 @@ public:
         return iterator(static_cast<const range_type&>(*this), part_count());
     }
 
-    auto vehicle() const -> ::vehicle& { return *vehicle_; }
+    auto vehicle() const -> ::vehicle& { // *NOPAD*
+        return *vehicle_;
+    }
     friend range_type;
 };
 

@@ -37,18 +37,18 @@ public:
 
     // similar to item_location you are not supposed to store this class between turns
     map_selector(const map_selector& that) = delete;
-    auto operator=(const map_selector&) -> map_selector& = delete;
+    map_selector& operator=(const map_selector&) = delete;
     map_selector(map_selector&&) = default;
 
-    auto size() const -> size_type { return data.size(); }
-    auto begin() -> iterator { return data.begin(); }
-    auto end() -> iterator { return data.end(); }
-    auto cbegin() const -> const_iterator { return data.cbegin(); }
-    auto cend() const -> const_iterator { return data.cend(); }
-    auto front() -> reference { return data.front(); }
-    auto front() const -> const_reference { return data.front(); }
-    auto back() -> reference { return data.back(); }
-    auto back() const -> const_reference { return data.back(); }
+    size_type size() const { return data.size(); }
+    iterator begin() { return data.begin(); }
+    iterator end() { return data.end(); }
+    const_iterator cbegin() const { return data.cbegin(); }
+    const_iterator cend() const { return data.cend(); }
+    reference front() { return data.front(); }
+    const_reference front() const { return data.front(); }
+    reference back() { return data.back(); }
+    const_reference back() const { return data.back(); }
 
 private:
     std::vector<value_type> data;

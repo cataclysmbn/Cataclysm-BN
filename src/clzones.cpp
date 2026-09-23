@@ -21,7 +21,7 @@
 #include "line.h"
 #include "make_static.h"
 #include "map/map.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "memory_fast.h"
 #include "output.h"
 #include "player.h"

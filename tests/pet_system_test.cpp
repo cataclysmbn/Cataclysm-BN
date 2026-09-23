@@ -1,3 +1,4 @@
+#include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -15,8 +16,6 @@
 
 #include <cmath>
 #include <string>
-
-static const activity_id ACT_TRAIN_PET("ACT_TRAIN_PET");
 
 static const efftype_id effect_ai_waiting("ai_waiting");
 static const efftype_id effect_pet("pet");
@@ -212,14 +211,11 @@ TEST_CASE(
     clear_all_state();
     avatar& p = get_avatar();
 
-    player_activity act(ACT_TRAIN_PET);
-    // Push an expired (default-constructed, never-assigned) weak_ptr so
-    // lock() will return nullptr, exercising the null-guard we added.
-    act.monsters.push_back(weak_ptr_fast<monster>{});
-    act.str_values.push_back("test_pet");
+    auto actor = train_pet_actor{weak_ptr_fast<monster>{}, "test_pet"};
+    player_activity act;
 
     // Must not crash and must set the activity to null.
-    activity_handlers::train_pet_finish(&act, &p);
+    actor.finish(act, p);
     CHECK(act.is_null());
 }
 
@@ -236,11 +232,9 @@ TEST_CASE("train_pet_finish removes effect_well_fed", "[pet][monster][training][
     REQUIRE(mon.type->pet_training.has_value());
     p.set_skill_level(skill_survival, mon.type->pet_training->min_skill);
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
-
-    activity_handlers::train_pet_finish(&act, &p);
+    auto actor = train_pet_actor{g->shared_from(mon), mon.get_name()};
+    player_activity act;
+    actor.finish(act, p);
     CHECK_FALSE(mon.has_effect(effect_well_fed));
 }
 
@@ -259,11 +253,9 @@ TEST_CASE(
     // Skill 25 guarantees success: 4*25=100 >= rng(0,100) always.
     p.set_skill_level(skill_survival, 25);
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
-
-    activity_handlers::train_pet_finish(&act, &p);
+    auto actor = train_pet_actor{g->shared_from(mon), mon.get_name()};
+    player_activity act;
+    actor.finish(act, p);
     CHECK(mon.training_level == 1);
 }
 
@@ -281,11 +273,9 @@ TEST_CASE("train_pet_finish does not exceed max_level", "[pet][monster][training
     move_player_out_of_the_way();
     p.set_skill_level(skill_survival, 25);
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
-
-    activity_handlers::train_pet_finish(&act, &p);
+    auto actor = train_pet_actor{g->shared_from(mon), mon.get_name()};
+    player_activity act;
+    actor.finish(act, p);
     CHECK(mon.training_level == max_level);
 }
 
@@ -308,11 +298,9 @@ TEST_CASE(
     // Set skill below the minimum required for this pet.
     p.set_skill_level(skill_survival, mon.type->pet_training->min_skill - 1);
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
-
-    activity_handlers::train_pet_finish(&act, &p);
+    auto actor = train_pet_actor{g->shared_from(mon), mon.get_name()};
+    player_activity act;
+    actor.finish(act, p);
     // Should return early without touching training_level or well_fed.
     CHECK(mon.training_level == 0);
     CHECK(mon.has_effect(effect_well_fed));
@@ -356,10 +344,8 @@ TEST_CASE(
     REQUIRE(mon.type->pet_training.has_value());
     p.set_skill_level(skill_survival, mon.type->pet_training->min_skill);
 
-    player_activity act(ACT_TRAIN_PET);
-    act.monsters.push_back(g->shared_from(mon));
-    act.str_values.push_back(mon.get_name());
-
-    activity_handlers::train_pet_finish(&act, &p);
+    auto actor = train_pet_actor{g->shared_from(mon), mon.get_name()};
+    player_activity act;
+    actor.finish(act, p);
     CHECK_FALSE(mon.has_effect(effect_ai_waiting));
 }

@@ -1381,7 +1381,7 @@ void defense_game::spawn_wave_monster( const mtype_id &type )
             continue;
         }
         monster &tmp = *mon;
-        tmp.wander_pos = g->u.bub_pos();
+        tmp.wander_pos = g->u.abs_pos();
         tmp.wandf = 150;
         // We want to kill!
         tmp.anger = 100;

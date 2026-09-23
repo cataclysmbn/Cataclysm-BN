@@ -403,6 +403,10 @@ void populate_salvage_materials( quality &q )
 
 void salvage_activity_actor::calc_all_moves( player_activity &act, Character &who )
 {
+    if( targets.empty() || !targets.front().loc ) {
+        act.set_to_null();
+        return;
+    }
     const auto &target = targets.front();
     auto reqs = activity_reqs_adapter( get_type()->skills, std::make_pair(
                                            target.loc->weight(), target.loc->volume() ) );
@@ -412,45 +416,60 @@ void salvage_activity_actor::calc_all_moves( player_activity &act, Character &wh
 
 void salvage_activity_actor::start( player_activity &act, Character &who )
 {
-    //yes this should NOT be a reference
+    if( targets.empty() ) {
+        act.set_to_null();
+        return;
+    }
+
+    // Process the front target only.  The next target is prepared after the
+    // current progress task completes, avoiding vector invalidation when a
+    // skipped target is removed.
     auto cache = who.crafting_inventory().get_quality_cache();
-    for( auto &target : targets ) {
-        if( !target.loc ) {
-            debugmsg( "Lost target of ", get_type() );
-        } else {
-            if( progress.empty() && !mute_prompts ) {
-                switch( salvage::prompt_warnings( who, *target.loc, cache ) ) {
-                    case salvage::q_result::ignore:
-                        mute_prompts = true;
-                        [[fallthrough]];
-                    case salvage::q_result::yes:
-                        progress.emplace( target.loc->tname(), salvage::moves_to_salvage( *target.loc ) );
-                        break;
-                    case salvage::q_result::fail:
-                    case salvage::q_result::skip:
-                        targets.erase( targets.begin() );
-                        // If we skipped everything, cancel or we'll crash.
-                        if( targets.empty() ) {
-                            act.set_to_null();
-                            add_msg( _( "Never mind." ) );
-                        }
-                        break;
-                    case salvage::q_result::abort:
-                        act.set_to_null();
-                        add_msg( _( "Never mind." ) );
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                progress.emplace( target.loc->tname(), salvage::moves_to_salvage( *target.loc ) );
-            }
+    auto &target = targets.front();
+    if( !target.loc ) {
+        debugmsg( "Lost target of ", get_type() );
+        targets.erase( targets.begin() );
+        if( targets.empty() ) {
+            act.set_to_null();
         }
+        return;
+    }
+
+    if( progress.empty() && !mute_prompts ) {
+        switch( salvage::prompt_warnings( who, *target.loc, cache ) ) {
+            case salvage::q_result::ignore:
+                mute_prompts = true;
+                [[fallthrough]];
+            case salvage::q_result::yes:
+                progress.emplace( target.loc->tname(), salvage::moves_to_salvage( *target.loc ) );
+                break;
+            case salvage::q_result::fail:
+            case salvage::q_result::skip:
+                targets.erase( targets.begin() );
+                if( targets.empty() ) {
+                    act.set_to_null();
+                    add_msg( _( "Never mind." ) );
+                }
+                break;
+            case salvage::q_result::abort:
+                act.set_to_null();
+                add_msg( _( "Never mind." ) );
+                break;
+            default:
+                break;
+        }
+    } else if( progress.empty() ) {
+        progress.emplace( target.loc->tname(), salvage::moves_to_salvage( *target.loc ) );
     }
 }
 
 void salvage_activity_actor::do_turn( player_activity &act, Character &who )
 {
+    if( targets.empty() || progress.empty() ) {
+        act.set_to_null();
+        return;
+    }
+
     if( progress.front().complete() ) {
         auto &target = targets.front();
         if( !target.loc ) {
@@ -460,6 +479,17 @@ void salvage_activity_actor::do_turn( player_activity &act, Character &who )
         }
         targets.erase( targets.begin() );
         progress.pop();
+        if( targets.empty() ) {
+            act.set_to_null();
+            return;
+        }
+        if( !targets.front().loc ) {
+            debugmsg( "Lost target of ", get_type() );
+            act.set_to_null();
+            return;
+        }
+        progress.emplace( targets.front().loc->tname(),
+                          salvage::moves_to_salvage( *targets.front().loc ) );
     }
     if( !progress.empty() && progress.front().not_started() ) {
         auto &target = targets.front();
@@ -497,7 +527,7 @@ void salvage_activity_actor::do_turn( player_activity &act, Character &who )
 
 void salvage_activity_actor::finish( player_activity &act, Character & )
 {
-    if( !progress.complete() ) {
+    if( !progress.empty() && !progress.complete() ) {
         debugmsg( "salvage_activity_actor call finish function while able to start new salvage" );
     }
     add_msg( _( "You finish salvaging." ) );

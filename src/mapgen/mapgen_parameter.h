@@ -20,7 +20,7 @@ template <> struct enum_traits<mapgen_parameter_scope> {
     static constexpr mapgen_parameter_scope last = mapgen_parameter_scope::last;
 };
 
-inline auto operator<(mapgen_parameter_scope l, mapgen_parameter_scope r) -> bool {
+inline bool operator<(mapgen_parameter_scope l, mapgen_parameter_scope r) {
     return static_cast<int>(l) < static_cast<int>(r);
 }
 
@@ -32,10 +32,10 @@ public:
 
     void deserialize(JsonIn&);
 
-    auto scope() const -> mapgen_parameter_scope { return scope_; }
-    auto type() const -> cata_variant_type;
-    auto get(const mapgendata&) const -> cata_variant;
-    auto all_possible_values(const mapgen_parameters&) const -> std::vector<std::string>;
+    mapgen_parameter_scope scope() const { return scope_; }
+    cata_variant_type type() const;
+    cata_variant get(const mapgendata&) const;
+    std::vector<std::string> all_possible_values(const mapgen_parameters&) const;
 
     void check(const mapgen_parameters&, const std::string& context) const;
     void check_consistent_with(const mapgen_parameter&, const std::string& context) const;
@@ -52,12 +52,12 @@ struct mapgen_parameters {
     std::unordered_map<std::string, mapgen_parameter> map;
     using iterator = std::unordered_map<std::string, mapgen_parameter>::const_iterator;
 
-    auto add_unique_parameter(
+    iterator add_unique_parameter(
         const std::string& prefix, const mapgen_value<std::string>& def, cata_variant_type,
-        mapgen_parameter_scope) -> iterator;
+        mapgen_parameter_scope);
 
-    auto params_for_scope(mapgen_parameter_scope scope) const -> mapgen_parameters;
-    auto get_args(const mapgendata&, mapgen_parameter_scope scope) const -> mapgen_arguments;
+    mapgen_parameters params_for_scope(mapgen_parameter_scope scope) const;
+    mapgen_arguments get_args(const mapgendata&, mapgen_parameter_scope scope) const;
     void check_and_merge(
         const mapgen_parameters&, const std::string& context,
         mapgen_parameter_scope up_to_scope = mapgen_parameter_scope::last);

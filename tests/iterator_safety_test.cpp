@@ -1,7 +1,7 @@
 #include "../src/vehicle/vpart_position.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "rect_range.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vpart_range.h"

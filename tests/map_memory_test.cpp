@@ -5,7 +5,9 @@
 #include "game_constants.h"
 #include "json.h"
 #include "lru_cache.h"
-#include "map_memory.h"
+#include "map/map.h"
+#include "map/map_memory.h"
+#include "map_helpers.h"
 #include "string_formatter.h"
 
 #include <cstdio>
@@ -63,7 +65,7 @@ TEST_CASE("map_memory_overwrites", "[map_memory]") {
 
 TEST_CASE("map_memory_forgets", "[map_memory]") {
     map_memory memory;
-    memory.memorize_symbol(tripoint_abs_ms::zero(), 1);
+    memory.memorize_symbol(test_origin, 1);
     memory.memorize_symbol(p3, 1);
 }
 

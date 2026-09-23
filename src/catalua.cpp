@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <clocale>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <ranges>
 #include <sstream>
@@ -53,6 +54,8 @@ constexpr int LUA_API_VERSION = 2;
 
 namespace cata
 {
+
+std::recursive_mutex lua_lock;
 
 namespace
 {

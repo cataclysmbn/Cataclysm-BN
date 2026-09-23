@@ -1,6 +1,6 @@
-#include "vehicle_wait.h"
+#include "vehicle/vehicle_wait.h"
 
-#include "vehicle.h"
+#include "vehicle/vehicle.h"
 
 namespace vehicle_wait {
 

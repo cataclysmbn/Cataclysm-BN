@@ -4,7 +4,7 @@
 #include "coordinates.h"
 #include "data_vars.h"
 #include "map/map.h"
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 #include "point.h"
 #include "type_id.h"
 #include "units_angle.h"

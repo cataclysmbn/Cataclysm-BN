@@ -1,4 +1,4 @@
-#include "mapdata.h"
+#include "map/mapdata.h"
 
 #include "assign.h"
 #include "cached_options.h"
@@ -42,7 +42,7 @@ const units::volume DEFAULT_MAX_VOLUME_IN_SQUARE = units::from_liter(1000);
 generic_factory<ter_t> terrain_data("terrain");
 generic_factory<furn_t> furniture_data("furniture");
 
-auto is_json_check_strict(const std::string& src) -> bool {
+bool is_json_check_strict(const std::string& src) {
     return json_report_strict || is_strict_enabled(src);
 }
 
@@ -283,7 +283,7 @@ void map_bash_info::finalize() {
     if (!ter_set_bashed_from_above) { ter_set_bashed_from_above = ter_set; }
 }
 
-static auto map_object_type_to_str(map_bash_info::map_object_type type) -> const std::string& {
+static const std::string& map_object_type_to_str(map_bash_info::map_object_type type) {
     switch (type) {
         case map_bash_info::map_object_type::terrain:
             return STATIC("terrain");
@@ -339,8 +339,8 @@ map_deconstruct_info::map_deconstruct_info()
       ter_set(ter_str_id::NULL_ID()),
       furn_set(furn_str_id::NULL_ID()) {}
 
-auto map_deconstruct_info::load(
-    const JsonObject& jsobj, const std::string& member, bool is_furniture) -> bool {
+bool map_deconstruct_info::load(
+    const JsonObject& jsobj, const std::string& member, bool is_furniture) {
     if (!jsobj.has_object(member)) { return false; }
     JsonObject j = jsobj.get_object(member);
     furn_set = furn_str_id(j.get_string("furn_set", "f_null"));
@@ -395,8 +395,8 @@ pry_result::pry_result()
       pry_items(item_group_id("EMPTY_GROUP")),
       break_items(item_group_id("EMPTY_GROUP")) {}
 
-auto pry_result::load(const JsonObject& jsobj, const std::string& member, map_object_type obj_type)
-    -> bool {
+bool pry_result::load(
+    const JsonObject& jsobj, const std::string& member, map_object_type obj_type) {
     if (!jsobj.has_object(member)) { return false; }
 
     JsonObject j = jsobj.get_object(member);
@@ -444,7 +444,7 @@ auto pry_result::load(const JsonObject& jsobj, const std::string& member, map_ob
     return true;
 }
 
-auto null_furniture_t() -> furn_t {
+furn_t null_furniture_t() {
     furn_t new_furniture;
     new_furniture.id = furn_str_id::NULL_ID();
     new_furniture.name_ = translate_marker("nothing");
@@ -467,7 +467,7 @@ ter_t::ter_t()
       roof(ter_str_id::NULL_ID()),
       trap(tr_null) {}
 
-auto null_terrain_t() -> ter_t {
+ter_t null_terrain_t() {
     ter_t new_terrain;
 
     new_terrain.id = ter_str_id::NULL_ID();
@@ -509,7 +509,7 @@ void load_season_array(const JsonObject& jo, const std::string& key, C& containe
     }
 }
 
-auto map_data_common_t::name() const -> std::string { return _(name_); }
+std::string map_data_common_t::name() const { return _(name_); }
 
 void map_data_common_t::load_symbol(const JsonObject& jo) {
     if (jo.has_member("copy-from") && looks_like.empty()) {
@@ -544,15 +544,15 @@ void map_data_common_t::load_symbol(const JsonObject& jo) {
     }
 }
 
-auto map_data_common_t::symbol() const -> int { return symbol_[season_of_year(calendar::turn)]; }
+int map_data_common_t::symbol() const { return symbol_[season_of_year(calendar::turn)]; }
 
-auto map_data_common_t::color() const -> nc_color { return color_[season_of_year(calendar::turn)]; }
+nc_color map_data_common_t::color() const { return color_[season_of_year(calendar::turn)]; }
 
-auto map_data_common_t::get_harvest() const -> const harvest_id& {
+const harvest_id& map_data_common_t::get_harvest() const {
     return harvest_by_season[season_of_year(calendar::turn)];
 }
 
-auto map_data_common_t::get_harvest_names() const -> const std::set<std::string>& {
+const std::set<std::string>& map_data_common_t::get_harvest_names() const {
     static const std::set<std::string> null_names = {};
     const harvest_id& hid = get_harvest();
     return hid.is_null() ? null_names : hid->names();
@@ -592,7 +592,7 @@ void map_data_common_t::set_connects(const std::string& connect_group_string) {
     }
 }
 
-auto map_data_common_t::connects(int& ret) const -> bool {
+bool map_data_common_t::connects(int& ret) const {
     if (connect_group != TERCONN_NONE) {
         ret = connect_group;
         return true;
@@ -1148,10 +1148,10 @@ void set_furn_ids() {
     f_gunsafe_ml = furn_id("f_gunsafe_ml");
 }
 
-auto ter_t::count() -> size_t { return terrain_data.size(); }
+size_t ter_t::count() { return terrain_data.size(); }
 
 namespace io {
-template <> auto enum_to_string<season_type>(season_type data) -> std::string {
+template <> std::string enum_to_string<season_type>(season_type data) {
     switch (data) {
         // *INDENT-OFF*
         case season_type::SPRING:
@@ -1224,9 +1224,9 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     optional(jo, was_loaded, "curtain_transform", curtain_transform);
 }
 
-auto ter_t::is_null() const -> bool { return id == ter_str_id::NULL_ID(); }
+bool ter_t::is_null() const { return id == ter_str_id::NULL_ID(); }
 
-auto ter_t::is_diggable() const -> bool { return !digging_results.result_ter->is_null(); }
+bool ter_t::is_diggable() const { return !digging_results.result_ter->is_null(); }
 
 void ter_t::load(const JsonObject& jo, const std::string& src) {
     connect_group = TERCONN_NONE;
@@ -1417,13 +1417,13 @@ void ter_t::check() const {
     }
 }
 
-auto ter_t::get_all() -> const std::vector<ter_t>& { return terrain_data.get_all(); }
+const std::vector<ter_t>& ter_t::get_all() { return terrain_data.get_all(); }
 
 furn_t::furn_t(): open(furn_str_id::NULL_ID()), close(furn_str_id::NULL_ID()) {}
 
-auto furn_t::count() -> size_t { return furniture_data.size(); }
+size_t furn_t::count() { return furniture_data.size(); }
 
-auto furn_t::is_movable() const -> bool { return move_str_req >= 0; }
+bool furn_t::is_movable() const { return move_str_req >= 0; }
 
 void furn_t::load(const JsonObject& jo, const std::string& src) {
     map_data_common_t::load(jo, src);
@@ -1652,7 +1652,7 @@ void furn_t::check() const {
     }
 }
 
-auto furn_t::get_all() -> const std::vector<furn_t>& { return furniture_data.get_all(); }
+const std::vector<furn_t>& furn_t::get_all() { return furniture_data.get_all(); }
 
 auto fluid_grid_connected_variant(const furn_id& id) -> std::optional<furn_id> {
     const auto& connected = fluid_grid_connected_variants();
@@ -1684,7 +1684,7 @@ void finalize_furn() {
     build_fluid_grid_variant_maps();
 }
 
-auto activity_byproduct::roll() const -> int { return count + rng(random_min, random_max); }
+int activity_byproduct::roll() const { return count + rng(random_min, random_max); }
 
 void activity_byproduct::load(const JsonObject& jo) {
     mandatory(jo, was_loaded, "item", item);

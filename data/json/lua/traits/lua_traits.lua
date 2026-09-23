@@ -145,7 +145,7 @@ local function count_loose_items(here, center)
   local total = 0
 
   for _, pt in ipairs(here:points_in_radius(center, clutter_radius, 0)) do
-    if you:sees(pt) then
+    if you:sees(here:bub_to_abs(pt)) then
       if is_loot_on_floor(here, pt) then
         local items = here:get_items_at(pt)
         total = total + #items
@@ -171,17 +171,18 @@ local function tick_nyctophobia()
   if you:get_effect_int(effect_depressants) > 3 then return end
 
   local here = gapi.get_map()
-  local pos = you:get_pos_ms()
+  local bub_pos = you:bub_pos()
+  local abs_pos = you:abs_pos()
   local threshold = nyctophobia_threshold()
   local dark_places = {}
 
-  for _, pt in ipairs(here:points_in_radius(pos, 5)) do
-    if you:sees(pt) and here:ambient_light_at(pt) < threshold and is_passable(here, pt) then
+  for _, pt in ipairs(here:points_in_radius(bub_pos, 5)) do
+    if you:sees(here:bub_to_abs(pt)) and here:ambient_light_at(pt) < threshold and is_passable(here, pt) then
       table.insert(dark_places, pt)
     end
   end
 
-  local in_darkness = here:ambient_light_at(pos) < threshold
+  local in_darkness = here:ambient_light_at(bub_pos) < threshold
   local chance = in_darkness and 50 or 200
 
   if #dark_places > 0 and gapi.rng(1, chance) == 1 and one_turn_in(TimeDuration.from_hours(1)) then
@@ -249,8 +250,8 @@ local function tick_morale_traits()
   end
 
   local here = gapi.get_map()
-  local pos = you:get_pos_ms()
-  local is_outside = here:is_outside(pos)
+  local bub_pos = you:bub_pos()
+  local is_outside = here:is_outside(bub_pos)
 
   if you:has_trait(trait_claustrophobia) then
     if not is_outside then
@@ -281,10 +282,10 @@ local function tick_clutter_intolerant()
   end
 
   local here = gapi.get_map()
-  local pos = you:get_pos_ms()
+  local bub_pos = you:bub_pos()
 
   if you:has_trait(trait_clutter_intolerant) then
-    local loose_items = count_loose_items(here, pos)
+    local loose_items = count_loose_items(here, bub_pos)
     local penalty = clutter_penalty(loose_items)
     apply_penalty(you, morale_clutter_intolerant, penalty)
     if penalty > 0 and not seen_clutter then
@@ -317,7 +318,7 @@ local function on_character_try_move(params)
   if not dest then return true end
 
   local threshold = nyctophobia_threshold()
-  if here:ambient_light_at(dest) >= threshold then return true end
+  if here:ambient_light_at(here:abs_to_bub(dest)) >= threshold then return true end
 
   if ch:is_avatar() then
     gapi.add_msg(

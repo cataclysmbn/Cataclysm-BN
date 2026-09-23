@@ -1,6 +1,6 @@
 #include "catch/catch.hpp"
 #include "coordinates.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "point.h"
 
 #include <algorithm>

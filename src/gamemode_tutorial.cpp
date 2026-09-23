@@ -12,7 +12,7 @@
 #include "item.h"
 #include "map/map.h"
 #include "map/mapdata.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "output.h"
 #include "overmap.h"
 #include "overmapbuffer.h"

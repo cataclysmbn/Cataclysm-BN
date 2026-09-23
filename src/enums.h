@@ -236,6 +236,11 @@ enum liquid_source_type { LST_INFINITE_MAP = 1, LST_VEHICLE = 2};
 
 enum liquid_target_type { LTT_CONTAINER = 1, LTT_VEHICLE = 2, LTT_MAP = 3, LTT_MONSTER = 4 };
 
+enum class hack_type_t : int {
+    vehicle = 0,
+    furniture = 1
+};
+
 /**
  *  Possible layers that a piece of clothing/armor can occupy
  *

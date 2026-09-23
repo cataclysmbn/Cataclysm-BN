@@ -1,6 +1,7 @@
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 
 #include "artifact.h"
+#include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "computer.h"
@@ -20,7 +21,7 @@
 #include "map/mapbuffer.h"
 #include "map/mapdata.h"
 #include "map/submap.h"
-#include "mapgendata.h"
+#include "mapgen/mapgendata.h"
 #include "mongroup.h"
 #include "npc.h"
 #include "omdata.h"
@@ -385,7 +386,8 @@ auto mapgen_constructor::get_vehicles() const -> std::vector<vehicle*> {
 
 auto mapgen_constructor::ter_set(const point_omt_ms& p, const ter_id& terrain) -> bool {
     const auto [sm, local] = tile_at(p);
-    if (sm == nullptr || sm->get_ter(local) == terrain) { return false; }
+    if (sm == nullptr) { return false; }
+    if (sm->get_ter(local) == terrain) { return false; }
     sm->set_ter(local, terrain);
     return true;
 }
@@ -523,7 +525,6 @@ auto mapgen_constructor::add_item(const point_omt_ms& p, detached_ptr<item>&& ne
     sm->is_uniform = false;
     sm->update_lum_add(local, *new_item);
     if (new_item->needs_processing()) { sm->active_items.add(*new_item); }
-    new_item->on_map_placement(project_combine(abs_offset_, p));
     sm->get_items(local).push_back(std::move(new_item));
 }
 
@@ -940,6 +941,7 @@ auto mapgen_constructor::place_npc(
     temp->toggle_trait(trait_NPC_STATIC_NPC);
     get_overmapbuffer(get_bound_dimension()).insert_npc(temp);
     if (!is_pool_worker_thread()) {
+        std::unique_lock lock(cata::lua_lock);
         cata::run_hooks("on_creature_spawn", [&](sol::table& params) {
             params["creature"] = temp.get();
         });

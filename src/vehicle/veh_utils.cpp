@@ -1,4 +1,4 @@
-#include "veh_utils.h"
+#include "vehicle/veh_utils.h"
 
 #include "calendar.h"
 #include "character.h"
@@ -15,10 +15,10 @@
 #include "point.h"
 #include "requirements.h"
 #include "translations.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_range.h"
 
 #include <algorithm>
 #include <cmath>
@@ -31,7 +31,7 @@
 
 namespace veh_utils {
 
-auto calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who) -> int {
+int calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who) {
     const auto iter = vp.install_skills.find(sk);
     if (iter == vp.install_skills.end()) { return 0; }
 
@@ -46,7 +46,7 @@ auto calc_xp_gain(const vpart_info& vp, const skill_id& sk, const Character& who
         static_cast<double>(vp.install_moves) / to_moves<int>(1_minutes * std::pow(lvl, 2)) * diff);
 }
 
-auto most_repairable_part(vehicle& veh, Character& who, bool only_repairable) -> vehicle_part& {
+vehicle_part& most_repairable_part(vehicle& veh, Character& who, bool only_repairable) {
     const auto& inv = who.crafting_inventory();
 
     enum class repairable_status { not_repairable = 0, need_replacement, repairable };
@@ -92,7 +92,7 @@ auto most_repairable_part(vehicle& veh, Character& who, bool only_repairable) ->
     return high_damage_iterator->part();
 }
 
-auto repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) -> bool {
+bool repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) {
     // TODO: Get rid of this cast after moving relevant functions down to Character
     player& who = static_cast<player&>(who_c);
     int part_index = veh.index_of_part(&pt);
@@ -102,7 +102,7 @@ auto repair_part(vehicle& veh, vehicle_part& pt, Character& who_c) -> bool {
     const auto reqs =
         pt.is_broken() ? vp.install_requirements() : vp.repair_requirements() * pt.damage_level(4);
 
-    const inventory& inv = who.crafting_inventory(who.bub_pos(), PICKUP_RANGE, !who.is_npc());
+    const inventory& inv = who.crafting_inventory(who.abs_pos(), PICKUP_RANGE, !who.is_npc());
     inventory map_inv;
     // allow NPCs to use welding rigs they can't see ( on the other side of a vehicle )
     // as they have the handicap of not being able to use the veh interaction menu

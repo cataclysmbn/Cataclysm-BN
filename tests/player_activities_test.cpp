@@ -59,8 +59,8 @@ TEST_CASE("boltcut", "[activity][boltcut]") {
     };
 
     auto setup_activity = [&dummy](item& cutter) -> void {
-        auto act = std::make_unique<
-            boltcutting_activity_actor>(tripoint_bub_ms::zero(), safe_reference<item>(cutter));
+        auto act = std::make_unique<boltcutting_activity_actor>(
+            map_local_to_abs(get_map(), tripoint_bub_ms::zero()), safe_reference<item>(cutter));
         act->testing = true;
         dummy.assign_activity(std::make_unique<player_activity>(std::move(act)));
     };
@@ -315,8 +315,8 @@ TEST_CASE("hacksaw", "[activity][hacksaw]") {
     };
 
     auto setup_activity = [&dummy](item& saw) -> void {
-        auto act = std::make_unique<
-            hacksaw_activity_actor>(tripoint_bub_ms::zero(), safe_reference<item>(saw));
+        auto act = std::make_unique<hacksaw_activity_actor>(
+            map_local_to_abs(get_map(), tripoint_bub_ms::zero()), safe_reference<item>(saw));
         act->testing = true;
         dummy.assign_activity(std::make_unique<player_activity>(std::move(act)));
     };
@@ -569,8 +569,8 @@ TEST_CASE("oxytorch", "[activity][oxytorch]") {
     };
 
     auto setup_activity = [&dummy](item& torch) -> void {
-        auto act = std::make_unique<
-            oxytorch_activity_actor>(tripoint_bub_ms::zero(), safe_reference<item>(torch));
+        auto act = std::make_unique<oxytorch_activity_actor>(
+            map_local_to_abs(get_map(), tripoint_bub_ms::zero()), safe_reference<item>(torch));
         act->testing = true;
         dummy.assign_activity(std::make_unique<player_activity>(std::move(act)));
     };

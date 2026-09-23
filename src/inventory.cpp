@@ -17,7 +17,7 @@
 #include "locations.h"
 #include "map/map.h"
 #include "map/mapdata.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "material.h"
 #include "messages.h" //for rust message
 #include "npc.h"

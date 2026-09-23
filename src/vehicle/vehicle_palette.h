@@ -6,7 +6,7 @@
 #include "string_id.h"
 #include "type_id.h"
 #include "units_angle.h"
-#include "vehicle_group.h"
+#include "vehicle/vehicle_group.h"
 #include "weighted_list.h"
 
 #include <memory>
@@ -32,9 +32,9 @@ public:
 
     static void reset();
 
-    auto fuzzy_to_index(const vpart_id& id) const -> int;
+    int fuzzy_to_index(const vpart_id& id) const;
 
-    auto pick_colors() const -> std::vector<RGBColor>;
+    std::vector<RGBColor> pick_colors() const;
 
     vpalette_id id;
 

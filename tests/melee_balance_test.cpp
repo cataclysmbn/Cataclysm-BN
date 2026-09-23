@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-static const tripoint_bub_ms dude_pos(g_half_mapsize_x, g_half_mapsize_y, 0);
+static const tripoint_abs_ms dude_pos(g_half_mapsize_x, g_half_mapsize_y, 0);
 
 static auto find_weapons() -> std::vector<const itype*> {
     std::vector<const itype*> result;

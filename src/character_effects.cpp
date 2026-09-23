@@ -9,7 +9,7 @@
 #include "itype.h"
 #include "make_static.h"
 #include "map/submap.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "player.h"
 #include "player_activity.h"
 #include "rng.h"

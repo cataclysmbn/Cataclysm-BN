@@ -632,12 +632,15 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
     if( here.empty() ) {
         return;
     }
+    const std::optional<tripoint_abs_ms> starting_pos_abs = starting_pos ?
+            bub_to_abs( *starting_pos ) :
+            std::optional<tripoint_abs_ms>( std::nullopt );
 
     // Not many items, just grab them
     if( static_cast<int>( here.size() ) <= min && min != -1 ) {
         g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
         std::vector<pickup::pick_drop_selection> { { *here.front(), std::nullopt, {} } },
-        starting_pos ) ) );
+        starting_pos_abs ) ) );
         return;
     }
 
@@ -760,7 +763,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
 
             if( selected >= 0 && selected <= static_cast<int>( stacked_here.size() ) - 1 ) {
                 item *loc = *stacked_here[matches[selected]].front();
-                temperature_flag temperature = rot::temp::for_location( get_map(), *loc );
+                temperature_flag temperature = rot::temp::for_location( *loc );
 
                 std::vector<iteminfo> this_item = selected_item.info( temperature );
 
@@ -1222,7 +1225,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
     std::vector<pickup::pick_drop_selection> targets = pickup::optimize_pickup( locations, quantities );
     g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
                           ( targets,
-                            starting_pos ) ) );
+                            starting_pos_abs ) ) );
     if( min == -1 ) {
         // Auto pickup will need to auto resume since there can be several of them on the stack.
         g->u.activity->auto_resume = true;
@@ -1314,7 +1317,7 @@ auto pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_fr
         }
 
         // Bail out if this square cannot be auto-picked-up
-        if( g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), p ) ) {
+        if( g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), bub_to_abs( p ) ) ) {
             return;
         } else if( g->m.has_flag( "SEALED", p ) ) {
             return;

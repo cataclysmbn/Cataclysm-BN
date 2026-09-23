@@ -46,12 +46,11 @@ class veh_interact {
     using part_selector = std::function<bool(const vehicle_part& pt)>;
 
 public:
-    static auto run(vehicle& veh, tripoint_mnt_veh p) -> std::unique_ptr<player_activity>;
+    static std::unique_ptr<player_activity> run(vehicle& veh, tripoint_mnt_veh p);
 
     /** Prompt for a part matching the selector function */
-    static auto select_part(
-        const vehicle& veh, const part_selector& sel, const std::string& title = std::string())
-        -> vehicle_part&;
+    static vehicle_part& select_part(
+        const vehicle& veh, const part_selector& sel, const std::string& title = std::string());
 
     static void complete_vehicle(Character& who);
 
@@ -117,20 +116,20 @@ private:
     // maximum level of available jacking equipment (if any)
     int max_jack;
 
-    auto create_or_get_ui_adaptor() -> shared_ptr_fast<ui_adaptor>;
+    shared_ptr_fast<ui_adaptor> create_or_get_ui_adaptor();
     void hide_ui(bool hide);
 
-    auto serialize_activity() -> std::unique_ptr<player_activity>;
+    std::unique_ptr<player_activity> serialize_activity();
 
     /** Format list of requirements returning true if all are met */
-    auto format_reqs(
+    bool format_reqs(
         std::string& msg, const requirement_data& reqs, const std::map<skill_id, int>& skills,
-        int moves) const -> bool;
+        int moves) const;
 
-    auto part_at(tripoint_bub_ms d) -> int;
+    int part_at(tripoint_bub_ms d);
     void move_cursor(tripoint_rel_veh d, int dstart_at = 0);
-    auto cant_do(char mode) -> task_reason;
-    auto can_potentially_install(const vpart_info& vpart) -> bool;
+    task_reason cant_do(char mode);
+    bool can_potentially_install(const vpart_info& vpart);
     /** Move index (parameter pos) according to input action:
      * (up or down, single step or whole page).
      * @param pos index to change.
@@ -139,7 +138,7 @@ private:
      * @param header number of lines reserved for list header.
      * @return false if the action is not a move action, the index is not changed in this case.
      */
-    auto move_in_list(int& pos, const std::string& action, int size, int header = 0) const -> bool;
+    bool move_in_list(int& pos, const std::string& action, int size, int header = 0) const;
     void move_fuel_cursor(int delta);
 
     /**
@@ -158,7 +157,7 @@ private:
     void do_rename();
     void do_siphon();
     // Returns true if exiting the screen
-    auto do_unload() -> bool;
+    bool do_unload();
     void do_change_shape();
     void do_assign_crew();
     void do_relabel();
@@ -233,20 +232,20 @@ private:
     nc_color total_durability_color;
 
     /** Returns the most damaged part's index, or -1 if they're all healthy. */
-    auto get_most_damaged_part() const -> vehicle_part*;
+    vehicle_part* get_most_damaged_part() const;
 
     /** Returns the index of the part that needs repair the most.
      * This may not be mostDamagedPart since not all parts can be repaired
      * If there are no damaged parts this returns -1 */
-    auto get_most_repariable_part() const -> vehicle_part*;
+    vehicle_part* get_most_repariable_part() const;
 
     // do_remove supporting operation, writes requirements to ui
-    auto can_remove_part(int idx, const Character& who) -> bool;
+    bool can_remove_part(int idx, const Character& who);
     // do install support, writes requirements to ui
-    auto update_part_requirements() -> bool;
+    bool update_part_requirements();
     // true if trying to install foot crank with electric engines for example
     // writes failure to ui
-    auto is_drive_conflict() -> bool;
+    bool is_drive_conflict();
 
     /* Vector of all vpart TYPES that can be mounted in the current square.
      * Can be converted to a vector<vpart_info>.
@@ -284,5 +283,5 @@ private:
     void cache_tool_availability_update_lifting(const tripoint_bub_ms& world_cursor_pos);
 
     /** Returns true if the vehicle has a jack powerful enough to lift itself installed */
-    auto can_self_jack() -> bool;
+    bool can_self_jack();
 };

@@ -45,7 +45,7 @@
 #include "line.h"
 #include "map/map.h"
 #include "map/mapbuffer.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "messages.h"
 #include "mission.h"
 #include "mongroup.h"

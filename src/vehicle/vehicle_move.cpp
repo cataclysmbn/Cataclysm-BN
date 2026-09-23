@@ -1,4 +1,4 @@
-#include "vehicle_move.h" // IWYU pragma: associated
+#include "vehicle/vehicle_move.h" // IWYU pragma: associated
 
 #include "action_time_scale.h"
 #include "avatar.h"
@@ -13,8 +13,8 @@
 #include "item.h"
 #include "itype.h"
 #include "map/map.h"
+#include "map/map_iterator.h"
 #include "map/mapdata.h"
-#include "map_iterator.h"
 #include "material.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -29,11 +29,11 @@
 #include "trap.h"
 #include "units_angle.h"
 #include "units_utility.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
-#include "vpart_range.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h" // IWYU pragma: associated
+#include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 
 #include <algorithm>
 #include <array>
@@ -75,12 +75,12 @@ auto mps_to_cmps(double mps) -> int { return std::lround(mps * 100.0); }
 auto cmps_to_mps(int cmps) -> double { return static_cast<double>(cmps) / 100.0; }
 
 // Conversion of impulse Ns to damage for vehicle collision purposes.
-auto impulse_to_damage(float impulse) -> float { return impulse * imp_conv_const; }
+float impulse_to_damage(float impulse) { return impulse * imp_conv_const; }
 
 // Convert damage back to impulse Ns
-auto damage_to_impulse(float damage) -> float { return damage * imp_conv_const_inv; }
+float damage_to_impulse(float damage) { return damage * imp_conv_const_inv; }
 
-auto vehicle::slowdown(int at_velocity) const -> int {
+int vehicle::slowdown(int at_velocity) const {
     double mps = cmps_to_mps(std::abs(at_velocity));
 
     // slowdown due to air resistance is proportional to square of speed
@@ -145,7 +145,7 @@ void vehicle::thrust(int thd, int z) {
     }
 
     // TODO: Pass this as an argument to avoid recalculating
-    float traction = k_traction(get_map().vehicle_wheel_traction(*this));
+    float traction = k_traction(get_map().get_mapbuffer().vehicle_wheel_traction(*this));
     int accel = current_acceleration() * traction;
     // Somehow accel is not clamped to current_acceleration in the air
     // Everywhere else and there is no need for clamps
@@ -474,7 +474,6 @@ auto vehicle::collision(const vehicle_collision_options& options) -> bool {
         colls.push_back(fake_coll);
         velocity = 0;
         vertical_velocity = 0;
-        add_msg(m_debug, "Collision check on a dirty vehicle %s", name);
         return true;
     }
 
@@ -910,7 +909,7 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
                 critter->bleed();
             } else {
                 sound_event se;
-                se.origin = p;
+                se.origin = bub_to_abs(p);
                 se.volume = 70;
                 se.category = sounds::sound_t::combat;
                 se.description = snd;
@@ -935,7 +934,7 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
         }
 
         sound_event se;
-        se.origin = p;
+        se.origin = bub_to_abs(p);
         se.volume = smashed ? 90 : 70;
         se.category = sounds::sound_t::combat;
         se.description = snd;
@@ -966,14 +965,14 @@ auto vehicle::part_collision(const vehicle_part_collision_options& options) -> v
     return ret;
 }
 
-void vehicle::handle_trap(const tripoint_bub_ms& p, int part) {
+void vehicle::handle_trap(const tripoint_abs_ms& p, int part) {
     int pwh = part_with_feature(part, VPFLAG_WHEEL, true);
     if (pwh < 0) { return; }
     if (part_with_feature(part, VPFLAG_TRAP_PROOF, true) >= 0) { return; }
-    map& here = get_map();
     Character& player_character = get_player_character();
+    auto& here = player_character.get_mapbuffer();
 
-    const trap& tr = here.tr_at(p);
+    const trap& tr = here.get_trap(p)->obj();
     const trap_id t = tr.loadid;
 
     if (t == tr_null) {
@@ -1010,14 +1009,14 @@ void vehicle::handle_trap(const tripoint_bub_ms& p, int part) {
         }
         if (veh_data.do_explosion) {
             explosion_handler::
-                explosion(p, nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel);
+                explosion(abs_to_bub(p), nullptr, veh_data.damage, 0.5f, false, veh_data.shrapnel);
         } else {
             // Hit the wheel directly since it ran right over the trap.
             damage_direct(pwh, veh_data.damage);
         }
         bool still_has_trap = true;
         if (veh_data.remove_trap || veh_data.do_explosion) {
-            here.remove_trap(p);
+            here.set_trap(p, tr_null);
             still_has_trap = false;
         }
         for (const auto& it : veh_data.spawn_items) {
@@ -1025,11 +1024,11 @@ void vehicle::handle_trap(const tripoint_bub_ms& p, int part) {
             if (cnt > 0) { here.spawn_item(p, it.first, cnt); }
         }
         if (veh_data.set_trap) {
-            here.trap_set(p, veh_data.set_trap.id());
+            here.set_trap(p, veh_data.set_trap.id());
             still_has_trap = true;
         }
         if (still_has_trap) {
-            const trap& tr = here.tr_at(p);
+            const trap& tr = here.get_trap(p)->obj();
             if (seen || known) {
                 // known status has been reset by map::trap_set()
                 player_character.add_known_trap(p, tr);
@@ -1037,14 +1036,14 @@ void vehicle::handle_trap(const tripoint_bub_ms& p, int part) {
             if (seen && !known) {
                 // hard to miss!
                 const std::string direction = direction_name(
-                    direction_from(player_character.bub_pos(), p));
+                    direction_from(player_character.abs_pos(), p));
                 add_msg(_("You've spotted a %1$s to the %2$s!"), tr.name(), direction);
             }
         }
     }
 }
 
-auto vehicle::has_harnessed_animal() const -> bool {
+bool vehicle::has_harnessed_animal() const {
     for (size_t e = 0; e < parts.size(); e++) {
         const vehicle_part& vp = parts[e];
         if (vp.info().fuel_type == fuel_type_animal) {
@@ -1102,7 +1101,7 @@ void vehicle::selfdrive(point p) {
     }
 }
 
-auto vehicle::check_is_heli_landed() -> bool {
+bool vehicle::check_is_heli_landed() {
     // @TODO - when there are chasms that extend below z-level 0 - perhaps the heli
     // will be able to descend into them but for now, assume z-level-0 == the ground.
     if ((bub_ms_location().z() == 0
@@ -1114,7 +1113,7 @@ auto vehicle::check_is_heli_landed() -> bool {
     return false;
 }
 
-auto vehicle::check_heli_descend(Character& who) -> bool {
+bool vehicle::check_heli_descend(Character& who) {
     if (!is_aircraft()) {
         debugmsg("A vehicle is somehow flying without being an aircraft");
         return true;
@@ -1145,7 +1144,7 @@ auto vehicle::check_heli_descend(Character& who) -> bool {
 }
 
 // Rename this?
-auto vehicle::check_heli_ascend(Character& who) -> bool {
+bool vehicle::check_heli_ascend(Character& who) {
     if (!is_aircraft()) {
         debugmsg("A vehicle is somehow flying without being an aircraft");
         return true;
@@ -1333,14 +1332,14 @@ void vehicle::possibly_recover_from_skid() {
 }
 
 // if not skidding, move_vec == face_vec, mv <dot> fv == 1, velocity*1 is returned.
-auto vehicle::forward_velocity() const -> float {
+float vehicle::forward_velocity() const {
     rl_vec2d mv = move_vec();
     rl_vec2d fv = face_vec();
     float dot = mv.dot_product(fv);
     return velocity * dot;
 }
 
-auto vehicle::velo_vec() const -> rl_vec2d {
+rl_vec2d vehicle::velo_vec() const {
     rl_vec2d ret;
     if (skidding) {
         ret = move_vec();
@@ -1352,21 +1351,21 @@ auto vehicle::velo_vec() const -> rl_vec2d {
     return ret;
 }
 
-static inline auto angle_to_vec(units::angle angle) -> rl_vec2d {
+static inline rl_vec2d angle_to_vec(units::angle angle) {
     return rl_vec2d(units::cos(angle), units::sin(angle));
 }
 
 // normalized.
-auto vehicle::move_vec() const -> rl_vec2d { return angle_to_vec(move.dir()); }
+rl_vec2d vehicle::move_vec() const { return angle_to_vec(move.dir()); }
 
 // normalized.
-auto vehicle::face_vec() const -> rl_vec2d { return angle_to_vec(face.dir()); }
+rl_vec2d vehicle::face_vec() const { return angle_to_vec(face.dir()); }
 
-auto vehicle::dir_vec() const -> rl_vec2d { return angle_to_vec(turn_dir); }
+rl_vec2d vehicle::dir_vec() const { return angle_to_vec(turn_dir); }
 // Takes delta_v in m/s, returns collision factor. Ranges from 1 at 0m/s to 0.3 at approx ~60mph.
 // Changed from e min of 0.1 as this is a nearly perfectly plastic collision, which is not common
 // outside of vehicles with engineered crumple zones. Cata vehicles dont have crumple zones.
-auto get_collision_factor(const float delta_v) -> float {
+float get_collision_factor(const float delta_v) {
     if (std::abs(delta_v) <= 26.8224) {
         return (1 - (0.7 * std::abs(delta_v)) / 26.8224);
     } else {
@@ -1374,7 +1373,7 @@ auto get_collision_factor(const float delta_v) -> float {
     }
 }
 
-auto vehicle::act_on_map() -> vehicle* {
+vehicle* vehicle::act_on_map() {
     map& here = get_map();
     // Note: no inbounds() guard here.  Vehicles outside the reality bubble are
     // valid for loaded submaps.  A vehicle driving into an unloaded submap will naturally
@@ -1446,7 +1445,7 @@ auto vehicle::act_on_map() -> vehicle* {
         return this;
     }
 
-    const float wheel_traction_area = here.vehicle_wheel_traction(*this);
+    const float wheel_traction_area = here.get_mapbuffer().vehicle_wheel_traction(*this);
     const float traction = k_traction(wheel_traction_area);
     if (traction < 0.001f) {
         of_turn = 0;
@@ -1549,7 +1548,7 @@ auto vehicle::act_on_map() -> vehicle* {
         if (dp.z() > 0 && is_aircraft()) { is_flying = true; }
     }
 
-    return here.move_vehicle(*this, dp, mdir);
+    return here.get_mapbuffer().move_vehicle(*this, dp, mdir);
 }
 
 void vehicle::shift_zlevel() {
@@ -1573,10 +1572,10 @@ void vehicle::shift_zlevel() {
         z_shift = center_it->z_terrain[0];
     }
 
-    if (z_shift != 0) { here.shift_vehicle_z(*this, z_shift); }
+    if (z_shift != 0) { here.get_mapbuffer().shift_vehicle_z(*this, z_shift); }
 }
 
-auto vehicle::check_on_ramp(int idir, const tripoint_rel_ms& offset) const -> bool {
+bool vehicle::check_on_ramp(int idir, const tripoint_rel_ms& offset) const {
     const tripoint_bub_ms origin = bub_ms_location();
     for (auto& prt : get_all_parts()) {
         const vehicle_part& p = prt.part();
@@ -1687,167 +1686,6 @@ void vehicle::check_falling_or_floating() {
     in_water = 2 * water_tiles >= pts.size();
 }
 
-auto map::vehicle_wheel_traction(
-    const vehicle& veh, const bool ignore_movement_modifiers /*=false*/) const -> float {
-    if (veh.is_in_water(true)) { return veh.can_float() ? 1.0f : -1.0f; }
-    if (veh.is_in_water() && veh.is_watercraft() && veh.can_float()) { return 1.0f; }
-    if (veh.is_flying_in_air()) { return (veh.has_lift()) ? 1.0f : -1.0f; }
-
-    const auto& wheel_indices = veh.wheelcache;
-    int num_wheels = wheel_indices.size();
-    if (num_wheels == 0) {
-        // TODO: Assume it is digging in dirt
-        // TODO: Return something that could be reused for dragging
-        return 0.0f;
-    }
-
-    float traction_wheel_area = 0.0f;
-
-    if (vehicle_movement::is_on_rails(*this, veh)) {
-        // Vehicles on rails are considered to have all of their wheels on rails
-        for (int p : veh.rail_wheelcache) { traction_wheel_area += veh.cpart(p).wheel_area(); }
-        return traction_wheel_area;
-    }
-
-    for (int p : wheel_indices) {
-        const auto& pp = veh.bub_part_location(p);
-        const int wheel_area = veh.cpart(p).wheel_area();
-
-        const auto& tr = ter(pp).obj();
-        // Deep water and air
-        if (tr.has_flag(TFLAG_DEEP_WATER) || tr.has_flag(TFLAG_NO_FLOOR)) {
-            // No traction from wheel in water or air
-            continue;
-        }
-
-        int move_mod = move_cost_ter_furn(pp);
-        if (move_mod == 0) {
-            // Vehicle locked in wall
-            // Shouldn't happen, but does
-            return 0.0f;
-        }
-
-        for (const auto& terrain_mod : veh.part_info(p).wheel_terrain_mod()) {
-            if (!tr.has_flag(terrain_mod.first)) {
-                move_mod += terrain_mod.second;
-                break;
-            }
-        }
-
-        // Ignore the movement modifier if needed.
-        if (ignore_movement_modifiers) { move_mod = 2; }
-
-        traction_wheel_area += 2.0 * wheel_area / move_mod;
-    }
-
-    return traction_wheel_area;
-}
-
-auto map::shake_vehicle(vehicle& veh, const int velocity_before, const units::angle direction)
-    -> units::angle {
-    const int d_vel = std::abs(cmps_to_mps(veh.velocity - velocity_before)) * 2.23694;
-
-    std::vector<rider_data> riders = veh.get_riders();
-
-    units::angle coll_turn = 0_degrees;
-    for (const rider_data& r : riders) {
-        const int ps = r.prt;
-        Creature* rider = r.psg;
-        if (rider == nullptr) {
-            debugmsg("throw passenger: empty passenger at part %d", ps);
-            continue;
-        }
-
-        const auto part_pos = veh.bub_part_location(ps);
-        if (rider->bub_pos() != part_pos) {
-            debugmsg("throw passenger: passenger at %d,%d,%d, part at %d,%d,%d",
-                     rider->bub_pos().x(), rider->bub_pos().y(), rider->bub_pos().z(), part_pos.x(),
-                     part_pos.y(), part_pos.z());
-            veh.part(ps).remove_flag(vehicle_part::passenger_flag);
-            continue;
-        }
-
-        player* psg = dynamic_cast<player*>(rider);
-        monster* pet = dynamic_cast<monster*>(rider);
-
-        bool throw_from_seat = false;
-        int move_resist = 1;
-        if (psg) {
-            ///\EFFECT_STR reduces chance of being thrown from your seat when not wearing a seatbelt
-            move_resist = psg->str_cur * 150 + 500;
-            if (veh.part(ps).info().has_flag("SEAT_REQUIRES_BALANCE")) {
-                // Much harder to resist being thrown on a skateboard-like vehicle.
-                // Penalty mitigated by Deft and Skater.
-                int resist_penalty = 500;
-                if (psg->has_trait(trait_PROF_SKATER)) { resist_penalty -= 150; }
-                if (psg->has_trait(trait_DEFT)) { resist_penalty -= 150; }
-                move_resist -= resist_penalty;
-            }
-        } else {
-            int pet_resist = 0;
-            if (pet != nullptr) {
-                pet_resist = static_cast<int>(to_kilogram(pet->get_weight()) * 200);
-            }
-            move_resist = std::max(100, pet_resist);
-        }
-        if (veh.part_with_feature(ps, VPFLAG_SEATBELT, true) == -1) {
-            ///\EFFECT_STR reduces chance of being thrown from your seat when not wearing a seatbelt
-            throw_from_seat = d_vel * rng(80, 120) > move_resist;
-        }
-
-        // Damage passengers if d_vel is too high
-        if (!throw_from_seat && (10 * d_vel) > 6 * rng(50, 100)) {
-            const int dmg = d_vel * rng(70, 100) / 400;
-            if (psg) {
-                psg->hurtall(dmg, nullptr);
-                psg->add_msg_player_or_npc(
-                    m_bad, _("You take %d damage by the power of the impact!"),
-                    _("<npcname> takes %d damage by the power of the "
-                      "impact!"),
-                    dmg);
-            } else {
-                pet->apply_damage(nullptr, bodypart_id("torso"), dmg);
-            }
-        }
-
-        if (psg && veh.player_in_control(*psg)) {
-            const int lose_ctrl_roll = rng(0, d_vel);
-            ///\EFFECT_DEX reduces chance of losing control of vehicle when shaken
-
-            ///\EFFECT_DRIVING reduces chance of losing control of vehicle when shaken
-            if (lose_ctrl_roll > psg->dex_cur * 2 + psg->get_skill_level(skill_driving) * 3) {
-                psg->add_msg_player_or_npc(
-                    m_warning, _("You lose control of the %s."),
-                    _("<npcname> loses control of the %s."), veh.name);
-                int turn_amount = rng(1, 3) * std::sqrt(std::abs(veh.velocity)) / 20;
-                if (turn_amount < 1) { turn_amount = 1; }
-                units::angle turn_angle = std::min(turn_amount * 15_degrees, 120_degrees);
-                coll_turn = one_in(2) ? turn_angle : -turn_angle;
-            }
-        }
-
-        if (throw_from_seat) {
-            if (psg) {
-                psg->add_msg_player_or_npc(
-                    m_bad,
-                    _("You are hurled from the %s's seat by "
-                      "the power of the impact!"),
-                    _("<npcname> is hurled from the %s's seat by "
-                      "the power of the impact!"),
-                    veh.name);
-                unboard_vehicle(part_pos);
-            } else if (get_player_character().sees(part_pos)) {
-                add_msg(m_bad, _("%s is hurled from %s's by the power of the impact!"),
-                        pet->disp_name(false, true), veh.name);
-            }
-            ///\EFFECT_STR reduces distance thrown from seat in a vehicle impact
-            g->fling_creature(rider, direction + rng_float(-30_degrees, 30_degrees),
-                              std::max(10, d_vel - move_resist / 100));
-        }
-    }
-
-    return coll_turn;
-}
 
 namespace vehicle_movement {
 static auto has_rail_at_vehicle_z(const map& m, const tripoint_bub_ms& p) -> bool {
@@ -1863,9 +1701,9 @@ static auto has_rail_at_vehicle_z(const map& m, const tripoint_bub_ms& p) -> boo
     });
 }
 
-static auto scan_rails_from_veh_internal(
+static bool scan_rails_from_veh_internal(
     const map& m, const vehicle& veh, tripoint_bub_ms scan_initial_pos, point veh_plus_y_vec,
-    point scan_vec) -> bool {
+    point scan_vec) {
     for (size_t rail_id = 0; rail_id < veh.rail_profile.size(); rail_id++) {
         int rail_y_rel_to_pivot = veh.rail_profile[rail_id] - veh.pivot_point().y();
         tripoint_bub_ms scan_pos = scan_initial_pos + rail_y_rel_to_pivot * veh_plus_y_vec;
@@ -1882,7 +1720,7 @@ static auto scan_rails_from_veh_internal(
 }
 
 // Get number of rotations of identity vector
-static inline auto get_num_cw_rots_of_ray_delta(point v) -> int {
+static inline int get_num_cw_rots_of_ray_delta(point v) {
     if (v == point_north_east) {
         return 0;
     } else if (v == point_south_east) {
@@ -1894,9 +1732,9 @@ static inline auto get_num_cw_rots_of_ray_delta(point v) -> int {
     }
 }
 
-static auto scan_rails_at_shift(
+static bool scan_rails_at_shift(
     const map& m, const vehicle& veh, int velocity_sign, units::angle dir, int shift_sign,
-    tripoint_rel_ms* shift_amt = nullptr) -> bool {
+    tripoint_rel_ms* shift_amt = nullptr) {
     point ray_delta;
     {
         tileray ray(dir);
@@ -1943,23 +1781,23 @@ static auto scan_rails_at_shift(
     return false;
 }
 
-static inline auto make_none() -> rail_processing_result { return rail_processing_result(); }
+static inline rail_processing_result make_none() { return rail_processing_result(); }
 
-static inline auto make_turn(units::angle a) -> rail_processing_result {
+static inline rail_processing_result make_turn(units::angle a) {
     rail_processing_result res;
     res.do_turn = true;
     res.turn_dir = a;
     return res;
 }
 
-static inline auto make_shift(tripoint_rel_ms dp) -> rail_processing_result {
+static inline rail_processing_result make_shift(tripoint_rel_ms dp) {
     rail_processing_result res;
     res.do_shift = true;
     res.shift_amount = dp;
     return res;
 }
 
-auto process_movement_on_rails(const map& m, const vehicle& veh) -> rail_processing_result {
+rail_processing_result process_movement_on_rails(const map& m, const vehicle& veh) {
     int face_dir_degrees = std::round(units::to_degrees(veh.face.dir()));
     int face_dir_snapped = (face_dir_degrees / 45) * 45;
 
@@ -2039,7 +1877,7 @@ auto process_movement_on_rails(const map& m, const vehicle& veh) -> rail_process
     return make_none();
 }
 
-auto is_on_rails(const map& m, const vehicle& veh) -> bool {
+bool is_on_rails(const map& m, const vehicle& veh) {
     if (!veh.can_use_rails()) {
         // Must be rail-worthy
         return false;

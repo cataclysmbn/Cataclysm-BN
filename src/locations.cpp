@@ -374,11 +374,10 @@ int tile_item_location::obtain_cost( const Character &ch, int qty, const item *i
 
 std::string tile_item_location::describe( const Character *ch, const item * ) const
 {
-    map &here = get_map();
-    const auto local = abs_to_map_local( here, pos_ );
-    std::string res = here.name( local );
+    auto &here = MAPBUFFER_REGISTRY.get( dim_ );
+    std::string res = here.name( pos_ );
     if( ch ) {
-        res += std::string( " " ) += direction_suffix( ch->bub_pos().raw(), abs_to_bub( pos_ ).raw() );
+        res += std::string( " " ) += direction_suffix( ch->abs_pos().raw(), pos_.raw() );
     }
     return res;
 }
@@ -503,9 +502,9 @@ bool vehicle_item_location::is_loaded( const item * ) const
     if( !part ) {
         return false;
     }
-
-    //Have to check the bounds, the vehicle might be half outside the bubble
-    return get_map().inbounds( veh->mount_to_bubble( part->mount ) );
+    auto &here = veh->get_mapbuffer();
+    auto pos = veh->mount_to_abs( veh->get_part_hack( hack_id ).mount );
+    return abs_tile_handle::fetch( here, pos ).has_value();
 }
 
 tripoint_bub_ms vehicle_item_location::bub_pos( const item * ) const
@@ -541,11 +540,20 @@ detached_ptr<item> vehicle_item_location::detach( item *it )
         debugmsg( "vehicle_item_location::detach: no part for hack_id %d", hack_id );
         return detached_ptr<item>();
     }
-    const auto item_pos = veh->mount_to_bubble( veh->part( part_index ).mount );
     const auto temperature = rot::temp::for_part( *veh, part_index );
     detached_ptr<item> ret = veh->remove_item( part_index, it );
     if( ret ) {
-        ret = item::actualize_rot( std::move( ret ), item_pos, temperature, get_weather() );
+        // Item was just removed from the vehicle and has no location;
+        // compute position from the vehicle part directly.
+        const tripoint_abs_ms part_abs_pos =
+            veh->mount_to_abs( veh->get_part_hack( hack_id ).mount );
+        ret = item::actualize_rot( std::move( ret ), {
+            .position = part_abs_pos,
+            .temperature = temperature,
+            .weather = &get_weather(),
+            .local_temperature = g && !g->new_game ?
+            veh->get_mapbuffer().get_temperature( part_abs_pos ).value_or( 0 ) : 0,
+        } );
     }
     veh->invalidate_mass();
     return ret;
@@ -574,9 +582,9 @@ int vehicle_item_location::obtain_cost( const Character &ch, int qty, const item
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *obj, true,
              VEHICLE_HANDLING_PENALTY );
     const vehicle_part *const part = veh->find_part_hack( hack_id );
-    const tripoint_bub_ms part_pos = part ? veh->mount_to_bubble( part->mount ) :
-                                     veh->bub_ms_location();
-    mv += 100 * rl_dist( ch.bub_pos(), part_pos );
+    const tripoint_abs_ms part_pos = part ? veh->mount_to_abs( part->mount ) :
+                                     veh->abs_ms_location();
+    mv += 100 * rl_dist( ch.abs_pos(), part_pos );
     return mv;
 }
 
@@ -597,7 +605,7 @@ std::string vehicle_item_location::describe( const Character *ch, const item * )
         return "Error: vehicle part without storage";
     }
     if( ch ) {
-        res += " " + direction_suffix( ch->bub_pos().raw(), part_pos.pos().raw() );
+        res += " " + direction_suffix( ch->abs_pos().raw(), part_pos.abs_pos().raw() );
     }
     return res;
 }
@@ -681,7 +689,7 @@ tripoint_abs_ms contents_item_location::abs_pos( const item * ) const
 
 dimension_id contents_item_location::get_dimension( const item * ) const
 {
-    return dimension_id{}; // TODO
+    return container->get_dimension_id();
 }
 
 std::string contents_item_location::describe( const Character *, const item * ) const

@@ -46,7 +46,7 @@ public:
     void zoom_out();
 
     /** Get current zoom level */
-    auto get_zoom() const -> int { return zoom; }
+    int get_zoom() const { return zoom; }
 
 private:
     // The window we're rendering into (for bounds calculation)
@@ -90,7 +90,7 @@ private:
     void draw_cursor_at_pixel(point pixel_pos);
 
     /** Calculate the center of the window in pixels */
-    auto calc_window_center_pixels() const -> point;
+    point calc_window_center_pixels() const;
 };
 
 #endif // TILES

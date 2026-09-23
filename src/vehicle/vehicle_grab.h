@@ -1,16 +1,16 @@
 #pragma once
 
 #include "coordinates.h"
-#include "vpart_position.h"
+#include "vehicle/vpart_position.h"
 
 #include <optional>
 
-class map;
+class mapbuffer;
 
 struct vehicle_grab_target {
-    tripoint_bub_ms pos;
+    tripoint_abs_ms pos;
     vpart_position vp;
 };
 
-auto vehicle_grab_target_at(const map& here, const tripoint_bub_ms& pos)
+auto vehicle_grab_target_at(mapbuffer& here, const tripoint_abs_ms& pos)
     -> std::optional<vehicle_grab_target>;

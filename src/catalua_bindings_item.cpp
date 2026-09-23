@@ -408,8 +408,8 @@ void reg_item( sol::state &lua )
 
         SET_FX( activate );
         SET_FX( deactivate );
-        DOC( "Immediately invokes this item's use action at the given map-square position. Returns the charges consumed by the use action." );
-        luna::set_fx( ut, "invoke_at", []( item & it, const tripoint_bub_ms & pos ) -> int {
+        DOC( "Immediately invokes this item's use action at the given position. Returns the charges consumed by the use action." );
+        luna::set_fx( ut, "invoke_at", []( item & it, const tripoint_abs_ms & pos ) -> int {
             return it.type->invoke( get_avatar(), it, pos );
         } );
         SET_FX( set_charges );

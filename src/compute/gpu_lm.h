@@ -212,6 +212,13 @@ auto prepare_lighting_transparency_output(prepare_lighting_transparency_output_p
 auto mark_lighting_transparency_level_updated(int zlev) -> void;
 auto lighting_transparency_level_is_valid(int zlev) -> bool;
 auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void;
+// Invalidate structural floor inputs after a map-cache rebuild that does not
+// dispatch lighting.  The next lighting pass must upload the complete floor
+// volume, including levels that are now empty.
+auto invalidate_lighting_floor_inputs() -> void;
+// Invalidate all resident lighting inputs and derived outputs after map::load()
+// replaces the bubble directly instead of shifting it incrementally.
+auto invalidate_lighting_residency() -> void;
 
 struct resident_lighting_visibility_params {
     SDL_GPUDevice* device = nullptr;

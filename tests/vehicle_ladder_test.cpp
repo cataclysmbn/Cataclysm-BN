@@ -22,18 +22,18 @@
 
 TEST_CASE("rope_ladder_spans_full_column_in_rope_cache", "[vehicle][ladder][zlevel]") {
     clear_all_state();
-    auto& here = get_map();
+    auto& map = get_map();
+    auto& here = map.get_mapbuffer();
     build_test_map(ter_id("t_pavement"));
 
-    const tripoint_bub_ms vpos(60, 60, 0);
-    auto* veh = here.add_vehicle(vproto_id("none"), vpos, 0_degrees, 0, 0);
+    auto* veh = here.add_vehicle(vproto_id("none"), test_origin, 0_degrees, 0, 0);
     REQUIRE(veh != nullptr);
     REQUIRE(veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
     const auto ladder = veh->install_part(tripoint_mnt_veh::zero(), vpart_id("ladder_3"), true);
     REQUIRE(ladder >= 0);
 
-    here.add_vehicle_to_cache(veh);
-    here.build_map_cache(vpos.z(), true);
+    here.register_vehicle(veh);
+    map.build_map_cache(test_origin.z(), true);
 
     const auto top = veh->bub_part_location(ladder);
     const auto len = veh->part(ladder).info().ladder_length();
@@ -41,13 +41,13 @@ TEST_CASE("rope_ladder_spans_full_column_in_rope_cache", "[vehicle][ladder][zlev
 
     SECTION("rope is present from the part down to ladder_length below it") {
         // Top tile: needed so a boarded player can climb DOWN.
-        CHECK(here.has_rope_at(top));
+        CHECK(map.has_rope_at(top));
         // Hanging rope: needed to climb UP from the ground and to render the rope.
         for (const auto dz : std::views::iota(1, len + 1)) {
-            CHECK(here.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - dz)));
+            CHECK(map.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - dz)));
         }
         // One tile past the ladder's reach must NOT report rope.
-        CHECK_FALSE(here.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - (len + 1))));
+        CHECK_FALSE(map.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - (len + 1))));
     }
 
     SECTION("removing the ladder clears the whole column") {
@@ -56,7 +56,7 @@ TEST_CASE("rope_ladder_spans_full_column_in_rope_cache", "[vehicle][ladder][zlev
         veh->remove_part(ladder);
         veh->part_removal_cleanup();
         for (const auto dz : std::views::iota(0, len + 1)) {
-            CHECK_FALSE(here.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - dz)));
+            CHECK_FALSE(map.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - dz)));
         }
     }
 }

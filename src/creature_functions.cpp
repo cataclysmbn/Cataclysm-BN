@@ -5,7 +5,7 @@
 #include "game.h"
 #include "line.h"
 #include "map/map.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "monster.h"
 #include "npc.h"
 #include "vehicle/vehicle.h"

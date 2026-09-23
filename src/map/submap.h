@@ -5,10 +5,9 @@
 #include "calendar.h"
 #include "computer.h"
 #include "construction_partial.h"
-#include "field.h"
 #include "game_constants.h"
 #include "item.h"
-#include "legacy_pathfinding.h"
+#include "map/field.h"
 #include "monster.h"
 #include "point.h"
 #include "poly_serialized.h"
@@ -66,12 +65,12 @@ struct spawn_point {
     // helper function to convert internal disposition into a binary bool value.
     // This is required to preserve save game compatibility because submaps store/load
     // their spawn_points using a boolean flag.
-    auto is_friendly() const -> bool { return disposition != spawn_disposition::SpawnDisp_Default; }
+    bool is_friendly() const { return disposition != spawn_disposition::SpawnDisp_Default; }
 
     // helper function to convert binary bool friendly value to internal disposition.
     // This is required to preserve save game compatibility because submaps store/load
     // their spawn_points using a boolean flag.
-    static auto friendly_to_spawn_disposition(bool friendly) -> spawn_disposition {
+    static spawn_disposition friendly_to_spawn_disposition(bool friendly) {
         return friendly ? spawn_disposition::SpawnDisp_Friendly
                         : spawn_disposition::SpawnDisp_Default;
     }
@@ -98,18 +97,18 @@ public:
     submap(const tripoint_abs_sm& position, const dimension_id& dim);
     ~submap();
 
-    auto get_dimension() const -> const dimension_id { return dim_; }
-    auto position() const -> const tripoint_abs_sm { return pos_; }
+    const dimension_id get_dimension() const { return dim_; }
+    const tripoint_abs_sm position() const { return pos_; }
     auto set_dimension(const dimension_id& dim) -> void;
     auto set_position(const tripoint_abs_sm& position) -> void;
 
-    auto get_trap(const point_sm_ms& p) const -> trap_id { return trp[p.x()][p.y()]; }
+    trap_id get_trap(const point_sm_ms& p) const { return trp[p.x()][p.y()]; }
 
     /// The effective trap at a tile: a terrain-attached trap (ter_t::trap) takes
     /// precedence over a standalone trap in the trp array. Mirrors map::tr_at().
     /// Use this (not get_trap()) when a tile may carry a terrain-attached trap,
     /// e.g. a gutter downspout's funnel.
-    auto get_effective_trap(const point_sm_ms& p) const -> trap_id {
+    trap_id get_effective_trap(const point_sm_ms& p) const {
         const trap_id ter_trap = get_ter(p).obj().trap;
         if (ter_trap != tr_null) { return ter_trap; }
         return get_trap(p);
@@ -126,7 +125,7 @@ public:
         trap_cache.clear();
     }
 
-    auto get_furn(const point_sm_ms& p) const -> furn_id { return frn[p.x()][p.y()]; }
+    furn_id get_furn(const point_sm_ms& p) const { return frn[p.x()][p.y()]; }
 
     void set_furn(const point_sm_ms& p, furn_id furn) {
         is_uniform = false;
@@ -145,7 +144,7 @@ public:
         frn_vars.clear();
     }
 
-    auto get_ter(const point_sm_ms& p) const -> ter_id { return ter[p.x()][p.y()]; }
+    ter_id get_ter(const point_sm_ms& p) const { return ter[p.x()][p.y()]; }
 
     void set_ter(const point_sm_ms& p, ter_id terr) {
         is_uniform = false;
@@ -159,14 +158,14 @@ public:
         emitter_cache = std::nullopt;
     }
 
-    auto get_radiation(const point_sm_ms& p) const -> int { return rad[p.x()][p.y()]; }
+    int get_radiation(const point_sm_ms& p) const { return rad[p.x()][p.y()]; }
 
     void set_radiation(const point_sm_ms& p, const int radiation) {
         is_uniform = false;
         rad[p.x()][p.y()] = radiation;
     }
 
-    auto get_lum(const point_sm_ms& p) const -> uint8_t { return lum[p.x()][p.y()]; }
+    uint8_t get_lum(const point_sm_ms& p) const { return lum[p.x()][p.y()]; }
 
     auto static_emitter_tiles() const -> const std::vector<point_sm_ms>&;
 
@@ -183,30 +182,28 @@ public:
     void update_lum_rem(const point_sm_ms& p, const item& i);
 
     // TODO: Replace this as it essentially makes itm public
-    auto get_items(const point_sm_ms& p) -> location_vector<item>& { return itm[p.x()][p.y()]; }
+    location_vector<item>& get_items(const point_sm_ms& p) { return itm[p.x()][p.y()]; }
 
-    auto get_items(const point_sm_ms& p) const -> const location_vector<item>& {
-        return itm[p.x()][p.y()];
-    }
+    const location_vector<item>& get_items(const point_sm_ms& p) const { return itm[p.x()][p.y()]; }
 
     // TODO: Replace this as it essentially makes fld public
-    auto get_field(const point_sm_ms& p) -> field& { return fld[p.x()][p.y()]; }
+    field& get_field(const point_sm_ms& p) { return fld[p.x()][p.y()]; }
 
-    auto get_field(const point_sm_ms& p) const -> const field& { return fld[p.x()][p.y()]; }
+    const field& get_field(const point_sm_ms& p) const { return fld[p.x()][p.y()]; }
 
-    auto get_ter_vars(const point_sm_ms& p) -> data_vars::data_set& { return ter_vars[p]; };
+    data_vars::data_set& get_ter_vars(const point_sm_ms& p) { return ter_vars[p]; };
 
-    auto get_furn_vars(const point_sm_ms& p) -> data_vars::data_set& { return frn_vars[p]; };
+    data_vars::data_set& get_furn_vars(const point_sm_ms& p) { return frn_vars[p]; };
 
-    auto get_ter_vars(const point_sm_ms& p) const -> const data_vars::data_set& {
+    const data_vars::data_set& get_ter_vars(const point_sm_ms& p) const {
         const auto it = ter_vars.find(p);
         if (it == ter_vars.end()) { return EMPTY_VARS; }
         return it->second;
     };
 
-    auto get_furn_vars(const point_sm_ms& p) const -> const data_vars::data_set& {
-        const auto it = ter_vars.find(p);
-        if (it == ter_vars.end()) { return EMPTY_VARS; }
+    const data_vars::data_set& get_furn_vars(const point_sm_ms& p) const {
+        const auto it = frn_vars.find(p);
+        if (it == frn_vars.end()) { return EMPTY_VARS; }
         return it->second;
     };
 
@@ -218,33 +215,33 @@ public:
 
     void insert_cosmetic(const point_sm_ms& p, const std::string& type, const std::string& str);
 
-    auto get_temperature() const -> int { return temperature; }
+    int get_temperature() const { return temperature; }
 
     void set_temperature(int new_temperature) { temperature = new_temperature; }
 
-    auto has_graffiti(const point_sm_ms& p) const -> bool;
-    auto get_graffiti(const point_sm_ms& p) const -> const std::string&;
+    bool has_graffiti(const point_sm_ms& p) const;
+    const std::string& get_graffiti(const point_sm_ms& p) const;
     void set_graffiti(const point_sm_ms& p, const std::string& new_graffiti);
     void delete_graffiti(const point_sm_ms& p);
 
     // Signage is a pretend union between furniture on a square and stored
     // writing on the square. When both are present, we have signage.
     // Its effect is meant to be cosmetic and atmospheric only.
-    auto has_signage(const point_sm_ms& p) const -> bool;
+    bool has_signage(const point_sm_ms& p) const;
     // Dependent on furniture + cosmetics.
-    auto get_signage(const point_sm_ms& p) const -> std::string;
+    std::string get_signage(const point_sm_ms& p) const;
     // Can be used anytime (prevents code from needing to place sign first.)
     void set_signage(const point_sm_ms& p, const std::string& s);
     // Can be used anytime (prevents code from needing to place sign first.)
     void delete_signage(const point_sm_ms& p);
 
-    auto has_computer(const point_sm_ms& p) const -> bool;
-    auto get_computer(const point_sm_ms& p) const -> const computer*;
-    auto get_computer(const point_sm_ms& p) -> computer*;
+    bool has_computer(const point_sm_ms& p) const;
+    const computer* get_computer(const point_sm_ms& p) const;
+    computer* get_computer(const point_sm_ms& p);
     void set_computer(const point_sm_ms& p, const computer& c);
     void delete_computer(const point_sm_ms& p);
 
-    auto contains_vehicle(vehicle*) -> bool;
+    bool contains_vehicle(vehicle*);
 
     void rotate(int turns);
 
@@ -288,7 +285,8 @@ public:
     // Initialized to calendar::turn_zero; legacy saves that predate
     // serialization will receive the maximum-capped catchup on first load.
     time_point last_touched = calendar::turn_zero;
-    // This is used for things like terrain swap catch up, generally set on last loaded
+    // This is used for effects that are updated when a submap is actualized,
+    // rather than while it is actively simulated.
     time_point last_actualized = calendar::turn_zero;
     std::vector<spawn_point> spawns;
 
@@ -298,10 +296,8 @@ public:
     // scent_values is serialized; the other caches are rebuilt on load.
 
     float transparency_cache[SEEX][SEEY] = {};
-    bool outside_cache[SEEX][SEEY] = {};
-    bool sheltered_cache[SEEX][SEEY] = {};
+    bool roof_above_cache[SEEX][SEEY] = {};
     char floor_cache[SEEX][SEEY] = {};
-    pf_special pf_special_cache[SEEX][SEEY] = {};
     int scent_values[SEEX][SEEY] = {};
     short absorption_cache[SEEX][SEEY] = {};
     bool sound_wall_cache[SEEX][SEEY] = {};
@@ -310,7 +306,7 @@ public:
     bool has_scent = false;
 
     bool transparency_dirty = true;
-    bool outside_dirty = true;
+    bool roof_above_dirty = true;
     bool floor_dirty = true;
     bool pf_dirty = true;
     bool absorption_dirty = true;
@@ -321,12 +317,10 @@ public:
     // Rebuild per-submap caches from terrain/furniture/field data.
     // grid_pos = submap grid coordinates within map m (x,y = submap index, z = z-level).
     // above: the level_cache for z+1 (nullptr at OVERMAP_HEIGHT — base case).
-    // outside_cache: true when the tile has sky access via the 3×3 overhang rule.
-    // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
-    auto rebuild_outside_cache(const level_cache* above, const tripoint_bub_sm& grid_pos) -> void;
+    // This cache records only structural cover directly above the tile.
+    // Vehicle state is deliberately handled by mapbuffer predicates.
+    auto rebuild_roof_above_cache(const submap* above) -> void;
     auto rebuild_floor_cache(const map& m, const tripoint_bub_sm& grid_pos) -> void;
-    auto rebuild_pf_cache(const map& m, const tripoint_bub_sm& grid_pos) -> void;
-    // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
     auto rebuild_transparency_cache(const map& m, const tripoint_bub_sm& grid_pos) -> void;
 
     // Rebuilds the per-submap sound absorption cache from terrain and furniture data.
@@ -373,43 +367,41 @@ private:
     submap* const sm;
     point_sm_ms pos_;
 
-    auto pos() const -> point_sm_ms { return pos_; }
+    point_sm_ms pos() const { return pos_; }
 
     maptile(submap* sub, const point_sm_ms& p): sm(sub), pos_(p) {}
 
 public:
-    auto get_trap() const -> trap_id { return sm->get_trap(pos()); }
+    trap_id get_trap() const { return sm->get_trap(pos()); }
 
-    auto get_furn() const -> furn_id { return sm->get_furn(pos()); }
+    furn_id get_furn() const { return sm->get_furn(pos()); }
 
-    auto get_ter() const -> ter_id { return sm->get_ter(pos()); }
+    ter_id get_ter() const { return sm->get_ter(pos()); }
 
-    auto get_trap_t() const -> const trap& { return sm->get_trap(pos()).obj(); }
+    const trap& get_trap_t() const { return sm->get_trap(pos()).obj(); }
 
-    auto get_furn_t() const -> const furn_t& { return sm->get_furn(pos()).obj(); }
-    auto get_ter_t() const -> const ter_t& { return sm->get_ter(pos()).obj(); }
+    const furn_t& get_furn_t() const { return sm->get_furn(pos()).obj(); }
+    const ter_t& get_ter_t() const { return sm->get_ter(pos()).obj(); }
 
-    auto get_field() const -> const field& { return sm->get_field(pos()); }
+    const field& get_field() const { return sm->get_field(pos()); }
 
-    auto find_field(const field_type_id& field_to_find) -> field_entry* {
+    field_entry* find_field(const field_type_id& field_to_find) {
         return sm->get_field(pos()).find_field(field_to_find);
     }
 
-    auto get_radiation() const -> int { return sm->get_radiation(pos()); }
+    int get_radiation() const { return sm->get_radiation(pos()); }
 
-    auto has_graffiti() const -> bool { return sm->has_graffiti(pos()); }
+    bool has_graffiti() const { return sm->has_graffiti(pos()); }
 
-    auto get_graffiti() const -> const std::string& { return sm->get_graffiti(pos()); }
+    const std::string& get_graffiti() const { return sm->get_graffiti(pos()); }
 
-    auto has_signage() const -> bool { return sm->has_signage(pos()); }
+    bool has_signage() const { return sm->has_signage(pos()); }
 
-    auto get_signage() const -> std::string { return sm->get_signage(pos()); }
+    std::string get_signage() const { return sm->get_signage(pos()); }
 
     // For map::draw_maptile
-    auto get_item_count() const -> size_t { return sm->get_items(pos()).size(); }
+    size_t get_item_count() const { return sm->get_items(pos()).size(); }
 
     // Assumes there is at least one item
-    auto get_uppermost_item() const -> const item& {
-        return **std::prev(sm->get_items(pos()).cend());
-    }
+    const item& get_uppermost_item() const { return **std::prev(sm->get_items(pos()).cend()); }
 };

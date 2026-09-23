@@ -18,7 +18,7 @@
 #include "lua_action_menu.h"
 #include "map/map.h"
 #include "map/mapdata.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "messages.h"
 #include "options.h"
 #include "output.h"

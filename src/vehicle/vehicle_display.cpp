@@ -11,10 +11,10 @@
 #include "translations.h"
 #include "units.h"
 #include "units_utility.h"
-#include "veh_type.h"
-#include "vehicle.h"
-#include "vehicle_part.h" // IWYU pragma: associated
-#include "vpart_position.h"
+#include "vehicle/veh_type.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h" // IWYU pragma: associated
+#include "vehicle/vpart_position.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -26,9 +26,9 @@ static const std::string part_location_structure("structure");
 static const itype_id itype_battery("battery");
 static const itype_id fuel_type_muscle("muscle");
 
-auto vehicle::disp_name() const -> std::string { return string_format(_("the %s"), name); }
+std::string vehicle::disp_name() const { return string_format(_("the %s"), name); }
 
-auto vehicle::part_sym(const int p, const bool exact) const -> char {
+char vehicle::part_sym(const int p, const bool exact) const {
     if (p < 0 || p >= static_cast<int>(parts.size()) || parts[p].removed) { return ' '; }
 
     const int displayed_part = exact ? p : part_displayed_at(parts[p].mount);
@@ -65,7 +65,7 @@ auto vehicle::part_display_direction(const int p, const bool roof) const -> unit
 // similar to part_sym(int p) but for use when drawing SDL tiles. Called only by cata_tiles
 // during draw_vpart vector returns at least 1 element, max of 2 elements. If 2 elements the
 // second denotes if it is open or damaged
-auto vehicle::part_id_string(const int p, bool roof, char& part_mod) const -> vpart_id {
+vpart_id vehicle::part_id_string(const int p, bool roof, char& part_mod) const {
     part_mod = 0;
     if (p < 0 || p >= static_cast<int>(parts.size()) || parts[p].removed) {
         return vpart_id::NULL_ID();
@@ -99,7 +99,7 @@ auto vehicle::part_id_string(const int p, bool roof, char& part_mod) const -> vp
     return idinfo;
 }
 
-auto vehicle::part_color(const int p, const bool exact) const -> nc_color {
+nc_color vehicle::part_color(const int p, const bool exact) const {
     if (p < 0 || p >= static_cast<int>(parts.size())) { return c_black; }
 
     nc_color col;
@@ -161,9 +161,9 @@ auto vehicle::part_color(const int p, const bool exact) const -> nc_color {
  * @param detail Whether or not to show detailed contents for fuel components.
  * @param start_at Index of first part to display (for scrolling).
  */
-auto vehicle::print_part_list(
+int vehicle::print_part_list(
     const catacurses::window& win, int y1, const int max_y, int width, int p, int hl /*= -1*/,
-    bool detail, int start_at) const -> int {
+    bool detail, int start_at) const {
     if (p < 0 || p >= static_cast<int>(parts.size())) { return y1; }
     std::vector<int> pl = this->parts_at_relative(parts[p].mount, true);
     int y = y1;
@@ -328,7 +328,7 @@ void vehicle::print_vparts_descs(
  * Returns an array of fuel types that can be printed
  * @return An array of printable fuel type ids
  */
-auto vehicle::get_printable_fuel_types() const -> std::vector<itype_id> {
+std::vector<itype_id> vehicle::get_printable_fuel_types() const {
     std::set<itype_id> opts;
     for (const auto& pt : parts) {
         if (pt.is_fuel_store() && !pt.ammo_current().is_null()) { opts.emplace(pt.ammo_current()); }

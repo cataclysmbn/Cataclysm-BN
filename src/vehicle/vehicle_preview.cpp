@@ -1,6 +1,6 @@
 #if defined(TILES)
 
-#    include "vehicle_preview.h"
+#    include "vehicle/vehicle_preview.h"
 
 #    include "cata_tiles.h"
 #    include "cursesport.h"
@@ -9,10 +9,10 @@
 #    include "output.h"
 #    include "sdltiles.h"
 #    include "units_utility.h"
-#    include "veh_type.h"
-#    include "vehicle.h"
-#    include "vehicle_part.h"
-#    include "vpart_position.h"
+#    include "vehicle/veh_type.h"
+#    include "vehicle/vehicle.h"
+#    include "vehicle/vehicle_part.h"
+#    include "vehicle/vpart_position.h"
 
 #    include <algorithm>
 
@@ -21,11 +21,11 @@ static const std::string empty_string;
 
 // These functions are also defined in character_preview.cpp
 // We provide our own static definitions here to avoid duplicate symbols
-static auto termx_to_pixel_value() -> int {
+static int termx_to_pixel_value() {
     return projected_window_width() / TERMX / get_scaling_factor();
 }
 
-static auto termy_to_pixel_value() -> int {
+static int termy_to_pixel_value() {
     return projected_window_height() / TERMY / get_scaling_factor();
 }
 
@@ -35,7 +35,7 @@ static auto termy_to_pixel_value() -> int {
  */
 class veh_preview_adapter: public cata_tiles {
 public:
-    static auto convert(cata_tiles* ct) -> veh_preview_adapter* {
+    static veh_preview_adapter* convert(cata_tiles* ct) {
         return static_cast<veh_preview_adapter*>(ct);
     }
 
@@ -80,7 +80,7 @@ public:
      * Get the paint colors for a vehicle part.
      * Uses get_vpart_color which will return actual colors when painting is implemented.
      */
-    auto get_part_colors(const vehicle& veh, int part_idx) const -> color_tint_pair {
+    color_tint_pair get_part_colors(const vehicle& veh, int part_idx) const {
         const map& here = get_map();
         const auto part_pos = veh.bub_part_location(part_idx);
         const optional_vpart_position vp = here.veh_at(part_pos);
@@ -134,7 +134,7 @@ void vehicle_preview_window::prepare(const catacurses::window& win) {
     tilecontext->set_draw_scale(zoom);
 }
 
-auto vehicle_preview_window::calc_window_center_pixels() const -> point {
+point vehicle_preview_window::calc_window_center_pixels() const {
     // Calculate center of window in pixel coordinates
     const int center_x = win_pos.x * termx_pixels + (win_cols * termx_pixels) / 2;
     const int center_y = win_pos.y * termy_pixels + (win_lines * termy_pixels) / 2;

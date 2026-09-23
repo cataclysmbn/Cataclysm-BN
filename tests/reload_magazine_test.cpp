@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "avatar_functions.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "game.h"
@@ -317,4 +318,29 @@ TEST_CASE("reload_magazine", "[magazine] [visitable] [item] [item_location]") {
             }
         }
     }
+}
+
+TEST_CASE("unloading_loaded_magazine_transfers_it_once", "[magazine] [visitable] [item_location]") {
+    clear_all_state();
+    avatar& you = get_avatar();
+    you.wear_item(item::spawn("backpack"));
+
+    auto magazine = item::spawn("stanag30");
+    magazine->ammo_set(itype_id("556"), 6);
+    auto gun = item::spawn("m4a1");
+    gun->put_in(std::move(magazine));
+    you.i_add(std::move(gun));
+
+    const auto gun_position = you.inv_position_by_type(itype_id("m4a1"));
+    REQUIRE(gun_position != INT_MIN);
+    item& loaded_gun = you.inv_find_item(gun_position);
+    REQUIRE(loaded_gun.magazine_current() != nullptr);
+    REQUIRE(loaded_gun.ammo_remaining() == 6);
+
+    REQUIRE(avatar_funcs::unload_item(you, loaded_gun));
+
+    CHECK(loaded_gun.magazine_current() == nullptr);
+    const auto magazine_position = you.inv_position_by_type(itype_id("stanag30"));
+    REQUIRE(magazine_position != INT_MIN);
+    CHECK(you.inv_find_item(magazine_position).ammo_remaining() == 6);
 }

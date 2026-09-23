@@ -7,7 +7,7 @@
 #include "hsv_color.h"
 #include "line.h"
 #include "map/lightmap.h"
-#include "map_memory.h"
+#include "map/map_memory.h"
 #include "options.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"

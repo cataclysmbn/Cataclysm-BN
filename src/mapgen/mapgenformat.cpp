@@ -1,7 +1,7 @@
-#include "mapgenformat.h"
+#include "mapgen/mapgenformat.h"
 
 #include "map/mapdata.h"
-#include "mapgen_constructor.h"
+#include "mapgen/mapgen_constructor.h"
 #include "point.h"
 
 #include <algorithm>
@@ -44,7 +44,7 @@ format_effect<ID>::format_effect(const std::string& chars, std::vector<ID> dets)
         .erase(std::remove_if(characters.begin(), characters.end(), isspace), characters.end());
 }
 
-template <typename ID> auto format_effect<ID>::translate(const char c) const -> ID {
+template <typename ID> ID format_effect<ID>::translate(const char c) const {
     const auto index = characters.find(c);
     if (index == std::string::npos) { return ID(0); }
     return determiners[index];

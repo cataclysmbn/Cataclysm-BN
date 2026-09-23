@@ -1,4 +1,4 @@
-#include "mapgen_functions.h"
+#include "mapgen/mapgen_functions.h"
 
 #include "calendar.h"
 #include "character_id.h"
@@ -10,12 +10,12 @@
 #include "int_id.h"
 #include "line.h"
 #include "map/field_type.h"
+#include "map/map_iterator.h"
 #include "map/mapdata.h"
-#include "map_iterator.h"
-#include "mapgen.h"
-#include "mapgen_constructor.h"
-#include "mapgendata.h"
-#include "mapgenformat.h"
+#include "mapgen/mapgen.h"
+#include "mapgen/mapgen_constructor.h"
+#include "mapgen/mapgendata.h"
+#include "mapgen/mapgenformat.h"
 #include "omdata.h"
 #include "overmap.h"
 #include "point.h"
@@ -48,7 +48,7 @@ static const mongroup_id GROUP_ZOMBIE("GROUP_ZOMBIE");
 
 class npc_template;
 
-auto rotate_point(const tripoint_omt_ms& p, int rotations) -> tripoint_omt_ms {
+tripoint_omt_ms rotate_point(const tripoint_omt_ms& p, int rotations) {
     if (p.x() < 0 || p.x() >= SEEX * 2 || p.y() < 0 || p.y() >= SEEY * 2) {
         debugmsg("Point out of range: %d,%d,%d", p.x(), p.y(), p.z());
         // Mapgen is vulnerable, don't supply invalid points, debugmsg is enough
@@ -140,12 +140,12 @@ building_gen_pointer get_mapgen_cfunction(const std::string& ident) {
     return iter == pointers.end() ? nullptr : iter->second;
 }
 
-auto grass_or_dirt() -> ter_id {
+ter_id grass_or_dirt() {
     if (one_in(4)) { return t_grass; }
     return t_dirt;
 }
 
-auto clay_or_sand() -> ter_id {
+ter_id clay_or_sand() {
     if (one_in(16)) { return t_alluvial_deposit; }
     if (one_in(16)) { return t_sand; }
     return t_clay;
@@ -398,7 +398,7 @@ void mapgen_hive(mapgendata& dat) {
     if (is_center) { m->place_npc(point_omt_ms(SEEX, SEEY), string_id<npc_template>("apis")); }
 }
 
-auto terrain_type_to_nesw_array(oter_id terrain_type, bool array[4]) -> int {
+int terrain_type_to_nesw_array(oter_id terrain_type, bool array[4]) {
     // count and mark which directions the road goes
     const auto& oter(*terrain_type);
     int num_dirs = 0;
@@ -443,7 +443,7 @@ static void coord_rotate_cw(int& x, int& y, int rot) {
     }
 }
 
-static auto compare_neswx(bool* a1, std::initializer_list<int> a2) -> bool {
+static bool compare_neswx(bool* a1, std::initializer_list<int> a2) {
     return std::equal(std::begin(a2), std::end(a2), a1, [](int a, bool b) {
         return static_cast<bool>(a) == b;
     });

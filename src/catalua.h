@@ -6,6 +6,7 @@
 #include "type_id.h"
 #include <memory>
 #include <filesystem>
+#include <mutex>
 #include <span>
 
 class lua_monster_callback_actor;
@@ -18,6 +19,8 @@ class world;
 
 namespace cata
 {
+extern std::recursive_mutex lua_lock;
+
 struct lua_state;
 struct lua_state_deleter {
     void operator()( lua_state *state ) const;
@@ -37,6 +40,7 @@ bool save_world_lua_state( const world *world, const std::string &path );
 bool load_world_lua_state( const world *world, const std::string &path );
 
 std::unique_ptr<lua_state, lua_state_deleter> make_wrapped_state();
+auto get_active_lua_state() -> lua_state *;
 
 void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modlist );
 void set_mod_being_loaded( lua_state &state, const mod_id &mod );

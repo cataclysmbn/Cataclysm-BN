@@ -1,8 +1,8 @@
-#include "vehicle_selector.h"
+#include "vehicle/vehicle_selector.h"
 
 #include "map/map.h"
 #include "point.h"
-#include "vpart_position.h"
+#include "vehicle/vpart_position.h"
 
 #include <algorithm>
 #include <memory>

@@ -1,4 +1,4 @@
-#include "lightmap.h" // IWYU pragma: associated
+#include "map/lightmap.h" // IWYU pragma: associated
 
 #include "avatar.h"
 #include "cached_options.h"
@@ -8,7 +8,6 @@
 #include "character.h"
 #include "coordinates.h"
 #include "cuboid_rectangle.h"
-#include "field.h"
 #include "fragment_cloud.h" // IWYU pragma: keep
 #include "game.h"
 #include "game_constants.h"
@@ -18,10 +17,12 @@
 #include "item_stack.h"
 #include "itype.h"
 #include "line.h"
-#include "map.h"
-#include "map_iterator.h"
-#include "mapbuffer.h"
-#include "mapdata.h"
+#include "map/field.h"
+#include "map/map.h"
+#include "map/map_iterator.h"
+#include "map/mapbuffer.h"
+#include "map/mapdata.h"
+#include "map/submap.h"
 #include "math_defines.h"
 #include "monster.h"
 #include "mtype.h"
@@ -31,7 +32,6 @@
 #include "profile.h"
 #include "shadowcasting.h" // IWYU pragma: associated
 #include "string_formatter.h"
-#include "submap.h"
 #include "thread_pool.h"
 #include "tileray.h"
 #include "type_id.h"
@@ -94,7 +94,7 @@ struct vehicle_external_light_cache_scope {
     vehicle_external_light_cache_scope(level_cache& cache, vehicle& veh, const int zlev)
         : cache(cache) {
         for (const auto& part : veh.get_all_parts()) {
-            const auto pos = part.pos();
+            const auto pos = part.bub_pos();
             if (pos.z() != zlev || !cache.inbounds(pos.xy())) { continue; }
 
             const auto idx = static_cast<std::size_t>(cache.idx(pos.x(), pos.y()));
@@ -473,7 +473,7 @@ void map::update_weather_transparency_lookup() {
     }
 }
 
-auto map::build_transparency_cache(const int zlev) -> bool {
+bool map::build_transparency_cache(const int zlev) {
     ZoneScopedN("build_transparency_cache");
     auto& map_cache = get_cache(zlev);
     auto& transparency_cache = map_cache.transparency_cache;
@@ -528,13 +528,15 @@ auto map::build_transparency_cache(const int zlev) -> bool {
                     continue;
                 }
 
-                cur_submap->transparency_dirty = true;
-                if (cur_submap->outside_dirty) {
-                    const level_cache* above =
-                        zlev < OVERMAP_HEIGHT ? &get_cache_ref(zlev + 1) : nullptr;
-                    cur_submap->rebuild_outside_cache(above, sm_pos);
-                }
-                refs.push_back({cur_submap, sm_offset.x(), sm_offset.y()});
+                refs.push_back({
+                    .sm = cur_submap,
+                    .offset_x = sm_offset.x(),
+                    .offset_y = sm_offset.y(),
+                    .outside_cache =
+                        map_cache.outside_cache.data()
+                        + map_cache.idx(sm_offset.x(), sm_offset.y()),
+                    .outside_cache_y = map_cache.cache_y,
+                });
             }
         }
 
@@ -808,16 +810,14 @@ auto map::build_transparency_caches(const int minz, const int maxz) -> std::vect
                         continue;
                     }
 
-                    cur_submap->transparency_dirty = true;
-                    if (cur_submap->outside_dirty) {
-                        const auto* above =
-                            zlev < OVERMAP_HEIGHT ? &get_cache_ref(zlev + 1) : nullptr;
-                        cur_submap->rebuild_outside_cache(above, sm_pos);
-                    }
                     refs.push_back({
                         .sm = cur_submap,
                         .offset_x = sm_offset.x(),
                         .offset_y = sm_offset.y(),
+                        .outside_cache =
+                            map_cache.outside_cache.data()
+                            + map_cache.idx(sm_offset.x(), sm_offset.y()),
+                        .outside_cache_y = map_cache.cache_y,
                         .output_offset = resident_output.output_offset,
                     });
                     ref_levels.push_back(zlev);
@@ -925,7 +925,7 @@ auto map::build_transparency_caches(const int minz, const int maxz) -> std::vect
 }
 
 
-auto map::build_vision_transparency_cache(const Character& player) -> bool {
+bool map::build_vision_transparency_cache(const Character& player) {
     const auto& p = player.bub_pos();
 
     bool dirty = false;
@@ -1585,7 +1585,7 @@ void map::generate_lightmap_worker(const int zlev) {
             for (const auto& part : lights) {
                 const auto& vp = part.info();
                 const auto& vehicle_part = part.part();
-                const auto src = part.pos();
+                const auto src = part.bub_pos();
 
                 if (!inbounds(src)) { continue; }
                 if (src.z() != zlev) { continue; }
@@ -1667,7 +1667,7 @@ void map::generate_lightmap_worker(const int zlev) {
 
             for (const vpart_reference& vp : v->get_all_parts()) {
                 const size_t p = vp.part_index();
-                tripoint_bub_ms pp = vp.pos();
+                const auto pp = vp.bub_pos();
                 if (!inbounds(pp)) { continue; }
                 if (pp.z() != zlev) { continue; }
                 if (vp.has_feature(VPFLAG_CARGO) && !vp.has_feature("COVERED")) {
@@ -1726,7 +1726,7 @@ void map::add_light_source(const tripoint_bub_ms& p, float luminance, uint32_t c
 
 // Tile light/transparency: 3D
 
-auto map::light_at(const tripoint_bub_ms& p) const -> lit_level {
+lit_level map::light_at(const tripoint_bub_ms& p) const {
     if (!inbounds(p)) {
         return lit_level::DARK; // Out of bounds
     }
@@ -1746,8 +1746,7 @@ auto map::light_at(const tripoint_bub_ms& p) const -> lit_level {
     return lit_level::DARK;
 }
 
-auto map::ambient_light_at(const tripoint_bub_ms& p, const std::source_location location) const
-    -> float {
+float map::ambient_light_at(const tripoint_bub_ms& p, const std::source_location location) const {
     if (!inbounds(p)) { return 0.0f; }
 
     const auto& map_cache = get_cache_ref(p.z());
@@ -1798,11 +1797,11 @@ void map::flush_lightmap_cpu_read_counters() const {
     flush_cpu_lm_ambient_location_counters();
 }
 
-auto map::is_transparent(const tripoint_bub_ms& p) const -> bool {
+bool map::is_transparent(const tripoint_bub_ms& p) const {
     return light_transparency(p) > LIGHT_TRANSPARENCY_SOLID;
 }
 
-auto map::light_transparency(const tripoint_bub_ms& p) const -> float {
+float map::light_transparency(const tripoint_bub_ms& p) const {
     const auto& map_cache = get_cache_ref(p.z());
     return map_cache.transparency_cache[map_cache.idx(p.x(), p.y())];
 }
@@ -1916,9 +1915,8 @@ auto map::make_visibility_variables(const int zlev) const -> visibility_variable
     return variables;
 }
 
-auto map::apparent_light_helper(
-    const level_cache& map_cache, const tripoint_bub_ms& p, const float visibility_scale_factor)
-    -> map::apparent_light_info {
+map::apparent_light_info map::apparent_light_helper(
+    const level_cache& map_cache, const tripoint_bub_ms& p, const float visibility_scale_factor) {
     const float vis = std::
         max(map_cache.seen_cache[map_cache.idx(p.x(), p.y())],
             map_cache.camera_cache[map_cache.idx(p.x(), p.y())]);
@@ -1973,14 +1971,13 @@ auto map::apparent_light_helper(
     return {obstructed, apparent_light};
 }
 
-auto map::apparent_light_at(const tripoint_bub_ms& p, const visibility_variables& cache) const
-    -> lit_level {
+lit_level map::apparent_light_at(
+    const tripoint_bub_ms& p, const visibility_variables& cache) const {
     return apparent_light_at(p, cache, rl_dist(g->u.bub_pos(), p));
 }
 
-auto map::apparent_light_at(
-    const tripoint_bub_ms& p, const visibility_variables& cache, const int dist) const
-    -> lit_level {
+lit_level map::apparent_light_at(
+    const tripoint_bub_ms& p, const visibility_variables& cache, const int dist) const {
     // Clairvoyance overrides everything.
     if (dist <= cache.u_clairvoyance) { return lit_level::BRIGHT; }
     const auto& map_cache = get_cache_ref(p.z());
@@ -2037,7 +2034,7 @@ auto map::apparent_light_at(
     }
 }
 
-auto map::pl_sees(const tripoint_bub_ms& t, const int max_range) const -> bool {
+bool map::pl_sees(const tripoint_bub_ms& t, const int max_range) const {
     if (!inbounds(t)) { return false; }
 
     if (max_range >= 0 && square_dist(t, g->u.bub_pos()) > max_range) {
@@ -2046,10 +2043,7 @@ auto map::pl_sees(const tripoint_bub_ms& t, const int max_range) const -> bool {
 
 #if defined(CATA_SDL)
     const auto& map_cache = get_cache_ref(t.z());
-    // Visibility cache is updated once per turn
-    // A door opening / closing and invalidating the cache doesn't matter here
-    // Just consider it to be seen as it all happens "at once"
-    if (visibility_variables_cache.variables_set) {
+    if (!map_cache.visibility_cache_dirty && visibility_variables_cache.variables_set) {
         const auto ll = map_cache.visibility_cache[map_cache.idx(t.x(), t.y())];
         return get_visibility(ll, visibility_variables_cache) == VIS_CLEAR;
     }
@@ -2064,7 +2058,7 @@ auto map::pl_sees(const tripoint_bub_ms& t, const int max_range) const -> bool {
 #endif
 }
 
-auto map::pl_line_of_sight(const tripoint_bub_ms& t, const int max_range) const -> bool {
+bool map::pl_line_of_sight(const tripoint_bub_ms& t, const int max_range) const {
     if (!inbounds(t)) { return false; }
 
     if (max_range >= 0 && square_dist(t, g->u.bub_pos()) > max_range) {
@@ -2556,7 +2550,7 @@ void map::apply_vehicle_optics(const tripoint_bub_ms& origin, const int target_z
     // Cameras are also handled here, so that we only need to get through all vehicle parts once.
     int cam_control = -1;
     for (const vpart_reference& vp : veh->get_avail_parts(VPFLAG_EXTENDS_VISION)) {
-        const tripoint_bub_ms mirror_pos = vp.pos();
+        const auto mirror_pos = vp.bub_pos();
         // We can utilize the current state of the seen cache to determine
         // if the player can see the mirror from their position.
         // Use g_visible_threshold for consistency with apparent_light_helper.
@@ -2657,7 +2651,7 @@ void map::apply_vehicle_optics(const tripoint_bub_ms& origin, const int target_z
 }
 
 // Schraudolph's algorithm with John's constants
-static inline auto fastexp(float x) -> float {
+static inline float fastexp(float x) {
     union {
         float f;
         int i;
@@ -2672,18 +2666,17 @@ static inline auto fastexp(float x) -> float {
     return u.f / v.f;
 }
 
-static auto light_calc(const float& numerator, const float& transparency, const int& distance)
-    -> float {
+static float light_calc(const float& numerator, const float& transparency, const int& distance) {
     // Light uses exponential attenuation divided by linear distance.
     return numerator / (fastexp(transparency * distance) * distance);
 }
 
-static auto light_check(const float& transparency, const float& intensity) -> bool {
+static bool light_check(const float& transparency, const float& intensity) {
     return transparency > LIGHT_TRANSPARENCY_SOLID && intensity > LIGHT_AMBIENT_LOW;
 }
 
-static auto light_from_lookup(
-    const float& numerator, const float& transparency, const int& distance) -> float {
+static float light_from_lookup(
+    const float& numerator, const float& transparency, const int& distance) {
     return numerator * transparency / distance;
 }
 

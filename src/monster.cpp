@@ -38,7 +38,7 @@
 #include "map/mapbuffer.h"
 #include "map/mapdata.h"
 #include "map/submap.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "mattack_actors.h"
 #include "mattack_common.h"
 #include "melee.h"
@@ -185,8 +185,9 @@ namespace
 
 auto adjacent_grabber_for( const monster &target ) -> Creature *
 {
-    for( const auto &p : get_map().points_in_radius( target.bub_pos(), 1, 0 ) ) {
-        Creature *const grabber = g->critter_at<Creature>( p );
+    auto &here = target.get_mapbuffer();
+    for( const auto &p : simulated_tiles_in_radius( here, target.abs_pos(), 1 ) ) {
+        Creature *const grabber = here.creature_at( p.abs_pos() );
         if( grabber != nullptr && grabber != &target && grabber->has_effect( effect_grabbing ) ) {
             return grabber;
         }
@@ -282,8 +283,6 @@ auto get_lua_monster_attitude( const monster &mon,
 } // namespace
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
-struct pathfinding_settings;
-
 // Limit the number of iterations for next upgrade_time calculations.
 // This also sets the percentage of monsters that will never upgrade.
 // The rough formula is 2^(-x), e.g. for x = 5 it's 0.03125 (~ 3%).
@@ -312,17 +311,21 @@ static const std::map<monster_attitude, std::pair<std::string, color_id>> attitu
 };
 
 // Returns all the players around pos who don't have grabbing monsters adjacent to them
-static std::vector<player *> find_targets_to_ungrab( const tripoint_bub_ms &pos )
+static std::vector<player *> find_targets_to_ungrab( const monster &source,
+        const tripoint_abs_ms &pos )
 {
     std::vector<player *> result;
-    for( auto &player_pos : g->m.points_in_radius( pos, 1, 0 ) ) {
-        player *p = g->critter_at<player>( player_pos );
+    auto &here = source.get_mapbuffer();
+    for( const auto &player_pos : simulated_tiles_in_radius( here, pos, 1 ) ) {
+        Creature *const creature = here.creature_at( player_pos.abs_pos() );
+        player *const p = creature != nullptr ? creature->as_player() : nullptr;
         if( !p || !p->has_effect( effect_grabbed ) ) {
             continue;
         }
         bool grabbed = false;
-        for( auto &mon_pos : g->m.points_in_radius( player_pos, 1, 0 ) ) {
-            const monster *const mon = g->critter_at<monster>( mon_pos );
+        for( const auto &mon_pos : simulated_tiles_in_radius( here, player_pos.abs_pos(), 1 ) ) {
+            const Creature *const creature_at = here.creature_at( mon_pos.abs_pos() );
+            const monster *const mon = creature_at != nullptr ? creature_at->as_monster() : nullptr;
             if( mon && mon->has_effect( effect_grabbing ) ) {
                 grabbed = true;
                 break;
@@ -395,7 +398,7 @@ monster::monster( const mtype_id &id ) : monster()
     }
 }
 
-monster::monster( const mtype_id &id, const tripoint_bub_ms &p ) : monster( id )
+monster::monster( const mtype_id &id, const tripoint_abs_ms &p ) : monster( id )
 {
     spawn( p );
 }
@@ -483,8 +486,9 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 
     const auto wandering = is_wandering();
-    g->update_zombie_pos( *this, p );
-    pos_abs = p;
+    if( g->update_zombie_pos( *this, p ) ) {
+        pos_abs = p;
+    }
     if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
@@ -819,9 +823,9 @@ void monster::refill_udders()
     }
 }
 
-auto monster::spawn( const tripoint_bub_ms &p ) -> void
+auto monster::spawn( const tripoint_abs_ms &p ) -> void
 {
-    pos_abs = map_local_to_abs( get_map(), p );
+    pos_abs = p;
     unset_dest();
 }
 
@@ -1424,7 +1428,7 @@ nc_color monster::color_with_effects() const
     return ret;
 }
 
-bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) const
+bool monster::avoid_trap( const tripoint_abs_ms & /* pos */, const trap &tr ) const
 {
     // The trap position is not used, monsters are to stupid to remember traps. Actually, they do
     // not even see them.
@@ -1451,18 +1455,17 @@ bool monster::sees( const Creature &ch ) const
     }
     return Creature::sees( ch );
 }
-bool monster::sees( const tripoint_bub_ms &t, bool is_player, int range_limit,
-                    double range_mod ) const
+bool monster::sees( const tripoint_abs_ms &t, bool is_player, int range_mod ) const
 {
     if( type->clairvoyance > 0 ) {
-        const int wanted_range = rl_dist( bub_pos(), t );
+        const int wanted_range = rl_dist( abs_pos(), t );
 
         // Clairvoyance is now pretty cheap, so we can check it early
         if( wanted_range < type->clairvoyance ) {
             return true;
         }
     }
-    return Creature::sees( t, is_player, range_limit, range_mod );
+    return Creature::sees( t, is_player, range_mod );
 }
 
 bool monster::can_see() const
@@ -1564,51 +1567,18 @@ bool monster::made_of( phase_id p ) const
     return type->phase == p;
 }
 
-void monster::set_goal( const tripoint_bub_ms &p )
+void monster::set_goal( const tripoint_abs_ms &p )
 {
-    const map &here = get_map();
-    if( !here.inbounds( p ) ) {
+    const auto &here = get_mapbuffer();
+    if( !here.is_column_state( project_to<coords::sm>( p ).xy(),
+                               submap_column_load_state::simulated ) ) {
         return;
     }
 
-    if( p != goal && p != bub_pos() ) {
+    if( p != goal && p != abs_pos() ) {
         repath_requested = true;
     }
     goal = p;
-}
-
-auto monster::shift( point_rel_sm sm_shift ) -> void
-{
-    const map &here = get_map();
-
-    const auto ms_shift = project_to<coords::ms>( sm_shift );
-    if( wandf > 0 ) {
-        wander_pos = wander_pos - ms_shift;
-    }
-
-    // Pathfinding shifts, we bypass `set_dest` to prevent repathing
-    goal = goal - ms_shift;
-    if( !here.inbounds( goal ) ) {
-        // May accidentally occur during long-teleports
-        goal = bub_pos();
-        path.clear();
-        return;
-    }
-
-    // Shift our found paths too, but also validate them
-    if( !this->path.empty() ) {
-        std::ranges::for_each( path, [ms_shift]( tripoint_bub_ms & p ) {
-            p = p - ms_shift;
-        } );
-        const auto path_is_oob = std::ranges::any_of( path, [&]( const tripoint_bub_ms & p ) {
-            return !here.inbounds( p );
-        } );
-        if( path_is_oob ) {
-            // Path started going through OoB regions, so...
-            this->path.clear();
-            this->repath_requested = true;
-        }
-    }
 }
 
 detached_ptr<item> monster::set_tack_item( detached_ptr<item> &&to )
@@ -1725,7 +1695,7 @@ item *monster::get_battery_item() const
     return nullptr;
 }
 
-tripoint_bub_ms monster::move_target()
+tripoint_abs_ms monster::move_target()
 {
     return goal;
 }
@@ -2042,7 +2012,7 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_IGNORE;
     }
 
-    if( has_flag( MF_KEEP_DISTANCE ) && rl_dist( bub_pos(), goal ) < type->tracking_distance ) {
+    if( has_flag( MF_KEEP_DISTANCE ) && rl_dist( abs_pos(), goal ) < type->tracking_distance ) {
         return MATT_FLEE;
     }
 
@@ -2116,8 +2086,9 @@ void monster::process_triggers()
 
     process_trigger( mon_trigger::FIRE, [this]() {
         int ret = 0;
-        for( const auto &p : g->m.points_in_radius( bub_pos(), 3 ) ) {
-            ret += 5 * g->m.get_field_intensity( p, fd_fire );
+        auto &here = get_mapbuffer();
+        for( const auto &tile : simulated_tiles_in_radius( here, abs_pos(), 3 ) ) {
+            ret += 5 * tile.get_field_intensity( fd_fire );
         }
         return ret;
     } );
@@ -2410,7 +2381,7 @@ void monster::melee_attack( Creature &target, float accuracy )
         return;
     }
 
-    if( !can_squeeze_to( target.bub_pos() ) ) {
+    if( !can_squeeze_to( target.abs_pos() ) ) {
         return;
     }
 
@@ -3089,7 +3060,7 @@ float monster::fall_damage_mod() const
     return 0.0f;
 }
 
-int monster::impact( const int force, const tripoint_bub_ms &p )
+int monster::impact( const int force, const tripoint_abs_ms &p )
 {
     if( force <= 0 ) {
         return force;
@@ -3097,7 +3068,7 @@ int monster::impact( const int force, const tripoint_bub_ms &p )
 
     const float mod = fall_damage_mod();
     int total_dealt = 0;
-    if( g->m.has_flag( TFLAG_SHARP, p ) ) {
+    if( get_mapbuffer().has_flag( TFLAG_SHARP, p ) ) {
         const int cut_damage = std::max( 0.0f, 10 * mod - get_armor_cut( bodypart_id( "torso" ) ) );
         apply_damage( nullptr, bodypart_id( "torso" ), cut_damage );
         total_dealt += 10 * mod;
@@ -3254,11 +3225,12 @@ void monster::process_turn()
         local_attack_data.cooldown = std::max( 0, local_attack_data.cooldown -
                                                action_time_scale::calendar_turns_this_tick() );
     }
+    auto &here = get_mapbuffer();
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
         auto found_grabbed_target = false;
-        for( const auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
-            const Creature *const target = g->critter_at<Creature>( dest );
+        for( const auto &dest : simulated_tiles_in_radius( here, abs_pos(), 1 ) ) {
+            const Creature *const target = here.creature_at( dest.abs_pos() );
             if( target != nullptr && target != this && target->has_effect( effect_grabbed ) ) {
                 found_grabbed_target = true;
                 add_effect( effect_grabbing, 2_turns );
@@ -3273,7 +3245,7 @@ void monster::process_turn()
         if( has_effect( effect_emp ) ) {
             if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 50;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "hummmmm." );
@@ -3284,14 +3256,13 @@ void monster::process_turn()
                 sounds::sound( se );
             }
         } else {
-            for( const auto &zap : g->m.points_in_radius( bub_pos(), 1 ) ) {
-                const bool player_sees = g->u.sees( zap );
-                const auto items = g->m.i_at( zap );
-                for( const auto &item : items ) {
+            for( const auto &zap : simulated_tiles_in_radius( here, abs_pos(), 1 ) ) {
+                const bool player_sees = g->u.sees( zap.abs_pos() );
+                for( const auto &item : zap.items() ) {
                     if( item->made_of( LIQUID ) && item->flammable() ) { // start a fire!
-                        g->m.add_field( zap, fd_fire, 2, 1_minutes );
+                        here.add_field( zap.abs_pos(), { .type = fd_fire, .intensity = 2, .age = 1_minutes } );
                         sound_event se;
-                        se.origin = bub_pos();
+                        se.origin = abs_pos();
                         se.volume = 60;
                         se.category = sounds::sound_t::combat;
                         se.description = _( "fwoosh!" );
@@ -3303,30 +3274,31 @@ void monster::process_turn()
                         break;
                     }
                 }
-                if( zap != bub_pos() ) {
-                    explosion_handler::emp_blast( zap ); // Fries electronics due to the intensity of the field
+                if( zap.abs_pos() != abs_pos() ) {
+                    explosion_handler::emp_blast( abs_to_bub(
+                                                      zap.abs_pos() ) ); // Fries electronics due to the intensity of the field
                 }
-                const auto t = g->m.ter( zap );
+                const auto t = zap.ter();
                 if( t == ter_str_id( "t_gas_pump" ) || t == ter_str_id( "t_gas_pump_a" ) ) {
                     if( one_in( 4 ) ) {
                         explosion_handler::explosion( bub_pos(), nullptr, 40, 0.8, true );
                         if( player_sees ) {
-                            add_msg( m_warning, _( "The %s explodes in a fiery inferno!" ), g->m.tername( zap ) );
+                            add_msg( m_warning, _( "The %s explodes in a fiery inferno!" ), zap.tername() );
                         }
                     } else {
                         if( player_sees ) {
                             add_msg( m_warning, _( "Lightning from %1$s engulfs the %2$s!" ), name(),
-                                     g->m.tername( zap ) );
+                                     zap.tername() );
                         }
-                        g->m.add_field( zap, fd_fire, 1, 2_turns );
+                        here.add_field( zap.abs_pos(), { .type = fd_fire, .intensity = 1, .age = 1_turns } );
                     }
                 }
             }
             if( get_weather().lightning_active && !has_effect( effect_supercharged ) &&
-                g->m.is_outside( bub_pos() ) ) {
+                here.is_outside( abs_pos() ) ) {
                 get_weather().lightning_active = false; // only one supercharge per strike
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 180;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "BOOOOOOOM!!!" );
@@ -3341,7 +3313,7 @@ void monster::process_turn()
                 se.variant = "default";
                 se.volume = 120;
                 sounds::sound( se );
-                if( g->u.sees( bub_pos() ) ) {
+                if( g->u.sees( abs_pos() ) ) {
                     add_msg( m_bad, _( "Lightning strikes the %s!" ), name() );
                     add_msg( m_bad, _( "Your vision goes white!" ) );
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
@@ -3350,7 +3322,7 @@ void monster::process_turn()
             } else if( has_effect( effect_supercharged ) &&
                        action_time_scale::once_every_this_tick( 5_turns ) ) {
                 sound_event se;
-                se.origin = bub_pos();
+                se.origin = abs_pos();
                 se.volume = 80;
                 se.category = sounds::sound_t::combat;
                 se.description = _( "VMMMMMMMMM!" );
@@ -3545,7 +3517,7 @@ void monster::die( Creature *nkiller )
     }
     if( has_effect( effect_grabbing ) ) {
         remove_effect( effect_grabbing );
-        for( player *p : find_targets_to_ungrab( bub_pos() ) ) {
+        for( player *p : find_targets_to_ungrab( *this, abs_pos() ) ) {
             p->add_msg_player_or_npc( m_good, _( "The last enemy holding you collapses!" ),
                                       _( "The last enemy holding <npcname> collapses!" ) );
             p->remove_effect( effect_grabbed );
@@ -3653,7 +3625,7 @@ bool monster::use_mech_power( int amt )
         return false;
     }
     amt = -amt;
-    battery_item->ammo_consume( amt, bub_pos() );
+    battery_item->ammo_consume( amt );
     return battery_item->ammo_remaining() > 0;
 }
 
@@ -3682,7 +3654,7 @@ static void process_item_valptr( item *ptr, monster &mon )
 {
     if( ptr && ptr->needs_processing() ) {
         ptr->attempt_detach( [&mon]( detached_ptr<item> &&it ) {
-            return item::process( std::move( it ), nullptr, mon.bub_pos(), false, 1 );
+            return item::process( std::move( it ), nullptr, false );
         } );
     }
 }
@@ -3693,7 +3665,7 @@ void monster::process_items()
     if( !inv.empty() ) {
         inv.remove_with( [this]( detached_ptr<item> &&it ) {
             if( it->needs_processing() ) {
-                return item::process( std::move( it ), nullptr, bub_pos(), false, 1 );
+                return item::process( std::move( it ), nullptr, false );
             }
             return std::move( it );
         } );
@@ -3773,7 +3745,7 @@ void monster::drop_items_on_death()
         return;
     }
 
-    g->m.spawn_items( bub_pos(), std::move( items ) );
+    get_mapbuffer().spawn_items( abs_pos(), std::move( items ) );
 }
 
 void monster::drop_monster_weapon()
@@ -3814,7 +3786,7 @@ void monster::drop_monster_weapon()
         return;
     }
 
-    g->m.spawn_items( bub_pos(), std::move( items ) );
+    get_mapbuffer().spawn_items( abs_pos(), std::move( items ) );
 }
 
 void monster::process_one_effect( effect &it, bool is_new )
@@ -3999,7 +3971,7 @@ bool monster::make_fungus()
     const std::string old_name = name();
     poly( type->fungalize_into );
 
-    if( g->u.sees( bub_pos() ) ) {
+    if( g->u.sees( abs_pos() ) ) {
         add_msg( m_info, _( "The spores transform %1$s into a %2$s!" ),
                  old_name, name() );
     }
@@ -4317,7 +4289,7 @@ void monster::on_damage_of_type( int amt, damage_type dt, const bodypart_id &bp 
     if( has_effect( effect_grabbing ) && ( dt == DT_BASH || dt == DT_CUT || dt == DT_STAB ) &&
         x_in_y( amt * 10, full_hp ) ) {
         remove_effect( effect_grabbing );
-        for( player *p : find_targets_to_ungrab( bub_pos() ) ) {
+        for( player *p : find_targets_to_ungrab( *this, abs_pos() ) ) {
             p->add_msg_player_or_npc( m_good, _( "%s flinches, letting you go!" ),
                                       _( "%s flinches, letting <npcname> go!" ),
                                       disp_name( false, true ) );
@@ -4382,10 +4354,12 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     if( volume < -3000 ) {
         return;
     }
+
     // Error is based on volume and goodhearing. Louder sound contributes lightly, goodhearing contributes greatly.
     // Always some error, with more error if the heard sound is very low.
     // Getting within a few tiles *should* enable them to get better info, or just see their target.
     int max_error = ( goodhearing ) ? 0 : 2;
+
     if( volume < -1000 ) {
         // -10dB or greater below ambient
         max_error = ( goodhearing ) ? 8 : 0;
@@ -4405,14 +4379,13 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     } else if( volume < 4000 ) {
         // 20-40dB greater than ambient
         max_error = ( goodhearing ) ? 3 : 8;
-
     } else if( volume < 8000 ) {
         // 40-80dB greater than ambient
         max_error = ( goodhearing ) ? 1 : 4;
     }
 
-    int target_x = source.origin.x() + rng( -max_error, max_error );
-    int target_y = source.origin.y() + rng( -max_error, max_error );
+    auto target = source.origin + point_rel_ms( rng( -max_error, max_error ), rng( -max_error,
+                  max_error ) );
     // Allowing for z level error would cause consistant issues with monsters trying to path into solid rock.
 
     // A goodhearing monster will follow a heard_sound of 100dB for 26 turns (10 + 16).
@@ -4424,11 +4397,10 @@ void monster::hear_sound( const sound_event &source, const short heard_vol, cons
     process_trigger( mon_trigger::SOUND, ( heard_vol * 0.001 ) );
     if( morale >= 0 && anger >= 10  && !afraid_of_source ) {
 
-        wander_to( tripoint_bub_ms( target_x, target_y, source.origin.z() ), wander_turns );
+        wander_to( target, wander_turns );
     } else if( morale < 0 || afraid_of_source ) {
         // Monsters afraid of sound should not go towards sound
-        wander_to( tripoint_bub_ms( 2 * bub_pos().x() - target_x, 2 * bub_pos().y() - target_y,
-                                    2 * bub_pos().z() - source.origin.z() ), wander_turns );
+        wander_to( abs_pos() - target + abs_pos(), wander_turns );
     }
 }
 
@@ -4481,14 +4453,6 @@ void monster::on_load()
     } );
 }
 
-const pathfinding_settings &monster::get_legacy_pathfinding_settings() const
-{
-    return !effect_cache[PATHFINDING_OVERRIDE] ?
-           type->legacy_path_settings
-           : type->legacy_path_settings_buffed;
-
-}
-
 std::pair<PathfindingSettings, RouteSettings> monster::get_pathfinding_pair()
 const
 {
@@ -4496,11 +4460,6 @@ const
            std::make_pair( type->path_settings, type->route_settings ) :
            std::make_pair( type->path_settings_buffed, type->route_settings_buffed );
 
-}
-
-std::set<tripoint_bub_ms> monster::get_legacy_path_avoid() const
-{
-    return std::set<tripoint_bub_ms>();
 }
 
 const std::vector<item *> &monster::get_items() const

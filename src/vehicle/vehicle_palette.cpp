@@ -1,4 +1,4 @@
-#include "vehicle_palette.h"
+#include "vehicle/vehicle_palette.h"
 
 #include "debug.h"
 #include "game_constants.h"
@@ -15,9 +15,9 @@
 #include "type_id.h"
 #include "type_id_implement.h"
 #include "units_angle.h"
-#include "vehicle.h"
-#include "vehicle_part.h"
-#include "vpart_position.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
+#include "vehicle/vpart_position.h"
 
 #include <cstddef>
 #include <functional>
@@ -64,14 +64,14 @@ void VehiclePalette::check() const {
     }
 }
 
-auto VehiclePalette::fuzzy_to_index(const vpart_id& id) const -> int {
+int VehiclePalette::fuzzy_to_index(const vpart_id& id) const {
     for (auto const& [fuzzy, index] : fuzzy_color_match) {
         if (id.str().contains(fuzzy) || id.str() == fuzzy) { return index; }
     }
     return -1;
 }
 
-auto VehiclePalette::pick_colors() const -> std::vector<RGBColor> {
+std::vector<RGBColor> VehiclePalette::pick_colors() const {
     std::vector<RGBColor> result;
     for (const auto& colorlist : colors) {
         std::string colorstr = *colorlist.pick();

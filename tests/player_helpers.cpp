@@ -50,6 +50,8 @@ auto player_has_item_of_type(const std::string& type) -> bool {
 
 void clear_character(player& dummy, bool debug_storage) {
     character_funcs::normalize(dummy);
+    dummy.in_vehicle = false;
+    dummy.controlling_vehicle = false;
 
     // Remove first worn item until there are none left.
     std::vector<detached_ptr<item>> temp;
@@ -83,6 +85,8 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.clear_skills();
     dummy.clear_morale();
     dummy.activity->set_to_null();
+    dummy.backlog.clear();
+    dummy.cancel_stashed_activity();
     // Make sure any lingering safe references from the activity are removed
     dummy.activity->targets.clear();
     dummy.reset_chargen_attributes();
@@ -119,8 +123,7 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.cash = 0;
     dummy.dodges_left = 1;
 
-    const tripoint_bub_ms spot(60, 60, 0);
-    dummy.setpos(map_local_to_abs(get_map(), spot));
+    dummy.setpos(test_origin);
 
     dummy.invalidate_crafting_inventory();
 }

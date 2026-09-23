@@ -27,7 +27,7 @@ public:
 
     // Non-copyable
     mapbuffer_registry(const mapbuffer_registry&) = delete;
-    auto operator=(const mapbuffer_registry&) -> mapbuffer_registry& = delete;
+    mapbuffer_registry& operator=(const mapbuffer_registry&) = delete;
 
     /**
      * Return the mapbuffer for the given dimension, creating it if it does not

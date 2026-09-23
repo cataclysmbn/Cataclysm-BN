@@ -3,7 +3,7 @@
 #include "calendar.h"
 #include "coordinates.h"
 #include "units_temperature.h"
-#include "weather_type.h"
+#include "weather/weather_type.h"
 
 #include <string>
 
@@ -50,31 +50,31 @@ public:
     std::vector<weather_type_id> weather_types;
     weather_generator();
 
-    auto get_bad_weather() const -> const weather_type_id&;
-    auto get_default_weather() const -> const weather_type_id&;
+    const weather_type_id& get_bad_weather() const;
+    const weather_type_id& get_default_weather() const;
 
-    auto forecast_priority(const weather_type_id& w) const -> int;
+    int forecast_priority(const weather_type_id& w) const;
 
     /**
      * TODO: Remove the regular tripoint overload, replace with *_abs_ms one.
      */
-    auto get_weather(const tripoint_abs_ms&, const time_point&, unsigned seed) const -> w_point;
-    auto get_weather(
+    w_point get_weather(const tripoint_abs_ms&, const time_point&, unsigned seed) const;
+    w_point get_weather(
         const tripoint_abs_ms& location, const time_point& t,
-        const calendar_config& calendar_config, unsigned seed) const -> w_point;
-    auto get_weather_conditions(const tripoint_abs_ms&, const time_point&, unsigned seed) const
-        -> const weather_type_id&;
-    auto get_weather_conditions(const w_point&) const -> const weather_type_id&;
-    auto get_wind_direction(season_type) const -> int;
-    auto convert_winddir(int) const -> int;
+        const calendar_config& calendar_config, unsigned seed) const;
+    const weather_type_id& get_weather_conditions(
+        const tripoint_abs_ms&, const time_point&, unsigned seed) const;
+    const weather_type_id& get_weather_conditions(const w_point&) const;
+    int get_wind_direction(season_type) const;
+    int convert_winddir(int) const;
     void test_weather(unsigned) const;
 
-    auto get_weather_temperature(
+    units::temperature get_weather_temperature(
         const tripoint_abs_ms&, const time_point&, const calendar_config& calendar_config,
-        unsigned) const -> units::temperature;
-    auto get_water_temperature(
+        unsigned) const;
+    units::temperature get_water_temperature(
         const tripoint_abs_ms&, const time_point&, const calendar_config& calendar_config,
-        unsigned) const -> units::temperature;
+        unsigned) const;
 
-    static auto load(const JsonObject& jo) -> weather_generator;
+    static weather_generator load(const JsonObject& jo);
 };

@@ -18,34 +18,33 @@
 #include "vehicle/vehicle.h"
 
 /** food items are counted by charges */
-static auto get_single_food_item(const tripoint_bub_ms& pos) -> const item& {
-    map& here = get_map();
-    const auto& items = here.i_at(pos);
-    CHECK(items.size() == 1);
+static auto get_single_food_item(const tripoint_abs_ms& pos) -> const item& {
+    auto& here = get_map().get_mapbuffer();
+    const auto items = here.get_items(pos);
+    REQUIRE(items);
+    CHECK(items->size() == 1);
 
-    return **items.begin();
+    return **items->begin();
 }
 
 TEST_CASE("auto_consume_priority", "[auto_consume][food][zone]") {
     clear_all_state();
 
-    map& here = get_map();
+    auto& here = get_map().get_mapbuffer();
     auto& zmgr = zone_manager::get_manager();
 
-    constexpr auto zone_origin = tripoint_bub_ms{60, 60, 0};
-    auto zone_origin_absolute = map_local_to_abs(here, zone_origin);
     constexpr auto zone_size = tripoint_rel_ms{6, 6, 0};
 
     avatar& you = get_avatar();
-    you.setpos(zone_origin);
+    you.setpos(test_origin);
 
-    auto create_zone = [&, zone_origin_absolute, zone_size](const std::string& name) -> void {
+    auto create_zone = [&, zone_size](const std::string& name) -> void {
         zmgr.add(name, zone_type_id(name), faction_id("your_followers"), false, true,
-                 zone_origin_absolute - zone_size, zone_origin_absolute + zone_size);
+                 test_origin - zone_size, test_origin + zone_size);
     };
 
     auto place_items =
-        [&](const std::vector<std::pair<item*, tripoint_bub_ms>>& item_pairs) -> void {
+        [&](const std::vector<std::pair<item*, tripoint_abs_ms>>& item_pairs) -> void {
         for (const auto& [item, pos] : item_pairs) {
             here.add_item_or_charges(pos, item::spawn(*item));
         }
@@ -59,14 +58,16 @@ TEST_CASE("auto_consume_priority", "[auto_consume][food][zone]") {
         };
     };
 
-    using PosCounts = std::vector<std::pair<tripoint_bub_ms, int>>;
+    using PosCounts = std::vector<std::pair<tripoint_abs_ms, int>>;
 
     SECTION("auto_eat") {
         const auto check_item_count = [&](const PosCounts& expected) -> void {
             for (const auto& [pos, count] : expected) {
                 if (count == 0) {
                     INFO("expected empty at " << pos);
-                    CHECK(here.i_at(pos).empty());
+                    auto it = here.get_items(pos);
+                    REQUIRE(it);
+                    CHECK(it->empty());
                 } else {
                     INFO("expected " << count << " at " << pos);
                     CHECK(get_single_food_item(pos).count() == count);
@@ -83,13 +84,13 @@ TEST_CASE("auto_consume_priority", "[auto_consume][food][zone]") {
 
         auto expiring_soon =
             item::spawn_temporary("test_auto_consume_food_soon", calendar::turn, 5);
-        const auto expiring_soon_pos = zone_origin;
+        const auto expiring_soon_pos = test_origin;
         auto expiring_later =
             item::spawn_temporary("test_auto_consume_food_later", calendar::turn, 5);
-        const auto expiring_later_pos = zone_origin + tripoint_east;
+        const auto expiring_later_pos = test_origin + tripoint_east;
         auto expiring_last =
             item::spawn_temporary("test_auto_consume_food_last", calendar::turn, 5);
-        const auto expiring_last_pos = zone_origin + tripoint_east * 2;
+        const auto expiring_last_pos = test_origin + tripoint_east * 2;
 
         place_items(
             {{expiring_soon, expiring_soon_pos},
@@ -128,13 +129,13 @@ TEST_CASE("auto_consume_priority", "[auto_consume][food][zone]") {
         auto jar = itype_id{"jar_3l_glass"};
         auto water = item::spawn("water_clean");
         auto water_bottle = item::in_container(jar, std::move(water));
-        auto water_pos = zone_origin;
+        auto water_pos = test_origin;
         auto orange = item::spawn("oj"); // 5 days
         auto orange_bottle = item::in_container(jar, std::move(orange));
-        auto orange_pos = zone_origin + tripoint_east;
+        auto orange_pos = test_origin + tripoint_east;
         auto cocoa = item::spawn("hot_chocolate"); // 1 day
         auto cocoa_bottle = item::in_container(jar, std::move(cocoa));
-        auto cocoa_pos = zone_origin + tripoint_east * 2;
+        auto cocoa_pos = test_origin + tripoint_east * 2;
 
         place_items(
             {{&*water_bottle, water_pos},

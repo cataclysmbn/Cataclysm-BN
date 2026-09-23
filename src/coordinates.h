@@ -8,7 +8,7 @@
 #include "drawing_primitives.h"
 #include "enums.h"
 #include "game_constants.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "point.h"
 #include "point_float.h"
 #include "debug.h"

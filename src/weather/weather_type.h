@@ -53,7 +53,7 @@ struct weather_animation_t {
     nc_color color = c_white;
     std::string tile;
     uint32_t symbol = NULL_UNICODE;
-    auto get_symbol() const -> std::string { return utf32_to_utf8(symbol); }
+    std::string get_symbol() const { return utf32_to_utf8(symbol); }
 };
 
 struct weather_requirements {
@@ -102,11 +102,11 @@ public:
     void load(const JsonObject& jo, const std::string& src);
     void check() const;
 
-    auto get_symbol() const -> std::string { return utf32_to_utf8(symbol); }
+    std::string get_symbol() const { return utf32_to_utf8(symbol); }
 };
 namespace weather_types {
 /** Get all currently loaded weather types */
-auto get_all() -> const std::vector<weather_type>&;
+const std::vector<weather_type>& get_all();
 /** Finalize all loaded weather types */
 void finalize_all();
 /** Clear all loaded weather types (invalidating any pointers) */

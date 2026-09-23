@@ -23,7 +23,7 @@
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map/mapbuffer_registry.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "mapgen/mapgen.h"
 #include "mapgen/mapgen_constructor.h"
 #include "mapgen/mapgen_functions.h"

@@ -12,7 +12,7 @@
 #include "shape.h"
 #include "point.h"
 #include "point_float.h"
-#include "map_iterator.h"
+#include "map/map_iterator.h"
 #include "make_static.h"
 #include "json.h"
 #include "units_angle.h"

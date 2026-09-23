@@ -70,13 +70,15 @@ static_assert(sizeof(transparency_push_constants) == 16);
 //
 // Thin descriptor passed by the map layer to prepare_transparency_inputs.
 // Keeps the compute module free of a direct map.h dependency at the call site.
-// Pre-condition: sm->outside_cache must be current (rebuild_outside_cache runs
-// before transparency in build_map_cache, so this is satisfied in normal flow).
+// Pre-condition: outside_cache must be current before the map layer gathers
+// these references.
 // ---------------------------------------------------------------------------
 struct transparency_submap_ref {
     submap const* sm; // source submap data
     int offset_x;     // sm_offset.x() — tile x of submap origin in flat level cache
     int offset_y;     // sm_offset.y()
+    char const* outside_cache = nullptr;
+    int outside_cache_y = 0;
     uint32_t output_offset = 0;
 };
 
@@ -90,7 +92,7 @@ auto rebuild_transparency_luts(transparency_luts& luts) -> void;
 auto gather_transparency_refs(map const& m, int zlev) -> std::vector<transparency_submap_ref>;
 
 // Build GPU upload records for a set of submaps.
-// Reads ter/furn/field/outside_cache data from each ref.sm and writes one
+// Reads ter/furn/field/outside_cache data from each ref and writes one
 // transparency_submap_in per ref into out (clearing it first).
 auto prepare_transparency_inputs(
     std::span<transparency_submap_ref const> refs, std::vector<transparency_submap_in>& out)

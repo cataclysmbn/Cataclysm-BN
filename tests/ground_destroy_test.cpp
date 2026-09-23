@@ -6,8 +6,8 @@
 #include "int_id.h"
 #include "item.h"
 #include "itype.h"
+#include "map/map_iterator.h"
 #include "map_helpers.h"
-#include "map_iterator.h"
 #include "options.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -65,7 +65,7 @@ TEST_CASE("explosion_on_ground", "[.]") {
     const tripoint_bub_ms area_center(area_dim / 2, area_dim / 2, 0);
     item& rdx_keg = *item::spawn_temporary(rdx_keg_typeid);
     rdx_keg.charges = 0;
-    rdx_keg.type->invoke(get_avatar(), rdx_keg, area_center);
+    rdx_keg.type->invoke(get_avatar(), rdx_keg, bub_to_abs(area_center));
 
     // Check area to see if any t_flat_roof is present.
     for (int x = 0; x < area_dim; x++) {
@@ -111,7 +111,7 @@ TEST_CASE("explosion_on_floor_with_rock_floor_basement", "[.]") {
     const tripoint_bub_ms area_center(area_dim / 2, area_dim / 2, 0);
     item& rdx_keg = *item::spawn_temporary(rdx_keg_typeid);
     rdx_keg.charges = 0;
-    rdx_keg.type->invoke(get_avatar(), rdx_keg, area_center);
+    rdx_keg.type->invoke(get_avatar(), rdx_keg, bub_to_abs(area_center));
 
     // Check z0 for open air
     bool found_open_air = false;
