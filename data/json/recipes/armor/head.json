@@ -1418,6 +1418,7 @@
         [ "goggles_welding", 1 ],
         [ "sunglasses", 1 ],
         [ "fancy_sunglasses", 1 ],
+        [ "aviators", 1 ],
         [ "fitover_sunglasses", 1 ]
       ],
       [ [ "glasses_safety", 2 ], [ "glasses_bal", 1 ] ],

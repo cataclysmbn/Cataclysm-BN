@@ -74,7 +74,7 @@ auto prepare_item_for_placement(const item_placement_options& options) -> bool {
         options.item_to_place->activate();
     }
 
-    options.item_to_place->on_map_placement(here, local);
+    options.item_to_place->on_map_placement(options.p);
     return true;
 }
 

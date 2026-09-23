@@ -413,44 +413,46 @@ bool Creature::sees( const Creature &critter ) const
                  critter.get_size() <= creature_size::medium ) ) {
         return false;
     }
+    double range_mod = 1;
     if( ch != nullptr ) {
         if( ch->movement_mode_is( CMM_CROUCH ) || ch->movement_mode_is( CMM_PRONE ) ) {
             const int coverage = here.obstacle_coverage( bub_pos(), critter.bub_pos() );
             const int threshold = ch->movement_mode_is( CMM_PRONE ) ? 15 : 30;
-            if( coverage < threshold ) {
-                return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
+            if( coverage > threshold ) {
+                float size_modifier = 1.0;
+                switch( ch->get_size() ) {
+                    case creature_size::tiny:
+                        size_modifier = 2.0;
+                        break;
+                    case creature_size::small:
+                        size_modifier = 1.4;
+                        break;
+                    case creature_size::medium:
+                        break;
+                    case creature_size::large:
+                        size_modifier = 0.6;
+                        break;
+                    case creature_size::huge:
+                        size_modifier = 0.15;
+                        break;
+                    default:
+                        break;
+                }
+                range_mod = ( 0.5 * coverage * size_modifier ) / 30.0;
             }
-            float size_modifier = 1.0;
-            switch( ch->get_size() ) {
-                case creature_size::tiny:
-                    size_modifier = 2.0;
-                    break;
-                case creature_size::small:
-                    size_modifier = 1.4;
-                    break;
-                case creature_size::medium:
-                    break;
-                case creature_size::large:
-                    size_modifier = 0.6;
-                    break;
-                case creature_size::huge:
-                    size_modifier = 0.15;
-                    break;
-                default:
-                    break;
-            }
-            const int vision_modifier = 30 - 0.5 * coverage * size_modifier;
-            if( vision_modifier > 1 ) {
-                return sees( critter.bub_pos(), critter.is_avatar(), vision_modifier ) && visible( ch );
-            }
-            return false;
         }
+        range_mod *= ( double( ch->visibility() ) / 100.0 );
     }
-    return sees( critter.bub_pos(), critter.is_avatar() ) && visible( ch );
+    return sees( critter.bub_pos(), critter.is_avatar(), 0, range_mod ) && visible( ch );
 }
 
-bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod ) const
+bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_limit,
+                     double range_mod ) const
 {
+    if( range_mod <= 0 ) {
+        return false;
+    }
+
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.
@@ -475,24 +477,24 @@ bool Creature::sees( const tripoint_bub_ms &t, bool /*is_avatar*/, int range_mod
         tl_range.range_night = sight_range( 0 );
         tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
     }
-    const auto range_max = tl_range.range_max;
+    const int range_max = tl_range.range_max * range_mod;
     const auto wanted_range = rl_dist( bub_pos(), t );
     if( wanted_range > range_max ) {
         return false;
     }
     const auto ambient = here.ambient_light_at( t );
-    const auto range_cur = sight_range( ambient );
-    const auto range_min = std::min( range_cur, range_max );
+    const int range_cur = sight_range( ambient ) * range_mod;
+    const int range_min = std::min( range_cur, range_max );
     const auto natural_light = g->natural_light_level( t.z() );
     const auto is_lit = ambient > natural_light;
     if( wanted_range <= range_min ||
         ( wanted_range <= range_max && is_lit ) ) {
-        auto range = is_lit ? g_max_view_distance : range_min;
+        int range = is_lit ? g_max_view_distance * range_mod : range_min;
         if( has_effect( effect_no_sight ) ) {
             range = 1;
         }
-        if( range_mod > 0 ) {
-            range = std::min( range, range_mod );
+        if( range_limit > 0 ) {
+            range = std::min( range, range_limit );
         }
         return here.sees( bub_pos(), t, range );
     } else {

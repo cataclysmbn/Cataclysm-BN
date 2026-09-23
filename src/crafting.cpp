@@ -677,8 +677,8 @@ void Character::make_craft_with_command( const recipe_id &id_to_make, int batch_
 
 // @param offset is the index of the created item in the range [0, batch_size-1],
 // it makes sure that the used items are distributed equally among the new items.
-static void set_components( item &of, const std::vector<item *> &used,
-                            const int batch_size, const size_t offset )
+void set_components( item &of, const std::vector<item *> &used,
+                     const int batch_size, const size_t offset )
 {
     location_vector<item> &components = of.get_components();
     if( batch_size <= 1 ) {
@@ -1106,7 +1106,7 @@ static auto component_relative_rot( const item *component ) -> double
     return component != nullptr && component->goes_bad() ? component->get_relative_rot() : 0.0;
 }
 
-static auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
+auto highest_component_relative_rot( const std::vector<item *> &components ) -> double
 {
     namespace ranges = std::ranges;
     using namespace std::views;

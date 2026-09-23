@@ -4995,5 +4995,28 @@
       { "point": [ 0, 0, 1 ], "overmap": "vending_park_roof_1_north" },
       { "point": [ 1, 0, 1 ], "overmap": "vending_park_roof_2_north" }
     ]
+  },
+  {
+    "type": "city_building",
+    "id": "triffid_sprout",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "triffid_sprout_north" },
+      { "point": [ 0, 0, -1 ], "overmap": "triffid_sprout_finale_north" }
+    ],
+    "locations": [ "land" ],
+    "flags": [ "TRIFFID" ],
+    "spawns": { "group": "GROUP_TRIFFID_OUTER", "population": [ 100, 160 ], "radius": [ 0, 10 ] }
+  },
+  {
+    "type": "city_building",
+    "id": "mi-go_foward_camp",
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "mi-go_forward_camp_1_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "mi-go_forward_camp_2_north" },
+      { "point": [ 0, 0, 2 ], "overmap": "mi-go_forward_camp_3_north" }
+    ],
+    "locations": [ "land" ],
+    "flags": [ "MI-GO" ],
+    "spawns": { "group": "GROUP_MI-GO_CAMP_OM", "population": [ 10, 16 ], "radius": [ 1, 5 ] }
   }
 ]

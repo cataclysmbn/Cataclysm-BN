@@ -39,6 +39,34 @@
   },
   {
     "type": "furniture",
+    "id": "f_nanofab_portable",
+    "name": "portable nanofabricator unit",
+    "description": "An ugly amalgamation, grafted together from a nanofabricator body, its control panel, and a huge plutonium fuel cell to power it.  Needless to say, it's significantly more fragile, but more compact and portable.  Somewhat.",
+    "symbol": "%",
+    "bgcolor": "white",
+    "looks_like": "f_control_station",
+    "move_cost_mod": -1,
+    "coverage": 55,
+    "required_str": -1,
+    "examine_action": "nanofab",
+    "flags": [ "PLACE_ITEM", "NANOFAB_BODY" ],
+    "deconstruct": { "items": [ { "item": "portable_nanofab", "count": 1 } ] },
+    "bash": {
+      "str_min": 18,
+      "str_max": 50,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "scrap", "count": [ 20, 70 ] },
+        { "item": "e_scrap", "count": [ 20, 70 ] },
+        { "item": "plut_cell", "count": [ 10, 20 ] }
+      ],
+      "//": "Variable reduction since might hit more or less material.",
+      "ranged": { "reduction": [ 9, 18 ], "destroy_threshold": 50 }
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_air_filter",
     "name": "central air filter",
     "description": "Cleans out dust mites, smoke particles, and more!",

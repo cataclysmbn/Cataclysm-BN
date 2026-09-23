@@ -11641,7 +11641,7 @@ int Character::run_cost( int base_cost, bool diag ) const
             movecost *= mutation_value( "movecost_flatground_modifier" );
             movecost += bonus_from_enchantments( movecost, enchantment_value_id( "FLAT_MOVE_COST" ) );
         }
-        if( has_trait( trait_PADDED_FEET ) && !footwear_factor() ) {
+        if( has_trait( trait_PADDED_FEET ) && !is_wearing_shoes() ) {
             movecost *= .9f;
         }
         if( has_active_bionic( bio_jointservo ) ) {
@@ -12059,7 +12059,7 @@ Attitude Character::attitude_to( const Creature &other ) const
     return Attitude::A_NEUTRAL;
 }
 
-bool Character::sees( const tripoint_bub_ms &t, bool, int ) const
+bool Character::sees( const tripoint_bub_ms &t, bool, int, double ) const
 {
     if( t == bub_pos() ) {
         return true;

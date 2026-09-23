@@ -273,9 +273,13 @@ class iuse_actor
          * Finalizes the actor. Must be called after all items are loaded.
          */
         virtual void finalize( const itype_id &/*my_item_type*/ ) { }
+        /**
+         * Checks the actor.
+         */
+        virtual std::string check() const { return ""; }
 
         virtual void on_spawned( item & ) const {}
-        virtual void on_placed( item &, const map &, const tripoint_bub_ms & ) const {}
+        virtual void on_placed( item &, const tripoint_abs_ms & ) const {}
 };
 
 struct use_function {

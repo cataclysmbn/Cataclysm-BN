@@ -831,6 +831,19 @@
     "time": 1
   },
   {
+    "id": "bio_gas_remover",
+    "type": "bionic",
+    "name": { "str": "Contaminant Particle Ionizer" },
+    "description": "When active, this bionic emits a low energy electric field, causing dangerous airborne particles such as smoke and poison gas within a 5 tile radius to ionize and dissipate rapidly.",
+    "occupied_bodyparts": [ [ "torso", 16 ] ],
+    "points": 5,
+    "flags": [ "BIONIC_TOGGLED" ],
+    "enchantments": [ "ENCH_GAS_REMOVER_CLOUD" ],
+    "act_cost": "5 kJ",
+    "react_cost": "5 kJ",
+    "time": 1
+  },
+  {
     "id": "bio_night_vision",
     "type": "bionic",
     "name": { "str": "Implanted Night Vision" },

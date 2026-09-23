@@ -1522,11 +1522,10 @@ class item : public location_visitable<item>, public game_object<item>
         void on_damage( int qty, damage_type dt );
 
         /**
-         * Callback after an item is placed on the map, for any reason
-         * @param m The Map
-         * @param p Where in the map
+         * Callback after an item is placed, for any reason, including lazy load
+         * @param p Where was it placed
          */
-        void on_map_placement( const map &m, const tripoint_bub_ms &p );
+        void on_map_placement( const tripoint_abs_ms &abs_pos );
 
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 

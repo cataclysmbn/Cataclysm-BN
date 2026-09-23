@@ -535,7 +535,15 @@
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 65,
-    "flags": [ "PLACE_ITEM", "NANOFAB_BODY" ],
+    "flags": [ "PLACE_ITEM", "NANOFAB_BODY", "ADV_DECONSTRUCT" ],
+    "deconstruct": {
+      "ter_set": "t_strconc_floor",
+      "items": [
+        { "item": "nanofab_body_item", "charges": 1 },
+        { "item": "power_supply", "charges": [ 3, 3 ] },
+        { "item": "cable", "charges": [ 15, 15 ] }
+      ]
+    },
     "bash": {
       "str_min": 120,
       "str_max": 150,
@@ -569,8 +577,16 @@
     "looks_like": "t_console",
     "move_cost": 0,
     "coverage": 50,
-    "flags": [ "WALL", "NOITEM", "PERMEABLE" ],
+    "flags": [ "WALL", "NOITEM", "PERMEABLE", "ADV_DECONSTRUCT" ],
     "examine_action": "nanofab",
+    "deconstruct": {
+      "ter_set": "t_strconc_floor",
+      "items": [
+        { "item": "nanofab_item", "charges": 1 },
+        { "item": "power_supply", "charges": [ 3, 3 ] },
+        { "item": "cable", "charges": [ 15, 15 ] }
+      ]
+    },
     "bash": {
       "str_min": 8,
       "str_max": 150,

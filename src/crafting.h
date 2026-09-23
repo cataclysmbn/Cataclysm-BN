@@ -48,7 +48,11 @@ float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 float crafting_speed_multiplier( const Character &who, const item &craft,
                                  const bench_location &bench,
                                  std::optional<float> tools_multi_override = std::nullopt );
+auto highest_component_relative_rot( const std::vector<item *> &components ) -> double;
 void complete_craft( Character &who, item &craft );
+
+void set_components( item &of, const std::vector<item *> &used,
+                     const int batch_size, const size_t offset );
 
 namespace crafting
 {

@@ -183,7 +183,8 @@ class monster : public Creature, public location_visitable<monster>
         bool swims() const;
         // see Creature::sees
         bool sees( const Creature &critter ) const override;
-        bool sees( const tripoint_bub_ms &t, bool is_player = false, int range_mod = 0 ) const override;
+        bool sees( const tripoint_bub_ms &t, bool is_player = false, int range_limit = 0,
+                   double range_mod = 1 ) const override;
         // Returns false if the monster is stunned, has 0 moves or otherwise wouldn't act this turn
         bool can_act() const;
         int sight_range( int light_level ) const override;

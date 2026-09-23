@@ -298,6 +298,40 @@
   },
   {
     "type": "GENERIC",
+    "id": "nanofab_item",
+    "name": { "str": "dismantled nanofabricator control panel" },
+    "description": "The control panel from a dismantled nanofabricator.  Must be attached to the body to make the nanofabricator work again.",
+    "material": [ "steel" ],
+    "symbol": "%",
+    "color": "dark_gray",
+    "volume": "190000 ml",
+    "weight": "250 kg"
+  },
+  {
+    "type": "GENERIC",
+    "id": "nanofab_body_item",
+    "name": { "str": "dismantled nanofabricator body" },
+    "description": "The machinery from a dismantled nanofabricator.  This massive column of advanced 3D printers and robotic assemblers is useless without its control panel.",
+    "material": [ "steel" ],
+    "symbol": "%",
+    "color": "dark_gray",
+    "volume": "248000 ml",
+    "weight": "250 kg"
+  },
+  {
+    "type": "GENERIC",
+    "id": "portable_nanofab",
+    "looks_like": "f_control_station",
+    "name": { "str": "portable nanofabricator" },
+    "description": "A massive nanofabricator manufacturing column and it's control panel combined together into a semi-portable unit.",
+    "material": [ "steel" ],
+    "symbol": "%",
+    "color": "dark_gray",
+    "volume": "300000 ml",
+    "weight": "480 kg"
+  },
+  {
+    "type": "GENERIC",
     "id": "superglue",
     "category": "chems",
     "symbol": ",",

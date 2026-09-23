@@ -345,7 +345,8 @@ class Creature
          */
         /*@{*/
         virtual bool sees( const Creature &critter ) const;
-        virtual bool sees( const tripoint_bub_ms &t, bool is_avatar = false, int range_mod = 0 ) const;
+        virtual bool sees( const tripoint_bub_ms &t, bool is_avatar = false, int range_limit = 0,
+                           double range_mod = 1 ) const;
         /*@}*/
 
         /**

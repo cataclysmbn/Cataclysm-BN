@@ -539,7 +539,7 @@
     "price": "36 USD",
     "price_postapoc": "750 cent",
     "description": "This is a canister grenade filled with fungicidal solution.  Use this item to pull the pin and light the fuse, turning it into an active fungicidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to fungal life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "fungicidalbomb_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "fungicidalbomb_act" }
   },
   {
     "id": "fungicidalbomb_act",
@@ -562,7 +562,7 @@
     "price": "36 USD",
     "price_postapoc": "5 USD",
     "description": "This is a makeshift canister grenade filled with fungicidal solution.  Use this item to pull the pin and light the fuse, turning it into an active fungicidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to fungal life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "fungicidalbomb_makeshift_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "fungicidalbomb_makeshift_act" }
   },
   {
     "id": "fungicidalbomb_makeshift_act",
@@ -813,7 +813,7 @@
     "price": "36 USD",
     "price_postapoc": "250 cent",
     "description": "This is a canister grenade filled with noxious irritant.  Use this item to pull the pin and light the fuse, turning it into an active tear gas grenade.  In five turns it will begin to expel a highly toxic gas for some time.  This gas damages and slows those who enter it, as well as obscuring vision and scent.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "gasbomb_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "gasbomb_act" }
   },
   {
     "id": "gasbomb_act",
@@ -836,7 +836,7 @@
     "price": "36 USD",
     "price_postapoc": "750 cent",
     "description": "This is a canister grenade filled with insecticidal solution.  Use this item to pull the pin and light the fuse, turning it into an active insecticidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to insect life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "insecticidalbomb_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "insecticidalbomb_act" }
   },
   {
     "id": "insecticidalbomb_act",
@@ -860,7 +860,7 @@
     "price": "36 USD",
     "price_postapoc": "5 USD",
     "description": "This is a makeshift canister grenade filled with insecticidal solution.  Use this item to pull the pin and light the fuse, turning it into an active insecticidal grenade.  In five turns it will begin to expel a volatile spray that is highly toxic to insect life forms.",
-    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "target": "insecticidalbomb_makeshift_act" }
+    "countdown_action": { "menu_text": "Pull pin", "type": "transform", "active": true, "target": "insecticidalbomb_makeshift_act" }
   },
   {
     "id": "insecticidalbomb_makeshift_act",
@@ -1208,7 +1208,7 @@
     "price": "18 USD",
     "price_postapoc": "0 cent",
     "weight": "569 g",
-    "countdown_action": { "type": "transform", "target": "smokebomb_act" }
+    "countdown_action": { "type": "transform", "active": true, "target": "smokebomb_act" }
   },
   {
     "id": "smokebomb_act",

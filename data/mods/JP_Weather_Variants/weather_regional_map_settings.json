@@ -843,7 +843,9 @@
         "cs_public_space": 100,
         "cs_city_dump_small": 100,
         "cs_open_sewer": 100,
-        "trailerpark_city": 10
+        "trailerpark_city": 10,
+        "triffid_sprout": 50,
+        "mi-go_foward_camp": 25
       },
       "shops": {
         "bus_station": 200,

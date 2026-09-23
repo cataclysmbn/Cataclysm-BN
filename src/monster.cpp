@@ -1451,7 +1451,8 @@ bool monster::sees( const Creature &ch ) const
     }
     return Creature::sees( ch );
 }
-bool monster::sees( const tripoint_bub_ms &t, bool is_player, int range_mod ) const
+bool monster::sees( const tripoint_bub_ms &t, bool is_player, int range_limit,
+                    double range_mod ) const
 {
     if( type->clairvoyance > 0 ) {
         const int wanted_range = rl_dist( bub_pos(), t );
@@ -1461,7 +1462,7 @@ bool monster::sees( const tripoint_bub_ms &t, bool is_player, int range_mod ) co
             return true;
         }
     }
-    return Creature::sees( t, is_player, range_mod );
+    return Creature::sees( t, is_player, range_limit, range_mod );
 }
 
 bool monster::can_see() const

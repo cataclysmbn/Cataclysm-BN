@@ -66,7 +66,8 @@
       { "item": "null", "prob": 60 },
       { "item": "glasses_safety", "prob": 20 },
       { "item": "goggles_ski", "prob": 20 },
-      { "item": "sunglasses", "prob": 20 }
+      { "item": "sunglasses", "prob": 20 },
+      { "item": "aviators", "prob": 20 }
     ]
   }
 ]

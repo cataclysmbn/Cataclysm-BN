@@ -249,13 +249,12 @@
     "message": "\"Let this be your pyre…\"  You cast %s!",
     "extra_effects": [
       { "id": "arcana_aftermath_brief_fire_ward", "hit_self": true },
-      { "id": "arcana_aftermath_conjure_flame_bash", "hit_self": false, "max_level": 10 },
       { "id": "arcana_aftermath_conjure_flame_noise", "hit_self": false, "max_level": 10 },
       { "id": "arcana_aftermath_magic_sign_exertion_5", "hit_self": true, "max_level": 10 }
     ],
     "effect": "target_attack",
     "valid_targets": [ "ally", "hostile", "ground" ],
-    "flags": [ "NO_HANDS", "NO_LEGS", "VERBAL", "SILENT", "NO_FAIL", "DIVIDE_DAMAGE" ],
+    "flags": [ "NO_HANDS", "NO_LEGS", "VERBAL", "SILENT", "NO_FAIL", "DIVIDE_DAMAGE", "DAMAGE_TERRAIN" ],
     "min_damage": 80,
     "max_damage": 160,
     "damage_increment": 4,
@@ -1023,12 +1022,11 @@
     "sprite": "fd_dazzling",
     "extra_effects": [
       { "id": "arcana_aftermath_sundering_quake_noise", "hit_self": false, "max_level": 10 },
-      { "id": "arcana_aftermath_sundering_quake_pulse", "hit_self": false, "max_level": 10 },
       { "id": "arcana_aftermath_sundering_quake_boulders", "hit_self": false, "max_level": 10 },
       { "id": "arcana_aftermath_magic_sign_exertion_8", "hit_self": true, "max_level": 10 }
     ],
     "valid_targets": [ "ally", "hostile", "ground" ],
-    "flags": [ "SILENT", "NO_HANDS", "NO_LEGS", "VERBAL", "NO_FAIL", "DIVIDE_DAMAGE" ],
+    "flags": [ "SILENT", "NO_HANDS", "NO_LEGS", "VERBAL", "NO_FAIL", "DIVIDE_DAMAGE", "DAMAGE_TERRAIN" ],
     "min_damage": 160,
     "max_damage": 320,
     "damage_increment": 8,

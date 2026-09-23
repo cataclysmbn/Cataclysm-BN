@@ -154,5 +154,25 @@
     "color": "green",
     "see_cost": 5,
     "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "triffid_sprout",
+    "copy-from": "generic_city_building",
+    "name": "triffid sprout",
+    "sym": "T",
+    "color": "light_red",
+    "looks_like": "triffid_grove",
+    "extend": { "flags": [ "KNOWN_DOWN", "RISK_HIGH" ] }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "triffid_sprout_finale",
+    "copy-from": "generic_city_building",
+    "name": "triffid sprout heart",
+    "sym": "T",
+    "color": "red",
+    "looks_like": "triffid_finale",
+    "extend": { "flags": [ "KNOWN_UP", "RISK_HIGH" ] }
   }
 ]

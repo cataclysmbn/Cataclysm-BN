@@ -433,7 +433,7 @@
       { "x": -2, "y": 1, "chance": 25, "items": "camera_pro" },
       { "x": -2, "y": 0, "chance": 25, "items": "novel_sports" },
       { "x": -2, "y": 0, "chance": 5, "items": "touristmap" },
-      { "x": 0, "y": 0, "chance": 10, "items": "fancy_sunglasses" },
+      { "x": 0, "y": 0, "chance": 10, "items": "aviators" },
       { "x": 0, "y": 0, "chance": 5, "items": "binoculars" }
     ]
   },
@@ -1074,6 +1074,7 @@
     },
     "items": [
       { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": 0, "y": 0, "chance": 20, "items": [ "aviators" ] },
       { "x": -2, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -3, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -2, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] },
@@ -1156,6 +1157,7 @@
     },
     "items": [
       { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": 0, "y": 0, "chance": 20, "items": [ "aviators" ] },
       { "x": -5, "y": -2, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -5, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -5, "y": 0, "chance": 50, "items": [ "aerial_bomb" ] },
@@ -1352,7 +1354,9 @@
     ],
     "items": [
       { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": 0, "y": 0, "chance": 20, "items": [ "aviators" ] },
       { "x": -2, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -2, "y": 0, "chance": 20, "items": [ "aviators" ] },
       { "x": -3, "y": 2, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -3, "y": -2, "chance": 50, "items": [ "aerial_bomb" ] },
       { "x": -5, "y": 3, "chance": 50, "items": [ "aerial_bomb" ] },

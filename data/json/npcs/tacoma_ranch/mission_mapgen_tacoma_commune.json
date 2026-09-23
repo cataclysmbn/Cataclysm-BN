@@ -813,22 +813,23 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_lumbermill_4",
     "object": {
-      "mapgensize": [ 12, 12 ],
+      "mapgensize": [ 12, 13 ],
       "rows": [
-        "..........  ",
-        "..........  ",
-        "WWW.......  ",
-        "W.........  ",
-        "W.........  ",
-        "..........  ",
-        "..........  ",
-        "..........  ",
-        "..........  ",
-        "..........  ",
-        "..........  ",
-        "..........  "
+        "            ",
+        "            ",
+        " WWW....WWW ",
+        " W........W ",
+        " W........W ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W........W ",
+        " W........W ",
+        " WWW....WWW ",
+        "            "
       ],
-      "terrain": { "W": "t_wall_log_half", ".": "t_dirt" }
+      "terrain": { ".": "t_region_soil", "W": "t_wall_log_half" }
     }
   },
   {
@@ -836,22 +837,23 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_lumbermill_5",
     "object": {
-      "mapgensize": [ 12, 12 ],
+      "mapgensize": [ 12, 13 ],
       "rows": [
         "            ",
         "            ",
-        "WWW....WWW  ",
-        "W........W  ",
-        "W........W  ",
-        "W.........  ",
-        "W.........  ",
-        "W.........  ",
-        "W.........  ",
-        "W........W  ",
-        "W........W  ",
-        "WWW....WWW  "
+        " WWW....WWW ",
+        " W........W ",
+        " W........W ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W........W ",
+        " W........W ",
+        " WWW....WWW ",
+        "            "
       ],
-      "terrain": { "W": "t_wall_log", ".": "t_dirtfloor" }
+      "terrain": { ".": "t_dirtfloor", "W": "t_wall_log" }
     }
   },
   {
@@ -859,24 +861,25 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_lumbermill_6",
     "object": {
-      "mapgensize": [ 12, 12 ],
+      "mapgensize": [ 12, 13 ],
       "rows": [
         "            ",
         "            ",
-        "WWW....WWW  ",
-        "W........W  ",
-        "W........W  ",
-        "W.........  ",
-        "W.........  ",
-        "W.........  ",
-        "W.........  ",
-        "W.......rW  ",
-        "W.......rW  ",
-        "WWW....WWW  "
+        " WWW....WWW ",
+        " W........W ",
+        " W........W ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W.......rW ",
+        " W.......rW ",
+        " WWW....WWW ",
+        "            "
       ],
-      "terrain": { "r": "t_dirtfloor", "W": "t_wall_log", ".": "t_dirtfloor" },
-      "furniture": { "r": "f_rack" },
-      "place_item": [ { "item": "frame", "x": 3, "y": 6 }, { "item": "frame", "x": 3, "y": 7 }, { "item": "frame", "x": 3, "y": 8 } ]
+      "terrain": { ".": "t_dirtfloor", "r": "t_dirtfloor", "W": "t_wall_log" },
+      "furniture": { "r": "f_rack_wood" },
+      "place_item": [ { "item": "frame", "x": 4, "y": 6 }, { "item": "frame", "x": 4, "y": 7 }, { "item": "frame", "x": 4, "y": 8 } ]
     }
   },
   {
@@ -884,23 +887,24 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_lumbermill_7",
     "object": {
-      "mapgensize": [ 12, 12 ],
+      "mapgensize": [ 12, 13 ],
       "rows": [
         "            ",
         "            ",
-        "WWWc...WWW  ",
-        "W..c....rW  ",
-        "W..c....rW  ",
-        "W..c......  ",
-        "W.........  ",
-        "W.........  ",
-        "W.........  ",
-        "W.......rW  ",
-        "W.......rW  ",
-        "WWW....WWW  "
+        " WWWc...WWW ",
+        " W..c....rW ",
+        " W..c....rW ",
+        " W..c...... ",
+        " W......... ",
+        " W......... ",
+        " W......... ",
+        " W.......rW ",
+        " W.......rW ",
+        " WWW....WWW ",
+        "            "
       ],
-      "terrain": { "r": "t_dirtfloor", "W": "t_wall_log", ".": "t_dirtfloor", "c": "t_conveyor" },
-      "furniture": { "r": "f_rack" }
+      "terrain": { ".": "t_dirtfloor", "r": "t_dirtfloor", "W": "t_wall_log", "c": "t_conveyor" },
+      "furniture": { "r": "f_rack_wood" }
     }
   },
   {
@@ -908,40 +912,41 @@
     "method": "json",
     "nested_mapgen_id": "tacoma_commune_lumbermill_8_done",
     "object": {
-      "mapgensize": [ 12, 12 ],
+      "mapgensize": [ 12, 13 ],
       "rows": [
         "            ",
         "            ",
-        "WWWc...WWW  ",
-        "W..c....rW  ",
-        "W..c....rW  ",
-        "W..c......  ",
-        "W..m......  ",
-        "W..m......  ",
-        "W..M......  ",
-        "W.......rW  ",
-        "W.......rW  ",
-        "WWW....WWW  "
+        " WWWc...WWW ",
+        " W..c....rW ",
+        " W..c....rW ",
+        " W..c...... ",
+        " W..m...... ",
+        " W..m...... ",
+        " W..M...... ",
+        " W.......rW ",
+        " W.......rW ",
+        " WWW....WWW ",
+        "            "
       ],
+      "remove_all": { "m": {  }, "M": {  } },
       "terrain": {
+        ".": "t_dirtfloor",
         "r": "t_dirtfloor",
         "W": "t_wall_log",
-        ".": "t_dirtfloor",
         "c": "t_conveyor",
         "m": "t_machinery_old",
         "M": "t_machinery_heavy"
       },
-      "furniture": { "r": "f_rack" },
+      "furniture": { "r": "f_rack_wood" },
       "place_item": [
-        { "item": "log", "x": 3, "y": 0 },
-        { "item": "log", "x": 3, "y": 1 },
-        { "item": "log", "x": 3, "y": 1 },
-        { "item": "log", "x": 0, "y": 1, "amount": [ 1, 5 ] },
+        { "item": "log", "x": 4, "y": 0 },
+        { "item": "log", "x": 4, "y": 1, "amount": 2 },
+        { "item": "log", "x": 4, "y": 2 },
         { "item": "log", "x": 1, "y": 1, "amount": [ 1, 5 ] },
-        { "item": "2x4", "x": 3, "y": 9, "amount": [ 1, 10 ] },
-        { "item": "log", "x": 3, "y": 2 }
+        { "item": "log", "x": 2, "y": 1, "amount": [ 1, 5 ] },
+        { "item": "2x4", "x": 4, "y": 8, "amount": [ 1, 10 ] }
       ],
-      "place_npcs": [ { "class": "ranch_woodcutter_1", "x": 4, "y": 7 } ]
+      "place_npcs": [ { "class": "ranch_woodcutter_1", "x": 5, "y": 7 } ]
     }
   },
   {

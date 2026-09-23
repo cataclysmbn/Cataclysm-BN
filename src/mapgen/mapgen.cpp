@@ -3662,15 +3662,19 @@ auto jmapgen_setmap::apply(
     for (int i = 0; i < trepeat; i++) {
         point_omt_ms pt = func(point_omt_ms(x_get(), y_get()));
         point_omt_ms pt2 = func(point_omt_ms(x2_get(), y2_get()));
-        if (pt.x() > pt2.x()) {
-            int inter = pt.x();
-            pt.x() = pt2.x();
-            pt2.x() = inter;
-        }
-        if (pt.y() > pt2.y()) {
-            int inter = pt.y();
-            pt.y() = pt2.y();
-            pt2.y() = inter;
+        // If it is not a line or square, pt2 will always be 0, 0
+        // This is in case rotation messes with the order
+        if (op >= JMAPGEN_SETMAP_OPTYPE_LINE) {
+            if (pt.x() > pt2.x()) {
+                int inter = pt.x();
+                pt.x() = pt2.x();
+                pt2.x() = inter;
+            }
+            if (pt.y() > pt2.y()) {
+                int inter = pt.y();
+                pt.y() = pt2.y();
+                pt2.y() = inter;
+            }
         }
         switch (op) {
             case JMAPGEN_SETMAP_TER: {

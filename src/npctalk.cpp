@@ -911,7 +911,8 @@ void npc::handle_sound( const short heard_vol, sound_event sound )
     // Is the sound source a monster, and is said monster an ally of the hearing NPC?
 
     // Grab the attitude of our monster or set it to null if it the source is not a monster.
-    const monster_attitude mon_att = ( source_monster ) ? ( critter->as_monster()->attitude(
+    const monster *mon = critter->as_monster();
+    const monster_attitude mon_att = ( source_monster && mon ) ? ( mon->attitude(
                                          this->as_character() ) ) : MATT_NULL;
 
     // NPCs should generally ignore low priority sounds from non-hostile monsters such as dogs

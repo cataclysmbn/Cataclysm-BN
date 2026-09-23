@@ -34,6 +34,7 @@
       { "item": "diamond", "prob": 1 },
       { "item": "manual_dodge", "prob": 1 },
       { "item": "fancy_sunglasses", "prob": 2 },
+      { "item": "aviators", "prob": 2 },
       { "item": "pocketwatch", "prob": 5 },
       { "item": "well_pump", "prob": 1 },
       { "item": "nodachi", "prob": 1 },

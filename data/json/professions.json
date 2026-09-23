@@ -955,6 +955,14 @@
   },
   {
     "type": "profession_item_substitutions",
+    "item": "aviators",
+    "sub": [
+      { "present": [ "HYPEROPIC" ], "new": [ "fitover_sunglasses" ] },
+      { "present": [ "MYOPIC" ], "new": [ "fitover_sunglasses" ] }
+    ]
+  },
+  {
+    "type": "profession_item_substitutions",
     "item": "hardtack",
     "sub": [
       { "present": [ "ANTIWHEAT" ], "absent": [ "MEATARIAN" ], "new": [ "cornbread" ] },
@@ -2356,7 +2364,7 @@
           "gloves_liner",
           "gloves_tactical",
           "tac_helmet",
-          "fancy_sunglasses",
+          "aviators",
           "goggles_nv_enhanced",
           "socks",
           "boots_combat",
@@ -3202,7 +3210,7 @@
     "skills": [ { "level": 7, "name": "driving" }, { "level": 2, "name": "speech" }, { "level": 3, "name": "mechanics" } ],
     "items": {
       "both": {
-        "items": [ "pants_cargo", "socks", "polo_shirt", "smart_phone", "boots", "sf_watch", "fancy_sunglasses" ],
+        "items": [ "pants_cargo", "socks", "polo_shirt", "smart_phone", "boots", "sf_watch", "aviators" ],
         "entries": [ { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] } ]
       },
       "male": [ "boxer_shorts" ],
@@ -3303,7 +3311,7 @@
     ],
     "items": {
       "both": {
-        "items": [ "pants_cargo", "socks", "jacket_leather", "smart_phone", "boots", "wristwatch", "fancy_sunglasses" ],
+        "items": [ "pants_cargo", "socks", "jacket_leather", "smart_phone", "boots", "wristwatch", "aviators" ],
         "entries": [ { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] } ]
       },
       "male": [ "boxer_shorts" ],
@@ -4418,6 +4426,7 @@
       "bio_infrared",
       "bio_faraday",
       "bio_batteries",
+      "bio_gas_remover",
       "bio_power_storage_mkII",
       "bio_power_storage_mkII"
     ],
@@ -7601,7 +7610,7 @@
           "helmet_army",
           "webbing_belt",
           "wristwatch",
-          "fancy_sunglasses"
+          "aviators"
         ],
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
@@ -7656,7 +7665,7 @@
           "helmet_army",
           "webbing_belt",
           "wristwatch",
-          "fancy_sunglasses"
+          "aviators"
         ],
         "entries": [
           { "item": "mil_scouter", "charges": 200 },
@@ -8625,7 +8634,7 @@
           { "item": "beret" },
           { "item": "silver_watch" },
           { "item": "pants_army" },
-          { "item": "fancy_sunglasses" },
+          { "item": "aviators" },
           { "item": "binoculars" },
           { "item": "cigar", "count": 2 },
           { "item": "id_military" },
