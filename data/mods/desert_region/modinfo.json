@@ -7,7 +7,7 @@
     "description": "A testbed/WIP mod to showcase regional_map_settings JSON changes.",
     "category": "content",
     "dependencies": [ "bn" ],
-    "version": "0.1",
+    "version": "0.1.0",
     "obsolete": false
   }
 ]
