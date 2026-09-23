@@ -5018,5 +5018,14 @@
     "locations": [ "land" ],
     "flags": [ "MI-GO" ],
     "spawns": { "group": "GROUP_MI-GO_CAMP_OM", "population": [ 10, 16 ], "radius": [ 1, 5 ] }
+  },
+  {
+    "type": "city_building",
+    "id": "fungal_buds",
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "fungal_buds" } ],
+    "locations": [ "land" ],
+    "flags": [ "FUNGAL" ],
+    "rotate": false,
+    "spawns": { "group": "GROUP_FUNGI_BUDS", "population": [ 200, 320 ], "radius": [ 0, 20 ] }
   }
 ]
