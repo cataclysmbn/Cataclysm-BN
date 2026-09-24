@@ -237,6 +237,11 @@ character trips and anger trigger. Resets randomly when the monster is at its ba
 
 (string, optional)
 
+> [!WARNING]
+> `lua_attitude` is currently disabled. The function is never called, and the monster uses the
+> default attitude logic. A debug message is shown whenever a monster with `lua_attitude` has its
+> attitude checked.
+
 If set, uses a Lua function from `game.monster_attitude_functions` to determine the monster's
 attitude instead of the default C++ logic. The Lua function is called with `(monster, target)`,
 where `target` can be `nil`, and should return a `MonsterAttitude` value. Returning `nil` falls back

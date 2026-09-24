@@ -1853,8 +1853,10 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
 
 auto monster::attitude( const Character *u ) const -> monster_attitude
 {
-    if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
-        return *lua_attitude;
+    // lua_attitude is disabled: attitude() runs on planning worker threads, which must never enter Lua (#10367).
+    if( type->lua_attitude ) {
+        debugmsg( "Lua monster attitude function '%s' is currently disabled; using the default attitude instead.",
+                  *type->lua_attitude );
     }
 
     if( friendly != 0 ) {
