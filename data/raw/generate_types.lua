@@ -586,7 +586,7 @@ doc_gen_func.impl = function()
 ---@field mutation_functions table<string, table<string, function>>
 ---@field horde_behaviours table<string, function>
 ---@field monster_ai_functions table<string, function>
----@field monster_attitude_functions table<string, function>
+---@field monster_attitude_functions table<string, function> Currently disabled (#10367): registered functions are never called.
 ---@field mapgen_functions table<string, MapgenFunction>
 ---@field examine_functions table<string, fun(params: { user: Character, pos: TripointBubMs })>
 ---@field activity_functions table<string, LuaActivityFinishFunction>
