@@ -10,6 +10,7 @@
   "craft_inherit": true, // Items made with it will keep this flag
   "requires_flag": true, // Used by vehicle part flags, requires another part with this ID on the tile
   "inherit": true, // Item mods will pass this flag down to the item
+  "use_method": "USE_METHOD_ID", // This flag gives the connected item this use method if it doesn't already have it
   "tag": "string" // Translatable string appended to the item's UI display name, if the item has this flag
 }
 ```
@@ -23,6 +24,7 @@
 - Many of the flags intended for one category or item type, can be used in other categories or item
   types. Experiment to see where else flags can be used.
 - Offensive and defensive flags can be used on any item type that can be wielded.
+- `use_method` needs to be on the item, so if it's on a mod flag, that flag also needs to set inherit to true.
 
 ## Inheritance
 

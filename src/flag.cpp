@@ -422,6 +422,7 @@ void json_flag::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "taste_mod", taste_mod_ );
     optional( jo, was_loaded, "restriction", restriction_ );
     optional( jo, was_loaded, "tag", tag_ );
+    optional( jo, was_loaded, "use_method", use_method_ );
 
     // FIXME: most flags have a "context" field that isn't used for anything
     // Test for it here to avoid errors about unvisited members

@@ -1833,7 +1833,9 @@
   {
     "id": "ADD_UPS_TOGGLE",
     "type": "json_flag",
-    "context": [  ]
+    "context": [  ],
+    "inherit": true,
+    "use_method": "TOGGLE_UPS_CHARGING"
   },
   {
     "id": "IS_UPS",
