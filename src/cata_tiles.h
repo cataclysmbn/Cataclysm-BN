@@ -372,6 +372,7 @@ class tileset
         int tile_width;
         int tile_height;
         int zlevel_height = 0;
+        bool is_iso = false;
         float prevent_occlusion_min_dist = 0.0f;
         float prevent_occlusion_max_dist = 0.0f;
 
@@ -439,6 +440,9 @@ class tileset
         }
         auto get_zlevel_height() const -> int {
             return zlevel_height;
+        }
+        auto get_tile_iso() const -> bool {
+            return is_iso;
         }
         auto get_prevent_occlusion_min_dist() const -> float {
             return prevent_occlusion_min_dist;
@@ -1089,6 +1093,7 @@ class cata_tiles
             return tile_ratioy;
         }
         void do_tile_loading_report( const std::function<void( std::string )> &out );
+        point player_to_tile( point_bub_ms ) const;
         point player_to_screen( point_bub_ms ) const;
         static std::vector<options_manager::id_and_option> build_renderer_list();
         static std::vector<options_manager::id_and_option> build_display_list();
@@ -1130,6 +1135,8 @@ class cata_tiles
         // measured in map coordinates, *not* in pixels.
         int screentile_width = 0;
         int screentile_height = 0;
+        int viewport_width = 0;
+        int viewport_height = 0;
         float tile_ratiox = 0.0f;
         float tile_ratioy = 0.0f;
 
