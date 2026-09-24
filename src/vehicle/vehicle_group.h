@@ -40,6 +40,7 @@ public:
     static void load(const JsonObject& jo);
     static void reset();
     static void check();
+    static void finalize();
 
 private:
     weighted_int_list<vproto_id> vehicles;

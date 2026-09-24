@@ -172,6 +172,12 @@ template <typename W, typename T> struct weighted_list {
             invalidate_precalc();
             return objects.erase( first, last );
         }
+        typename std::vector<weighted_object<W, T> >::iterator erase(
+            typename std::vector<weighted_object<W, T> >::iterator first ) {
+            invalidate_precalc();
+            total_weight -= first->weight;
+            return objects.erase( first );
+        }
         size_t size() const noexcept {
             return objects.size();
         }
