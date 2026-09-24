@@ -59,8 +59,6 @@ class recipe_dictionary
          */
         static void delete_if( const std::function<bool( const recipe & )> &pred );
 
-
-
         static recipe &load( const JsonObject &jo, const std::string &src,
                              std::map<recipe_id, recipe> &out );
 
