@@ -327,7 +327,7 @@ static bool clear_shot_reach( const tripoint_bub_ms &from, const tripoint_bub_ms
         Creature *inter = g->critter_at( p );
         if( check_ally && inter != nullptr ) {
             return false;
-        } else if( get_map().impassable( p ) ) {
+        } else if( get_map().impassable( p ) && !get_map().has_flag( flag_MOUNTABLE, p ) ) {
             return false;
         } else if( get_map().obstructed_by_vehicle_rotation( last_point, p ) ) {
             return false;
