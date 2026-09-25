@@ -1433,7 +1433,8 @@
     "description": "Fresh, clean water.  Truly the best thing to quench your thirst.",
     "color": "light_cyan",
     "delete": { "flags": [ "UNSAFE_CONSUME" ] },
-    "use_action": [  ]
+    "use_action": [  ],
+    "reacts_into": { "result": "water", "cause": "ground_contamination" }
   },
   {
     "id": "water_mineral",
@@ -1445,7 +1446,8 @@
     "proportional": { "quench": 1.2 },
     "relative": { "fun": 1 },
     "delete": { "flags": [ "UNSAFE_CONSUME" ] },
-    "use_action": [  ]
+    "use_action": [  ],
+    "reacts_into": { "result": "water", "cause": "ground_contamination" }
   },
   {
     "type": "COMESTIBLE",

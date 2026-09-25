@@ -278,6 +278,66 @@
   },
   {
     "type": "ammunition_type",
+    "id": "dirty_diesel",
+    "name": "dirty diesel",
+    "default": "dirty_diesel"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_gasoline",
+    "name": "dirty gasoline",
+    "default": "dirty_gasoline"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_biodiesel",
+    "name": "dirty biodiesel",
+    "default": "dirty_biodiesel"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_jp8",
+    "name": "dirty jp8",
+    "default": "dirty_jp8"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_avgas",
+    "name": "dirty avgas",
+    "default": "dirty_avgas"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_lamp_oil",
+    "name": "dirty lamp oil",
+    "default": "dirty_lamp_oil"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_chem_ethanol",
+    "name": "dirty ethanol",
+    "default": "dirty_chem_ethanol"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_denat_alcohol",
+    "name": "dirty denatured alcohol",
+    "default": "dirty_denat_alcohol"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_chem_methanol",
+    "name": "dirty methanol",
+    "default": "dirty_chem_methanol"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "dirty_motor_oil",
+    "name": "dirty motor oil",
+    "default": "dirty_motor_oil"
+  },
+  {
+    "type": "ammunition_type",
     "id": "thread",
     "name": "thread",
     "default": "thread"
