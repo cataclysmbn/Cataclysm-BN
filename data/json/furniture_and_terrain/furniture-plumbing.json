@@ -443,6 +443,21 @@
       "allow_output": false,
       "allowed_liquids": [ "water" ],
       "transformer": { "tick_interval": "10 m", "collector_area_m2": 1.0 }
+    },
+    "deconstruct": {
+      "items": [
+        { "item": "pipe", "count": 4 },
+        { "item": "sheet_metal", "count": 2 },
+        { "item": "scrap", "count": 8 },
+        { "item": "water_faucet", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 15,
+      "str_max": 80,
+      "sound": "whack!",
+      "sound_fail": "thunk.",
+      "items": [ { "item": "scrap", "count": [ 8, 12 ] }, { "item": "pipe", "count": [ 0, 2 ] } ]
     }
   }
 ]
