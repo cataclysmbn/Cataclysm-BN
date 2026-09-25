@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <bitset>
 #include <list>
+#include <optional>
 #include <set>
 #include <vector>
 #include <array>
@@ -12,6 +13,7 @@
 
 #include "coordinates.h"
 #include "cube_direction.h"
+#include "cuboid_rectangle.h"
 #include "flat_set.h"
 #include "memory_fast.h"
 #include "omdata.h"
@@ -89,6 +91,11 @@ struct overmap_special_placement_constraints {
     numeric_interval<int> city_size{ 0, INT_MAX };
     numeric_interval<int> city_distance{ 0, INT_MAX };
     numeric_interval<int> occurrences;
+    std::optional<inclusive_cuboid<tripoint_om_omt>> overmap_origin;
+
+    auto allows_origin( const tripoint_om_omt &p ) const -> bool {
+        return !overmap_origin || overmap_origin->contains( p );
+    }
 };
 
 enum class overmap_special_subtype {
@@ -271,4 +278,3 @@ class overmap_special_batch
         std::vector<overmap_special_placement> placements;
         point_abs_om origin_overmap;
 };
-
