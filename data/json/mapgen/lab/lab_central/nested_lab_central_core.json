@@ -711,8 +711,8 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "central_lab_locked_n_4x4",
-    "//": "These provide a chance for connections between parts of the core lab to be either locked or blocked by debris, with variations based on intended facing.  Idea is random placement may force the player to either take a different route to progress or have to use available tools to break through.",
+    "nested_mapgen_id": "central_lab_locked_4x4",
+    "//": "These provide a chance for connections between parts of the core lab to be locked. Idea is random placement may force the player to either take a different route to progress or have to use available tools to break through.",
     "object": {
       "mapgensize": [ 4, 4 ],
       "rows": [
@@ -720,54 +720,6 @@
         "|==7",
         "    ",
         "    "
-      ],
-      "palettes": [ "central_lab_palette" ],
-      "terrain": { "|": "t_strconc_wall" }
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
-    "nested_mapgen_id": "central_lab_locked_s_4x4",
-    "object": {
-      "mapgensize": [ 4, 4 ],
-      "rows": [
-        "    ",
-        "    ",
-        "|==7",
-        "    "
-      ],
-      "palettes": [ "central_lab_palette" ],
-      "terrain": { "|": "t_strconc_wall" }
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
-    "nested_mapgen_id": "central_lab_locked_e_4x4",
-    "object": {
-      "mapgensize": [ 4, 4 ],
-      "rows": [
-        "  7 ",
-        "  = ",
-        "  = ",
-        "  | "
-      ],
-      "palettes": [ "central_lab_palette" ],
-      "terrain": { "|": "t_strconc_wall" }
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
-    "nested_mapgen_id": "central_lab_locked_w_4x4",
-    "object": {
-      "mapgensize": [ 4, 4 ],
-      "rows": [
-        " |  ",
-        " =  ",
-        " =  ",
-        " 7  "
       ],
       "palettes": [ "central_lab_palette" ],
       "terrain": { "|": "t_strconc_wall" }
@@ -809,7 +761,7 @@
       ],
       "palettes": [ "central_lab_palette" ],
       "terrain": { "|": "t_strconc_wall" },
-      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 1, "y": 1 } ]
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4" ], "x": 1, "y": 1 } ]
     }
   },
   {
@@ -828,7 +780,7 @@
       ],
       "palettes": [ "central_lab_palette" ],
       "terrain": { "|": "t_strconc_wall" },
-      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 1, "y": 1 } ]
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4" ], "x": 1, "y": 1, "rotation": 2 } ]
     }
   },
   {
@@ -847,7 +799,7 @@
       ],
       "palettes": [ "central_lab_palette" ],
       "terrain": { "|": "t_strconc_wall" },
-      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 1, "y": 1 } ]
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4" ], "x": 1, "y": 1, "rotation": 1 } ]
     }
   },
   {
@@ -866,14 +818,14 @@
       ],
       "palettes": [ "central_lab_palette" ],
       "terrain": { "|": "t_strconc_wall" },
-      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ew_4x4" ], "x": 1, "y": 1 } ]
+      "place_nested": [ { "chunks": [ "central_lab_mini_room_4x4" ], "x": 1, "y": 1, "rotation": 3 } ]
     }
   },
   {
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "central_lab_mini_room_4x4",
-    "//": "4x4 spaces used by the 6x6 rooms, usually minor stuff like storage, restrooms, etc.  Comes in variations based on whether the layout needs to keep the north/south spaces clear for a doorway, the east/west spaces, or if it doesn't really matter where the door might be.",
+    "//": "4x4 spaces used by the 6x6 rooms, usually minor stuff like storage, restrooms, etc.",
     "object": {
       "mapgensize": [ 4, 4 ],
       "rows": [
@@ -929,7 +881,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "central_lab_mini_room_ns_4x4",
+    "nested_mapgen_id": "central_lab_mini_room_4x4",
     "object": {
       "mapgensize": [ 4, 4 ],
       "rows": [
@@ -948,7 +900,8 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "central_lab_mini_room_ns_4x4",
+    "nested_mapgen_id": "central_lab_mini_room_4x4",
+    "//": "Todo: add more variants to 4x4 rooms: small medical exam room with possible autodoc, small autoclave room with recycling utilities for implied corpse disposal",
     "object": {
       "mapgensize": [ 4, 4 ],
       "rows": [
@@ -956,43 +909,6 @@
         "   s",
         "T  t",
         "u  u"
-      ],
-      "palettes": [ "central_lab_palette" ],
-      "items": { "s": { "item": "cleaning", "chance": 50, "repeat": 2 } },
-      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 2, 3 ], "y": [ 2, 3 ], "chance": 50 } ]
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
-    "nested_mapgen_id": "central_lab_mini_room_ew_4x4",
-    "object": {
-      "mapgensize": [ 4, 4 ],
-      "rows": [
-        "uYSu",
-        "    ",
-        " b  ",
-        "LLLL"
-      ],
-      "palettes": [ "central_lab_palette" ],
-      "furniture": { "S": "f_shower" },
-      "items": { "L": [ { "item": "cleaning", "chance": 50, "repeat": 4 }, { "item": "rad_gear", "chance": 50, "repeat": 2 } ] },
-      "place_loot": [ { "item": "eyedrops", "x": 1, "y": 0, "chance": 75, "repeat": 2 } ],
-      "place_monster": [ { "group": "GROUP_CENTRAL_LAB", "x": [ 2, 3 ], "y": [ 2, 3 ], "chance": 50 } ]
-    }
-  },
-  {
-    "type": "mapgen",
-    "method": "json",
-    "nested_mapgen_id": "central_lab_mini_room_ew_4x4",
-    "//": "Todo: add more variants to 4x4 rooms: small medical exam room with possible autodoc, small autoclave room with recycling utilities for implied corpse disposal",
-    "object": {
-      "mapgensize": [ 4, 4 ],
-      "rows": [
-        "uT u",
-        "    ",
-        "    ",
-        "utsu"
       ],
       "palettes": [ "central_lab_palette" ],
       "items": { "s": { "item": "cleaning", "chance": 50, "repeat": 2 } },
@@ -1431,10 +1347,10 @@
       "palettes": [ "central_lab_palette" ],
       "terrain": { "|": "t_strconc_wall" },
       "place_nested": [
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 3, "y": 3 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 13, "y": 3 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 3, "y": 13 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 13, "y": 13 }
+        { "chunks": [ "central_lab_mini_room_4x4" ], "x": 3, "y": 3 },
+        { "chunks": [ "central_lab_mini_room_4x4" ], "x": 13, "y": 3 },
+        { "chunks": [ "central_lab_mini_room_4x4" ], "x": 3, "y": 13, "rotation": 2 },
+        { "chunks": [ "central_lab_mini_room_4x4" ], "x": 13, "y": 13, "rotation": 2 }
       ]
     }
   },

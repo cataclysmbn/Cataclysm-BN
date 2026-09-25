@@ -159,10 +159,10 @@
           "x": 2,
           "y": 2
         },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_n_4x4", 1 ] ], "x": 10, "y": 0 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 0 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 20, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -212,9 +212,9 @@
           "x": 2,
           "y": 2
         },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 20, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -264,8 +264,8 @@
           "x": 2,
           "y": 2
         },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -304,9 +304,9 @@
       "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 20, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -346,9 +346,9 @@
       "terrain": { "_": "t_concrete_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 20, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -387,8 +387,8 @@
       "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -427,9 +427,9 @@
       "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_e_4x4", 1 ] ], "x": 20, "y": 10 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 20, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -468,8 +468,8 @@
       "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_s_4x4", 1 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_w_4x4", 1 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -714,8 +714,8 @@
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 2, "y": 15 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 15 },
-        { "chunks": [ [ "null", 25 ], [ "central_lab_locked_s_4x4", 75 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 25 ], [ "central_lab_locked_w_4x4", 75 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -830,8 +830,8 @@
       "palettes": [ "central_lab_palette" ],
       "place_nested": [
         { "chunks": [ "central_lab_stairway_20x20" ], "x": 2, "y": 2 },
-        { "chunks": [ [ "null", 25 ], [ "central_lab_locked_s_4x4", 75 ] ], "x": 10, "y": 20 },
-        { "chunks": [ [ "null", 25 ], [ "central_lab_locked_w_4x4", 75 ] ], "x": 0, "y": 10 }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 10, "y": 20, "rotation": 2 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_locked_4x4", 1 ] ], "x": 0, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -868,10 +868,11 @@
         "========================"
       ],
       "palettes": [ "central_lab_palette" ],
+      "terrain": { "=": "t_strconc_wall" },
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_14x14" ], "x": 5, "y": 2 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 0, "y": 2 },
-        { "chunks": [ "central_lab_mini_room_4x4", "central_lab_mini_room_ns_4x4" ], "x": 20, "y": 2 },
+        { "chunks": [ "central_lab_mini_room_4x4" ], "x": 0, "y": 2, "rotation": 2 },
+        { "chunks": [ "central_lab_mini_room_4x4" ], "x": 20, "y": 2, "rotation": 2 },
         {
           "//": "Reuse Melchior chunks here for added flavor",
           "chunks": [ "central_lab_melchior_mini_room_20x7" ],
@@ -918,16 +919,8 @@
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 1,
-          "y": 10
-        },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 19,
-          "y": 10
-        }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_mini_room_4x4", 1 ] ], "x": 1, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_mini_room_4x4", 1 ] ], "x": 19, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -968,16 +961,8 @@
       "place_nested": [
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 16, "y": 2 },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 1,
-          "y": 10
-        },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 19,
-          "y": 10
-        }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_mini_room_4x4", 1 ] ], "x": 1, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_mini_room_4x4", 1 ] ], "x": 19, "y": 10, "rotation": 3 }
       ]
     }
   },
@@ -1057,16 +1042,8 @@
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 1, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 2 },
         { "chunks": [ "central_lab_mini_room_7x7" ], "x": 15, "y": 16 },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ew_4x4", 1 ] ],
-          "x": 1,
-          "y": 10
-        },
-        {
-          "chunks": [ [ "null", 4 ], [ "central_lab_mini_room_4x4", 1 ], [ "central_lab_mini_room_ns_4x4", 1 ] ],
-          "x": 10,
-          "y": 19
-        }
+        { "chunks": [ [ "null", 2 ], [ "central_lab_mini_room_4x4", 1 ] ], "x": 1, "y": 10, "rotation": 1 },
+        { "chunks": [ [ "null", 2 ], [ "central_lab_mini_room_4x4", 1 ] ], "x": 10, "y": 19 }
       ]
     }
   },
