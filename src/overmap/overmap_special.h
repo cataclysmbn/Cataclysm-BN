@@ -49,7 +49,7 @@ struct overmap_special_locations {
     overmap_special_locations(
         const tripoint_rel_omt& p, const cata::flat_set<overmap_location_id>& l)
         : p(p),
-          locations(l){};
+          locations(l) {};
     tripoint_rel_omt p;
     cata::flat_set<overmap_location_id> locations;
 
@@ -67,7 +67,7 @@ struct overmap_special_terrain: overmap_special_locations {
         const tripoint_rel_omt& p, const oter_str_id& t,
         const cata::flat_set<overmap_location_id>& l)
         : overmap_special_locations{p, l},
-          terrain(t){};
+          terrain(t) {};
     oter_str_id terrain;
 
     void deserialize(JsonIn& jsin);

@@ -2,8 +2,8 @@
 
 #include "coordinates.h"
 #include "enums.h"
-#include "point.h"
 #include "om_direction.h"
+#include "point.h"
 
 #include <functional>
 #include <optional>

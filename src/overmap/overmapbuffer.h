@@ -5,9 +5,9 @@
 #include "enums.h"
 #include "json.h"
 #include "memory_fast.h"
+#include "overmap_types.h"
 #include "string_id.h"
 #include "type_id.h"
-#include "overmap_types.h"
 
 #include <array>
 #include <functional>

@@ -190,8 +190,8 @@ auto isolated_city_special_candidate_allowed(
 }
 
 auto isolated_city_temporary_terrain(
-    const oter_id& oter, const oter_id& land_oter,
-    const std::optional<oter_id>& shore_oter) -> bool {
+    const oter_id& oter, const oter_id& land_oter, const std::optional<oter_id>& shore_oter)
+    -> bool {
     return oter == land_oter || (shore_oter.has_value() && oter == *shore_oter);
 }
 
@@ -246,8 +246,8 @@ auto isolated_city_coastline_adjustment(
 }
 
 auto isolated_city_near_development(
-    const tripoint_om_omt& pos, const std::vector<tripoint_om_omt>& developed,
-    const int distance) -> bool {
+    const tripoint_om_omt& pos, const std::vector<tripoint_om_omt>& developed, const int distance)
+    -> bool {
     namespace ranges = std::ranges;
 
     return ranges::any_of(developed, [&pos, distance](const tripoint_om_omt& dev) {
@@ -256,8 +256,8 @@ auto isolated_city_near_development(
 }
 
 auto isolated_city_nearest_development_distance(
-    const tripoint_om_omt& pos,
-    const std::vector<tripoint_om_omt>& developed) -> std::optional<float> {
+    const tripoint_om_omt& pos, const std::vector<tripoint_om_omt>& developed)
+    -> std::optional<float> {
     auto nearest = std::optional<float>();
     for (const auto& dev : developed) {
         const auto distance = trig_dist(pos.xy(), dev.xy());

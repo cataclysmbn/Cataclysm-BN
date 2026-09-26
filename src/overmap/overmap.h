@@ -1,21 +1,20 @@
 #pragma once
 
 #include "coordinates.h"
+#include "cube_direction.h"
 #include "enum_conversions.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "mapgen/mapgendata.h"
 #include "memory_fast.h"
 #include "mongroup.h"
+#include "omdata.h"
+#include "overmap_types.h"
 #include "pimpl.h"
 #include "point.h"
 #include "string_id.h"
 #include "type_id.h"
-#include "cube_direction.h"
-#include "omdata.h"
-#include "overmap_types.h"
 
-#include <weighted_list.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -32,6 +31,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <weighted_list.h>
 
 class JsonIn;
 class JsonObject;
