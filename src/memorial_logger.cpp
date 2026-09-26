@@ -1,12 +1,5 @@
 #include "memorial_logger.h"
 
-#include <istream>
-#include <list>
-#include <map>
-#include <memory>
-#include <tuple>
-#include <utility>
-
 #include "addiction.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -32,9 +25,9 @@
 #include "monstergenerator.h"
 #include "mtype.h"
 #include "mutation.h"
-#include "omdata.h"
 #include "output.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
 #include "pldata.h"
 #include "profession.h"
 #include "skill.h"
@@ -43,6 +36,13 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+
+#include <istream>
+#include <list>
+#include <map>
+#include <memory>
+#include <tuple>
+#include <utility>
 
 static const efftype_id effect_datura( "datura" );
 static const efftype_id effect_drunk( "drunk" );

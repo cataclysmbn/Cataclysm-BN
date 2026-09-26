@@ -37,7 +37,7 @@
 #include "mtype.h"
 #include "npc.h"
 #include "output.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "player.h"
 #include "point.h"
 #include "profile.h"

@@ -1,5 +1,20 @@
 #include "world.h"
 
+#include "avatar.h"
+#include "cata_utility.h"
+#include "catacharset.h"
+#include "compress.h"
+#include "debug.h"
+#include "filesystem.h"
+#include "game.h"
+#include "mod_manager.h"
+#include "output.h"
+#include "overmap/overmapbuffer_registry.h"
+#include "path_info.h"
+#include "sqlite3.h"
+#include "worldfactory.h"
+#include "zlib.h"
+
 #include <algorithm>
 #include <chrono>
 #include <cstring>
@@ -9,21 +24,6 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
-
-#include "catacharset.h"
-#include "game.h"
-#include "overmapbuffer_registry.h"
-#include "avatar.h"
-#include "debug.h"
-#include "cata_utility.h"
-#include "filesystem.h"
-#include "output.h"
-#include "worldfactory.h"
-#include "mod_manager.h"
-#include "path_info.h"
-#include "compress.h"
-#include "sqlite3.h"
-#include "zlib.h"
 
 #define dbg(x) DebugLogFL((x),DC::Main)
 

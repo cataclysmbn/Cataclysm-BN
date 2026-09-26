@@ -1,5 +1,6 @@
 #include "mapgen_constructor.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "artifact.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -23,9 +24,8 @@
 #include "mapgendata.h"
 #include "mongroup.h"
 #include "npc.h"
-#include "omdata.h"
 #include "options.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
 #include "point.h"
 #include "point_float.h"
 #include "rng.h"

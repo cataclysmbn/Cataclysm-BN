@@ -1,3 +1,4 @@
+#include "../overmap/overmapbuffer.h"
 #include "animation.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -27,7 +28,6 @@
 #include "messages.h"
 #include "monster.h"
 #include "mutation.h"
-#include "overmapbuffer.h"
 #include "player.h"
 #include "projectile.h"
 #include "ret_val.h"

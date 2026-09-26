@@ -1,13 +1,5 @@
 #include "diary.h"
 
-#include <string>
-#include <list>
-#include <iostream>
-#include <fstream>
-#include <algorithm>
-#include <string_view>
-#include <utility>
-
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
@@ -22,13 +14,21 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "output.h"
+#include "overmap/overmap_ui.h"
 #include "path_info.h"
 #include "skill.h"
 #include "string_formatter.h"
 #include "type_id.h"
-#include "overmap_ui.h"
 #include "units.h"
 #include "world.h"
+
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <list>
+#include <string>
+#include <string_view>
+#include <utility>
 
 diary_page::diary_page() = default;
 

@@ -28,7 +28,7 @@
 #include "map_iterator.h"
 #include "morale.h"
 #include "mutation.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "player.h"
 #include "player_activity.h"
 #include "profile.h"

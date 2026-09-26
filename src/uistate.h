@@ -1,17 +1,17 @@
 #pragma once
 
-#include <list>
-#include <map>
-#include <set>
-#include <optional>
-#include <string>
-#include <vector>
-
 #include "calendar.h"
 #include "enums.h"
 #include "flat_set.h"
-#include "om_direction.h"
+#include "overmap/om_direction.h"
 #include "type_id.h"
+
+#include <list>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
 
 class item;
 class JsonObject;

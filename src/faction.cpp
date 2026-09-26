@@ -1,15 +1,5 @@
 #include "faction.h"
 
-#include <bitset>
-#include <cstdlib>
-#include <limits>
-#include <map>
-#include <memory>
-#include <optional>
-#include <set>
-#include <string>
-#include <utility>
-
 #include "avatar.h"
 #include "bionics.h"
 #include "character.h"
@@ -24,8 +14,8 @@
 #include "mtype.h"
 #include "npc.h"
 #include "output.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "pimpl.h"
 #include "player.h"
 #include "point.h"
@@ -35,6 +25,16 @@
 #include "translations.h"
 #include "type_id.h"
 #include "ui_manager.h"
+
+#include <bitset>
+#include <cstdlib>
+#include <limits>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <utility>
 
 namespace npc_factions
 {

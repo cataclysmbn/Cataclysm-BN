@@ -1,9 +1,9 @@
+#include "../src/overmap/simple_pathfinding.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "cuboid_rectangle.h"
 #include "line.h"
 #include "point.h"
-#include "simple_pathfinding.h"
 #include "state_helpers.h"
 
 template <typename Point> static void test_greedy_line_path() {

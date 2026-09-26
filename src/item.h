@@ -1,20 +1,10 @@
 #pragma once
 
-#include <climits>
-#include <cstdint>
-#include <functional>
-#include <map>
-#include <optional>
-#include <set>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
-
 #include "calendar.h"
 #include "catalua_icallback_actor.h"
 #include "coordinates.h"
 #include "damage.h"
+#include "data_vars.h"
 #include "detached_ptr.h"
 #include "dimension_info.h"
 #include "enums.h"
@@ -25,14 +15,24 @@
 #include "item_contents.h"
 #include "kill_tracker.h"
 #include "location_vector.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "string_id.h"
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
 #include "visitable.h"
-#include "data_vars.h"
+
+#include <climits>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <optional>
+#include <set>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 class Character;
 class JsonIn;

@@ -1,5 +1,6 @@
 #include "mapgen_async.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "auto_note.h"
 #include "catalua.h"
 #include "color.h"
@@ -9,8 +10,7 @@
 #include "map_extras.h"
 #include "mapgen_constructor.h"
 #include "options.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "string_id.h"

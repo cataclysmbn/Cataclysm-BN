@@ -9,7 +9,7 @@
 #include "map/lightmap.h"
 #include "map_memory.h"
 #include "options.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "sdl_geometry.h"
 #include "sdl_utils.h"

@@ -39,7 +39,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pickup.h"
 #include "pickup_token.h"
 #include "player.h"

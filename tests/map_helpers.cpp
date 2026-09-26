@@ -3,6 +3,7 @@
 #include "../src/map/map.h"
 #include "../src/map/mapdata.h"
 #include "../src/map/submap.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -14,7 +15,6 @@
 #include "map/mapbuffer.h"
 #include "map_iterator.h"
 #include "npc.h"
-#include "overmapbuffer.h"
 #include "type_id.h"
 
 #include <algorithm>

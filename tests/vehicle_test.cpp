@@ -1,4 +1,5 @@
 #include "../src/map/map.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "../src/vehicle/vehicle_part.h"
 #include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
@@ -18,7 +19,6 @@
 #include "mongroup.h"
 #include "monster.h"
 #include "options_helpers.h"
-#include "overmapbuffer.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle/veh_type.h"

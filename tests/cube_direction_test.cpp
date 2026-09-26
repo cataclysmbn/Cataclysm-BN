@@ -1,6 +1,6 @@
 #include "catch/catch.hpp"
-#include "cube_direction.h"
-#include "omdata.h"
+#include "overmap/cube_direction.h"
+#include "overmap/omdata.h"
 
 TEST_CASE("cube_direction_add_om_direction", "[cube_direction]") {
     CHECK(cube_direction::north + om_direction::type::north == cube_direction::north);

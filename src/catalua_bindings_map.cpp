@@ -17,7 +17,7 @@
 #include "map_iterator.h"
 #include "mapgen/mapgen_constructor.h"
 #include "npc.h"
-#include "overmap.h"
+#include "overmap/overmap.h"
 #include "sol/sol.hpp"
 #include "sounds.h"
 #include "trap.h"

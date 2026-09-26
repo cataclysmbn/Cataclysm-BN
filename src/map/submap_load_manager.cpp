@@ -1,5 +1,6 @@
 #include "submap_load_manager.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "cached_options.h"
 #include "calendar.h"
 #include "cata_cartesian_product.h"
@@ -9,8 +10,7 @@
 #include "mapbuffer_registry.h"
 #include "mapgen/mapgen_async.h"
 #include "mapgen/mapgen_functions.h"
-#include "omdata.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
 #include "point.h"
 #include "profile.h"
 #include "thread_pool.h"

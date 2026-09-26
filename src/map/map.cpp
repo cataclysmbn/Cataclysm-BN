@@ -1,5 +1,6 @@
 #include "map.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "active_item_cache.h"
 #include "active_tile_data.h"
 #include "ammo.h"
@@ -74,7 +75,6 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
 #include "player.h"
 #include "point.h"
 #include "point_float.h"

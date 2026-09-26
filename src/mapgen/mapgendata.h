@@ -3,8 +3,8 @@
 #include "calendar.h"
 #include "cata_variant.h"
 #include "coordinates.h"
-#include "cube_direction.h"
 #include "json.h"
+#include "overmap/cube_direction.h"
 #include "type_id.h"
 #include "weighted_list.h"
 

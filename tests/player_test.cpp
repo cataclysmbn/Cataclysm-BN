@@ -1,4 +1,5 @@
 #include "../src/map/map.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "../src/vehicle/vpart_position.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -11,7 +12,6 @@
 #include "item.h"
 #include "map_helpers.h"
 #include "morale_types.h"
-#include "overmapbuffer.h"
 #include "player.h"
 #include "player_helpers.h"
 #include "state_helpers.h"

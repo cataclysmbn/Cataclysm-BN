@@ -1,5 +1,7 @@
 #include "map_extras.h"
 
+#include "../overmap/overmap.h"
+#include "../overmap/overmapbuffer.h"
 #include "auto_note.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -29,9 +31,7 @@
 #include "mapgendata.h"
 #include "mongroup.h"
 #include "options.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "point.h"
 #include "point_float.h"
 #include "regional_settings.h"

@@ -27,7 +27,7 @@
 #include "name.h"
 #include "npc.h"
 #include "options.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pldata.h"
 #include "point.h"
 #include "regional_settings.h"
