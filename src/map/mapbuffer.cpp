@@ -2375,7 +2375,9 @@ auto mapbuffer::add_item_or_charges(
             return false;
         }
         if (new_item->made_of(LIQUID) || !new_item->has_flag(flag_DROP_ACTION_ONLY_IF_LIQUID)) {
-            return new_item->on_drop(*local, g->m);
+            const auto destroyed = new_item->on_drop(*local, g->m);
+            if (destroyed) { new_item = detached_ptr<item>(); }
+            return destroyed;
         }
         return false;
     };

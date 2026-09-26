@@ -13,19 +13,6 @@ local effect_shakes = EffectTypeId.new("shakes")
 local morale_indoor_misery = MoraleTypeDataId.new("morale_indoor_misery")
 local morale_outdoor_misery = MoraleTypeDataId.new("morale_outdoor_misery")
 local morale_clutter_intolerant = MoraleTypeDataId.new("morale_clutter_intolerant")
-local moppable_field_ids = {
-  FieldTypeId.new("fd_blood"):int_id(),
-  FieldTypeId.new("fd_blood_veggy"):int_id(),
-  FieldTypeId.new("fd_blood_insect"):int_id(),
-  FieldTypeId.new("fd_blood_invertebrate"):int_id(),
-  FieldTypeId.new("fd_gibs_flesh"):int_id(),
-  FieldTypeId.new("fd_gibs_veggy"):int_id(),
-  FieldTypeId.new("fd_gibs_insect"):int_id(),
-  FieldTypeId.new("fd_gibs_invertebrate"):int_id(),
-  FieldTypeId.new("fd_bile"):int_id(),
-  FieldTypeId.new("fd_slime"):int_id(),
-  FieldTypeId.new("fd_sludge"):int_id(),
-}
 
 local clutter_radius = 8
 local clutter_threshold = 12
@@ -82,8 +69,8 @@ local function auto_mop_surrounding(here, center)
   local mopped_tiles = 0
   for _, pt in ipairs(here:points_in_radius(center, 1)) do
     local mopped_tile = false
-    for _, field_id in ipairs(moppable_field_ids) do
-      if here:has_field_at(pt, field_id) then
+    for _, field_id in ipairs(here:get_field_ids_at(pt)) do
+      if field_id:obj().moppable then
         here:remove_field_at(pt, field_id)
         mopped_tile = true
       end

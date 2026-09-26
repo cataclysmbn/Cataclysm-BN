@@ -1173,6 +1173,7 @@ template <> auto enum_to_string<season_type>(season_type data) -> std::string {
 
 void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     const auto examine_action = jo.get_string("examine_action", "");
+    const auto has_flammable_override = jo.has_bool("flammable");
     examine_action_id.clear();
 
     if (examine_action.rfind("lua:", 0) == 0) {
@@ -1212,6 +1213,7 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     mandatory(jo, was_loaded, "description", description);
     optional(jo, was_loaded, "message", message);
     optional(jo, was_loaded, "prompt", prompt);
+    optional(jo, was_loaded, "flammable", flammable);
     assign(jo, "light_color", light_color, is_json_check_strict(src));
 
     assign(jo, "flags", flags);
@@ -1221,6 +1223,14 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     transparent = false;
 
     for (const std::string& flag : flags) { set_flag(flag); }
+
+    const auto has_legacy_flammability =
+        has_flag(TFLAG_FLAMMABLE) || has_flag(TFLAG_FLAMMABLE_ASH)
+        || has_flag(TFLAG_FLAMMABLE_HARD);
+    if (!has_flammable_override) { flammable = flammable || has_legacy_flammability; }
+    flammable_ash = flammable && has_flag(TFLAG_FLAMMABLE_ASH);
+    flammable_hard = flammable && has_flag(TFLAG_FLAMMABLE_HARD);
+
     optional(jo, was_loaded, "curtain_transform", curtain_transform);
 }
 

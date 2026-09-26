@@ -1863,6 +1863,8 @@ public:
      * @param src Id of object producing the emission
      * @param mul Multiplies the chance and possibly qty (if `chance*mul > 100`) of the emission
      */
+    void spill_liquid_field(const tripoint_bub_ms& center, const item& liquid);
+
     void emit_field(const tripoint_bub_ms& pos, const emit_id& src, float mul = 1.0f);
 
     // Scent propagation helpers

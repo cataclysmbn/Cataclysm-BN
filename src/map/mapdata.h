@@ -455,6 +455,8 @@ protected:
 
 private:
     std::set<std::string> flags; // string flags which possibly refer to what's documented above.
+    bool flammable_ash = false;
+    bool flammable_hard = false;
     std::bitset<NUM_TERFLAGS> bitflags; // bitfield of -certain- string flags which are heavily
                                         // checked
 
@@ -512,6 +514,7 @@ public:
          harvest_id::NULL_ID()}};
 
     bool transparent = false;
+    bool flammable = false;
 
     auto get_flags() const -> const std::set<std::string>& { return flags; }
 
@@ -529,6 +532,16 @@ public:
 
     auto connects_to(int test_connect_group) const -> bool {
         return connect_group != TERCONN_NONE && connect_group == test_connect_group;
+    }
+
+    auto is_flammable() const -> bool { return flammable; }
+
+    auto is_ash_flammable() const -> bool { return flammable && flammable_ash; }
+
+    auto is_hard_flammable() const -> bool { return flammable && flammable_hard; }
+
+    auto is_basic_flammable() const -> bool {
+        return flammable && !flammable_ash && !flammable_hard;
     }
 
     auto symbol() const -> int;

@@ -129,6 +129,7 @@
     "container": "bottle_glass",
     "primary_material": "water",
     "category": "cooking_ingredients",
+    "spill_field": "fd_condiment",
     "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "quench": -20,
     "charges": 10,
