@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "catalua_icallback_actor.h"
 #include "recipe.h"
 #include "type_id.h"
 
@@ -38,6 +39,9 @@ class recipe_dictionary
 
         bool is_item_on_loop( const itype_id & ) const;
 
+        void resolve_lua_callbacks( const std::map<std::string, std::unique_ptr<lua_recipe_actor>> &actors )
+        const;
+
         /** Returns disassembly recipe (or null recipe if no match) */
         static const recipe &get_uncraft( const itype_id &id );
 
@@ -54,6 +58,8 @@ class recipe_dictionary
          * @warning must not be called after finalize()
          */
         static void delete_if( const std::function<bool( const recipe & )> &pred );
+
+
 
         static recipe &load( const JsonObject &jo, const std::string &src,
                              std::map<recipe_id, recipe> &out );
