@@ -1,5 +1,64 @@
 [
   {
+    "id": "mon_test_special_attack",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "special attack test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "test",
+        "cooldown": 7,
+        "move_cost": 23,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      }
+    ]
+  },
+  {
+    "id": "mon_test_lua_attitude_recursion",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "recursive attitude test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "lua_attitude": "test_recursive_attitude",
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "test",
+        "cooldown": 7,
+        "move_cost": 10,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      }
+    ]
+  },
+  {
+    "id": "mon_test_special_attack_pair",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "paired special attack test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "alpha",
+        "cooldown": 7,
+        "move_cost": 10,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      },
+      {
+        "type": "melee",
+        "id": "beta",
+        "cooldown": 9,
+        "move_cost": 10,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ]
+      }
+    ]
+  },
+  {
     "id": "mon_test_bash",
     "copy-from": "debug_mon",
     "type": "MONSTER",

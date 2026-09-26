@@ -508,6 +508,31 @@ class monster : public Creature, public location_visitable<monster>
                      dealt_projectile_attack const *proj = nullptr ) override;
         void on_damage_of_type( int amt, damage_type dt, const bodypart_id &bp ) override;
 
+        /// Whether the current type and this instance both contain the attack.
+        auto has_special_attack( const std::string &attack_id ) const -> bool;
+        /// Checks only enabled state and zero cooldown, not targeting or actor prerequisites.
+        auto special_attack_ready( const std::string &attack_id ) const -> bool;
+        /// Calls a ready actor once and resets its cooldown only if it reports use.
+        /// Does not apply the AI scheduler's pacified/hallucination restrictions.
+        /// On success marks the special budget for this action as spent, so the stock
+        /// scheduler skips its own pick for the remainder of the same monster::move().
+        auto use_special_attack( const std::string &attack_id ) -> bool;
+        /// Every attack ID the current type defines and this instance tracks, sorted.
+        auto special_attack_ids() const -> std::vector<std::string>;
+        /// Whether the attack is enabled. False for attacks this monster does not have.
+        auto special_attack_enabled( const std::string &attack_id ) const -> bool;
+        /// Enables or disables an attack without touching its cooldown.
+        auto set_special_attack_enabled( const std::string &attack_id, bool enabled ) -> void;
+        /// Sets the remaining cooldown, clamped to 0. No-op for attacks it does not have.
+        auto set_special_attack_cooldown( const std::string &attack_id, int turns ) -> void;
+        /// Remaining cooldown, or nullopt for attacks this monster does not have.
+        auto get_special_attack_cooldown( const std::string &attack_id ) const -> std::optional<int>;
+        /// Whether this action's one special attack has already been spent.
+        auto special_attack_budget_spent() const -> bool { return special_attack_spent; }
+        /// Frees the budget for a deliberate second attack in the same action.
+        /// Called at the start of monster::move(); Lua must ask for it by name.
+        auto clear_special_attack_budget() -> void { special_attack_spent = false; }
+
         /** Resets a given special to its monster type cooldown value */
         void reset_special( const std::string &special_name );
         /** Resets a given special to a value between 0 and its monster type cooldown value. */
@@ -516,6 +541,8 @@ class monster : public Creature, public location_visitable<monster>
         void set_special( const std::string &special_name, int time );
         /** Sets the enabled flag for the given special to false */
         void disable_special( const std::string &special_name );
+        /** Sets the enabled flag for the given special to true */
+        void enable_special( const std::string &special_name );
         /** Return the lowest cooldown for an enabled special */
         int shortest_special_cooldown() const;
 
@@ -796,6 +823,14 @@ class monster : public Creature, public location_visitable<monster>
 
         int hp;
         std::map<std::string, mon_special_attack> special_attacks;
+        /// Per-action special attack budget, set by use_special_attack(). The stock scheduler
+        /// consumes it on read, and monster::move() clears it at the top of every action.
+        /// Transient, never serialized.
+        bool special_attack_spent = false;
+        /// Reentrancy guard for use_special_attack(). Transient, never serialized.
+        bool dispatching_special_attack = false;
+        /// Reentrancy guard for the Lua attitude hook. Transient, never serialized.
+        mutable bool evaluating_lua_attitude = false;
         // Absolute map-square position for active and overmap-stored monsters.
         tripoint_abs_ms pos_abs;
         tripoint_bub_ms goal;

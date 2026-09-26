@@ -444,6 +444,39 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( try_upgrade, void( bool ) );
         SET_FX_T( try_reproduce, void() );
         SET_FX_T( refill_udders, void() );
+        DOC( "Whether this monster's current type and runtime state contain the exact attack ID." );
+        SET_FX_T( has_special_attack, bool( const std::string & ) const );
+        DOC( "Checks only enabled state and zero cooldown; does not predict range, target, sight or ammo." );
+        SET_FX_T( special_attack_ready, bool( const std::string & ) const );
+        DOC( "Calls a ready special attack once. True means the actor handled use, not necessarily a hit or shot." );
+        DOC( "Resets cooldown only on true. Actor side effects are not rolled back on false." );
+        DOC( "Does not apply the scheduler's pacified/hallucination restrictions or plan a target." );
+        DOC( "On true the stock scheduler skips its own pick for the rest of this action." );
+        SET_FX_T( use_special_attack, bool( const std::string & ) );
+        DOC( "Whether this action's one special attack has already been spent." );
+        SET_FX_N_T( special_attack_budget_spent, "special_attack_budget_spent", bool() const );
+        DOC( "Frees the budget so a further use_special_attack can run in the same action." );
+        DOC( "Only for a deliberately multi-attack action; the budget is what stops Lua and" );
+        DOC( "the stock scheduler from stacking attacks onto one action." );
+        SET_FX_N_T( clear_special_attack_budget, "clear_special_attack_budget", void() );
+        DOC( "Sorted IDs of every special attack this monster's current type defines." );
+        SET_FX_N_T( special_attack_ids, "get_special_attack_ids",
+                    std::vector<std::string>() const );
+        DOC( "Whether the attack is enabled. False for attacks this monster does not have." );
+        SET_FX_N_T( special_attack_enabled, "special_attack_enabled",
+                    bool( const std::string & ) const );
+        DOC( "Enables or disables an attack without touching its cooldown." );
+        DOC( "The enabled flag is serialized, so it persists across save/load." );
+        DOC( "A disabled attack is skipped by the stock scheduler and by special_attack_ready." );
+        SET_FX_N_T( set_special_attack_enabled, "set_special_attack_enabled",
+                    void( const std::string &, bool ) );
+        DOC( "Remaining cooldown in turns, or nil for attacks this monster does not have." );
+        SET_FX_N_T( get_special_attack_cooldown, "get_special_attack_cooldown",
+                    std::optional<int>( const std::string & ) const );
+        DOC( "Sets the remaining cooldown in turns. Negative values are clamped to 0." );
+        DOC( "Does nothing for attacks this monster does not have." );
+        SET_FX_N_T( set_special_attack_cooldown, "set_special_attack_cooldown",
+                    void( const std::string &, int ) );
         SET_FX_T( spawn, void( const tripoint_bub_ms & ) );
 
         SET_FX_T( name, std::string( unsigned int ) const );

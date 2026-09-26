@@ -59,6 +59,146 @@
 // workaround for https://github.com/llvm/llvm-project/issues/113087
 #define CHECK_TUPLE(...) CHECK((__VA_ARGS__))
 
+TEST_CASE(
+    "Lua monster special attacks use the real melee actor", "[lua][monster][special_attack]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& target = get_avatar();
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(65, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_special_attack", tripoint_bub_ms(60, 60, 0));
+    mon.set_special("test", 0);
+    mon.friendly = 0;
+    mon.anger = 100;
+    mon.moves = 100;
+    mon.set_dest(target.bub_pos());
+    REQUIRE(mon.attack_target() == &target);
+    auto lua = make_lua_state();
+    lua["test_monster"] = &mon;
+    const auto failed = lua.safe_script(
+        R"(
+        assert(test_monster:has_special_attack("test"))
+        assert(not test_monster:has_special_attack("missing"))
+        assert(not test_monster:use_special_attack("missing"))
+        assert(test_monster:special_attack_ready("test"))
+        assert(not test_monster:use_special_attack("test"))
+        assert(test_monster:special_attack_ready("test"))
+    )",
+        sol::script_pass_on_error);
+    CHECK(failed.valid());
+    CHECK(mon.moves == 100);
+    CHECK(mon.shortest_special_cooldown() == 0);
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(61, 60, 0)));
+    mon.set_dest(target.bub_pos());
+    const auto used = lua.safe_script(
+        R"(
+        assert(test_monster:use_special_attack("test"))
+        assert(not test_monster:special_attack_ready("test"))
+        assert(not test_monster:use_special_attack("test"))
+    )",
+        sol::script_pass_on_error);
+    CHECK(used.valid());
+    CHECK(mon.moves == 77);
+    CHECK(mon.shortest_special_cooldown() == 7);
+}
+
+TEST_CASE(
+    "Lua can enumerate special attacks and toggle them by ID", "[lua][monster][special_attack]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    get_avatar().setpos(map_local_to_abs(get_map(), tripoint_bub_ms(65, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_special_attack_pair", tripoint_bub_ms(60, 60, 0));
+    mon.set_special("alpha", 0);
+    mon.set_special("beta", 0);
+    auto lua = make_lua_state();
+    lua["test_monster"] = &mon;
+
+    // This mirrors what the phase boss demo does: enumerate, then keep exactly one enabled.
+    // It pins the whole round trip -- the returned list must be ipairs-able and its entries
+    // must compare equal to plain Lua strings, or the toggle silently hits the wrong attack.
+    const auto res = lua.safe_script(
+        R"(
+        local ids = test_monster:get_special_attack_ids()
+        assert(#ids == 2, "expected 2 ids, got " .. tostring(#ids))
+        assert(ids[1] == "alpha", "first id was " .. tostring(ids[1]))
+        assert(ids[2] == "beta", "second id was " .. tostring(ids[2]))
+        local seen = 0
+        for _, id in ipairs(ids) do
+            seen = seen + 1
+            test_monster:set_special_attack_enabled(id, id == "alpha")
+        end
+        assert(seen == 2, "ipairs visited " .. tostring(seen) .. " entries")
+        assert(test_monster:special_attack_enabled("alpha"))
+        assert(not test_monster:special_attack_enabled("beta"))
+    )",
+        sol::script_pass_on_error);
+    // Surface the script's own assert() text, which names the step that broke.
+    if (!res.valid()) { FAIL(res.get<sol::error>().what()); }
+
+    // The same state must be visible from C++, not just inside Lua.
+    CHECK(mon.special_attack_enabled("alpha"));
+    CHECK_FALSE(mon.special_attack_enabled("beta"));
+    // A disabled attack keeps its cooldown frozen, so it stays skippable.
+    CHECK(mon.special_attack_ready("alpha"));
+    CHECK_FALSE(mon.special_attack_ready("beta"));
+}
+
+TEST_CASE(
+    "a Lua attitude function cannot recurse through a special attack",
+    "[lua][monster][special_attack]") {
+    clear_all_state();
+    sol::state& lua = DynamicDataLoader::get_instance().lua->lua;
+    // Register into the live tables rather than calling init_global_state_tables(), which
+    // replaces every callback table plus the mod runtime and storage. Wiping those would
+    // leave whatever ran before this test without its registrations.
+    sol::table attitudes = lua.globals()["game"]["monster_attitude_functions"];
+    REQUIRE(attitudes.valid());
+    const auto cleanup = on_out_of_scope([&]() {
+        attitudes["test_recursive_attitude"] = sol::lua_nil;
+        lua.globals()["test_data"] = sol::lua_nil;
+        clear_all_state();
+    });
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    // Registered before the monster spawns, so no attitude query finds the hook missing.
+    const auto script = lua.safe_script(
+        R"(
+        test_data.depth = 0
+        test_data.max_depth = 0
+        game.monster_attitude_functions["test_recursive_attitude"] = function(mon, target)
+            test_data.depth = test_data.depth + 1
+            if test_data.depth > test_data.max_depth then
+                test_data.max_depth = test_data.depth
+            end
+            -- The actor resolves its target through attitude_to(), which lands back here.
+            mon:use_special_attack("test")
+            test_data.depth = test_data.depth - 1
+            return MonsterAttitude.MATT_ATTACK
+        end
+    )",
+        sol::script_pass_on_error);
+    REQUIRE(script.valid());
+
+    auto& target = get_avatar();
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(61, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_lua_attitude_recursion", tripoint_bub_ms(60, 60, 0));
+    mon.friendly = 0;
+    mon.anger = 100;
+    mon.morale = 100;
+    mon.moves = 100;
+    mon.set_special("test", 0);
+    mon.set_dest(target.bub_pos());
+
+    // Without the guard this never returns; it recurses until the stack overflows.
+    // The guard reports the refused recursion, so capture it rather than failing the run.
+    const auto dmsg = capture_debugmsg_during([&]() {
+        CHECK(mon.attitude(&target) == MATT_ATTACK);
+    });
+    CHECK_THAT(dmsg, Catch::Contains("triggered attitude evaluation again"));
+    // The nested attitude query is served by the stock rules, so the hook runs exactly once.
+    CHECK(test_data.get<int>("max_depth") == 1);
+}
+
 static void run_lua_test_script(sol::state& lua, const std::string& script_name) {
     std::string full_script_name = "tests/lua/" + script_name;
 

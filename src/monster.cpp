@@ -3,6 +3,7 @@
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "cata_utility.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
@@ -221,6 +222,40 @@ auto report_missing_lua_attitude( const std::string &method ) -> void
         return;
     }
     debugmsg( "Lua monster attitude function '%s' is not defined", method );
+}
+
+auto report_recursive_special_attack( const std::string &mon_name,
+                                      const std::string &attack_id ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( attack_id ).second ) {
+        return;
+    }
+    debugmsg( "%s re-entered use_special_attack( '%s' ) from inside a special attack; "
+              "the nested call was refused.", mon_name, attack_id );
+}
+
+auto report_spent_special_attack( const std::string &mon_name,
+                                  const std::string &attack_id ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( attack_id ).second ) {
+        return;
+    }
+    debugmsg( "%s already spent this action's special attack, so use_special_attack( '%s' ) "
+              "was refused. Call clear_special_attack_budget() first if the second attack "
+              "is deliberate.", mon_name, attack_id );
+}
+
+auto report_recursive_lua_attitude( const std::string &method ) -> void
+{
+    static auto warned = std::unordered_set<std::string> {};
+    if( !warned.insert( method ).second ) {
+        return;
+    }
+    debugmsg( "Lua monster attitude function '%s' triggered attitude evaluation again; "
+              "the nested call fell back to the stock rules. This usually means it called "
+              "use_special_attack() or another action that resolves a target.", method );
 }
 
 auto report_invalid_lua_attitude_return( const std::string &method, const sol::object &value,
@@ -1856,8 +1891,21 @@ std::string io::enum_to_string<monster_attitude>( monster_attitude att )
 
 auto monster::attitude( const Character *u ) const -> monster_attitude
 {
-    if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
-        return *lua_attitude;
+    // A Lua attitude function that causes attitude to be evaluated again — directly, or by
+    // calling use_special_attack(), whose actor resolves its target through attitude_to() —
+    // would recurse until the stack overflows. Serve the nested call from the stock rules.
+    // Gated on lua_attitude so ordinary monsters, which call this from the movement hot
+    // loop, pay the same single check they did before the guard existed.
+    if( type->lua_attitude ) {
+        if( evaluating_lua_attitude ) {
+            report_recursive_lua_attitude( *type->lua_attitude );
+        } else {
+            evaluating_lua_attitude = true;
+            const auto restore = on_out_of_scope( [this]() { evaluating_lua_attitude = false; } );
+            if( const auto lua_attitude = get_lua_monster_attitude( *this, u ); lua_attitude ) {
+                return *lua_attitude;
+            }
+        }
     }
 
     if( friendly != 0 ) {
@@ -3127,6 +3175,108 @@ void monster::reset_stats()
     // Nothing here yet
 }
 
+auto monster::has_special_attack( const std::string &attack_id ) const -> bool
+{
+    return type->special_attacks.contains( attack_id ) && special_attacks.contains( attack_id );
+}
+
+auto monster::special_attack_ready( const std::string &attack_id ) const -> bool
+{
+    const auto attack = special_attacks.find( attack_id );
+    return type->special_attacks.contains( attack_id ) && attack != special_attacks.end() &&
+           attack->second.enabled && attack->second.cooldown == 0;
+}
+
+auto monster::use_special_attack( const std::string &attack_id ) -> bool
+{
+    // Actors reach into the map and into their target; a corpse must not act. This has to be
+    // is_dead(), not is_dead_state(): monster::die() only raises the dead flag, so an actor
+    // that kills outright without dealing damage (mattack::suicide) leaves hp positive. The
+    // stock scheduler is gated by the caller's is_dead() check, which one Lua AI call does
+    // not repeat, so an actor that kills this monster must not be followed by another.
+    if( is_dead() || !special_attack_ready( attack_id ) ) {
+        return false;
+    }
+    // One special attack per action, whoever spends it. Lua chooses which attack; the engine
+    // keeps the action economy, because an accidental second attack is silent in play while a
+    // refused deliberate one shows up immediately in testing.
+    if( special_attack_spent ) {
+        report_spent_special_attack( disp_name(), attack_id );
+        return false;
+    }
+    // An actor can re-enter Lua (an attitude function, an on-hit hook) which can call back
+    // into here. The cooldown is not reset until call() returns, so a nested call for the
+    // same attack would still look ready and recurse until the stack overflows.
+    if( dispatching_special_attack ) {
+        report_recursive_special_attack( disp_name(), attack_id );
+        return false;
+    }
+    dispatching_special_attack = true;
+    const auto restore = on_out_of_scope( [this]() { dispatching_special_attack = false; } );
+    // The actor may replace the runtime state through poly(), including the supplied ID.
+    const auto used_id = attack_id;
+    if( !type->special_attacks.at( used_id )->call( *this ) ) {
+        return false;
+    }
+    // The actor may have killed this monster outright (mattack::suicide, mattack::kamikaze).
+    // Leave the corpse's cooldowns alone; it will not act again.
+    if( !is_dead() && has_special_attack( used_id ) ) {
+        reset_special( used_id );
+    }
+    // Consume this action's special budget so the stock scheduler does not add a second
+    // attack on top of the one Lua picked. monster::move() clears it every action.
+    special_attack_spent = true;
+    return true;
+}
+
+auto monster::special_attack_ids() const -> std::vector<std::string>
+{
+    namespace ranges = std::ranges;
+    using namespace std::views;
+
+    // Hoisted out of the pipeline: an inline lambda there breaks astyle's continuation
+    // indent. See mongroup.cpp for the same pipeline shape without one.
+    const auto tracked = [this]( const auto & id ) { return special_attacks.contains( id ); };
+    // type->special_attacks is a std::map, so the result is already sorted by ID.
+    return type->special_attacks
+           | keys
+           | filter( tracked )
+           | ranges::to<std::vector<std::string>>();
+}
+
+auto monster::special_attack_enabled( const std::string &attack_id ) const -> bool
+{
+    const auto attack = special_attacks.find( attack_id );
+    return type->special_attacks.contains( attack_id ) && attack != special_attacks.end() &&
+           attack->second.enabled;
+}
+
+auto monster::set_special_attack_enabled( const std::string &attack_id, bool enabled ) -> void
+{
+    if( enabled ) {
+        enable_special( attack_id );
+    } else {
+        disable_special( attack_id );
+    }
+}
+
+auto monster::set_special_attack_cooldown( const std::string &attack_id, int turns ) -> void
+{
+    if( !has_special_attack( attack_id ) ) {
+        return;
+    }
+    set_special( attack_id, std::max( 0, turns ) );
+}
+
+auto monster::get_special_attack_cooldown( const std::string &attack_id ) const -> std::optional<int>
+{
+    const auto attack = special_attacks.find( attack_id );
+    if( !type->special_attacks.contains( attack_id ) || attack == special_attacks.end() ) {
+        return std::nullopt;
+    }
+    return attack->second.cooldown;
+}
+
 void monster::reset_special( const std::string &special_name )
 {
     const auto iter = type->special_attacks.find( special_name );
@@ -3158,6 +3308,16 @@ void monster::disable_special( const std::string &special_name )
     const auto iter = special_attacks.find( special_name );
     if( iter != special_attacks.end() ) {
         iter->second.enabled = false;
+    } else {
+        debugmsg( "%s has no special attack %s", disp_name(), special_name );
+    }
+}
+
+void monster::enable_special( const std::string &special_name )
+{
+    const auto iter = special_attacks.find( special_name );
+    if( iter != special_attacks.end() ) {
+        iter->second.enabled = true;
     } else {
         debugmsg( "%s has no special attack %s", disp_name(), special_name );
     }
