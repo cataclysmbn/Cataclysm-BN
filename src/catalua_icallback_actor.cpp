@@ -928,3 +928,52 @@ std::string lua_monster_callback_actor::get_mon_str_id() const
 {
     return mon_str_id;
 }
+
+
+lua_ispell_actor::lua_ispell_actor( const std::string &spell_str_id,
+                                    sol::protected_function &&on_try_cast,
+                                    sol::protected_function &&on_cast
+                                  )
+    : spell_str_id( spell_str_id ),
+      on_try_cast_func( std::move( on_try_cast ) ),
+      on_cast_func( std::move( on_cast ) ) {}
+
+bool lua_ispell_actor::call_on_try_cast( Character &who, spell &sp ) const
+{
+    if( on_try_cast_func == sol::lua_nil ) {
+        return true;
+    }
+    try {
+        sol::state_view lua( on_try_cast_func.lua_state() );
+        auto params = lua.create_table();
+        params["char"] = &who;
+        params["spell"] = &sp;
+        sol::protected_function_result res = on_try_cast_func( params );
+        check_func_result( res );
+        const bool ret = res;
+        return ret;
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run ispell on_try_cast for '%s' ('%s'): %s", who.get_name(), sp.name(),
+                  e.what() );
+    }
+    return true;
+}
+
+void lua_ispell_actor::call_on_cast( Character &who, spell &sp, tripoint_bub_ms &target_pos ) const
+{
+    if( on_cast_func == sol::lua_nil ) {
+        return;
+    }
+    try {
+        sol::state_view lua( on_cast_func.lua_state() );
+        auto params = lua.create_table();
+        params["char"] = &who;
+        params["spell"] = &sp;
+        params["target_pos"] = &target_pos;
+        sol::protected_function_result res = on_cast_func( params );
+        check_func_result( res );
+    } catch( std::runtime_error &e ) {
+        debugmsg( "Failed to run ispell on_cast for '%s' ('%s'): %s", who.get_name(), sp.name(),
+                  e.what() );
+    }
+}

@@ -389,7 +389,7 @@ void spell_type::load(const JsonObject& jo, const std::string&) {
 
     optional(jo, was_loaded, "volume", volume,
              -255); // -255 used as default because it would never be set that low on purpose
-                    // otherwise
+    // otherwise
 
     optional(jo, was_loaded, "starting_spell", starting_spell, false);
     optional(jo, was_loaded, "starting_points", starting_points, 0);
@@ -403,8 +403,8 @@ void spell_type::load(const JsonObject& jo, const std::string&) {
     for (auto d : temp_vector) {
         // phys and ele provided for convenience when you want entire categories
         std::array<damage_type, 3> phys = {DT_BASH, DT_CUT, DT_STAB}; // Ballistic not included
-                                                                      // because why would ballistic
-                                                                      // be on a melee anyway
+        // because why would ballistic
+        // be on a melee anyway
         std::array<damage_type, 8> ele =
             {DT_ACID, DT_HEAT,  DT_COLD,       DT_DARK,
              DT_PSI,  DT_LIGHT, DT_BIOLOGICAL, DT_ELECTRIC}; // True not included
@@ -543,7 +543,7 @@ auto spell::get_stat_mult(bool decrease, const Character& guy) const -> double {
                         0.1); // Max is necessary to avoid negatives / 0
     }
     return (1.0 + (percent * get_stats_deltas(guy))); // No else block needed because return early
-                                                      // above
+    // above
 }
 
 auto spell::field_intensity() const -> int {
@@ -832,21 +832,21 @@ auto spell::terrain_damage(const int base_damage) const -> int {
         case DT_CUT:
         case DT_STAB:
             return std::floor(base_damage * 0.8); // Cut and Stab are fairly good at damaging
-                                                  // terrain
+        // terrain
         case DT_HEAT:
         case DT_COLD:
         case DT_ACID:
             return std::floor(base_damage * 0.75); // Some elemental damage types are okay at
-                                                   // damaging terrain
+        // damaging terrain
         case DT_LIGHT:
         case DT_DARK:
         case DT_ELECTRIC:
             return std::floor(base_damage * 0.5); // Some elemental damage types are bad at damaging
-                                                  // terrain
+        // terrain
         case DT_PSI:
         case DT_BIOLOGICAL:
             return std::floor(base_damage * 0.1); // Terrain is generally not biological nor does it
-                                                  // have a brain to be psionically attacked
+        // have a brain to be psionically attacked
         default:
             return base_damage; // We don't know how we want to handle this damage type, let's just
                                 // assume it's good at damaging terrain
@@ -2624,5 +2624,13 @@ void spell_events::notify(const cata::event& e) {
         }
         default:
             break;
+    }
+}
+
+void spell_type::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_ispell_actor>>& actors) {
+    for (const spell_type& sp : spell_factory.get_all()) {
+        auto it = actors.find(sp.id.str());
+        if (it != actors.end()) { sp.lua_callbacks = it->second.get(); }
     }
 }

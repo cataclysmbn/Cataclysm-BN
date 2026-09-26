@@ -58,6 +58,8 @@ constexpr auto hook_names = std::array
     "on_npc_try_move",
     "on_player_try_move",
     "on_shoot",
+    "on_spell_try_cast",
+    "on_spell_cast",
     "on_throw",
     "on_try_monster_interaction",
     "on_try_npc_interaction",

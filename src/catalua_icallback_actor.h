@@ -8,6 +8,7 @@
 
 #include <string>
 
+class spell;
 class Character;
 class Creature;
 class item;
@@ -293,4 +294,24 @@ class lua_monster_callback_actor
         void call_on_examine_menu_entry( Character &who, monster &monster, std::string entry ) const;
 
         std::string get_mon_str_id() const;
+};
+
+
+/** Lua callbacks for spell related events. */
+class lua_ispell_actor
+{
+    private:
+        std::string spell_str_id;
+        sol::protected_function on_try_cast_func;
+        sol::protected_function on_cast_func;
+
+    public:
+        lua_ispell_actor( const std::string &spell_str_id,
+                          sol::protected_function &&on_try_cast,
+                          sol::protected_function &&on_cast
+                        );
+
+        /** Returns false to block casting. */
+        bool call_on_try_cast( Character &who, spell &sp ) const;
+        void call_on_cast( Character &who, spell &sp, tripoint_bub_ms &target_pos ) const;
 };
