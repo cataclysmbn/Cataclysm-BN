@@ -208,7 +208,7 @@
     "clip_size": 60,
     "reload": 160,
     "ammo_to_fire": 15,
-    "ammo_effects": [ "WIDE", "LASER", "BEANBAG", "BLINDS_EYES" ],
+    "ammo_effects": [ "WIDE", "ARCANA_WRAITHSLAYER_BEAM", "BEANBAG", "BLINDS_EYES" ],
     "flags": [ "NEVER_JAMS", "PRIMITIVE_RANGED_WEAPON", "NO_SALVAGE", "CROSSBOW" ],
     "valid_mod_locations": [ [ "sling", 1 ], [ "rail", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ] ]
   },
@@ -238,7 +238,7 @@
     "clip_size": 50,
     "reload": 50,
     "ammo_to_fire": 10,
-    "ammo_effects": [ "WIDE", "LASER", "BEANBAG", "BLINDS_EYES" ],
+    "ammo_effects": [ "WIDE", "ARCANA_WRAITHSLAYER_BEAM", "BEANBAG", "BLINDS_EYES" ],
     "flags": [ "NEVER_JAMS", "PRIMITIVE_RANGED_WEAPON", "NO_SALVAGE", "CROSSBOW" ],
     "valid_mod_locations": [ [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ] ]
   },
@@ -269,7 +269,7 @@
     "clip_size": 120,
     "reload": 600,
     "ammo_to_fire": 40,
-    "ammo_effects": [ "WIDE", "LASER", "LARGE_BEANBAG", "BLINDS_EYES" ],
+    "ammo_effects": [ "WIDE", "ARCANA_WRAITHSLAYER_BEAM_GREATER", "LARGE_BEANBAG", "BLINDS_EYES" ],
     "flags": [ "NEVER_JAMS", "PRIMITIVE_RANGED_WEAPON", "NO_SALVAGE", "CROSSBOW" ],
     "valid_mod_locations": [ [ "sling", 1 ] ]
   },
@@ -513,7 +513,7 @@
     "copy-from": "fake_item",
     "name": { "str": "monster lightning weapon" },
     "description": "Used to give the Host of the Archon a specific degree of inaccuracy, and to nerf his damage to not be an immediate instakill.  If you encounter one of these in the wild, it's a bug.",
-    "ammo_effects": [ "NEVER_MISFIRES", "LIGHTNING" ],
+    "ammo_effects": [ "NEVER_MISFIRES", "LIGHTNING", "LIGHTNING_JUDGMENT" ],
     "flags": [ "NEVER_JAMS" ],
     "skill": "pistol",
     "durability": 10,

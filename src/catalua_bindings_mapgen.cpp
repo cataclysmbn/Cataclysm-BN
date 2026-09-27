@@ -6,7 +6,7 @@
 #include "map/map.h"
 #include "mapgen/mapgen.h"
 #include "mapgen/mapgendata.h"
-#include "om_direction.h"
+#include "overmap/om_direction.h"
 #include "popup.h"
 #include "string_input_popup.h"
 #include "ui.h"

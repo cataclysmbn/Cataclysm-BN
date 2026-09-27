@@ -1,5 +1,6 @@
 #include "vehicle.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
@@ -41,7 +42,6 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point_float.h"

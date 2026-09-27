@@ -18,6 +18,8 @@
 #endif
 #define CATCH_CONFIG_RUNNER
 #include "../src/map/map.h"
+#include "../src/overmap/overmap.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -33,9 +35,7 @@
 #include "mod_manager.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_special.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap_special.h"
 #include "path_info.h"
 #include "pldata.h"
 #include "rng.h"

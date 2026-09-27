@@ -2,15 +2,14 @@
 #include "catalua_bindings_utils.h"
 #include "catalua_coord.h"
 #include "catalua_luna_doc.h"
-
-#include <stdexcept>
-#include <vector>
-
 #include "game.h"
 #include "iexamine.h"
 #include "line.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "player.h"
+
+#include <stdexcept>
+#include <vector>
 
 namespace
 {

@@ -1861,7 +1861,7 @@
     "subtype": "collection",
     "ammo": 100,
     "entries": [
-      { "item": "acr_300blk", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ] },
+      { "item": "sig_mcx", "ammo-group": "on_hand_300BLK", "charges": [ 0, 30 ] },
       { "group": "nested_stanag_mag_300" },
       { "group": "nested_stanag_mag_300", "prob": 50 },
       { "group": "on_hand_300BLK" }

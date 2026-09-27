@@ -1,9 +1,9 @@
 #pragma once
 
+#include "type_id.h"
+
 #include <functional>
 #include <string>
-
-#include "type_id.h"
 
 class overmapbuffer;
 
@@ -17,23 +17,22 @@ class overmapbuffer;
  */
 
 /** Return (or create) the overmapbuffer for the given dimension. */
-auto get_overmapbuffer( const dimension_id &dim_id ) -> overmapbuffer &;
+auto get_overmapbuffer(const dimension_id& dim_id) -> overmapbuffer&;
 
 /** Return true if a registered overmapbuffer exists for the given dimension. */
-auto has_any_overmapbuffer( const dimension_id &dim_id ) -> bool;
+auto has_any_overmapbuffer(const dimension_id& dim_id) -> bool;
 
 /** Remove and destroy the overmapbuffer for the given dimension. */
-auto unload_overmapbuffer_dimension( const dimension_id &dim_id ) -> void;
+auto unload_overmapbuffer_dimension(const dimension_id& dim_id) -> void;
 
 /** Invoke @p fn for every registered dimension. */
-void for_each_overmapbuffer(
-    const std::function<void( const dimension_id &, overmapbuffer & )> &fn );
+void for_each_overmapbuffer(const std::function<void(const dimension_id&, overmapbuffer&)>& fn);
 
 /** Save every registered overmapbuffer to disk. */
 auto save_all_overmapbuffers() -> void;
 
 /** Return the primary dimension's overmapbuffer. */
-auto get_primary_overmapbuffer() -> overmapbuffer &;
+auto get_primary_overmapbuffer() -> overmapbuffer&;
 
 /**
  * The dimension ID of the dimension the player is currently in.
@@ -54,10 +53,10 @@ extern dimension_id g_active_dimension_id;
  *
  * Do NOT call this from background threads; see g_active_dimension_id comment above.
  */
-auto get_active_overmapbuffer() -> overmapbuffer &;
+auto get_active_overmapbuffer() -> overmapbuffer&;
 
 // Active-dimension macro — resolves to the currently active dimension's overmapbuffer.
 // *** RENDERING / UI ONLY *** — must NOT be used for gameplay logic.
 // Gameplay code should use get_overmapbuffer(dim_id) with an explicit dimension.
 // NOLINTNEXTLINE(cata-text-style)
-#define ACTIVE_OVERMAP_BUFFER ( get_active_overmapbuffer() )
+#define ACTIVE_OVERMAP_BUFFER (get_active_overmapbuffer())

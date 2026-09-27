@@ -6,13 +6,13 @@
       {
         "file": "mod_tileset/arcana_expan_dp_large.png",
         "tiles": [
-          { "id": "mon_dark_wyrm_summoned", "fg": 0, "rotates": false },
-          { "id": "mon_flesh_angel_summoned", "fg": 1, "rotates": false },
-          { "id": "mon_flying_polyp_summoned", "fg": 2, "rotates": false },
-          { "id": "mon_jabberwock_summoned", "fg": 3, "rotates": false },
-          { "id": "mon_mech_arcana", "fg": 4, "rotates": false },
-          { "id": "mon_mech_arcana_boss", "fg": 5, "rotates": false },
-          { "id": "mon_mi_go_summoned", "fg": 6, "rotates": false },
+          { "id": "mon_dark_wyrm_summoned", "fg": 0 },
+          { "id": "mon_flesh_angel_summoned", "fg": 1 },
+          { "id": "mon_flying_polyp_summoned", "fg": 2 },
+          { "id": "mon_jabberwock_summoned", "fg": 3 },
+          { "id": "mon_mech_arcana", "fg": 4 },
+          { "id": "mon_mech_arcana_boss", "fg": 5 },
+          { "id": "mon_mi_go_summoned", "fg": 6 },
           {
             "id": "mon_moruboru",
             "fg": [
@@ -21,11 +21,10 @@
               { "weight": 25, "sprite": 9 },
               { "weight": 25, "sprite": 10 }
             ],
-            "rotates": false,
             "animated": true
           },
-          { "id": "corpse_mon_moruboru", "fg": 11, "rotates": false },
-          { "id": "mon_shoggoth_summoned", "fg": 12, "rotates": false },
+          { "id": "corpse_mon_moruboru", "fg": 11 },
+          { "id": "mon_shoggoth_summoned", "fg": 12 },
           {
             "id": "mon_spirit_of_fire",
             "fg": [
@@ -36,13 +35,14 @@
               { "weight": 10, "sprite": 17 },
               { "weight": 10, "sprite": 18 }
             ],
-            "rotates": false,
             "animated": true
           },
-          { "id": "mon_thing_summoned", "fg": 19, "rotates": false },
-          { "id": "mon_yugg_summoned", "fg": 20, "rotates": false },
-          { "id": [ "broken_mech_arcana", "broken_mech_arcana_boss" ], "fg": 21, "rotates": false },
-          { "id": "bot_mech_arcana", "fg": 22, "rotates": false }
+          { "id": "mon_thing_summoned", "fg": 19 },
+          { "id": "mon_yugg_summoned", "fg": 20 },
+          { "id": [ "broken_mech_arcana", "broken_mech_arcana_boss" ], "fg": 21 },
+          { "id": "bot_mech_arcana", "fg": 22 },
+          { "id": "mon_archon", "fg": 23 },
+          { "id": "overlay_wielded_spear_pestilence", "fg": 24 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

@@ -182,5 +182,22 @@
     "display_items": false,
     "display_field": true,
     "looks_like": "fd_fog"
+  },
+  {
+    "id": "fd_wraithslayer_beam",
+    "type": "field_type",
+    "intensity_levels": [
+      { "name": "faint green glimmer", "color": "green", "sym": "9", "light_emitted": 5, "translucency": 0.9 },
+      { "name": "bolt of light", "color": "light_green", "light_emitted": 10, "translucency": 0.7 },
+      { "name": "intense bolt of light", "color": "white", "light_emitted": 15, "translucency": 0.5 }
+    ],
+    "description_affix": "illuminated_by",
+    "priority": 4,
+    "half_life": "1 turns",
+    "dirty_transparency_cache": true,
+    "phase": "plasma",
+    "display_items": false,
+    "display_field": true,
+    "looks_like": "fd_laser"
   }
 ]

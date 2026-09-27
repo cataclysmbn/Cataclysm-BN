@@ -1,4 +1,5 @@
 #include "../src/map/map.h"
+#include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
@@ -17,7 +18,6 @@
 #include "npc.h"
 #include "npc_favor.h"
 #include "npctalk.h"
-#include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"

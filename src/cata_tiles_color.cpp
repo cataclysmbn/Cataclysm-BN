@@ -5,7 +5,7 @@
 #    include "map/field.h"
 #    include "map/map.h"
 #    include "monster.h"
-#    include "omdata.h"
+#    include "overmap/omdata.h"
 #    include "vehicle/veh_type.h"
 #    include "vehicle/vehicle.h"
 #    include "vehicle/vehicle_part.h"

@@ -55,7 +55,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "profile.h"
@@ -237,6 +237,8 @@ auto report_invalid_lua_attitude_return( const std::string &method, const sol::o
               method, raw_name );
 }
 
+std::mutex lua_monster_attitude_lock;
+
 auto get_lua_monster_attitude( const monster &mon,
                                const Character *target ) -> std::optional<monster_attitude>
 {
@@ -245,6 +247,7 @@ auto get_lua_monster_attitude( const monster &mon,
         return std::nullopt;
     }
 
+    std::unique_lock lock( lua_monster_attitude_lock );
     auto *lua_state = DynamicDataLoader::get_instance().lua.get();
     if( lua_state == nullptr ) {
         return std::nullopt;

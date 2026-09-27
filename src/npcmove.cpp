@@ -47,10 +47,10 @@
 #include "npc_class.h"
 #include "npctalk.h"
 #include "options.h"
-#include "overmap.h"
-#include "overmap_location.h"
-#include "overmapbuffer.h"
-#include "overmapbuffer_registry.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_location.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "pldata.h"
 #include "profile.h"
@@ -327,7 +327,7 @@ static bool clear_shot_reach( const tripoint_bub_ms &from, const tripoint_bub_ms
         Creature *inter = g->critter_at( p );
         if( check_ally && inter != nullptr ) {
             return false;
-        } else if( get_map().impassable( p ) ) {
+        } else if( get_map().impassable( p ) && !get_map().has_flag( "MOUNTABLE", p ) ) {
             return false;
         } else if( get_map().obstructed_by_vehicle_rotation( last_point, p ) ) {
             return false;

@@ -2404,27 +2404,39 @@ void options_manager::add_options_performance()
 
 #endif
     add_option_group( performance, Group( "rem_act_perf", to_translation( "Activity Boost" ),
-                                          to_translation( "Skip expensive processing while the player does activities ( slow path only )." ) ),
+                                          to_translation( "Skip expensive processing while the player does activities." ) ),
     [&]( auto & page_id ) {
         add( "ACTIVITY_SKIP_VISIBILITY", page_id,
              translate_marker( "Skip Activity Visibility Calculations" ),
              translate_marker( "Turns recaclculation of visibility cache on or off during activity slow paths" ),
              true );
         add( "SLEEP_SKIP_VEH", page_id, translate_marker( "Skip Vehicle Movement" ),
-             translate_marker( "Turns off vehicle movement and autodrive while sleeping" ),
+             translate_marker( "Turns off vehicle movement and autodrive while sleeping ( slow path only )" ),
              true );
         add( "SLEEP_SKIP_SOUND", page_id, translate_marker( "Skip Sound Processing On Sleep" ),
-             translate_marker( "Sounds are not processed while sleeping" ),
+             translate_marker( "Sounds are not processed while sleeping ( slow path only )" ),
              false );
         add( "SLEEP_SKIP_MON", page_id, translate_marker( "Skip Monster Movement" ),
-             translate_marker( "Monsters do not move while the player is sleeping" ),
+             translate_marker( "Monsters do not move while the player is sleeping ( slow path only )" ),
              is_android ? true : false );
         add( "SLEEP_SKIP_NPC", page_id, translate_marker( "Skip NPC Movement" ),
              translate_marker( "NPCs are forced to sleep alongside the player, skipping movement "
                                "but still processing rest recovery (fatigue reduction, healing, etc.).  "
                                "NPCs with non-interruptible activities (e.g. surgery) are frozen "
-                               "for the turn instead." ),
+                               "for the turn instead. ( slow path only )" ),
              is_android ? true : false );
+        add( "ACTIVITY_SKIP_SOUND_SKIP", page_id,
+             translate_marker( "Skip Activity Sounds Calculations" ),
+             translate_marker( "Turns caclculation of sound on or off during activity skip" ),
+             false );
+        add( "ACTIVITY_SKIP_MON_SKIP", page_id,
+             translate_marker( "Skip Activity Monster Calculations" ),
+             translate_marker( "Turns caclculation of monsters on or off during activity skip" ),
+             false );
+        add( "ACTIVITY_SKIP_NPC_SKIP", page_id,
+             translate_marker( "Skip Activity NPC Calculations" ),
+             translate_marker( "During activity skip disables NPC logic other then doing activities and processing items" ),
+             false );
     } );
 
     add_empty_line();
@@ -4466,6 +4478,9 @@ void options_manager::cache_to_globals()
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
     activity_skip_monster_lod_gate = ::get_option<int>( "ACTIVITY_SKIP_MONSTER_LOD_GATE" );
 
+    activity_skip_mon_skip = ::get_option<bool>( "ACTIVITY_SKIP_MON_SKIP" );
+    activity_skip_npc_skip = ::get_option<bool>( "ACTIVITY_SKIP_NPC_SKIP" );
+    activity_skip_sound_skip = ::get_option<bool>( "ACTIVITY_SKIP_SOUND_SKIP" );
     // Temporary fix for #8726: force out-of-bubble fire spread off while the
     // corresponding options are commented out above.
     reality_bubble_fire_spread = false;

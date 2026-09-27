@@ -43,5 +43,12 @@
     "type": "effect_type",
     "id": "test_lua_effect",
     "flags": [ "EFFECT_LUA_ON_ADDED", "EFFECT_LUA_ON_TICK", "EFFECT_LUA_ON_REMOVED" ]
+  },
+  {
+    "type": "effect_type",
+    "id": "test_merged_enchantments",
+    "max_intensity": 3,
+    "base_enchantments": [ { "values": [ { "value": "STRENGTH", "add": 1 } ] }, { "values": [ { "value": "DEXTERITY", "add": 2 } ] } ],
+    "scaling_enchantments": [ { "values": [ { "value": "PERCEPTION", "add": 1 } ] }, { "values": [ { "value": "INTELLIGENCE", "add": 2 } ] } ]
   }
 ]

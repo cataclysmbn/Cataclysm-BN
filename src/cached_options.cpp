@@ -52,6 +52,10 @@ int  monster_plan_chunk_size = 8;
 bool parallel_map_cache = true;
 bool parallel_scent_update = true;
 
+bool activity_skip_sound_skip = false;
+bool activity_skip_npc_skip = false;
+bool activity_skip_mon_skip = false;
+
 FungalOptions fungal_opt;
 
 error_log_format_t error_log_format = error_log_format_t::human_readable;

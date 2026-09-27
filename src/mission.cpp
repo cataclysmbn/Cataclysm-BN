@@ -1,17 +1,8 @@
 #include "mission.h"
 
-#include <algorithm>
-#include <cstdlib>
-#include <istream>
-#include <iterator>
-#include <list>
-#include <memory>
-#include <numeric>
-#include <unordered_map>
-#include <utility>
-
 #include "avatar.h"
 #include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "creature.h"
 #include "debug.h"
 #include "enum_conversions.h"
@@ -26,13 +17,22 @@
 #include "monster.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "profile.h"
 #include "requirements.h"
 #include "string_formatter.h"
 #include "translations.h"
-#include "catalua_sol.h"
+
+#include <algorithm>
+#include <cstdlib>
+#include <istream>
+#include <iterator>
+#include <list>
+#include <memory>
+#include <numeric>
+#include <unordered_map>
+#include <utility>
 
 mission mission_type::create( const character_id &npc_id ) const
 {

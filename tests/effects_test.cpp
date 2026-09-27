@@ -1,6 +1,8 @@
 #include "avatar.h"
 #include "catch/catch.hpp"
 #include "effect.h"
+#include "enchantments/enchantment.h"
+#include "type_id.h"
 
 #include <cstdlib>
 #include <map>
@@ -13,6 +15,12 @@ static const efftype_id effect_test_juggling_l1("test_juggling_l1");
 static const efftype_id effect_test_juggling_l2("test_juggling_l2");
 static const efftype_id effect_test_juggling_r1("test_juggling_r1");
 static const efftype_id effect_test_juggling_r2("test_juggling_r2");
+static const efftype_id effect_test_merged_enchantments("test_merged_enchantments");
+
+static const enchantment_value_id enchantment_value_DEXTERITY("DEXTERITY");
+static const enchantment_value_id enchantment_value_INTELLIGENCE("INTELLIGENCE");
+static const enchantment_value_id enchantment_value_PERCEPTION("PERCEPTION");
+static const enchantment_value_id enchantment_value_STRENGTH("STRENGTH");
 
 TEST_CASE("Adrenaline decays into adrenaline comedown") {
     REQUIRE(effect_adrenaline.is_valid());
@@ -64,4 +72,28 @@ TEST_CASE("Effect body part switching and inheritance on decay works as expected
     dummy.process_effects();
     CHECK(!dummy.has_effect(effect_test_juggling_l2));
     CHECK(dummy.has_effect(effect_test_juggling_l1, body_part_hand_l));
+}
+
+TEST_CASE("Effect enchantments with matching conditions are merged on load") {
+    // Enchantments raising different values still merge when their conditions match.
+    REQUIRE(effect_test_merged_enchantments.is_valid());
+
+    avatar dummy;
+    dummy.add_effect(effect_test_merged_enchantments, 1_hours);
+    auto& e = dummy.get_effect(effect_test_merged_enchantments);
+
+    SECTION("base enchantments are merged into one") {
+        const auto enchantments = e.get_enchantments();
+        REQUIRE(enchantments.size() == 1);
+        CHECK(enchantments.front().get_value_add(enchantment_value_STRENGTH) == 1);
+        CHECK(enchantments.front().get_value_add(enchantment_value_DEXTERITY) == 2);
+    }
+
+    SECTION("scaling enchantments are merged and loaded") {
+        e.set_intensity(3);
+        const auto enchantments = e.get_enchantments();
+        REQUIRE(enchantments.size() == 2);
+        CHECK(enchantments.back().get_value_add(enchantment_value_PERCEPTION) == 2);
+        CHECK(enchantments.back().get_value_add(enchantment_value_INTELLIGENCE) == 4);
+    }
 }

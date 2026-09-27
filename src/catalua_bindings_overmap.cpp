@@ -1,25 +1,24 @@
+#include "catalua.h"
+#include "catalua_bindings.h"
+#include "catalua_bindings_utils.h"
+#include "catalua_coord.h"
+#include "catalua_impl.h"
+#include "catalua_luna.h"
+#include "catalua_luna_doc.h"
+#include "coordinates.h"
+#include "enums.h"
+#include "fluid_grid.h"
+#include "mongroup.h"
+#include "overmap/overmap_types.h"
+#include "overmap/overmapbuffer.h"
+#include "type_id.h"
+
 #include <algorithm>
 #include <iterator>
 #include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "catalua_bindings.h"
-#include "catalua_coord.h"
-#include "catalua.h"
-#include "catalua_bindings_utils.h"
-#include "catalua_impl.h"
-#include "catalua_luna.h"
-#include "catalua_luna_doc.h"
-
-#include "coordinates.h"
-#include "enums.h"
-#include "fluid_grid.h"
-#include "mongroup.h"
-#include "overmap_types.h"
-#include "overmapbuffer.h"
-#include "type_id.h"
 
 namespace
 {

@@ -28,8 +28,8 @@
 #include "npctalk.h" // IWYU pragma: associated
 #include "npctrade.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"

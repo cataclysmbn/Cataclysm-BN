@@ -122,12 +122,12 @@
 #include "mutation.h"
 #include "npc.h"
 #include "npc_class.h"
-#include "omdata.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
-#include "overmap_ui.h"
-#include "overmapbuffer.h"
+#include "overmap/omdata.h"
+#include "overmap/overmap.h"
+#include "overmap/overmap_ui.h"
+#include "overmap/overmapbuffer.h"
 #include "panels.h"
 #include "path_info.h"
 #include "pathfinding.h"
@@ -2854,26 +2854,59 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             return guy && !guy->is_dead();
         } );
         if( critter_tracker->size() > 0 || has_active_npcs ) {
-            sounds::process_sounds();
-            m.build_map_cache( get_levz(), true );
+            if( !activity_skip_sound_skip ) {
+                sounds::process_sounds();
+            }
+            if( ( critter_tracker->size() > 0 && !activity_skip_mon_skip ) ||
+                ( has_active_npcs && !activity_skip_npc_skip ) ) {
+                m.build_map_cache( get_levz(), true );
+            }
             if( critter_tracker->size() > 0 ) {
-                monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
-                if( critter_tracker->size() != monster_count ) {
-                    activity_fixed_window_force_normal_turn_ = true;
-                    if( log_activity_skip_state ) {
-                        add_msg( "Monster added, cannot skip time" );
+                if( !activity_skip_mon_skip ) {
+                    monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
+                    if( critter_tracker->size() != monster_count ) {
+                        activity_fixed_window_force_normal_turn_ = true;
+                        if( log_activity_skip_state ) {
+                            add_msg( "Monster added, cannot skip time" );
+                        }
+                        break;
                     }
-                    break;
+                } else {
+                    for( const shared_ptr_fast<monster> &mon_ptr : critter_tracker->get_monsters_list() ) {
+                        // Solves the lack of processing for pets issue
+                        if( mon_ptr && !mon_ptr->is_dead() ) {
+                            mon_ptr->process_items();
+                        }
+                    }
                 }
             }
             if( has_active_npcs ) {
-                npcmove();
-                if( npcs_dirty || critter_tracker->size() != monster_count ) {
-                    activity_fixed_window_force_normal_turn_ = true;
-                    if( log_activity_skip_state ) {
-                        add_msg( "NPC or monster added, cannot skip time" );
+                if( !activity_skip_npc_skip ) {
+                    npcmove();
+                    if( npcs_dirty || critter_tracker->size() != monster_count ) {
+                        activity_fixed_window_force_normal_turn_ = true;
+                        if( log_activity_skip_state ) {
+                            add_msg( "NPC or monster added, cannot skip time" );
+                        }
+                        break;
                     }
-                    break;
+                } else {
+                    for( npc &guy : g->all_npcs() ) {
+                        // Don't process NPCs in unloaded submaps like a LEMON
+                        ZoneScopedN( "activity_skip_npc_process_turn" );
+                        if( !guy.is_simulated() ) {
+                            continue;
+                        }
+                        if( !guy.has_effect( effect_npc_suspend ) ) {
+                            // A bit more expensive then players & idle, but still
+                            // A ton cheaper then NPCs normally
+                            // While not messing any activities up
+                            guy.process_turn();
+                            if( guy.has_player_activity() ) {
+                                guy.execute_action( "npc_player_activity" );
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2937,6 +2970,12 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
     {
         ZoneScopedN( "do_player_process_items" );
         u.process_items( skipped_turns );
+    }
+    if( activity_skip_npc_skip ) {
+        ZoneScopedN( "do_npc_process_items" );
+        for( npc &guy : g->all_npcs() ) {
+            guy.process_items( skipped_turns );
+        }
     }
 
     {

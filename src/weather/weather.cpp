@@ -1,5 +1,7 @@
 #include "weather.h"
 
+#include "../overmap/overmap.h"
+#include "../overmap/overmapbuffer.h"
 #include "action_time_scale.h"
 #include "activity_time_cadence.h"
 #include "assign.h"
@@ -23,8 +25,6 @@
 #include "math_defines.h"
 #include "messages.h"
 #include "options.h"
-#include "overmap.h"
-#include "overmapbuffer.h"
 #include "point.h"
 #include "point_float.h"
 #include "profile.h"
