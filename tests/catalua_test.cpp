@@ -328,6 +328,9 @@ TEST_CASE("lua_activity_bindings", "[lua]") {
     REQUIRE(test_data.get<std::string>("activity_name") == "test wash");
     CHECK(test_data.get<int>("activity_moves_total") == to_moves<int>(5_minutes));
     CHECK(test_data.get<bool>("activity_interruptable"));
+    CHECK(test_data.get<std::string>("pos_before_type") == "userdata");
+    CHECK(test_data.get<std::string>("pos_before_str").starts_with("TripointBubMs"));
+    CHECK(test_data.get<int>("activity_coords_len") == 1);
     CHECK(test_data.get<std::string>("activity_coord").starts_with("TripointAbsMs"));
 
     get_avatar().activity->moves_left = 0;

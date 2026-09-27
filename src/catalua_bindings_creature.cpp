@@ -86,6 +86,10 @@ struct lua_activity_options {
 auto parse_lua_activity_options( const sol::table &opts ) -> lua_activity_options
 {
     const auto pos = opts.get<sol::optional<tripoint_bub_ms>>( "pos" );
+    if( const sol::object raw_pos = opts["pos"]; raw_pos.valid() && !pos ) {
+        debugmsg( "assign_lua_activity: pos option is %s but tripoint_bub_ms conversion failed",
+                  lua_typename( opts.lua_state(), static_cast<int>( raw_pos.get_type() ) ) );
+    }
     const auto on_finish = opts.get<sol::optional<std::string>>( "on_finish" );
     const auto on_turn = opts.get<sol::optional<std::string>>( "on_turn" );
     const auto interruptable = opts.get<sol::optional<bool>>( "interruptable" );
