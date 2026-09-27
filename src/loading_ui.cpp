@@ -506,40 +506,40 @@ void loading_ui::init()
         ui = std::make_unique<ui_adaptor>();
         ui->on_screen_resize( [this]( ui_adaptor & ui ) { menu->reposition( ui ); } );
         menu->reposition( *ui );
-        ui->on_redraw([this](ui_adaptor& ui) {
-            if (!get_option<bool>("LOADING_SCREEN_IMAGES") || menu->entries.empty()) {
-                menu->show(ui);
+        ui->on_redraw( [this]( ui_adaptor & ui ) {
+            if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) || menu->entries.empty() ) {
+                menu->show( ui );
                 return;
             }
 
-            const int last = static_cast<int>(menu->entries.size()) - 1;
-            const int sel = std::clamp(menu->selected, 0, last);
-            const int width = std::min(TERMX, 40);
+            const int last = static_cast<int>( menu->entries.size() ) - 1;
+            const int sel = std::clamp( menu->selected, 0, last );
+            const int width = std::min( TERMX, 40 );
             const int row_width = width - 2;
-            const double frac = last > 0 ? static_cast<double>(sel) / last : 1.0;
+            const double frac = last > 0 ? static_cast<double>( sel ) / last : 1.0;
             const int filled =
-                std::clamp(static_cast<int>(std::lround(frac * row_width)), 0, row_width);
+                std::clamp( static_cast<int>( std::lround( frac * row_width ) ), 0, row_width );
 
             catacurses::window w =
-                catacurses::newwin(3, width, point((TERMX - width) / 2, TERMY - 3));
-            werase(w);
-            draw_border(w, c_magenta);
+                catacurses::newwin( 3, width, point( ( TERMX - width ) / 2, TERMY - 3 ) );
+            werase( w );
+            draw_border( w, c_magenta );
 
-            const std::string entry_text = remove_color_tags(menu->entries[sel].txt);
+            const std::string entry_text = remove_color_tags( menu->entries[sel].txt );
             std::string row =
-                utf8_truncate(string_format("%s: %s", menu->text, entry_text), row_width);
-            row += std::string(row_width - utf8_width(row, true), ' ');
+                utf8_truncate( string_format( "%s: %s", menu->text, entry_text ), row_width );
+            row += std::string( row_width - utf8_width( row, true ), ' ' );
 
-            const utf8_wrapper row_wrapper(row);
+            const utf8_wrapper row_wrapper( row );
             int col = 0;
-            for (size_t i = 0; i < row_wrapper.length(); ++i) {
-                const std::string ch = row_wrapper.substr(i, 1).str();
-                mvwprintz(w, point(1 + col, 1), col < filled ? h_white : c_light_gray, "%s", ch);
-                col += utf8_width(ch, true);
+            for( size_t i = 0; i < row_wrapper.length(); ++i ) {
+                const std::string ch = row_wrapper.substr( i, 1 ).str();
+                mvwprintz( w, point( 1 + col, 1 ), col < filled ? h_white : c_light_gray, "%s", ch );
+                col += utf8_width( ch, true );
             }
 
-            wnoutrefresh(w);
-        });
+            wnoutrefresh( w );
+        } );
     }
 }
 
