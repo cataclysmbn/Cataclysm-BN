@@ -13,6 +13,7 @@
 #include "calendar.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "catalua_hooks.h"
 #include "character.h"
 #include "character_display.h"
 #include "character_martial_arts.h"
@@ -1804,6 +1805,16 @@ auto try_cast_spell( player &u, spell &sp ) -> bool
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
                  _( "You cannot cast Blood Magic without a cutting implement." ) );
         return false;
+    }
+
+    const auto hook_results = cata::run_hooks( "on_spell_try_cast", [&]( sol::table & params ) {
+        params["char"] = &u;
+        params["spell"] = &sp;
+    } );
+    if( !hook_results.get_or( "allowed", true ) ) { return false; }
+
+    if( sp.type->lua_callbacks ) {
+        if( !sp.type->lua_callbacks->call_on_try_cast( *u.as_character(), sp ) ) { return false;}
     }
 
     start_spellcasting_activity( u, sp );

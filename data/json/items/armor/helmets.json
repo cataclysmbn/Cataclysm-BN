@@ -661,7 +661,16 @@
     "environmental_protection_with_filter": 15,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "qualities": [ [ "GLARE", 1 ] ],
-    "flags": [ "VARSIZE", "STURDY", "WATERPROOF", "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "ALLOWS_MUZZLE" ]
+    "flags": [
+      "VARSIZE",
+      "STURDY",
+      "WATERPROOF",
+      "SUN_GLASSES",
+      "ALLOWS_NATURAL_ATTACKS",
+      "ALLOWS_HORNS",
+      "ALLOWS_MUZZLE",
+      "SLEEP_IGNORE"
+    ]
   },
   {
     "id": "helmet_scrap",

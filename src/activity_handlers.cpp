@@ -39,6 +39,7 @@
 #include "debug.h"
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after implementing repair_activity_actor.
+#include "catalua_hooks.h"
 #include "distribution_grid.h"
 #include "enums.h"
 #include "event.h"
@@ -4904,6 +4905,16 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
         if( !it.has_flag( flag_USE_PLAYER_ENERGY ) ) {
             p->consume_charges( it, it.type->charges_to_use() );
         }
+    }
+    const auto hook_results = cata::run_hooks(
+                                  "on_spell_cast",
+    [ & ]( sol::table & params ) {
+        params["char"] = p;
+        params["spell"] = spell_being_cast;
+        params["target_pos"] = &target;
+    } );
+    if( spell_being_cast.type->lua_callbacks ) {
+        spell_being_cast.type->lua_callbacks->call_on_cast( *p->as_character(), spell_being_cast, target );
     }
 }
 
