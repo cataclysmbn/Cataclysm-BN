@@ -1,5 +1,6 @@
 #include "mapgen_functions.h"
 
+#include "../overmap/overmap.h"
 #include "calendar.h"
 #include "character_id.h"
 #include "debug.h"
@@ -16,8 +17,7 @@
 #include "mapgen_constructor.h"
 #include "mapgendata.h"
 #include "mapgenformat.h"
-#include "omdata.h"
-#include "overmap.h"
+#include "overmap/omdata.h"
 #include "point.h"
 #include "regional_settings.h"
 #include "rng.h"

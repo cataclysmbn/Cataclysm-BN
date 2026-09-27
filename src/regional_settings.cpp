@@ -8,7 +8,7 @@
 #include "json.h"
 #include "mapgen/map_extras.h"
 #include "options.h"
-#include "overmap_special.h"
+#include "overmap/overmap_special.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"

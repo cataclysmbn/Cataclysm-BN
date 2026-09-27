@@ -1,23 +1,20 @@
 #pragma once
 
-#include <optional>
-
 #include "coordinates.h"
 #include "type_id.h"
 
-namespace catacurses
-{
+#include <optional>
+
+namespace catacurses {
 class window;
 } // namespace catacurses
 
 class input_context;
 class nc_color;
 
-namespace ui
-{
+namespace ui {
 
-namespace omap
-{
+namespace omap {
 
 /**
  * Display overmap centered at the player's position.
@@ -46,8 +43,7 @@ void display_distribution_grids();
 /**
  * Display overmap like with @ref display() and display the given zone.
  */
-void display_zones( const tripoint_abs_omt &center, const tripoint_abs_omt &select,
-                    int iZoneIndex );
+void display_zones(const tripoint_abs_omt& center, const tripoint_abs_omt& select, int iZoneIndex);
 /**
  * Display overmap like with @ref display() and enable the overmap editor.
  */
@@ -59,27 +55,26 @@ void display_editor();
  * @returns The absolute coordinates of the chosen point or
  * invalid_point if canceled with Escape (or similar key).
  */
-tripoint_abs_omt choose_point();
+auto choose_point() -> tripoint_abs_omt;
 
 /**
  * Same as above but start at z-level z instead of players
  * current z-level, x and y are taken from the players position.
  */
-tripoint_abs_omt choose_point( int z );
+auto choose_point(int z) -> tripoint_abs_omt;
 /**
  * Interactive point choosing; used as the map screen.
  * The map is initially centered on the @ref origin.
  * @returns The absolute coordinates of the chosen point or
  * invalid_point if canceled with Escape (or similar key).
  */
-tripoint_abs_omt choose_point( const tripoint_abs_omt &origin );
+auto choose_point(const tripoint_abs_omt& origin) -> tripoint_abs_omt;
 
 } // namespace omap
 
 } // namespace ui
 
-namespace overmap_ui
-{
+namespace overmap_ui {
 // drawing relevant data, e.g. what to draw.
 struct draw_data_t {
     // draw editor.
@@ -87,7 +82,7 @@ struct draw_data_t {
     // draw scent traces.
     bool debug_scent = false;
     // draw zone location.
-    tripoint_abs_omt select = tripoint_abs_omt( -1, -1, -1 );
+    tripoint_abs_omt select = tripoint_abs_omt(-1, -1, -1);
     // draw location of a zone
     int iZoneIndex = -1;
     // draw distribution grids
@@ -102,9 +97,9 @@ struct tiles_redraw_info {
 extern tiles_redraw_info redraw_info;
 #endif
 
-auto fmt_omt_coords( const tripoint_abs_omt &coord ) -> std::string;
+auto fmt_omt_coords(const tripoint_abs_omt& coord) -> std::string;
 
-weather_type_id get_weather_at_point( const point_abs_omt &pos );
-std::tuple<char, nc_color, size_t> get_note_display_info( const std::string &note );
-std::optional<std::string> get_note_sprite_id( const std::string &note );
+auto get_weather_at_point(const point_abs_omt& pos) -> weather_type_id;
+auto get_note_display_info(const std::string& note) -> std::tuple<char, nc_color, size_t>;
+auto get_note_sprite_id(const std::string& note) -> std::optional<std::string>;
 } // namespace overmap_ui

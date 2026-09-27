@@ -4,7 +4,7 @@
 #include "map/mapdata.h"
 #include "monstergenerator.h"
 #include "mutation.h"
-#include "omdata.h"
+#include "overmap/omdata.h"
 #include "recipe.h"
 #include "skill.h"
 #include "trap.h"

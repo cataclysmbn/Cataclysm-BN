@@ -160,6 +160,10 @@ extern int  monster_plan_chunk_size;
 extern bool parallel_map_cache;
 extern bool parallel_scent_update;
 
+extern bool activity_skip_sound_skip;
+extern bool activity_skip_npc_skip;
+extern bool activity_skip_mon_skip;
+
 /* Options related to fungal activity */
 struct FungalOptions {
     /**

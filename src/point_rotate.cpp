@@ -1,6 +1,7 @@
 #include "point_rotate.h"
-#include "overmapbuffer.h"
-#include "omdata.h"
+
+#include "overmap/omdata.h"
+#include "overmap/overmapbuffer.h"
 #include "point.h"
 
 auto rotate( point p, point dim, int turns ) -> point

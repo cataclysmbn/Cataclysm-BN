@@ -44,6 +44,27 @@ static const trait_id trait_VEGETARIAN( "VEGETARIAN" );
 namespace
 {
 std::map<efftype_id, effect_type> effect_types;
+
+/// Loads enchantments from `member`, merging ones that stack with an already loaded enchantment.
+auto load_enchantments( const JsonObject &jo, const std::string &member,
+                        std::vector<enchantment> &enchantments ) -> void
+{
+    namespace ranges = std::ranges;
+    if( !jo.has_array( member ) ) {
+        return;
+    }
+    for( JsonObject jobj : jo.get_array( member ) ) {
+        auto ench = enchantment{};
+        ench.load( jobj );
+        if( !ench.id.is_empty() ) {
+            ench = ench.id.obj();
+        }
+        const auto merged = ranges::any_of( enchantments, [&]( auto & oench ) { return oench.add( ench ); } );
+        if( !merged ) {
+            enchantments.emplace_back( ench );
+        }
+    }
+}
 } // namespace
 
 /** @relates string_id */
@@ -1465,37 +1486,8 @@ void load_effect_type( const JsonObject &jo )
         }
     }
 
-    if( jo.has_array( "base_enchantments" ) ) {
-        for( JsonObject jobj : jo.get_array( "base_enchantments" ) ) {
-            enchantment ench;
-            ench.load( jobj );
-            if( !ench.id.is_empty() ) {
-                ench = ench.id.obj();
-            }
-            for( enchantment &oench : new_etype.base_enchantments ) {
-                if( oench.add( ench ) ) {
-                    return;
-                }
-            }
-            new_etype.base_enchantments.emplace_back( ench );
-        }
-    }
-
-    if( jo.has_array( "scaling_enchantments" ) ) {
-        for( JsonObject jobj : jo.get_array( "scaling_enchantments" ) ) {
-            enchantment ench;
-            ench.load( jobj );
-            if( !ench.id.is_empty() ) {
-                ench = ench.id.obj();
-            }
-            for( enchantment &oench : new_etype.scaling_enchantments ) {
-                if( oench.add( ench ) ) {
-                    return;
-                }
-            }
-            new_etype.scaling_enchantments.emplace_back( ench );
-        }
-    }
+    load_enchantments( jo, "base_enchantments", new_etype.base_enchantments );
+    load_enchantments( jo, "scaling_enchantments", new_etype.scaling_enchantments );
 
     effect_types[new_etype.id] = new_etype;
 }

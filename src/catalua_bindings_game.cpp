@@ -20,7 +20,7 @@
 #include "messages.h"
 #include "monster.h"
 #include "npc.h"
-#include "overmapbuffer.h"
+#include "overmap/overmapbuffer.h"
 #include "sol/forward.hpp"
 #include "sol/sol.hpp"
 #include "units_temperature.h"

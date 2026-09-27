@@ -1,27 +1,26 @@
 #pragma once
 
-#include <functional>
-#include <optional>
-#include <vector>
-
 #include "coordinates.h"
 #include "enums.h"
 #include "om_direction.h"
 #include "point.h"
 
-namespace pf
-{
+#include <functional>
+#include <optional>
+#include <vector>
+
+namespace pf {
 
 /*
  * A node in a path, containing position and direction.
  */
-template<typename Point>
-struct directed_node {
+template <typename Point> struct directed_node {
     Point pos;
     om_direction::type dir;
 
-    explicit directed_node( Point pos,
-                            om_direction::type dir = om_direction::type::invalid ) : pos( pos ), dir( dir ) {}
+    explicit directed_node(Point pos, om_direction::type dir = om_direction::type::invalid)
+        : pos(pos),
+          dir(dir) {}
 };
 
 /*
@@ -29,8 +28,7 @@ struct directed_node {
  * The nodes are given in reverse order (from destination to source) in order to allow
  * efficient consumption through pop_back().
  */
-template<typename Point>
-struct directed_path {
+template <typename Point> struct directed_path {
     std::vector<directed_node<Point>> nodes;
 };
 
@@ -39,8 +37,7 @@ struct directed_path {
  * The points are given in reverse order (from destination to source) in order to allow
  * efficient consumption through pop_back().
  */
-template<typename Point>
-struct simple_path {
+template <typename Point> struct simple_path {
     std::vector<Point> points;
 };
 
@@ -53,20 +50,20 @@ struct node_score {
     // if node_cost is negative, this is ignored
     int estimated_dest_cost;
 
-    node_score( int node_cost, int estimated_dest_cost );
+    node_score(int node_cost, int estimated_dest_cost);
 
     static const node_score rejected;
 };
 
 // A node scoring function that provides a node to score and optionally provides the
 // previous node in the path as context.
-template<typename Point>
+template <typename Point>
 using two_node_scoring_fn =
-    std::function<node_score( directed_node<Point>, std::optional<directed_node<Point>> )>;
+    std::function<node_score(directed_node<Point>, std::optional<directed_node<Point>>)>;
 
 // non-templated implementation
-directed_path<point> greedy_path( point source, point dest, point max,
-                                  const two_node_scoring_fn<point> &scorer );
+auto greedy_path(point source, point dest, point max, const two_node_scoring_fn<point>& scorer)
+    -> directed_path<point>;
 
 /**
  * Uses Greedy Best-First-Search to find a short path from source to destination [2D only].
@@ -77,25 +74,22 @@ directed_path<point> greedy_path( point source, point dest, point max,
  * @param max Max permissible coordinates for a point on the path
  * @param scorer function of (node &current, node *previous) that returns node_score.
  */
-template<typename Point>
-directed_path<Point> greedy_path( const Point &source, const Point &dest, const Point &max,
-                                  two_node_scoring_fn<Point> scorer )
-requires( Point::dimension == 2 )
+template <typename Point>
+auto greedy_path(
+    const Point& source, const Point& dest, const Point& max, two_node_scoring_fn<Point> scorer)
+    -> directed_path<Point>
+    requires(Point::dimension == 2)
 {
     directed_path<Point> res;
-    const two_node_scoring_fn<point> point_scorer
-    = [scorer]( directed_node<point> current, std::optional<directed_node<point>> prev ) {
-        std::optional<directed_node<Point>> prev_node;
-        if( prev ) {
-            prev_node = directed_node<Point>( Point( prev->pos ), prev->dir );
-        }
-        return scorer( directed_node<Point>( Point( current.pos ), current.dir ), prev_node );
-    };
-    directed_path<point> path = greedy_path( source.raw(), dest.raw(), max.raw(), point_scorer );
-    res.nodes.reserve( path.nodes.size() );
-    for( const auto &node : path.nodes ) {
-        res.nodes.emplace_back( Point( node.pos ), node.dir );
-    }
+    const two_node_scoring_fn<point> point_scorer =
+        [scorer](directed_node<point> current, std::optional<directed_node<point>> prev) {
+            std::optional<directed_node<Point>> prev_node;
+            if (prev) { prev_node = directed_node<Point>(Point(prev->pos), prev->dir); }
+            return scorer(directed_node<Point>(Point(current.pos), current.dir), prev_node);
+        };
+    directed_path<point> path = greedy_path(source.raw(), dest.raw(), max.raw(), point_scorer);
+    res.nodes.reserve(path.nodes.size());
+    for (const auto& node : path.nodes) { res.nodes.emplace_back(Point(node.pos), node.dir); }
     return res;
 }
 
@@ -108,12 +102,12 @@ struct omt_score {
     // actually possible.
     bool allow_z_change;
 
-    explicit omt_score( int node_cost, bool allow_z_change = false );
+    explicit omt_score(int node_cost, bool allow_z_change = false);
 
     static const omt_score rejected;
 };
 
-using omt_scoring_fn = std::function<omt_score( tripoint_abs_omt )>;
+using omt_scoring_fn = std::function<omt_score(tripoint_abs_omt)>;
 
 /**
  * Uses A* to find an approximately-cheapest path from source to destination (in 3D).
@@ -124,10 +118,8 @@ using omt_scoring_fn = std::function<omt_score( tripoint_abs_omt )>;
  * @param scorer function that returns the omt_score for the given OMT
  * @param max_cost Maximum path cost (optional)
  */
-simple_path<tripoint_abs_omt> find_overmap_path( const tripoint_abs_omt &source,
-        const tripoint_abs_omt &dest, int radius, omt_scoring_fn scorer,
-        std::optional<int> max_cost = std::nullopt );
+auto find_overmap_path(
+    const tripoint_abs_omt& source, const tripoint_abs_omt& dest, int radius, omt_scoring_fn scorer,
+    std::optional<int> max_cost = std::nullopt) -> simple_path<tripoint_abs_omt>;
 
 } // namespace pf
-
-

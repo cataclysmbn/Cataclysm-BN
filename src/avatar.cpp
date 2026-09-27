@@ -51,7 +51,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmap.h"
+#include "overmap/overmap.h"
 #include "player.h"
 #include "player_activity.h"
 #include "recipe.h"

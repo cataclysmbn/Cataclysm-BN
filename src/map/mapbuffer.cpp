@@ -1,5 +1,6 @@
 #include "mapbuffer.h"
 
+#include "../overmap/overmapbuffer.h"
 #include "avatar.h"
 #include "batch_turns.h"
 #include "calendar.h"
@@ -32,7 +33,6 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
-#include "overmapbuffer.h"
 #include "popup.h"
 #include "profile.h"
 #include "rng.h"

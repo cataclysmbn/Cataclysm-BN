@@ -9,10 +9,12 @@ if (( $# == 0 )); then
     exit 2
 fi
 
-if ! command -v clang-tidy >/dev/null 2>&1; then
-    echo "error: clang-tidy executable was not found" >&2
-    exit 1
-fi
+for tool in clang-tidy clang-apply-replacements; do
+    if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "error: $tool executable was not found" >&2
+        exit 1
+    fi
+done
 
 build_path="${BUILD_PATH:-out/build/linux-full}"
 if [[ ! -f "$build_path/compile_commands.json" ]]; then
@@ -21,8 +23,11 @@ if [[ ! -f "$build_path/compile_commands.json" ]]; then
     exit 1
 fi
 
-files_file="$(mktemp)"
-trap 'rm -f "$files_file"' EXIT
+work_dir="$(mktemp -d)"
+trap 'rm -rf "$work_dir"' EXIT
+files_file="$work_dir/files"
+fixes_dir="$work_dir/fixes"
+mkdir "$fixes_dir"
 
 for path in "$@"; do
     if [[ -d "$path" ]]; then
@@ -51,18 +56,21 @@ if [[ ! -s "$files_file" ]]; then
 fi
 
 jobs="${JOBS:-$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)}"
-tidy_status=0
-xargs -0 -n 1 -P "$jobs" clang-tidy \
-    --quiet \
-    --fix \
-    --checks='-*,modernize-use-trailing-return-type' \
-    --config='{CheckOptions: {modernize-use-trailing-return-type.TransformLambdas: none}}' \
-    --header-filter='^$' \
-    -p "$build_path" \
-    < "$files_file" || tidy_status=$?
+# Analyze a stable source tree in parallel; apply all edits only after every analysis succeeds.
+xargs -0 -n 1 -P "$jobs" bash -c '
+    set -euo pipefail
+    fix_dir="$(mktemp -d "$1/fixes.XXXXXX")"
+    clang-tidy \
+        --quiet \
+        --checks="-*,modernize-use-trailing-return-type" \
+        --config="{CheckOptions: {modernize-use-trailing-return-type.TransformLambdas: none}}" \
+        --header-filter="^$" \
+        --export-fixes="$fix_dir/fixes.yaml" \
+        -p "$2" "$3"
+' _ "$fixes_dir" "$build_path" < "$files_file"
+
+clang-apply-replacements "$fixes_dir"
 
 files=()
 mapfile -d '' files < "$files_file"
 build-scripts/format-cpp.sh "${files[@]}"
-
-exit "$tidy_status"

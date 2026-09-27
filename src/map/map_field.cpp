@@ -1,3 +1,4 @@
+#include "../overmap/overmapbuffer.h"
 #include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -31,7 +32,6 @@
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
-#include "overmapbuffer.h"
 #include "player.h"
 #include "pldata.h"
 #include "point.h"

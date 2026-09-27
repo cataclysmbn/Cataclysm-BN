@@ -2,6 +2,7 @@
   {
     "type": "mod_tileset",
     "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockXottoplus" ],
+    "//": "Note: Spaces 115, 121, and 148 are available for new sprites",
     "tiles-new": [
       {
         "file": "mod_tileset/arcana_expan_dp_normal.png",
@@ -184,14 +185,12 @@
           { "id": "overlay_worn_revenant_crown", "fg": 111 },
           { "id": [ "robe_shadow", "overlay_wielded_robe_shadow" ], "fg": 112 },
           { "id": "overlay_worn_robe_shadow", "fg": 113 },
-          { "id": "robe_shadow_on", "fg": 114 },
-          { "id": "overlay_worn_robe_shadow_on", "fg": 115 },
+          { "id": "overlay_worn_robe_shadow_on", "fg": 114 },
           { "id": [ "gauntlets_necro", "gauntlets_necro_xl" ], "fg": 116 },
           { "id": [ "overlay_worn_gauntlets_necro", "overlay_worn_gauntlets_necro_xl" ], "fg": 117 },
           { "id": "cyclopean_mirror", "fg": 118 },
           { "id": "overlay_worn_cyclopean_mirror", "fg": 119 },
-          { "id": "overlay_female_worn_cyclopean_mirror_on", "fg": 120 },
-          { "id": "overlay_male_worn_cyclopean_mirror_on", "fg": 121 },
+          { "id": "overlay_worn_cyclopean_mirror_on", "fg": 120 },
           { "id": "hauberk_jade", "fg": 122 },
           { "id": "overlay_female_worn_hauberk_jade", "fg": 123 },
           { "id": "overlay_male_worn_hauberk_jade", "fg": 124 },
@@ -218,7 +217,6 @@
           { "id": "hexenhammer", "fg": 145 },
           { "id": "overlay_wielded_hexenhammer", "fg": 146 },
           { "id": "spear_pestilence", "fg": 147 },
-          { "id": "overlay_wielded_spear_pestilence", "fg": 148 },
           {
             "id": [
               "scroll_sun",
@@ -377,7 +375,7 @@
           { "id": "overlay_wielded_stormbringer_on", "fg": 190 },
           { "id": [ "distortion_amp_motor_item", "overlay_wielded_distortion_amp_motor_item" ], "fg": 191 },
           { "id": [ "essence_surge_generator_item", "overlay_wielded_essence_surge_generator_item" ], "fg": 192 },
-          { "id": "mon_archon", "fg": 193 },
+          { "id": "fd_wraithslayer_beam", "fg": 193 },
           { "id": "corpse_mon_archon", "fg": 194 },
           { "id": "mon_zombie_fiend_summoned", "fg": 195 },
           { "id": "mon_homunculus_summoned", "fg": 196 },
@@ -424,7 +422,7 @@
           { "id": "overlay_worn_robe_shadow_xl_on", "fg": 232 },
           { "id": "ethereal_hand_crossbow", "fg": 233 },
           { "id": "overlay_wielded_ethereal_hand_crossbow", "fg": 234 },
-          { "id": "fd_veil_light", "fg": 235 },
+          { "id": "overlay_effect_arcana_aegis_mending", "fg": 235 },
           { "id": "mon_feral_summoner", "fg": 236 },
           { "id": "mon_feral_magehunter", "fg": 237 },
           { "id": "mon_feral_keeper", "fg": 238 },
