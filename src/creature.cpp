@@ -2072,6 +2072,10 @@ float Creature::get_hit() const
 {
     return get_hit_base() + get_hit_bonus();
 }
+int Creature::spotting_range() const
+{
+    return 0;
+}
 
 anatomy_id Creature::get_anatomy() const
 {
