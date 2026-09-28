@@ -2007,7 +2007,7 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
     }
     if( aim_amount > 0 && you.recoil > min_recoil ) {
         // If you can point shoot, you get free aim up to your point shoot amount
-        if ( you.recoil <= point_shoot_amount ) {
+        if ( you.recoil < point_shoot_amount ) {
             you.recoil = std::max( min_recoil, you.recoil - point_shoot_amount );
         } else {
             // Increase aim at the cost of moves
@@ -4851,6 +4851,10 @@ double ranged::get_point_shoot_amount( const Character &who, const item &gun )
 
 bool ranged::is_amateur( const Character &who, const item &gun )
 {    
+    if( !gun.is_gun() ) {
+        return false;
+    }
+    
     skill_id gun_skill = gun.gun_skill();
     bool amateur = true;
     // If you have 1 or above for the specific gun skill you don't get the penalty
