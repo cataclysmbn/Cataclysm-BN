@@ -56,6 +56,7 @@
 #include "map/map.h"
 #include "map/map_selector.h"
 #include "map/mapdata.h"
+#include "map_memory.h"
 #include "mapsharing.h"
 #include "messages.h"
 #include "monster.h"
@@ -144,6 +145,22 @@ static const enchantment_value_id ench_val_REACH_RANGE_UNARMED( "REACH_RANGE_UNA
 
 namespace
 {
+
+auto is_terrain_memory( const memorized_terrain_tile &memory ) -> bool
+{
+    return !memory.tile.empty() && ter_str_id( memory.tile ).is_valid();
+}
+
+auto has_memorized_terrain_at( avatar &you, map &/*here*/, const tripoint_bub_ms &target ) -> bool
+{
+    if( !you.should_show_map_memory() ) {
+        return false;
+    }
+
+    const auto abs_target = bub_to_abs( target );
+    return is_terrain_memory( you.get_terrain_tile( abs_target ) ) ||
+           is_terrain_memory( you.get_memorized_tile( abs_target ) );
+}
 
 const flag_id flag_NO_GRAB( "NO_GRAB" );
 
@@ -672,12 +689,13 @@ inline static void pldrive( point_rel_veh d )
     return pldrive( tripoint_rel_veh( d, 0 ) );
 }
 
-static void open()
+static auto open( const std::optional<tripoint_bub_ms> &target = std::nullopt ) -> void
 {
     player &u = g->u;
-    const std::optional<tripoint_bub_ms> openp_ = choose_adjacent_highlight( _( "Open where?" ),
-            pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
-            ACTION_OPEN, false );
+    const std::optional<tripoint_bub_ms> openp_ = target ? target :
+            choose_adjacent_highlight( _( "Open where?" ),
+                                       pgettext( "no door, gate, curtain, etc.", "There is nothing that can be opened nearby." ),
+                                       ACTION_OPEN, false );
 
     if( !openp_ ) {
         return;
@@ -1916,6 +1934,10 @@ bool game::handle_action()
     input_context ctxt;
     action_id act = ACTION_NULL;
     user_turn current_turn;
+    // If performing an action with right mouse button, co-ordinates
+    // of location clicked.
+    std::optional<tripoint_bub_ms> mouse_target;
+
     {
         ZoneScopedN( "handle_action_get_action" );
         // Check if we have an auto-move destination
@@ -1925,6 +1947,8 @@ bool game::handle_action()
             if( act == ACTION_NULL ) {
                 add_msg( m_info, _( "Auto-move canceled" ) );
                 u.clear_destination();
+                previewed_right_click_action_.reset();
+                queued_right_click_action_.reset();
                 return false;
             }
         } else if( u.has_destination_activity() ) {
@@ -1932,6 +1956,8 @@ bool game::handle_action()
             // starts destination activity after the player successfully reached his destination
             u.start_destination_activity();
             return false;
+        } else if( try_get_queued_right_click_action( act, mouse_target ) ) {
+            // Queued right-click walk-to interaction reached its destination.
         } else {
             ZoneScopedN( "handle_action_get_player_input" );
             // No auto-move, ask player for input
@@ -1947,10 +1973,6 @@ bool game::handle_action()
                                     local_vehicle_in_control ? player_vehicle : nullptr;
     const auto veh_ctrl = !u.is_dead_state() && ( local_vehicle_in_control ||
                           remote_vehicle != nullptr );
-
-    // If performing an action with right mouse button, co-ordinates
-    // of location clicked.
-    std::optional<tripoint_bub_ms> mouse_target;
 
     if( uquit == QUIT_WATCH && action == "QUIT" ) {
         uquit = QUIT_DIED;
@@ -1973,6 +1995,8 @@ bool game::handle_action()
             // No auto-move actions have or can be set at this point.
             u.clear_destination();
             destination_preview.clear();
+            previewed_right_click_action_.reset();
+            queued_right_click_action_.reset();
             act = handle_main_menu();
             if( act == ACTION_NULL ) {
                 return false;
@@ -1986,6 +2010,8 @@ bool game::handle_action()
             // No auto-move actions have or can be set at this point.
             u.clear_destination();
             destination_preview.clear();
+            previewed_right_click_action_.reset();
+            queued_right_click_action_.reset();
             act = handle_action_menu();
             if( act == ACTION_NULL ) {
                 return false;
@@ -2000,6 +2026,8 @@ bool game::handle_action()
         if( act == ACTION_KEYBINDINGS ) {
             u.clear_destination();
             destination_preview.clear();
+            previewed_right_click_action_.reset();
+            queued_right_click_action_.reset();
             act = ctxt.display_menu( true );
             if( act == ACTION_NULL ) {
                 return false;
@@ -2010,7 +2038,7 @@ bool game::handle_action()
             user_action_counter += 1;
         }
 
-        if( act == ACTION_SELECT || act == ACTION_SEC_SELECT ) {
+        if( act == ACTION_SELECT || act == ACTION_SEC_SELECT || act == ACTION_DESCRIBE_TILE ) {
             // Mouse button click
             if( veh_ctrl ) {
                 // No mouse use in vehicle
@@ -2026,11 +2054,20 @@ bool game::handle_action()
             if( !mouse_pos ) {
                 return false;
             }
+
+            const auto sees_mouse_pos = u.sees( *mouse_pos );
+            const auto can_click_memorized_terrain = has_memorized_terrain_at( u, m, *mouse_pos );
+            if( !sees_mouse_pos && !can_click_memorized_terrain ) {
+                // Not clicked in visible or remembered terrain.
+                return false;
+            }
             mouse_target = mouse_pos;
 
             if( act == ACTION_SELECT ) {
-                if( !avatar_knows_travel_destination( u, *mouse_target ) ) {
-                    return false;
+                if( previewed_right_click_action_ ) {
+                    destination_preview.clear();
+                    previewed_right_click_action_.reset();
+                    invalidate_main_ui_adaptor();
                 }
                 // Note: The following has the potential side effect of
                 // setting auto-move destination state in addition to setting
@@ -2038,13 +2075,27 @@ bool game::handle_action()
                 if( !try_get_left_click_action( act, *mouse_target ) ) {
                     return false;
                 }
+            } else if( act == ACTION_DESCRIBE_TILE && !sees_mouse_pos ) {
+                act = ACTION_DESCRIBE_TILE;
             } else if( act == ACTION_SEC_SELECT ) {
-                if( !u.sees( *mouse_target ) ) {
-                    // Right-click actions examine or target current terrain and creatures.
-                    return false;
-                }
-                if( !try_get_right_click_action( act, *mouse_target ) ) {
-                    return false;
+                if( mouse_target->xy() == u.bub_pos().xy() ) {
+                    u.clear_destination();
+                    destination_preview.clear();
+                    previewed_right_click_action_.reset();
+                    queued_right_click_action_.reset();
+                    mouse_target = std::nullopt;
+                    act = handle_action_menu();
+                    if( act == ACTION_NULL ) {
+                        return false;
+                    }
+                } else {
+                    if( !sees_mouse_pos ) {
+                        // Right-click actions examine or target current terrain and creatures.
+                        return false;
+                    }
+                    if( !try_get_right_click_action( act, *mouse_target ) ) {
+                        return false;
+                    }
                 }
             }
         } else if( act != ACTION_TIMEOUT ) {
@@ -2056,6 +2107,8 @@ bool game::handle_action()
             // timeout delay.
             u.clear_destination();
             destination_preview.clear();
+            previewed_right_click_action_.reset();
+            queued_right_click_action_.reset();
         }
     }
 
@@ -2148,6 +2201,11 @@ bool game::handle_action()
             case ACTION_NULL:
             case NUM_ACTIONS:
                 break; // dummy entries
+            case ACTION_DESCRIBE_TILE:
+                if( mouse_target ) {
+                    describe_tile( *mouse_target );
+                }
+                break;
             case ACTION_ACTIONMENU:
             case ACTION_MAIN_MENU:
             case ACTION_KEYBINDINGS:
@@ -2391,10 +2449,10 @@ bool game::handle_action()
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
-                        open();
+                        open( mouse_target );
                     }
                 } else {
-                    open();
+                    open( mouse_target );
                 }
                 break;
 
@@ -3169,7 +3227,11 @@ bool game::handle_action()
                 break;
 
             case ACTION_AUTOATTACK:
-                avatar_action::autoattack( u, m );
+                if( mouse_target ) {
+                    mouse_attack( *mouse_target );
+                } else {
+                    avatar_action::autoattack( u, m );
+                }
                 break;
 
             case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
