@@ -2000,10 +2000,20 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
 static void do_aim( avatar &you, const item &relevant, const double min_recoil )
 {
     const double aim_amount = ranged::aim_per_move( you, relevant, you.recoil );
+    const double point_shoot_amount = ranged::get_point_shoot_amount( you, relevant );
+    const bool is_amateur = ranged::is_amateur( you, relevant );
+    if ( is_amateur ) {
+        min_recoil = min_recoil * 2;
+    }
     if( aim_amount > 0 && you.recoil > min_recoil ) {
-        // Increase aim at the cost of moves
-        you.mod_moves( -1 );
-        you.recoil = std::max( min_recoil, you.recoil - aim_amount );
+        // If you can point shoot, you get free aim up to your point shoot amount
+        if ( you.recoil <= point_shoot_amount ) {
+            you.recoil = std::max( min_recoil, you.recoil - point_shoot_amount );
+        } else {
+            // Increase aim at the cost of moves
+            you.mod_moves( -1 );
+            you.recoil = std::max( min_recoil, you.recoil - aim_amount );
+        }
     } else {
         // If aim is already maxed, we're just waiting, so pass the turn.
         you.set_moves( 0 );
@@ -4818,6 +4828,40 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
     // Never improve by more than the currently used sights permit.
     return std::min( aim_speed, recoil - limit );
+}
+
+double ranged::get_point_shoot_amount( const Character &who, const item &gun )
+{
+    if( !gun.is_gun() ) {
+        return 0.0;
+    }
+    
+    skill_id gun_skill = gun.gun_skill();
+    double point_shoot_amount = 0.0;
+    // If you have 6 or above for the specific gun skill
+    if ( who.get_skill_level( gun_skill ) >= 6 ) {
+        point_shoot_amount += ( who.get_skill_level( gun_skill ) - 5 ) * 100;
+    }
+    // If you have 6 or above for marksmanship skill in general
+    if ( who.get_skill_level( skill_gun ) >= 6 ) {
+        point_shoot_amount += ( who.get_skill_level( skill_gun) - 5 ) * 50;
+    }
+    return point_shoot_amount;
+}
+
+bool ranged::is_amateur( const Character &who, const item &gun )
+{    
+    skill_id gun_skill = gun.gun_skill();
+    bool amateur = true;
+    // If you have 1 or above for the specific gun skill you don't get the penalty
+    if ( who.get_skill_level( gun_skill ) >= 1 ) {
+        amateur = false;
+    }
+    // If you have 4 or above for marksmanship skill in general you don't get the penalty
+    if ( who.get_skill_level( skill_gun ) >= 4 ) {
+        amateur = false
+    }
+    return amateur;
 }
 
 std::optional<shape_factory> ranged::get_shape_factory( const item &gun )
