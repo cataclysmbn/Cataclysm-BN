@@ -2001,10 +2001,6 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
 {
     const double aim_amount = ranged::aim_per_move( you, relevant, you.recoil );
     const double point_shoot_amount = ranged::get_point_shoot_amount( you, relevant );
-    const bool is_amateur = ranged::is_amateur( you, relevant );
-    if( is_amateur ) {
-        min_recoil = min_recoil * 2;
-    }
     if( aim_amount > 0 && you.recoil > min_recoil ) {
         // If you can point shoot, you get free aim up to your point shoot amount
         if( you.recoil < point_shoot_amount ) {
@@ -3957,7 +3953,11 @@ bool target_ui::action_aim()
 {
     set_last_target();
     apply_aim_turning_penalty();
-    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
+    double min_recoil = ranged::calculate_aim_cap( *you, dst );
+    const bool is_amateur = ranged::is_amateur( *you, *relevant );
+    if( is_amateur ) {
+        min_recoil *= 2;
+    }
     for( int i = 0; i < 10; ++i ) {
         do_aim( *you, *relevant, min_recoil );
     }
