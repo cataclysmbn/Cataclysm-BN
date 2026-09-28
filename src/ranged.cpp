@@ -3953,11 +3953,7 @@ bool target_ui::action_aim()
 {
     set_last_target();
     apply_aim_turning_penalty();
-    double min_recoil = ranged::calculate_aim_cap( *you, dst );
-    const bool is_amateur = ranged::is_amateur( *you, *relevant );
-    if( is_amateur ) {
-        min_recoil *= 5;
-    }
+    const double min_recoil = ranged::calculate_aim_cap( *you, dst );
     for( int i = 0; i < 10; ++i ) {
         do_aim( *you, *relevant, min_recoil );
     }
@@ -4840,11 +4836,11 @@ double ranged::get_point_shoot_amount( const Character &who, const item &gun )
     double point_shoot_amount = 0.0;
     // If you have 6 or above for the specific gun skill
     if( who.get_skill_level( gun_skill ) >= 6 ) {
-        point_shoot_amount += ( who.get_skill_level( gun_skill ) - 5 ) * 100;
+        point_shoot_amount += ( ( who.get_skill_level( gun_skill ) - 5 ) * 100 );
     }
     // If you have 6 or above for marksmanship skill in general
     if( who.get_skill_level( skill_gun ) >= 6 ) {
-        point_shoot_amount += ( who.get_skill_level( skill_gun ) - 5 ) * 50;
+        point_shoot_amount += ( ( who.get_skill_level( skill_gun ) - 5 ) * 50 );
     }
     return point_shoot_amount;
 }
