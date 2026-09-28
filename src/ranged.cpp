@@ -2722,7 +2722,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     }
 
     // Having no skill at all makes dispersion much worse
-    if( ranged:is_amateur( who, obj ) ) {
+    if( ranged::is_amateur( who, obj ) ) {
         dispersion.add_multiplier( 2 );
     }
     
