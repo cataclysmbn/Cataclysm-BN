@@ -4863,7 +4863,7 @@ bool ranged::is_amateur( const Character &who, const item &gun )
     }
     // If you have 4 or above for marksmanship skill in general you don't get the penalty
     if( who.get_skill_level( skill_gun ) >= 4 ) {
-        amateur = false
+        amateur = false;
     }
     return amateur;
 }
