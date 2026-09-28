@@ -909,6 +909,14 @@ int Character::sight_range( int light_level ) const
     return clamp( range, 1, sight_max );
 }
 
+// This is the range that players (and NPCs) can spot camouflaged enemies from
+auto Character::spotting_range() const -> int
+{
+    int spotting_range = get_per();
+    spotting_range += get_skill_level( skill_survival ) / 2;
+    return spotting_range;
+}
+
 auto Character::unimpaired_range() const -> int
 {
     // Cap at g_max_view_distance (runtime bubble radius) so castLight's
