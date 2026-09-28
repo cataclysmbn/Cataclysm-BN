@@ -402,6 +402,12 @@ static const enchantment_value_id ench_val_WEIGHTMOD_BODY( "WEIGHTMOD_BODY" );
 static const enchantment_value_id ench_val_WEIGHTMOD_INVENTORY( "WEIGHTMOD_INVENTORY" );
 static const enchantment_value_id ench_val_WEIGHTMOD_BIONICS( "WEIGHTMOD_BIONICS" );
 static const enchantment_value_id ench_val_WEIGHTMOD_WEAPON( "WEIGHTMOD_WEAPON" );
+
+static const enchantment_value_id ench_val_STRENGTH_PERMANENT( "STRENGTH_PERMANENT" );
+static const enchantment_value_id ench_val_DEXTERITY_PERMANENT( "DEXTERITY_PERMANENT" );
+static const enchantment_value_id ench_val_INTELLIGENCE_PERMANENT( "INTELLIGENCE_PERMANENT" );
+static const enchantment_value_id ench_val_PERCEPTION_PERMANENT( "PERCEPTION_PERMANENT" );
+
 namespace io
 {
 
@@ -5018,19 +5024,19 @@ int Character::get_int() const
 
 int Character::get_str_base() const
 {
-    return str_max;
+    return str_max + bonus_from_enchantments( str_max, ench_val_STRENGTH_PERMANENT, true );
 }
 int Character::get_dex_base() const
 {
-    return dex_max;
+    return dex_max + bonus_from_enchantments( dex_max, ench_val_DEXTERITY_PERMANENT, true );
 }
 int Character::get_per_base() const
 {
-    return per_max;
+    return per_max + bonus_from_enchantments( per_max, ench_val_PERCEPTION_PERMANENT, true );
 }
 int Character::get_int_base() const
 {
-    return int_max;
+    return int_max + bonus_from_enchantments( int_max, ench_val_INTELLIGENCE_PERMANENT, true );
 }
 
 int Character::get_str_bonus() const
@@ -12222,6 +12228,7 @@ bool Character::sees( const Creature &critter ) const
 {
     // This handles only the player/npc specific stuff (monsters don't have traits or bionics).
     const int dist = rl_dist( bub_pos(), critter.bub_pos() );
+    if( dist < clairvoyance() ) { return true; }
     if( bub_pos().z() == critter.bub_pos().z() &&
         dist <= bonus_from_enchantments( 0, ench_val_GROUNDED_CREATURE_SIGHT ) &&
         !critter.has_flag( MF_FLIES ) ) {

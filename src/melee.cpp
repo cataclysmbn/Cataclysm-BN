@@ -2580,6 +2580,10 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         }
     }
 
+    if( technique.stun_dur > 0 ) {
+        t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
+    }
+
     if( technique.side_switch ) {
         const auto b = t.bub_pos();
         int newx;
@@ -2643,9 +2647,6 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
             }
         }
 
-        if( technique.stun_dur > 0 && !technique.powerful_knockback ) {
-            t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
-        }
         if( t.bub_pos() != prev_pos && can_be_downed_after_knockback( t ) ) {
             if( technique.controlled_knockback ) {
                 apply_thrown_creature_downed_effect( t );

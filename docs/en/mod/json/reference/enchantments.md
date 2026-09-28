@@ -382,6 +382,22 @@ Perception stat. `base_value` here is the base stat value. The final value canno
 
 Intelligence stat. `base_value` here is the base stat value. The final value cannot go below 0.
 
+##### STRENGTH_PERMANENT
+
+Affects base strength stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### DEXTERITY_PERMANENT
+
+Affects base dexterity stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### PERCEPTION_PERMANENET
+
+Affects base perception stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
+##### INTELLIGENCE_PERMANENT
+
+Affects base intelligence stat. `base_value` here is the base stat value. The final value cannot go below 0.
+
 ##### HEALTH_POINTS
 
 Hit points stat. `base_value` here is the base health value, The final value cannot go below 1.
