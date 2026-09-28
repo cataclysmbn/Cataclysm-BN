@@ -24,4 +24,6 @@ function(enable_rot_coverage)
     target_link_options(cataclysm-bn-tiles PRIVATE ${rot_link_options})
 endfunction()
 
-cmake_language(DEFER CALL enable_rot_coverage)
+if(PROJECT_IS_TOP_LEVEL)
+    cmake_language(DEFER CALL enable_rot_coverage)
+endif()
