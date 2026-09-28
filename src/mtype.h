@@ -164,7 +164,7 @@ enum m_flag : int {
     MF_PUSH_MON,            // Monsters that can push creatures out of their way
     MF_PUSH_VEH,            // Monsters that can push vehicles out of their way
     MF_NIGHT_INVISIBILITY,  // Monsters that are invisible in poor light conditions
-    MF_CAMOUFLAGE,          // Monsters that are hard to see in all light conditions
+    MF_CAMOUFLAGE,          // Monsters that are invisible at a range greater than the player's current perception + half of survival skill rounded down.
     MF_REVIVES_HEALTHY,     // When revived, this monster has full hitpoints and speed
     MF_NO_NECRO,            // This monster can't be revived by necros. It will still rise on its own.
     MF_AVOID_DANGER_1,      // This monster will path around some dangers instead of through them.
