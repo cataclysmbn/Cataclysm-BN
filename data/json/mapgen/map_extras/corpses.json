@@ -103,7 +103,12 @@
       "place_nested": [
         { "chunks": [ [ "lost_squad_chunk_bodies", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 2, 6 ] },
         {
-          "chunks": [ [ "lost_squad_chunk_zombies", 40 ], [ "lost_squad_chunk_robot", 40 ], [ "lost_squad_chunk_portal", 20 ] ],
+          "chunks": [
+            [ "lost_squad_chunk_zombies", 35 ],
+            [ "lost_squad_chunk_robot", 35 ],
+            [ "lost_squad_chunk_portal", 20 ],
+            [ "lost_squad_chunk_camo_zombies", 1000000 ]
+          ],
           "x": [ 1, 22 ],
           "y": [ 1, 22 ]
         }
@@ -149,6 +154,15 @@
     "method": "json",
     "nested_mapgen_id": "lost_squad_chunk_portal",
     "object": { "mapgensize": [ 1, 1 ], "set": [ { "point": "trap", "id": "tr_portal", "x": 0, "y": 0 } ] }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lost_squad_chunk_camo_zombies",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "place_monster": [ { "monster": "mon_zombie_soldier_camo_2", "chance": 100, "x": 0, "y": 0, "repeat": [ 2, 3 ] } ]
+    }
   },
   {
     "type": "mapgen",
