@@ -8960,6 +8960,9 @@ void Character::wake_up()
         remove_effect( effect_sleep );
         // Wake up might be called more than once per turn, but we only need to recalc after removing sleep
         recalc_sight_limits();
+        cata::run_hooks( "on_character_wake_up", [ &, this]( auto & params ) {
+            params["char"] = this;
+        } );
     }
 }
 
