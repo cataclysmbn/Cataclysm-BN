@@ -684,7 +684,7 @@
     "id": "mon_zombie_soldier_camo_2",
     "type": "MONSTER",
     "name": { "str": "camouflaged hunter zombie" },
-    "description": "This agile zombie was once a soldier, being covered in tangles of camouflage material that seem to change color and morph to match it's background, making it nearly impossible to spot at long distances.",
+    "description": "This agile zombie was once a soldier, being covered in tangles of camouflage material that have grown into its skin and change color to match it's background, making it nearly impossible to spot at long distances.",
     "default_faction": "zombie",
     "bodytype": "human",
     "categories": [ "CLASSIC" ],
