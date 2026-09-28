@@ -455,6 +455,8 @@ class Character : public Creature, public location_visitable<Character>
         tripoint_abs_ms abs_pos() const override;
         /** Returns the player's sight range */
         int sight_range( int light_level ) const override;
+        /** Returns the range at which the player can spot camouflaged creatures */
+        int  spotting_range() const;
         /** Returns the player maximum vision range factoring in mutations, diseases, and other effects */
         int  unimpaired_range() const;
         /** Returns true if overmap tile is within player line-of-sight */
