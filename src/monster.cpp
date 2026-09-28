@@ -1552,6 +1552,11 @@ int monster::sight_range( const int light_level ) const
     return range;
 }
 
+int monster::spotting_range() const
+{
+    return std::max( type->vision_night / 8, type->vision_day / 8 );
+}
+
 bool monster::made_of( const material_id &m ) const
 {
     return type->made_of( m );
