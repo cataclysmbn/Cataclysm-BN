@@ -1,12 +1,16 @@
+#include "avatar.h"
 #include "avatar_action.h"
 #include "catch/catch.hpp"
 #include "character_martial_arts.h"
 #include "coordinates.h"
 #include "creature.h"
+#include "damage.h"
 #include "game.h"
 #include "game_constants.h"
 #include "item.h"
 #include "itype.h"
+#include "map_helpers.h"
+#include "martialarts.h"
 #include "melee.h"
 #include "monattack.h"
 #include "monster.h"
@@ -223,6 +227,39 @@ TEST_CASE("manual technique prompt includes mutation attacks", "[melee]") {
     CHECK(std::ranges::any_of(mutation_attacks, [&fangs](const auto& entry) {
         return entry.name == fangs.obj().name() && entry.available;
     }));
+}
+
+TEST_CASE("stunning techniques stun regardless of knockback", "[melee][martial_arts]") {
+    clear_all_state();
+
+    const auto effect_stunned = efftype_id("stunned");
+    auto& dude = g->u;
+    dude.setpos(dude_pos);
+
+    const auto check_stuns = [&dude, &effect_stunned](const matec_id& tec) {
+        auto& target = spawn_test_monster("mon_zombie", dude_pos + tripoint_rel_ms::east());
+        REQUIRE(tec->stun_dur > 0);
+        REQUIRE_FALSE(target.has_effect(effect_stunned));
+
+        auto di = damage_instance();
+        auto move_cost = 100;
+        dude.perform_technique(tec.obj(), target, di, move_cost);
+
+        CHECK(target.has_effect(effect_stunned));
+    };
+
+    SECTION("technique without knockback") {
+        const auto tec = matec_id("tec_karate_precise");
+        REQUIRE(tec->knockback_dist == 0);
+        check_stuns(tec);
+    }
+
+    SECTION("technique with powerful knockback") {
+        const auto tec = matec_id("tec_crane_precise");
+        REQUIRE(tec->knockback_dist > 0);
+        REQUIRE(tec->powerful_knockback);
+        check_stuns(tec);
+    }
 }
 
 TEST_CASE("Character attacking a manhack", "[.melee]") {

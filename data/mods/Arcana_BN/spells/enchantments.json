@@ -24,14 +24,14 @@
     "id": "ENCH_DRAGONBLOOD_SCALY_WINGS",
     "condition": "ALWAYS",
     "//": "Only here for consistency with below stat mods.",
-    "values": [ { "value": "STRENGTH", "add": 2 }, { "value": "DEXTERITY", "add": -1 } ]
+    "values": [ { "value": "STRENGTH_PERMANENT", "add": 2 }, { "value": "DEXTERITY_PERMANENT", "add": -1 } ]
   },
   {
     "type": "enchantment",
     "id": "ENCH_DRAGONBLOOD_DRACONIC_WINGS",
     "condition": "ALWAYS",
     "//": "Moved here instead of passive stat buffs in the mutation as active mutations act weird.",
-    "values": [ { "value": "STRENGTH", "add": 5 }, { "value": "DEXTERITY", "add": -2 } ],
+    "values": [ { "value": "STRENGTH_PERMANENT", "add": 5 }, { "value": "DEXTERITY_PERMANENT", "add": -2 } ],
     "ench_effects": [ { "effect": "feather_fall_dragonblood", "intensity": 1 } ]
   },
   {
