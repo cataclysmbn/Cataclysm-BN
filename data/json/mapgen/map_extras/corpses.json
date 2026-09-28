@@ -107,7 +107,7 @@
             [ "lost_squad_chunk_zombies", 35 ],
             [ "lost_squad_chunk_robot", 35 ],
             [ "lost_squad_chunk_portal", 20 ],
-            [ "lost_squad_chunk_camo_zombies", 1000000 ]
+            [ "lost_squad_chunk_camo_zombies", 10 ]
           ],
           "x": [ 1, 22 ],
           "y": [ 1, 22 ]
