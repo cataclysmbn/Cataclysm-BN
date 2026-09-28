@@ -677,7 +677,7 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "MF_CAMOUFLAGE"
+      "CAMOUFLAGE"
     ]
   },
   {
@@ -734,7 +734,7 @@
       "NO_BREATHE",
       "REVIVES",
       "PUSH_MON",
-      "MF_CAMOUFLAGE"
+      "CAMOUFLAGE"
     ]
   }
 ]
