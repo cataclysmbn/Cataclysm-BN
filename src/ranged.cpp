@@ -2725,7 +2725,7 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     if( ranged::is_amateur( who, obj ) ) {
         dispersion.add_multiplier( 2 );
     }
-    
+
     // If using a bow you lack the strength for, increase based on how much weaker shooter is.
     dispersion.add_multiplier( 1 / ranged::str_draw_dispersion_modifier( obj, who ) );
 
