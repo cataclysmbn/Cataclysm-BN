@@ -1264,6 +1264,7 @@ void lua_state_deleter::operator()( lua_state *state ) const
     lua_itrap_actors.clear();
     monster_callback_actors.clear();
     lua_ispell_actors.clear();
+    recipe_callback_actors.clear();
     get_hook_cache().clear();
     delete state;
 }
