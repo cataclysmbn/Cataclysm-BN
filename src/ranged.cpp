@@ -2002,12 +2002,12 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
     const double aim_amount = ranged::aim_per_move( you, relevant, you.recoil );
     const double point_shoot_amount = ranged::get_point_shoot_amount( you, relevant );
     const bool is_amateur = ranged::is_amateur( you, relevant );
-    if ( is_amateur ) {
+    if( is_amateur ) {
         min_recoil = min_recoil * 2;
     }
     if( aim_amount > 0 && you.recoil > min_recoil ) {
         // If you can point shoot, you get free aim up to your point shoot amount
-        if ( you.recoil < point_shoot_amount ) {
+        if( you.recoil < point_shoot_amount ) {
             you.recoil = std::max( min_recoil, you.recoil - point_shoot_amount );
         } else {
             // Increase aim at the cost of moves
@@ -4835,34 +4835,34 @@ double ranged::get_point_shoot_amount( const Character &who, const item &gun )
     if( !gun.is_gun() ) {
         return 0.0;
     }
-    
+
     skill_id gun_skill = gun.gun_skill();
     double point_shoot_amount = 0.0;
     // If you have 6 or above for the specific gun skill
-    if ( who.get_skill_level( gun_skill ) >= 6 ) {
+    if( who.get_skill_level( gun_skill ) >= 6 ) {
         point_shoot_amount += ( who.get_skill_level( gun_skill ) - 5 ) * 100;
     }
     // If you have 6 or above for marksmanship skill in general
-    if ( who.get_skill_level( skill_gun ) >= 6 ) {
-        point_shoot_amount += ( who.get_skill_level( skill_gun) - 5 ) * 50;
+    if( who.get_skill_level( skill_gun ) >= 6 ) {
+        point_shoot_amount += ( who.get_skill_level( skill_gun ) - 5 ) * 50;
     }
     return point_shoot_amount;
 }
 
 bool ranged::is_amateur( const Character &who, const item &gun )
-{    
+{
     if( !gun.is_gun() ) {
         return false;
     }
-    
+
     skill_id gun_skill = gun.gun_skill();
     bool amateur = true;
     // If you have 1 or above for the specific gun skill you don't get the penalty
-    if ( who.get_skill_level( gun_skill ) >= 1 ) {
+    if( who.get_skill_level( gun_skill ) >= 1 ) {
         amateur = false;
     }
     // If you have 4 or above for marksmanship skill in general you don't get the penalty
-    if ( who.get_skill_level( skill_gun ) >= 4 ) {
+    if( who.get_skill_level( skill_gun ) >= 4 ) {
         amateur = false
     }
     return amateur;
