@@ -161,6 +161,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_GROUP_MORALE: return "GROUP_MORALE";
         case MF_INTERIOR_AMMO: return "INTERIOR_AMMO";
         case MF_NIGHT_INVISIBILITY: return "NIGHT_INVISIBILITY";
+        case MF_CAMOUFLAGE: return "MF_CAMOUFLAGE";
         case MF_REVIVES_HEALTHY: return "REVIVES_HEALTHY";
         case MF_NO_NECRO: return "NO_NECRO";
         case MF_PACIFIST: return "PACIFIST";
