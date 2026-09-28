@@ -167,6 +167,12 @@ double aim_multiplier_from_volume( const item &gun );
 /** Calculates aim improvement per move spent aiming at a given @param recoil */
 double aim_per_move( const Character &who, const item &gun, double recoil );
 
+/** Calculates if and how much you can point shoot */
+double get_point_shoot_amount( const Character &who, const item &gun );
+
+/** Calculates if you're an 'amateur' with that weapon, which doubles your minimum recoil */
+bool is_amateur( const Character &who, const item &gun );
+
 /** Get maximum recoil penalty due to vehicle motion */
 double recoil_vehicle( const Character &who );
 
