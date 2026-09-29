@@ -4823,7 +4823,7 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // so applying the max value once more.
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
     // Bypass the sight limit if the player can point shoot.
-    if ( can_point_shoot( who, gun ) ) {
+    if( can_point_shoot( who, gun ) ) {
         return aim_speed;
     }
     // Never improve by more than the currently used sights permit.
