@@ -4770,26 +4770,6 @@ double ranged::aim_multiplier_from_volume( const item &gun )
     return aim_mult;
 }
 
-
-double ranged::get_point_shoot_amount( const Character &who, const item &gun )
-{
-    if( !gun.is_gun() ) {
-        return 0.0;
-    }
-
-    skill_id gun_skill = gun.gun_skill();
-    double point_shoot_amount = 0.0;
-    // If you have 6 or above for the specific gun skill
-    if( who.get_skill_level( gun_skill ) >= 6 ) {
-        point_shoot_amount += ( ( who.get_skill_level( gun_skill ) - 5 ) * 100 );
-    }
-    // If you have 6 or above for marksmanship skill in general
-    if( who.get_skill_level( skill_gun ) >= 6 ) {
-        point_shoot_amount += ( ( who.get_skill_level( skill_gun ) - 5 ) * 50 );
-    }
-    return point_shoot_amount;
-}
-
 double ranged::aim_per_move( const Character &who, const item &gun, double recoil )
 {
     if( !gun.is_gun() ) {
@@ -4802,11 +4782,6 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     if( sight_speed_modifier == INT_MIN ) {
         // No suitable sights (already at maximum aim).
         return 0;
-    }
-
-    double point_shoot_amount = get_point_shoot_amount( who, gun );
-    if( point_shoot_amount > 0.0 && recoil >= MAX_RECOIL ) {
-        return point_shoot_amount;
     }
 
     // Overall strategy for determining aim speed is to sum the factors that contribute to it,
@@ -4847,6 +4822,10 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
     // so applying the max value once more.
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
+    // Bypass the sight limit if the player can point shoot.
+    if (can_point_shoot( who, gun )) {
+        return aim_speed;
+    }
     // Never improve by more than the currently used sights permit.
     return std::min( aim_speed, recoil - limit );
 }
@@ -4868,6 +4847,25 @@ bool ranged::is_amateur( const Character &who, const item &gun )
         amateur = false;
     }
     return amateur;
+}
+
+bool ranged::can_point_shoot( const Character &who, const item &gun )
+{
+    if( !gun.is_gun() ) {
+        return false;
+    }
+
+    skill_id gun_skill = gun.gun_skill();
+    bool can_point_shoot = false;
+    // If you have 6 or above for the specific gun skill
+    if( who.get_skill_level( gun_skill ) >= 6 ) {
+        can_point_shoot = true;
+    }
+    // If you have 8 or above for marksmanship skill in general
+    if( who.get_skill_level( skill_gun ) >= 8 ) {
+        can_point_shoot = true;
+    }
+    return can_point_shoot;
 }
 
 std::optional<shape_factory> ranged::get_shape_factory( const item &gun )
