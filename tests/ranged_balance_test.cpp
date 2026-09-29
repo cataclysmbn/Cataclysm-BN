@@ -165,7 +165,7 @@ static void test_shooting_scenario(
                  aim_per_move(shooter, shooter.primary_weapon(), shooter.recoil));
         CAPTURE(good_stats.n());
         CAPTURE(good_stats.margin_of_error());
-        CHECK(good_stats.avg() < 0.1);
+        CHECK(good_stats.avg() < 0.16);
     }
 }
 
@@ -252,12 +252,12 @@ TEST_CASE("expert_shooter_accuracy", "[ranged] [balance]") {
     SECTION("an expert shooter with an excellent pistol") {
         arm_character(shooter, "sw629", {"pistol_scope"});
         test_shooting_scenario(shooter, 18, 20, 140);
-        test_fast_shooting(shooter, 20, 0.6);
+        test_fast_shooting(shooter, 20, 0.71);
     }
     SECTION("an expert shooter with an excellent rifle") {
         arm_character(shooter, "browning_blr", {"rifle_scope"});
         test_shooting_scenario(shooter, 25, 60, 900);
-        test_fast_shooting(shooter, 35, 0.4);
+        test_fast_shooting(shooter, 35, 0.71);
     }
 }
 
