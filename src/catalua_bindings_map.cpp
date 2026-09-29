@@ -375,7 +375,9 @@ void cata::detail::reg_map( sol::state &lua )
             return g->find_npc( char_id );
         } );
 
-        DOC( "Creates a new item(s) at a position on the map." );
+        DOC( "Creates a new item at a position on the map." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         DOC( "Returns nil. Use gapi.create_item and Map:add_item to modify before placement." );
         luna::set_fx( ut, "create_item_at", []( map & m, const tripoint_bub_ms & p, const itype_id & itype,
         int count ) -> void {
@@ -605,7 +607,9 @@ void cata::detail::reg_map( sol::state &lua )
             return g->find_npc( char_id );
         } );
 
-        DOC( "Creates a new item(s) at a position on the mapgen surface." );
+        DOC( "Creates a new item at a position on the mapgen surface." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         luna::set_fx( ut, "create_item_at", []( mapgen_constructor & m, const point_omt_ms & p,
         const itype_id & itype, int count ) -> void {
             auto new_item = item::spawn( itype, calendar::turn, count );
