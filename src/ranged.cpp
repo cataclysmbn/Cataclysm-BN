@@ -4812,6 +4812,8 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // If the player can point shoot give them an extremely high multiplier while recoil is above half of max.
     if( get_point_shoot_modifier( who, gun ) > 0 && recoil > ( MAX_RECOIL / 2 ) ) {
         aim_speed *= get_point_shoot_modifier( who, gun );
+        // Make sure the aim speed can't exceed 75% of max recoil.
+        aim_speed = std::min( aim_speed, MAX_RECOIL * 0.75 );
     } else {
         // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
         aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
