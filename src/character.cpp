@@ -1964,7 +1964,6 @@ void Character::force_movement_mode( character_movemode new_mode )
         // crouching and prone affect visibility
         get_map().set_seen_cache_dirty( bub_pos().z() );
     }
-    recoil = MAX_RECOIL;
     move_mode = new_mode;
 }
 

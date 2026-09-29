@@ -1607,8 +1607,8 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
             }
         }
         g->events().send<event_type::character_loses_effect>( ch->getID(), eff_id );
-        // Stand back up after knockdown.
-        if( eff_id == effect_downed ) {
+        // Stand back up after knockdown, unless we're aiming since we're busy retaliating against what knocked us over
+        if( eff_id == effect_downed && !ch->has_activity( activity_id( "ACT_AIM" ) ) ) {
             ch->force_movement_mode( CMM_WALK );
         }
     }
