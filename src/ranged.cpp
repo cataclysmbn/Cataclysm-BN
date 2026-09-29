@@ -4864,11 +4864,11 @@ double ranged::get_point_shoot_modifier( const Character &who, const item &gun )
     double point_shoot_modifier = 0;
     // If you have 6 or above for the specific gun skill
     if( who.get_skill_level( gun_skill ) >= 6 ) {
-        point_shoot_modifier += ( who.get_skill_level( gun_skill ) - 5 );
+        point_shoot_modifier += ( who.get_skill_level( gun_skill ) - 4 );
     }
     // If you have 8 or above for marksmanship skill in general
     if( who.get_skill_level( skill_gun ) >= 8 ) {
-        point_shoot_modifier += ( who.get_skill_level( gun_skill ) - 7 );
+        point_shoot_modifier += ( who.get_skill_level( skill_gun ) - 6 );
     }
     return point_shoot_modifier;
 }
