@@ -887,7 +887,7 @@ int ranged::gun_engagement_moves( const Character &who, const item &gun, int tar
     double penalty = start;
     double point_shoot_amount = ranged::get_point_shoot_amount( who, gun );
     penalty -= point_shoot_amount;
-    
+
     while( penalty > target ) {
         double adj = ranged::aim_per_move( who, gun, penalty );
         if( adj <= 0 ) {
