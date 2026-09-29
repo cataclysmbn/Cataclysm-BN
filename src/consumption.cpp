@@ -790,7 +790,7 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
     }
 
     if( !food.has_infinite_charges() &&
-        ( ( food_kcal > 0 &&
+        ( ( food_kcal > 0 && !has_active_mutation( trait_EATHEALTH ) &&
             get_stored_kcal() + stomach.get_calories() + food_kcal
             > max_stored_kcal() ) ||
           ( comest->quench > 0 && get_thirst() < comest->quench && !has_trait( trait_NO_THIRST ) ) ) ) {
