@@ -885,9 +885,7 @@ int ranged::gun_engagement_moves( const Character &who, const item &gun, int tar
 {
     int mv = 0;
     double penalty = start;
-    double point_shoot_amount = ranged::get_point_shoot_amount( who, gun );
-    penalty -= point_shoot_amount;
-
+    
     while( penalty > target ) {
         double adj = ranged::aim_per_move( who, gun, penalty );
         if( adj <= 0 ) {
@@ -4789,6 +4787,10 @@ double ranged::get_point_shoot_amount( const Character &who, const item &gun )
     if( who.get_skill_level( skill_gun ) >= 6 ) {
         point_shoot_amount += ( ( who.get_skill_level( skill_gun ) - 5 ) * 50 );
     }
+    // Check if the point shoot value exceeds the maximum recoil
+    if ( point_shoot_amount > MAX_RECOIL ) {
+        point_shoot_amount = MAX_RECOIL - 1.0;
+    }
     return point_shoot_amount;
 }
 
@@ -4804,6 +4806,12 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     if( sight_speed_modifier == INT_MIN ) {
         // No suitable sights (already at maximum aim).
         return 0;
+    }
+
+    // If the player can point shoot, make their initial aim speed equal to their point shoot value
+    double point_shoot_amount = get_point_shoot_amount( who, gun );
+    if ( point_shoot_amount > 0.0 && recoil > point_shoot_amount ) {
+        return point_shoot_amount;
     }
 
     // Overall strategy for determining aim speed is to sum the factors that contribute to it,
