@@ -16,7 +16,8 @@
     "id": "fuel_diesel",
     "items": [
       { "item": "diesel", "prob": 70, "charges-min": 950, "charges-max": 8000, "container-item": "jerrycan" },
-      { "item": "diesel", "prob": 30, "charges-min": 3850, "charges-max": 20000, "container-item": "jerrycan_big" }
+      { "item": "diesel", "prob": 30, "charges-min": 3850, "charges-max": 20000, "container-item": "jerrycan_big" },
+      [ "fuel_filter_funnel", 10 ]
     ]
   },
   {
@@ -24,7 +25,8 @@
     "id": "fuel_gasoline",
     "items": [
       { "item": "gasoline", "prob": 80, "charges-min": 450, "charges-max": 8000, "container-item": "jerrycan" },
-      { "item": "gasoline", "prob": 20, "charges-min": 2650, "charges-max": 20000, "container-item": "jerrycan_big" }
+      { "item": "gasoline", "prob": 20, "charges-min": 2650, "charges-max": 20000, "container-item": "jerrycan_big" },
+      [ "fuel_filter_funnel", 10 ]
     ]
   },
   {
@@ -35,6 +37,7 @@
       [ "wheel", 14 ],
       [ "jerrycan", 10 ],
       [ "jerrycan_big", 3 ],
+      [ "fuel_filter_funnel", 5 ],
       [ "hose", 7 ],
       [ "jumper_cable", 10 ],
       [ "sm_extinguisher", 7 ],

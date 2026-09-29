@@ -906,6 +906,11 @@ class islot_milling
         int conversion_rate_;
 };
 
+struct fluid_reaction {
+    itype_id result;
+    std::string cause;
+};
+
 struct attack_statblock {
     int to_hit = 0;
     damage_instance damage;
@@ -997,6 +1002,9 @@ struct itype {
 
         // A list of conditional names, in order of ascending priority.
         std::vector<conditional_name> conditional_names;
+
+        /** Fluid reactions: transforms the item when conditions are met (e.g. dropping on ground) */
+        std::vector<fluid_reaction> reacts_into;
 
         // What we're made of (material names). .size() == made of nothing.
         // MATERIALS WORK IN PROGRESS.

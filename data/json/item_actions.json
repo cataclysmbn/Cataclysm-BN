@@ -931,6 +931,11 @@
   },
   {
     "type": "item_action",
+    "id": "fluid_pickup",
+    "name": { "str": "Pick up liquids" }
+  },
+  {
+    "type": "item_action",
     "id": "explosion",
     "name": { "str": "Activate" }
   },

@@ -3714,7 +3714,8 @@ auto vehicle::fuel_left(const itype_id& ftype, bool recurse) const -> int {
     } else {
         fl = std::accumulate(
             parts.begin(), parts.end(), 0, [&ftype](const int& lhs, const vehicle_part& rhs) {
-                return lhs + (rhs.ammo_current() == ftype ? rhs.ammo_remaining() : 0);
+                if (rhs.ammo_current() != ftype) { return lhs; }
+                return lhs + rhs.ammo_remaining();
             });
     }
 
