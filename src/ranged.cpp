@@ -4804,12 +4804,6 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
         return 0;
     }
 
-    // If the player can point shoot, make their initial aim speed equal to their point shoot value
-    double point_shoot_amount = get_point_shoot_amount( who, gun );
-    if( point_shoot_amount > 0.0 && recoil > point_shoot_amount ) {
-        return point_shoot_amount;
-    }
-
     // Overall strategy for determining aim speed is to sum the factors that contribute to it,
     // then scale that speed by current recoil level.
     // Player capabilities make aiming faster, and aim speed slows down as it approaches 0.
