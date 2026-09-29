@@ -170,8 +170,8 @@ double aim_per_move( const Character &who, const item &gun, double recoil );
 /** Calculates if you're an 'amateur' with that weapon, which doubles your dispersion */
 bool is_amateur( const Character &who, const item &gun );
 
-/** Calculates if you can point shoot, which allows you to bypass the sight aim speed limit */
-bool can_point_shoot( const Character &who, const item &gun );
+/** Calculates if you can point shoot and what the point shoot multiplier will be */
+double get_point_shoot_modifier( const Character &who, const item &gun );
 
 /** Get maximum recoil penalty due to vehicle motion */
 double recoil_vehicle( const Character &who );
