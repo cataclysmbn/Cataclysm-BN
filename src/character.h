@@ -597,6 +597,7 @@ class Character : public Creature, public location_visitable<Character>
         character_movemode get_movement_mode() const;
 
         virtual void set_movement_mode( character_movemode mode ) = 0;
+        void force_movement_mode( character_movemode mode );
 
         /**Determine if character is susceptible to dis_type and if so apply the symptoms*/
         void expose_to_disease( diseasetype_id dis_type );
@@ -863,6 +864,8 @@ class Character : public Creature, public location_visitable<Character>
         bool is_limb_broken( const bodypart_id &limb ) const;
         /** source of truth of whether a Character can run */
         bool can_run();
+        /** source of truth of whether a Character can run */
+        void try_remove_downed( Character &c );
         /** Hurts all body parts for dam, no armor reduction */
         void hurtall( int dam, Creature *source, bool disturb = true );
         /** Harms all body parts for dam, with armor reduction. If vary > 0 damage to parts are random within vary % (1-100) */

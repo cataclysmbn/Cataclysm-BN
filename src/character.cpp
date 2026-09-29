@@ -1661,7 +1661,7 @@ bool Character::can_run()
     return ( get_stamina() > get_stamina_max() * 0.1f ) && get_working_leg_count() >= 2;
 }
 
-void static try_remove_downed( Character &c )
+void Character::try_remove_downed( Character &c )
 {
 
     /** @EFFECT_DEX increases chance to stand up when knocked down */
@@ -1954,6 +1954,18 @@ character_movemode Character::get_movement_mode() const
 bool Character::movement_mode_is( const character_movemode mode ) const
 {
     return move_mode == mode;
+}
+
+// Change movement mode without messages, normal movecost, or potential loops from calling Character::try_remove_downed
+void Character::force_movement_mode( character_movemode new_mode )
+{
+    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ||
+        move_mode == CMM_PRONE || new_mode == CMM_PRONE ) {
+        // crouching and prone affect visibility
+        get_map().set_seen_cache_dirty( bub_pos().z() );
+    }
+    recoil = MAX_RECOIL;
+    move_mode = new_mode;
 }
 
 void Character::expose_to_disease( const diseasetype_id dis_type )

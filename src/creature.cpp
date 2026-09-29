@@ -1547,6 +1547,10 @@ void Creature::add_effect( const efftype_id &eff_id, const time_duration &dur,
             if( is_player() && !type.get_apply_message().empty() ) {
                 add_msg( type.gain_game_message_type(), _( type.get_apply_message() ) );
             }
+            // Knockdown changes your stance.
+            if( eff_id == effect_downed ) {
+                ch->force_movement_mode( CMM_PRONE );
+            }
         }
         on_effect_int_change( e.get_id(), e.get_intensity(), e.get_bp() );
         // Perform any effect addition effects.
@@ -1603,6 +1607,10 @@ bool Creature::remove_effect( const efftype_id &eff_id, const bodypart_str_id &b
             }
         }
         g->events().send<event_type::character_loses_effect>( ch->getID(), eff_id );
+        // Stand back up after knockdown.
+        if( eff_id == effect_downed ) {
+            ch->force_movement_mode( CMM_WALK );
+        }
     }
 
     if( type.has_flag( flag_EFFECT_LUA_ON_REMOVED ) ) {
