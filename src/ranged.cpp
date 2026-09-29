@@ -4788,7 +4788,7 @@ double ranged::get_point_shoot_amount( const Character &who, const item &gun )
         point_shoot_amount += ( ( who.get_skill_level( skill_gun ) - 5 ) * 50 );
     }
     // Check if the point shoot value exceeds the maximum recoil
-    if ( point_shoot_amount >= recoil_total( who ) ) {
+    if( point_shoot_amount >= recoil_total( who ) ) {
         point_shoot_amount = recoil_total( who ) - 1.0;
     }
     return point_shoot_amount;
@@ -4810,7 +4810,7 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
 
     // If the player can point shoot, make their initial aim speed equal to their point shoot value
     double point_shoot_amount = get_point_shoot_amount( who, gun );
-    if ( point_shoot_amount > 0.0 && recoil > point_shoot_amount ) {
+    if( point_shoot_amount > 0.0 && recoil > point_shoot_amount ) {
         return point_shoot_amount;
     }
 
