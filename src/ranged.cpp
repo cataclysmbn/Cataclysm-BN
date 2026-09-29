@@ -4809,8 +4809,13 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // Just a raw scaling factor.
     aim_speed *= 6.5;
 
-    // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
-    aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
+    // If the player can point shoot give them an extremely high multiplier while recoil is above half of max.
+    if( get_point_shoot_modifier( who, gun ) > 0 && recoil > ( MAX_RECOIL / 2 ) ) {
+        aim_speed *= get_point_shoot_modifier;
+    } else {
+        // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
+        aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
+    }
 
     // Minimum improvement is 5MoA.  This mostly puts a cap on how long aiming for sniping takes.
     aim_speed = std::max( aim_speed, 5.0 );
@@ -4823,7 +4828,7 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // so applying the max value once more.
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
     // Bypass the sight limit if the player can point shoot.
-    if( can_point_shoot( who, gun ) ) {
+    if( get_point_shoot_modifier( who, gun ) > 0 ) {
         return aim_speed;
     }
     // Never improve by more than the currently used sights permit.
@@ -4849,23 +4854,23 @@ bool ranged::is_amateur( const Character &who, const item &gun )
     return amateur;
 }
 
-bool ranged::can_point_shoot( const Character &who, const item &gun )
+double ranged::get_point_shoot_modifier( const Character &who, const item &gun )
 {
     if( !gun.is_gun() ) {
-        return false;
+        return 0;
     }
 
     skill_id gun_skill = gun.gun_skill();
-    bool can_point_shoot = false;
+    double point_shoot_modifier = 0;
     // If you have 6 or above for the specific gun skill
     if( who.get_skill_level( gun_skill ) >= 6 ) {
-        can_point_shoot = true;
+        point_shoot_modifier += ( who.get_skill_level( gun_skill ) - 5 );
     }
     // If you have 8 or above for marksmanship skill in general
     if( who.get_skill_level( skill_gun ) >= 8 ) {
-        can_point_shoot = true;
+        point_shoot_modifier += ( who.get_skill_level( gun_skill ) - 7 );
     }
-    return can_point_shoot;
+    return point_shoot_modifier;
 }
 
 std::optional<shape_factory> ranged::get_shape_factory( const item &gun )
