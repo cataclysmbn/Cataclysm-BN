@@ -20,7 +20,7 @@
     "purifiable": false,
     "cancels": [ "STR_UP" ],
     "profession": true,
-    "passive_mods": { "str_mod": 7 }
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 7 } ] } ]
   },
   {
     "type": "mutation",
@@ -216,7 +216,7 @@
     "prereqs": [ "STR_UP", "STR_UP_2", "STR_UP_3", "STR_UP_4" ],
     "cancels": [ "SMALL", "SMALL2" ],
     "changes_to": [ "ELEPHANTINE_OK", "GIGANTIC" ],
-    "passive_mods": { "str_mod": 2 },
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 2 } ] } ],
     "weight_capacity_modifier": 1.05
   },
   {
@@ -233,7 +233,7 @@
     "threshreq": [ "THRESH_MASTODON" ],
     "changes_to": [ "GIGANTIC" ],
     "leads_to": [ "MUT_TANK" ],
-    "passive_mods": { "str_mod": 2 },
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 2 } ] } ],
     "weight_capacity_modifier": 1.05
   },
   {
@@ -250,7 +250,7 @@
     "prereqs2": [ "STR_UP_3", "STR_UP_4" ],
     "cancels": [ "SMALL", "SMALL2" ],
     "changes_to": [ "GIGANTIC_OK" ],
-    "passive_mods": { "str_mod": 4 },
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 4 } ] } ],
     "hp_adjustment": -6,
     "fatigue_modifier": 0.15,
     "restricts_gear": [ "torso", "leg_l", "leg_r", "arm_l", "arm_r", "hand_l", "hand_r", "head", "foot_l", "foot_r" ],
@@ -271,7 +271,7 @@
     "cancels": [ "SMALL", "SMALL2" ],
     "threshreq": [ "THRESH_MASTODON" ],
     "leads_to": [ "MUT_TANK" ],
-    "passive_mods": { "str_mod": 4 },
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 4 } ] } ],
     "restricts_gear": [ "torso", "leg_l", "leg_r", "arm_l", "arm_r", "hand_l", "hand_r", "head", "foot_l", "foot_r" ],
     "weight_capacity_modifier": 1.1
   },

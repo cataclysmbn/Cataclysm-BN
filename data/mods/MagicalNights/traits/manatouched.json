@@ -75,7 +75,7 @@
     "id": "WEAK",
     "type": "mutation",
     "name": { "str": "Weak" },
-    "passive_mods": { "str_mod": -2 },
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": -2 } ] } ],
     "points": -1,
     "description": "Your body is unnaturally weak.  -2 Strength.",
     "category": [ "MANATOUCHED" ],

@@ -16,6 +16,7 @@
 #include "iexamine.h"
 #include "monster.h"
 #include "monstergenerator.h"
+#include "recipe_dictionary.h"
 #include "sol/sol.hpp"
 #include "trap.h"
 #include "type_id.h"
@@ -347,6 +348,8 @@ void init_global_state_tables( lua_state &state, const std::vector<mod_id> &modl
     gt["examine_functions"] = lua.create_table();
     gt["activity_functions"] = lua.create_table();
 
+    gt["recipe_functions"] = lua.create_table();
+
     // bionic/mutation functions
     gt["bionic_functions"] = lua.create_table();
     gt["mutation_functions"] = lua.create_table();
@@ -542,6 +545,7 @@ std::map<std::string, std::unique_ptr<lua_mutation_callback_actor>> mutation_cal
 std::map<std::string, std::unique_ptr<lua_itrap_actor>> lua_itrap_actors;
 std::map<std::string, std::unique_ptr<lua_monster_callback_actor>> monster_callback_actors;
 std::map<std::string, std::unique_ptr<lua_ispell_actor>> lua_ispell_actors;
+std::map<std::string, std::unique_ptr<lua_recipe_actor>> recipe_callback_actors;
 } // namespace
 
 namespace
@@ -787,6 +791,7 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
     const sol::table monster_funcs = lua.globals()["game"]["monster_functions"];
     const sol::table spell_funcs = lua.globals()["game"]["spell_functions"];
 
+    const sol::table recipe_funcs = lua.globals()["game"]["recipe_functions"];
 
     auto it = iuse_funcs.begin();
     while( it != iuse_funcs.end() ) {
@@ -1139,6 +1144,31 @@ void reg_lua_icallback_actors( lua_state &state, Item_factory &ifactory )
             ++it;
         }
     }
+
+    // --- recipe / crafting callback registration ---
+    {
+        auto it = recipe_funcs.begin();
+        while( it != recipe_funcs.end() ) {
+            const auto ref = *it;
+            std::string key;
+            try {
+                key = ref.first.as<std::string>();
+                if( ref.second.get_type() != sol::type::table ) {
+                    throw std::runtime_error( "recipe_functions entry must be a table" );
+                }
+                const auto tbl = ref.second.as<sol::table>();
+                auto on_craft = tbl.get_or<sol::function>( "on_craft", sol::lua_nil );
+                recipe_callback_actors[key] = std::make_unique<lua_recipe_actor>(
+                                                  key, std::move( on_craft )
+                                              );
+
+            } catch( std::runtime_error &e ) {
+                debugmsg( "Failed to extract recipe_functions k='%s': %s", key, e.what() );
+                break;
+            }
+            ++it;
+        }
+    }
 }
 
 void resolve_extra_lua_callbacks()
@@ -1148,6 +1178,7 @@ void resolve_extra_lua_callbacks()
     mutation_branch::resolve_lua_callbacks( mutation_callback_actors );
     trap::resolve_lua_callbacks( lua_itrap_actors );
     spell_type::resolve_lua_callbacks( lua_ispell_actors );
+    recipe_dict.resolve_lua_callbacks( recipe_callback_actors );
 }
 
 void run_on_every_x_hooks( lua_state &state )
@@ -1233,6 +1264,7 @@ void lua_state_deleter::operator()( lua_state *state ) const
     lua_itrap_actors.clear();
     monster_callback_actors.clear();
     lua_ispell_actors.clear();
+    recipe_callback_actors.clear();
     get_hook_cache().clear();
     delete state;
 }

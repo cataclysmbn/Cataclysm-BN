@@ -102,7 +102,7 @@
     "description": "You see the world a little differently today.  Intelligence + 1",
     "changes_to": [ "EXPANDED_CONSCIOUSNESS" ],
     "category": [ "MIGO" ],
-    "passive_mods": { "int_mod": 1 }
+    "mut_enchantments": [ { "values": [ { "value": "INTELLIGENCE_PERMANENT", "add": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -113,7 +113,7 @@
     "prereqs": [ "NEURAL_IMPROVEMENT" ],
     "changes_to": [ "UPLIFTED" ],
     "category": [ "MIGO" ],
-    "passive_mods": { "int_mod": 2 }
+    "mut_enchantments": [ { "values": [ { "value": "INTELLIGENCE_PERMANENT", "add": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -126,7 +126,7 @@
     "prereqs": [ "EXPANDED_CONSCIOUSNESS" ],
     "changes_to": [ "ALIEN_INT" ],
     "category": [ "MIGO" ],
-    "passive_mods": { "int_mod": 4 }
+    "mut_enchantments": [ { "values": [ { "value": "INTELLIGENCE_PERMANENT", "add": 4 } ] } ]
   },
   {
     "type": "mutation",
@@ -140,7 +140,7 @@
     "category": [ "MIGO" ],
     "threshreq": [ "THRESH_YUGGOTH" ],
     "starting_trait": false,
-    "passive_mods": { "int_mod": 5 }
+    "mut_enchantments": [ { "values": [ { "value": "INTELLIGENCE_PERMANENT", "add": 5 } ] } ]
   },
   {
     "type": "mutation",
@@ -150,7 +150,7 @@
     "description": "Today is the day to start juggling.  Dexterity + 1",
     "changes_to": [ "QUICKENING" ],
     "category": [ "MIGO" ],
-    "passive_mods": { "dex_mod": 1 }
+    "mut_enchantments": [ { "values": [ { "value": "DEXTERITY_PERMANENT", "add": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -161,7 +161,7 @@
     "prereqs": [ "ENHANCED_REACTIONS" ],
     "changes_to": [ "OTHERWORLDLY_GRACE" ],
     "category": [ "MIGO" ],
-    "passive_mods": { "dex_mod": 2 }
+    "mut_enchantments": [ { "values": [ { "value": "DEXTERITY_PERMANENT", "add": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -173,7 +173,7 @@
     "threshreq": "THRESH_YUGGOTH",
     "social_modifiers": { "persuade": -10, "lie": -6 },
     "category": [ "MIGO" ],
-    "passive_mods": { "dex_mod": 4 }
+    "mut_enchantments": [ { "values": [ { "value": "DEXTERITY_PERMANENT", "add": 4 } ] } ]
   },
   {
     "type": "mutation",
@@ -184,7 +184,7 @@
     "changes_to": [ "MUSCLE_FIBER" ],
     "category": [ "MIGO" ],
     "social_modifiers": { "persuade": -3, "intimidate": 2 },
-    "passive_mods": { "str_mod": 1 }
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 1 } ] } ]
   },
   {
     "type": "mutation",
@@ -196,7 +196,7 @@
     "category": [ "MIGO" ],
     "social_modifiers": { "persuade": -3, "intimidate": 2 },
     "ugliness": 2,
-    "passive_mods": { "str_mod": 2 }
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 2 } ] } ]
   },
   {
     "type": "mutation",
@@ -643,7 +643,7 @@
     "purifiable": false,
     "cancels": [ "STR_UP" ],
     "profession": true,
-    "passive_mods": { "str_mod": 7 }
+    "mut_enchantments": [ { "values": [ { "value": "STRENGTH_PERMANENT", "add": 7 } ] } ]
   },
   {
     "type": "mutation",

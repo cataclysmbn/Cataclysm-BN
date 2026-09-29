@@ -10,6 +10,7 @@
 #include "utils/algo.h"
 #include "cata_utility.h"
 #include "debug.h"
+#include "fmtlib_core.h"
 #include "init.h"
 #include "input.h"
 #include "item.h"
@@ -801,4 +802,15 @@ int recipe_subset::get_custom_difficulty( const recipe *r ) const
         return iter->second;
     }
     return r->difficulty;
+}
+
+void recipe_dictionary::resolve_lua_callbacks(
+    const std::map<std::string, std::unique_ptr<lua_recipe_actor>> &actors ) const
+{
+    for( auto &recipe_pair : recipes ) {
+        auto it = actors.find( recipe_pair.first.str() );
+        if( it != actors.end() ) {
+            recipe_pair.second.lua_callbacks = it->second.get();
+        }
+    }
 }

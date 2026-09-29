@@ -345,6 +345,8 @@ void reg_item( sol::state &lua )
         } );
 
         DOC( "Spawns a new item. Same as gapi.create_item " );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         luna::set_fx( ut, "spawn", []( const itype_id & itype, int count )
         {
             return item::spawn( itype, calendar::turn, count );
@@ -516,7 +518,9 @@ void reg_item( sol::state &lua )
 
         SET_FX( get_reload_time );
 
-        DOC( "Adds an item(s) to contents" );
+        DOC( "Creates an item with the given id and adds it to contents." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         SET_FX( add_item_with_id );
 
         DOC( "Checks item contents for a given item id" );

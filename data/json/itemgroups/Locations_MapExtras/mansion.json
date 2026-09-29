@@ -886,6 +886,7 @@
       [ "candy", 20 ],
       [ "slingshot", 10 ],
       [ "rock", 10 ],
+      [ "super_soaker", 10 ],
       [ "bat", 10 ],
       [ "creepy_doll", 3 ],
       [ "portable_game", 5 ],

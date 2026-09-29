@@ -1,4 +1,5 @@
 #include "../src/map/map.h"
+#include "../src/map/mapdata.h"
 #include "../src/map/submap.h"
 #include "../src/map/submap_load_manager.h"
 #include "avatar.h"
@@ -14,9 +15,12 @@
 #include "game_constants.h"
 #include "iexamine.h"
 #include "item.h"
+#include "iuse_actor.h"
+#include "map/field.h"
 #include "map/field_type.h"
 #include "map/mapbuffer.h"
 #include "map/mapbuffer_registry.h"
+#include "map/submap_fields.h"
 #include "map_helpers.h"
 #include "mapgen/mapgen_constructor.h"
 #include "messages.h"
@@ -25,11 +29,13 @@
 #include "options.h"
 #include "options_helpers.h"
 #include "player_helpers.h"
+#include "projectile.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "units.h"
 #include "vehicle/vehicle.h"
 
+#include <algorithm>
 #include <memory>
 #include <ranges>
 #include <vector>
@@ -109,6 +115,28 @@ auto mapgen_item_count_in_radius(
     auto result = size_t{0};
     for (const auto& candidate : tm.points_in_radius(center, radius)) {
         result += tm.i_at(candidate).size();
+    }
+    return result;
+}
+
+auto count_field_tiles_in_radius(
+    map& here, const tripoint_bub_ms& center, const size_t radius, const field_type_id& field_id)
+    -> int {
+    auto result = 0;
+    for (const auto& pos : here.points_in_radius(center, radius)) {
+        result += here.get_field(pos, field_id) != nullptr ? 1 : 0;
+    }
+    return result;
+}
+
+auto total_field_intensity_in_radius(
+    map& here, const tripoint_bub_ms& center, const size_t radius, const field_type_id& field_id)
+    -> int {
+    auto result = 0;
+    for (const auto& pos : here.points_in_radius(center, radius)) {
+        if (const auto* field = here.get_field(pos, field_id)) {
+            result += field->get_field_intensity();
+        }
     }
     return result;
 }
@@ -557,6 +585,192 @@ TEST_CASE("destroy_grabbed_furniture") {
     }
 }
 
+TEST_CASE("spilled_liquids_become_fields_without_dropping_items", "[map][item][liquid][field]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto center = tripoint_bub_ms(60, 60, 0);
+    for (const auto& pos : here.points_in_radius(center, 2)) {
+        here.i_clear(pos);
+        here.remove_field(pos, fd_blood);
+        here.ter_set(pos, ter_id("t_floor"));
+        here.furn_set(pos, furn_id("f_null"));
+    }
+
+    auto spilled_blood = item::spawn("blood", calendar::turn);
+    spilled_blood->charges = 10;
+
+    REQUIRE_FALSE(here.add_item_or_charges(center, std::move(spilled_blood), false));
+
+    auto center_items = here.i_at(center);
+    CHECK(center_items.empty());
+
+    CHECK(count_field_tiles_in_radius(here, center, 2, fd_blood) > 1);
+}
+
+TEST_CASE("repeated_liquid_spills_intensify_before_expanding", "[map][item][liquid][field]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto center = tripoint_bub_ms(60, 60, 0);
+    const auto water_field = field_type_id("fd_water");
+    for (const auto& pos : here.points_in_radius(center, 2)) {
+        here.i_clear(pos);
+        here.remove_field(pos, water_field);
+        here.ter_set(pos, ter_id("t_floor"));
+        here.furn_set(pos, furn_id("f_null"));
+    }
+
+    auto first_pour = item::spawn("water", calendar::turn);
+    first_pour->charges = 1;
+    REQUIRE_FALSE(here.add_item_or_charges(center, std::move(first_pour), false));
+    CHECK(count_field_tiles_in_radius(here, center, 2, water_field) == 1);
+    REQUIRE(here.get_field(center, water_field) != nullptr);
+    CHECK(here.get_field(center, water_field)->get_field_intensity() == 1);
+
+    auto second_pour = item::spawn("water", calendar::turn);
+    second_pour->charges = 1;
+    REQUIRE_FALSE(here.add_item_or_charges(center, std::move(second_pour), false));
+    CHECK(count_field_tiles_in_radius(here, center, 2, water_field) == 1);
+    REQUIRE(here.get_field(center, water_field) != nullptr);
+    CHECK(here.get_field(center, water_field)->get_field_intensity() == 2);
+
+    auto third_pour = item::spawn("water", calendar::turn);
+    third_pour->charges = 1;
+    REQUIRE_FALSE(here.add_item_or_charges(center, std::move(third_pour), false));
+    CHECK(count_field_tiles_in_radius(here, center, 2, water_field) == 1);
+    REQUIRE(here.get_field(center, water_field) != nullptr);
+    CHECK(here.get_field(center, water_field)->get_field_intensity()
+          == water_field.obj().get_max_intensity());
+
+    auto fourth_pour = item::spawn("water", calendar::turn);
+    fourth_pour->charges = 1;
+    REQUIRE_FALSE(here.add_item_or_charges(center, std::move(fourth_pour), false));
+
+    auto center_items = here.i_at(center);
+    CHECK(center_items.empty());
+    CHECK(count_field_tiles_in_radius(here, center, 2, water_field) > 1);
+}
+
+TEST_CASE(
+    "liquid_drop_on_independent_map_consumes_its_source_item",
+    "[map][item][liquid][field][fluid_regression]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    g->place_player(tripoint_bub_ms(60, 60, 0));
+
+    auto independent = map(2);
+    independent.load(get_map().get_abs_sub(), false);
+    const auto center = tripoint_bub_ms(13, 13, 0);
+    const auto water_field = field_type_id("fd_water");
+    REQUIRE(&independent != &get_map());
+    REQUIRE(independent.get_submap_at(center) != nullptr);
+    for (const auto& tile : independent.points_in_radius(center, 2)) {
+        independent.ter_set(tile, ter_id("t_floor"));
+        independent.furn_set(tile, f_null);
+        independent.i_clear(tile);
+        independent.remove_field(tile, water_field);
+    }
+
+    auto direct_water = item::spawn("water_clean", calendar::turn);
+    direct_water->charges = 1;
+    const auto direct_result =
+        independent.add_item_or_charges(center, std::move(direct_water), false);
+    REQUIRE_FALSE(direct_result);
+    CHECK_FALSE(direct_water);
+    CHECK(independent.get_field(center, water_field) != nullptr);
+    CHECK(independent.i_at(center).empty());
+
+    independent.remove_field(center, water_field);
+    independent.furn_set(center, furn_id("f_grave_stone"));
+    REQUIRE(independent.has_flag("NOITEM", center));
+    REQUIRE(independent.passable(center));
+
+    auto overflow_water = item::spawn("water_clean", calendar::turn);
+    overflow_water->charges = 1;
+    const auto overflow_result =
+        independent.add_item_or_charges(center, std::move(overflow_water), true);
+    REQUIRE_FALSE(overflow_result);
+    CHECK_FALSE(overflow_water);
+    CHECK(independent.get_field(center, water_field) == nullptr);
+    CHECK(count_field_tiles_in_radius(independent, center, 1, water_field) == 1);
+    CHECK(std::ranges::all_of(independent.points_in_radius(center, 1), [&](const auto& tile) {
+        return independent.i_at(tile).empty();
+    }));
+}
+
+TEST_CASE(
+    "gasoline_spills_scale_with_volume_instead_of_raw_charges", "[map][item][liquid][field]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto center = tripoint_bub_ms(60, 60, 0);
+    const auto fuel_field = field_type_id("fd_fuel");
+    for (const auto& pos : here.points_in_radius(center, 12)) {
+        here.i_clear(pos);
+        here.remove_field(pos, fuel_field);
+        here.ter_set(pos, ter_id("t_floor"));
+        here.furn_set(pos, furn_id("f_null"));
+    }
+
+    auto spilled_gasoline = item::spawn("gasoline", calendar::turn);
+    spilled_gasoline->charges = 10000;
+    const auto max_fuel_intensity = fuel_field.obj().get_max_intensity();
+    static constexpr auto spill_tile_volume = 1_liter;
+    const auto spill_tiles = divide_round_up(
+        units::to_milliliter(spilled_gasoline->volume()), units::to_milliliter(spill_tile_volume));
+    const auto expected_visual_intensity = std::min(
+        static_cast<int>(std::max<decltype(spill_tiles)>(1, spill_tiles)), 90 * max_fuel_intensity);
+
+    REQUIRE_FALSE(here.add_item_or_charges(center, std::move(spilled_gasoline), false));
+    CHECK(count_field_tiles_in_radius(here, center, 12, fuel_field) <= 90);
+    CHECK(
+        total_field_intensity_in_radius(here, center, 12, fuel_field) == expected_visual_intensity);
+    REQUIRE(here.get_field(center, fuel_field) != nullptr);
+    CHECK(here.get_field(center, fuel_field)->get_field_intensity() == max_fuel_intensity);
+}
+TEST_CASE("mop_spills_respects_jsonized_field_property", "[map][field][mop]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto center = tripoint_bub_ms(60, 60, 0);
+    g->place_player(center);
+
+    SECTION("moppable fields are removed") {
+        const auto bile_field = field_type_id("fd_bile");
+        here.add_field(center, bile_field);
+
+        CHECK(here.mop_spills(center));
+        CHECK(here.get_field(center, bile_field) == nullptr);
+    }
+
+    SECTION("spilled liquid fields are removed") {
+        const auto water_field = field_type_id("fd_water");
+        auto spilled_water = item::spawn("water_clean", calendar::turn);
+        spilled_water->charges = 1;
+
+        REQUIRE_FALSE(here.add_item_or_charges(center, std::move(spilled_water), false));
+        CHECK(here.get_field(center, water_field) != nullptr);
+        CHECK(here.mop_spills(center));
+        CHECK(here.get_field(center, water_field) == nullptr);
+    }
+
+    SECTION("non-moppable fields remain") {
+        const auto fire_field = field_type_id("fd_fire");
+        here.add_field(center, fire_field);
+
+        CHECK_FALSE(here.mop_spills(center));
+        CHECK(here.get_field(center, fire_field) != nullptr);
+    }
+
+    SECTION("plain liquid fields are removed when marked moppable") {
+        const auto water_field = field_type_id("fd_water");
+        here.add_field(center, water_field);
+
+        CHECK(here.mop_spills(center));
+        CHECK(here.get_field(center, water_field) == nullptr);
+    }
+}
 TEST_CASE("mapbuffer_vehicle_lookup_uses_absolute_coordinates") {
     clear_all_state();
 
@@ -586,6 +800,126 @@ TEST_CASE("place_player_can_safely_move_multiple_submaps") {
     g->place_player(tripoint_bub_ms::zero());
     CHECK(get_map().check_submap_active_item_consistency().empty());
     CHECK(get_map().get_abs_sub() == player_reality_bubble_origin().xy());
+}
+
+TEST_CASE("json_flammable_terrain_counts_as_flammable", "[map][fire]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    here.ter_set(pos, ter_str_id("t_test_flammable_bool").id());
+
+    CHECK(here.is_flammable(pos));
+    CHECK_FALSE(here.has_flag("FLAMMABLE", pos));
+}
+
+TEST_CASE(
+    "removing_inherited_flammable_flag_clears_terrain_flammability",
+    "[map][fire][fluid_regression]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms{60, 60, 0};
+    here.furn_set(pos, f_null);
+    here.ter_set(pos, ter_str_id("t_test_flammable_hard_parent").id());
+    REQUIRE(here.has_flag("FLAMMABLE_HARD", pos));
+    CHECK(here.is_flammable(pos));
+
+    here.ter_set(pos, ter_str_id("t_test_flammable_hard_removed").id());
+    REQUIRE_FALSE(here.has_flag("FLAMMABLE_HARD", pos));
+    CHECK_FALSE(here.is_flammable(pos));
+}
+
+TEST_CASE(
+    "replacing_inherited_flammable_flag_updates_fire_classification",
+    "[map][fire][fluid_regression]") {
+    const auto& terrain = ter_str_id("t_test_flammable_hard_replaced_with_ash").obj();
+
+    REQUIRE_FALSE(terrain.has_flag("FLAMMABLE_HARD"));
+    REQUIRE(terrain.has_flag("FLAMMABLE_ASH"));
+    CHECK(terrain.is_flammable());
+    CHECK(terrain.is_ash_flammable());
+    CHECK_FALSE(terrain.is_hard_flammable());
+    CHECK_FALSE(terrain.is_basic_flammable());
+}
+
+TEST_CASE(
+    "explicit_terrain_flammability_survives_inheritance_and_flag_changes",
+    "[map][fire][fluid_regression]") {
+    const auto& inherited_true = ter_str_id("t_test_flammable_true_child").obj();
+    CHECK(inherited_true.is_flammable());
+    CHECK(inherited_true.is_basic_flammable());
+
+    const auto& explicit_false = ter_str_id("t_test_flammable_false_override").obj();
+    REQUIRE(explicit_false.has_flag("FLAMMABLE_HARD"));
+    CHECK_FALSE(explicit_false.is_flammable());
+    CHECK_FALSE(explicit_false.is_hard_flammable());
+
+    const auto& inherited_false = ter_str_id("t_test_flammable_false_child").obj();
+    REQUIRE(inherited_false.has_flag("FLAMMABLE_HARD"));
+    CHECK_FALSE(inherited_false.is_flammable());
+    CHECK_FALSE(inherited_false.is_hard_flammable());
+
+    const auto& inherited_false_with_changed_flags =
+        ter_str_id("t_test_flammable_false_grandchild").obj();
+    REQUIRE_FALSE(inherited_false_with_changed_flags.has_flag("FLAMMABLE_HARD"));
+    REQUIRE(inherited_false_with_changed_flags.has_flag("FLAMMABLE_ASH"));
+    CHECK_FALSE(inherited_false_with_changed_flags.is_flammable());
+    CHECK_FALSE(inherited_false_with_changed_flags.is_ash_flammable());
+
+    const auto& explicit_true = ter_str_id("t_test_flammable_true_override").obj();
+    REQUIRE(explicit_true.has_flag("FLAMMABLE_ASH"));
+    CHECK(explicit_true.is_flammable());
+    CHECK(explicit_true.is_ash_flammable());
+}
+
+TEST_CASE(
+    "gasoline_spilled_on_fire_fuels_the_same_tile",
+    "[map][field][fire][liquid][fluid_regression]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms{60, 60, 0};
+    const auto furniture = furn_id(GENERATE("f_null", "f_brazier"));
+    const auto fuel_before_fire = GENERATE(true, false);
+    const auto fuel_field = field_type_id("fd_fuel");
+    CAPTURE(furniture.id().str(), fuel_before_fire);
+    here.ter_set(pos, ter_id("t_rock_floor"));
+    here.furn_set(pos, furniture);
+
+    auto* sm = here.get_submap_at(pos);
+    REQUIRE(sm != nullptr);
+    const auto abs_sm = project_to<coords::sm>(map_local_to_abs(here, pos));
+    const auto process_fields = [&]() {
+        process_fields_in_submap(get_avatar().get_dimension(), *sm, abs_sm, MAPBUFFER);
+    };
+
+    if (!fuel_before_fire) {
+        REQUIRE(here.add_field(pos, fd_fire, 1));
+        process_fields();
+    }
+
+    auto gasoline = item::spawn("gasoline", calendar::turn);
+    gasoline->charges = 1;
+    REQUIRE_FALSE(here.add_item_or_charges(pos, std::move(gasoline), false));
+    REQUIRE(here.get_field(pos, fuel_field) != nullptr);
+    CHECK(here.i_at(pos).empty());
+
+    if (fuel_before_fire) {
+        REQUIRE(here.add_field(pos, fd_fire, 1));
+        process_fields();
+    }
+
+    REQUIRE(here.get_field(pos, fd_fire) != nullptr);
+    const auto fire_age_before = here.get_field(pos, fd_fire)->get_field_age();
+    process_fields();
+
+    CHECK(here.get_field(pos, fuel_field) == nullptr);
+    const auto* fire_after = here.get_field(pos, fd_fire);
+    REQUIRE(fire_after != nullptr);
+    CHECK(fire_after->get_field_age() != fire_age_before);
 }
 
 TEST_CASE("mapbuffer_resident_lookup_uses_absolute_coordinates") {
@@ -1181,4 +1515,44 @@ TEST_CASE("bash_through_roof_can_destroy_multiple_times") {
             }
         }
     }
+}
+
+TEST_CASE("flammable_fields_can_be_ignited", "[map][field][fire]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms(60, 60, 0);
+    here.ter_set(pos, ter_str_id("t_rock_floor").id());
+    here.furn_set(pos, f_null);
+    const auto fuel = field_type_id(
+        GENERATE("fd_fuel", "fd_sticky_fuel", "fd_oil", "fd_alcohol_strong", "test_fd_flammable"));
+    const auto inert = field_type_id(GENERATE("test_fd_nonflammable", "fd_alcohol"));
+    REQUIRE(here.add_field(pos, inert));
+    CHECK_FALSE(here.is_flammable(pos));
+    const auto intensity = GENERATE(1, 2, 3);
+    REQUIRE(here.add_field(pos, fuel, intensity));
+    CHECK(here.is_flammable(pos));
+
+    SECTION("firestarter") { firestarter_actor::resolve_firestarter_use(get_avatar(), pos); }
+    SECTION("heat projectile") {
+        auto shot = projectile{};
+        shot.impact.add_damage(DT_HEAT, 1);
+        here.shoot(pos, pos, shot, false);
+    }
+    SECTION("mixed combustible fields") {
+        const auto other_fuel =
+            fuel == field_type_id("test_fd_flammable")
+                ? field_type_id("fd_fuel")
+                : field_type_id("test_fd_flammable");
+        REQUIRE(here.add_field(pos, other_fuel, intensity));
+        firestarter_actor::resolve_firestarter_use(get_avatar(), pos);
+        CHECK(here.get_field(pos, other_fuel) == nullptr);
+    }
+
+    CHECK(here.get_field(pos, fuel) == nullptr);
+    CHECK(here.get_field(pos, inert) != nullptr);
+    const auto* fire = here.get_field(pos, fd_fire);
+    REQUIRE(fire != nullptr);
+    CHECK(fire->get_field_intensity() == std::max(2, intensity));
+    CHECK(fire->get_field_age() == -10_minutes * intensity);
 }

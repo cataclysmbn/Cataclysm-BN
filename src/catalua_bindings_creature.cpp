@@ -1088,7 +1088,9 @@ void cata::detail::reg_character( sol::state &lua )
             c.i_add( std::move( i ) );
         } );
 
-        DOC( "Creates and an item with the given id and amount to the player inventory" );
+        DOC( "Creates an item with the given id and adds it to the player inventory." );
+        DOC( "`count` sets the item's charges, not the number of items: exactly one item is created." );
+        DOC( "For stackable (count-by-charges) items such as ammo, `count` is the stack size. For non-stackable items, pass a negative value (e.g. -1), since a positive one is still applied as charges. Tools spawned with a negative value get their default charges." );
         luna::set_fx( ut, "create_item", []( UT_CLASS & c, const itype_id & itype, int count )
         {
             return &c.add_item_with_id( itype, count );

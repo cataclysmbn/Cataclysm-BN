@@ -1033,6 +1033,9 @@ void inventory_column::draw( const catacurses::window &win, point pos ) const
             int xx = pos.x;
             if( entry.get_invlet() != '\0' ) {
                 mvwputch( win, point( pos.x, yy ), entry.get_invlet_color(), entry.get_invlet() );
+            } else if( entry.invlet_hint ) {
+                mvwputch( win, point( pos.x, yy ), entry.invlet_hint->color,
+                          entry.invlet_hint->invlet );
             }
             xx += 2;
             if( get_option<bool>( "ITEM_SYMBOLS" ) ) {
@@ -1532,6 +1535,7 @@ void inventory_selector::prepare_layout( size_t client_width, size_t client_heig
         elem->prepare_paging();
         custom_invlet = elem->reassign_custom_invlets( u, custom_invlet, '9' );
     }
+    assign_invlet_hints();
 
     refresh_active_column();
 }
@@ -2009,9 +2013,11 @@ void inventory_selector::on_input( const inventory_input &input )
     } else if( input.action == "WIELD" ) {
         auto &entry = const_cast<inventory_entry &>( get_selected() );
         wield( entry );
+        assign_invlet_hints();
     } else if( input.action == "WEAR" ) {
         auto &entry = const_cast<inventory_entry &>( get_selected() );
         wear( entry );
+        assign_invlet_hints();
     } else {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
@@ -2181,6 +2187,15 @@ item *inventory_pick_selector::execute()
         } else if( handle_action( input.action ) ) {
             return nullptr;
         } else {
+            auto *const picked = input.action == "ANY_INPUT"
+                                 ? pick_by_unbound_key( input.ch )
+                                 : nullptr;
+            if( picked != nullptr ) {
+                if( select( picked ) ) {
+                    ui_manager::redraw();
+                }
+                return picked;
+            }
             on_input( input );
         }
 

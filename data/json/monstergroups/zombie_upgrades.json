@@ -106,6 +106,7 @@
     "monsters": [
       { "monster": "mon_zombie_supply_sergeant", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 100, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_soldier_camo_1", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_acid_1", "freq": 125, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_acid_2", "freq": 175, "cost_multiplier": 2 }
     ]

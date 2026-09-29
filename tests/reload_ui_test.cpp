@@ -81,3 +81,52 @@ TEST_CASE("reload_hotkey_preparation", "[reload][reload_ui]") {
         CHECK(state.fallback_index == 0);
     }
 }
+
+TEST_CASE("reload_picker_wielded_key", "[reload][reload_ui]") {
+    SECTION("an unlettered row shows the reload key and answers every binding") {
+        const auto key = reload_ui::resolve_wielded_key(
+            {.reload_keys = {'r', 'R'},
+             .own_invlet = 0,
+             .taken_invlets = {'a'},
+             .action_keys = {'q'}});
+
+        CHECK(key.keys == std::vector<char>{'r', 'R'});
+        CHECK(key.shown == 'r');
+        CHECK_FALSE(key.shadowed);
+    }
+
+    SECTION("a carried item's letter keeps the reload key, and the row still shows it shadowed") {
+        const auto key = reload_ui::resolve_wielded_key(
+            {.reload_keys = {'r', 'R'}, .own_invlet = 0, .taken_invlets = {'r'}, .action_keys = {}});
+
+        CHECK(key.keys == std::vector<char>{'R'});
+        CHECK(key.shown == 'r');
+        CHECK(key.shadowed);
+    }
+
+    // A remapped reload key can land on a key the picker already uses, such as `e` for examine.
+    SECTION("a picker action keeps the reload key") {
+        const auto key = reload_ui::resolve_wielded_key(
+            {.reload_keys = {'e'}, .own_invlet = 0, .taken_invlets = {}, .action_keys = {'e', 'w'}});
+
+        CHECK(key.keys.empty());
+        CHECK(key.shown == 'e');
+        CHECK(key.shadowed);
+    }
+
+    SECTION("a lettered row keeps its letter and still answers the reload key") {
+        const auto key = reload_ui::resolve_wielded_key(
+            {.reload_keys = {'r'}, .own_invlet = 'a', .taken_invlets = {}, .action_keys = {}});
+
+        CHECK(key.keys == std::vector<char>{'r'});
+        CHECK_FALSE(key.shown.has_value());
+    }
+
+    SECTION("an unbound reload action offers no key") {
+        const auto key = reload_ui::resolve_wielded_key(
+            {.reload_keys = {}, .own_invlet = 0, .taken_invlets = {}, .action_keys = {}});
+
+        CHECK(key.keys.empty());
+        CHECK_FALSE(key.shown.has_value());
+    }
+}

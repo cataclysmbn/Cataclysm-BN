@@ -13214,6 +13214,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
                             vp1 ) ) {
         u.stop_hauling();
     }
+    const auto moved = u.bub_pos() != dest_loc;
     const auto origin_before_setpos = m.get_abs_sub();
     const tripoint_abs_ms abs_dest_loc = bub_to_abs( dest_loc );
     u.setpos( dest_loc );
@@ -13314,6 +13315,10 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
     // If the new tile is a boardable part, board it
     if( vp1.part_with_feature( "BOARDABLE", true ) && !u.is_mounted() ) {
         m.board_vehicle( u.bub_pos(), &u );
+    }
+
+    if( moved ) {
+        m.creature_in_field( u, /*movement_only=*/true );
     }
 
     // Traps!

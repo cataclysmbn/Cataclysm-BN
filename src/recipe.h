@@ -13,6 +13,7 @@
 #include "translations.h"
 #include "type_id.h"
 
+class lua_recipe_actor;
 class JsonObject;
 class item;
 class time_duration;
@@ -175,6 +176,10 @@ class recipe
         int makes_amount() const;
         /** Returns number of charges of the item needed for single disassembly. */
         int disassembly_batch_size() const;
+
+        /** Lua callback actor (non-owning, owned by catalua.cpp static maps).
+         *  Mutable because it is wired post-construction through const factory references. */
+        mutable const lua_recipe_actor *lua_callbacks = nullptr;
 
     private:
         void add_requirements( const std::vector<std::pair<requirement_id, int>> &reqs );

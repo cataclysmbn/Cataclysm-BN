@@ -1212,6 +1212,7 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     mandatory(jo, was_loaded, "description", description);
     optional(jo, was_loaded, "message", message);
     optional(jo, was_loaded, "prompt", prompt);
+    if (jo.has_member("flammable")) { flammable_override = jo.get_bool("flammable"); }
     assign(jo, "light_color", light_color, is_json_check_strict(src));
 
     assign(jo, "flags", flags);
@@ -1221,6 +1222,14 @@ void map_data_common_t::load(const JsonObject& jo, const std::string& src) {
     transparent = false;
 
     for (const std::string& flag : flags) { set_flag(flag); }
+
+    const auto has_legacy_flammability =
+        has_flag(TFLAG_FLAMMABLE) || has_flag(TFLAG_FLAMMABLE_ASH)
+        || has_flag(TFLAG_FLAMMABLE_HARD);
+    flammable = flammable_override.value_or(has_legacy_flammability);
+    flammable_ash = flammable && has_flag(TFLAG_FLAMMABLE_ASH);
+    flammable_hard = flammable && has_flag(TFLAG_FLAMMABLE_HARD);
+
     optional(jo, was_loaded, "curtain_transform", curtain_transform);
 }
 

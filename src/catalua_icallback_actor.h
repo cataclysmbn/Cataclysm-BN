@@ -315,3 +315,29 @@ class lua_ispell_actor
         bool call_on_try_cast( Character &who, spell &sp ) const;
         void call_on_cast( Character &who, spell &sp, tripoint_bub_ms &target_pos ) const;
 };
+
+
+/** Lua callbacks for recipe / crafting related events. */
+class lua_recipe_actor
+{
+    private:
+        std::string recipe_str_id;
+        sol::protected_function on_craft_func;
+
+    public:
+        lua_recipe_actor( const std::string &recipe_str_id,
+                          sol::protected_function &&on_craft
+                        );
+
+        struct RecipeCraftResult {
+            Character &crafter;
+            item &craft;
+            item &food_contained;
+            const recipe &recipe;
+            const int &batch_size;
+            const bool &hot_result;
+            const bool &dehydrated_result;
+        };
+        /** Returns false to block casting. */
+        void call_on_craft( const RecipeCraftResult &craft_result ) const;
+};

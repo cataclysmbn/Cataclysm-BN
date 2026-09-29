@@ -1008,6 +1008,9 @@ struct itype {
         /** Action to take BEFORE the item is placed on map. If it returns non-zero, item won't be placed. */
         use_function drop_action;
 
+        /** Field to spread when a liquid is spilled onto ordinary ground. */
+        field_type_id spill_field;
+
         /** Lua callback actors (non-owning, owned by Item_factory) */
         const lua_iwieldable_actor *iwieldable_callbacks = nullptr;
         const lua_iwearable_actor *iwearable_callbacks = nullptr;

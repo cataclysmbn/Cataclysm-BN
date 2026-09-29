@@ -2935,6 +2935,7 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         }
 
         here.creature_on_trap( *this );
+        here.creature_in_field( *this, /*movement_only=*/true );
         here.creature_in_field( *this );
     }
 }

@@ -405,6 +405,7 @@ bool Creature::sees( const Creature &critter ) const
     } else if( ( wanted_range > 1 && critter.digging() ) ||
                ( critter.has_flag( MF_NIGHT_INVISIBILITY ) &&
                  here.light_at( critter.bub_pos() ) <= lit_level::LOW ) ||
+               ( critter.has_flag( MF_CAMOUFLAGE ) && wanted_range > spotting_range() ) ||
                ( critter.is_underwater() && !is_underwater() && here.is_divable( critter.bub_pos() ) ) ||
                ( here.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, critter.bub_pos() ) &&
                  !( std::abs( bub_pos().x() - critter.bub_pos().x() ) <= 1 &&
@@ -2070,6 +2071,10 @@ float Creature::get_dodge() const
 float Creature::get_hit() const
 {
     return get_hit_base() + get_hit_bonus();
+}
+int Creature::spotting_range() const
+{
+    return 0;
 }
 
 anatomy_id Creature::get_anatomy() const

@@ -47,7 +47,9 @@ Example:
     "obsolete": false,
     // Path of mod's files relative to the modinfo.json file. The game automatically loads all files from the folder with modinfo.json,
     // and all the subfolders, so this field is only useful when you for whatever reason want to stick your modinfo.json in a subfolder of your mod.
-    "path": "../common-data/"
+    "path": "../common-data/",
+    // Path to mod options
+    "options_path": "options"
   }
 ]
 ```

@@ -101,7 +101,7 @@
         "stab": 1
       }
     ],
-    "passive_mods": { "dex_mod": -1 }
+    "mut_enchantments": [ { "values": [ { "value": "DEXTERITY_PERMANENT", "add": -1 } ] } ]
   },
   {
     "type": "mutation",
