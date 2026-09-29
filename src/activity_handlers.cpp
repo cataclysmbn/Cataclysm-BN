@@ -4008,7 +4008,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     // Current progress as a percent of base_total_moves to 2 decimal places
     const auto new_counter_f = current_progress / base_total_moves * 10'000'000.0;
     // This is to ensure we don't over count skill steps
-    const auto new_counter = std::min( static_cast<int>( std::round( new_counter_f ) ), 10'000'000 );
+    const auto new_counter = static_cast<int>( std::min( std::round( new_counter_f ), 10'000'000.0 ) );
     auto five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
     craft->set_counter( new_counter );
 
