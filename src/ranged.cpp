@@ -4788,7 +4788,7 @@ double ranged::get_point_shoot_amount( const Character &who, const item &gun )
         point_shoot_amount += ( ( who.get_skill_level( skill_gun ) - 5 ) * 50 );
     }
     // Check if the point shoot value exceeds the maximum recoil
-    if ( point_shoot_amount > MAX_RECOIL ) {
+    if ( point_shoot_amount >= MAX_RECOIL ) {
         point_shoot_amount = MAX_RECOIL - 1.0;
     }
     return point_shoot_amount;
