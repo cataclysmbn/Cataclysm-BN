@@ -167,8 +167,8 @@ double aim_multiplier_from_volume( const item &gun );
 /** Calculates aim improvement per move spent aiming at a given @param recoil */
 double aim_per_move( const Character &who, const item &gun, double recoil );
 
-/** Calculates if and how much you can point shoot */
-double get_point_shoot_amount( const Character &who, const item &gun );
+/** Calculates if you can point shoot, which allows you to bypass the sight aim speed limit */
+bool can_point_shoot( const Character &who, const item &gun );
 
 /** Calculates if you're an 'amateur' with that weapon, which doubles your dispersion */
 bool is_amateur( const Character &who, const item &gun );
