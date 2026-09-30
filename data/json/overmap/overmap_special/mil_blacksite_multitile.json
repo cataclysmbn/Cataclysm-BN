@@ -148,7 +148,7 @@
       "monster": {
         "@": { "monster": "mon_turret_searchlight" },
         "#": { "monster": "mon_laserturret" },
-        "N": { "monster": "mon_chickenbot" },
+        "N": { "monster": "mon_tankbot_hostile" },
         "L": { "monster": "mon_turret_antimateriel" },
         "O": { "monster": "mon_turret_mark19" }
       },
