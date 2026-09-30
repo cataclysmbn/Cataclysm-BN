@@ -445,6 +445,7 @@
     "subtype": "distribution",
     "entries": [
       { "group": "snacks", "prob": 370 },
+      { "item": "lactaid", "prob": 10 },
       { "item": "aluminum_foil", "prob": 25 },
       { "item": "cereal", "prob": 50 },
       { "item": "cereal2", "prob": 60 },
