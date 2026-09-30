@@ -884,6 +884,7 @@
     "material": "powder",
     "symbol": "!",
     "color": "white",
+    "looks_like": "aspirin",
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some lactaid.",
