@@ -5293,7 +5293,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint_bub_ms & 
     if( mod.has_flag( flag_VARSIZE ) && !mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_large" );
     }
-    if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_OVERSIZE ) ) {
+    if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_VARSIZE ) ) {
         valid_mods.push_back( "resized_small" );
     }
 
