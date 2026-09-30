@@ -5293,8 +5293,15 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint_bub_ms & 
     if( mod.has_flag( flag_VARSIZE ) && !mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_large" );
     }
-    if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_VARSIZE ) ) {
+    if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_small" );
+    }
+
+    if( mod.has_flag( flag_VARSIZE ) && !mod.has_flag( flag_UNDERSIZE ) ) {
+        valid_mods.push_back( "resized_small" );
+    }
+    if( !mod.has_flag( flag_OVERSIZE ) && mod.has_flag( flag_UNDERSIZE ) ) {
+        valid_mods.push_back( "resized_large" );
     }
 
     const auto get_compare_color = [&]( const int before, const int after,
