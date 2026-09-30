@@ -2091,6 +2091,15 @@
   },
   {
     "type": "effect_type",
+    "id": "lactaid",
+    "name": [ "Lactase Supplement" ],
+    "desc": [ "You have taken a lactase supplement and will not suffer the effects of lactose intolerance." ],
+    "max_duration": "55 m",
+    "blood_analysis_description": "Lactase Supplement",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
     "id": "happy",
     "name": [ "Happy", "Happy", "Happy", "Happy", "Happy", "Joyful", "Joyful", "Joyful", "Joyful", "Joyful", "Elated" ],
     "desc": [
