@@ -13,7 +13,7 @@ Transifex や、gettext をサポートするその他のプラットフォー�
 PO/POT/MOファイルや、GNU gettext ユーティリティを使用した作業方法についてさらに詳細な説明が必要な場合は、[GNU gettext manual](https://www.gnu.org/software/gettext/manual/gettext.html)を参照してください。
 
 Cataclysm: Bright Nights およびそのMODの文字列を翻訳するための一般的なヒントについては、
-[translation API](../reference/translation)を参照してください。
+[translation API](../reference/translation.md)を参照してください。
 
 ## 簡単な用語集
 
@@ -213,10 +213,10 @@ MOファイルをロードするとき、ゲームはまず、名前が正確な
 2. 翻訳 A と B の両方に複数形がある場合(または両方にない場合)、最初にロードさ
    れた翻訳が使用されます(MOロード順序を参照)。
 
-ベースゲームのものとは異なる翻訳を使用したい場合、または他のMODからの文字列と競合させたくない場合は、対応する JSONオブジェクト内の文字列に翻訳コンテキストを追加してください (どのフィールドが翻訳コンテキストをサポートしているかについては [こちら](../reference/translation)を参照してください)。
+ベースゲームのものとは異なる翻訳を使用したい場合、または他のMODからの文字列と競合させたくない場合は、対応する JSONオブジェクト内の文字列に翻訳コンテキストを追加してください (どのフィールドが翻訳コンテキストをサポートしているかについては [こちら](../reference/translation.md)を参照してください)。
 
 ### 参考となる、MOD翻訳を実装したプルリクエスト
 
-https://github.com/cataclysmbnteam/Cataclysm-BN/pull/505
+https://github.com/cataclysmbn/Cataclysm-BN/pull/505
 
 ### [Mod翻訳の例](https://github.com/Kenan2000/Bright-Nights-Kenan-Mod-Pack/pull/36)

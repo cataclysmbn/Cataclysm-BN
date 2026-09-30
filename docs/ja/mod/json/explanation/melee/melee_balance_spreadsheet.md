@@ -1,6 +1,6 @@
 # 近接武器のバランス調整スプレッドシート
 
-![スプレッドシード](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/1fa4f7ec-2965-4247-a592-94f246b13662)
+![スプレッドシード](https://github.com/cataclysmbn/Cataclysm-BN/assets/54838975/1fa4f7ec-2965-4247-a592-94f246b13662)
 
 これは、「`Melee Weapons Evaluation.ods`」(近接武器評価) スプレッドシートに関するドキュメンテーションです。このスプレッドシートは、0.E 開発版の近接武器のバランス調整プロジェクトです。オリジナルのスプレッドシートは
 [google doc](https://docs.google.com/spreadsheets/d/14eQIe4AO_f6OxCt1XcB4NLAs6-5R1wQW-ydZG0orYdY/edit#gid=1787713396)として利用可能ですが、内容が移動する事態に備えて静的コピーが保存されています。

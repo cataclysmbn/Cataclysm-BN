@@ -47,11 +47,13 @@ Visual Studio Marketplace에 astyle 확장이 있지만 VS2019 또는 VS2022에�
 4. `Release` 빌드 구성을 선택합니다 (VS가 기본적으로 `Debug` 구성을 선택할 가능성이 높음).
 5. 솔루션을 빌드합니다.
 6. 빌드가 성공하면 `AStyleExtension\bin\Release`에서 컴파일된 확장을 볼 수 있습니다. 더블 클릭하여 설치합니다.
-7. [구성 지침 (Visual Studio 2019 또는 이전)](#configuration-instructions-visual-studio-2019-or-older) 섹션에 따라 확장을 구성합니다.
+7. [구성 지침 (Visual Studio 2019 또는 이전)](#구성-지침-visual-studio-2019-또는-이전) 섹션에 따라 확장을 구성합니다.
 
 #### Visual Studio 2017 또는 이전
 
 VS2019의 단계를 따라 소스에서 컴파일할 수 있지만 Visual Studio Marketplace에서 [사용 가능한](https://marketplace.visualstudio.com/items?itemName=Lukamicoder.AStyleExtension2017) 미리 빌드된 버전이 있으며 VS의 확장 관리자를 통해 확장을 설치한 다음 동일한 방식으로 구성할 수 있어야 합니다.
+
+<a id="구성-지침-visual-studio-2019-또는-이전"></a>
 
 #### 구성 지침 (Visual Studio 2019 또는 이전):
 
@@ -75,7 +77,7 @@ _참고:_ `Tools` - `Options` - `Environment` - `Keybindings` 메뉴에서 언�
 
 ## JSON 스타일
 
-[JSON 스타일 가이드](../../mod/json/explanation/json_style)를 참조하세요.
+[JSON 스타일 가이드](../../mod/json/explanation/json_style.md)를 참조하세요.
 
 ## ctags
 

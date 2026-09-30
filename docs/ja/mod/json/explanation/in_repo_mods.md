@@ -9,7 +9,7 @@ sidebar:
 > [!CAUTION]
 >
 > 現在のガイドラインでは、
-> [リポジトリ内 MOD](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3026)の削除が推奨されています。
+> [リポジトリ内 MOD](https://github.com/cataclysmbn/Cataclysm-BN/pull/3026)の削除が推奨されています。
 > このページは歴史的な目的のために残されています。
 
 BNはMOD導入が可能であるだけでなく、サードパーティのソースから MOD を入手しなくても、ユーザーが選択できる多数の MOD を同梱しています。

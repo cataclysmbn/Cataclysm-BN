@@ -1,8 +1,12 @@
 # 새로운 타입 바인딩
 
+<a id="adding-new-type-to-the-doc-generator-without-binding-internals"></a>
+
 ### 내부를 바인딩하지 않고 문서 생성기에 새 타입 추가하기
 
 C++ 타입이 문서 생성기에 등록되지 않았다면 `<cppval: **gibberish** >`로 표시됩니다. 이 문제를 완화하려면 `catalua_luna_doc.h`에 `LUNA_VAL( your_type, "YourType" )`을 추가하면 생성기가 인수 타입에 `YourType` 문자열을 사용합니다.
+
+<a id="binding-new-type-to-lua"></a>
 
 ### Lua에 새 타입 바인딩하기
 
@@ -34,7 +38,7 @@ C++ 타입이 문서 생성기에 등록되지 않았다면 `<cppval: **gibberis
    ```cpp
    #include "catalua_bindings.h"
 
-   #include "horde.h" // 타입이 정의된 헤더로 교체
+   #include "horde.h" // Replace with the header where your type is defined
 
    void cata::detail::reg_horde( sol::state &lua )
    {
@@ -43,34 +47,34 @@ C++ 타입이 문서 생성기에 등록되지 않았다면 `<cppval: **gibberis
                lua,
                luna::no_bases,
                luna::constructors <
-                   // 실제 생성자를 여기에 정의
+                   // Define your actual constructors here
                    horde(),
                    horde( const point & ),
                    horde( int, int )
                    > ()
                );
 
-       // 필요한 모든 멤버 등록
+       // Register all needed members
        luna::set( ut, "pos", &horde::pos );
        luna::set( ut, "size", &horde::size );
 
-       // 필요한 모든 메서드 등록
+       // Register all needed methods
        luna::set_fx( ut, "move_to", &horde::move_to );
        luna::set_fx( ut, "update", &horde::update );
        luna::set_fx( ut, "get_printable_name", &horde::get_printable_name );
 
-       // 저장/로드 경계를 넘어 horde를 전달할 수 있도록
-       // (역)직렬화 함수 추가
+       // Add (de-)serialization functions so we can carry
+       // our horde over the save/load boundary
        reg_serde_functions( ut );
 
-       // 산술 연산자, to_string 연산자 등 추가
+       // Add more stuff like arithmetic operators, to_string operator, etc.
    }
    ```
 4. 완료입니다. 타입이 이제 `Horde`라는 이름으로 Lua에 표시되며, 바인딩된 메서드와 멤버를 사용할 수 있습니다.
 
 ### Lua에 새 타입 바인딩하기 (Neovim의 정규식 사용)
 
-클래스/구조체를 Lua에 수동으로 바인딩하는 것은 꽤 지루할 수 있으므로, 헤더 파일을 변환하여 클래스를 바인딩하는 다른 방법도 있습니다. [이전](#lua에-새-타입-바인딩하기)의 두 번째 부분의 세 번째 단계에서는 Neovim의 내장 정규식과 C++ 매크로를 사용하여 클래스를 바인딩할 수 있습니다.
+클래스/구조체를 Lua에 수동으로 바인딩하는 것은 꽤 지루할 수 있으므로, 헤더 파일을 변환하여 클래스를 바인딩하는 다른 방법도 있습니다. [이전](#binding-new-type-to-lua)의 두 번째 부분의 세 번째 단계에서는 Neovim의 내장 정규식과 C++ 매크로를 사용하여 클래스를 바인딩할 수 있습니다.
 
 1. 클래스 정의의 사본을 만듭니다.
 2. 둘 다 적용: `%s@class \([^{]\)\+\n*{@private:@` `%s@struct \([^{]\)\+\n*{@public:@`
@@ -104,7 +108,7 @@ C++ 타입이 문서 생성기에 등록되지 않았다면 `<cppval: **gibberis
 #include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
 
-#include "horde.h" // 타입이 정의된 헤더로 교체
+#include "horde.h" // Replace with the header where your type is defined
 
 void cata::detail::reg_horde( sol::state &lua )
 {
@@ -114,27 +118,27 @@ void cata::detail::reg_horde( sol::state &lua )
         lua,
         luna::no_bases,
         luna::constructors <
-            // 실제 생성자를 여기에 정의
+            // Define your actual constructors here
             UT_TYPE(),
             UT_TYPE( const point & ),
             UT_TYPE( int, int )
             > ()
        );
 
-    // 필요한 모든 멤버 등록
+    // Register all needed members
     SET_MEMB( pos );
     SET_MEMB( size );
 
-    // 필요한 모든 메서드 등록
-    SET_FX_T( move_to, ... ); // ... 대신 메서드의 타입 선언이 들어갑니다.
+    // Register all needed methods
+    SET_FX_T( move_to, ... ); // Instead of ..., there'd be the type declaration of the method.
     SET_FX_T( update, ... );
     SET_FX_T( get_printable_name, ... );
 
-    // 저장/로드 경계를 넘어 horde를 전달할 수 있도록
-    // (역)직렬화 함수 추가
+    // Add (de-)serialization functions so we can carry
+    // our horde over the save/load boundary
     reg_serde_functions( ut );
 
-    // 산술 연산자, to_string 연산자 등 추가
+    // Add more stuff like arithmetic operators, to_string operator, etc.
     // ...
     #undef UT_TYPE // #define UT_TYPE horde
 }
@@ -185,16 +189,16 @@ enum 바인딩은 타입 바인딩과 유사합니다. 가상의 `horde_type` en
 
 이것들은 `T` 자체를 바인딩하는 것과 별도로 수행할 수 있습니다.
 
-1. 아직 하지 않았다면 문서 생성기에 타입 `T`를 등록하세요 ([관련 문서](#내부를-바인딩하지-않고-문서-생성기에-새-타입-추가하기) 참조).
+1. 아직 하지 않았다면 문서 생성기에 타입 `T`를 등록하세요 ([관련 문서](#adding-new-type-to-the-doc-generator-without-binding-internals) 참조).
 2. 1단계의 `LUNA_VAL`을 `LUNA_ID`로 교체합니다.
 3. 타입 `T`가 연산자 `<`와 `==`를 구현하는지 확인하세요. 보통 수동으로 구현하기 쉬우며, `catalua_type_operators.h`에 있는 `LUA_TYPE_OPS` 매크로로 반자동으로 수행할 수 있습니다.
 4. 타입 `T`에 null `string_id`가 있는지 확인하세요. 존재하지 않으면 `string_id_null_ids.cpp`에 추가할 수 있습니다. `T`가 class로 정의된 경우 `MAKE_CLASS_NULL_ID` 매크로를, 그렇지 않으면 `MAKE_STRUCT_NULL_ID` 매크로를 사용하세요.
 5. 타입 `T`의 `string_id`에 `obj()` 및 `is_valid()` 메서드가 구현되어 있는지 확인하세요. 이 메서드들은 케이스별로 구현됩니다. 다른 `string_id`를 예제로 확인하는 것을 권장합니다.
-6. `catalua_bindings_ids.cpp`에 타입 T가 정의된 헤더를 추가합니다:
+6. 적절한 `catalua_bindings_ids_*.cpp` 묶음에 타입 T가 정의된 헤더를 추가합니다:
    ```cpp
    #include "your_type_definition.h"
    ```
-7. `reg_game_ids` 함수에서 다음과 같이 등록합니다:
+7. 해당 묶음의 `reg_game_ids_*` 함수에서 다음과 같이 등록합니다:
    ```cpp
    reg_id<T, true>( lua );
    ```

@@ -115,9 +115,6 @@ id 멤버는 시나리오의 고유 id여야 합니다.
 특성/변이 id 목록. "forbidden_traits"의 특성은 금지되며 캐릭터 생성 중에 선택할 수 없습니다.
 "forced_traits"의 특성은 캐릭터에 자동으로 추가됩니다. "traits"의 특성은 시작 특성이 아니더라도 선택할 수 있게 합니다.
 
-모드는 "add:traits" / "add:forced_traits" / "add:forbidden_traits"와
-"remove:traits" / "remove:forced_traits" / "remove:forbidden_traits"를 통해 이것을 수정할 수 있습니다.
-
 ## `bionics", "forced_bionics", "forbidden_bionics`
 
 (선택사항, 문자열 배열)
@@ -125,8 +122,11 @@ id 멤버는 시나리오의 고유 id여야 합니다.
 특성/변이 id 목록. "forbidden_bionics"의 생체공학은 금지되며 캐릭터 생성 중에 선택할 수 없습니다.
 "forced_bionics"의 생체공학은 캐릭터에 자동으로 추가됩니다. "bionics"의 생체공학은 시작 생체공학이 아니더라도 선택할 수 있게 합니다.
 
-모드는 "add:bionics" / "add:forced_bionics" / "add:forbidden_bionics"와
-"remove:bionics" / "remove:forced_bionics" / "remove:forbidden_bionics"를 통해 이것을 수정할 수 있습니다.
+## `spells", "forbidden_spells`
+
+(선택사항, 문자열 배열)
+
+주문 ID 목록입니다. `forbidden_spells`의 주문은 금지되어 캐릭터 생성 중 선택할 수 없습니다. `spells`의 주문은 시작 주문이 아니더라도 선택할 수 있게 합니다.
 
 ## `forbids_bionics`
 

@@ -350,6 +350,18 @@
 
 제공되는 사기 효과의 유형. 사기 효과가 있는 경우 필수이며, 그렇지 않으면 지정하면 안 됩니다.
 
+### 인챈트
+
+```json
+"base_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ],
+"scaling_enchantments": [ { "values": [ { "value": "SKILL_LEVEL_COMPUTER", "add": 100 } ] } ]
+```
+
+인라인 효과 또는 인챈트 문자열 ID를 지정합니다.
+배열이어야 합니다.
+강도 1을 초과할 때마다 scaling이 한 번씩 추가됩니다.
+효과가 적용될 때 base가 한 번 추가됩니다.
+
 ### 제거 시 다른 효과
 
 ```json

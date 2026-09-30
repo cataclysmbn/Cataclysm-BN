@@ -19,14 +19,14 @@ astyle --style=1tbs --attach-inlines --indent=spaces=4 --align-pointer=name --ma
 :'a,'b ! astyle --style=1tbs --attach-inlines --indent=spaces=4 --align-pointer=name --max-code-length=100 --break-after-logical --indent-classes --indent-switches --indent-preproc-define --indent-col1-comments --min-conditional-indent=0 --pad-oper --add-braces --convet-tabs --unpad-paren --pad-paren-in --keep-one-line-blocks
 ```
 
-その他の環境については、[DEVELOPER_TOOLING.md](../reference/tooling) を参照してください。
+その他の環境については、[DEVELOPER_TOOLING.md](../reference/tooling.md) を参照してください。
 
 ## コード例
 
 以下は、最も一般的なスタイル上のポイントを示す例です:
 
 ```cpp
-int foo( int arg1, int *arg2 )
+auto foo( int arg1, int *arg2 ) -> int
 {
     if( arg1 < 5 ) {
         switch( *arg2 ) {
@@ -55,7 +55,12 @@ int foo( int arg1, int *arg2 )
 
 これらは、より汎用性の低いガイドラインであり、長年にわたり遭遇してきた問題点に基づいています。
 
+### 不変値を優先する
+
 - 不変の値を優先し、変数を `const`で宣言してください。可動部分が少ないほど、コードの流れはより予測可能になります。
+
+### `int` または `int64_t` を使う
+
 - `int`を優先してください。
   - 特に`long`は、サポートしている一部のプラットフォームでは int よりも大きい型ではないため、問題を引き起こ
     します。
@@ -63,8 +68,14 @@ int foo( int arg1, int *arg2 )
   - `uint` (符号なし整数) も問題があります。オーバーフロー時に好ましくない振る舞いをするため、一般的なプログラミングでの使用は避けるべきです。
     - バイナリデータが必要な場合は、`unsigned int` や `unsigned char` は問題ありませんが、代わりに `std::bitset` の使用を推奨します。
   - `float` の使用は避けるべきですが、有効な用途もあります。
-- [`auto` キーワード](https://learn.microsoft.com/en-us/cpp/cpp/auto-cpp?view=msvc-170)は、以下のように使用することが理にかなっている場所で使用してください:
-  - [後置戻り地型](https://en.wikipedia.org/wiki/Trailing_return_type) を関数宣言で優先してください。長い戻り値型は関数名を不明瞭にし、クラスメソッドの可読性を損ないます。
+
+### Auto キーワードを使う
+
+[`auto` キーワード](https://learn.microsoft.com/en-us/cpp/cpp/auto-cpp?view=msvc-170)は、以下のように使用することが理にかなっている場所で使用してください:
+
+#### 後置戻り値型
+
+- [後置戻り値型](https://en.wikipedia.org/wiki/Trailing_return_type) を関数宣言で優先してください。長い戻り値型は関数名を不明瞭にし、クラスメソッドの可読性を損ないます。
   ```cpp
   class Bar;
   auto foo( int a ) -> int
@@ -74,7 +85,10 @@ int foo( int arg1, int *arg2 )
       return is_bar_ok( bar ) ? 42 : 404;
   }
   ```
-  - `decltype` スタイルのジェネリック関数に使用する。
+
+#### Decltype スタイルのジェネリック関数
+
+- `decltype` スタイルのジェネリック関数に使用する。
   ```diff
   template<typename A, typename B>
   - decltype(std::declval<A&>() * std::declval<B&>()) multiply(A a, B b)
@@ -83,20 +97,34 @@ int foo( int arg1, int *arg2 )
       return a*b;
   }
   ```
-  - 長いイテレータ宣言の省略に使用する。
+
+#### 長いイテレータ宣言の別名
+
+- 長いイテレータ宣言の省略に使用する。
   ```diff
     std::map<int, std::map<std::string, some_long_typename>> some_map;
 
   - std::map<int, std::map<std::string, some_long_typename>>::iterator iter = some_map.begin();
   + auto iter = some_map.begin();
   ```
-  - ラムダ宣言には必須である。
+
+#### ラムダ宣言
+
+- ラムダ宣言には必須である。
   ```cpp
   auto two_times = []( int a ) { return a * 2; };
   ```
-  - それ以外の場合でも、利便性のために可読性を犠牲にしない。[vscode](https://github.com/clangd/vscode-clangd)などの一般的なコードエディタでは、インレイヒントのオプションが利用可能です。
+
+#### エディタの型ヒント
+
+- それ以外の場合でも、利便性のために可読性を犠牲にしない。[vscode](https://github.com/clangd/vscode-clangd)などの一般的なコードエディタでは、インレイヒントのオプションが利用可能です。
+
+### `using namespace` を避ける
 
 - 標準名前空間に対する `using namespace` の使用を避ける。
+
+### メンバメソッドを避ける
+
 - 必要がない限り、クラスに新しいメンバメソッドを追加することを避ける。
   ```diff
   // this function does not access non-public data members or member methods in the class, and thus can be made a free function

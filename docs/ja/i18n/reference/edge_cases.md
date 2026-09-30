@@ -7,7 +7,7 @@ Cataclysm: BN には、翻訳者が留意すべき固有の問題がいくつか
 一部の翻訳テキストには、以下のような特殊なシンボルまたはフォーマットが含まれます。
 
 - [`%s` および `%3$d` (これらはそのまま残すべきです)](../explanation/file_format.md#format-strings-and-newlines)
-- [`<name>` (これは翻訳してはいけません](../explanation/file_format.md#special-tags-in-strings)
+- [`<name>` (これは翻訳してはいけません)](../explanation/file_format.md#special-tags-in-strings)
 
 詳細については、[ファイル形式の説明](../explanation/file_format.md)をお読みください。
 

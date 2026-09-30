@@ -26,7 +26,7 @@ Sol2는 번들링이 쉽습니다. `sol2 v3.3.0` 단일 헤더 통합 버전이 
 
 - `catalua.h` (및 `catalua.cpp`) - 메인 Lua 인터페이스. 코드베이스 대부분이 포함해야 하는 유일한 헤더이며, 공용 인터페이스를 제공합니다.
 - `catalua_sol.h` 및 `catalua_sol_fwd.h` - 컴파일되도록 커스텀 프라그마를 포함한 `sol/sol.hpp` 및 `sol/forward.hpp`의 래퍼입니다.
-- `catalua_bindings*` - 게임 Lua 바인딩이 여기에 있습니다.
+- `catalua_bindings*` - 게임 Lua 바인딩이 여기에 있습니다. 좌표 바인딩(`catalua_bindings_coords*.cpp`, `catalua_coord.h`)은 특히 복잡하므로, Lua 측 API와 설계상의 이유는 [`coordinates.md`](coordinates.md)를 참조하세요.
 - `catalua_console.h`(`.cpp`) - 게임 내 Lua 콘솔.
 - `catalua_impl.h`(`.cpp`) - `catalua.h`(`.cpp`)의 구현 세부 사항.
 - `catalua_iuse_actor.h`(`.cpp`) - Lua 기반 `iuse_actor`.
