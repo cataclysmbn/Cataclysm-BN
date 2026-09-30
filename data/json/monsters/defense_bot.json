@@ -545,6 +545,12 @@
     ]
   },
   {
+    "id": "mon_tankbot_hostile",
+    "type": "MONSTER",
+    "copy-from": "mon_tankbot",
+    "aggression": 100
+  },
+  {
     "id": "mon_tripod",
     "type": "MONSTER",
     "name": { "str": "tripod" },
