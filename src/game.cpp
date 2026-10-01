@@ -128,6 +128,7 @@
 #include "overmap/overmap.h"
 #include "overmap/overmap_ui.h"
 #include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "panels.h"
 #include "path_info.h"
 #include "pathfinding.h"
@@ -215,6 +216,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 class computer;
 
 #if defined(TILES)
@@ -4387,8 +4389,8 @@ bool game::save( bool quitting )
 
     world->start_save_tx();
 
-    cata::run_on_game_save_hooks( *DynamicDataLoader::get_instance().lua );
     try {
+        cata::run_on_game_save_hooks( *DynamicDataLoader::get_instance().lua );
         reset_save_ids( time( nullptr ), quitting );
         if( !save_factions_missions_npcs() ||
             !save_artifacts() ||
@@ -4400,6 +4402,7 @@ bool game::save( bool quitting )
             !cata::save_world_lua_state( get_active_world(), "lua_state.json" ) ||
             !save_uistate_data()
           ) {
+            world->rollback_save_tx();
             return false;
         } else {
             world_generator->last_world_name = world_generator->active_world->info->world_name;
@@ -4412,8 +4415,12 @@ bool game::save( bool quitting )
             return true;
         }
     } catch( std::ios::failure &err ) {
+        world->rollback_save_tx();
         popup( _( "Failed to save game data" ) );
         return false;
+    } catch( ... ) {
+        world->rollback_save_tx();
+        throw;
     }
 }
 
@@ -14821,6 +14828,88 @@ std::string game::get_dimension_prefix() const
     return current_dimension_id_.str();
 }
 
+auto game::delete_dimension( const dimension_id &dim_id ) -> bool
+{
+    return delete_dimension( dim_id, true );
+}
+
+auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    // Portals and scripts can still own requests for an inactive dimension.  Keep its buffers
+    // intact until those owners release their handles, including the loader's cached state.
+    if( std::ranges::contains( submap_loader.active_dimensions(), dim_id ) ) {
+        return false;
+    }
+
+    auto *active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+
+    const auto is_loaded = loaded_dimensions_.contains( dim_id );
+    if( !is_loaded && !active_world->has_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    if( active_world->is_save_tx_active() ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+    const auto was_kept = kept_pocket_dimension_id_ == dim_id;
+
+    // Save while the destination metadata is still intact.  If data deletion fails or the process
+    // stops during cleanup, the next load can still recover the dimension's generation settings.
+    if( !save( false ) ) {
+        return false;
+    }
+
+    submap_loader.drain_lazy_loads();
+    if( !active_world->delete_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    if( auto tracker_it = grid_trackers_.find( dim_id ); tracker_it != grid_trackers_.end() ) {
+        submap_loader.remove_listener( tracker_it->second.get() );
+        grid_trackers_.erase( tracker_it );
+    }
+
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    unload_overmapbuffer_dimension( dim_id );
+
+    // Finalize a deletion only after its data and zones are gone.  Keep metadata on failure so
+    // cleanup can be retried.  A reset keeps both zones and metadata for re-entry.
+    if( remove_zones ) {
+        if( !zone_manager::get_manager().remove_dimension_zones( dim_id ) ) {
+            return false;
+        }
+        loaded_dimensions_.erase( dim_id );
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dimension_id();
+        }
+        if( !save( false ) ) {
+            if( preserved_info ) {
+                loaded_dimensions_[dim_id] = *preserved_info;
+            }
+            if( was_kept ) {
+                kept_pocket_dimension_id_ = dim_id;
+            }
+            return false;
+        }
+    }
+
+    return true;
+}
+
+auto game::reset_dimension( const dimension_id &dim_id ) -> bool { return delete_dimension( dim_id, false ); }
+
 auto game::set_active_dimension_id( const dimension_id &dim_id ) -> void
 {
     current_dimension_id_ = dim_id;
@@ -14865,9 +14954,13 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
                                 const std::optional<tripoint_abs_sm> &load_pos,
                                 const std::function<void()> &pre_load_callback ) -> bool
 {
-    if( get_active_world()->info->world_save_format == save_format::V1 ) {
+    auto *const active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+    if( active_world->info->world_save_format == save_format::V1 ) {
         popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
-        return true;
+        return false;
     }
     // Flush any items pending deferred deletion before switching dimensions.
     // Without this, zombie item pointers in cata_arena can persist across the
@@ -14878,6 +14971,9 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     if( dim_id == current_dimension_id_ ) {
         add_msg( m_debug, "[DIM] Already in dimension '%s', no-op", dim_id.c_str() );
         return true;
+    }
+    if( active_world->is_save_tx_active() ) {
+        return false;
     }
 
     // Resolve effective world_type: use the passed value if valid; otherwise try
@@ -14897,6 +14993,19 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
 
     // For the overworld, effective_wt may still be null; guard all uses below.
     const struct world_type *target_type = effective_wt.is_valid() ? &effective_wt.obj() : nullptr;
+    auto effective_pd_info = pd_info;
+    if( !effective_pd_info ) {
+        if( auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+            effective_pd_info = it->second.pocket_info;
+        }
+    }
+    if( effective_pd_info && load_pos ) {
+        const auto target_pos = project_to<coords::ms>(
+                                    *load_pos + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
+        if( !effective_pd_info->bounds.contains( target_pos ) ) {
+            return false;
+        }
+    }
     map &here = get_map();
     avatar &player = get_avatar();
 
@@ -14919,23 +15028,17 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
             here.unboard_vehicle( player.bub_pos() );
         }
 
-        world *active_world = get_active_world();
         try {
-            if( active_world ) {
-                active_world->start_save_tx();
-            }
+            active_world->start_save_tx();
             get_overmapbuffer( current_dimension_id_ ).save( current_dimension_id_ );
             MAPBUFFER_REGISTRY.get( old_dim_id ).save();
             if( !save_dimension_data() ) {
-                if( active_world ) {
-                    active_world->commit_save_tx();
-                }
+                active_world->rollback_save_tx();
                 return false;
             }
-            if( active_world ) {
-                active_world->commit_save_tx();
-            }
+            active_world->commit_save_tx();
         } catch( const std::exception &err ) {
+            active_world->rollback_save_tx();
             popup( _( "Failed to save map data: %s" ), err.what() );
             return false;
         }
@@ -14956,11 +15059,11 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         const bool old_is_bounded = !old_dim_id.is_empty() &&
                                     loaded_dimensions_.count( old_dim_id ) &&
                                     loaded_dimensions_.at( old_dim_id ).pocket_info.has_value();
-        if( old_is_bounded && !pd_info.has_value() ) {
+        if( old_is_bounded && !effective_pd_info.has_value() ) {
             // Exiting a bounded pocket → remember it.
             kept_pocket_dimension_id_ = old_dim_id;
             add_msg( m_debug, "[DIM] Marking pocket '%s' as kept", old_dim_id.c_str() );
-        } else if( pd_info.has_value() ) {
+        } else if( effective_pd_info.has_value() ) {
             // Entering any pocket → forget the previous kept marker.
             kept_pocket_dimension_id_ = dimension_id();
         }
@@ -15000,7 +15103,7 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
             .id                  = dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id.str(),
-            .pocket_info         = pd_info
+            .pocket_info         = effective_pd_info
         };
     }
 
@@ -15021,9 +15124,9 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.get_mapbuffer().clear_pocket_info();
     get_overmapbuffer( current_dimension_id_ ).clear_pocket_info();
-    if( pd_info ) {
-        here.get_mapbuffer().set_pocket_info( *pd_info );
-        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *pd_info );
+    if( effective_pd_info ) {
+        here.get_mapbuffer().set_pocket_info( *effective_pd_info );
+        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *effective_pd_info );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps

@@ -717,6 +717,9 @@ public:
      */
     auto drain_pending_submap_destroy() -> void;
 
+    /// Release committed pending writes, or restore them after a failed save transaction.
+    auto finish_save_tx(bool committed) -> void;
+
     /**
      * Evict all submaps in the OMT at @p omt_addr.
      *
@@ -793,6 +796,8 @@ private:
     /// the player can revert to the pre-session state by quitting without saving.
     mutable std::mutex pending_writes_mutex_;
     std::map<tripoint_abs_omt, std::string> pending_writes_;
+    /// Evicted OMTs flushed by the current save, retained until its transaction finishes.
+    std::map<tripoint_abs_omt, std::string> transaction_pending_writes_;
 
 public:
     auto begin() -> submap_map_t::iterator { return submaps.begin(); }
