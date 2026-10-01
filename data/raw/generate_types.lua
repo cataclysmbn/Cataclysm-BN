@@ -26,13 +26,13 @@ end
 ---@param arg_list string[] List of types
 ---@param ret_type string return type
 ---@param class_name string The name of the owning class/library
----@param meta string Member metadata
+---@param meta string? Member metadata
 ---@return string
 local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
   local params = {}
 
   local clean_arg_list = remove_hidden_args(arg_list)
-  local meta_args = get_meta_params(meta)
+  local meta_args = get_meta_param_specs(meta)
   local state = nil
 
   for i, arg_str in ipairs(clean_arg_list) do
@@ -41,11 +41,13 @@ local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
     if i == 1 and arg_str == class_name then
       arg_name = "self"
     else
-      state, arg_name = next(meta_args, state)
-      if not arg_name then
+      local param_spec
+      state, param_spec = next(meta_args, state)
+      if not param_spec then
         arg_name = "arg" .. i -- Generate placeholder name if needed
       else
-        arg_name = string.gsub(arg_name, "[^%w_]", "_")
+        arg_name = string.gsub(param_spec.name, "[^%w_]", "_")
+        lua_type = param_spec.type or lua_type
       end
     end
     table.insert(params, arg_name .. ": " .. lua_type)
@@ -79,7 +81,7 @@ local operator_metamethod_names = {
 ---@return string?
 local get_operator_metamethod_name = function(member_name) return operator_metamethod_names[member_name] end
 
----@param member table {name:string, overloads:table[]}
+---@param member LuaDocFunctionMember
 ---@param class_name string
 ---@return string
 local fmt_operator_annotations = function(member, class_name)
@@ -127,7 +129,7 @@ end
 --[[
     Formats ---@field annotation for variable members.
   ]]
----@param member table {name:string, vartype:string, comment?:string, hasval?:boolean, varval?:any}
+---@param member { name: string, vartype: string, comment?: string, hasval?: boolean, varval?: any }
 ---@param _is_static boolean (optional) Not directly used in LuaLS field, but might be relevant contextually
 ---@return string
 local fmt_variable_field = function(member, _is_static)
@@ -166,7 +168,7 @@ local fmt_signature_union = function(signatures)
   return table.concat(wrapped, " | ")
 end
 
----@param member table {name:string, comment?:string, overloads:table[]}
+---@param member LuaDocFunctionMember
 ---@param class_name string The name of the owning class/library
 ---@return string
 local fmt_function_field = function(member, class_name)
@@ -183,6 +185,7 @@ local fmt_function_field = function(member, class_name)
   local signatures = {}
   ---@type table<string, boolean>
   local seen_signatures = {}
+  ---@param signature string
   local add_signature = function(signature)
     if seen_signatures[signature] then return end
     seen_signatures[signature] = true
@@ -210,12 +213,10 @@ local fmt_function_field = function(member, class_name)
   local signature_union = fmt_signature_union(signatures)
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
   if member.comment and member.comment ~= "" then
+    ---@param m string
     local op = function(m)
-      if string.match(m, "^@param") then
-        return nil
-      else
-        return m
-      end
+      if string.match(m, "^@param") or is_luals_metadata_line(m) then return nil end
+      return m
     end
     ret = ret .. " @" .. string_concat_matches(member.comment, "([^\r\n]+)", "<br />", op)
   end
@@ -229,6 +230,51 @@ end
 local add_class_annotation = function(annotations, class_name, annotation)
   local pattern = "(---@class " .. class_name .. " : [^\n]+\n)"
   return (annotations:gsub(pattern, "%1" .. annotation .. "\n"))
+end
+
+---@param comment string?
+---@return string[]
+local custom_luals_annotations_from_comment = function(comment)
+  local lines = {}
+  if not comment or comment == "" then return lines end
+  for line in string.gmatch(comment, "[^\r\n]+") do
+    if is_luals_metadata_line(line) then table.insert(lines, "---" .. line) end
+  end
+  return lines
+end
+
+---@param dt LuaDocMetadata
+---@return string
+local collect_custom_luals_annotations = function(dt)
+  local lines = {}
+  local seen = {}
+
+  ---@param comment string?
+  local add_comment = function(comment)
+    for _, line in ipairs(custom_luals_annotations_from_comment(comment)) do
+      if not seen[line] then
+        seen[line] = true
+        table.insert(lines, line)
+      end
+    end
+  end
+
+  ---@param section table<string, LuaDocSection>
+  local add_section = function(section)
+    for _, item in ipairs(sort_by(wrapped(section))) do
+      local data = item.v or {}
+      add_comment(data.type_comment or data.lib_comment)
+      for _, member in ipairs(data["#member"] or {}) do
+        add_comment(member.comment)
+      end
+    end
+  end
+
+  add_section(dt["#types"] or {})
+  add_section(dt["#libs"] or {})
+
+  if #lines == 0 then return "" end
+  return table.concat(lines, "\n") .. "\n\n"
 end
 
 ---@class LuaCoordNamePart
@@ -793,7 +839,7 @@ on_npc_loaded = {}
 
   -- Process Classes and Libraries (Types and Libs)
   ---@param section_name string Display name for the section header
-  ---@param section_data table Data table (#types or #libs)
+  ---@param section_data { k: string|integer, v: LuaDocSection }[] Data table (#types or #libs)
   ---@param is_class boolean True if processing classes (affects 'self', bases, constructors)
   ---@return string Generated Lua code snippet for this section
   local process_section = function(section_name, section_data, is_class)
@@ -813,12 +859,21 @@ on_npc_loaded = {}
 
       -- Class/Lib Annotation Start
       local bases_str = is_class and fmt_bases_luals(bases) or ""
-      local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+      local comment_annot = string_concat_matches(
+        comment,
+        "([^\r\n]+)",
+        "\n",
+        ---@param m string
+        function(m)
+          if is_luals_metadata_line(m) then return nil end
+          return "--- " .. m
+        end
+      )
       if comment_annot ~= "" then ret = ret .. comment_annot .. "\n" end
       ret = ret .. "---@class " .. name .. bases_str .. "\n"
 
       -- Process Members (Variables and Functions)
-      ---@type { member: table, value: string }[]
+      ---@type { member: LuaDocMember, value: string }[]
       local formatted = {}
       for _, member in ipairs(members) do
         local member_name_str = tostring(member.name)
@@ -849,11 +904,16 @@ on_npc_loaded = {}
       end
 
       for _, item in
-        ipairs(sort_by(formatted, function(a, b)
-          if field_sort_less(a.member, b.member) then return true end
-          if field_sort_less(b.member, a.member) then return false end
-          return a.value < b.value
-        end))
+        ipairs(sort_by(
+          formatted,
+          ---@param a { member: LuaDocMember, value: string }
+          ---@param b { member: LuaDocMember, value: string }
+          function(a, b)
+            if field_sort_less(a.member, b.member) then return true end
+            if field_sort_less(b.member, a.member) then return false end
+            return a.value < b.value
+          end
+        ))
       do
         ret = ret .. item.value
       end
@@ -864,6 +924,8 @@ on_npc_loaded = {}
     end
     return ret
   end
+
+  full_ret = full_ret .. collect_custom_luals_annotations(dt)
 
   -- Generate sections
   full_ret = full_ret .. process_section("Classes", wrapped(dt["#types"]), true)
@@ -877,7 +939,16 @@ on_npc_loaded = {}
     local dt_enum = item.v or {}
     local comment = dt_enum.enum_comment
 
-    local comment_annot = string_concat_matches(comment, "([^\r\n]+)", "\n", function(m) return "--- " .. m end)
+    local comment_annot = string_concat_matches(
+      comment,
+      "([^\r\n]+)",
+      "\n",
+      ---@param m string
+      function(m)
+        if is_luals_metadata_line(m) then return nil end
+        return "--- " .. m
+      end
+    )
     if comment_annot ~= "" then full_ret = full_ret .. comment_annot .. "\n" end
 
     full_ret = full_ret .. "---@enum " .. enumname .. "\n"
@@ -891,7 +962,12 @@ on_npc_loaded = {}
       end
     end
 
-    local entries_sorted_by_v = sort_by(entries_filtered, function(a, b) return a.v < b.v end)
+    local entries_sorted_by_v = sort_by(
+      entries_filtered,
+      ---@param a { k: string, v: string|number|boolean }
+      ---@param b { k: string, v: string|number|boolean }
+      function(a, b) return a.v < b.v end
+    )
 
     local table_entries = {}
     for _, entry_item in ipairs(entries_sorted_by_v) do
@@ -927,14 +1003,22 @@ on_npc_loaded = {}
     full_ret = full_ret .. "}\n\n"
   end
 
-  full_ret = full_ret:gsub("%-%-%-@class (Point%u[%w]*)\n", function(name)
-    if name == "PointCoord" then return "---@class " .. name .. "\n" end
-    return "---@class " .. name .. " : PointCoord\n"
-  end)
-  full_ret = full_ret:gsub("%-%-%-@class (Tripoint%u[%w]*)\n", function(name)
-    if name == "TripointCoord" then return "---@class " .. name .. "\n" end
-    return "---@class " .. name .. " : TripointCoord\n"
-  end)
+  full_ret = full_ret:gsub(
+    "%-%-%-@class (Point%u[%w]*)\n",
+    ---@param name string
+    function(name)
+      if name == "PointCoord" then return "---@class " .. name .. "\n" end
+      return "---@class " .. name .. " : PointCoord\n"
+    end
+  )
+  full_ret = full_ret:gsub(
+    "%-%-%-@class (Tripoint%u[%w]*)\n",
+    ---@param name string
+    function(name)
+      if name == "TripointCoord" then return "---@class " .. name .. "\n" end
+      return "---@class " .. name .. " : TripointCoord\n"
+    end
+  )
   full_ret = add_coord_specific_annotations(full_ret)
 
   return full_ret
