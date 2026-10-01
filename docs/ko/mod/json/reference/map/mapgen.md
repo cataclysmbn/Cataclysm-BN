@@ -24,6 +24,16 @@ Cataclysm은 탐색 시 `mapgen`으로 건물과 지형을 생성합니다. 이�
 
 # mapgen 항목 추가
 
+standalone mapgen은 다음과 같이 오버맵 지형을 지정합니다.
+
+```json
+{
+  "type": "mapgen",
+  "om_terrain": "oter_id",
+  "overmap_terrain": "oter_id"
+}
+```
+
 건물 변형을 만들기 위해 반드시 새 `overmap_terrain`을 만들 필요는 없습니다. 커스텀 주유소를 만들 때
 mapgen 항목을 정의하고 이를 `"s_gas"` mapgen 목록에 추가하면, 세계의 주유소 무작위 변형에 포함됩니다.
 
@@ -174,11 +184,11 @@ apartments_mod_tower 오버맵 지형 ID와 각각 연결됩니다.
 
 일부 오버맵 지형은 _linear_입니다. 도로, 터널처럼 다양한 방식으로 연결되는 선형 구조에 사용됩니다.
 이런 지형은 `overmap_terrain` 정의에 `LINEAR` 플래그로 표시됩니다
-( [OVERMAP docs](OVERMAP.md) 참고 ).
+( [오버맵 문서](overmap.md) 참고 ).
 
 이런 지형의 JSON mapgen을 정의할 때는 가능한 연결 형태마다 인스턴스를 정의해야 합니다. 각 인스턴스는
 `overmap_terrain` ID에 접미사가 붙습니다. 접미사는 `_end`, `_straight`, `_curved`, `_tee`,
-`_four_way`입니다. 예시는 [`ants.json`](../data/json/mapgen/bugs/ants.json)의 `ants` 정의를 보세요.
+`_four_way`입니다. 예시는 [`ants.json`](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/json/mapgen/bugs/ants.json)의 `ants` 정의를 보세요.
 
 ### mapgen `weight` 정의
 
@@ -206,6 +216,8 @@ standalone에서는 `"id"`가 필수 `"om_terrain"` id를 결정합니다. 단, 
   절반 정도만 전환되었습니다. 즉, 커스텀 mapgen 함수는 허용되지만, 기본 함수는 새 함수가 추가되면
   무시될 수 있습니다.
 - TODO: 이 목록에 추가
+
+<a id="json-object-definition"></a>
 
 # JSON 객체 정의
 
@@ -329,6 +341,11 @@ mapgen 키 문자는 사실상 무한합니다. 단, 시각적으로 구분이 �
 `rows`용 가구 ID를 정의합니다(각 문자는 지형 또는 지형/가구 조합). `f_null`은 가구 없음이며,
 항목을 생략해도 됩니다.
 
+팔레트를 사용하면 팔레트에 따라 가구가 기본 색상으로 칠해집니다.
+팔레트는 전역 오버맵에서의 위치를 기준으로 색상을 무작위로 선택합니다.
+
+별도의 옵션으로 인라인 팔레트를 정의할 수도 있습니다.
+
 예시:
 
 ```json
@@ -339,7 +356,7 @@ mapgen 키 문자는 사실상 무한합니다. 단, 시각적으로 구분이 �
   "O": "f_oven",
   "r": "f_rack",
   "^": "f_indoor_plant",
-  "t": "f_table",
+  "t": { "furn": "f_table", "palette": "wooden_furniture_palette" },
   "T": "f_toilet",
   "S": "f_sink",
   "e": "f_fridge",
@@ -624,13 +641,23 @@ Specials는 위 `rows` 항목을 사용하는 terrain/furniture 매핑과 같은
 }
 ```
 
+적용할 색상 팔레트를 지정할 수도 있습니다.
+팔레트는 `mapgen_color_palette`입니다.
+
+별도의 옵션으로 인라인 팔레트를 정의할 수도 있습니다.
+
+````json
+"terrain": {
+  "|": { "ter": "t_wall_paintable", "palette": "plaster_wall_palette" }
+}
+
 예시(`.` 칸마다 blood와 bile 필드 배치):
 
 ```json
 "fields" : {
     ".": [ { "field": "fd_blood" }, { "field": "fd_bile" } ]
 }
-```
+````
 
 또는 문자 하나의 매핑을 한 번에 정의:
 
@@ -784,13 +811,14 @@ Terrain/furniture/traps는 JSON 객체 대신 단일 문자열로도 지정할 �
 
 ### `vehicles`로 차량 타입/그룹 배치
 
-| Field    | Description                                                                                                      |
-| -------- | ---------------------------------------------------------------------------------------------------------------- |
-| vehicle  | (필수, string) 차량 타입 또는 차량 그룹 id                                                                       |
-| chance   | (선택, integer 또는 min/max 배열) 차량이 생성될 100분의 x 확률. 기본 1(즉 1% 확률이므로 보통 더 큰 값을 원할 것) |
-| rotation | (선택, integer) 차량 방향                                                                                        |
-| fuel     | (선택, integer) 연료 상태. 기본 -1은 탱크 1~7% 상태. 양수는 탱크 채움 비율(예: 100은 가득 참)                    |
-| status   | (선택, integer) 기본 -1(경미 손상), 0은 완전 상태, 1은 심하게 손상                                               |
+| Field               | Description                                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| vehicle             | (필수, string) 차량 타입 또는 차량 그룹 id                                                                       |
+| chance              | (선택, integer 또는 min/max 배열) 차량이 생성될 100분의 x 확률. 기본 1(즉 1% 확률이므로 보통 더 큰 값을 원할 것) |
+| rotation            | (선택, integer) 차량 방향                                                                                        |
+| fuel                | (선택, integer) 연료 상태. 기본 -1은 탱크 1~7% 상태. 양수는 탱크 채움 비율(예: 100은 가득 참)                    |
+| status              | (선택, integer) 기본 -1(경미 손상), 0은 완전 상태, 1은 심하게 손상                                               |
+| place_beyond_bounds | (선택, integer) 모든 충돌을 24x24 OMT 밖에서 무시하여 더 큰 차량을 생성할 수 있게 하는 반위험 값                 |
 
 ### `item`으로 특정 아이템 배치
 
@@ -972,6 +1000,10 @@ mapgen에 분위기를 더하는 용도로 쓸 수 있습니다.
 
 - `"transform"`: (필수, string) 실행할 `ter_furn_transform` id
 
+```json
+{ "transform": "example" }
+```
+
 ### `place_nested`로 오버맵 이웃 기반 중첩 청크 스폰
 
 Place_nested는 이웃 오버맵의 `"id"`와 mutable overmap special 배치에 사용된 join을 기준으로,
@@ -985,6 +1017,7 @@ Place_nested는 이웃 오버맵의 `"id"`와 mutable overmap special 배치에 
 | neighbors          | (선택) 청크 배치 전 검사할 이웃 오버맵. 각 방향은 오버맵 `"id"` 부분문자열 목록과 연결됨                   |
 | joins              | (선택) 청크 배치 전 검사할 mutable overmap special join. 각 방향은 join `"id"` 문자열 목록과 연결됨        |
 | connections        | (선택) 청크 배치 전 해당 오버맵으로 향해야 하는 연결. 각 방향은 connection `"id"` 문자열 목록과 연결됨     |
+| rotation           | (선택) 맵을 90도 단위로 회전할 횟수                                                                        |
 |                    |                                                                                                            |
 
 이 방식으로 검사 가능한 인접 오버맵은 다음과 같습니다:
@@ -999,7 +1032,7 @@ Join은 직교 방향과 `"above"`, `"below"`만 검사할 수 있습니다.
 
 ```json
 "place_nested": [
-  { "chunks": [ "concrete_wall_ew" ], "x": 0, "y": 0, "neighbors": { "north": [ "empty_rock", "field" ] } },
+  { "chunks": [ "concrete_wall_ew" ], "x": 0, "y": 0, "neighbors": { "north": [ "empty_rock", "field" ] }, "rotation": 0  },
   { "chunks": [ "gate_north" ], "x": 0, "y": 0, "joins": { "north": [ "interior_to_exterior" ] } },
   { "else_chunks": [ "concrete_wall_ns" ], "x": 0, "y": 0, "neighbors": { "north_west": [ "field", "microlab" ] } }
 ],
@@ -1010,6 +1043,19 @@ Join은 직교 방향과 `"above"`, `"below"`만 검사할 수 있습니다.
 - 북쪽 이웃이 field 또는 solid rock이면 `"concrete_wall_ew"`
 - mutable overmap 배치 시 북쪽에 `"interior_to_exterior"` join이 사용되었으면 `"gate_north"`
 - 북서 이웃이 field도 아니고 microlab 계열 오버맵도 아니면 `"concrete_wall_ns"`
+
+## 배치 전에 영역 지우기
+
+중첩된 전체 영역을 지우려면 다음 플래그를 사용합니다.
+
+```json
+"flags": [ "ERASE_ALL_BEFORE_PLACING_TERRAIN" ]
+```
+
+그 외에는 `place_remove_all`에 x/y 좌표를 지정하거나 문자 팔레트에서 `remove_all`을 사용합니다.
+이 작업은 다른 모든 작업보다 먼저 실행됩니다.
+
+<a id="mapgen-values"></a>
 
 ## Mapgen 값
 
@@ -1046,6 +1092,8 @@ _mapgen value_는 특정 id가 필요한 다양한 위치에서 사용할 수 �
   }
 }
 ```
+
+<a id="mapgen-parameters"></a>
 
 ## Mapgen 매개변수
 

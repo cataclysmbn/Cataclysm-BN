@@ -3173,7 +3173,7 @@ void item::armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *pa
             }
         } else {
             info.emplace_back( "DESCRIPTION", _( "* This clothing <bad>can not be refitted, "
-                                                 "upsized, or downsized</bad>." ) );
+                                                 "upsized, or downsized</bad> to fit abnormal anatomy without <bad>extensive modifications</bad>, but should <info>fit everyone with normal anatomy</info>." ) );
         }
     }
 

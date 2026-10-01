@@ -7,33 +7,33 @@ Cataclysm: BNの公式な翻訳場所は、
 
 [ゲームリポジトリに含まれないMODの翻訳方法をお探しですか？](../guides/mods.md)
 
-現在対応している言語は２５言語であり、以下の通りとなります。
+現在対応している言語は以下の通りです。
 
 - アラビア語 / Arabic
-- アイスランド語 / Icelandic
-- イタリア語(イタリア) / Italian (Italy)
-- インドネシア語 / Indonesian
-- ウクライナ語 / Ukrainian
-- ウクライナ語（ウクライナ）/ Ukrainian (Ukraine)
+- 中国語（中国）/ Chinese (China)
+- 中国語（台湾）/ Chinese (Taiwan)
+- デンマーク語 / Danish
 - オランダ語 / Dutch
-- 韓国語 / Korean
+- フランス語 / French
+- ドイツ語 / German
 - ギリシャ語 / Greek
+- ハンガリー語 / Hungarian
+- アイスランド語 / Icelandic
+- インドネシア語 / Indonesian
+- イタリア語 (イタリア) / Italian (Italy)
+- 日本語 / Japanese
+- 韓国語 / Korean
+- ノルウェー語（ブークモール）/ Norwegian Bokmål
+- ポーランド語（ポーランド）/ Polish (Poland)
+- ポルトガル語（ブラジル）/ Portuguese (Brazil)
+- ロシア語（ロシア）/ Russian (Russia)
 - セルビア語 / Serbian
+- スロバキア語（スロバキア）/ Slovak (Slovakia)
 - スペイン語 (アルゼンチン) / Spanish (Argentina)
 - スペイン語 (スペイン) / Spanish (Spain)
-- スロバキア語（スロバキア）/ Slovak (Slovakia)
-- 中国語（台湾）/ Chinese (Taiwan)
-- 中国語（中国）/ Chinese (China)
-- デンマーク語 / Danish
-- ドイツ語 / German
 - トルコ語 / Turkish
-- 日本語 / Japanese
-- ノルウェー語（ブークモール）/ Norwegian Bokmål
-- ハンガリー語 / Hungarian
-- フランス語 / French
-- ポルトガル語（ブラジル）/ Portuguese (Brazil)
-- ポーランド語（ポーランド）/ Polish (Poland)
-- ロシア語（ロシア）/ Russian (Russia)
+- ウクライナ語 / Ukrainian
+- ウクライナ語（ウクライナ）/ Ukrainian (Ukraine)
 
 上記のリストにあなたの言語が見当たらない場合は、Transifexでプロジェクトに追加できます！
 

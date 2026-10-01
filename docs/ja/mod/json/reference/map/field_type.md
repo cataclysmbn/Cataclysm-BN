@@ -64,6 +64,7 @@
   "display_items": true, // ファイル上の項目を表示するかどうか?
   "display_field": true, // フィールドを表示するかどうか?
   "priority": 1, // フィールドのシンボル/スプライトを表示する優先順位
+  "tint": "#123456", // オプションのスプライト色調: 色名または RGB 色。copy-from から継承されます。
   // 免疫
   "immunity_data": {
     "traits": ["M_IMMUNE"], // フィールドからの影響を防ぐ特性の配列
@@ -84,6 +85,9 @@
   "wandering_field": "fd_toxic_gas", // このフィールドが生成するフィールド
   "accelerated_decay": true, // このフィールドは地形の変化とともに下に下がりますか?
   // その他
+  "conductive": false, // true の場合、電気パルスが接続された導電性フィールドを活性化してから消えます。デフォルトは false です。
+  "flammable": false, // true の場合、点火によってこのフィールドが消費され、持続的な火災が発生します。デフォルトは false です。
+  "moppable": false, // true の場合、モップと自動モップ掛けがこのフィールドを除去します。デフォルトは false です。
   "gas_absorbption_factor": 10, // ガスマスクから食べるチャージの数
   "dirty_transparency_cache": true, // 透明度キャッシュを強制的に再計算する天気。 transparentがfalseの場合は自動で設定されます
   "description_affix": "covered in", // これをすべての強度レベル名の前に置きます

@@ -59,15 +59,21 @@
 
 핫 리로드를 실행할 때 게임은 (R)로 표시된 단계를 반복합니다. 즉, 작업 중인 코드를 핫 리로드 가능하게 하려면 [`main.lua`](#mainlua)에 넣어야 합니다.
 
+<a id="preloadlua"></a>
+
 ### `preload.lua`
 
 이 스크립트는 이벤트 훅을 등록하고 게임 JSON 로딩 시스템이 참조할 정의를 설정해야 합니다(예: 아이템 사용 액션). 여기에 등록하고 나중 단계(예: [`main.lua`](#mainlua)에서 정의하여 핫 리로드가 훅에 영향을 미치도록 할 수 있습니다.
+
+<a id="finalizelua"></a>
 
 ### `finalize.lua`
 
 이 스크립트는 copy-from이 해결된 후 JSON에서 로드된 정의를 모드가 수정할 수 있도록 해야 하지만 아직 API가 없습니다.
 
 TODO: 최종화를 위한 api
+
+<a id="mainlua"></a>
 
 ### `main.lua`
 
@@ -172,7 +178,7 @@ local result = math_helper.add(2, 3)
 
 자세한 내용은 Lua 매뉴얼의 `Standard Libraries` 섹션을 참조하세요.
 
-여기의 일부 함수는 BN에 의해 오버로드됩니다. 자세한 내용은 [전역 오버라이드](#전역-오버라이드)를 참조하세요.
+여기의 일부 함수는 BN에 의해 오버로드됩니다. 자세한 내용은 [전역 오버라이드](#global-overrides)를 참조하세요.
 
 ### 전역 상태
 
@@ -193,6 +199,10 @@ local result = math_helper.add(2, 3)
 게임은 다양한 함수, 상수 및 타입을 Lua에 노출합니다. 함수와 상수는 조직적 목적을 위해 "라이브러리"로 구성됩니다. 타입은 전역적으로 사용할 수 있으며 멤버 함수와 필드를 가질 수 있습니다.
 
 전체 함수, 상수 및 타입 목록을 보려면 `--lua-doc` 명령줄 인수로 게임을 실행하세요. 이렇게 하면 `config` 폴더에 배치될 문서 파일 `lua_doc.md`가 생성됩니다.
+
+많은 API 함수가 게임 세계의 위치를 다룹니다. 게임은 모든 위치에 원점(참조 프레임)과 스케일(단위 크기)을 함께 갖는 타입이 지정된 좌표 시스템을 사용합니다. 타입이 지정된 좌표 타입, 산술 규칙, 원시 `Tripoint`/`Point` 값을 사용해도 되는 경우에 대한 자세한 설명은 [`coordinates.md`](../explanation/coordinates.md)를 참조하세요.
+
+<a id="global-overrides"></a>
 
 #### 전역 오버라이드
 
@@ -260,6 +270,8 @@ mod.my_awesome_iuse_function = function( who, item, pos )
 end
 ```
 
+<a id="translation-functions"></a>
+
 #### 번역 함수
 
 모드를 다른 언어로 번역 가능하게 하려면 `locale` 라이브러리에 바인딩된 함수를 통해 텍스트를 가져오세요. C++ 대응에 대한 자세한 설명은 [번역 API](../explanation/lua_integration.md)를 참조하세요.
@@ -324,7 +336,7 @@ local not_ok = locale.gettext(
 --[[~
   오류: 여러 줄 Lua 주석은 번역자 주석으로 사용할 수 없습니다!
   이 주석은 추출되지 않습니다!
-]] 
+]]
 local ok = locale.gettext("Confusing text that needs explanation.")
 
 --~ 여러 줄 번역자 주석이 필요한 경우

@@ -133,31 +133,47 @@ auto character_has_adjacent_grabbed_target( const Character &who ) -> bool
 
 void Character::recalc_speed_bonus()
 {
+    ZoneScoped;
     // Minus some for weight...
     // Easy test, if Character DOES have this trait then we don't need to check weight carried/capacity
-    if( !has_trait( trait_DEBUG_STORAGE ) ) {
-        // these are nontrivial calculations, store in variables so they aren't calculated multiple times.
-        auto carried = weight_carried();
-        auto capacity = weight_capacity();
-        if( carried > capacity ) {
-            mod_speed_bonus( -25 * ( carried - capacity ) / capacity );
+    {
+        ZoneScopedN( "storage" );
+        if( !has_trait( trait_DEBUG_STORAGE ) ) {
+            // these are nontrivial calculations, store in variables so they aren't calculated multiple times.
+            auto carried = cached_weight_carried();
+            auto capacity = weight_capacity();
+            if( carried > capacity ) {
+                mod_speed_bonus( -25 * ( carried - capacity ) / capacity );
+            }
         }
     }
-    mod_speed_bonus( -character_effects::get_pain_penalty( *this ).speed );
+    {
+        ZoneScopedN( "pain_penalty" );
+        mod_speed_bonus( -character_effects::get_pain_penalty( *this ).speed );
+    }
 
-    if( get_thirst() > thirst_levels::very_thirsty ) {
-        mod_speed_bonus( character_effects::get_thirst_speed_penalty( get_thirst() ) );
+    {
+        ZoneScopedN( "thirsty" );
+        if( get_thirst() > thirst_levels::very_thirsty ) {
+            mod_speed_bonus( character_effects::get_thirst_speed_penalty( get_thirst() ) );
+        }
     }
     // when underweight, you get slower. cumulative with hunger
-    mod_speed_bonus( character_effects::get_kcal_speed_penalty( get_kcal_percent() ) );
+    {
+        ZoneScopedN( "hungry" );
+        mod_speed_bonus( character_effects::get_kcal_speed_penalty( get_kcal_percent() ) );
+    }
 
-    for( const auto &maps : *effects ) {
-        for( auto &i : maps.second ) {
-            if( i.second.is_removed() ) {
-                continue;
+    {
+        ZoneScopedN( "effects" );
+        for( const auto &maps : *effects ) {
+            for( auto &i : maps.second ) {
+                if( i.second.is_removed() ) {
+                    continue;
+                }
+                bool reduced = resists_effect( i.second );
+                mod_speed_bonus( i.second.get_mod( "SPEED", reduced ) );
             }
-            bool reduced = resists_effect( i.second );
-            mod_speed_bonus( i.second.get_mod( "SPEED", reduced ) );
         }
     }
 
@@ -168,6 +184,7 @@ void Character::recalc_speed_bonus()
     // Ectothermic/COLDBLOOD4 is intended to buff folks in the Summer
     // Threshold-crossing has its charms ;-)
     if( g != nullptr ) {
+        ZoneScopedN( "temperature_dependent" );
         if( has_trait( trait_SUNLIGHT_DEPENDENT ) && !g->is_in_sunlight( bub_pos() ) ) {
             mod_speed_bonus( -( g->light_level( bub_pos().z() ) >= 12 ? 5 : 10 ) );
         }
@@ -182,26 +199,35 @@ void Character::recalc_speed_bonus()
         }
     }
 
-    if( has_artifact_with( AEP_SPEED_UP ) ) {
-        mod_speed_bonus( 20 );
+    {
+        ZoneScopedN( "artifact_speed" );
+        if( has_artifact_with( AEP_SPEED_UP ) ) {
+            mod_speed_bonus( 20 );
+        }
+        if( has_artifact_with( AEP_SPEED_DOWN ) ) {
+            mod_speed_bonus( -20 );
+        }
     }
-    if( has_artifact_with( AEP_SPEED_DOWN ) ) {
-        mod_speed_bonus( -20 );
+    {
+        ZoneScopedN( "mutation_speed" );
+        float speed_modifier = Character::mutation_value( "speed_modifier" );
+        mod_speed_mult( speed_modifier - 1 );
     }
-
-    float speed_modifier = Character::mutation_value( "speed_modifier" );
-    mod_speed_mult( speed_modifier - 1 );
-
-    double ench_bonus = enchantment_cache->calc_bonus( enchantment_value_id( "SPEED" ), get_speed() );
-    mod_speed_bonus( ench_bonus );
+    {
+        ZoneScopedN( "enchantment_speed" );
+        double ench_bonus = enchantment_cache->calc_bonus( enchantment_value_id( "SPEED" ), get_speed() );
+        mod_speed_bonus( ench_bonus );
+    }
 }
 
 void Character::process_turn()
 {
+    ZoneScopedN( "character_process_turn" );
     // Has to happen before reset_stats
     clear_miss_reasons();
 
     for( bionic &i : get_bionic_collection() ) {
+        ZoneScopedN( "Bionic deincapacitation" );
         if( i.incapacitated_time > 0_turns ) {
             i.incapacitated_time -= action_time_scale::calendar_duration_this_tick();
             if( i.incapacitated_time <= 0_turns ) {
@@ -321,6 +347,7 @@ void Character::process_turn()
     // player::read, player::practice, ...
     // Check for spontaneous discovery of martial art styles
     for( auto &style : autolearn_martialart_types() ) {
+        ZoneScopedN( "autolearn_martial_arts" );
         const matype_id &ma( style );
 
         if( !martial_arts_data->has_martialart( ma ) && can_autolearn_martial_art( *this, ma ) ) {
@@ -390,6 +417,7 @@ auto Character::action_move_factor() const -> int
 
 void Character::process_one_effect( effect &it, bool is_new )
 {
+    ZoneScoped;
     bool reduced = resists_effect( it );
     double mod = 1;
     bodypart_str_id bp = it.get_bp();
@@ -399,6 +427,7 @@ void Character::process_one_effect( effect &it, bool is_new )
     hardcoded_effects( it );
 
     const auto get_effect = [&it, is_new]( const std::string & arg, bool reduced ) {
+        ZoneScopedN( "get_effect" );
         if( is_new ) {
             return it.get_amount( arg, reduced );
         }
@@ -406,10 +435,13 @@ void Character::process_one_effect( effect &it, bool is_new )
     };
 
     // Handle miss messages
-    auto msgs = it.get_miss_msgs();
-    if( !msgs.empty() ) {
-        for( const auto &i : msgs ) {
-            add_miss_reason( _( i.first ), static_cast<unsigned>( i.second ) );
+    {
+        ZoneScopedN( "miss_messages" );
+        auto msgs = it.get_miss_msgs();
+        if( !msgs.empty() ) {
+            for( const auto &i : msgs ) {
+                add_miss_reason( _( i.first ), static_cast<unsigned>( i.second ) );
+            }
         }
     }
 
@@ -607,23 +639,27 @@ void Character::process_one_effect( effect &it, bool is_new )
 
     // Speed and stats are handled in recalc_speed_bonus and reset_stats respectively
 
-    if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
-        cata::run_hooks( "on_character_effect_added", [ &, this ]( auto & params ) {
-            params["char"] = this;
-            params["effect"] = &it;
-        } );
-    }
+    {
+        ZoneScopedN( "lua_effects" );
+        if( is_new && it.has_flag( flag_EFFECT_LUA_ON_ADDED ) ) {
+            cata::run_hooks( "on_character_effect_added", [ &, this ]( auto & params ) {
+                params["char"] = this;
+                params["effect"] = &it;
+            } );
+        }
 
-    if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
-        cata::run_hooks( "on_character_effect", [ &, this ]( auto & params ) {
-            params["char"] = this;
-            params["effect"] = &it;
-        } );
+        if( it.has_flag( flag_EFFECT_LUA_ON_TICK ) ) {
+            cata::run_hooks( "on_character_effect", [ &, this ]( auto & params ) {
+                params["char"] = this;
+                params["effect"] = &it;
+            } );
+        }
     }
 }
 
 void Character::process_effects_internal()
 {
+    ZoneScoped;
     //Special Removals
     if( has_effect( effect_darkness ) && g->is_in_sunlight( bub_pos() ) ) {
         remove_effect( effect_darkness );
@@ -660,6 +696,7 @@ void Character::process_effects_internal()
 
     //Human only effects
     for( auto &elem : *effects ) {
+        ZoneScopedN( "process_human_effects" );
         for( auto &_effect_it : elem.second ) {
             if( !_effect_it.second.is_removed() ) {
                 process_one_effect( _effect_it.second, false );
@@ -670,45 +707,50 @@ void Character::process_effects_internal()
 
 void Character::reset_stats()
 {
+    ZoneScopedN( "character_reset_stats" );
     const int current_stim = get_stim();
 
     // Trait / mutation buffs
-    if( has_trait( trait_THICK_SCALES ) ) {
-        add_miss_reason( _( "Your thick scales get in the way." ), 2 );
-    }
-    if( has_trait( trait_CHITIN2 ) || has_trait( trait_CHITIN3 ) || has_trait( trait_CHITIN_FUR3 ) ) {
-        add_miss_reason( _( "Your chitin gets in the way." ), 1 );
-    }
-    if( has_trait( trait_COMPOUND_EYES ) && !wearing_something_on( bodypart_id( "eyes" ) ) ) {
-        mod_per_bonus( 2 );
-    }
-    if( has_trait( trait_INSECT_ARMS ) ) {
-        add_miss_reason( _( "Your insect limbs get in the way." ), 2 );
-    }
-    if( has_trait( trait_INSECT_ARMS_OK ) ) {
-        if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
-            mod_dex_bonus( 1 );
-        } else {
-            mod_dex_bonus( -1 );
-            add_miss_reason( _( "Your clothing restricts your insect arms." ), 1 );
+    {
+        ZoneScopedN( "trait_checks" );
+        if( has_trait( trait_THICK_SCALES ) ) {
+            add_miss_reason( _( "Your thick scales get in the way." ), 2 );
         }
-    }
-    if( has_trait( trait_WEBBED ) ) {
-        add_miss_reason( _( "Your webbed hands get in the way." ), 1 );
-    }
-    if( has_trait( trait_ARACHNID_ARMS ) ) {
-        add_miss_reason( _( "Your arachnid limbs get in the way." ), 4 );
-    }
-    if( has_trait( trait_ARACHNID_ARMS_OK ) ) {
-        if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
-            mod_dex_bonus( 2 );
-        } else if( !exclusive_flag_coverage( STATIC( flag_id( "OVERSIZE" ) ) )
-                   .test( STATIC( bodypart_str_id( "torso" ) ) ) ) {
-            mod_dex_bonus( -2 );
-            add_miss_reason( _( "Your clothing constricts your arachnid limbs." ), 2 );
+        if( has_trait( trait_CHITIN2 ) || has_trait( trait_CHITIN3 ) || has_trait( trait_CHITIN_FUR3 ) ) {
+            add_miss_reason( _( "Your chitin gets in the way." ), 1 );
+        }
+        if( has_trait( trait_COMPOUND_EYES ) && !wearing_something_on( bodypart_id( "eyes" ) ) ) {
+            mod_per_bonus( 2 );
+        }
+        if( has_trait( trait_INSECT_ARMS ) ) {
+            add_miss_reason( _( "Your insect limbs get in the way." ), 2 );
+        }
+        if( has_trait( trait_INSECT_ARMS_OK ) ) {
+            if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
+                mod_dex_bonus( 1 );
+            } else {
+                mod_dex_bonus( -1 );
+                add_miss_reason( _( "Your clothing restricts your insect arms." ), 1 );
+            }
+        }
+        if( has_trait( trait_WEBBED ) ) {
+            add_miss_reason( _( "Your webbed hands get in the way." ), 1 );
+        }
+        if( has_trait( trait_ARACHNID_ARMS ) ) {
+            add_miss_reason( _( "Your arachnid limbs get in the way." ), 4 );
+        }
+        if( has_trait( trait_ARACHNID_ARMS_OK ) ) {
+            if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
+                mod_dex_bonus( 2 );
+            } else if( !exclusive_flag_coverage( STATIC( flag_id( "OVERSIZE" ) ) )
+                       .test( STATIC( bodypart_str_id( "torso" ) ) ) ) {
+                mod_dex_bonus( -2 );
+                add_miss_reason( _( "Your clothing constricts your arachnid limbs." ), 2 );
+            }
         }
     }
     const auto set_fake_effect_dur = [this]( const efftype_id & type, const time_duration & dur ) {
+        ZoneScopedN( "add_fake_effect" );
         effect &eff = get_effect( type );
         if( eff.get_duration() == dur ) {
             return;
@@ -727,6 +769,7 @@ void Character::reset_stats()
 
     // Pain
     if( get_perceived_pain() > 0 ) {
+        ZoneScopedN( "pain_processing" );
         const stat_mod ppen = character_effects::get_pain_penalty( *this );
         mod_str_bonus( -ppen.strength );
         mod_dex_bonus( -ppen.dexterity );
@@ -754,6 +797,7 @@ void Character::reset_stats()
     }
     // Starvation
     if( get_kcal_percent() < 0.95f ) {
+        ZoneScopedN( "starvation_checks" );
         // kcal->percentage of base str
         static const std::vector<std::pair<float, float>> starv_thresholds = { {
                 std::make_pair( 0.0f, 0.5f ),
@@ -778,35 +822,37 @@ void Character::reset_stats()
     }
 
     // Dodge-related effects
-    mod_dodge_bonus( mabuff_dodge_bonus()
-                     - ( ( encumb( body_part_leg_l ) + encumb( body_part_leg_r ) ) / 20.0f )
-                     - ( encumb( body_part_torso ) / 10.0f ) );
-    // Whiskers don't work so well if they're covered
-    if( has_trait( trait_WHISKERS ) && !wearing_something_on( bodypart_id( "mouth" ) ) ) {
-        mod_dodge_bonus( 1.5 );
-    }
-    if( has_trait( trait_WHISKERS_RAT ) && !wearing_something_on( bodypart_id( "mouth" ) ) ) {
-        mod_dodge_bonus( 3 );
-    }
-    // depending on mounts size, attacks will hit the mount and use their dodge rating.
-    // if they hit the player, the player cannot dodge as effectively.
-    if( is_mounted() ) {
-        mod_dodge_bonus( -4 );
-    }
-    // Spider hair is basically a full-body set of whiskers, once you get the brain for it
-    if( has_trait( trait_CHITIN_FUR3 ) ) {
-        static const std::array<bodypart_id, 5> parts{ { bodypart_id( "head" ), bodypart_id( "arm_r" ), bodypart_id( "arm_l" ), bodypart_id( "leg_r" ), bodypart_id( "leg_l" ) } };
-        for( const bodypart_id &bp : parts ) {
-            if( !wearing_something_on( bp ) ) {
-                mod_dodge_bonus( +1 );
+    {
+        ZoneScopedN( "dodge_modifier" );
+        mod_dodge_bonus( mabuff_dodge_bonus()
+                         - ( ( encumb( body_part_leg_l ) + encumb( body_part_leg_r ) ) / 20.0f )
+                         - ( encumb( body_part_torso ) / 10.0f ) );
+        // Whiskers don't work so well if they're covered
+        if( has_trait( trait_WHISKERS ) && !wearing_something_on( bodypart_id( "mouth" ) ) ) {
+            mod_dodge_bonus( 1.5 );
+        }
+        if( has_trait( trait_WHISKERS_RAT ) && !wearing_something_on( bodypart_id( "mouth" ) ) ) {
+            mod_dodge_bonus( 3 );
+        }
+        // depending on mounts size, attacks will hit the mount and use their dodge rating.
+        // if they hit the player, the player cannot dodge as effectively.
+        if( is_mounted() ) {
+            mod_dodge_bonus( -4 );
+        }
+        // Spider hair is basically a full-body set of whiskers, once you get the brain for it
+        if( has_trait( trait_CHITIN_FUR3 ) ) {
+            static const std::array<bodypart_id, 5> parts{ { bodypart_id( "head" ), bodypart_id( "arm_r" ), bodypart_id( "arm_l" ), bodypart_id( "leg_r" ), bodypart_id( "leg_l" ) } };
+            for( const bodypart_id &bp : parts ) {
+                if( !wearing_something_on( bp ) ) {
+                    mod_dodge_bonus( +1 );
+                }
+            }
+            // Torso handled separately, bigger bonus
+            if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
+                mod_dodge_bonus( 4 );
             }
         }
-        // Torso handled separately, bigger bonus
-        if( !wearing_something_on( bodypart_id( "torso" ) ) ) {
-            mod_dodge_bonus( 4 );
-        }
     }
-
     // Apply static martial arts buffs
     martial_arts_data->ma_static_effects( *this );
 
@@ -816,6 +862,7 @@ void Character::reset_stats()
 
     // Effects
     for( const auto &maps : *effects ) {
+        ZoneScopedN( "effects_stat_bonuses" );
         for( auto i : maps.second ) {
             const auto &it = i.second;
             if( it.is_removed() ) {
@@ -835,19 +882,24 @@ void Character::reset_stats()
     mod_int_bonus( get_mod_stat_from_bionic( character_stat::INTELLIGENCE ) );
 
     // Trait / mutation buffs
-    mod_str_bonus( std::floor( mutation_value( "str_modifier" ) ) );
-    mod_dodge_bonus( std::floor( mutation_value( "dodge_modifier" ) ) );
+    {
+        ZoneScopedN( "mutation_stat_bonuses" );
+        mod_str_bonus( std::floor( mutation_value( "str_modifier" ) ) );
+        mod_dodge_bonus( std::floor( mutation_value( "dodge_modifier" ) ) );
+    }
 
-    mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(),
-                   true ) );
-    mod_dex_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "DEXTERITY" ), get_dex_base(),
-                   true ) );
-    mod_per_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "PERCEPTION" ), get_per_base(),
-                   true ) );
-    mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ),
-                   get_int_base(),
-                   true ) );
-
+    {
+        ZoneScopedN( "enchantment_stat_bonuses" );
+        mod_str_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "STRENGTH" ), get_str_base(),
+                       true ) );
+        mod_dex_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "DEXTERITY" ), get_dex_base(),
+                       true ) );
+        mod_per_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "PERCEPTION" ), get_per_base(),
+                       true ) );
+        mod_int_bonus( enchantment_cache->calc_bonus( enchantment_value_id( "INTELLIGENCE" ),
+                       get_int_base(),
+                       true ) );
+    }
     mod_num_dodges_bonus( enchantment_cache->calc_bonus(
                               enchantment_value_id( "BONUS_DODGE" ),
                               get_num_dodges_base(),
@@ -875,9 +927,12 @@ void Character::reset_stats()
     recalc_sight_limits();
     recalc_speed_bonus();
 
-    cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
-        params["character"] = this;
-    } );
+    {
+        ZoneScopedN( "reset_stats_hook" );
+        cata::run_hooks( "on_character_reset_stats", [this]( auto & params ) {
+            params["character"] = this;
+        } );
+    }
 }
 
 void Character::environmental_revert_effect()

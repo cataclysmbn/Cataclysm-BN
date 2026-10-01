@@ -41,7 +41,7 @@
     "id": "drugs_misc",
     "type": "item_group",
     "//": "Drugs not contained within any other category",
-    "items": [ [ "bfipowder", 100 ], [ "dayquil", 50 ], [ "nyquil", 50 ], [ "vaccine_shot", 50 ] ]
+    "items": [ [ "bfipowder", 100 ], [ "dayquil", 50 ], [ "nyquil", 50 ], [ "vaccine_shot", 50 ], [ "lactaid", 50 ] ]
   },
   {
     "id": "drugs_pharmacy",
@@ -169,6 +169,7 @@
       [ "prussian_blue", 5 ],
       [ "dayquil", 70 ],
       [ "nyquil", 70 ],
+      [ "lactaid", 35 ],
       [ "disinfectant", 35 ],
       [ "vaccine_shot", 10 ],
       {

@@ -5,10 +5,16 @@
 #include "units_temperature.h"
 #include "weather_type.h"
 
+#include <map>
 #include <string>
+#include <unordered_map>
 
 struct tripoint;
 class JsonObject;
+struct weather_pattern;
+using weather_pattern_id = string_id<weather_pattern>;
+class weather_generator;
+using base_weather_id = string_id<weather_generator>;
 
 struct w_point {
     units::temperature temperature = 0_f;
@@ -18,6 +24,7 @@ struct w_point {
     std::string wind_desc;
     int winddirection = 0;
     bool acidic = false;
+    std::unordered_map<weather_pattern_id, double> pattern_values;
 };
 
 struct season_modifier {
@@ -27,6 +34,8 @@ struct season_modifier {
 
 class weather_generator {
 public:
+    bool was_loaded = false;
+    base_weather_id id;
     // Average humidity
     double base_humidity = 0;
     // Average atmospheric pressure
@@ -48,12 +57,17 @@ public:
     // TODO: Remove this horrible static variable!
     static int current_winddir;
     std::vector<weather_type_id> weather_types;
+    std::vector<weather_pattern_id> weather_patterns;
     weather_generator();
 
-    auto get_bad_weather() const -> const weather_type_id&;
-    auto get_default_weather() const -> const weather_type_id&;
+    void load(const JsonObject& jo, const std::string& src);
+    void check() const;
+    auto get_bad_weather() const -> const weather_type_id&;     // *NOPAD*
+    auto get_default_weather() const -> const weather_type_id&; // *NOPAD*
 
     auto forecast_priority(const weather_type_id& w) const -> int;
+    auto choose_representative_weather(const std::map<weather_type_id, int>& sample_counts) const
+        -> const weather_type_id&; // *NOPAD*
 
     /**
      * TODO: Remove the regular tripoint overload, replace with *_abs_ms one.
@@ -75,6 +89,40 @@ public:
     auto get_water_temperature(
         const tripoint_abs_ms&, const time_point&, const calendar_config& calendar_config,
         unsigned) const -> units::temperature;
-
-    static auto load(const JsonObject& jo) -> weather_generator;
 };
+
+struct weather_pattern {
+    bool was_loaded = false;
+    weather_pattern_id id;
+    double x_scale = 1.0;
+    double y_scale = 1.0;
+    double z_scale = 1.0;
+    int seed_offset = 0;
+    double multiplier = 1.0;
+    double offset = 0.0;
+    double humidity_mod = 0.0;
+    double pressure_mod = 0.0;
+    double windpower_mod = 0.0;
+    units::temperature temperature_mod = 0_c;
+    double active_threshold = 0.0;
+    bool acidic = false;
+
+    void load(const JsonObject& jo, const std::string& src);
+    void check() const;
+};
+
+namespace weather_patterns {
+const weather_pattern& get(const weather_pattern_id& id);
+void load(const JsonObject& jo, const std::string& src);
+void finalize_all();
+void reset();
+void check_consistency();
+} // namespace weather_patterns
+
+namespace base_weathers {
+const weather_generator& get(const base_weather_id& id);
+void load(const JsonObject& jo, const std::string& src);
+void finalize_all();
+void reset();
+void check_consistency();
+} // namespace base_weathers

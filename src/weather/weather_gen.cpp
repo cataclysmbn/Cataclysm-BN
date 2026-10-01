@@ -5,6 +5,7 @@
 #include "cata_utility.h"
 #include "fstream_utils.h"
 #include "game_constants.h"
+#include "generic_factory.h"
 #include "generic_readers.h"
 #include "json.h"
 #include "math_defines.h"
@@ -24,11 +25,30 @@ namespace {
 constexpr double tau = M_PI * 2;
 // Out of 24 hours
 constexpr double coldest_hour = 5;
+
+generic_factory<weather_pattern> weather_pattern_factory("weather pattern");
+generic_factory<weather_generator> base_weather_factory("base weather");
 } // namespace
 
 weather_generator::weather_generator() = default;
 // TODO: Remove this disgusting static variable!
 int weather_generator::current_winddir = 1000;
+
+template <> bool string_id<weather_pattern>::is_valid() const {
+    return weather_pattern_factory.is_valid(*this);
+}
+
+template <> const weather_pattern& string_id<weather_pattern>::obj() const {
+    return weather_pattern_factory.obj(*this);
+}
+
+template <> bool string_id<weather_generator>::is_valid() const {
+    return base_weather_factory.is_valid(*this);
+}
+
+template <> const weather_generator& string_id<weather_generator>::obj() const {
+    return base_weather_factory.obj(*this);
+}
 
 struct weather_gen_common {
     double x;
@@ -69,6 +89,23 @@ static auto get_common_data(
     result.season = season_of_year(t);
 
     return result;
+}
+
+static auto apply_weather_patterns(
+    const weather_generator& wg, const weather_gen_common& common, w_point& result) -> void {
+    for (const weather_pattern_id& pattern_id : wg.weather_patterns) {
+        const weather_pattern& pattern = weather_patterns::get(pattern_id);
+        const double noise = raw_noise_4d(
+            common.x * pattern.x_scale, common.y * pattern.y_scale, common.z * pattern.z_scale,
+            common.modSEED + pattern.seed_offset);
+        const double value = pattern.offset + noise * pattern.multiplier;
+        result.pattern_values[pattern.id] = value;
+        result.humidity += pattern.humidity_mod * value;
+        result.pressure += pattern.pressure_mod * value;
+        result.windpower += pattern.windpower_mod * value;
+        result.temperature += units::multiply_any_unit(pattern.temperature_mod, value);
+        if (pattern.acidic && value >= pattern.active_threshold) { result.acidic = true; }
+    }
 }
 
 static auto season_temp(const weather_generator& wg, double year_fraction) -> units::temperature {
@@ -171,10 +208,12 @@ auto weather_generator::get_weather(
         }
     }
     std::string wind_desc = get_wind_desc(W);
-    // Acid rains
     const double acid_content = base_acid * A;
-    bool acid = acid_content >= 1.0;
-    return w_point{T, H, P, W, wind_desc, current_winddir, acid};
+    auto result = w_point{T, H, P, W, wind_desc, current_winddir, acid_content >= 1.0, {}};
+    apply_weather_patterns(*this, common, result);
+    result.humidity = std::clamp(result.humidity, 0.0, 100.0);
+    result.windpower = std::max(0.0, result.windpower);
+    return result;
 }
 
 auto weather_generator::get_default_weather() const -> const weather_type_id& {
@@ -193,6 +232,18 @@ auto weather_generator::forecast_priority(const weather_type_id& w) const -> int
     auto it = std::ranges::find(weather_types, w);
     if (it == weather_types.end()) { return -1; }
     return std::distance(weather_types.begin(), it);
+}
+
+auto weather_generator::choose_representative_weather(
+    const std::map<weather_type_id, int>& sample_counts) const
+    -> const weather_type_id& { // *NOPAD*
+    if (sample_counts.empty()) { return get_default_weather(); }
+
+    namespace ranges = std::ranges;
+    const auto best_sample = ranges::max_element(sample_counts, {}, [this](const auto& entry) {
+        return std::pair{entry.second, forecast_priority(entry.first)};
+    });
+    return best_sample->first;
 }
 
 auto weather_generator::get_weather_conditions(
@@ -222,7 +273,13 @@ auto weather_generator::get_weather_conditions(const w_point& w) const -> const 
         bool test_windspeed =
             wrequires.windpower_max > w.windpower && wrequires.windpower_min < w.windpower;
         bool test_acidic = !wrequires.acidic || w.acidic;
-        if (!(test_temperature && test_windspeed && test_acidic)) { continue; }
+        const bool test_patterns = std::ranges::all_of(
+            wrequires.required_weather_patterns,
+            [&w](const std::pair<weather_pattern_id, double>& required_pattern) {
+                const auto iter = w.pattern_values.find(required_pattern.first);
+                return iter != w.pattern_values.end() && iter->second >= required_pattern.second;
+            });
+        if (!(test_temperature && test_windspeed && test_acidic && test_patterns)) { continue; }
 
         if (!wrequires.required_weathers.empty()) {
             if (std::ranges::find(wrequires.required_weathers, *current_conditions)
@@ -314,7 +371,8 @@ void weather_generator::test_weather(unsigned seed = 1000) const {
     write_to_file(
         "weather.output",
         [&](std::ostream& testfile) {
-            testfile << "|;year;season;day;hour;minute;temperature(F);humidity(%);pressure(mB);weatherdesc;windspeed(mph);winddirection"
+            testfile << "|;year;season;day;hour;minute;temperature(F);humidity(%);pressure(mB);"
+                        "weatherdesc;windspeed(mph);winddirection"
                      << '\n';
 
             const time_point begin = calendar::turn;
@@ -356,7 +414,29 @@ inline auto maybe_temperature_reader(
     return true;
 }
 
-auto weather_generator::load(const JsonObject& jo) -> weather_generator {
+auto weather_pattern::load(const JsonObject& jo, const std::string& /*src*/) -> void {
+    mandatory(jo, was_loaded, "id", id);
+    optional(jo, was_loaded, "x_scale", x_scale, 1.0);
+    optional(jo, was_loaded, "y_scale", y_scale, 1.0);
+    optional(jo, was_loaded, "z_scale", z_scale, 1.0);
+    optional(jo, was_loaded, "seed_offset", seed_offset, 0);
+    optional(jo, was_loaded, "multiplier", multiplier, 1.0);
+    optional(jo, was_loaded, "offset", offset, 0.0);
+    optional(jo, was_loaded, "humidity_mod", humidity_mod, 0.0);
+    optional(jo, was_loaded, "pressure_mod", pressure_mod, 0.0);
+    optional(jo, was_loaded, "windpower_mod", windpower_mod, 0.0);
+    assign(jo, "temperature_mod", temperature_mod);
+    optional(jo, was_loaded, "active_threshold", active_threshold, 0.0);
+    optional(jo, was_loaded, "acidic", acidic, false);
+}
+
+void weather_pattern::check() const {
+    if (x_scale == 0.0 || y_scale == 0.0 || z_scale == 0.0) {
+        debugmsg("Weather pattern %s has a zero noise scale", id.c_str());
+    }
+}
+
+auto weather_generator::load(const JsonObject& jo, const std::string& /*src*/) -> void {
     static const std::array<std::pair<std::string, int>, NUM_SEASONS> legacy_temp_id_values = {{
         {"spring_temp_manual_mod", 0},
         {"summer_temp_manual_mod", 10},
@@ -369,40 +449,91 @@ auto weather_generator::load(const JsonObject& jo) -> weather_generator {
         {"spring_humidity_manual_mod", "summer_humidity_manual_mod", "autumn_humidity_manual_mod",
          "winter_humidity_manual_mod"};
 
-    weather_generator ret;
+    mandatory(jo, was_loaded, "id", id);
 
-    float base_temp = jo.get_float("base_temperature", 0.0);
+    const bool has_legacy_temperature_settings =
+        jo.has_member("base_temperature")
+        || std::ranges::any_of(legacy_temp_id_values, [&jo](const auto& member) {
+               return jo.has_member(member.first);
+           });
     // Handling legacy temperature settings
     // Don't handle legacy settings in strict mode, let it error
-    if (!json_report_strict) {
+    if (!json_report_strict && has_legacy_temperature_settings) {
+        const float base_temp = jo.get_float("base_temperature", 0.0);
         for (size_t i = 0; i < season_temp_ids.size(); i++) {
-            ret.season_stats[i].average_temperature = units::from_celsius(
+            season_stats[i].average_temperature = units::from_celsius(
                 base_temp + jo.get_int(legacy_temp_id_values[i].first, 0)
                 + legacy_temp_id_values[i].second);
         }
     }
     // Reading temperature settings
     for (size_t i = 0; i < season_temp_ids.size(); i++) {
-        maybe_temperature_reader(
-            jo, season_temp_ids[i], ret.season_stats[i].average_temperature, false);
-        assign(jo, season_humidity_ids[i], ret.season_stats[i].humidity_mod);
+        maybe_temperature_reader(jo, season_temp_ids[i], season_stats[i].average_temperature, false);
+        assign(jo, season_humidity_ids[i], season_stats[i].humidity_mod);
     }
 
     // Reading other weather settings.
-    ret.base_humidity = jo.get_float("base_humidity", 50.0);
-    ret.base_pressure = jo.get_float("base_pressure", 0.0);
-    ret.base_acid = jo.get_float("base_acid", 0.0);
-    ret.base_wind = jo.get_float("base_wind", 0.0);
-    ret.base_wind_distrib_peaks = jo.get_int("base_wind_distrib_peaks", 0);
-    ret.base_wind_season_variation = jo.get_int("base_wind_season_variation", 0);
+    optional(jo, was_loaded, "base_humidity", base_humidity, 50.0);
+    optional(jo, was_loaded, "base_pressure", base_pressure, 0.0);
+    optional(jo, was_loaded, "base_acid", base_acid, 0.0);
+    optional(jo, was_loaded, "base_wind", base_wind, 0.0);
+    optional(jo, was_loaded, "base_wind_distrib_peaks", base_wind_distrib_peaks, 0);
+    optional(jo, was_loaded, "base_wind_season_variation", base_wind_season_variation, 0);
 
-    assign(jo, "temperature_daily_amplitude", ret.temperature_daily_amplitude);
-    assign(jo, "temperature_noise_amplitude", ret.temperature_noise_amplitude);
+    if (!assign(jo, "temperature_daily_amplitude", temperature_daily_amplitude) && !was_loaded) {
+        temperature_daily_amplitude = 5_c;
+    }
+    if (!assign(jo, "temperature_noise_amplitude", temperature_noise_amplitude) && !was_loaded) {
+        temperature_noise_amplitude = 8_c;
+    }
 
-    jo.get_member("weather_types"); // Throw if does not exist
-    jo.read("weather_types", ret.weather_types);
-    if (ret.weather_types.empty()) {
+    optional(jo, was_loaded, "weather_types", weather_types, auto_flags_reader<weather_type_id>{});
+    if (weather_types.empty()) {
         jo.throw_error("expected at least 1 weather type", "weather_types");
     }
-    return ret;
+    optional(jo, was_loaded, "weather_patterns", weather_patterns,
+             auto_flags_reader<weather_pattern_id>{});
 }
+
+void weather_generator::check() const {
+    for (const weather_type_id& weather_type : weather_types) {
+        if (!weather_type.is_valid()) {
+            debugmsg("Base weather %s references invalid weather type %s", id.c_str(),
+                     weather_type.c_str());
+        }
+    }
+    for (const weather_pattern_id& weather_pattern : weather_patterns) {
+        if (!weather_pattern.is_valid()) {
+            debugmsg("Base weather %s references invalid weather pattern %s", id.c_str(),
+                     weather_pattern.c_str());
+        }
+    }
+}
+
+const weather_pattern& weather_patterns::get(const weather_pattern_id& id) {
+    return weather_pattern_factory.obj(id);
+}
+
+void weather_patterns::load(const JsonObject& jo, const std::string& src) {
+    weather_pattern_factory.load(jo, src);
+}
+
+void weather_patterns::finalize_all() { weather_pattern_factory.finalize(); }
+
+void weather_patterns::reset() { weather_pattern_factory.reset(); }
+
+void weather_patterns::check_consistency() { weather_pattern_factory.check(); }
+
+const weather_generator& base_weathers::get(const base_weather_id& id) {
+    return base_weather_factory.obj(id);
+}
+
+void base_weathers::load(const JsonObject& jo, const std::string& src) {
+    base_weather_factory.load(jo, src);
+}
+
+void base_weathers::finalize_all() { base_weather_factory.finalize(); }
+
+void base_weathers::reset() { base_weather_factory.reset(); }
+
+void base_weathers::check_consistency() { base_weather_factory.check(); }

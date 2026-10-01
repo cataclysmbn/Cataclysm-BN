@@ -91,6 +91,8 @@ who:assign_lua_activity({
 
 - rest_amount( 0.0 ): HP 회복과 관련하여 활동이 얼마나 휴식을 제공하는지 나타냅니다. `rest_amount`가 0.2이면 활동을 수행하는 동안 수면 시 HP 회복량의 20%를 제공합니다.
 
+- suppress_comfort_lines( false ): `rest_amount`가 0보다 큰 활동을 수행할 때 플레이어의 편안함에 관한 문구를 표시할지 결정합니다. false이면 표시하고 true이면 숨깁니다.
+
 ## 종료
 
 활동은 여러 방식으로 끝낼 수 있습니다.

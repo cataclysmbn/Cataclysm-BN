@@ -74,6 +74,7 @@ static const efftype_id effect_paincysts( "paincysts" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_tapeworm( "tapeworm" );
 static const efftype_id effect_visuals( "visuals" );
+static const efftype_id effect_lactaid( "lactaid" );
 
 static const itype_id itype_syringe( "syringe" );
 
@@ -638,6 +639,9 @@ morale_type Character::allergy_type( const item &food ) const
     for( const auto &tp : allergy_tuples ) {
         if( has_trait( std::get<0>( tp ) ) &&
             food.has_vitamin( std::get<1>( tp ) ) ) {
+            if( std::get<0>( tp ) == trait_LACTOSE && has_effect( effect_lactaid ) ) {
+                continue;
+            }
             return std::get<2>( tp );
         }
     }

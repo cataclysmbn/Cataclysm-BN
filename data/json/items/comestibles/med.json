@@ -870,6 +870,28 @@
     }
   },
   {
+    "id": "lactaid",
+    "type": "COMESTIBLE",
+    "comestible_type": "MED",
+    "name": { "str": "Lactaid" },
+    "description": "Capsules containing lactase, an enzyme essential to the digestion of milk products for those who are lactose intolerant.  Take to temporarily remove the downsides of lactose intolerance.",
+    "weight": "1 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "50 USD",
+    "charges": 20,
+    "stack_size": 200,
+    "material": "powder",
+    "symbol": "!",
+    "color": "white",
+    "looks_like": "aspirin",
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You take some lactaid.",
+      "effects": [ { "id": "lactaid", "duration": "25 m" } ]
+    }
+  },
+  {
     "id": "lsd",
     "type": "COMESTIBLE",
     "comestible_type": "MED",

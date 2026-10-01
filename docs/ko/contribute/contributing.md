@@ -53,12 +53,12 @@
 ### C++
 
 저장소 formatter helper로 일관된 C++ 코드 스타일을 강제하고 있습니다. 커밋하기 전에 `just fmt`를 실행하고, 자세한 내용은
-[CODE_STYLE](../dev/explanation/code_style)을 참고해주세요.
+[CODE_STYLE](../dev/explanation/code_style.md)을 참고해주세요.
 
 ### JSON 스타일
 
 `tools/format` 경로에 있는 포매터로 일관된 JSON 스타일을 강제하고 있습니다.
-[JSON Style Guide](../mod/json/explanation/json_style) 을 참고해주세요.
+[JSON Style Guide](../mod/json/explanation/json_style.md) 을 참고해주세요.
 
 ### 마크다운
 
@@ -89,19 +89,18 @@ Lua 파일은 [`dprint`](https://dprint.dev)의 내장 포매터를 사용해 �
 [번역 프로젝트](https://app.transifex.com/bn-team/cataclysm-bright-nights/)에서 지원되는 언어를
 실시간으로 확인할 수 있습니다.
 
-- [번역자를 위한 내용](../i18n/tutorial/transifex)
-- [개발자를 위한 내용](../i18n/reference/translation)
-- [관리자를 위한 내용](../i18n/guides/maintain)
+- [번역자를 위한 내용](../i18n/tutorial/transifex.md)
+- [개발자를 위한 내용](../i18n/reference/translation.md)
+- [관리자를 위한 내용](../i18n/guides/maintain.md)
 
 ## 공식 문서
 
-<!-- <p align="middle">
-    <img src="/docs/en/contributing/img/contributing-doxy1.png" width="48%">
-    <img src="/docs/en/contributing/img/contributing-doxy2.png" width="48%">
-</p> -->
+<!--
+![](./img/contributing-doxy1.png)
+![](./img/contributing-doxy2.png)
 
 자동 생성된 문서를 [깃허브 페이지](https://cataclysmbn.github.io/Cataclysm-BN)에서 읽을 수
-있습니다.
+있습니다. -->
 
 ### 독시젠(Doxygen) 주석
 
@@ -193,10 +192,38 @@ $ git remote add -f upstream https://github.com/cataclysmbn/Cataclysm-BN.git
 
 ### `main` 브랜치 업데이트하기
 
-1. `main` 브랜치가 체크아웃 되어 있는지 확인해주세요.
+0. **`main` 브랜치가 `origin/main`이 아닌 `upstream/main`을 추적하도록 설정하세요.**
 
 ```sh
-$ git checkout main
+$ git branch --set-upstream-to upstream/main main
+# main 브랜치가 upstream의 main을 추적하도록 설정합니다.
+```
+
+`git remote -v`로 원격 저장소를 확인하면 다음과 비슷한 결과가 나와야 합니다.
+
+```sh
+$ git remote -v
+
+origin  git@github.com:YOUR_USERNAME/Cataclysm-BN.git (fetch)
+origin  git@github.com:YOUR_USERNAME/Cataclysm-BN.git (push)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (fetch)
+upstream        https://github.com/cataclysmbn/Cataclysm-BN.git (push)
+```
+
+`git branch -vv`를 실행하면 `main` 브랜치 옆에 `[upstream/main]`이 표시되어야 합니다.
+
+```sh
+$ git branch -vv
+
+# ...
+* main   ed11439ee61 [upstream/main] feat: add more vending machines to marina (#7001)
+# ...
+```
+
+1. `main` 브랜치로 전환하세요.
+
+```sh
+$ git switch main
 ```
 
 2. `upstream/main` 브랜치에서 변경사항을 가져옵니다.
@@ -216,10 +243,8 @@ $ git pull --ff-only upstream main
 1. 기능 추가나 버그 수정을 하려 할 때마다, 새 브랜치를 만들어주세요.
 
 ```sh
-$ git branch new_feature
-# "new_feature"라는 새 브랜치를 만듭니다.
-$ git checkout new_feature
-# "new_feature" 브랜치를 활성화합니다.
+$ git switch --create new_feature
+# "new_feature"라는 새 브랜치를 만들고 활성화합니다.
 ```
 
 2. 로컬에서 커밋을 했다면, 깃허브에 있는 포크에 푸시해야 합니다.
@@ -234,6 +259,8 @@ $ git push origin new_feature
 
 > **Note** 깃허브의 `new_feature` 브랜치에 새 커밋이 생기면, 풀 리퀘스트에 자동으로 포함됩니다.
 > 따라서 같은 브랜치에 관련된 변경사항만 커밋해주세요.
+
+<a id="pull-request-notes"></a>
 
 ## 풀 리퀘스트 초안
 
@@ -253,19 +280,18 @@ $ git push origin new_feature
 > 1. 그런 요약은 대개 품질이 낮고 리뷰어가 읽기 어렵기 때문입니다.
 > 2. PR 작성자가 자신이 하는 일을 이해하지 못한 채 바이브 코딩을 했다는 것을 나타내는 경우가 많기 때문입니다.
 
-### 모든 풀 리퀘스트에는 `"Summary"`줄이 있어야 합니다.
+AI 코딩 어시스턴트가 PR 작성에 사용되었다면 PR 설명에 AI 사용 사실을 공개해야 합니다.
 
-개요(summary)는 [변경 내역](../game/changelog.md)에 추가할 한 줄 요약입니다.
+AI의 도움을 받아 작성, 생성 또는 실질적으로 수정한 모든 커밋에는
+[AI 코딩 어시스턴트](https://docs.kernel.org/process/coding-assistants.html) 및
+[패치 제출](https://docs.kernel.org/process/submitting-patches.html#using-assisted-by)에 설명된
+Linux 커널 형식의 `Assisted-by:` 트레일러를 포함해야 합니다.
 
-개요 형식: `SUMMARY: 카테고리 "설명"`
+예시:
 
-고를 수 있는 카테고리는 Features, Content, Interface, Mods, Balance, Bugfixes, Performance,
-Infrastructure, Build, I18N이 있습니다.
-
-예시: `SUMMARY: Content "Adds new mutation category 'Mouse'"` (해석:
-`SUMMARY: Content "새로운 변이 카테고리 'Mouse'를 추가합니다."`)
-
-[변경 내역 가이드라인](./changelog_guidelines.md)에서 카테고리에 대한 설명을 볼 수 있습니다.
+```text
+Assisted-by: Claude:claude-3-opus coccinelle sparse
+```
 
 ### 키워드로 이슈 닫기
 

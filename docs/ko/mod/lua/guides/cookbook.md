@@ -251,7 +251,7 @@ mod.on_throw_fun = function(params)
     ---@type Character
     local thrower = params.thrower
     ---@type Item
-    local thrown = params.item
+    local thrown = params.thrown
     if thrown:is_gun() then
         gdebug.log_info("어라! 총은 던지는 것이 아닙니다!")
     end
@@ -341,8 +341,8 @@ local items = you:all_items(false)
 
 for _, item in pairs(items) do
     print(
-        item:tname(1, false, 0) 
-        .. " { 공격 비용: " .. item:attack_cost() 
+        item:tname(1, false, 0)
+        .. " { 공격 비용: " .. item:attack_cost()
         .. ", 스태미나 비용: " .. item:stamina_cost()
         .. ", 근접 스태미나 비용: " .. you:get_melee_stamina_cost(item)
         .. " }"
@@ -353,12 +353,44 @@ end
 print("Uncanny dodge: " .. (you:uncanny_dodge() and "네" or "아니오"))
 ```
 
-## 동적 아이템 액션
+## 캐릭터 마법
 
-### Lua에서 커스텀 아이템 사용 함수 만들기
+### 새 주문을 배우고 잊기
+
+주문 배우기:
 
 ```lua
--- tick과 can_use 함수로 아이템의 사용 동작 정의
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:learn_spell(ex_sp, u, true) -- learn forced
+print( km:knows_spell(ex_sp) ) -- check
+```
+
+주문 잊기:
+
+```lua
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:forget_spell(ex_sp)         -- forget
+print( km:knows_spell(ex_sp) ) -- check again
+```
+
+## 동적 아이템 액션
+
+모든 아이템, 바이오닉, 돌연변이 콜백 테이블은 문자열 ID를 키로 사용하며 선택적 콜백 함수 테이블을 받습니다. 모든 콜백은 이름 있는 필드를 가진 단일 `params` 테이블을 받습니다.
+
+### game.iuse_functions
+
+| 콜백      | params 필드           |
+| --------- | --------------------- |
+| `use`     | `user`, `item`, `pos` |
+| `can_use` | `user`, `item`, `pos` |
+
+`use`는 `int`(이동 단위 시간 비용)를 반환합니다. `can_use`는 `bool`을 반환합니다.
+
+```lua
 game.iuse_functions["my_custom_item"] = {
     use = function(params)
         local user = params.user
@@ -368,25 +400,118 @@ game.iuse_functions["my_custom_item"] = {
     end,
 
     can_use = function(params)
-        local user = params.user
-        local item = params.item
         -- 사용을 허용하려면 true, 방지하려면 false 반환
         return true
-    end,
-
-    tick = function(params)
-        local user = params.user
-        local item = params.item
-        -- 아이템이 활성화되어 있는 동안 주기적으로 호출됨
-        if item:get_countdown() == 0 then
-            gdebug.log_info("아이템 카운트다운이 완료되었습니다!")
-        end
     end
 }
+```
 
--- 주기적 틱을 트리거하기 위해 아이템에 카운트다운 설정
-local item = gapi.create_item(ItypeId.new("some_item"), 1)
-item:set_countdown(100)  -- 100턴 동안 틱
+### 아이템 수명 주기 콜백
+
+몇 가지 추가 콜백 테이블을 사용하면 아이템 이벤트에 반응할 수 있습니다.
+
+### game.iwieldable_functions
+
+| 콜백                                     | params 필드                 |
+| ---------------------------------------- | --------------------------- |
+| `on_wield`                               | `user`, `item`, `move_cost` |
+| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item`              |
+
+---
+### game.iwearable_functions
+| 콜백 | params 필드 |
+|-----------|---------------|
+| `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `user`, `item` |
+---
+
+### game.iequippable_functions
+
+| 콜백                    | params 필드                                |
+| ----------------------- | ------------------------------------------ |
+| `on_durability_change`  | `user`, `item`, `old_damage`, `new_damage` |
+| `on_repair`, `on_break` | `user`, `item`                             |
+
+---
+### game.istate_functions
+| 콜백            | params 필드         |
+|--------------------- | --------------------- |
+| `on_tick`, `on_drop` | `user`, `item`, `pos` |
+| `on_pickup`          | `user`, `item`        |
+---
+
+### game.imelee_functions
+
+| 콜백              | params 필드                                 |
+| ----------------- | ------------------------------------------- |
+| `on_melee_attack` | `user`, `target`, `item`                    |
+| `on_hit`          | `user`, `target`, `item`, `damage_instance` |
+| `on_block`        | `user`, `source`, `item`, `damage_blocked`  |
+| `on_miss`         | `user`, `item`                              |
+
+---
+### game.iranged_functions
+| 콜백                             | params 필드                         |
+| ------------------------------------- | ------------------------------------- |
+| `on_fire`                             | `user`, `item`, `target_pos`, `shots` |
+| `on_reload`, `can_fire`, `can_reload` | `user`, `item`                        |
+---
+
+`can_*` 콜백은 `bool`을 반환합니다 — 동작을 막으려면 `false`를 반환하세요.
+
+```lua
+game.iwieldable_functions["cursed_sword"] = {
+    on_wield = function(params)
+        gdebug.log_info(params.user:get_name() .. " draws " .. params.item:tname(1))
+    end,
+    can_unwield = function(params)
+        -- Cursed sword can't be put down
+        return false
+    end
+}
+```
+
+### 바이오닉 콜백
+
+`game.bionic_functions`는 바이오닉 문자열 ID를 키로 사용합니다. 각 콜백은 단일 `params` 테이블을 받습니다.
+
+| 콜백            | params 필드         | 발생 시점            |
+| --------------- | ------------------- | -------------------- |
+| `on_activate`   | `user`, `bionic`    | 바이오닉 활성화 후   |
+| `on_deactivate` | `user`, `bionic`    | 바이오닉 비활성화 후 |
+| `on_installed`  | `user`, `bionic_id` | 바이오닉 설치 후     |
+| `on_removed`    | `user`, `bionic_id` | 바이오닉 제거 후     |
+
+```lua
+game.bionic_functions["bio_laser"] = {
+    on_activate = function(params)
+        gdebug.log_info(params.user:get_name() .. " activated bio_laser")
+    end,
+    on_installed = function(params)
+        gdebug.log_info("Installed: " .. tostring(params.bionic_id))
+    end
+}
+```
+
+### 돌연변이 콜백
+
+`game.mutation_functions`는 특성 문자열 ID를 키로 사용합니다.
+
+| 콜백            | params 필드        | 발생 시점            |
+| --------------- | ------------------ | -------------------- |
+| `on_activate`   | `user`, `trait_id` | 돌연변이 활성화 후   |
+| `on_deactivate` | `user`, `trait_id` | 돌연변이 비활성화 후 |
+| `on_gain`       | `user`, `trait_id` | 돌연변이 획득 후     |
+| `on_loss`       | `user`, `trait_id` | 돌연변이 상실 후     |
+
+```lua
+game.mutation_functions["TRAIT_QUICK"] = {
+    on_gain = function(params)
+        gdebug.log_info(params.user:get_name() .. " gained " .. tostring(params.trait_id))
+    end,
+    on_loss = function(params)
+        gdebug.log_info(params.user:get_name() .. " lost " .. tostring(params.trait_id))
+    end
+}
 ```
 
 ## 더 많은 전투 훅
@@ -473,6 +598,29 @@ print(tostring(u:knows_trap(pos4x)))
 ```
 
 두 번째 스크립트를 실행한 후에는 함정을 밟지 않고도 함정이 설치된 위치를 볼 수 있습니다.
+
+## 시간과 공간
+
+### 태양과 달, 실내와 실외
+
+```lua
+local u_pos = gapi.get_avatar():get_pos_ms()
+local map = gapi.get_map()
+local now = gapi.current_turn()
+
+-- Found the key name from MoonPhase entries
+local moon = ""
+for name, num in pairs(MoonPhase) do
+   if num == now:moon_phase() then
+      moon = name
+   end
+end
+
+print( "Are you outside?: " .. tostring(map:is_outside(u_pos)) )
+print( "Are you sheltered?: " .. tostring(map:is_sheltered(u_pos)) )
+print( "Today moon phase is: " .. moon )
+print( "Sunset time is: " .. now:sunset():to_string_time_of_day() )
+```
 
 ## 아이템 타입 정보
 

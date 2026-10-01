@@ -41,6 +41,7 @@
 "name" : "phasing strike",  // 게임 내 표시 이름
 "unarmed_allowed" : true,   // 비무장 캐릭터가 이 기술을 사용할 수 있는가
 "unarmed_weapons_allowed" : true,    // 이 기술은 캐릭터가 실제로 비무장이어야 하는가 아니면 비무장 무기를 허용하는가
+"force_unarmed" : true,   // 이 기술을 사용하면 무기 피해를 계산하지 않습니다(예: 발차기/던지기)
 "weapon_categories_allowed" : [ "BLADES", "KNIVES" ], // 기술을 이러한 무기 카테고리로만 제한합니다. 생략하면 모든 무기 카테고리가 허용됩니다. unarmed_allowed가 true이면 빈 손은 항상 허용됩니다.
 "melee_allowed" : true,     // 무술의 무기뿐만 아니라 모든 근접 무기를 사용할 수 있음을 의미합니다
 "skill_requirements": [ { "name": "melee", "level": 3 } ],     // 이 기술을 사용하기 위해 필요한 기술과 최소 레벨. 모든 기술이 가능합니다.

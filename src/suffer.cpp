@@ -28,6 +28,7 @@
 #include "npc.h"
 #include "options.h"
 #include "overmap/overmapbuffer.h"
+#include "profile.h"
 #include "pldata.h"
 #include "point.h"
 #include "regional_settings.h"
@@ -184,6 +185,7 @@ ench_val_ADDICTION_TIME_PER_INTENSITY( "ADDICTION_TIME_PER_INTENSITY" );
 
 void Character::suffer_water_damage( const mutation_branch &mdata )
 {
+    ZoneScoped;
     for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {
         const float wetness_percentage = static_cast<float>( elem.second.get_wetness() ) /
                                          elem.second.get_drench_capacity();
@@ -204,6 +206,7 @@ void Character::suffer_water_damage( const mutation_branch &mdata )
 
 void Character::suffer_mutation_power( const mutation_branch &mdata, char_trait_data &tdata )
 {
+    ZoneScoped;
     if( tdata.powered && tdata.charge > 0 ) {
         // Already-on units just lose a bit of charge
         tdata.charge--;
@@ -251,6 +254,7 @@ void Character::suffer_mutation_power( const mutation_branch &mdata, char_trait_
 
 void Character::suffer_while_underwater()
 {
+    ZoneScoped;
     // Infinite breath
     if( has_trait( trait_DEBUG_STAMINA ) ) {
         return;
@@ -351,6 +355,7 @@ auto suffer_while_grabbed( Character &you ) -> void
 
 void Character::suffer_from_addictions()
 {
+    ZoneScoped;
     time_duration timer = -6_hours;
 
     timer += bonus_from_enchantments( timer / 1_seconds,
@@ -377,6 +382,7 @@ void Character::suffer_from_addictions()
 
 void Character::suffer_while_awake( const int current_stim )
 {
+    ZoneScoped;
     if( !has_trait( trait_DEBUG_STORAGE ) ) {
         units::mass w_carry;
         units::mass w_cap;
@@ -385,7 +391,7 @@ void Character::suffer_while_awake( const int current_stim )
             w_carry = mount.get_carried_weight() + this->get_weight();
             w_cap = 4 * mount.weight_capacity();
         } else {
-            w_carry = weight_carried();
+            w_carry = cached_weight_carried();
             w_cap = 4 * weight_capacity();
         }
 
@@ -480,6 +486,7 @@ static auto set_bodytemp( Character &who, units::temperature bodytemp ) -> void
 
 void Character::suffer_from_chemimbalance()
 {
+    ZoneScoped;
     if( one_turn_in( 6_hours ) && !has_trait( trait_NOPAIN ) ) {
         add_msg_if_player( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
         mod_pain( 3 * rng( 1, 3 ) );
@@ -543,6 +550,7 @@ void Character::suffer_from_chemimbalance()
 
 void Character::suffer_from_schizophrenia()
 {
+    ZoneScoped;
     std::string i_name_w;
     item &weapon = primary_weapon();
     if( !weapon.is_null() ) {
@@ -722,6 +730,7 @@ void Character::suffer_from_schizophrenia()
 
 void Character::suffer_from_asthma( const int current_stim )
 {
+    ZoneScoped;
     if( has_effect( effect_adrenaline ) ||
         has_effect( effect_datura ) ||
         has_effect( effect_took_antiasthmatic ) ) {
@@ -830,6 +839,7 @@ void Character::suffer_from_asthma( const int current_stim )
 
 void Character::suffer_feral_kill_withdrawl()
 {
+    ZoneScoped;
     // If we somehow triggered this while content with our bloodshed, cancel.
     if( has_effect( effect_feral_killed_recently ) ) {
         return;
@@ -911,6 +921,7 @@ void Character::suffer_feral_kill_withdrawl()
 
 void Character::suffer_in_sunlight()
 {
+    ZoneScoped;
     if( !g->is_in_sunlight( bub_pos() ) ) {
         return;
     }
@@ -1006,6 +1017,7 @@ std::map<bodypart_id, float> Character::bodypart_exposure()
 
 void Character::suffer_from_sunburn()
 {
+    ZoneScoped;
     if( !has_trait( trait_ALBINO ) && !has_effect( effect_datura ) && !has_trait( trait_SUNBURN ) ) {
         return;
     }
@@ -1141,6 +1153,7 @@ void Character::suffer_from_sunburn()
 
 void Character::suffer_from_other_mutations()
 {
+    ZoneScoped;
     map &here = get_map();
     if( has_trait( trait_SHARKTEETH ) && one_turn_in( 24_hours ) ) {
         add_msg_if_player( m_neutral, _( "You shed a tooth!" ) );
@@ -1164,27 +1177,27 @@ void Character::suffer_from_other_mutations()
         sounds::sound( se );
     }
 
-    bool wearing_shoes = is_wearing_shoes( side::LEFT ) || is_wearing_shoes( side::RIGHT );
-    int root_vitamins = 0;
-    int root_water = 0;
-    if( has_trait( trait_ROOTS3 ) && here.has_flag( flag_PLOWABLE, bub_pos() ) && !wearing_shoes ) {
-        root_vitamins += 1;
-        if( get_thirst() <= thirst_levels::turgid ) {
-            root_water += 51;
+    if( has_trait( trait_ROOTS3 ) ) {
+        bool wearing_shoes = is_wearing_shoes( side::LEFT ) || is_wearing_shoes( side::RIGHT );
+        int root_vitamins = 0;
+        int root_water = 0;
+        if( here.has_flag( flag_PLOWABLE, bub_pos() ) && !wearing_shoes ) {
+            root_vitamins += 1;
+            if( get_thirst() <= thirst_levels::turgid ) {
+                root_water += 51;
+            }
+            if( x_in_y( root_vitamins, 576 ) ) {
+                vitamin_mod( vitamin_id( "iron" ), 1, true );
+                vitamin_mod( vitamin_id( "calcium" ), 1, true );
+                mod_healthy_mod( 5, 50 );
+            }
+            if( x_in_y( root_water, 2550 ) ) {
+                // Plants draw some crazy amounts of water from the ground in real life,
+                // so these numbers try to reflect that uncertain but large amount
+                // this should take 12 hours to meet your daily needs with ROOTS2, and 8 with ROOTS3
+                mod_thirst( -1 );
+            }
         }
-    }
-
-    if( x_in_y( root_vitamins, 576 ) ) {
-        vitamin_mod( vitamin_id( "iron" ), 1, true );
-        vitamin_mod( vitamin_id( "calcium" ), 1, true );
-        mod_healthy_mod( 5, 50 );
-    }
-
-    if( x_in_y( root_water, 2550 ) ) {
-        // Plants draw some crazy amounts of water from the ground in real life,
-        // so these numbers try to reflect that uncertain but large amount
-        // this should take 12 hours to meet your daily needs with ROOTS2, and 8 with ROOTS3
-        mod_thirst( -1 );
     }
 
     if( has_trait( trait_SORES ) ) {
@@ -1261,6 +1274,7 @@ void Character::suffer_from_other_mutations()
 
 void Character::suffer_from_radiation()
 {
+    ZoneScoped;
     map &here = get_map();
     // checking for radioactive items in inventory
     const int item_radiation = leak_level( flag_RADIOACTIVE );
@@ -1384,6 +1398,7 @@ void Character::suffer_from_radiation()
 
 void Character::suffer_from_bad_bionics()
 {
+    ZoneScoped;
     // Negative bionics effects
     if( has_bionic( bio_dis_shock ) && get_power_level() > bio_dis_shock->power_trigger &&
         one_turn_in( 2_hours ) &&
@@ -1486,6 +1501,7 @@ void Character::suffer_from_bad_bionics()
 
 void Character::suffer_from_artifacts()
 {
+    ZoneScoped;
     // Artifact effects
     if( has_artifact_with( AEP_ATTENTION ) ) {
         add_effect( effect_attention, 3_turns );
@@ -1508,6 +1524,7 @@ void Character::suffer_from_artifacts()
 
 void Character::suffer_from_stimulants( const int current_stim )
 {
+    ZoneScoped;
     // Stim +250 kills
     if( current_stim > 210 ) {
         if( one_turn_in( 2_minutes ) && !has_effect( effect_downed ) ) {
@@ -1550,6 +1567,7 @@ void Character::suffer_from_stimulants( const int current_stim )
 
 void Character::suffer_without_sleep( const int sleep_deprivation )
 {
+    ZoneScoped;
     if( has_effect( effect_meth ) ) {
         return;
     }
@@ -1637,6 +1655,7 @@ void Character::suffer_without_sleep( const int sleep_deprivation )
 
 void Character::suffer()
 {
+    ZoneScopedN( "character_suffer" );
     const int current_stim = get_stim();
     // TODO: Remove this section and encapsulate hp_cur
     for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {

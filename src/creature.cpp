@@ -3,6 +3,7 @@
 #include "action_time_scale.h"
 #include "anatomy.h"
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
@@ -272,6 +273,7 @@ void Creature::bleed() const
 
 void Creature::reset_bonuses()
 {
+    ZoneScopedN( "creature_reset_bonuses" );
     num_blocks = 1;
     num_dodges = 1;
     num_blocks_bonus = 0;
@@ -293,15 +295,18 @@ void Creature::reset_bonuses()
 
 void Creature::process_turn()
 {
+    ZoneScopedN( "creature_process_turn" );
     if( is_dead_state() ) {
         return;
     }
-    reset_bonuses();
-
     process_effects();
 
     // Call this in case any effects have changed our stats
-    reset_stats();
+    if( !g->u.in_skip_state ||
+        action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        reset_bonuses();
+        reset_stats();
+    }
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
@@ -1773,6 +1778,7 @@ struct removed_effect {
 
 void Creature::process_effects()
 {
+    ZoneScopedN( "creature_process_effects" );
     process_effects_internal();
 
     // id's and body_part's of all effects to be removed. If we ever get player or
@@ -1784,6 +1790,7 @@ void Creature::process_effects()
 
     // Decay/removal of effects
     for( auto &elem : *effects ) {
+        ZoneScopedN( "creature_decay_effects" );
         for( auto &_it : elem.second ) {
             if( _it.second.is_removed() ) {
                 to_remove.emplace_back( elem.first, _it.first, false );
@@ -1811,6 +1818,7 @@ void Creature::process_effects()
 
     // Run the on-remove effects
     for( const removed_effect &r : to_remove ) {
+        ZoneScopedN( "creature_remove_effects" );
         const auto &add_after = r.type->get_effects_on_remove();
         if( !add_after.empty() ) {
             bool found = false;
@@ -1838,6 +1846,7 @@ void Creature::process_effects()
     }
     // Actually remove effects. This should be the last thing done in process_effects().
     for( const removed_effect &r : to_remove ) {
+        ZoneScopedN( "creature_remove_effects_pt2" );
         if( !r.bp ) {
             effects->erase( r.type );
         } else {
@@ -1850,6 +1859,7 @@ void Creature::process_effects()
     }
 
     for( const effect &eff : to_add ) {
+        ZoneScopedN( "creature_add_effects" );
         add_effect( eff );
     }
 }

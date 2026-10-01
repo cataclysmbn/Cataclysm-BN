@@ -4373,6 +4373,8 @@ void options_manager::cache_to_globals()
     activity_skip_mon_skip = ::get_option<bool>( "ACTIVITY_SKIP_MON_SKIP" );
     activity_skip_npc_skip = ::get_option<bool>( "ACTIVITY_SKIP_NPC_SKIP" );
     activity_skip_sound_skip = ::get_option<bool>( "ACTIVITY_SKIP_SOUND_SKIP" );
+    activity_skip_stat_update_ticks = ::get_option<int>( "ACTIVITY_SKIP_STAT_UPDATE_TICKS" ) *
+                                      1_seconds;
     // Temporary fix for #8726: force out-of-bubble fire spread off while the
     // corresponding options are commented out above.
     reality_bubble_fire_spread = false;

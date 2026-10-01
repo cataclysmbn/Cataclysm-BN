@@ -18,14 +18,14 @@ astyle --style=1tbs --attach-inlines --indent=spaces=4 --align-pointer=name --ma
 :'a,'b ! astyle --style=1tbs --attach-inlines --indent=spaces=4 --align-pointer=name --max-code-length=100 --break-after-logical --indent-classes --indent-switches --indent-preproc-define --indent-col1-comments --min-conditional-indent=0 --pad-oper --add-braces --convet-tabs --unpad-paren --pad-paren-in --keep-one-line-blocks
 ```
 
-다른 환경에 대해서는 [DEVELOPER_TOOLING.md](../reference/tooling)를 참조하세요.
+다른 환경에 대해서는 [DEVELOPER_TOOLING.md](../reference/tooling.md)를 참조하세요.
 
 ## 코드 예제
 
 다음은 가장 일반적인 스타일 포인트를 보여주는 예제입니다:
 
 ```cpp
-int foo( int arg1, int *arg2 )
+auto foo( int arg1, int *arg2 ) -> int
 {
     if( arg1 < 5 ) {
         switch( *arg2 ) {
@@ -54,15 +54,26 @@ int foo( int arg1, int *arg2 )
 
 다음은 일반적인 가이드라인이라기보다는 시간이 지나면서 마주친 문제점들입니다.
 
+### 불변 값 선호
+
 - 불변 값을 선호하고 변수를 `const`로 선언하세요. 변경 가능한 부분이 적을수록 코드 흐름을 예측하기 쉽습니다.
+
+### `int` 또는 `int64_t` 사용
+
 - `int`를 선호하세요.
   - 특히 `long`은 문제가 있습니다. 일부 플랫폼에서는 int보다 큰 타입이 _아닙니다_.
   - 32비트보다 큰 정수 값 사용은 피해야 합니다. 정말 필요하다면 `int64_t`를 사용하세요.
   - `uint`도 문제가 있습니다. 오버플로 시 바람직하지 않은 동작을 하므로 범용 프로그래밍에서는 피해야 합니다.
     - 바이너리 데이터가 필요하다면 `unsigned int`나 `unsigned char`를 사용해도 되지만, `std::bitset`을 사용하는 것이 좋습니다.
   - `float`는 피해야 하지만 유효한 사용 사례가 있습니다.
-- 적절한 경우 [`auto` 키워드](https://learn.microsoft.com/en-us/cpp/cpp/auto-cpp?view=msvc-170)를 사용하세요. 예를 들어:
-  - 함수 선언에서 [후행 반환 타입](https://en.wikipedia.org/wiki/Trailing_return_type)을 선호하세요. 긴 반환 타입은 함수 이름을 가리고 클래스 메서드 읽기를 어렵게 만듭니다.
+
+### Auto 키워드 사용
+
+적절한 경우 [`auto` 키워드](https://learn.microsoft.com/en-us/cpp/cpp/auto-cpp?view=msvc-170)를 사용하세요. 예를 들어:
+
+#### 후행 반환 타입
+
+- 함수 선언에서 [후행 반환 타입](https://en.wikipedia.org/wiki/Trailing_return_type)을 선호하세요. 긴 반환 타입은 함수 이름을 가리고 클래스 메서드 읽기를 어렵게 만듭니다.
   ```cpp
   class Bar;
   auto foo( int a ) -> int
@@ -72,7 +83,10 @@ int foo( int arg1, int *arg2 )
       return is_bar_ok( bar ) ? 42 : 404;
   }
   ```
-  - `decltype` 스타일 제네릭 함수에 사용
+
+#### Decltype 스타일 제네릭 함수
+
+- `decltype` 스타일 제네릭 함수에 사용
   ```diff
   template<typename A, typename B>
   - decltype(std::declval<A&>() * std::declval<B&>()) multiply(A a, B b)
@@ -81,20 +95,34 @@ int foo( int arg1, int *arg2 )
       return a*b;
   }
   ```
-  - 긴 이터레이터 선언에 대한 별칭
+
+#### 긴 이터레이터 선언의 별칭
+
+- 긴 이터레이터 선언에 대한 별칭
   ```diff
     std::map<int, std::map<std::string, some_long_typename>> some_map;
 
   - std::map<int, std::map<std::string, some_long_typename>>::iterator iter = some_map.begin();
   + auto iter = some_map.begin();
   ```
-  - 람다 선언에 필수
+
+#### 람다 선언
+
+- 람다 선언에 필수
   ```cpp
   auto two_times = []( int a ) { return a * 2; };
   ```
-  - 편의를 위해 가독성을 희생하지 않는 경우. [vscode](https://github.com/clangd/vscode-clangd)와 같은 인기 있는 코드 에디터에서 인라인 타입 힌트 옵션을 사용할 수 있습니다.
+
+#### 편집기 타입 힌트
+
+- 편의를 위해 가독성을 희생하지 않는 경우. [vscode](https://github.com/clangd/vscode-clangd)와 같은 인기 있는 코드 에디터에서 인라인 타입 힌트 옵션을 사용할 수 있습니다.
+
+### `using namespace` 사용 금지
 
 - 표준 네임스페이스에 `using namespace` 사용을 피하세요.
+
+### 멤버 메서드 사용 금지
+
 - 필요하지 않다면 클래스에 새 멤버 메서드를 추가하지 마세요.
   ```diff
   // 이 함수는 클래스의 비공개 데이터 멤버나 멤버 메서드에 접근하지 않으므로 자유 함수로 만들 수 있습니다

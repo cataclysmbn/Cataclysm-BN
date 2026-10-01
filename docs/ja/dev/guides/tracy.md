@@ -7,7 +7,7 @@
 > [!CAUTION]
 >
 > 適切に機能するためには、ゲームとプロファイラの両方が同じバージョンの tracy でビルドされている必要があります。
-> [多数の問題](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/3253#discussion_r1545267113)のため、Windows バージョンは [`v0.10`](https://github.com/wolfpld/tracy/releases/tag/v0.10)を使用してい
+> [多数の問題](https://github.com/cataclysmbn/Cataclysm-BN/pull/3253#discussion_r1545267113)のため、Windows バージョンは [`v0.10`](https://github.com/wolfpld/tracy/releases/tag/v0.10)を使用してい
 > ますが、Linux バージョンは
 > [`6d1deb5640ed11da01995fb1791115cfebe54dbf`](https://github.com/wolfpld/tracy/commit/6d1deb5640ed11da01995fb1791115cfebe54dbf)を使用しています。
 
@@ -95,7 +95,7 @@ $ cmake --build profiler/build --config Release --parallel $(nproc)
 
 ### Windows
 
-![image](https://github.com/cataclysmbnteam/Cataclysm-BN/assets/54838975/b6f73c09-969c-4305-b8fb-070d14fb834a)
+![image](https://github.com/cataclysmbn/Cataclysm-BN/assets/54838975/b6f73c09-969c-4305-b8fb-070d14fb834a)
 
 <https://github.com/wolfpld/tracy/releases>から、プリコンパイルされた実行可能ファイルをダウンロードしてください。
 
@@ -132,10 +132,10 @@ bool game::do_turn()
 
 1. BN (`USE_TRACY=ON`でビルドしたもの)を起動し、tracy プロファイラを実行します。
 
-![](../../../../../assets/img/tracy/main.png)
+![](./img/tracy/main.png)
 
 2. `connect` ボタンをクリックしてゲームに接続します。
 
-![](../../../../../assets/img/tracy/stats.png)
+![](./img/tracy/stats.png)
 
 3. プロファイリングデータが GUI に表示されます。

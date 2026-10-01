@@ -3840,7 +3840,7 @@ std::string repair_item_actor::get_name() const
     []( const material_id & mid ) {
         return _( mid->name() );
     } );
-    return string_format( _( "Repair %s" ), mats );
+    return string_format( _( "Repair/Refit %s" ), mats );
 }
 
 void heal_actor::load( const JsonObject &obj )

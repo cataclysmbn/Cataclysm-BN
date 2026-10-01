@@ -110,6 +110,20 @@
     "default_android": true
   },
   {
+    "type": "OPTION",
+    "name": "ACTIVITY_SKIP_STAT_UPDATE_TICKS",
+    "stype": "int",
+    "scope": "global",
+    "page": "performance",
+    "group": "rem_act_perf",
+    "menu_text": "Activity Skip Stat Update Ticks",
+    "tooltip": "The number of seconds that it takes to re-update stats during activity skip. Increasing values greatly improves performance in NPC dense areas. Makes stats update slightly slower. Default 60 ( 1 minute )",
+    "default": 60,
+    "default_android": 300,
+    "min": 1,
+    "max": 300
+  },
+  {
     "type": "OPTION_GROUP",
     "id": "lod_monster",
     "page": "performance",

@@ -46,7 +46,9 @@
     "obsolete": false,
     // modinfo.json 파일을 기준으로 한 모드 파일의 경로. 게임은 자동으로 modinfo.json이 있는 폴더와
     // 모든 하위 폴더의 파일을 로드하므로, 이 필드는 어떤 이유로 modinfo.json을 모드의 하위 폴더에 넣고 싶을 때만 유용합니다.
-    "path": "../common-data/"
+    "path": "../common-data/",
+    // 모드 옵션의 경로
+    "options_path": "options"
   }
 ]
 ```

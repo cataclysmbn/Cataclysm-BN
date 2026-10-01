@@ -3040,8 +3040,10 @@ auto game::try_activity_fixed_window_skip() -> bool
     const auto duration = activity_fixed_window_duration();
     if( !can_activity_fixed_window_skip( duration ) ) {
         next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        u.in_skip_state = false;
         return false;
     }
+    u.in_skip_state = true;
     const auto skipped_turns = execute_activity_fixed_window_skip( duration );
     if( skipped_turns <= 0 ) {
         next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
@@ -3056,6 +3058,7 @@ auto game::try_activity_fixed_window_skip() -> bool
     if( skipped_turns >= full_window_turns || get_weather().nextweather <= calendar::turn ) {
         run_activity_cadence_boundary();
     }
+    u.in_skip_state = false;
     return true;
 }
 

@@ -1437,6 +1437,9 @@ class Character : public Creature, public location_visitable<Character>
         std::vector<detached_ptr<item>> inv_dump_remove();
 
         units::mass weight_carried() const;
+        // TODO: See if we can move all weight_carried instances to this
+        // Recalculating the cache requires this to be non-constant
+        units::mass cached_weight_carried();
         units::volume volume_carried() const;
 
         units::mass weight_carried_reduced_by( const excluded_stacks &without ) const;
@@ -1956,6 +1959,11 @@ class Character : public Creature, public location_visitable<Character>
     protected:
         void on_damage_of_type( int adjusted_damage, damage_type type, const bodypart_id &bp ) override;
         location_inventory inv;
+    private:
+        units::mass worn_weight_cache;
+        bool worn_weight_cache_dirty = true;
+        units::mass wielded_weight_cache;
+        bool wielded_weight_cache_drity = true;
     public:
 
         /** Called when an item is worn */

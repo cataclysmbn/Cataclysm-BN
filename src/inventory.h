@@ -189,7 +189,12 @@ class inventory : public temp_visitable<inventory>
 
         void rust_iron_items();
 
+    private:
+        units::mass cached_weight;
+        bool cached_weight_dirty = true;
+    public:
         units::mass weight() const;
+        units::mass weight_cached();
         units::mass weight_without( const excluded_stacks &without ) const;
         units::volume volume() const;
         units::volume volume_without( const excluded_stacks &without ) const;
@@ -351,6 +356,7 @@ class location_inventory : public location_visitable<location_inventory>
         void rust_iron_items();
 
         units::mass weight() const;
+        units::mass weight_cached();
         units::mass weight_without( const excluded_stacks &without ) const;
         units::volume volume() const;
         units::volume volume_without( const excluded_stacks &without ) const;

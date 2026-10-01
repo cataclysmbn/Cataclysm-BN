@@ -21,6 +21,7 @@
 #include "monster.h"
 #include "morale_types.h"
 #include "mutation_data.h"
+#include "profile.h"
 #include "player.h" // IWYU pragma: associated
 #include "player_activity.h"
 #include "pldata.h"
@@ -490,6 +491,7 @@ static void eff_fun_mutating( player &u, effect &it )
 
 void Character::hardcoded_effects( effect &it )
 {
+    ZoneScoped;
     if( auto buff = ma_buff::from_effect( it ) ) {
         if( buff->is_valid_character( *this ) ) {
             buff->apply_character( *this );

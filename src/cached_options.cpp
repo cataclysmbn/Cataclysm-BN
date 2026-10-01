@@ -55,6 +55,7 @@ bool parallel_scent_update = true;
 bool activity_skip_sound_skip = false;
 bool activity_skip_npc_skip = false;
 bool activity_skip_mon_skip = false;
+time_duration activity_skip_stat_update_ticks = 1_seconds;
 
 FungalOptions fungal_opt;
 
