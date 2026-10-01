@@ -14,6 +14,7 @@ Before writing **ANY** code, verify:
 
 **Prefer `std::ranges`/`std::views`/`std::ranges::to`/cata_algo.h for collection work. Avoid manual iterator increment loops unless required by mutation semantics.**
 
+- Ranges preference means composable iterator/view pipelines. Do not replace a clear counted/nested loop with `views::iota` + `ranges::for_each` just to avoid loop syntax; use a plain `for` when index access, early break, mutation, or nested traversal is clearer.
 - prefer function-local `using namespace std::views;` and use `transform`/`filter` unqualified.
 - prefer function-local `namespace ranges = std::ranges;` and use `ranges::*` without `std::`
 - prefer method/function references over lambdas whenever possible, e.g. `transform( &vpart_position::part_index )` instead of `transform( []( const auto &vp ) { return vp.part_index(); } )`.
