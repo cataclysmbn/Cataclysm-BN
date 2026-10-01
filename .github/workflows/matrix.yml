@@ -225,6 +225,7 @@ jobs:
 
       - name: run tests
         if: ${{ github.ref_name != 'main' && env.SKIP == 'false' }}
+        timeout-minutes: 120
         run: |
           # Run tests using parallel execution
           Xvfb :99 -screen 0 1280x1024x24 &
