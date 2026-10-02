@@ -581,7 +581,7 @@ std::string shortcut_text( nc_color shortcut_color, const std::string &fmt );
 // extra_resolution
 std::pair<std::string, nc_color> get_bar( float cur, float max, int width = 5,
         bool extra_resolution = true,
-        const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
+const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
 
 /**
  * @return Pair of a string containing the bar, and its color
