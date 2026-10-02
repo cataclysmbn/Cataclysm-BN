@@ -555,6 +555,12 @@ enum class item_filter_type : int {
 void draw_item_filter_rules( const catacurses::window &win, int starty, int height,
                              item_filter_type type );
 
+/**
+ * The same tips as draw_item_filter_rules(), as a single string (with color tags) for use
+ * in popups, e.g. as a string_input_popup description.
+ */
+auto item_filter_rules_text( item_filter_type type ) -> std::string;
+
 char rand_char();
 int special_symbol( int sym );
 
