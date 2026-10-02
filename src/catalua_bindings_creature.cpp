@@ -15,6 +15,7 @@
 #include "character.h"
 #include "character_martial_arts.h"
 #include "character_functions.h"
+#include "construction.h"
 #include "craft_command.h"
 #include "crafting.h"
 #include "creature.h"
@@ -1369,6 +1370,17 @@ void cata::detail::reg_character( sol::state &lua )
         luna::set_fx( ut, "make_all_craft", []( UT_CLASS & ch, const recipe_id & rec,
         sol::optional<int> batch_size ) -> bool {
             return lua_make_craft( ch, rec, batch_size.value_or( 1 ), true );
+        } );
+
+        DOC( "Returns true if the character has the skills needed for the construction." );
+        luna::set_fx( ut, "meets_construction_skills", []( const UT_CLASS & ch,
+        const construction_str_id & con ) -> bool {
+            return con.is_valid() && ch.meets_skill_requirements( con.obj() );
+        } );
+
+        DOC( "Returns true if the character has the skills, tools and components (on them or nearby) to build the construction.  Does not check the target tile." );
+        luna::set_fx( ut, "can_build", []( UT_CLASS & ch, const construction_str_id & con ) -> bool {
+            return con.is_valid() && player_can_build( ch, ch.crafting_inventory(), con.obj() );
         } );
 
         luna::set_fx( ut, "knows_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> bool { return utObj.martial_arts_data->has_martialart( ma_type_id ); } );
