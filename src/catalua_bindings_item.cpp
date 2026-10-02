@@ -485,6 +485,12 @@ void reg_item( sol::state &lua )
         luna::set_fx( ut, "remove_technique",
                       sol::resolve<void( const matec_id & )> ( &item::remove_technique ) );
 
+        DOC( "Adds an enchantment to this item" );
+        luna::set_fx( ut, "add_enchantment", sol::overload(
+                          sol::resolve<bool( const enchantment_id & )>( &item::add_enchantment ),
+                          sol::resolve<bool( const enchantment & )>( &item::add_enchantment )
+                      ) );
+
         DOC( "Checks if this item can contain another" );
         luna::set_fx( ut, "can_contain",
                       sol::resolve<bool( const item & ) const>

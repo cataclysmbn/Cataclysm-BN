@@ -2389,6 +2389,7 @@ class item : public location_visitable<item>, public game_object<item>
         std::optional<dimension_info> pocket_dim;
 
         bool add_enchantment( const enchantment_id &ench );
+        bool add_enchantment( const enchantment &ench );
 
         const std::vector<enchantment> &get_enchantments( bool dynamic ) const;
 

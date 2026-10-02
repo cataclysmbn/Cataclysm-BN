@@ -98,6 +98,7 @@ public:
         -> enchantment_vision_id;
 
     auto operator==(const enchantment& rhs) const -> bool;
+    auto operator<(const enchantment& rhs) const -> bool;
 
     static void check_consistency();
     void check(

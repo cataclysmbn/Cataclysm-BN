@@ -8056,6 +8056,15 @@ bool item::add_enchantment( const enchantment_id &ench )
     return true;
 }
 
+bool item::add_enchantment( const enchantment &ench )
+{
+    if( !relic_data ) {
+        relic_data = cata::make_value<relic>();
+    }
+    relic_data->add_passive_effect( ench );
+    return true;
+}
+
 const std::vector<enchantment> &item::get_enchantments( bool dynamic ) const
 {
     if( dynamic && is_relic( true ) ) {
