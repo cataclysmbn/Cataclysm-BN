@@ -2127,5 +2127,190 @@
       "!": [ "xlframe_vertical", "halfboard_vertical", "roof" ]
     },
     "color_palette": "aircraft_commercial"
+  },
+  {
+    "id": "plane_adfx02",
+    "type": "vehicle",
+    "name": "ADFX-02 Merlin",
+    "parts": [
+      { "x": -6, "y": -1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left", "wing_carbon_horizontal" ] },
+      { "x": -5, "y": -1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left" ] },
+      { "x": -4, "y": -1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left" ] },
+      { "x": -3, "y": -1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left" ] },
+      { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left" ] },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "windshield_sw" ] },
+      { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "door_vertical_left" ] },
+      { "x": 1, "y": -1, "parts": [ "xlframe_nw", "windshield_nw" ] },
+      {
+        "x": -6,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "medium_storage_battery", "carbon_halfboard_vertical", "wing_carbon_horizontal" ]
+      },
+      {
+        "x": -5,
+        "y": 0,
+        "parts": [ "xlframe_vertical", { "part": "tank_30gal_drum", "fuel": "jp8" }, "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": 0,
+        "parts": [ "xlframe_vertical", { "part": "tank_30gal_drum", "fuel": "jp8" }, "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "xlframe_vertical", { "part": "tank_30gal_drum", "fuel": "jp8" }, "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "carbon_halfboard_vertical", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "xlframe_vertical", "windshield_horizontal_rear" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "black_box",
+          "programmable_autopilot",
+          "tracker",
+          "roof"
+        ]
+      },
+      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "windshield_horizontal_front" ] },
+      { "x": 2, "y": 0, "parts": [ "xlframe_vertical", "carbon_halfboard_cover" ] },
+      {
+        "x": -6,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right", "wing_carbon_horizontal" ]
+      },
+      { "x": -5, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] },
+      { "x": -4, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] },
+      { "x": -3, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] },
+      { "x": -2, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] },
+      { "x": -1, "y": 1, "parts": [ "xlframe_vertical", "windshield_se_edge" ] },
+      { "x": 0, "y": 1, "parts": [ "xlframe_vertical", "door_vertical_right" ] },
+      { "x": 1, "y": 1, "parts": [ "xlframe_ne", "windshield_ne" ] },
+      {
+        "x": -7,
+        "y": -1,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_left", "wing_carbon_horizontal" ]
+      },
+      {
+        "x": -7,
+        "y": 1,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_right", "wing_carbon_horizontal" ]
+      },
+      { "x": -7, "y": -2, "parts": [ "xlframe_vertical_2", "bomber controls", "trunk_carbon" ] },
+      {
+        "x": -8,
+        "y": -2,
+        "parts": [ "xlframe_vertical_2", "wing_carbon_horizontal", "carbon_halfboard_vertical_left" ]
+      },
+      { "x": -7, "y": 2, "parts": [ "xlframe_vertical_2", "bomber controls", "trunk_carbon" ] },
+      {
+        "x": -8,
+        "y": 2,
+        "parts": [ "xlframe_vertical_2", "wing_carbon_horizontal", "carbon_halfboard_vertical_right" ]
+      },
+      { "x": -8, "y": 0, "parts": [ "xlframe_cover", "carbon_halfboard_vertical", "wing_carbon_horizontal" ] },
+      {
+        "x": -7,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          "carbon_halfboard_vertical",
+          "wing_carbon_horizontal",
+          "large_storage_battery",
+          "turret_mount",
+          "laser_cannon",
+          "laser_designator_part"
+        ]
+      },
+      { "x": 2, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [
+          "xlframe_vertical",
+          "carbon_halfboard_vertical_left",
+          "turret_mount",
+          {
+            "part": "mounted_25mm_rotary_cannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
+          "laser_designator_part"
+        ]
+      },
+      { "x": 3, "y": 0, "parts": [ "xlframe_vertical", "carbon_halfboard_cover" ] },
+      { "x": -3, "y": -2, "part": "wing_carbon_external_left" },
+      { "x": -3, "y": 2, "part": "wing_carbon_external_right" },
+      { "x": -4, "y": 2, "part": "wing_carbon_external_horizontal" },
+      { "x": -4, "y": 3, "part": "lit_wing_carbon_external_right" },
+      { "x": -4, "y": -2, "part": "wing_carbon_external_horizontal" },
+      { "x": -4, "y": -3, "part": "lit_wing_carbon_external_left" },
+      { "x": -7, "y": -3, "part": "wing_carbon_external_left" },
+      { "x": -7, "y": -4, "part": "wing_carbon_external_right" },
+      { "x": -7, "y": -5, "part": "wing_carbon_external_horizontal" },
+      { "x": -6, "y": -5, "part": "wing_carbon_external_right" },
+      { "x": -8, "y": -4, "part": "wing_carbon_external_horizontal" },
+      { "x": -8, "y": -3, "part": "wing_carbon_external_horizontal" },
+      { "x": -6, "y": -2, "part": "wing_carbon_external_left" },
+      { "x": -6, "y": 2, "part": "wing_carbon_external_right" },
+      { "x": -7, "y": 3, "part": "wing_carbon_external_right" },
+      { "x": -7, "y": 4, "part": "wing_carbon_external_left" },
+      { "x": -7, "y": 5, "part": "wing_carbon_external_horizontal" },
+      { "x": -6, "y": 5, "part": "wing_carbon_external_left" },
+      { "x": -8, "y": 3, "part": "wing_carbon_external_horizontal" },
+      { "x": -8, "y": 4, "part": "wing_carbon_external_horizontal" },
+      { "x": -8, "y": -1, "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical", "wing_carbon_horizontal" ] },
+      { "x": -8, "y": 1, "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical", "wing_carbon_horizontal" ] },
+      {
+        "x": -9,
+        "y": -1,
+        "parts": [ "xlframe_vertical", "carbon_halfboard_vertical", "wheel_mount_medium", "wheel" ]
+      },
+      { "x": -9, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical", "wheel_mount_medium", "wheel" ] },
+      { "x": -9, "y": 0, "parts": [ "xlframe_vertical", "carbon_halfboard_horizontal_rear" ] },
+      { "x": -9, "y": -3, "part": "wing_carbon_external_horizontal" },
+      { "x": -9, "y": 3, "part": "wing_carbon_external_horizontal" },
+      {
+        "x": -10,
+        "y": -1,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical", "engine_turbine_large", "alternator_car" ]
+      },
+      {
+        "x": -10,
+        "y": 1,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical", "engine_turbine_large", "alternator_car" ]
+      },
+      { "x": -11, "y": -1, "part": "jet_thruster_external" },
+      { "x": -11, "y": 1, "part": "jet_thruster_external" },
+      {
+        "x": -9,
+        "y": -2,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_left", "wing_carbon_horizontal" ]
+      },
+      {
+        "x": -9,
+        "y": 2,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_right", "wing_carbon_horizontal" ]
+      },
+      { "x": -10, "y": -2, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left" ] },
+      { "x": -10, "y": 2, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": 0, "y": 0, "chance": 100, "items": [ "aviators" ] },
+      { "x": -7, "y": 2, "chance": 100, "items": [ "aerial_bomb" ] },
+      { "x": -7, "y": -2, "chance": 100, "items": [ "aerial_bomb" ] }
+    ]
   }
 ]
