@@ -229,7 +229,8 @@
           { "id": "mon_zombie_soldier_camo_1", "fg": 139, "bg": 30 },
           { "id": "corpse_mon_zombie_soldier_camo_1", "fg": 140 },
           { "id": "mon_zombie_soldier_camo_2", "fg": 141, "bg": 30 },
-          { "id": "corpse_mon_zombie_soldier_camo_2", "fg": 142 }
+          { "id": "corpse_mon_zombie_soldier_camo_2", "fg": 142 },
+          { "id": "nether_lesser_incursion", "fg": 143 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
