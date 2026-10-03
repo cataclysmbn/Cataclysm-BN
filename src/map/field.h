@@ -29,6 +29,7 @@ public:
 
     // returns the move cost of this field
     auto move_cost() const -> int;
+    auto is_impassable() const -> bool { return type.obj().get_impassable(intensity - 1); }
 
     auto extra_radiation_min() const -> int;
     auto extra_radiation_max() const -> int;

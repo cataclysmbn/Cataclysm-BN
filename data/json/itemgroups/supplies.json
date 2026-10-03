@@ -253,6 +253,7 @@
       [ "fungicide", 5 ],
       [ "gas_insecticidal", 5 ],
       [ "gas_fungicidal", 5 ],
+      [ "foamcrete_slurry", 3 ],
       [ "insecticide", 5 ],
       [ "charcoal", 5 ],
       { "group": "ammo_pocket_batteries_full", "prob": 50 },
