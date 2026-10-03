@@ -452,7 +452,7 @@
     "id": "mx_swat_truck",
     "type": "map_extra",
     "name": "SWAT Truck",
-    "looks_like": "mon_feral_swat_boss_commander",
+    "looks_like": "badge_swat",
     "description": "A SWAT truck stopped here.  Something's moving nearby…",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_swat_truck" },
     "sym": "S",
