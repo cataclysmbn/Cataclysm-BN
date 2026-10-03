@@ -345,7 +345,7 @@
     "volume": "25 ml",
     "phase": "liquid",
     "spill_field": "fd_glue",
-    "container": "bottle_plastic_small",
+    "container": "squeeze_tube",
     "to_hit": -2,
     "flags": [ "UNRECOVERABLE" ],
     "stackable": true
@@ -365,7 +365,7 @@
     "volume": "25 ml",
     "phase": "liquid",
     "spill_field": "fd_glue",
-    "container": "bottle_plastic_small",
+    "container": "squeeze_tube",
     "to_hit": -2,
     "flags": [ "UNRECOVERABLE", "NO_SALVAGE" ],
     "stackable": true
