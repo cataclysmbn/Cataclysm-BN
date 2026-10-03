@@ -397,6 +397,24 @@ TEST_CASE("npc_talk_needs", "[npc_talk]") {
     CHECK(d.responses[3].text == "This is a npc fatigue test response.");
 }
 
+TEST_CASE("npc_talk_size_up_hunger", "[npc_talk]") {
+    clear_all_state();
+    dialogue d;
+    npc& talker_npc = prep_test(d);
+    avatar& player_character = get_avatar();
+    player_character.per_cur = 30;
+    player_character.int_cur = 30;
+
+    d.add_topic("TALK_SIZE_UP");
+    talker_npc.set_stored_kcal(talker_npc.max_stored_kcal());
+    const std::string fed_info = gen_dynamic_line(d);
+    CHECK(fed_info.find("Hungry") == std::string::npos);
+
+    talker_npc.set_stored_kcal(0);
+    const std::string hungry_info = gen_dynamic_line(d);
+    CHECK(hungry_info.find("Hungry") != std::string::npos);
+}
+
 TEST_CASE("npc_talk_mission_goal", "[npc_talk]") {
     clear_all_state();
     dialogue d;
