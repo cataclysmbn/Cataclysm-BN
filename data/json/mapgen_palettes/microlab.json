@@ -22,7 +22,6 @@
       "E": "t_elevator_control",
       "<": "t_stairs_up",
       ">": "t_stairs_down",
-      "Y": "t_utility_light",
       "#": "t_rock"
     },
     "furniture": {
@@ -51,7 +50,8 @@
       "R": "f_table",
       "^": "f_indoor_plant",
       "x": "f_safe_l",
-      "N": "f_glass_cabinet"
+      "N": "f_glass_cabinet",
+      "Y": "f_olight_nogrid"
     },
     "toilets": { ";": {  } },
     "items": {
