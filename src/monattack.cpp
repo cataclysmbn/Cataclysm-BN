@@ -916,7 +916,11 @@ bool mattack::pull_metal_weapon( monster *z )
             success = pull_metal_weapon_success_chance( success,
                       rl_dist( z->bub_pos(), target->bub_pos() ) );
             auto m_type = foe == &g->u ? m_bad : m_neutral;
-            if( rng( 1, 100 ) <= success ) {
+            namespace ranges = std::ranges;
+            const auto tethered = ranges::any_of( weapon.gunmods(), []( const auto * mod ) {
+                return mod->has_flag( flag_id( "WEAPON_TETHER" ) );
+            } );
+            if( !tethered && rng( 1, 100 ) <= success ) {
                 target->add_msg_player_or_npc( m_type, _( "%s is pulled away from your hands!" ),
                                                _( "%s is pulled away from <npcname>'s hands!" ), weapon.tname() );
                 z->add_item( foe->remove_primary_weapon() );

@@ -1,0 +1,14 @@
+[
+  {
+    "type": "recipe",
+    "result": "bungee_cord",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "hose", 1 ] ], [ [ "wire", 2 ] ], [ [ "string_36", 1 ] ] ]
+  }
+]

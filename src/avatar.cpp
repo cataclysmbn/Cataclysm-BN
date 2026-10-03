@@ -1573,6 +1573,9 @@ bool avatar::invoke_item( item *used, const tripoint_bub_ms &pt )
 {
     std::map<std::string, use_function> use_methods;
     use_methods.insert( used->type->use_methods.begin(), used->type->use_methods.end() );
+    if( !used->gunmods().empty() ) {
+        use_methods["detach_gunmods"] = *used->get_use( "detach_gunmods" );
+    }
     // Make sure the flag is that of the mod, not of the item being used :P
     if( used->has_flag( flag_ADD_UPS_TOGGLE ) && !used->type->has_flag( flag_ADD_UPS_TOGGLE ) ) {
         use_methods["TOGGLE_UPS_CHARGING"] = item_controller->usage_from_string( "TOGGLE_UPS_CHARGING" );

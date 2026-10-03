@@ -652,6 +652,38 @@ gunmod_data:
 }
 ```
 
+#### Weapon tethers
+
+A gunmod with `WEAPON_TETHER` prevents zombie technicians from pulling its host weapon out of the
+wielder's hands. The shoulder strap has this flag and retains its normal gun categories and sling
+slot. Carrying an unattached tether does not provide protection.
+
+Tethers use the normal gunmod installation action. Only one tether can be attached to a weapon at a
+time. Activate the modified weapon and choose **Detach gunmods** to recover it. Normal unwielding
+and transferring the weapon remain possible.
+
+The bungee cord also has `UNIVERSAL_WEAPON_TETHER`. This allows it to attach to any gun or melee
+weapon without using a gunmod slot. Other tethers follow their normal gunmod target and slot rules.
+
+Custom tethers can inherit the bungee cord's flag and installation time:
+
+```json
+{
+  "id": "my_weapon_tether",
+  "copy-from": "bungee_cord",
+  "type": "GUNMOD",
+  "name": { "str": "custom weapon tether" },
+  "description": "A reusable cord for securing a weapon.",
+  "material": ["nylon"],
+  "weight": "80 g"
+}
+```
+
+For an independent universal tether definition, use `"type": "GUNMOD"` and
+`"flags": [ "WEAPON_TETHER", "UNIVERSAL_WEAPON_TETHER" ]`, alongside the normal item fields and
+the required gunmod `location`. A tether with only `WEAPON_TETHER` uses normal gunmod compatibility
+rules. No custom use action is needed, and neither flag depends on the item's ID.
+
 ### Batteries
 
 ```json
