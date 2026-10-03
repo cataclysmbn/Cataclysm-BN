@@ -14,6 +14,8 @@
 #include "catalua_serde.h"
 #include "character.h"
 #include "character_martial_arts.h"
+#include "character_functions.h"
+#include "construction.h"
 #include "craft_command.h"
 #include "crafting.h"
 #include "creature.h"
@@ -152,6 +154,36 @@ auto reg_player_activity( sol::state &lua ) -> void
     luna::set_fx( ut, "id_str", []( const player_activity & act ) -> std::string {
         return act.id().str();
     } );
+}
+
+/// Starts a craft for Lua, refusing cases the crafting menu would not allow.
+auto lua_make_craft( Character &who, const recipe_id &rec_id, int batch_size,
+                     bool is_long ) -> bool
+{
+    if( !who.is_avatar() ) {
+        debugmsg( "make_craft: only the avatar can start crafts from Lua" );
+        return false;
+    }
+    if( !rec_id.is_valid() || batch_size < 1 ) {
+        return false;
+    }
+    const recipe &rec = rec_id.obj();
+    if( !rec ) {
+        return false;
+    }
+    if( who.has_recipe( &rec, who.crafting_inventory(),
+                        character_funcs::get_crafting_helpers( who ) ) < 0 ) {
+        return false;
+    }
+    if( !who.can_start_craft( &rec, recipe_filter_flags::none, batch_size ) ) {
+        return false;
+    }
+    if( is_long ) {
+        who.make_all_craft( rec_id, batch_size );
+    } else {
+        who.make_craft( rec_id, batch_size );
+    }
+    return who.has_activity( activity_id( "ACT_CRAFT" ) );
 }
 
 } // namespace
@@ -1316,6 +1348,40 @@ void cata::detail::reg_character( sol::state &lua )
 
         luna::set_fx( ut, "knows_recipe", []( const UT_CLASS & utObj, const recipe_id & rec ) -> bool { return utObj.knows_recipe( &( rec.obj() ) ); } );
         luna::set_fx( ut, "learn_recipe", []( UT_CLASS & utObj, const recipe_id & rec ) -> void { utObj.learn_recipe( &( rec.obj() ) ); } );
+
+        DOC( "Returns true if the character knows the recipe (or has it in a nearby book or helper) and has everything needed to craft it." );
+        luna::set_fx( ut, "can_make", []( UT_CLASS & ch, const recipe_id & rec,
+        sol::optional<int> batch_size ) -> bool {
+            const int batch = batch_size.value_or( 1 );
+            if( !rec.is_valid() || batch < 1 )
+            {
+                return false;
+            }
+            return ch.can_make( &rec.obj(), batch );
+        } );
+
+        DOC( "Starts crafting a recipe, like choosing it from the crafting menu.  Only works for the avatar, and may show the usual prompts (component choice, rotten components...).  Returns true if a craft is in progress afterwards." );
+        luna::set_fx( ut, "make_craft", []( UT_CLASS & ch, const recipe_id & rec,
+        sol::optional<int> batch_size ) -> bool {
+            return lua_make_craft( ch, rec, batch_size.value_or( 1 ), false );
+        } );
+
+        DOC( "Same as make_craft, but keeps crafting the recipe until it runs out of components (like \"craft as long as possible\")." );
+        luna::set_fx( ut, "make_all_craft", []( UT_CLASS & ch, const recipe_id & rec,
+        sol::optional<int> batch_size ) -> bool {
+            return lua_make_craft( ch, rec, batch_size.value_or( 1 ), true );
+        } );
+
+        DOC( "Returns true if the character has the skills needed for the construction." );
+        luna::set_fx( ut, "meets_construction_skills", []( const UT_CLASS & ch,
+        const construction_str_id & con ) -> bool {
+            return con.is_valid() && ch.meets_skill_requirements( con.obj() );
+        } );
+
+        DOC( "Returns true if the character has the skills, tools and components (on them or nearby) to build the construction.  Does not check the target tile." );
+        luna::set_fx( ut, "can_build", []( UT_CLASS & ch, const construction_str_id & con ) -> bool {
+            return con.is_valid() && player_can_build( ch, ch.crafting_inventory(), con.obj() );
+        } );
 
         luna::set_fx( ut, "knows_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> bool { return utObj.martial_arts_data->has_martialart( ma_type_id ); } );
         luna::set_fx( ut, "learn_martial_art", []( const UT_CLASS & utObj, const matype_id & ma_type_id ) -> void { utObj.martial_arts_data->add_martialart( ma_type_id ); } );

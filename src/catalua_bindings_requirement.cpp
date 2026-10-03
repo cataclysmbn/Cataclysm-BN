@@ -4,11 +4,70 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
-#include "requirements.h"
 #include "inventory.h"
+#include "itype.h"
+#include "requirements.h"
 
 void cata::detail::reg_requirement( sol::state &lua )
 {
+#define UT_CLASS item_comp
+    {
+        DOC( "A component consumed by a crafting requirement" );
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::no_constructor
+        );
+
+        // type/count/recoverable live in the `component` base struct, so expose them as properties.
+        DOC( "Item type of the component" );
+        luna::set_prop( ut, "type", []( const UT_CLASS & c ) -> itype_id { return c.type; } );
+        DOC( "Amount needed (items, or charges for items counted by charges)" );
+        luna::set_prop( ut, "count", []( const UT_CLASS & c ) -> int { return c.count; } );
+        DOC( "Whether the component can be recovered by disassembly" );
+        luna::set_prop( ut, "recoverable", []( const UT_CLASS & c ) -> bool { return c.recoverable; } );
+    }
+#undef UT_CLASS
+
+#define UT_CLASS tool_comp
+    {
+        DOC( "A tool used by a crafting requirement" );
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::no_constructor
+        );
+
+        DOC( "Item type of the tool" );
+        luna::set_prop( ut, "type", []( const UT_CLASS & c ) -> itype_id { return c.type; } );
+        DOC( "Charges needed, or -1 if the tool is not used up by charges" );
+        luna::set_prop( ut, "count", []( const UT_CLASS & c ) -> int { return c.count; } );
+        DOC( "Whether the tool needs charges" );
+        SET_FX( by_charges );
+    }
+#undef UT_CLASS
+
+#define UT_CLASS quality_requirement
+    {
+        DOC( "A tool quality needed by a crafting requirement" );
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::no_constructor
+        );
+
+        DOC( "Quality type" );
+        SET_MEMB_RO( type );
+        DOC( "Number of tools with this quality needed" );
+        SET_MEMB_RO( count );
+        DOC( "Minimum quality level" );
+        SET_MEMB_RO( level );
+    }
+#undef UT_CLASS
+
 #define UT_CLASS requirement_data
     {
         DOC( "Represents crafting requirements (tools, components, qualities)" );
