@@ -1012,7 +1012,7 @@
         "i": "f_counter",
         "T": "f_workbench",
         "C": "f_charger",
-        "@": "f_olight",
+        "@": "f_olight_nogrid",
         "U": "f_utility_shelf",
         "O": "f_crate_o",
         "Q": "f_crate_c",
@@ -1130,15 +1130,15 @@
         "B": "f_bench",
         "A": "f_armchair",
         "Y": "f_sofa",
-        "M": "f_olight",
-        "@": "f_olight",
+        "M": "f_olight_nogrid",
+        "@": "f_olight_nogrid",
         "T": "f_table",
         "X": "f_trashcan",
         "P": "f_indoor_plant",
         "&": "f_trashcan",
         "b": "f_crate_c",
         "e": "f_rack",
-        "O": "f_olight",
+        "O": "f_olight_nogrid",
         "j": "f_rack",
         "k": "f_bookcase",
         "l": "f_sink",
@@ -1227,7 +1227,7 @@
         "a": "t_carpet_purple",
         "B": "t_thconc_floor"
       },
-      "furniture": { "B": "f_bench", "@": "f_olight", "K": "f_counter" },
+      "furniture": { "B": "f_bench", "@": "f_olight_nogrid", "K": "f_counter" },
       "toilets": {  },
       "vendingmachines": { "V": { "item_group": "vending_food" } },
       "items": { "B": { "item": "traveler", "chance": 2 } },
@@ -1301,7 +1301,7 @@
         "1": "f_glass_fridge",
         "2": "f_glass_fridge",
         "3": "f_sink",
-        "@": "f_olight",
+        "@": "f_olight_nogrid",
         "4": "f_counter",
         "6": "f_armchair",
         "7": "f_filing_cabinet",
@@ -1401,7 +1401,7 @@
         "B": "f_bench",
         "C": "f_chair",
         "^": "f_armchair",
-        "@": "f_olight",
+        "@": "f_olight_nogrid",
         "Y": "f_sofa",
         "T": "f_trashcan",
         "P": "f_indoor_plant",
@@ -1487,7 +1487,7 @@
         "h": "t_linoleum_white",
         "i": "t_linoleum_white"
       },
-      "furniture": { "B": "f_bench", "b": "f_counter", "@": "f_olight", "f": "f_utility_shelf", "h": "f_table", "i": "f_chair" },
+      "furniture": { "B": "f_bench", "b": "f_counter", "@": "f_olight_nogrid", "f": "f_utility_shelf", "h": "f_table", "i": "f_chair" },
       "toilets": {  },
       "items": {
         "d": { "item": "traveler", "chance": 12 },
@@ -2742,7 +2742,7 @@
         "D": "t_thconc_floor",
         "8": "t_thconc_floor"
       },
-      "furniture": { "D": "f_desk", "8": "f_counter", "@": "f_olight", "t": "f_sink", "C": "f_chair" },
+      "furniture": { "D": "f_desk", "8": "f_counter", "@": "f_olight_nogrid", "t": "f_sink", "C": "f_chair" },
       "toilets": { "T": {  } },
       "place_vehicles": [ { "vehicle": "parkinglotbasic", "x": 5, "y": 18, "rotation": 180, "status": -1, "fuel": -1, "chance": 55 } ],
       "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 6, 17 ], "y": [ 6, 15 ], "chance": 100, "repeat": [ 2, 4 ] } ]
@@ -2789,7 +2789,7 @@
         "C": "t_thconc_floor",
         "a": "t_open_air"
       },
-      "furniture": { "D": "f_desk", "@": "f_olight", "C": "f_chair" }
+      "furniture": { "D": "f_desk", "@": "f_olight_nogrid", "C": "f_chair" }
     }
   },
   {
@@ -2834,7 +2834,7 @@
         ">": "t_stairs_down",
         "a": "t_open_air"
       },
-      "furniture": { "c": "f_armchair", "#": "f_battery", "@": "f_olight", "f": "f_filing_cabinet" },
+      "furniture": { "c": "f_armchair", "#": "f_battery", "@": "f_olight_nogrid", "f": "f_filing_cabinet" },
       "computers": {
         "?": {
           "name": "Air Traffic Control Console",
@@ -3089,7 +3089,7 @@
         "cg|....................."
       ],
       "terrain": { ".": "t_thconc_floor", "g": "t_region_groundcover", "@": "t_thconc_floor", "|": "t_wall_metal", "c": "t_chainfence" },
-      "furniture": { "@": "f_olight" },
+      "furniture": { "@": "f_olight_nogrid" },
       "place_monster": [ { "group": "GROUP_LARGE_STATION", "x": [ 3, 23 ], "y": [ 0, 23 ], "chance": 100, "repeat": [ 5, 7 ] } ]
     }
   },
