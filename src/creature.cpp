@@ -1360,10 +1360,13 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
                 if( !is_immune_effect( effect_bleed ) ) {
-                    if( is_monster() ) {
-                        add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
-                    } else {
-                        add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                    int bleed_intensity = std::min( 3, std::max( 1, adjusted_damage / 25 ) );
+                    for( int i = 0; i < bleed_intensity; i++ ) {
+                        if( is_monster() ) {
+                            add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
+                        } else {
+                            add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                        }
                     }
                 }
             }
@@ -1374,10 +1377,13 @@ void Creature::deal_damage_handle_type( const damage_unit &du, bodypart_id bp, i
             // Cause bleed if high damage goes through armor and enemy is made of flesh
             if( adjusted_damage > 15 ) {
                 if( !is_immune_effect( effect_bleed ) ) {
-                    if( is_monster() ) {
-                        add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
-                    } else {
-                        add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                    int bleed_intensity = std::min( 3, std::max( 1, adjusted_damage / 25 ) );
+                    for( int i = 0; i < bleed_intensity; i++ ) {
+                        if( is_monster() ) {
+                            add_effect( effect_bleed, 4_seconds * rng( 1, adjusted_damage ), bp.id() );
+                        } else {
+                            add_effect( effect_bleed, 1_minutes * rng( 1, adjusted_damage ), bp.id() );
+                        }
                     }
                 }
             }
