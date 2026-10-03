@@ -108,7 +108,7 @@
     },
     "furniture": {
       ":": "f_us_flag_metal",
-      "β": "f_olight_on",
+      "β": "f_olight_nogrid",
       "W": "f_workbench",
       "3": "f_drill_press",
       "δ": "f_wardrobe",
