@@ -323,6 +323,26 @@
     "watertight": true
   },
   {
+    "id": "squeeze_tube",
+    "type": "CONTAINER",
+    "category": "container",
+    "name": { "str": "squeeze tube" },
+    "description": "A resealable squeeze tube, holds 250 ml of liquid.",
+    "weight": "8 g",
+    "volume": "100 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "to_hit": 1,
+    "material": "plastic",
+    "symbol": "t",
+    "color": "white",
+    "contains": "250 ml",
+    "seals": true,
+    "watertight": true,
+    "rigid": false,
+    "looks_like": "superglue"
+  },
+  {
     "id": "bowl_clay",
     "type": "CONTAINER",
     "category": "container",
