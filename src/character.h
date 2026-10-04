@@ -1796,6 +1796,17 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns the intensity of the specified addiction */
         int  addiction_level( add_type type ) const;
 
+    private:
+        std::unordered_set<perk_id> perks;
+    public:
+        std::vector<perk_id> get_perks() const;
+        /** Adds a perk to the player */
+        void add_perk( const perk_id &perk );
+        /** Removes a perk from the player */
+        void remove_perk( const perk_id &perk );
+        /** Checks if the player has a perk. */
+        bool has_perk( const perk_id &perk ) const;
+
         /** This character becomes familiar with creatures of the given type **/
         void set_knows_creature_type( const mtype_id &c );
         /** Returns a list of all monster types known by this character **/

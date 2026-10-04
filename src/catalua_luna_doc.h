@@ -67,6 +67,7 @@ class mission;
 class monster;
 class npc;
 class player;
+class perk;
 class query_popup;
 class recipe;
 class Skill;
@@ -281,6 +282,7 @@ LUNA_ID( spell_type, "SpellType" )
 LUNA_ID( ter_t, "Ter" )
 LUNA_ID( trap, "Trap" )
 LUNA_ID( MonsterGroup, "MonsterGroup" )
+LUNA_ID( perk, "Perk" )
 LUNA_ID( weapon_category, "WeaponCategory" )
 LUNA_ID( emit, "FieldEmit" )
 LUNA_ID( fault, "Fault" )

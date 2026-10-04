@@ -79,6 +79,7 @@
 #include "overmap/overmap_special.h"
 #include "overmap/overmapbuffer.h"
 #include "panels.h"
+#include "perk.h"
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
@@ -489,6 +490,7 @@ void DynamicDataLoader::initialize()
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
     add( "named_color", &RGBColor::load_named_color );
+    add( "perk", &perk::load_perks );
     add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
@@ -695,6 +697,7 @@ void DynamicDataLoader::unload_data()
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
+    perk::reset();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
@@ -779,6 +782,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             { _( "Enchantments" ), &enchantment::finalize_all },
+            { _( "Perks" ), &perk::finalize_all },
 #if defined(TILES)
             { _( "Tileset" ), &load_tileset },
 #endif
@@ -887,6 +891,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Disease types" ), &disease_type::check_disease_consistency },
             { _( "Factions" ), &faction_template::check_consistency },
             { _( "Effects" ), &effect_type::check_consistency },
+            { _( "Perks" ), &perk::check_consistency },
         }
     };
 

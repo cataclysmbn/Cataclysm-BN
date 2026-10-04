@@ -47,6 +47,7 @@ void reg_magic( sol::state &lua );
 void reg_names( sol::state &lua );
 void reg_npc( sol::state &lua );
 void reg_overmap( sol::state &lua );
+void reg_perk( sol::state &lua );
 void reg_player( sol::state &lua );
 void reg_point_tripoint( sol::state &lua );
 void reg_recipe( sol::state &lua );

@@ -37,6 +37,7 @@ class scenario
         */
         mutable std::vector<profession_id> cached_permitted_professions;
 
+        std::set<perk_id> _forced_perks;
         std::set<trait_id> _allowed_traits;
         std::set<trait_id> _forced_traits;
         std::set<trait_id> _forbidden_traits;
@@ -108,6 +109,8 @@ class scenario
         std::set<spell_id> get_locked_spells() const;
         bool is_forbidden_spell( const spell_id &spell ) const;
         bool forbids_spells() const;
+
+        std::set<perk_id> get_perks() const;
 
         bool allowed_start( const start_location_id &loc ) const;
         signed int point_cost() const;

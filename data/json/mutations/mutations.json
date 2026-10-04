@@ -192,7 +192,8 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "INSOMNIA" ],
-    "category": [ "MOUSE", "INSECT", "RABBIT" ]
+    "category": [ "MOUSE", "INSECT", "RABBIT" ],
+    "mut_enchantments": [ { "values": [ { "value": "SLEEPY", "add": 40 } ] } ]
   },
   {
     "type": "mutation",
@@ -203,7 +204,8 @@
     "prereqs": [ "MET_RAT" ],
     "cancels": [ "INSOMNIA" ],
     "threshreq": [ "THRESH_MOUSE", "THRESH_RABBIT" ],
-    "category": [ "MOUSE", "RABBIT" ]
+    "category": [ "MOUSE", "RABBIT" ],
+    "mut_enchantments": [ { "values": [ { "value": "SLEEPY", "add": 100 } ] } ]
   },
   {
     "type": "mutation",
@@ -6764,7 +6766,8 @@
     "valid": false,
     "purifiable": false,
     "profession": true,
-    "cancels": [ "ILLITERATE" ]
+    "cancels": [ "ILLITERATE" ],
+    "mut_enchantments": [ { "flags": [ "NO_READING_COMPLEXITY_PENALTY" ] } ]
   },
   {
     "type": "mutation",

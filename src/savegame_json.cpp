@@ -705,6 +705,7 @@ void Character::load( const JsonObject &data )
     recalculate_size();
 
     data.read( "my_bionics", *my_bionics );
+    data.read( "my_perks", perks );
 
     for( auto &w : worn ) {
         w->on_takeoff( *this );
@@ -906,6 +907,7 @@ void Character::store( JsonOut &json ) const
     json.member( "martial_arts_data", martial_arts_data );
     // "Fracking Toasters" - Saul Tigh, toaster
     json.member( "my_bionics", *my_bionics );
+    json.member( "my_perks", perks );
 
     json.member_as_string( "move_mode",  move_mode );
 

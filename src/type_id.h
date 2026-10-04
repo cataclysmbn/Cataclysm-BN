@@ -104,9 +104,6 @@ using matype_id = string_id<martialart>;
 class ma_technique;
 using matec_id = string_id<ma_technique>;
 
-class mapgen_palette;
-using palette_id = string_id<mapgen_palette>;
-
 class MapgenColorPalette;
 using mpalette_id = string_id<MapgenColorPalette>;
 
@@ -158,6 +155,12 @@ using overmap_location_id = string_id<overmap_location>;
 
 class overmap_special;
 using overmap_special_id = string_id<overmap_special>;
+
+class mapgen_palette;
+using palette_id = string_id<mapgen_palette>;
+
+class perk;
+using perk_id = string_id<perk>;
 
 class profession;
 using profession_id = string_id<profession>;

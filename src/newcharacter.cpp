@@ -347,6 +347,7 @@ void avatar::randomize( const bool random_scenario, points_left &points, bool pl
     int num_btraits = 0;
     int tries = 0;
     newcharacter::add_traits( *this, points ); // adds mandatory profession/scenario traits.
+    newcharacter::add_perks( *this );
     for( const trait_id &mut : get_mutations() ) {
         const mutation_branch &mut_info = mut.obj();
         if( mut_info.profession ) {
@@ -2633,6 +2634,7 @@ tab_direction set_profession( avatar &u, points_left &points,
             // Add traits for the new profession (and perhaps scenario, if, for example,
             // both the scenario and old profession require the same trait)
             newcharacter::add_traits( u, points );
+            newcharacter::add_perks( u );
             points.skill_points -= netPointCost;
         } else if( action == "CHANGE_GENDER" ) {
             u.male = !u.male;
@@ -4348,6 +4350,17 @@ void newcharacter::add_traits( Character &ch, points_left &points )
     }
 }
 
+void newcharacter::add_perks( Character &ch )
+{
+    for( const perk_id &perk : ch.prof->get_perks() ) {
+        ch.add_perk( perk );
+    }
+
+    for( const perk_id &perk : g->scen->get_perks() ) {
+        ch.add_perk( perk );
+    }
+}
+
 trait_id newcharacter::random_good_trait()
 {
     std::vector<trait_id> vTraitsGood;
@@ -4585,6 +4598,7 @@ void reset_scenario( avatar &u, const scenario *scen )
     u.clear_skills();
     u.clear_bionics();
     newcharacter::add_traits( u );
+    newcharacter::add_perks( u );
     restore_cosmetic_trait( u, type_hair_color, previous_hair_color );
     restore_or_default_hair_style( u, previous_hair_style );
 }

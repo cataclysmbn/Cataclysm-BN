@@ -43,6 +43,7 @@
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "units_energy.h"
 #include "units_temperature.h"
 #include "weather/weather.h"
 
@@ -177,6 +178,7 @@ static const std::string flag_PLOWABLE( "PLOWABLE" );
 static const enchantment_flag_id ench_flag_ANTIGLARE( "ANTIGLARE" );
 
 static const enchantment_value_id ench_val_CROWD_CRUSH_RESIST( "CROWD_CRUSH_RESIST" );
+static const enchantment_value_id ench_val_PASSIVE_BIONIC_POWER( "PASSIVE_BIONIC_POWER" );
 static const enchantment_value_id ench_val_ADDICTION_STRENGTH( "ADDICTION_STRENGTH" );
 static const enchantment_value_id
 ench_val_ADDICTION_TIME_PER_ADDITION( "ADDICTION_TIME_PER_ADDITION" );
@@ -1714,6 +1716,8 @@ void Character::suffer()
     for( bionic &bio : get_bionic_collection() ) {
         process_bionic( bio );
     }
+    mod_power_level( units::from_joule( bonus_from_enchantments( 0.0, ench_val_PASSIVE_BIONIC_POWER,
+                                        true ) ) );
 
     for( std::pair<const trait_id, char_trait_data> &mut : my_mutations ) {
         const mutation_branch &mdata = mut.first.obj();

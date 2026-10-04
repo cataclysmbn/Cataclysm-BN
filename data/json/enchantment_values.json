@@ -153,6 +153,12 @@
     "desc": "Affects Stamina Regen"
   },
   {
+    "id": "PASSIVE_BIONIC_POWER",
+    "type": "enchantment_value",
+    "can_mult": false,
+    "desc": "Affects Passive Bionic Power"
+  },
+  {
     "id": "THIRST",
     "type": "enchantment_value",
     "desc": "Affects Thirst Rates",
@@ -219,6 +225,11 @@
     "id": "BODYTEMP_SPEED",
     "type": "enchantment_value",
     "desc": "Affects Cold Blooded Speed"
+  },
+  {
+    "id": "SLEEPY",
+    "type": "enchantment_value",
+    "desc": "Affects easy of sleeping"
   },
   {
     "id": "SLEEP_PAIN_THRESH",
@@ -334,6 +345,11 @@
     "id": "OVERMAP_SIGHT",
     "type": "enchantment_value",
     "desc": "Affects Long Range Vision"
+  },
+  {
+    "id": "SIGHT_RANGE",
+    "type": "enchantment_value",
+    "desc": "Affects unenhanced sight range"
   },
   {
     "id": "EFFECTIVE_FOCUS",

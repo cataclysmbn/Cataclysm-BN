@@ -2,6 +2,7 @@
 
 #include "debug.h"
 #include "generic_factory.h"
+#include "generic_readers.h"
 #include "json.h"
 #include "mapgen/map_extras.h"
 #include "mission.h"
@@ -80,6 +81,7 @@ void scenario::load( const JsonObject &jo, const std::string & )
     optional( jo, was_loaded, "spells", _allowed_spells, auto_flags_reader<spell_id> {} );
     optional( jo, was_loaded, "forbidden_spells", _forbidden_spells, auto_flags_reader<spell_id> {} );
     optional( jo, was_loaded, "forbids_spells", _forbids_spells );
+    optional( jo, was_loaded, "forced_perks", _forced_perks, auto_flags_reader<perk_id> {} );
     optional( jo, was_loaded, "allowed_locs", _allowed_locs, auto_flags_reader<start_location_id> {} );
     if( _allowed_locs.empty() ) {
         jo.throw_error( "at least one starting location (member \"allowed_locs\") must be defined" );
@@ -456,6 +458,11 @@ bool scenario::spellquery( const spell_id &spell ) const
 {
     return _allowed_spells.contains( spell ) ||
            ( !is_forbidden_spell( spell ) && spell->starting_spell );
+}
+
+std::set<perk_id> scenario::get_perks() const
+{
+    return _forced_perks;
 }
 
 std::set<trait_id> scenario::get_locked_traits() const

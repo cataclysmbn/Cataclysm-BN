@@ -98,11 +98,12 @@ static const itype_id itype_guidebook( "guidebook" );
 static const trait_id trait_CENOBITE( "CENOBITE" );
 static const trait_id trait_HYPEROPIC( "HYPEROPIC" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
-static const trait_id trait_PROF_DICEMASTER( "PROF_DICEMASTER" );
 
 static const morale_type MORALE_FOOD_COLD( "morale_food_cold" );
 static const morale_type MORALE_FOOD_VERY_COLD( "morale_food_very_cold" );
 
+static const enchantment_flag_id
+ench_flag_NO_READING_COMPLEXITY_PENALTY( "NO_READING_COMPLEXITY_PENALTY" );
 class JsonIn;
 class JsonOut;
 
@@ -506,7 +507,8 @@ int avatar::time_to_read( const item &book, const Character &reader,
                         character_funcs::fine_detail_vision_mod( reader ) );
 
     const int effective_int = std::min( { get_int(), reader.get_int(), learner ? learner->get_int() : INT_MAX } );
-    if( type->intel > effective_int && !reader.has_trait( trait_PROF_DICEMASTER ) ) {
+    if( type->intel > effective_int &&
+        !reader.has_enchantment_flag( ench_flag_NO_READING_COMPLEXITY_PENALTY ) ) {
         retval += type->time * ( type->intel - effective_int ) * 100;
     }
     return retval;
@@ -767,7 +769,7 @@ bool avatar::read( item *loc, const bool continuous )
 
     const int intelligence = get_int();
     const bool complex_penalty = type->intel > std::min( intelligence, reader->get_int() ) &&
-                                 !reader->has_trait( trait_PROF_DICEMASTER );
+                                 !reader->has_enchantment_flag( ench_flag_NO_READING_COMPLEXITY_PENALTY );
     const auto *complex_player = reader->get_int() < intelligence ? reader : this;
     if( complex_penalty && !continuous ) {
         add_msg( m_warning,

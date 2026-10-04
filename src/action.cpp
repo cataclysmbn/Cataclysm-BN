@@ -141,6 +141,7 @@ std::string io::enum_to_string<action_id>( action_id data )
             PAIR( ACTION_DIR_DROP )
             PAIR( ACTION_BIONICS )
             PAIR( ACTION_MUTATIONS )
+            PAIR( ACTION_PERKS )
             PAIR( ACTION_SORT_ARMOR )
             PAIR( ACTION_AUTOATTACK )
             PAIR( ACTION_TOGGLE_MANUAL_COMBAT_MODE )
@@ -399,6 +400,8 @@ std::string action_ident( action_id act )
             return "bionics";
         case ACTION_MUTATIONS:
             return "mutations";
+        case ACTION_PERKS:
+            return "perks";
         case ACTION_SORT_ARMOR:
             return "sort_armor";
         case ACTION_WAIT:
@@ -1182,7 +1185,7 @@ action_id handle_action_menu()
             register_lua_action_entries( category_id );
         } else if( category_id == "misc" ) {
             register_actions( {
-                ACTION_WAIT, ACTION_SLEEP, ACTION_BIONICS, ACTION_MUTATIONS,
+                ACTION_WAIT, ACTION_SLEEP, ACTION_BIONICS, ACTION_MUTATIONS, ACTION_PERKS,
                 ACTION_CONTROL_VEHICLE, ACTION_ITEMACTION, ACTION_TOGGLE_THIEF_MODE
             } );
 #if defined(TILES)

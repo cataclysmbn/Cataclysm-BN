@@ -1419,6 +1419,10 @@ void cata::detail::reg_character( sol::state &lua )
             return ch.bonus_from_enchantments( base, ench_val_id, round.value_or( false ) );
         } );
         SET_FX( has_enchantment_flag );
+
+        SET_FX( add_perk );
+        SET_FX( remove_perk );
+        SET_FX( has_perk );
     }
 #undef UT_CLASS // #define UT_CLASS Character
 
