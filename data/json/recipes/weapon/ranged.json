@@ -1008,6 +1008,7 @@
       { "id": "SANDING", "level": 1 }
     ],
     "components": [
+      [ [ "hand_pump", 1 ] ],
       [ [ "pipe", 3 ] ],
       [ [ "adhesive", 1, "LIST" ] ],
       [ [ "2x4", 1 ], [ "stick", 1 ] ],
