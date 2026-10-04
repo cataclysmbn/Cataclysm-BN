@@ -110,6 +110,7 @@
     "clip_size": 1,
     "valid_mod_locations": [ [ "accessories", 2 ], [ "sights", 1 ], [ "sling", 1 ] ],
     "delete": { "flags": [ "WATERPROOF_GUN", "UNDERWATER_GUN" ] },
+    "extend": { "flags": [ "PRIMITIVE_RANGED_WEAPON" ] },
     "loudness": 60
   },
   {
