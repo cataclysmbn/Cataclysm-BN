@@ -36,7 +36,20 @@
     "upgrades": { "half_life": 28, "into_group": "GROUP_SOLDIER_UPGRADE" },
     "burn_into": "mon_zombie_scorched",
     "fungalize_into": "mon_zombie_fungus",
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "PUSH_MON", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "POISON",
+      "BLEED",
+      "NO_BREATHE",
+      "REVIVES",
+      "PUSH_MON",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_zombie_soldier_blackops_1",
@@ -253,7 +266,20 @@
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 28, "into": "mon_zombie_kevlar_1" },
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "PUSH_MON", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "POISON",
+      "BLEED",
+      "NO_BREATHE",
+      "REVIVES",
+      "PUSH_MON",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_zombie_kevlar_1",
@@ -293,7 +319,20 @@
     "death_function": [ "NORMAL" ],
     "upgrades": { "half_life": 42, "into": "mon_zombie_kevlar_2" },
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "PUSH_MON", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "POISON",
+      "BLEED",
+      "NO_BREATHE",
+      "REVIVES",
+      "PUSH_MON",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_zombie_kevlar_2",
@@ -333,7 +372,20 @@
     "death_drops": "mon_zombie_kevlar_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "POISON", "BLEED", "NO_BREATHE", "REVIVES", "PUSH_MON", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "POISON",
+      "BLEED",
+      "NO_BREATHE",
+      "REVIVES",
+      "PUSH_MON",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_zombie_military_pilot",

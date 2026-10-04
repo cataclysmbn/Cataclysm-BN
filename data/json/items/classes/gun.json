@@ -197,7 +197,15 @@
     "flags": [ "RELOAD_ONE", "STR_RELOAD", "WATERPROOF_GUN", "UNDERWATER_GUN", "NEVER_JAMS", "NON_FOULING", "NEEDS_NO_LUBE" ],
     "dispersion": 120,
     "reload": 600,
-    "valid_mod_locations": [ [ "accessories", 2 ], [ "grip", 1 ], [ "sights", 1 ], [ "sling", 1 ], [ "stock", 1 ], [ "rail", 1 ], [ "underbarrel", 1 ] ],
+    "valid_mod_locations": [
+      [ "accessories", 2 ],
+      [ "grip", 1 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "rail", 1 ],
+      [ "underbarrel", 1 ]
+    ],
     "faults": [  ]
   },
   {

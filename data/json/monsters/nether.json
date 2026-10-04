@@ -411,7 +411,18 @@
     "death_function": [ "NORMAL" ],
     "anger_triggers": [ "NETHER_ATTENTION" ],
     "special_attacks": [ { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 8, "armor_multiplier": 0.8 } ] } ],
-    "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "NO_BREATHE", "GRABS", "HUMAN", "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "HEARS",
+      "WARM",
+      "NO_BREATHE",
+      "GRABS",
+      "HUMAN",
+      "PATH_AVOID_DANGER_2",
+      "PRIORITIZE_TARGETS",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_headless_dog_thing",
@@ -821,7 +832,19 @@
     "regenerates": 50,
     "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -0.3, "scaling_mod": -0.15 }, { "effect": "mon_mitosis", "base_mod": -1.0 } ],
     "regen_morale": true,
-    "flags": [ "SEES", "SMELLS", "SWIMS", "PLASTIC", "SLUDGEPROOF", "ACID_BLOOD", "ACIDPROOF", "NOHEAD", "ABSORBS_SPLITS", "NOGIB", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "SWIMS",
+      "PLASTIC",
+      "SLUDGEPROOF",
+      "ACID_BLOOD",
+      "ACIDPROOF",
+      "NOHEAD",
+      "ABSORBS_SPLITS",
+      "NOGIB",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_thing",
@@ -850,7 +873,20 @@
     "harvest": "exempt",
     "special_attacks": [ [ "TENTACLE", 5 ] ],
     "death_function": [ "MELT" ],
-    "flags": [ "SMELLS", "HEARS", "NOHEAD", "BASHES", "GROUP_BASH", "SWIMS", "ATTACKMON", "PLASTIC", "ACIDPROOF", "NOGIB", "CLIMBS", "NO_SLIP" ]
+    "flags": [
+      "SMELLS",
+      "HEARS",
+      "NOHEAD",
+      "BASHES",
+      "GROUP_BASH",
+      "SWIMS",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "NOGIB",
+      "CLIMBS",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_twisted_body",

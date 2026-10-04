@@ -288,7 +288,18 @@
     "vision_night": 30,
     "harvest": "exempt",
     "death_function": [ "DISAPPEAR" ],
-    "flags": [ "SEES", "BASHES", "ACIDPROOF", "NOHEAD", "DARKPROOF", "NO_BREATHE", "HIT_AND_RUN", "FIREPROOF", "BIOPROOF", "NO_SLIP" ]
+    "flags": [
+      "SEES",
+      "BASHES",
+      "ACIDPROOF",
+      "NOHEAD",
+      "DARKPROOF",
+      "NO_BREATHE",
+      "HIT_AND_RUN",
+      "FIREPROOF",
+      "BIOPROOF",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_mutant_medical_summon_hostile",
