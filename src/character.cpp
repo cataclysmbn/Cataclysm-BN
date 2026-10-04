@@ -7393,9 +7393,9 @@ bool Character::is_immune_field( const field_type_id &fid ) const
                 if (has_enchantment_flag(ench_flag_NOSLIP)
                         || worn_with_flag(flag_NOSLIP, body_part_foot_l)
                         || worn_with_flag(flag_NOSLIP, body_part_foot_r)) {
-                    return false;
-                } else {
                     return true;
+                } else {
+                    return false;
                 }
             }
         }
