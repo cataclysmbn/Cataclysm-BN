@@ -16,7 +16,15 @@
     "dispersion": 600,
     "durability": 7,
     "clip_size": 1,
-    "valid_mod_locations": [ [ "accessories", 4 ], [ "grip", 1 ], [ "stock", 1 ], [ "rail", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ] ],
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "grip", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "underbarrel", 1 ]
+    ],
     "extend": { "flags": [ "WATERPROOF_GUN", "PYROMANIAC_WEAPON" ] },
     "faults": [  ]
   }

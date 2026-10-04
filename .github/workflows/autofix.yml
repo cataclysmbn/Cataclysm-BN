@@ -106,7 +106,9 @@ jobs:
       - name: lint and test typescript files
         run: |
           # deno lint
-          deno test --allow-read --allow-env=npm_package_config_libvips,TILESET_PYTHON --allow-ffi
+          test_tmp="$(mktemp -d)"
+          trap 'rm -rf "$test_tmp"' EXIT
+          TMPDIR="$test_tmp" deno test --allow-read --allow-write="$test_tmp" --allow-run --allow-env=npm_package_config_libvips,TILESET_PYTHON --allow-ffi
 
       - name: check generated semantic PR config
         run: |

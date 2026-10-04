@@ -24,6 +24,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
@@ -82,6 +83,7 @@
       [ "rail", 1 ],
       [ "sights", 1 ],
       [ "stock", 1 ],
+      [ "sling", 1 ],
       [ "underbarrel", 1 ]
     ],
     "magazine_well": "250 ml",

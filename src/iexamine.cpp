@@ -5372,10 +5372,7 @@ bool iexamine::toPumpFuel( const tripoint_bub_ms &src, const tripoint_bub_ms &ds
 
             content->charges -= units;
 
-            const auto backup_pump = here.ter( dst );
-            here.ter_set( dst, ter_str_id::NULL_ID() );
             here.add_item_or_charges( dst, item::spawn( content->type, calendar::turn, units ) );
-            here.ter_set( dst, backup_pump );
 
             if( content->charges < 1 ) {
                 items.erase( item_it );
@@ -5398,10 +5395,7 @@ static int fromPumpFuel( const tripoint_bub_ms &dst, const tripoint_bub_ms &src 
             // how much do we have in the pump?
 
             // add the charges to the destination
-            const auto backup_tank = here.ter( dst );
-            here.ter_set( dst, ter_str_id::NULL_ID() );
             here.add_item_or_charges( dst, item::spawn( content->type, calendar::turn, content->charges ) );
-            here.ter_set( dst, backup_tank );
 
             // remove the liquid from the pump
             int amount = content->charges;

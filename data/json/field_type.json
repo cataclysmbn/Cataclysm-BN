@@ -1970,7 +1970,6 @@
     "underwater_age_speedup": "5 minutes",
     "phase": "liquid",
     "moppable": true,
-    "tint": "yellow",
     "display_field": true,
     "looks_like": "fd_blood"
   },

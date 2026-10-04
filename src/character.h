@@ -376,6 +376,10 @@ class Character : public Creature, public location_visitable<Character>
         virtual void mod_dex_bonus( int ndex );
         virtual void mod_per_bonus( int nper );
         virtual void mod_int_bonus( int nint );
+        void mod_str_bonus( int nstr, bool force_on_tick );
+        void mod_dex_bonus( int ndex, bool force_on_tick );
+        void mod_per_bonus( int nper, bool force_on_tick );
+        void mod_int_bonus( int nint, bool force_on_tick );
 
         // Prints message(s) about current health
         void print_health() const;
@@ -1002,7 +1006,9 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns true if the player doesn't have the mutation or a conflicting one and it complies with the force typing */
         bool mutation_ok( const trait_id &mutation, bool force_good, bool force_bad ) const;
         /** Picks a random valid mutation in a category and mutate_towards() it */
-        void mutate_category( const mutation_category_id &mut_cat );
+        void mutate_category( const mutation_category_id &cat );
+        /** Picks a random valid mutation in a category, mutate_towards() it and possibly cross thresh */
+        void mutate_category( const mutation_category_id &cat, bool cross_thresh );
         /** Mutates toward one of the given mutations, upgrading or removing conflicts if necessary */
         bool mutate_towards( std::vector<trait_id> muts, int num_tries = INT_MAX );
         /** Mutates toward the entered mutation, upgrading or removing conflicts if necessary */

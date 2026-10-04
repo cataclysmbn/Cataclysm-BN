@@ -48,6 +48,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
@@ -101,6 +102,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],
@@ -132,6 +134,7 @@
       [ "grip", 1 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ]

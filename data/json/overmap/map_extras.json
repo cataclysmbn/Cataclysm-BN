@@ -122,10 +122,10 @@
     "type": "map_extra",
     "name": { "ctxt": "map extra", "str": "Dead Survivors" },
     "looks_like": "mon_zombie_survivor_elite",
-    "description": "Several corpses of survivors are here.",
+    "description": "Several corpses of survivors are here, along with whatever killed them.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_survivor" },
     "sym": "s",
-    "color": "light_red",
+    "color": "red",
     "autonote": true
   },
   {
@@ -445,15 +445,19 @@
     "description": "A vehicle surrounded by zombies.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_surrounded_vehicle" },
     "sym": "S",
-    "color": "light_red",
+    "color": "yellow",
     "autonote": true
   },
   {
     "id": "mx_swat_truck",
     "type": "map_extra",
     "name": "SWAT Truck",
-    "description": "A SWAT truck.",
-    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_swat_truck" }
+    "looks_like": "badge_swat",
+    "description": "A SWAT truck stopped here.  Something's moving nearby…",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_swat_truck" },
+    "sym": "S",
+    "color": "light_blue",
+    "autonote": true
   },
   {
     "id": "mx_mass_grave",
@@ -626,7 +630,7 @@
     "type": "map_extra",
     "name": { "ctxt": "map extra", "str": "Corpses" },
     "looks_like": "corpse_bloody",
-    "description": "Several corpses are here, along with whatever killed them...",
+    "description": "Several corpses are here, along with whatever killed them…",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_crawler" },
     "sym": "C",
     "color": "red",

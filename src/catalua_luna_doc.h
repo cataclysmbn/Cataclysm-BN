@@ -88,6 +88,7 @@ struct dealt_damage_instance;
 struct fake_spell;
 struct field_type;
 struct mutation_branch;
+struct mutation_category_trait;
 struct mission_type;
 struct npc_opinion;
 struct npc_personality;

@@ -229,7 +229,22 @@
           { "id": "mon_zombie_soldier_camo_1", "fg": 139, "bg": 30 },
           { "id": "corpse_mon_zombie_soldier_camo_1", "fg": 140 },
           { "id": "mon_zombie_soldier_camo_2", "fg": 141, "bg": 30 },
-          { "id": "corpse_mon_zombie_soldier_camo_2", "fg": 142 }
+          { "id": "corpse_mon_zombie_soldier_camo_2", "fg": 142 },
+          { "id": "nether_lesser_incursion", "fg": 143 },
+          {
+            "id": "fd_fuel",
+            "fg": 144,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 145 },
+              { "id": "corner", "fg": [ 146, 147, 148, 149 ] },
+              { "id": "t_connection", "fg": [ 156, 157, 158, 159 ] },
+              { "id": "edge", "fg": [ 150, 151 ] },
+              { "id": "end_piece", "fg": [ 152, 153, 154, 155 ] },
+              { "id": "unconnected", "fg": 160 }
+            ]
+          }
         ],
         "sprite_width": 32,
         "sprite_height": 32

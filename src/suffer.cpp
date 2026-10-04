@@ -966,25 +966,25 @@ void Character::suffer_in_sunlight()
 
     if( ( has_trait( trait_TROGLO ) || has_trait( trait_TROGLO2 ) ) &&
         get_weather().weather_id->sun_intensity >= sun_intensity_type::high ) {
-        mod_str_bonus( -1 );
-        mod_dex_bonus( -1 );
+        mod_str_bonus( -1, true );
+        mod_dex_bonus( -1, true );
         add_miss_reason( _( "The sunlight distracts you." ), 1 );
-        mod_int_bonus( -1 );
-        mod_per_bonus( -1 );
+        mod_int_bonus( -1, true );
+        mod_per_bonus( -1, true );
     }
     if( has_trait( trait_TROGLO2 ) ) {
-        mod_str_bonus( -1 );
-        mod_dex_bonus( -1 );
+        mod_str_bonus( -1, true );
+        mod_dex_bonus( -1, true );
         add_miss_reason( _( "The sunlight distracts you." ), 1 );
-        mod_int_bonus( -1 );
-        mod_per_bonus( -1 );
+        mod_int_bonus( -1, true );
+        mod_per_bonus( -1, true );
     }
     if( has_trait( trait_TROGLO3 ) ) {
-        mod_str_bonus( -4 );
-        mod_dex_bonus( -4 );
+        mod_str_bonus( -4, true );
+        mod_dex_bonus( -4, true );
         add_miss_reason( _( "You can't stand the sunlight!" ), 4 );
-        mod_int_bonus( -4 );
-        mod_per_bonus( -4 );
+        mod_int_bonus( -4, true );
+        mod_per_bonus( -4, true );
     }
 }
 
@@ -1454,7 +1454,7 @@ void Character::suffer_from_bad_bionics()
     }
     if( has_bionic( bio_power_weakness ) && has_max_power() &&
         get_power_level() >= get_max_power_level() * .75 ) {
-        mod_str_bonus( -3 );
+        mod_str_bonus( -3, true );
     }
     if( has_bionic( bio_trip ) && one_turn_in( 50_minutes ) &&
         !has_effect( effect_visuals ) &&

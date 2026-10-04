@@ -257,7 +257,7 @@
       "feed": "If you're seeing this message it's a bug.",
       "pet": "If you're seeing this message it's a bug."
     },
-    "flags": [ "SEES", "SMELLS", "HEARS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "NO_SLIP" ]
   },
   {
     "id": "mon_flaming_eye",
@@ -411,7 +411,18 @@
     "death_function": [ "NORMAL" ],
     "anger_triggers": [ "NETHER_ATTENTION" ],
     "special_attacks": [ { "id": "scratch", "damage_max_instance": [ { "damage_type": "cut", "amount": 8, "armor_multiplier": 0.8 } ] } ],
-    "flags": [ "SEES", "SMELLS", "HEARS", "WARM", "NO_BREATHE", "GRABS", "HUMAN", "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "HEARS",
+      "WARM",
+      "NO_BREATHE",
+      "GRABS",
+      "HUMAN",
+      "PATH_AVOID_DANGER_2",
+      "PRIORITIZE_TARGETS",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_headless_dog_thing",
@@ -439,7 +450,7 @@
     "harvest": "exempt",
     "special_attacks": [ [ "TENTACLE", 5 ] ],
     "on_death": { "spawn_mon": "mon_thing" },
-    "flags": [ "SEES", "SMELLS", "HEARS", "BASHES" ]
+    "flags": [ "SEES", "SMELLS", "HEARS", "BASHES", "NO_SLIP" ]
   },
   {
     "id": "mon_homunculus",
@@ -512,7 +523,8 @@
       "ARTHROPOD_BLOOD",
       "DARKPROOF",
       "NO_BREATHE",
-      "HARDTOSHOOT"
+      "HARDTOSHOOT",
+      "NO_SLIP"
     ]
   },
   {
@@ -557,7 +569,8 @@
       "ARTHROPOD_BLOOD",
       "NO_BREATHE",
       "DARKPROOF",
-      "HARDTOSHOOT"
+      "HARDTOSHOOT",
+      "NO_SLIP"
     ]
   },
   {
@@ -587,7 +600,7 @@
     "special_attacks": [ [ "ACID", 15 ] ],
     "anger_triggers": [ "PLAYER_WEAK", "FRIEND_DIED" ],
     "death_function": [ "NORMAL" ],
-    "flags": [ "SMELLS", "HEARS", "POISON", "ACIDPROOF", "ACID_BLOOD" ]
+    "flags": [ "SMELLS", "HEARS", "POISON", "ACIDPROOF", "ACID_BLOOD", "NO_SLIP" ]
   },
   {
     "id": "mon_hunting_horror",
@@ -711,7 +724,8 @@
       "WEBWALK",
       "NO_BREATHE",
       "DARKPROOF",
-      "NIGHT_INVISIBILITY"
+      "NIGHT_INVISIBILITY",
+      "NO_SLIP"
     ]
   },
   {
@@ -756,7 +770,8 @@
       "ACIDPROOF",
       "HIT_AND_RUN",
       "NO_BREATHE",
-      "NOGIB"
+      "NOGIB",
+      "NO_SLIP"
     ]
   },
   {
@@ -784,7 +799,7 @@
     "harvest": "exempt",
     "special_attacks": [ [ "DISAPPEAR", 200 ] ],
     "death_function": [ "MELT" ],
-    "flags": [ "SEES", "SMELLS", "WARM", "SWIMS", "PLASTIC", "DARKPROOF", "SUNDEATH", "NOGIB" ]
+    "flags": [ "SEES", "SMELLS", "WARM", "SWIMS", "PLASTIC", "DARKPROOF", "SUNDEATH", "NOGIB", "NO_SLIP" ]
   },
   {
     "id": "mon_shoggoth",
@@ -817,7 +832,19 @@
     "regenerates": 50,
     "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -0.3, "scaling_mod": -0.15 }, { "effect": "mon_mitosis", "base_mod": -1.0 } ],
     "regen_morale": true,
-    "flags": [ "SEES", "SMELLS", "SWIMS", "PLASTIC", "SLUDGEPROOF", "ACID_BLOOD", "ACIDPROOF", "NOHEAD", "ABSORBS_SPLITS", "NOGIB" ]
+    "flags": [
+      "SEES",
+      "SMELLS",
+      "SWIMS",
+      "PLASTIC",
+      "SLUDGEPROOF",
+      "ACID_BLOOD",
+      "ACIDPROOF",
+      "NOHEAD",
+      "ABSORBS_SPLITS",
+      "NOGIB",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_thing",
@@ -846,7 +873,20 @@
     "harvest": "exempt",
     "special_attacks": [ [ "TENTACLE", 5 ] ],
     "death_function": [ "MELT" ],
-    "flags": [ "SMELLS", "HEARS", "NOHEAD", "BASHES", "GROUP_BASH", "SWIMS", "ATTACKMON", "PLASTIC", "ACIDPROOF", "NOGIB", "CLIMBS" ]
+    "flags": [
+      "SMELLS",
+      "HEARS",
+      "NOHEAD",
+      "BASHES",
+      "GROUP_BASH",
+      "SWIMS",
+      "ATTACKMON",
+      "PLASTIC",
+      "ACIDPROOF",
+      "NOGIB",
+      "CLIMBS",
+      "NO_SLIP"
+    ]
   },
   {
     "id": "mon_twisted_body",
@@ -986,7 +1026,8 @@
       "NO_BREATHE",
       "HARDTOSHOOT",
       "NOT_HALLUCINATION",
-      "NOHEAD"
+      "NOHEAD",
+      "NO_SLIP"
     ]
   },
   {
@@ -1023,7 +1064,7 @@
     "special_attacks": [ [ "PARROT_AT_DANGER", 0 ] ],
     "death_function": [ "MELT" ],
     "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT" ],
-    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "NO_BREATHE", "HARDTOSHOOT", "NOT_HALLUCINATION", "NOHEAD" ]
+    "flags": [ "SEES", "HEARS", "BASHES", "GROUP_BASH", "NO_BREATHE", "HARDTOSHOOT", "NOT_HALLUCINATION", "NOHEAD", "NO_SLIP" ]
   },
   {
     "id": "mon_suspended_shade",
@@ -1342,7 +1383,8 @@
       "CAN_OPEN_DOORS",
       "CLIMBS",
       "PUSH_MON",
-      "PATH_AVOID_DANGER_1"
+      "PATH_AVOID_DANGER_1",
+      "NO_SLIP"
     ]
   }
 ]

@@ -590,11 +590,10 @@ auto map::creature_in_field(Creature& critter, const bool movement_only) -> void
                 continue;
             }
             if (field_fx.get_id() == effect_downed) {
-                if (Character* const character = critter.as_character();
-                    character != nullptr
-                    && (character->has_enchantment_flag(ench_flag_NOSLIP)
-                        || character->worn_with_flag(flag_NOSLIP, body_part_foot_l)
-                        || character->worn_with_flag(flag_NOSLIP, body_part_foot_r))) {
+                if (monster* const mon = critter.as_monster();
+                    mon != nullptr
+                    && (mon->digs() || mon->flies() || mon->digging() || veh_at(mon->bub_pos())
+                        || mon->has_flag(MF_NO_SLIP))) {
                     continue;
                 }
             }

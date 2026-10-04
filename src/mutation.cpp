@@ -1075,6 +1075,18 @@ void Character::old_mutate()
     }
 }
 
+void Character::mutate_category( const mutation_category_id &cat, const bool cross_thresh )
+{
+    if( !cross_thresh ) {mutate_category( cat ); return;}
+
+    mutate_category( cat );
+    const auto cat_obj = &cat.obj();
+    if( !cat_obj->threshold_muts.empty() ) {
+        const auto max_tier = cat_obj->threshold_muts.size() - 1;
+        test_crossing_threshold( *this, *cat_obj, max_tier );
+    }
+}
+
 void Character::mutate_category( const mutation_category_id &cat )
 {
     // Hacky ID comparison is better than separate hardcoded branch used before
@@ -1656,14 +1668,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
     if( guy.thresh_tier >= tier ) {
         // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
         // Mostly an issue with debug quit and similar scenarios
-        bool has_thresh = false;
-        for( const trait_id &mut : guy.get_mutations() ) {
-            if( mut->threshold ) {
-                has_thresh = true;
-                break;
-            }
-        }
-        if( has_thresh ) {
+        if( guy.crossed_threshold() ) {
             return;
         } else {
             // The character does not have a threshold mutation but has a tier greater than 0
@@ -1690,14 +1695,7 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
     if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
         // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
         // Mostly an issue with debug quit and similar scenarios
-        bool has_thresh = false;
-        for( const trait_id &mut : guy.get_mutations() ) {
-            if( mut->threshold ) {
-                has_thresh = true;
-                break;
-            }
-        }
-        if( has_thresh ) {
+        if( guy.crossed_threshold() ) {
             return;
         } else {
             // The character does not have a threshold mutation but has a tier greater than 0
@@ -1884,4 +1882,13 @@ std::string Character::visible_mutations( const int visibility_cap ) const
         return std::string();
     } );
     return trait_str;
+}
+
+std::vector<trait_id> mutation_category_trait::get_mutations( ) const
+{
+    auto it = mutations_category.find( id );
+    if( it != mutations_category.end() ) {
+        return it->second;
+    }
+    return std::vector<trait_id>();
 }

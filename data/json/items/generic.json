@@ -331,7 +331,7 @@
     "weight": "480 kg"
   },
   {
-    "type": "GENERIC",
+    "type": "AMMO",
     "id": "superglue",
     "category": "chems",
     "symbol": ",",
@@ -344,8 +344,10 @@
     "weight": "4500 mg",
     "volume": "25 ml",
     "phase": "liquid",
+    "ammo_type": "glue",
+    "effects": [ "STREAM_GLUE" ],
     "spill_field": "fd_glue",
-    "container": "bottle_plastic_small",
+    "container": "squeeze_tube",
     "to_hit": -2,
     "flags": [ "UNRECOVERABLE" ],
     "stackable": true
@@ -365,7 +367,7 @@
     "volume": "25 ml",
     "phase": "liquid",
     "spill_field": "fd_glue",
-    "container": "bottle_plastic_small",
+    "container": "squeeze_tube",
     "to_hit": -2,
     "flags": [ "UNRECOVERABLE", "NO_SALVAGE" ],
     "stackable": true

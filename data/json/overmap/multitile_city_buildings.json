@@ -5027,5 +5027,12 @@
     "flags": [ "FUNGAL" ],
     "rotate": false,
     "spawns": { "group": "GROUP_FUNGI_BUDS", "population": [ 200, 320 ], "radius": [ 0, 20 ] }
+  },
+  {
+    "type": "city_building",
+    "id": "nether_lesser_incursion",
+    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "nether_lesser_incursion_north" } ],
+    "locations": [ "land" ],
+    "spawns": { "group": "GROUP_NETHER_LESSER_INCURSION", "population": [ 20, 32 ], "radius": [ 0, 1 ] }
   }
 ]

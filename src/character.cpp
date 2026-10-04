@@ -9,6 +9,7 @@
 #include "avatar_action.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -5201,6 +5202,39 @@ void Character::mod_int_bonus( int nint )
     int_cur = std::max( 0, int_max + int_bonus );
 }
 
+void Character::mod_str_bonus( int nstr, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_str_bonus( nstr );
+}
+void Character::mod_dex_bonus( int ndex, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_dex_bonus( ndex );
+}
+void Character::mod_per_bonus( int nper, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_per_bonus( nper );
+}
+void Character::mod_int_bonus( int nint, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_int_bonus( nint );
+}
+
 void Character::print_health() const
 {
     if( !is_player() ) {
@@ -7383,6 +7417,20 @@ bool Character::is_immune_field( const field_type_id &fid ) const
                get_armor_type( DT_ACID, bodypart_id( "foot_r" ) ) >= 5 &&
                get_armor_type( DT_ACID, bodypart_id( "leg_l" ) ) >= 5 &&
                get_armor_type( DT_ACID, bodypart_id( "leg_r" ) ) >= 5;
+    }
+    // Check for if field has downed effect which means slipping
+    static const auto flag_NOSLIP = flag_id( "NOSLIP" );
+    static const auto ench_flag_NOSLIP = enchantment_flag_id( "NOSLIP" );
+    for( const field_intensity_level &lvl : ft.intensity_levels ) {
+        for( const field_effect &fe : lvl.field_effects ) {
+            if( fe.id == effect_downed ) {
+                if( has_enchantment_flag( ench_flag_NOSLIP )
+                    || worn_with_flag( flag_NOSLIP, body_part_foot_l )
+                    || worn_with_flag( flag_NOSLIP, body_part_foot_r ) ) {
+                    return true;
+                }
+            }
+        }
     }
     // If we haven't found immunity yet fall up to the next level
     return Creature::is_immune_field( fid );

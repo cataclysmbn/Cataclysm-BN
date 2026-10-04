@@ -171,6 +171,7 @@ enum m_flag : int {
     MF_AVOID_DANGER_2,      // This monster will path around most dangers instead of through them.
     MF_AVOID_FIRE,          // This monster will path around heat-related dangers instead of through them.
     MF_AVOID_FALL,          // This monster will path around cliffs instead of off of them.
+    MF_NO_SLIP,             // This monster cannot slip in fields.
     MF_PRIORITIZE_TARGETS,  // This monster will prioritize targets depending on their danger levels
     MF_NOT_HALLU,           // Monsters that will NOT appear when player's producing hallucinations
     MF_CANPLAY,             // This monster can be played with if it's a pet.

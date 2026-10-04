@@ -118,7 +118,7 @@
     "valid": false,
     "cancels": [ "BADCARDIO" ],
     "changes_to": [ "GOODCARDIO2" ],
-    "category": [ "FISH", "LUPINE", "MOUSE", "INSECT" ],
+    "category": [ "FISH", "LUPINE", "MOUSE", "INSECT", "ALPHA" ],
     "max_stamina_modifier": 1.25
   },
   {
@@ -141,7 +141,7 @@
     "points": 4,
     "description": "You're just generally quick!  You get a 10% bonus to action points.",
     "starting_trait": true,
-    "category": [ "FISH", "BIRD", "INSECT", "TROGLOBITE", "CHIMERA", "RAPTOR", "MOUSE", "RABBIT" ],
+    "category": [ "FISH", "BIRD", "INSECT", "TROGLOBITE", "CHIMERA", "RAPTOR", "MOUSE", "RABBIT", "ALPHA" ],
     "speed_modifier": 1.1
   },
   {
@@ -707,7 +707,7 @@
     "ugliness": -2,
     "description": "You are a sight to behold.  People who care about such things will react more kindly to you.",
     "starting_trait": true,
-    "category": [ "ALPHA", "FELINE", "LUPINE", "RABBIT" ],
+    "category": [ "FELINE", "LUPINE", "RABBIT" ],
     "cancels": [ "UGLY", "DEFORMED", "DEFORMED2", "DEFORMED3" ],
     "changes_to": [ "BEAUTIFUL" ]
   },
@@ -4666,7 +4666,7 @@
     "description": "You are a vision of beauty.  Some people will react very well to your looks, and most people will trust you immediately.",
     "cancels": [ "UGLY", "DEFORMED", "DEFORMED2", "DEFORMED3" ],
     "prereqs": [ "BEAUTIFUL" ],
-    "category": [ "RABBIT" ],
+    "category": [ "RABBIT", "ALPHA" ],
     "changes_to": [ "BEAUTIFUL3" ]
   },
   {

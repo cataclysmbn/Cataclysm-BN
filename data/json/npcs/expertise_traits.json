@@ -697,7 +697,7 @@
   {
     "//": "This trait group guarantees one of the associated traits, distributed in favor of real traits but with a chance of fakes.",
     "type": "trait_group",
-    "id": "Exp_Eng_Electrical_Group",
+    "id": "Exp_Eng_Mechanical_Group",
     "subtype": "distribution",
     "traits": [ { "group": "Exp_Eng_Mechanical_Nofake" }, { "group": "Exp_Eng_Mechanical_Any" } ]
   },
@@ -1617,28 +1617,28 @@
     "traits": [
       { "group": "Exp_Biochemistry_Nofake" },
       { "group": "Exp_Biochemistry_Nofake" },
-      { "trait": "Exp_Biochemistry1fake2" },
+      { "trait": "Exp_Biochemistry1Fake2" },
       { "group": "Exp_Botany_Nofake" },
       { "group": "Exp_Botany_Nofake" },
-      { "trait": "Exp_Botany1fake2" },
+      { "trait": "Exp_Botany1Fake2" },
       { "group": "Exp_Chemistry_Nofake" },
       { "group": "Exp_Chemistry_Nofake" },
-      { "trait": "Exp_Chemistry1fake2" },
+      { "trait": "Exp_Chemistry1Fake2" },
       { "group": "Exp_Entomology_Nofake" },
       { "group": "Exp_Entomology_Nofake" },
-      { "trait": "Exp_Entomology1fake2" },
+      { "trait": "Exp_Entomology1Fake2" },
       { "group": "Exp_Geology_Nofake" },
       { "group": "Exp_Geology_Nofake" },
-      { "trait": "Exp_Geology1fake2" },
+      { "trait": "Exp_Geology1Fake2" },
       { "group": "Exp_Mycology_Nofake" },
       { "group": "Exp_Mycology_Nofake" },
-      { "trait": "Exp_Mycology1fake2" },
+      { "trait": "Exp_Mycology1Fake2" },
       { "group": "Exp_Physics_Nofake" },
       { "group": "Exp_Physics_Nofake" },
-      { "trait": "Exp_Physics1fake2" },
+      { "trait": "Exp_Physics1Fake2" },
       { "group": "Exp_Biology_Nofake" },
       { "group": "Exp_Biology_Nofake" },
-      { "trait": "Exp_Biology 1fake2" }
+      { "trait": "Exp_Biology1Fake2" }
     ]
   },
   {

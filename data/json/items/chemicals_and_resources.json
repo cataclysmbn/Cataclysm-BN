@@ -1257,7 +1257,8 @@
     "spill_field": "fd_industrial_lubricant",
     "description": "A viscous liquid used as an industrial lubricant.",
     "volume": "250 ml",
-    "ammo_type": "components",
+    "ammo_type": "lubricant",
+    "effects": [ "STREAM_INDUSTRIAL_LUBRICANT" ],
     "phase": "liquid"
   },
   {
