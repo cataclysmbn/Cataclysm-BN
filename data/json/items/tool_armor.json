@@ -876,7 +876,8 @@
       "SWIM_GOGGLES",
       "SUN_GLASSES",
       "RAD_RESIST",
-      "COMBAT_NPC_USE"
+      "COMBAT_NPC_USE",
+      "NOSLIP"
     ],
     "price": "500 kUSD",
     "price_postapoc": "100 USD",
@@ -945,7 +946,8 @@
       "TRADER_AVOID",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON",
-      "DRONE_CAM"
+      "DRONE_CAM",
+      "NOSLIP"
     ],
     "turns_per_charge": 18,
     "revert_to": "rm13_armor",
@@ -1056,7 +1058,8 @@
       "ALARMCLOCK",
       "SWIM_GOGGLES",
       "SUN_GLASSES",
-      "COMBAT_NPC_USE"
+      "COMBAT_NPC_USE",
+      "NOSLIP"
     ],
     "relic_data": {
       "passive_effects": [
@@ -1099,7 +1102,8 @@
       "PSYSHIELD_PARTIAL",
       "GNV_EFFECT",
       "COMBAT_NPC_USE",
-      "COMBAT_NPC_ON"
+      "COMBAT_NPC_ON",
+      "NOSLIP"
     ],
     "adv_hearing_protection": 48,
     "hearing_protection": 0
