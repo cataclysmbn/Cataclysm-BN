@@ -1,6 +1,9 @@
 #include "location_vector.h"
 #include "item.h"
 #include "locations.h"
+#include "safe_reference.h"
+
+#include <algorithm>
 
 template<typename T>
 location_vector<T>::location_vector( location<T> *loc ) : loc( loc ) {};
@@ -410,34 +413,51 @@ void location_vector<T>::remove_with( std::function < detached_ptr<T>( detached_
         debugmsg( "Attempted to remove_with from a destroyed location." );
         return;
     }
-    size_t i = 0;
-    for( auto it = contents.begin(); it != contents.end(); ) {
-        item &as_item = **it;
-        location<T> *saved_loc = ( *it )->loc;
-        ( *it )->prepare_for_location_removal();
-        ( *it )->remove_location();
-        ( *it )->saved_loc = saved_loc;
-        detached_ptr<T> original( *it );
-        detached_ptr<T> n = cb( std::move( original ) );
-        if( n ) {
-            if( &*n == *it ) {
-                ( *it )->loc = saved_loc;
-                n.release();
+    auto index = size_t{ 0 };
+    while( index < contents.size() ) {
+        auto *const subject = contents[index];
+        auto *const saved_loc = subject->loc;
+        const auto lifetime = cache_reference<T>( subject );
+        if( subject->type != nullptr ) {
+            subject->prepare_for_location_removal();
+        }
+        subject->remove_location();
+        subject->saved_loc = saved_loc;
+        auto original = detached_ptr<T>( subject );
+        auto result = cb( std::move( original ) );
+        if( destroyed ) {
+            return;
+        }
+        if( result && result.get() != subject ) {
+            debugmsg( "Returning a different item in remove_with is not currently supported" );
+            result = std::move( original );
+        }
+
+        // Callbacks can reallocate the vector or move the item elsewhere. Neither
+        // the old iterator nor the removed item's fields remain safe to inspect.
+        const auto current_index = index < contents.size() && contents[index] == subject ? index :
+                                   static_cast<size_t>( std::ranges::find( contents, subject ) - contents.begin() );
+        if( result ) {
+            if( current_index == contents.size() ) {
+                index = std::min( index, contents.size() );
+                contents.insert( contents.begin() + index, result.get() );
             } else {
-                debugmsg( "Returning a different item in remove_with is not currently supported" );
+                index = current_index;
             }
-            ( *it )->saved_loc = nullptr;
-            it++;
-            i++;
-        } else {
-            if( as_item.saved_loc == nullptr ) {
-                if( i >= contents.size() ) {
-                    break;
-                }
-                it = contents.begin() + i;
+            result->saved_loc = nullptr;
+            result->loc = saved_loc;
+            result.release();
+            ++index;
+        } else if( current_index < contents.size() ) {
+            index = current_index;
+            if( lifetime && subject->loc == saved_loc ) {
+                // The callback reattached the item to this same location.
+                ++index;
             } else {
-                as_item.saved_loc = nullptr;
-                it = contents.erase( it );
+                if( lifetime ) {
+                    subject->saved_loc = nullptr;
+                }
+                contents.erase( contents.begin() + index );
             }
         }
     }
