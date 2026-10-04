@@ -599,8 +599,8 @@ auto map::creature_in_field(Creature& critter, const bool movement_only) -> void
                 }
                 if (monster* const mon = critter.as_monster();
                     mon != nullptr
-                    && (mon.digs() || mon.flies() || mon.digging() || veh_at(mon.bub_pos())
-                        || mon.has_flag(MF_NO_SLIP))) {
+                    && (mon->digs() || mon->flies() || mon->digging() || veh_at(mon->bub_pos())
+                        || mon->has_flag(MF_NO_SLIP))) {
                     continue;
                 }
             }
