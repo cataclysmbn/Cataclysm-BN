@@ -2119,6 +2119,7 @@ void vehicle::interact_with(const tripoint_bub_ms& pos, int interact_part) {
                 you.assign_activity(ACT_RELOAD, opt.moves(), opt.qty());
                 you.activity->targets.emplace_back(turret.base());
                 you.activity->targets.emplace_back(opt.ammo);
+                you.activity->values.push_back(opt.store_container_as_item);
             }
             return;
         }

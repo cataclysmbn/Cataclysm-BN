@@ -12915,28 +12915,40 @@ bool Character::can_reload( const item &it, const itype_id &ammo ) const
     return true;
 }
 
-int Character::item_reload_cost( const item &it, item &ammo, int qty ) const
+int Character::item_reload_cost( const item &it, item &ammo, int qty,
+                                 bool store_container_as_item ) const
 {
-    if( ammo.is_ammo() ) {
+    store_container_as_item = store_container_as_item ||
+                              ( it.is_container() && !it.is_watertight_container() &&
+                                ammo.is_container() );
+    if( !store_container_as_item && ammo.is_ammo() ) {
         qty = std::max( std::min( ammo.charges, qty ), 1 );
-    } else if( ammo.is_ammo_container() || ammo.is_container() ) {
+    } else if( !store_container_as_item && ( ammo.is_ammo_container() ||
+               ( ammo.is_watertight_container() &&
+                 it.is_watertight_container() && ammo.contents_made_of( LIQUID ) ) ) ) {
         qty = clamp( qty, ammo.contents.front().charges, 1 );
-    } else if( ammo.is_magazine() ) {
+    } else if( !store_container_as_item && ammo.is_magazine() ) {
         qty = 1;
-    } else if( ammo.is_comestible() ) {
+    } else if( !store_container_as_item && ammo.is_comestible() ) {
         qty = std::max( std::min( qty, ammo.charges ), 1 );
+    } else if( it.is_container() ) {
+        qty = std::max( qty, 1 );
     } else {
         debugmsg( "cannot determine reload cost as %s is neither ammo or magazine", ammo.tname() );
         return 0;
     }
 
     //Save the quantity so we can change it for item_handling_cost and reset it after
-    int saved_quantity = ammo.charges;
-    ammo.charges = qty;
+    const auto saved_quantity = ammo.charges;
+    if( ammo.count_by_charges() ) {
+        ammo.charges = qty;
+    }
     // No base cost for handling ammo - that's already included in obtain cost
     // We have the ammo in our hands right now
-    int mv = item_handling_cost( ammo, true, 0 );
-    ammo.charges = saved_quantity;
+    auto mv = item_handling_cost( ammo, true, 0 );
+    if( ammo.count_by_charges() ) {
+        ammo.charges = saved_quantity;
+    }
 
     if( ammo.has_flag( flag_MAG_BULKY ) ) {
         mv *= 1.5; // bulky magazines take longer to insert

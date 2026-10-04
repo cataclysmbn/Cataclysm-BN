@@ -857,24 +857,30 @@ class activatable_inventory_preset : public pickup_inventory_preset
         activatable_inventory_preset( const player &p ) : pickup_inventory_preset( p ), p( p ) {
             if( get_option<bool>( "INV_USE_ACTION_NAMES" ) ) {
                 append_cell( [ this ]( const item * loc ) {
-                    const item &it = !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                                     ( *loc ).get_contained().type->has_use() ? ( *loc ).get_contained() : *loc;
+                    const auto contents = actionable_contents( *loc );
+                    if( loc->is_container() && !contents.empty() ) {
+                        return string_format( "<color_light_green>%s</color>", _( "…" ) );
+                    }
+                    const item &it = contents.size() == 1 ? *contents.front() : *loc;
                     return string_format( "<color_light_green>%s</color>", get_action_name( it ) );
                 }, _( "ACTION" ) );
             }
         }
 
         bool is_shown( const item *loc ) const override {
-            if( !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                ( *loc ).get_contained().type->has_use() ) {
-                return true;
-            }
-            return loc->type->has_use();
+            const auto contents = actionable_contents( *loc );
+            return loc->type->has_use() || contents.size() > 1 ||
+                   ( contents.size() == 1 && contents.front()->is_medication() &&
+                     contents.front()->type->has_use() );
         }
 
         std::string get_denial( const item *loc ) const override {
-            const item &it = !( *loc ).is_container_empty() && ( *loc ).get_contained().is_medication() &&
-                             ( *loc ).get_contained().type->has_use() ? ( *loc ).get_contained() : *loc;
+            const auto contents = actionable_contents( *loc );
+            if( contents.size() > 1 ) {
+                return pickup_inventory_preset::get_denial( loc );
+            }
+            const item &it = contents.size() == 1 && contents.front()->is_medication() &&
+                             contents.front()->type->has_use() ? *contents.front() : *loc;
             const auto &uses = it.type->use_methods;
 
             if( uses.size() == 1 ) {
@@ -903,6 +909,17 @@ class activatable_inventory_preset : public pickup_inventory_preset
         }
 
     protected:
+        auto actionable_contents( const item &loc ) const -> std::vector<const item *> {
+            auto result = std::vector<const item *>();
+            for( const item *contained : loc.contents.all_items_top() ) {
+                if( p.can_consume_as_is( *contained ) || contained->type->has_use() ||
+                    contained->has_flag( flag_SPLINT ) ) {
+                    result.push_back( contained );
+                }
+            }
+            return result;
+        }
+
         std::string get_action_name( const item &it ) const {
             const auto &uses = it.type->use_methods;
 
@@ -910,6 +927,8 @@ class activatable_inventory_preset : public pickup_inventory_preset
                 return uses.begin()->second.get_name();
             } else if( uses.size() > 1 ) {
                 return _( "…" );
+            } else if( p.can_consume_as_is( it ) ) {
+                return _( "Consume" );
             }
 
             return std::string();

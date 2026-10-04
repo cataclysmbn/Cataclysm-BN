@@ -1572,7 +1572,8 @@ class Character : public Creature, public location_visitable<Character>
          * @param ammo either ammo or magazine to use when reloading the item
          * @param qty maximum units of ammo to reload. Capped by remaining capacity and ignored if reloading using a magazine.
          */
-        int item_reload_cost( const item &it, item &ammo, int qty ) const;
+        int item_reload_cost( const item &it, item &ammo, int qty,
+                              bool store_container_as_item = false ) const;
 
         // --------------- Clothing Stuff ---------------
         /** Returns true if the player is wearing the item. */

@@ -3366,6 +3366,9 @@ void item::container_info( std::vector<iteminfo> &info, const iteminfo_query *pa
 
     container_str += string_format( _( "can store <info>%s %s</info>." ),
                                     format_volume( c.contains ), volume_units_long() );
+    container_str += string_format( _( " It is currently storing <info>%s %s</info>." ),
+                                    format_volume( contents.item_size_modifier() ),
+                                    volume_units_long() );
 
     info.emplace_back( "CONTAINER", container_str );
 }
@@ -5867,6 +5870,18 @@ units::volume item::volume( bool integral ) const
     return ret;
 }
 
+auto item::volume_for_storage() const -> units::volume
+{
+    const auto capacity = get_total_capacity();
+    if( capacity == 0_ml ) {
+        return volume();
+    }
+
+    // A nested container carries its capacity with it.  Counting only its exterior volume would
+    // let every nested container add the difference between its interior and exterior volume.
+    return std::max( { base_volume(), capacity, contents.item_size_modifier() } );
+}
+
 int item::lift_strength() const
 {
     const int mass = units::to_gram( weight() );
@@ -7906,15 +7921,14 @@ bool item::is_container_full( bool allow_bucket ) const
     if( is_container_empty() ) {
         return false;
     }
-    if( is_watertight_container() ) {
+    if( is_watertight_container() && contents_made_of( LIQUID ) ) {
         return get_remaining_capacity_for_liquid( contents.front(), allow_bucket ) == 0;
-    } else if( !is_reloadable_with( contents.front().typeId() ) ) {
-        return true;
-    } else {
-        int ammo = contents.front().charges_per_volume( get_container_capacity() ) -
-                   contents.front().charges;
-        return ammo <= 0;
     }
+
+    const auto free_volume = std::max( get_container_capacity() -
+                                       contents.item_size_modifier(), 0_ml );
+
+    return free_volume <= 0_ml;
 }
 
 bool item::can_unload_liquid() const
@@ -7951,17 +7965,43 @@ bool item::is_reloadable_helper( const itype_id &ammo, bool now ) const
     } else if( is_watertight_container() ) {
         if( ammo.is_empty() ) {
             return now ? !is_container_full() : true;
-        } else {
-            return now ? ( is_container_empty() || contents.front().typeId() == ammo ) : true;
         }
+        if( ammo->phase == LIQUID ) {
+            return now ? ( !is_container_full() &&
+                           ( is_container_empty() || contents.front().typeId() == ammo ) ) : true;
+        }
+        if( contents_made_of( LIQUID ) ) {
+            return false;
+        }
+        if( !now ) {
+            return true;
+        }
+        item sample( ammo, calendar::turn, item::solitary_tag{} );
+        const auto free_volume = std::max( get_container_capacity() -
+                                           contents.item_size_modifier(), 0_ml );
+        if( sample.count_by_charges() ) {
+            return sample.charges_per_volume( free_volume ) > 0;
+        }
+        return free_volume >= sample.volume_for_storage();
     } else if( is_container() ) {
         if( ammo.is_empty() ) {
             return now ? !is_container_full() : true;
         } else if( ammo->phase == LIQUID ) {
             return false;
-        } else {
-            return now ? ( is_container_empty() || contents.front().typeId() == ammo ) : true;
         }
+        if( contents_made_of( LIQUID ) ) {
+            return false;
+        }
+        if( !now ) {
+            return true;
+        }
+        item sample( ammo, calendar::turn, item::solitary_tag{} );
+        const auto free_volume = std::max( get_container_capacity() -
+                                           contents.item_size_modifier(), 0_ml );
+        if( sample.count_by_charges() ) {
+            return sample.charges_per_volume( free_volume ) > 0;
+        }
+        return free_volume >= sample.volume_for_storage();
     } else if( magazine_integral() ) {
         if( !ammo.is_empty() ) {
             if( now && ammo_data() ) {
@@ -9213,7 +9253,6 @@ bool item::units_sufficient( const Character &ch, int qty ) const
     return units_remaining( ch, qty ) == qty;
 }
 
-
 int item::casings_count() const
 {
     int res = 0;
@@ -9236,7 +9275,7 @@ void item::casings_handle( const std::function < detached_ptr<item>( detached_pt
     contents.casings_handle( func );
 }
 
-bool item::reload( Character &who, item &loc, int qty )
+bool item::reload( Character &who, item &loc, int qty, bool store_container_as_item )
 {
     if( qty <= 0 ) {
         debugmsg( "Tried to reload zero or less charges" );
@@ -9249,7 +9288,13 @@ bool item::reload( Character &who, item &loc, int qty )
     }
 
     item *container = nullptr;
-    if( ammo->is_ammo_container() || ammo->is_container() ) {
+    const auto preserve_container = store_container_as_item ||
+                                    ( is_container() && !is_watertight_container() &&
+                                      ammo->is_container() );
+    if( ( ammo->is_ammo_container() && !preserve_container ) ||
+        ( ammo->is_watertight_container() &&
+          is_watertight_container() &&
+          ammo->contents_made_of( LIQUID ) ) ) {
         container = ammo;
         ammo = &ammo->contents.front();
     }
@@ -9260,12 +9305,13 @@ bool item::reload( Character &who, item &loc, int qty )
 
     // limit quantity of ammo loaded to remaining capacity
     int limit = 0;
-    if( is_watertight_container() && ammo->made_of( LIQUID ) ) {
-        limit = get_remaining_capacity_for_liquid( *ammo, true );
-    } else if( is_container() && ammo->is_comestible() ) {
-        limit = ammo->charges_per_volume( get_container_capacity() );
-        if( !is_container_empty() ) {
-            limit -= ammo_remaining();
+    if( is_container() ) {
+        if( ammo->count_by_charges() ) {
+            limit = get_remaining_capacity_for_liquid( *ammo, true );
+        } else {
+            const auto free_volume = std::max( get_container_capacity() - contents.item_size_modifier(),
+                                               0_ml );
+            limit = free_volume >= ammo->volume_for_storage() ? 1 : 0;
         }
     } else {
         limit = ammo_capacity() - ammo_remaining();
@@ -9276,6 +9322,9 @@ bool item::reload( Character &who, item &loc, int qty )
     }
 
     qty = std::min( qty, limit );
+    if( qty <= 0 && ( is_container() || is_magazine() || magazine_integral() ) ) {
+        return false;
+    }
 
     // Lua iranged can_reload callback: blocks reloading before ammo is consumed
     if( const auto *iranged_cb = type->iranged_callbacks ) {
@@ -9314,10 +9363,19 @@ bool item::reload( Character &who, item &loc, int qty )
         if( container ) {
             container->on_contents_changed();
         }
-        item &cur = *this;
-        ammo->attempt_split( 0, [&cur, qty]( detached_ptr<item> &&it ) {
-            return cur.fill_with( std::move( it ), qty );
-        } );
+        if( !ammo->count_by_charges() && !ammo->is_comestible() && !ammo->made_of( LIQUID ) ) {
+            auto moved_ammo = ammo->detach();
+            if( !moved_ammo ) {
+                return false;
+            }
+            put_in( std::move( moved_ammo ) );
+            on_contents_changed();
+        } else {
+            item &cur = *this;
+            ammo->attempt_split( 0, [&cur, qty]( detached_ptr<item> &&it ) {
+                return cur.fill_with( std::move( it ), qty );
+            } );
+        }
     } else if( !magazine_integral() ) {
         // if we already have a magazine loaded prompt to eject it
         if( magazine_current() ) {
@@ -9589,19 +9647,24 @@ int item::get_remaining_capacity_for_liquid( const item &liquid, bool allow_buck
         }
         remaining_capacity = ammo_capacity() - ammo_remaining();
     } else if( is_container() ) {
-        if( !type->container->watertight && liquid.made_of( LIQUID ) ) {
+        const auto is_liquid = liquid.made_of( LIQUID );
+        const auto contents_are_liquid = contents_made_of( LIQUID );
+
+        if( is_liquid && !type->container->watertight ) {
             return error( string_format( _( "That %s isn't water-tight." ), tname() ) );
+        } else if( contents_are_liquid && contents.front().typeId() != liquid.typeId() ) {
+            return error( string_format( _( "You can't mix loads in your %s." ), tname() ) );
+        } else if( contents_are_liquid && !is_liquid ) {
+            return error( string_format( _( "You can't mix loads in your %s." ), tname() ) );
         } else if( !type->container->seals && ( !allow_bucket || !is_bucket() ) ) {
             return error( string_format( is_bucket() ?
                                          _( "That %s must be on the ground or held to hold contents!" )
                                          : _( "You can't seal that %s!" ), tname() ) );
-        } else if( !contents.empty() && contents.front().typeId() != liquid.typeId() ) {
-            return error( string_format( _( "You can't mix loads in your %s." ), tname() ) );
         }
-        remaining_capacity = liquid.charges_per_volume( get_container_capacity() );
-        if( !contents.empty() ) {
-            remaining_capacity -= contents.front().charges;
-        }
+
+        const auto free_volume = std::max( get_container_capacity() -
+                                           contents.item_size_modifier(), 0_ml );
+        remaining_capacity = liquid.charges_per_volume( free_volume );
     } else {
         return error( string_format( _( "That %1$s won't hold %2$s." ), tname(),
                                      liquid.tname() ) );
@@ -9724,8 +9787,11 @@ detached_ptr<item> item::fill_with( detached_ptr<item> &&liquid, int amount )
     if( amount == -1 ) {
         amount = INT_MAX;
     }
-    amount = std::min( get_remaining_capacity_for_liquid( *liquid, true ),
-                       std::min( amount, liquid->charges ) );
+
+    const auto available = liquid->count_by_charges() ? liquid->charges : 1;
+    const auto capacity = get_remaining_capacity_for_liquid( *liquid, true );
+
+    amount = std::min( capacity, std::min( amount, available ) );
     if( amount <= 0 ) {
         return std::move( liquid );
     }
@@ -9737,22 +9803,35 @@ detached_ptr<item> item::fill_with( detached_ptr<item> &&liquid, int amount )
             return std::move( liquid );
         }
         ammo_set( liquid->typeId(), ammo_remaining() + amount );
+        liquid->mod_charges( -amount );
     } else if( is_food_container() ) {
         item &cts = contents.front();
 
         cts.set_rot( weighted_averaged_rot( &cts, &*liquid ) );
         cts.mod_charges( amount );
-    } else if( !is_container_empty() ) {
-        // if container already has liquid we need to set the amount
-        item &cts = contents.front();
-        cts.mod_charges( amount );
+        liquid->mod_charges( -amount );
     } else {
-        detached_ptr<item> liquid_copy = item::spawn( *liquid );
-        liquid_copy->charges = amount;
-        put_in( std::move( liquid_copy ) );
+        if( liquid->count_by_charges() ) {
+            const auto contents_match = std::ranges::find_if( contents.all_items_top(),
+            [&]( item * cts ) {
+                return cts->typeId() == liquid->typeId() && cts->count_by_charges();
+            } );
+
+            if( contents_match != contents.all_items_top().end() ) {
+                ( *contents_match )->mod_charges( amount );
+            } else {
+                detached_ptr<item> liquid_copy = item::spawn( *liquid );
+                liquid_copy->charges = amount;
+                put_in( std::move( liquid_copy ) );
+            }
+            liquid->mod_charges( -amount );
+        } else {
+            put_in( std::move( liquid ) );
+            on_contents_changed();
+            return detached_ptr<item>();
+        }
     }
 
-    liquid->mod_charges( -amount );
     on_contents_changed();
     if( liquid->charges > 0 ) {
         return std::move( liquid );

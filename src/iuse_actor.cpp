@@ -1515,6 +1515,7 @@ int deploy_furn_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
 
     here.furn_set( pnt, furn_type );
     here.furn_vars( pnt )->merge( it.item_vars() );
+    it.contents.spill_contents( pnt );
     p.mod_moves( to_turns<int>( 2_seconds ) );
     return 1;
 }
@@ -3249,6 +3250,7 @@ int ammobelt_actor::use( player &p, item &, bool, const tripoint_bub_ms & ) cons
         p.assign_activity( ACT_RELOAD, opt.moves(), opt.qty() );
         p.activity->targets.emplace_back( &*mag );
         p.activity->targets.emplace_back( opt.ammo );
+        p.activity->values.push_back( opt.store_container_as_item );
         p.i_add( std::move( mag ) );
     }
 

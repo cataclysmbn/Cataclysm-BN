@@ -2117,7 +2117,7 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
     const int qty = act->index;
     const bool is_speedloader = ammo.has_flag( flag_SPEEDLOADER );
 
-    if( !reloadable.reload( *p, ammo, qty ) ) {
+    if( !reloadable.reload( *p, ammo, qty, act->get_value( 0 ) != 0 ) ) {
         add_msg( m_info, _( "Can't reload the %s." ), reloadable.tname() );
         return;
     }

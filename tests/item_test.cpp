@@ -58,6 +58,27 @@ TEST_CASE("large_item_storage_volumes", "[item][volume]") {
     CHECK(large_container.get_container_capacity() == 3000000_liter);
 }
 
+TEST_CASE("nested_containers_account_for_their_internal_capacity", "[item][volume][container]") {
+    auto inner_box = item::spawn("box_large", calendar::start_of_cataclysm);
+    auto middle_box = item::spawn("box_large", calendar::start_of_cataclysm);
+    auto outer_box = item::spawn("box_large", calendar::start_of_cataclysm);
+
+    REQUIRE(inner_box->volume() == 3_liter);
+    REQUIRE(inner_box->get_container_capacity() == 5_liter);
+    middle_box->put_in(std::move(inner_box));
+    outer_box->put_in(std::move(middle_box));
+
+    CHECK(outer_box->contents.item_size_modifier() == 5_liter);
+    CHECK(outer_box->contents.front().contents.item_size_modifier() == 5_liter);
+    CHECK(outer_box->contents.front().volume() == 3_liter);
+    CHECK(outer_box->contents.front().get_container_capacity() == 5_liter);
+
+    const auto backpack = item::spawn("backpack", calendar::start_of_cataclysm);
+    CHECK(backpack->volume() == 2_liter);
+    CHECK(backpack->get_total_capacity() == 15_liter);
+    CHECK(backpack->volume_for_storage() == 15_liter);
+}
+
 TEST_CASE("charge_volume_calculation_uses_wide_intermediate", "[item][volume]") {
     item& battery = *item::spawn_temporary(
         "battery", calendar::start_of_cataclysm, item::default_charges_tag());
