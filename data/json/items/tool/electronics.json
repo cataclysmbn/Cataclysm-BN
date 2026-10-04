@@ -21,7 +21,7 @@
     "ups_recharge_rate": 10,
     "looks_like": "battery",
     "//": "Twice the recharge rate, half the size of a heavy plutonium battery.",
-    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "72 s", "rate": 4 } ] },
+    "relic_data": { "recharge_scheme": [ { "type": "time", "interval": "1 m", "rate": 4 } ] },
     "flags": [ "IS_UPS", "LEAK_DAM", "RADIOACTIVE", "NO_RELOAD", "NO_UNLOAD" ]
   },
   {
