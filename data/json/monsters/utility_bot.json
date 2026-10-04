@@ -134,7 +134,8 @@
       "PRIORITIZE_TARGETS",
       "CARD_OVERRIDE",
       "PATH_AVOID_DANGER_1",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -175,7 +176,8 @@
       "PET_MOUNTABLE",
       "CARD_OVERRIDE",
       "MILITARY_MECH",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
