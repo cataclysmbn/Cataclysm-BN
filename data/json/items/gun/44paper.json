@@ -59,6 +59,8 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "44paper",
+    "ranged_damage": { "damage_type": "bullet", "amount": 8 },
+    "range": 4,
     "dispersion": 280,
     "clip_size": 8
   }

@@ -13,6 +13,7 @@
     "material": [ "steel", "plastic" ],
     "ammo": "57",
     "ranged_damage": { "damage_type": "bullet", "amount": -3 },
+    "range": -6,
     "dispersion": 440,
     "handling": 20,
     "min_cycle_recoil": 81,

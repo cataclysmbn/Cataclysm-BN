@@ -49,6 +49,8 @@
     "material": "steel",
     "color": "dark_gray",
     "ammo": "32",
+    "ranged_damage": { "damage_type": "bullet", "amount": 2 },
+    "range": 5,
     "dispersion": 360,
     "durability": 6,
     "min_cycle_recoil": 135,
