@@ -26,7 +26,8 @@
       "CLIMBS",
       "PATH_AVOID_DANGER_1",
       "WARM",
-      "HIT_AND_RUN"
+      "HIT_AND_RUN",
+      "NO_SLIP"
     ]
   },
   {
