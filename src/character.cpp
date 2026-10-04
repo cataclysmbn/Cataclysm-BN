@@ -7384,6 +7384,22 @@ bool Character::is_immune_field( const field_type_id &fid ) const
                get_armor_type( DT_ACID, bodypart_id( "leg_l" ) ) >= 5 &&
                get_armor_type( DT_ACID, bodypart_id( "leg_r" ) ) >= 5;
     }
+    // Whole check for if the field makes you slip because slipping is a half baked mechanic
+    static const auto flag_NOSLIP = flag_id("NOSLIP");
+    static const auto ench_flag_NOSLIP = enchantment_flag_id("NOSLIP");
+    for (const field_intensity_level &lvl : ft.intensity_levels) {
+        for (const field_effect &fe : lvl.field_effects) {
+            if (fe.id == effect_downed) {
+                if (has_enchantment_flag(ench_flag_NOSLIP)
+                        || worn_with_flag(flag_NOSLIP, body_part_foot_l)
+                        || worn_with_flag(flag_NOSLIP, body_part_foot_r))) {
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+        }
+    }
     // If we haven't found immunity yet fall up to the next level
     return Creature::is_immune_field( fid );
 }
