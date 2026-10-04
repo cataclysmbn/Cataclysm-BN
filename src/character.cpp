@@ -7385,14 +7385,14 @@ bool Character::is_immune_field( const field_type_id &fid ) const
                get_armor_type( DT_ACID, bodypart_id( "leg_r" ) ) >= 5;
     }
     // Check for if field has downed effect which means slipping
-    static const auto flag_NOSLIP = flag_id("NOSLIP");
-    static const auto ench_flag_NOSLIP = enchantment_flag_id("NOSLIP");
-    for (const field_intensity_level &lvl : ft.intensity_levels) {
-        for (const field_effect &fe : lvl.field_effects) {
-            if (fe.id == effect_downed) {
-                if (has_enchantment_flag(ench_flag_NOSLIP)
-                        || worn_with_flag(flag_NOSLIP, body_part_foot_l)
-                        || worn_with_flag(flag_NOSLIP, body_part_foot_r)) {
+    static const auto flag_NOSLIP = flag_id( "NOSLIP" );
+    static const auto ench_flag_NOSLIP = enchantment_flag_id( "NOSLIP" );
+    for( const field_intensity_level &lvl : ft.intensity_levels ) {
+        for( const field_effect &fe : lvl.field_effects ) {
+            if( fe.id == effect_downed ) {
+                if( has_enchantment_flag( ench_flag_NOSLIP )
+                    || worn_with_flag( flag_NOSLIP, body_part_foot_l )
+                    || worn_with_flag( flag_NOSLIP, body_part_foot_r ) ) {
                     return true;
                 }
             }
