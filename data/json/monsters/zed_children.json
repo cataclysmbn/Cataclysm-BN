@@ -196,7 +196,7 @@
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_child_scorched",
     "fungalize_into": "mon_zombie_child_fungus",
-    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BLEED", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "CLIMBS" ],
+    "flags": [ "SEES", "HEARS", "SMELLS", "STUMBLES", "WARM", "BLEED", "BASHES", "POISON", "NO_BREATHE", "REVIVES", "CLIMBS", "NO_SLIP" ],
     "//": "no GUILT because it no longer looks enough like a child to evoke pity"
   },
   {
