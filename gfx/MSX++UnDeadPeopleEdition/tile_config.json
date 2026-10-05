@@ -16506,7 +16506,7 @@
             "apartments_con_tower_103",
             "apartments_con_tower_104"
           ],
-          "fg": [ 9402, 9405, 9404, 9404 ],
+          "fg": [ 9402, 9405, 9404, 9403 ],
           "rotates": true
         },
         {
