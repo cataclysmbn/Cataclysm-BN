@@ -54,6 +54,12 @@
   },
   {
     "type": "item_group",
+    "id": "mags_rifle_common",
+    "//": "Factory specification rifle magazines commonly owned by citizens.",
+    "items": [ [ "fnp90mag", 5 ] ]
+  },
+  {
+    "type": "item_group",
     "id": "mags_rifle_rare",
     "//": "Aftermarket or otherwise uncommon rifle magazines excluding milspec.",
     "items": [ [ "lw223mag", 20 ], [ "lw223bigmag", 20 ] ]

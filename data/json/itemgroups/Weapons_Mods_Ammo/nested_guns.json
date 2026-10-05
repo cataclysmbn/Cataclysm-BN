@@ -1721,6 +1721,18 @@
     ]
   },
   {
+    "id": "nested_PKM",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "PKM", "ammo-group": "on_hand_762R", "charges": [ 0, 100 ] },
+      { "item": "belt762R", "ammo-group": "on_hand_762R", "charges": 100, "prob": 50 },
+      { "group": "on_hand_762R" }
+    ]
+  },
+  {
     "id": "nested_m2browning",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

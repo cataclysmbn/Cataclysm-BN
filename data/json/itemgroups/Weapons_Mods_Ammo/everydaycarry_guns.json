@@ -2277,6 +2277,21 @@
     ]
   },
   {
+    "id": "everyday_PKM",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "PKM", "ammo-group": "on_hand_762R", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt762R", "ammo-group": "on_hand_762R", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_762R", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "everyday_m2browning",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

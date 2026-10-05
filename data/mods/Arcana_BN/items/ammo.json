@@ -355,7 +355,21 @@
     "price_postapoc": "9 USD",
     "range": 30,
     "damage": { "damage_type": "heat", "amount": 16, "armor_penetration": 10 },
-    "shot": { "count": 5, "half_angle": 5 },
+    "shot": { "count": 5, "half_angle": 3 },
+    "extend": { "effects": [ "IGNITE", "SHOT", "ARCANA_DAZZLE_SHOT" ] }
+  },
+  {
+    "id": "410shot_000_arcana",
+    "copy-from": "410shot_000",
+    "looks_like": "410shot_000",
+    "type": "AMMO",
+    "name": { "str": "purifying .410 000 shot" },
+    "description": "A handloaded .410 shell, loaded with precious metals.  The addition of consecrated essence enhances its impact and focuses it into a burst of white-hot light when fired.  Immolates targets on impact and bypasses mundane armor, while leaving behind a dazzling glow.",
+    "price": "0 cent",
+    "price_postapoc": "9 USD",
+    "range": 25,
+    "damage": { "damage_type": "heat", "amount": 10, "armor_penetration": 10 },
+    "shot": { "count": 5, "half_angle": 4 },
     "extend": { "effects": [ "IGNITE", "SHOT", "ARCANA_DAZZLE_SHOT" ] }
   },
   {

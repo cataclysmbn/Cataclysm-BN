@@ -467,6 +467,23 @@
   },
   {
     "type": "recipe",
+    "result": "ammolink762R",
+    "charges": 25,
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "30 m",
+    "batch_time_factors": [ 50, 3 ],
+    "autolearn": [ [ "fabrication", 5 ], [ "gun", 2 ] ],
+    "book_learn": [ [ "manual_rifle", 3 ], [ "recipe_bullets", 3 ] ],
+    "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
+    "using": [ [ "forging_standard", 2 ] ],
+    "components": [ [ [ "scrap", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "ammolink50",
     "charges": 25,
     "category": "CC_WEAPON",
@@ -684,6 +701,21 @@
     "decomp_learn": 3,
     "using": [ [ "magazine_standard", 5 ] ],
     "components": [ [ [ "scrap", 4 ] ] ]
+  },
+  {
+    "result": "SVDmag",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "autolearn": false,
+    "skill_used": "fabrication",
+    "book_learn": [ [ "mag_guns", 3 ] ],
+    "difficulty": 3,
+    "time": "120 m",
+    "reversible": true,
+    "decomp_learn": 3,
+    "using": [ [ "magazine_standard", 5 ] ],
+    "components": [ [ [ "scrap", 6 ] ] ]
   },
   {
     "result": "uzimag",

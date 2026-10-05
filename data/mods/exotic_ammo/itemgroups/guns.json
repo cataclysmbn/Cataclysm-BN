@@ -195,13 +195,21 @@
     "type": "item_group",
     "id": "guns_rifle_common",
     "//": "Rifles owned by citizens and found in many locations.",
-    "items": [ { "group": "nested_bh_m89", "prob": 20 }, { "group": "nested_remington700_270", "prob": 30 } ]
+    "items": [
+      { "group": "nested_bh_m89", "prob": 20 },
+      { "group": "nested_remington700_270", "prob": 30 },
+      { "group": "nested_ar57", "prob": 5 }
+    ]
   },
   {
     "type": "item_group",
     "id": "carried_guns_rifle_common",
     "//": "Rifles commonly owned by citizens and carried by them. Has mags or loose ammo.",
-    "items": [ { "group": "everyday_bh_m89", "prob": 20 }, { "group": "everyday_remington700_270", "prob": 30 } ]
+    "items": [
+      { "group": "everyday_bh_m89", "prob": 20 },
+      { "group": "everyday_remington700_270", "prob": 30 },
+      { "group": "everyday_ar57", "prob": 5 }
+    ]
   },
   {
     "type": "item_group",
@@ -210,6 +218,7 @@
     "items": [
       { "item": "bh_m89", "prob": 20, "charges-min": 0, "charges-max": 0 },
       { "item": "remington700_270", "prob": 30, "charges-min": 0, "charges-max": 0 },
+      { "item": "ar57", "prob": 5, "charges-min": 0, "charges-max": 0 },
       { "item": "l_HFPack", "prob": 30 }
     ]
   },

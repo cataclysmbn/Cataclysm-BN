@@ -116,7 +116,7 @@
     "description": "A medium machine gun used by the US Military during WWII onward, chambered in .30-06 Springfield.  While rarely used today, it can still serve survivors as faithful as its heavier .50 caliber sibling can.",
     "weight": "14 kg",
     "price": "20 kUSD",
-    "price_postapoc": "75 USD",
+    "price_postapoc": "70 USD",
     "ammo": "3006",
     "range": 55,
     "modes": [ [ "AUTO", "auto", 3 ] ],
@@ -131,7 +131,7 @@
     "name": { "str_sp": ".30 caliber 'Stinger'" },
     "description": "A M1919A4 Browning machine gun, modified to be lighter with a shoulder stock for use as a light machine gun.  Original examples were mainly made from faster-firing aircraft versions, this one saves a bit less weight but adds select-fire capability.",
     "weight": "12 kg",
-    "price_postapoc": "90 USD",
+    "price_postapoc": "60 USD",
     "range": 40,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 3 ] ],
     "valid_mod_locations": [
@@ -146,7 +146,7 @@
       [ "muzzle", 1 ],
       [ "rail", 1 ],
       [ "underbarrel", 1 ]
-    ],
+    ]
   },
   {
     "id": "remington_700",

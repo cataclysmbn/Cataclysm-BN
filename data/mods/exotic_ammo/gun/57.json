@@ -65,5 +65,20 @@
     ],
     "magazine_well": "500 ml",
     "magazines": [ [ "57", [ "fnp90mag" ] ] ]
+  },
+  {
+    "id": "ar57",
+    "copy-from": "ar15",
+    "type": "GUN",
+    "name": { "str": "AR-57" },
+    "description": "An AR-15 rifle with its upper receiver modified to fire 5.7x28mm, loading FN P90 magazines on top of the front handguard.",
+    "price": "1100 USD",
+    "price_postapoc": "30 USD",
+    "ammo": "223",
+    "ranged_damage": { "damage_type": "bullet", "amount": 2 },
+    "range": 10,
+    "min_cycle_recoil": 81,
+    "magazine_well": "500 ml",
+    "magazines": [ [ "57", [ "fnp90mag" ] ] ]
   }
 ]

@@ -102,7 +102,8 @@
       [ "hexenhammer", 30 ],
       [ "sun_sword", 15 ],
       [ "ethereal_crossbow", 20 ],
-      [ "reloaded_shot_00_arcana", 5 ],
+      [ "reloaded_shot_00_arcana", 4 ],
+      [ "410shot_000_arcana", 1 ],
       [ "gilded_aegis", 10 ],
       [ "somen_clairvoyance", 15 ],
       [ "thermic_essence_cutter", 5 ]
@@ -400,6 +401,12 @@
     "id": "arcana_purifying_shot_group",
     "type": "item_group",
     "//": "Used for shopkeepers at the rural church who sell ammo.",
-    "items": [ [ "reloaded_shot_00_arcana", 7 ], [ "flintlock_shot_arcana", 2 ], [ "blun_shot_arcana", 1 ] ]
+    "items": [
+      [ "reloaded_shot_00_arcana", 5 ],
+      [ "410shot_000_arcana", 2 ],
+      [ "flintlock_shot_arcana", 1 ],
+      [ "20ga_shot_arcana", 1 ],
+      [ "blun_shot_arcana", 1 ]
+    ]
   }
 ]

@@ -21,7 +21,7 @@
     "copy-from": "colt_ring",
     "type": "GUN",
     "name": { "str": "Colt .36 Ring Lever Rifle" },
-    "description": "The Colt Ring Lever Rifle was one of the first true lever-action rifles, designed to utilize the same caplock ammo as Colt revolvers, in this case the same .44 caliber as the Colt M1861 Navy.  It was famously used in the second Seminole war, where the Seminole people had learned to strike American soldiers while they were reloading their muskets.",
+    "description": "The Colt Ring Lever Rifle was one of the first true lever-action rifles, designed to utilize the same caplock ammo as Colt revolvers, in this case the same .36 caliber as the Colt M1861 Navy.  It was famously used in the second Seminole war, where the Seminole people had learned to strike American soldiers while they were reloading their muskets.",
     "ammo": "36paper"
   }
 ]

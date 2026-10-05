@@ -31,6 +31,7 @@
       { "item": "m240", "prob": 10 },
       { "item": "m249", "prob": 10 },
       { "item": "m60", "prob": 10 },
+      { "item": "PKM", "prob": 5 },
       { "item": "militarymap", "prob": 20 },
       { "group": "mutagens_common", "prob": 200 },
       { "item": "optical_cloak", "prob": 20 },

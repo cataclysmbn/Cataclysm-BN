@@ -423,6 +423,26 @@
     ]
   },
   {
+    "result": "410shot_000_arcana",
+    "type": "recipe",
+    "category": "CC_ARCANA",
+    "subcategory": "CSC_ARCANA_AMMO",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "skills_required": [ [ "fabrication", 2 ], [ "gun", 1 ] ],
+    "time": "2 m",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "recipe_bullets", 3 ], [ "manual_shotgun", 3 ], [ "book_hexenhammer", 2 ], [ "book_syncretism", 2 ] ],
+    "charges": 1,
+    "reversible": true,
+    "using": [ [ "shot_forming", 1 ], [ "ammo_410shot", 1 ] ],
+    "components": [
+      [ [ "gunpowder", 5 ], [ "chem_black_powder", 6 ], [ "chem_match_head_powder", 6 ] ],
+      [ [ "silver_small", 5 ], [ "platinum_small", 3 ] ],
+      [ [ "essence_dull", 5 ] ]
+    ]
+  },
+  {
     "result": "20ga_shot_arcana",
     "type": "recipe",
     "category": "CC_ARCANA",

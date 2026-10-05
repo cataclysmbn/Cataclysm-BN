@@ -34,5 +34,17 @@
     "capacity": 10,
     "reliability": 10,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "belt762R",
+    "copy-from": "magazine_belt",
+    "looks_like": "belt308",
+    "type": "MAGAZINE",
+    "name": { "str": "7.62x54mmR ammo belt" },
+    "ammo_type": "762R",
+    "capacity": 200,
+    "count": 100,
+    "default_ammo": "762_54R",
+    "linkage": "ammolink762R"
   }
 ]
