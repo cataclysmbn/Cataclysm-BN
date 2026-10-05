@@ -1991,7 +1991,8 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
     }
 
     const std::string space = "  ";
-    if( max_nutr.kcal != 0 || food_item->get_comestible()->quench != 0 ) {
+    if( max_nutr.kcal != 0 || food_item->get_comestible()->quench != 0 ||
+        food_item->get_comestible()->healthy != 0 ) {
         if( parts->test( iteminfo_parts::FOOD_NUTRITION ) ) {
             info.emplace_back( "FOOD", _( "<bold>Calories (kcal)</bold>: " ),
                                "", iteminfo::no_newline, you.compute_effective_nutrients( *food_item ).kcal );
@@ -2003,6 +2004,11 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         if( parts->test( iteminfo_parts::FOOD_QUENCH ) ) {
             info.emplace_back( "FOOD", space + _( "Quench: " ),
                                food_item->get_comestible()->quench );
+        }
+        if( food_item->get_comestible()->healthy != 0 &&
+            parts->test( iteminfo_parts::FOOD_HEALTHY ) ) {
+            info.emplace_back( "FOOD", space + _( "Healthy: " ),
+                               food_item->get_comestible()->healthy );
         }
     }
 
