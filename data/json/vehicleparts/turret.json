@@ -404,6 +404,19 @@
     "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "rifle", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
   },
   {
+    "id": "mounted_PKM",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted PKM" },
+    "item": "PKM",
+    "folded_volume": "3500 ml",
+    "color": "cyan",
+    "broken_color": "cyan",
+    "looks_like": "mounted_m60",
+    "breaks_into": [ { "item": "scrap", "count": 24 }, { "item": "steel_chunk", "count": 10 }, { "item": "steel_lump", "count": 6 } ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "rifle", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
+  },
+  {
     "id": "mounted_m250",
     "copy-from": "turret",
     "type": "vehicle_part",
