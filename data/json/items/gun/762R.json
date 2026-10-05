@@ -134,7 +134,7 @@
     "price_postapoc": "65 USD",
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
-    "looks_like": "M60",
+    "looks_like": "m60",
     "ammo": "762R",
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "dispersion": 180,
