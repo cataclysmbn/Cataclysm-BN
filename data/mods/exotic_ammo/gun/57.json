@@ -74,7 +74,7 @@
     "description": "An AR-15 rifle with its upper receiver modified to fire 5.7x28mm, loading FN P90 magazines on top of the front handguard.",
     "price": "1100 USD",
     "price_postapoc": "30 USD",
-    "ammo": "223",
+    "ammo": "57",
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "range": 10,
     "min_cycle_recoil": 81,
