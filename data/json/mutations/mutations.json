@@ -5093,7 +5093,7 @@
     "description": "Sunlight makes you uncomfortable.  If you are outdoors and the weather is Sunny, you suffer -1 to all stats.",
     "cancels": [ "SUNLIGHT_DEPENDENT" ],
     "changes_to": [ "TROGLO2" ],
-    "category": [ "LIZARD", "BEAST", "INSECT", "SLIME", "SPIDER" ]
+    "category": [ "BEAST", "INSECT", "SLIME", "SPIDER" ]
   },
   {
     "type": "mutation",
@@ -5402,7 +5402,7 @@
     "description": "Your body's ability to digest fruits, vegetables, grains and nuts is severely hampered.  You cannot eat anything besides meat.",
     "cancels": [ "VEGETARIAN", "HERBIVORE", "RUMINANT", "GRAZER" ],
     "leads_to": [ "SAPROVORE" ],
-    "category": [ "LIZARD", "SERPENT", "BEAST", "SPIDER", "CHIMERA", "RAPTOR", "FELINE" ],
+    "category": [ "SERPENT", "BEAST", "SPIDER", "CHIMERA", "RAPTOR", "FELINE" ],
     "vitamin_rates": [ [ "vitC", -1200 ] ]
   },
   {
