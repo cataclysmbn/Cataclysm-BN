@@ -1327,7 +1327,8 @@ std::optional<tripoint_bub_ms> choose_adjacent_highlight( const std::string &mes
     const std::function<bool( const tripoint_bub_ms & )> f = [&action]( const tripoint_bub_ms & p ) {
         return can_interact_at( action, p );
     };
-    return choose_adjacent_highlight( message, failure_message, f, allow_vertical );
+    return choose_adjacent_highlight( message, failure_message, f, allow_vertical,
+                                      action == ACTION_EXAMINE );
 }
 
 std::optional<tripoint_bub_ms> choose_adjacent_highlight(
