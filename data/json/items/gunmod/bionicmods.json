@@ -21,7 +21,7 @@
       "dispersion": 30,
       "loudness": 60,
       "ranged_damage": { "damage_type": "heat", "amount": 20 },
-      "ammo_effects": [ "NO_PENETRATE_OBSTACLES", "PLASMA", "FUSION_ARM_POWERSHOT" ],
+      "ammo_effects": [ "NO_PENETRATE_OBSTACLES", "LASER", "FUSION_ARM_POWERSHOT" ],
       "durability": 10
     },
     "flags": [ "IRREMOVABLE" ]
@@ -42,14 +42,15 @@
     "symbol": ":",
     "color": "light_red",
     "location": "emitter",
+    "//": "unbio weapons deal 80% damage/apren for 120% UPS cost compared to the bionic version",
     "gun_data": {
       "skill": "rifle",
       "range": 30,
       "dispersion": 30,
       "loudness": 60,
-      "ranged_damage": { "damage_type": "heat", "amount": 20 },
+      "ranged_damage": { "damage_type": "heat", "amount": 16 },
       "ups_charges": 100,
-      "ammo_effects": [ "NO_PENETRATE_OBSTACLES", "PLASMA", "FUSION_ARM_POWERSHOT" ],
+      "ammo_effects": [ "NO_PENETRATE_OBSTACLES", "LASER", "FUSION_ARM_POWERSHOT_SMALL" ],
       "durability": 10
     },
     "flags": [ "IRREMOVABLE", "USE_PARENT_GUN" ]

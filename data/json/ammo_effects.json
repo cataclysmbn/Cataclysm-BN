@@ -543,7 +543,13 @@
   {
     "id": "FUSION_ARM_POWERSHOT",
     "type": "ammo_effect",
-    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 },
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 3, "radius": 1, "chance": 10 },
     "explosion": { "fragment": { "impact": { "damage_type": "heat", "amount": 40, "armor_multiplier": 2 }, "range": 3 } }
+  },
+  {
+    "id": "FUSION_ARM_POWERSHOT_SMALL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 2, "radius": 1, "chance": 10 },
+    "explosion": { "fragment": { "impact": { "damage_type": "heat", "amount": 32, "armor_multiplier": 2 }, "range": 3 } }
   }
 ]
