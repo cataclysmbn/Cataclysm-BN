@@ -1366,7 +1366,8 @@ std::optional<tripoint_bub_ms> choose_adjacent_highlight(
     }
 
     const auto selection = choose_adjacent( message, allow_vertical );
-    if( selection.has_value() && ( accept_any_tile || std::ranges::contains( valid, selection.value() ) ) ) {
+    if( selection.has_value() && ( accept_any_tile ||
+                                   std::ranges::contains( valid, selection.value() ) ) ) {
         return selection;
     }
 
