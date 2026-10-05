@@ -15,7 +15,7 @@
     "ammo_type": "36paper",
     "range": 15,
     "//": "Half the expected armor penetration since blackpowder.",
-    "damage": { "damage_type": "bullet", "amount": 25, "armor_penetration": 5 },
+    "damage": { "damage_type": "bullet", "amount": 18, "armor_penetration": 4 },
     "dispersion": 80,
     "recoil": 210,
     "loudness": 148,
@@ -29,7 +29,13 @@
     "description": "A paper cartridge containing a premeasured amount of smokeless powder and a .36 projectile, for people who want to fire real civil war era weapons without getting a lungful of smoke.",
     "copy-from": "36navy",
     "ammo_type": "36paper",
-    "relative": { "damage": { "damage_type": "bullet", "amount": 7, "armor_penetration": 10 } },
+    "proportional": {
+      "price": 2,
+      "price_postapoc": 2,
+      "damage": { "damage_type": "bullet", "amount": 1.25 },
+      "recoil": 1.31,
+      "dispersion": 0.83
+    },
     "delete": { "effects": [ "BLACKPOWDER", "MUZZLE_SMOKE" ] }
   }
 ]
