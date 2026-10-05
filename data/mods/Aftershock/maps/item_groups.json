@@ -38,8 +38,7 @@
       [ "afs_bio_precision_solderers", 10 ],
       [ "afs_bio_missiles", 10 ],
       [ "afs_bio_linguistic_coprocessor", 10 ],
-      [ "afs_bio_dopamine_stimulators", 10 ],
-      [ "bio_blaster", 5 ]
+      [ "afs_bio_dopamine_stimulators", 10 ]
     ]
   },
   {
@@ -51,11 +50,6 @@
       [ "afs_bio_precision_solderers", 5 ],
       [ "afs_bio_linguistic_coprocessor", 8 ]
     ]
-  },
-  {
-    "id": "bionics_mil",
-    "type": "item_group",
-    "items": [ [ "bio_blaster", 5 ] ]
   },
   {
     "id": "bionics_sci",

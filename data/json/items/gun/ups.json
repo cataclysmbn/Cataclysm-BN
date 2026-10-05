@@ -212,5 +212,36 @@
     "reload": 300,
     "extend": { "flags": [ "MOUNTED_GUN", "NO_RECOVER_AMMO" ] },
     "delete": { "flags": [ "NO_UNLOAD" ] }
+  },
+  {
+    "id": "unbio_blaster_gun",
+    "copy-from": "rifle_energy",
+    "type": "GUN",
+    "name": { "str": "fusion blaster rifle" },
+    "description": "A cyborg's fusion blaster arm, cannibalized and converted into a rifle.  This improvised weapon is powered by a standard UPS connection.",
+    "weight": "2680 g",
+    "volume": "2500 ml",
+    "price": "4200 USD",
+    "price_postapoc": "42 USD",
+    "material": [ "steel", "plastic" ],
+    "color": "magenta",
+    "range": 30,
+    "ranged_damage": { "damage_type": "heat", "amount": 60, "armor_penetration": 30 },
+    "dispersion": 90,
+    "durability": 6,
+    "loudness": 60,
+    "ups_charges": 100,
+    "modes": [ [ "DEFAULT", "single shot", 1 ], [ "burst", "triple shot", 3 ] ],
+    "built_in_mods": [ "unbio_powershot" ],
+    "valid_mod_locations": [
+      [ "emitter", 1 ],
+      [ "grip", 1 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "rail", 1 ],
+      [ "underbarrel", 1 ]
+    ],
+    "ammo_effects": [ "PLASMA" ]
   }
 ]

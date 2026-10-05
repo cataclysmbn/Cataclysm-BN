@@ -1422,7 +1422,7 @@
     "copy-from": "bionic_general",
     "type": "BIONIC_ITEM",
     "name": { "str": "Fusion Blaster Arm CBM" },
-    "description": "Heavy-duty fusion blaster was integrated into your left arm!  You may use your energy banks to fire a damaging heat ray.",
+    "description": "A heavy-duty fusion blaster integrated into the left arm.  Provides a damaging heat ray that can select between single-shot, 3-round burst, or a power shot that trades direct damage for area of effect.",
     "price": "2200 USD",
     "difficulty": 3
   },

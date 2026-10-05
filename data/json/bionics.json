@@ -245,7 +245,7 @@
     "name": { "str": "Chain Lightning" },
     "description": "Your body is equipped with a chain lightning generator, allowing you to emit a blast of lightning at a target, leaving a trail of lightning in its wake, jumping to additional targets within 4 tiles of the previous target.",
     "occupied_bodyparts": [ [ "torso", 8 ], [ "arm_l", 2 ], [ "arm_r", 2 ] ],
-    "act_cost": "100 kJ",
+    "act_cost": "50 kJ",
     "fake_item": "bio_lightning",
     "points": 3,
     "flags": [ "BIONIC_GUN" ]
@@ -409,7 +409,7 @@
     "name": { "str": "EMP Projector" },
     "description": "A ranged EMP generator system is implanted on the palm of your right hand and arm.  The system fires precise, single-target pulses that require time to aim.  Extremely effective against electronic targets but mostly useless otherwise.",
     "occupied_bodyparts": [ [ "arm_r", 10 ], [ "hand_r", 5 ] ],
-    "act_cost": "50 kJ",
+    "act_cost": "25 kJ",
     "fake_item": "bio_emp_gun",
     "points": 3,
     "flags": [ "BIONIC_GUN" ]
@@ -1578,9 +1578,9 @@
     "id": "bio_blaster",
     "type": "bionic",
     "name": { "str": "Fusion Blaster Arm" },
-    "description": "A heavy-duty fusion blaster was integrated into your left arm!  You may use your energy banks to fire a damaging heat ray.",
+    "description": "A heavy-duty fusion blaster was integrated into your left arm!  You may use your energy banks to fire a damaging heat ray.  While aiming you can select between single-shot, 3-round burst, or a power shot that trades direct damage for area of effect.",
     "occupied_bodyparts": [ [ "arm_l", 10 ] ],
-    "act_cost": "50 kJ",
+    "act_cost": "100 kJ",
     "fake_item": "bio_blaster_gun",
     "points": 4,
     "flags": [ "BIONIC_GUN", "BIONIC_NPC_USABLE" ]

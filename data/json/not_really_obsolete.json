@@ -125,35 +125,6 @@
     }
   },
   {
-    "id": "unbio_blaster_gun",
-    "copy-from": "rifle_energy",
-    "type": "GUN",
-    "name": { "str": "fusion blaster rifle" },
-    "description": "A cyborg's fusion blaster arm, cannibalized and converted into a rifle.  This improvised weapon is powered by a standard UPS connection.",
-    "weight": "2680 g",
-    "volume": "2500 ml",
-    "price": "4200 USD",
-    "material": [ "steel", "plastic" ],
-    "color": "magenta",
-    "range": 30,
-    "ranged_damage": { "damage_type": "stab", "amount": 22 },
-    "dispersion": 90,
-    "durability": 6,
-    "loudness": 55,
-    "ups_charges": 40,
-    "reload": 600,
-    "valid_mod_locations": [
-      [ "emitter", 1 ],
-      [ "grip", 1 ],
-      [ "sights", 1 ],
-      [ "sling", 1 ],
-      [ "stock", 1 ],
-      [ "rail", 1 ],
-      [ "underbarrel", 1 ]
-    ],
-    "ammo_effects": [ "PLASMA", "EXPLOSIVE", "FLAME" ]
-  },
-  {
     "id": "ftk93",
     "copy-from": "rifle_energy",
     "type": "GUN",
