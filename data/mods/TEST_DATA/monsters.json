@@ -59,6 +59,18 @@
     ]
   },
   {
+    "id": "mon_test_lua_read_bindings",
+    "copy-from": "debug_mon",
+    "type": "MONSTER",
+    "name": { "str": "Lua read binding test monster" },
+    "description": "This monster exists only for testing purposes.",
+    "clairvoyance": 10,
+    "melee_dice": 2,
+    "melee_dice_sides": 3,
+    "melee_damage": [ { "damage_type": "cut", "amount": 4 } ],
+    "grab_strength": 5
+  },
+  {
     "id": "mon_test_bash",
     "copy-from": "debug_mon",
     "type": "MONSTER",

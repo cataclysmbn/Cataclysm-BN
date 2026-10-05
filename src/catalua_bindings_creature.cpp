@@ -443,6 +443,10 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_MEMB( faction );
         SET_MEMB( death_drops );
         SET_MEMB( unique_name );
+        DOC( "Pet training level gained through pet training." );
+        SET_MEMB_RO( training_level );
+        DOC( "Bond level with the character this pet is bonded to." );
+        SET_MEMB_RO( pet_bond_level );
 
         // Methods
         // I really don't want to break the uniformity, but...
@@ -505,6 +509,19 @@ void cata::detail::reg_monster( sol::state &lua )
 
         SET_FX_T( move_target, tripoint_bub_ms() );
         SET_FX_N_T( is_wandering, "is_wandering", bool() const );
+        DOC( "Hostile creature this monster sees at its move target, or nil while wandering." );
+        SET_FX_T( attack_target, Creature * () );
+        DOC( "Whether this monster flees from the given character." );
+        SET_FX_T( is_fleeing, bool( Character & ) const );
+        DOC( "Whether this monster has moves left and is not stunned, downed or webbed." );
+        SET_FX_T( can_act, bool() const );
+        DOC( "Whether this monster has an effect that impairs movement." );
+        SET_FX_T( movement_impaired, bool() );
+        DOC( "Intensity of the grabbed effect this monster applies." );
+        SET_FX_T( get_grab_strength, int() const );
+        DOC( "Whether this monster is dead or at 0 HP. Unlike is_dead, which checks only HP," );
+        DOC( "this also includes monsters that already died with HP left, e.g. by self-destructing." );
+        SET_FX_N_T( is_dead, "is_dead_or_dying", bool() const );
 
         SET_FX_T( wander_to, void( const tripoint_bub_ms & p, int f ) );
         luna::set_fx( ut, "add_armor_item", []( monster & m, detached_ptr<item> &armor ) { return m.set_armor_item( std::move( armor ) ); } );

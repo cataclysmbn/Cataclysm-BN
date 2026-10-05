@@ -156,6 +156,67 @@ TEST_CASE(
     CHECK_FALSE(mon.special_attack_ready("beta"));
 }
 
+TEST_CASE("Lua reads monster and monster type state", "[lua][monster]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& target = get_avatar();
+    target.setpos(map_local_to_abs(get_map(), tripoint_bub_ms(61, 60, 0)));
+    auto& mon = spawn_test_monster("mon_test_lua_read_bindings", tripoint_bub_ms(60, 60, 0));
+    mon.friendly = 0;
+    mon.anger = 100;
+    mon.moves = 100;
+    mon.training_level = 2;
+    mon.pet_bond_level = 3;
+    mon.set_dest(target.bub_pos());
+    REQUIRE(mon.attack_target() == &target);
+    auto lua = make_lua_state();
+    lua["test_monster"] = &mon;
+    lua["test_target"] = &target;
+
+    const auto alive = lua.safe_script(
+        R"(
+        local mt = test_monster:get_type():obj()
+        assert(mt.melee_dice == 2, "melee_dice was " .. tostring(mt.melee_dice))
+        assert(mt.melee_sides == 3, "melee_sides was " .. tostring(mt.melee_sides))
+        assert(mt.melee_damage:total_damage() == 4, "melee_damage was " .. tostring(mt.melee_damage:total_damage()))
+        assert(mt.grab_strength == 5, "grab_strength was " .. tostring(mt.grab_strength))
+        assert(test_monster:get_grab_strength() == 5)
+        assert(test_monster.training_level == 2)
+        assert(test_monster.pet_bond_level == 3)
+        assert(not pcall(function() test_monster.training_level = 0 end), "training_level must be read-only")
+        local attack_target = test_monster:attack_target()
+        assert(attack_target ~= nil and attack_target:is_avatar(), "attack_target was not the avatar")
+        assert(not test_monster:is_fleeing(test_target))
+        assert(test_monster:can_act())
+        assert(not test_monster:movement_impaired())
+        assert(not test_monster:is_dead())
+        assert(not test_monster:is_dead_or_dying())
+    )",
+        sol::script_pass_on_error);
+    if (!alive.valid()) { FAIL(alive.get<sol::error>().what()); }
+    CHECK(mon.training_level == 2);
+
+    mon.add_effect(efftype_id("downed"), 1_turns);
+    const auto downed = lua.safe_script(
+        R"(
+        assert(not test_monster:can_act())
+        assert(test_monster:movement_impaired())
+    )",
+        sol::script_pass_on_error);
+    if (!downed.valid()) { FAIL(downed.get<sol::error>().what()); }
+
+    // die() with HP left, as self-destructing special attacks do.
+    mon.die(nullptr);
+    REQUIRE(mon.get_hp() > 0);
+    const auto died = lua.safe_script(
+        R"(
+        assert(not test_monster:is_dead(), "is_dead checks only HP")
+        assert(test_monster:is_dead_or_dying())
+    )",
+        sol::script_pass_on_error);
+    if (!died.valid()) { FAIL(died.get<sol::error>().what()); }
+}
+
 TEST_CASE(
     "a Lua attitude function cannot recurse through a special attack",
     "[lua][monster][special_attack]") {
