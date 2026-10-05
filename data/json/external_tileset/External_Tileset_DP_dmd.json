@@ -244,7 +244,8 @@
               { "id": "end_piece", "fg": [ 152, 153, 154, 155 ] },
               { "id": "unconnected", "fg": 160 }
             ]
-          }
+          },
+          { "id": "overlay_wielded_m1014", "fg": 161 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
