@@ -21,5 +21,15 @@
     "loudness": 148,
     "speed": 280,
     "effects": [ "COOKOFF", "MUZZLE_SMOKE", "BLACKPOWDER" ]
+  },
+  {
+    "id": "36navy_smokeless",
+    "type": "AMMO",
+    "name": { "str": ".36 smokeless paper cartridge" },
+    "description": "A paper cartridge containing a premeasured amount of smokeless powder and a .36 projectile, for people who want to fire real civil war era weapons without getting a lungful of smoke.",
+    "copy-from": "36navy",
+    "ammo_type": "36paper",
+    "relative": { "damage": { "damage_type": "bullet", "amount": 7, "armor_penetration": 10 } },
+    "delete": { "effects": [ "BLACKPOWDER", "MUZZLE_SMOKE" ] }
   }
 ]

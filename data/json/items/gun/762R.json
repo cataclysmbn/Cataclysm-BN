@@ -98,5 +98,25 @@
       [ "underbarrel", 1 ]
     ],
     "relative": { "price": "100 USD" }
+  },
+  {
+    "id": "SVD",
+    "copy-from": "rifle_semi",
+    "looks_like": "m1a",
+    "type": "GUN",
+    "name": { "str": "SVD" },
+    "description": "A Soviet semi-automatic designated marksman rifle, chambered in 7.612x54mmR.  Originated during the Cold War, since phased out in Russia and Ukraine in favor of the SVDM and UAR-10, respectively.",
+    "weight": "4300 g",
+    "volume": "2500 ml",
+    "price": "4 kUSD",
+    "price_postapoc": "35 USD",
+    "material": [ "steel", "wood" ],
+    "color": "brown",
+    "ammo": "762R",
+    "dispersion": 110,
+    "min_cycle_recoil": 2500,
+    "magazine_well": "50 ml",
+    "default_mods": [ "rifle_scope" ],
+    "magazines": [ [ "762R", [ "SVDmag" ] ] ]
   }
 ]

@@ -750,7 +750,26 @@
     "autolearn": true,
     "qualities": [ { "id": "SAW_M_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SANDING", "level": 1 } ],
     "using": [ [ "welding_standard", 3 ] ],
-    "components": [ [ [ "m2browning", 1 ] ], [ [ "2x4", 1 ] ] ]
+    "components": [ [ [ "m2browning", 1 ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "m1919browning_stinger",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_RANGED",
+    "skill_used": "mechanics",
+    "skills_required": [ "gun", 4 ],
+    "difficulty": 7,
+    "time": "3 h",
+    "autolearn": true,
+    "qualities": [
+      { "id": "HAMMER_FINE", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "SANDING", "level": 1 }
+    ],
+    "using": [ [ "welding_standard", 4 ], [ "steel_tiny", 1 ] ],
+    "components": [ [ [ "m1919browning", 1 ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -1324,6 +1343,27 @@
   },
   {
     "type": "recipe",
+    "result": "colt_navy",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_RANGED",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 5 ],
+    "difficulty": 6,
+    "time": "1 h 30 m",
+    "autolearn": true,
+    "book_learn": [ [ "manual_pistol", 4 ], [ "mag_pistol", 5 ] ],
+    "qualities": [
+      { "id": "CUT", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "DRILL", "level": 2 },
+      { "id": "HAMMER_FINE", "level": 1 }
+    ],
+    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_standard", 4 ] ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ], [ [ "pipe", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "colt_army",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_RANGED",
@@ -1345,15 +1385,36 @@
   },
   {
     "type": "recipe",
+    "result": "colt_ring_36",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_RANGED",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 6 ],
+    "difficulty": 7,
+    "time": "2 h 30 m",
+    "autolearn": true,
+    "book_learn": [ [ "manual_rifle", 5 ], [ "mag_rifle", 6 ] ],
+    "qualities": [
+      { "id": "CUT", "level": 1 },
+      { "id": "SCREW_FINE", "level": 1 },
+      { "id": "SAW_M_FINE", "level": 1 },
+      { "id": "DRILL", "level": 2 },
+      { "id": "HAMMER_FINE", "level": 1 }
+    ],
+    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_standard", 4 ] ],
+    "components": [ [ [ "wood_structural_small", 1, "LIST" ] ], [ [ "pipe", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "colt_ring",
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_RANGED",
     "skill_used": "fabrication",
-    "skills_required": [ "mechanics", 5 ],
-    "difficulty": 6,
+    "skills_required": [ "mechanics", 6 ],
+    "difficulty": 7,
     "time": "2 h 30 m",
     "autolearn": true,
-    "book_learn": [ [ "manual_rifle", 4 ], [ "mag_rifle", 5 ] ],
+    "book_learn": [ [ "manual_rifle", 5 ], [ "mag_rifle", 6 ] ],
     "qualities": [
       { "id": "CUT", "level": 1 },
       { "id": "SCREW_FINE", "level": 1 },

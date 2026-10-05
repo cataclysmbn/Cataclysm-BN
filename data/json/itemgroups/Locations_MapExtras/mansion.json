@@ -517,9 +517,10 @@
     "subtype": "distribution",
     "//": "Mostly US weapons plus a small number of British ones",
     "items": [
-      [ "garand", 30 ],
+      [ "garand", 25 ],
       [ "m1918", 10 ],
       [ "m1903", 10 ],
+      [ "m1919browning", 5 ],
       [ "tommygun", 15 ],
       [ "m1911", 15 ],
       [ "winchester_1897", 10 ],

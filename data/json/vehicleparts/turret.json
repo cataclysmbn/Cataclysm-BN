@@ -306,6 +306,31 @@
     "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "rifle", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
   },
   {
+    "id": "mounted_1919browning",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted M1919A4 Browning" },
+    "item": "m1919browning",
+    "color": "green",
+    "broken_color": "green",
+    "looks_like": "mounted_browning",
+    "breaks_into": [ { "item": "scrap", "count": 80 }, { "item": "steel_chunk", "count": 48 }, { "item": "steel_lump", "count": 18 } ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "rifle", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
+  },
+  {
+    "id": "mounted_m1919browning_stinger",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted .30 caliber 'Stinger'" },
+    "item": "m1919browning_stinger",
+    "folded_volume": "3500 ml",
+    "looks_like": "mounted_browning",
+    "color": "green",
+    "broken_color": "green",
+    "breaks_into": [ { "item": "scrap", "count": 40 }, { "item": "steel_chunk", "count": 24 }, { "item": "steel_lump", "count": 9 } ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 3 ], [ "rifle", 1 ] ] }, "removal": { "skills": [ [ "mechanics", 1 ] ] } }
+  },
+  {
     "id": "mounted_browning",
     "copy-from": "turret",
     "type": "vehicle_part",
