@@ -179,9 +179,13 @@ local function get_core_stats(character)
   local core_per = character:get_per_base() + get_char_value(character, "rpg_assigned_per", 0)
   for _, mutation_id in ipairs(STAT_BONUS_IDS) do
     local mutation = MUTATIONS[mutation_id:str()]
-    if not mutation then goto continue_stat_bonus end
+    if not mutation then
+      goto continue_stat_bonus
+    end
     local bonuses = mutation.stat_bonuses
-    if not bonuses then goto continue_stat_bonus end
+    if not bonuses then
+      goto continue_stat_bonus
+    end
 
     if bonuses.str then core_str = core_str + (math.floor(level * bonuses.str * level_scaling)) end
     if bonuses.dex then core_dex = core_dex + (math.floor(level * bonuses.dex * level_scaling)) end
@@ -189,7 +193,7 @@ local function get_core_stats(character)
     if bonuses.per then core_per = core_per + (math.floor(level * bonuses.per * level_scaling)) end
     ::continue_stat_bonus::
   end
-  return {str = core_str, dex = core_dex, int = core_int, per = core_per }
+  return { str = core_str, dex = core_dex, int = core_int, per = core_per }
 end
 
 -- Common requirement checking and formatting
