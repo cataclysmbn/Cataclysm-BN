@@ -74,9 +74,7 @@ TEST_CASE("rope_ladder_spans_full_column_in_rope_cache", "[vehicle][ladder][zlev
         const auto rope_pos = tripoint_bub_ms(top.xy(), top.z() - 1);
         get_avatar().clear_map_memory();
         const auto window = catacurses::newwin(1, 1, point_zero);
-        here.drawsq(
-            window, rope_pos,
-            drawsq_params().center(rope_pos).memorize(true).output(false));
+        here.drawsq(window, rope_pos, drawsq_params().center(rope_pos).memorize(true).output(false));
 
         CHECK(get_avatar().get_memorized_symbol(bub_to_abs(rope_pos)) == '<');
     }
