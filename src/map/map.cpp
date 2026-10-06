@@ -6730,6 +6730,31 @@ auto map::draw_maptile(
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
 
         if (!veh->forward_velocity() && !veh->player_in_control(g->u)) { memory_sym = sym; }
+    } else if (has_rope_at(p)) {
+        const auto veh_pair = get_rope_at(p);
+        const vehicle* const rope_veh = veh_pair.first;
+        const int rope_part = veh_pair.second;
+        const int veh_z = rope_veh->bub_ms_location().z();
+        const auto& rope_info = rope_veh->part(rope_part).info();
+        auto draw_rope = veh_z - p.z() > 0;
+        if (draw_rope && rope_info.ladder_length() >= veh_z - p.z()) {
+            for (const auto z : std::views::iota(p.z() + 1, veh_z + 1)) {
+                if (ter(tripoint_bub_ms(p.x(), p.y(), z)) != t_open_air) {
+                    draw_rope = false;
+                    break;
+                }
+            }
+        }
+        if (draw_rope) {
+            const auto part_face = tileray(rope_veh->part_display_direction(rope_part));
+            sym = special_symbol(part_face.dir_symbol(rope_veh->part_sym(rope_part, true)));
+            tercol = rope_veh->part_color(rope_part, true);
+            item_sym.clear(); // clear the item symbol so `sym` is used instead.
+
+            if (!rope_veh->forward_velocity() && !rope_veh->player_in_control(g->u)) {
+                memory_sym = sym;
+            }
+        }
     }
 
     if (param.memorize() && check_and_set_seen_cache(p)) {

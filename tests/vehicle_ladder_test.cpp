@@ -1,5 +1,7 @@
+#include "../src/cursesdef.h"
 #include "../src/map/map.h"
 #include "../src/vehicle/vehicle_part.h"
+#include "avatar.h"
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game_constants.h"
@@ -58,5 +60,24 @@ TEST_CASE("rope_ladder_spans_full_column_in_rope_cache", "[vehicle][ladder][zlev
         for (const auto dz : std::views::iota(0, len + 1)) {
             CHECK_FALSE(here.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - dz)));
         }
+    }
+
+    SECTION("ascii drawing shows the hanging rope below the vehicle") {
+        for (const auto dz : std::views::iota(0, len + 1)) {
+            here.ter_set(tripoint_bub_ms(top.xy(), top.z() - dz), ter_id("t_open_air"));
+        }
+        for (const auto z : std::views::iota(top.z() - len, top.z() + 1)) {
+            here.invalidate_map_cache(z);
+            here.build_map_cache(z, true);
+        }
+
+        const auto rope_pos = tripoint_bub_ms(top.xy(), top.z() - 1);
+        get_avatar().clear_map_memory();
+        const auto window = catacurses::newwin(1, 1, point_zero);
+        here.drawsq(
+            window, rope_pos,
+            drawsq_params().center(rope_pos).memorize(true).output(false));
+
+        CHECK(get_avatar().get_memorized_symbol(bub_to_abs(rope_pos)) == '<');
     }
 }
