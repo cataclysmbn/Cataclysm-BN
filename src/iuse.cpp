@@ -8118,7 +8118,7 @@ static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
 
     for( auto &veh : g->m.get_vehicles() ) {
         auto &v = veh.v;
-        if( rl_dist( center, v->bub_ms_location() ) < 40 &&
+        if( g->m.inbounds(v->bub_ms_location()) &&
             v->fuel_left( itype_battery, true ) > 0 &&
             ( !v->get_avail_parts( advctrl ).empty() ||
               ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
@@ -8167,6 +8167,7 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
         if( stop ) {
             it->deactivate();
             g->setremoteveh( nullptr );
+            g->u.view_offset = tripoint_rel_ms::zero();
         }
 
         return it->type->charges_to_use();
@@ -8184,7 +8185,14 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     if( choice == 0 && controlling ) {
         it->deactivate();
+        if ( remote->velocity == 0 && remote->engine_on && !remote->is_flying_in_air() ) {
+                remote->stop_engines();
+        }
+        if ( remote->has_part("CAMERA") && remote->has_part("CAMERA_CONTROL") ) {
+                remote->camera_on = false;
+        }
         g->setremoteveh( nullptr );
+        g->u.view_offset = tripoint_rel_ms::zero();
         return 0;
     }
 
@@ -8199,6 +8207,7 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
     if( !hackveh( *p, *it, *veh ) ) {
         return 0;
     }
+    const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
 
     if( choice == 0 ) {
         if( g->u.has_trait( trait_WAYFARER ) ) {
@@ -8211,9 +8220,11 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             if( !veh->engine_on ) {
                 veh->start_engines();
             }
+        if ( veh->has_part("CAMERA") && veh->has_part("CAMERA_CONTROL") ) {
+                veh->camera_on = true;
+        }
         }
     } else if( choice == 1 ) {
-        const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
         // Revert to original behavior if we can't find remote controls.
         if( rctrl_parts.empty() ) {
             veh->use_controls( tripoint_bub_ms( pos ) );
@@ -8224,6 +8235,10 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     g->u.view_offset.x() = p2.x();
     g->u.view_offset.y() = p2.y();
+    if( !rctrl_parts.empty() ) {
+        g->u.view_offset = rctrl_parts.begin()->pos() - g->u.bub_pos();
+    }
+
     return it->type->charges_to_use();
 }
 

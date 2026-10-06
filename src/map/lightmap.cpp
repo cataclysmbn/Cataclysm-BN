@@ -23,6 +23,7 @@
 #include "mapbuffer.h"
 #include "mapdata.h"
 #include "math_defines.h"
+#include "messages.h"
 #include "monster.h"
 #include "mtype.h"
 #include "npc.h"
@@ -2538,7 +2539,15 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
             blocked_restore_cache);
     }
 
-    apply_vehicle_optics(origin, target_z);
+    const auto remote_vehicle = g->remoteveh();
+    tripoint_bub_ms cam_pos = origin;
+    if ( remote_vehicle != nullptr ) {
+        const auto cam_parts = remote_vehicle->get_avail_parts( "CAMERA_CONTROL" );
+        if( !cam_parts.empty() ) {
+            cam_pos = tripoint_bub_ms( cam_parts.begin()->pos() );
+        }
+    }
+    apply_vehicle_optics(cam_pos, target_z);
 }
 
 void map::apply_vehicle_optics(const tripoint_bub_ms& origin, const int target_z) {
@@ -2546,6 +2555,8 @@ void map::apply_vehicle_optics(const tripoint_bub_ms& origin, const int target_z
     const optional_vpart_position vp = veh_at(origin);
     if (!vp) { return; }
     vehicle* const veh = &vp->vehicle();
+    add_msg( m_info, _( "Camera source should be: %1$s." ),
+                                    veh->name );
 
     auto& target_cache = get_cache(target_z);
 
@@ -2563,11 +2574,14 @@ void map::apply_vehicle_optics(const tripoint_bub_ms& origin, const int target_z
         if (!vp.info().has_flag("CAMERA")
             && target_cache.seen_cache[target_cache.idx(mirror_pos.x(), mirror_pos.y())]
                    < LIGHT_TRANSPARENCY_SOLID + g_visible_threshold) {
+            add_msg( m_info, _( "cam_control failed because no cams" ) );
             continue;
-        } else if (!vp.info().has_flag("CAMERA_CONTROL")) {
+        } else if (!vp.info().has_flag("CAMERA_CONTROL") ) {
+            add_msg( m_info, _( "cam_control failed because no controller" ) );
             mirrors.emplace_back(static_cast<int>(vp.part_index()));
         } else {
             if (square_dist(origin, mirror_pos) <= 1 && veh->camera_on) {
+                add_msg( m_info, _( "cam_control should be equal to part index" ) );
                 cam_control = static_cast<int>(vp.part_index());
             }
         }
@@ -2624,6 +2638,8 @@ void map::apply_vehicle_optics(const tripoint_bub_ms& origin, const int target_z
         target_cache.camera_cache[camera_idx] = VISIBILITY_FULL;
     };
 
+    add_msg( m_info, _( "cam_control count: %1$s." ),
+                                    cam_control );
     for (const int mirror : mirrors) {
         const bool is_camera = veh->part_info(mirror).has_flag("CAMERA");
         if (is_camera && cam_control < 0) {

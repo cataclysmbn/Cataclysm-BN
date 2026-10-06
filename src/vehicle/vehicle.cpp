@@ -549,7 +549,7 @@ auto vehicle::remote_controlled(const Character& who) const -> bool {
     if (veh != this) { return false; }
 
     for (const vpart_reference& vp : get_avail_parts("REMOTE_CONTROLS")) {
-        if (rl_dist(who.bub_pos(), vp.pos()) <= 40) { return true; }
+        if (g->m.inbounds(vp.pos())) { return true; }
     }
 
     add_msg(m_bad, _("Lost connection with the vehicle due to distance!"));

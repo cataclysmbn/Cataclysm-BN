@@ -2129,6 +2129,10 @@ auto map::displace_vehicle(vehicle& veh, const tripoint_rel_ms& dp) -> bool {
     if (remote) {
         // Has to be after update_map or coordinates won't be valid
         g->setremoteveh(&veh);
+        const auto cam_parts = veh.get_avail_parts( "REMOTE_CONTROLS" );
+        if( !cam_parts.empty() ) {
+            g->u.view_offset = cam_parts.begin()->pos() - g->u.bub_pos();
+        }
     }
     mark_vehicle_moved();
     return true;

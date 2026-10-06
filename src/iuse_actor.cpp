@@ -737,6 +737,7 @@ void unfold_vehicle_iuse::load( const JsonObject &obj )
     obj.read( "unfold_msg", unfold_msg );
     obj.read( "moves", moves );
     obj.read( "tools_needed", tools_needed );
+    obj.read( "full_battery", full_battery );
 }
 
 int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
@@ -758,7 +759,7 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &
         }
     }
 
-    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, 0, 0, false, false,
+    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, full_battery ? 100 : 0, 0, false, false,
                                           true );
     if( veh == nullptr ) {
         p.add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it.tname() );

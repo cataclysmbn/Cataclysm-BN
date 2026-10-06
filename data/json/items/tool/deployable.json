@@ -434,5 +434,31 @@
     "price": "250 USD",
     "price_postapoc": "5 USD",
     "use_action": { "type": "deploy_furn", "furn_type": "f_kiln_metal_empty" }
+  },
+  {
+    "id": "delivery_drone_item",
+    "type": "TOOL",
+    "category": "deployables",
+    "name": { "str": "delivery drone" },
+    "description": "This is a backpack-sized remote-controlled drone, with a small basket for holding items.  Activate it to deploy, you'll need a vehicle remote controller to operate it.",
+    "//": "Exact weight of component items, exact folded volume of vehicle.",
+    "weight": "11880 g",
+    "volume": "8 L",
+    "price": "3 kUSD",
+    "price_postapoc": "20 USD",
+    "to_hit": -5,
+    "bashing": 10,
+    "material": "plastic",
+    "symbol": "0",
+    "color": "light_gray",
+    "looks_like": "bot_eyebot",
+    "use_action": {
+      "type": "unfold_vehicle",
+      "vehicle_name": "delivery_drone",
+      "unfold_msg": "You lay the drone down on the ground.",
+      "full_battery": true,
+      "moves": 0
+    },
+    "flags": [ "ALLOWS_REMOTE_USE", "DESTROY_ON_DECHARGE" ]
   }
 ]

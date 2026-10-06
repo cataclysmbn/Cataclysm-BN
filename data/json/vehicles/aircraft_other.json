@@ -2312,5 +2312,26 @@
       { "x": -7, "y": 2, "chance": 100, "items": [ "aerial_bomb" ] },
       { "x": -7, "y": -2, "chance": 100, "items": [ "aerial_bomb" ] }
     ]
+  },
+  {
+    "id": "delivery_drone",
+    "type": "vehicle",
+    "name": "Delivery Drone",
+    "blueprint": [ "#" ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_plastic_cross",
+          "small_storage_battery",
+          "engine_electric_small",
+          "robot_controls",
+          "omnicam",
+          "cargo_bag",
+          "drone_rotors"
+        ]
+      }
+    ]
   }
 ]
