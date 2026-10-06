@@ -2194,7 +2194,8 @@ auto find_vehicle_for_optics_origin(map const& m, tripoint_bub_ms const& origin)
     return it != origin_cache.vehicle_list.end() ? *it : nullptr;
 }
 
-auto collect_vehicle_optics(map const& m, tripoint_bub_ms const& origin, int const target_z)
+auto collect_vehicle_optics(
+    map const& m, tripoint_bub_ms const& origin, int const target_z, bool requires_camera)
     -> std::vector<GpuVehicleOptic> {
     auto optics = std::vector<GpuVehicleOptic>{};
     auto* const veh = find_vehicle_for_optics_origin(m, origin);
@@ -2223,7 +2224,7 @@ auto collect_vehicle_optics(map const& m, tripoint_bub_ms const& origin, int con
         if (!target_cache.inbounds(optic_pos.xy())) { continue; }
         auto const is_camera = part_info.has_flag("CAMERA");
         if (is_camera) {
-            if (cam_control < 0) { continue; }
+            if (requires_camera && cam_control < 0) { continue; }
             auto const durability = std::max(part_info.durability, 1);
             auto const raw_range = part_info.bonus * veh->part(part_index).hp() / durability;
             auto const optic_range = std::clamp(raw_range, 0, g_max_view_distance);
@@ -3855,8 +3856,13 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto const visibility_download_bytes =
         static_cast<Uint32>(visibility_download_levels.size()) * uint_level_bytes;
     auto const visibility_download_total_bytes = visibility_download_bytes;
-    auto vehicle_optics = collect_vehicle_optics(
-        *p.m, tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev}, p.zlev);
+    auto veh_optic_pos = tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev};
+    bool requires_camera = true;
+    if (const auto remote_vehicle = g->remoteveh()) {
+        veh_optic_pos = remote_vehicle->bub_ms_location();
+        requires_camera = false;
+    }
+    auto vehicle_optics = collect_vehicle_optics(*p.m, veh_optic_pos, p.zlev, requires_camera);
     if (!vehicle_optics.empty() && !ensure_vehicle_optics_pipeline(device)) { return {}; }
     auto camera_zero = make_camera_zero_plan(all_levels, p.zlev, !vehicle_optics.empty());
     auto const camera_clear_ranges = make_z_level_ranges(camera_zero.upload_levels);

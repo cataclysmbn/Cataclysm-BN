@@ -8118,7 +8118,7 @@ static vehicle *pickveh( const tripoint_bub_ms &center, bool advanced )
 
     for( auto &veh : g->m.get_vehicles() ) {
         auto &v = veh.v;
-        if( g->m.inbounds(v->bub_ms_location()) &&
+        if( g->m.inbounds( v->bub_ms_location() ) &&
             v->fuel_left( itype_battery, true ) > 0 &&
             ( !v->get_avail_parts( advctrl ).empty() ||
               ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
@@ -8185,11 +8185,11 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 
     if( choice == 0 && controlling ) {
         it->deactivate();
-        if ( remote->velocity == 0 && remote->engine_on && !remote->is_flying_in_air() ) {
-                remote->stop_engines();
+        if( remote->velocity == 0 && remote->engine_on && !remote->is_flying_in_air() ) {
+            remote->stop_engines();
         }
-        if ( remote->has_part("CAMERA") && remote->has_part("CAMERA_CONTROL") ) {
-                remote->camera_on = false;
+        if( remote->has_part( "CAMERA" ) && remote->has_part( "CAMERA_CONTROL" ) ) {
+            remote->camera_on = false;
         }
         g->setremoteveh( nullptr );
         g->u.view_offset = tripoint_rel_ms::zero();
@@ -8220,9 +8220,9 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             if( !veh->engine_on ) {
                 veh->start_engines();
             }
-        if ( veh->has_part("CAMERA") && veh->has_part("CAMERA_CONTROL") ) {
+            if( veh->has_part( "CAMERA" ) && veh->has_part( "CAMERA_CONTROL" ) ) {
                 veh->camera_on = true;
-        }
+            }
         }
     } else if( choice == 1 ) {
         // Revert to original behavior if we can't find remote controls.

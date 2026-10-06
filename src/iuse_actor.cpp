@@ -759,7 +759,8 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &
         }
     }
 
-    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, full_battery ? 100 : 0, 0, false, false,
+    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, full_battery ? 100 : 0, 0,
+                                          false, false,
                                           true );
     if( veh == nullptr ) {
         p.add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it.tname() );

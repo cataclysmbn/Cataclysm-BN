@@ -2175,7 +2175,8 @@ protected:
     auto vision_transparency_block_mask() const -> uint32_t;
     // Applies vehicle mirror/camera FOV from @p origin's vehicle.
     // Separated from build_seen_cache for readability and Tracy granularity.
-    void apply_vehicle_optics(const tripoint_bub_ms& origin, int target_z);
+    void apply_vehicle_optics(
+        const tripoint_bub_ms& origin, int target_z, bool requires_camera = false);
     void apply_character_light(Character& who);
 
     // Adds/removes player specific transparencies
