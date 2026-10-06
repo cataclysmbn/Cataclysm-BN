@@ -78,6 +78,7 @@
         "t": "f_table"
       },
       "toilets": { "T": {  } },
+      "items": { "#": { "item": "delivery_drones", "chance": 10 } },
       "place_items": [
         { "item": "produce", "x": [ 3, 6 ], "y": 5, "chance": 85, "repeat": [ 1, 10 ] },
         { "item": "produce", "x": [ 8, 12 ], "y": 5, "chance": 85, "repeat": [ 1, 10 ] },
@@ -236,6 +237,7 @@
       },
       "toilets": { "T": {  } },
       "items": {
+        "#": { "item": "delivery_drones", "chance": 10 },
         "α": { "item": "fridgesnacks", "chance": 80, "repeat": [ 1, 6 ] },
         "β": { "item": "fridge", "chance": 80, "repeat": [ 1, 6 ] },
         "γ": { "item": "softdrugs", "chance": 75, "repeat": [ 1, 4 ] },

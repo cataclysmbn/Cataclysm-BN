@@ -1914,7 +1914,11 @@
     "name": "Automatic Water Skimmer",
     "blueprint": [  ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "robot_controls", "engine_electric", "roof", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "robot_controls", "vehicle_alarm", "engine_electric", "roof", "metal_boat_hull" ]
+      },
       { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "vehicle_scoop" ] },
       { "x": -2, "y": 0, "parts": [ "frame_horizontal", "hatch", "metal_boat_hull" ] },
       {

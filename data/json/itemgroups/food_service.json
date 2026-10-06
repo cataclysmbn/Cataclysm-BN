@@ -351,6 +351,7 @@
     "id": "pizza_locker",
     "type": "item_group",
     "items": [
+      { "group": "delivery_drones", "prob": 50 },
       [ "towel", 15 ],
       [ "soap", 15 ],
       [ "detergent", 15 ],
@@ -493,6 +494,7 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
+      { "group": "delivery_drones", "prob": 50 },
       { "item": "apron_leather", "prob": 25 },
       { "item": "sm_extinguisher", "prob": 10 },
       { "item": "hat_ball", "prob": 25 },
@@ -635,6 +637,7 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [
+      { "group": "delivery_drones", "prob": 50 },
       { "item": "hat_ball", "prob": 30 },
       { "item": "knife_steak", "prob": 20 },
       { "item": "sm_extinguisher", "prob": 40 },

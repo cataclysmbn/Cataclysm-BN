@@ -415,6 +415,8 @@
       { "item": "survivormap", "prob": 1 },
       { "item": "radio_car_box", "prob": 2 },
       { "item": "radiocontrol", "prob": 5 },
+      { "item": "delivery_drone_item", "prob": 1 },
+      { "item": "remotevehcontrol", "prob": 4 },
       { "item": "magnifying_glass", "prob": 2 },
       { "item": "straw_hat", "prob": 5 },
       { "item": "kufi", "prob": 1 },
