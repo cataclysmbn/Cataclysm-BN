@@ -719,9 +719,50 @@
     "type": "field_type",
     "legacy_enum_id": 24,
     "intensity_levels": [
-      { "name": "faint plasma", "color": "magenta", "sym": "9", "light_emitted": 0.01 },
-      { "name": "glowing plasma", "color": "pink", "light_emitted": 4 },
-      { "name": "glaring plasma", "color": "white", "light_emitted": 20 }
+      {
+        "name": "faint plasma",
+        "color": "magenta",
+        "sym": "9",
+        "dangerous": true,
+        "light_emitted": 0.01,
+        "effects": [
+          {
+            "effect_id": "onfire",
+            "body_part": "torso",
+            "intensity": 1,
+            "min_duration": "4 seconds",
+            "max_duration": "4 seconds"
+          }
+        ]
+      },
+      {
+        "name": "glowing plasma",
+        "color": "pink",
+        "light_emitted": 4,
+        "effects": [
+          {
+            "effect_id": "onfire",
+            "body_part": "torso",
+            "intensity": 2,
+            "min_duration": "8 seconds",
+            "max_duration": "8 seconds"
+          }
+        ]
+      },
+      {
+        "name": "glaring plasma",
+        "color": "white",
+        "light_emitted": 20,
+        "effects": [
+          {
+            "effect_id": "onfire",
+            "body_part": "torso",
+            "intensity": 3,
+            "min_duration": "12 seconds",
+            "max_duration": "12 seconds"
+          }
+        ]
+      }
     ],
     "priority": 4,
     "half_life": "2 turns",
