@@ -5037,9 +5037,7 @@ std::optional<tripoint_rel_ms> game::get_veh_dir_indicator_location( bool next )
     if( !get_option<bool>( "VEHICLE_DIR_INDICATOR" ) ) {
         return std::nullopt;
     }
-    add_msg( "here1" );
     if( vehicle *veh = remoteveh() ) {
-        add_msg( "here" );
         rl_vec2d face = next ? veh->dir_vec() : veh->face_vec();
         float r = 10.0;
         return tripoint_rel_ms( static_cast<int>( r * face.x ), static_cast<int>( r * face.y ),
@@ -5049,7 +5047,6 @@ std::optional<tripoint_rel_ms> game::get_veh_dir_indicator_location( bool next )
     if( !vp ) {
         return std::nullopt;
     }
-    add_msg( "here2" );
     vehicle *const veh = &vp->vehicle();
     rl_vec2d face = next ? veh->dir_vec() : veh->face_vec();
     float r = 10.0;
