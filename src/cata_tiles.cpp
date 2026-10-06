@@ -4165,6 +4165,15 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 lit_level::LIT, false, 0, false );
         }
     }
+    if( g->remoteveh() ) {
+        if( auto indicator_offset = g->get_veh_dir_indicator_location( true ) ) {
+            const tile_search_params tile { "cursor", C_NONE, empty_string, 0, 0 };
+            const auto pos = indicator_offset->xy() + g->remoteveh()->bub_ms_location();
+            draw_from_id_string(
+                tile, pos, std::nullopt, std::nullopt,
+                lit_level::LIT, false, 0, false );
+        }
+    }
     if( !g->display_overlay_state( ACTION_DISPLAY_TILES_NO_VFX ) ) {
         if( const std::optional<SDL_Color> overlay_color = get_weather_screen_overlay_color();
             overlay_color ) {
