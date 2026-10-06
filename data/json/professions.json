@@ -5675,6 +5675,40 @@
   },
   {
     "type": "profession",
+    "id": "pizzaboy_drone",
+    "name": "Delivery Drone Pilot",
+    "description": "When the riots started it was still business as usual at work, since they had you handling online orders and contactless delivery, but the undead are much more insistent about in-store pickup than the living.  You fled with what was going to be your last delivery order and the drone that was going to ship it.",
+    "points": 1,
+    "skills": [
+      { "level": 2, "name": "driving" },
+      { "level": 2, "name": "computers" },
+      { "level": 1, "name": "barter" },
+      { "level": 1, "name": "speech" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "hat_ball",
+          "tshirt",
+          "jeans",
+          "jacket_light",
+          "socks",
+          "sneakers",
+          "pizza_veggy",
+          "pizza_meat",
+          "delivery_drone_item",
+          "remotevehcontrol",
+          "wristwatch",
+          "backpack",
+          "plastic_shopping_bag"
+        ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "bra", "boy_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
     "id": "archaeologist",
     "name": "Archaeologist",
     "description": "While on your way to a long-lost temple following a clue from your dead grandfather's journal, the ground started to shake uncontrollably.  Getting a bad feeling about the situation, you head to the nearest shelter.",
@@ -6666,7 +6700,7 @@
       { "level": 2, "name": "fabrication" }
     ],
     "items": {
-      "both": { "items": [ "jumpsuit", "socks", "boots", "smart_phone", "wristwatch" ] },
+      "both": { "items": [ "jumpsuit", "socks", "boots", "backpack", "smart_phone", "wristwatch", "delivery_drone_item" ] },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }

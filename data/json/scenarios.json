@@ -753,7 +753,7 @@
     "points": 2,
     "description": "While the world was falling apart someone called to order some of Foodplace's delicious food™ and they sent you to do the delivery.  You're not sure about much, but one thing is certain: that delicious food™ is going to get delivered even if that's the last thing you do!",
     "vehicle": "food_truck_delivery_mission",
-    "professions": [ "true_foodperson", "pizzaboy", "unemployed" ],
+    "professions": [ "true_foodperson", "pizzaboy", "pizzaboy_drone", "unemployed" ],
     "start_name": "A Stop On The Road",
     "allowed_locs": [ "sloc_gas_station" ],
     "missions": [ "MISSION_LAST_DELIVERY" ],
