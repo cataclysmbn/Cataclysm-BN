@@ -103,6 +103,7 @@
     "type": "vehicle_part",
     "name": "drone quad rotors",
     "item": "quad_rotors",
+    "looks_like": "gyrocopter_rotors",
     "rotor_diameter": 1,
     "requirements": {
       "install": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "soldering_standard", 10 ] ] },
