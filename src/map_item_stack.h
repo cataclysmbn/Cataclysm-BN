@@ -13,12 +13,13 @@ class map_item_stack
         class item_group
         {
             public:
+                const item *example;
                 tripoint_rel_ms pos;
                 int count;
 
                 //only expected to be used for things like lists and vectors
                 item_group();
-                item_group( const tripoint_rel_ms &p, int arg_count );
+                item_group( const item *it, const tripoint_rel_ms &p, int arg_count );
         };
     public:
         // This should be per-group!
@@ -45,5 +46,4 @@ std::vector<map_item_stack> filter_item_stacks( const std::vector<map_item_stack
 int list_filter_high_priority( std::vector<map_item_stack> &stack, const std::string &priorities );
 int list_filter_low_priority( std::vector<map_item_stack> &stack, int start,
                               const std::string &priorities );
-
 
