@@ -240,7 +240,7 @@
       { "item": "lighter", "charges": 25 },
       { "item": "pockknife" },
       { "item": "multitool" },
-      { "item": "1st_aid" },
+      { "item": "1st_aid_ifak" },
       { "item": "rollmat" },
       { "item": "sleeping_bag_roll" },
       { "item": "ear_plugs" },
@@ -248,6 +248,18 @@
       { "item": "mre_macaronimarinara_box" },
       { "item": "mre_meatball_box" },
       { "item": "water_clean", "count": 2, "charges": 2, "container-item": "bottle_plastic" }
+    ]
+  },
+  {
+    "id": "individual_first_aid_kit",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [
+      { "item": "medical_tape", "charges": 20 },
+      { "item": "bfipowder", "charges": 4, "container-item": "bag_zipper_small" },
+      { "item": "quikclot", "charges": 3, "container-item": "bag_zipper_small" },
+      { "item": "bandages", "charges": 3 },
+      { "item": "medical_gauze", "charges": 3 }
     ]
   },
   {
