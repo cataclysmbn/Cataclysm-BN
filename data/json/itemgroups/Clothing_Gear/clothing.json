@@ -31,13 +31,13 @@
             "collection": [
               {
                 "distribution": [
-                  { "item": "glasses_eye", "prob": 80 },
-                  { "item": "glasses_reading", "prob": 10 },
-                  { "item": "glasses_bifocal", "prob": 5 },
+                  { "item": "glasses_eye", "prob": 45 },
+                  { "item": "glasses_reading", "prob": 40 },
+                  { "item": "glasses_bifocal", "prob": 10 },
                   { "item": "glasses_monocle", "prob": 5 }
                 ]
               },
-              { "item": "fitover_sunglasses" }
+              { "item": "fitover_sunglasses", "prob": 25 }
             ],
             "prob": 75
           }
@@ -1437,7 +1437,7 @@
       [ "cowboy_hat", 10 ],
       [ "bullwhip", 1 ],
       [ "10gal_hat", 5 ],
-      [ "glasses_monocle", 2 ],
+      { "group": "clothing_glasses", "prob": 40 },
       [ "duct_tape", 60 ],
       [ "firecracker_pack", 5 ],
       [ "firecracker", 5 ],
@@ -3768,8 +3768,6 @@
     "//": "unisex personal accessories",
     "subtype": "distribution",
     "items": [
-      { "group": "clothing_glasses", "prob": 10 },
-      { "group": "clothing_watch", "prob": 10 },
       { "group": "typical_accessories_combined", "prob": 25 },
       {
         "distribution": [ { "group": "accessory_sportsgear", "prob": 50 }, { "group": "accessory_weaponcarry", "prob": 50 } ],
@@ -3777,7 +3775,7 @@
       },
       {
         "distribution": [ { "group": "misc_personal_accessories", "prob": 90 }, { "group": "flask_liquor", "prob": 10 } ],
-        "prob": 10
+        "prob": 25
       },
       {
         "distribution": [
@@ -3787,7 +3785,7 @@
           { "group": "mags_pistol_common", "prob": 1 },
           { "item": "condom", "prob": 10, "count": [ 1, 5 ] }
         ],
-        "prob": 20
+        "prob": 25
       }
     ]
   },
@@ -3797,12 +3795,10 @@
     "//": "unisex personal accessories but minus things that'd be odd for a child to have on them",
     "subtype": "distribution",
     "items": [
-      { "group": "clothing_glasses", "prob": 10 },
-      { "group": "clothing_watch", "prob": 10 },
       { "group": "kids_accessories_combined", "prob": 25 },
       { "group": "accessory_sportsgear", "prob": 25 },
-      { "group": "misc_personal_accessories", "prob": 10 },
-      { "group": "child_items", "prob": 20 }
+      { "group": "misc_personal_accessories", "prob": 25 },
+      { "group": "child_items", "prob": 25 }
     ]
   },
   {

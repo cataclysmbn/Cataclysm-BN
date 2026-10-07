@@ -310,8 +310,14 @@
     "id": "default_maid_clothes",
     "entries": [
       { "group": "scarfs_unisex", "damage": [ 1, 4 ], "prob": 20 },
+      {
+        "distribution": [
+          { "group": "clothing_glasses", "prob": 25, "damage": [ 0, 2 ] },
+          { "item": "glasses_monocle", "prob": 75, "damage": [ 1, 4 ] },
+        ], "prob": 20
+      },
+      { "group": "clothing_watch", "damage": [ 0, 2 ], "prob": 10 },
       { "group": "accesories_personal_unisex", "damage": [ 1, 4 ], "prob": 15 },
-      { "item": "glasses_monocle", "prob": 20, "damage": [ 1, 4 ] },
       {
         "distribution": [
           {
@@ -371,6 +377,12 @@
       { "group": "gloves_unisex", "damage": [ 1, 4 ], "prob": 20 },
       { "group": "hatstore_hats", "damage": [ 1, 4 ], "prob": 20 },
       { "group": "scarfs_unisex", "damage": [ 1, 4 ], "prob": 20 },
+      {
+        "distribution": [
+          { "group": "clothing_glasses", "prob": 25, "damage": [ 0, 2 ] },
+          { "item": "glasses_monocle", "prob": 75, "damage": [ 1, 4 ] },
+        ], "prob": 20
+      },
       { "group": "accesories_personal_unisex", "damage": [ 1, 4 ], "prob": 45 },
       {
         "distribution": [

@@ -368,7 +368,8 @@
       [ "character_sheet", 20 ],
       [ "scorecard", 10 ],
       [ "dnd_handbook", 5 ],
-      [ "portable_game", 5 ]
+      [ "portable_game", 5 ],
+      [ "game_watch", 5 ]
     ]
   }
 ]
