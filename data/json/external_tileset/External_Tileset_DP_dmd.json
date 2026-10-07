@@ -245,7 +245,9 @@
               { "id": "unconnected", "fg": 160 }
             ]
           },
-          { "id": "overlay_wielded_m1014", "fg": 161 }
+          { "id": "overlay_wielded_m1014", "fg": 161 },
+          { "id": "1st_aid_ifak", "fg": 162 },
+          { "id": "overlay_wielded_1st_aid_ifak", "fg": 163 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
