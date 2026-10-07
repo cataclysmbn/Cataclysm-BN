@@ -49,8 +49,8 @@
     "type": "item_group",
     "id": "cop_gear",
     "items": [
-      [ "1st_aid", 24 ],
-      [ "1st_aid_deluxe", 6 ],
+      [ "1st_aid_ifak", 24 ],
+      [ "1st_aid", 6 ],
       [ "gasbomb", 5 ],
       [ "airhorn", 5 ],
       [ "bandages", 20 ],
@@ -182,7 +182,7 @@
         "collection": [
           { "item": "bandages", "prob": 60 },
           {
-            "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
+            "distribution": [ { "item": "1st_aid_ifak", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
             "prob": 20
           }
         ],
