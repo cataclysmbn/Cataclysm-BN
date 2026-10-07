@@ -1,0 +1,12 @@
+name: Build shadercross
+description: Build the host shader compiler without vcpkg
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        cmake -S build-scripts/shadercross -B "$RUNNER_TEMP/shadercross" -DCMAKE_BUILD_TYPE=Release
+        cmake --build "$RUNNER_TEMP/shadercross" --target shadercross --parallel 2
+        echo "SHADERCROSS=$RUNNER_TEMP/shadercross/bin/shadercross" >> "$GITHUB_ENV"
+        echo "$RUNNER_TEMP/shadercross/bin" >> "$GITHUB_PATH"
