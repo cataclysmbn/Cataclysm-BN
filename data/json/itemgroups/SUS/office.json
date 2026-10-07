@@ -64,10 +64,7 @@
         "prob": 10
       },
       {
-        "distribution": [
-          { "item": "glasses_reading", "prob": 75 },
-          { "item": "glasses_bifocal", "prob": 25 }
-        ],
+        "distribution": [ { "item": "glasses_reading", "prob": 75 }, { "item": "glasses_bifocal", "prob": 25 } ],
         "prob": 5
       },
       { "group": "everyday_gear", "prob": 10 }

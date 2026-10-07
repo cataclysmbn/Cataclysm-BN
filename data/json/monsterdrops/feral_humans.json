@@ -313,8 +313,9 @@
       {
         "distribution": [
           { "group": "clothing_glasses", "prob": 25, "damage": [ 0, 2 ] },
-          { "item": "glasses_monocle", "prob": 75, "damage": [ 1, 4 ] },
-        ], "prob": 20
+          { "item": "glasses_monocle", "prob": 75, "damage": [ 1, 4 ] }
+        ],
+        "prob": 20
       },
       { "group": "clothing_watch", "damage": [ 0, 2 ], "prob": 10 },
       { "group": "accesories_personal_unisex", "damage": [ 1, 4 ], "prob": 15 },
@@ -380,8 +381,9 @@
       {
         "distribution": [
           { "group": "clothing_glasses", "prob": 25, "damage": [ 0, 2 ] },
-          { "item": "glasses_monocle", "prob": 75, "damage": [ 1, 4 ] },
-        ], "prob": 20
+          { "item": "glasses_monocle", "prob": 75, "damage": [ 1, 4 ] }
+        ],
+        "prob": 20
       },
       { "group": "accesories_personal_unisex", "damage": [ 1, 4 ], "prob": 45 },
       {
