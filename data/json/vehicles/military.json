@@ -1318,7 +1318,7 @@
       { "x": 0, "y": 1, "chance": 1, "items": [ "roadmap" ] },
       { "x": 0, "y": 1, "chance": 2, "items": [ "mil_gps_device" ] },
       { "x": 0, "y": 1, "chance": 10, "items": [ "flashlight" ] },
-      { "x": 0, "y": 1, "chance": 5, "items": [ "1st_aid" ] },
+      { "x": 0, "y": 1, "chance": 5, "items": [ "1st_aid_ifak" ] },
       { "x": 0, "y": 1, "chance": 5, "item_groups": [ "infantry_officer_gear" ] },
       { "x": 0, "y": -1, "chance": 10, "item_groups": [ "infantry_common_gear" ] },
       { "x": -1, "y": 0, "chance": 20, "item_groups": [ "car_kit" ] },
