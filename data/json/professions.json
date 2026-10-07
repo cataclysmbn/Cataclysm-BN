@@ -5681,7 +5681,7 @@
     "points": 1,
     "skills": [
       { "level": 2, "name": "driving" },
-      { "level": 2, "name": "computers" },
+      { "level": 2, "name": "computer" },
       { "level": 1, "name": "barter" },
       { "level": 1, "name": "speech" }
     ],
