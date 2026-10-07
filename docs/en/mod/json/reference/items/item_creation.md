@@ -948,6 +948,7 @@ All object defined use actions support the following two types.
     "type": "unfold_vehicle", // Transforms the item into a vehicle.
     "vehicle_name": "bicycle", // Vehicle name to create.
     "unfold_msg": "You painstakingly unfold the bicycle and make it ready to ride.", // Message to display when transforming.
+    "full_battery": true, // If set to true, vehicle will be created with full fuel and batteries. It's recommended you only use this if the vehicle being deployed is made entirely from foldable parts, as those will convert into a generic folded vehicle item that tracks its status when taken down.  (Default: false)
     "moves": 500 // Number of moves required in the process.
 },
 "use_action" : {
