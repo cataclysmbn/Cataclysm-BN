@@ -94,7 +94,7 @@
     "subtype": "distribution",
     "//": "Healing items appropriate for soldiers and other paramilitary forces",
     "entries": [
-      { "item": "1st_aid", "prob": 40 },
+      { "item": "1st_aid_ifak", "prob": 40 },
       { "item": "1st_aid_deluxe", "prob": 10 },
       { "item": "antibiotics", "prob": 20 },
       { "item": "bandages", "prob": 100 },
