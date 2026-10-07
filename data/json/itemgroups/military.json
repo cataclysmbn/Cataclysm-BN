@@ -235,8 +235,7 @@
     "id": "infantry_medical_gear",
     "subtype": "collection",
     "entries": [
-      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 80 },
-      { "item": "quikclot", "prob": 70 },
+      { "distribution": [ { "item": "1st_aid_ifak", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 80 },
       { "collection": [ { "item": "morphine" }, { "item": "syringe" } ], "prob": 40 },
       {
         "distribution": [
@@ -695,7 +694,7 @@
       { "item": "neccowafers", "prob": 30 },
       { "item": "can_beans", "prob": 40 },
       { "item": "pork_beans", "prob": 40 },
-      { "item": "1st_aid", "prob": 28 },
+      { "item": "1st_aid_ifak", "prob": 28 },
       { "item": "1st_aid_deluxe", "prob": 7 },
       { "item": "saline", "prob": 10 },
       { "item": "con_milk", "prob": 10 },
