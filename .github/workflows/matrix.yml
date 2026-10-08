@@ -298,6 +298,7 @@ jobs:
         ]
       download-translations: false
       bundle-tilesets: false
+      bundle-registry-mods: false
       package-artifacts: true
       run-tests: true
       android-localize: false
