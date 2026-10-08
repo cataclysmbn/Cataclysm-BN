@@ -17,6 +17,7 @@
       { "item": "solder_wire", "prob": 20, "count": [ 2, 4 ] },
       [ "RAM", 20 ],
       [ "radiocontrol", 10 ],
+      [ "remotevehcontrol", 5 ],
       [ "receiver", 30 ],
       [ "transponder", 30 ],
       [ "light_bulb", 60 ],

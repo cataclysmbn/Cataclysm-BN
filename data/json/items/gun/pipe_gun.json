@@ -63,6 +63,7 @@
       [ "sights", 1 ],
       [ "underbarrel", 1 ],
       [ "rail", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ]
     ],
     "delete": { "flags": "NEVER_JAMS" }

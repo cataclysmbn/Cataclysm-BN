@@ -288,7 +288,7 @@
     "charges_per_use": 5,
     "use_action": "WEATHER_TOOL",
     "flags": [ "THERMOMETER", "HYGROMETER", "BAROMETER", "WINDMETER" ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -362,7 +362,7 @@
     "material": [ "plastic", "glass" ],
     "symbol": ";",
     "color": "light_gray",
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -384,7 +384,7 @@
     "use_action": [ "VOLTMETER" ],
     "flags": [ "BELT_CLIP" ],
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -403,7 +403,7 @@
     "material": [ "plastic", "glass" ],
     "symbol": ";",
     "color": "light_gray",
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -593,7 +593,7 @@
     "color": "white",
     "ammo": "battery",
     "qualities": [ [ "CONCENTRATE", 1 ], [ "SEPARATE", 1 ] ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {

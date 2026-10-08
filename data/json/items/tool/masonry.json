@@ -66,6 +66,7 @@
     "volume": "250 ml",
     "cutting": 14,
     "flags": [ "HURT_WHEN_WIELDED" ],
+    "qualities": [ [ "SANDING", 1 ] ],
     "to_hit": -4
   }
 ]

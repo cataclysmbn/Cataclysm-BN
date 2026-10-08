@@ -1130,7 +1130,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1197,7 +1197,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1263,7 +1263,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -1400,7 +1400,7 @@
     },
     "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {

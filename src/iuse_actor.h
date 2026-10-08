@@ -219,6 +219,10 @@ class unfold_vehicle_iuse : public iuse_actor
         /** Creature::moves it takes to unfold. */
         int moves = 0;
         std::map<itype_id, int> tools_needed;
+        /**
+         * Whether vehicle deploys with full battery/fuel.
+         */
+        bool full_battery = false;
 
         unfold_vehicle_iuse( const std::string &type = "unfold_vehicle" ) : iuse_actor( type ) {}
 

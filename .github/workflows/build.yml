@@ -108,13 +108,8 @@ jobs:
         with:
           ref: ${{ inputs.checkout-ref }}
 
-      - name: Install shadercross dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
-
-      - name: Install shadercross
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+      - name: Build shadercross
+        uses: ./.github/actions/build-shadercross
 
       - name: Generate shaders
         run: bash build-scripts/generate-shaders.sh
@@ -368,9 +363,9 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install shadercross (Linux)
+      - name: Build shadercross (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+        uses: ./.github/actions/build-shadercross
 
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
@@ -656,9 +651,9 @@ jobs:
           ninja: true
           setup-cpp: false
 
-      - name: Install shadercross (android host)
+      - name: Build shadercross (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+        uses: ./.github/actions/build-shadercross
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'

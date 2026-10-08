@@ -41,6 +41,7 @@
 "name" : "phasing strike",  // ゲーム内で表示される名前
 "unarmed_allowed" : true,   // 素手のキャラクターがこの技を使用できるかどうか
 "unarmed_weapons_allowed" : true,    // この技の使用に完全な素手が必要か、あるいは素手系武器の使用を許可するかどうか
+"force_unarmed" : true,   // この技では武器のダメージを考慮しません（蹴りや投げなど）
 "weapon_categories_allowed" : [ "BLADES", "KNIVES" ], // この技を特定の武器カテゴリのみに制限します。省略した場合、すべての武器カテゴリが許可されます。unarmed_allowedがtrueの場合、素手は常に許可されます。
 "melee_allowed" : true,     // 格闘術固有の武器だけでなく、あらゆる近接武器で使用可能であることを意味します。
 "skill_requirements": [ { "name": "melee", "level": 3 } ],     // この技の使用に必要なスキルとその最小レベル。任意のスキルを指定できます。

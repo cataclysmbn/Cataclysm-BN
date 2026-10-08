@@ -1662,6 +1662,40 @@
   },
   {
     "type": "profession",
+    "id": "plumber",
+    "name": "Plumber",
+    "description": "You made a living installing and repairing pipes, tanks, and fixtures.  Your tools and spare supplies may help you keep the surviving plumbing working.",
+    "points": 4,
+    "vehicle": "cube_van",
+    "skills": [ { "level": 3, "name": "fabrication" }, { "level": 2, "name": "mechanics" } ],
+    "items": {
+      "both": {
+        "items": [
+          "tank_top",
+          "jeans",
+          "socks",
+          "gloves_work",
+          "boots",
+          "hat_ball",
+          "shoe_covers_noslip",
+          "mbag",
+          "smart_phone",
+          "mag_porn"
+        ],
+        "entries": [
+          { "item": "pipe", "count": 4 },
+          { "item": "cu_pipe", "count": 2 },
+          { "item": "hose", "count": 3 },
+          { "item": "duct_tape" },
+          { "item": "tool_belt", "contents-item": "plumber_toolkit" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "bra", "panties" ]
+    }
+  },
+  {
+    "type": "profession",
     "id": "scoundrel",
     "name": "Scoundrel",
     "description": "Your flexible outlook on the law, the scuffles you've been in (and avoided) at the bar, and your impressive ability to weasel your way out of the consequences of your actions - all these skills have helped ensure your survival.  But how much longer will they hold out?",
@@ -2363,22 +2397,26 @@
           "undershirt",
           "gloves_liner",
           "gloves_tactical",
-          "tac_helmet",
           "aviators",
-          "goggles_nv_enhanced",
           "socks",
           "boots_combat",
           "webbing_belt",
           "wristwatch",
           "canteen",
-          "molle_pack",
-          "light_disposable_cell"
+          "molle_pack"
         ],
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "kukri", "container-item": "sheath" },
           { "item": "jacket_flannel" },
           { "item": "modularvestsuper", "contents-group": "army_mags_mp5" },
+          { "item": "tac_helmet" },
+          {
+            "item": "light_disposable_cell",
+            "ammo-item": "battery",
+            "charges": 300,
+            "container-item": "goggles_nv_enhanced"
+          },
           {
             "item": "hk_mp5sd",
             "ammo-item": "9mm",
@@ -4912,7 +4950,19 @@
     "description": "All you ever wanted was to make people laugh.  Dropping out of school and performing at kids' parties was a dream come true until the world ended.  There's precious few balloon animals in your future now.",
     "points": -1,
     "items": {
-      "both": { "items": [ "clown_wig", "clown_suit", "smart_phone", "clown_nose", "socks", "clownshoes", "airhorn", "balloon" ] },
+      "both": {
+        "items": [
+          "clown_wig",
+          "clown_suit",
+          "smart_phone",
+          "clown_nose",
+          "socks",
+          "clownshoes",
+          "airhorn",
+          "balloon",
+          "industrial_lubricant"
+        ]
+      },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
@@ -5639,7 +5689,7 @@
     "name": { "male": "Pizza Delivery Boy", "female": "Pizza Delivery Girl" },
     "description": "You were delivering the last pizza of the night to the local cryogenics lab when the Cataclysm hit.  Fleeing to the nearest shelter, you find yourself with only your wits and some leftover pizza.  And they didn't even leave a tip!",
     "points": 0,
-    "skills": [ { "level": 4, "name": "driving" }, { "level": 1, "name": "barter" }, { "level": 1, "name": "speech" } ],
+    "skills": [ { "level": 2, "name": "driving" }, { "level": 1, "name": "barter" }, { "level": 1, "name": "speech" } ],
     "items": {
       "both": {
         "items": [
@@ -5655,6 +5705,36 @@
           "smart_phone",
           "wristwatch",
           "mbag"
+        ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "bra", "boy_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "pizzaboy_drone",
+    "name": "Delivery Drone Pilot",
+    "description": "When the riots started it was still business as usual at work, since they had you handling online orders and contactless delivery, but the undead are much more insistent about in-store pickup than the living.  You fled with what was going to be your last delivery order and the drone that was going to ship it.",
+    "points": 1,
+    "skills": [ { "level": 2, "name": "driving" }, { "level": 2, "name": "computer" } ],
+    "items": {
+      "both": {
+        "items": [
+          "hat_ball",
+          "tshirt",
+          "jeans",
+          "jacket_light",
+          "socks",
+          "sneakers",
+          "pizza_veggy",
+          "pizza_meat",
+          "delivery_drone_item",
+          "remotevehcontrol",
+          "smart_phone",
+          "wristwatch",
+          "backpack",
+          "plastic_shopping_bag"
         ]
       },
       "male": [ "briefs" ],
@@ -6654,7 +6734,7 @@
       { "level": 2, "name": "fabrication" }
     ],
     "items": {
-      "both": { "items": [ "jumpsuit", "socks", "boots", "smart_phone", "wristwatch" ] },
+      "both": { "items": [ "jumpsuit", "socks", "boots", "backpack", "smart_phone", "wristwatch", "delivery_drone_item" ] },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
@@ -6760,7 +6840,8 @@
           "radio_car_box",
           "marble",
           "slingshot"
-        ]
+        ],
+        "entries": [ { "item": "super_soaker", "ammo-item": "water", "charges": 8 } ]
       },
       "male": [ "briefs" ],
       "female": [ "boy_shorts" ]

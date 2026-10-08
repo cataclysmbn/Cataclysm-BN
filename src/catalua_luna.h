@@ -30,6 +30,13 @@
 
 #define LUNA_DOC( Class, Name ) LUNA_VAL( Class, Name )
 
+// This is used for things like enchantments.
+// Things that have ids but can be made as themself
+#define LUNA_VAL_WITH_ID( Class, Name )         \
+    LUNA_VAL( Class, Name )                     \
+    LUNA_VAL( string_id<Class>, Name "Id" )     \
+    LUNA_VAL( int_id<Class>, Name "IntId" )
+
 #define LUNA_ID( Class, Name )                  \
     LUNA_DOC( Class, Name "Raw" )               \
     LUNA_VAL( string_id<Class>, Name "Id" )     \

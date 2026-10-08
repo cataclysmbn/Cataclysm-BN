@@ -2,11 +2,53 @@
 #include "flag.h"
 #include "item.h"
 #include "item_group.h"
+#include "profession.h"
 #include "stringmaker.h"
 
 #include <algorithm>
+#include <memory>
 #include <utility>
 #include <vector>
+
+TEST_CASE("item group ammo loading unwraps packaged ammunition", "[item_group]") {
+    const auto packaged = GENERATE(false, true);
+    const auto ammo_id = packaged ? "test_item_group_water" : "test_birdshot";
+    auto gun = item::spawn(packaged ? "test_item_group_water_gun" : "test_shotgun");
+    auto modifier = Item_modifier{};
+    modifier.ammo =
+        std::make_unique<Single_item_creator>(ammo_id, Single_item_creator::S_ITEM, 100);
+
+    const auto spawned_ammo = modifier.ammo->create_single(gun->birthday());
+    REQUIRE(spawned_ammo);
+    REQUIRE(spawned_ammo->is_container() == packaged);
+    auto expected_charges = 0;
+    SECTION("explicit charges") {
+        modifier.charges.first = 4;
+        modifier.charges.second = 4;
+        expected_charges = 4;
+    }
+    SECTION("automatic full load") {
+        modifier.with_ammo = 100;
+        expected_charges = gun->ammo_capacity();
+    }
+
+    gun = modifier.modify(std::move(gun));
+    REQUIRE(gun);
+    CHECK(gun->ammo_current() == itype_id(ammo_id));
+    CHECK(gun->ammo_remaining() == expected_charges);
+}
+
+TEST_CASE("delinquent starts with a water-loaded super soaker", "[item_group][profession]") {
+    namespace ranges = std::ranges;
+    const auto male = GENERATE(false, true);
+    const auto items = string_id<profession>("jdelinquent")->items(male, {});
+    const auto soaker = ranges::find_if(items, [](const auto& candidate) {
+        return candidate->typeId() == itype_id("super_soaker");
+    });
+    REQUIRE(soaker != items.end());
+    CHECK((*soaker)->ammo_current() == itype_id("water"));
+    CHECK((*soaker)->ammo_remaining() == 8);
+}
 
 TEST_CASE("spawn with default charges and with ammo", "[item_group]") {
     Item_modifier default_charges;

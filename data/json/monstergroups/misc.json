@@ -343,7 +343,8 @@
     "default": "mon_secubot",
     "monsters": [
       { "monster": "mon_secubot", "freq": 150, "cost_multiplier": 0 },
-      { "monster": "mon_talon_m249", "freq": 100, "cost_multiplier": 0 }
+      { "monster": "mon_talon_m249", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_talon_m2hb", "freq": 25, "cost_multiplier": 0 }
     ]
   }
 ]

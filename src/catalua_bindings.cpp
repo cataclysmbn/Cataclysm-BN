@@ -1111,6 +1111,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_game_ids( lua );
     mod_bionic_data( lua );
     mod_mutation_branch( lua );
+    mod_mutation_category_trait( lua );
     reg_bionics( lua );
     reg_magic( lua );
     reg_names( lua );
@@ -1127,6 +1128,7 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_types( lua );
     reg_time_types( lua );
     reg_effect( lua );
+    reg_field_type( lua );
     reg_testing_library( lua );
     reg_requirement( lua );
     reg_inventory( lua );

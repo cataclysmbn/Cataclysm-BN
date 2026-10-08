@@ -1,5 +1,31 @@
 # 開発者向けツール
 
+## PR のプレイテスト
+
+リポジトリのルートで、ローカルでコンパイルせずに PR のタイル版ビルドをダウンロードして起動できます。
+
+```sh
+gh auth login
+just playtest 10443
+just playtest https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest --os linux https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest "正確な PR タイトル"
+just playtest branch-name
+```
+
+最初の位置引数は PR 番号、URL、ブランチ、または正確なタイトルです。タイトルに一致する PR は1件である必要があり、空白を含むタイトルは引用符で囲んでください。省略可能な `--os` は `linux`、`windows`、`macos`、`android` で、既定値はホスト OS です。デスクトップ版は対応する OS で実行してください。Linux 版には x86_64 が必要です。macOS ではホストのアーキテクチャに応じて Intel または ARM 版を選択します。
+
+[just](https://just.systems/)、[Deno](https://deno.com/)、[GitHub CLI](https://cli.github.com/) をインストールしてください。リポジトリの justfile は Windows でも Bash を必要とします。Linux での展開には GNU tar が必要です。macOS では標準の `hdiutil`、`ditto`、`open` を使います。ダウンロードしたゲームの実行には、そのプラットフォームのランタイムライブラリも必要です。
+
+Android では USB デバッグを有効にした ARM64 デバイスを接続し、`adb devices` に認証済みの対象が1台表示されることを確認してから、`just playtest --os android https://github.com/cataclysmbn/Cataclysm-BN/pull/10443` を実行してください。`adb install -r` で実験版アプリをインストールまたは更新して起動します。既存のアプリが別の鍵で署名されている場合、この方法では更新できません。
+
+> [!WARNING]
+> 信頼できる PR のみをプレイテストしてください。アーティファクトはコンピュータや Android デバイス上でコードを実行します。
+
+このコマンドは、PR の現在の head SHA に一致する、有効期限内の最新アーティファクトを選択します。見つからない場合は PR の `matrix` ワークフローを確認してください。ビルドが待機中、スキップ、失敗の状態か、アーティファクトが期限切れの可能性があります。古いコミットのビルドを代わりに使うことはありません。
+
+デスクトップ版のダウンロードは `/tmp/cataclysm-bn/artifacts/PR-<number>-<SHA>/<os>/build-<artifact-id>/` 以下にキャッシュされます。Windows のルートは `%TEMP%\cataclysm-bn\artifacts` です。`TEMP` が未設定の場合はリポジトリのディレクトリを使います。同じアーティファクトを再起動すると同じディレクトリを再利用し、その中のセーブと設定を保持します。SHA またはアーティファクト ID が変わると別のディレクトリを使います。一時ディレクトリのクリーンアップでファイルが削除されることがあるため、残したいセーブは別の場所にコピーしてください。Android のセーブはデバイスに残ります。
+
 ## コードスタイル (C++)
 
 C++ フォーマットはトップレベルの `src/*.cpp` と `src/*.h` にのみ [Artistic Style](http://astyle.sourceforge.net/) を使います。他のほとんどの C++ ファイルには [clang-format](https://clang.llvm.org/docs/ClangFormat.html) を使います。`tools/clang-tidy-plugin/test/` のようなフォーマッタ依存の fixture は変更しません。ファイルごとのツール選択はリポジトリの helper に任せてください。
@@ -51,19 +77,21 @@ Visual Studio Marketplace に astyle 拡張機能はありますが、VS2019 ま
 5. ソリューションをビルドします。
 6. ビルドが成功すると、コンパイルされた拡張機能が `AStyleExtension\bin\Release`に表示されます。
    ダブルクリックしてインストールします。
-7. [設定手順 (Visual Studio 2019 以前)](#configuration-instructions-visual-studio-2019-or-older)
+7. [設定手順 (Visual Studio 2019 以前)](#設定手順-visual-studio-2019-以前)
    セクションに従って拡張機能を設定します。
 
 #### Visual Studio 2017 以前
 
 VS2019 の手順に従ってソースからコンパイルすることもできますが、Visual Studio Marketplace でプリビルドバージョンが[利用可能](https://marketplace.visualstudio.com/items?itemName=Lukamicoder.AStyleExtension2017) です。VS の拡張機能マネージャーを介して拡張機能をインストールし、同じ方法で設定できるはずです。
 
+<a id="設定手順-visual-studio-2019-以前"></a>
+
 #### 設定手順 (Visual Studio 2019 以前):
 
 1. `ツール` - `オプション` - `AStyle Formatter` - `全般`.
 
 2. `エクスポート/インポート` タブで `インポート` ボタンを使用して、
-   `https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/msvc-full-features/AStyleExtension-Cataclysm-BN.cfg`をインポートします。
+   `https://github.com/cataclysmbn/Cataclysm-BN/blob/main/msvc-full-features/AStyleExtension-Cataclysm-BN.cfg`をインポートします。
 
 ![image](./img/VS_Astyle_Step_1.png)
 
@@ -83,7 +111,7 @@ VS2019 の手順に従ってソースからコンパイルすることもでき�
 
 ## JSON スタイル
 
-[JSON スタイルガイド](../../mod/json/explanation/json_style)を参照してください。
+[JSON スタイルガイド](../../mod/json/explanation/json_style.md)を参照してください。
 
 ## ctags
 
@@ -95,7 +123,7 @@ VS2019 の手順に従ってソースからコンパイルすることもでき�
 ## clang-tidy
 
 Cataclysm には
-[clang-tidy 設定ファイル](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.clang-tidy)
+[clang-tidy 設定ファイル](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.clang-tidy)
 があり、`clang-tidy` が利用可能であれば、コードベースの静的解析を実行するためにそれを実行できます。CI では LLVM 22 の `clang-tidy` でテストを行っているため、最も一貫した結果を得るには、そのバージョンを使用することをお勧めします。
 
 これを実行するには、いくつかのオプションがあります。
@@ -118,7 +146,7 @@ grep '"file": "' build/compile_commands.json | \
 ## カスタム clang-tidy プラグイン
 
 独自の clang-tidy チェックをカスタムプラグインとして記述しました。ubuntu 24.04 でプラグインをビルドするための正確な手順については、
-[clang-tidy.yml](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/.github/workflows/clang-tidy.yml)を参照してください。
+[clang-tidy.yml](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/.github/workflows/clang-tidy.yml)を参照してください。
 
 ### Ubuntu 24.04 でのプラグインのビルド
 

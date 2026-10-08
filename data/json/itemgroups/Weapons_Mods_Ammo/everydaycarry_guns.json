@@ -1109,6 +1109,21 @@
     ]
   },
   {
+    "id": "everyday_m1919browning",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m1919browning", "ammo-group": "on_hand_3006", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt3006", "ammo-group": "on_hand_3006", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_3006", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "everyday_hk417_13",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1516,6 +1531,18 @@
     ]
   },
   {
+    "id": "everyday_SVD",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "SVD", "ammo-group": "on_hand_762R", "charges": [ 0, 10 ] },
+      { "item": "SVDmag", "ammo-group": "on_hand_762R", "charges-min": 0, "prob": 80 },
+      { "item": "SVDmag", "ammo-group": "on_hand_762R", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_762R", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_famas",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1866,8 +1893,18 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "colt_ring", "ammo-group": "on_hand_44paper", "charges": [ 0, 9 ] },
+      { "item": "colt_ring", "ammo-group": "on_hand_44paper", "charges": [ 0, 8 ] },
       { "group": "on_hand_44paper", "prob": 80, "charges": [ 5, 10 ], "count": [ 2, 3 ] }
+    ]
+  },
+  {
+    "id": "everyday_colt_ring_36",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "colt_ring_36", "ammo-group": "on_hand_36paper", "charges": [ 0, 8 ] },
+      { "group": "on_hand_36paper", "prob": 80, "charges": [ 5, 10 ], "count": [ 2, 3 ] }
     ]
   },
   {
@@ -2235,6 +2272,21 @@
         "distribution": [
           { "item": "belt308", "ammo-group": "on_hand_308", "charges": [ 1, 100 ], "prob": 50 },
           { "group": "on_hand_308", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "everyday_PKM",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "PKM", "ammo-group": "on_hand_762R", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt762R", "ammo-group": "on_hand_762R", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_762R", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
         ]
       }
     ]

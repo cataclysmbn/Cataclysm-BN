@@ -33,7 +33,6 @@
     "ammo_type": "battery",
     "capacity": 50,
     "looks_like": "battery",
-    "reloads_like": "light_battery_cell",
     "flags": [ "NO_SALVAGE", "NO_UNLOAD", "RECHARGE" ]
   },
   {

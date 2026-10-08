@@ -101,7 +101,7 @@
       {
         "x": 2,
         "y": 0,
-        "parts": [ "frame_horizontal", "halfboard_horizontal", "engine_v6", "alternator_car", "battery_car" ]
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "diesel_engine_v6", "alternator_car", "battery_car" ]
       },
       { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
       {
@@ -133,12 +133,12 @@
       {
         "x": -2,
         "y": -1,
-        "parts": [ "frame_vertical", "halfboard_vertical_left", { "part": "tank", "fuel": "gasoline" } ]
+        "parts": [ "frame_vertical", "halfboard_vertical_left", { "part": "tank", "fuel": "diesel" } ]
       },
       {
         "x": -2,
         "y": 2,
-        "parts": [ "frame_vertical", "halfboard_vertical_right", { "part": "tank", "fuel": "gasoline" } ]
+        "parts": [ "frame_vertical", "halfboard_vertical_right", { "part": "tank", "fuel": "diesel" } ]
       },
       {
         "x": -3,
@@ -158,11 +158,199 @@
       { "x": 0, "y": 0, "chance": 10, "item_groups": "car_misc" },
       { "x": 0, "y": 1, "chance": 10, "item_groups": "car_misc" },
       { "x": -3, "y": 0, "chance": 10, "item_groups": "car_kit" },
-      { "x": -3, "y": 0, "chance": 8, "item_groups": "fuel_gasoline" },
+      { "x": -3, "y": 0, "chance": 8, "item_groups": "fuel_diesel" },
       { "x": -2, "y": 0, "chance": 40, "items": [ "308" ] },
       { "x": -2, "y": 0, "chance": 20, "items": [ "308", "308" ] },
       { "x": -2, "y": 0, "chance": 10, "items": [ "308", "308" ] },
       { "x": -2, "y": 0, "chance": 5, "items": [ "308", "308" ] }
+    ]
+  },
+  {
+    "id": "pickup_technical_m1919",
+    "type": "vehicle",
+    "name": "Technical",
+    "blueprint": [
+      [ "o--+-ox" ],
+      [ "=='#'|x" ],
+      [ ".#'#'|x" ],
+      [ "o--+-ox" ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "seat", "seatbelt", "controls", "dashboard", "stereo", "horn_car", "roof" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "seat", "seatbelt", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_front_left" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door_front_right" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "windshield_horizontal_front", "rebar_plate", "roof" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "windshield_horizontal_front", "rebar_plate", "roof" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical_left" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "halfboard_vertical_right" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield_horizontal_front", "rebar_plate" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield_horizontal_front", "rebar_plate" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield_nw", "rebar_plate" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield_ne", "rebar_plate" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "diesel_engine_v6", "alternator_car", "battery_car" ]
+      },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_medium_steerable", "wheel", "spring_plate", "headlight" ]
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_medium_steerable", "wheel", "spring_plate", "headlight" ]
+      },
+      { "x": 3, "y": 0, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": 1, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": -1, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": 2, "parts": [ "ram_spiked" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical", "trunk", "muffler", "roof" ] },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [
+          "frame_vertical",
+          "seat",
+          "turret_mount_manual_steel",
+          { "part": "mounted_1919browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          "roof"
+        ]
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_vertical", "halfboard_vertical_left", { "part": "tank", "fuel": "diesel" } ]
+      },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_vertical", "halfboard_vertical_right", { "part": "tank", "fuel": "diesel" } ]
+      },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_horizontal", "halfboard_sw", "wheel_mount_medium", "wheel", "spring_plate" ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_horizontal", "trunk" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical" ] },
+      {
+        "x": -3,
+        "y": 2,
+        "parts": [ "frame_horizontal", "halfboard_se", "wheel_mount_medium", "wheel", "spring_plate" ]
+      }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 15, "item_groups": "car_misc" },
+      { "x": 0, "y": 0, "chance": 10, "item_groups": "car_misc" },
+      { "x": 0, "y": 1, "chance": 10, "item_groups": "car_misc" },
+      { "x": -3, "y": 0, "chance": 10, "item_groups": "car_kit" },
+      { "x": -3, "y": 0, "chance": 8, "item_groups": "fuel_diesel" },
+      { "x": -2, "y": 0, "chance": 40, "items": [ "3006" ] },
+      { "x": -2, "y": 0, "chance": 20, "items": [ "3006", "3006" ] },
+      { "x": -2, "y": 0, "chance": 10, "items": [ "3006", "3006" ] },
+      { "x": -2, "y": 0, "chance": 5, "items": [ "3006", "3006" ] }
+    ]
+  },
+  {
+    "id": "pickup_technical_PKM",
+    "type": "vehicle",
+    "name": "Technical",
+    "blueprint": [
+      [ "o--+-ox" ],
+      [ "=='#'|x" ],
+      [ ".#'#'|x" ],
+      [ "o--+-ox" ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_vertical_2", "seat", "seatbelt", "controls", "dashboard", "stereo", "horn_car", "roof" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "seat", "seatbelt", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door_front_left" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door_front_right" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "windshield_horizontal_front", "rebar_plate", "roof" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "windshield_horizontal_front", "rebar_plate", "roof" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical_left" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "halfboard_vertical_right" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield_horizontal_front", "rebar_plate" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield_horizontal_front", "rebar_plate" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield_nw", "rebar_plate" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield_ne", "rebar_plate" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "diesel_engine_v6", "alternator_car", "battery_car" ]
+      },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_medium_steerable", "wheel", "spring_plate", "headlight" ]
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "wheel_mount_medium_steerable", "wheel", "spring_plate", "headlight" ]
+      },
+      { "x": 3, "y": 0, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": 1, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": -1, "parts": [ "ram_spiked" ] },
+      { "x": 3, "y": 2, "parts": [ "ram_spiked" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical", "trunk", "muffler", "roof" ] },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [
+          "frame_vertical",
+          "seat",
+          "turret_mount_manual_steel",
+          { "part": "mounted_PKM", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          "roof"
+        ]
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_vertical", "halfboard_vertical_left", { "part": "tank", "fuel": "diesel" } ]
+      },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_vertical", "halfboard_vertical_right", { "part": "tank", "fuel": "diesel" } ]
+      },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_horizontal", "halfboard_sw", "wheel_mount_medium", "wheel", "spring_plate" ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_horizontal", "trunk" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical" ] },
+      {
+        "x": -3,
+        "y": 2,
+        "parts": [ "frame_horizontal", "halfboard_se", "wheel_mount_medium", "wheel", "spring_plate" ]
+      }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 15, "item_groups": "car_misc" },
+      { "x": 0, "y": 0, "chance": 10, "item_groups": "car_misc" },
+      { "x": 0, "y": 1, "chance": 10, "item_groups": "car_misc" },
+      { "x": -3, "y": 0, "chance": 10, "item_groups": "car_kit" },
+      { "x": -3, "y": 0, "chance": 8, "item_groups": "fuel_diesel" },
+      { "x": -2, "y": 0, "chance": 40, "items": [ "762_54R" ] },
+      { "x": -2, "y": 0, "chance": 20, "items": [ "762_54R", "762_54R" ] },
+      { "x": -2, "y": 0, "chance": 10, "items": [ "762_54R", "762_54R" ] },
+      { "x": -2, "y": 0, "chance": 5, "items": [ "762_54R", "762_54R" ] }
     ]
   },
   {

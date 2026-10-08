@@ -1,0 +1,26 @@
+[
+  {
+    "id": "test_item_group_water_gun",
+    "copy-from": "test_shotgun",
+    "type": "GUN",
+    "name": { "str": "test water gun" },
+    "description": "An eight-charge water gun for item-group ammunition loading tests.",
+    "ammo": "water"
+  },
+  {
+    "id": "test_item_group_water",
+    "type": "AMMO",
+    "name": { "str_sp": "test ammunition water" },
+    "description": "Liquid ammunition that spawns in a container for item-group tests.",
+    "weight": "250 g",
+    "volume": "250 ml",
+    "price": "0 cent",
+    "material": [ "water" ],
+    "symbol": "~",
+    "color": "light_blue",
+    "phase": "liquid",
+    "container": "test_waterskin",
+    "ammo_type": "water",
+    "count": 1
+  }
+]

@@ -637,6 +637,18 @@
     "default": "acid"
   },
   {
+    "id": "lubricant",
+    "type": "ammunition_type",
+    "name": "lubricant",
+    "default": "industrial_lubricant"
+  },
+  {
+    "id": "glue",
+    "type": "ammunition_type",
+    "name": "glue",
+    "default": "superglue"
+  },
+  {
     "type": "ammunition_type",
     "id": "mininuke_mod",
     "name": "modified mininuke",

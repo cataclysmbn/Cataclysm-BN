@@ -20,6 +20,26 @@
     "desc": "Affects Intelligence"
   },
   {
+    "id": "STRENGTH_PERMANENT",
+    "type": "enchantment_value",
+    "desc": "Affects Strength"
+  },
+  {
+    "id": "DEXTERITY_PERMANENT",
+    "type": "enchantment_value",
+    "desc": "Affects Dexterity"
+  },
+  {
+    "id": "PERCEPTION_PERMANENT",
+    "type": "enchantment_value",
+    "desc": "Affects Perception"
+  },
+  {
+    "id": "INTELLIGENCE_PERMANENT",
+    "type": "enchantment_value",
+    "desc": "Affects Intelligence"
+  },
+  {
     "id": "HEALTH_POINTS",
     "type": "enchantment_value",
     "suffixes": [

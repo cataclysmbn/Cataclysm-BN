@@ -21,6 +21,7 @@
 #include "monster.h"
 #include "morale_types.h"
 #include "mutation_data.h"
+#include "profile.h"
 #include "player.h" // IWYU pragma: associated
 #include "player_activity.h"
 #include "pldata.h"
@@ -292,11 +293,11 @@ static void eff_fun_hallu( player &u, effect &it )
         u.add_effect( effect_visuals, time_duration::from_turns( peakTime - comedownTime ) );
     } else if( dur > comedownTime && dur < peakTime ) {
         // Full symptoms
-        u.mod_per_bonus( -2 );
-        u.mod_int_bonus( -1 );
-        u.mod_dex_bonus( -2 );
+        u.mod_per_bonus( -2, true );
+        u.mod_int_bonus( -1, true );
+        u.mod_dex_bonus( -2, true );
         u.add_miss_reason( _( "Dancing fractals distract you." ), 2 );
-        u.mod_str_bonus( -1 );
+        u.mod_str_bonus( -1, true );
         if( u.is_player() && one_in( 50 ) ) {
             g->spawn_hallucination( u.bub_pos() + tripoint_rel_ms( rng( -10, 10 ), rng( -10, 10 ), 0 ) );
         }
@@ -329,17 +330,17 @@ struct temperature_effect {
 
     void apply( player &u ) const {
         if( str_pen > 0 ) {
-            u.mod_str_bonus( -str_pen );
+            u.mod_str_bonus( -str_pen, true );
         }
         if( dex_pen > 0 ) {
-            u.mod_dex_bonus( -dex_pen );
+            u.mod_dex_bonus( -dex_pen, true );
             u.add_miss_reason( _( miss_msg ), dex_pen );
         }
         if( int_pen > 0 ) {
-            u.mod_int_bonus( -int_pen );
+            u.mod_int_bonus( -int_pen, true );
         }
         if( per_pen > 0 ) {
-            u.mod_per_bonus( -per_pen );
+            u.mod_per_bonus( -per_pen, true );
         }
         if( !msg.empty() && !u.has_effect( effect_sleep ) && one_in( msg_chance ) ) {
             u.add_msg_if_player( m_warning, "%s", _( msg ) );
@@ -490,6 +491,7 @@ static void eff_fun_mutating( player &u, effect &it )
 
 void Character::hardcoded_effects( effect &it )
 {
+    ZoneScoped;
     if( auto buff = ma_buff::from_effect( it ) ) {
         if( buff->is_valid_character( *this ) ) {
             buff->apply_character( *this );
@@ -592,24 +594,24 @@ void Character::hardcoded_effects( effect &it )
         }
         if( lesserEvil ) {
             // Only minor effects, some even good!
-            mod_str_bonus( dur > 450_minutes ? 10.0 : dur / 45_minutes );
+            mod_str_bonus( dur > 450_minutes ? 10.0 : dur / 45_minutes, true );
             if( dur < 1_hours ) {
-                mod_dex_bonus( 1 );
+                mod_dex_bonus( 1, true );
             } else {
                 int dex_mod = -( dur > 360_minutes ? 10.0 : ( dur - 1_hours ) / 30_minutes );
-                mod_dex_bonus( dex_mod );
+                mod_dex_bonus( dex_mod, true );
                 add_miss_reason( _( "Why waste your time on that insignificant speck?" ), -dex_mod );
             }
-            mod_int_bonus( -( dur > 300_minutes ? 10.0 : ( dur - 50_minutes ) / 25_minutes ) );
-            mod_per_bonus( -( dur > 480_minutes ? 10.0 : ( dur - 80_minutes ) / 40_minutes ) );
+            mod_int_bonus( -( dur > 300_minutes ? 10.0 : ( dur - 50_minutes ) / 25_minutes ), true );
+            mod_per_bonus( -( dur > 480_minutes ? 10.0 : ( dur - 80_minutes ) / 40_minutes ), true );
         } else {
             // Major effects, all bad.
-            mod_str_bonus( -( dur > 500_minutes ? 10.0 : dur / 50_minutes ) );
+            mod_str_bonus( -( dur > 500_minutes ? 10.0 : dur / 50_minutes ), true );
             int dex_mod = -( dur > 600_minutes ? 10.0 : dur / 60_minutes );
-            mod_dex_bonus( dex_mod );
+            mod_dex_bonus( dex_mod, true );
             add_miss_reason( _( "Why waste your time on that insignificant speck?" ), -dex_mod );
-            mod_int_bonus( -( dur > 450_minutes ? 10.0 : dur / 45_minutes ) );
-            mod_per_bonus( -( dur > 400_minutes ? 10.0 : dur / 40_minutes ) );
+            mod_int_bonus( -( dur > 450_minutes ? 10.0 : dur / 45_minutes ), true );
+            mod_per_bonus( -( dur > 400_minutes ? 10.0 : dur / 40_minutes ), true );
         }
     } else if( id == effect_attention ) {
         if( intense > 6 ) {

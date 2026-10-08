@@ -1,5 +1,47 @@
 # Developer Tooling
 
+## Playtesting pull requests
+
+From the repository root, download and launch a PR's tiles build without compiling locally:
+
+```sh
+gh auth login
+just playtest 10443
+just playtest https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest --os linux https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest "Exact PR title"
+just playtest branch-name
+```
+
+The first argument accepts a PR number, URL, branch, or exact title. Titles must match exactly one PR;
+quote titles containing spaces. The optional `--os` is `linux`, `windows`, `macos`, or `android`, and defaults
+to the host OS. Desktop builds must run on their matching OS. Linux builds require x86_64; macOS selects
+Intel or ARM according to the host architecture.
+
+Install [just](https://just.systems/), [Deno](https://deno.com/), and the
+[GitHub CLI](https://cli.github.com/). The repository's justfile also requires Bash, including on Windows.
+Linux extraction requires GNU tar; macOS uses the built-in `hdiutil`, `ditto`, and `open` tools.
+The downloaded game still needs its platform's runtime libraries.
+
+For Android, connect an ARM64 device with USB debugging enabled and ensure `adb devices` shows one
+authorized target, then run `just playtest --os android https://github.com/cataclysmbn/Cataclysm-BN/pull/10443`. This installs or updates the experimental app
+with `adb install -r` and launches it. An existing app signed with a different key cannot be updated
+this way.
+
+> [!WARNING]
+> Only playtest PRs you trust: their artifacts execute code on your computer or Android device.
+
+The command selects the newest unexpired artifact matching the PR's current head SHA. If none exists,
+check the PR's `matrix` workflow: the build may be pending, skipped, failed, or expired. Older commits
+are not used as a fallback.
+
+Desktop downloads are cached under
+`/tmp/cataclysm-bn/artifacts/PR-<number>-<SHA>/<os>/build-<artifact-id>/`.
+On Windows, the root is `%TEMP%\cataclysm-bn\artifacts` (the repository directory is used if `TEMP` is unset).
+Repeated launches reuse the same artifact directory and preserve its saves and configuration;
+a new SHA or artifact ID gets a separate directory. Temporary-directory cleanup can remove these files,
+so copy any saves you want to keep elsewhere. Android saves remain on the device.
+
 ## Code style (C++)
 
 C++ formatting uses [Artistic Style](http://astyle.sourceforge.net/) only for top-level

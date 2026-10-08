@@ -4,7 +4,7 @@
     "type": "GENERIC",
     "category": "drugs",
     "name": { "str": "compact first aid kit" },
-    "description": "A compact medical kit containing bandages and antiseptic.  Used for healing large amounts of damage.  Disassemble to get its content.",
+    "description": "A compact medical kit containing bandages and antiseptic.  Used for healing large amounts of damage.  Disassemble to get its contents.",
     "weight": "1500 g",
     "volume": "1 L",
     "price": "30 USD",
@@ -21,12 +21,28 @@
     "type": "GENERIC",
     "category": "drugs",
     "name": { "str": "first aid kit" },
-    "description": "A full medical kit, with bandages, antiseptic, local analgesics, and basic medical tools.  Used for healing large amounts of damage.  Disassemble to get its content.",
+    "description": "A full medical kit, with bandages, antiseptic, local analgesics, and basic medical tools.  Used for healing large amounts of damage.  Disassemble to get its contents.",
     "weight": "2000 g",
     "volume": "1500 ml",
     "price": "45 USD",
     "price_postapoc": "45 USD",
     "use_action": { "type": "unpack", "group": "deluxe_first_aid_kit" }
+  },
+  {
+    "id": "1st_aid_ifak",
+    "type": "GENERIC",
+    "category": "drugs",
+    "name": { "str": "individual first aid kit" },
+    "description": "A small medical kit containing bandages, antiseptic, and hemostatic powder.  Issued to soldiers and police, it is meant to stabilize battlefield wounds before proper medical care.  Disassemble to get its contents.",
+    "weight": "600 g",
+    "volume": "300 ml",
+    "price": "20 USD",
+    "price_postapoc": "20 USD",
+    "material": "nylon",
+    "symbol": "!",
+    "color": "green",
+    "use_action": { "type": "unpack", "group": "individual_first_aid_kit" },
+    "flags": [ "NO_REPAIR", "NO_SALVAGE" ]
   },
   {
     "id": "melatonin_tablet",
@@ -867,6 +883,28 @@
       ],
       "fields_produced": { "fd_weedsmoke": 2 },
       "addiction_type_too_much": [ [ "cig", "nicotine" ] ]
+    }
+  },
+  {
+    "id": "lactaid",
+    "type": "COMESTIBLE",
+    "comestible_type": "MED",
+    "name": { "str": "Lactaid" },
+    "description": "Capsules containing lactase, an enzyme essential to the digestion of milk products for those who are lactose intolerant.  Take to temporarily remove the downsides of lactose intolerance.",
+    "weight": "1 g",
+    "volume": "250 ml",
+    "price": "15 USD",
+    "price_postapoc": "50 USD",
+    "charges": 20,
+    "stack_size": 200,
+    "material": "powder",
+    "symbol": "!",
+    "color": "white",
+    "looks_like": "aspirin",
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You take some lactaid.",
+      "effects": [ { "id": "lactaid", "duration": "25 m" } ]
     }
   },
   {

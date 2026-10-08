@@ -103,6 +103,7 @@
 #include "vehicle/vehicle_palette.h"
 #include "vitamin.h"
 #include "weather/weather.h"
+#include "weather/weather_gen.h"
 #include "weather/weather_type.h"
 #include "world_type.h"
 #include "worldfactory.h"
@@ -265,11 +266,16 @@ void DynamicDataLoader::initialize()
     // Static Function Access
     add( "WORLD_OPTION", &load_world_option );
     add( "EXTERNAL_OPTION", &load_external_option );
+    add( "OPTION", &load_ignored_type );
+    add( "OPTION_GROUP", &load_ignored_type );
+    add( "OPTION_SPACE", &load_ignored_type );
     add( "json_flag", &json_flag::load_all );
     add( "mutation_flag", &json_trait_flag::load_all );
     add( "fault", &fault::load_fault );
     add( "field_type", &field_types::load );
     add( "weather_type", &weather_types::load );
+    add( "weather_pattern", &weather_patterns::load );
+    add( "base_weather", &base_weathers::load );
     add( "world_type", &world_types::load );
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
@@ -483,6 +489,7 @@ void DynamicDataLoader::initialize()
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
     add( "named_color", &RGBColor::load_named_color );
+    add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
@@ -682,6 +689,8 @@ void DynamicDataLoader::unload_data()
     vpart_info::reset();
     weapon_category::reset();
     weather_types::reset();
+    weather_patterns::reset();
+    base_weathers::reset();
     world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
@@ -715,6 +724,8 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Body parts" ), &body_part_type::finalize_all },
             { _( "Bionics" ), &bionic_data::finalize_all },
             { _( "Weather types" ), &weather_types::finalize_all },
+            { _( "Weather patterns" ), &weather_patterns::finalize_all },
+            { _( "Base weather" ), &base_weathers::finalize_all },
             { _( "World types" ), &world_types::finalize_all },
             { _( "Field types" ), &field_types::finalize_all },
             { _( "Ammo effects" ), &ammo_effects::finalize_all },
@@ -732,6 +743,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
                 }
             },
             { _( "Vehicle parts" ), &vpart_info::finalize_all },
+            { _( "Vehicle Groupss" ), &VehicleGroup::finalize },
             { _( "Traps" ), &trap::finalize },
             { _( "Terrain" ), &set_ter_ids },
             { _( "Furniture" ), &finalize_furn },
@@ -800,6 +812,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
+            { _( "Weather patterns" ), &weather_patterns::check_consistency },
+            { _( "Base weather" ), &base_weathers::check_consistency },
             { _( "World types" ), &world_types::check_consistency },
             { _( "Field types" ), &field_types::check_consistency },
             { _( "Ammo effects" ), &ammo_effects::check_consistency },

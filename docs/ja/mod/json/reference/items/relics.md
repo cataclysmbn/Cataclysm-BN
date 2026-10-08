@@ -13,8 +13,8 @@
 "name": "Boots of Haste",       // デフォルトのアイテム名を上書きします
 "moves": 100,                   // (任意) 発動にかかる移動コスト (既定値 100)
 "charges_per_activation": 1,    // (任意) 発動1回あたりの消費チャージ数 (既定値 1)
-"active_effects": [ {}, ... ],  // (任意) 発動時に実行される呪文 (`hit_you_effect` と同一。詳細は MAGIC.md を参照)
-"passive_effects": [ {}, ... ], // (任意) 常時発動効果(エンチャント)のリスト。詳細は MAGIC.md を参照
+"active_effects": [ {}, ... ],  // (任意) 発動時に実行される呪文 (`hit_you_effect` と同一。詳細は [エンチャントのドキュメント](../enchantments.md) を参照)
+"passive_effects": [ {}, ... ], // (任意) 常時発動効果(エンチャント)のリスト。詳細は [エンチャントのドキュメント](../enchantments.md) を参照
 "recharge_scheme": [ {}, ... ], // (任意) 再充填(リチャージ)方法のリスト。詳細は以下を参照
 }
 ```

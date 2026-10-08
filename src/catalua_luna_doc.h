@@ -51,6 +51,7 @@ class distribution_grid;
 class distribution_grid_tracker;
 class effect;
 class overmapbuffer;
+class enchantment;
 class enchantment_value;
 class enchantment_flag;
 class effect_type;
@@ -87,6 +88,7 @@ struct dealt_damage_instance;
 struct fake_spell;
 struct field_type;
 struct mutation_branch;
+struct mutation_category_trait;
 struct mission_type;
 struct npc_opinion;
 struct npc_personality;
@@ -252,6 +254,7 @@ LUNA_ID( activity_type, "ActivityType" )
 LUNA_ID( bionic_data, "BionicData" )
 LUNA_ID( body_part_type, "BodyPartType" )
 LUNA_ID( disease_type, "DiseaseType" )
+LUNA_VAL_WITH_ID( enchantment, "Enchantment" )
 LUNA_ID( enchantment_value, "EnchantmentValue" )
 LUNA_ID( enchantment_flag, "EnchantmentFlag" )
 LUNA_ID( effect_type, "EffectType" )

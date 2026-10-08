@@ -2720,6 +2720,12 @@ dispersion_sources ranged::get_weapon_dispersion( const Character &who, const it
     if( who.has_trait( trait_LASER_GUIDED ) ) {
         dispersion.add_multiplier( 0.25 );
     }
+
+    // Having no skill at all makes dispersion much worse
+    if( ranged::is_amateur( who, obj ) ) {
+        dispersion.add_multiplier( 2 );
+    }
+
     // If using a bow you lack the strength for, increase based on how much weaker shooter is.
     dispersion.add_multiplier( 1 / ranged::str_draw_dispersion_modifier( obj, who ) );
 
@@ -4803,8 +4809,15 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // Just a raw scaling factor.
     aim_speed *= 6.5;
 
-    // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
-    aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
+    // If the player can point shoot give them an extremely high multiplier while recoil is above half of max.
+    if( get_point_shoot_modifier( who, gun ) > 0 && recoil > ( MAX_RECOIL / 2 ) ) {
+        aim_speed *= get_point_shoot_modifier( who, gun );
+        // Make sure the aim speed can't exceed 75% of max recoil.
+        aim_speed = std::min( aim_speed, MAX_RECOIL * 0.75 );
+    } else {
+        // Scale rate logistically as recoil goes from MAX_RECOIL to 0.
+        aim_speed *= 1.0 - logarithmic_range( 0, MAX_RECOIL, recoil );
+    }
 
     // Minimum improvement is 5MoA.  This mostly puts a cap on how long aiming for sniping takes.
     aim_speed = std::max( aim_speed, 5.0 );
@@ -4816,8 +4829,50 @@ double ranged::aim_per_move( const Character &who, const item &gun, double recoi
     // To prevent a bug where aiming does not proceed at all because the aiming speed drops below the game's minimum limit (5.0) due to debuffs (such as Cursed Artifacts),
     // so applying the max value once more.
     aim_speed = std::max( 5.0, aim_speed + ench_aim_bonus );
+    // Bypass the sight limit if the player can point shoot.
+    if( get_point_shoot_modifier( who, gun ) > 0 ) {
+        return aim_speed;
+    }
     // Never improve by more than the currently used sights permit.
     return std::min( aim_speed, recoil - limit );
+}
+
+bool ranged::is_amateur( const Character &who, const item &gun )
+{
+    if( !gun.is_gun() ) {
+        return false;
+    }
+
+    skill_id gun_skill = gun.gun_skill();
+    bool amateur = true;
+    // If you have 1 or above for the specific gun skill you don't get the penalty
+    if( who.get_skill_level( gun_skill ) >= 1 ) {
+        amateur = false;
+    }
+    // If you have 4 or above for marksmanship skill in general you don't get the penalty
+    if( who.get_skill_level( skill_gun ) >= 4 ) {
+        amateur = false;
+    }
+    return amateur;
+}
+
+double ranged::get_point_shoot_modifier( const Character &who, const item &gun )
+{
+    if( !gun.is_gun() ) {
+        return 0;
+    }
+
+    skill_id gun_skill = gun.gun_skill();
+    double point_shoot_modifier = 0;
+    // If you have 6 or above for the specific gun skill
+    if( who.get_skill_level( gun_skill ) >= 6 ) {
+        point_shoot_modifier += ( who.get_skill_level( gun_skill ) - 4 );
+    }
+    // If you have 8 or above for marksmanship skill in general
+    if( who.get_skill_level( skill_gun ) >= 8 ) {
+        point_shoot_modifier += ( who.get_skill_level( skill_gun ) - 6 );
+    }
+    return point_shoot_modifier;
 }
 
 std::optional<shape_factory> ranged::get_shape_factory( const item &gun )

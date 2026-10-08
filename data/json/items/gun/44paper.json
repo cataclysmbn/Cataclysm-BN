@@ -37,6 +37,7 @@
       [ "barrel", 1 ],
       [ "bore", 1 ],
       [ "grip", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ],
       [ "rail", 1 ],
@@ -49,8 +50,8 @@
     "copy-from": "rifle_manual_cap_ball",
     "type": "GUN",
     "looks_like": "henry_big_boy",
-    "name": { "str": "Colt Ring Lever Rifle" },
-    "description": "The Colt Ring Lever Rifle was one of the first true lever-action rifles, designed to utilize the same caplock ammo as Colt revolvers.  It was famously used in the second Seminole war, where the Seminole people had learned to strike American soldiers while they were reloading their muskets.",
+    "name": { "str": "Colt .44 Ring Lever Rifle" },
+    "description": "The Colt Ring Lever Rifle was one of the first true lever-action rifles, designed to utilize the same caplock ammo as Colt revolvers, in this case the same .44 caliber as the Colt M1860 Army.  It was famously used in the second Seminole war, where the Seminole people had learned to strike American soldiers while they were reloading their muskets.",
     "weight": "4300 g",
     "volume": "3 L",
     "price": "1300 USD",
@@ -58,6 +59,8 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "44paper",
+    "ranged_damage": { "damage_type": "bullet", "amount": 8 },
+    "range": 4,
     "dispersion": 280,
     "clip_size": 8
   }

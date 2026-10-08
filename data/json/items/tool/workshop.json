@@ -117,7 +117,7 @@
     "material": [ "steel", "plastic" ],
     "symbol": "/",
     "color": "yellow",
-    "qualities": [ [ "GRIND", 2 ] ],
+    "qualities": [ [ "GRIND", 2 ], [ "SANDING", 1 ] ],
     "ammo": "battery",
     "charges_per_use": 1,
     "power_draw": 800000,
@@ -929,7 +929,7 @@
     "color": "light_gray",
     "ammo": "battery",
     "flags": [ "TRADER_AVOID" ],
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {

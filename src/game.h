@@ -257,6 +257,7 @@ class game : public submap_load_listener
     private:
         bool is_looking = false;
         std::vector<weak_ptr_fast<draw_callback_t>> draw_callbacks;
+        auto delete_dimension( const dimension_id &dim_id, bool remove_zones ) -> bool;
 
     public:
         // when force_redraw is true, redraw all panel instead of just animated panels
@@ -269,7 +270,7 @@ class game : public submap_load_listener
          * @param next If true, bases it on the vehicle the vehicle will turn to next turn,
          * instead of the one it is currently facing.
          */
-        std::optional<tripoint_rel_ms> get_veh_dir_indicator_location( bool next ) const;
+        std::optional<tripoint_rel_ms> get_veh_dir_indicator_location( bool next );
         void draw_veh_dir_indicator( bool next );
 
         /**
@@ -300,6 +301,8 @@ class game : public submap_load_listener
                                   const std::optional<pocket_dimension_data> &pd_info = std::nullopt,
                                   const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
                                   const std::function<void()> &pre_load_callback = nullptr );
+        auto delete_dimension( const dimension_id &dim_id ) -> bool;
+        auto reset_dimension( const dimension_id &dim_id ) -> bool;
 
         /**
          * Return the dimension ID the player is currently in.

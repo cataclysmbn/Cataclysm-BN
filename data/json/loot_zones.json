@@ -423,7 +423,7 @@
     "id": "FARM_PLOT",
     "type": "LOOT_ZONE",
     "name": "Farm: Plot",
-    "description": "Designate a farm plot for tilling and planting.",
+    "description": "Designate a farm plot for tilling, planting, fertilizing, and harvesting.",
     "color": "green"
   },
   {

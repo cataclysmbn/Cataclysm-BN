@@ -8,6 +8,12 @@ Run `tests/cata_test --help` to see the available command-line options, and/or c
 [Catch2 tutorial](https://github.com/catchorg/Catch2/blob/devel/docs/tutorial.md) for a more
 thorough introduction.
 
+## Playtesting pull requests
+
+Use [`just playtest [--os OS] <PR URL>`](../reference/tooling.md#playtesting-pull-requests) to download and launch
+an existing PR build without compiling locally. The tooling guide covers prerequisites, supported
+platforms, artifact selection, and save locations.
+
 ## Guidelines
 
 When creating tests, ensure that all objects used (directly or indirectly) are fully reset before

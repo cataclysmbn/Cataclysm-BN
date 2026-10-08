@@ -45,7 +45,8 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": [ "4570" ],
-    "ranged_damage": { "damage_type": "bullet", "amount": -15 },
+    "ranged_damage": { "damage_type": "bullet", "amount": -8 },
+    "range": -12,
     "dispersion": 180,
     "clip_size": 5,
     "blackpowder_tolerance": 72,
@@ -56,6 +57,7 @@
       [ "mechanism", 4 ],
       [ "sights", 1 ],
       [ "rail", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ]

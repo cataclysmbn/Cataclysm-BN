@@ -39,6 +39,7 @@
 #include "debug.h"
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after implementing repair_activity_actor.
+#include "catalua_hooks.h"
 #include "distribution_grid.h"
 #include "enums.h"
 #include "event.h"
@@ -1569,6 +1570,9 @@ void activity_handlers::milk_finish( player_activity *act, player *p )
 
 void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
 {
+    static constexpr size_t liquid_target_amount_index = 3;
+    static constexpr int liquid_transfer_all = -1;
+
     player_activity &act_ref = *act;
     map &here = get_map();
     try {
@@ -1579,31 +1583,55 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
                      &act_ref]( const std::function < detached_ptr<item>( detached_ptr<item> &&it ) > & cb ) {
             auto pos = act_ref.coords.at( 0 );
             static const units::volume volume_per_second = units::from_liter( 4.0F / 6.0F );
-            int charges;
-            detached_ptr<item> source;
+            const auto amount_index = act_ref.values.size() > liquid_target_amount_index ?
+                                      liquid_target_amount_index : act_ref.values.size();
+            const auto remaining_limit = amount_index < act_ref.values.size() ?
+                                         act_ref.values[ amount_index ] : liquid_transfer_all;
+            int transferred = 0;
+            bool finished = true;
             switch( source_type ) {
                 case LST_INFINITE_MAP:
-                    source = here.water_from( abs_to_bub( pos ) );
-                    charges = std::max( 1, source->charges_per_volume( volume_per_second ) );
-                    source->charges = charges;
-                    source = cb( std::move( source ) );
-                    return source && source->charges == charges;
-                case LST_VEHICLE:
-                    auto vp = here.veh_at( pos );
-                    if( !vp ) {
-                        debugmsg( "Lost track of vehicle source for fill_liquid activity" );
-                    }
-                    item &base = vp->vehicle().part( act_ref.values.at( 1 ) ).get_base();
-                    if( base.contents.empty() ) {
+                    if( remaining_limit == 0 ) {
                         return true;
+                    } else {
+                        detached_ptr<item> source = here.water_from( abs_to_bub( pos ) );
+                        const auto charges_per_turn = std::max( 1, source->charges_per_volume( volume_per_second ) );
+                        const auto charges = remaining_limit > 0 ? std::min( charges_per_turn, remaining_limit ) :
+                                             charges_per_turn;
+                        source->charges = charges;
+                        source = cb( std::move( source ) );
+                        transferred = charges - ( source ? source->charges : 0 );
+                        finished = transferred == 0;
                     }
-                    item &source_it = base.contents.back();
-                    charges = std::max( 1, source_it.charges_per_volume( volume_per_second ) );
-                    int orig = source_it.charges;
-                    source_it.attempt_split( charges, cb );
-                    return source_it.charges == 0 || source_it.charges == orig;
+                    break;
+                case LST_VEHICLE:
+                    if( remaining_limit == 0 ) {
+                        return true;
+                    } else {
+                        const auto vp = here.veh_at( pos );
+                        if( !vp ) {
+                            debugmsg( "Lost track of vehicle source for fill_liquid activity" );
+                        }
+                        item &base = vp->vehicle().part( act_ref.values.at( 1 ) ).get_base();
+                        if( base.contents.empty() ) {
+                            return true;
+                        }
+                        item &source_it = base.contents.back();
+                        const auto charges_per_turn = std::max( 1, source_it.charges_per_volume( volume_per_second ) );
+                        const auto charges = remaining_limit > 0 ? std::min( charges_per_turn, remaining_limit ) :
+                                             charges_per_turn;
+                        const auto original = source_it.charges;
+                        source_it.attempt_split( charges, cb );
+                        transferred = original - source_it.charges;
+                        finished = source_it.charges == 0 || transferred == 0;
+                    }
+                    break;
             }
-            return false;
+            if( amount_index < act_ref.values.size() && act_ref.values[ amount_index ] > 0 ) {
+                act_ref.values[ amount_index ] = std::max( 0, act_ref.values[ amount_index ] - transferred );
+                finished = finished || act_ref.values[ amount_index ] == 0;
+            }
+            return finished;
         };
         bool finished = true;
         // 2. Transfer charges.
@@ -4007,7 +4035,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     // Current progress as a percent of base_total_moves to 2 decimal places
     const auto new_counter_f = current_progress / base_total_moves * 10'000'000.0;
     // This is to ensure we don't over count skill steps
-    const auto new_counter = std::min( static_cast<int>( std::round( new_counter_f ) ), 10'000'000 );
+    const auto new_counter = static_cast<int>( std::min( std::round( new_counter_f ), 10'000'000.0 ) );
     auto five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
     craft->set_counter( new_counter );
 
@@ -4904,6 +4932,16 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
         if( !it.has_flag( flag_USE_PLAYER_ENERGY ) ) {
             p->consume_charges( it, it.type->charges_to_use() );
         }
+    }
+    const auto hook_results = cata::run_hooks(
+                                  "on_spell_cast",
+    [ & ]( sol::table & params ) {
+        params["char"] = p;
+        params["spell"] = spell_being_cast;
+        params["target_pos"] = &target;
+    } );
+    if( spell_being_cast.type->lua_callbacks ) {
+        spell_being_cast.type->lua_callbacks->call_on_cast( *p->as_character(), spell_being_cast, target );
     }
 }
 

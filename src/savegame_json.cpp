@@ -4493,6 +4493,11 @@ void submap::store( JsonOut &jsout ) const
                 jsout.write( cur.get_field_type().id() );
                 jsout.write( cur.get_field_intensity() );
                 jsout.write( cur.get_field_age() );
+                if( cur.electricity_conducted ) {
+                    jsout.start_object();
+                    jsout.member( "electricity_conducted", true );
+                    jsout.end_object();
+                }
             }
             jsout.end_array();
         }
@@ -4758,6 +4763,11 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                     field_cache.push_back( point_sm_ms( i, j ) );
                 }
                 fld[i][j].add_field( ft, intensity, time_duration::from_turns( age ) );
+                if( jsin.test_object() ) {
+                    auto metadata = jsin.get_object();
+                    fld[i][j].find_field( ft )->electricity_conducted =
+                        metadata.get_bool( "electricity_conducted", false );
+                }
             }
         }
     } else if( member_name == "graffiti" ) {

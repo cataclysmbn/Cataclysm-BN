@@ -51,7 +51,8 @@
       "MOUNTABLE_LEDGE",
       "MECH_DEFENSIVE",
       "PRIORITIZE_TARGETS",
-      "PATH_AVOID_DANGER_2"
+      "PATH_AVOID_DANGER_2",
+      "NO_SLIP"
     ]
   },
   {
@@ -107,7 +108,8 @@
       "MECH_DEFENSIVE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_2",
-      "LOUDMOVES"
+      "LOUDMOVES",
+      "NO_SLIP"
     ]
   },
   {
@@ -162,7 +164,8 @@
       "MOUNTABLE_LEDGE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_2",
-      "LOUDMOVES"
+      "LOUDMOVES",
+      "NO_SLIP"
     ]
   }
 ]

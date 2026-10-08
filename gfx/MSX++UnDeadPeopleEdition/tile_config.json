@@ -16506,7 +16506,7 @@
             "apartments_con_tower_103",
             "apartments_con_tower_104"
           ],
-          "fg": [ 9402, 9405, 9404, 9404 ],
+          "fg": [ 9402, 9405, 9404, 9403 ],
           "rotates": true
         },
         {
@@ -16515,13 +16515,21 @@
             "apartments_con_tower_111",
             "apartments_con_tower_112",
             "apartments_con_tower_113",
-            "apartments_con_tower_114"
+            "apartments_con_tower_114",
+            "apartments_con_tower_115"
           ],
           "fg": [ 9406, 9409, 9408, 9407 ],
           "rotates": true
         },
         {
-          "id": [ "apartments_con_tower_010", "apartments_con_tower_011", "apartments_con_tower_013" ],
+          "id": [
+            "apartments_con_tower_010",
+            "apartments_con_tower_011",
+            "apartments_con_tower_012",
+            "apartments_con_tower_013",
+            "apartments_con_tower_014",
+            "apartments_con_tower_015"
+          ],
           "fg": [ 9398, 9401, 9400, 9399 ],
           "rotates": true
         },
@@ -16530,8 +16538,7 @@
             "apartments_mod_tower_000",
             "apartments_mod_tower_001",
             "apartments_mod_tower_002",
-            "apartments_mod_tower_003",
-            "apartments_mod_tower_004"
+            "apartments_mod_tower_003"
           ],
           "fg": [ 9410, 9413, 9412, 9411 ],
           "rotates": true
@@ -16541,8 +16548,7 @@
             "apartments_mod_tower_100",
             "apartments_mod_tower_101",
             "apartments_mod_tower_102",
-            "apartments_mod_tower_103",
-            "apartments_mod_tower_104"
+            "apartments_mod_tower_103"
           ],
           "fg": [ 9418, 9421, 9420, 9419 ],
           "rotates": true
@@ -16553,7 +16559,7 @@
             "apartments_mod_tower_111",
             "apartments_mod_tower_112",
             "apartments_mod_tower_113",
-            "apartments_mod_tower_114"
+            "apartments_mod_tower_shack_roof"
           ],
           "fg": [ 9422, 9425, 9424, 9423 ],
           "rotates": true
@@ -16562,12 +16568,8 @@
           "id": [
             "apartments_mod_tower_010",
             "apartments_mod_tower_011",
-            "apartments_con_tower_012",
             "apartments_mod_tower_012",
-            "apartments_mod_tower_013",
-            "apartments_con_tower_014",
-            "apartments_mod_tower_014",
-            "apartments_con_tower_015"
+            "apartments_mod_tower_013"
           ],
           "fg": [ 9414, 9417, 9416, 9415 ],
           "rotates": true
@@ -16581,8 +16583,8 @@
         },
         { "id": [ "barn_aban1", "desolatebarn" ], "fg": 9429, "rotates": false },
         { "id": "boat_rental", "fg": 9430, "rotates": false },
-        { "id": [ "BotanicalGarden_1a" ], "fg": [ 9431, 9432, 9433, 9434 ], "rotates": true },
-        { "id": [ "BotanicalGarden_1b" ], "fg": [ 9433, 9434, 9431, 9432 ], "rotates": true },
+        { "id": [ "BotanicalGarden_1a" ], "fg": [ 9431, 9434, 9433, 9432 ], "rotates": true },
+        { "id": [ "BotanicalGarden_1b" ], "fg": [ 9433, 9432, 9431, 9434 ], "rotates": true },
         { "id": [ "bridge" ], "fg": [ 9435, 9436, 9437, 9438 ], "rotates": true },
         { "id": [ "bridgehead_ground" ], "fg": [ 9439, 9440, 9441, 9442 ], "bg": 9644, "rotates": true },
         { "id": [ "bus_stat_0", "bus_stat_1" ], "fg": 9443, "rotates": false },
@@ -34910,14 +34912,14 @@
         { "id": [ "construction_site" ], "fg": 19375, "rotates": false },
         {
           "id": [ "BotanicalGarden_1b_roof" ],
-          "fg": [ 19378, 19379, 19376, 19377 ],
+          "fg": [ 19378, 19377, 19376, 19379 ],
           "bg": 19346,
           "rotates": true,
           "has_om_transparency": true
         },
         {
           "id": [ "BotanicalGarden_1a_roof" ],
-          "fg": [ 19376, 19377, 19378, 19379 ],
+          "fg": [ 19376, 19379, 19378, 19377 ],
           "bg": 19346,
           "rotates": true,
           "has_om_transparency": true

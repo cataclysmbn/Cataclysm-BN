@@ -95,8 +95,8 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install shadercross
-        run: bash build-scripts/install-shadercross-vcpkg.sh
+      - name: Build shadercross
+        uses: ./.github/actions/build-shadercross
 
       - name: add problem matcher
         run: |

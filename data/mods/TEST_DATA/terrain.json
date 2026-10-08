@@ -154,5 +154,99 @@
       "duration": "5 seconds",
       "byproducts": [ { "item": "test_rock", "count": 3 }, { "item": "test_2x4", "count": [ 7, 9 ] } ]
     }
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_bool",
+    "name": "json flammable test floor",
+    "description": "A test-only floor that is flammable through the dedicated JSON bool.",
+    "looks_like": "t_floor",
+    "symbol": ".",
+    "color": "yellow",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "flammable": true
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_hard_parent",
+    "name": "flammable test floor",
+    "description": "A test-only floor with a legacy flammability flag.",
+    "looks_like": "t_floor",
+    "symbol": ".",
+    "color": "red",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT", "FLAMMABLE_HARD" ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_hard_removed",
+    "copy-from": "t_test_flammable_hard_parent",
+    "name": "nonflammable test floor",
+    "description": "A test-only floor that removes its inherited flammability flag.",
+    "symbol": ".",
+    "color": "red",
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_hard_replaced_with_ash",
+    "copy-from": "t_test_flammable_hard_parent",
+    "name": "ash-flammable test floor",
+    "description": "A test-only floor that replaces its inherited flammability flag.",
+    "symbol": ".",
+    "color": "red",
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] },
+    "extend": { "flags": [ "FLAMMABLE_ASH" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_true_child",
+    "copy-from": "t_test_flammable_bool",
+    "name": "inherited flammable test floor",
+    "description": "A test-only floor that inherits explicit flammability.",
+    "symbol": ".",
+    "color": "yellow"
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_false_override",
+    "copy-from": "t_test_flammable_true_child",
+    "name": "explicitly nonflammable test floor",
+    "description": "A test-only floor with a legacy flag overridden by an explicit false.",
+    "symbol": ".",
+    "color": "yellow",
+    "flags": [ "TRANSPARENT", "FLAT", "FLAMMABLE_HARD" ],
+    "flammable": false
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_false_child",
+    "copy-from": "t_test_flammable_false_override",
+    "name": "inherited nonflammable test floor",
+    "description": "A test-only floor that inherits explicit nonflammability.",
+    "symbol": ".",
+    "color": "yellow"
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_false_grandchild",
+    "copy-from": "t_test_flammable_false_child",
+    "name": "inherited nonflammable ash test floor",
+    "description": "A test-only floor that changes flags while retaining explicit nonflammability.",
+    "symbol": ".",
+    "color": "yellow",
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] },
+    "extend": { "flags": [ "FLAMMABLE_ASH" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_test_flammable_true_override",
+    "copy-from": "t_test_flammable_false_grandchild",
+    "name": "explicitly flammable ash test floor",
+    "description": "A test-only floor that explicitly restores flammability.",
+    "symbol": ".",
+    "color": "yellow",
+    "flammable": true
   }
 ]

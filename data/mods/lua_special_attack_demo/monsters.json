@@ -1,0 +1,86 @@
+[
+  {
+    "type": "MONSTER",
+    "id": "mon_lua_special_attack_demo",
+    "copy-from": "debug_mon",
+    "name": { "str": "Lua special attack demonstrator" },
+    "description": "A stationary training robot. Its Lua AI reports special attack readiness, failed attempts, successful use, and cooldown after a harmless tap.",
+    "default_faction": "zombie",
+    "symbol": "S",
+    "color": "light_cyan",
+    "hp": 1000,
+    "regenerates": 0,
+    "speed": 100,
+    "aggression": 100,
+    "morale": 100,
+    "vision_day": 20,
+    "vision_night": 20,
+    "clairvoyance": 10,
+    "melee_skill": 3,
+    "melee_dice": 0,
+    "melee_dice_sides": 0,
+    "lua_ai": "lua_special_attack_demo",
+    "lua_attitude": "lua_special_attack_demo_attitude",
+    "flags": [ "IMMOBILE", "SEES", "NOT_HALLUCINATION" ],
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "demo_tap",
+        "cooldown": 7,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ],
+        "miss_msg_u": "The %s demonstrates a tap, but you dodge it.",
+        "no_dmg_msg_u": "The %s demonstrates a harmless tap."
+      }
+    ]
+  },
+  {
+    "type": "MONSTER",
+    "id": "mon_lua_boss_phase_demo",
+    "copy-from": "debug_mon",
+    "name": { "str": "Lua phase boss demonstrator" },
+    "description": "A stationary training robot. It declares three special attacks but keeps all but the one matching its current HP phase disabled, letting the stock scheduler pick from what is left.",
+    "default_faction": "zombie",
+    "symbol": "B",
+    "color": "light_red",
+    "hp": 300,
+    "regenerates": 0,
+    "speed": 100,
+    "aggression": 100,
+    "morale": 100,
+    "vision_day": 20,
+    "vision_night": 20,
+    "clairvoyance": 10,
+    "melee_skill": 3,
+    "melee_dice": 0,
+    "melee_dice_sides": 0,
+    "lua_ai": "lua_boss_phase_demo",
+    "flags": [ "IMMOBILE", "SEES", "NOT_HALLUCINATION" ],
+    "special_attacks": [
+      {
+        "type": "melee",
+        "id": "phase_opening",
+        "cooldown": 3,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ],
+        "no_dmg_msg_u": "The %s performs its OPENING pattern."
+      },
+      {
+        "type": "melee",
+        "id": "phase_midgame",
+        "cooldown": 3,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ],
+        "no_dmg_msg_u": "The %s performs its MIDGAME pattern."
+      },
+      {
+        "type": "melee",
+        "id": "phase_enrage",
+        "cooldown": 3,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "bash", "amount": 0 } ],
+        "no_dmg_msg_u": "The %s performs its ENRAGE pattern."
+      }
+    ]
+  }
+]

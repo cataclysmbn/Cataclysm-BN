@@ -182,7 +182,8 @@
       "BLEED",
       "NO_BREATHE",
       "REVIVES",
-      "PUSH_MON"
+      "PUSH_MON",
+      "NO_SLIP"
     ]
   }
 ]

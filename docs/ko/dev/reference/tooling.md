@@ -1,5 +1,31 @@
 # 개발자 도구
 
+## PR 플레이테스트
+
+저장소 루트에서 로컬 컴파일 없이 PR의 타일 빌드를 내려받아 실행할 수 있습니다:
+
+```sh
+gh auth login
+just playtest 10443
+just playtest https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest --os linux https://github.com/cataclysmbn/Cataclysm-BN/pull/10443
+just playtest "정확한 PR 제목"
+just playtest branch-name
+```
+
+첫 번째 위치 인자는 PR 번호, URL, 브랜치 또는 정확한 제목입니다. 제목으로 찾을 때는 일치하는 PR이 하나여야 하며, 공백이 있는 제목은 따옴표로 감싸세요. 선택적 `--os`는 `linux`, `windows`, `macos`, `android`이며 기본값은 현재 OS입니다. 데스크톱 빌드는 해당 OS에서 실행해야 합니다. Linux 빌드는 x86_64가 필요하고, macOS는 현재 아키텍처에 따라 Intel 또는 ARM 빌드를 선택합니다.
+
+[just](https://just.systems/), [Deno](https://deno.com/), [GitHub CLI](https://cli.github.com/)를 설치하세요. 저장소의 justfile은 Windows에서도 Bash가 필요합니다. Linux 압축 해제에는 GNU tar가 필요하며, macOS에서는 내장 도구인 `hdiutil`, `ditto`, `open`을 사용합니다. 내려받은 게임을 실행하려면 해당 플랫폼의 런타임 라이브러리도 필요합니다.
+
+Android에서는 USB 디버깅을 켠 ARM64 기기를 연결하고 `adb devices`에 인증된 대상이 하나 표시되는지 확인한 뒤, `just playtest --os android https://github.com/cataclysmbn/Cataclysm-BN/pull/10443`를 실행하세요. `adb install -r`로 실험판 앱을 설치하거나 업데이트한 뒤 실행합니다. 기존 앱이 다른 키로 서명되어 있다면 이 방법으로 업데이트할 수 없습니다.
+
+> [!WARNING]
+> 신뢰하는 PR만 플레이테스트하세요. 아티팩트는 컴퓨터나 Android 기기에서 코드를 실행합니다.
+
+명령은 PR의 현재 head SHA와 일치하는 만료되지 않은 최신 아티팩트를 선택합니다. 아티팩트가 없다면 PR의 `matrix` 워크플로를 확인하세요. 빌드가 대기 중이거나 건너뛰었거나 실패했거나 아티팩트가 만료되었을 수 있습니다. 이전 커밋의 빌드로 대신 실행하지는 않습니다.
+
+데스크톱 다운로드는 `/tmp/cataclysm-bn/artifacts/PR-<number>-<SHA>/<os>/build-<artifact-id>/` 아래에 캐시됩니다. Windows의 루트는 `%TEMP%\cataclysm-bn\artifacts`이며 `TEMP`가 없으면 저장소 디렉토리를 사용합니다. 같은 아티팩트를 다시 실행하면 기존 디렉토리와 그 안의 세이브 및 설정을 재사용합니다. SHA나 아티팩트 ID가 바뀌면 별도 디렉토리를 사용합니다. 임시 디렉토리 정리로 파일이 삭제될 수 있으므로 보관할 세이브는 다른 곳에 복사하세요. Android 세이브는 기기에 남습니다.
+
 ## 코드 스타일 (C++)
 
 C++ 포매팅은 top-level `src/*.cpp`와 `src/*.h`에만 [Artistic Style](http://astyle.sourceforge.net/)을 사용합니다. 대부분의 다른 C++ 파일은 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)을 사용합니다. `tools/clang-tidy-plugin/test/` 같은 포매터에 민감한 fixture는 변경하지 않습니다. 파일별 도구 선택은 저장소 helper에 맡기세요.
@@ -47,11 +73,13 @@ Visual Studio Marketplace에 astyle 확장이 있지만 VS2019 또는 VS2022에�
 4. `Release` 빌드 구성을 선택합니다 (VS가 기본적으로 `Debug` 구성을 선택할 가능성이 높음).
 5. 솔루션을 빌드합니다.
 6. 빌드가 성공하면 `AStyleExtension\bin\Release`에서 컴파일된 확장을 볼 수 있습니다. 더블 클릭하여 설치합니다.
-7. [구성 지침 (Visual Studio 2019 또는 이전)](#configuration-instructions-visual-studio-2019-or-older) 섹션에 따라 확장을 구성합니다.
+7. [구성 지침 (Visual Studio 2019 또는 이전)](#구성-지침-visual-studio-2019-또는-이전) 섹션에 따라 확장을 구성합니다.
 
 #### Visual Studio 2017 또는 이전
 
 VS2019의 단계를 따라 소스에서 컴파일할 수 있지만 Visual Studio Marketplace에서 [사용 가능한](https://marketplace.visualstudio.com/items?itemName=Lukamicoder.AStyleExtension2017) 미리 빌드된 버전이 있으며 VS의 확장 관리자를 통해 확장을 설치한 다음 동일한 방식으로 구성할 수 있어야 합니다.
+
+<a id="구성-지침-visual-studio-2019-또는-이전"></a>
 
 #### 구성 지침 (Visual Studio 2019 또는 이전):
 
@@ -75,7 +103,7 @@ _참고:_ `Tools` - `Options` - `Environment` - `Keybindings` 메뉴에서 언�
 
 ## JSON 스타일
 
-[JSON 스타일 가이드](../../mod/json/explanation/json_style)를 참조하세요.
+[JSON 스타일 가이드](../../mod/json/explanation/json_style.md)를 참조하세요.
 
 ## ctags
 

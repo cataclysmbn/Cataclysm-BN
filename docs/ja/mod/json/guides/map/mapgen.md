@@ -2,7 +2,7 @@
 
 本ガイドでは、マップ生成の基本、編集が必要なファイル、各ファイル内のタグ、そしてスペシャル（特殊な構造物）と通常の都市内建物を作成する際の相違点について解説します。
 
-[For full technical information about mapgen entries, visit here](../../reference/map/mapgen)
+[mapgen エントリの詳しい技術情報はこちらを参照してください](../../reference/map/mapgen.md)
 
 まず、いくつかの基本的な概念と、追加・編集するファイルについて説明します。
 
@@ -21,11 +21,11 @@ BN のマップ生成は、慣れると驚くほど強力です。多くの工�
 ## 必須ファイルとその目的:
 
 1. 新しいマップ生成ファイルを次の場所に追加します。
-   [data/json/mapgen](https://github.com/cataclysmbnteam/Cataclysm-BN/tree/main/data/json/mapgen) またはサブフォルダ。既存の建物の基礎形状を使用する場合は、その建物のファイルに追記しても構いません。
+   [data/json/mapgen](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/data/json/mapgen) またはサブフォルダ。既存の建物の基礎形状を使用する場合は、その建物のファイルに追記しても構いません。
    - 建物の設計図です。家具や戦利品を追加するための建物データも保持できます（代替案としてパレットを参照）。
 
 2. 作成する Z レベルごとに、オーバーマップ地形ファイル
-   ([data/json/overmap/overmap_terrain](https://github.com/cataclysmbnteam/Cataclysm-BN/tree/main/data/json/overmap/overmap_terrain))にエントリを追加します。
+   ([data/json/overmap/overmap_terrain](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/data/json/overmap/overmap_terrain))にエントリを追加します。
    - エントリは、オーバーマップ上で建物がどのように見えるか、シンボル、色、および歩道の追加な
      どの出現要件を定義します。また、一部のマップ生成機能のフラグを制御します。
 
@@ -63,7 +63,7 @@ BN のマップ生成は、慣れると驚くほど強力です。多くの工�
 
 ## マップ生成マップ:
 
-ここでは、マップ生成ファイル内のマップフラグと、何をするかを説明します。より広範な情報については、[MAPGEN](../../reference/map/mapgen)を参照してください。
+ここでは、マップ生成ファイル内のマップフラグと、何をするかを説明します。より広範な情報については、[MAPGEN](../../reference/map/mapgen.md)を参照してください。
 
 マップ生成ファイルには、いくつかのメタデータタグと、マップ作成のすべてを定義する `"object"` データが含まれています。
 
@@ -246,7 +246,7 @@ BN のマップ生成は、慣れると驚くほど強力です。多くの工�
 (注釈: 弾薬グループなど、任意のアイテムグループを機械に入れることができます)。
 
 6. アイテム配置: アイテムを配置する方法はたくさんあります。このチュートリアルでは、最も簡単なシンボル配
-   置のみを扱います。さらなる情報については、戦利品配置に関するドキュメント: [ITEM_SPAWN.md](../../reference/items/item_spawn)を参照してください。
+   置のみを扱います。さらなる情報については、戦利品配置に関するドキュメント: [ITEM_SPAWN.md](../../reference/items/item_spawn.md)を参照してください。
 
 サンプルではタグに "items" を使用しています。他には、"place_item"、"place_items"、"place_loot"があります。一部は個別にアイテム配置し、他はグループ、または両方できます。これについては別のチュートリアルで扱います。
 
@@ -423,7 +423,7 @@ Cataclysm-BN の建物は、ほぼすべて屋根に対応しており、その�
 ## multitile_city_buildings.json を使用したマップ生成マップのリンク
 
 このファイルは次の場所にあります:
-[data/json/overmap/multitile_city_buildings.json](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/json/overmap/multitile_city_buildings.json)。
+[data/json/overmap/multitile_city_buildings.json](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/json/overmap/multitile_city_buildings.json)。
 
 注釈:このファイルは都市内建物のみを対象としており、スペシャル用ではありません。
 
@@ -456,7 +456,7 @@ Cataclysm-BN の建物は、ほぼすべて屋根に対応しており、その�
 
 ## regional_map_settings.json を使用したオーバーマップ配置の設定
 
-[data/json/regional_map_settings.json](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/json/regional_map_settings.json)
+[data/json/regional_map_settings.json](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/json/regional_map_settings.json)
 
 1. 都市内建物と家の場合、`"city":` フラグまでスクロールします。
 2. 適切なサブタグ (通常は`"houses"` または `"shops"`) を見つけます。
@@ -467,7 +467,7 @@ Cataclysm-BN の建物は、ほぼすべて屋根に対応しており、その�
 ## スペシャルのリンクとスポーン:
 
 エントリを次の場所に入れます:
-[data/json/overmap/overmap_special/specials.json](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/json/overmap/overmap_special/specials.json)。
+[data/json/overmap/overmap_special/specials.json](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/json/overmap/overmap_special/specials.json)。
 
 このエントリは、regional_map_settings と multitile_city_buildings の両方の役割に加え、その他の楽しいオーバーマップ設定も行います。
 
@@ -519,7 +519,7 @@ Cataclysm-BN の建物は、ほぼすべて屋根に対応しており、その�
 ## オーバーマップ地形エントリ:
 
 建物のタイプに応じて、次の場所でファイルを選択します:
-[data/json/overmap/overmap_terrain](https://github.com/cataclysmbnteam/Cataclysm-BN/tree/main/data/json/overmap/overmap_terrain)。
+[data/json/overmap/overmap_terrain](https://github.com/cataclysmbn/Cataclysm-BN/tree/main/data/json/overmap/overmap_terrain)。
 
 この一連のエントリは、オーバーマップ上で建物がどのように見えるかを定義します。copy-from をサポートしています。
 
@@ -558,7 +558,7 @@ Cataclysm-BN の建物は、ほぼすべて屋根に対応しており、その�
    するように努めてください。その他にも、歩道を生成するなど、マップ生成をさらに定義するものがあります。
 
 詳細については、
-[Overmap Terrain section of OVERMAP](../../reference/map/overmap#overmap-terrain)を参照してください。
+[OVERMAP のオーバーマップ地形の節](../../reference/map/overmap.md#overmap-terrain)を参照してください。
 
 ## パレット(Palettes):
 
@@ -635,10 +635,10 @@ Cataclysm-BN の建物は、ほぼすべて屋根に対応しており、その�
 ```
 
 より複雑なパレットを確認したい場合は、
-[data/json/mapgen_palettes/house_general_palette.json](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/json/mapgen_palettes/house_general_palette.json)にある standard_domestic_palette が、すべての BN の家で機能するように設計されたパレットの良い例となります。これには、戦利品の出現定義が含まれており、家で使用されるほとんどの家具をカバーしています。また、特定の場所のニーズに合わせてマップ生成ファイルで使用できるように、一部のシンボルをオープンな状態にして残しました。
+[data/json/mapgen_palettes/house_general_palette.json](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/json/mapgen_palettes/house_general_palette.json)にある standard_domestic_palette が、すべての BN の家で機能するように設計されたパレットの良い例となります。これには、戦利品の出現定義が含まれており、家で使用されるほとんどの家具をカバーしています。また、特定の場所のニーズに合わせてマップ生成ファイルで使用できるように、一部のシンボルをオープンな状態にして残しました。
 
 最後に、
-[data/json/mapgen_palettes/house_w_palette.json](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/data/json/mapgen_palettes/house_w_palette.json)にある一連の house_w パレットは、ネストされたマップ生成を使用する家のために連携して機能するように設計されています。基礎専用のパレット、ネスト専用のパレット、そして最後に、私が設計した家庭用の屋外ネスト化チャンク専用のパレットがあります。
+[data/json/mapgen_palettes/house_w_palette.json](https://github.com/cataclysmbn/Cataclysm-BN/blob/main/data/json/mapgen_palettes/house_w_palette.json)にある一連の house_w パレットは、ネストされたマップ生成を使用する家のために連携して機能するように設計されています。基礎専用のパレット、ネスト専用のパレット、そして最後に、私が設計した家庭用の屋外ネスト化チャンク専用のパレットがあります。
 
 ## 最終コメント:
 

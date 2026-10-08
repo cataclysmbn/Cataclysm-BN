@@ -177,6 +177,47 @@ it for the purpose of surgery.
 (Optional) Dispenses infinite amounts of specified liquid item when interacted. Must be used with
 `"examine_action": "liquid_source"` to work.
 
+#### `fluid_grid`
+
+(Optional) Connects the furniture to a fluid grid. The `role` determines how it interacts with the
+grid: `tank` adds storage, `fixture` dispenses stored liquids, and `transformer` or `rain_collector`
+changes or produces liquids. Every fluid-grid object must set `allow_input`, `allow_output`, and
+`allowed_liquids`.
+
+`allowed_liquids` can be an array of liquid item ids, or the string `"universal"`. An array limits
+the object to those liquids. A non-universal output fixture must be assigned one of its allowed
+liquids that is already stored in the grid; it will then dispense only that liquid until reassigned.
+Assigning a fixture requires a plumbing kit and consumes one rubber hose; unassigning it requires
+the kit and returns the hose. A fixture must be unassigned before it can be assigned to another liquid.
+`"universal"` lets a fixture select any liquid in the grid each time it is used. For example, use a
+water allowlist for a sink, and use `"universal"` only for a fixture that should dispense arbitrary
+liquids.
+
+Tank objects also need a positive `capacity` or `use_keg_capacity: true` (which uses the furniture's
+`keg_capacity`), and a `connected_variant` or `disconnected_variant` furniture id. Universal tanks
+are assigned one liquid at a time for dispensing. Assigning or unassigning a tank requires a plumbing
+kit. Assignment consumes one rubber hose, and unassignment returns it. Unassigning does not remove
+liquid from the tank furniture or shared fluid grid. To change an assignment, unassign the tank, then
+assign it to a liquid already stored in the connected grid.
+
+The optional `autofill` boolean is only valid with `allowed_liquids: "universal"`. It lets an
+unassigned tank's capacity be automatically assigned to a liquid when that liquid needs more grid
+capacity. This is useful when a grid has multiple universal tanks: tanks already assigned to one
+liquid keep that assignment, while unassigned autofill tanks can be allocated as more storage is
+needed.
+
+```json
+"fluid_grid": {
+  "role": "tank",
+  "allow_input": true,
+  "allow_output": true,
+  "allowed_liquids": "universal",
+  "autofill": true,
+  "disconnected_variant": "f_standing_tank",
+  "use_keg_capacity": true
+}
+```
+
 #### `enchanter_info`
 
 (Optional) array of enchant info objects

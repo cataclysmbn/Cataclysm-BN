@@ -13,6 +13,8 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": [ "45colt", "410shot" ],
+    "ranged_damage": { "damage_type": "bullet", "amount": -4 },
+    "range": -2,
     "dispersion": 520,
     "durability": 6,
     "clip_size": 2,
@@ -24,6 +26,7 @@
       [ "grip", 1 ],
       [ "mechanism", 2 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ]
@@ -42,6 +45,7 @@
     "color": "brown",
     "ammo": "45colt",
     "ranged_damage": { "damage_type": "bullet", "amount": 5 },
+    "range": 10,
     "dispersion": 180,
     "durability": 7,
     "clip_size": 14,
@@ -83,6 +87,8 @@
     "color": "light_gray",
     "weight": "820 g",
     "volume": "750 ml",
+    "ranged_damage": { "damage_type": "bullet", "amount": -4 },
+    "range": -2,
     "clip_size": 5,
     "dispersion": 360,
     "valid_mod_locations": [
@@ -91,6 +97,7 @@
       [ "mechanism", 4 ],
       [ "rail", 1 ],
       [ "sights", 1 ],
+      [ "sling", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
     ],

@@ -1109,6 +1109,7 @@ void mapbuffer::clear() {
     }
     std::lock_guard<std::mutex> pw_lk(pending_writes_mutex_);
     pending_writes_.clear();
+    transaction_pending_writes_.clear();
 }
 
 auto mapbuffer::add_submap(const tripoint_abs_sm& p, std::unique_ptr<submap>& sm) -> bool {
@@ -2375,7 +2376,9 @@ auto mapbuffer::add_item_or_charges(
             return false;
         }
         if (new_item->made_of(LIQUID) || !new_item->has_flag(flag_DROP_ACTION_ONLY_IF_LIQUID)) {
-            return new_item->on_drop(*local, g->m);
+            const auto destroyed = new_item->on_drop(*local, g->m);
+            if (destroyed) { new_item = detached_ptr<item>(); }
+            return destroyed;
         }
         return false;
     };
@@ -3148,6 +3151,11 @@ void mapbuffer::save(bool delete_after_save, bool notify_tracker, bool show_prog
     std::map<tripoint_abs_omt, std::string> pending_snapshot;
     {
         std::lock_guard<std::mutex> pw_lk(pending_writes_mutex_);
+        if (g->get_active_world()->is_save_tx_active()) {
+            for (const auto& [omt_addr, data] : pending_writes_) {
+                transaction_pending_writes_.insert_or_assign(omt_addr, data);
+            }
+        }
         pending_snapshot = std::move(pending_writes_);
     }
     std::ranges::for_each(pending_snapshot, [&](auto& entry) {
@@ -3163,6 +3171,15 @@ void mapbuffer::save(bool delete_after_save, bool notify_tracker, bool show_prog
                 });
         }
     });
+}
+
+auto mapbuffer::finish_save_tx(bool committed) -> void {
+    const auto lock = std::lock_guard<std::mutex>(pending_writes_mutex_);
+    if (!committed) {
+        // Any newer pending version takes precedence over the failed save's snapshot.
+        pending_writes_.merge(transaction_pending_writes_);
+    }
+    transaction_pending_writes_.clear();
 }
 
 void mapbuffer::save_omt(

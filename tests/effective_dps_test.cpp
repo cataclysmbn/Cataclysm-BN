@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "item.h"
@@ -17,9 +18,20 @@
 
 struct itype;
 
-static constexpr auto deterministic_dps_seed = 0U;
+// Zero leaves the RNG unchanged instead of seeding it.
+static constexpr auto deterministic_dps_seed = 1U;
 
 static auto reset_dps_rng() -> void { rng_set_engine_seed(deterministic_dps_seed); }
+
+TEST_CASE("DPS RNG reset repeats the trial sequence", "[dps][rng]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
+    rng_set_engine_seed(GENERATE(1U, 1789231266U));
+    reset_dps_rng();
+    const auto expected = rng_get_engine();
+    rng_bits();
+    reset_dps_rng();
+    CHECK(rng_get_engine() == expected);
+}
 
 // Run a large number of trials of a player attacking a monster with a given weapon,
 // and return the average damage done per second.
@@ -108,8 +120,9 @@ static auto check_accuracy_dps(
     CHECK(dps_wpn3 > dps_wpn2);
 }
 TEST_CASE("effective damage per second", "[effective][dps]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
     clear_all_state();
-    rng_set_engine_seed(0);
+    reset_dps_rng();
     avatar& dummy = g->u;
     clear_character(dummy);
 
@@ -178,8 +191,9 @@ TEST_CASE("effective damage per second", "[effective][dps]") {
 }
 
 TEST_CASE("effective vs actual damage per second", "[actual][dps]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
     clear_all_state();
-    rng_set_engine_seed(0);
+    reset_dps_rng();
     avatar& dummy = g->u;
     clear_character(dummy);
 
@@ -213,8 +227,9 @@ TEST_CASE("effective vs actual damage per second", "[actual][dps]") {
 }
 
 TEST_CASE("accuracy increases success", "[accuracy][dps]") {
+    const auto restore_rng = restore_on_out_of_scope(rng_get_engine());
     clear_all_state();
-    rng_set_engine_seed(0);
+    reset_dps_rng();
     avatar& dummy = g->u;
     clear_character(dummy);
 

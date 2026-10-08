@@ -90,7 +90,7 @@ class Trait_creation_data
         /**
          * Check the trait templates for consistency (valid trait types, etc).
          */
-        virtual void check_consistency() const = 0;
+        virtual void check_consistency( const std::string &context = "" ) const = 0;
 
         /**
          * Remove the given trait from this and all linked groups.
@@ -120,7 +120,7 @@ class Single_trait_creator : public Trait_creation_data
         trait_id id;
 
         trait_group::Trait_list create( RecursionList &rec ) const override;
-        void check_consistency() const override;
+        void check_consistency( const std::string &context = "" ) const override;
         bool remove_trait( const trait_id &tid ) override;
         bool has_trait( const trait_id &tid ) const override;
 };
@@ -138,7 +138,7 @@ class Trait_group_creator : public Trait_creation_data
         trait_group::Trait_group_tag id;
 
         trait_group::Trait_list create( RecursionList &rec ) const override;
-        void check_consistency() const override;
+        void check_consistency( const std::string &context = "" ) const override;
         bool remove_trait( const trait_id &tid ) override;
         bool has_trait( const trait_id &tid ) const override;
 };
@@ -164,7 +164,7 @@ class Trait_group : public Trait_creation_data
          */
         virtual void add_entry( std::unique_ptr<Trait_creation_data> ptr ) = 0;
 
-        void check_consistency() const override;
+        void check_consistency( const std::string &context = "" ) const override;
         bool remove_trait( const trait_id &tid ) override;
         bool has_trait( const trait_id &tid ) const override;
 

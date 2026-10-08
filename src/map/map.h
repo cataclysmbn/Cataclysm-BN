@@ -1752,7 +1752,8 @@ public:
     /**
      * Apply field effects to the creature when it's on a square with fields.
      */
-    void creature_in_field(Creature& critter);
+    /// With movement_only, apply only character slipping; otherwise apply ongoing effects.
+    auto creature_in_field(Creature& critter, bool movement_only = false) -> void;
     /**
      * Apply trap effects to the creature, similar to @ref creature_in_field.
      * If there is no trap at the creatures location, nothing is done.
@@ -1863,6 +1864,8 @@ public:
      * @param src Id of object producing the emission
      * @param mul Multiplies the chance and possibly qty (if `chance*mul > 100`) of the emission
      */
+    void spill_liquid_field(const tripoint_bub_ms& center, const item& liquid);
+
     void emit_field(const tripoint_bub_ms& pos, const emit_id& src, float mul = 1.0f);
 
     // Scent propagation helpers
@@ -2172,7 +2175,8 @@ protected:
     auto vision_transparency_block_mask() const -> uint32_t;
     // Applies vehicle mirror/camera FOV from @p origin's vehicle.
     // Separated from build_seen_cache for readability and Tracy granularity.
-    void apply_vehicle_optics(const tripoint_bub_ms& origin, int target_z);
+    void apply_vehicle_optics(
+        const tripoint_bub_ms& origin, int target_z, bool requires_camera = false);
     void apply_character_light(Character& who);
 
     // Adds/removes player specific transparencies

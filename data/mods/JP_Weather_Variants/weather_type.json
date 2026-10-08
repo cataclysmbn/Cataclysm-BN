@@ -218,7 +218,7 @@
     "animation": { "factor": 0.01, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_snow" },
     "sound_category": "snow",
     "sun_intensity": "light",
-    "requirements": { "acidic": true, "temperature_max": 21, "required_weathers": [ "acid_drizzle" ] }
+    "requirements": { "temperature_max": 21, "required_weathers": [ "acid_drizzle" ], "required_weather_patterns": { "acidic": 1.0 } }
   },
   {
     "id": "acid_snow",
@@ -258,7 +258,7 @@
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_snow" },
     "sound_category": "flurries",
     "sun_intensity": "light",
-    "requirements": { "acidic": true, "temperature_max": 21, "required_weathers": [ "acid_rain" ] }
+    "requirements": { "temperature_max": 21, "required_weathers": [ "acid_rain" ], "required_weather_patterns": { "acidic": 1.0 } }
   },
   {
     "id": "acid_snowstorm",
@@ -298,7 +298,11 @@
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_snow" },
     "sound_category": "snowstorm",
     "sun_intensity": "none",
-    "requirements": { "acidic": true, "temperature_max": 21, "required_weathers": [ "acid_rain", "snowstorm" ] }
+    "requirements": {
+      "temperature_max": 21,
+      "required_weathers": [ "acid_rain", "snowstorm" ],
+      "required_weather_patterns": { "acidic": 1.0 }
+    }
   },
   {
     "id": "clear_night",

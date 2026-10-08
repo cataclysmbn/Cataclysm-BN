@@ -220,6 +220,31 @@
     "trail": { "field_type": "fd_fire", "intensity_min": 2, "intensity_max": 2, "chance": 75 }
   },
   {
+    "id": "STREAM_WATER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_water", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_SALT_WATER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_salt_water", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_SOAPY_WATER",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_soapy_water", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_GLUE",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_glue", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
+    "id": "STREAM_INDUSTRIAL_LUBRICANT",
+    "type": "ammo_effect",
+    "trail": { "field_type": "fd_industrial_lubricant", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
+  },
+  {
     "id": "STREAM_GAS_FUNGICIDAL",
     "type": "ammo_effect",
     "trail": { "field_type": "fd_fungicidal_gas", "intensity_min": 1, "intensity_max": 2, "chance": 66 }
@@ -514,5 +539,17 @@
     "id": "AMMO_66MM_HEAT",
     "type": "ammo_effect",
     "explosion": { "damage": 300, "radius": 2 }
+  },
+  {
+    "id": "FUSION_ARM_POWERSHOT",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 3, "radius": 1, "chance": 10 },
+    "explosion": { "fragment": { "impact": { "damage_type": "heat", "amount": 40, "armor_multiplier": 2 }, "range": 3 } }
+  },
+  {
+    "id": "FUSION_ARM_POWERSHOT_SMALL",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_plasma", "intensity_min": 1, "intensity_max": 2, "radius": 1, "chance": 10 },
+    "explosion": { "fragment": { "impact": { "damage_type": "heat", "amount": 32, "armor_multiplier": 2 }, "range": 3 } }
   }
 ]

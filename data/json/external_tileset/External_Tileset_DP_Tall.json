@@ -68,7 +68,10 @@
           { "id": "creepy_doll", "fg": 48 },
           { "id": "mon_suspended_shade", "fg": 49 },
           { "id": "mon_suspended_merc", "fg": 50 },
-          { "id": "mon_anomaly_boss", "fg": 51 }
+          { "id": "mon_anomaly_boss", "fg": 51 },
+          { "id": "mon_talon_m2hb", "fg": 52 },
+          { "id": [ "bot_talon_m2hb", "overlay_wielded_bot_talon_m2hb" ], "fg": 53 },
+          { "id": [ "broken_talon_m2hb", "overlay_wielded_broken_talon_m2hb" ], "fg": 54 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

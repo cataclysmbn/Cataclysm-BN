@@ -357,7 +357,7 @@
     "type": "item_group",
     "id": "ammo_shotgun_modern_handloads",
     "subtype": "distribution",
-    "entries": [ { "item": "reloaded_shot_00_arcana", "prob": 25 } ]
+    "entries": [ { "item": "reloaded_shot_00_arcana", "prob": 20 }, { "item": "410shot_000_arcana", "prob": 5 } ]
   },
   {
     "type": "item_group",

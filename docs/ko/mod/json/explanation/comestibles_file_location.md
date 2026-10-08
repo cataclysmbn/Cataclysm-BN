@@ -1,29 +1,73 @@
 # 소비재 파일 위치
 
-소비재(음식, 음료 등)는 다음 위치에 정의되어 있습니다:
+`json/items/comestibles`에는 많은 파일이 있습니다. 이 가이드는 새 소비재를 어디에 추가할지 결정하는 데 도움을 줍니다.
 
-## 기본 게임
+## 특수 소비재 목록
 
-- `data/json/items/comestibles/` - 모든 소비재 JSON 파일
+`med.json` -- 알코올과 카페인 외에 중독 효과가 있는 소비재와 붕대·소독제 같은 아이템.
 
-## 모드
+`mre.json` -- MRE와 관련된 아이템 및 소비재.
 
-모드는 자체 소비재를 추가하거나 기존 소비재를 수정할 수 있습니다:
+`mutagen.json` -- 돌연변이 효과가 있는 소비재.
 
-- `data/mods/[MOD_NAME]/items/comestibles/`
+`carnivore.json` -- 동물이나 몬스터에게서 보통 도축으로 얻는 아이템과 조리된 형태. 예: 고기 덩어리, 오염된 뼈, 삶은 위.
 
-## 구성
+`protein.json` -- 단백질 분말을 기반으로 한 소비재.
 
-소비재는 다음과 같이 정의됩니다:
+`spice.json` -- 보통 영양소는 없지만 요리의 맛을 내는 데 사용하는 소비재. 예: 소금, 타임, 후추.
 
-```json
-{
-  "type": "COMESTIBLE",
-  "id": "example_food",
-  "name": "example food",
-  "description": "An example food item.",
-  ...
-}
-```
+`frozen.json` -- 얼린 상태로 먹는 것이 좋은 소비재.
 
-자세한 내용은 [COMESTIBLES.md](../reference/items/COMESTIBLES.md)를 참조하세요.
+`brewing.json` -- 양조 과정에 사용하는 아이템.
+
+## 일반 소비재 목록(우선순위 순)
+
+추가하려는 소비재가 있으면 이 목록을 위에서부터 확인하고, 조건에 맞는 첫 번째 파일을 선택하세요.
+
+### 액체
+
+`alcohol.json` -- 알코올 중독이 있는 음료 소비재.
+
+`soup.json` -- 수프인 음료 소비재. 음료라기보다는 주로 열량을 얻는 음식에 가깝습니다.
+
+`drink.json` -- 일반적인 음료 소비재. 목마를 때 선택하는 음료입니다. 예: 차, 주스, 물.
+
+`drink_other.json` -- 다른 조건에 맞지 않는 음료 소비재. 예: 식초, 겨자.
+
+### 고체
+
+`junkfood.json` -- `junk` 재질의 소비재. 예: 케이크, 설탕 시리얼, 나초.
+
+`sandwich.json` -- 일반적으로 빵 두 조각 사이에 재료를 넣은 샌드위치. 예: BLT, PB&J 샌드위치, 생선 샌드위치.
+
+`offal_dishes.json` -- 각종 내장으로 만든 소비재. 내장의 종류는 간, 뇌, 신장, 스위트브레드, 위이며, 내장이 요리의 주재료여야 합니다.
+
+`seed.json` -- 씨앗.
+
+`meat_dishes_human.json` -- 사람의 살로 만든 소비재. 예: 호보 헬퍼, 티오 타코.
+
+`meat_dishes.json` -- 고기로 만든 소비재.
+
+`raw_veggy.json` -- 날것의 채소인 소비재.
+
+`irradiated_veggy.json` -- 방사선 조사된 채소인 소비재. 유통기한이 없습니다.
+
+`raw_fruit.json` -- 날것의 과일인 소비재.
+
+`irradiated_fruit.json` -- 방사선 조사된 과일인 소비재. 유통기한이 없습니다.
+
+`veggy_dishes.json` -- 채소로 만든 소비재.
+
+`bread.json` -- 빵 발효종 또는 조리된 빵인 소비재.
+
+`wheat.json` -- 날밀 또는 밀로 만든 소비재.
+
+`egg.json` -- 달걀 또는 달걀로 만든 소비재.
+
+`dairy.json` -- 우유로 만든 소비재.
+
+`mushroom.json` -- 버섯 또는 버섯으로 만든 소비재.
+
+`nuts.json` -- 견과류 또는 견과류로 만든 소비재.
+
+`other.json` -- 여기까지 왔다면 다른 범주에 맞지 않는 소비재입니다.

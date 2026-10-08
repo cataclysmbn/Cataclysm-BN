@@ -218,7 +218,40 @@
           { "id": "overlay_worn_crocs_sport", "fg": 127 },
           { "id": "fd_gas_remover", "fg": 128 },
           { "id": [ "aviators", "overlay_wielded_aviators" ], "fg": 129 },
-          { "id": "overlay_worn_aviators", "fg": 130 }
+          { "id": "overlay_worn_aviators", "fg": 130 },
+          { "id": "textbook_brawl", "fg": 132, "bg": 131 },
+          { "id": "textbook_melee", "fg": 133, "bg": 131 },
+          { "id": "textbook_dodge", "fg": 134 },
+          { "id": "textbook_cutting", "fg": 135, "bg": 131 },
+          { "id": "textbook_bashing", "fg": 136, "bg": 131 },
+          { "id": "textbook_archery", "fg": 137 },
+          { "id": "textbook_stabbing", "fg": 138, "bg": 131 },
+          { "id": "mon_zombie_soldier_camo_1", "fg": 139, "bg": 30 },
+          { "id": "corpse_mon_zombie_soldier_camo_1", "fg": 140 },
+          { "id": "mon_zombie_soldier_camo_2", "fg": 141, "bg": 30 },
+          { "id": "corpse_mon_zombie_soldier_camo_2", "fg": 142 },
+          { "id": "nether_lesser_incursion", "fg": 143 },
+          {
+            "id": "fd_fuel",
+            "fg": 144,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 145 },
+              { "id": "corner", "fg": [ 146, 147, 148, 149 ] },
+              { "id": "t_connection", "fg": [ 156, 157, 158, 159 ] },
+              { "id": "edge", "fg": [ 150, 151 ] },
+              { "id": "end_piece", "fg": [ 152, 153, 154, 155 ] },
+              { "id": "unconnected", "fg": 160 }
+            ]
+          },
+          { "id": "overlay_wielded_m1014", "fg": 161 },
+          { "id": "1st_aid_ifak", "fg": 162 },
+          { "id": "overlay_wielded_1st_aid_ifak", "fg": 163 },
+          { "id": "SVD", "fg": 164 },
+          { "id": "overlay_wielded_SVD", "fg": 165 },
+          { "id": "PKM", "fg": 166 },
+          { "id": "overlay_wielded_PKM", "fg": 167 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

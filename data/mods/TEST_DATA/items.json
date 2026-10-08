@@ -310,6 +310,25 @@
     "flags": [ "VARSIZE", "SKINTIGHT" ]
   },
   {
+    "id": "test_noslip_boots",
+    "type": "ARMOR",
+    "name": { "str": "TEST pair of non-slip boots", "str_pl": "TEST pairs of non-slip boots" },
+    "description": "Deterministic test boots with aggressively grippy soles.",
+    "weight": "900 g",
+    "volume": "1500 ml",
+    "price": "0 USD",
+    "material": [ "leather", "rubber" ],
+    "symbol": "[",
+    "looks_like": "boots",
+    "color": "light_gray",
+    "covers": [ "feet" ],
+    "coverage": 100,
+    "encumbrance": 6,
+    "warmth": 10,
+    "material_thickness": 2,
+    "flags": [ "VARSIZE", "NOSLIP" ]
+  },
+  {
     "id": "test_longshirt",
     "type": "ARMOR",
     "name": "TEST long-sleeved shirt",

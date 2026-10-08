@@ -54,6 +54,7 @@
 #include "vehicle/vpart_position.h"
 
 #include <algorithm>
+#include <utility>
 #include <array>
 #include <cfloat>
 #include <cmath>
@@ -1532,7 +1533,13 @@ void monster::execute_action( const monster_action_t &action )
     //     out into a separate action kind (with an early return) caused an infinite
     //     loop: if all call()s failed the cooldown was never reset, decide_action()
     //     saw cooldown==0 again next iteration, and moves were never consumed.
-    if( !pacified && !is_hallucination() &&
+    // The budget is consumed on read. use_special_attack() sets it, but monster::move() is the
+    // only place that clears it, and monsters without lua_ai reach execute_action() without
+    // going through move() at all -- see the use_direct_monster_move branch in game::monmove.
+    // Clearing here keeps the flag from latching and silently barring that monster from ever
+    // using a special attack again, whichever path reaches this block.
+    const auto budget_spent = std::exchange( special_attack_spent, false );
+    if( !pacified && !is_hallucination() && !budget_spent &&
         !type->special_attacks.empty() && !special_attacks.empty() ) {
         ZoneScopedN( "mon_execute_special_attacks" );
         auto spec_list = std::vector<const std::pair<const std::string, mtype_special_attack> *> {};
@@ -1545,6 +1552,10 @@ void monster::execute_action( const monster_action_t &action )
             }
         }
         auto sp_atk_used = false;
+        // The same guard use_special_attack() holds, so an on-hit or attitude callback that
+        // reaches back into Lua cannot fire a second attack from inside this one.
+        dispatching_special_attack = true;
+        const auto restore = on_out_of_scope( [this]() { dispatching_special_attack = false; } );
         while( !sp_atk_used && !spec_list.empty() ) {
             const auto spec_iter = spec_list.size() == 1 ? 0 :
                                    rng( 0, static_cast<int>( spec_list.size() ) - 1 );
@@ -1853,6 +1864,8 @@ void monster::execute_action( const monster_action_t &action )
 // 4) Sound-based tracking
 void monster::move()
 {
+    // Each action gets one special attack, whether Lua or the stock scheduler spends it.
+    clear_special_attack_budget();
     const auto pre_lua_pos = bub_pos();
     const auto pre_lua_moves = moves;
     if( run_lua_monster_ai( *this ) ) {

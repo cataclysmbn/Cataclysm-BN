@@ -91,5 +91,17 @@
     "capacity": 20,
     "reliability": 9,
     "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "belt3006",
+    "copy-from": "magazine_belt",
+    "looks_like": "belt308",
+    "type": "MAGAZINE",
+    "name": { "str": ".30-06 Springfield ammo belt" },
+    "ammo_type": "3006",
+    "capacity": 200,
+    "count": 100,
+    "default_ammo": "3006",
+    "linkage": "ammolink3006"
   }
 ]

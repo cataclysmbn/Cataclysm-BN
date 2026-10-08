@@ -61,7 +61,7 @@
     "description": "A battery compartment mod that allows the use of light batteries in tools that otherwise could not.",
     "color": "light_green",
     "acceptable_ammo": [ "battery" ],
-    "magazine_adaptor": [ [ "battery", [ "light_battery_cell" ] ] ]
+    "magazine_adaptor": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ]
   },
   {
     "id": "magazine_battery_medium_mod",

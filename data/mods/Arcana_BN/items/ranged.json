@@ -240,7 +240,7 @@
     "ammo_to_fire": 10,
     "ammo_effects": [ "WIDE", "ARCANA_WRAITHSLAYER_BEAM", "BEANBAG", "BLINDS_EYES" ],
     "flags": [ "NEVER_JAMS", "PRIMITIVE_RANGED_WEAPON", "NO_SALVAGE", "CROSSBOW" ],
-    "valid_mod_locations": [ [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ] ]
+    "valid_mod_locations": [ [ "sling", 1 ], [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ] ]
   },
   {
     "id": "ethereal_huge_crossbow",

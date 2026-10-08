@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -212,6 +213,7 @@ class effect_type
         std::vector<caused_effect> effects_on_remove;
 
         /** Key tuple order is:("base_mods"/"scaling_mods", reduced: bool, type of mod: "STR", desired argument: "tick") */
+        std::unordered_set<std::string> mod_data_types;
         std::unordered_map <
         std::tuple<std::string, bool, std::string, std::string>, double, cata::tuple_hash > mod_data;
 

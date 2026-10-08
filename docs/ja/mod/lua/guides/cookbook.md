@@ -175,6 +175,101 @@ mod.on_control_npc = function(params)
 end
 ```
 
+## 次元
+
+### 現在の次元を確認する
+
+```lua
+local map = gapi.get_map()
+
+print("game dimension:", gapi.get_current_dimension_id())
+print("map dimension:", map:get_bound_dimension())
+print("is far-away point out of bounds:", map:is_out_of_bounds(coords.tripoint_bub_ms(500, 500, 0)))
+```
+
+### ポケットディメンションへ入って再入場する
+
+新しいポケットディメンションを作る時は `world_type` と両方の境界を渡します。
+任意の `overmap_terrain` は `bounds_min_omt` 基準の z/y/x テーブルです。
+そのディメンションが現在のセッションでロードされたままなら、再入場には
+`dimension_id` と `target_omt` だけで足ります。
+
+```lua
+home_dimension = "sky_island_home"
+overworld_pos = gapi.get_avatar():abs_pos()
+home_omt = overworld_pos:to_omt()
+local home_bounds_radius = coords.tripoint_rel_omt(2, 2, 0)
+
+local entered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+  world_type = "pocket_dimension",
+  bounds_min_omt = home_omt - home_bounds_radius,
+  bounds_max_omt = home_omt + home_bounds_radius,
+  boundary_terrain = "t_pd_border",
+  boundary_overmap_terrain = "pd_border",
+  overmap_terrain = {
+    {
+      { "forest", "field", "forest" },
+      { "field", "field", "field" },
+      { "forest", "field", "forest" },
+    },
+  },
+})
+
+if entered then
+  gapi.add_msg("Pocket home loaded.")
+end
+```
+
+### オーバーワールドへ戻る
+
+入場前に保存した `overworld_pos` を使うと、元のマスへ正確に戻れます。
+
+```lua
+gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+```
+
+帰還後は、ロード済みポケットディメンションの ID と目的地だけで再入場できます。
+
+```lua
+local reentered = gapi.place_player_dimension_at({
+  dimension_id = home_dimension,
+  target_omt = home_omt,
+})
+```
+
+### 遠征ディメンションをリセットまたは削除する
+
+統合対象の
+[CBN-Sky-Island 遠征フロー](https://github.com/graysonchao/CBN-Sky-Island/blob/main/teleport.lua)では、
+[issue #9589](https://github.com/cataclysmbn/Cataclysm-BN/issues/9589)を解決するために
+遠征地形を新しく生成する必要があります。遠征にプライマリ以外のディメンション ID を割り当て、
+オーバーワールドへ戻って mod の状態を更新してから、生成データをリセットします。
+
+```lua
+local expedition_dimension = "sky_island_expedition"
+local storage = game.mod_storage[game.current_mod]
+local returned = gapi.place_player_dimension_at({
+  dimension_id = "",
+  target_ms = overworld_pos,
+})
+
+if returned then
+  storage.is_away_from_home = false
+  gapi.reset_dimension(expedition_dimension)
+end
+```
+
+プライマリのオーバーワールドは削除できないため、どちらのクリーンアップ関数も `""` を拒否します。
+`reset_dimension` は再入場に必要なディメンションメタデータを維持しますが、
+`delete_dimension` を使った場合、次の入場時に生成オプションをすべて再指定する必要があります。
+クリーンアップはディメンションデータを削除する前に完全な保存を行うため、
+永続 Lua 状態を先に更新してください。
+
 ## 天気フック
 
 ### 天気の変化に反応する
@@ -251,7 +346,7 @@ mod.on_throw_fun = function(params)
     ---@type Character
     local thrower = params.thrower
     ---@type Item
-    local thrown = params.item
+    local thrown = params.thrown
     if thrown:is_gun() then
         gdebug.log_info("おい！銃は投げるものではないぞ!")
     end
@@ -341,8 +436,8 @@ local items = you:all_items(false)
 
 for _, item in pairs(items) do
     print(
-        item:tname(1, false, 0) 
-        .. " { 攻撃コスト: " .. item:attack_cost() 
+        item:tname(1, false, 0)
+        .. " { 攻撃コスト: " .. item:attack_cost()
         .. ", スタミナコスト: " .. item:stamina_cost()
         .. ", 近接スタミナコスト: " .. you:get_melee_stamina_cost(item)
         .. " }"
@@ -353,12 +448,44 @@ end
 print("Uncanny dodge: " .. (you:uncanny_dodge() and "はい" or "いいえ"))
 ```
 
-## ダイナミックアイテムアクション
+## キャラクターの魔法
 
-### Lua でカスタムアイテム使用関数を作成する
+### 新しい呪文を学び、忘れる
+
+呪文を学ぶ:
 
 ```lua
--- tick と can_use 関数でアイテムの使用動作を定義
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:learn_spell(ex_sp, u, true) -- learn forced
+print( km:knows_spell(ex_sp) ) -- check
+```
+
+呪文を忘れる:
+
+```lua
+local u = gapi.get_avatar()
+local km = u:get_magic()
+local ex_sp = SpellTypeId.new("example_template")
+km:forget_spell(ex_sp)         -- forget
+print( km:knows_spell(ex_sp) ) -- check again
+```
+
+## ダイナミックアイテムアクション
+
+すべてのアイテム、バイオニック、変異のコールバックテーブルは文字列 ID をキーとし、任意のコールバック関数のテーブルを受け取ります。各コールバックは名前付きフィールドを持つ単一の `params` テーブルを受け取ります。
+
+### game.iuse_functions
+
+| コールバック | params フィールド     |
+| ------------ | --------------------- |
+| `use`        | `user`, `item`, `pos` |
+| `can_use`    | `user`, `item`, `pos` |
+
+`use` は `int`（移動単位の時間コスト）を返します。`can_use` は `bool` を返します。
+
+```lua
 game.iuse_functions["my_custom_item"] = {
     use = function(params)
         local user = params.user
@@ -368,25 +495,118 @@ game.iuse_functions["my_custom_item"] = {
     end,
 
     can_use = function(params)
-        local user = params.user
-        local item = params.item
         -- 使用を許可する場合は true、禁止する場合は false を返す
         return true
-    end,
-
-    tick = function(params)
-        local user = params.user
-        local item = params.item
-        -- アイテムがアクティブ状態の間、定期的に呼び出される
-        if item:get_countdown() == 0 then
-            gdebug.log_info("アイテムのカウントダウンが完了しました!")
-        end
     end
 }
+```
 
--- 周期的なティックをトリガーするためにアイテムにカウントダウンを設定
-local item = gapi.create_item(ItypeId.new("some_item"), 1)
-item:set_countdown(100)  -- 100ターンティック
+### アイテムのライフサイクルコールバック
+
+いくつかの追加コールバックテーブルを使うと、アイテムイベントに反応できます。
+
+### game.iwieldable_functions
+
+| コールバック                             | params フィールド           |
+| ---------------------------------------- | --------------------------- |
+| `on_wield`                               | `user`, `item`, `move_cost` |
+| `on_unwield`, `can_wield`, `can_unwield` | `user`, `item`              |
+
+---
+### game.iwearable_functions
+| コールバック | params フィールド |
+|-----------|---------------|
+| `on_wear`, `on_takeoff`, `can_wear`, `can_takeoff` | `user`, `item` |
+---
+
+### game.iequippable_functions
+
+| コールバック            | params フィールド                          |
+| ----------------------- | ------------------------------------------ |
+| `on_durability_change`  | `user`, `item`, `old_damage`, `new_damage` |
+| `on_repair`, `on_break` | `user`, `item`                             |
+
+---
+### game.istate_functions
+| コールバック            | params フィールド         |
+|--------------------- | --------------------- |
+| `on_tick`, `on_drop` | `user`, `item`, `pos` |
+| `on_pickup`          | `user`, `item`        |
+---
+
+### game.imelee_functions
+
+| コールバック      | params フィールド                           |
+| ----------------- | ------------------------------------------- |
+| `on_melee_attack` | `user`, `target`, `item`                    |
+| `on_hit`          | `user`, `target`, `item`, `damage_instance` |
+| `on_block`        | `user`, `source`, `item`, `damage_blocked`  |
+| `on_miss`         | `user`, `item`                              |
+
+---
+### game.iranged_functions
+| コールバック                             | params フィールド                         |
+| ------------------------------------- | ------------------------------------- |
+| `on_fire`                             | `user`, `item`, `target_pos`, `shots` |
+| `on_reload`, `can_fire`, `can_reload` | `user`, `item`                        |
+---
+
+`can_*` コールバックは `bool` を返します — アクションを止めるには `false` を返します。
+
+```lua
+game.iwieldable_functions["cursed_sword"] = {
+    on_wield = function(params)
+        gdebug.log_info(params.user:get_name() .. " draws " .. params.item:tname(1))
+    end,
+    can_unwield = function(params)
+        -- Cursed sword can't be put down
+        return false
+    end
+}
+```
+
+### バイオニックコールバック
+
+`game.bionic_functions` はバイオニック文字列 ID をキーとします。各コールバックは単一の `params` テーブルを受け取ります。
+
+| コールバック    | params フィールド   | 発生時                     |
+| --------------- | ------------------- | -------------------------- |
+| `on_activate`   | `user`, `bionic`    | バイオニック有効化後       |
+| `on_deactivate` | `user`, `bionic`    | バイオニック無効化後       |
+| `on_installed`  | `user`, `bionic_id` | バイオニックインストール後 |
+| `on_removed`    | `user`, `bionic_id` | バイオニック削除後         |
+
+```lua
+game.bionic_functions["bio_laser"] = {
+    on_activate = function(params)
+        gdebug.log_info(params.user:get_name() .. " activated bio_laser")
+    end,
+    on_installed = function(params)
+        gdebug.log_info("Installed: " .. tostring(params.bionic_id))
+    end
+}
+```
+
+### 変異コールバック
+
+`game.mutation_functions` は特性文字列 ID をキーとします。
+
+| コールバック    | params フィールド  | 発生時               |
+| --------------- | ------------------ | -------------------- |
+| `on_activate`   | `user`, `trait_id` | 変異が有効になった後 |
+| `on_deactivate` | `user`, `trait_id` | 変異が無効になった後 |
+| `on_gain`       | `user`, `trait_id` | 変異を獲得した後     |
+| `on_loss`       | `user`, `trait_id` | 変異を失った後       |
+
+```lua
+game.mutation_functions["TRAIT_QUICK"] = {
+    on_gain = function(params)
+        gdebug.log_info(params.user:get_name() .. " gained " .. tostring(params.trait_id))
+    end,
+    on_loss = function(params)
+        gdebug.log_info(params.user:get_name() .. " lost " .. tostring(params.trait_id))
+    end
+}
 ```
 
 ## より多くのコンバットフック
@@ -473,6 +693,29 @@ print(tostring(u:knows_trap(pos4x)))
 ```
 
 2番目のスクリプトを実行した後、トラップを踏まずにその位置を見ることができます。
+
+## 時間と空間
+
+### 太陽と月、屋内と屋外
+
+```lua
+local u_pos = gapi.get_avatar():get_pos_ms()
+local map = gapi.get_map()
+local now = gapi.current_turn()
+
+-- Found the key name from MoonPhase entries
+local moon = ""
+for name, num in pairs(MoonPhase) do
+   if num == now:moon_phase() then
+      moon = name
+   end
+end
+
+print( "Are you outside?: " .. tostring(map:is_outside(u_pos)) )
+print( "Are you sheltered?: " .. tostring(map:is_sheltered(u_pos)) )
+print( "Today moon phase is: " .. moon )
+print( "Sunset time is: " .. now:sunset():to_string_time_of_day() )
+```
 
 ## アイテムタイプ情報
 

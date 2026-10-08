@@ -74,6 +74,7 @@ static const efftype_id effect_paincysts( "paincysts" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_tapeworm( "tapeworm" );
 static const efftype_id effect_visuals( "visuals" );
+static const efftype_id effect_lactaid( "lactaid" );
 
 static const itype_id itype_syringe( "syringe" );
 
@@ -638,6 +639,9 @@ morale_type Character::allergy_type( const item &food ) const
     for( const auto &tp : allergy_tuples ) {
         if( has_trait( std::get<0>( tp ) ) &&
             food.has_vitamin( std::get<1>( tp ) ) ) {
+            if( std::get<0>( tp ) == trait_LACTOSE && has_effect( effect_lactaid ) ) {
+                continue;
+            }
             return std::get<2>( tp );
         }
     }
@@ -790,7 +794,7 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
     }
 
     if( !food.has_infinite_charges() &&
-        ( ( food_kcal > 0 &&
+        ( ( food_kcal > 0 && !has_active_mutation( trait_EATHEALTH ) &&
             get_stored_kcal() + stomach.get_calories() + food_kcal
             > max_stored_kcal() ) ||
           ( comest->quench > 0 && get_thirst() < comest->quench && !has_trait( trait_NO_THIRST ) ) ) ) {

@@ -9,6 +9,7 @@
 #include "avatar_action.h"
 #include "bionics.h"
 #include "bodypart.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -402,6 +403,12 @@ static const enchantment_value_id ench_val_WEIGHTMOD_BODY( "WEIGHTMOD_BODY" );
 static const enchantment_value_id ench_val_WEIGHTMOD_INVENTORY( "WEIGHTMOD_INVENTORY" );
 static const enchantment_value_id ench_val_WEIGHTMOD_BIONICS( "WEIGHTMOD_BIONICS" );
 static const enchantment_value_id ench_val_WEIGHTMOD_WEAPON( "WEIGHTMOD_WEAPON" );
+
+static const enchantment_value_id ench_val_STRENGTH_PERMANENT( "STRENGTH_PERMANENT" );
+static const enchantment_value_id ench_val_DEXTERITY_PERMANENT( "DEXTERITY_PERMANENT" );
+static const enchantment_value_id ench_val_INTELLIGENCE_PERMANENT( "INTELLIGENCE_PERMANENT" );
+static const enchantment_value_id ench_val_PERCEPTION_PERMANENT( "PERCEPTION_PERMANENT" );
+
 namespace io
 {
 
@@ -907,6 +914,14 @@ int Character::sight_range( int light_level ) const
 
     // Clamp to [1, sight_max].
     return clamp( range, 1, sight_max );
+}
+
+// This is the range that players (and NPCs) can spot camouflaged enemies from
+auto Character::spotting_range() const -> int
+{
+    int spotting_range = get_per();
+    spotting_range += get_skill_level( skill_survival ) / 2;
+    return spotting_range;
 }
 
 auto Character::unimpaired_range() const -> int
@@ -1647,7 +1662,7 @@ bool Character::can_run()
     return ( get_stamina() > get_stamina_max() * 0.1f ) && get_working_leg_count() >= 2;
 }
 
-void static try_remove_downed( Character &c )
+void Character::try_remove_downed( Character &c )
 {
 
     /** @EFFECT_DEX increases chance to stand up when knocked down */
@@ -1942,6 +1957,17 @@ bool Character::movement_mode_is( const character_movemode mode ) const
     return move_mode == mode;
 }
 
+// Change movement mode without messages, normal movecost, or potential loops from calling Character::try_remove_downed
+void Character::force_movement_mode( character_movemode new_mode )
+{
+    if( move_mode == CMM_CROUCH || new_mode == CMM_CROUCH ||
+        move_mode == CMM_PRONE || new_mode == CMM_PRONE ) {
+        // crouching and prone affect visibility
+        get_map().set_seen_cache_dirty( bub_pos().z() );
+    }
+    move_mode = new_mode;
+}
+
 void Character::expose_to_disease( const diseasetype_id dis_type )
 {
     const std::optional<int> &healt_thresh = dis_type->health_threshold;
@@ -2028,6 +2054,7 @@ float Character::night_vision_sight_range() const
 // 'wears' vector is still allowed due to refactor exhaustion.
 void Character::recalc_sight_limits()
 {
+    ZoneScopedN( "recalc_sight_limits" );
     sight_max = 9999;
     vision_mode_cache.reset();
 
@@ -2552,6 +2579,7 @@ void Character::update_fuel_storage( const itype_id &fuel )
 
 int Character::get_mod_stat_from_bionic( const character_stat &Stat ) const
 {
+    ZoneScopedN( "bionics_stat_bonuses" );
     int ret = 0;
     for( const bionic &i : get_bionic_collection() ) {
         const bionic_id &bid = i.id;
@@ -3095,6 +3123,32 @@ units::mass Character::weight_carried() const
     return weight_carried_reduced_by( {} );
 }
 
+units::mass Character::cached_weight_carried()
+{
+    ZoneScoped;
+    units::mass ret = 0_gram;
+    {
+        ZoneScopedN( "worn_weight" );
+        if( worn_weight_cache_dirty ) {
+            worn_weight_cache = 0_gram;
+            for( auto &i : worn ) {
+                worn_weight_cache += i->weight();
+            }
+            worn_weight_cache_dirty = false;
+        }
+        ret += worn_weight_cache;
+    }
+    {
+        ZoneScopedN( "inv_weight" );
+        ret += inv.weight_cached();
+    }
+    {
+        ZoneScopedN( "weapon_weight" );
+        ret += primary_weapon().weight();
+    }
+    return ret;
+}
+
 units::volume Character::volume_carried() const
 {
     return inv.volume();
@@ -3123,57 +3177,67 @@ int Character::best_nearby_lifting_assist( const tripoint_bub_ms &world_pos ) co
 
 units::mass Character::weight_carried_reduced_by( const excluded_stacks &without ) const
 {
+    ZoneScoped;
     const std::map<const item *, int> empty;
 
     // Worn items
     units::mass ret = 0_gram;
-    for( auto &i : worn ) {
-        if( !without.contains( i ) ) {
-            ret += i->weight();
+    {
+        ZoneScopedN( "worn_weight" );
+        for( auto &i : worn ) {
+            if( !without.contains( i ) ) {
+                ret += i->weight();
+            }
         }
     }
 
     // Items in inventory
-    ret += inv.weight_without( without );
+    {
+        ZoneScopedN( "inv_weight" );
+        ret += inv.weight_without( without );
+    }
 
     // Wielded item
-    units::mass weaponweight = 0_gram;
-    int subtract_count = 0;
-    item &weapon = primary_weapon();
-    auto weapon_it = without.find( &weapon );
-    if( weapon_it == without.end() ) {
-        weaponweight = weapon.weight();
-    } else {
-        subtract_count = ( *weapon_it ).second;
-        if( weapon.count_by_charges() ) {
-            weapon.charges -= subtract_count;
-            if( weapon.charges < 0 ) {
-                debugmsg( "Trying to remove more charges than the wielded item has" );
-                //Set subtract_count to the original value of weapon->charges, so that it's set back correctly at the end
-                subtract_count += weapon.charges;
-                weapon.charges = 0;
-            }
+    {
+        ZoneScopedN( "weapon_weight" );
+        units::mass weaponweight = 0_gram;
+        int subtract_count = 0;
+        item &weapon = primary_weapon();
+        auto weapon_it = without.find( &weapon );
+        if( weapon_it == without.end() ) {
             weaponweight = weapon.weight();
-        } else if( subtract_count > 1 ) {
-            debugmsg( "Trying to remove more than one wielded item" );
         } else {
-            subtract_count = 0;
+            subtract_count = ( *weapon_it ).second;
+            if( weapon.count_by_charges() ) {
+                weapon.charges -= subtract_count;
+                if( weapon.charges < 0 ) {
+                    debugmsg( "Trying to remove more charges than the wielded item has" );
+                    //Set subtract_count to the original value of weapon->charges, so that it's set back correctly at the end
+                    subtract_count += weapon.charges;
+                    weapon.charges = 0;
+                }
+                weaponweight = weapon.weight();
+            } else if( subtract_count > 1 ) {
+                debugmsg( "Trying to remove more than one wielded item" );
+            } else {
+                subtract_count = 0;
+            }
         }
-    }
-    // Don't try to add weaponweight if it doesn't exist or is weightless
-    if( weaponweight > 0_gram ) {
-        // Exclude wielded item if using lifting tool
-        if( weaponweight + ret > weight_capacity() ) {
-            const float liftrequirement = std::ceil( units::to_gram<float>( weaponweight ) /
-                                          units::to_gram<float>( TOOL_LIFT_FACTOR ) );
-            if( g->new_game || best_nearby_lifting_assist() < liftrequirement ) {
+        // Don't try to add weaponweight if it doesn't exist or is weightless
+        if( weaponweight > 0_gram ) {
+            // Exclude wielded item if using lifting tool
+            if( weaponweight + ret > weight_capacity() ) {
+                const float liftrequirement = std::ceil( units::to_gram<float>( weaponweight ) /
+                                              units::to_gram<float>( TOOL_LIFT_FACTOR ) );
+                if( g->new_game || best_nearby_lifting_assist() < liftrequirement ) {
+                    ret += weaponweight;
+                }
+            } else {
                 ret += weaponweight;
             }
-        } else {
-            ret += weaponweight;
         }
+        weapon.charges += subtract_count;
     }
-    weapon.charges += subtract_count;
     return ret;
 }
 
@@ -3827,6 +3891,7 @@ std::vector<detached_ptr<item>> remove_randomly_by_weight( location_inventory &i
 
 void Character::drop_invalid_inventory()
 {
+    ZoneScoped;
     bool dropped_liquid = false;
 
     const auto p = bub_pos();
@@ -3851,7 +3916,7 @@ void Character::drop_invalid_inventory()
         return;
     }
     // Also drop excess weight IF an NPC
-    auto wt_carried = weight_carried();
+    auto wt_carried = cached_weight_carried();
     auto wt_capacity = weight_capacity();
     if( wt_carried > wt_capacity ) {
         auto items_to_drop = remove_randomly_by_weight( inv, wt_carried - wt_capacity );
@@ -4396,6 +4461,7 @@ void Character::die( Creature *nkiller )
 
 void Character::apply_skill_boost()
 {
+    ZoneScoped;
     for( const skill_boost &boost : skill_boost::get_all() ) {
         // For migration, reset previously applied bonus.
         // Remove after 0.E or so.
@@ -5018,19 +5084,23 @@ int Character::get_int() const
 
 int Character::get_str_base() const
 {
-    return str_max;
+    return std::max( 0, str_max + int( bonus_from_enchantments( str_max, ench_val_STRENGTH_PERMANENT,
+                                       true ) ) );
 }
 int Character::get_dex_base() const
 {
-    return dex_max;
+    return std::max( 0, dex_max + int( bonus_from_enchantments( dex_max, ench_val_DEXTERITY_PERMANENT,
+                                       true ) ) );
 }
 int Character::get_per_base() const
 {
-    return per_max;
+    return std::max( 0, per_max + int( bonus_from_enchantments( per_max, ench_val_PERCEPTION_PERMANENT,
+                                       true ) ) );
 }
 int Character::get_int_base() const
 {
-    return int_max;
+    return std::max( 0, int_max + int( bonus_from_enchantments( int_max,
+                                       ench_val_INTELLIGENCE_PERMANENT, true ) ) );
 }
 
 int Character::get_str_bonus() const
@@ -5130,6 +5200,39 @@ void Character::mod_int_bonus( int nint )
 {
     int_bonus += nint;
     int_cur = std::max( 0, int_max + int_bonus );
+}
+
+void Character::mod_str_bonus( int nstr, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_str_bonus( nstr );
+}
+void Character::mod_dex_bonus( int ndex, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_dex_bonus( ndex );
+}
+void Character::mod_per_bonus( int nper, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_per_bonus( nper );
+}
+void Character::mod_int_bonus( int nint, bool force_on_tick )
+{
+    if( force_on_tick && g->u.in_skip_state &&
+        !action_time_scale::once_every_this_tick( activity_skip_stat_update_ticks ) ) {
+        return;
+    }
+    mod_int_bonus( nint );
 }
 
 void Character::print_health() const
@@ -5464,6 +5567,7 @@ void Character::on_damage_of_type( int adjusted_damage, damage_type type, const 
 
 void Character::reset_bonuses()
 {
+    ZoneScopedN( "character_reset_bonuses" );
     // Reset all bonuses to 0 and multipliers to 1.0
     str_bonus = 0;
     dex_bonus = 0;
@@ -7226,7 +7330,7 @@ nc_color Character::basic_symbol_color() const
     if( move_mode == CMM_RUN ) {
         return c_yellow;
     }
-    if( move_mode == CMM_CROUCH ) {
+    if( move_mode == CMM_CROUCH || move_mode == CMM_PRONE ) {
         return c_light_gray;
     }
     return c_white;
@@ -7313,6 +7417,20 @@ bool Character::is_immune_field( const field_type_id &fid ) const
                get_armor_type( DT_ACID, bodypart_id( "foot_r" ) ) >= 5 &&
                get_armor_type( DT_ACID, bodypart_id( "leg_l" ) ) >= 5 &&
                get_armor_type( DT_ACID, bodypart_id( "leg_r" ) ) >= 5;
+    }
+    // Check for if field has downed effect which means slipping
+    static const auto flag_NOSLIP = flag_id( "NOSLIP" );
+    static const auto ench_flag_NOSLIP = enchantment_flag_id( "NOSLIP" );
+    for( const field_intensity_level &lvl : ft.intensity_levels ) {
+        for( const field_effect &fe : lvl.field_effects ) {
+            if( fe.id == effect_downed ) {
+                if( has_enchantment_flag( ench_flag_NOSLIP )
+                    || worn_with_flag( flag_NOSLIP, body_part_foot_l )
+                    || worn_with_flag( flag_NOSLIP, body_part_foot_r ) ) {
+                    return true;
+                }
+            }
+        }
     }
     // If we haven't found immunity yet fall up to the next level
     return Creature::is_immune_field( fid );
@@ -8954,6 +9072,9 @@ void Character::wake_up()
         remove_effect( effect_sleep );
         // Wake up might be called more than once per turn, but we only need to recalc after removing sleep
         recalc_sight_limits();
+        cata::run_hooks( "on_character_wake_up", [ &, this]( auto & params ) {
+            params["char"] = this;
+        } );
     }
 }
 
@@ -11522,6 +11643,7 @@ void Character::use_fire( const int quantity )
 
 void Character::on_item_wear( item &it )
 {
+    worn_weight_cache_dirty = true;
     recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_effect( mut );
@@ -11547,6 +11669,7 @@ void Character::on_item_wear( item &it )
 
 void Character::on_item_takeoff( item &it )
 {
+    worn_weight_cache_dirty = true;
     recalculate_enchantment_cache();
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_loss_effect( mut );
@@ -12222,6 +12345,7 @@ bool Character::sees( const Creature &critter ) const
 {
     // This handles only the player/npc specific stuff (monsters don't have traits or bionics).
     const int dist = rl_dist( bub_pos(), critter.bub_pos() );
+    if( dist < clairvoyance() ) { return true; }
     if( bub_pos().z() == critter.bub_pos().z() &&
         dist <= bonus_from_enchantments( 0, ench_val_GROUNDED_CREATURE_SIGHT ) &&
         !critter.has_flag( MF_FLIES ) ) {

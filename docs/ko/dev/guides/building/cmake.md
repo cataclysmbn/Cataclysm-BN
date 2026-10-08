@@ -72,6 +72,12 @@ sqlite-devel zlib-devel
 > Ubuntu와 Fedora는 SDL3_mixer 또는 shadercross를 제공하지 않습니다.
 > 이 라이브러리들은 컴파일할 때 자동으로 빌드됩니다.
 
+- Arch 기반 배포판의 경우:
+
+```sh
+sudo pacman -S sdl3 sdl3_image sdl3_ttf sdl3_mixer zip sqlite
+```
+
 #### 컴파일러 버전 확인
 
 CataclysmBN을 빌드하려면 Clang 22 이상이 필요합니다. 다음 명령으로 컴파일러 버전을 확인할 수 있습니다:
@@ -115,11 +121,15 @@ brew install cmake ninja ccache sdl3 sdl3_image sdl3_ttf sdl3_mixer \
 > Xcode 16 이상에 포함된 Apple Clang은 CataclysmBN에 필요한 C++23 기능을 지원합니다.
 > 별도의 컴파일러를 설치할 필요가 없습니다.
 
+<a id="windows-subsystem-for-linux-wsl"></a>
+
 ### Windows Subsystem for Linux (WSL)
 
 `UNIX 환경`과 동일한 지침을 따르면 됩니다. 그대로 작동합니다 (TM).
 
 `tiles`를 사용할 계획이라면 [GUI를 지원하는 최신 WSL 2](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps)와 [일치하는 드라이버](https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps#prerequisites)를 설치했는지 확인하세요.
+
+<a id="windows-환경-msys2"></a>
 
 ### Windows 환경 (MSYS2)
 
@@ -352,6 +362,8 @@ cmake-gui -S . -B out/build/linux-slim
 - CMAKE_INSTALL_PREFIX=`<full path>`
 
 바이너리, 리소스, 문서 파일의 설치 접두사입니다.
+
+<a id="cataclysmbn-specific-options"></a>
 
 ### CataclysmBN 특정 옵션
 

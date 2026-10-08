@@ -413,7 +413,8 @@
       "CLIMBS",
       "PATH_AVOID_DANGER_1",
       "WARM",
-      "HIT_AND_RUN"
+      "HIT_AND_RUN",
+      "NO_SLIP"
     ]
   },
   {
@@ -551,7 +552,8 @@
     "copy-from": "mon_cat",
     "name": "tabby cat",
     "description": "Marked with the characteristic 'M' on its forehead and decorated with swirling stripes, the tabby's markings provide excellent camouflage.",
-    "reproduction": { "baby_monster": "mon_cat_tabby_kitten", "baby_count": 4, "baby_timer": 60 }
+    "reproduction": { "baby_monster": "mon_cat_tabby_kitten", "baby_count": 4, "baby_timer": 60 },
+    "extend": { "flags": [ "CAMOUFLAGE" ] }
   },
   {
     "id": "mon_cat_tabby_kitten",

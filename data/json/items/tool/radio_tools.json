@@ -38,7 +38,7 @@
     "turns_per_charge": 5,
     "proportional": { "weight": 0.21, "volume": 0.25, "price": 0.2 },
     "use_action": "RADIOCONTROL",
-    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -101,7 +101,7 @@
     "charges_per_use": 1,
     "flags": [ "WEATHER_FORECAST" ],
     "use_action": [ "RADIO_OFF", "WEATHER_TOOL" ],
-    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
@@ -133,15 +133,15 @@
     "ammo": "battery",
     "charges_per_use": 1,
     "flags": [ "TWO_WAY_RADIO" ],
-    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   },
   {
     "id": "remotevehcontrol",
     "type": "TOOL",
     "category": "electronics",
-    "name": { "str": "remote vehicle controller" },
-    "description": "A remote controller for real cars.  Can turn onboard devices on and off.  Some cars can be driven remotely.",
+    "name": { "str": "remote drone controller" },
+    "description": "A remote controller for drones.  Can turn onboard devices on and off.  Some cars can also be driven remotely, if you can bypass their security.",
     "weight": "907 g",
     "volume": "1 L",
     "price": "20 USD",
@@ -154,7 +154,7 @@
     "charges_per_use": 1,
     "turns_per_charge": 10,
     "use_action": "REMOTEVEH",
-    "magazines": [ [ "battery", [ "light_battery_cell" ] ] ],
+    "magazines": [ [ "battery", [ "light_battery_cell", "light_minus_battery_cell" ] ] ],
     "magazine_well": "250 ml"
   }
 ]

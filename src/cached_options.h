@@ -1,4 +1,5 @@
 #pragma once
+#include "calendar.h"
 
 // A collection of options which are accessed frequently enough that we don't
 // want to pay the overhead of a string lookup each time one is tested.
@@ -163,6 +164,7 @@ extern bool parallel_scent_update;
 extern bool activity_skip_sound_skip;
 extern bool activity_skip_npc_skip;
 extern bool activity_skip_mon_skip;
+extern time_duration activity_skip_stat_update_ticks;
 
 /* Options related to fungal activity */
 struct FungalOptions {

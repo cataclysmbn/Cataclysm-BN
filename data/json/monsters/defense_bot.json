@@ -40,7 +40,8 @@
       "NO_BREATHE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_1",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -82,7 +83,8 @@
       "NO_BREATHE",
       "PRIORITIZE_TARGETS",
       "PATH_AVOID_DANGER_1",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -146,7 +148,8 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -209,7 +212,8 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -272,7 +276,71 @@
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
+    ]
+  },
+  {
+    "id": "mon_talon_m2hb",
+    "type": "MONSTER",
+    "name": { "str": "M2HB autonomous TALON UGV" },
+    "description": "A TALON unmanned ground vehicle equipped with an M2HB.  It is a small tracked UGV with an array of motors and sensors covering its weapon mount.",
+    "default_faction": "defense_bot",
+    "species": [ "ROBOT" ],
+    "diff": 10,
+    "volume": "150 L",
+    "weight": "40750 g",
+    "hp": 80,
+    "speed": 40,
+    "material": [ "steel" ],
+    "symbol": "R",
+    "color": "dark_gray",
+    "aggression": 100,
+    "morale": 100,
+    "armor_bash": 14,
+    "armor_cut": 14,
+    "armor_bullet": 30,
+    "armor_fire": 15,
+    "vision_day": 50,
+    "revert_to_itype": "bot_talon_m2hb",
+    "starting_ammo": { "50ss": 100 },
+    "special_attacks": [
+      [ "PHOTOGRAPH", 60 ],
+      {
+        "type": "gun",
+        "cooldown": 3,
+        "move_cost": 60,
+        "gun_type": "m2browning_turret_fake",
+        "//": "A quarter as effective as a nice, stable turret",
+        "fake_skills": [ [ "gun", 2 ], [ "rifle", 2 ] ],
+        "fake_str": 4,
+        "fake_dex": 3,
+        "ranges": [ [ 0, 35, "DEFAULT" ] ],
+        "require_targeting_npc": true,
+        "require_targeting_monster": true,
+        "target_moving_vehicles": true,
+        "laser_lock": true,
+        "no_crits": true,
+        "targeting_cost": 160,
+        "targeting_timeout_extend": -10,
+        "targeting_sound": "\"Hostile detected.\"",
+        "targeting_volume": "56 dB",
+        "no_ammo_sound": "a chk!"
+      }
+    ],
+    "death_drops": {  },
+    "death_function": [ "BROKEN" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "ELECTRONIC",
+      "COLDPROOF",
+      "NO_BREATHE",
+      "PATH_AVOID_DANGER_1",
+      "LOUDMOVES",
+      "DROPS_AMMO",
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -442,7 +510,8 @@
       "PATH_AVOID_DANGER_2",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -489,7 +558,8 @@
       "PATH_AVOID_DANGER_2",
       "LOUDMOVES",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -541,7 +611,8 @@
       "FIREPROOF",
       "PRIORITIZE_TARGETS",
       "DROPS_AMMO",
-      "BIOPROOF"
+      "BIOPROOF",
+      "NO_SLIP"
     ]
   },
   {
@@ -711,7 +782,8 @@
       "NO_BREATHE",
       "PATH_AVOID_DANGER_1",
       "LOUDMOVES",
-      "DROPS_AMMO"
+      "DROPS_AMMO",
+      "NO_SLIP"
     ]
   }
 ]

@@ -658,6 +658,9 @@ void mutation_branch::check_consistency()
         ::check_consistency( mdata.replacements, mid, "replacements" );
         ::check_consistency( mdata.additions, mid, "additions" );
     }
+    for( const auto &[id, group_ptr] : trait_groups ) {
+        group_ptr->check_consistency( id.str() );
+    }
 }
 
 nc_color mutation_branch::get_display_color() const

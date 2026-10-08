@@ -15,7 +15,7 @@
     "stack_size": 80,
     "ammo_type": "46",
     "casing": "46mm_casing",
-    "range": 14,
+    "range": 24,
     "//": "Base damage of 20, balance increase of one third.",
     "damage": { "damage_type": "bullet", "amount": 24, "armor_penetration": 21 },
     "dispersion": 40,

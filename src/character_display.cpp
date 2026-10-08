@@ -520,7 +520,7 @@ static void draw_stats_info( const catacurses::window &w_info, const Character &
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         fold_and_print( w_info, point( 1, 0 ), FULL_SCREEN_WIDTH - 2, c_magenta,
                         _( "Perception is the most important stat for ranged combat.  It's also used for "
-                           "detecting traps and other things of interest." ) );
+                           "detecting traps, camouflaged creatures, and other things of interest." ) );
         print_colored_text( w_info, point( 1, 3 ), col_temp, c_light_gray,
                             string_format( _( "Base night vision range: <color_white>%.1f</color>" ),
                                            vision::nv_range_from_per( you.get_per() ) ) );

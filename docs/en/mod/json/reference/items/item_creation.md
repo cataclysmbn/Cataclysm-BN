@@ -27,6 +27,7 @@
 "description": "Socks. Put 'em on your feet.", // Description of the item
 "ascii_picture": "ascii_socks", // Id of the asci_art used for this item
 "phase": "solid",                            // (Optional, default = "solid") What phase it is
+"spill_field": "fd_water",                   // (Optional) For liquids dropped onto ordinary ground, create this field before any drop_action runs.
 "weight": "350 g",                           // Weight, weight in grams, mg and kg can be used - "50 mg", "5 g" or "5 kg". For stackable items (ammo, comestibles) this is the weight per charge.
 "volume": "250 ml",                          // Volume, volume in ml and L can be used - "50 ml" or "2 L". For stackable items (ammo, comestibles) this is the volume of stack_size charges.
 "integral_volume": 0,                        // Volume added to base item when item is integrated into another (eg. a gunmod integrated to a gun). Volume in ml and L can be used - "50 ml" or "2 L". Can be negative to reduce parent volume. Clamped at 1% of parent base volume.
@@ -84,6 +85,25 @@
 },
 "repair_difficulty": 2                       // Overrites recipe difficulty being used for repair difficulty
 ```
+
+`spill_field` is intended for liquids. If a liquid item with a `spill_field` is dropped onto
+ordinary ground, the game marks the liquid dirty when appropriate, creates the specified field,
+and then still runs any `drop_action` the item defines. The liquid item is consumed: its charges
+and item state are not stored in the field, and the puddle cannot be collected as liquid again.
+Tiles with the `LIQUIDCONT` flag do not convert liquids to spill fields.
+
+Spill visuals are volume-based rather than charge-count-based. The current implementation treats
+each liter of liquid as one unit of visible spill intensity, with a minimum of one unit for any
+non-zero spill. When additional liquid is poured into an existing connected spill of the same
+field type, the spill deepens existing tiles first by raising field intensity, then expands
+outward into adjacent passable tiles. The visible footprint is capped, so very large spills stop
+growing visually while still consuming the poured liquid.
+
+In practice, `spill_field` is usually many-to-one. Multiple related liquids can intentionally map
+to the same visible field to avoid JSON bloat and unnecessary field type proliferation. For
+example, `tea`, `coca_tea`, and `sweet_tea` can all spill as `fd_tea`, producing the same visible
+`puddle of tea` field. A separate field type is only needed when the puddle has different effects
+or appearance. See [Field Types](../map/field_type.md) for field properties.
 
 #### damage_instance
 
@@ -928,6 +948,7 @@ All object defined use actions support the following two types.
     "type": "unfold_vehicle", // Transforms the item into a vehicle.
     "vehicle_name": "bicycle", // Vehicle name to create.
     "unfold_msg": "You painstakingly unfold the bicycle and make it ready to ride.", // Message to display when transforming.
+    "full_battery": true, // If set to true, vehicle will be created with full fuel and batteries. It's recommended you only use this if the vehicle being deployed is made entirely from foldable parts, as those will convert into a generic folded vehicle item that tracks its status when taken down.  (Default: false)
     "moves": 500 // Number of moves required in the process.
 },
 "use_action" : {

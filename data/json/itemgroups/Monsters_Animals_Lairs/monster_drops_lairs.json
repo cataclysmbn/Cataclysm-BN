@@ -305,6 +305,7 @@
       { "item": "kriss_vector_9mm", "prob": 4 },
       { "item": "savage_111f", "prob": 10 },
       { "item": "ak47", "prob": 16 },
+      { "item": "SVD", "prob": 4 },
       { "item": "m4a1", "prob": 7 },
       { "item": "m16a4", "prob": 6 },
       { "item": "h&k416a5", "prob": 3 },
@@ -351,7 +352,6 @@
       { "item": "pur_tablets", "prob": 10 },
       { "item": "pastaextruder", "prob": 10 },
       { "item": "can_sealer", "prob": 10 },
-      { "item": "remotevehcontrol", "prob": 8 },
       { "item": "shield_ballistic", "prob": 10 },
       { "item": "shield_ballistic_large", "prob": 10 }
     ]
@@ -431,6 +431,8 @@
       { "item": "nic_gum", "prob": 5 },
       { "item": "radio_car_box", "prob": 2 },
       { "item": "radiocontrol", "prob": 15 },
+      { "item": "radio_car_box", "prob": 2 },
+      { "item": "radiocontrol", "prob": 3 },
       { "item": "thermometer", "prob": 10 },
       { "item": "hygrometer", "prob": 10 },
       { "item": "barometer", "prob": 10 },

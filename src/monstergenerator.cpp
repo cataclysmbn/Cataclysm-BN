@@ -161,6 +161,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_GROUP_MORALE: return "GROUP_MORALE";
         case MF_INTERIOR_AMMO: return "INTERIOR_AMMO";
         case MF_NIGHT_INVISIBILITY: return "NIGHT_INVISIBILITY";
+        case MF_CAMOUFLAGE: return "CAMOUFLAGE";
         case MF_REVIVES_HEALTHY: return "REVIVES_HEALTHY";
         case MF_NO_NECRO: return "NO_NECRO";
         case MF_PACIFIST: return "PACIFIST";
@@ -170,6 +171,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_AVOID_DANGER_1: return "PATH_AVOID_DANGER_1";
         case MF_AVOID_DANGER_2: return "PATH_AVOID_DANGER_2";
         case MF_AVOID_FALL: return "PATH_AVOID_FALL";
+        case MF_NO_SLIP: return "NO_SLIP";
         case MF_AVOID_FIRE: return "PATH_AVOID_FIRE";
         case MF_PRIORITIZE_TARGETS: return "PRIORITIZE_TARGETS";
         case MF_NOT_HALLU: return "NOT_HALLUCINATION";

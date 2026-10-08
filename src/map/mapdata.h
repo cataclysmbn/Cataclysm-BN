@@ -455,6 +455,9 @@ protected:
 
 private:
     std::set<std::string> flags; // string flags which possibly refer to what's documented above.
+    std::optional<bool> flammable_override;
+    bool flammable_ash = false;
+    bool flammable_hard = false;
     std::bitset<NUM_TERFLAGS> bitflags; // bitfield of -certain- string flags which are heavily
                                         // checked
 
@@ -512,6 +515,7 @@ public:
          harvest_id::NULL_ID()}};
 
     bool transparent = false;
+    bool flammable = false;
 
     auto get_flags() const -> const std::set<std::string>& { return flags; }
 
@@ -529,6 +533,16 @@ public:
 
     auto connects_to(int test_connect_group) const -> bool {
         return connect_group != TERCONN_NONE && connect_group == test_connect_group;
+    }
+
+    auto is_flammable() const -> bool { return flammable; }
+
+    auto is_ash_flammable() const -> bool { return flammable && flammable_ash; }
+
+    auto is_hard_flammable() const -> bool { return flammable && flammable_hard; }
+
+    auto is_basic_flammable() const -> bool {
+        return flammable && !flammable_ash && !flammable_hard;
     }
 
     auto symbol() const -> int;
@@ -631,11 +645,17 @@ struct fluid_grid_data {
     bool allow_input = false;
     bool allow_output = false;
     std::set<itype_id> allowed_liquids;
+    bool universal_liquids = false;
+    bool autofill = false;
     std::optional<units::volume> capacity;
     bool use_keg_capacity = false;
     std::optional<furn_str_id> connected_variant;
     std::optional<furn_str_id> disconnected_variant;
     std::optional<fluid_grid_transformer_config> transformer;
+
+    auto allows_liquid(const itype_id& liquid) const -> bool {
+        return universal_liquids || allowed_liquids.contains(liquid);
+    }
 };
 
 struct furn_t: map_data_common_t {

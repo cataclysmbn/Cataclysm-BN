@@ -636,6 +636,7 @@ class Creature
         /** Returns melee skill level, to be used to throttle dodge practice. **/
         virtual float get_melee() const = 0;
         virtual float get_hit() const;
+        virtual int spotting_range() const;
 
         virtual int get_speed() const;
         virtual creature_size get_size() const = 0;

@@ -7,6 +7,7 @@
 #include "damage.h"
 #include "flag.h"
 #include "input.h"
+#include "inventory_ui.h"
 #include "item.h"
 #include "itype.h"
 #include "messages.h"
@@ -24,6 +25,8 @@
 #include <cstddef>
 #include <functional>
 #include <iterator>
+#include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -302,9 +305,121 @@ auto present(const player& who, item& base, reload_selection::selection_result r
     }
     return item_reload_option();
 }
+
+class reload_target_preset: public inventory_selector_preset {
+public:
+    explicit reload_target_preset(const std::function<bool(const item&)>& is_target)
+        : is_target(is_target) {}
+
+    auto is_shown(const item* itm) const -> bool override { return is_target(*itm); }
+
+private:
+    std::function<bool(const item&)> is_target;
+};
+
+class reload_target_picker: public inventory_pick_selector {
+public:
+    reload_target_picker(player& who, const inventory_selector_preset& preset)
+        : inventory_pick_selector(who, preset),
+          reload_keys(input_context("DEFAULTMODE").keys_bound_to("reload_item")) {}
+
+protected:
+    auto assign_invlet_hints() -> void override {
+        for (auto* column : get_all_columns()) {
+            for (auto& entry : column->entries) { entry.invlet_hint.reset(); }
+            for (auto& entry : column->entries_hidden) { entry.invlet_hint.reset(); }
+        }
+
+        auto* const entry = wielded_entry();
+        if (entry == nullptr) { return; }
+        const auto key = reload_ui::resolve_wielded_key(facts_for(*entry));
+
+        if (key.shown) {
+            entry->invlet_hint = inventory_invlet_hint{
+                .invlet = *key.shown, .color = key.shadowed ? c_red : c_white};
+        }
+    }
+
+    auto pick_by_unbound_key(int key) -> item* override {
+        auto* const entry = wielded_entry();
+        if (entry == nullptr) { return nullptr; }
+        // `execute` already ruled out entry letters and picker actions.
+        // Therefore, the resolver checks them again such that the drawn hint and the picked items
+        // will always agree.
+        const auto keys = reload_ui::resolve_wielded_key(facts_for(*entry)).keys;
+        return std::ranges::contains(keys, key) ? entry->any_item() : nullptr;
+    }
+
+private:
+    auto listed_entries() const {
+        return get_all_columns() | std::views::transform(&inventory_column::entries)
+             | std::views::join;
+    }
+
+    // Uses the same wielded item as `reload_wielded` (while the picker lists it).
+    // A wield from inside the picker changes that item, so this runs on every call.
+    auto wielded_entry() const -> inventory_entry* {
+        const auto wielded = u.wielded_items();
+        const auto target = std::ranges::find_if(wielded, &item::is_reloadable);
+        if (target == wielded.end()) { return nullptr; }
+        auto listed = listed_entries();
+        const auto found = std::ranges::find_if(listed, [&](const inventory_entry& entry) {
+            return entry.is_selectable() && entry.any_item() == *target;
+        });
+        return found == listed.end() ? nullptr : &*found;
+    }
+
+    auto facts_for(const inventory_entry& wielded) const -> reload_ui::wielded_key_facts {
+        auto taken_invlets =
+            listed_entries() | std::views::filter([&](const inventory_entry& entry) {
+                return &entry != &wielded && entry.is_selectable();
+            })
+            | std::views::transform(&inventory_entry::get_invlet)
+            | std::views::filter([](int invlet) { return invlet != '\0'; })
+            | std::ranges::to<std::vector>();
+        return {.reload_keys = reload_keys,
+                .own_invlet = wielded.get_invlet(),
+                .taken_invlets = std::move(taken_invlets),
+                .action_keys = all_bound_keys()};
+    }
+
+    std::vector<char> reload_keys;
+};
 } // namespace
 
 namespace reload_ui {
+auto pick_target(player& who, const std::function<bool(const item&)>& is_target) -> item* {
+    const auto preset = reload_target_preset(is_target);
+    auto picker = reload_target_picker(who, preset);
+    picker.set_title(_("Reload item"));
+    picker.set_display_stats(false);
+    who.inv_restack();
+    picker.add_character_items(who);
+    picker.add_nearby_items(1);
+    if (picker.empty()) {
+        popup(_("You have nothing to reload."), PF_GET_KEY);
+        return nullptr;
+    }
+    return picker.execute();
+}
+
+auto resolve_wielded_key(const wielded_key_facts& facts) -> wielded_key {
+    const auto is_taken = [&](char key) {
+        return std::ranges::contains(facts.taken_invlets, key)
+            || std::ranges::contains(facts.action_keys, key);
+    };
+    auto result = wielded_key{
+        .keys = facts.reload_keys | std::views::filter(std::not_fn(is_taken))
+              | std::ranges::to<std::vector>(),
+        .shown = std::nullopt,
+        .shadowed = false};
+    if (facts.own_invlet == 0 && !facts.reload_keys.empty()) {
+        result.shown = facts.reload_keys.front();
+        result.shadowed = is_taken(facts.reload_keys.front());
+    }
+    return result;
+}
+
 auto select_ammo(const player& who, item& base, reload_selection::selection_options options)
     -> item_reload_option {
     return present(who, base, reload_selection::prepare(who, base, options));

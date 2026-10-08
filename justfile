@@ -32,4 +32,9 @@ lint-dialogue:
 hooks-setup:
     prek install
 
+# Download and launch a PR tiles build: just playtest [--os OS] <PR URL>.
+[positional-arguments]
+playtest *args:
+    deno run --allow-read --allow-write --allow-run --allow-env scripts/playtest.ts "$@"
+
 check: lint

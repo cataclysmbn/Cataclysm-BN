@@ -17,6 +17,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 // The test cases below cover polymorphic functions related to melee hit and dodge rates
 // for the Character, player, and monster classes, including:
@@ -123,6 +124,43 @@ TEST_CASE("Manually grabbed monster cannot walk away", "[player][melee][grab]") 
     CHECK(zed.can_move_to(monster_start));
     CHECK_FALSE(zed.move_to(monster_destination));
     CHECK(zed.bub_pos() == monster_start);
+}
+
+TEST_CASE(
+    "Grabbed monsters are released when the avatar is no longer adjacent",
+    "[player][melee][grab]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([] { clear_all_state(); });
+    clear_map();
+    auto& dummy = get_avatar();
+    clear_character(dummy);
+
+    const auto avatar_start = dummy.bub_pos();
+    const auto monster_start = avatar_start + tripoint_north;
+    auto& zed = spawn_test_monster("debug_mon", monster_start);
+    dummy.add_effect(efftype_id("grabbing"), 1_days, body_part_torso);
+    zed.add_effect(efftype_id("grabbed"), 1_days);
+    auto remains_adjacent = false;
+
+    SECTION("Avatar teleports away") { dummy.setpos(avatar_start + tripoint_south); }
+    SECTION("Avatar moves to another z-level") { dummy.setpos(avatar_start + tripoint_above); }
+    SECTION("Monster is knocked away") {
+        auto trajectory = std::vector<tripoint_bub_ms>{
+            monster_start, monster_start + tripoint_north,
+            monster_start + tripoint_north + tripoint_north};
+        g->knockback(trajectory, 0, 0, &dummy);
+        REQUIRE(zed.bub_pos() == monster_start + tripoint_north + tripoint_north);
+    }
+    SECTION("Cardinally adjacent grab persists") { remains_adjacent = true; }
+    SECTION("Diagonally adjacent grab persists") {
+        dummy.setpos(avatar_start + tripoint_east);
+        remains_adjacent = true;
+    }
+
+    REQUIRE(zed.has_effect(efftype_id("grabbed")));
+    zed.process_turn();
+
+    CHECK(zed.has_effect(efftype_id("grabbed")) == remains_adjacent);
 }
 
 TEST_CASE("Crowd crush does not drain breath when disabled", "[player][melee][grab]") {

@@ -2,10 +2,13 @@
 
 #include "catacharset.h"
 #include "color.h"
+#include "hsv_color.h"
 #include "translations.h"
 #include "type_id.h"
 
 #include <climits>
+#include <map>
+#include <optional>
 #include <string>
 
 using weather_effect_fn = std::function<void(int)>;
@@ -13,6 +16,8 @@ using weather_effect_fn = std::function<void(int)>;
 template <typename E> struct enum_traits;
 template <typename T> class generic_factory;
 class JsonObject;
+struct weather_pattern;
+using weather_pattern_id = string_id<weather_pattern>;
 
 enum class precip_class : int { none, very_light, light, medium, heavy, last };
 template <> struct enum_traits<precip_class> {
@@ -56,6 +61,13 @@ struct weather_animation_t {
     auto get_symbol() const -> std::string { return utf32_to_utf8(symbol); }
 };
 
+struct weather_screen_color_overlay {
+    std::optional<RGBColor> color = std::nullopt;
+    int alpha = 0;
+
+    auto has_value() const -> bool { return color.has_value() && alpha > 0; }
+};
+
 struct weather_requirements {
     int windpower_min = INT_MIN;
     int windpower_max = INT_MAX;
@@ -69,6 +81,7 @@ struct weather_requirements {
     bool acidic = false;
     weather_time_requirement_type time = weather_time_requirement_type::both;
     std::vector<weather_type_id> required_weathers;
+    std::map<weather_pattern_id, double> required_weather_patterns;
 };
 
 struct weather_type {
@@ -93,6 +106,7 @@ public:
     bool acidic = false;                      // Whether precipitation is acidic.
     std::vector<std::pair<weather_effect_fn, int>> effects;
     weather_animation_t animation = {};
+    weather_screen_color_overlay screen_color_overlay = {};
     weather_sound_category sound_category = weather_sound_category::silent;
     sun_intensity_type sun_intensity = sun_intensity_type::none;
     weather_requirements requirements = {};

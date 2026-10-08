@@ -170,6 +170,32 @@ local function give_system_interface(char)
   char:add_item_with_id(SYSTEM_INTERFACE_ITEM_ID, 1)
 end
 
+local function get_core_stats(character)
+  local level = get_char_value(character, "rpg_level", 0)
+  local level_scaling = get_char_value(character, "rpg_level_scaling", 100) / 100.0
+  local core_str = character:get_str_base() + get_char_value(character, "rpg_assigned_str", 0)
+  local core_dex = character:get_dex_base() + get_char_value(character, "rpg_assigned_dex", 0)
+  local core_int = character:get_int_base() + get_char_value(character, "rpg_assigned_int", 0)
+  local core_per = character:get_per_base() + get_char_value(character, "rpg_assigned_per", 0)
+  for _, mutation_id in ipairs(STAT_BONUS_IDS) do
+    local mutation = MUTATIONS[mutation_id:str()]
+    if not mutation then
+      goto continue_stat_bonus
+    end
+    local bonuses = mutation.stat_bonuses
+    if not bonuses then
+      goto continue_stat_bonus
+    end
+
+    if bonuses.str then core_str = core_str + (math.floor(level * bonuses.str * level_scaling)) end
+    if bonuses.dex then core_dex = core_dex + (math.floor(level * bonuses.dex * level_scaling)) end
+    if bonuses.int then core_int = core_int + (math.floor(level * bonuses.int * level_scaling)) end
+    if bonuses.per then core_per = core_per + (math.floor(level * bonuses.per * level_scaling)) end
+    ::continue_stat_bonus::
+  end
+  return { str = core_str, dex = core_dex, int = core_int, per = core_per }
+end
+
 -- Common requirement checking and formatting
 local function check_requirements(player, mutation, current_level)
   local reqs = mutation.requirements
@@ -184,11 +210,12 @@ local function check_requirements(player, mutation, current_level)
 
   -- Check stat requirements
   if reqs.stats then
+    local core_stats = get_core_stats(player)
     local stats_map = {
-      STR = player:get_str(),
-      DEX = player:get_dex(),
-      INT = player:get_int(),
-      PER = player:get_per(),
+      STR = math.max(player:get_str(), core_stats.str),
+      DEX = math.max(player:get_dex(), core_stats.dex),
+      INT = math.max(player:get_int(), core_stats.int),
+      PER = math.max(player:get_per(), core_stats.per),
     }
     for stat, required in pairs(reqs.stats) do
       local current = stats_map[stat]

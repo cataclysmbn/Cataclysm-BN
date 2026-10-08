@@ -343,7 +343,8 @@
           { "id": "shield_kevlar", "fg": 236 },
           { "id": [ "overlay_worn_shield_kevlar", "overlay_wielded_shield_kevlar" ], "fg": 237 },
           { "id": "shield_kevlar_large", "fg": 238 },
-          { "id": [ "overlay_worn_shield_kevlar_large", "overlay_wielded_shield_kevlar_large" ], "fg": 239 }
+          { "id": [ "overlay_worn_shield_kevlar_large", "overlay_wielded_shield_kevlar_large" ], "fg": 239 },
+          { "id": "vp_drone_rotors", "fg": 240 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

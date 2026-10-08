@@ -591,10 +591,22 @@ auto enchantment::mon_passes_special_vision(
 
 auto enchantment::operator==(const enchantment& rhs) const -> bool {
     return id == rhs.id && mutations == rhs.mutations && emitter == rhs.emitter
-        && ench_effects == rhs.ench_effects && values_multiply == rhs.values_multiply
-        && values_add == rhs.values_add && values_max == rhs.values_max
-        && hit_me_effect == rhs.hit_me_effect && hit_you_effect == rhs.hit_you_effect
-        && intermittent_activation == intermittent_activation && conditions == rhs.conditions;
+        && fake_items == rhs.fake_items && ench_effects == rhs.ench_effects
+        && values_add == rhs.values_add && values_multiply == rhs.values_multiply
+        && values_max == rhs.values_max && hit_me_effect == rhs.hit_me_effect
+        && hit_you_effect == rhs.hit_you_effect
+        && intermittent_activation == intermittent_activation && conditions == rhs.conditions
+        && immune_effects == rhs.immune_effects && immune_fields == rhs.immune_fields
+        && flags == rhs.flags && special_visions == rhs.special_visions;
+}
+bool enchantment::operator<(const enchantment& rhs) const {
+    return std::tie(id, mutations, emitter, ench_effects, fake_items, values_add, values_multiply,
+                    values_max, hit_me_effect, hit_you_effect, intermittent_activation, conditions,
+                    immune_effects, immune_fields, flags, special_visions)
+         < std::tie(rhs.id, rhs.mutations, rhs.emitter, rhs.ench_effects, rhs.fake_items,
+                    rhs.values_add, rhs.values_multiply, rhs.values_max, rhs.hit_me_effect,
+                    rhs.hit_you_effect, rhs.intermittent_activation, rhs.conditions,
+                    rhs.immune_effects, rhs.immune_fields, rhs.flags, rhs.special_visions);
 }
 
 namespace {

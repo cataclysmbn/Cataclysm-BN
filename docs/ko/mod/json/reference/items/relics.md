@@ -13,7 +13,7 @@
 "name": "Boots of Haste",       // 기본 아이템 이름을 덮어씁니다.
 "moves": 100,                   // (선택 사항) 활성화 이동 비용 (기본값 100)
 "charges_per_activation": 1,    // (선택 사항) 활성화당 충전량 (기본값 1)
-"active_effects": [ {}, ... ],  // (선택 사항) 활성화 시 실행되는 주문 (`hit_you_effect`와 동일, [MAGIC.md](MAGIC.md/#hit_you_effect) 참조)
+"active_effects": [ {}, ... ],  // (선택 사항) 활성화 시 실행되는 주문 (`hit_you_effect`와 동일, [인챈트 문서](../enchantments.md#hit_you_effect) 참조)
 "passive_effects": [ {}, ... ], // (선택 사항) 패시브 효과(마법 부여) 목록, [MAGIC.md](MAGIC.md/#enchantments) 참조
 "recharge_scheme": [ {}, ... ], // (선택 사항) 재충전 방법 목록, 아래 참조
 }

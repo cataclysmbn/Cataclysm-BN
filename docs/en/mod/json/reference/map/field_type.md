@@ -64,6 +64,7 @@
   "display_items": true, // Display the items on the files or not?
   "display_field": true, // Display the field or not?
   "priority": 1, // Priority to display the field's symbol / sprite
+  "tint": "#123456", // Optional sprite tint: a color name or RGB color. Inherited through copy-from.
   // Immunities
   "immunity_data": {
     "traits": ["M_IMMUNE"], // Array of traits that prevent effects from the field
@@ -84,6 +85,9 @@
   "wandering_field": "fd_toxic_gas", // Field that this field produces
   "accelerated_decay": true, // Does this field go downward with terrain shifts?
   // Misc
+  "conductive": false, // If true, an electrical pulse energizes connected conductive fields, then fades. Defaults to false.
+  "flammable": false, // If true, ignition consumes this field to create sustained fire. Defaults to false.
+  "moppable": false, // If true, mops and automatic mopping remove this field. Defaults to false.
   "gas_absorbption_factor": 10, // Number of charges to eat from the gas mask
   "dirty_transparency_cache": true, // Weather to forcefully recalc the transparency cache. It is automatically set with transparent being false
   "description_affix": "covered in", // Puts this in front of every intensity level name

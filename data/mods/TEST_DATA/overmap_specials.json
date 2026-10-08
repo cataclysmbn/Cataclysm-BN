@@ -1,6 +1,17 @@
 [
   {
     "type": "overmap_special",
+    "id": "test_dimension_special_bounds",
+    "overmaps": [
+      { "point": [ -1, -1, -1 ], "overmap": "field" },
+      { "point": [ 0, 0, 0 ], "overmap": "field" },
+      { "point": [ 1, 1, 1 ], "overmap": "field" }
+    ],
+    "locations": [ "land" ],
+    "occurrences": [ 0, 0 ]
+  },
+  {
+    "type": "overmap_special",
     "id": "test_anthill",
     "subtype": "mutable",
     "locations": [ "subterranean_empty" ],

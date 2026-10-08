@@ -28,6 +28,7 @@ struct liquid_storage_stats {
     units::volume stored = 0_ml;
     units::volume capacity = 0_ml;
     std::map<itype_id, units::volume> stored_by_type;
+    std::map<itype_id, units::volume> capacity_by_type;
 
     auto stored_for( const itype_id &liquid_type ) const -> units::volume {
         const auto iter = stored_by_type.find( liquid_type );
@@ -90,9 +91,14 @@ auto update( time_point to ) -> void;
 auto bind_dimension( const dimension_id &dim_id ) -> void;
 auto load( const map &m ) -> void;
 auto on_contents_changed( const tripoint_abs_ms &p ) -> void;
+auto assign_tank_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type ) -> bool;
+auto set_tank_assigned_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type ) -> bool;
+auto unassign_tank_liquid( const tripoint_abs_ms &p ) -> bool;
+auto set_fixture_assigned_liquid( const tripoint_abs_ms &p, const itype_id &liquid_type ) -> bool;
+auto unassign_fixture_liquid( const tripoint_abs_ms &p ) -> bool;
 auto on_structure_changed( const tripoint_abs_ms &p ) -> void;
 auto on_tank_removed( const tripoint_abs_ms &p ) -> void;
-auto disconnect_tank( const tripoint_abs_ms &p ) -> void;
+auto disconnect_tank( const tripoint_abs_ms &p ) -> bool;
 auto add_grid_connection( const tripoint_abs_omt &lhs,
                           const tripoint_abs_omt &rhs ) -> bool;
 auto remove_grid_connection( const tripoint_abs_omt &lhs,

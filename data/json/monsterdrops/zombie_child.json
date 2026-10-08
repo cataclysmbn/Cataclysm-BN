@@ -28,6 +28,8 @@
         ],
         "prob": 25
       },
+      { "group": "clothing_glasses", "damage": [ 0, 2 ], "prob": 10 },
+      { "group": "clothing_watch", "damage": [ 0, 2 ], "prob": 10 },
       { "group": "accesories_personal_unisex_kids", "prob": 15, "count": 2 },
       {
         "distribution": [

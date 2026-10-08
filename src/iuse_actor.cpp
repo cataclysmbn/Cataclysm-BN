@@ -31,6 +31,7 @@
 #include "enum_conversions.h"
 #include "enums.h"
 #include "explosion.h"
+#include "field_ignition_utils.h"
 #include "faction.h"
 #include "flag.h"
 #include "flat_set.h"
@@ -736,6 +737,7 @@ void unfold_vehicle_iuse::load( const JsonObject &obj )
     obj.read( "unfold_msg", unfold_msg );
     obj.read( "moves", moves );
     obj.read( "tools_needed", tools_needed );
+    obj.read( "full_battery", full_battery );
 }
 
 int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
@@ -757,7 +759,8 @@ int unfold_vehicle_iuse::use( player &p, item &it, bool, const tripoint_bub_ms &
         }
     }
 
-    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, 0, 0, false, false,
+    vehicle *veh = get_map().add_vehicle( vehicle_id, p.bub_pos(), 0_degrees, full_battery ? 100 : 0, 0,
+                                          false, false,
                                           true );
     if( veh == nullptr ) {
         p.add_msg_if_player( m_info, _( "There's no room to unfold the %s." ), it.tname() );
@@ -1808,7 +1811,14 @@ bool firestarter_actor::prep_firestarter_use( const player &p, tripoint_bub_ms &
 
 void firestarter_actor::resolve_firestarter_use( player &p, const tripoint_bub_ms &pos )
 {
-    if( get_map().add_field( pos, fd_fire, 1, 10_minutes ) ) {
+    map &here = get_map();
+    const auto fuel = flammable_fields( here.get_field( pos ) );
+    const auto fuel_intensity = fuel.intensity;
+    for( const auto type : fuel.types ) {
+        here.remove_field( pos, type );
+    }
+    if( here.add_field( pos, fd_fire, fuel_field_fire_intensity( fuel_intensity ),
+                        fuel_field_fire_age( fuel_intensity ) ) ) {
         if( !p.has_trait( trait_PYROMANIA ) ) {
             p.add_msg_if_player( _( "You successfully light a fire." ) );
         } else {
@@ -3832,7 +3842,7 @@ std::string repair_item_actor::get_name() const
     []( const material_id & mid ) {
         return _( mid->name() );
     } );
-    return string_format( _( "Repair %s" ), mats );
+    return string_format( _( "Repair/Refit %s" ), mats );
 }
 
 void heal_actor::load( const JsonObject &obj )

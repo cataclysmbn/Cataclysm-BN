@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "debug_log_capture.h"
 
 #include <algorithm>
 #include <atomic>
@@ -22,6 +23,7 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <sys/stat.h>
 #include <type_traits>
 #include <utility>
@@ -115,6 +117,12 @@ static std::atomic<bool> error_observed = false;
  * header + message body + newline are never interleaved across threads.
  */
 static std::mutex g_debug_log_mutex;
+
+namespace
+{
+auto capturing_errors = false;
+auto captured_errors = std::ostringstream {};
+} // namespace
 
 /** If true, debug messages will be captured,
  * used to test debugmsg calls in the unit tests
@@ -218,6 +226,26 @@ std::string capture_debugmsg::dmsg()
 capture_debugmsg::~capture_debugmsg()
 {
     capturing = false;
+}
+
+auto capture_debug_errors_during( const std::function < auto() -> void > &function ) -> std::string
+{
+    {
+        const auto lock = std::lock_guard<std::mutex>( g_debug_log_mutex );
+        if( capturing_errors ) {
+            throw std::logic_error( "Nested error log capture" );
+        }
+        captured_errors.str( "" );
+        captured_errors.clear();
+        capturing_errors = true;
+    }
+    const auto restore_capture = on_out_of_scope( []() {
+        const auto lock = std::lock_guard<std::mutex>( g_debug_log_mutex );
+        capturing_errors = false;
+    } );
+    function();
+    const auto lock = std::lock_guard<std::mutex>( g_debug_log_mutex );
+    return captured_errors.str();
 }
 
 bool debug_has_error_been_observed()
@@ -1562,6 +1590,10 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
         const char *line, const char *funcname )
 {
     if( lev == DL::Error ) {
+        auto lock = std::unique_lock<std::mutex>( g_debug_log_mutex );
+        if( capturing_errors ) {
+            return DebugLogGuard( captured_errors, std::move( lock ) );
+        }
         error_observed = true;
     }
 

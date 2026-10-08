@@ -21,6 +21,21 @@
 #include "type_id.h"
 #include "options.h"
 
+namespace
+{
+
+/// Ammo spawn entries can be wrapped in their default container.
+auto spawned_ammo_id( const item &spawned ) -> itype_id
+{
+    const auto *ammo = &spawned;
+    while( ammo->is_container() && ammo->contents.num_item_stacks() == 1 ) {
+        ammo = &ammo->get_contained();
+    }
+    return ammo->typeId();
+}
+
+} // namespace
+
 // FIXME: Somehow we cant get item_groups from their ids
 // Only can get Item_spawn_data
 // Either that or it is not clear how to access it from item_factory
@@ -569,7 +584,7 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         } else {
             detached_ptr<item> am = ammo->create_single( new_item->birthday() );
             if( am ) {
-                new_item->ammo_set( am->typeId(), ch );
+                new_item->ammo_set( spawned_ammo_id( *am ), ch );
             }
         }
         // Make sure the item is in valid state
@@ -594,7 +609,7 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
             if( ammo ) {
                 detached_ptr<item> am = ammo->create_single( new_item->birthday() );
                 if( am ) {
-                    new_item->ammo_set( am->typeId() );
+                    new_item->ammo_set( spawned_ammo_id( *am ) );
                 }
             } else {
                 new_item->ammo_set( new_item->ammo_default() );

@@ -9,6 +9,8 @@
       { "item": "cash_card", "prob": 1200, "charges-min": 0, "charges-max": 50000 },
       { "item": "money_bundle", "prob": 300, "count": [ 1, 2 ] },
       { "item": "coin_quarter", "prob": 100, "count": [ 1, 10 ] },
+      [ "pen", 100 ],
+      { "group": "clothing_glasses", "prob": 50 },
       [ "cell_phone", 2 ],
       [ "smart_phone", 300 ],
       [ "wrist_comp_budget", 20 ],
@@ -175,7 +177,9 @@
       [ "textbook_armschina", 2 ],
       [ "radio_book", 22 ],
       [ "radio_car_box", 1 ],
-      [ "radiocontrol", 5 ]
+      [ "radiocontrol", 5 ],
+      [ "delivery_drone_item", 1 ],
+      [ "remotevehcontrol", 5 ]
     ]
   },
   {

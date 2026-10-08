@@ -16,5 +16,35 @@
     "ammo_type": "762R",
     "capacity": 5,
     "flags": [ "SPEEDLOADER" ]
+  },
+  {
+    "id": "SVDmag",
+    "looks_like": "akmag10",
+    "type": "MAGAZINE",
+    "name": { "str": "SVD magazine" },
+    "description": "A standard, stamped sheet steel 10-round box magazine for the SVD.",
+    "weight": "150 g",
+    "volume": "250 ml",
+    "price": "45 USD",
+    "price_postapoc": "1 USD",
+    "material": "steel",
+    "symbol": "#",
+    "color": "light_gray",
+    "ammo_type": "762R",
+    "capacity": 10,
+    "reliability": 10,
+    "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "belt762R",
+    "copy-from": "magazine_belt",
+    "looks_like": "belt308",
+    "type": "MAGAZINE",
+    "name": { "str": "7.62x54mmR ammo belt" },
+    "ammo_type": "762R",
+    "capacity": 200,
+    "count": 100,
+    "default_ammo": "762_54R",
+    "linkage": "ammolink762R"
   }
 ]

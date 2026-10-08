@@ -128,6 +128,7 @@
 #include "overmap/overmap.h"
 #include "overmap/overmap_ui.h"
 #include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "panels.h"
 #include "path_info.h"
 #include "pathfinding.h"
@@ -156,6 +157,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "thread_pool.h"
 #include "tileray.h"
 #include "timed_event.h"
@@ -215,6 +217,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
 class computer;
 
 #if defined(TILES)
@@ -3040,8 +3043,10 @@ auto game::try_activity_fixed_window_skip() -> bool
     const auto duration = activity_fixed_window_duration();
     if( !can_activity_fixed_window_skip( duration ) ) {
         next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        u.in_skip_state = false;
         return false;
     }
+    u.in_skip_state = true;
     const auto skipped_turns = execute_activity_fixed_window_skip( duration );
     if( skipped_turns <= 0 ) {
         next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
@@ -3056,6 +3061,7 @@ auto game::try_activity_fixed_window_skip() -> bool
     if( skipped_turns >= full_window_turns || get_weather().nextweather <= calendar::turn ) {
         run_activity_cadence_boundary();
     }
+    u.in_skip_state = false;
     return true;
 }
 
@@ -4384,8 +4390,8 @@ bool game::save( bool quitting )
 
     world->start_save_tx();
 
-    cata::run_on_game_save_hooks( *DynamicDataLoader::get_instance().lua );
     try {
+        cata::run_on_game_save_hooks( *DynamicDataLoader::get_instance().lua );
         reset_save_ids( time( nullptr ), quitting );
         if( !save_factions_missions_npcs() ||
             !save_artifacts() ||
@@ -4397,6 +4403,7 @@ bool game::save( bool quitting )
             !cata::save_world_lua_state( get_active_world(), "lua_state.json" ) ||
             !save_uistate_data()
           ) {
+            world->rollback_save_tx();
             return false;
         } else {
             world_generator->last_world_name = world_generator->active_world->info->world_name;
@@ -4409,8 +4416,12 @@ bool game::save( bool quitting )
             return true;
         }
     } catch( std::ios::failure &err ) {
+        world->rollback_save_tx();
         popup( _( "Failed to save game data" ) );
         return false;
+    } catch( ... ) {
+        world->rollback_save_tx();
+        throw;
     }
 }
 
@@ -5014,7 +5025,7 @@ void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bo
                       POSY - u.bub_pos().y() ), c_white, 'X' );
     }
 
-    if( u.controlling_vehicle && !looking ) {
+    if( ( u.controlling_vehicle || remoteveh() ) && !looking ) {
         draw_veh_dir_indicator( false );
         draw_veh_dir_indicator( true );
     }
@@ -5022,10 +5033,16 @@ void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bo
     wmove( w_terrain, -center.xy().raw() + g->u.bub_pos().xy().raw() + point( POSX, POSY ) );
 }
 
-std::optional<tripoint_rel_ms> game::get_veh_dir_indicator_location( bool next ) const
+std::optional<tripoint_rel_ms> game::get_veh_dir_indicator_location( bool next )
 {
     if( !get_option<bool>( "VEHICLE_DIR_INDICATOR" ) ) {
         return std::nullopt;
+    }
+    if( vehicle *veh = remoteveh() ) {
+        rl_vec2d face = next ? veh->dir_vec() : veh->face_vec();
+        float r = 10.0;
+        return tripoint_rel_ms( static_cast<int>( r * face.x ), static_cast<int>( r * face.y ),
+                                veh->bub_ms_location().z() );
     }
     const optional_vpart_position vp = m.veh_at( u.bub_pos() );
     if( !vp ) {
@@ -9142,6 +9159,27 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
                                                    furniture_desc ) - 1;
             line += desc_lines;
         }
+        if( furniture.fluid_grid && furniture.fluid_grid->role == fluid_grid_role::tank &&
+            furniture.fluid_grid->allow_output ) {
+            auto dispensable_liquids = std::vector<std::string> {};
+            if( furniture.fluid_grid->universal_liquids ) {
+                const auto *vars = m.furn_vars( lp );
+                const auto assigned_liquid = vars == nullptr ? std::string{} :
+                                             vars->get( "fluid_grid_assigned_liquid", "" );
+                if( !assigned_liquid.empty() ) {
+                    dispensable_liquids.emplace_back( item::nname( itype_id( assigned_liquid ) ) );
+                }
+            } else {
+                dispensable_liquids = furniture.fluid_grid->allowed_liquids |
+                std::views::transform( []( const itype_id & liquid ) {
+                    return item::nname( liquid );
+                } ) | std::ranges::to<std::vector>();
+            }
+            const auto dispense_desc = dispensable_liquids.empty() ?
+                                       _( "Can dispense any allowed liquid; the type is assigned when filled." ) :
+                                       string_format( _( "Can dispense: %s." ), join( dispensable_liquids, ", " ) );
+            fold_and_print( w_look, point( column, ++line ), max_width, c_light_gray, dispense_desc );
+        }
     }
 
     if( concealment > 0 ) {
@@ -9162,7 +9200,9 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     std::string signage = m.get_signage( lp );
     if( !signage.empty() ) {
         std::string sign_string = u.has_trait( trait_ILLITERATE ) ? "???" : signage;
-        mvwprintz( w_look, point( column, ++line ), c_light_gray, _( "Sign: %s" ), sign_string );
+        auto col = c_light_gray;
+        print_colored_text( w_look, point( column, ++line ), col, col, string_format( _( "Sign: %s" ),
+                            sign_string ) );
     }
 
     if( lp.z() > -OVERMAP_DEPTH && !m.has_floor( lp ) ) {
@@ -13214,6 +13254,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
                             vp1 ) ) {
         u.stop_hauling();
     }
+    const auto moved = u.bub_pos() != dest_loc;
     const auto origin_before_setpos = m.get_abs_sub();
     const tripoint_abs_ms abs_dest_loc = bub_to_abs( dest_loc );
     u.setpos( dest_loc );
@@ -13314,6 +13355,10 @@ auto game::place_player( const tripoint_bub_ms &dest_loc ) -> point_rel_sm
     // If the new tile is a boardable part, board it
     if( vp1.part_with_feature( "BOARDABLE", true ) && !u.is_mounted() ) {
         m.board_vehicle( u.bub_pos(), &u );
+    }
+
+    if( moved ) {
+        m.creature_in_field( u, /*movement_only=*/true );
     }
 
     // Traps!
@@ -14813,6 +14858,88 @@ std::string game::get_dimension_prefix() const
     return current_dimension_id_.str();
 }
 
+auto game::delete_dimension( const dimension_id &dim_id ) -> bool
+{
+    return delete_dimension( dim_id, true );
+}
+
+auto game::delete_dimension( const dimension_id &dim_id, const bool remove_zones ) -> bool
+{
+    if( dim_id.is_empty() || dim_id == current_dimension_id_ ) {
+        return false;
+    }
+
+    // Portals and scripts can still own requests for an inactive dimension.  Keep its buffers
+    // intact until those owners release their handles, including the loader's cached state.
+    if( std::ranges::contains( submap_loader.active_dimensions(), dim_id ) ) {
+        return false;
+    }
+
+    auto *active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+
+    const auto is_loaded = loaded_dimensions_.contains( dim_id );
+    if( !is_loaded && !active_world->has_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    if( active_world->is_save_tx_active() ) {
+        return false;
+    }
+
+    auto preserved_info = std::optional<dimension_info> {};
+    if( const auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+        preserved_info = it->second;
+    }
+    const auto was_kept = kept_pocket_dimension_id_ == dim_id;
+
+    // Save while the destination metadata is still intact.  If data deletion fails or the process
+    // stops during cleanup, the next load can still recover the dimension's generation settings.
+    if( !save( false ) ) {
+        return false;
+    }
+
+    submap_loader.drain_lazy_loads();
+    if( !active_world->delete_dimension_data( dim_id.str() ) ) {
+        return false;
+    }
+
+    if( auto tracker_it = grid_trackers_.find( dim_id ); tracker_it != grid_trackers_.end() ) {
+        submap_loader.remove_listener( tracker_it->second.get() );
+        grid_trackers_.erase( tracker_it );
+    }
+
+    MAPBUFFER_REGISTRY.unload_dimension( dim_id );
+    unload_overmapbuffer_dimension( dim_id );
+
+    // Finalize a deletion only after its data and zones are gone.  Keep metadata on failure so
+    // cleanup can be retried.  A reset keeps both zones and metadata for re-entry.
+    if( remove_zones ) {
+        if( !zone_manager::get_manager().remove_dimension_zones( dim_id ) ) {
+            return false;
+        }
+        loaded_dimensions_.erase( dim_id );
+        if( was_kept ) {
+            kept_pocket_dimension_id_ = dimension_id();
+        }
+        if( !save( false ) ) {
+            if( preserved_info ) {
+                loaded_dimensions_[dim_id] = *preserved_info;
+            }
+            if( was_kept ) {
+                kept_pocket_dimension_id_ = dim_id;
+            }
+            return false;
+        }
+    }
+
+    return true;
+}
+
+auto game::reset_dimension( const dimension_id &dim_id ) -> bool { return delete_dimension( dim_id, false ); }
+
 auto game::set_active_dimension_id( const dimension_id &dim_id ) -> void
 {
     current_dimension_id_ = dim_id;
@@ -14857,9 +14984,13 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
                                 const std::optional<tripoint_abs_sm> &load_pos,
                                 const std::function<void()> &pre_load_callback ) -> bool
 {
-    if( get_active_world()->info->world_save_format == save_format::V1 ) {
+    auto *const active_world = get_active_world();
+    if( !active_world ) {
+        return false;
+    }
+    if( active_world->info->world_save_format == save_format::V1 ) {
         popup( "Dimensions are currently disfunctional in v1 saves. Please migrate this save to v2 or dont use the feature." );
-        return true;
+        return false;
     }
     // Flush any items pending deferred deletion before switching dimensions.
     // Without this, zombie item pointers in cata_arena can persist across the
@@ -14870,6 +15001,9 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     if( dim_id == current_dimension_id_ ) {
         add_msg( m_debug, "[DIM] Already in dimension '%s', no-op", dim_id.c_str() );
         return true;
+    }
+    if( active_world->is_save_tx_active() ) {
+        return false;
     }
 
     // Resolve effective world_type: use the passed value if valid; otherwise try
@@ -14889,6 +15023,19 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
 
     // For the overworld, effective_wt may still be null; guard all uses below.
     const struct world_type *target_type = effective_wt.is_valid() ? &effective_wt.obj() : nullptr;
+    auto effective_pd_info = pd_info;
+    if( !effective_pd_info ) {
+        if( auto it = loaded_dimensions_.find( dim_id ); it != loaded_dimensions_.end() ) {
+            effective_pd_info = it->second.pocket_info;
+        }
+    }
+    if( effective_pd_info && load_pos ) {
+        const auto target_pos = project_to<coords::ms>(
+                                    *load_pos + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) );
+        if( !effective_pd_info->bounds.contains( target_pos ) ) {
+            return false;
+        }
+    }
     map &here = get_map();
     avatar &player = get_avatar();
 
@@ -14911,23 +15058,17 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
             here.unboard_vehicle( player.bub_pos() );
         }
 
-        world *active_world = get_active_world();
         try {
-            if( active_world ) {
-                active_world->start_save_tx();
-            }
+            active_world->start_save_tx();
             get_overmapbuffer( current_dimension_id_ ).save( current_dimension_id_ );
             MAPBUFFER_REGISTRY.get( old_dim_id ).save();
             if( !save_dimension_data() ) {
-                if( active_world ) {
-                    active_world->commit_save_tx();
-                }
+                active_world->rollback_save_tx();
                 return false;
             }
-            if( active_world ) {
-                active_world->commit_save_tx();
-            }
+            active_world->commit_save_tx();
         } catch( const std::exception &err ) {
+            active_world->rollback_save_tx();
             popup( _( "Failed to save map data: %s" ), err.what() );
             return false;
         }
@@ -14948,11 +15089,11 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
         const bool old_is_bounded = !old_dim_id.is_empty() &&
                                     loaded_dimensions_.count( old_dim_id ) &&
                                     loaded_dimensions_.at( old_dim_id ).pocket_info.has_value();
-        if( old_is_bounded && !pd_info.has_value() ) {
+        if( old_is_bounded && !effective_pd_info.has_value() ) {
             // Exiting a bounded pocket → remember it.
             kept_pocket_dimension_id_ = old_dim_id;
             add_msg( m_debug, "[DIM] Marking pocket '%s' as kept", old_dim_id.c_str() );
-        } else if( pd_info.has_value() ) {
+        } else if( effective_pd_info.has_value() ) {
             // Entering any pocket → forget the previous kept marker.
             kept_pocket_dimension_id_ = dimension_id();
         }
@@ -14992,7 +15133,7 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
             .id                  = dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id.str(),
-            .pocket_info         = pd_info
+            .pocket_info         = effective_pd_info
         };
     }
 
@@ -15013,9 +15154,9 @@ auto game::travel_to_dimension( const dimension_id &dim_id,
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
     here.get_mapbuffer().clear_pocket_info();
     get_overmapbuffer( current_dimension_id_ ).clear_pocket_info();
-    if( pd_info ) {
-        here.get_mapbuffer().set_pocket_info( *pd_info );
-        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *pd_info );
+    if( effective_pd_info ) {
+        here.get_mapbuffer().set_pocket_info( *effective_pd_info );
+        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *effective_pd_info );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps
@@ -16182,22 +16323,22 @@ void game::process_artifact( item &it, Character &who )
     for( const art_effect_passive &i : effects ) {
         switch( i ) {
             case AEP_STR_UP:
-                who.mod_str_bonus( +4 );
+                who.mod_str_bonus( +4, true );
                 break;
             case AEP_DEX_UP:
-                who.mod_dex_bonus( +4 );
+                who.mod_dex_bonus( +4, true );
                 break;
             case AEP_PER_UP:
-                who.mod_per_bonus( +4 );
+                who.mod_per_bonus( +4, true );
                 break;
             case AEP_INT_UP:
-                who.mod_int_bonus( +4 );
+                who.mod_int_bonus( +4, true );
                 break;
             case AEP_ALL_UP:
-                who.mod_str_bonus( +2 );
-                who.mod_dex_bonus( +2 );
-                who.mod_per_bonus( +2 );
-                who.mod_int_bonus( +2 );
+                who.mod_str_bonus( +2, true );
+                who.mod_dex_bonus( +2, true );
+                who.mod_per_bonus( +2, true );
+                who.mod_int_bonus( +2, true );
                 break;
             case AEP_SPEED_UP:
                 // Handled in player::current_speed()
@@ -16269,26 +16410,26 @@ void game::process_artifact( item &it, Character &who )
                 break;
 
             case AEP_STR_DOWN:
-                who.mod_str_bonus( -3 );
+                who.mod_str_bonus( -3, true );
                 break;
 
             case AEP_DEX_DOWN:
-                who.mod_dex_bonus( -3 );
+                who.mod_dex_bonus( -3, true );
                 break;
 
             case AEP_PER_DOWN:
-                who.mod_per_bonus( -3 );
+                who.mod_per_bonus( -3, true );
                 break;
 
             case AEP_INT_DOWN:
-                who.mod_int_bonus( -3 );
+                who.mod_int_bonus( -3, true );
                 break;
 
             case AEP_ALL_DOWN:
-                who.mod_str_bonus( -2 );
-                who.mod_dex_bonus( -2 );
-                who.mod_per_bonus( -2 );
-                who.mod_int_bonus( -2 );
+                who.mod_str_bonus( -2, true );
+                who.mod_dex_bonus( -2, true );
+                who.mod_per_bonus( -2, true );
+                who.mod_int_bonus( -2, true );
                 break;
 
             case AEP_SPEED_DOWN:

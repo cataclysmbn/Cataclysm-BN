@@ -421,7 +421,8 @@
     "name": { "ctxt": "fish", "str_sp": "rock bass" },
     "reproduction": { "baby_egg": "egg_fish_tiny", "baby_count": 2, "baby_timer": 17 },
     "looks_like": "mon_fish_sunfish",
-    "description": "A rock bass.  Related to sunfish, this tiny fish has a camouflage-like patterning and a red eye."
+    "description": "A rock bass.  Related to sunfish, this tiny fish has a camouflage-like patterning and a red eye.",
+    "extend": { "flags": [ "CAMOUFLAGE" ] }
   },
   {
     "id": "mon_fish_calico_bass",

@@ -563,7 +563,7 @@
     "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
     "flags": [ "WRITE_MESSAGE", "NO_PAINT" ],
     "ammo": "battery",
-    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell" ] ] ]
+    "magazines": [ [ "battery", [ "light_disposable_cell", "light_battery_cell", "light_minus_battery_cell" ] ] ]
   },
   {
     "id": "stepladder",
