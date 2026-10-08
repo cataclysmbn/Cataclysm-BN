@@ -2017,7 +2017,7 @@ void Character::calc_all_parts_hp( float hp_mod, float hp_adjustment, int str_ma
         if( ench.is_valid() ) {
             new_max += bonus_from_enchantments( new_max, ench, true );
         }
-        
+
         if( part.first == bodypart_str_id( "head" ) ) {
             new_max *= 0.5;
         } else if( part.first == bodypart_str_id( "arm_l" ) || part.first == bodypart_str_id( "arm_r" ) ) {
@@ -2025,7 +2025,7 @@ void Character::calc_all_parts_hp( float hp_mod, float hp_adjustment, int str_ma
         } else if( part.first == bodypart_str_id( "leg_l" ) || part.first == bodypart_str_id( "leg_r" ) ) {
             new_max *= 0.75;
         }
-        
+
         new_max = std::max( new_max, 1 );
         int new_cur = std::ceil( static_cast<float>( new_max ) * hp_ratio );
 

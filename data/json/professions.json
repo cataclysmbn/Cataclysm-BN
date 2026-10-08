@@ -5679,10 +5679,7 @@
     "name": "Delivery Drone Pilot",
     "description": "When the riots started it was still business as usual at work, since they had you handling online orders and contactless delivery, but the undead are much more insistent about in-store pickup than the living.  You fled with what was going to be your last delivery order and the drone that was going to ship it.",
     "points": 1,
-    "skills": [
-      { "level": 2, "name": "driving" },
-      { "level": 2, "name": "computer" }
-    ],
+    "skills": [ { "level": 2, "name": "driving" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": {
         "items": [
