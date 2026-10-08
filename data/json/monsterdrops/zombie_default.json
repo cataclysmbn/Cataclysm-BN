@@ -256,7 +256,7 @@
         ],
         "prob": 20
       },
-      { "distribution": [ { "group": "harddrugs", "prob": 25 }, { "group": "baddrugs", "prob": 75 } ], "prob": 20 },
+      { "distribution": [ { "group": "harddrugs", "prob": 25 }, { "group": "baddrugs", "prob": 75 } ], "prob": 10 },
       {
         "distribution": [
           { "item": "usb_drive", "prob": 50 },
