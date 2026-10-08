@@ -2417,6 +2417,11 @@ void options_manager::add_options_graphics()
 
     get_option( "LOADING_SCREEN_IMAGES" ).setPrerequisite( "USE_TILES" );
 
+    add( "LOADING_PROGRESS_COMPACT", graphics, translate_marker( "Compact loading progress bar" ),
+         translate_marker( "If true, shows loading progress info as a compact bar at the bottom of the screen instead of a centered list of all steps. Good for enabled loading screen images." ),
+         true
+       );
+
     add_empty_line();
 
     add( "MEMORY_MAP_MODE", graphics, translate_marker( "Memory map drawing mode" ),
