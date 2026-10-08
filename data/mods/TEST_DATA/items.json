@@ -36,6 +36,13 @@
     "effects": [ "NEVER_MISFIRES", "NON_FOULING" ]
   },
   {
+    "type": "AMMO",
+    "id": "test_rock_fractional",
+    "copy-from": "test_rock",
+    "name": "TEST fractional rock",
+    "proportional": { "damage": { "damage_type": "stab", "amount": 0.8 } }
+  },
+  {
     "type": "GENERIC",
     "id": "test_1kg_cube",
     "name": "TEST 1kg cube",

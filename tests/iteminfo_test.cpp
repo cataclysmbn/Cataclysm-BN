@@ -790,6 +790,15 @@ TEST_CASE("ammunition", "[item][iteminfo][ammo]") {
             "Damage: <color_c_yellow>7</color>\n"
             "Range: <color_c_yellow>10</color>  Dispersion: <color_c_yellow>14</color>\n");
     }
+
+    SECTION("fractional ammo damage is displayed") {
+        test_info_equals(
+            "test_rock_fractional", q,
+            "--\n"
+            "<color_c_white>Ammunition type</color>: rocks\n"
+            "Damage: <color_c_yellow>5.60</color>\n"
+            "Range: <color_c_yellow>10</color>  Dispersion: <color_c_yellow>14</color>\n");
+    }
 }
 
 TEST_CASE("nutrients in food", "[item][iteminfo][food]") {
