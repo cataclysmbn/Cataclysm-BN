@@ -5698,8 +5698,7 @@
           "remotevehcontrol",
           "wristwatch",
           "backpack",
-          "plastic_shopping_bag",
-          "smart_phone",
+          "plastic_shopping_bag"
         ]
       },
       "male": [ "briefs" ],
