@@ -2397,22 +2397,26 @@
           "undershirt",
           "gloves_liner",
           "gloves_tactical",
-          "tac_helmet",
           "aviators",
-          "goggles_nv_enhanced",
           "socks",
           "boots_combat",
           "webbing_belt",
           "wristwatch",
           "canteen",
-          "molle_pack",
-          "light_disposable_cell"
+          "molle_pack"
         ],
         "entries": [
           { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
           { "item": "kukri", "container-item": "sheath" },
           { "item": "jacket_flannel" },
           { "item": "modularvestsuper", "contents-group": "army_mags_mp5" },
+          { "item": "tac_helmet" },
+          {
+            "item": "light_disposable_cell",
+            "ammo-item": "battery",
+            "charges": 300,
+            "container-item": "goggles_nv_enhanced"
+          },
           {
             "item": "hk_mp5sd",
             "ammo-item": "9mm",
