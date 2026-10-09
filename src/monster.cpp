@@ -2688,7 +2688,7 @@ void monster::deal_projectile_attack( Creature *source, item *source_weapon,
 
 int monster::heal( const int delta_hp, bool overheal )
 {
-    const int maxhp = type->hp;
+    const int maxhp = get_hp_max();
     if( delta_hp <= 0 || ( hp >= maxhp && !overheal ) ) {
         return 0;
     }
