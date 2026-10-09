@@ -653,6 +653,33 @@ TEST_CASE("MCP rejects invalid mouse events and mixed input modes", "[mcp][proto
     CHECK(fixture.submitted.empty());
 }
 
+TEST_CASE("MCP rejects fractional and exponent mouse coordinates", "[mcp][protocol]") {
+    auto fixture = protocol_fixture{};
+    auto server = fixture.make_server();
+    auto input = std::stringstream{};
+    input << request(
+        "initialize", "1",
+        "{\"protocolVersion\":\"2025-11-25\",\"capabilities\":{},"
+        "\"clientInfo\":{\"name\":\"test\",\"version\":\"1\"}}");
+    input << "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}\n";
+    const auto mouse = std::vector<std::string>{
+        "\"x\":17.9,\"y\":23", "\"x\":-0.5,\"y\":0", "\"x\":1,\"y\":2.0", "\"x\":1e1,\"y\":2"};
+    for (auto i = std::size_t{0}; i < mouse.size(); ++i) {
+        input << request(
+            "tools/call", std::to_string(i + 2),
+            "{\"name\":\"bn.press\",\"arguments\":{\"keys\":[{\"mouse\":{" + mouse[i]
+                + ",\"button\":\"left\"}}]}}");
+    }
+    auto output = std::ostringstream{};
+    auto errors = std::ostringstream{};
+
+    CHECK(server.run(input, output, errors) == 0);
+    for (auto i = std::size_t{0}; i < mouse.size(); ++i) {
+        CHECK(has_error_response(output.str(), static_cast<int>(i + 2)));
+    }
+    CHECK(fixture.submitted.empty());
+}
+
 TEST_CASE("MCP rejects empty and oversized key batches", "[mcp][session]") {
     auto fixture = protocol_fixture{};
     auto server = fixture.make_server();

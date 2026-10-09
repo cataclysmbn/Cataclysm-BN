@@ -290,7 +290,7 @@ auto read_keys( const JsonObject &arguments ) -> std::vector<key_event>
         if( event.has_member( "mouse" ) ) {
             const auto mouse = event.get_object( "mouse" );
             mouse.allow_omitted_members();
-            key.mouse_position = point{ mouse.get_int( "x" ), mouse.get_int( "y" ) };
+            key.mouse_position = point{ read_integer( mouse, "x" ), read_integer( mouse, "y" ) };
             key.mouse_button = mouse.get_string( "button" );
             if( key.mouse_position->x < 0 || key.mouse_position->y < 0 ) {
                 event.throw_error( "Mouse coordinates must be non-negative" );
