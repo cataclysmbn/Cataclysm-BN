@@ -544,13 +544,13 @@ auto monster::abs_pos() const -> tripoint_abs_ms
 
 void monster::poly( const mtype_id &id )
 {
-    double hp_percentage = static_cast<double>( hp ) / static_cast<double>( type->hp );
+    double hp_percentage = static_cast<double>( hp ) / static_cast<double>( get_hp_max() );
     type = &id.obj();
     moves = 0;
     Creature::set_speed_base( type->speed );
     anger = type->agro;
     morale = type->morale;
-    hp = static_cast<int>( hp_percentage * type->hp );
+    hp = static_cast<int>( hp_percentage * get_hp_max() );
     special_attacks.clear();
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
@@ -990,7 +990,7 @@ std::string monster::skin_name() const
 
 void monster::get_HP_Bar( nc_color &color, std::string &text ) const
 {
-    std::tie( text, color ) = ::get_hp_bar( hp, type->hp, true );
+    std::tie( text, color ) = ::get_hp_bar( hp, get_hp_max(), true );
 }
 
 std::pair<std::string, nc_color> monster::get_attitude() const
@@ -1243,7 +1243,7 @@ std::string monster::extended_description() const
     }
 
     ss += "--\n";
-    const std::pair<std::string, nc_color> hp_bar = hp_description( hp, type->hp );
+    const std::pair<std::string, nc_color> hp_bar = hp_description( hp, get_hp_max() );
     ss += colorize( hp_bar.first, hp_bar.second ) + "\n";
 
     const std::pair<std::string, nc_color> speed_desc = speed_description(
@@ -4103,9 +4103,9 @@ void monster::process_effects_internal()
         const float light = g->m.ambient_light_at( bub_pos() );
         add_msg( m_debug, _( "%1$s local light level: %2$s" ), name(), light );
         // Requires standing in a properly dark tile, scales as it gets darker
-        if( light < 11.0f && one_in( 2 ) && hp < type->hp ) {
+        if( light < 11.0f && one_in( 2 ) && hp < get_hp_max() ) {
             // Regen will max out at 50 at 6.0 light (barely able to craft), or top off to max HP
-            int dark_regen_amount = std::min( static_cast<int>( 110.0f - ( light * 10.0f ) ), type->hp - hp );
+            int dark_regen_amount = std::min( static_cast<int>( 110.0f - ( light * 10.0f ) ), get_hp_max() - hp );
             dark_regen_amount = std::min( dark_regen_amount, 50 );
             heal( round( dark_regen_amount ) );
             if( dark_regen_amount > 0 && g->u.sees( *this ) ) {
@@ -4117,7 +4117,7 @@ void monster::process_effects_internal()
 
     // Monster will regen morale and aggression if it is on max HP
     // It regens more morale and aggression if is currently fleeing.
-    if( type->regen_morale && hp >= type->hp ) {
+    if( type->regen_morale && hp >= get_hp_max() ) {
         if( is_fleeing( g->u ) ) {
             morale = type->morale;
             // Don't restore global anger for FACTION_MEMORY monsters
@@ -4366,7 +4366,7 @@ void monster::init_from_item( const item &itm )
 
         // HP can be 0 or less, in this case revive_corpse will just deactivate the corpse
         if( hp > 0 && type->has_flag( MF_REVIVES_HEALTHY ) ) {
-            hp = type->hp;
+            hp = get_hp_max();
             set_speed_base( type->speed );
         }
         const std::string up_time = itm.get_var( "upgrade_time" );
@@ -4388,7 +4388,7 @@ detached_ptr<item> monster::to_item() const
     }
     // Birthday is wrong, but the item created here does not use it anyway (I hope).
     detached_ptr<item> result = item::spawn( type->revert_to_itype, calendar::turn );
-    const int damfac = std::max( 1, ( result->max_damage() + 1 ) * hp / type->hp );
+    const int damfac = std::max( 1, ( result->max_damage() + 1 ) * hp / get_hp_max() );
     result->set_damage( std::max( 0, ( result->max_damage() + 1 ) - damfac ) );
     // If we have a nickname, save it via the item's label
     if( !unique_name.empty() ) {
