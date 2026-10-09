@@ -24,6 +24,7 @@
 #include <limits>
 #include <memory>
 #include <mutex>
+#include <ranges>
 #include <sstream>
 #include <thread>
 #include <unordered_map>
@@ -232,15 +233,20 @@ bool WORLDINFO::save( const bool is_conversion ) const
 
             jout.start_array();
 
-            for( auto &elem : WORLD_OPTIONS ) {
+            namespace ranges = std::ranges;
+            using namespace std::views;
+            auto names = WORLD_OPTIONS | keys | ranges::to<std::vector>();
+            ranges::sort( names );
+            for( const auto &name : names ) {
+                const auto &option = WORLD_OPTIONS.at( name );
                 // Skip hidden option because it is set by mod and should not be saved
-                if( !elem.second.getDefaultText().empty() ) {
+                if( !option.getDefaultText().empty() ) {
                     jout.start_object();
 
-                    jout.member( "info", elem.second.getTooltip() );
-                    jout.member( "default", elem.second.getDefaultText( false ) );
-                    jout.member( "name", elem.first );
-                    jout.member( "value", elem.second.getValue( true ) );
+                    jout.member( "info", option.getTooltip() );
+                    jout.member( "default", option.getDefaultText( false ) );
+                    jout.member( "name", name );
+                    jout.member( "value", option.getValue( true ) );
 
                     jout.end_object();
                 }

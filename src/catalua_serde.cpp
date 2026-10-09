@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <stdexcept>
@@ -138,10 +139,56 @@ auto deserialize_lua_coord( sol::state_view lua, const JsonObject &jo,
     return sol::nil;
 }
 
-} // namespace
+struct lua_entry_order {
+    std::string key;
+    std::string value;
+    auto operator<=>( const lua_entry_order & ) const = default; // *NOPAD*
+};
 
-static void serialize_lua_object( const sol::object &val, JsonOut &jsout,
-                                  std::vector<sol::table> &stack )
+struct serialized_lua_entry {
+    lua_entry_order order;
+    std::string key;
+    std::string value;
+};
+
+/// Ignore only JSON whitespace outside strings for format/depth-independent ordering.
+/// Keep every token byte: parsing numbers or unescaping strings would be lossy.
+auto lua_object_sort_key( const std::string &data ) -> std::string
+{
+    auto result = std::string{};
+    result.reserve( data.size() );
+    auto in_string = false;
+    auto escaped = false;
+    for( const auto ch : data ) {
+        if( in_string ) {
+            result += ch;
+            if( escaped ) {
+                escaped = false;
+            } else if( ch == '\\' ) {
+                escaped = true;
+            } else if( ch == '"' ) {
+                in_string = false;
+            }
+        } else if( ch == '"' ) {
+            in_string = true;
+            result += ch;
+        } else if( ch != ' ' && ch != '\n' && ch != '\r' && ch != '\t' ) {
+            result += ch;
+        }
+    }
+    return result;
+}
+
+/// Emit the already serialized object without parsing/coercing its numeric or typed data.
+auto write_serialized_lua_object( const std::string &data, JsonOut &jsout ) -> void
+{
+    jsout.write_separator();
+    *jsout.get_stream() << data;
+    jsout.set_need_separator();
+}
+
+auto serialize_lua_object( const sol::object &val, JsonOut &jsout,
+                           std::vector<sol::table> &stack ) -> void
 {
     sol::state_view lua( val.lua_state() );
 
@@ -213,6 +260,8 @@ static void serialize_lua_object( const sol::object &val, JsonOut &jsout,
     jsout.end_object();
 }
 
+} // namespace
+
 void serialize_lua_table_internal( const sol::table &t, JsonOut &jsout,
                                    std::vector<sol::table> &stack )
 {
@@ -233,11 +282,30 @@ void serialize_lua_table_internal( const sol::table &t, JsonOut &jsout,
         jsout.member( "entries" );
         jsout.start_array();
 
-        // TODO: persistent key order?
+        // Capture in the existing traversal order: userdata serializers may be effectful.
+        // The typed JSON encoding (including recursively ordered tables) orders complete
+        // pairs without consulting Lua again. Values break ties between structurally
+        // identical identity keys; identical pairs retain their full multiplicity.
+        auto entries = std::vector<serialized_lua_entry> {};
         t.for_each( [&]( const sol::object & key, const sol::object & val ) {
-            serialize_lua_object( key, jsout, stack );
-            serialize_lua_object( val, jsout, stack );
+            auto key_stream = std::ostringstream{};
+            auto key_out = JsonOut( key_stream, jsout );
+            serialize_lua_object( key, key_out, stack );
+            auto value_stream = std::ostringstream{};
+            auto value_out = JsonOut( value_stream, jsout );
+            serialize_lua_object( val, value_out, stack );
+            auto key_data = std::move( key_stream ).str();
+            auto value_data = std::move( value_stream ).str();
+            entries.push_back( { .order = { .key = lua_object_sort_key( key_data ),
+                                            .value = lua_object_sort_key( value_data )
+                                          },
+                                 .key = std::move( key_data ), .value = std::move( value_data ) } );
         } );
+        std::ranges::sort( entries, {}, &serialized_lua_entry::order );
+        for( const auto &entry : entries ) {
+            write_serialized_lua_object( entry.key, jsout );
+            write_serialized_lua_object( entry.value, jsout );
+        }
 
         jsout.end_array();
     }

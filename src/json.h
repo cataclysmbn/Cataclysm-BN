@@ -642,6 +642,9 @@ class JsonOut
 
     public:
         JsonOut( std::ostream &stream, bool pretty_print = false, int depth = 0 );
+        /// Write a standalone value using the caller's indentation/wrapping context,
+        /// without copying its pending separator or modifying its output state.
+        JsonOut( std::ostream &stream, const JsonOut &context );
         JsonOut( const JsonOut & ) = delete;
         JsonOut &operator=( const JsonOut & ) = delete;
 
