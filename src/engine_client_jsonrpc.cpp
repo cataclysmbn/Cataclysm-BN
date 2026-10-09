@@ -702,8 +702,11 @@ std::expected<void, output_error>
     if( value->bytes().empty() || ( !batch_ && count_ != 0 ) ) {
         failure_ = output_error::invalid_value;
     } else {
-        const auto overhead = batch_ ? ( count_ == 0 ? 2u : 1u ) : 0u;
-        if( value->bytes().size() > maximum_frame_bytes - bytes_.size() - overhead ) {
+        // A batch always owes its closing bracket plus this response's opening '[' or ','.
+        const auto overhead = batch_ ? size_t{ 2 } :
+                              size_t{ 0 };
+        if( bytes_.size() + overhead > maximum_frame_bytes ||
+            value->bytes().size() > maximum_frame_bytes - bytes_.size() - overhead ) {
             failure_ = output_error::resource_limit;
         }
     }

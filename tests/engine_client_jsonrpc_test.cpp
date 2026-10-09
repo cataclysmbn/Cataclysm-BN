@@ -432,6 +432,36 @@ TEST_CASE(
     CHECK_FALSE(batch.append(*tiny));
 }
 
+TEST_CASE("jsonrpc_batch_reserves_closing_bracket_for_every_response", "[engine_client_jsonrpc]") {
+    const auto request = one_request(R"({"jsonrpc":"2.0","method":"ping","id":1})");
+    const auto tiny = rpc::make_result(request, "\"\"");
+    REQUIRE(tiny);
+    REQUIRE(*tiny);
+    const auto tiny_size = (*tiny)->bytes().size();
+    const auto padded = [&](const size_t size) {
+        return rpc::make_result(request, "\"" + std::string(size - tiny_size, 'x') + "\"");
+    };
+    // "[" + first + "," + second + "]" must fit: first + second == maximum - 3 is the largest.
+    const auto first = padded(rpc::maximum_frame_bytes / 2);
+    const auto fits = padded(rpc::maximum_frame_bytes - 3 - rpc::maximum_frame_bytes / 2);
+    const auto over = padded(rpc::maximum_frame_bytes - 2 - rpc::maximum_frame_bytes / 2);
+    REQUIRE(first);
+    REQUIRE(fits);
+    REQUIRE(over);
+    auto batch = rpc::response_frame(true);
+    REQUIRE(batch.append(*first));
+    REQUIRE(batch.append(*fits));
+    const auto bytes = std::move(batch).finish();
+    REQUIRE(bytes);
+    REQUIRE(*bytes);
+    CHECK((**bytes).size() == rpc::maximum_frame_bytes);
+    auto overflow = rpc::response_frame(true);
+    REQUIRE(overflow.append(*first));
+    const auto failure = overflow.append(*over);
+    REQUIRE_FALSE(failure);
+    CHECK(failure.error() == rpc::output_error::resource_limit);
+}
+
 TEST_CASE(
     "jsonrpc_output_checks_all_bytes_before_write_and_reports_transport_loss",
     "[engine_client_jsonrpc]") {
