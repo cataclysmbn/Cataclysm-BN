@@ -51,6 +51,18 @@ auto memory_changed( const tripoint_abs_ms &p ) -> void;
 /// Clear/load/session replacement must not reuse the previous knowledge baseline.
 auto reset() -> void;
 
+/// Intermediate redraws of a simulation step may show transient states but never write knowledge.
+/// Knowledge is acquired only at engine boundaries, so animation speed cannot change it.
+class presentation_scope
+{
+    public:
+        presentation_scope();
+        ~presentation_scope();
+        presentation_scope( const presentation_scope & ) = delete;
+        auto operator=( const presentation_scope & ) -> presentation_scope & = delete; // *NOPAD*
+};
+auto presenting() -> bool;
+
 /// Game-thread boundary only. Complete lighting/visibility, then acquire both memory channels.
 /// Never call from a renderer or a passive observation.
 auto acquire() -> acquisition_counts;

@@ -433,6 +433,15 @@ auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool
 
 auto reset() -> void { state = acquisition_state{}; }
 
+namespace
+{
+auto presentation_depth = 0;
+} // namespace
+
+presentation_scope::presentation_scope() { ++presentation_depth; }
+presentation_scope::~presentation_scope() { --presentation_depth; }
+auto presenting() -> bool { return presentation_depth > 0; }
+
 auto invalidate_visibility( const map &here ) -> void
 {
     if( state.owner == &here ) {

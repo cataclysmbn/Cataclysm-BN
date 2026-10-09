@@ -33,6 +33,7 @@
 #include "map/map.h"
 #include "map/mapdata.h"
 #include "map_iterator.h"
+#include "map_perception.h"
 #include "material.h"
 #include "math_defines.h"
 #include "messages.h"
@@ -799,7 +800,10 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     if( is_animated() ) {
         std::vector<tripoint_bub_ms> buf = line_to( position, center );
         buf.resize( 2 );
-        g->draw_line( position, buf );
+        if( !controlled_explosion_clock ) {
+            const auto presenting = map_perception::presentation_scope{};
+            g->draw_line( position, buf );
+        }
     }
     request_redraw |= true;
 }
@@ -1298,8 +1302,10 @@ auto ExplosionProcess::run() -> void
     while( process_next() ) {
         // No need to redraw in testing mode
         if( request_redraw && is_animated() ) {
+            const auto presenting = map_perception::presentation_scope{};
             if( controlled_explosion_clock ) {
                 auto &state = *controlled_explosion_clock;
+                if( state.options.render ) { state.options.render(); }
                 state.observation.redraws++;
                 state.observation.redraw_ms += state.options.redraw_ms;
                 state.observation.elapsed_ms += state.options.redraw_ms;

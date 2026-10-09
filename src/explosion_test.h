@@ -4,6 +4,7 @@
 
 #include <compare>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -20,6 +21,8 @@ struct clock_options {
     long long redraw_ms = 0;
     /// Exercise is_animated's option/queue-count policy despite test_mode.
     bool bypass_test_mode = true;
+    /// Stands in for the native renderer; runs inside the same presentation scope as a real redraw.
+    std::function < auto() -> void > render;
 };
 
 struct trace_entry {

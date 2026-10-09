@@ -270,6 +270,9 @@ const memorized_terrain_tile &avatar::get_memorized_tile( const tripoint_abs_ms 
 void avatar::memorize_tile( const tripoint_abs_ms &pos, const std::string &ter, const int subtile,
                             const int rotation )
 {
+    if( map_perception::presenting() ) {
+        return;
+    }
     player_map_memory->memorize_tile( pos, ter, subtile, rotation );
     if( g && this == &get_avatar() ) {
         map_perception::memory_changed( pos );
@@ -278,6 +281,9 @@ void avatar::memorize_tile( const tripoint_abs_ms &pos, const std::string &ter, 
 
 void avatar::memorize_symbol( const tripoint_abs_ms &pos, const int symbol )
 {
+    if( map_perception::presenting() ) {
+        return;
+    }
     player_map_memory->memorize_symbol( pos, symbol );
     if( g && this == &get_avatar() ) {
         map_perception::memory_changed( pos );
@@ -292,6 +298,9 @@ int avatar::get_memorized_symbol( const tripoint_abs_ms &p ) const
 void avatar::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::string &ter,
                                     const int subtile, const int rotation )
 {
+    if( map_perception::presenting() ) {
+        return;
+    }
     player_map_memory->memorize_terrain_tile( pos, ter, subtile, rotation );
     if( g && this == &get_avatar() ) {
         map_perception::memory_changed( pos );
@@ -305,6 +314,9 @@ memorized_terrain_tile avatar::get_terrain_tile( const tripoint_abs_ms &pos ) co
 
 void avatar::clear_memorized_overlay( const tripoint_abs_ms &pos )
 {
+    if( map_perception::presenting() ) {
+        return;
+    }
     player_map_memory->clear_memorized_overlay( pos );
     if( g && this == &get_avatar() ) {
         map_perception::memory_changed( pos );
@@ -313,6 +325,9 @@ void avatar::clear_memorized_overlay( const tripoint_abs_ms &pos )
 
 void avatar::clear_memorized_tile( const tripoint_abs_ms &pos )
 {
+    if( map_perception::presenting() ) {
+        return;
+    }
     player_map_memory->clear_memorized_tile( pos );
     if( g && this == &get_avatar() ) {
         map_perception::memory_changed( pos );

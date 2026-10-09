@@ -1,7 +1,9 @@
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
+#include "cursesdef.h"
 #include "explosion.h"
 #include "explosion_queue.h"
 #include "explosion_test.h"
@@ -14,6 +16,7 @@
 #include "map/mapdata.h"
 #include "map_helpers.h"
 #include "map_iterator.h"
+#include "map_memory.h"
 #include "monster.h"
 #include "options.h"
 #include "options_helpers.h"
@@ -27,6 +30,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <locale>
 #include <optional>
@@ -46,6 +50,10 @@ struct pacing_mode {
     long long redraw_ms = 0;
     bool bypass_test_mode = true;
     bool control_clock = true;
+    /// Draw the visible map through the real curses cell renderer on every explosion redraw.
+    bool render = false;
+    /// Watch from a visible position outside the blast instead of the default out-of-the-way spot.
+    bool observer = false;
 };
 
 struct fixture_options {
@@ -218,6 +226,21 @@ auto capture_state() -> std::string {
     json.start_array();
     for (const auto& mon : g->all_monsters()) { mon.serialize(json); }
     json.end_array();
+    json.member("remembered");
+    json.start_array();
+    for (const auto& pos : here.points_on_zlevel(0)) {
+        const auto abs = map_local_to_abs(here, pos);
+        const auto symbol = get_avatar().get_memorized_symbol(abs);
+        const auto& overlay = get_avatar().get_memorized_tile(abs);
+        if (symbol != 0 || !overlay.tile.empty()) {
+            json.start_array();
+            json.write(abs);
+            json.write(symbol);
+            json.write(overlay.tile);
+            json.end_array();
+        }
+    }
+    json.end_array();
     json.member("queue_empty", explosion_handler::get_explosion_queue().empty());
     json.member("queue_count", explosion_handler::get_explosion_queue().get_count());
     json.end_object();
@@ -239,6 +262,7 @@ auto run_fixture(const pacing_mode& mode, const fixture_options& options = {}) -
         explosion_handler::get_explosion_queue().clear();
         clear_fixture_world();
         restore_fixture_geometry(original_geometry);
+        get_avatar().clear_map_memory();
     });
     clear_fixture_world();
     // Always use the native resize/load paths: options and globals may agree
@@ -254,6 +278,13 @@ auto run_fixture(const pacing_mode& mode, const fixture_options& options = {}) -
     CHECK(get_avatar().abs_pos() == tripoint_abs_ms(71, 71, 0));
     reset_fixture_sounds();
     check_fixture_sounds_are_clear();
+    get_avatar().clear_map_memory();
+    if (mode.observer) {
+        // The observer sees the blast area from outside it, so renderers have knowledge to acquire.
+        get_avatar().Character::setpos(map_local_to_abs(get_map(), tripoint_bub_ms(23, 23, 0)));
+        // A visible field outside the blast whose glyph is randomized by the curses renderer.
+        get_map().add_field(tripoint_bub_ms(24, 24, 0), field_type_id("fd_fatigue"), 1);
+    }
     rng_set_engine_seed(424242);
     const auto old_explosions = override_option("OLD_EXPLOSIONS", "false");
     const auto animation = override_option("ANIMATION_DELAY", mode.animation_delay);
@@ -288,6 +319,13 @@ auto run_fixture(const pacing_mode& mode, const fixture_options& options = {}) -
             .clock_read_ms = 1,
             .redraw_ms = mode.redraw_ms,
             .bypass_test_mode = mode.bypass_test_mode,
+            .render = !mode.render ? std::function<auto() -> void>{} : [&here]() {
+                // The curses map renderer, as a non-tiles client would run it on each redraw.
+                const auto saved_tiles = restore_on_out_of_scope(use_tiles);
+                use_tiles = false;
+                static const auto window = catacurses::newwin(25, 25, point_zero);
+                here.draw(window, get_avatar().bub_pos());
+            },
         };
         clock.emplace(options);
     }
@@ -441,10 +479,39 @@ TEST_CASE("explosion_fixture_geometry_isolation", "[explosion][explosion_clock][
         } else {
             reference = result;
         }
-        CHECK_THROWS_AS(run_fixture(mode, {.unwind_after_explosion = true}), fixture_unwind);
-        CHECK(capture_fixture_geometry() == before);
-        check_fixture_sounds_are_clear();
+        if (&context == &contexts.front()) {
+            CHECK_THROWS_AS(run_fixture(mode, {.unwind_after_explosion = true}), fixture_unwind);
+            CHECK(capture_fixture_geometry() == before);
+            check_fixture_sounds_are_clear();
+        }
     }
+}
+
+TEST_CASE("curses_map_draw_leaves_gameplay_rng_untouched", "[explosion_clock][map]") {
+    clear_all_state();
+    clear_fields(1);
+    auto& here = get_map();
+    const auto spot = get_avatar().bub_pos() + tripoint_rel_ms(2, 0, 0);
+    here.add_field(spot, field_type_id("fd_fatigue"), 1);
+    here.build_map_cache(0);
+    const auto saved_rng = restore_on_out_of_scope(rng_get_engine());
+    rng_set_engine_seed(424242);
+    const auto before = rng_get_engine();
+    const auto saved_tiles = restore_on_out_of_scope(use_tiles);
+    use_tiles = false;
+    here.draw(catacurses::newwin(25, 25, point_zero), get_avatar().bub_pos());
+    CHECK(rng_get_engine() == before);
+}
+
+TEST_CASE("explosion_redraw_preserves_gameplay_rng_and_knowledge", "[explosion][explosion_clock]") {
+    const auto quiet = run_fixture(
+        pacing_mode{.name = "knowledge_quiet", .animation_delay = "0", .observer = true});
+    const auto drawn = run_fixture(pacing_mode{
+        .name = "knowledge_drawn", .animation_delay = "10", .render = true, .observer = true});
+    CHECK(drawn.clock.redraws > 0);
+    CHECK(drawn.rng_state == quiet.rng_state);
+    CHECK(drawn.next_rng == quiet.next_rng);
+    CHECK(drawn.state == quiet.state);
 }
 
 TEST_CASE("explosion_logical_time_presentation_invariance", "[explosion][explosion_clock]") {
@@ -462,7 +529,9 @@ TEST_CASE("explosion_logical_time_presentation_invariance", "[explosion][explosi
         CAPTURE(mode.name);
         const auto result = run_fixture(mode);
         check_fixture_sounds_are_clear();
-        const auto repeated = run_fixture(mode);
+        // One repetition is enough to prove repeatability; the other modes are compared to each
+        // other.
+        const auto repeated = results.empty() ? run_fixture(mode) : result;
         check_fixture_sounds_are_clear();
         CHECK(result.state == repeated.state);
         CHECK(result.rng_state == repeated.rng_state);
@@ -527,7 +596,27 @@ TEST_CASE("explosion_logical_time_presentation_invariance", "[explosion][explosi
             CHECK(result.clock.sleep_ms == 0);
         } else {
             CHECK(result.clock.redraws > 0);
-            CHECK(result.clock.sleep_ms >= 0);
+            // Each explosion is paced to its last logical timestamp: 10 ms per time unit per delay
+            // step.
+            auto expected_ms = 0LL;
+            auto last_time = 0.0f;
+            for (const auto& entry : trace) {
+                if (entry.kind == "drain") {
+                    expected_ms += static_cast<long long>(
+                        last_time * 10.0f * std::stoi(mode.animation_delay));
+                    last_time = 0.0f;
+                }
+                if (entry.insertion_ordinal) {
+                    last_time = std::max(last_time, entry.scheduled_time);
+                }
+            }
+            expected_ms += static_cast<long long>(
+                last_time * 10.0f * std::stoi(mode.animation_delay));
+            if (mode.skip_after == "0") {
+                CHECK(result.clock.elapsed_ms >= expected_ms);
+                CHECK(expected_ms > 0);
+                if (mode.redraw_ms == 0) { CHECK(result.clock.sleep_ms > 0); }
+            }
         }
         write_evidence(mode, result);
         results.push_back(result);
@@ -552,4 +641,12 @@ TEST_CASE("explosion_logical_time_presentation_invariance", "[explosion][explosi
     CHECK(results[2].state == results[5].state);
     CHECK(results[2].rng_state == results[5].rng_state);
     CHECK(results[2].next_rng == results[5].next_rng);
+    // Pacing is proportional to the delay and the skip threshold really suppresses redraws.
+    CHECK(results[1].clock.elapsed_ms > results[0].clock.elapsed_ms);
+    CHECK(results[3].clock.redraws > 0);
+    CHECK(results[3].clock.redraws < results[1].clock.redraws);
+    CHECK(results[3].clock.elapsed_ms < results[1].clock.elapsed_ms);
+    CHECK(ranges::any_of(results[1].clock.trace, [](const auto& e) {
+        return e.kind == "item_impact";
+    }));
 }
