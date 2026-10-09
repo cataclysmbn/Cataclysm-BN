@@ -2,6 +2,7 @@
 #include "vehicle_preview.h"
 
 #include "cata_tiles.h"
+#include "character_preview.h"
 #include "cursesport.h"
 #include "game.h"
 #include "map/map.h"
@@ -20,13 +21,12 @@
 // Local empty string for tile_search_params
 static const std::string empty_string;
 
-// These functions are also defined in character_preview.cpp
-// We provide our own static definitions here to avoid duplicate symbols
-static auto termx_to_pixel_value() -> int {
+// Shared with the character preview, which declares them in character_preview.h.
+auto termx_to_pixel_value() -> int {
     return projected_window_width() / TERMX / get_scaling_factor();
 }
 
-static auto termy_to_pixel_value() -> int {
+auto termy_to_pixel_value() -> int {
     return projected_window_height() / TERMY / get_scaling_factor();
 }
 

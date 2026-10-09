@@ -127,14 +127,6 @@ private:
     auto calc_character_pos() const -> point_bub_ms;
 };
 
-auto termx_to_pixel_value() -> int {
-    return projected_window_width() / TERMX / get_scaling_factor();
-}
-
-auto termy_to_pixel_value() -> int {
-    return projected_window_height() / TERMY / get_scaling_factor();
-}
-
 // @brief adapter to get access to protected functions of cata_tiles
 // exclusively for use by character_preview ui
 class char_preview_adapter: public cata_tiles {
