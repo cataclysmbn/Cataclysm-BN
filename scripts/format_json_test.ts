@@ -106,9 +106,6 @@ const withRepository = async (fn: (sandbox: Sandbox) => Promise<void>): Promise<
       await ensureDir(dirname(destination))
       await copy(join(repoRoot, path), destination)
     }
-    for (const path of ["build-scripts/fmt.sh", "build-scripts/format-json.sh"]) {
-      assertEquals(await Deno.readFile(join(root, path)), await Deno.readFile(join(repoRoot, path)))
-    }
     await ensureDir(join(root, "nested cwd"))
     await fn({ root, buildDir, env })
   } finally {

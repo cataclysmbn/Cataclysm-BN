@@ -93,18 +93,6 @@ if (name === 'deno') {
 
 Deno.test("staged formatters select MD TS and Lua without reaching private files", async () => {
   await fixture(async (root, run) => {
-    await new Deno.Command("/usr/bin/git", {
-      args: ["add", "--", "staged.md", "staged.ts", "staged.lua"],
-      cwd: root,
-      clearEnv: true,
-      env: {
-        PATH: "/usr/bin:/bin",
-        HOME: `${root}/home`,
-        GIT_CONFIG_NOSYSTEM: "1",
-        GIT_CONFIG_GLOBAL: "/dev/null",
-        GIT_CONFIG_SYSTEM: "/dev/null",
-      },
-    }).output()
     // Make a staged change, rather than merely re-add unchanged fixture files.
     for (const file of ["staged.md", "staged.ts", "staged.lua"]) {
       await Deno.writeTextFile(`${root}/${file}`, "staged\n")
