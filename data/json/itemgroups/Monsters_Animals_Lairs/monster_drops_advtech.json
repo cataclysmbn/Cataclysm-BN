@@ -168,7 +168,7 @@
     "entries": [
       { "distribution": [ { "item": "null", "prob": 50 }, { "group": "bionic_salvage_junk", "prob": 50 } ], "prob": 33 },
       {
-        "distribution": [ { "item": "bionics", "prob": 50 }, { "group": "bionics_broken_cyborg", "prob": 50 } ],
+        "distribution": [ { "group": "bionics", "prob": 50 }, { "group": "bionics_broken_cyborg", "prob": 50 } ],
         "prob": 66
       }
     ]
