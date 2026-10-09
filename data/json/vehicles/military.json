@@ -777,10 +777,15 @@
     "name": "Joint Light Tactical Vehicle",
     "color_palette": "military_standard",
     "parts": [
+      { "y": 3, "x": 3, "parts": [ "hdframe_horizontal", "plating_military" ] },
+      { "y": 2, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": 1, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": 0, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": -1, "x": 3, "parts": [ "hdframe_horizontal", "plating_military" ] },
       {
         "x": 2,
         "y": 3,
-        "parts": [ "hdframe_ne", "hdhalfboard_ne", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor", "inboard_mirror" ]
+        "parts": [ "hdframe_ne", "hdhalfboard_ne", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
       },
       {
         "x": 2,
@@ -807,13 +812,13 @@
       {
         "x": 2,
         "y": -1,
-        "parts": [ "hdframe_nw", "hdhalfboard_nw", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor", "inboard_mirror" ]
+        "parts": [ "hdframe_nw", "hdhalfboard_nw", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
       },
-      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "hdboard_ne", "plating_military" ] },
+      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "plating_military", "reinforced_windshield_ne" ] },
       { "x": 1, "y": 2, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "x": 1, "y": 1, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
-      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "hdboard_nw", "plating_military" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "reinforced_windshield_nw" ] },
       { "x": 0, "y": 3, "parts": [ "hdframe_vertical", "hddoor_right", "plating_military" ] },
       {
         "x": 0,
@@ -864,15 +869,15 @@
       { "x": -2, "y": 2, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": 0, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "hdboard_sw" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
       {
         "x": -4,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
       },
       { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
@@ -880,7 +885,7 @@
       {
         "x": -4,
         "y": -1,
-        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
       },
       { "x": -2, "y": 1, "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ] },
       { "x": -5, "y": 2, "part": "mounted_spare_tire" }
@@ -897,10 +902,15 @@
     "name": "Joint Light Tactical Vehicle",
     "color_palette": "military_standard",
     "parts": [
+      { "y": 3, "x": 3, "parts": [ "hdframe_horizontal", "plating_military" ] },
+      { "y": 2, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": 1, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": 0, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": -1, "x": 3, "parts": [ "hdframe_horizontal", "plating_military" ] },
       {
         "x": 2,
         "y": 3,
-        "parts": [ "hdframe_ne", "hdhalfboard_ne", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor", "inboard_mirror" ]
+        "parts": [ "hdframe_ne", "hdhalfboard_ne", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
       },
       {
         "x": 2,
@@ -927,13 +937,13 @@
       {
         "x": 2,
         "y": -1,
-        "parts": [ "hdframe_nw", "hdhalfboard_nw", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor", "inboard_mirror" ]
+        "parts": [ "hdframe_nw", "hdhalfboard_nw", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
       },
-      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "hdboard_ne", "plating_military" ] },
+      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "plating_military", "reinforced_windshield_ne" ] },
       { "x": 1, "y": 2, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "x": 1, "y": 1, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
-      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "hdboard_nw", "plating_military" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "reinforced_windshield_nw" ] },
       { "x": 0, "y": 3, "parts": [ "hdframe_vertical", "hddoor_right", "plating_military" ] },
       {
         "x": 0,
@@ -984,15 +994,15 @@
       { "x": -2, "y": 2, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": 0, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "hdboard_sw" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdhalfboard_vertical" ] },
       {
         "x": -4,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
       },
       { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
       { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
@@ -1000,7 +1010,7 @@
       {
         "x": -4,
         "y": -1,
-        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdhalfboard_vertical" ]
       },
       { "x": -2, "y": 1, "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ] },
       { "x": -5, "y": 2, "part": "mounted_spare_tire" }
@@ -1017,10 +1027,15 @@
     "name": "Joint Light Tactical Vehicle",
     "color_palette": "military_standard",
     "parts": [
+      { "y": 3, "x": 3, "parts": [ "hdframe_horizontal", "plating_military" ] },
+      { "y": 2, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": 1, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": 0, "x": 3, "parts": [ "hdframe_horizontal_2", "plating_military" ] },
+      { "y": -1, "x": 3, "parts": [ "hdframe_horizontal", "plating_military" ] },
       {
         "x": 2,
         "y": 3,
-        "parts": [ "hdframe_ne", "hdhalfboard_ne", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor", "inboard_mirror" ]
+        "parts": [ "hdframe_ne", "hdhalfboard_ne", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
       },
       {
         "x": 2,
@@ -1047,13 +1062,13 @@
       {
         "x": 2,
         "y": -1,
-        "parts": [ "hdframe_nw", "hdhalfboard_nw", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor", "inboard_mirror" ]
+        "parts": [ "hdframe_nw", "hdhalfboard_nw", "plating_military", "wheel_mount_heavy_steerable", "wheel_armor" ]
       },
-      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "hdboard_ne", "plating_military" ] },
+      { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "plating_military", "reinforced_windshield_ne" ] },
       { "x": 1, "y": 2, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "x": 1, "y": 1, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
       { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "reinforced_windshield" ] },
-      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "hdboard_nw", "plating_military" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "reinforced_windshield_nw" ] },
       { "x": 0, "y": 3, "parts": [ "hdframe_vertical", "hddoor_right", "plating_military" ] },
       {
         "x": 0,
@@ -1105,23 +1120,23 @@
       { "x": -2, "y": 2, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": 0, "parts": [ "hdframe_horizontal_2", "hdroof", "hdboard_horizontal", "plating_military" ] },
       { "x": -2, "y": -1, "parts": [ "hdframe_vertical", "plating_military", "hdboard_sw" ] },
-      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ] },
-      { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdboard_vertical" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "plating_military", "hdstowboard_vertical" ] },
+      { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space", "hdroof" ] },
+      { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space", "hdroof" ] },
+      { "x": -3, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space", "hdroof" ] },
+      { "x": -3, "y": 3, "parts": [ "hdframe_horizontal", "plating_military", "hdstowboard_vertical" ] },
       {
         "x": -4,
         "y": 3,
-        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "parts": [ "hdframe_se", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdstowboard_vertical" ]
       },
-      { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space" ] },
-      { "x": -4, "y": 0, "parts": [ "hdframe_horizontal", "muffler", "plating_military", "cargo_space" ] },
+      { "x": -4, "y": 2, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space", "hdroof" ] },
+      { "x": -4, "y": 1, "parts": [ "hdframe_horizontal", "plating_military", "cargo_space", "hdroof" ] },
+      { "x": -4, "y": 0, "parts": [ "hdframe_horizontal", "muffler", "plating_military", "cargo_space", "hdroof" ] },
       {
         "x": -4,
         "y": -1,
-        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "hdboard_vertical", "omnicam" ]
+        "parts": [ "hdframe_sw", "plating_military", "wheel_mount_heavy", "wheel_armor", "omnicam", "hdstowboard_vertical" ]
       },
       { "x": -2, "y": 1, "parts": [ "hdframe_cross", "hdroof", "hddoor_trunk", "plating_military" ] },
       { "x": -5, "y": 2, "part": "mounted_spare_tire" }
@@ -1131,8 +1146,10 @@
       { "x": 0, "y": 0, "chance": 3, "items": [ "mil_gps_device" ] },
       { "x": -3, "y": 0, "chance": 5, "item_groups": [ "fuel_diesel" ] },
       { "x": -3, "y": 2, "chance": 50, "items": [ "atgm_heat" ] },
-      { "x": -3, "y": 2, "chance": 50, "items": [ "atgm_heat" ] },
-      { "x": -3, "y": 2, "chance": 50, "items": [ "atgm_heat" ] }
+      { "x": -3, "y": -1, "chance": 50, "items": [ "atgm_heat" ] },
+      { "x": -3, "y": 3, "chance": 50, "items": [ "atgm_heat" ] },
+      { "x": -4, "y": 3, "chance": 50, "items": [ "atgm_heat" ] },
+      { "x": -4, "y": -1, "chance": 50, "items": [ "atgm_heat" ] }
     ]
   },
   {
