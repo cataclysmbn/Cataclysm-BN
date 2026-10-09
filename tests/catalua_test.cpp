@@ -1506,6 +1506,7 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
     clear_all_state();
     initialize_dimension_test_storage();
     const auto target_dimension_id = dimension_id("lua\\test_failed_delete");
+    const auto original_map_size = get_map().getmapsize();
     g->place_player_overmap(tripoint_abs_omt(tripoint_zero));
 
     auto* const active_world = g->get_active_world();
@@ -1522,6 +1523,7 @@ TEST_CASE("failed dimension deletion preserves saved metadata", "[lua]") {
         unload_overmapbuffer_dimension(target_dimension_id);
         auto input = std::istringstream(original_save.str());
         g->unserialize(input);
+        get_map().resize(original_map_size);
         clear_all_state();
     });
 
