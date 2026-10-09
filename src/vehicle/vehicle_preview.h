@@ -16,7 +16,6 @@ struct vehicle_preview_window {
     virtual auto clear() -> void = 0;
     virtual auto zoom_in() -> void = 0;
     virtual auto zoom_out() -> void = 0;
-    virtual auto get_zoom() const -> int = 0;
 };
 
 namespace game_client {

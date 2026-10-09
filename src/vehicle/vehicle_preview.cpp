@@ -126,7 +126,6 @@ public:
     auto clear() -> void override;
     auto zoom_in() -> void override;
     auto zoom_out() -> void override;
-    auto get_zoom() const -> int override { return zoom; }
 
 private:
     // The window we're rendering into (for bounds calculation)
