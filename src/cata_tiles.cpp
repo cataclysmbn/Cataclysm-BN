@@ -33,6 +33,7 @@
 #    include "make_static.h"
 #    include "map/field.h"
 #    include "map/field_type.h"
+#    include "map/hanging_rope.h"
 #    include "map/map.h"
 #    include "map/mapbuffer.h"
 #    include "map/mapdata.h"
@@ -5867,22 +5868,12 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                        lit_level::MEMORIZED, true, z_drop, false, height_3d );
         }
     } else if( here.has_rope_at( p ) ) {
+        if( !is_hanging_rope_visible( here, p ) ) {
+            return false;
+        }
         auto veh_pair = here.get_rope_at( p );
         vehicle *veh = veh_pair.first;
         int veh_part = veh_pair.second;
-
-        int veh_z = veh->bub_ms_location().z();
-        auto part = veh->part( veh_part ).info();
-        if( veh_z - p.z() <= 0 ) {
-            return false;
-        }
-        if( part.ladder_length() >= veh_z - p.z() ) {
-            for( int i = p.z() + 1; i <= veh_z; i++ ) {
-                if( here.ter( tripoint_bub_ms( p.x(), p.y(), i ) ).id().str() != "t_open_air" ) {
-                    return false;
-                }
-            }
-        }
         // Gets the visible part, should work fine once tileset vp_ids are updated to work with the vehicle part json ids
         // get the vpart_id
         char part_mod = 0;

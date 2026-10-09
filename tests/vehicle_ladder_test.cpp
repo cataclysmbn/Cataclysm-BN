@@ -3,6 +3,7 @@
 #include "catch/catch.hpp"
 #include "coordinates.h"
 #include "game_constants.h"
+#include "map/hanging_rope.h"
 #include "map_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -58,5 +59,34 @@ TEST_CASE("rope_ladder_spans_full_column_in_rope_cache", "[vehicle][ladder][zlev
         for (const auto dz : std::views::iota(0, len + 1)) {
             CHECK_FALSE(here.has_rope_at(tripoint_bub_ms(top.xy(), top.z() - dz)));
         }
+    }
+}
+
+TEST_CASE("hanging_rope_is_visible_only_through_open_air", "[vehicle][ladder][zlevel]") {
+    clear_all_state();
+    auto& here = get_map();
+    build_test_map(ter_id("t_pavement"));
+
+    const tripoint_bub_ms vpos(60, 60, 2);
+    const auto below = [&](const int dz) { return tripoint_bub_ms(vpos.xy(), vpos.z() - dz); };
+    here.ter_set(below(0), ter_id("t_open_air"));
+    here.ter_set(below(1), ter_id("t_open_air"));
+    auto* veh = here.add_vehicle(vproto_id("none"), vpos, 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
+    REQUIRE(veh->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical"), true) >= 0);
+    REQUIRE(veh->install_part(tripoint_mnt_veh::zero(), vpart_id("ladder_3"), true) >= 0);
+    here.add_vehicle_to_cache(veh);
+
+    SECTION("rope hangs through open air down to the ground") {
+        CHECK_FALSE(is_hanging_rope_visible(here, below(0)));
+        CHECK(is_hanging_rope_visible(here, below(1)));
+        CHECK(is_hanging_rope_visible(here, below(2)));
+        CHECK_FALSE(is_hanging_rope_visible(here, below(3)));
+    }
+
+    SECTION("a floor between the vehicle and the tile hides the rope") {
+        here.ter_set(below(1), ter_id("t_floor"));
+        CHECK(is_hanging_rope_visible(here, below(1)));
+        CHECK_FALSE(is_hanging_rope_visible(here, below(2)));
     }
 }
