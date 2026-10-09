@@ -140,7 +140,29 @@ validated commits onto `feat/magnum-opus`.
 - Format with `build-scripts/fmt.sh cpp <files>`; never bypass hooks; commit only validated changes; no push
   without explicit request.
 
-## Open decisions
+## Protocol and scope decisions (2026-10-09)
 
-1. P1 provider API: make interaction providers page-aware, or change the capture test oracle.
-2. Whether the Deno consumer may be extended into a browser client later (keeps a web option open).
+Answers to `out/lanes/l2/protocol-unification.md` §7 and lane follow-ups:
+
+1. The unified protocol is named `1.0` (nothing shipped) and replaces today's 1.0 in place; no compatibility shim.
+2. Projectile events are emitted per perceived path segment; steps stay ordered inside the event.
+3. World coverage is the whole loaded area on all z levels, sparse; measure snapshot bytes before changing it.
+4. Native list state (`focus`, `pane.filter`) stays for the 1:1 port; clients may ignore it.
+5. One controller connection submits commands; others spectate (finalised in Phase 3).
+6. `engine_client_delivery.{h,cpp}` is deleted; Phase 3 rebuilds only what its slow-consumer test needs.
+7. Damage numbers follow native disclosure: shown for monsters exactly when the native damage-number option
+   would show them.
+8. Legacy MCP tools stay separate in Phase 1 and are rebuilt on the new values after the world model lands.
+9. Event-replay files carry appearance inline (`look`), no embedded data table.
+10. Remembered map knowledge is part of save equality: acquisition is decided by the engine, never by rendering
+    speed (P2).
+11. Explosion-clock fixtures keep their cases but reduce repetitions before entering CI.
+12. P1: interaction providers become page-aware (`offset`, `limit`) and pair with `bn.interaction.choices`;
+    capture tests are rewritten for that API.
+13. The Deno headless consumer may later grow into a browser client; no work now.
+
+### Input replay work items (M6 support)
+
+- Record and immediately play back in the same run; no long-lived recording fixtures.
+- Record a per-turn state hash so playback reports the first diverging turn and input line.
+- Short per-feature scenarios driven over MCP instead of one long tutorial session.
