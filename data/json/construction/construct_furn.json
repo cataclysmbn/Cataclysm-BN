@@ -979,8 +979,16 @@
     "required_skills": [ [ "fabrication", 4 ] ],
     "time": "3 h",
     "qualities": [ [ { "id": "HAMMER", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ], [ { "id": "WRENCH", "level": 2 } ] ],
-	"using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
-    "components": [ [ [ "2x4", 3 ] ], [ [ "wood_sheet", 1 ], [ "wood_panel", 2 ] ], [ [ "nail", 8 ] ], [ [ "clay_lump", 20 ] ], [ [ "water_faucet", 1 ] ], [ [ "cu_pipe", 2 ] ], [ [ "water", 10 ], [ "water_clean", 10 ] ] ],
+    "using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
+    "components": [
+      [ [ "2x4", 3 ] ],
+      [ [ "wood_sheet", 1 ], [ "wood_panel", 2 ] ],
+      [ [ "nail", 8 ] ],
+      [ [ "clay_lump", 20 ] ],
+      [ [ "water_faucet", 1 ] ],
+      [ [ "cu_pipe", 2 ] ],
+      [ [ "water", 10 ], [ "water_clean", 10 ] ]
+    ],
     "pre_special": "check_empty",
     "post_furniture": "f_sink"
   },
@@ -992,10 +1000,10 @@
     "required_skills": [ [ "fabrication", 4 ] ],
     "time": "2 h",
     "qualities": [ [ { "id": "WRENCH", "level": 2 } ], [ { "id": "SAW_W", "level": 2 } ] ],
-	"using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
+    "using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
     "components": [ [ [ "clay_lump", 20 ] ], [ [ "water_faucet", 1 ] ], [ [ "cu_pipe", 2 ] ], [ [ "water", 10 ], [ "water_clean", 10 ] ] ],
     "pre_special": "check_empty",
-	"pre_furniture": "f_cupboard",
+    "pre_furniture": "f_cupboard",
     "post_furniture": "f_sink"
   }
 ]
