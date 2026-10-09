@@ -403,7 +403,7 @@ bool melee_actor::call( monster &z ) const
     add_msg( m_debug, "%s attempting to melee_attack %s", z.name(),
              target->disp_name() );
 
-    const int acc = accuracy >= 0 ? accuracy : z.type->melee_skill;
+    const int acc = accuracy >= 0 ? accuracy : z.get_melee();
     int hitspread = target->deal_melee_attack( &z, dice( acc, 10 ) );
 
     if( hitspread < 0 ) {
