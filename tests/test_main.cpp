@@ -367,6 +367,11 @@ auto describe_leaks(const global_snapshot& before, const global_snapshot& after)
 struct CataListener: Catch::TestEventListenerBase {
     using TestEventListenerBase::TestEventListenerBase;
 
+    void testRunStarting(Catch::TestRunInfo const& runInfo) override {
+        TestEventListenerBase::testRunStarting(runInfo);
+        baseline = take_global_snapshot();
+    }
+
     void testCaseStarting(Catch::TestCaseInfo const& testInfo) override {
         TestEventListenerBase::testCaseStarting(testInfo);
         test_name = testInfo.name;
@@ -378,7 +383,9 @@ struct CataListener: Catch::TestEventListenerBase {
     void sectionEnded(Catch::SectionStats const& sectionStats) override {
         TestEventListenerBase::sectionEnded(sectionStats);
         if (sectionStats.sectionInfo.name != test_name || !before) { return; }
-        const auto leaks = describe_leaks(*before, take_global_snapshot());
+        // A test that begins dirty and ends at the baseline cleaned up after an earlier leaker.
+        const auto after = take_global_snapshot();
+        const auto leaks = after == baseline ? std::string{} : describe_leaks(*before, after);
         before.reset();
         if (leaks.empty()) { return; }
         const auto message = "test case leaked global state:" + leaks;
@@ -412,6 +419,7 @@ struct CataListener: Catch::TestEventListenerBase {
 
 private:
     std::string test_name;
+    global_snapshot baseline;
     std::optional<global_snapshot> before;
 };
 
