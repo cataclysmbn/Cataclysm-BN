@@ -1,128 +1,67 @@
 ---
-title: エンジン/クライアントプロトコル1.0
+title: エンジン/クライアントプロトコル 1.0
 ---
 
-## 範囲と互換性
+外部クライアントは `cataclysm-bn-tiles --client=mcp` の stdio 上で、改行区切りの JSON-RPC 2.0 によりゲームをプレイします。値は [Draft 2020-12 スキーマ](../../../schema/engine-client/1.0.schema.json)で定義され、以下の例はすべて[例ファイル](../../../schema/engine-client/1.0.examples.json)でスキーマに照らして検証されています。従来の MCP ツール(`bn.observe`、`bn.press` など)は別の面であり変更されません。クライアントが `bn.hello` を呼ぶと、これらのツールは入力を拒否します。
 
-[Draft 2020-12スキーマ](../../../schema/engine-client/1.0.schema.json)はJSON-RPCのフレーミングではなく、閉じた**アプリケーション値**を定義します。共有C++コアは通信方式に依存しません。以下の4つのJSON-RPC 2.0メソッドはアダプター契約であり、MCPサーバー（`src/mcp_server.cpp`）が既存のMCPツールと並べて処理します。既存のMCPツール、MCPネゴシエーション、リプレイ形式1は変更しません。
+## セッション
 
-バージョンネゴシエーションでは、クライアントの対応バージョンから文字列`"1.0"`を完全一致で選びます。近いマイナーバージョンへの置き換えはありません。非対応の必須機能があれば全体を拒否し、非対応の任意機能は省きます。意味の非互換な変更には新しいメジャーバージョンが必要です。機能追加のマイナーバージョンにも完全一致のネゴシエーションと明示的な機能ネゴシエーションが必要です。
-
-コアが対応する機能名は次のとおりです。要求された対応機能の共通部分のみを返します。
-
-- `snapshot.readiness`, `snapshot.actions`, `snapshot.interaction`
-- `command.semantic_interaction`, `command.registered_action`
-- `events.interaction_replaced`, `delivery.inline_completion`
-
-ワールド/知覚、push、credits、history、reconnectには対応しません。将来の生成側の名前は`projectile.step`、`projectile.impact`、`entity.moved`、`terrain.changed`、`field.changed`、`explosion.phase`、`chain.reaction`、`visibility.transition`、`presentation.compatibility`です。これらは**1.0で有効なイベント型ではありません**。導入には所有権のあるペイロードと、レビュー済みのエンジン開示判定が必要です。将来のアセット参照はレンダラーのハンドルやファイルパスではなくデータIDを使わなければなりません。
-
-## アダプターメソッド
-
-各メソッドの`params`と`result`を、表にあるスキーマ定義で検証します。受領前に余分なメンバー、不正なスカラー型、不正な操作ユニオンを拒否し、不正な要求の一部も実行しません。JSON-RPCの解析/要求/メソッド/パラメーターエラーには標準JSON-RPCエラーを使います。アプリケーションエラーにはJSON-RPCコード`1000`、固定メッセージ`Engine contract error`、`error.data`内の閉じた`$defs/application_error`を使います。ネイティブ解決器やパーサーの診断をそのまま返してはいけません。
-
-| メソッド                | Params定義            | Result定義            | 必須機能                                                              |
-| ----------------------- | --------------------- | --------------------- | --------------------------------------------------------------------- |
-| `bn.contract.negotiate` | `negotiation_request` | `negotiated_contract` | なし                                                                  |
-| `bn.snapshot.get`       | `snapshot_request`    | `snapshot`            | 3つの`snapshot.*`機能すべて                                           |
-| `bn.command.submit`     | `command_request`     | `receipt`             | 操作に対応する機能                                                    |
-| `bn.command.result`     | `result_request`      | `command_response`    | `delivery.inline_completion`; デルタには`events.interaction_replaced` |
-
-ネゴシエーションによる制御、厳密な解析、JSON-RPCのID/フレーミング、接続状態はアダプターが管理します。I/Oからワールドへアクセスしてはいけません。ゲームスレッドだけが、アクティブで安定したネイティブ入力境界でキャプチャーや解決を行えます。
-
-ネゴシエーションparams:
-
-```json
-{
-  "supported_versions": ["1.0"],
-  "required_capabilities": [
-    "snapshot.readiness",
-    "snapshot.actions",
-    "snapshot.interaction",
-    "command.semantic_interaction",
-    "events.interaction_replaced",
-    "delivery.inline_completion"
-  ],
-  "optional_capabilities": ["command.registered_action"]
-}
+```text
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["1.0"],"client":{"name":"my-client","version":"1"}}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"1.0","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"]},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096}}}
+-> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
+<- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
+<- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
+-> {"jsonrpc":"2.0","id":3,"method":"bn.command.submit","params":{"epoch":"epoch:e7f3","expect":{"revision":"31","boundary_id":"boundary:90","schema_id":null},"operation":{"kind":"action","action_id":"RIGHT"}}}
+<- {"jsonrpc":"2.0","id":3,"result":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"received"}}
+<- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"validated"}}
+<- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"executing"}}
+<- {"jsonrpc":"2.0","method":"bn.events","params":{"epoch":"epoch:e7f3","events":[{"sequence":"41","revision":"32","type":"interaction.changed","command":"c:5","changes":{...}}]}}
+<- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"completed","at":{"epoch":"epoch:e7f3","sequence":"41","revision":"32"}}}
 ```
 
-スナップショットparams:
+`parts` 個のスナップショットパートを集めてから、`bn.events` を順に適用します。欠落(gap)、epoch の不一致、`bn.resync` があれば `bn.subscribe` を再度呼びます。新しいスナップショットは状態のみを復元し、`lost_after` 以降の一時的なイベントは失われたものとして扱われ、再送されません。
+
+## メソッド
+
+| メソッド                 | パラメータ                                | 結果                                                   |
+| ------------------------ | ----------------------------------------- | ------------------------------------------------------ |
+| `bn.hello`               | `versions`, `client`                      | `version`, `epoch`, `engine`, `limits`                 |
+| `bn.subscribe`           | なし                                      | スナップショットヘッダー。続いてパートとイベントが届く |
+| `bn.unsubscribe`         | なし                                      | なし                                                   |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (読み取り専用)       |
+| `bn.world.cells`         | `epoch`, `min`, `max`                     | `at`, `cells`, `forgotten` (読み取り専用)              |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                      |
+| `bn.command.result`      | `epoch`, `command_id`                     | 最新のステージ。失われた通知の回復に使う               |
+
+エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync` です。購読中のクライアントへ入力境界ごとに送られます。
+
+エラーはコード `1000` と `error.data = {kind, action?, at?}` を使い、`action` が次の対応(`hello`、`subscribe`、`retry`)を示します。
+
+## 単一の時計
+
+- `epoch` はプロセス開始時とワールド入れ替え時に変わり、読み取りでは変わりません。
+- `sequence` は公開されたイベントの数です(10進文字列、連続、`"1"` から開始)。`revision` は状態を変えるイベントの数です。`at = {epoch, sequence, revision}` は「sequence までのすべてのイベントを含む」ことを意味します。
+- コマンドは `expect = {revision, boundary_id, schema_id}` を持ちます。古い値は拒否されるため、クライアントは見ていない画面に対して操作しません。`schema_id` は、その境界にインタラクションがないときに限り `null` です。
+
+## コマンド
+
+`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、または `action`(移動キーなど登録済みアクション)のいずれかです。
 
 ```json
-{ "session_epoch": "epoch:opaque", "page": { "offset": 0, "limit": 100 } }
+{ "kind": "choose", "choice_id": "root:0" }
+{ "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
+{ "kind": "action", "action_id": "RIGHT" }
 ```
 
-意味ベースの送信params:
+ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` です。`completed` は次のネイティブ入力境界に到達したことを意味し、長い行動が終わったことではありません。その `at` はその境界の終点です。同時に実行できるコマンドは 1 つです(`command_busy`)。
 
-```json
-{
-  "session_epoch": "epoch:opaque",
-  "based_on": {
-    "state_revision": "7",
-    "input_boundary_id": "boundary:opaque",
-    "interaction_schema_id": "schema:opaque"
-  },
-  "operation": { "kind": "choose", "choice_id": "choice:opaque" }
-}
-```
+## 値
 
-登録アクションには`invoke_registered_action`と`action_id`を使います。意味ベースの操作はネイティブの`choose`、`fill`、`set_count`、`set_target`、`cancel`の意味を再利用します。`fill`には`false`の場合も必ず`submit`を指定します。Enabled、selectable、highlighted、selectedは異なるネイティブ属性です。`enabled`を`selectable`に読み替える、強調された行を自動選択する、ネイティブの拒否/確認を迂回することは禁止です。
+- `pos = {dim, x, y, z}` は絶対マップマスで、`dim` はゲームのディメンション、プライマリは `""` です。リアリティバブル座標はワイヤ上に現れません。
+- `look = {kind, id, glyph, color}` はゲームデータ由来の見た目を持つため、テキストクライアントにタイルセットは不要です。
+- `interaction` はネイティブのメニューやダイアログです。`choices` は `[0, min(choice_total, 200))` 行を持ち、残りは `bn.interaction.choices` で読みます。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。
+- ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`、`environment`、読み込み済みの `coverage` で構成されます。
+- すべてのイベントは汎用の `changes` ブロックを持ち、`coverage`、`cells`、`forgotten`、`entities`、`gone` の順に適用した後、`avatar`、`environment`、`interaction` を置き換えます。
 
-## 識別子、座標、公開状態
-
-- `session_epoch`は権威を持つ1つのセッション/ワールド/プロセスを識別します。新しいセッション/ワールドやプロセス再起動時に一度生成し、読み取りやソケットのポーリングでは生成しません。`new_session_epoch()`はゲームRNGではなく独立したシステムエントロピーを使います。テストではepoch文字列を注入できます。認証情報ではありません。
-- リビジョンとシーケンスは先頭ゼロのない正規10進**文字列**で、uint64を表します。上限到達は明示的な`resource_limit`となり、循環させず新しいepoch/スナップショットを要求します。不透明IDは空でない文字列であり、クライアントは解析してはいけません。ネイティブの数値`input_id`はこの通信形式には出現しません。
-- 公開シーケンスはepoch内で`"1"`から連続します。非公開候補は公開IDやシーケンス/リビジョンを消費しません。因果リンクは同じepochで先に**公開された**シーケンスだけを参照し、内部の順序番号や非公開の原因を参照しません。
-- `state_revision`は選択ページの投影と独立した、コミット済み準備状態/アクション/対話**境界**のバージョンです。読み取り、受動的ページ切り替え、変更のないキャプチャーはリビジョンもシーケンスも進めません。すべての内部ワールド変更を数えるものではありません。
-- スナップショットにはoffset/count/totalを含む完全な公開**制限付きページ**とnullableな対話を含めます。そのページの実際のネイティブ説明、拒否理由、pane、フィールド、数量、対象データをすべて保持します。仮のワールドビューや汎用JSONペイロードは認めません。
-- `state.projection`は**要求された**窓の構造的ビュー識別子`{kind: "interaction_choices", offset, limit}`です。ネイティブ`choice_page.offset`は引き続き総数に制限され、両offsetは安全なJSON整数でなければなりません。異なる窓は1つのセッション時計のビューであり、別の権威あるストリームではありません。
-- `capture_state`は所有された読み取り専用候補を作り、コミットしません。コミット済みの安定した境界で`event_stream::project_snapshot`は既存epoch/リビジョン/シーケンスのもと、要求された制限付きページを具体化します。ページ0 → ページ200 → ページ0は通常の読み取りで、イベント、カウンター変更、再同期、履歴喪失を生みません。境界/スキーマ/総数/共通メタデータはセッションの基準値と一致し、同じ窓の値も一致する必要があります。P1承認済みネイティブキャプチャーがその境界の不変な行を提供し、任意のI/O DTOは使いません。説明の純粋性と上流の生成処理の制限はP1への依存事項です。
-
-対象位置には`space: "reality_bubble_map_square"`、現在の不透明な`frame_id`、符号付き32ビットの`x/y/z`を明記します。コアは**フレームの完全一致を検証してからのみ**ネイティブの`bubble_ms`位置へ変換します。候補ID、境界、射程、距離尺度の検証はネイティブの解決器に任せます。絶対マップスクエア/オーバーマップタイル座標定義には`dimension_id`が必要です。これは予約された値形式であり、対応する対象操作やワールドイベント機能ではありません。座標系を推測してはいけません。
-
-## 所有イベントと再構成
-
-実装済みイベントは`interaction.replaced`のみです。ペイロード`{base_state_revision, state}`は制限付き準備状態/アクション/対話投影の完全な置き換えであり、任意のパッチではありません。対話を閉じると`interaction: null`を公開します。値の変更はリビジョンをちょうど1進めます。
-
-エンジンは論理境界で`disclosure::publish`または`disclosure::withheld`を渡します。コアは公開IDの割り当て、原因の検査、カウンターのコミット**より前に**非公開候補を破棄します。シンクは可視性を問い合わせたり記憶知識を獲得したりできません。既存のネイティブ選択IDは、エンジンが開示を許可した対話値の一部としてのみ公開します。将来のエンティティIDも開示判定後に生成する必要があります。再出現時は権威ある記憶知識が許可するときだけ既存IDを維持し、それ以外は新しいIDを生成します。
-
-イベントは文字列、コンテナー、ネイティブ対話値、タグ付き座標を所有します。`public_event`はconstアクセスのみを提供し、ワールドポインター、参照、string view、レンダラーハンドルを保持しません。元の値を変更/破棄してもイベントは変わりません。Null/recordingシンクは権威ある状態を変更せず、ゲームRNGも消費しません。レコーダーは制限付きプロセス内保存であり、**通信履歴の保持ではありません**。
-
-実際のエンジン境界でセッションストリームから一度だけ公開し、同じ境界のネイティブキャプチャーと純粋な`project_event`で各アクティブ要求ビューを具体化します。コピーは行を所有し、**同じ**epoch/イベントID/シーケンス/ベース・結果リビジョン/原因を保持します。投影メタデータと行は異なることがあります。追加イベントの公開やクエリーごとのストリームレジストリーの作成は行いません。境界が有効な間にキャプチャー/具体化する必要があり、後の境界のライブプロバイダーから過去の行を復元することはできません。アダプター所有の配達待ちデータも制限します。
-
-スナップショット`(epoch, R, S, projection)`には、同じepochと投影の次の連続シーケンス`S + 1`だけを適用します。デルタのベースリビジョンは`R`、結果リビジョンは`R + 1`でなければなりません。Epochの不一致、欠落、重複、不正な原因/ベースには新しいスナップショットが必要です。投影の不一致は誤って組み立てられた配達です。正しい具体化を取得し、新しいepochやページ切り替えの復旧として扱いません。`apply_batch`はトランザクション方式で、不正な後半があると前半も適用しません。
-
-任意の`display`には`group_id`、ゼロ始まりの`ordinal`、正の`count`、負でない助言的な`duration_ms`を含めます。Ordinalはcount未満でなければなりません。グループ化と表示時間は因果順序、リビジョン、ゲーム時間、RNGを決めません。独立した表示専用イベント機能はまだありません。
-
-空のバッチは正確に次の形式です。
-
-```json
-{ "complete": true, "first_sequence": null, "last_sequence": null, "events": [] }
-```
-
-空でないバッチのfirst/lastメタデータは実際の最初/最後のイベントを示す必要があります。`complete: true`は提供したバッチが完全という意味で、長期アクティビティの完了や通信履歴の存在を意味しません。
-
-## コマンドのライフサイクルと制限
-
-1. **受領:** 正しい型の要求を受け入れ、不透明なコマンドIDを割り当て、要求を1つ保持します。まだライブ検証ではありません。
-2. **検証:** epoch、リビジョン、現在の入力境界と対話スキーマ、許可、ネイティブの選択/数量/フィールド/対象/アクション規則を確認します。既存のネイティブ`input_event`を返し、コールバック呼び出しやワールド変更は行いません。古い/不正な入力は終端状態`rejected`となり、イベントもリビジョンも生成しません。
-3. **実行:** アダプターは解決した入力を既存のウィジェットへ渡すときだけ`execution_started()`を呼びます。`native_input_delivered`は要求したゲーム効果の成功を保証しません。ネイティブの拒否や入れ子の確認は通信検証の失敗ではなくネイティブの結果です。
-4. **完了:** 次の**異なるネイティブ対話境界**で開示された置き換えをコミットし、そのリビジョン/シーケンスで完了します（リソース上限超過時には再同期スナップショットを明示的にコミットできます）。`next_interaction_boundary`は製作、待機などの長期アクティビティが終了したという一律の宣言では**ありません**。次の境界より前にセッションが終了した場合は、完了を捏造せず中断します。
-
-公開準備状態は情報であり、**ライブ許可の権威ではありません**。それより長く生存する読み取り専用エンジンセッションポリシーで`command_lifecycle(epoch, command_authority&)`を構築します。検証時点で`current_permissions()`を呼ぶため、古い公開ブール値は許可も拒否もできません。ポリシーは引き続きエンジンが提供し、I/O/要求からは渡しません。C++エンジン値の偽造やキャッシュ済みDTOのポリシーへの接続は対応する統合の範囲外であり、グローバルレジストリーを作る理由ではありません。
-
-受領応答、結果要求、コマンド結果には権威ある`session_epoch`を含めます。インラインバッチはこの1コマンドの範囲に属します。すべてのイベントのepochが一致し、nullでないイベント`command_id`は応答コマンドと一致しなければなりません。付随するエンジンイベントのコマンドIDはnullでも構いません。未完了結果のバッチは正確に空です。通常完了結果は完了の終点まで整合したイベントを必要とし、`resync_required: true`は**正確な空**バッチを要求します。必須イベントを含むバッチと組み合わせることはできません。C++とスキーマはこの双方向の規則を強制します。
-
-`command_lifecycle`は処理中コマンド1つと置き換え可能な終端結果1つを保持します。再検証/再配達は拒否します。処理中の追加送信には`command_busy`を返します。新しい送信を受け入れると以前の終端結果を置き換え、そのIDには`unknown_command`を返します。ポーリングは状態を進めません。リプレイには契約epoch/コマンドIDではなく、既存の解決済み意味ベース入力を記録します。
-
-上限は処理中コマンド1つ、要求された選択行1–200件、インラインイベント8件、通信フレーミングを除くシリアライズ済みアプリケーション応答のUTF-8で262144バイトです。数量/ページインデックスは9007199254740991以下の非負の安全なJSON整数で、座標はint32です。アダプターは解析前にフレーム/要求のバイト数も制限します。必須の説明/イベントを黙って切り詰めたり、捨てたバッチを完全と報告したりしてはいけません。
-
-シンクが公開を拒否した場合、ストリームのスナップショット/カウンターは変わりません。受け入れ済みのバッチを取り出して同じ候補を再試行します。この**状態専用**範囲では、エンジンが安定した境界で`event_stream::resynchronize`を呼ぶこともできます。これは制限付きの新しいスナップショットをコミットし、変更されたリビジョンを進めますが、公開シーケンス/epochは変えません。アダプターは正確な空バッチと`resync_required: true`を報告し、古いスナップショットを新しい状態として返してはいけません。これは受動的な読み取りや通常のページ切り替えではなく、将来の必須表示イベントを捨てるためには使えません。上限超過だけを理由にepochを変えることもありません。`serialize_command_response`はライフサイクルとバッチを合わせたバイト上限と完了の終点を検証します。必須のインラインデータが収まらない場合は`resource_limit`を明示するか、`resync_required: true`の完了結果と正確な空バッチを返し、続いて権威ある新しいスナップショットを提供します。必須スナップショット自体が収まらなければ失敗を明示したままにします。可能なら要求ページを小さくしますが説明は省略しません。コアは配達済みコマンドを巻き戻せず、push/history/credits/yielding/reconnectの実装も提供しません。
-
-## 統合境界
-
-`engine_client_wire.h`は4つの要求値の純粋な型付きデコーダーと、制限付きの`serialize_receipt` / `serialize_application_error`を提供します。従来の`JsonIn`や浮動小数点で再符号化した値ではなく、完全な元のアプリケーションバイト列（最大262144バイト）を渡します。デコードは埋め込みNULと補助平面Unicodeを保持し、不正なUTF-8とデコード後の重複キーを拒否し、数学的な整数の小数・指数表記を正確に受け入れます。コマンドIDの割り当てやネイティブ権威へのアクセスはしません。JSON-RPCフレーミング、エンベロープ検証、ディスパッチは`engine_client_jsonrpc.h`と`mcp_server.cpp`が担います。
-
-`engine_client_contract.h`と`engine_client_event.h`を使います。ストリームとコマンドのライフサイクルは接続ではなく**権威あるエンジンセッション**に属します。新しいepochごとに一度、検証済みの制限付き`snapshot`で`event_stream::create`を呼び、初期リビジョン/シーケンスを0とします。ストリームには制限付き基準投影を1つ保持し、ページごとにストリームを作りません。基準投影はストリームの生存期間中固定です。`replace`は境界が変わっても異なるビューを拒否し、`resynchronize`はすべての基準ビュー変更を拒否します。要求ページには引き続き純粋な具体化を使います。接続は現在の要求投影を保持し、`project_snapshot`で切り替えます。次の実際の境界では、一度コミットされたイベントを要求ビューへ具体化してから配達します。以後の接続/再ネゴシエーションは既存のセッション時計から要求窓の新しい`project_snapshot`を取得します。同じepochでカウンターを初期化したりコマンドIDを再生成したりしてはいけません。過去の履歴再開は意味しません。P1の純粋性承認後、実際のネイティブ対話プロバイダーだけをキャプチャーします。レンダラー可視性や`game_observation`を開示の権威として使ってはいけません。型付きコマンドを送信し、既存の解決器で検証し、返された入力を一度配達します。次の境界で公開/完了し、`serialize_command_response`で制限付き結果を組み立てます。新しい接続は保守的に再ネゴシエーションし新しいスナップショットを取得します。リプレイ/再開の継続性を広告しません。
-
-このコアだけではP1/P2の純粋性、ワールド知識の獲得、戦闘生成側、ネイティブ表示の移行、プロセス間適合性、ストリーミング、M1全体の受け入れを証明しません。
+イベントは `interaction.changed`、`coverage.moved`、`turn.passed`、`cells.seen` で、今後スキーマに挙げた演出タイプが加わります。新しいイベントタイプには新しい正確なバージョンが必要です。

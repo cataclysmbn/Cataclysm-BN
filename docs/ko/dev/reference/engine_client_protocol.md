@@ -2,127 +2,66 @@
 title: 엔진/클라이언트 프로토콜 1.0
 ---
 
-## 범위와 호환성
+외부 클라이언트는 `cataclysm-bn-tiles --client=mcp`의 stdio에서 줄바꿈으로 구분된 JSON-RPC 2.0으로 게임을 플레이합니다. 값은 [Draft 2020-12 스키마](../../../schema/engine-client/1.0.schema.json)가 정의하며, 아래 예시는 모두 [예시 파일](../../../schema/engine-client/1.0.examples.json)에서 스키마로 검증됩니다. 기존 MCP 도구(`bn.observe`, `bn.press` 등)는 별개이며 바뀌지 않습니다. 클라이언트가 `bn.hello`를 호출하면 이 도구들은 입력을 거부합니다.
 
-[Draft 2020-12 스키마](../../../schema/engine-client/1.0.schema.json)는 JSON-RPC 프레이밍이 아닌 폐쇄적인 **애플리케이션 값**을 정의합니다. 공유 C++ 코어는 전송 방식에 의존하지 않습니다. 아래의 네 JSON-RPC 2.0 메서드는 어댑터 계약이며, MCP 서버(`src/mcp_server.cpp`)가 기존 MCP 도구와 함께 처리합니다. 기존 MCP 도구와 MCP 협상, 리플레이 형식 1은 변경되지 않습니다.
+## 세션
 
-버전 협상은 클라이언트의 지원 버전에서 정확히 `"1.0"`을 선택합니다. 비슷한 마이너 버전으로 대체하지 않습니다. 지원하지 않는 필수 기능이 있으면 전체 협상이 실패하고, 선택적 기능은 제외됩니다. 의미의 비호환 변경에는 새 메이저 버전이 필요합니다. 기능을 추가하는 마이너 버전도 정확한 버전 협상과 명시적인 기능 협상이 필요합니다.
-
-코어가 지원하는 기능 이름은 다음과 같습니다. 요청한 기능과 지원 기능의 교집합만 반환합니다.
-
-- `snapshot.readiness`, `snapshot.actions`, `snapshot.interaction`
-- `command.semantic_interaction`, `command.registered_action`
-- `events.interaction_replaced`, `delivery.inline_completion`
-
-월드/지각, push, credits, history, reconnect 기능은 지원하지 않습니다. 향후 생산자 이름은 `projectile.step`, `projectile.impact`, `entity.moved`, `terrain.changed`, `field.changed`, `explosion.phase`, `chain.reaction`, `visibility.transition`, `presentation.compatibility`입니다. 이는 **1.0에서 유효한 이벤트 유형이 아닙니다**. 도입하려면 소유권이 있는 페이로드와 검토된 엔진 공개 판정이 필요합니다. 향후 에셋 참조에는 렌더러 핸들이나 파일 경로 대신 데이터 ID를 사용해야 합니다.
-
-## 어댑터 메서드
-
-각 메서드의 `params`와 `result`를 표의 스키마 정의로 검증합니다. 수신 확인 전에 추가 멤버, 잘못된 스칼라 유형, 잘못 구성된 연산 유니온을 거부하며 잘못된 요청의 일부도 실행하지 않습니다. JSON-RPC 파싱/요청/메서드/매개변수 오류는 표준 JSON-RPC 오류를 사용합니다. 애플리케이션 오류는 JSON-RPC 코드 `1000`, 고정 메시지 `Engine contract error`, `error.data`의 폐쇄적인 `$defs/application_error`를 사용합니다. 네이티브 해석기나 파서의 진단을 그대로 반환하지 않습니다.
-
-| 메서드                  | Params 정의           | Result 정의           | 필수 기능                                                            |
-| ----------------------- | --------------------- | --------------------- | -------------------------------------------------------------------- |
-| `bn.contract.negotiate` | `negotiation_request` | `negotiated_contract` | 없음                                                                 |
-| `bn.snapshot.get`       | `snapshot_request`    | `snapshot`            | 세 `snapshot.*` 기능 모두                                            |
-| `bn.command.submit`     | `command_request`     | `receipt`             | 해당 연산의 기능                                                     |
-| `bn.command.result`     | `result_request`      | `command_response`    | `delivery.inline_completion`; 델타에는 `events.interaction_replaced` |
-
-협상에 따른 접근 제어, 엄격한 파싱, JSON-RPC ID/프레이밍, 연결 상태는 어댑터가 담당합니다. I/O에서 월드에 접근하면 안 됩니다. 게임 스레드만 활성화된 안정적인 네이티브 입력 경계에서 캡처하거나 명령을 해석할 수 있습니다.
-
-협상 params:
-
-```json
-{
-  "supported_versions": ["1.0"],
-  "required_capabilities": [
-    "snapshot.readiness",
-    "snapshot.actions",
-    "snapshot.interaction",
-    "command.semantic_interaction",
-    "events.interaction_replaced",
-    "delivery.inline_completion"
-  ],
-  "optional_capabilities": ["command.registered_action"]
-}
+```text
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["1.0"],"client":{"name":"my-client","version":"1"}}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"1.0","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"]},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096}}}
+-> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
+<- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
+<- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
+-> {"jsonrpc":"2.0","id":3,"method":"bn.command.submit","params":{"epoch":"epoch:e7f3","expect":{"revision":"31","boundary_id":"boundary:90","schema_id":null},"operation":{"kind":"action","action_id":"RIGHT"}}}
+<- {"jsonrpc":"2.0","id":3,"result":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"received"}}
+<- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"validated"}}
+<- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"executing"}}
+<- {"jsonrpc":"2.0","method":"bn.events","params":{"epoch":"epoch:e7f3","events":[{"sequence":"41","revision":"32","type":"interaction.changed","command":"c:5","changes":{...}}]}}
+<- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"completed","at":{"epoch":"epoch:e7f3","sequence":"41","revision":"32"}}}
 ```
 
-스냅샷 params:
+`parts` 개수만큼 스냅샷 파트를 모은 뒤 `bn.events`를 순서대로 적용합니다. 누락(gap), epoch 불일치, `bn.resync`가 오면 `bn.subscribe`를 다시 호출합니다. 새 스냅샷은 상태만 복원하며, `lost_after` 이후의 일시적 이벤트는 유실로 보고되고 다시 전송되지 않습니다.
+
+## 메서드
+
+| 메서드                   | 매개변수                                  | 결과                                          |
+| ------------------------ | ----------------------------------------- | --------------------------------------------- |
+| `bn.hello`               | `versions`, `client`                      | `version`, `epoch`, `engine`, `limits`        |
+| `bn.subscribe`           | 없음                                      | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨    |
+| `bn.unsubscribe`         | 없음                                      | 없음                                          |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (읽기 전용) |
+| `bn.world.cells`         | `epoch`, `min`, `max`                     | `at`, `cells`, `forgotten` (읽기 전용)        |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`             |
+| `bn.command.result`      | `epoch`, `command_id`                     | 최신 단계. 유실된 알림을 복구할 때 사용       |
+
+엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`입니다. 구독한 클라이언트에 입력 경계마다 전송됩니다.
+
+오류는 코드 `1000`과 `error.data = {kind, action?, at?}`를 사용하며, `action`은 다음에 할 일(`hello`, `subscribe`, `retry`)을 알려 줍니다.
+
+## 하나의 시계
+
+- `epoch`는 프로세스가 시작되거나 월드가 교체될 때 바뀌며, 읽기에서는 바뀌지 않습니다.
+- `sequence`는 게시된 이벤트 수입니다(10진 문자열, 연속, `"1"`부터 시작). `revision`은 상태를 바꾸는 이벤트 수입니다. `at = {epoch, sequence, revision}`은 "sequence까지의 모든 이벤트를 포함한다"는 뜻입니다.
+- 명령은 `expect = {revision, boundary_id, schema_id}`를 가집니다. 오래된 값은 거부되므로 클라이언트는 보지 못한 화면에 대해 행동하지 않습니다. `schema_id`는 해당 경계에 상호작용이 없을 때만 `null`입니다.
+
+## 명령
+
+`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) 또는 `action`(이동 키 같은 등록된 액션) 중 하나입니다.
 
 ```json
-{ "session_epoch": "epoch:opaque", "page": { "offset": 0, "limit": 100 } }
+{ "kind": "choose", "choice_id": "root:0" }
+{ "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
+{ "kind": "action", "action_id": "RIGHT" }
 ```
 
-의미 기반 명령 제출 params:
+단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`입니다. `completed`는 다음 네이티브 입력 경계에 도달했다는 뜻이지 긴 활동이 끝났다는 뜻이 아닙니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`).
 
-```json
-{
-  "session_epoch": "epoch:opaque",
-  "based_on": {
-    "state_revision": "7",
-    "input_boundary_id": "boundary:opaque",
-    "interaction_schema_id": "schema:opaque"
-  },
-  "operation": { "kind": "choose", "choice_id": "choice:opaque" }
-}
-```
+## 값
 
-등록된 동작에는 `invoke_registered_action`과 `action_id`를 사용합니다. 의미 기반 연산은 네이티브 `choose`, `fill`, `set_count`, `set_target`, `cancel`의 의미를 재사용합니다. `fill`은 `false`인 경우에도 반드시 `submit`을 지정합니다. Enabled, selectable, highlighted, selected는 서로 다른 네이티브 속성입니다. `enabled`를 `selectable`로 재해석하거나, 강조된 행을 자동 선택하거나, 네이티브 거부/확인 로직을 우회하면 안 됩니다.
+- `pos = {dim, x, y, z}`는 절대 맵 칸이며, `dim`은 게임 차원이고 기본 차원은 `""`입니다. 리얼리티 버블 좌표는 전송 형식에 나타나지 않습니다.
+- `look = {kind, id, glyph, color}`는 게임 데이터의 외형을 담으므로 텍스트 클라이언트에는 타일셋이 필요 없습니다.
+- `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 `[0, min(choice_total, 200))` 행을 담고, 나머지는 `bn.interaction.choices`로 읽습니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다.
+- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`, `environment`, 로드된 `coverage`로 구성됩니다.
+- 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `interaction`을 교체합니다.
 
-## 식별자, 좌표, 공개 상태
-
-- `session_epoch`는 하나의 권위 있는 세션/월드/프로세스를 식별합니다. 새 세션/월드나 프로세스 재시작 시 한 번 생성하며 조회나 소켓 폴링에서는 생성하지 않습니다. `new_session_epoch()`는 게임 RNG가 아닌 독립적인 시스템 엔트로피를 사용합니다. 테스트에서는 epoch 문자열을 주입할 수 있습니다. 인증 자격 증명은 아닙니다.
-- 리비전과 시퀀스는 선행 0이 없는 정규 10진 **문자열**이며 uint64를 나타냅니다. 범위를 소진하면 순환시키지 않고 명시적인 `resource_limit`으로 새 epoch/스냅샷을 요구합니다. 불투명 ID는 비어 있지 않은 문자열이며 클라이언트가 파싱하면 안 됩니다. 네이티브 숫자 `input_id`는 이 전송 형식에 나타나지 않습니다.
-- 공개 시퀀스는 epoch 내에서 `"1"`부터 연속됩니다. 비공개 후보는 공개 ID나 시퀀스/리비전을 소비하지 않습니다. 인과 링크는 같은 epoch에서 먼저 **공개된** 시퀀스만 참조합니다. 내부 순번이나 비공개 원인을 참조하지 않습니다.
-- `state_revision`은 선택 페이지 투영과 독립적인, 커밋된 준비 상태/동작/상호작용 **경계**의 버전입니다. 조회, 수동 페이지 전환, 변경 없는 캡처는 리비전이나 시퀀스를 증가시키지 않습니다. 모든 내부 월드 변경을 세는 카운터가 아닙니다.
-- 스냅샷은 offset/count/total을 포함하는 완전한 공개 **제한된 페이지**와 nullable 상호작용을 담습니다. 해당 페이지의 실제 네이티브 설명, 거부 사유, pane, 필드, 수량, 대상 정보를 모두 보존합니다. 가짜 월드 뷰나 일반 JSON 페이로드는 허용하지 않습니다.
-- `state.projection`은 **요청한** 창의 구조적 뷰 식별자 `{kind: "interaction_choices", offset, limit}`입니다. 네이티브 `choice_page.offset`은 여전히 전체 수량으로 제한되며 두 offset 모두 안전한 JSON 정수여야 합니다. 서로 다른 창은 하나의 세션 시계를 보는 뷰이지 별도의 권위 있는 스트림이 아닙니다.
-- `capture_state`는 소유된 읽기 전용 후보를 만들며 커밋하지 않습니다. 커밋된 안정적인 경계에서 `event_stream::project_snapshot`은 기존 epoch/리비전/시퀀스로 요청한 제한된 페이지를 구체화합니다. 페이지 0 → 페이지 200 → 페이지 0은 일반 조회이며 이벤트, 카운터 변경, 재동기화, 기록 손실을 만들지 않습니다. 경계/스키마/전체 수량/공통 메타데이터는 세션 기준 값과 일치해야 하며, 같은 창의 값도 일치해야 합니다. P1 승인 네이티브 캡처가 해당 경계의 불변 행을 제공하며 임의의 I/O DTO를 사용하지 않습니다. 설명의 순수성과 상위 계층 생성 비용 제한은 P1 의존성입니다.
-
-대상 위치는 `space: "reality_bubble_map_square"`, 활성 불투명 `frame_id`, 부호 있는 32비트 `x/y/z`를 명시합니다. 코어는 **프레임이 정확히 일치하는지 검증한 뒤에만** 네이티브 `bubble_ms` 위치로 변환합니다. 후보 식별자, 경계, 사거리, 거리 척도는 네이티브 해석기로 검증합니다. 절대 맵 칸/오버맵 타일 좌표 정의에는 `dimension_id`가 필요합니다. 이는 예약된 값 형식이며 지원되는 대상 연산이나 월드 이벤트 기능이 아닙니다. 좌표계를 추측하면 안 됩니다.
-
-## 소유 이벤트와 재구성
-
-구현된 이벤트는 `interaction.replaced`뿐입니다. 페이로드 `{base_state_revision, state}`는 제한된 준비 상태/동작/상호작용 투영의 완전한 교체이며 임의의 패치가 아닙니다. 상호작용이 닫히면 `interaction: null`을 공개합니다. 값이 변경되면 리비전을 정확히 1 증가시킵니다.
-
-엔진은 논리 경계에서 `disclosure::publish` 또는 `disclosure::withheld`를 제공합니다. 코어는 공개 ID 할당, 원인 검사, 카운터 커밋 **이전에** 비공개 후보를 버립니다. 싱크는 가시성을 조회하거나 기억 정보를 획득할 수 없습니다. 기존 네이티브 선택 ID는 엔진이 공개를 허용한 상호작용 값의 일부로만 내보냅니다. 향후 엔티티 ID도 공개 판정 후에 생성해야 합니다. 재등장 시 권위 있는 기억 정보가 허용할 때만 기존 식별자를 유지하고, 그렇지 않으면 새 ID를 생성합니다.
-
-이벤트는 문자열, 컨테이너, 네이티브 상호작용 값, 태그가 있는 좌표를 소유합니다. `public_event`는 const 접근만 제공하며 월드 포인터, 참조, string view, 렌더러 핸들을 보관하지 않습니다. 원본을 변경하거나 파괴해도 이벤트는 변하지 않습니다. Null/recording 싱크는 권위 있는 상태를 변경하거나 게임 RNG를 소비하지 않습니다. 레코더는 제한된 프로세스 내 저장소이며 **전송 기록 보관 기능이 아닙니다**.
-
-실제 엔진 경계에서 세션 스트림으로 정확히 한 번 공개한 뒤, 같은 경계의 네이티브 캡처와 순수한 `project_event`로 활성 요청 뷰마다 구체화합니다. 복사본은 행을 소유하고 **같은** epoch/이벤트 ID/시퀀스/기준·결과 리비전/원인을 유지하며 투영 메타데이터와 행만 달라질 수 있습니다. 추가 이벤트를 공개하거나 쿼리별 스트림 레지스트리를 만들지 않습니다. 해당 경계가 유효할 때 캡처/구체화해야 하며, 이후 경계의 현재 공급자로 과거 행을 재구성할 수 없습니다. 어댑터가 보관하는 전달 대기 데이터도 제한되어야 합니다.
-
-스냅샷 `(epoch, R, S, projection)`에서는 같은 epoch와 투영의 다음 연속 시퀀스 `S + 1`만 적용합니다. 델타의 기준 리비전은 `R`, 결과 리비전은 `R + 1`이어야 합니다. Epoch 불일치, 누락, 중복, 잘못된 원인이나 기준 리비전은 새 스냅샷을 요구합니다. 투영 불일치는 잘못 조립된 전달이므로 올바른 구체화를 받아야 하며 새 epoch나 페이지 전환 복구로 처리하지 않습니다. `apply_batch`는 트랜잭션 방식이므로 뒷부분이 잘못되면 앞부분도 적용하지 않습니다.
-
-선택적 `display`에는 `group_id`, 0부터 시작하는 `ordinal`, 양수 `count`, 음수가 아닌 권고 `duration_ms`가 있습니다. Ordinal은 count보다 작아야 합니다. 그룹화와 지속 시간은 인과 순서, 리비전, 게임 시간, RNG를 결정하지 않습니다. 독립된 표시 전용 이벤트 기능은 아직 없습니다.
-
-빈 배치는 정확히 다음과 같습니다.
-
-```json
-{ "complete": true, "first_sequence": null, "last_sequence": null, "events": [] }
-```
-
-비어 있지 않으면 first/last 메타데이터는 실제 첫/마지막 이벤트를 식별해야 합니다. `complete: true`는 제공한 배치가 완전하다는 뜻이지 장기 활동 완료나 전송 기록의 가용성을 뜻하지 않습니다.
-
-## 명령 생명주기와 제한
-
-1. **수신:** 올바른 유형의 요청을 받아 불투명 명령 ID를 생성하고 요청 하나를 보관합니다. 아직 실시간 검증은 아닙니다.
-2. **검증:** epoch, 리비전, 현재 입력 경계와 상호작용 스키마, 권한, 네이티브 선택/수량/필드/대상/동작 규칙을 검사합니다. 기존 네이티브 `input_event`를 반환하며 콜백 호출이나 월드 변경은 없습니다. 오래되거나 잘못된 입력은 종결 상태 `rejected`가 되고 이벤트나 리비전을 만들지 않습니다.
-3. **실행:** 어댑터는 해석된 입력을 기존 위젯에 전달할 때만 `execution_started()`를 호출합니다. `native_input_delivered`는 요청한 게임 효과의 성공을 보증하지 않습니다. 네이티브 거부와 중첩 확인은 전송 검증 실패가 아닌 네이티브 결과로 남습니다.
-4. **완료:** 다음 **서로 다른 네이티브 상호작용 경계**에서 공개된 교체를 커밋한 뒤 그 리비전/시퀀스로 완료합니다(리소스 넘침이면 재동기화 스냅샷을 명시적으로 커밋할 수 있습니다). `next_interaction_boundary`는 제작, 대기 등의 장기 활동이 끝났다는 포괄적인 선언이 **아닙니다**. 다음 경계 전에 세션이 끝나면 완료를 조작하지 말고 중단합니다.
-
-공개된 준비 상태는 정보이며 **현재 권한의 근거가 아닙니다**. 자신보다 오래 유지되는 읽기 전용 엔진 세션 정책으로 `command_lifecycle(epoch, command_authority&)`를 생성합니다. 검증 시점에 `current_permissions()`를 호출하므로 오래된 공개 불리언은 권한을 허용하거나 거부할 수 없습니다. 정책은 엔진이 제공하며 I/O/요청은 이 의존성을 제공하지 않습니다. C++ 엔진 값을 위조하거나 캐시된 DTO를 정책으로 연결하는 것은 지원되는 통합 범위 밖의 사용이지 전역 레지스트리를 만들 이유가 아닙니다.
-
-수신 확인, 결과 요청, 명령 결과는 권위 있는 `session_epoch`를 포함합니다. 인라인 배치는 이 명령 하나의 범위에 속합니다. 모든 이벤트의 epoch가 일치해야 하며 null이 아닌 이벤트 `command_id`는 응답 명령과 일치해야 합니다. 부수적인 엔진 이벤트의 명령 ID는 null일 수 있습니다. 미완료 결과의 배치는 정확히 비어 있어야 합니다. 정상 완료 결과에는 완료 끝점까지 일관된 이벤트가 필요하며, `resync_required: true`는 **정확한 빈** 배치를 요구합니다. 필수 이벤트가 있는 배치와 결합할 수 없습니다. C++와 스키마는 이 양방향 규칙을 강제합니다.
-
-`command_lifecycle`은 처리 중 명령 하나와 교체 가능한 종결 결과 하나만 보관합니다. 재검증/재전달은 거부합니다. 처리 중 추가 제출은 `command_busy`입니다. 새 제출을 수락하면 이전 종결 결과를 교체하고 이전 ID는 `unknown_command`가 됩니다. 폴링은 상태를 증가시키지 않습니다. 리플레이에는 계약 epoch/명령 ID가 아닌 기존 해석된 의미 기반 입력을 기록합니다.
-
-제한은 처리 중 명령 하나, 요청한 선택 행 1–200개, 인라인 이벤트 8개, 전송 프레이밍을 제외한 직렬화 애플리케이션 응답 UTF-8 262144바이트입니다. 수량/페이지 인덱스는 9007199254740991까지의 음수가 아닌 안전한 JSON 정수이고 좌표는 int32입니다. 어댑터는 파싱 전에 프레임/요청 바이트도 제한해야 합니다. 필수 설명/이벤트를 묵시적으로 자르거나 버린 배치를 완전하다고 보고하면 안 됩니다.
-
-싱크 공개가 거부되면 스트림 스냅샷/카운터는 그대로입니다. 수락한 배치를 비우고 같은 후보를 재시도합니다. 이 **상태 전용** 범위에서는 엔진이 안정적인 경계에서 `event_stream::resynchronize`를 호출할 수도 있습니다. 이는 제한된 새 스냅샷을 커밋하고 변경된 리비전을 증가시키지만 공개 시퀀스/epoch는 그대로 유지합니다. 어댑터는 정확한 빈 배치와 `resync_required: true`를 보고해야 하며, 이전 스냅샷을 새 상태로 반환하면 안 됩니다. 이는 수동 조회나 일반 페이지 전환이 아니며 향후 필수 표시 이벤트를 버릴 수 없습니다. 넘침만을 이유로 epoch를 변경하지도 않습니다. `serialize_command_response`는 생명주기와 배치의 합산 바이트 제한 및 완료 끝점을 검증합니다. 필수 인라인 데이터가 맞지 않으면 `resource_limit`을 명시적으로 반환하거나, `resync_required: true`인 완료 결과와 정확한 빈 배치를 반환한 뒤 새 권위 있는 스냅샷을 제공합니다. 필수 스냅샷 자체가 맞지 않으면 실패를 명시적으로 유지합니다. 가능하면 요청 페이지를 줄이되 설명을 축약하지 않습니다. 코어는 전달된 명령을 되돌릴 수 없으며 push/history/credits/yielding/reconnect 구현을 제공하지 않습니다.
-
-## 통합 경계
-
-`engine_client_wire.h`는 네 요청 값의 순수한 유형별 디코더와 제한된 `serialize_receipt` / `serialize_application_error`를 제공합니다. 기존 `JsonIn`이나 부동소수점으로 다시 인코딩한 값이 아닌 완전한 원본 애플리케이션 바이트(최대 262144바이트)를 전달합니다. 디코딩은 포함된 NUL과 보충 평면 Unicode를 보존하고, 잘못된 UTF-8과 디코딩 후 중복 키를 거부하며, 수학적 정수의 소수·지수 표기를 정확히 받아들입니다. 명령 ID를 할당하거나 네이티브 권위에 접근하지 않습니다. JSON-RPC 프레이밍, 엔벌로프 검증, 디스패치는 `engine_client_jsonrpc.h`와 `mcp_server.cpp`가 담당합니다.
-
-`engine_client_contract.h`와 `engine_client_event.h`를 사용합니다. 스트림과 명령 생명주기는 연결이 아닌 **권위 있는 엔진 세션**에 속합니다. 새 epoch마다 한 번, 검증된 제한된 `snapshot`으로 `event_stream::create`를 호출하며 초기 리비전/시퀀스는 0입니다. 스트림에는 제한된 기준 투영 하나를 유지하며 페이지별 스트림을 만들지 않습니다. 기준 투영은 스트림 생명주기 내내 고정됩니다. `replace`는 경계가 변경되어도 다른 뷰를 거부하며, `resynchronize`는 모든 기준 뷰 변경을 거부합니다. 요청한 페이지는 여전히 순수한 구체화를 사용합니다. 연결은 현재 요청한 투영을 보관하고 `project_snapshot`으로 전환합니다. 다음 실제 경계에서 한 번 커밋된 이벤트를 요청한 뷰로 구체화한 뒤 전달합니다. 이후 연결/재협상은 기존 세션 시계에서 요청한 창의 새 `project_snapshot`을 받습니다. 같은 epoch에서 카운터를 초기화하거나 명령 ID를 다시 생성하면 안 됩니다. 과거 기록 재개를 보증하지 않습니다. P1 순수성 승인 후 실제 네이티브 상호작용 공급자만 캡처합니다. 렌더러 가시성이나 `game_observation`을 공개 판정의 권위로 사용하지 않습니다. 유형이 있는 명령을 제출하고 기존 해석기로 검증하여 반환된 입력을 한 번 전달합니다. 다음 경계에서 공개/완료하고 `serialize_command_response`로 제한된 결과를 만듭니다. 새 연결은 보수적으로 재협상하고 새 스냅샷을 받습니다. 리플레이/재개 연속성을 광고하지 않습니다.
-
-이 코어만으로 P1/P2 순수성, 월드 지식 획득, 전투 생산자, 네이티브 표시 전환, 프로세스 간 적합성, 스트리밍, M1 전체 승인은 입증되지 않습니다.
+이벤트는 `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`이며, 이후 스키마에 나열된 연출 유형이 추가됩니다. 새 이벤트 유형에는 새로운 정확한 버전이 필요합니다.

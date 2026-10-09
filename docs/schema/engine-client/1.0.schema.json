@@ -1,186 +1,355 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://cataclysmbn.org/schema/engine-client/1.0.schema.json",
-  "title": "BN engine/client contract 1.0 application values",
-  "description": "JSON-RPC 2.0 framing is separate. Each method validates params/results against its named $defs. Cross-field sequence, revision, identity and byte-limit invariants are enforced by the engine core.",
-  "oneOf": [
-    {
-      "$ref": "#/$defs/negotiation_request"
+  "title": "BN engine/client protocol 1.0",
+  "description": "Application values of the JSON-RPC 2.0 methods and notifications. Framing is not described here. Sequence, revision and visibility invariants are checked by the engine and its reconstruction tests.",
+  "x-methods": {
+    "bn.hello": {
+      "params": "hello_params",
+      "result": "hello_result"
     },
-    {
-      "$ref": "#/$defs/negotiated_contract"
+    "bn.subscribe": {
+      "params": "empty_params",
+      "result": "subscribe_result"
     },
-    {
-      "$ref": "#/$defs/snapshot_request"
+    "bn.unsubscribe": {
+      "params": "empty_params",
+      "result": "empty_params"
     },
-    {
-      "$ref": "#/$defs/snapshot"
+    "bn.interaction.choices": {
+      "params": "choices_params",
+      "result": "choices_result"
     },
-    {
-      "$ref": "#/$defs/command_request"
+    "bn.world.cells": {
+      "params": "world_cells_params",
+      "result": "world_cells_result"
     },
-    {
-      "$ref": "#/$defs/receipt"
+    "bn.command.submit": {
+      "params": "submit_params",
+      "result": "submit_result"
     },
-    {
-      "$ref": "#/$defs/result_request"
-    },
-    {
-      "$ref": "#/$defs/command_result"
-    },
-    {
-      "$ref": "#/$defs/command_response"
-    },
-    {
-      "$ref": "#/$defs/public_event"
-    },
-    {
-      "$ref": "#/$defs/event_batch"
-    },
-    {
-      "$ref": "#/$defs/application_error"
+    "bn.command.result": {
+      "params": "result_params",
+      "result": "command_result"
     }
-  ],
+  },
+  "x-notifications": {
+    "bn.snapshot.part": "snapshot_part",
+    "bn.events": "events_notification",
+    "bn.command": "command_notification",
+    "bn.resync": "resync_notification"
+  },
   "$defs": {
     "counter": {
       "type": "string",
-      "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-      "maxLength": 20,
-      "description": "Canonical decimal uint64, at most 18446744073709551615."
+      "pattern": "^(0|[1-9][0-9]{0,19})$",
+      "description": "Decimal uint64 string."
     },
     "opaque_id": {
       "type": "string",
       "minLength": 1,
       "maxLength": 256
     },
-    "negotiation_request": {
+    "pos": {
       "type": "object",
       "properties": {
-        "supported_versions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "minItems": 1,
-          "uniqueItems": true
+        "dim": {
+          "type": "string",
+          "maxLength": 256,
+          "description": "Game dimension_id; empty string is the primary dimension."
         },
-        "required_capabilities": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
+        "x": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         },
-        "optional_capabilities": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "uniqueItems": true
+        "y": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "z": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
         }
       },
       "required": [
-        "supported_versions",
-        "required_capabilities",
-        "optional_capabilities"
+        "dim",
+        "x",
+        "y",
+        "z"
+      ],
+      "additionalProperties": false,
+      "description": "Absolute map square. Never a reality-bubble coordinate."
+    },
+    "at": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "sequence": {
+          "$ref": "#/$defs/counter"
+        },
+        "revision": {
+          "$ref": "#/$defs/counter"
+        }
+      },
+      "required": [
+        "epoch",
+        "sequence",
+        "revision"
       ],
       "additionalProperties": false
     },
-    "negotiated_contract": {
+    "bounds": {
       "type": "object",
       "properties": {
-        "contract_version": {
-          "const": "1.0"
+        "min": {
+          "$ref": "#/$defs/pos"
         },
-        "schema_id": {
-          "const": "bn-engine-client-1.0"
+        "max": {
+          "$ref": "#/$defs/pos"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ],
+      "additionalProperties": false
+    },
+    "look": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "terrain",
+            "furniture",
+            "field",
+            "trap",
+            "item",
+            "vehicle_part",
+            "monster",
+            "npc",
+            "avatar",
+            "projectile"
+          ]
         },
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
-        "capabilities": {
+        "glyph": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "glyph",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "cell": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "known": {
+          "enum": [
+            "remembered",
+            "visible",
+            "sensed"
+          ]
+        },
+        "terrain": {
+          "$ref": "#/$defs/look"
+        },
+        "furniture": {
+          "$ref": "#/$defs/look"
+        },
+        "fields": {
           "type": "array",
           "items": {
-            "enum": [
-              "snapshot.readiness",
-              "snapshot.actions",
-              "snapshot.interaction",
-              "command.semantic_interaction",
-              "command.registered_action",
-              "events.interaction_replaced",
-              "delivery.inline_completion"
-            ]
-          },
-          "uniqueItems": true
+            "type": "object",
+            "properties": {
+              "look": {
+                "$ref": "#/$defs/look"
+              },
+              "intensity": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "look",
+              "intensity"
+            ],
+            "additionalProperties": false
+          }
         },
-        "limits": {
+        "traps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/look"
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/look"
+          }
+        },
+        "vehicle": {
+          "$ref": "#/$defs/look"
+        },
+        "light": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "memory": {
           "type": "object",
           "properties": {
-            "maximum_outstanding_commands": {
-              "const": 1
+            "terrain": {
+              "$ref": "#/$defs/look"
             },
-            "maximum_interaction_page_size": {
-              "const": 200
-            },
-            "maximum_inline_events": {
-              "const": 8
-            },
-            "maximum_inline_bytes": {
-              "const": 262144
+            "overlay": {
+              "$ref": "#/$defs/look"
             }
           },
           "required": [
-            "maximum_outstanding_commands",
-            "maximum_interaction_page_size",
-            "maximum_inline_events",
-            "maximum_inline_bytes"
-          ],
-          "additionalProperties": false
-        },
-        "delivery": {
-          "type": "object",
-          "properties": {
-            "selected": {
-              "const": "inline_completion"
-            },
-            "push_supported": {
-              "const": false
-            },
-            "credits_supported": {
-              "const": false
-            },
-            "history_supported": {
-              "const": false
-            },
-            "reconnect_supported": {
-              "const": false
-            },
-            "resync_snapshot_supported": {
-              "const": true
-            }
-          },
-          "required": [
-            "selected",
-            "push_supported",
-            "credits_supported",
-            "history_supported",
-            "reconnect_supported",
-            "resync_snapshot_supported"
+            "terrain"
           ],
           "additionalProperties": false
         }
       },
       "required": [
-        "contract_version",
-        "schema_id",
-        "session_epoch",
-        "capabilities",
-        "limits",
-        "delivery"
+        "at",
+        "known"
       ],
       "additionalProperties": false
+    },
+    "entity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "known": {
+          "enum": [
+            "visible",
+            "sensed"
+          ]
+        },
+        "look": {
+          "$ref": "#/$defs/look"
+        },
+        "name": {
+          "type": "string"
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sense": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "known"
+      ],
+      "additionalProperties": false
+    },
+    "avatar": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "at",
+        "name",
+        "stats"
+      ],
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "turn": {
+          "$ref": "#/$defs/counter"
+        },
+        "time": {
+          "type": "string"
+        },
+        "weather": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "turn",
+        "time",
+        "weather"
+      ],
+      "additionalProperties": false
+    },
+    "gone_reason": {
+      "enum": [
+        "lost_sight",
+        "died",
+        "removed"
+      ]
     },
     "readiness": {
       "type": "object",
@@ -213,122 +382,83 @@
       ],
       "additionalProperties": false
     },
-    "action": {
+    "choice": {
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         },
-        "name": {
+        "label": {
           "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "denial": {
+          "type": "string"
+        },
+        "pane_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "area_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "storage_kind": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "selectable": {
+          "type": "boolean"
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "selected_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "minimum_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "available_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         }
       },
       "required": [
         "id",
-        "name"
-      ],
-      "additionalProperties": false
-    },
-    "bubble_coordinate": {
-      "type": "object",
-      "properties": {
-        "space": {
-          "const": "reality_bubble_map_square"
-        },
-        "frame_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "x": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        },
-        "y": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        },
-        "z": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        }
-      },
-      "required": [
-        "space",
-        "frame_id",
-        "x",
-        "y",
-        "z"
-      ],
-      "additionalProperties": false
-    },
-    "absolute_coordinate": {
-      "type": "object",
-      "properties": {
-        "space": {
-          "enum": [
-            "absolute_map_square",
-            "absolute_overmap_tile"
-          ]
-        },
-        "dimension_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "x": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        },
-        "y": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        },
-        "z": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
-        }
-      },
-      "required": [
-        "space",
-        "dimension_id",
-        "x",
-        "y",
-        "z"
-      ],
-      "additionalProperties": false
-    },
-    "coordinate": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/bubble_coordinate"
-        },
-        {
-          "$ref": "#/$defs/absolute_coordinate"
-        }
-      ]
-    },
-    "column": {
-      "type": "object",
-      "properties": {
-        "label": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      },
-      "required": [
         "label",
-        "value"
+        "description",
+        "denial",
+        "enabled",
+        "selectable",
+        "selected",
+        "columns"
       ],
       "additionalProperties": false
     },
@@ -336,9 +466,7 @@
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         },
         "label": {
           "type": "string"
@@ -374,90 +502,11 @@
       ],
       "additionalProperties": false
     },
-    "choice": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "label": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "denial": {
-          "type": "string"
-        },
-        "pane_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "area_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "storage_kind": {
-          "type": "string"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "selectable": {
-          "type": "boolean"
-        },
-        "selected": {
-          "type": "boolean"
-        },
-        "highlighted": {
-          "type": "boolean"
-        },
-        "columns": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/column"
-          }
-        },
-        "selected_count": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        },
-        "minimum_count": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        },
-        "available_count": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        }
-      },
-      "required": [
-        "id",
-        "label",
-        "description",
-        "denial",
-        "enabled",
-        "selectable",
-        "selected",
-        "highlighted",
-        "columns"
-      ],
-      "additionalProperties": false
-    },
     "field": {
       "type": "object",
       "properties": {
         "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         },
         "label": {
           "type": "string"
@@ -476,8 +525,7 @@
         },
         "max_length": {
           "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
+          "minimum": -1
         },
         "printable": {
           "type": "boolean"
@@ -494,55 +542,23 @@
       ],
       "additionalProperties": false
     },
-    "target_candidate": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "label": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "position": {
-          "$ref": "#/$defs/bubble_coordinate"
-        },
-        "creature": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "id",
-        "label",
-        "description",
-        "position",
-        "creature"
-      ],
-      "additionalProperties": false
-    },
     "target": {
       "type": "object",
       "properties": {
         "source": {
-          "$ref": "#/$defs/bubble_coordinate"
+          "$ref": "#/$defs/pos"
         },
-        "cursor": {
-          "$ref": "#/$defs/bubble_coordinate"
+        "current": {
+          "$ref": "#/$defs/pos"
         },
-        "minimum_position": {
-          "$ref": "#/$defs/bubble_coordinate"
+        "minimum": {
+          "$ref": "#/$defs/pos"
         },
-        "maximum_position": {
-          "$ref": "#/$defs/bubble_coordinate"
+        "maximum": {
+          "$ref": "#/$defs/pos"
         },
         "range": {
-          "type": "integer",
-          "minimum": -2147483648,
-          "maximum": 2147483647
+          "type": "integer"
         },
         "distance_metric": {
           "type": "string"
@@ -550,23 +566,44 @@
         "status": {
           "type": "string"
         },
-        "limit_to_reality_bubble": {
-          "type": "boolean"
-        },
         "candidates": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/target_candidate"
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "label": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "creature": {
+                "type": "boolean"
+              },
+              "position": {
+                "$ref": "#/$defs/pos"
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "description",
+              "creature",
+              "position"
+            ],
+            "additionalProperties": false
           }
         }
       },
       "required": [
         "source",
-        "cursor",
+        "current",
         "range",
         "distance_metric",
         "status",
-        "limit_to_reality_bubble",
         "candidates"
       ],
       "additionalProperties": false
@@ -575,9 +612,7 @@
       "type": "object",
       "properties": {
         "schema_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         },
         "context": {
           "type": "string"
@@ -591,12 +626,6 @@
             "target"
           ]
         },
-        "structured": {
-          "const": true
-        },
-        "actions_only": {
-          "type": "boolean"
-        },
         "allow_cancel": {
           "type": "boolean"
         },
@@ -609,12 +638,6 @@
         "message": {
           "type": "string"
         },
-        "panes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/pane"
-          }
-        },
         "choices": {
           "type": "array",
           "items": {
@@ -622,60 +645,1168 @@
           },
           "maxItems": 200
         },
-        "choice_page": {
-          "type": "object",
-          "properties": {
-            "offset": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
-            },
-            "count": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 200
-            },
-            "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
-            }
-          },
-          "required": [
-            "offset",
-            "count",
-            "total"
-          ],
-          "additionalProperties": false
+        "choice_total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "field": {
           "$ref": "#/$defs/field"
         },
         "target": {
           "$ref": "#/$defs/target"
+        },
+        "compat": {
+          "type": "object",
+          "properties": {
+            "focus": {
+              "type": "object",
+              "properties": {
+                "pane_id": {
+                  "$ref": "#/$defs/opaque_id"
+                },
+                "choice_id": {
+                  "$ref": "#/$defs/opaque_id"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            },
+            "panes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/pane"
+              }
+            }
+          },
+          "required": [
+            "panes"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "schema_id",
         "context",
         "kind",
-        "structured",
-        "actions_only",
         "allow_cancel",
         "allow_set_count",
         "title",
         "message",
-        "panes",
         "choices",
-        "choice_page"
+        "choice_total",
+        "compat"
+      ],
+      "additionalProperties": false,
+      "description": "choices holds rows [0, min(choice_total, 200)); read the rest with bn.interaction.choices."
+    },
+    "interaction_boundary": {
+      "type": "object",
+      "properties": {
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "readiness": {
+          "$ref": "#/$defs/readiness"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interaction": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "boundary_id",
+        "readiness",
+        "actions",
+        "interaction"
       ],
       "additionalProperties": false
     },
-    "projection": {
+    "changes": {
       "type": "object",
       "properties": {
+        "coverage": {
+          "$ref": "#/$defs/bounds"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cell"
+          }
+        },
+        "forgotten": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          }
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entity"
+          }
+        },
+        "gone": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "reason": {
+                "$ref": "#/$defs/gone_reason"
+              }
+            },
+            "required": [
+              "id",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "avatar": {
+          "$ref": "#/$defs/avatar"
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        },
+        "interaction": {
+          "$ref": "#/$defs/interaction_boundary"
+        }
+      },
+      "required": [],
+      "additionalProperties": false,
+      "description": "Applied in member order: coverage, cells, forgotten, entities, gone, then avatar/environment/interaction replace."
+    },
+    "display": {
+      "type": "object",
+      "properties": {
+        "group": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "sequence": {
+          "$ref": "#/$defs/counter"
+        },
+        "revision": {
+          "$ref": "#/$defs/counter"
+        },
+        "type": {
+          "enum": [
+            "interaction.changed",
+            "coverage.moved",
+            "turn.passed",
+            "cells.seen",
+            "message.logged",
+            "sound.heard",
+            "entity.moved",
+            "entity.damaged",
+            "entity.gone",
+            "item.activated",
+            "item.thrown",
+            "projectile.moved",
+            "projectile.hit",
+            "item.landed",
+            "explosion.started",
+            "explosion.blast",
+            "explosion.shrapnel",
+            "explosion.ended",
+            "terrain.changed",
+            "furniture.changed",
+            "field.changed"
+          ]
+        },
+        "cause": {
+          "$ref": "#/$defs/counter"
+        },
+        "command": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "display": {
+          "$ref": "#/$defs/display"
+        },
+        "data": {
+          "type": "object"
+        },
+        "changes": {
+          "$ref": "#/$defs/changes"
+        }
+      },
+      "required": [
+        "sequence",
+        "revision",
+        "type"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "interaction.changed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "data"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "coverage.moved"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "data"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "turn.passed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "data"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "cells.seen"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "data"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "message.logged"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_message_logged"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "sound.heard"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_sound_heard"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "entity.moved"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_entity_moved"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "entity.damaged"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_entity_damaged"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "entity.gone"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_entity_gone"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "item.activated"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_item_activated"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "item.thrown"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_item_thrown"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "projectile.moved"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_projectile_moved"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "projectile.hit"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_projectile_hit"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "item.landed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_item_landed"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "explosion.started"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_explosion_started"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "explosion.blast"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_explosion_blast"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "explosion.shrapnel"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_explosion_shrapnel"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "explosion.ended"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_explosion_ended"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "terrain.changed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_terrain_changed"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "furniture.changed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_furniture_changed"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "field.changed"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_field_changed"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
+        }
+      ]
+    },
+    "data_message_logged": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
         "kind": {
-          "const": "interaction_choices"
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "data_sound_heard": {
+      "type": "object",
+      "properties": {
+        "marker": {
+          "$ref": "#/$defs/pos"
+        },
+        "text": {
+          "type": "string"
+        },
+        "volume": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "text",
+        "volume"
+      ],
+      "additionalProperties": false
+    },
+    "data_entity_moved": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "from": {
+          "$ref": "#/$defs/pos"
+        },
+        "to": {
+          "$ref": "#/$defs/pos"
+        },
+        "mode": {
+          "enum": [
+            "walk",
+            "propelled"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "to",
+        "mode"
+      ],
+      "additionalProperties": false
+    },
+    "data_entity_damaged": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "part": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "data_entity_gone": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "reason": {
+          "$ref": "#/$defs/gone_reason"
+        }
+      },
+      "required": [
+        "id",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "data_item_activated": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "look": {
+          "$ref": "#/$defs/look"
+        }
+      },
+      "required": [
+        "look"
+      ],
+      "additionalProperties": false
+    },
+    "data_item_thrown": {
+      "type": "object",
+      "properties": {
+        "projectile": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "look": {
+          "$ref": "#/$defs/look"
+        },
+        "by": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "from": {
+          "$ref": "#/$defs/pos"
+        },
+        "to": {
+          "$ref": "#/$defs/pos"
+        }
+      },
+      "required": [
+        "projectile",
+        "look"
+      ],
+      "additionalProperties": false
+    },
+    "data_projectile_moved": {
+      "type": "object",
+      "properties": {
+        "projectile": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "projectile",
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "data_projectile_hit": {
+      "type": "object",
+      "properties": {
+        "projectile": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "entity": {
+          "$ref": "#/$defs/opaque_id"
+        }
+      },
+      "required": [
+        "projectile",
+        "at"
+      ],
+      "additionalProperties": false
+    },
+    "data_item_landed": {
+      "type": "object",
+      "properties": {
+        "projectile": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "look": {
+          "$ref": "#/$defs/look"
+        }
+      },
+      "required": [
+        "at",
+        "look"
+      ],
+      "additionalProperties": false
+    },
+    "data_explosion_started": {
+      "type": "object",
+      "properties": {
+        "explosion": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "explosion"
+      ],
+      "additionalProperties": false
+    },
+    "data_explosion_blast": {
+      "type": "object",
+      "properties": {
+        "explosion": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          }
+        }
+      },
+      "required": [
+        "explosion",
+        "cells"
+      ],
+      "additionalProperties": false
+    },
+    "data_explosion_shrapnel": {
+      "type": "object",
+      "properties": {
+        "explosion": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          }
+        }
+      },
+      "required": [
+        "explosion",
+        "cells"
+      ],
+      "additionalProperties": false
+    },
+    "data_explosion_ended": {
+      "type": "object",
+      "properties": {
+        "explosion": {
+          "$ref": "#/$defs/opaque_id"
+        }
+      },
+      "required": [
+        "explosion"
+      ],
+      "additionalProperties": false
+    },
+    "data_terrain_changed": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "from": {
+          "$ref": "#/$defs/look"
+        },
+        "to": {
+          "$ref": "#/$defs/look"
+        }
+      },
+      "required": [
+        "at",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "data_furniture_changed": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "from": {
+          "$ref": "#/$defs/look"
+        },
+        "to": {
+          "$ref": "#/$defs/look"
+        }
+      },
+      "required": [
+        "at",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "data_field_changed": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "field": {
+          "type": "string"
+        },
+        "intensity": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "at",
+        "field",
+        "intensity"
+      ],
+      "additionalProperties": false
+    },
+    "hello_params": {
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "versions",
+        "client"
+      ],
+      "additionalProperties": false
+    },
+    "hello_result": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "const": "1.0"
+        },
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "engine": {
+          "type": "object",
+          "properties": {
+            "build": {
+              "type": "string"
+            },
+            "mods": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "build",
+            "mods"
+          ],
+          "additionalProperties": false
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "frame_bytes": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "cells_per_part": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "cells_per_query": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "frame_bytes",
+            "cells_per_part",
+            "cells_per_query"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "epoch",
+        "engine",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "empty_params": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "subscribe_result": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/at"
+        },
+        "coverage": {
+          "$ref": "#/$defs/bounds"
+        },
+        "interaction": {
+          "$ref": "#/$defs/interaction_boundary"
+        },
+        "avatar": {
+          "$ref": "#/$defs/avatar"
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entity"
+          }
+        },
+        "parts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "at",
+        "interaction",
+        "entities",
+        "parts"
+      ],
+      "additionalProperties": false
+    },
+    "choices_params": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
         },
         "offset": {
           "type": "integer",
@@ -689,120 +1820,82 @@
         }
       },
       "required": [
-        "kind",
+        "epoch",
+        "boundary_id",
         "offset",
         "limit"
       ],
       "additionalProperties": false
     },
-    "state": {
+    "choices_result": {
       "type": "object",
       "properties": {
-        "projection": {
-          "$ref": "#/$defs/projection"
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
         },
-        "readiness": {
-          "$ref": "#/$defs/readiness"
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
-        "input_boundary_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "actions": {
+        "choices": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/action"
+            "$ref": "#/$defs/choice"
+          },
+          "maxItems": 200
+        }
+      },
+      "required": [
+        "boundary_id",
+        "total",
+        "choices"
+      ],
+      "additionalProperties": false
+    },
+    "world_cells_params": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "min": {
+          "$ref": "#/$defs/pos"
+        },
+        "max": {
+          "$ref": "#/$defs/pos"
+        }
+      },
+      "required": [
+        "epoch",
+        "min",
+        "max"
+      ],
+      "additionalProperties": false
+    },
+    "world_cells_result": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/at"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cell"
           }
         },
-        "interaction": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/interaction"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "forgotten": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pos"
+          }
         }
       },
       "required": [
-        "projection",
-        "readiness",
-        "input_boundary_id",
-        "actions",
-        "interaction"
-      ],
-      "additionalProperties": false
-    },
-    "snapshot_request": {
-      "type": "object",
-      "properties": {
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "page": {
-          "type": "object",
-          "properties": {
-            "offset": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991
-            },
-            "limit": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 200
-            }
-          },
-          "required": [
-            "offset",
-            "limit"
-          ],
-          "additionalProperties": false
-        }
-      },
-      "required": [
-        "session_epoch",
-        "page"
-      ],
-      "additionalProperties": false
-    },
-    "snapshot": {
-      "type": "object",
-      "properties": {
-        "contract_version": {
-          "const": "1.0"
-        },
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "state_revision": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-          "maxLength": 20,
-          "description": "Canonical decimal uint64, at most 18446744073709551615."
-        },
-        "through_public_sequence": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-          "maxLength": 20,
-          "description": "Canonical decimal uint64, at most 18446744073709551615."
-        },
-        "state": {
-          "$ref": "#/$defs/state"
-        }
-      },
-      "required": [
-        "contract_version",
-        "session_epoch",
-        "state_revision",
-        "through_public_sequence",
-        "state"
+        "at",
+        "cells",
+        "forgotten"
       ],
       "additionalProperties": false
     },
@@ -815,9 +1908,7 @@
               "const": "choose"
             },
             "choice_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+              "$ref": "#/$defs/opaque_id"
             }
           },
           "required": [
@@ -833,9 +1924,7 @@
               "const": "fill"
             },
             "field_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+              "$ref": "#/$defs/opaque_id"
             },
             "value": {
               "type": "string"
@@ -859,9 +1948,7 @@
               "const": "set_count"
             },
             "choice_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+              "$ref": "#/$defs/opaque_id"
             },
             "count": {
               "type": "integer",
@@ -882,18 +1969,16 @@
             "kind": {
               "const": "set_target"
             },
-            "candidate_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+            "pos": {
+              "$ref": "#/$defs/pos"
             },
-            "position": {
-              "$ref": "#/$defs/bubble_coordinate"
+            "candidate_id": {
+              "$ref": "#/$defs/opaque_id"
             }
           },
           "required": [
             "kind",
-            "position"
+            "pos"
           ],
           "additionalProperties": false
         },
@@ -913,12 +1998,10 @@
           "type": "object",
           "properties": {
             "kind": {
-              "const": "invoke_registered_action"
+              "const": "action"
             },
             "action_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+              "$ref": "#/$defs/opaque_id"
             }
           },
           "required": [
@@ -929,37 +2012,36 @@
         }
       ]
     },
-    "command_request": {
+    "submit_params": {
       "type": "object",
       "properties": {
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
         },
-        "based_on": {
+        "expect": {
           "type": "object",
           "properties": {
-            "state_revision": {
-              "type": "string",
-              "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
+            "revision": {
+              "$ref": "#/$defs/counter"
             },
-            "input_boundary_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+            "boundary_id": {
+              "$ref": "#/$defs/opaque_id"
             },
-            "interaction_schema_id": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
+            "schema_id": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/opaque_id"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
-            "state_revision",
-            "input_boundary_id"
+            "revision",
+            "boundary_id",
+            "schema_id"
           ],
           "additionalProperties": false
         },
@@ -968,650 +2050,198 @@
         }
       },
       "required": [
-        "session_epoch",
-        "based_on",
+        "epoch",
+        "expect",
         "operation"
       ],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "operation": {
-                "properties": {
-                  "kind": {
-                    "not": {
-                      "const": "invoke_registered_action"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "based_on": {
-                "required": [
-                  "interaction_schema_id"
-                ]
-              }
-            }
-          }
-        }
-      ]
+      "additionalProperties": false
     },
-    "receipt": {
+    "submit_result": {
       "type": "object",
       "properties": {
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
         },
         "command_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         },
         "stage": {
           "const": "received"
         }
       },
       "required": [
-        "session_epoch",
+        "epoch",
         "command_id",
         "stage"
       ],
       "additionalProperties": false
     },
-    "result_request": {
+    "result_params": {
       "type": "object",
       "properties": {
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
         },
         "command_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         }
       },
       "required": [
-        "session_epoch",
+        "epoch",
         "command_id"
       ],
       "additionalProperties": false
     },
-    "completion": {
-      "type": "object",
-      "properties": {
-        "status": {
-          "const": "next_interaction_boundary"
-        },
-        "state_revision": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-          "maxLength": 20,
-          "description": "Canonical decimal uint64, at most 18446744073709551615."
-        },
-        "through_public_sequence": {
-          "type": "string",
-          "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-          "maxLength": 20,
-          "description": "Canonical decimal uint64, at most 18446744073709551615."
-        },
-        "resync_required": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "status",
-        "state_revision",
-        "through_public_sequence",
-        "resync_required"
-      ],
-      "additionalProperties": false
+    "command_error": {
+      "enum": [
+        "stale_epoch",
+        "stale_revision",
+        "stale_boundary",
+        "stale_interaction_schema",
+        "validation_failed",
+        "not_ready"
+      ]
     },
     "command_result": {
       "type": "object",
       "properties": {
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
         },
         "command_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+          "$ref": "#/$defs/opaque_id"
         },
         "stage": {
           "enum": [
             "received",
             "validated",
             "executing",
-            "rejected",
             "completed",
+            "rejected",
             "interrupted"
           ]
         },
-        "receipt": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "const": "received"
-            }
-          },
-          "required": [
-            "status"
-          ],
-          "additionalProperties": false
+        "error": {
+          "$ref": "#/$defs/command_error"
         },
-        "validation": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "enum": [
-                "pending",
-                "validated",
-                "rejected"
-              ]
-            },
-            "error": {
-              "enum": [
-                "negotiation_failed",
-                "unsupported_capability",
-                "not_ready",
-                "stale_epoch",
-                "stale_revision",
-                "stale_boundary",
-                "stale_interaction_schema",
-                "validation_failed",
-                "command_busy",
-                "unknown_command",
-                "invalid_lifecycle",
-                "resync_required",
-                "resource_limit"
-              ]
-            }
-          },
-          "required": [
-            "status"
-          ],
-          "additionalProperties": false
-        },
-        "execution": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "enum": [
-                "pending",
-                "native_input_delivered"
-              ]
-            }
-          },
-          "required": [
-            "status"
-          ],
-          "additionalProperties": false
-        },
-        "completion": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/completion"
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "at": {
+          "$ref": "#/$defs/at"
         }
       },
       "required": [
-        "session_epoch",
+        "epoch",
         "command_id",
-        "stage",
-        "receipt",
-        "validation",
-        "execution",
-        "completion"
-      ],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "received"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "properties": {
-                  "status": {
-                    "const": "pending"
-                  }
-                }
-              },
-              "execution": {
-                "properties": {
-                  "status": {
-                    "const": "pending"
-                  }
-                }
-              },
-              "completion": {
-                "type": "null"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "validated"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "properties": {
-                  "status": {
-                    "const": "validated"
-                  }
-                }
-              },
-              "execution": {
-                "properties": {
-                  "status": {
-                    "const": "pending"
-                  }
-                }
-              },
-              "completion": {
-                "type": "null"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "executing"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "properties": {
-                  "status": {
-                    "const": "validated"
-                  }
-                }
-              },
-              "execution": {
-                "properties": {
-                  "status": {
-                    "const": "native_input_delivered"
-                  }
-                }
-              },
-              "completion": {
-                "type": "null"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "rejected"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "properties": {
-                  "status": {
-                    "const": "rejected"
-                  }
-                },
-                "required": [
-                  "error"
-                ]
-              },
-              "execution": {
-                "properties": {
-                  "status": {
-                    "const": "pending"
-                  }
-                }
-              },
-              "completion": {
-                "type": "null"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "completed"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "properties": {
-                  "status": {
-                    "const": "validated"
-                  }
-                }
-              },
-              "execution": {
-                "properties": {
-                  "status": {
-                    "const": "native_input_delivered"
-                  }
-                }
-              },
-              "completion": {
-                "$ref": "#/$defs/completion"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "interrupted"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "completion": {
-                "type": "null"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "not": {
-                  "const": "rejected"
-                }
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "not": {
-                  "required": [
-                    "error"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "execution": {
-                "properties": {
-                  "status": {
-                    "const": "native_input_delivered"
-                  }
-                }
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "validation": {
-                "properties": {
-                  "status": {
-                    "const": "validated"
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    "presentation": {
-      "type": "object",
-      "properties": {
-        "group_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
-        },
-        "ordinal": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 2147483647
-        },
-        "count": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 2147483647
-        },
-        "duration_ms": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 2147483647
-        }
-      },
-      "required": [
-        "group_id",
-        "ordinal",
-        "count",
-        "duration_ms"
+        "stage"
       ],
       "additionalProperties": false
     },
-    "public_event": {
+    "snapshot_part": {
       "type": "object",
       "properties": {
-        "contract_version": {
-          "const": "1.0"
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
         },
-        "session_epoch": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "at": {
+          "$ref": "#/$defs/at"
         },
-        "event_id": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 256
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
-        "public_sequence": {
-          "type": "string",
-          "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-          "maxLength": 20,
-          "description": "Canonical decimal uint64, at most 18446744073709551615."
+        "last": {
+          "type": "boolean"
         },
-        "type": {
-          "const": "interaction.replaced"
-        },
-        "state_revision": {
-          "type": "string",
-          "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-          "maxLength": 20,
-          "description": "Canonical decimal uint64, at most 18446744073709551615."
-        },
-        "command_id": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "cause_sequence": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "display": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/presentation"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "payload": {
-          "type": "object",
-          "properties": {
-            "base_state_revision": {
-              "type": "string",
-              "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
-            },
-            "state": {
-              "$ref": "#/$defs/state"
-            }
-          },
-          "required": [
-            "base_state_revision",
-            "state"
-          ],
-          "additionalProperties": false
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cell"
+          }
         }
       },
       "required": [
-        "contract_version",
-        "session_epoch",
-        "event_id",
-        "public_sequence",
-        "type",
-        "state_revision",
-        "command_id",
-        "cause_sequence",
-        "display",
-        "payload"
+        "epoch",
+        "at",
+        "index",
+        "last",
+        "cells"
       ],
       "additionalProperties": false
     },
-    "event_batch": {
+    "events_notification": {
       "type": "object",
       "properties": {
-        "complete": {
-          "const": true
-        },
-        "first_sequence": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "last_sequence": {
-          "anyOf": [
-            {
-              "type": "string",
-              "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
-            },
-            {
-              "type": "null"
-            }
-          ]
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
         },
         "events": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/public_event"
+            "$ref": "#/$defs/event"
           },
-          "maxItems": 8
+          "minItems": 1
         }
       },
       "required": [
-        "complete",
-        "first_sequence",
-        "last_sequence",
+        "epoch",
         "events"
       ],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "events": {
-                "maxItems": 0
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "first_sequence": {
-                "type": "null"
-              },
-              "last_sequence": {
-                "type": "null"
-              }
-            }
-          },
-          "else": {
-            "properties": {
-              "first_sequence": {
-                "type": "string",
-                "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-                "maxLength": 20,
-                "description": "Canonical decimal uint64, at most 18446744073709551615."
-              },
-              "last_sequence": {
-                "type": "string",
-                "pattern": "^([1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-                "maxLength": 20,
-                "description": "Canonical decimal uint64, at most 18446744073709551615."
-              }
-            }
-          }
+      "additionalProperties": false
+    },
+    "command_notification": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "command_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "stage": {
+          "enum": [
+            "validated",
+            "executing",
+            "completed",
+            "rejected",
+            "interrupted"
+          ]
+        },
+        "error": {
+          "$ref": "#/$defs/command_error"
+        },
+        "at": {
+          "$ref": "#/$defs/at"
         }
-      ]
+      },
+      "required": [
+        "epoch",
+        "command_id",
+        "stage"
+      ],
+      "additionalProperties": false
+    },
+    "resync_notification": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "reason": {
+          "enum": [
+            "world_replaced",
+            "overflow"
+          ]
+        },
+        "lost_after": {
+          "$ref": "#/$defs/counter"
+        }
+      },
+      "required": [
+        "epoch",
+        "reason",
+        "lost_after"
+      ],
+      "additionalProperties": false
     },
     "application_error": {
       "type": "object",
@@ -1619,7 +2249,6 @@
         "kind": {
           "enum": [
             "negotiation_failed",
-            "unsupported_capability",
             "not_ready",
             "stale_epoch",
             "stale_revision",
@@ -1633,168 +2262,21 @@
             "resource_limit"
           ]
         },
-        "stage": {
+        "action": {
           "enum": [
-            "negotiation",
-            "receipt",
-            "validation",
-            "execution",
-            "completion"
+            "hello",
+            "subscribe",
+            "retry"
           ]
         },
-        "retryable": {
-          "type": "boolean"
-        },
-        "required_action": {
-          "enum": [
-            "negotiate",
-            "read_snapshot",
-            "retry",
-            "none"
-          ]
-        },
-        "current": {
-          "type": "object",
-          "properties": {
-            "session_epoch": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 256
-            },
-            "state_revision": {
-              "type": "string",
-              "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
-            },
-            "through_public_sequence": {
-              "type": "string",
-              "pattern": "^(0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|1844674407370955[0-0][0-9]{3}|18446744073709551[0-5][0-9]{2}|184467440737095516[0-0][0-9]{1}|1844674407370955161[0-4][0-9]{0}|18446744073709551615)$",
-              "maxLength": 20,
-              "description": "Canonical decimal uint64, at most 18446744073709551615."
-            }
-          },
-          "required": [
-            "session_epoch",
-            "state_revision",
-            "through_public_sequence"
-          ],
-          "additionalProperties": false
+        "at": {
+          "$ref": "#/$defs/at"
         }
       },
       "required": [
-        "kind",
-        "stage",
-        "retryable",
-        "required_action"
+        "kind"
       ],
       "additionalProperties": false
-    },
-    "command_response": {
-      "type": "object",
-      "properties": {
-        "command": {
-          "$ref": "#/$defs/command_result"
-        },
-        "event_batch": {
-          "$ref": "#/$defs/event_batch"
-        }
-      },
-      "required": [
-        "command",
-        "event_batch"
-      ],
-      "additionalProperties": false,
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "command": {
-                "properties": {
-                  "stage": {
-                    "not": {
-                      "const": "completed"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "event_batch": {
-                "properties": {
-                  "events": {
-                    "maxItems": 0
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "command": {
-                "properties": {
-                  "stage": {
-                    "const": "completed"
-                  },
-                  "completion": {
-                    "properties": {
-                      "resync_required": {
-                        "const": false
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "event_batch": {
-                "properties": {
-                  "events": {
-                    "minItems": 1
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "command": {
-                "properties": {
-                  "stage": {
-                    "const": "completed"
-                  },
-                  "completion": {
-                    "properties": {
-                      "resync_required": {
-                        "const": true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "event_batch": {
-                "properties": {
-                  "events": {
-                    "maxItems": 0
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
     }
   }
 }

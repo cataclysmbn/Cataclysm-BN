@@ -1,0 +1,480 @@
+{
+  "valid": [
+    {
+      "name": "hello request",
+      "def": "hello_params",
+      "value": { "versions": ["1.0"], "client": { "name": "bn-deno", "version": "0.1.0" } }
+    },
+    {
+      "name": "hello result",
+      "def": "hello_result",
+      "value": {
+        "version": "1.0",
+        "epoch": "epoch:e7f3",
+        "engine": { "build": "0.9.1-1234-gabc", "mods": ["bn"] },
+        "limits": { "frame_bytes": 1048576, "cells_per_part": 512, "cells_per_query": 4096 }
+      }
+    },
+    { "name": "subscribe request", "def": "empty_params", "value": {} },
+    {
+      "name": "subscribe result at a menu",
+      "def": "subscribe_result",
+      "value": {
+        "at": { "epoch": "epoch:e7f3", "sequence": "0", "revision": "0" },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [{ "id": "UP", "name": "Move up" }],
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "kind": "choices",
+            "allow_cancel": true,
+            "allow_set_count": false,
+            "title": "Cataclysm: Bright Nights",
+            "message": "",
+            "choices": [
+              {
+                "id": "root:0",
+                "label": "New Game",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": true,
+                "columns": []
+              }
+            ],
+            "choice_total": 1,
+            "compat": { "focus": { "choice_id": "root:0" }, "panes": [] }
+          }
+        },
+        "entities": [],
+        "parts": 0
+      }
+    },
+    {
+      "name": "subscribe result in a world",
+      "def": "subscribe_result",
+      "value": {
+        "at": { "epoch": "epoch:e7f3", "sequence": "40", "revision": "31" },
+        "coverage": {
+          "min": { "dim": "", "x": -66, "y": -66, "z": -10 },
+          "max": { "dim": "", "x": 65, "y": 65, "z": 10 }
+        },
+        "interaction": {
+          "boundary_id": "boundary:90",
+          "readiness": {
+            "phase": "waiting_for_input",
+            "game_ready": true,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [],
+          "interaction": null
+        },
+        "avatar": {
+          "id": "e:avatar",
+          "at": { "dim": "", "x": 3, "y": 4, "z": 0 },
+          "name": "Ada",
+          "stats": [{ "id": "hp", "label": "HP", "value": 80 }]
+        },
+        "environment": { "turn": "5184000", "time": "2026-04-01T08:00:00Z", "weather": "clear" },
+        "entities": [
+          {
+            "id": "e:12",
+            "at": { "dim": "", "x": 10, "y": 4, "z": 0 },
+            "known": "visible",
+            "look": { "kind": "monster", "id": "mon_zombie", "glyph": "Z", "color": "light_green" }
+          },
+          {
+            "id": "e:13",
+            "at": { "dim": "", "x": 12, "y": 9, "z": 0 },
+            "known": "sensed",
+            "sense": "sound"
+          }
+        ],
+        "parts": 1
+      }
+    },
+    {
+      "name": "snapshot part",
+      "def": "snapshot_part",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "at": { "epoch": "epoch:e7f3", "sequence": "40", "revision": "31" },
+        "index": 0,
+        "last": true,
+        "cells": [
+          {
+            "at": { "dim": "", "x": 3, "y": 4, "z": 0 },
+            "known": "visible",
+            "terrain": { "kind": "terrain", "id": "t_dirt", "glyph": ".", "color": "brown" },
+            "items": [{ "kind": "item", "id": "rock", "glyph": "*", "color": "light_gray" }],
+            "light": 4,
+            "memory": {
+              "terrain": { "kind": "terrain", "id": "t_dirt", "glyph": ".", "color": "brown" }
+            }
+          },
+          {
+            "at": { "dim": "", "x": 2, "y": 4, "z": 0 },
+            "known": "remembered",
+            "memory": {
+              "terrain": { "kind": "terrain", "id": "t_grass", "glyph": "\"", "color": "green" }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "choices request",
+      "def": "choices_params",
+      "value": { "epoch": "epoch:e7f3", "boundary_id": "boundary:90", "offset": 200, "limit": 200 }
+    },
+    {
+      "name": "choices result",
+      "def": "choices_result",
+      "value": {
+        "boundary_id": "boundary:90",
+        "total": 201,
+        "choices": [
+          {
+            "id": "item:201",
+            "label": "rock",
+            "description": "A rock.",
+            "denial": "",
+            "pane_id": "pane:left",
+            "enabled": true,
+            "selectable": true,
+            "selected": false,
+            "columns": [{ "label": "Weight", "value": "0.5 kg" }],
+            "available_count": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "submit choose",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": { "revision": "31", "boundary_id": "boundary:90", "schema_id": "schema:ab" },
+        "operation": { "kind": "choose", "choice_id": "root:0" }
+      }
+    },
+    {
+      "name": "submit movement action at a boundary without interaction",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": { "revision": "31", "boundary_id": "boundary:90", "schema_id": null },
+        "operation": { "kind": "action", "action_id": "RIGHT" }
+      }
+    },
+    {
+      "name": "submit absolute target",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": { "revision": "31", "boundary_id": "boundary:91", "schema_id": "schema:cd" },
+        "operation": {
+          "kind": "set_target",
+          "pos": { "dim": "", "x": 9, "y": 4, "z": 0 },
+          "candidate_id": "target:1"
+        }
+      }
+    },
+    {
+      "name": "submit fill",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": { "revision": "31", "boundary_id": "boundary:91", "schema_id": "schema:ef" },
+        "operation": { "kind": "fill", "field_id": "name", "value": "Ada", "submit": false }
+      }
+    },
+    {
+      "name": "submit receipt",
+      "def": "submit_result",
+      "value": { "epoch": "epoch:e7f3", "command_id": "c:5", "stage": "received" }
+    },
+    {
+      "name": "command notification completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:5",
+        "stage": "completed",
+        "at": { "epoch": "epoch:e7f3", "sequence": "42", "revision": "33" }
+      }
+    },
+    {
+      "name": "command notification rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:6",
+        "stage": "rejected",
+        "error": "stale_revision"
+      }
+    },
+    {
+      "name": "command result after a lost notification",
+      "def": "command_result",
+      "value": { "epoch": "epoch:e7f3", "command_id": "c:5", "stage": "executing" }
+    },
+    {
+      "name": "walk one step",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "cells.seen",
+            "command": "c:5",
+            "changes": {
+              "cells": [
+                {
+                  "at": { "dim": "", "x": 4, "y": 4, "z": 0 },
+                  "known": "visible",
+                  "terrain": { "kind": "terrain", "id": "t_dirt", "glyph": ".", "color": "brown" }
+                }
+              ],
+              "forgotten": [{ "dim": "", "x": -66, "y": 4, "z": 0 }],
+              "entities": [
+                {
+                  "id": "e:12",
+                  "at": { "dim": "", "x": 10, "y": 4, "z": 0 },
+                  "known": "visible",
+                  "look": {
+                    "kind": "monster",
+                    "id": "mon_zombie",
+                    "glyph": "Z",
+                    "color": "light_green"
+                  }
+                }
+              ],
+              "gone": [{ "id": "e:13", "reason": "lost_sight" }],
+              "avatar": {
+                "id": "e:avatar",
+                "at": { "dim": "", "x": 4, "y": 4, "z": 0 },
+                "name": "Ada",
+                "stats": []
+              }
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "33",
+            "type": "interaction.changed",
+            "command": "c:5",
+            "changes": {
+              "interaction": {
+                "boundary_id": "boundary:91",
+                "readiness": {
+                  "phase": "waiting_for_input",
+                  "game_ready": true,
+                  "accepts_interaction_commands": true,
+                  "accepts_registered_actions": true
+                },
+                "actions": [],
+                "interaction": null
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "thrown grenade slice",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "43",
+            "revision": "34",
+            "type": "item.thrown",
+            "command": "c:6",
+            "data": {
+              "projectile": "p:1",
+              "look": { "kind": "item", "id": "grenade_act", "glyph": "*", "color": "green" },
+              "by": "e:avatar",
+              "from": { "dim": "", "x": 3, "y": 4, "z": 0 },
+              "to": { "dim": "", "x": 9, "y": 4, "z": 0 }
+            }
+          },
+          {
+            "sequence": "44",
+            "revision": "34",
+            "type": "projectile.moved",
+            "cause": "43",
+            "display": { "group": "p:1", "duration_ms": 60 },
+            "data": {
+              "projectile": "p:1",
+              "path": [{ "dim": "", "x": 4, "y": 4, "z": 0 }, { "dim": "", "x": 5, "y": 4, "z": 0 }]
+            }
+          },
+          {
+            "sequence": "45",
+            "revision": "34",
+            "type": "sound.heard",
+            "data": { "text": "Tick.", "volume": 20 }
+          },
+          {
+            "sequence": "46",
+            "revision": "34",
+            "type": "explosion.blast",
+            "cause": "43",
+            "display": { "group": "x:1", "duration_ms": 40 },
+            "data": { "explosion": "x:1", "cells": [{ "dim": "", "x": 8, "y": 4, "z": 0 }] }
+          }
+        ]
+      }
+    },
+    {
+      "name": "resync after world replacement",
+      "def": "resync_notification",
+      "value": { "epoch": "epoch:e7f3", "reason": "world_replaced", "lost_after": "977" }
+    },
+    {
+      "name": "stale submit error",
+      "def": "application_error",
+      "value": {
+        "kind": "stale_revision",
+        "action": "subscribe",
+        "at": { "epoch": "epoch:e7f3", "sequence": "42", "revision": "33" }
+      }
+    },
+    {
+      "name": "world cells query",
+      "def": "world_cells_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "min": { "dim": "", "x": 0, "y": 0, "z": 0 },
+        "max": { "dim": "", "x": 8, "y": 8, "z": 0 }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "bubble coordinate in a target",
+      "def": "submit_params",
+      "why": "coordinates are absolute map squares with a dimension",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": { "revision": "31", "boundary_id": "boundary:91", "schema_id": "schema:cd" },
+        "operation": {
+          "kind": "set_target",
+          "pos": {
+            "space": "reality_bubble_map_square",
+            "frame_id": "boundary:91",
+            "x": 9,
+            "y": 4,
+            "z": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "position without a dimension",
+      "def": "pos",
+      "why": "dim is required",
+      "value": { "x": 1, "y": 2, "z": 0 }
+    },
+    {
+      "name": "unknown event type",
+      "def": "events_notification",
+      "why": "types form a closed catalogue",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [{ "sequence": "41", "revision": "32", "type": "monster.exploded" }]
+      }
+    },
+    {
+      "name": "missing epoch on events",
+      "def": "events_notification",
+      "why": "every stream position names its epoch",
+      "value": { "events": [{ "sequence": "41", "revision": "32", "type": "interaction.changed" }] }
+    },
+    {
+      "name": "missing epoch on a command",
+      "def": "submit_params",
+      "why": "submit names its epoch",
+      "value": {
+        "expect": { "revision": "31", "boundary_id": "boundary:90", "schema_id": null },
+        "operation": { "kind": "cancel" }
+      }
+    },
+    {
+      "name": "numeric sequence",
+      "def": "events_notification",
+      "why": "counters are decimal strings",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [{ "sequence": 41, "revision": "32", "type": "interaction.changed" }]
+      }
+    },
+    {
+      "name": "typed event without its data",
+      "def": "events_notification",
+      "why": "item.thrown requires data",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [{ "sequence": "41", "revision": "32", "type": "item.thrown" }]
+      }
+    },
+    {
+      "name": "state-only event carrying data",
+      "def": "events_notification",
+      "why": "interaction.changed has no data",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          { "sequence": "41", "revision": "32", "type": "interaction.changed", "data": {} }
+        ]
+      }
+    },
+    {
+      "name": "choice window above the limit",
+      "def": "choices_params",
+      "why": "limit is at most 200",
+      "value": { "epoch": "epoch:e7f3", "boundary_id": "boundary:90", "offset": 0, "limit": 201 }
+    },
+    {
+      "name": "removed projection member",
+      "def": "subscribe_result",
+      "why": "no page or projection identity exists",
+      "value": {
+        "at": { "epoch": "epoch:e7f3", "sequence": "0", "revision": "0" },
+        "projection": { "kind": "interaction_choices", "offset": 0, "limit": 100 },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [],
+          "interaction": null
+        },
+        "entities": [],
+        "parts": 0
+      }
+    },
+    {
+      "name": "received as a notification stage",
+      "def": "command_notification",
+      "why": "received is the submit result, never a notification",
+      "value": { "epoch": "epoch:e7f3", "command_id": "c:5", "stage": "received" }
+    }
+  ]
+}
