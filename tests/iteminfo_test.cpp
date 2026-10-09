@@ -809,6 +809,17 @@ TEST_CASE("nutrients in food", "[item][iteminfo][food]") {
     }
 }
 
+TEST_CASE("healthy modifier in food", "[item][iteminfo][food]") {
+    clear_all_state();
+    iteminfo_query q = q_vec({iteminfo_parts::FOOD_HEALTHY});
+
+    SECTION("nonzero healthy value is shown") {
+        test_info_equals("icecream", q, "--\nHealthy: <color_c_yellow>-1</color>\n");
+    }
+
+    SECTION("zero healthy value is hidden") { test_info_equals("water_clean", q, ""); }
+}
+
 TEST_CASE("food freshness and lifetime", "[item][iteminfo][food]") {
     clear_all_state();
     iteminfo_query q = q_vec({iteminfo_parts::FOOD_ROT, iteminfo_parts::FOOD_ROT_STORAGE});
