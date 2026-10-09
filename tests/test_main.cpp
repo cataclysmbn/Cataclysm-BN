@@ -30,6 +30,7 @@
 #include "distribution_grid.h"
 #include "filesystem.h"
 #include "game.h"
+#include "game_constants.h"
 #include "init.h"
 #include "language.h"
 #include "loading_ui.h"
@@ -37,6 +38,7 @@
 #include "options.h"
 #include "output.h"
 #include "overmap/overmap_special.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "path_info.h"
 #include "pldata.h"
 #include "rng.h"
@@ -55,7 +57,9 @@
 #include <cstring>
 #include <ctime>
 #include <exception>
+#include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -299,8 +303,80 @@ static auto extract_user_dir(std::vector<const char*>& arg_vec) -> std::string {
     return option_user_dir;
 }
 
+namespace {
+
+/// Global state a test case must leave as it found it, else later tests fail depending on order.
+struct global_snapshot {
+    int reality_bubble_size;
+    int map_size;
+    std::string avatar_dimension;
+    std::string active_dimension;
+    std::map<std::string, std::string> world_default_options;
+
+    auto operator==(const global_snapshot&) const -> bool = default; // *NOPAD*
+};
+
+auto take_global_snapshot() -> global_snapshot {
+    auto options = std::map<std::string, std::string>{};
+    for (const auto& [name, opt] : get_options().get_world_defaults()) {
+        options.emplace(name, opt.getValue(true));
+    }
+    return {
+        .reality_bubble_size = g_reality_bubble_size,
+        .map_size = get_map().getmapsize(),
+        .avatar_dimension = get_avatar().get_dimension().str(),
+        .active_dimension = g_active_dimension_id.str(),
+        .world_default_options = std::move(options),
+    };
+}
+
+/// Describes every field that differs, as `name: before -> after`.
+auto describe_leaks(const global_snapshot& before, const global_snapshot& after) -> std::string {
+    auto out = std::string{};
+    const auto report =
+        [&](const std::string& name, const std::string& was, const std::string& now) {
+            if (was != now) { out += string_format("\n  %s: '%s' -> '%s'", name, was, now); }
+        };
+    report("g_reality_bubble_size", std::to_string(before.reality_bubble_size),
+           std::to_string(after.reality_bubble_size));
+    report("get_map().getmapsize()", std::to_string(before.map_size),
+           std::to_string(after.map_size));
+    report("get_avatar().get_dimension()", before.avatar_dimension, after.avatar_dimension);
+    report("g_active_dimension_id", before.active_dimension, after.active_dimension);
+    for (const auto& [name, value] : after.world_default_options) {
+        const auto it = before.world_default_options.find(name);
+        report("option " + name, it == before.world_default_options.end() ? "<unset>" : it->second,
+               value);
+    }
+    return out;
+}
+
+} // namespace
+
 struct CataListener: Catch::TestEventListenerBase {
     using TestEventListenerBase::TestEventListenerBase;
+
+    void testCaseStarting(Catch::TestCaseInfo const& testInfo) override {
+        TestEventListenerBase::testCaseStarting(testInfo);
+        test_name = testInfo.name;
+        before = take_global_snapshot();
+    }
+
+    // The test case's own section ends after its body but before the case is tallied, so a
+    // failure reported here is attributed to the leaking test case itself.
+    void sectionEnded(Catch::SectionStats const& sectionStats) override {
+        TestEventListenerBase::sectionEnded(sectionStats);
+        if (sectionStats.sectionInfo.name != test_name || !before) { return; }
+        const auto leaks = describe_leaks(*before, take_global_snapshot());
+        before.reset();
+        if (leaks.empty()) { return; }
+        const auto message = "test case leaked global state:" + leaks;
+        auto reaction = Catch::AssertionReaction{};
+        Catch::getResultCapture().handleMessage(
+            Catch::AssertionInfo{"LEAK_CHECK", sectionStats.sectionInfo.lineInfo, "",
+                                 Catch::ResultDisposition::ContinueOnFailure},
+            Catch::ResultWas::ExplicitFailure, message, reaction);
+    }
 
     void sectionStarting(Catch::SectionInfo const& sectionInfo) override {
         TestEventListenerBase::sectionStarting(sectionInfo);
@@ -322,6 +398,10 @@ struct CataListener: Catch::TestEventListenerBase {
 
         return TestEventListenerBase::assertionEnded(assertionStats);
     }
+
+private:
+    std::string test_name;
+    std::optional<global_snapshot> before;
 };
 
 CATCH_REGISTER_LISTENER(CataListener)
