@@ -100,6 +100,18 @@ without per-frame requests; a slow consumer cannot grow engine memory past the d
 
 Map accessibility is explicit: cursor-cell description, look-around and message log exposed as text nodes.
 
+## Replays
+
+Two kinds, with different lifetimes:
+
+- **Input replay** (`--replay-record`/`--replay-play`, exists): input recording re-simulated from a seed. Valid
+  only for the same build, data, mods and options; any gameplay change can make it diverge. Use it for
+  determinism regression tests, same-build bug reproduction and cross-client equivalence (GOAL M6). Record and
+  play within the same run instead of keeping recordings as long-lived fixtures.
+- **Event replay** (after Phase 2): the ordered snapshot + event stream written to a file and played by any client
+  without the engine. It survives gameplay changes as long as the protocol version is supported, like GOTV demos
+  or ttyrec. This is the replay players watch.
+
 ## Later packages (unchanged scope from GOAL)
 
 P1 description bounds and reuse (needs an API decision: page-aware providers vs. test oracle change), P2
