@@ -3701,7 +3701,9 @@ void npc::set_attitude( npc_attitude new_attitude )
              name, npc_attitude_id( attitude ), npc_attitude_id( new_attitude ) );
     attitude_group new_group = get_attitude_group( new_attitude );
     attitude_group old_group = get_attitude_group( attitude );
-    if( new_group != old_group && !is_fake() && g->u.sees( *this ) ) {
+    // NPCs temporarily switch to NPCATT_ACTIVITY to perform activities
+    const auto is_activity = attitude == NPCATT_ACTIVITY || new_attitude == NPCATT_ACTIVITY;
+    if( new_group != old_group && !is_activity && !is_fake() && g->u.sees( *this ) ) {
         switch( new_group ) {
             case attitude_group::hostile:
                 add_msg_if_npc( m_bad, _( "<npcname> gets angry!" ) );
