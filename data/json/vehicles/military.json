@@ -119,7 +119,7 @@
       {
         "y": 1,
         "x": 3,
-        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 10, 100 ] }, "turret_autoloader" ]
+        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 1, 10 ] }, "turret_autoloader" ]
       },
       { "y": 1, "x": 3, "parts": [ "seat", "seatbelt_heavyduty" ] },
       { "y": 0, "x": 3, "parts": [ "hdframe_vertical_2", "stowboard_vertical", "hdroof", "NBC_seal" ] },
@@ -213,7 +213,7 @@
       {
         "y": 1,
         "x": 3,
-        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 10, 100 ] }, "turret_autoloader" ]
+        "parts": [ "turret_mount", { "part": "mounted_browning", "ammo": 60, "ammo_qty": [ 1, 10 ] }, "turret_autoloader" ]
       },
       { "y": 1, "x": 3, "parts": [ "seat", "seatbelt_heavyduty" ] },
       { "y": 0, "x": 3, "parts": [ "hdframe_vertical_2", "stowboard_vertical", "hdroof", "NBC_seal" ] },
@@ -569,7 +569,7 @@
         "x": -1,
         "parts": [
           "turret_mount",
-          { "ammo_types": [ "762_51" ], "part": "mounted_m240", "ammo": 60, "ammo_qty": [ 10, 100 ] },
+          { "ammo_types": [ "762_51" ], "part": "mounted_m240", "ammo": 60, "ammo_qty": [ 3, 30 ] },
           "turret_autoloader"
         ]
       },
@@ -853,7 +853,7 @@
           "hdroof",
           "NBC_seal",
           "turret_mount",
-          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 1, 10 ] },
           "turret_autoloader",
           "controls_turret"
         ]
@@ -1498,7 +1498,7 @@
           "seatbelt_heavyduty",
           "cam_control",
           "turret_mount_manual_steel",
-          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 1, 10 ] },
           "hdroof",
           "NBC_seal"
         ]
@@ -1922,7 +1922,7 @@
           "seatbelt_heavyduty",
           "cam_control",
           "turret_mount",
-          { "part": "mounted_m240", "ammo": 80, "ammo_types": [ "762_51" ], "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_m240", "ammo": 80, "ammo_types": [ "762_51" ], "ammo_qty": [ 3, 30 ] },
           "hdroof",
           "NBC_seal"
         ]
@@ -2006,7 +2006,7 @@
           "cam_control",
           "controls_electronic",
           "turret_mount",
-          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 1, 10 ] },
           "hdroof",
           "NBC_seal"
         ]
@@ -2188,7 +2188,7 @@
           "cam_control",
           "controls_electronic",
           "turret_mount",
-          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 1, 10 ] },
           "hdroof",
           "NBC_seal"
         ]
@@ -2345,7 +2345,7 @@
           "hdframe_vertical_2",
           "hdboard_ne",
           "turret_mount",
-          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 10, 100 ] },
+          { "part": "mounted_browning", "ammo": 80, "ammo_qty": [ 1, 10 ] },
           "controls_turret",
           "plating_military"
         ]
