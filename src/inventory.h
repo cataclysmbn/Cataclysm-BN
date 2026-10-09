@@ -19,6 +19,8 @@
 #include "visitable.h"
 
 class Character;
+struct inventory_from_map_request;
+struct inventory_from_map_points_request;
 class JsonIn;
 class JsonOut;
 class item_stack;
@@ -138,6 +140,8 @@ class inventory : public temp_visitable<inventory>
         void form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zone_pts,
                              const Character *pl = nullptr,
                              bool assign_invlet = true );
+        auto form_from_map( const inventory_from_map_request &request ) -> void;
+        auto form_from_map_points( const inventory_from_map_points_request &request ) -> void;
         void form_from_map( const tripoint_bub_ms &origin, int range, const Character *pl = nullptr,
                             bool assign_invlet = true,
                             bool clear_path = true );

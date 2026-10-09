@@ -790,6 +790,7 @@ class npc : public player
                                        npc_factions::relationship flag ) const;
         void set_fac( const faction_id &id );
         faction *get_faction() const override;
+        auto get_faction_id_for_display() const -> std::optional<faction_id> override;
         faction_id get_fac_id() const;
         /** Teleport the NPC to a random tile within the given absolute submap. */
         void spawn_at_sm( const tripoint_abs_sm &p );

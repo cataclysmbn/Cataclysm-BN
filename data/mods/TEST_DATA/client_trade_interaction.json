@@ -1,0 +1,17 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_CLIENT_TRADE",
+    "dynamic_line": "A real native trade can return to this conversation.",
+    "responses": [
+      { "text": "Open native trade.", "topic": "TALK_TEST_CLIENT_TRADE_RETURN", "effect": "start_trade" },
+      { "text": "Goodbye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_TEST_CLIENT_TRADE_RETURN",
+    "dynamic_line": "The native trade window has closed.",
+    "responses": [ { "text": "Back to the conversation.", "topic": "TALK_NONE" } ]
+  }
+]

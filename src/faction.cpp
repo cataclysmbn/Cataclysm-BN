@@ -26,6 +26,7 @@
 #include "type_id.h"
 #include "ui_manager.h"
 
+#include <algorithm>
 #include <bitset>
 #include <cstdlib>
 #include <limits>
@@ -418,6 +419,50 @@ faction *faction_manager::add_new_faction( const std::string &name_new, const fa
     return nullptr;
 }
 
+namespace
+{
+
+auto validate_faction_from_template( faction &value, const faction_id &id ) -> void
+{
+    namespace ranges = std::ranges;
+    const auto found = ranges::find( npc_factions::all_templates, id, &faction_template::id );
+    if( found != npc_factions::all_templates.end() ) {
+        value.currency = found->currency;
+        value.lone_wolf_faction = found->lone_wolf_faction;
+        value.name = found->name;
+        value.desc = found->desc;
+        value.mon_faction = found->mon_faction;
+        value.epilogue_data = found->epilogue_data;
+        for( const auto &relation : found->relations ) {
+            value.relations.try_emplace( relation.first, relation.second );
+        }
+    }
+    value.validated = true;
+}
+
+} // namespace
+
+auto faction_manager::get_for_display( const faction_id &id ) const -> std::optional<faction>
+{
+    namespace ranges = std::ranges;
+    const auto effective_id = id.is_null() ? faction_id( "no_faction" ) : id;
+    const auto stored = factions.find( effective_id );
+    if( stored != factions.end() ) {
+        auto result = stored->second;
+        if( !result.validated ) {
+            validate_faction_from_template( result, effective_id );
+        }
+        return result;
+    }
+    const auto found = ranges::find( npc_factions::all_templates, effective_id, &faction_template::id );
+    if( found == npc_factions::all_templates.end() ) {
+        return std::nullopt;
+    }
+    auto result = faction( *found );
+    result.validated = true;
+    return result;
+}
+
 faction *faction_manager::get( const faction_id &id, const bool complain )
 {
     if( id.is_null() ) {
@@ -426,23 +471,7 @@ faction *faction_manager::get( const faction_id &id, const bool complain )
     for( auto &elem : factions ) {
         if( elem.first == id ) {
             if( !elem.second.validated ) {
-                for( const faction_template &fac_temp : npc_factions::all_templates ) {
-                    if( fac_temp.id == id ) {
-                        elem.second.currency = fac_temp.currency;
-                        elem.second.lone_wolf_faction = fac_temp.lone_wolf_faction;
-                        elem.second.name = fac_temp.name;
-                        elem.second.desc = fac_temp.desc;
-                        elem.second.mon_faction = fac_temp.mon_faction;
-                        elem.second.epilogue_data = fac_temp.epilogue_data;
-                        for( const auto &rel_data : fac_temp.relations ) {
-                            if( !elem.second.relations.contains( rel_data.first ) ) {
-                                elem.second.relations[rel_data.first] = rel_data.second;
-                            }
-                        }
-                        break;
-                    }
-                }
-                elem.second.validated = true;
+                validate_faction_from_template( elem.second, id );
             }
             return &elem.second;
         }

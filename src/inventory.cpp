@@ -3,6 +3,10 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
+#include "crafting_inventory_request.h"
+#include "item_preview.h"
+#include "ownership_observation.h"
+#include "water_source.h"
 #include "damage.h"
 #include "debug.h"
 #include "diary.h"
@@ -468,6 +472,16 @@ void inventory::form_from_map( map &m, const tripoint_bub_ms &origin, int range,
                                bool assign_invlet,
                                bool clear_path )
 {
+    form_from_map( { .world = m, .origin = origin, .radius = range, .actor = pl,
+                     .assign_invlet = assign_invlet, .clear_path = clear_path } );
+}
+
+auto inventory::form_from_map( const inventory_from_map_request &request ) -> void
+{
+    auto &m = request.world;
+    const auto &origin = request.origin;
+    const auto range = request.radius;
+    const auto clear_path = request.clear_path;
     // populate a grid of spots that can be reached
     std::vector<tripoint_bub_ms> reachable_pts = {};
     // If we need a clear path we care about the reachability of points
@@ -480,13 +494,29 @@ void inventory::form_from_map( map &m, const tripoint_bub_ms &origin, int range,
             reachable_pts.emplace_back( p );
         }
     }
-    form_from_map( m, reachable_pts, pl, assign_invlet );
+    form_from_map_points( { .world = m, .points = std::move( reachable_pts ), .actor = request.actor,
+                            .assign_invlet = request.assign_invlet, .observation = request.observation } );
 }
 
 //TODO!: check that not stacking the crafting inventory works ok
 void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const Character *pl,
                                bool assign_invlet )
 {
+    form_from_map_points( { .world = m, .points = std::move( pts ), .actor = pl,
+                            .assign_invlet = assign_invlet } );
+}
+
+auto inventory::form_from_map_points( const inventory_from_map_points_request &request ) -> void
+{
+    auto &m = request.world;
+    const auto &pts = request.points;
+    const auto *pl = request.actor;
+    const auto assign_invlet = request.assign_invlet;
+    const auto spawn_synthetic = [&request]( const item_preview_request & spawn_request ) -> item
+    & { // *NOPAD*
+        return request.observation ? *item::spawn_for_display( spawn_request ) :
+        *item::spawn_temporary( spawn_request.type, spawn_request.turn, spawn_request.charges );
+    };
     const time_point bday = calendar::start_of_cataclysm;
     std::unordered_map<const vehicle *, std::unordered_set<std::string>> checked_veh_tools;
     bool has_faucet = false;
@@ -500,7 +530,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
             const std::vector<itype> tool_list = f.crafting_pseudo_item_types();
             if( !tool_list.empty() ) {
                 for( const itype &type : tool_list ) {
-                    item &furn_item = *item::spawn_temporary( type.get_id(), calendar::turn, 0 );
+                    auto &furn_item = spawn_synthetic( { .type = &*type.get_id(), .charges = 0 } );
                     furn_item.set_flag( flag_PSEUDO );
                     const itype_id &ammo = furn_item.ammo_default();
                     if( furn_item.has_flag( flag_USES_GRID_POWER ) ) {
@@ -519,22 +549,28 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
             for( auto &i : m.i_at( p ) ) {
                 // if it's *the* player requesting this from from map inventory
                 // then don't allow items owned by another faction to be factored into recipe components etc.
-                if( pl && !i->is_owned_by( *pl, true ) && i->get_owner()->likes_u >= -10 ) {
+                if( pl && ( request.observation ? !item_available_for_crafting_observation( *i, *pl ) :
+                            !i->is_owned_by( *pl, true ) && i->get_owner()->likes_u >= -10 ) ) {
                     continue;
                 }
                 if( allow_liquids || !i->made_of( LIQUID ) ) {
-                    add_item_by_items_type_cache( *i, false, assign_invlet, false );
+                    add_item_by_items_type_cache( *i, request.observation, assign_invlet && !request.observation,
+                                                  false );
                 }
             }
         }
         // Kludges for now!
         if( m.has_nearby_fire( p, 0 ) ) {
-            item &fire = *item::spawn_temporary( "fire", bday );
+            auto &fire = spawn_synthetic( { .type = &*itype_id( "fire" ), .turn = bday } );
             fire.charges = 1;
             add_item_by_items_type_cache( fire, false, true, false );
         }
         // Handle any water from infinite map sources.
-        detached_ptr<item> water = m.water_from( p );
+        const auto water_source = request.observation ? m.water_source_at( p ) : std::nullopt;
+        auto water = request.observation ?
+                     ( water_source ? item::spawn_for_display( { .type = &*water_source->type,
+                             .turn = water_source->birthday, .charges = item::INFINITE_CHARGES } ) :
+                       detached_ptr<item> {} ) : m.water_from( p );
         if( water ) {
             add_item_by_items_type_cache( *water, false, true, false );
         }
@@ -542,16 +578,11 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
         // crafting
         if( m.furn( p ).obj().examine == &iexamine::toilet ) {
             // get water charges at location
-            auto toilet = m.i_at( p );
-            item *waterp = nullptr;
-            for( auto candidate = toilet.begin(); candidate != toilet.end(); ++candidate ) {
-                if( ( *candidate )->typeId() == itype_water ) {
-                    waterp = *candidate;
-                    break;
-                }
-            }
-            if( waterp != nullptr && waterp->charges > 0 ) {
-                add_item_by_items_type_cache( *waterp, false, true, false );
+            const auto toilet = m.i_at( p );
+            const auto water = std::ranges::find_if( toilet,
+            []( const auto * candidate ) { return candidate->typeId() == itype_water; } );
+            if( water != toilet.end() && ( *water )->charges > 0 ) {
+                add_item_by_items_type_cache( **water, request.observation, !request.observation, false );
             }
         }
 
@@ -594,13 +625,13 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
         if( crafterpart ) {
             for( itype_id id : crafterpart->info().craftertools() ) {
                 if( !found_tools.contains( id.str() ) ) {
-                    item &tool = *item::spawn_temporary( id, bday );
+                    auto &tool = spawn_synthetic( { .type = &*id, .turn = bday } );
                     tool.charges = veh->fuel_left( itype_battery, true );
                     tool.item_tags.insert( flag_PSEUDO );
                     if( id == itype_hotplate ) {
                         tool.item_tags.insert( flag_HEATS_FOOD );
                     }
-                    add_item_by_items_type_cache( tool, false );
+                    add_item_by_items_type_cache( tool, false, true, !request.observation );
                     found_tools.insert( id.str() );
                 }
             }
@@ -608,7 +639,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
 
         if( faupart && !has_faucet ) {
             for( const auto &it : veh->fuels_left() ) {
-                item &fuel = *item::spawn_temporary( it.first, bday );
+                auto &fuel = spawn_synthetic( { .type = &*it.first, .turn = bday } );
                 if( fuel.made_of( LIQUID ) ) {
                     fuel.charges = it.second;
                     add_item_by_items_type_cache( fuel, false, true, false );
@@ -618,14 +649,13 @@ void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const C
         }
 
         if( autoclavepart && !has_autodoc ) {
-            item &autoclave = *item::spawn_temporary( "autoclave", bday );
+            auto &autoclave = spawn_synthetic( { .type = &*itype_id( "autoclave" ), .turn = bday } );
             autoclave.charges = veh->fuel_left( itype_battery, true );
             autoclave.item_tags.insert( flag_PSEUDO );
-            add_item_by_items_type_cache( autoclave, false );
+            add_item_by_items_type_cache( autoclave, false, true, !request.observation );
             has_autodoc = true;
         }
     }
-    pts.clear();
 }
 
 std::vector<detached_ptr<item>> location_inventory::reduce_stack( const int position,

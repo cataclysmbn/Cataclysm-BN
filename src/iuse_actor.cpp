@@ -43,6 +43,7 @@
 #include "int_id.h"
 #include "inventory.h"
 #include "item.h"
+#include "item_preview.h"
 #include "item_contents.h"
 #include "item_factory.h"
 #include "item_group.h"
@@ -469,7 +470,20 @@ void iuse_transform::finalize( const itype_id & )
 
 void iuse_transform::info( const item &it, std::vector<iteminfo> &dump ) const
 {
-    item &dummy = *item::spawn_temporary( target, calendar::turn, std::max( ammo_qty, 1 ) );
+    info_impl( it, dump, false );
+}
+
+auto iuse_transform::info_for_display( const item &it, std::vector<iteminfo> &dump ) const -> void
+{
+    info_impl( it, dump, true );
+}
+
+auto iuse_transform::info_impl( const item &it, std::vector<iteminfo> &dump,
+                                bool observation ) const -> void
+{
+    auto &dummy = observation ?
+                  *item::spawn_for_display( { .type = &*target, .charges = std::max( ammo_qty, 1 ) } ) :
+                  *item::spawn_temporary( target, calendar::turn, std::max( ammo_qty, 1 ) );
     if( it.has_flag( flag_FIT ) ) {
         dummy.set_flag( flag_FIT );
     }
@@ -481,7 +495,12 @@ void iuse_transform::info( const item &it, std::vector<iteminfo> &dump ) const
 
     const auto *explosion_use = dummy.get_use( "explosion" );
     if( explosion_use != nullptr ) {
-        explosion_use->get_actor_ptr()->info( it, dump );
+        const auto *actor = explosion_use->get_actor_ptr();
+        if( observation ) {
+            actor->info_for_display( it, dump );
+        } else {
+            actor->info( it, dump );
+        }
     }
 }
 
@@ -587,11 +606,26 @@ std::string countdown_actor::get_name() const
 
 void countdown_actor::info( const item &it, std::vector<iteminfo> &dump ) const
 {
+    info_impl( it, dump, false );
+}
+
+auto countdown_actor::info_for_display( const item &it, std::vector<iteminfo> &dump ) const -> void
+{
+    info_impl( it, dump, true );
+}
+
+auto countdown_actor::info_impl( const item &it, std::vector<iteminfo> &dump,
+                                 bool observation ) const -> void
+{
     dump.emplace_back( "TOOL", _( "Countdown: " ),
                        interval > 0 ? interval : it.type->countdown_interval );
     const auto countdown_actor = it.type->countdown_action.get_actor_ptr();
     if( countdown_actor != nullptr ) {
-        countdown_actor->info( it, dump );
+        if( observation ) {
+            countdown_actor->info_for_display( it, dump );
+        } else {
+            countdown_actor->info( it, dump );
+        }
     }
 }
 

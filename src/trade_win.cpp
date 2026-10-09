@@ -12,11 +12,14 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "client_interaction.h"
 #include "color.h"
+#include "drop_token.h"
 #include "game.h"
 #include "input.h"
 #include "ime.h"
 #include "item.h"
+#include "iteminfo_request.h"
 #include "item_category.h"
 #include "item_contents.h"
 #include "item_search.h"
@@ -45,6 +48,78 @@ struct category_range {
     size_t start = 0;
     size_t end = 0;
 };
+
+struct trade_selection_totals {
+    units::volume volume = 0_ml;
+    units::mass weight = 0_gram;
+};
+
+auto trade_storage_kind( const item &candidate ) -> std::string
+{
+    switch( candidate.where() ) {
+        case item_location_type::character:
+            return "inventory";
+        case item_location_type::map:
+            return "ground";
+        case item_location_type::vehicle:
+            return "cargo";
+        case item_location_type::container:
+            return "container";
+        case item_location_type::monster:
+        case item_location_type::invalid:
+            return "mixed";
+    }
+    return "mixed";
+}
+
+auto trade_item_source_identity( const item &candidate ) -> std::string
+{
+    auto position = std::string{ "no-position" };
+    if( candidate.has_position() ) {
+        const auto pos = candidate.abs_pos();
+        position = string_format( "%d:%d:%d", pos.x(), pos.y(), pos.z() );
+    }
+    return string_format( "%d:%s:%s", static_cast<int>( candidate.where() ), position,
+                          candidate.get_owner().str() );
+}
+
+auto trade_item_identity( const item &candidate ) -> std::string
+{
+    const auto &token = *candidate.drop_token;
+    return string_format( "%s:%s:%d:%d:%d:%d:%d:%d", candidate.typeId().str(),
+                          trade_item_source_identity( candidate ),
+                          to_turn<int>( candidate.birthday() ), to_turn<int>( token.turn ),
+                          token.drop_number, token.parent_number, candidate.damage(),
+                          candidate.count_by_charges() ? candidate.charges : 1 );
+}
+
+auto selected_trade_amount( const item_pricing &pricing, const bool is_theirs ) -> int
+{
+    if( pricing.charges > 0 ) {
+        return is_theirs ? pricing.u_charges : pricing.npc_charges;
+    }
+    return is_theirs ? pricing.u_has : pricing.npc_has;
+}
+
+auto available_trade_amount( const item_pricing &pricing ) -> int
+{
+    return pricing.charges > 0 ? pricing.charges : std::max( pricing.count, 1 );
+}
+
+auto trade_pane_storage_kind( const std::vector<item_pricing> &list,
+                              const std::vector<size_t> &filtered ) -> std::string
+{
+    auto result = std::string{};
+    for( const auto list_index : filtered ) {
+        const auto current = trade_storage_kind( *list[list_index].locs.front() );
+        if( result.empty() ) {
+            result = current;
+        } else if( result != current ) {
+            return "mixed";
+        }
+    }
+    return result.empty() ? "inventory" : result;
+}
 
 auto build_page_starts( const std::vector<item_pricing> &list,
                         const std::vector<size_t> &filtered,
@@ -765,6 +840,172 @@ auto trading_window::build_filtered_indices( const std::vector<item_pricing> &li
     | std::ranges::to<std::vector>();
 }
 
+auto trading_window::interaction_snapshot( const npc &np ) const ->
+game_client::interaction_snapshot
+{
+    const auto their_selected = std::ranges::fold_left(
+    state.theirs | std::views::transform( []( const item_pricing & pricing ) {
+        const auto amount = selected_trade_amount( pricing, true );
+        return trade_selection_totals{
+            .volume = pricing.vol * amount,
+            .weight = pricing.weight * amount,
+        };
+    } ), trade_selection_totals{},
+    []( const trade_selection_totals & lhs, const trade_selection_totals & rhs ) {
+        return trade_selection_totals{
+            .volume = lhs.volume + rhs.volume,
+            .weight = lhs.weight + rhs.weight,
+        };
+    } );
+    const auto your_selected = std::ranges::fold_left(
+    state.yours | std::views::transform( []( const item_pricing & pricing ) {
+        const auto amount = selected_trade_amount( pricing, false );
+        return trade_selection_totals{
+            .volume = pricing.vol * amount,
+            .weight = pricing.weight * amount,
+        };
+    } ), trade_selection_totals{},
+    []( const trade_selection_totals & lhs, const trade_selection_totals & rhs ) {
+        return trade_selection_totals{
+            .volume = lhs.volume + rhs.volume,
+            .weight = lhs.weight + rhs.weight,
+        };
+    } );
+    const auto player_free_volume = g->u.volume_capacity() - g->u.volume_carried() +
+                                    your_selected.volume - their_selected.volume;
+    const auto player_free_weight = g->u.weight_capacity() - g->u.weight_carried() +
+                                    your_selected.weight - their_selected.weight;
+    const auto balance_label = np.will_exchange_items_freely() ? _( "Exchange" ) :
+                               string_format( state.your_balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),
+                                       format_money( std::abs( state.your_balance ) ) );
+    auto result = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::inventory,
+        .title = string_format( _( "Trading with %s" ), np.disp_name() ),
+        .message = string_format( _( "%s | Balance acceptable: %s" ), balance_label,
+                                  npc_trading::npc_will_accept_trade( state, np ) ? _( "yes" ) : _( "no" ) ),
+        .allow_cancel = true,
+        .allow_set_count = true,
+    };
+    const auto npc_position = np.abs_pos();
+    const auto npc_pane_id = game_client::opaque_interaction_id(
+                                 "trade-pane", {"npc", np.name, np.get_fac_id().str(),
+                                         std::to_string( npc_position.x() ),
+                                         std::to_string( npc_position.y() ),
+                                         std::to_string( npc_position.z() )
+                                               } );
+    const auto player_pane_id = game_client::opaque_interaction_id( "trade-pane", {"player"} );
+    const auto capacity_description = []( const units::mass weight,
+    const units::volume volume ) -> std::string {
+        return string_format( _( "Free capacity: %.2f %s, %.2f %s" ),
+                              convert_weight( weight ), weight_units(),
+                              convert_volume( to_milliliter( volume ) ), volume_units_abbr() );
+    };
+    result.panes = {
+        {
+            .id = npc_pane_id,
+            .label = np.disp_name(),
+            .role = "npc",
+            .area_id = game_client::opaque_interaction_id( "trade-party", {npc_pane_id} ),
+            .area_label = _( "NPC items" ),
+            .area_description = capacity_description( state.weight_left, state.volume_left ),
+            .filter = them_filter,
+            .storage_kind = trade_pane_storage_kind( state.theirs, them_filtered ),
+        },
+        {
+            .id = player_pane_id,
+            .label = _( "You" ),
+            .role = "player",
+            .area_id = game_client::opaque_interaction_id( "trade-party", {player_pane_id} ),
+            .area_label = _( "Player items" ),
+            .area_description = capacity_description( player_free_weight, player_free_volume ),
+            .filter = you_filter,
+            .storage_kind = trade_pane_storage_kind( state.yours, you_filtered ),
+        },
+    };
+
+    struct append_trade_choices_options {
+        const std::vector<item_pricing> &list;
+        const std::vector<size_t> &filtered;
+        const std::string &pane_id;
+        std::string role;
+        bool is_theirs;
+        size_t cursor;
+    };
+    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
+    const auto append_choices = [&]( const append_trade_choices_options & opts ) -> void {
+        for( const auto visible_index : std::views::iota( std::size_t{0}, opts.filtered.size() ) )
+        {
+            const auto &pricing = opts.list[opts.filtered[visible_index]];
+            const auto &candidate = *pricing.locs.front();
+            const auto storage_kind = trade_storage_kind( candidate );
+            const auto source_identity = trade_item_source_identity( candidate );
+            const auto area_id = game_client::opaque_interaction_id(
+            "trade-area", {opts.role, source_identity} );
+            auto identity = std::vector<std::string> {
+                opts.pane_id, opts.role, source_identity,
+                candidate.typeId().str(), std::to_string( pricing.locs.size() )
+            };
+            std::ranges::transform( pricing.locs, std::back_inserter( identity ),
+            []( const item * member ) { return trade_item_identity( *member ); } );
+            const auto base_id = game_client::opaque_interaction_id( "trade-item", identity );
+            identity.push_back( std::to_string( identity_counts[base_id]++ ) );
+            const auto selected_amount = selected_trade_amount( pricing, opts.is_theirs );
+            const auto available_amount = available_trade_amount( pricing );
+            result.choices.push_back( {
+                .id = game_client::opaque_interaction_id( "trade-item", identity ),
+                .label = candidate.display_name( available_amount ),
+                .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
+                .pane_id = opts.pane_id,
+                .area_id = area_id,
+                .storage_kind = storage_kind,
+                .enabled = true,
+                .selectable = true,
+                .selected = selected_amount > 0,
+                .highlighted = focus_them == opts.is_theirs && visible_index == opts.cursor,
+                .columns = {
+                    {.label = "Type", .value = candidate.typeId().str()},
+                    {.label = "Party", .value = opts.role},
+                    {.label = "Source", .value = storage_kind},
+                    {.label = "Unit price", .value = format_money( pricing.price )},
+                    {.label = "Available", .value = std::to_string( available_amount )},
+                    {.label = "Selected", .value = std::to_string( selected_amount )},
+                    {
+                        .label = "Weight",
+                        .value = string_format( "%.2f %s", convert_weight( pricing.weight ),
+                                                weight_units() )
+                    },
+                    {
+                        .label = "Volume",
+                        .value = string_format( "%.2f %s",
+                                                convert_volume( to_milliliter( pricing.vol ) ),
+                                                volume_units_abbr() )
+                    },
+                },
+                .selected_count = static_cast<std::uint64_t>( selected_amount ),
+                .minimum_count = 0,
+                .available_count = static_cast<std::uint64_t>( available_amount ),
+            } );
+        }
+    };
+    append_choices( {
+        .list = state.theirs,
+        .filtered = them_filtered,
+        .pane_id = npc_pane_id,
+        .role = "npc",
+        .is_theirs = true,
+        .cursor = them_cursor,
+    } );
+    append_choices( {
+        .list = state.yours,
+        .filtered = you_filtered,
+        .pane_id = player_pane_id,
+        .role = "player",
+        .is_theirs = false,
+        .cursor = you_cursor,
+    } );
+    return result;
+}
+
 auto trading_window::get_var_trade( const item &it, int total_count, int amount_hint ) -> int
 {
     auto popup_input = string_input_popup{};
@@ -1056,6 +1297,30 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         }
         return plan;
     };
+    const auto toggle_trade_item = [&]( item_pricing & ip ) -> void {
+        if( get_current_amount( ip ) > 0 )
+        {
+            apply_trade_change( ip, 0 );
+            return;
+        }
+        const auto max_amount = get_max_amount( ip );
+        auto amount = 1;
+        if( max_amount > 1 )
+        {
+            auto hint = 0;
+            if( ip.price > 0 ) {
+                if( focus_them && state.your_balance > 0 ) {
+                    hint = state.your_balance / ip.price;
+                } else if( !focus_them && state.your_balance < 0 ) {
+                    const auto offered = state.your_balance / ip.price;
+                    const auto remainder = std::fmod( state.your_balance, ip.price ) == 0 ? 0 : 1;
+                    hint = offered - remainder;
+                }
+            }
+            amount = get_var_trade( *ip.locs.front(), max_amount, hint );
+        }
+        if( amount > 0 ) { apply_trade_change( ip, amount ); }
+    };
     const auto calc_autobalance_amount = [&]( const item_pricing & ip ) -> int {
         const auto unit_balance_delta = ( focus_them ? -1 : 1 ) * static_cast<int>( ip.price );
         if( unit_balance_delta == 0 )
@@ -1127,7 +1392,58 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         }
         ui_manager::redraw();
 
-        const auto action = ctxt.handle_input();
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+                return interaction_snapshot( np );
+            } );
+            action = ctxt.handle_input();
+        }
+        const auto &event = ctxt.get_raw_input();
+        if( event.interaction ) {
+            if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else {
+                const auto snapshot = interaction_snapshot( np );
+                const auto choice = std::ranges::find(
+                                        snapshot.choices, event.interaction->target_id,
+                                        &game_client::interaction_choice::id );
+                if( choice == snapshot.choices.end() || !choice->pane_id ) { continue; }
+                const auto pane = std::ranges::find(
+                                      snapshot.panes, *choice->pane_id,
+                                      &game_client::interaction_pane::id );
+                if( pane == snapshot.panes.end() ) { continue; }
+                focus_them = pane->role == "npc";
+                auto &semantic_list = focus_them ? state.theirs : state.yours;
+                auto &semantic_filtered = focus_them ? them_filtered : you_filtered;
+                auto &semantic_cursor = focus_them ? them_cursor : you_cursor;
+                auto &semantic_offset = focus_them ? them_off : you_off;
+                const auto choice_position = static_cast<size_t>(
+                                                 std::distance( snapshot.choices.begin(), choice ) );
+                semantic_cursor = static_cast<size_t>( std::ranges::count_if(
+                        snapshot.choices | std::views::take( choice_position ),
+                [&]( const game_client::interaction_choice & candidate ) {
+                    return candidate.pane_id == choice->pane_id;
+                } ) );
+                clamp_cursor_to_list( clamp_cursor_options{
+                    .list = semantic_list,
+                    .filtered = semantic_filtered,
+                    .cursor = semantic_cursor,
+                    .offset = semantic_offset,
+                } );
+                auto &pricing = semantic_list[semantic_filtered[semantic_cursor]];
+                if( event.interaction->operation == game_client::interaction_operation::choose ) {
+                    toggle_trade_item( pricing );
+                    pending_count.reset();
+                    continue;
+                }
+                if( event.interaction->operation == game_client::interaction_operation::set_count ) {
+                    apply_trade_change( pricing, static_cast<int>( *event.interaction->count ) );
+                    pending_count.reset();
+                    continue;
+                }
+            }
+        }
         if( action == "SWITCH_LISTS" ) {
             focus_them = !focus_them;
             if( category_mode ) {
@@ -1419,61 +1735,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                     }
                 }
                 auto &ip = target_list[filtered[ch_index]];
-                auto change_amount = 1;
-                auto &owner_sells = focus_them ? ip.u_has : ip.npc_has;
-                auto &owner_sells_charge = focus_them ? ip.u_charges : ip.npc_charges;
-
-                const auto calc_amount_hint = [&]() -> int {
-                    if( ip.price > 0 )
-                    {
-                        if( focus_them && state.your_balance > 0 ) {
-                            return state.your_balance / ip.price;
-                        } else if( !focus_them && state.your_balance < 0 ) {
-                            const auto amt = state.your_balance / ip.price;
-                            const auto rem = ( std::fmod( state.your_balance, ip.price ) == 0 ) ? 0 : 1;
-                            return amt - rem;
-                        }
-                    }
-                    return 0;
-                };
-
-                if( ip.selected ) {
-                    if( owner_sells_charge > 0 ) {
-                        change_amount = owner_sells_charge;
-                        owner_sells_charge = 0;
-                    } else if( owner_sells > 0 ) {
-                        change_amount = owner_sells;
-                        owner_sells = 0;
-                    }
-                } else if( ip.charges > 0 ) {
-                    const auto hint = calc_amount_hint();
-                    change_amount = get_var_trade( *ip.locs.front(), ip.charges, hint );
-                    if( change_amount < 1 ) {
-                        continue;
-                    }
-                    owner_sells_charge = change_amount;
-                } else {
-                    if( ip.count > 1 ) {
-                        const auto hint = calc_amount_hint();
-                        change_amount = get_var_trade( *ip.locs.front(), ip.count, hint );
-                        if( change_amount < 1 ) {
-                            continue;
-                        }
-                    }
-                    owner_sells = change_amount;
-                }
-                ip.selected = !ip.selected;
-                if( ip.selected != focus_them ) {
-                    change_amount *= -1;
-                }
-                const auto delta_price = static_cast<int>( ip.price * change_amount );
-                if( !np.will_exchange_items_freely() ) {
-                    state.your_balance -= delta_price;
-                }
-                if( affects_npc_capacity( *ip.locs.front() ) ) {
-                    state.volume_left += ip.vol * change_amount;
-                    state.weight_left += ip.weight * change_amount;
-                }
+                toggle_trade_item( ip );
             }
         }
     }

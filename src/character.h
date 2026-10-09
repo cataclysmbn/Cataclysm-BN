@@ -85,6 +85,8 @@ enum class recipe_filter_flags : int;
 class craft_command;
 class recipe;
 class recipe_subset;
+struct crafting_inventory_request;
+struct available_recipes_request;
 struct requirement_data;
 struct item_comp;
 struct tool_comp;
@@ -459,6 +461,10 @@ class Character : public Creature, public location_visitable<Character>
         /* returns the character's faction */
         virtual faction *get_faction() const {
             return nullptr;
+        }
+        /// Native faction identity without validating or creating faction authority.
+        virtual auto get_faction_id_for_display() const -> std::optional<faction_id> {
+            return std::nullopt;
         }
         void set_fac_id( const std::string &my_fac_id );
 
@@ -1443,6 +1449,8 @@ class Character : public Creature, public location_visitable<Character>
         void remove_mission_items( int mission_id );
         /** Maximum thrown range with a given item, taking all active effects into account. */
         int throw_range( const item & ) const;
+        /// Passive descriptions share native range arithmetic without native temporary-copy effects.
+        auto throw_range_for_display( const item &it ) const -> int;
 
         /** True if unarmed or wielding a weapon with the UNARMED_WEAPON flag */
         bool unarmed_attack() const;
@@ -1471,7 +1479,7 @@ class Character : public Creature, public location_visitable<Character>
         units::volume volume_capacity() const;
         units::volume volume_capacity_reduced_by(
             const units::volume &mod,
-            const excluded_stacks &without = {} ) const;
+        const excluded_stacks &without = {} ) const;
 
         bool can_pick_volume( const item &it ) const;
         bool can_pick_volume( units::volume volume ) const;
@@ -2304,9 +2312,15 @@ class Character : public Creature, public location_visitable<Character>
         const inventory &crafting_inventory( const tripoint_bub_ms &src_pos = tripoint_bub_ms::zero(),
                                              int radius = PICKUP_RANGE, bool clear_path = true );
         void invalidate_crafting_inventory();
+        /// Local resource inventory: no sampling, invlet changes or gameplay-cache population.
+        auto crafting_inventory_for_display() -> inventory;
+        auto populate_crafting_inventory( inventory &target,
+                                          const crafting_inventory_request &request ) -> void;
 
         /** Returns all known recipes. */
         const recipe_subset &get_learned_recipes() const;
+        /// Includes eligible autolearn recipes without updating stored knowledge or its stamp.
+        auto get_learned_recipes_for_display() const -> recipe_subset;
 
         bool knows_recipe( const recipe *rec ) const;
         void learn_recipe( const recipe *rec );
@@ -2431,6 +2445,7 @@ class Character : public Creature, public location_visitable<Character>
         mutable pimpl<SkillLevelMap> autolearn_skills_stamp;
         /** Subset of learned recipes. Needs to be mutable for lazy initialization. */
         mutable pimpl<recipe_subset> learned_recipes;
+        auto include_autolearn_recipes( recipe_subset &target ) const -> void;
 
         // Cached vision values.
         std::bitset<NUM_VISION_MODES> vision_mode_cache;
@@ -2471,6 +2486,8 @@ class Character : public Creature, public location_visitable<Character>
          */
         std::map<bodypart_id, float> bodypart_exposure();
     private:
+        auto throw_range_impl( const item &it, bool observation ) const -> int;
+
         /** suffer() subcalls */
         void suffer_water_damage( const mutation_branch &mdata );
         void suffer_mutation_power( const mutation_branch &mdata, char_trait_data &tdata );
@@ -2575,6 +2592,8 @@ class Character : public Creature, public location_visitable<Character>
           * @param helpers List of NPCs that could help with crafting.
           * @param filter If set, will return only recipes that match the filter (should be much faster).
           */
+        /// Observation propagates to helper NPC recipe knowledge as well.
+        auto get_available_recipes( const available_recipes_request &request ) const -> recipe_subset;
         recipe_subset get_available_recipes( const inventory &crafting_inv,
                                              const std::vector<npc *> *helpers = nullptr,
                                              recipe_filter filter = nullptr ) const;

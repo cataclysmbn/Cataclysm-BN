@@ -16,10 +16,13 @@
 class lua_recipe_actor;
 class JsonObject;
 class item;
+class inventory;
 class time_duration;
 class Character;
 template<typename T>
 class detached_ptr;
+
+using recipe_component_filter = std::function < auto( const item & ) -> bool >;
 
 enum class recipe_filter_flags : int {
     none = 0,
@@ -89,6 +92,12 @@ class recipe
 
         std::function<bool( const item & )> get_component_filter(
             recipe_filter_flags = recipe_filter_flags::none ) const;
+        /// Checks material availability on local requirement data, without setting native availability flags.
+        auto can_make_with_inventory_for_display( const inventory &crafting_inv,
+                int batch = 1 ) const -> bool;
+        /// Same component rules with a detached, non-gameplay result preview.
+        auto get_component_filter_for_display(
+            recipe_filter_flags flags = recipe_filter_flags::none ) const -> recipe_component_filter;
 
         /** Prevent this recipe from ever being added to the player's learned recipies ( used for special NPC crafting ) */
         bool never_learn = false;
@@ -143,6 +152,8 @@ class recipe
         // Create an item instance as if the recipe was just finished,
         // Contain charges multiplier
         detached_ptr<item> create_result() const;
+        /// Includes native charges, fit and containment, without spawn actors or gameplay RNG.
+        auto create_result_for_display() const -> detached_ptr<item>;
         std::vector<detached_ptr<item>> create_results( int batch = 1 ) const;
 
         // Create byproduct instances as if the recipe was just finished
@@ -171,6 +182,8 @@ class recipe
         bool hot_result() const;
 
         bool dehydrate_result() const;
+        auto hot_result_for_display() const -> bool;
+        auto dehydrate_result_for_display() const -> bool;
 
         /** Returns the amount or charges recipe will produce. */
         int makes_amount() const;
@@ -182,6 +195,11 @@ class recipe
         mutable const lua_recipe_actor *lua_callbacks = nullptr;
 
     private:
+        auto create_result_impl( bool preview ) const -> detached_ptr<item>;
+        auto component_filter_for_result( const item &result,
+                                          recipe_filter_flags flags ) const -> recipe_component_filter;
+        auto hot_result_impl( const item &result ) const -> bool;
+        auto dehydrate_result_impl( const item &result ) const -> bool;
         void add_requirements( const std::vector<std::pair<requirement_id, int>> &reqs );
 
     private:

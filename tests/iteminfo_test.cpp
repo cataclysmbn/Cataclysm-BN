@@ -1,4 +1,5 @@
 #include "avatar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "game.h"
 #include "item.h"
@@ -7,6 +8,7 @@
 #include "options_helpers.h"
 #include "player_helpers.h"
 #include "recipe.h"
+#include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "value_ptr.h"
@@ -178,6 +180,21 @@ TEST_CASE("throwing ratings and costs", "[item][iteminfo][throwing]") {
         "Throw range: <color_c_yellow>13</color>\n"
         "Moves per throw: <color_c_yellow>70</color>\n"
         "Stamina cost: <color_c_yellow>91</color>\n");
+}
+
+TEST_CASE("item information does not advance gameplay RNG", "[item][iteminfo][rng][replay]") {
+    clear_all_state();
+    auto restore_rng = restore_on_out_of_scope<cata_default_random_engine>(rng_get_engine());
+    const auto weapon = item::spawn_temporary("test_normal_sword");
+    REQUIRE(weapon != nullptr);
+    const auto query = q_vec({iteminfo_parts::BASE_MOVES});
+    rng_set_engine_seed(424242);
+    const auto rng_before = rng_get_engine();
+
+    const auto first = weapon->info_string(query, 1);
+    CHECK(rng_get_engine() == rng_before);
+    CHECK(weapon->info_string(query, 1) == first);
+    CHECK(rng_get_engine() == rng_before);
 }
 
 TEST_CASE("weapon attack ratings and moves", "[item][iteminfo][weapon]") {

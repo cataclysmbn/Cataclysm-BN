@@ -41,6 +41,7 @@
 #include "map/legacy_pathfinding.h"
 #include "map/map.h"
 #include "map_memory.h"
+#include "map_perception.h"
 #include "martialarts.h"
 #include "messages.h"
 #include "mission.h"
@@ -243,11 +244,17 @@ bool avatar::save_map_memory()
 void avatar::load_map_memory()
 {
     player_map_memory->load( abs_pos() );
+    if( g && this == &get_avatar() ) {
+        map_perception::reset();
+    }
 }
 
 void avatar::clear_map_memory()
 {
     player_map_memory->clear();
+    if( g && this == &get_avatar() ) {
+        map_perception::reset();
+    }
 }
 
 void avatar::prepare_map_memory_region( const tripoint_abs_ms &p1, const tripoint_abs_ms &p2 )
@@ -264,11 +271,17 @@ void avatar::memorize_tile( const tripoint_abs_ms &pos, const std::string &ter, 
                             const int rotation )
 {
     player_map_memory->memorize_tile( pos, ter, subtile, rotation );
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
 }
 
 void avatar::memorize_symbol( const tripoint_abs_ms &pos, const int symbol )
 {
     player_map_memory->memorize_symbol( pos, symbol );
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
 }
 
 int avatar::get_memorized_symbol( const tripoint_abs_ms &p ) const
@@ -280,6 +293,9 @@ void avatar::memorize_terrain_tile( const tripoint_abs_ms &pos, const std::strin
                                     const int subtile, const int rotation )
 {
     player_map_memory->memorize_terrain_tile( pos, ter, subtile, rotation );
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
 }
 
 memorized_terrain_tile avatar::get_terrain_tile( const tripoint_abs_ms &pos ) const
@@ -290,11 +306,17 @@ memorized_terrain_tile avatar::get_terrain_tile( const tripoint_abs_ms &pos ) co
 void avatar::clear_memorized_overlay( const tripoint_abs_ms &pos )
 {
     player_map_memory->clear_memorized_overlay( pos );
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
 }
 
 void avatar::clear_memorized_tile( const tripoint_abs_ms &pos )
 {
     player_map_memory->clear_memorized_tile( pos );
+    if( g && this == &get_avatar() ) {
+        map_perception::memory_changed( pos );
+    }
 }
 
 bool avatar::has_memorized_tile_for_autodrive( const tripoint_abs_ms &p ) const
@@ -1280,6 +1302,13 @@ void avatar::upgrade_stat( character_stat stat )
 faction *avatar::get_faction() const
 {
     return g->faction_manager_ptr->get( faction_id( "your_followers" ) );
+}
+
+auto avatar::get_faction_id_for_display() const -> std::optional<faction_id>
+{
+    const auto effective = g->faction_manager_ptr->get_for_display( faction_id( "your_followers" ) );
+    return effective ? std::optional{ effective->id } :
+           std::nullopt;
 }
 
 void avatar::set_movement_mode( character_movemode new_mode )

@@ -536,6 +536,16 @@ faction *npc::get_faction() const
     return my_fac;
 }
 
+auto npc::get_faction_id_for_display() const -> std::optional<faction_id>
+{
+    if( my_fac ) {
+        return my_fac->id;
+    }
+    const auto effective = g->faction_manager_ptr->get_for_display( faction_id( "no_faction" ) );
+    return effective ? std::optional{ effective->id } :
+           std::nullopt;
+}
+
 // item id from group "<class-name>_<what>" or from fallback group
 // may still be a null item!
 static detached_ptr<item> random_item_from( const npc_class_id &type, const std::string &what,

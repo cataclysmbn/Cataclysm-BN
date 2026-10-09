@@ -16,6 +16,8 @@
 #include "craft_command.h"
 #include "crafting_gui.h"
 #include "crafting_quality.h"
+#include "crafting_inventory_request.h"
+#include "item_preview.h"
 #include "debug.h"
 #include "enchantments/enchantment.h"
 #include "enums.h"
@@ -615,33 +617,57 @@ const inventory &Character::crafting_inventory( const tripoint_bub_ms &src_pos, 
     if( cache_hit ) {
         return cached_crafting_inventory;
     }
-    cached_crafting_inventory.form_from_map( inv_pos, radius, this, false, clear_path );
-    cached_crafting_inventory.add_items( inv, true );
-    cached_crafting_inventory.add_item( primary_weapon(), true );
-    cached_crafting_inventory.add_items( worn, true );
-    for( const bionic &bio : get_bionic_collection() ) {
-        const bionic_data &bio_data = bio.info();
-        if( ( !bio_data.has_flag( flag_BIONIC_TOGGLED ) || bio.powered ) &&
-            !bio_data.fake_item.is_empty() ) {
-            cached_crafting_inventory.add_item( *item::spawn_temporary( bio.info().fake_item, calendar::turn,
-                                                units::to_kilojoule( get_power_level() ) ), true );
-        }
-    }
-    for( const itype_id &it : enchantment_cache->get_fake_items() ) {
-        if( it->has_flag( flag_USES_BIONIC_POWER ) ) {
-            cached_crafting_inventory.add_item( *item::spawn_temporary( it, calendar::turn,
-                                                units::to_kilojoule( get_power_level() ) ), true );
-        } else {
-            cached_crafting_inventory.add_item( *item::spawn_temporary( it, calendar::turn ), true );
-        }
-    }
+    populate_crafting_inventory( cached_crafting_inventory, {
+        .origin = inv_pos, .radius = radius, .clear_path = clear_path,
+    } );
 
     cached_moves = moves;
     cached_time = calendar::turn;
     cached_position = inv_pos;
-    // cache the qualities of the items in cached_crafting_inventory
-    cached_crafting_inventory.update_quality_cache();
     return cached_crafting_inventory;
+}
+
+auto Character::crafting_inventory_for_display() -> inventory
+{
+    auto result = inventory{};
+    populate_crafting_inventory( result, { .observation = true } );
+    return result;
+}
+
+auto Character::populate_crafting_inventory( inventory &target,
+        const crafting_inventory_request &request ) -> void
+{
+    const auto origin = request.origin == tripoint_bub_ms::zero() ? bub_pos() : request.origin;
+    target.form_from_map( {
+        .world = get_map(), .origin = origin, .radius = request.radius, .actor = this,
+        .assign_invlet = false, .clear_path = request.clear_path, .observation = request.observation,
+    } );
+    // Stacking can rewrite invlets on referenced authority items even when assignment is disabled.
+    target.add_items( inv, true, !request.observation, !request.observation );
+    target.add_item( primary_weapon(), true, !request.observation, !request.observation );
+    target.add_items( worn, true, !request.observation, !request.observation );
+    const auto add_synthetic = [&target, &request]( const item_preview_request & spawn_request ) {
+        auto &synthetic = request.observation ? *item::spawn_for_display( spawn_request ) :
+                          *item::spawn_temporary( spawn_request.type, spawn_request.turn, spawn_request.charges );
+        target.add_item( synthetic, true, !request.observation, !request.observation );
+    };
+    for( const bionic &bio : get_bionic_collection() ) {
+        const bionic_data &bio_data = bio.info();
+        if( ( !bio_data.has_flag( flag_BIONIC_TOGGLED ) || bio.powered ) &&
+            !bio_data.fake_item.is_empty() ) {
+            add_synthetic( { .type = &*bio.info().fake_item,
+                             .charges = units::to_kilojoule( get_power_level() ) } );
+        }
+    }
+    for( const itype_id &it : enchantment_cache->get_fake_items() ) {
+        if( it->has_flag( flag_USES_BIONIC_POWER ) ) {
+            add_synthetic( { .type = &*it, .charges = units::to_kilojoule( get_power_level() ) } );
+        } else {
+            add_synthetic( { .type = &*it } );
+        }
+    }
+
+    target.update_quality_cache();
 }
 
 void Character::invalidate_crafting_inventory()

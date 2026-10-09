@@ -11,6 +11,10 @@
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
 #include "character.h"
+#include "character_functions.h"
+#include "crafting_inventory_request.h"
+#include "item_preview.h"
+#include "nutrient_range.h"
 #include "craft_command.h"
 #include "debug.h"
 #include "enchantments/enchantment.h"
@@ -359,119 +363,186 @@ nutrients Character::compute_effective_nutrients( const item &comest ) const
     }
 }
 
-// Calculate range of nutrients obtainable for a given item when crafted via
-// the given recipe
-std::pair<nutrients, nutrients> Character::compute_nutrient_range(
-    const item &comest, const recipe_id &recipe_i,
-    const cata::flat_set<flag_id> &extra_flags ) const
+namespace
 {
+
+struct nutrient_calculation_context {
+    const Character &you;
+    const inventory *crafting_inv = nullptr;
+    const recipe_subset *available_recipes = nullptr;
+
+    auto observing() const -> bool { return crafting_inv != nullptr; }
+};
+
+auto nutrient_range_for_type( const nutrient_calculation_context &context,
+                              const itype_id &comest_id,
+                              const cata::flat_set<flag_id> &extra_flags ) -> nutrient_range;
+
+auto can_make_for_nutrients( const nutrient_calculation_context &context,
+                             const recipe &rec, int charges ) -> bool
+{
+    if( !context.observing() ) {
+        return g->u.can_make( &rec, charges );
+    }
+    // Native has_recipe treats recipes without a primary skill as known unconditionally.
+    if( rec.skill_used && !context.available_recipes->contains( rec ) ) {
+        return false;
+    }
+    return rec.can_make_with_inventory_for_display( *context.crafting_inv, charges );
+}
+
+// Both gameplay and observation use the same recursive arithmetic and availability rules.
+auto nutrient_range_for_recipe( const nutrient_calculation_context &context,
+                                const nutrient_range_request &request ) -> nutrient_range
+{
+    const auto &comest = request.food;
     if( !comest.is_comestible() ) {
         return {};
     }
 
-    const recipe &rec = *recipe_i;
-    int charges = comest.count();
-    // if item has components, will derive calories from that instead.
-    if( comest.has_flag( flag_NUTRIENT_OVERRIDE ) || !g->u.can_make( &rec, charges ) ) {
-        nutrients result = compute_default_effective_nutrients( comest, *this );
-        return { result, result };
+    const auto &rec = *request.recipe;
+    const auto charges = comest.count();
+    if( comest.has_flag( flag_NUTRIENT_OVERRIDE ) ||
+        !can_make_for_nutrients( context, rec, charges ) ) {
+        const auto result = compute_default_effective_nutrients( comest, context.you );
+        return { .minimum = result, .maximum = result };
     }
 
-    nutrients tally_min;
-    nutrients tally_max;
-
-    cata::flat_set<flag_id> our_extra_flags = extra_flags;
-
-    if( rec.hot_result() || rec.dehydrate_result() ) {
+    auto tally = nutrient_range{};
+    auto our_extra_flags = request.extra_flags;
+    const auto cooked = context.observing() ?
+                        rec.hot_result_for_display() || rec.dehydrate_result_for_display() :
+                        rec.hot_result() || rec.dehydrate_result();
+    if( cooked ) {
         our_extra_flags.insert( flag_COOKED );
     }
 
-    const requirement_data requirements = rec.simple_requirements();
-    const requirement_data::alter_item_comp_vector &component_requirements =
-        requirements.get_components();
-
-    for( const std::vector<item_comp> &component_options : component_requirements ) {
-        nutrients this_min;
-        nutrients this_max;
-        bool first = true;
-        for( const item_comp &component_option : component_options ) {
-            if( component_option.has( g->u.crafting_inventory(), rec.get_component_filter(), charges ) ) {
-                std::pair<nutrients, nutrients> component_option_range =
-                    compute_nutrient_range( component_option.type, our_extra_flags );
-                component_option_range.first *= component_option.count;
-                component_option_range.second *= component_option.count;
-
+    const auto requirements = rec.simple_requirements();
+    for( const auto &component_options : requirements.get_components() ) {
+        auto this_range = nutrient_range{};
+        auto first = true;
+        for( const auto &component_option : component_options ) {
+            const auto &crafting_inv = context.observing() ? *context.crafting_inv :
+                                       g->u.crafting_inventory();
+            const auto filter = context.observing() ? rec.get_component_filter_for_display() :
+                                rec.get_component_filter();
+            if( component_option.has( crafting_inv, filter, charges ) ) {
+                auto option_range = nutrient_range_for_type( context, component_option.type, our_extra_flags );
+                option_range.minimum *= component_option.count;
+                option_range.maximum *= component_option.count;
                 if( first ) {
-                    std::tie( this_min, this_max ) = component_option_range;
+                    this_range = option_range;
                     first = false;
                 } else {
-                    this_min.min_in_place( component_option_range.first );
-                    this_max.max_in_place( component_option_range.second );
+                    this_range.minimum.min_in_place( option_range.minimum );
+                    this_range.maximum.max_in_place( option_range.maximum );
                 }
             }
         }
-        tally_min += this_min;
-        tally_max += this_max;
+        tally.minimum += this_range.minimum;
+        tally.maximum += this_range.maximum;
     }
 
-    for( const std::pair<const itype_id, int> &byproduct : rec.byproducts ) {
-        item &byproduct_it = *item::spawn_temporary( byproduct.first, calendar::turn, byproduct.second );
-        nutrients byproduct_nutr = compute_default_effective_nutrients( byproduct_it, *this );
-        tally_min -= byproduct_nutr;
-        tally_max -= byproduct_nutr;
+    for( const auto &byproduct : rec.byproducts ) {
+        const auto byproduct_it = context.observing() ?
+                                  item::spawn_for_display( { .type = &*byproduct.first, .charges = byproduct.second } ) :
+                                  item::spawn( byproduct.first, calendar::turn, byproduct.second );
+        const auto byproduct_nutr = compute_default_effective_nutrients( *byproduct_it, context.you );
+        tally.minimum -= byproduct_nutr;
+        tally.maximum -= byproduct_nutr;
     }
     if( comest.get_kcal_mult() > 1 ) {
-        tally_min.kcal *= comest.get_kcal_mult();
-        tally_max.kcal *= comest.get_kcal_mult();
+        tally.minimum.kcal *= comest.get_kcal_mult();
+        tally.maximum.kcal *= comest.get_kcal_mult();
     }
 
-    return { tally_min / charges, tally_max / charges };
+    return { .minimum = tally.minimum / charges, .maximum = tally.maximum / charges };
 }
 
-// Calculate the range of nturients possible for a given item across all
-// possible recipes
-std::pair<nutrients, nutrients> Character::compute_nutrient_range(
-    const itype_id &comest_id, const cata::flat_set<flag_id> &extra_flags ) const
+auto nutrient_range_for_type( const nutrient_calculation_context &context,
+                              const itype_id &comest_id,
+                              const cata::flat_set<flag_id> &extra_flags ) -> nutrient_range
 {
-    const itype *comest = &*comest_id;
+    const auto *comest = &*comest_id;
     if( !comest->comestible ) {
         return {};
     }
-    //TODO!: wtf is all this shit
-    item &comest_it = *item::spawn_temporary( comest, calendar::turn, 1 );
-    // The default nutrients are always a possibility
-    nutrients min_nutr = compute_default_effective_nutrients( comest_it, *this, extra_flags );
+    const auto comest_it = context.observing() ?
+                           item::spawn_for_display( { .type = comest, .charges = 1 } ) :
+                           item::spawn( comest, calendar::turn, 1 );
+    // The default nutrients are always a possibility.
+    const auto default_nutr = compute_default_effective_nutrients( *comest_it, context.you,
+                              extra_flags );
+    auto range = nutrient_range{ .minimum = default_nutr, .maximum = default_nutr };
 
     if( comest->has_flag( flag_NUTRIENT_OVERRIDE ) ||
         recipe_dict.is_item_on_loop( comest->get_id() ) ) {
-        return { min_nutr, min_nutr };
+        return range;
     }
 
-    nutrients max_nutr = min_nutr;
-
-    for( const recipe_id &rec : comest->recipes ) {
-        nutrients this_min;
-        nutrients this_max;
-
-        detached_ptr<item> res = rec->create_result();
-        item *result_it = &*res;
+    for( const auto &rec : comest->recipes ) {
+        auto result = context.observing() ? rec->create_result_for_display() : rec->create_result();
+        auto *result_it = &*result;
         if( result_it->contents.num_item_stacks() == 1 ) {
-            item &alt_result = result_it->contents.front();
-            if( alt_result.typeId() == comest_it.typeId() ) {
+            auto &alt_result = result_it->contents.front();
+            if( alt_result.typeId() == comest_it->typeId() ) {
                 result_it = &alt_result;
             }
         }
-        if( result_it->typeId() != comest_it.typeId() ) {
+        if( result_it->typeId() != comest_it->typeId() ) {
             debugmsg( "When creating recipe result expected %s, got %s\n",
-                      comest_it.typeId().str(), result_it->typeId().str() );
+                      comest_it->typeId().str(), result_it->typeId().str() );
         }
 
-        std::tie( this_min, this_max ) = compute_nutrient_range( *result_it, rec, extra_flags );
-        min_nutr.min_in_place( this_min );
-        max_nutr.max_in_place( this_max );
+        const auto recipe_range = nutrient_range_for_recipe( context, {
+            .food = *result_it, .recipe = rec, .extra_flags = extra_flags,
+        } );
+        range.minimum.min_in_place( recipe_range.minimum );
+        range.maximum.max_in_place( recipe_range.maximum );
     }
 
-    return { min_nutr, max_nutr };
+    return range;
+}
+
+} // namespace
+
+auto Character::compute_nutrient_range(
+    const item &comest, const recipe_id &recipe_i,
+    const cata::flat_set<flag_id> &extra_flags ) const -> std::pair<nutrients, nutrients>
+{
+    const auto range = nutrient_range_for_recipe( { .you = *this }, {
+        .food = comest, .recipe = recipe_i, .extra_flags = extra_flags,
+    } );
+    return { range.minimum, range.maximum };
+}
+
+auto Character::compute_nutrient_range(
+    const itype_id &comest_id, const cata::flat_set<flag_id> &extra_flags ) const ->
+std::pair<nutrients, nutrients>
+{
+    const auto range = nutrient_range_for_type( { .you = *this }, comest_id, extra_flags );
+    return { range.minimum, range.maximum };
+}
+
+auto compute_nutrient_range_for_display( const Character &you,
+        const nutrient_range_request &request ) -> nutrient_range
+{
+    if( !request.food.is_comestible() ) {
+        return {};
+    }
+    if( request.food.has_flag( flag_NUTRIENT_OVERRIDE ) ) {
+        const auto result = compute_default_effective_nutrients( request.food, you );
+        return { .minimum = result, .maximum = result };
+    }
+    // Native availability is checked against the player's resources, even for another eater.
+    const auto inventory = g->u.crafting_inventory_for_display();
+    const auto helpers = character_funcs::get_crafting_helpers( g->u );
+    const auto available = g->u.get_available_recipes( {
+        .crafting_inv = inventory, .helpers = &helpers, .observation = true,
+    } );
+    return nutrient_range_for_recipe( {
+        .you = you, .crafting_inv = &inventory, .available_recipes = &available,
+    }, request );
 }
 
 int Character::nutrition_for( const item &comest ) const

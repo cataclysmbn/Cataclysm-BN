@@ -43,6 +43,9 @@ class faction;
 class gunmod_location;
 class item;
 class iteminfo_query;
+struct iteminfo_request;
+struct item_preview_request;
+struct item_ammo_request;
 class material_type;
 class monster;
 class nc_color;
@@ -241,6 +244,17 @@ class item : public location_visitable<item>, public game_object<item>
         item( const item & );
         item &operator=( const item & );
 
+    private:
+        item( const item &source, bool preview );
+        item( const item_preview_request &request, bool preview );
+        auto set_ammo_impl( const item_ammo_request &request ) -> void;
+        auto price_impl( bool practical, bool observation ) const -> float;
+        auto gun_range_impl( bool with_ammo, bool observation ) const -> int;
+        auto gun_range_impl( const player *p, bool observation ) const -> int;
+        static auto in_container_impl( const itype_id &container_type, detached_ptr<item> &&self,
+                                       bool preview ) -> detached_ptr<item>;
+
+    public:
         explicit item( const itype_id &id, time_point turn = calendar::turn, int qty = -1 );
         explicit item( const itype *type, time_point turn = calendar::turn, int qty = -1 );
 
@@ -271,6 +285,8 @@ class item : public location_visitable<item>, public game_object<item>
 
         friend cata_arena<item>;
         friend item &null_item_reference();
+        friend auto item_available_for_crafting_observation( const item &value,
+                const Character &actor ) -> bool;
 
         ~item();
         void on_destroy();
@@ -283,6 +299,10 @@ class item : public location_visitable<item>, public game_object<item>
             }
             return p;
         }
+
+        /// Detached presentation items omit spawn actors and isolate synthetic randomness.
+        static auto spawn_for_display( const item_preview_request &request ) -> detached_ptr<item>;
+        static auto copy_for_display( const item &source ) -> detached_ptr<item>;
 
         inline static detached_ptr<item> spawn( const item &source ) {
             if( source.is_null() ) {
@@ -493,6 +513,9 @@ class item : public location_visitable<item>, public game_object<item>
         *   the vector can be used to compare them to properties of another item.
         */
         /*@{*/
+        /// Explicit observation preserves all sections without applying inspection effects.
+        auto info( const iteminfo_request &request ) const -> std::vector<iteminfo>;
+        auto info_string( const iteminfo_request &request ) const -> std::string;
         std::vector<iteminfo> info() const;
         std::vector<iteminfo> info( int batch ) const;
         std::vector<iteminfo> info( const iteminfo_query &parts, int batch,
@@ -509,18 +532,18 @@ class item : public location_visitable<item>, public game_object<item>
         /*@}*/
 
         /* type specific helper functions for info() that should probably be in itype() */
-        void basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                         bool debug ) const;
+        auto basic_info( std::vector<iteminfo> &info, const iteminfo_request &request,
+                         bool debug ) const -> void;
         void med_info( const item *med_item, std::vector<iteminfo> &info, const iteminfo_query *parts,
                        int batch, bool debug ) const;
-        void food_info( const item *food_item, std::vector<iteminfo> &info, const iteminfo_query *parts,
-                        int batch, bool debug, temperature_flag temperature ) const;
+        auto food_info( const item &food_item, std::vector<iteminfo> &info,
+                        const iteminfo_request &request ) const -> void;
         void magazine_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                             bool debug ) const;
         void ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                         bool debug ) const;
-        void gun_info( const item *mod, std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                       bool debug ) const;
+        auto gun_info( const item *mod, std::vector<iteminfo> &info,
+                       const iteminfo_request &request ) const -> void;
         void gunmod_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const;
         void armor_protection_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
@@ -531,8 +554,8 @@ class item : public location_visitable<item>, public game_object<item>
                                 bool debug ) const;
         void armor_fit_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                              bool debug ) const;
-        void book_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                        bool debug ) const;
+        auto book_info( std::vector<iteminfo> &info, const iteminfo_request &request,
+                        bool debug ) const -> void;
         void battery_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                            bool debug ) const;
         void container_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
@@ -551,14 +574,14 @@ class item : public location_visitable<item>, public game_object<item>
                           bool debug ) const;
         void combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                           bool debug ) const;
-        void throw_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
-                         bool debug ) const;
+        auto throw_info( std::vector<iteminfo> &info,
+                         const iteminfo_request &request ) const -> void;
         void damage_statblock_info( std::vector<iteminfo> &info, damage_instance attack,
                                     bool line_by_line ) const;
         void contents_info( std::vector<iteminfo> &info, const iteminfo_query *parts, int batch,
                             bool debug ) const;
-        void final_info( std::vector<iteminfo> &info, const iteminfo_query &parts, int batch,
-                         bool debug ) const;
+        auto final_info( std::vector<iteminfo> &info, const iteminfo_request &request,
+                         bool debug ) const -> void;
         void enchantment_info( std::vector<iteminfo> &info, const iteminfo_query &parts, int batch,
                                bool debug ) const;
 
@@ -599,6 +622,8 @@ class item : public location_visitable<item>, public game_object<item>
          * otherwise returns approximate post-cataclysm value.
          */
         auto price( bool practical ) const -> float;
+        /// Description-only pricing retains native arithmetic without synthetic ammo spawn effects.
+        auto price_for_display( bool practical ) const -> float;
 
         /**
          * Whether two items should stack when displayed in a inventory menu.
@@ -867,6 +892,8 @@ class item : public location_visitable<item>, public game_object<item>
          */
         static detached_ptr<item> in_its_container( detached_ptr<item> &&self );
         static detached_ptr<item> in_container( const itype_id &container_type, detached_ptr<item> &&self );
+        static auto in_container_for_display( const itype_id &container_type,
+                                              detached_ptr<item> &&self ) -> detached_ptr<item>;
         /*@}*/
 
         bool item_has_uses_recursive() const;
@@ -2155,6 +2182,9 @@ class item : public location_visitable<item>, public game_object<item>
          * Summed range value of a gun, including values from mods. Returns 0 on non-gun items.
          */
         int gun_range( bool with_ammo = true ) const;
+        /// Passive descriptions opt in; gameplay and inspection retain native construction effects.
+        auto gun_range_for_display( bool with_ammo = true ) const -> int;
+        auto gun_range_for_display( const player *p ) const -> int;
         /**
          * Summed projectile speed value (m/s) of a gun, including values from mods. Returns 10 on non-gun items.
          */

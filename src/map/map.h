@@ -74,6 +74,7 @@ template <typename Tripoint> class tripoint_range;
 class vehicle;
 class zone_data;
 struct maptile;
+struct water_source;
 struct partial_con;
 struct trap;
 
@@ -1592,6 +1593,8 @@ public:
     auto check_submap_active_item_consistency() -> std::vector<tripoint_abs_sm>;
     // Accessor that returns a wrapped reference to an item stack for safe modification.
     auto i_at(const tripoint_bub_ms& p) -> map_stack;
+    /// Pure definition of an infinite resource; does not spawn items or sample poison.
+    auto water_source_at(const tripoint_bub_ms& p) const -> std::optional<water_source>;
     auto water_from(const tripoint_bub_ms& p) -> detached_ptr<item>;
     auto i_clear(const tripoint_bub_ms& p) -> std::vector<detached_ptr<item>>;
     // i_rem() methods that return values act like container::erase(),

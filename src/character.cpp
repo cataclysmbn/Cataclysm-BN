@@ -26,6 +26,7 @@
 #include "consumption.h"
 #include "coordinates.h"
 #include "craft_command.h"
+#include "crafting_inventory_request.h"
 #include "creature.h"
 #include "damage.h"
 #include "debug.h"
@@ -2058,6 +2059,9 @@ float Character::night_vision_sight_range() const
 void Character::recalc_sight_limits()
 {
     ZoneScopedN( "recalc_sight_limits" );
+    const auto previous_limit = sight_max;
+    const auto previous_modes = vision_mode_cache;
+    const auto previous_nv = nv_range;
     sight_max = 9999;
     vision_mode_cache.reset();
 
@@ -2134,6 +2138,12 @@ void Character::recalc_sight_limits()
     } else if( has_artifact_with( AEP_CLAIRVOYANCE ) ||
                has_effect_with_flag( flag_EFFECT_CLAIRVOYANCE ) ) {
         vision_mode_cache.set( VISION_CLAIRVOYANCE );
+    }
+    // Invalidate only changed native actor inputs, including changes hidden by
+    // the final visibility threshold/range clamps. Inactive actors are not owners.
+    if( g && this == &get_avatar() && ( previous_limit != sight_max ||
+                                        previous_modes != vision_mode_cache || previous_nv != nv_range ) ) {
+        get_map().invalidate_visibility_caches();
     }
 }
 
@@ -4249,7 +4259,7 @@ const SkillLevelMap &Character::get_all_skills() const
 
 const SkillLevel &Character::get_skill_level_object( const skill_id &ident ) const
 {
-    return _skills->get_skill_level_object( ident );
+    return std::as_const( *_skills ).get_skill_level_object( ident );
 }
 
 SkillLevel &Character::get_skill_level_object( const skill_id &ident )
@@ -7589,11 +7599,21 @@ bool Character::is_rad_immune() const
 
 int Character::throw_range( const item &it ) const
 {
+    return throw_range_impl( it, false );
+}
+
+auto Character::throw_range_for_display( const item &it ) const -> int
+{
+    return throw_range_impl( it, true );
+}
+
+auto Character::throw_range_impl( const item &it, bool observation ) const -> int
+{
     if( it.is_null() ) {
         return -1;
     }
 
-    item &tmp = *item::spawn_temporary( it );
+    auto &tmp = observation ? *item::copy_for_display( it ) : *item::spawn_temporary( it );
 
     if( tmp.count_by_charges() && tmp.charges > 1 ) {
         tmp.charges = 1;
@@ -12188,11 +12208,17 @@ bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
     const auto p = bub_to_abs( pos );
+    const auto previous = known_traps.find( p );
+    const auto changed = t.is_null() ? previous != known_traps.end() :
+                         previous == known_traps.end() || previous->second != t.id.str();
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
         // TODO: known_traps should map to a trap_str_id
         known_traps[p] = t.id.str();
+    }
+    if( changed && g && this == &get_avatar() ) {
+        get_map().set_memory_seen_cache_dirty( pos );
     }
 }
 
@@ -12543,18 +12569,32 @@ bool Character::defer_move( const tripoint_bub_ms &next )
     return true;
 }
 
+auto Character::include_autolearn_recipes( recipe_subset &target ) const -> void
+{
+    for( const auto *recipe : recipe_dict.all_autolearn() ) {
+        if( meets_skill_requirements( recipe->autolearn_requirements ) ) {
+            target.include( recipe );
+        }
+    }
+}
+
 const recipe_subset &Character::get_learned_recipes() const
 {
     if( *_skills != *autolearn_skills_stamp ) {
-        for( const auto &r : recipe_dict.all_autolearn() ) {
-            if( meets_skill_requirements( r->autolearn_requirements ) ) {
-                learned_recipes->include( r );
-            }
-        }
+        include_autolearn_recipes( *learned_recipes );
         *autolearn_skills_stamp = *_skills;
     }
 
     return *learned_recipes;
+}
+
+auto Character::get_learned_recipes_for_display() const -> recipe_subset
+{
+    auto result = *learned_recipes;
+    if( *_skills != *autolearn_skills_stamp ) {
+        include_autolearn_recipes( result );
+    }
+    return result;
 }
 
 bool Character::knows_recipe( const recipe *rec ) const
@@ -13144,12 +13184,24 @@ recipe_subset Character::get_recipes_from_books( const inventory &crafting_inv,
 recipe_subset Character::get_available_recipes( const inventory &crafting_inv,
         const std::vector<npc *> *helpers, recipe_filter filter ) const
 {
-    recipe_subset res;
+    return get_available_recipes( { .crafting_inv = crafting_inv, .helpers = helpers,
+                                    .filter = std::move( filter ) } );
+}
+
+auto Character::get_available_recipes(
+    const available_recipes_request &request ) const -> recipe_subset
+{
+    const auto &crafting_inv = request.crafting_inv;
+    const auto *helpers = request.helpers;
+    const auto &filter = request.filter;
+    const auto local_recipes = request.observation ? get_learned_recipes_for_display() : recipe_subset{};
+    const auto &known_recipes = request.observation ? local_recipes : get_learned_recipes();
+    auto res = recipe_subset{};
 
     if( filter ) {
-        res.include_if( get_learned_recipes(), filter );
+        res.include_if( known_recipes, filter );
     } else {
-        res.include( get_learned_recipes() );
+        res.include( known_recipes );
     }
 
     res.include( get_recipes_from_books( crafting_inv, filter ) );
@@ -13159,7 +13211,10 @@ recipe_subset Character::get_available_recipes( const inventory &crafting_inv,
             // Directly form the helper's inventory
             res.include( get_recipes_from_books( np->inv.as_inventory(), filter ) );
             // Being told what to do
-            res.include_if( np->get_learned_recipes(), [this, &filter]( const recipe & r ) {
+            const auto local_helper_recipes = request.observation ? np->get_learned_recipes_for_display() :
+                                              recipe_subset{};
+            const auto &helper_recipes = request.observation ? local_helper_recipes : np->get_learned_recipes();
+            res.include_if( helper_recipes, [this, &filter]( const recipe & r ) {
                 if( filter && !filter( r ) ) {
                     return false;
                 }

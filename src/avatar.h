@@ -233,6 +233,7 @@ class avatar : public player
         void upgrade_stat( character_stat stat );
 
         faction *get_faction() const override;
+        auto get_faction_id_for_display() const -> std::optional<faction_id> override;
         // Set in npc::talk_to_you for use in further NPC interactions
         bool dialogue_by_radio = false;
         // Preferred aim mode - ranged.cpp aim mode defaults to this if possible

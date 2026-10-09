@@ -1567,9 +1567,11 @@ itype_id Character::find_remote_fuel( bool look_only )
                 continue;
             case state_grid: {
                 if( !nonchar.point_valid() ) {
-                    debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
-                    add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
-                    cable->reset_cable( this );
+                    if( !look_only ) {
+                        debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
+                        add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                        cable->reset_cable( this );
+                    }
                     continue;
                 }
                 auto *grid_connector = active_tiles::furn_at<vehicle_connector_tile>( nonchar.point );
@@ -1584,9 +1586,11 @@ itype_id Character::find_remote_fuel( bool look_only )
             }
             case state_vehicle: {
                 if( !nonchar.point_valid() ) {
-                    debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
-                    add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
-                    cable->reset_cable( this );
+                    if( !look_only ) {
+                        debugmsg( "Cable_data was not properly initialized or cable map points were not set" );
+                        add_msg_if_player( m_bad, _( "You notice the cable has come loose!" ) );
+                        cable->reset_cable( this );
+                    }
                     continue;
                 }
                 const optional_vpart_position vp = here.veh_at( nonchar.point );
