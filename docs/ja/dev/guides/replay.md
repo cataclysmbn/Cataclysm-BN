@@ -5,10 +5,10 @@ title: 入力の記録とリプレイ
 `--replay-record PATH` でゲームセッションを記録し、`--replay-play PATH` で再生します。これらのオプションは共有入力境界を使うため、タイル、Curses、MCP で動作します。再生は入力を直接供給するので、MCP の記録を再生するときに MCP ホストは不要です。
 
 ```sh
-out/build/linux-full/src/cataclysm-bn --client=curses \
+out/build/linux-full/src/cataclysm-bn --client=tiles \
   --userdir out/record-user/ --configdir out/record-user/config/ \
   --seed example --replay-record out/example.jsonl
-out/build/linux-full/src/cataclysm-bn --client=curses \
+out/build/linux-full/src/cataclysm-bn --client=tiles \
   --userdir out/playback-user/ --configdir out/playback-user/config/ \
   --replay-play out/example.jsonl
 ```
@@ -38,7 +38,7 @@ out/build/linux-full/src/cataclysm-bn --client=curses \
 Linux では、`MCP=ON` のビルドに対して標準ライブラリだけを使うスモークドライバーを実行します。
 
 ```sh
-python3 tools/client/replay_smoke.py --output out/replay-smoke-1
+python3 tools/client/replay_smoke.py --binary out/build/linux-clients/src/cataclysm-bn --output out/replay-smoke-1
 ```
 
 出力ディレクトリは事前に存在していてはいけません。ドライバーは同一の初期プロファイルを作成し、MCP を通じてチュートリアルセッションを記録します。待機によってチュートリアルの所持品が空になる前に、公開された空でない所持品セレクターで正確な数量を設定し、共通の照準 UI に入ってカーソルを動かします。次に、見えている位置と通行可能性を使ってバックパックを取得・着用し、地面の拾得モデルでマチェーテを選択し、ネイティブの解体メニューでカーゴパンツを再利用して、生成された布を拾い、活動状態を観察して非ブロッキングポーリングでのみ `IDLE` を送り、簡易包帯 2 個のバッチ製作を完了します。さらに、製作と建設の拒否検査、待機、東西への移動、所持品フィルター、セーブも維持します。MCP ホストなしで再生し、保存された JSON 全体を比較します。起動時の選択肢、チュートリアルダイアログ、所持品の項目とフィールド、照準、確認にはライブのセマンティック記述を使い、通常のゲームプレイ移動には検出したアクションを使います。同期に端末スクレイピング、固定入力回数、固定遅延は使いません。

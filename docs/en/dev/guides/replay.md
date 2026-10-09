@@ -7,10 +7,10 @@ These options use the shared input boundary, so they work with Tiles, Curses, an
 Playback supplies input directly; an MCP host is not needed to replay an MCP recording.
 
 ```sh
-out/build/linux-full/src/cataclysm-bn --client=curses \
+out/build/linux-full/src/cataclysm-bn --client=tiles \
   --userdir out/record-user/ --configdir out/record-user/config/ \
   --seed example --replay-record out/example.jsonl
-out/build/linux-full/src/cataclysm-bn --client=curses \
+out/build/linux-full/src/cataclysm-bn --client=tiles \
   --userdir out/playback-user/ --configdir out/playback-user/config/ \
   --replay-play out/example.jsonl
 ```
@@ -61,7 +61,7 @@ not a full simulation-state checksum.
 On Linux, run the standard-library-only smoke driver against a build with `MCP=ON`:
 
 ```sh
-python3 tools/client/replay_smoke.py --output out/replay-smoke-1
+python3 tools/client/replay_smoke.py --binary out/build/linux-clients/src/cataclysm-bn --output out/replay-smoke-1
 ```
 
 The output directory must not already exist. The driver creates identical initial profiles and records a tutorial session through MCP. Before any waits can empty the tutorial inventory, it uses a published nonempty inventory selector to set an exact quantity and enters the common target UI to move its cursor. It then follows live visible positions and traversability to acquire and wear a backpack, selects a machete through the ground pickup model, salvages cargo pants through the native butcher menu, picks up the resulting rags, and completes a batch of two makeshift bandages by observing activity state and sending `IDLE` only at nonblocking polls. It also retains the crafting and construction denial checks, waits, moves east and west, exercises the inventory filter, and saves. Playback runs without an MCP host and compares the complete saved JSON. Startup choices, tutorial dialogs, inventory entries and fields, targeting, and confirmations use live semantic descriptors; normal gameplay movement uses discovered actions. No terminal scraping, fixed input counts, or fixed delays are used for synchronization.

@@ -5,10 +5,10 @@ title: 입력 기록과 재생
 `--replay-record PATH`로 게임 세션을 기록하고 `--replay-play PATH`로 재생하세요. 이 옵션은 공유 입력 경계를 사용하므로 타일, Curses, MCP에서 작동합니다. 재생은 입력을 직접 제공하므로 MCP 기록을 재생할 때 MCP 호스트가 필요하지 않습니다.
 
 ```sh
-out/build/linux-full/src/cataclysm-bn --client=curses \
+out/build/linux-full/src/cataclysm-bn --client=tiles \
   --userdir out/record-user/ --configdir out/record-user/config/ \
   --seed example --replay-record out/example.jsonl
-out/build/linux-full/src/cataclysm-bn --client=curses \
+out/build/linux-full/src/cataclysm-bn --client=tiles \
   --userdir out/playback-user/ --configdir out/playback-user/config/ \
   --replay-play out/example.jsonl
 ```
@@ -38,7 +38,7 @@ out/build/linux-full/src/cataclysm-bn --client=curses \
 Linux에서는 `MCP=ON` 빌드를 대상으로 표준 라이브러리만 사용하는 스모크 드라이버를 실행하세요:
 
 ```sh
-python3 tools/client/replay_smoke.py --output out/replay-smoke-1
+python3 tools/client/replay_smoke.py --binary out/build/linux-clients/src/cataclysm-bn --output out/replay-smoke-1
 ```
 
 출력 디렉터리는 기존에 없어야 합니다. 드라이버는 동일한 초기 프로필을 만들고 MCP를 통해 튜토리얼 세션을 기록합니다. 기다리기로 튜토리얼 인벤토리가 비기 전에 공개된 비어 있지 않은 인벤토리 선택기로 정확한 수량을 설정하고 공통 조준 UI에 들어가 커서를 이동합니다. 이어서 실시간으로 보이는 위치와 통행 가능 여부를 따라 배낭을 획득해 착용하고, 지면 줍기 모델로 마체테를 선택하며, 네이티브 도축 메뉴로 카고 바지를 재활용하고, 나온 천 조각을 줍고 활동 상태를 관찰해 비차단 폴링에서만 `IDLE`을 보내 임시 붕대 2개 묶음 제작을 완료합니다. 제작 및 건설 거부 검사, 기다리기, 동쪽/서쪽 이동, 인벤토리 필터, 저장도 유지합니다. MCP 호스트 없이 재생하고 전체 저장 JSON을 비교합니다. 시작 선택지, 튜토리얼 대화상자, 인벤토리 항목과 필드, 조준, 확인은 실시간 시맨틱 설명자를 사용하며 일반 게임 플레이 이동은 발견한 액션을 사용합니다. 동기화에 터미널 스크레이핑, 고정 입력 횟수, 고정 지연을 사용하지 않습니다.
