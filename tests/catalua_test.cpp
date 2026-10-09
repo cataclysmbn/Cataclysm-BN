@@ -420,6 +420,8 @@ TEST_CASE("lua_class_members", "[lua]") {
 
 TEST_CASE("lua_global_functions", "[lua]") {
     clear_all_state();
+    // The avatar name derives the save id, so a randomized name must not outlive the test.
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
     const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     sol::state lua = make_lua_state();
 
