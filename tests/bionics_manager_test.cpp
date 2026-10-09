@@ -433,11 +433,13 @@ TEST_CASE(
     auto phase = 0;
     auto clear = false;
     auto invalid = false;
+    auto slash = false;
     SECTION("swap") {}
     SECTION("clear") { clear = true; }
     SECTION("invalid retains native feedback") { invalid = true; }
     SECTION("cancel") { phase = 10; }
-    const auto value = invalid ? "?" : clear ? " " : "b";
+    SECTION("slash is a native shortcut") { slash = true; }
+    const auto value = invalid ? "?" : clear ? " " : slash ? "/" : "b";
     client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = observe();
         if (snapshot.context == "POPUP_WAIT" && !snapshot.field) {
@@ -488,8 +490,16 @@ TEST_CASE(
         CHECK(you.get_bionic_state(bionic_id("bio_flashlight")).invlet == 'a');
         CHECK(you.get_bionic_state(bionic_id("bio_batteries")).invlet == 'b');
     } else {
-        CHECK(you.get_bionic_state(bionic_id("bio_flashlight")).invlet == (clear ? ' ' : 'b'));
-        CHECK(you.get_bionic_state(bionic_id("bio_batteries")).invlet == (clear ? 'b' : 'a'));
+        CHECK(
+            you.get_bionic_state(bionic_id("bio_flashlight")).invlet
+            == (clear   ? ' '
+                : slash ? '/'
+                        : 'b'));
+        CHECK(
+            you.get_bionic_state(bionic_id("bio_batteries")).invlet
+            == (clear   ? 'b'
+                : slash ? 'b'
+                        : 'a'));
     }
 }
 

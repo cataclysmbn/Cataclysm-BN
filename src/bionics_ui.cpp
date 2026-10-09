@@ -690,7 +690,7 @@ auto reassign_bionic_letter( const bionic &bio ) -> int
             .field = game_client::interaction_field{
                 .id = "bionic-letter", .label = _( "Manual (shortcut)" ),
                 .description = bionic_chars.get_allowed_chars(), .value = draft,
-                .max_length = 1, .printable = true },
+                .max_length = 1 },
         };
         {
             const auto scope = game_client::prepared_interaction_scope{
