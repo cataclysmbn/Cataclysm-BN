@@ -38,34 +38,19 @@ public:
     using avatar::add_msg_player_or_npc;
     using avatar::add_msg_player_or_say;
 
-    auto add_msg_if_player(const std::string& msg) const -> void override {
-        messages.emplace_back(msg);
-    }
-    auto add_msg_if_player(const game_message_params& /*params*/, const std::string& msg) const
-        -> void override {
-        messages.emplace_back(msg);
-    }
-    auto add_msg_player_or_npc(const std::string& player_msg, const std::string& /*npc_msg*/) const
-        -> void override {
-        messages.emplace_back(player_msg);
-    }
+    auto add_msg_if_player(const std::string& /*msg*/) const -> void override {}
+    auto add_msg_if_player(const game_message_params& /*params*/, const std::string& /*msg*/) const
+        -> void override {}
     auto add_msg_player_or_npc(
-        const game_message_params& /*params*/, const std::string& player_msg,
-        const std::string& /*npc_msg*/) const -> void override {
-        messages.emplace_back(player_msg);
-    }
+        const std::string& /*player_msg*/, const std::string& /*npc_msg*/) const -> void override {}
+    auto add_msg_player_or_npc(
+        const game_message_params& /*params*/, const std::string& /*player_msg*/,
+        const std::string& /*npc_msg*/) const -> void override {}
+    auto add_msg_player_or_say(const std::string& /*player_msg*/, const std::string& /*npc_speech*/)
+        const -> void override {}
     auto add_msg_player_or_say(
-        const std::string& player_msg, const std::string& /*npc_speech*/) const -> void override {
-        messages.emplace_back(player_msg);
-    }
-    auto add_msg_player_or_say(
-        const game_message_params& /*params*/, const std::string& player_msg,
-        const std::string& /*npc_speech*/) const -> void override {
-        messages.emplace_back(player_msg);
-    }
-
-private:
-    mutable std::vector<std::string> messages;
+        const game_message_params& /*params*/, const std::string& /*player_msg*/,
+        const std::string& /*npc_speech*/) const -> void override {}
 };
 
 /// A stable presentation domain keyed by the native profession-item inputs.
