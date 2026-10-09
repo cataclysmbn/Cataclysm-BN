@@ -419,6 +419,8 @@ TEST_CASE("lua_class_members", "[lua]") {
 }
 
 TEST_CASE("lua_global_functions", "[lua]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     sol::state lua = make_lua_state();
 
     // Create global table for test
@@ -939,6 +941,7 @@ TEST_CASE("lua_coord_cpp_helpers", "[lua]") {
 
 TEST_CASE("plumbing_lua_tripoint_migration", "[lua][plumbing]") {
     clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
     auto lua = make_lua_state();
 
     auto fake_map = lua.create_table();

@@ -85,6 +85,7 @@ void clear_character(player& dummy, bool debug_storage) {
     dummy.activity->set_to_null();
     // Make sure any lingering safe references from the activity are removed
     dummy.activity->targets.clear();
+    dummy.backlog.clear();
     dummy.reset_chargen_attributes();
     dummy.set_pain(0);
     dummy.reset_bonuses();
