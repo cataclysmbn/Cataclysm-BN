@@ -1701,6 +1701,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_sink",
+    "name": "Build Sink"
+  },
+  {
+    "type": "construction_group",
     "id": "remove_bathtub_money",
     "name": "Remove Money from Bathtub"
   },
