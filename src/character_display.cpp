@@ -1492,8 +1492,6 @@ struct display_action_options {
     const std::vector<std::pair<bionic, int>> &bionicslist;
     const std::vector<std::pair<std::string, std::string>> &effect_name_and_text;
     const std::vector<HeaderSkill> &skillslist;
-    const std::string &header;
-    const std::string &skill_description;
     display_boundary &boundary;
     const game_client::prepared_interaction_handle &prepared;
 };
@@ -2172,7 +2170,6 @@ void character_display::disp_info( Character &ch )
             .traits = ui_traits, .bionics = ui_bionics, .effects = ui_effects, .skills = ui_skills,
             .traitslist = traitslist, .bionicslist = bionics_list,
             .effect_name_and_text = effect_name_and_text, .skillslist = skillslist,
-            .header = native_header, .skill_description = native_skill_description,
             .boundary = boundary, .prepared = prepared,
         } );
     } while( !done );
