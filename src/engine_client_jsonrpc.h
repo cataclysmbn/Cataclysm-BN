@@ -55,16 +55,7 @@ struct inspected_envelope {
     inspected_value id = {};
     inspected_value params = {};
 };
-/// Parser working-allocation budget for one active frame/cursor (requested heap bytes,
-/// excluding allocator bookkeeping and values deliberately retained by callers).
-/// One immutable input, one envelope's fields/keys, and iterative lexical scratch only:
-/// 8B character/stack/copy headroom + 8 bytes per possible object key + 4096 control bytes.
-/// A JSON object with K members requires at least 5K+1 bytes. No batch-member/depth cap.
-inline constexpr auto maximum_parser_working_bytes = 8 * maximum_frame_bytes +
-        8 * ( ( maximum_frame_bytes - 1 ) / 5 ) + 4096;
-
 class inspected_frame;
-class parsed_frame;
 /// Copyable position over immutable OWNED validated input; no per-member vector/index.
 /// A cursor pins input independently of its frame, other cursors, and the caller's string.
 class envelope_cursor
@@ -102,32 +93,6 @@ class inspected_frame
 auto inspect_frame( std::string_view input ) -> std::expected<inspected_frame, parse_error>;
 auto apply_strict_policy( const inspected_envelope &input ) -> request_entry;
 
-class request_cursor
-{
-    public:
-        request_cursor() = default;
-        /// Strict materialization is lazy but syntax has already been fully validated.
-        /// Returned requests/IDs/params are owned, never dangling views into the frame.
-        auto next() -> std::optional<request_entry>;
-        auto remaining() const -> std::size_t;
-    private:
-        request_cursor( envelope_cursor origin, bool empty_batch_error );
-        envelope_cursor origin_;
-        bool empty_batch_error_ = false;
-        friend auto parse_frame( std::string_view ) -> std::expected<parsed_frame, parse_error>;
-};
-class parsed_frame
-{
-    public:
-        bool batch = false;
-        auto size() const -> std::size_t;
-        auto cursor() const -> request_cursor;
-    private:
-        parsed_frame( request_cursor origin, bool batch );
-        request_cursor origin_;
-        friend auto parse_frame( std::string_view ) -> std::expected<parsed_frame, parse_error>;
-};
-
 /// Established legacy protocol messages ONLY, never native/host/rejection diagnostics.
 enum class legacy_reason {
     parse_error, invalid_request, invalid_parameters, invalid_jsonrpc_version,
@@ -145,11 +110,6 @@ using legacy_request_entry = std::variant<request, legacy_error>;
 /// and no params-type restriction (valid legacy notifications remain silent).
 /// Never use this policy for direct bn methods; selection belongs to the server.
 auto apply_legacy_policy( const inspected_envelope &input ) -> legacy_request_entry;
-
-/// Validates ALL syntax before returning ANY owned requests. Empty batches become one
-/// non-batch invalid_request. Envelope extras are allowed but never added to params.
-/// Decoded duplicate envelope keys are rejected; params semantics belong to the wire decoder.
-auto parse_frame( std::string_view input ) -> std::expected<parsed_frame, parse_error>;
 
 enum class read_status { complete, eof, partial_eof, too_large, io_error };
 struct read_result {

@@ -582,31 +582,6 @@ auto apply_legacy_policy( const inspected_envelope &input ) -> legacy_request_en
     // A params:null (or otherwise wrong-type) notification must therefore remain a notification.
     return inspected_request( input );
 }
-request_cursor::request_cursor( envelope_cursor origin, bool empty_batch_error ) :
-    origin_( std::move( origin ) ), empty_batch_error_( empty_batch_error ) {}
-auto request_cursor::remaining() const -> std::size_t
-{
-    return origin_.remaining() + ( empty_batch_error_ ? 1u : 0u );
-}
-auto request_cursor::next() -> std::optional<request_entry>
-{
-    if( std::exchange( empty_batch_error_, false ) ) { return error_code::invalid_request; }
-    const auto input = origin_.next();
-    if( !input ) { return std::nullopt; }
-    return apply_strict_policy( *input );
-}
-parsed_frame::parsed_frame( request_cursor origin, bool is_batch ) :
-    batch( is_batch ), origin_( std::move( origin ) ) {}
-auto parsed_frame::size() const -> std::size_t { return origin_.remaining(); }
-auto parsed_frame::cursor() const -> request_cursor { return origin_; }
-auto parse_frame( std::string_view input ) -> std::expected<parsed_frame, parse_error>
-{
-    const auto inspected = inspect_frame( input );
-    if( !inspected ) { return std::unexpected( inspected.error() ); }
-    const auto empty_batch = inspected->batch && inspected->size() == 0;
-    return parsed_frame( request_cursor( inspected->cursor(), empty_batch ),
-                         inspected->batch && !empty_batch );
-}
 auto read_frame( std::istream &input, std::size_t max_bytes ) -> read_result
 {
     const auto limit = std::min( max_bytes, maximum_frame_bytes );

@@ -2,8 +2,10 @@
 #include "engine_client_jsonrpc.h"
 
 #include <array>
+#include <expected>
 #include <ios>
 #include <limits>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <streambuf>
@@ -16,7 +18,42 @@
 namespace rpc = engine_client::jsonrpc;
 
 namespace {
-auto first_request(const rpc::parsed_frame& frame) -> rpc::request_entry {
+/// Strict-policy view over the production inspection path; an empty batch is one invalid_request.
+class request_cursor {
+public:
+    request_cursor() = default;
+    request_cursor(rpc::envelope_cursor origin, const bool empty_batch_error)
+        : origin_(std::move(origin)),
+          empty_batch_error_(empty_batch_error) {}
+    auto remaining() const -> std::size_t {
+        return origin_.remaining() + (empty_batch_error_ ? 1u : 0u);
+    }
+    auto next() -> std::optional<rpc::request_entry> {
+        if (std::exchange(empty_batch_error_, false)) { return rpc::error_code::invalid_request; }
+        const auto input = origin_.next();
+        if (!input) { return std::nullopt; }
+        return rpc::apply_strict_policy(*input);
+    }
+
+private:
+    rpc::envelope_cursor origin_;
+    bool empty_batch_error_ = false;
+};
+struct parsed_frame {
+    bool batch = false;
+    request_cursor origin;
+    auto size() const -> std::size_t { return origin.remaining(); }
+    auto cursor() const -> request_cursor { return origin; }
+};
+auto parse_frame(std::string_view input) -> std::expected<parsed_frame, rpc::parse_error> {
+    const auto inspected = rpc::inspect_frame(input);
+    if (!inspected) { return std::unexpected(inspected.error()); }
+    const auto empty_batch = inspected->batch && inspected->size() == 0;
+    return parsed_frame{
+        .batch = inspected->batch && !empty_batch,
+        .origin = request_cursor(inspected->cursor(), empty_batch)};
+}
+auto first_request(const parsed_frame& frame) -> rpc::request_entry {
     auto cursor = frame.cursor();
     const auto entry = cursor.next();
     REQUIRE(entry);
@@ -29,7 +66,7 @@ auto first_envelope(const rpc::inspected_frame& frame) -> rpc::inspected_envelop
     return *entry;
 }
 auto one_request(std::string_view text) -> rpc::request {
-    const auto frame = rpc::parse_frame(text);
+    const auto frame = parse_frame(text);
     REQUIRE(frame.has_value());
     REQUIRE_FALSE(frame->batch);
     REQUIRE(frame->size() == 1);
@@ -37,7 +74,7 @@ auto one_request(std::string_view text) -> rpc::request {
     return std::get<rpc::request>(first_request(*frame));
 }
 auto invalid_request(std::string_view text) -> void {
-    const auto frame = rpc::parse_frame(text);
+    const auto frame = parse_frame(text);
     REQUIRE(frame.has_value());
     REQUIRE(frame->size() == 1);
     REQUIRE(std::holds_alternative<rpc::error_code>(first_request(*frame)));
@@ -71,21 +108,21 @@ TEST_CASE("jsonrpc_validates_complete_frame_before_exposing_requests", "[engine_
         7>{"{}", "x", ",", std::string_view{"\0", 1}, "/*comment*/", "true", "\v"};
     for (const auto suffix : suffixes) {
         CAPTURE(suffix);
-        const auto frame = rpc::parse_frame(good + std::string(suffix));
+        const auto frame = parse_frame(good + std::string(suffix));
         REQUIRE_FALSE(frame);
         CHECK(frame.error() == rpc::parse_error::invalid_json);
     }
     for (auto length = std::size_t{0}; length < good.size(); ++length) {
         CAPTURE(length);
-        const auto frame = rpc::parse_frame(std::string_view(good).substr(0, length));
+        const auto frame = parse_frame(std::string_view(good).substr(0, length));
         REQUIRE_FALSE(frame);
         CHECK(frame.error() == rpc::parse_error::invalid_json);
     }
     // Later syntax errors invalidate the WHOLE batch, even after apparently dispatchable members.
     for (const auto tail : {",]", ",{", ",falsee]", ",[1,]]"}) {
-        REQUIRE_FALSE(rpc::parse_frame("[" + good + tail));
+        REQUIRE_FALSE(parse_frame("[" + good + tail));
     }
-    CHECK(rpc::parse_frame(" \t\r\n" + good + " \r\n"));
+    CHECK(parse_frame(" \t\r\n" + good + " \r\n"));
 }
 
 TEST_CASE("jsonrpc_classifies_envelopes_not_application_members", "[engine_client_jsonrpc]") {
@@ -142,7 +179,7 @@ TEST_CASE(
         CHECK((*result)->bytes() == R"({"jsonrpc":"2.0","id":)" + id + R"(,"result":null})");
     }
     for (const auto id : {"+1", "01", "-01", "1.", ".1", "1e", "1e+", "NaN", "Infinity", "0x10"}) {
-        const auto frame = rpc::parse_frame(
+        const auto frame = parse_frame(
             std::string{R"({"jsonrpc":"2.0","method":"ping","id":)"} + id + "}");
         REQUIRE_FALSE(frame);
         CHECK(frame.error() == rpc::parse_error::invalid_json);
@@ -184,7 +221,7 @@ TEST_CASE(
     for (const auto& value : bad) {
         const auto prefix = std::string{R"({"jsonrpc":"2.0","method":"ping","id":1,)"};
         for (const auto key : {"extra", "params", "id"}) {
-            const auto frame = rpc::parse_frame(prefix + "\"" + key + "\":" + value + "}");
+            const auto frame = parse_frame(prefix + "\"" + key + "\":" + value + "}");
             REQUIRE_FALSE(frame);
             CHECK(frame.error() == rpc::parse_error::invalid_json);
         }
@@ -196,7 +233,7 @@ TEST_CASE(
 
 TEST_CASE(
     "jsonrpc_valid_batches_keep_members_and_notifications_in_order", "[engine_client_jsonrpc]") {
-    const auto frame = rpc::parse_frame(R"([
+    const auto frame = parse_frame(R"([
         {"jsonrpc":"2.0","method":"sum","params":[1,2],"id":"a"},
         {"jsonrpc":"2.0","method":"notify","params":{}},
         42, [], {"jsonrpc":"2.0","method":"ping","id":null}
@@ -224,7 +261,7 @@ TEST_CASE(
     CHECK(
         **bytes
         == R"([{"jsonrpc":"2.0","id":"a","result":{}},{"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid Request"}},{"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid Request"}},{"jsonrpc":"2.0","id":null,"result":{}}])");
-    const auto empty = rpc::parse_frame("[]");
+    const auto empty = parse_frame("[]");
     REQUIRE(empty);
     CHECK_FALSE(empty->batch);
     invalid_request("[]");
@@ -233,7 +270,7 @@ TEST_CASE(
 TEST_CASE(
     "jsonrpc_suppresses_notification_errors_and_all_notification_batches",
     "[engine_client_jsonrpc]") {
-    const auto frame = rpc::parse_frame(
+    const auto frame = parse_frame(
         R"([{"jsonrpc":"2.0","method":"engine.submit"},{"jsonrpc":"2.0","method":"unknown"}])");
     REQUIRE(frame);
     auto output = rpc::response_frame(frame->batch);
@@ -278,7 +315,7 @@ TEST_CASE(
     const auto request = one_request(exact);
     REQUIRE(request.params);
     CHECK(request.params->size() > 262144); // Subsequent typed application decoding must reject it.
-    const auto over = rpc::parse_frame(exact + " ");
+    const auto over = parse_frame(exact + " ");
     REQUIRE_FALSE(over);
     CHECK(over.error() == rpc::parse_error::resource_limit);
     // No artificial nesting ceiling or native recursion: arbitrary valid JSON stays valid.
@@ -286,13 +323,12 @@ TEST_CASE(
     const auto params = std::string(depth, '[') + "0" + std::string(depth, ']');
     const auto deep = one_request(R"({"jsonrpc":"2.0","method":"ping","params":)" + params + "}");
     CHECK(*deep.params == params);
-    REQUIRE_FALSE(
-        rpc::parse_frame(R"({"jsonrpc":"2.0","method":"ping","params":)" + params + "x}"));
+    REQUIRE_FALSE(parse_frame(R"({"jsonrpc":"2.0","method":"ping","params":)" + params + "x}"));
     // Batch work/storage are bounded by input bytes, not by an invented member-count ceiling.
     auto batch = std::string{"[0"};
     for (auto count = 0; count < 100000; ++count) { batch += ",0"; }
     batch += "]";
-    const auto large = rpc::parse_frame(batch);
+    const auto large = parse_frame(batch);
     REQUIRE(large);
     CHECK(large->size() == 100001);
 }
@@ -691,7 +727,7 @@ TEST_CASE(
         CHECK(
             (*response)->bytes()
             == R"({"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Invalid request"}})");
-        const auto strict = rpc::parse_frame(text);
+        const auto strict = parse_frame(text);
         REQUIRE(strict);
         const auto strict_entry = rpc::apply_strict_policy(first_envelope(*frame));
         CHECK(first_request(*strict).index() == strict_entry.index());
@@ -941,7 +977,7 @@ TEST_CASE(
     CHECK((*response)->bytes() == R"({"jsonrpc":"2.0","id":"\u0000\ud83d\ude00","result":{}})");
 
     auto strict = []() {
-        const auto frame = rpc::parse_frame(
+        const auto frame = parse_frame(
             R"([{"jsonrpc":"2.0","method":"ping","id":1.50e+01,"params":[]},false])");
         REQUIRE(frame);
         return frame->cursor();
@@ -951,8 +987,8 @@ TEST_CASE(
     REQUIRE(owned);
     REQUIRE(std::holds_alternative<rpc::request>(*owned));
     const auto owned_request = std::get<rpc::request>(*owned);
-    strict = rpc::request_cursor{};
-    copied_strict = rpc::request_cursor{};
+    strict = request_cursor{};
+    copied_strict = request_cursor{};
     CHECK(*owned_request.id.json == "1.50e+01");
     CHECK(*owned_request.params == "[]");
     CHECK(owned_request.method == "ping");
@@ -970,7 +1006,7 @@ TEST_CASE(
     }
     REQUIRE(text.size() == rpc::maximum_frame_bytes);
     auto inspected = rpc::inspect_frame(text);
-    auto parsed = rpc::parse_frame(text);
+    auto parsed = parse_frame(text);
     REQUIRE(inspected);
     REQUIRE(parsed);
     CHECK(inspected->batch);
@@ -1001,7 +1037,7 @@ TEST_CASE(
     // A malformed final byte still exposes NO syntax-validated prefix/cursor.
     text[text.size() - 2] = ',';
     CHECK_FALSE(rpc::inspect_frame(text));
-    CHECK_FALSE(rpc::parse_frame(text));
+    CHECK_FALSE(parse_frame(text));
     text.back() = 'x';
     CHECK_FALSE(rpc::inspect_frame(text));
 }
@@ -1012,7 +1048,7 @@ TEST_CASE(
     const auto depth = (rpc::maximum_frame_bytes - 1) / 2;
     auto text = std::string(depth, '[') + "0" + std::string(depth, ']');
     text.resize(rpc::maximum_frame_bytes, ' ');
-    const auto deep = rpc::parse_frame(text);
+    const auto deep = parse_frame(text);
     REQUIRE(deep);
     CHECK(deep->batch);
     CHECK(deep->size() == 1);
