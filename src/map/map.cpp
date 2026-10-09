@@ -6754,6 +6754,11 @@ auto map::draw_maptile(
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
 
         if (!veh->forward_velocity() && !veh->player_in_control(g->u)) { memory_sym = sym; }
+    } else if (has_rope_at(p)) {
+        const auto [rope_veh, rope_part] = get_rope_at(p);
+        sym = rope_veh->part_sym(rope_part, true);
+        tercol = rope_veh->part_color(rope_part, true);
+        item_sym.clear();
     }
 
     if (param.memorize() && check_and_set_seen_cache(p)) {
