@@ -570,6 +570,38 @@
     "charges": 1
   },
   {
+    "result": "762_54R_7n1",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 7 ] ],
+      [ [ "copper", 3 ] ],
+      [ [ "762R_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "gunpowder", 15 ] ]
+    ],
+    "charges": 1
+  },
+  {
+    "result": "bp_762_54R_7n1",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "skills_required": [ "gun", 1 ],
+    "time": "5 s",
+    "qualities": [ { "id": "PULL", "level": 2 } ],
+    "components": [
+      [ [ "lead", 7 ] ],
+      [ [ "copper", 3 ] ],
+      [ [ "762R_casing", 1 ] ],
+      [ [ "lgrifle_primer", 1 ] ],
+      [ [ "chem_black_powder", 20 ] ]
+    ],
+    "charges": 1
+  },
+  {
     "result": "762_m43",
     "type": "uncraft",
     "skill_used": "fabrication",
