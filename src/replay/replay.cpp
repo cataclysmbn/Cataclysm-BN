@@ -25,6 +25,11 @@ struct replay_event {
     input_boundary_metadata boundary;
 };
 
+struct replay_text {
+    std::string source;
+    std::string text;
+};
+
 struct replay_state {
     mode active_mode = mode::none;
     bool started = false;
@@ -35,6 +40,7 @@ struct replay_state {
     std::ofstream recording;
     std::ifstream playback;
     std::optional<replay_event> next;
+    std::optional<replay_text> next_text;
     std::size_t line = 0;
     std::size_t events = 0;
 };
@@ -295,6 +301,7 @@ auto read_event(const JsonObject& object) -> replay_event {
     auto boundary = object.get_object("boundary");
     result.boundary.context = boundary.get_string("context");
     result.boundary.timeout_ms = strict_int(boundary, "timeout_ms", -1);
+    result.boundary.pointer_space = boundary.get_string("pointer_space", "");
     result.boundary.actions = boundary.get_string_array("actions");
     boundary.finish();
     return result;
@@ -327,6 +334,9 @@ auto read_record(const bool header) -> void {
             current.metadata = {.rng_seed = static_cast<unsigned int>(seed)};
         } else if (kind == "input") {
             current.next = read_event(object);
+        } else if (kind == "text") {
+            current.next_text = replay_text{
+                .source = object.get_string("source"), .text = object.get_string("text")};
         } else if (kind == "end") {
             const auto count = strict_int64(object, "events");
             if (count < 0 || static_cast<std::uint64_t>(count) != current.events) {
@@ -337,7 +347,7 @@ auto read_record(const bool header) -> void {
             }
             current.ended = true;
         } else {
-            throw std::runtime_error("Expected input or end record");
+            throw std::runtime_error("Expected input, text or end record");
         }
         object.finish();
         input.eat_whitespace();
@@ -367,7 +377,7 @@ auto flush_record() -> void {
 
 auto ensure_next() -> void {
     auto& current = state();
-    if (!current.next && !current.ended) { read_record(false); }
+    if (!current.next && !current.next_text && !current.ended) { read_record(false); }
 }
 
 auto require_unconfigured() -> void {
@@ -526,6 +536,7 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
     json.member("context", boundary.context);
     json.member("actions", boundary.actions);
     json.member("timeout_ms", boundary.timeout_ms);
+    json.member("pointer_space", boundary.pointer_space);
     json.end_object();
     json.end_object();
     flush_record();
@@ -539,6 +550,12 @@ auto next_input_event(const input_boundary_metadata& expected_boundary)
     if (!current.started) { throw std::runtime_error("Replay playback has not been started"); }
     ensure_next();
     if (current.ended) { throw completed{}; }
+    if (current.next_text) { fail("expected external text '" + current.next_text->source + "'"); }
+    if (current.next->event.type == input_event_t::mouse
+        && current.next->boundary.pointer_space != expected_boundary.pointer_space) {
+        fail("mouse pointer_space recorded='" + current.next->boundary.pointer_space + "', actual='"
+             + expected_boundary.pointer_space + "'");
+    }
     if (!boundaries_match(current.next->boundary, expected_boundary)) {
         fail(boundary_mismatch_message(
             current.next->boundary, expected_boundary, current.events + 1));
@@ -547,6 +564,32 @@ auto next_input_event(const input_boundary_metadata& expected_boundary)
     current.next.reset();
     ++current.events;
     return result;
+}
+
+auto external_text(const std::string& source, const std::function<auto()->std::string>& read)
+    -> std::string {
+    auto& current = state();
+    if (!is_enabled()) { return read(); }
+    if (!current.started) { throw std::runtime_error("Replay has not been started"); }
+    if (is_recording()) {
+        auto text = read();
+        auto json = JsonOut(current.recording);
+        json.start_object();
+        json.member("kind", "text");
+        json.member("version", format_version);
+        json.member("source", source);
+        json.member("text", text);
+        json.end_object();
+        flush_record();
+        return text;
+    }
+    ensure_next();
+    if (!current.next_text || current.next_text->source != source) {
+        fail("expected external text '" + source + "'");
+    }
+    auto text = std::move(current.next_text->text);
+    current.next_text.reset();
+    return text;
 }
 
 auto playback_exhausted() -> bool {

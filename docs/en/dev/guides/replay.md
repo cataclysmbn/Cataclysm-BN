@@ -34,6 +34,8 @@ The versioned JSONL stream contains:
 - Keyboard, text/IME, mouse, gamepad, semantic interaction, timed-poll, and empty-poll events,
   including their input context, registered actions, and polling timeout. Empty nonblocking polls
   matter: omitting them could apply a later input too early during an activity.
+- Text the game reads from outside the input stream (pasted clipboard text, `input.txt`) as its own record, so playback inserts the recorded text rather than the current clipboard or file.
+- Mouse events carry their coordinate unit (Tiles pixels or Curses/MCP cells). Playback rejects a mouse event recorded in a different unit.
 - A normal-end record with the input count.
 
 Events pass through the existing game input logic. Nested prompts are recorded, not just

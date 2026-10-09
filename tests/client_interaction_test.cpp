@@ -13,6 +13,8 @@
 #    include "client_interaction.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
+#    include "client_presentation.h"
+#    include "client_presentation_scope.h"
 #    include "construction.h"
 #    include "crafting.h"
 #    include "cursesdef.h"
@@ -3006,6 +3008,58 @@ TEST_CASE(
     replay::start();
     auto playback_popup = string_input_popup{};
     CHECK(playback_popup.title("Replay field").max_length(30).query_string() == "recorded value");
+    CHECK(replay::playback_exhausted());
+    replay::finish();
+}
+
+namespace {
+
+class fixed_clipboard final: public game_client::render_service {
+public:
+    std::string text;
+    auto clipboard_available() const -> bool override { return true; }
+    auto clipboard_text() -> std::string override { return text; }
+};
+
+} // namespace
+
+TEST_CASE(
+    "replay inserts the recorded clipboard text instead of the live clipboard",
+    "[client][replay][mcp]") {
+    const auto guard = interaction_test_guard{};
+    static auto counter = std::atomic_uint64_t{0};
+    const auto directory =
+        std::filesystem::path(PATH_INFO::user_dir())
+        / ("clipboard-replay-" + std::to_string(counter.fetch_add(1)));
+    REQUIRE(std::filesystem::create_directory(directory));
+    const auto cleanup = on_out_of_scope([&] {
+        replay::stop();
+        std::filesystem::remove_all(directory);
+    });
+    const auto path = directory / "input.jsonl";
+    auto clipboard = std::make_unique<fixed_clipboard>();
+    auto& live_clipboard = *clipboard;
+    const auto presentation = game_client::presentation_scope(std::move(clipboard));
+
+    auto presses = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        return resolve_action(presses++ == 0 ? "TEXT.PASTE" : "TEXT.CONFIRM");
+    });
+    live_clipboard.text = "Alice";
+    replay::configure_recording(path.string(), {.rng_seed = 23});
+    replay::start();
+    auto recorded_popup = string_input_popup{};
+    CHECK(recorded_popup.title("Paste").max_length(30).query_string() == "Alice");
+    replay::finish();
+
+    live_clipboard.text = "Bob";
+    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
+        throw std::runtime_error("playback must not read live input");
+    });
+    replay::configure_playback(path.string(), {.rng_seed = 23});
+    replay::start();
+    auto playback_popup = string_input_popup{};
+    CHECK(playback_popup.title("Paste").max_length(30).query_string() == "Alice");
     CHECK(replay::playback_exhausted());
     replay::finish();
 }

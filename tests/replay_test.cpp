@@ -310,6 +310,60 @@ TEST_CASE("replay does not overwrite recordings or accept unfinished playback", 
     CHECK_FALSE(replay::is_enabled());
 }
 
+TEST_CASE("replay returns recorded external text instead of reading it again", "[replay][input]") {
+    const auto fixture = replay_fixture{};
+    const auto boundary = replay::input_boundary_metadata{.context = "GAME"};
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 9});
+    replay::start();
+    CHECK(replay::external_text("clipboard", [] { return std::string("Alice"); }) == "Alice");
+    replay::record_input_event(input_event{}, boundary);
+    replay::finish();
+
+    SECTION("playback ignores the live source") {
+        replay::configure_playback(fixture.path.string());
+        replay::start();
+        CHECK(
+            replay::external_text(
+                "clipboard",
+                []() -> std::string {
+                    throw std::runtime_error("playback must not read the live source");
+                })
+            == "Alice");
+        CHECK(replay::next_input_event(boundary));
+        replay::finish();
+    }
+    SECTION("a different source is rejected") {
+        replay::configure_playback(fixture.path.string());
+        replay::start();
+        CHECK_THROWS_WITH(replay::external_text("file", [] { return std::string(); }),
+                          Catch::Matchers::Contains("external text"));
+    }
+    SECTION("an input read before the recorded text is rejected") {
+        replay::configure_playback(fixture.path.string());
+        replay::start();
+        CHECK_THROWS_WITH(
+            replay::next_input_event(boundary), Catch::Matchers::Contains("external text"));
+    }
+}
+
+TEST_CASE("replay rejects mouse events recorded in another pointer space", "[replay][input]") {
+    const auto fixture = replay_fixture{};
+    const auto cells = replay::input_boundary_metadata{.context = "GAME", .pointer_space = "cell"};
+    auto click = input_event(MOUSE_BUTTON_LEFT, input_event_t::mouse);
+    click.mouse_pos = point(100, 100);
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 9});
+    replay::start();
+    replay::record_input_event(click, cells);
+    replay::record_input_event(input_event('x', input_event_t::keyboard), cells);
+    replay::finish();
+
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    const auto pixels =
+        replay::input_boundary_metadata{.context = "GAME", .pointer_space = "pixel"};
+    CHECK_THROWS_WITH(replay::next_input_event(pixels), Catch::Matchers::Contains("pointer_space"));
+}
+
 #if defined(CATA_MCP)
 TEST_CASE(
     "replay preserves activity polls through the shared input gateway", "[replay][input][client]") {

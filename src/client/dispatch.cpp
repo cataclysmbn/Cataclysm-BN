@@ -101,7 +101,8 @@ auto input_manager::get_input_event() -> input_event {
             .context = std::string(active.category),
             .actions = active.context ? active.context->get_registered_actions_copy()
                                       : std::vector<std::string>{},
-            .timeout_ms = get_timeout()};
+            .timeout_ms = get_timeout(),
+            .pointer_space = game_client::has_tiles() ? "pixel" : "cell"};
         try {
             if (const auto recorded = replay::next_input_event(boundary)) {
                 game_client::active_backend().pump_events();

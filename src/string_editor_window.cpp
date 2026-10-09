@@ -9,6 +9,7 @@
 
 
 #include "wcwidth.h"
+#include "replay/replay.h"
 #include "ui_manager.h"
 
 static bool is_linebreak( const uint32_t uc )
@@ -687,10 +688,16 @@ std::pair<bool, std::string> string_editor_window::query_string()
             // paste, input from file, or text input
             std::string entered;
             if( action == "TEXT.PASTE" ) {
-                if( edit.empty() ) { entered = game_client::presentation().clipboard_text(); }
+                if( edit.empty() ) {
+                    entered = replay::external_text( "clipboard", []() {
+                        return game_client::presentation().clipboard_text();
+                    } );
+                }
             } else if( action == "TEXT.INPUT_FROM_FILE" ) {
                 if( edit.empty() ) {
-                    entered = get_input_string_from_file();
+                    entered = replay::external_text( "file", []() {
+                        return get_input_string_from_file();
+                    } );
                 }
             } else if( ch == '\n' ) {
                 if( edit.empty() ) {

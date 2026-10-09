@@ -3,6 +3,7 @@
 #include "input.h"
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -23,6 +24,8 @@ struct input_boundary_metadata {
     std::string context;
     std::vector<std::string> actions;
     int timeout_ms = -1;
+    /// Unit of mouse coordinates ("pixel" or "cell"); mouse events replay only in the same unit.
+    std::string pointer_space;
 
     auto operator<=>(const input_boundary_metadata&) const = default; // *NOPAD*
 };
@@ -58,5 +61,9 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
 auto next_input_event(const input_boundary_metadata& expected_boundary = {})
     -> std::optional<input_event>;
 auto playback_exhausted() -> bool;
+/// Text the game reads from outside the input stream (clipboard, file). Recording stores what
+/// `read` returns; playback returns the stored text and never calls `read`.
+auto external_text(const std::string& source, const std::function<auto()->std::string>& read)
+    -> std::string;
 
 } // namespace replay
