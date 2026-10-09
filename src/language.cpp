@@ -1,5 +1,4 @@
 #include "language.h"
-#include "language_test.h"
 
 #include <algorithm>
 #include <fstream>
@@ -577,31 +576,6 @@ void unload_mod_catalogues()
     add_base_catalogue( list, get_language().id );
     set_library( std::move( list ) );
 }
-
-#if defined(CATA_LANGUAGE_TESTING)
-namespace testing
-{
-scoped_catalogues::scoped_catalogues( std::vector<std::string> catalogues )
-    : previous_( pin_library() ), previous_mod_loaded_( mod_catalogues_loaded )
-{
-    replace( std::move( catalogues ) );
-}
-
-scoped_catalogues::~scoped_catalogues() noexcept
-{
-    trans_lib_singleton = std::move( previous_ );
-    mod_catalogues_loaded = previous_mod_loaded_;
-    invalidate_translations();
-}
-
-auto scoped_catalogues::replace( std::vector<std::string> catalogues ) -> void
-{
-    auto next = localization::locale_snapshot::from_catalogues( std::move( catalogues ) );
-    trans_lib_singleton = std::move( next );
-    invalidate_translations();
-}
-} // namespace testing
-#endif
 
 } // namespace l10n_data
 

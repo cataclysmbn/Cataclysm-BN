@@ -241,11 +241,9 @@ class query_popup
         void invalidate_ui() const;
         void init() const;
         auto register_input_actions( input_context &context ) const -> void;
-        auto make_interaction( const input_context &context,
-                               const std::vector<std::string> *labels = nullptr ) const
+        auto make_interaction( const input_context &context ) const
         -> game_client::interaction_snapshot;
         auto apply_response( result response ) -> result;
-        auto query_evaluation() -> result;
 
         template <typename ...Args>
         static void assert_format( const std::string &, Args &&... ) {

@@ -1,57 +1,4 @@
 #include "translations.h"
-#include "translation_copy_test.h"
-#include <new>
-
-#if defined(CATA_TRANSLATION_COPY_TESTING)
-namespace translation_testing
-{
-namespace
-{
-thread_local auto observer = static_cast<scoped_copy_observer *>( nullptr );
-thread_local auto pending_copy_fault = copy_fault::none;
-} // namespace
-
-scoped_copy_observer::scoped_copy_observer( const translation &source )
-    : source_( &source ), previous_( observer )
-{
-    observer = this;
-}
-
-scoped_copy_observer::~scoped_copy_observer()
-{
-    observer = previous_;
-}
-
-auto inject_copy_failure( const copy_fault fault ) -> void { pending_copy_fault = fault; }
-
-auto throw_on_copy_fault( const copy_fault site ) -> void
-{
-    if( pending_copy_fault == site ) {
-        pending_copy_fault = copy_fault::none;
-        throw std::bad_alloc{};
-    }
-}
-
-auto observe_cache_fill( const translation &source, const std::size_t bytes ) -> void
-{
-    if( observer && observer->source_ == &source ) {
-        ++observer->work_.cache_fills;
-        observer->work_.cache_fill_bytes += bytes;
-    }
-}
-
-auto observe_owned_return( const translation &source, const std::string &value ) -> std::string
-{
-    throw_on_copy_fault( copy_fault::owned_return );
-    auto result = value;
-    if( observer && observer->source_ == &source ) {
-        ++observer->work_.owned_returns;
-        observer->work_.owned_return_bytes += result.size();
-    }
-    return result;
-}
-} // namespace translation_testing
-#endif
 
 #include <algorithm>
 #include <ranges>
@@ -479,79 +426,41 @@ void translation::deserialize( JsonIn &jsin )
     input_ = localization::publish_input( std::move( next ) );
 }
 
-namespace
-{
-/// Probe at most the admitted bytes plus their terminator, without max_bytes + 1 overflow.
-auto admitted_length( const char *value, const std::size_t max_bytes ) -> std::optional<std::size_t>
-{
-    namespace ranges = std::ranges;
-    const auto indices = std::views::iota( std::size_t{ 0 }, max_bytes );
-    const auto terminator = ranges::find_if( indices, [value]( const auto index ) { return value[index] == '\0'; } );
-    if( terminator != indices.end() ) { return *terminator; }
-    return value[max_bytes] == '\0' ? std::optional{ max_bytes } :
-           std::nullopt;
-}
-
-auto owned_translation( const translation &source, const std::string &value ) -> std::string
-{
-#if defined(CATA_TRANSLATION_COPY_TESTING)
-    return translation_testing::observe_owned_return( source, value );
-#else
-    static_cast<void>( source );
-    return value;
-#endif
-}
-} // namespace
-
 std::string translation::translated( const int num ) const
-{
-    return std::move( *translated_impl( std::nullopt, num ) );
-}
-
-auto translation::translated_bounded( const std::size_t max_bytes,
-                                      const int num ) const -> std::optional<std::string>
-{
-    return translated_impl( max_bytes, num );
-}
-
-auto translation::translated_impl( const std::optional<std::size_t> max_bytes,
-                                   const int num ) const -> std::optional<std::string>
 {
     const auto &raw = data().raw;
     const auto &ctxt = data().context;
     const auto &raw_pl = data().plural;
-    const auto needs_translation = data().needs_translation;
-    if( !needs_translation || raw.empty() ) {
-        if( max_bytes && raw.size() > *max_bytes ) { return std::nullopt; }
-        return owned_translation( *this, raw );
+    if( !data().needs_translation || raw.empty() ) {
+        return raw;
     }
-    // Same native context/plural/fallback and cache keys for bounded and ordinary access.
+    // Note1: `raw`, `raw_pl` and `ctxt` are effectively immutable for caching purposes:
+    // in the places where they are changed, cache is explicitly invalidated
+    // Note2: if `raw_pl` is defined, `num` becomes part of the "cache key"
+    // otherwise `num` is ignored (for both translation and cache)
     if( cached_language_version != current_language_version ||
         ( raw_pl && cached_num != num ) || !cached_translation ) {
-        const auto resolved = !ctxt ?
-                              ( !raw_pl ? detail::_translate_internal( raw.c_str() ) :
-                                vgettext( raw.c_str(), raw_pl->c_str(), num ) ) :
-                              ( !raw_pl ? pgettext( ctxt->c_str(), raw.c_str() ) :
-                                vpgettext( ctxt->c_str(), raw.c_str(), raw_pl->c_str(), num ) );
-        const auto length = max_bytes ? admitted_length( resolved, *max_bytes ) :
-                            std::optional{ std::char_traits<char>::length( resolved ) };
-        if( !length ) { return std::nullopt; }
-#if defined(CATA_TRANSLATION_COPY_TESTING)
-        translation_testing::throw_on_copy_fault( translation_testing::copy_fault::cache_fill );
-#endif
-        auto next_cache = cata::make_value<std::string>( resolved, *length );
-#if defined(CATA_TRANSLATION_COPY_TESTING)
-        translation_testing::observe_cache_fill( *this, next_cache->size() );
-#endif
-        // Publish coherent cache content/key only after allocation succeeds. Rejection
-        // or a failed fill leaves the old generation/count/content together untouched.
-        cached_translation = std::move( next_cache );
-        cached_num = num;
         cached_language_version = current_language_version;
+        cached_num = num;
         ++localization::work.eager_cache_refreshes;
+
+        if( !ctxt ) {
+            if( !raw_pl ) {
+                cached_translation = cata::make_value<std::string>( detail::_translate_internal( raw ) );
+            } else {
+                cached_translation = cata::make_value<std::string>(
+                                         vgettext( raw.c_str(), raw_pl->c_str(), num ) );
+            }
+        } else {
+            if( !raw_pl ) {
+                cached_translation = cata::make_value<std::string>( pgettext( ctxt->c_str(), raw.c_str() ) );
+            } else {
+                cached_translation = cata::make_value<std::string>(
+                                         vpgettext( ctxt->c_str(), raw.c_str(), raw_pl->c_str(), num ) );
+            }
+        }
     }
-    if( max_bytes && cached_translation->size() > *max_bytes ) { return std::nullopt; }
-    return owned_translation( *this, *cached_translation );
+    return *cached_translation;
 }
 
 bool translation::empty() const

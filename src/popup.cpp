@@ -8,8 +8,6 @@
 #include "cached_options.h"
 #include "catacharset.h"
 #include "client_interaction.h"
-#include "client_interaction_metadata.h"
-#include "evaluation_decision.h"
 #include "json.h"
 #include "ime.h"
 #include "input.h"
@@ -281,8 +279,7 @@ auto query_popup::register_input_actions( input_context &ctxt ) const -> void
     if( cancel ) { ctxt.register_action( "QUIT" ); }
 }
 
-auto query_popup::make_interaction( const input_context &ctxt,
-                                    const std::vector<std::string> *labels ) const ->
+auto query_popup::make_interaction( const input_context &ctxt ) const ->
 game_client::interaction_snapshot // *NOPAD*
 {
     auto snapshot = game_client::interaction_snapshot{
@@ -293,7 +290,7 @@ game_client::interaction_snapshot // *NOPAD*
     snapshot.choices.reserve( options.size() + ( ( anykey || cancel ) && options.empty() ? 1 : 0 ) );
     for( auto index = std::size_t{ 0 }; index < options.size(); ++index ) {
         const auto &option = options[index];
-        const auto label = labels ? ( *labels )[index] : ctxt.get_action_name( option.action );
+        const auto label = ctxt.get_action_name( option.action );
         snapshot.choices.push_back( {
             .id = "option:" + std::to_string( index ),
             .label = remove_color_tags( label ),
@@ -304,7 +301,7 @@ game_client::interaction_snapshot // *NOPAD*
     }
     if( ( anykey || cancel ) && options.empty() ) {
         const auto action = anykey ? "ANY_INPUT" : "QUIT";
-        const auto label = labels ? labels->front() : ctxt.get_action_name( action );
+        const auto label = ctxt.get_action_name( action );
         snapshot.choices.push_back( {
             .id = "acknowledge",
             .label = label,
@@ -316,123 +313,8 @@ game_client::interaction_snapshot // *NOPAD*
     return snapshot;
 }
 
-auto query_popup::query_evaluation() -> result
-{
-    namespace evaluation = game_client::evaluation;
-    try {
-        evaluation::throw_if_incomplete();
-        if( !anykey && !cancel && options.empty() ) {
-            evaluation::fail_current( evaluation::failure::invalid_response );
-        }
-        auto budget = evaluation::construction_budget{};
-        budget.add_bytes( 4096 ); // Fixed JSON members, context/row storage and encoder growth.
-        budget.add_text( text );
-        budget.add_text( category );
-        budget.add_array( options.size(), 2048 );
-        for( const auto &option : options ) { budget.add_text( option.action ); }
-        // Construct in place: metadata mode never publishes, even on Android or without NRVO.
-        auto ctxt = input_context( input_context_options{ .category = category, .mode = input_context_mode::metadata } );
-        register_input_actions( ctxt );
-        for( const auto &action : ctxt.registered_actions_view() ) {
-            budget.add_text( action );
-            const auto source = ctxt.action_name_source( action );
-            if( source ) { budget.add_text( source->get().debug_get_raw() ); }
-            const auto &events = inp_mngr.get_input_for_action( action, category );
-            budget.add_array( events.size(), 512 );
-            for( const auto &event : events ) {
-                budget.add_array( event.sequence.size(), 64 );
-                budget.add_array( event.modifiers.size(), 64 );
-            }
-        }
-        auto labels = std::vector<std::string> {};
-        labels.reserve( options.size() + ( options.empty() ? 1 : 0 ) );
-        const auto add_label = [&]( const auto & action ) {
-            auto label = ctxt.get_action_name_bounded( action, budget.remaining_text_capacity() );
-            if( !label ) { evaluation::fail_current( evaluation::failure::resource_limit ); }
-            budget.add_text( *label );
-            labels.push_back( std::move( *label ) );
-        };
-        for( const auto &option : options ) { add_label( option.action ); }
-        if( options.empty() ) { add_label( anykey ? "ANY_INPUT" : "QUIT" ); }
-        // Full owned snapshot and schema construction begins only after all admission checks.
-        auto snapshot = game_client::normalize_interaction_metadata( ctxt, make_interaction( ctxt,
-                        &labels ) );
-        auto stream = std::ostringstream{};
-        auto json = JsonOut( stream );
-        json.start_object();
-        json.member( "text", text );
-        json.member( "anykey", anykey );
-        json.member( "cancel", cancel );
-        json.member( "cursor", cur );
-        json.member( "ontop", ontop );
-        json.member( "fullscr", fullscr );
-        json.member( "color", static_cast<int>( default_text_color ) );
-        json.member( "bindings" );
-        json.start_array();
-        // Describe actual bindings, but never predict by executing arbitrary option filters.
-        for( const auto &action : ctxt.registered_actions_view() ) {
-            json.start_object();
-            json.member( "action", action );
-            json.member( "events" );
-            json.start_array();
-            for( const auto &event : inp_mngr.get_input_for_action( action, category ) ) {
-                json.start_object();
-                json.member( "type", static_cast<int>( event.type ) );
-                json.member( "sequence", event.sequence );
-                json.member( "modifiers", event.modifiers );
-                json.end_object();
-            }
-            json.end_array();
-            json.end_object();
-        }
-        json.end_array();
-        json.end_object();
-        evaluation::construction_complete();
-        auto event = evaluation::consume( { .interaction = snapshot, .popup_schema = stream.str() } );
-        auto response = result{};
-        response.wait_input = !anykey;
-        response.evt = std::move( event );
-        if( response.evt.interaction ) {
-            if( response.evt.type != input_event_t::interaction || !response.evt.sequence.empty() ||
-                !response.evt.modifiers.empty() || !response.evt.text.empty() ||
-                !response.evt.edit.empty() || response.evt.edit_refresh ||
-                !game_client::validate_interaction_metadata( snapshot, *response.evt.interaction ) ) {
-                evaluation::fail_current( evaluation::failure::invalid_response );
-            }
-        } else {
-            if( response.evt.sequence.empty() ||
-                ( response.evt.type != input_event_t::keyboard &&
-                  response.evt.type != input_event_t::mouse &&
-                  response.evt.type != input_event_t::gamepad ) ||
-                ( response.evt.type == input_event_t::mouse &&
-                  response.evt.get_first_input() == MOUSE_MOVE ) ) {
-                evaluation::fail_current( evaluation::failure::invalid_response );
-            }
-            response.action = ctxt.input_to_action( response.evt );
-            if( response.action == "LEFT" || response.action == "RIGHT" ||
-                response.action == "HELP_KEYBINDINGS" ) {
-                evaluation::fail_current( evaluation::failure::invalid_response );
-            }
-            if( anykey && response.action == "ERROR" ) { response.action = "ANY_INPUT"; }
-        }
-        // The very same native response implementation invokes the actual option filter once.
-        response = apply_response( std::move( response ) );
-        evaluation::throw_if_incomplete(); // Filters may nest or catch a pending request.
-        if( response.wait_input || response.action == "ERROR" ) {
-            evaluation::fail_current( evaluation::failure::invalid_response );
-        }
-        return response;
-    } catch( const evaluation::interrupted & ) {
-        throw;
-    } catch( ... ) {
-        evaluation::fail_current( evaluation::failure::exception );
-        throw;
-    }
-}
-
 query_popup::result query_popup::query_once()
 {
-    if( game_client::evaluation::active() ) { return query_evaluation(); }
     if( !anykey && !cancel && options.empty() ) {
         return { false, "ERROR", {} };
     }
@@ -528,7 +410,6 @@ auto query_popup::apply_response( result res ) -> result
 
 query_popup::result query_popup::query()
 {
-    if( game_client::evaluation::active() ) { return query_evaluation(); }
     ime_sentry sentry( ime_sentry::disable );
 
     std::shared_ptr<ui_adaptor> ui = create_or_get_adaptor();

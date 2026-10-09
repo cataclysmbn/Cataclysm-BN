@@ -211,8 +211,6 @@ class translation
          * form if the object has it.
          **/
         std::string translated( int num = 1 ) const;
-        /// Native resolution with admission before cache fill and owned return. No truncation.
-        auto translated_bounded( std::size_t max_bytes, int num = 1 ) const -> std::optional<std::string>;
 
         /// O(1) owned frozen inputs; never translates, clones text/cache, or hashes on acquisition.
         auto snapshot() const -> localization::translation_snapshot;
@@ -264,8 +262,6 @@ class translation
         }
 
     private:
-        auto translated_impl( std::optional<std::size_t> max_bytes,
-                              int num ) const -> std::optional<std::string>;
         translation( const std::string &ctxt, const std::string &raw );
         translation( const std::string &raw );
         translation( const std::string &raw, const std::string &raw_pl, plural_tag );

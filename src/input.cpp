@@ -1505,15 +1505,6 @@ auto input_context::get_action_name( const std::string &action_id ) const -> std
     return source ? source->get().translated() : action_id;
 }
 
-auto input_context::get_action_name_bounded( const std::string &action_id,
-        const std::size_t max_bytes ) const -> std::optional<std::string>
-{
-    const auto source = action_name_source( action_id );
-    if( source ) { return source->get().translated_bounded( max_bytes ); }
-    return action_id.size() <= max_bytes ? std::optional{ action_id } :
-           std::nullopt;
-}
-
 // (Press X (or Y)|Try) to Z
 std::string input_context::press_x( const std::string &action_id ) const
 {

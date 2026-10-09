@@ -697,9 +697,6 @@ class input_context
          * Get the human-readable name for an action.
          */
         auto get_action_name( const std::string &action_id ) const -> std::string;
-        /// Same native name selection, admitted before translated cache/return copies.
-        auto get_action_name_bounded( const std::string &action_id,
-                                      std::size_t max_bytes ) const -> std::optional<std::string>;
         /// Borrowed native name source for admission before materializing metadata labels.
         /// Invalidated by changes to this context or the input manager's action registry.
         auto action_name_source( const std::string &action_id ) const

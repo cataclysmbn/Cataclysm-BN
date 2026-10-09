@@ -1,5 +1,4 @@
 #include "catalua.h"
-#include "evaluation_decision.h"
 
 #include "debug.h"
 
@@ -696,7 +695,6 @@ auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init,
                 const hook_opts &opts ) -> sol::table
 {
-    game_client::evaluation::throw_if_incomplete();
     auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;
     auto &lua = state.lua;
 
@@ -724,9 +722,6 @@ auto run_hooks( std::string_view hook_name,
     while( i < entries.size() ) {
         const hook_entry &e = entries[i];
         try {
-            const auto index = game_client::evaluation::active() ? std::to_string( e.index ) : std::string{};
-            const auto invocation = game_client::evaluation::callback_scope(
-            { "hook:", hook_name, ":", e.mod_id, ":", index } );
             const sol::object obj = hooks.get_or<sol::object>( e.index, sol::lua_nil );
             if( obj == sol::lua_nil ) {
                 ++i;
@@ -772,7 +767,6 @@ auto run_hooks( std::string_view hook_name,
                 }
             }
         } catch( const std::runtime_error &e_err ) {
-            game_client::evaluation::throw_if_incomplete();
             debugmsg( "Failed to run hook %s[%d](%s): %s", hook_name, static_cast<int>( i ), e.mod_id.c_str(),
                       e_err.what() );
         }

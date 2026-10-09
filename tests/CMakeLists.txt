@@ -25,7 +25,7 @@ if (BUILD_TESTING)
     function(add_native_preview_test target_name client_target client_definition)
         add_executable(${target_name}
             test_main.cpp character_preview_test.cpp
-            preview_callback_capability_test.cpp evaluation_decision_test.cpp
+            preview_callback_capability_test.cpp
             state_helpers.cpp player_helpers.cpp map_helpers.cpp
             options_helpers.cpp tile_helpers.cpp
             ${CMAKE_SOURCE_DIR}/src/messages.cpp)

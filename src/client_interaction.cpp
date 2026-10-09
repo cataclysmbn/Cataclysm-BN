@@ -1,5 +1,4 @@
 #include "client_interaction.h"
-#include "client_interaction_metadata.h"
 #include "client_interaction_prepared.h"
 #include "client_interaction_validation.h"
 
@@ -127,7 +126,6 @@ auto add_position( stable_hash &hash, const interaction_position &position ) -> 
 }
 
 struct normalization_options {
-    bool count_work = true;
     const lazy_choice_descriptions *descriptions = nullptr;
 };
 
@@ -135,11 +133,9 @@ auto schema_for( const interaction_snapshot &snapshot,
                  const normalization_options &options ) -> std::string
 {
     const auto *descriptions = options.descriptions;
-    if( options.count_work ) {
-        ++work.schema_hashes;
-        work.hashed_choices += snapshot.choices.size();
-    }
-    auto hash = stable_hash{};
+    ++work.schema_hashes;
+    work.hashed_choices += snapshot.choices.size();
+    auto hash = localization::content_hash{};
     if( descriptions ) { hash.add( "owned-lazy-choice-descriptions-v1" ); }
     hash.add( interaction_kind_name( snapshot.kind ) );
     hash.add( snapshot.context );
@@ -222,7 +218,6 @@ const normalization_options &options = {} ) -> interaction_snapshot {
 struct acquired_interaction {
     prepared_interaction_handle prepared;
     interaction_snapshot legacy;
-    bool count_work = true;
 
     auto snapshot() const -> const interaction_snapshot & { // *NOPAD*
         return prepared ? prepared->snapshot : legacy;
@@ -235,15 +230,15 @@ struct acquired_interaction {
         if( index != nullptr ) {
             const auto found = std::ranges::lower_bound( *index, id, {}, [this, &values]( const auto ordinal )
             -> const std::string & { // *NOPAD*
-                if( count_work ) { ++work.id_comparisons; }
+                ++work.id_comparisons;
                 return values[ordinal].id;
             } );
             if( found == index->end() ) { return nullptr; }
-            if( count_work ) { ++work.id_comparisons; }
+            ++work.id_comparisons;
             return values[*found].id == id ? &values[*found] : nullptr;
         }
-        const auto found = std::ranges::find_if( values, [this, &id]( const auto & value ) {
-            if( count_work ) { ++work.id_comparisons; }
+        const auto found = std::ranges::find_if( values, [&id]( const auto & value ) {
+            ++work.id_comparisons;
             return value.id == id;
         } );
         return found == values.end() ? nullptr : &*found;
@@ -480,19 +475,6 @@ interaction_scope::~interaction_scope()
 {
     const auto entry = std::ranges::find( providers, token_, &provider_entry::token );
     if( entry != providers.end() ) { providers.erase( entry ); }
-}
-
-auto normalize_interaction_metadata( const input_context &context, interaction_snapshot snapshot )
--> interaction_snapshot
-{
-    return normalize( context, std::move( snapshot ), { .count_work = false } );
-}
-
-auto validate_interaction_metadata( const interaction_snapshot &snapshot,
-                                    const interaction_event &event )
--> std::expected<void, std::string>
-{
-    return validate( { .legacy = snapshot, .count_work = false }, event );
 }
 
 auto interaction_work() -> interaction_work_counts { return work; }
