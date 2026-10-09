@@ -572,6 +572,11 @@ void Character::move_operator_common( Character &&source ) noexcept
     last_item = source.last_item ;
     last_emote = source.last_emote;
 
+    // Recraft state points to this character and the currently loaded recipes.
+    *last_craft = craft_command();
+    lastrecipe = recipe_id();
+    last_batch = 0;
+
     scent = source.scent ;
     my_bionics = std::move( source.my_bionics );
     martial_arts_data = std::move( source.martial_arts_data );

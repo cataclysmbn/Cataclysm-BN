@@ -50,6 +50,23 @@ static const bionic_id bio_digestion("bio_digestion");
 static const trait_id trait_DEBUG_HS("DEBUG_HS");
 static const trait_id trait_DEBUG_STORAGE("DEBUG_STORAGE");
 
+TEST_CASE("replacing an avatar clears cached recraft state", "[crafting]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope( []() { clear_all_state(); } );
+
+    auto &you = get_avatar();
+    const auto &rec = recipe_id( "brew_rum" ).obj();
+    you.lastrecipe = rec.ident();
+    you.last_batch = 1;
+    *you.last_craft = craft_command( &rec, 1, false, &you );
+
+    you = avatar();
+
+    CHECK( you.lastrecipe.is_empty() );
+    CHECK( you.last_batch == 0 );
+    CHECK( you.last_craft->empty() );
+}
+
 TEST_CASE("recipe_subset") {
     clear_all_state();
     recipe_subset subset;

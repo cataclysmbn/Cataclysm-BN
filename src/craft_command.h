@@ -118,7 +118,7 @@ class craft_command
         */
         bool longcraft = false;
         // This is mainly here for maintainability reasons.
-        Character *crafter;
+        Character *crafter = nullptr;
 
         recipe_filter_flags flags = recipe_filter_flags::none;
 
