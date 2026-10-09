@@ -701,7 +701,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         const auto available = candidate.count_by_charges() ? candidate.charges :
                                static_cast<int>( stack.size() );
         const auto selected_count = selection.pick ? selection.count.value_or( available ) : 0;
-        const auto wear = g->u.can_wear( candidate );
+        const auto wear = g->u.can_wear_natively( candidate );
         const auto wield = g->u.can_wield( candidate );
         auto nesting = std::string{ _( "none" ) };
         if( selection.parent ) {

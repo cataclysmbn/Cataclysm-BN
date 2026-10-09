@@ -177,6 +177,11 @@ class inventory_selector_preset
         virtual nc_color get_color( const inventory_entry &entry ) const;
 
         std::string get_denial( const inventory_entry &entry ) const;
+        /// Denial for passive observation: must not run Lua callbacks or change state.
+        virtual std::string get_observed_denial( const item *loc ) const {
+            return get_denial( loc );
+        }
+        std::string get_observed_denial( const inventory_entry &entry ) const;
         /** Text in the cell */
         std::string get_cell_text( const inventory_entry &entry, size_t cell_index ) const;
         std::string get_cell_title( size_t cell_index ) const;

@@ -1498,6 +1498,9 @@ class Character : public Creature, public location_visitable<Character>
          * @param with_equip_change If true returns if it could be worn if things were taken off
          */
         ret_val<bool> can_wear( const item &it, bool with_equip_change = false ) const;
+        /// Like @ref can_wear without running Lua hooks, safe for passive observation.
+        auto can_wear_natively( const item &it,
+                                bool with_equip_change = false ) const -> ret_val<bool>;
         /**
          * Wear specified item.  Item must be in characters possession (wielded or stored).
          * @param to_wear Item to wear
@@ -1526,6 +1529,8 @@ class Character : public Creature, public location_visitable<Character>
          * @param res If set, will expect to move item into the list.
          */
         ret_val<bool> can_takeoff( const item &it, bool dropping = true ) const;
+        /// Like @ref can_takeoff without running Lua hooks, safe for passive observation.
+        auto can_takeoff_natively( const item &it, bool dropping = true ) const -> ret_val<bool>;
         /**
          * Take off an item. May start an activity.
          * @param it Item to take off

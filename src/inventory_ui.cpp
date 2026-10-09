@@ -319,6 +319,11 @@ std::string inventory_selector_preset::get_denial( const inventory_entry &entry 
     return entry.is_item() ? get_denial( entry.any_item() ) : std::string();
 }
 
+std::string inventory_selector_preset::get_observed_denial( const inventory_entry &entry ) const
+{
+    return entry.is_item() ? get_observed_denial( entry.any_item() ) : std::string();
+}
+
 std::string inventory_selector_preset::get_cell_text( const inventory_entry &entry,
         size_t cell_index ) const
 {
@@ -2045,7 +2050,7 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
                     .value = remove_color_tags( preset.get_cell_text( entry, cell_index ) ),
                 } );
             }
-            const auto denial = remove_color_tags( preset.get_denial( entry ) );
+            const auto denial = remove_color_tags( preset.get_observed_denial( entry ) );
             const auto description = remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) );
             auto identity = std::vector<std::string> {
                 std::to_string( column_index ), std::to_string( entry_index ),

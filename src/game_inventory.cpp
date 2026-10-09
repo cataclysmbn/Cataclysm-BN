@@ -391,13 +391,16 @@ class wear_inventory_preset: public armor_inventory_preset
         }
 
         std::string get_denial( const item *loc ) const override {
-            const auto ret = p.can_wear( *loc );
+            return denial( p.can_wear( *loc ) );
+        }
 
-            if( !ret.success() ) {
-                return trim_punctuation_marks( ret.str() );
-            }
+        std::string get_observed_denial( const item *loc ) const override {
+            return denial( p.can_wear_natively( *loc ) );
+        }
 
-            return std::string();
+    private:
+        static auto denial( const ret_val<bool> &ret ) -> std::string {
+            return ret.success() ? std::string() : trim_punctuation_marks( ret.str() );
         }
 };
 
@@ -419,13 +422,16 @@ class take_off_inventory_preset: public armor_inventory_preset
         }
 
         std::string get_denial( const item *loc ) const override {
-            const ret_val<bool> ret = p.can_takeoff( *loc );
+            return denial( p.can_takeoff( *loc ) );
+        }
 
-            if( !ret.success() ) {
-                return trim_punctuation_marks( ret.str() );
-            }
+        std::string get_observed_denial( const item *loc ) const override {
+            return denial( p.can_takeoff_natively( *loc ) );
+        }
 
-            return std::string();
+    private:
+        static auto denial( const ret_val<bool> &ret ) -> std::string {
+            return ret.success() ? std::string() : trim_punctuation_marks( ret.str() );
         }
 };
 

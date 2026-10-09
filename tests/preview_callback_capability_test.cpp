@@ -20,6 +20,7 @@
 #    include "state_helpers.h"
 
 #    include <algorithm>
+#    include <functional>
 #    include <memory>
 #    include <optional>
 #    include <ranges>
@@ -34,7 +35,10 @@
 #        include "client_memory.h"
 #        include "client_memory_scope.h"
 #        include "cursesdef.h"
+#        include "game_inventory.h"
 #        include "output.h"
+#        include "pickup.h"
+#        include "uistate.h"
 #    endif
 
 #    if defined(TILES)
@@ -314,6 +318,54 @@ TEST_CASE(
         CHECK(fixture.read() == expected);
         CHECK(saved_messages() == messages_before);
     }
+}
+
+TEST_CASE(
+    "passive pickup and wear observations do not run Lua try wear hooks",
+    "[preview_callback][callback_purity][mcp]") {
+    const auto fixture = callback_fixture{};
+    const auto guard = popup_input_guard{};
+    const auto restore_uistate = restore_on_out_of_scope<uistatedata>{uistate};
+    auto& you = get_avatar();
+    auto run = std::function<auto()->void>{};
+    SECTION("pickup interaction") {
+        get_map().add_item(you.bub_pos(), item::spawn(coat_id));
+        run = [&]() { pickup::pick_up(you.bub_pos(), 0, pickup::from_ground); };
+    }
+    SECTION("wear inventory interaction") {
+        you.i_add(item::spawn(coat_id));
+        run = [&]() { CHECK(game_menus::inv::wear(you) == nullptr); };
+    }
+    const auto saved_avatar = [&]() {
+        auto stream = std::ostringstream{};
+        auto json = JsonOut{stream};
+        you.serialize(json);
+        return stream.str();
+    };
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(++reads == 1);
+        // Native drawing may query eligibility itself; only the semantic observation is measured.
+        const auto before = fixture.read();
+        const auto avatar_before = saved_avatar();
+        const auto messages_before = saved_messages();
+        const auto engine = rng_get_engine();
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.structured);
+        CHECK(snapshot.choice_total == 1);
+        CHECK(fixture.read() == before);
+        CHECK(saved_avatar() == avatar_before);
+        CHECK(saved_messages() == messages_before);
+        CHECK(rng_get_engine() == engine);
+        auto command = game_client::input_command{};
+        command.action = "QUIT";
+        const auto resolved =
+            game_client::resolve_input_command(command, game_client::memory::screen_size());
+        REQUIRE(resolved.has_value());
+        return *resolved;
+    });
+    run();
+    CHECK(reads == 1);
 }
 #    endif
 

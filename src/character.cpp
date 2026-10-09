@@ -3409,13 +3409,9 @@ bool Character::can_use( const item &it, const item *context ) const
 
 ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) const
 {
-    if( !it.is_armor() ) {
-        return ret_val<bool>::make_failure( _( "Putting on a %s would be tricky." ), it.tname() );
-    }
-
     // During multithreaded mapgen this can be called on NPC gen
     // If so it will cause random segfaults on NPC generation
-    if( !is_pool_worker_thread() ) {
+    if( it.is_armor() && !is_pool_worker_thread() ) {
         const auto &hook_results = cata::run_hooks( "on_character_try_wear",
         [&]( sol::table & params ) {
             params["who"] = this;
@@ -3427,6 +3423,16 @@ ret_val<bool> Character::can_wear( const item &it, bool with_equip_change ) cons
             return ret_val<bool>::make_failure( hook_results.get_or( "message",
                                                 _( "Wearing that is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
         }
+    }
+
+    return can_wear_natively( it, with_equip_change );
+}
+
+auto Character::can_wear_natively( const item &it,
+                                   bool with_equip_change ) const -> ret_val<bool>
+{
+    if( !it.is_armor() ) {
+        return ret_val<bool>::make_failure( _( "Putting on a %s would be tricky." ), it.tname() );
     }
 
     if( !it.has_flag( flag_SEMITANGIBLE ) ) {
@@ -3723,18 +3729,9 @@ bool Character::wear_possessed( item &to_wear, bool interactive,
 
 ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
 {
-    auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
-        return &it == wit;
-    } );
-
-    if( iter == worn.end() ) {
-        return ret_val<bool>::make_failure( !is_npc() ? _( "You are not wearing that item." ) :
-                                            _( "<npcname> is not wearing that item." ) );
-    }
-
     // During multithreaded mapgen this can be called on NPC gen
     // If so it will cause random segfaults on NPC generation
-    if( !is_pool_worker_thread() ) {
+    if( is_worn( it ) && !is_pool_worker_thread() ) {
         const auto &hook_results = cata::run_hooks( "on_character_try_takeoff",
         [&]( sol::table & params ) {
             params["who"] = this;
@@ -3747,6 +3744,20 @@ ret_val<bool> Character::can_takeoff( const item &it, bool dropping ) const
                                                 _( "Taking that off is blocked for an unknown reason. One of your lua mods isn't returning the hook right." ) ) );
         }
     }
+    return can_takeoff_natively( it, dropping );
+}
+
+auto Character::can_takeoff_natively( const item &it, bool dropping ) const -> ret_val<bool>
+{
+    auto iter = std::ranges::find_if( worn, [ &it ]( item * wit ) {
+        return &it == wit;
+    } );
+
+    if( iter == worn.end() ) {
+        return ret_val<bool>::make_failure( !is_npc() ? _( "You are not wearing that item." ) :
+                                            _( "<npcname> is not wearing that item." ) );
+    }
+
     if( dropping && !get_dependent_worn_items( it ).empty() ) {
         if( it.has_flag( flag_POWERARMOR_EXO ) ) {
             return ret_val<bool>::make_failure( !is_npc() ?
