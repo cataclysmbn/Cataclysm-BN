@@ -513,7 +513,7 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
                           host_.observe();
     write_tool_result( json, snapshot, pending->error );
     json.end_object();
-    const auto request = rpc::request{ .id = { .json = pending->id.raw_json }, .method = "tools/call" };
+    const auto request = rpc::request{ .id = pending->id, .method = "tools/call" };
     const auto response = rpc::make_result( request, value.str() );
     if( !response || !deferred_frame_ || !deferred_frame_->append( *response ) ) {
         failed_ = true;
@@ -856,7 +856,7 @@ std::expected<std::optional<rpc::response>, rpc::output_error>
                 const auto accepted = host_.submit( read_keys( arguments ) );
                 if( pump_mode_ ) {
                     pending_response_ = deferred_response{
-                        .id = { .type = request_id::kind::null_value, .raw_json = request.id.json },
+                        .id = request.id,
 .error = accepted ? std::string{} : "Input batch was rejected"
                         ,
                     };
@@ -881,7 +881,7 @@ std::expected<std::optional<rpc::response>, rpc::output_error>
                 const auto accepted = host_.submit( { read_interaction_command( arguments ) } );
                 if( pump_mode_ ) {
                     pending_response_ = deferred_response{
-                        .id = { .type = request_id::kind::null_value, .raw_json = request.id.json },
+                        .id = request.id,
                         .interaction = true,
 .error = accepted ? std::string{} : "Semantic input was rejected"
                         ,

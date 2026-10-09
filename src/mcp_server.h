@@ -78,15 +78,8 @@ class server
         /// True when input ended because of an invalid or unreadable stdio frame.
         auto failed() const -> bool;
 
-        struct request_id {
-            enum class kind : int { missing, null_value, number, string };
-            kind type = kind::missing;
-            int64_t number = 0;
-            std::string string;
-            std::optional<std::string> raw_json;
-        };
         struct deferred_response {
-            request_id id;
+            engine_client::jsonrpc::request_id id;
             bool interaction = false;
             std::string error;
         };
