@@ -182,7 +182,7 @@ const row_schema = v.array(v.strictObject({
   data_hex: v.string(),
 }))
 
-export function validate_table_info(input: unknown): void {
+export function validate_table_info(input: unknown) {
   const actual = v.parse(table_info_schema, input)
   const expected = [
     { cid: 0, name: "path", type: "TEXT", notnull: 1, dflt_value: null, pk: 1 },
@@ -196,6 +196,7 @@ export function validate_table_info(input: unknown): void {
   ) {
     throw new Error(`Unknown SQLite files schema: ${JSON.stringify(actual)}`)
   }
+  return actual
 }
 
 async function query(database: string, sql: string): Promise<unknown> {
@@ -277,7 +278,7 @@ export async function records(root: string, files: FileEvidence[]): Promise<Map<
     ) {
       throw new Error(`Unknown SQLite schema in ${path}: ${JSON.stringify(schema)}`)
     }
-    validate_table_info(await query(path, "PRAGMA table_info(files);"))
+    const table_info = validate_table_info(await query(path, "PRAGMA table_info(files);"))
     const integrity = await query(path, "PRAGMA integrity_check;")
     if (JSON.stringify(integrity) !== '[{"integrity_check":"ok"}]') {
       throw new Error(`SQLite integrity failure: ${path}`)
@@ -285,9 +286,7 @@ export async function records(root: string, files: FileEvidence[]): Promise<Map<
     // Retain the empty database and its full schema as a logical record too.
     insert(
       file.path,
-      strict_json(
-        JSON.stringify({ schema, table_info: await query(path, "PRAGMA table_info(files);") }),
-      ),
+      strict_json(JSON.stringify({ schema, table_info })),
     )
     const rows = v.parse(
       row_schema,
