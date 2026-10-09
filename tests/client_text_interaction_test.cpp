@@ -734,7 +734,7 @@ TEST_CASE(
                                  : game_client::interaction_operation::cancel));
         }
     }
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 
     game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
@@ -745,7 +745,7 @@ TEST_CASE(
     auto played = help{};
     played.load();
     played.display_help();
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
     CHECK_FALSE(game_client::current_interaction().structured);
 }
@@ -786,7 +786,7 @@ TEST_CASE(
     replay::configure_playback(path.string(), {.rng_seed = 37});
     replay::start();
     scrollable_text(reader_window, "Document", "Original authorized text");
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -909,7 +909,7 @@ TEST_CASE(
     replay::configure_playback(path.string(), {.rng_seed = 37});
     replay::start();
     morale.display(93, 0, 0);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
     replay::configure_playback(path.string(), {.rng_seed = 37});
     replay::start();

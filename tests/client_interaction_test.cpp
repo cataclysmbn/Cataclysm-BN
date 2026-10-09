@@ -870,7 +870,7 @@ TEST_CASE(
         replay::configure_playback(path.string(), {.rng_seed = 41});
         replay::start();
         CHECK(npc_trading::trade(*fixture.trader, 0, "Trade"));
-        CHECK(replay::playback_exhausted());
+        CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
         CHECK(get_avatar().amount_of(itype_id("test_pipe")) == 1);
         CHECK(fixture.trader->amount_of(itype_id("test_pipe")) == 0);
         replay::finish();
@@ -1581,7 +1581,7 @@ TEST_CASE(
         REQUIRE(played.activity);
         CHECK(played.activity->id() == activity_id("ACT_DROP"));
         process_activity(played);
-        CHECK(replay::playback_exhausted());
+        CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
         CHECK_FALSE(played.activity);
         CHECK(played.backlog.empty());
         CHECK(played.amount_of(itype_id("test_1kg_cube")) == 1);
@@ -2642,7 +2642,7 @@ TEST_CASE(
     finish_pickup_activity(get_avatar());
     CHECK(get_avatar().amount_of(id) == 2);
     CHECK(ground_item_count(id) == 1);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -2698,7 +2698,7 @@ TEST_CASE(
     REQUIRE(playback.size() == 1);
     CHECK(playback.front().count == recorded.front().count);
     CHECK(&*playback.front().loc == &*recorded.front().loc);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -3019,7 +3019,7 @@ TEST_CASE(
     replay::start();
     auto playback_popup = string_input_popup{};
     CHECK(playback_popup.title("Replay field").max_length(30).query_string() == "recorded value");
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -3071,7 +3071,7 @@ TEST_CASE(
     replay::start();
     auto playback_popup = string_input_popup{};
     CHECK(playback_popup.title("Paste").max_length(30).query_string() == "Alice");
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -3540,7 +3540,7 @@ TEST_CASE(
     CHECK_FALSE(get_avatar().activity);
     CHECK(get_map().partial_con_at(played_destination) == nullptr);
     CHECK(get_map().furn(played_destination) == furn_id("f_test_semantic_construction"));
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -4196,7 +4196,7 @@ TEST_CASE(
     REQUIRE(played.activity);
     REQUIRE(played.activity->id() == activity_id("ACT_CRAFT"));
     CHECK(played.amount_of(itype_id("e_scrap")) == 0);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     finish_crafting_activity(played);
     REQUIRE_FALSE(played.activity);
     CHECK(played.amount_of(itype_id("test_soldering_iron")) == 2);

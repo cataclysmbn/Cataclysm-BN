@@ -94,7 +94,6 @@ TEST_CASE("replay preserves every input field and a clean end marker", "[replay]
         CHECK(actual->edit == expected.edit);
         CHECK(actual->edit_refresh == expected.edit_refresh);
     }
-    CHECK(replay::playback_exhausted());
     CHECK_THROWS_AS(replay::next_input_event(boundary), replay::completed);
     replay::finish();
     CHECK_FALSE(replay::is_enabled());
@@ -207,7 +206,7 @@ TEST_CASE("replay validates empty and mismatched input contexts", "[replay][inpu
     CHECK_THROWS_WITH(replay::next_input_event({.context = "MENU", .actions = {"MOVE_N"}}),
                       Catch::Matchers::Contains("actual='MENU'"));
     REQUIRE(replay::next_input_event({.context = "GAME", .actions = {"MOVE_N"}}));
-    CHECK_THROWS_WITH(replay::playback_exhausted(), Catch::Matchers::Contains("Unexpected EOF"));
+    CHECK_THROWS_WITH(replay::next_input_event(), Catch::Matchers::Contains("Unexpected EOF"));
 }
 
 TEST_CASE(
@@ -267,7 +266,7 @@ TEST_CASE(
         const auto event = replay::next_input_event(actual);
         REQUIRE(event);
         CHECK(*event == input);
-        CHECK(replay::playback_exhausted());
+        CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
         replay::finish();
     }
     SECTION("gameplay registration remains strict") {
@@ -403,7 +402,7 @@ TEST_CASE(
     CHECK(context.handle_input(-1) == "ANY_INPUT");
     CHECK(context.get_raw_input().get_first_input() == 'x');
     CHECK(polls == 3);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 
@@ -495,7 +494,7 @@ TEST_CASE(
         CHECK_FALSE(g->do_turn());
         CHECK(g_reality_bubble_size == original_bubble_size);
     }
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
 }
 #endif

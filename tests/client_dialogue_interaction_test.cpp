@@ -641,7 +641,7 @@ TEST_CASE(
     replay::configure_playback(path.string(), {.rng_seed = 74261});
     replay::start();
     fixture.talker->talk_to_u(false, false);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
     CHECK(serialize_actor(*fixture.talker) == recorded_npc);
     CHECK(serialize_actor(you) == recorded_avatar);

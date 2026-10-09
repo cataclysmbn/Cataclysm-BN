@@ -592,10 +592,4 @@ auto external_text(const std::string& source, const std::function<auto()->std::s
     return text;
 }
 
-auto playback_exhausted() -> bool {
-    if (!is_playing() || !state().started) { return false; }
-    ensure_next();
-    return state().ended;
-}
-
 } // namespace replay

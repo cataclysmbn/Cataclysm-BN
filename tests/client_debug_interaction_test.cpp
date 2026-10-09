@@ -1023,7 +1023,7 @@ TEST_CASE(
     replay::configure_playback(replay_file.path.string(), {.rng_seed = 424242});
     replay::start();
     support::prompt(options);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
     CHECK(reads == 3);
     REQUIRE(service.copies.size() == 4);

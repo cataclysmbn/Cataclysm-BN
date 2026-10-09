@@ -968,7 +968,7 @@ TEST_CASE(
     character_display::disp_info(get_avatar());
     CHECK(saved_state_fingerprint(actor_state()) == recorded);
     CHECK(rng_get_engine() == rng);
-    CHECK(replay::playback_exhausted());
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
     replay::finish();
     CHECK(step == 6);
 }
