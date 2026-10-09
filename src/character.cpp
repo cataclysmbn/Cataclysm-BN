@@ -92,6 +92,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_utils.h"
+#include "takeoff_cost.h"
 #include "text_snippets.h"
 #include "thread_pool.h"
 #include "translations.h"
@@ -3804,7 +3805,7 @@ bool Character::takeoff( item &it, std::vector<detached_ptr<item>> *res )
                            it.tname() );
 
     // TODO: Make this variable
-    mod_moves( -250 );
+    mod_moves( -takeoff_move_cost );
 
     recalc_sight_limits();
     reset_encumbrance();
