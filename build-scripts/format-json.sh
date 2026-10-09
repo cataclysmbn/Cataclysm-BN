@@ -11,7 +11,6 @@ if (( $# > 0 )); then
         if [[ ! -f "$file" || "$file" != *.json ]]; then
             continue
         fi
-        links=()
         while true; do
             # Resolve parent segments and directory aliases before checking the file target.
             # The ending slash preserves directory names ending in newlines.
@@ -24,13 +23,7 @@ if (( $# > 0 )); then
             if [[ ! -L "$file" ]]; then
                 break
             fi
-            # Detect repeated links without imposing an arbitrary chain-length limit.
-            for link in ${links[@]+"${links[@]}"}; do
-                if [[ "$file" == "$link" ]]; then
-                    continue 3
-                fi
-            done
-            links+=( "$file" )
+            # The initial -f test already rejected cyclic and dangling links.
             if ! command -v readlink >/dev/null 2>&1; then
                 echo "error: readlink is required to resolve explicit JSON symlinks" >&2
                 exit 1
