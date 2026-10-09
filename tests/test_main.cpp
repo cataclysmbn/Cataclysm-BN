@@ -34,6 +34,7 @@
 #include "init.h"
 #include "language.h"
 #include "loading_ui.h"
+#include "map/submap_load_manager.h"
 #include "map_helpers.h"
 #include "mod_manager.h"
 #include "options.h"
@@ -310,6 +311,7 @@ namespace {
 struct global_snapshot {
     int reality_bubble_size;
     int map_size;
+    bool map_in_simulated_bubble;
     std::string avatar_dimension;
     std::string active_dimension;
     bool save_tx_active;
@@ -327,6 +329,8 @@ auto take_global_snapshot() -> global_snapshot {
     return {
         .reality_bubble_size = g_reality_bubble_size,
         .map_size = get_map().getmapsize(),
+        .map_in_simulated_bubble =
+            submap_loader.is_simulated(get_map().get_bound_dimension(), get_map().get_abs_sub()),
         .avatar_dimension = get_avatar().get_dimension().str(),
         .active_dimension = g_active_dimension_id.str(),
         .avatar_name = get_avatar().name,
@@ -347,6 +351,9 @@ auto describe_leaks(const global_snapshot& before, const global_snapshot& after)
            std::to_string(after.reality_bubble_size));
     report("get_map().getmapsize()", std::to_string(before.map_size),
            std::to_string(after.map_size));
+    report("submap_loader.is_simulated(get_map().get_abs_sub())",
+           std::to_string(before.map_in_simulated_bubble),
+           std::to_string(after.map_in_simulated_bubble));
     report("get_avatar().get_dimension()", before.avatar_dimension, after.avatar_dimension);
     report("is_save_tx_active()", std::to_string(before.save_tx_active),
            std::to_string(after.save_tx_active));
