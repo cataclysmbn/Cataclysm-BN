@@ -12,9 +12,11 @@
 #    include "client_input.h"
 #    include "client_interaction.h"
 #    include "client_memory.h"
+#    include "client_memory_scope.h"
 #    include "construction.h"
 #    include "crafting.h"
 #    include "cursesdef.h"
+#    include "cursesport.h"
 #    include "drop_token.h"
 #    include "faction.h"
 #    include "game.h"
@@ -56,13 +58,12 @@
 namespace {
 
 struct interaction_test_guard {
+    const game_client::memory::scoped_state memory;
     bool old_test_mode = test_mode;
     int old_termx = TERMX;
     int old_termy = TERMY;
     int old_full_screen_width = FULL_SCREEN_WIDTH;
     int old_full_screen_height = FULL_SCREEN_HEIGHT;
-    catacurses::window old_stdscr = catacurses::stdscr;
-    catacurses::window old_newscr = catacurses::newscr;
 
     interaction_test_guard() {
         test_mode = false;
@@ -76,9 +77,6 @@ struct interaction_test_guard {
     }
 
     ~interaction_test_guard() {
-        game_client::memory::set_input_provider({});
-        catacurses::stdscr = old_stdscr;
-        catacurses::newscr = old_newscr;
         TERMX = old_termx;
         TERMY = old_termy;
         FULL_SCREEN_WIDTH = old_full_screen_width;
@@ -365,6 +363,24 @@ public:
 };
 
 } // namespace
+
+TEST_CASE("interaction_test_guard leaves a borrowed compositor intact", "[client][mcp]") {
+    const auto outer = game_client::memory::scoped_state{};
+    game_client::memory::resize(7, 3);
+    catacurses::stdscr = catacurses::newwin(3, 7, point_zero);
+    catacurses::mvwprintw(catacurses::stdscr, point_zero, "x");
+    catacurses::wrefresh(catacurses::stdscr);
+    const auto borrowed = catacurses::stdscr;
+    {
+        const auto guard = interaction_test_guard{};
+        CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>() != nullptr);
+    }
+    CHECK(game_client::memory::screen_size() == point(7, 3));
+    CHECK(game_client::memory::snapshot().cells[0].text == "x");
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()
+          == borrowed.get<cata_cursesport::WINDOW>());
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()->width == 7);
+}
 
 TEST_CASE(
     "NPC trade exposes filtered player and NPC selections without exchanging items",

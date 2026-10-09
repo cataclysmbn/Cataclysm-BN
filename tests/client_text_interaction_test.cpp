@@ -8,8 +8,10 @@
 #    include "client_input.h"
 #    include "client_interaction.h"
 #    include "client_memory.h"
+#    include "client_memory_scope.h"
 #    include "color.h"
 #    include "cursesdef.h"
+#    include "cursesport.h"
 #    include "fstream_utils.h"
 #    include "help.h"
 #    include "input.h"
@@ -38,14 +40,12 @@
 namespace {
 
 struct text_widget_guard {
+    const game_client::memory::scoped_state memory;
     restore_on_out_of_scope<bool> restore_test_mode{test_mode};
     restore_on_out_of_scope<int> restore_termx{TERMX};
     restore_on_out_of_scope<int> restore_termy{TERMY};
     restore_on_out_of_scope<int> restore_width{FULL_SCREEN_WIDTH};
     restore_on_out_of_scope<int> restore_height{FULL_SCREEN_HEIGHT};
-    restore_on_out_of_scope<catacurses::window> restore_stdscr{catacurses::stdscr};
-    restore_on_out_of_scope<catacurses::window> restore_newscr{catacurses::newscr};
-    point old_screen_size = game_client::memory::screen_size();
     int old_timeout = inp_mngr.get_timeout();
 
     text_widget_guard() {
@@ -59,11 +59,7 @@ struct text_widget_guard {
         catacurses::newscr = catacurses::newwin(TERMY, TERMX, point_zero);
     }
 
-    ~text_widget_guard() {
-        game_client::memory::set_input_provider({});
-        game_client::memory::resize(old_screen_size.x, old_screen_size.y);
-        inp_mngr.set_timeout(old_timeout);
-    }
+    ~text_widget_guard() { inp_mngr.set_timeout(old_timeout); }
 };
 
 struct loaded_topic {
@@ -204,6 +200,24 @@ auto native_text_row(
 }
 
 } // namespace
+
+TEST_CASE("text_widget_guard leaves a borrowed compositor intact", "[client][mcp]") {
+    const auto outer = game_client::memory::scoped_state{};
+    game_client::memory::resize(7, 3);
+    catacurses::stdscr = catacurses::newwin(3, 7, point_zero);
+    catacurses::mvwprintw(catacurses::stdscr, point_zero, "x");
+    catacurses::wrefresh(catacurses::stdscr);
+    const auto borrowed = catacurses::stdscr;
+    {
+        const auto guard = text_widget_guard{};
+        CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>() != nullptr);
+    }
+    CHECK(game_client::memory::screen_size() == point(7, 3));
+    CHECK(game_client::memory::snapshot().cells[0].text == "x");
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()
+          == borrowed.get<cata_cursesport::WINDOW>());
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()->width == 7);
+}
 
 TEST_CASE(
     "loaded help topics enter the native reader with complete localized content",

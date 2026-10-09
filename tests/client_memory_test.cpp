@@ -4,6 +4,7 @@
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "client_memory.h"
+#    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
 #    include "game.h"
@@ -16,21 +17,32 @@
 namespace {
 
 struct memory_screen_guard {
+    const game_client::memory::scoped_state memory;
     const int termx = TERMX;
     const int termy = TERMY;
-    const catacurses::window old_stdscr = catacurses::stdscr;
-    const catacurses::window old_newscr = catacurses::newscr;
 
     ~memory_screen_guard() {
-        catacurses::endwin();
         TERMX = termx;
         TERMY = termy;
-        catacurses::stdscr = old_stdscr;
-        catacurses::newscr = old_newscr;
     }
 };
 
 } // namespace
+
+TEST_CASE("memory_screen_guard leaves a borrowed compositor intact", "[client][mcp]") {
+    const auto outer = game_client::memory::scoped_state{};
+    game_client::memory::resize(7, 3);
+    catacurses::stdscr = catacurses::newwin(3, 7, point_zero);
+    catacurses::mvwprintw(catacurses::stdscr, point_zero, "x");
+    catacurses::wrefresh(catacurses::stdscr);
+    const auto borrowed = catacurses::stdscr;
+    { const auto guard = memory_screen_guard{}; }
+    CHECK(game_client::memory::screen_size() == point(7, 3));
+    CHECK(game_client::memory::snapshot().cells[0].text == "x");
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()
+          == borrowed.get<cata_cursesport::WINDOW>());
+    CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()->width == 7);
+}
 
 TEST_CASE("generic memory client composes overlapping windows", "[client][mcp]") {
     auto guard = memory_screen_guard{};

@@ -9,6 +9,7 @@
 #    include "client_input.h"
 #    include "client_interaction.h"
 #    include "client_memory.h"
+#    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "dialogue.h"
 #    include "faction.h"
@@ -54,14 +55,12 @@ const auto speaker_var = std::string{"npctalk_var_test_client_dialogue_speaker"}
 
 /// Own the real world fixture and the memory widget lifecycle, including exceptional exits.
 struct dialogue_fixture {
+    const game_client::memory::scoped_state memory;
     bool old_test_mode = test_mode;
     int old_termx = TERMX;
     int old_termy = TERMY;
     int old_width = FULL_SCREEN_WIDTH;
     int old_height = FULL_SCREEN_HEIGHT;
-    point old_memory_size = game_client::memory::screen_size();
-    catacurses::window old_stdscr = catacurses::stdscr;
-    catacurses::window old_newscr = catacurses::newscr;
     cata_default_random_engine old_rng = rng_get_engine();
     faction_manager old_factions = *g->faction_manager_ptr;
     uistatedata old_uistate = uistate;
@@ -111,7 +110,6 @@ struct dialogue_fixture {
     }
 
     ~dialogue_fixture() {
-        game_client::memory::set_input_provider({});
         test_mode = true;
         clear_all_state();
         *g->faction_manager_ptr = old_factions;
@@ -124,13 +122,10 @@ struct dialogue_fixture {
         you.get_skill_level_object(skill_id("speech")) = old_speech;
         you.focus_pool = old_focus;
         rng_get_engine() = old_rng;
-        catacurses::stdscr = old_stdscr;
-        catacurses::newscr = old_newscr;
         TERMX = old_termx;
         TERMY = old_termy;
         FULL_SCREEN_WIDTH = old_width;
         FULL_SCREEN_HEIGHT = old_height;
-        game_client::memory::resize(old_memory_size.x, old_memory_size.y);
         test_mode = old_test_mode;
     }
 
