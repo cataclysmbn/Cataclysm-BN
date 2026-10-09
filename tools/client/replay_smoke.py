@@ -13,8 +13,7 @@ import shutil
 import subprocess
 import time
 
-
-ROOT = Path(__file__).resolve().parents[2]
+from profile_isolation import ROOT, profile_arguments, verify_profile_paths
 
 
 class Session:
@@ -174,29 +173,6 @@ class Session:
             (self.output / "protocol.jsonl").write_text(
                 "".join(json.dumps(entry) + "\n" for entry in self.transcript)
             )
-
-
-def profile_arguments(profile):
-    return [
-        "--userdir", str(profile) + "/",
-        "--configdir", str(profile / "config") + "/",
-    ]
-
-
-def verify_profile_paths(command, profile, evidence):
-    result = subprocess.run(
-        [*command, *profile_arguments(profile), "--paths"], cwd=ROOT, text=True,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, timeout=30,
-    )
-    expected_user = f"User Directory: {profile}/"
-    expected_config = f"Config Directory: {profile / 'config'}/"
-    if expected_user not in result.stdout or expected_config not in result.stdout:
-        raise RuntimeError(
-            "Profile isolation failed; expected "
-            f"{expected_user!r} and {expected_config!r} in --paths"
-        )
-    evidence.write_text(result.stdout)
-
 
 
 def saved_data(profile):
@@ -376,7 +352,7 @@ def record_tutorial(command, output, waits):
         previous = {start_key: None}
         while frontier:
             current = frontier.popleft()
-            for (dx, dy), action in directions:
+            for (dx, dy), _action in directions:
                 neighbor = (current[0] + dx, current[1] + dy, current[2])
                 if neighbor in walkable and neighbor not in previous:
                     previous[neighbor] = current

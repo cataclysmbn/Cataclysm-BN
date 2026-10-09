@@ -18,6 +18,7 @@ import socket
 import statistics
 import struct
 import subprocess
+import sys
 import termios
 import time
 
@@ -25,6 +26,8 @@ import pyte
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools" / "client"))
+from profile_isolation import profile_arguments, verify_profile_paths  # noqa: E402
 TRACY_REVISION = "16bac5f80790fb29ca2bd1eab903f02e8ea0732a"
 OPTIONS = {"USE_LANG": "en_US", "ANIMATIONS": "false", "AUTOSAVE": "false"}
 INPUT_WAIT = "get_player_input_noanim_blocking_handle_mouseview"
@@ -153,32 +156,6 @@ def nonwaiting_self_events(inclusive_events, self_events, *, window):
         )
         in keys
     ]
-
-
-def profile_arguments(userdir):
-    return [
-        "--userdir",
-        str(userdir) + "/",
-        "--configdir",
-        str(userdir / "config") + "/",
-    ]
-
-
-def verify_profile_paths(command, userdir):
-    result = subprocess.run(
-        [*command, *profile_arguments(userdir), "--paths"],
-        cwd=ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=True,
-        timeout=30,
-    )
-    expected = f"Config Directory: {userdir / 'config'}/"
-    if expected not in result.stdout:
-        raise RuntimeError(
-            f"Profile config isolation failed; expected {expected!r} in --paths"
-        )
 
 
 def read_saved_state(userdir):
