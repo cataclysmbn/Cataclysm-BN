@@ -4105,7 +4105,8 @@ void monster::process_effects_internal()
         // Requires standing in a properly dark tile, scales as it gets darker
         if( light < 11.0f && one_in( 2 ) && hp < get_hp_max() ) {
             // Regen will max out at 50 at 6.0 light (barely able to craft), or top off to max HP
-            int dark_regen_amount = std::min( static_cast<int>( 110.0f - ( light * 10.0f ) ), get_hp_max() - hp );
+            int dark_regen_amount = std::min( static_cast<int>( 110.0f - ( light * 10.0f ) ),
+                                              get_hp_max() - hp );
             dark_regen_amount = std::min( dark_regen_amount, 50 );
             heal( round( dark_regen_amount ) );
             if( dark_regen_amount > 0 && g->u.sees( *this ) ) {
