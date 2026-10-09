@@ -7,6 +7,7 @@
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
+#include "client_interaction.h"
 #include "consistency_report.h"
 #include "construction_category.h"
 #include "construction_group.h"
@@ -459,6 +460,7 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     bool exit = false;
     construction_category_id category_id;
     std::vector<construction_group_str_id> constructs;
+    std::vector<bool> construct_buildable;
     //storage for the color text so it can be scrolled
     std::vector< std::vector < std::string > > construct_buffers;
     std::vector<std::string> full_construct_buffer;
@@ -534,6 +536,38 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
     const nc_color color_stage = c_light_gray;
     ui_adaptor ui;
+
+    const auto interaction_snapshot = [&]() {
+        auto message = filter.empty() ? category_id.str() :
+                       string_format( _( "Filter: %s" ), filter );
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Construction" ),
+            .message = std::move( message ),
+            .allow_cancel = true,
+        };
+        const auto indices = std::views::iota( std::size_t{ 0 }, constructs.size() );
+        std::ranges::transform( indices, std::back_inserter( snapshot.choices ),
+        [&]( const auto index ) {
+            const auto &group = constructs[index];
+            const auto buildable = construct_buildable[index];
+            return game_client::interaction_choice{
+                .id = game_client::opaque_interaction_id( "construction", { group.str() } ),
+                .label = group->name(),
+.denial = blueprint || buildable ? std::string{} :
+                _( "You can't build that!" ),
+                .enabled = blueprint || buildable,
+                .selectable = true,
+                .selected = static_cast<int>( index ) == select,
+                .highlighted = static_cast<int>( index ) == select,
+                .columns = {
+                    { .label = _( "Favorite" ), .value = is_favorite( group ) ? _( "yes" ) : _( "no" ) },
+                    { .label = _( "Buildable" ), .value = buildable ? _( "yes" ) : _( "no" ) },
+                },
+            };
+        } );
+        return snapshot;
+    };
 
     const auto recalc_buffer = [&]() {
         const int hint_width = available_window_width;
@@ -1304,6 +1338,11 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                     select = std::distance( constructs.begin(), it );
                 }
             }
+            construct_buildable.clear();
+            std::ranges::transform( constructs, std::back_inserter( construct_buildable ),
+            [&]( const auto & group ) {
+                return player_can_build( g->u, total_inv, group );
+            } );
         }
         isnew = false;
 
@@ -1356,7 +1395,26 @@ std::optional<construction_id> construction_menu( const bool blueprint )
 
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, interaction_snapshot );
+            action = ctxt.handle_input();
+        }
+        const auto &event = ctxt.get_raw_input();
+        if( event.interaction ) {
+            if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
+                const auto snapshot = interaction_snapshot();
+                const auto choice = std::ranges::find( snapshot.choices,
+                                                       event.interaction->target_id,
+                                                       &game_client::interaction_choice::id );
+                if( choice != snapshot.choices.end() ) {
+                    select = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
+                    action = "CONFIRM";
+                }
+            }
+        }
         if( action == "FILTER" ) {
             struct filter_example {
                 char key;

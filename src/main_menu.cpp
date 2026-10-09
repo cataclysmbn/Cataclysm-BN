@@ -6,6 +6,7 @@
 #include "catacharset.h"
 #include "catalua.h"
 #include "character_id.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "debug.h"
 #include "distraction_manager.h"
@@ -51,6 +52,8 @@
 #include <istream>
 #include <memory>
 #include <optional>
+#include <ranges>
+
 enum class main_menu_opts : int {
     MOTD = 0,
     NEWCHAR = 1,
@@ -710,8 +713,107 @@ bool main_menu::opening_screen()
         // Refresh in case player created new world or deleted old world
         // Since this is an index for a mutable array, it should always be regenerated instead of modified.
         const size_t last_world_pos = world_generator->get_world_index( world_generator->last_world_name );
-        std::string action = ctxt.handle_input();
-        input_event sInput = ctxt.get_raw_input();
+        auto action = std::string{};
+        auto sInput = input_event{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [this]() {
+                auto snapshot = game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices,
+                    .title = "Cataclysm: Bright Nights",
+                    .allow_cancel = true,
+                };
+                snapshot.choices.reserve( vMenuItems.size() + vNewGameSubItems.size() );
+                for( auto index = std::size_t{ 0 }; index < vMenuItems.size(); ++index ) {
+                    snapshot.choices.push_back( {
+                        .id = "root:" + std::to_string( index ),
+                        .label = remove_color_tags( shortcut_text( c_white, vMenuItems[index] ) ),
+                        .selected = static_cast<int>( index ) == sel1,
+                        .highlighted = static_cast<int>( index ) == sel1,
+                    } );
+                }
+                const auto add_submenu = [&]( const std::vector<std::string> &items,
+                const std::vector<std::string> &descriptions ) {
+                    for( auto index = std::size_t{ 0 }; index < items.size(); ++index ) {
+                        snapshot.choices.push_back( {
+                            .id = "submenu:" + std::to_string( index ),
+                            .label = remove_color_tags( shortcut_text( c_white, items[index] ) ),
+                            .description = index < descriptions.size() ?
+                            remove_color_tags( descriptions[index] ) : std::string{},
+                            .selected = static_cast<int>( index ) == sel2,
+                            .highlighted = static_cast<int>( index ) == sel2,
+                        } );
+                    }
+                };
+                if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) {
+                    add_submenu( vNewGameSubItems, vNewGameHints );
+                } else if( sel1 == getopt( main_menu_opts::SETTINGS ) ) {
+                    add_submenu( vSettingsSubItems, {} );
+                } else if( sel1 == getopt( main_menu_opts::LOADCHAR ) ||
+                           sel1 == getopt( main_menu_opts::WORLD ) ) {
+                    auto worlds = std::vector<std::string> {};
+                    if( sel1 == getopt( main_menu_opts::WORLD ) ) {
+                        worlds.emplace_back( _( "Create World" ) );
+                    }
+                    for( const auto &world_name : world_generator->all_worldnames() ) {
+                        const auto *const world = world_generator->get_world( world_name );
+                        worlds.push_back( string_format( "%s (%d)", world_name,
+                                                         world->world_saves.size() ) );
+                    }
+                    add_submenu( worlds, {} );
+                }
+                return snapshot;
+            } );
+            action = ctxt.handle_input();
+            sInput = ctxt.get_raw_input();
+        }
+
+        if( sInput.interaction &&
+            sInput.interaction->operation == game_client::interaction_operation::cancel ) {
+            action = "QUIT";
+        } else if( sInput.interaction &&
+                   sInput.interaction->operation == game_client::interaction_operation::choose ) {
+            const auto &choice_id = sInput.interaction->target_id;
+            const auto find_choice = [&]( const std::string & prefix, const std::size_t size )
+            -> std::optional<std::size_t> {
+                const auto indices = std::views::iota( std::size_t{ 0 }, size );
+                const auto found = std::ranges::find_if( indices, [&]( const auto index )
+                {
+                    return choice_id == prefix + std::to_string( index );
+                } );
+                return found == indices.end() ? std::nullopt : std::optional<std::size_t>{ *found };
+            };
+            if( const auto root = find_choice( "root:", vMenuItems.size() ) ) {
+                const auto next = static_cast<int>( *root );
+                if( next != sel1 ) {
+                    sel1 = next;
+                    sel2 = sel1 == getopt( main_menu_opts::LOADCHAR ) ? last_world_pos : 0;
+                    sel_line = 0;
+                    on_move();
+                }
+                if( sel1 == getopt( main_menu_opts::HELP ) ) {
+                    action = "CONFIRM";
+                } else if( sel1 == getopt( main_menu_opts::QUIT ) ) {
+                    action = "QUIT";
+                } else {
+                    action.clear();
+                }
+            } else {
+                auto submenu_size = std::size_t{ 0 };
+                if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) {
+                    submenu_size = vNewGameSubItems.size();
+                } else if( sel1 == getopt( main_menu_opts::SETTINGS ) ) {
+                    submenu_size = vSettingsSubItems.size();
+                } else if( sel1 == getopt( main_menu_opts::LOADCHAR ) ) {
+                    submenu_size = world_generator->all_worldnames().size();
+                } else if( sel1 == getopt( main_menu_opts::WORLD ) ) {
+                    submenu_size = world_generator->all_worldnames().size() + 1;
+                }
+                if( const auto submenu = find_choice( "submenu:", submenu_size ) ) {
+                    sel2 = static_cast<int>( *submenu );
+                    action = "CONFIRM";
+                }
+            }
+        }
 
         // check automatic menu shortcuts
         for( int i = 0; static_cast<size_t>( i ) < vMenuHotkeys.size(); ++i ) {

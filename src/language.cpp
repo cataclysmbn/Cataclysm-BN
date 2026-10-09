@@ -1,7 +1,9 @@
 #include "language.h"
+#include "language_test.h"
 
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 
 #if defined(_WIN32)
 #  if 1 // Prevent IWYU reordering platform_win.h below mmsystem.h
@@ -452,19 +454,32 @@ using cata_libintl::trans_catalogue;
 
 namespace l10n_data
 {
-static trans_library trans_lib_singleton;
+namespace
+{
+auto trans_lib_singleton = localization::locale_snapshot {};
+struct catalogue_collection {
+    std::vector<trans_catalogue> catalogues;
+    localization::content_hash identity;
+    bool track_identity = true;
+    catalogue_collection() { identity.add( "locale-catalogues-v1" ); }
+};
+} // namespace
+
 const trans_library &get_library()
 {
-    return trans_lib_singleton;
+    return trans_lib_singleton.library();
 }
 
-static void set_library( trans_library lib )
+auto pin_library() -> localization::locale_snapshot { return trans_lib_singleton; }
+
+static void set_library( catalogue_collection collection )
 {
-    trans_lib_singleton = std::move( lib );
+    trans_lib_singleton = localization::locale_snapshot::from_library(
+                              trans_library::create( std::move( collection.catalogues ) ), collection.identity.value() );
     invalidate_translations();
 }
 
-static void add_cat_if_exists( std::vector<trans_catalogue> &list, const std::string &lang_id,
+static void add_cat_if_exists( catalogue_collection &list, const std::string &lang_id,
                                const std::string &path_start, const std::string &path_end )
 {
     std::vector<std::string> opts = get_lang_path_substring( lang_id );
@@ -474,7 +489,21 @@ static void add_cat_if_exists( std::vector<trans_catalogue> &list, const std::st
             continue;
         }
         try {
-            list.push_back( trans_catalogue::load_from_file( path ) );
+            auto buffer = std::stringstream{};
+            auto file = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( path ) );
+            if( !file.is_open() ) { throw std::runtime_error( "failed to open file" ); }
+            buffer << file->rdbuf();
+            if( file.fail() ) { throw std::runtime_error( "failed to read file" ); }
+            auto bytes = buffer.str();
+            auto hash = localization::content_hash{};
+            if( list.track_identity ) {
+                hash.add( "mo-buffer-v1" );
+                hash.add( bytes );
+                localization::record_catalogue_hash( bytes.size() );
+            }
+            auto catalogue = trans_catalogue::load_from_memory( std::move( bytes ) );
+            list.catalogues.push_back( std::move( catalogue ) );
+            if( list.track_identity ) { list.identity.add( std::to_string( hash.value() ) ); }
         } catch( const std::runtime_error &err ) {
             debugmsg( "Failed to load translation catalogue '%s': %s", path, err.what() );
         }
@@ -482,13 +511,13 @@ static void add_cat_if_exists( std::vector<trans_catalogue> &list, const std::st
     }
 }
 
-static void add_mod_catalogue_if_exists( std::vector<trans_catalogue> &list,
+static void add_mod_catalogue_if_exists( catalogue_collection &list,
         const std::string &lang_id, const std::string &mod_path )
 {
     add_cat_if_exists( list, lang_id, mod_path + "/lang/", ".mo" );
 }
 
-static void add_base_catalogue( std::vector<trans_catalogue> &list, const std::string &lang_id )
+static void add_base_catalogue( catalogue_collection &list, const std::string &lang_id )
 {
     // TODO: split source code strings from data strings
     //       and load data translations from separate file(s)
@@ -498,7 +527,7 @@ static void add_base_catalogue( std::vector<trans_catalogue> &list, const std::s
                      );
 }
 
-static bool add_mod_catalogues( std::vector<trans_catalogue> &list, const std::string &lang_id )
+static bool add_mod_catalogues( catalogue_collection &list, const std::string &lang_id )
 {
     if( !world_generator || !world_generator->active_world ) {
         return false;
@@ -513,27 +542,28 @@ static bool add_mod_catalogues( std::vector<trans_catalogue> &list, const std::s
 
 void reload_catalogues()
 {
-    std::vector<trans_catalogue> list;
+    auto list = catalogue_collection{};
     add_base_catalogue( list, get_language().id );
     add_mod_catalogues( list, get_language().id );
-    set_library( trans_library::create( std::move( list ) ) );
+    set_library( std::move( list ) );
 }
 
 static bool mod_catalogues_loaded = false;
+auto mod_catalogues_are_loaded() -> bool { return mod_catalogues_loaded; }
 
 void unload_catalogues()
 {
     mod_catalogues_loaded = false;
-    set_library( trans_library::create( {} ) );
+    set_library( {} );
 }
 
 void load_mod_catalogues()
 {
     assert( !mod_catalogues_loaded );
-    std::vector<trans_catalogue> list;
+    auto list = catalogue_collection{};
     add_base_catalogue( list, get_language().id );
     mod_catalogues_loaded = add_mod_catalogues( list, get_language().id );
-    set_library( trans_library::create( std::move( list ) ) );
+    set_library( std::move( list ) );
 }
 
 void unload_mod_catalogues()
@@ -543,10 +573,35 @@ void unload_mod_catalogues()
     }
 
     mod_catalogues_loaded = false;
-    std::vector<trans_catalogue> list;
+    auto list = catalogue_collection{};
     add_base_catalogue( list, get_language().id );
-    set_library( trans_library::create( std::move( list ) ) );
+    set_library( std::move( list ) );
 }
+
+#if defined(CATA_LANGUAGE_TESTING)
+namespace testing
+{
+scoped_catalogues::scoped_catalogues( std::vector<std::string> catalogues )
+    : previous_( pin_library() ), previous_mod_loaded_( mod_catalogues_loaded )
+{
+    replace( std::move( catalogues ) );
+}
+
+scoped_catalogues::~scoped_catalogues() noexcept
+{
+    trans_lib_singleton = std::move( previous_ );
+    mod_catalogues_loaded = previous_mod_loaded_;
+    invalidate_translations();
+}
+
+auto scoped_catalogues::replace( std::vector<std::string> catalogues ) -> void
+{
+    auto next = localization::locale_snapshot::from_catalogues( std::move( catalogues ) );
+    trans_lib_singleton = std::move( next );
+    invalidate_translations();
+}
+} // namespace testing
+#endif
 
 } // namespace l10n_data
 
@@ -563,12 +618,13 @@ void translatable_mod_info::update()
     }
 
     // For 3rd-party mods, try that mod's translation file
-    std::vector<trans_catalogue> list;
+    auto list = l10n_data::catalogue_collection{};
+    list.track_identity = false;
     l10n_data::add_mod_catalogue_if_exists( list, get_language().id, mod_path );
-    if( list.empty() ) {
+    if( list.catalogues.empty() ) {
         return;
     }
-    trans_library lib = trans_library::create( std::move( list ) );
+    auto lib = trans_library::create( std::move( list.catalogues ) );
 
     name_tr = lib.get( name_raw_.c_str() );
     description_tr = lib.get( description_raw.c_str() );

@@ -4,6 +4,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "client_interaction.h"
 #include "debug.h"
 #include "detached_ptr.h"
 #include "drop_preview.h"
@@ -13,6 +14,7 @@
 #include "ime.h"
 #include "inventory.h"
 #include "item.h"
+#include "iteminfo_request.h"
 #include "item_category.h"
 #include "item_search.h"
 #include "item_stack.h"
@@ -333,6 +335,14 @@ std::string inventory_selector_preset::get_cell_text( const inventory_entry &ent
     } else {
         return entry.get_category_ptr()->name();
     }
+}
+
+std::string inventory_selector_preset::get_cell_title( const size_t cell_index ) const
+{
+    if( cell_index >= cells.size() ) {
+        return {};
+    }
+    return remove_color_tags( cells[cell_index].title );
 }
 
 bool inventory_selector_preset::is_stub_cell( const inventory_entry &entry,
@@ -1999,13 +2009,133 @@ bool inventory_selector::has_available_choices() const
     } );
 }
 
+auto inventory_selector::interaction_snapshot() const -> game_client::interaction_snapshot
+{
+    const auto message = filter.empty() ? std::string{} :
+                         string_format( _( "Filter: %s" ), filter );
+    auto result = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::inventory,
+        .title = remove_color_tags( title ),
+        .message = message,
+        .allow_cancel = true,
+        .allow_set_count = supports_semantic_count(),
+    };
+    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
+    const auto &all_columns = get_all_columns();
+    for( const auto column_index : std::views::iota( std::size_t{ 0 }, all_columns.size() ) ) {
+        const auto &column = *all_columns[column_index];
+        if( !column.allows_selecting() ) {
+            continue;
+        }
+        const auto source = &column == &own_inv_column ? "inventory" :
+                            &column == &map_column ? "map_or_vehicle" :
+                            &column == &own_gear_column ? "worn_or_wielded" : "other";
+        for( const auto entry_index : std::views::iota( std::size_t{ 0 }, column.entries.size() ) ) {
+            const auto &entry = column.entries[entry_index];
+            if( !entry.is_item() ) {
+                continue;
+            }
+            auto columns = std::vector<game_client::interaction_column> {};
+            columns.reserve( preset.get_cells_count() + 1 );
+            columns.push_back( { .label = "source", .value = source } );
+            for( const auto cell_index : std::views::iota( std::size_t{ 0 },
+                    preset.get_cells_count() ) ) {
+                columns.push_back( {
+                    .label = preset.get_cell_title( cell_index ),
+                    .value = remove_color_tags( preset.get_cell_text( entry, cell_index ) ),
+                } );
+            }
+            const auto denial = remove_color_tags( preset.get_denial( entry ) );
+            const auto description = remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) );
+            auto identity = std::vector<std::string> {
+                std::to_string( column_index ), std::to_string( entry_index ),
+                entry.any_item()->typeId().str(),
+                entry.get_category_ptr()->get_id().str(), description,
+                std::to_string( entry.get_available_count() ),
+            };
+            for( const auto &cell : columns ) {
+                identity.push_back( cell.label );
+                identity.push_back( cell.value );
+            }
+            const auto base_id = game_client::opaque_interaction_id( "item", identity );
+            const auto occurrence = identity_counts[base_id]++;
+            const auto id = game_client::opaque_interaction_id(
+                                "item", { base_id, std::to_string( occurrence ) } );
+            result.choices.push_back( {
+                .id = id,
+                .label = columns.size() > 1 ? columns[1].value : entry.any_item()->display_name(),
+                .description = description,
+                .denial = denial,
+                .enabled = entry.is_selectable(),
+                .selectable = entry.is_selectable() && denial.empty(),
+                .selected = entry.chosen_count > 0,
+                .highlighted = is_active_column( column ) && column.is_selected( entry ),
+                .columns = std::move( columns ),
+                .selected_count = entry.chosen_count,
+                .available_count = entry.get_available_count(),
+            } );
+        }
+    }
+    return result;
+}
+
+auto inventory_selector::find_interaction_entry( const std::string &id ) const -> inventory_entry *
+{
+    const auto snapshot = interaction_snapshot();
+    const auto choice = std::ranges::find( snapshot.choices, id,
+                                           &game_client::interaction_choice::id );
+    if( choice == snapshot.choices.end() ) {
+        return nullptr;
+    }
+    auto choice_index = static_cast<std::size_t>( std::distance( snapshot.choices.begin(), choice ) );
+    for( auto *column : get_all_columns() ) {
+        if( !column->allows_selecting() ) {
+            continue;
+        }
+        for( auto &entry : column->entries ) {
+            if( !entry.is_item() ) {
+                continue;
+            }
+            if( choice_index == 0 ) {
+                return &entry;
+            }
+            --choice_index;
+        }
+    }
+    return nullptr;
+}
+
 inventory_input inventory_selector::get_input()
 {
-    inventory_input res;
+    auto res = inventory_input{};
+    const auto interaction = game_client::interaction_scope( ctxt, [this]() {
+        return interaction_snapshot();
+    } );
 
     res.action = ctxt.handle_input();
-    res.ch = ctxt.get_raw_input().get_first_input();
+    const auto &event = ctxt.get_raw_input();
+    res.ch = event.get_first_input();
     res.entry = find_entry_by_invlet( res.ch );
+
+    if( event.interaction ) {
+        if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+            res.action = "QUIT";
+        } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
+            res.entry = find_interaction_entry( event.interaction->target_id );
+            if( res.entry != nullptr ) {
+                select( res.entry->any_item() );
+            }
+        } else if( event.interaction->operation == game_client::interaction_operation::set_count ) {
+            res.entry = find_interaction_entry( event.interaction->target_id );
+            if( res.entry != nullptr ) {
+                select( res.entry->any_item() );
+                apply_semantic_count( *res.entry,
+                                      static_cast<std::size_t>( *event.interaction->count ) );
+                res.entry = nullptr;
+                res.action = "SEMANTIC_COUNT";
+            }
+        }
+    }
 
     if( res.entry != nullptr && !res.entry->is_selectable() ) {
         res.entry = nullptr;
@@ -2284,6 +2414,12 @@ size_t inventory_multiselector::query_count( size_t count = 0 )
 
     spopup.reset();
     return count;
+}
+
+auto inventory_multiselector::apply_semantic_count( inventory_entry &entry,
+        const std::size_t count ) -> void
+{
+    set_chosen_count( entry, count );
 }
 
 void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t count )

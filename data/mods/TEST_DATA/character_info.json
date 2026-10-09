@@ -1,0 +1,1895 @@
+[
+  {
+    "type": "mutation",
+    "id": "test_character_info_visible_trait",
+    "name": "TEST character info visible trait",
+    "description": "Complete native trait description. The last sentence must remain available beyond the short native detail pane.",
+    "points": 0
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_hidden_trait",
+    "name": "TEST character info hidden trait",
+    "description": "This trait is not disclosed in character information.",
+    "points": 0,
+    "player_display": false
+  },
+  {
+    "type": "effect_type",
+    "id": "test_character_info_visible_effect",
+    "name": [ "TEST character info visible effect" ],
+    "desc": [ "Complete native effect description, including the final sentence." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "test_character_info_hidden_effect",
+    "desc": [ "Undisclosed effect description." ]
+  },
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_character_info_cbm",
+    "name": "TEST character info CBM item",
+    "description": "Item version of the native character information fixture.",
+    "weight": "1 g",
+    "volume": "1 ml",
+    "material": [ "steel" ],
+    "symbol": ":",
+    "color": "yellow",
+    "difficulty": 1,
+    "flags": [ "CBM", "MULTIINSTALL" ],
+    "use_action": "install_bionic"
+  },
+  {
+    "type": "bionic",
+    "id": "test_character_info_cbm",
+    "name": "TEST character info CBM",
+    "description": "Complete native bionic description. This final sentence must not be truncated.",
+    "capacity": "1 kJ",
+    "flags": [ "MULTIINSTALL" ]
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_0",
+    "name": "TEST character info page 000",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_1",
+    "name": "TEST character info page 001",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_2",
+    "name": "TEST character info page 002",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_3",
+    "name": "TEST character info page 003",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_4",
+    "name": "TEST character info page 004",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_5",
+    "name": "TEST character info page 005",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_6",
+    "name": "TEST character info page 006",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_7",
+    "name": "TEST character info page 007",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_8",
+    "name": "TEST character info page 008",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_9",
+    "name": "TEST character info page 009",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_10",
+    "name": "TEST character info page 010",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_11",
+    "name": "TEST character info page 011",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_12",
+    "name": "TEST character info page 012",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_13",
+    "name": "TEST character info page 013",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_14",
+    "name": "TEST character info page 014",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_15",
+    "name": "TEST character info page 015",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_16",
+    "name": "TEST character info page 016",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_17",
+    "name": "TEST character info page 017",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_18",
+    "name": "TEST character info page 018",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_19",
+    "name": "TEST character info page 019",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_20",
+    "name": "TEST character info page 020",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_21",
+    "name": "TEST character info page 021",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_22",
+    "name": "TEST character info page 022",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_23",
+    "name": "TEST character info page 023",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_24",
+    "name": "TEST character info page 024",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_25",
+    "name": "TEST character info page 025",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_26",
+    "name": "TEST character info page 026",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_27",
+    "name": "TEST character info page 027",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_28",
+    "name": "TEST character info page 028",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_29",
+    "name": "TEST character info page 029",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_30",
+    "name": "TEST character info page 030",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_31",
+    "name": "TEST character info page 031",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_32",
+    "name": "TEST character info page 032",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_33",
+    "name": "TEST character info page 033",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_34",
+    "name": "TEST character info page 034",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_35",
+    "name": "TEST character info page 035",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_36",
+    "name": "TEST character info page 036",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_37",
+    "name": "TEST character info page 037",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_38",
+    "name": "TEST character info page 038",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_39",
+    "name": "TEST character info page 039",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_40",
+    "name": "TEST character info page 040",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_41",
+    "name": "TEST character info page 041",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_42",
+    "name": "TEST character info page 042",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_43",
+    "name": "TEST character info page 043",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_44",
+    "name": "TEST character info page 044",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_45",
+    "name": "TEST character info page 045",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_46",
+    "name": "TEST character info page 046",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_47",
+    "name": "TEST character info page 047",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_48",
+    "name": "TEST character info page 048",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_49",
+    "name": "TEST character info page 049",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_50",
+    "name": "TEST character info page 050",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_51",
+    "name": "TEST character info page 051",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_52",
+    "name": "TEST character info page 052",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_53",
+    "name": "TEST character info page 053",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_54",
+    "name": "TEST character info page 054",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_55",
+    "name": "TEST character info page 055",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_56",
+    "name": "TEST character info page 056",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_57",
+    "name": "TEST character info page 057",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_58",
+    "name": "TEST character info page 058",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_59",
+    "name": "TEST character info page 059",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_60",
+    "name": "TEST character info page 060",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_61",
+    "name": "TEST character info page 061",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_62",
+    "name": "TEST character info page 062",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_63",
+    "name": "TEST character info page 063",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_64",
+    "name": "TEST character info page 064",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_65",
+    "name": "TEST character info page 065",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_66",
+    "name": "TEST character info page 066",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_67",
+    "name": "TEST character info page 067",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_68",
+    "name": "TEST character info page 068",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_69",
+    "name": "TEST character info page 069",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_70",
+    "name": "TEST character info page 070",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_71",
+    "name": "TEST character info page 071",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_72",
+    "name": "TEST character info page 072",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_73",
+    "name": "TEST character info page 073",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_74",
+    "name": "TEST character info page 074",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_75",
+    "name": "TEST character info page 075",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_76",
+    "name": "TEST character info page 076",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_77",
+    "name": "TEST character info page 077",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_78",
+    "name": "TEST character info page 078",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_79",
+    "name": "TEST character info page 079",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_80",
+    "name": "TEST character info page 080",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_81",
+    "name": "TEST character info page 081",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_82",
+    "name": "TEST character info page 082",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_83",
+    "name": "TEST character info page 083",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_84",
+    "name": "TEST character info page 084",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_85",
+    "name": "TEST character info page 085",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_86",
+    "name": "TEST character info page 086",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_87",
+    "name": "TEST character info page 087",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_88",
+    "name": "TEST character info page 088",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_89",
+    "name": "TEST character info page 089",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_90",
+    "name": "TEST character info page 090",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_91",
+    "name": "TEST character info page 091",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_92",
+    "name": "TEST character info page 092",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_93",
+    "name": "TEST character info page 093",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_94",
+    "name": "TEST character info page 094",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_95",
+    "name": "TEST character info page 095",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_96",
+    "name": "TEST character info page 096",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_97",
+    "name": "TEST character info page 097",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_98",
+    "name": "TEST character info page 098",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_99",
+    "name": "TEST character info page 099",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_100",
+    "name": "TEST character info page 100",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_101",
+    "name": "TEST character info page 101",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_102",
+    "name": "TEST character info page 102",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_103",
+    "name": "TEST character info page 103",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_104",
+    "name": "TEST character info page 104",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_105",
+    "name": "TEST character info page 105",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_106",
+    "name": "TEST character info page 106",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_107",
+    "name": "TEST character info page 107",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_108",
+    "name": "TEST character info page 108",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_109",
+    "name": "TEST character info page 109",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_110",
+    "name": "TEST character info page 110",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_111",
+    "name": "TEST character info page 111",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_112",
+    "name": "TEST character info page 112",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_113",
+    "name": "TEST character info page 113",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_114",
+    "name": "TEST character info page 114",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_115",
+    "name": "TEST character info page 115",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_116",
+    "name": "TEST character info page 116",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_117",
+    "name": "TEST character info page 117",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_118",
+    "name": "TEST character info page 118",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_119",
+    "name": "TEST character info page 119",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_120",
+    "name": "TEST character info page 120",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_121",
+    "name": "TEST character info page 121",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_122",
+    "name": "TEST character info page 122",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_123",
+    "name": "TEST character info page 123",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_124",
+    "name": "TEST character info page 124",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_125",
+    "name": "TEST character info page 125",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_126",
+    "name": "TEST character info page 126",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_127",
+    "name": "TEST character info page 127",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_128",
+    "name": "TEST character info page 128",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_129",
+    "name": "TEST character info page 129",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_130",
+    "name": "TEST character info page 130",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_131",
+    "name": "TEST character info page 131",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_132",
+    "name": "TEST character info page 132",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_133",
+    "name": "TEST character info page 133",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_134",
+    "name": "TEST character info page 134",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_135",
+    "name": "TEST character info page 135",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_136",
+    "name": "TEST character info page 136",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_137",
+    "name": "TEST character info page 137",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_138",
+    "name": "TEST character info page 138",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_139",
+    "name": "TEST character info page 139",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_140",
+    "name": "TEST character info page 140",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_141",
+    "name": "TEST character info page 141",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_142",
+    "name": "TEST character info page 142",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_143",
+    "name": "TEST character info page 143",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_144",
+    "name": "TEST character info page 144",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_145",
+    "name": "TEST character info page 145",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_146",
+    "name": "TEST character info page 146",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_147",
+    "name": "TEST character info page 147",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_148",
+    "name": "TEST character info page 148",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_149",
+    "name": "TEST character info page 149",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_150",
+    "name": "TEST character info page 150",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_151",
+    "name": "TEST character info page 151",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_152",
+    "name": "TEST character info page 152",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_153",
+    "name": "TEST character info page 153",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_154",
+    "name": "TEST character info page 154",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_155",
+    "name": "TEST character info page 155",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_156",
+    "name": "TEST character info page 156",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_157",
+    "name": "TEST character info page 157",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_158",
+    "name": "TEST character info page 158",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_159",
+    "name": "TEST character info page 159",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_160",
+    "name": "TEST character info page 160",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_161",
+    "name": "TEST character info page 161",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_162",
+    "name": "TEST character info page 162",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_163",
+    "name": "TEST character info page 163",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_164",
+    "name": "TEST character info page 164",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_165",
+    "name": "TEST character info page 165",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_166",
+    "name": "TEST character info page 166",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_167",
+    "name": "TEST character info page 167",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_168",
+    "name": "TEST character info page 168",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_169",
+    "name": "TEST character info page 169",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_170",
+    "name": "TEST character info page 170",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_171",
+    "name": "TEST character info page 171",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_172",
+    "name": "TEST character info page 172",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_173",
+    "name": "TEST character info page 173",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_174",
+    "name": "TEST character info page 174",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_175",
+    "name": "TEST character info page 175",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_176",
+    "name": "TEST character info page 176",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_177",
+    "name": "TEST character info page 177",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_178",
+    "name": "TEST character info page 178",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_179",
+    "name": "TEST character info page 179",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_180",
+    "name": "TEST character info page 180",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_181",
+    "name": "TEST character info page 181",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_182",
+    "name": "TEST character info page 182",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_183",
+    "name": "TEST character info page 183",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_184",
+    "name": "TEST character info page 184",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_185",
+    "name": "TEST character info page 185",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_186",
+    "name": "TEST character info page 186",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_187",
+    "name": "TEST character info page 187",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_188",
+    "name": "TEST character info page 188",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_189",
+    "name": "TEST character info page 189",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_190",
+    "name": "TEST character info page 190",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_191",
+    "name": "TEST character info page 191",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_192",
+    "name": "TEST character info page 192",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_193",
+    "name": "TEST character info page 193",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_194",
+    "name": "TEST character info page 194",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_195",
+    "name": "TEST character info page 195",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_196",
+    "name": "TEST character info page 196",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_197",
+    "name": "TEST character info page 197",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_198",
+    "name": "TEST character info page 198",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_199",
+    "name": "TEST character info page 199",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_200",
+    "name": "TEST character info page 200",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_201",
+    "name": "TEST character info page 201",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_202",
+    "name": "TEST character info page 202",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_203",
+    "name": "TEST character info page 203",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "test_character_info_page_204",
+    "name": "TEST character info page 204",
+    "points": 0,
+    "description": "Complete character information paging fixture.",
+    "player_display": true,
+    "valid": false
+  }
+]

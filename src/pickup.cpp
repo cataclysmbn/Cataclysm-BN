@@ -7,6 +7,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "coordinates.h"
 #include "cursesdef.h"
@@ -18,6 +19,7 @@
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
+#include "iteminfo_request.h"
 #include "item_contents.h"
 #include "item_search.h"
 #include "item_stack.h"
@@ -63,6 +65,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -626,9 +629,117 @@ auto append_item_iterators( item_stack &stack, std::vector<item_stack::iterator>
     } );
 }
 
-auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const int min,
-                         const std::optional<tripoint_bub_ms> &starting_pos ) -> void
+struct pick_up_from_items_options {
+    const std::vector<item_stack::iterator> &here;
+    int minimum;
+    std::optional<tripoint_bub_ms> starting_pos;
+    std::string source;
+    std::string source_identity;
+};
+
+struct pickup_interaction_options {
+    const std::vector<std::list<item_stack::iterator>> &stacked_here;
+    const std::vector<pickup_count> &getitem;
+    const std::vector<int> &matches;
+    const std::string &filter;
+    const std::string &source;
+    const std::string &source_identity;
+    int selected;
+};
+
+auto item_pickup_identity( const item &candidate ) -> std::string
 {
+    const auto &token = *candidate.drop_token;
+    auto position = std::string{ "unknown" };
+    if( candidate.has_position() ) {
+        const auto pos = candidate.abs_pos();
+        position = string_format( "%d:%d:%d", pos.x(), pos.y(), pos.z() );
+    }
+    return string_format( "%s:%s:%d:%d:%d:%d", candidate.typeId().str(), position,
+                          to_turn<int>( token.turn ), token.drop_number, token.parent_number,
+                          candidate.count_by_charges() ? candidate.charges : 1 );
+}
+
+auto pickup_choice_ids( const pickup_interaction_options &opts ) -> std::vector<std::string>
+{
+    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
+    auto ids = std::vector<std::string> {};
+    ids.reserve( opts.matches.size() );
+    std::ranges::transform( opts.matches, std::back_inserter( ids ), [&]( const auto stack_index ) {
+        const auto &stack = opts.stacked_here[stack_index];
+        auto identity = std::vector<std::string> { opts.source_identity };
+        identity.reserve( stack.size() + 2 );
+        std::ranges::transform( stack, std::back_inserter( identity ), []( const auto iter ) {
+            return item_pickup_identity( **iter );
+        } );
+        auto base_identity = std::string{};
+        std::ranges::for_each( identity, [&]( const auto & part ) { base_identity += part + "|"; } );
+        identity.push_back( std::to_string( identity_counts[base_identity]++ ) );
+        return game_client::opaque_interaction_id( "pickup", identity );
+    } );
+    return ids;
+}
+
+auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
+-> game_client::interaction_snapshot
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::inventory,
+        .title = _( "Pick up" ),
+.message = opts.filter.empty() ? std::string{} :
+        string_format( _( "Filter: %s" ), opts.filter ),
+        .allow_cancel = true,
+        .allow_set_count = true,
+    };
+    const auto ids = pickup_choice_ids( opts );
+    snapshot.choices.reserve( opts.matches.size() );
+    for( const auto visible_index : std::views::iota( std::size_t{ 0 }, opts.matches.size() ) ) {
+        const auto stack_index = static_cast<std::size_t>( opts.matches[visible_index] );
+        const auto &stack = opts.stacked_here[stack_index];
+        const auto &candidate = **stack.front();
+        const auto &selection = opts.getitem[stack_index];
+        const auto available = candidate.count_by_charges() ? candidate.charges :
+                               static_cast<int>( stack.size() );
+        const auto selected_count = selection.pick ? selection.count.value_or( available ) : 0;
+        const auto wear = g->u.can_wear( candidate );
+        const auto wield = g->u.can_wield( candidate );
+        auto nesting = std::string{ _( "none" ) };
+        if( selection.parent ) {
+            const auto parent_visible = std::ranges::find( opts.matches,
+                                        static_cast<int>( *selection.parent ) );
+            nesting = parent_visible == opts.matches.end() ? _( "child of a filtered item" ) :
+                      string_format( _( "child of %s" ), ids[std::distance( opts.matches.begin(), parent_visible )] );
+        } else if( !selection.children.empty() ) {
+            nesting = string_format( _( "parent with %d child stacks" ), selection.children.size() );
+        }
+        snapshot.choices.push_back( {
+            .id = ids[visible_index],
+            .label = candidate.display_name( stack.size() ),
+            .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
+            .enabled = true,
+            .selectable = true,
+            .selected = selection.pick,
+            .highlighted = static_cast<int>( visible_index ) == opts.selected,
+            .columns = {
+                { .label = _( "Type" ), .value = candidate.typeId().str() },
+                { .label = _( "Source" ), .value = opts.source },
+                { .label = _( "Nesting" ), .value = std::move( nesting ) },
+                { .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
+                { .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
+            },
+            .selected_count = static_cast<std::uint64_t>( selected_count ),
+            .minimum_count = 0,
+            .available_count = static_cast<std::uint64_t>( available ),
+        } );
+    }
+    return snapshot;
+}
+
+auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
+{
+    const auto &here = opts.here;
+    const auto min = opts.minimum;
+    const auto &starting_pos = opts.starting_pos;
     if( here.empty() ) {
         return;
     }
@@ -762,7 +873,9 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
                 item *loc = *stacked_here[matches[selected]].front();
                 temperature_flag temperature = rot::temp::for_location( get_map(), *loc );
 
-                std::vector<iteminfo> this_item = selected_item.info( temperature );
+                const auto this_item = selected_item.info( {
+                    .temperature = temperature, .mode = iteminfo_mode::observation,
+                } );
 
                 item_info_data dummy( {}, {}, this_item, {}, iScrollPos );
                 dummy.without_getch = true;
@@ -909,12 +1022,28 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
 
         // Now print the two lists; those on the ground and about to be added to inv
         // Continue until we hit return or space
+        auto semantic_index = std::optional<int> {};
+        auto semantic_count = std::optional<int> {};
         do {
             const std::string pickup_chars = ctxt.get_available_single_char_hotkeys( all_pickup_chars );
-            int idx = -1;
+            auto idx = -1;
 
-            if( action == "ANY_INPUT" &&
-                raw_input_char >= '0' && raw_input_char <= '9' ) {
+            if( semantic_index ) {
+                idx = *semantic_index;
+                selected = idx;
+                start = ( idx / maxitems ) * maxitems;
+                if( semantic_count ) {
+                    if( *semantic_count == 0 ) {
+                        action = "LEFT";
+                    } else {
+                        itemcount = *semantic_count;
+                        action = "RIGHT";
+                    }
+                }
+                semantic_index.reset();
+                semantic_count.reset();
+            } else if( action == "ANY_INPUT" &&
+                       raw_input_char >= '0' && raw_input_char <= '9' ) {
                 int raw_input_char_value = static_cast<char>( raw_input_char ) - '0';
                 if( !itemcount ) {
                     itemcount.emplace( 0 );
@@ -1163,8 +1292,47 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
             }
 
             ui_manager::redraw();
-            action = ctxt.handle_input();
+            {
+                const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+                    return pickup_interaction_snapshot( {
+                        .stacked_here = stacked_here,
+                        .getitem = getitem,
+                        .matches = matches,
+                        .filter = filter,
+                        .source = opts.source,
+                        .source_identity = opts.source_identity,
+                        .selected = selected,
+                    } );
+                } );
+                action = ctxt.handle_input();
+            }
             raw_input_char = ctxt.get_raw_input().get_first_input();
+            const auto &event = ctxt.get_raw_input();
+            if( event.interaction ) {
+                if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+                    action = "QUIT";
+                } else if( event.interaction->operation == game_client::interaction_operation::choose ||
+                           event.interaction->operation == game_client::interaction_operation::set_count ) {
+                    const auto snapshot = pickup_interaction_snapshot( {
+                        .stacked_here = stacked_here,
+                        .getitem = getitem,
+                        .matches = matches,
+                        .filter = filter,
+                        .source = opts.source,
+                        .source_identity = opts.source_identity,
+                        .selected = selected,
+                    } );
+                    const auto choice = std::ranges::find( snapshot.choices,
+                                                           event.interaction->target_id,
+                                                           &game_client::interaction_choice::id );
+                    if( choice != snapshot.choices.end() ) {
+                        semantic_index = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
+                        if( event.interaction->operation == game_client::interaction_operation::set_count ) {
+                            semantic_count = static_cast<int>( *event.interaction->count );
+                        }
+                    }
+                }
+            }
 
         } while( action != "QUIT" && action != "CONFIRM" );
 
@@ -1322,7 +1490,17 @@ auto pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_fr
     }
 
     const auto starting_pos = from_vehicle ? std::nullopt : std::make_optional( g->u.bub_pos() );
-    pick_up_from_items( here, min, starting_pos );
+    const auto absolute = map_local_to_abs( get_map(), p );
+    const auto source = from_vehicle ? _( "vehicle cargo" ) : _( "ground" );
+    const auto source_identity = string_format( "%s:%d:%d:%d:%d", from_vehicle ? "vehicle" : "ground",
+                                 absolute.x(), absolute.y(), absolute.z(), cargo_part );
+    pick_up_from_items( {
+        .here = here,
+        .minimum = min,
+        .starting_pos = starting_pos,
+        .source = source,
+        .source_identity = source_identity,
+    } );
 }
 
 auto pickup::nearby_items_for_pickup( const tripoint_bub_ms &center ) -> nearby_pickup_items
@@ -1366,7 +1544,14 @@ auto pickup::pick_up_all_nearby() -> void
 
     const auto starting_pos = nearby.has_ground_items ? std::make_optional(
                                   g->u.bub_pos() ) : std::nullopt;
-    pick_up_from_items( nearby.items, 0, starting_pos );
+    const auto absolute = get_avatar().abs_pos();
+    pick_up_from_items( {
+        .here = nearby.items,
+        .minimum = 0,
+        .starting_pos = starting_pos,
+        .source = _( "ground or vehicle cargo nearby" ),
+        .source_identity = string_format( "nearby:%d:%d:%d", absolute.x(), absolute.y(), absolute.z() ),
+    } );
 }
 
 //helper function for Pickup::pick_up

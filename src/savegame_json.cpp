@@ -4161,8 +4161,11 @@ void addiction::deserialize( JsonIn &jsin )
 
 void serialize( const recipe_subset &value, JsonOut &jsout )
 {
+    auto recipes = std::vector<const recipe *>( value.begin(), value.end() );
+    std::ranges::sort( recipes, recipe_id::LexCmp{}, &recipe::ident );
+
     jsout.start_array();
-    for( const auto &entry : value ) {
+    for( const auto &entry : recipes ) {
         jsout.write( entry->ident() );
     }
     jsout.end_array();

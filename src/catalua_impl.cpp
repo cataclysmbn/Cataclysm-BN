@@ -1,4 +1,5 @@
 #include "catalua_impl.h"
+#include "evaluation_decision.h"
 
 #include "catalua_bindings.h"
 #include "catalua_loader.h"
@@ -122,7 +123,10 @@ void run_console_input( sol::state &lua, const std::string &chunk )
 
 void check_func_result( sol::protected_function_result &res )
 {
+    // A Lua pcall or permissive callback must not turn an unresolved decision into a value.
+    game_client::evaluation::throw_if_incomplete();
     if( !res.valid() ) {
+        game_client::evaluation::fail_current( game_client::evaluation::failure::exception );
         sol::error err = res;
         throw std::runtime_error(
             string_format( "Script runtime error: %s", err.what() )

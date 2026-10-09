@@ -13,6 +13,7 @@
 #include "character_functions.h"
 #include "character_id.h"
 #include "clzones.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "condition.h"
 #include "creature.h"
@@ -83,6 +84,7 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -2149,8 +2151,8 @@ const talk_topic &special_talk( char ch )
     return no_topic;
 }
 
-talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
-                          const talk_topic &topic )
+auto dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
+                    const talk_topic &topic ) -> talk_topic
 {
     std::string challenge = dynamic_line( topic );
     gen_responses( topic );
@@ -2187,8 +2189,9 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     }
     auto selected_response = size_t{ 0 };
 
+    auto ctxt = input_context( "DIALOGUE_CHOOSE_RESPONSE" );
+    ctxt.register_action( "ANY_INPUT" );
 #if defined(__ANDROID__)
-    input_context ctxt( "DIALOGUE_CHOOSE_RESPONSE" );
     for( size_t i = 0; i < responses.size(); i++ ) {
         ctxt.register_manual_key( 'a' + i );
     }
@@ -2197,6 +2200,52 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
     ctxt.register_manual_key( 'Y', "Yell" );
     ctxt.register_manual_key( 'O', "Check opinion" );
 #endif
+
+    // Cache the already evaluated, player-visible lines.  Observation must not parse tags,
+    // generate responses, run speaker effects or roll a trial again.
+    auto interaction = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = remove_color_tags( npc_name ),
+        .message = remove_color_tags( challenge ),
+    };
+    auto occurrences = std::map<std::string, std::size_t> {};
+    for( const auto index : std::views::iota( std::size_t{0}, responses.size() ) ) {
+        const auto &response = responses[index];
+        auto identity = std::vector<std::string> {
+            std::to_string( beta->getID().get_value() ), topic.id, topic.item_type.str(),
+            topic.reason, response.text, response.success.next_topic.id,
+            response.success.next_topic.item_type.str(), response.failure.next_topic.id,
+            response.failure.next_topic.item_type.str(), response.skill.str(), response.style.str(),
+            response.dialogue_spell.str(), std::to_string( response.trial.type ),
+            std::to_string( response.trial.difficulty ),
+            response.mission_selected ? std::to_string( response.mission_selected->get_id() ) : "no-mission",
+        };
+        const auto response_id = game_client::opaque_interaction_id( "dialogue-response", identity );
+        // Identical labels/branches (including different opaque effects) remain distinct.
+        // This ordinal is local to identical response identities, not a screen row or address.
+        identity.push_back( std::to_string( occurrences[response_id]++ ) );
+        interaction.choices.push_back( {
+            .id = game_client::opaque_interaction_id( "dialogue-response", identity ),
+            .label = remove_color_tags( response_lines[index].text ),
+        } );
+    }
+    const auto special_keys = std::array{ 'L', 'S', 'Y', 'O' };
+    const auto special_labels = std::array{ _( "Look at" ), _( "Size up stats" ), _( "Yell" ), _( "Check opinion" ) };
+    for( const auto index : std::views::iota( std::size_t{0}, special_keys.size() ) ) {
+        interaction.choices.push_back( {
+            .id = game_client::opaque_interaction_id( "dialogue-special", {
+                std::to_string( beta->getID().get_value() ), topic.id, special_talk( special_keys[index] ).id,
+            } ),
+            .label = special_labels[index],
+        } );
+    }
+    const auto interaction_scope = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = interaction;
+        if( selected_response < response_lines.size() ) {
+            snapshot.choices[selected_response].highlighted = true;
+        }
+        return snapshot;
+    } );
 
     ui_adaptor ui;
     ui.on_screen_resize( [&]( ui_adaptor & ui ) {
@@ -2216,7 +2265,21 @@ talk_topic dialogue::opt( dialogue_window &d_win, const std::string &npc_name,
         d_win.refresh_response_display();
         do {
             ui_manager::redraw();
-            ch = inp_mngr.get_input_event().get_first_input();
+            ctxt.handle_input();
+            const auto &input = ctxt.get_raw_input();
+            if( input.interaction ) {
+                // handle_input validated this event against this exact provider.  Resolve only
+                // to the original native branch; confirmations, rolls and effects stay below.
+                const auto choice = std::ranges::find( interaction.choices,
+                                                       input.interaction->target_id, &game_client::interaction_choice::id );
+                const auto index = static_cast<std::size_t>( choice - interaction.choices.begin() );
+                if( index >= response_count ) {
+                    return special_talk( special_keys[index - response_count] );
+                }
+                ch = static_cast<int>( index );
+                break;
+            }
+            ch = input.get_first_input();
             if( ch == KEY_UP ) {
                 if( selected_response > 0 ) {
                     selected_response -= 1;

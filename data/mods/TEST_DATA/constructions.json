@@ -1,0 +1,34 @@
+[
+  {
+    "type": "construction_group",
+    "id": "test_semantic_construction",
+    "name": "TEST semantic construction"
+  },
+  {
+    "type": "construction_group",
+    "id": "test_semantic_construction_unavailable",
+    "name": "TEST semantic unavailable construction"
+  },
+  {
+    "type": "construction",
+    "id": "constr_test_semantic_construction",
+    "group": "test_semantic_construction",
+    "category": "OTHER",
+    "required_skills": [  ],
+    "time": "1 m",
+    "components": [ [ [ "e_scrap", 2 ] ] ],
+    "pre_terrain": "t_floor",
+    "post_furniture": "f_test_semantic_construction"
+  },
+  {
+    "type": "construction",
+    "id": "constr_test_semantic_construction_unavailable",
+    "group": "test_semantic_construction_unavailable",
+    "category": "OTHER",
+    "required_skills": [  ],
+    "time": "1 m",
+    "components": [ [ [ "test_1kg_cube", 99 ] ] ],
+    "pre_terrain": "t_floor",
+    "post_furniture": "f_test_semantic_construction"
+  }
+]

@@ -1,18 +1,23 @@
 #pragma once
 
-#include <array>
-#include <cctype>
-#include <functional>
-#include <string>
-
 #include "advanced_inv_area.h"
 #include "advanced_inv_listitem.h"
 #include "advanced_inv_pane.h"
 #include "cursesdef.h"
 
+#include <array>
+#include <cctype>
+#include <functional>
+#include <string>
+
 class input_context;
 class item;
 struct advanced_inv_save_state;
+
+namespace game_client
+{
+struct interaction_snapshot;
+} // namespace game_client
 
 void create_advanced_inv();
 
@@ -33,22 +38,17 @@ class advanced_inventory
         /**
          * Converts from screen relative location to game-space relative location
          * for control rotation in isometric mode.
-        */
+         */
         aim_location screen_relative_location( aim_location area );
         std::string get_location_key( aim_location area );
 
-        advanced_inv_area &get_one_square( const aim_location &loc ) {
-            return squares[loc];
-        }
+        advanced_inv_area &get_one_square( const aim_location &loc ) { return squares[loc]; }
+
     private:
         /**
          * Refers to the two panes, used as index into @ref panes.
          */
-        enum side {
-            left  = 0,
-            right = 1,
-            NUM_PANES = 2
-        };
+        enum side { left = 0, right = 1, NUM_PANES = 2 };
         static constexpr int head_height = 5;
 
         // swap the panes and windows via std::swap()
@@ -57,7 +57,7 @@ class advanced_inventory
         // minimap that displays things around character
         catacurses::window minimap;
         catacurses::window mm_border;
-        const int minimap_width  = 3;
+        const int minimap_width = 3;
         const int minimap_height = 3;
         void draw_minimap();
         void refresh_minimap();
@@ -104,18 +104,21 @@ class advanced_inventory
          * registers all the ctxt for display()
          */
         input_context register_ctxt() const;
+        auto interaction_snapshot() const -> game_client::interaction_snapshot;
+        auto focus_interaction_choice( const std::string &id ) -> bool;
         /**
          *  a smaller chunk of display()
          */
-        void start_activity( aim_location destarea, advanced_inv_listitem *sitem, int &amount_to_move,
-                             bool from_vehicle, bool to_vehicle ) const;
+        void start_activity(
+            aim_location destarea, advanced_inv_listitem *sitem, int &amount_to_move, bool from_vehicle,
+            bool to_vehicle ) const;
 
         /**
          * returns whether the display loop exits or not
          */
-        bool action_move_item( advanced_inv_listitem *sitem,
-                               advanced_inventory_pane &dpane, const advanced_inventory_pane &spane,
-                               const std::string &action );
+        bool action_move_item(
+            advanced_inv_listitem *sitem, advanced_inventory_pane &dpane,
+            const advanced_inventory_pane &spane, const std::string &action );
 
         void action_examine( advanced_inv_listitem *sitem, advanced_inventory_pane &spane );
 
@@ -147,8 +150,8 @@ class advanced_inventory
          * stored in ret), false otherwise.
          */
         bool get_square( const std::string &action, aim_location &ret );
-        void change_square( aim_location changeSquare, advanced_inventory_pane &dpane,
-                            advanced_inventory_pane &spane );
+        void change_square(
+            aim_location changeSquare, advanced_inventory_pane &dpane, advanced_inventory_pane &spane );
         /**
          * Show the sort-by menu and change the sorting of this pane accordingly.
          * @return whether the sort order was actually changed.
@@ -164,7 +167,8 @@ class advanced_inventory
          */
         bool query_destination( aim_location &def );
         /**
-         * Move content of source container into destination container (destination pane = AIM_CONTAINER)
+         * Move content of source container into destination container (destination pane =
+         * AIM_CONTAINER)
          * @param src_container Source container
          * @param dest_container Destination container
          */
@@ -180,6 +184,7 @@ class advanced_inventory
          *      should be moved. A return value of true indicates that amount now contains
          *      a valid item count to be moved.
          */
-        bool query_charges( aim_location destarea, const advanced_inv_listitem &sitem,
-                            const std::string &action, int &amount );
+        bool query_charges(
+            aim_location destarea, const advanced_inv_listitem &sitem, const std::string &action,
+            int &amount );
 };

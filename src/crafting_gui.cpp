@@ -9,6 +9,7 @@
 #include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "crafting.h"
 #include "crafting_quality.h"
@@ -50,8 +51,10 @@
 #include <iterator>
 #include <map>
 #include <regex>
+#include <ranges>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -213,6 +216,90 @@ struct availability {
     }
 
 };
+
+struct crafting_interaction_options {
+    const std::vector<const recipe *> &current;
+    const std::vector<availability> &available;
+    const std::string &category;
+    const std::string &subcategory;
+    const std::string &filter;
+    int line;
+    bool batch;
+};
+
+auto crafting_interaction_snapshot( const crafting_interaction_options &opts )
+-> game_client::interaction_snapshot
+{
+    auto category = normalized_names.contains( opts.category )
+                    ? normalized_names.at( opts.category ) : opts.category;
+    auto subcategory = normalized_names.contains( opts.subcategory )
+                       ? normalized_names.at( opts.subcategory ) : opts.subcategory;
+    auto message = string_format( "%s / %s", category, subcategory );
+    if( !opts.filter.empty() ) {
+        message += string_format( _( " | Filter: %s" ), opts.filter );
+    }
+    if( opts.batch ) {
+        message += _( " | Batch" );
+    }
+
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = _( "Crafting" ),
+        .message = std::move( message ),
+        .allow_cancel = true,
+        .allow_set_count = true,
+    };
+    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
+    const auto indices = std::views::iota( std::size_t{ 0 }, opts.current.size() );
+    std::ranges::transform( indices, std::back_inserter( snapshot.choices ), [&]( const auto index ) {
+        const auto *rec = opts.current[index];
+        const auto count = opts.batch ? index + 1 : std::size_t{ 1 };
+        const auto mode = opts.batch ? "batch" : "normal";
+        const auto base_identity = string_format( "%s:%s:%zu", rec->ident().str(), mode,
+                                   opts.batch ? count : 0 );
+        const auto occurrence = identity_counts[base_identity]++;
+        auto columns = std::vector<game_client::interaction_column> {
+            {
+                .label = _( "Category" ), .value = normalized_names.contains( rec->category )
+                ? normalized_names.at( rec->category ) : rec->category
+            },
+            {
+                .label = _( "Subcategory" ), .value = normalized_names.contains( rec->subcategory )
+                ? normalized_names.at( rec->subcategory ) : rec->subcategory
+            },
+            { .label = _( "Difficulty" ), .value = std::to_string( rec->difficulty ) },
+            { .label = _( "Known" ), .value = opts.available[index].known ? _( "yes" ) : _( "no" ) },
+            {
+                .label = _( "Craftable" ),
+                .value = opts.available[index].can_craft ? _( "yes" ) : _( "no" )
+            },
+            { .label = _( "Batch" ), .value = std::to_string( count ) },
+        };
+        auto choice = game_client::interaction_choice{
+            .id = game_client::opaque_interaction_id( "recipe", {
+                rec->ident().str(), mode, opts.batch ? std::to_string( count ) : "",
+                std::to_string( occurrence )
+            } ),
+            .label = opts.batch ? string_format( _( "%2dx %s" ), count, rec->result_name( true ) )
+            : rec->result_name( true ),
+            .description = rec->description.translated(),
+.denial = opts.available[index].can_craft || rec->is_nested() ? std::string{} :
+            _( "You can't do that!" ),
+            .enabled = opts.available[index].can_craft || rec->is_nested(),
+            .selectable = true,
+            .selected = static_cast<int>( index ) == opts.line,
+            .highlighted = static_cast<int>( index ) == opts.line,
+            .columns = std::move( columns ),
+        };
+        if( !rec->is_nested() ) {
+            choice.selected_count = count;
+            choice.minimum_count = 1;
+            choice.available_count = 50;
+        }
+        return choice;
+    } );
+    return snapshot;
+}
 
 struct list_nested_options {
     const recipe *rec = nullptr;
@@ -870,6 +957,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
     size_t num_hidden = 0;
     int num_recipe = 0;
     int batch_line = 0;
+    int semantic_batch_line = -1;
     const recipe *chosen = nullptr;
 
     const inventory &crafting_inv = crafter.crafting_inventory();
@@ -1414,6 +1502,10 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                     ++rcp_idx;
                 }
             }
+            if( semantic_batch_line >= 0 ) {
+                line = semantic_batch_line;
+                semantic_batch_line = -1;
+            }
         }
         keepline = false;
 
@@ -1472,7 +1564,56 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
         ui_manager::redraw();
         const int scroll_recipe_info_lines = catacurses::getmaxy( w_iteminfo ) - 4;
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+                return crafting_interaction_snapshot( {
+                    .current = current,
+                    .available = available,
+                    .category = tab.cur(),
+                    .subcategory = subtab.cur(),
+                    .filter = filterstring,
+                    .line = line,
+                    .batch = batch,
+                } );
+            } );
+            action = ctxt.handle_input();
+        }
+        const auto &event = ctxt.get_raw_input();
+        if( event.interaction ) {
+            const auto snapshot = crafting_interaction_snapshot( {
+                .current = current,
+                .available = available,
+                .category = tab.cur(),
+                .subcategory = subtab.cur(),
+                .filter = filterstring,
+                .line = line,
+                .batch = batch,
+            } );
+            if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
+                const auto choice = std::ranges::find( snapshot.choices,
+                                                       event.interaction->target_id, &game_client::interaction_choice::id );
+                if( choice != snapshot.choices.end() ) {
+                    line = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
+                    action = "CONFIRM";
+                }
+            } else if( event.interaction->operation ==
+                       game_client::interaction_operation::set_count ) {
+                const auto choice = std::ranges::find( snapshot.choices,
+                                                       event.interaction->target_id, &game_client::interaction_choice::id );
+                if( choice != snapshot.choices.end() ) {
+                    semantic_batch_line = static_cast<int>( *event.interaction->count ) - 1;
+                    if( batch ) {
+                        recalc = true;
+                        continue;
+                    }
+                    line = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
+                    action = "CYCLE_BATCH";
+                }
+            }
+        }
         if( action == "SCROLL_RECIPE_INFO_UP" ) {
             recipe_info_scroll -= dataLines;
             item_info_scroll -= dataLines;

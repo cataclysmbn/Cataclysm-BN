@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -8,6 +10,7 @@
 #include <vector>
 
 #include "value_ptr.h"
+#include "translation_snapshot.h"
 
 constexpr int INVALID_LANGUAGE_VERSION = 0;
 
@@ -208,6 +211,11 @@ class translation
          * form if the object has it.
          **/
         std::string translated( int num = 1 ) const;
+        /// Native resolution with admission before cache fill and owned return. No truncation.
+        auto translated_bounded( std::size_t max_bytes, int num = 1 ) const -> std::optional<std::string>;
+
+        /// O(1) owned frozen inputs; never translates, clones text/cache, or hashes on acquisition.
+        auto snapshot() const -> localization::translation_snapshot;
 
         /**
          * Methods exposing the underlying raw strings are not implemented, and
@@ -252,10 +260,12 @@ class translation
          * Get raw untranslated string for debug purposes.
          */
         std::string_view debug_get_raw() const {
-            return raw;
+            return data().raw;
         }
 
     private:
+        auto translated_impl( std::optional<std::size_t> max_bytes,
+                              int num ) const -> std::optional<std::string>;
         translation( const std::string &ctxt, const std::string &raw );
         translation( const std::string &raw );
         translation( const std::string &raw, const std::string &raw_pl, plural_tag );
@@ -264,10 +274,8 @@ class translation
         struct no_translation_tag {};
         translation( const std::string &str, no_translation_tag );
 
-        cata::value_ptr<std::string> ctxt = nullptr;
-        std::string raw;
-        cata::value_ptr<std::string> raw_pl = nullptr;
-        bool needs_translation = false;
+        auto data() const -> const localization::translation_input &; // *NOPAD*
+        std::shared_ptr<const localization::translation_input> input_;
         // translation cache. For "plural" translation only latest `num` is optimistically cached
         mutable int cached_language_version = INVALID_LANGUAGE_VERSION;
         mutable int cached_num = 0; // `num`, which `cached_translation` corresponds to

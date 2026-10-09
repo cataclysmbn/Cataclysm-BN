@@ -12,6 +12,7 @@
 #include "action.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -172,58 +173,94 @@ void help::display_help()
         draw_menu( w_help );
     } );
 
+    const auto topic_id = []( const auto order, const auto & name ) {
+        return game_client::opaque_interaction_id( "help-topic", { std::to_string( order ), name } );
+    };
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( " HELP " ),
+            .message = _( "Please press one of the following for help on that topic:\n"
+                          "Press ESC to return to the game." ),
+            .allow_cancel = true,
+        };
+        for( const auto &[order, topic] : help_texts ) {
+            snapshot.choices.push_back( {
+                .id = topic_id( order, topic.first ),
+                .label = remove_color_tags( shortcut_text( c_light_blue, _( topic.first ) ) ),
+            } );
+        }
+        return snapshot;
+    } );
+
     do {
         ui_manager::redraw();
 
         action = ctxt.handle_input();
-        std::string sInput = ctxt.get_raw_input().text;
-        for( size_t i = 0; i < hotkeys.size(); ++i ) {
-            for( const std::string &hotkey : hotkeys[i] ) {
-                if( sInput == hotkey ) {
-                    std::vector<std::string> i18n_help_texts;
-                    i18n_help_texts.reserve( help_texts[i].second.size() );
-                    std::transform( help_texts[i].second.begin(), help_texts[i].second.end(),
-                    std::back_inserter( i18n_help_texts ), [&]( std::string & line ) {
-                        std::string line_proc = _( line );
-                        size_t pos = line_proc.find( "<press_", 0, 7 );
-                        while( pos != std::string::npos ) {
-                            size_t pos2 = line_proc.find( ">", pos, 1 );
-
-                            std::string action = line_proc.substr( pos + 7, pos2 - pos - 7 );
-                            auto replace = "<color_light_blue>" + press_x( look_up_action( action ), "", "" ) + "</color>";
-
-                            if( replace.empty() ) {
-                                debugmsg( "Help json: Unknown action: %s", action );
-                            } else {
-                                line_proc = replace_all( line_proc, "<press_" + action + ">", replace );
-                            }
-
-                            pos = line_proc.find( "<press_", pos2, 7 );
-                        }
-                        return line_proc;
-                    } );
-
-                    if( !i18n_help_texts.empty() ) {
-                        ui.on_screen_resize( nullptr );
-
-                        const auto get_w_help_border = [&]() {
-                            init_windows( ui );
-                            return w_help_border;
-                        };
-
-                        scrollable_text( get_w_help_border, _( " HELP " ),
-                                         std::accumulate( i18n_help_texts.begin() + 1, i18n_help_texts.end(),
-                                                          i18n_help_texts.front(),
-                        []( const std::string & lhs, const std::string & rhs ) {
-                            return lhs + "\n\n" + rhs;
-                        } ) );
-
-                        ui.on_screen_resize( init_windows );
+        const auto &input = ctxt.get_raw_input();
+        auto selected_topic = std::optional<int> {};
+        if( input.interaction ) {
+            if( input.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( input.interaction->operation == game_client::interaction_operation::choose ) {
+                for( const auto &[order, topic] : help_texts ) {
+                    if( input.interaction->target_id == topic_id( order, topic.first ) ) {
+                        selected_topic = order;
+                        break;
                     }
-                    action = "CONFIRM";
+                }
+            }
+        } else {
+            for( auto i = std::size_t{0}; i < hotkeys.size(); ++i ) {
+                if( std::ranges::find( hotkeys[i], input.text ) != hotkeys[i].end() ) {
+                    selected_topic = static_cast<int>( i );
                     break;
                 }
             }
+        }
+        if( selected_topic ) {
+            const auto i = *selected_topic;
+            auto i18n_help_texts = std::vector<std::string> {};
+            i18n_help_texts.reserve( help_texts[i].second.size() );
+            std::ranges::transform( help_texts[i].second,
+            std::back_inserter( i18n_help_texts ), [&]( const auto & line ) {
+                auto line_proc = std::string( _( line ) );
+                auto pos = line_proc.find( "<press_", 0, 7 );
+                while( pos != std::string::npos ) {
+                    const auto pos2 = line_proc.find( ">", pos, 1 );
+
+                    const auto action = line_proc.substr( pos + 7, pos2 - pos - 7 );
+                    auto replace = "<color_light_blue>" + press_x( look_up_action( action ), "", "" ) + "</color>";
+
+                    if( replace.empty() ) {
+                        debugmsg( "Help json: Unknown action: %s", action );
+                    } else {
+                        line_proc = replace_all( line_proc, "<press_" + action + ">", replace );
+                    }
+
+                    pos = line_proc.find( "<press_", pos2, 7 );
+                }
+                return line_proc;
+            } );
+
+            if( !i18n_help_texts.empty() ) {
+                ui.on_screen_resize( nullptr );
+
+                const auto get_w_help_border = [&]() {
+                    init_windows( ui );
+                    return w_help_border;
+                };
+
+                scrollable_text( get_w_help_border, _( " HELP " ),
+                                 std::accumulate( i18n_help_texts.begin() + 1, i18n_help_texts.end(),
+                                                  i18n_help_texts.front(),
+                []( const std::string & lhs, const std::string & rhs ) {
+                    return lhs + "\n\n" + rhs;
+                } ) );
+
+                ui.on_screen_resize( init_windows );
+            }
+            action = "CONFIRM";
         }
     } while( action != "QUIT" );
 }

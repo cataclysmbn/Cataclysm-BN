@@ -1,0 +1,18 @@
+[
+  {
+    "type": "BIONIC_ITEM",
+    "id": "test_bionics_manager_callback",
+    "copy-from": "bio_flashlight",
+    "name": "TEST bionics manager callback",
+    "description": "The item version of the fixed native manager callback CBM."
+  },
+  {
+    "type": "bionic",
+    "id": "test_bionics_manager_callback",
+    "name": { "str": "TEST bionics manager callback" },
+    "description": "A fixed native toggled CBM for manager callback and power accounting tests.",
+    "act_cost": "8 J",
+    "deact_cost": "2 J",
+    "flags": [ "BIONIC_TOGGLED" ]
+  }
+]

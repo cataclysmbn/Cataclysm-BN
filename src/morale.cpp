@@ -13,6 +13,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -611,6 +612,8 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
                 }
             }
 
+            auto text() const -> std::string { return right.empty() ? left : left + " " + right; }
+
             int max_width() const {
                 if( sep_line ) {
                     return 0;
@@ -829,10 +832,26 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_cap )
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    namespace ranges = std::ranges;
+    auto message = top_lines.back().text();
+    ranges::for_each( middle_lines, [&]( const auto & line ) { message += "\n" + line.ml.text(); } );
+    ranges::for_each( bottom_lines, [&]( const auto & line ) { message += "\n" + line.text(); } );
+    const auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::custom,
+        .title = _( "Morale" ),
+        .message = std::move( message ),
+        .allow_cancel = true,
+    };
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() { return snapshot; } );
+
     std::string action;
     do {
         ui_manager::redraw();
         action = ctxt.handle_input();
+        if( const auto &event = ctxt.get_raw_input().interaction;
+            event && event->operation == game_client::interaction_operation::cancel ) {
+            action = "QUIT";
+        }
         if( action == "DOWN" && offset < std::max( 0, rows_total - rows_visible ) ) {
             offset++;
         } else if( action == "UP" && offset > 0 ) {
