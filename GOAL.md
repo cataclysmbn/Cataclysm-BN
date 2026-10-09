@@ -46,7 +46,7 @@ Deliver this incrementally across multiple working sessions. Each work package e
 
 Canonical checkout: `/home/scarf/repo/cata/Cataclysm-BN-worktrees/magnum-opus`.
 
-Branch `feat/magnum-opus` (rebuilt on `upstream/main` on 2026-10-09; earlier history is in `out/archive/engine-client.bundle`). Current package status, test results, exclusions and archives: `progress.md`. Re-read actual Git and process state when resuming.
+Branch `feat/magnum-opus` (rebuilt on `upstream/main` on 2026-10-09; earlier history is in `~/repo/cata/archive/engine-client-2026-10-10/engine-client.bundle`). Current package status, test results, exclusions and archives: `progress.md`. Re-read actual Git and process state when resuming.
 
 The existing replay smoke compares the complete avatar `.sav`. Wider saved-world checks are a separate acceptance gate.
 
@@ -212,7 +212,7 @@ Keep reports short and evidence-based. Report actual execution, observed results
 
 ## Resume locations and evidence
 
-Sibling candidate worktrees were retired on 2026-10-09. Their branches are under `refs/archive/branches/`, uncommitted WIP under `refs/archive/wip/`, and text handoffs/logs under `out/archive/2026-10-08/evidence/` (map: `manifest.tsv`).
+Retired branches, WIP snapshots and the pre-squash history are in `~/repo/cata/archive/engine-client-2026-10-10/engine-client.bundle` (restore with `git fetch <bundle> 'refs/*:refs/*'` in a clone that has `upstream/main`). Text handoffs/logs: `~/repo/cata/archive/engine-client-2026-10-10/2026-10-08/evidence/` (map: `manifest.tsv`).
 
 Relevant existing protections and context: [deferred EMP drains](https://github.com/cataclysmbn/Cataclysm-BN/pull/9716), [queued explosion source lifetime](https://github.com/cataclysmbn/Cataclysm-BN/pull/9782), [input replay](https://github.com/cataclysmbn/Cataclysm-BN/pull/9478).
 

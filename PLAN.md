@@ -5,17 +5,17 @@ there, in what order, and how each step is accepted. Read both at session start,
 
 ## Decisions (2026-10-09)
 
-| Topic                            | Decision                                                                                                                                                                          |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Branch / worktree                | `feat/magnum-opus` at `Cataclysm-BN-worktrees/magnum-opus`, based on `upstream/main`                                                                                              |
-| History                          | Rebuilt as one commit per concern; pre-squash history and all retired branches/WIP are in `out/archive/engine-client.bundle` (ref `refs/archive/branches/refactor/engine-client`) |
-| Wire protocol                    | JSON-RPC 2.0, newline-delimited, JSON Schema. One protocol version and one clock for interaction, world and presentation                                                          |
-| Engine-repo conformance consumer | Deno/TypeScript, headless, inside this repository (GOAL M5 "existing test tooling")                                                                                               |
-| Native clients                   | Separate repositories. Engine repo keeps schema, C++ and Deno conformance only                                                                                                    |
-| Rust client                      | `~/repo/cata/bn-client-egui`, eframe (egui + AccessKit, wgpu). Mouse-first (drag/drop, context menus, tooltips, map clicks) and screen-reader accessible                          |
-| Client UI strategy               | First port C++ screens 1:1 (feature parity); redesign only after parity                                                                                                           |
-| Removed from engine repo         | GTK client, Rust `bn-protocol`, unwired 2.0 ordered/world values, capture red tests (all recoverable from archive refs)                                                           |
-| Development mode                 | Client work is fully AI-driven; acceptance is by executable tests, never by inspection of generated code alone                                                                    |
+| Topic                            | Decision                                                                                                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Branch / worktree                | `feat/magnum-opus` at `Cataclysm-BN-worktrees/magnum-opus`, based on `upstream/main`                                                                                                                               |
+| History                          | Rebuilt as one commit per concern; pre-squash history and all retired branches/WIP are in `~/repo/cata/archive/engine-client-2026-10-10/engine-client.bundle` (ref `refs/archive/branches/refactor/engine-client`) |
+| Wire protocol                    | JSON-RPC 2.0, newline-delimited, JSON Schema. One protocol version and one clock for interaction, world and presentation                                                                                           |
+| Engine-repo conformance consumer | Deno/TypeScript, headless, inside this repository (GOAL M5 "existing test tooling")                                                                                                                                |
+| Native clients                   | Separate repositories. Engine repo keeps schema, C++ and Deno conformance only                                                                                                                                     |
+| Rust client                      | `~/repo/cata/bn-client-egui`, eframe (egui + AccessKit, wgpu). Mouse-first (drag/drop, context menus, tooltips, map clicks) and screen-reader accessible                                                           |
+| Client UI strategy               | First port C++ screens 1:1 (feature parity); redesign only after parity                                                                                                                                            |
+| Removed from engine repo         | GTK client, Rust `bn-protocol`, unwired 2.0 ordered/world values, capture red tests (all recoverable from archive refs)                                                                                            |
+| Development mode                 | Client work is fully AI-driven; acceptance is by executable tests, never by inspection of generated code alone                                                                                                     |
 
 ## Current state (evidence 2026-10-09)
 
@@ -24,7 +24,7 @@ there, in what order, and how each step is accepted. Read both at session start,
   ordering; contract 1.0 (4 JSON-RPC methods wired in `src/mcp_server.cpp`); bounded framing; perception
   acquisition after bionic commands.
 - Not present: world/map state on the wire, any push/notification, sockets/WebSocket, reconnect, presentation
-  events from gameplay code (M3), explosion clock (only `refs/archive/wip/refactor-engine-client-explosion-clock`).
+  events from gameplay code (M3), explosion clock (ported in Phase 0, see `src/explosion.cpp`).
 - Known test debt: order-dependent failures in full-suite order (`Items rot away`, `Map powered fridge and freezer
   furniture controls food rot`, `npc-movement`, Lua dimension tests with `database is locked` in the MCP binary).
   All pass alone. Lane L1 is adding a per-test global-state leak check to locate the leakers.
