@@ -63,7 +63,7 @@
     "id": "f_sink",
     "name": "sink",
     "symbol": "&",
-    "description": "Emergency relief provider.  Water isn't running, so it's basically useless.",
+    "description": "A basin with a faucet, set in a countertop. If you can get the plumbing working, it might work as a water source.",
     "color": "white",
     "move_cost_mod": 2,
     "coverage": 45,
