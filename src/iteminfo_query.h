@@ -34,6 +34,7 @@ enum class iteminfo_parts : size_t {
     FOOD_NUTRITION,
     FOOD_QUENCH,
     FOOD_JOY,
+    FOOD_HEALTHY,
     FOOD_PORTIONS,
     FOOD_SMELL,
     FOOD_VITAMINS,

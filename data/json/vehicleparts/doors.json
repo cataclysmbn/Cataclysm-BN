@@ -484,7 +484,7 @@
     "broken_color": "light_gray",
     "damage_modifier": 80,
     "durability": 150,
-    "description": "A short door.  You can always see over it, open or closed.",
+    "description": "A short door, like a car's trunk lid or tailgate.  You can always see over it, open or closed.",
     "item": "frame",
     "location": "center",
     "requirements": {

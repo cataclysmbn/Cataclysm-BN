@@ -2,6 +2,7 @@
 #include "bionics.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "examine_item_menu.h"
 #include "item.h"
 #include "itype.h"
 #include "pimpl.h"
@@ -76,6 +77,9 @@ TEST_CASE("bionics", "[bionics] [item]") {
             "battery" // old-school
         };
         for (auto it : always) { test_consumable_charges(dummy, it, true, true); }
+        CHECK(examine_item_menu::rate_action_eat(
+                  dummy, *item::spawn_temporary("battery", calendar::start_of_cataclysm, 100))
+              == examine_item_menu::hint_rating::good);
 
         static const std::list<std::string> never = {
             "flashlight",  // !is_magazine()

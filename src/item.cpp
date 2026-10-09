@@ -2011,6 +2011,10 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         info.emplace_back( "FOOD", _( "Enjoyability: " ), fun_for_food_item.first );
     }
 
+    if( food_item->get_comestible()->healthy != 0 && parts->test( iteminfo_parts::FOOD_HEALTHY ) ) {
+        info.emplace_back( "FOOD", _( "Healthy: " ), food_item->get_comestible()->healthy );
+    }
+
     if( parts->test( iteminfo_parts::FOOD_PORTIONS ) ) {
         info.emplace_back( "FOOD", _( "Portions: " ),
                            std::abs( static_cast<int>( food_item->charges ) * batch ) );
@@ -5306,6 +5310,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         } else {
             tagtext += _( " (scanned)" );
         }
+    }
+    if( const auto paint = iuse_paint_stuff::try_get_paint_color( *this ); paint && *paint != RGBColor{} ) {
+        tagtext += string_format( " (%s)", paint->friendly_name() );
     }
     if( has_flag( flag_ETHEREAL_ITEM ) ) {
         tagtext += string_format( _( " (%s turns)" ), get_var( "ethereal" ) );
