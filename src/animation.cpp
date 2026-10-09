@@ -526,11 +526,9 @@ void hit_animation( const avatar &u, const tripoint_bub_ms &center, nc_color cCo
         } );
         g->add_draw_callback( hit_cb );
 
-        ui_manager::redraw();
-        inp_mngr.set_timeout( get_option<int>( "ANIMATION_DELAY" ) );
-        // Skip input (if any), because holding down a key with nanosleep can get yourself killed
-        inp_mngr.get_input_event();
-        inp_mngr.reset_timeout();
+        // Pace without reading input: a read would be a client-dependent replay record, and
+        // would block on (then discard) an MCP command.
+        game_client::progress_animation( { .draw_popup = false } );
     }
 }
 
