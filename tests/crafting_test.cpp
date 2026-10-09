@@ -366,7 +366,6 @@ static void add_tool(std::vector<detached_ptr<item>>& tools, const char* type, i
 
 TEST_CASE("tools use charge to craft", "[crafting][charge]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     std::vector<detached_ptr<item>> tools;
 
     GIVEN("recipe and required tools/materials") {
@@ -770,7 +769,6 @@ static void verify_inventory(
 
 TEST_CASE("total crafting time with or without interruption", "[crafting][time][resume]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     GIVEN("a recipe and all the required tools and materials to craft it") {
         recipe_id test_recipe("crude_picklock");
         int expected_time_taken = test_recipe->batch_time(1, 1, 0);
@@ -854,7 +852,6 @@ TEST_CASE("debug hammerspace", "[crafting]") {
 
 TEST_CASE("craft catch-up uses activity progress scale", "[crafting][speed]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
     const auto activity_scale = override_option("ACTIVITY_PROGRESS_SCALE", "50");
     static const auto test_recipe = recipe_id("nodachi");
@@ -889,7 +886,6 @@ TEST_CASE("craft catch-up uses activity progress scale", "[crafting][speed]") {
 
 TEST_CASE("craft progress uses activity scale", "[crafting][speed]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
     const auto player_scale = override_option("PLAYER_ACTION_SCALE", "50");
     const auto activity_scale = override_option("ACTIVITY_PROGRESS_SCALE", "100");
@@ -1241,7 +1237,6 @@ auto check_cooked_meat_is_fresh(item& result) -> void {
 // REPRO for issue #9254: cooking in a vehicle kitchen with a fresh vehicle-stored
 // component should NOT produce a rotten result.
 TEST_CASE("vehicle kitchen craft preserves fresh component rot", "[crafting][rot]") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     setup_vehicle_rot_test_at(old_world_craft_turn());
     auto fixture = make_vehicle_craft_fixture({
         .work_part = vpart_id("kitchen_unit"),

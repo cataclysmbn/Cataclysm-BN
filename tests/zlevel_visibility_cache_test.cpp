@@ -14,7 +14,6 @@
 
 TEST_CASE("solar_cache_uses_date_sensitive_hour", "[vision][zlevel][sun]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
 
     const auto fov3d_occlusion = override_option("FOV_3D_OCCLUSION", "true");
     const auto restore_angled_sunlight_shadows = restore_on_out_of_scope<bool>(
@@ -53,7 +52,6 @@ TEST_CASE("solar_cache_uses_date_sensitive_hour", "[vision][zlevel][sun]") {
 
 TEST_CASE("opening_floor_invalidates_below_seen_cache", "[vision][zlevel]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
 
     map& here = get_map();
 
@@ -85,7 +83,6 @@ TEST_CASE("opening_floor_invalidates_below_seen_cache", "[vision][zlevel]") {
 
 TEST_CASE("solid_floor_blocks_directly_below_visibility", "[vision][zlevel]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
 
     map& here = get_map();
 

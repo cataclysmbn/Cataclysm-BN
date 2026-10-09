@@ -211,7 +211,6 @@ static auto add_backpack_with_sashimi_to_map(const tripoint_bub_ms& pos) -> void
 }
 
 TEST_CASE("Rate of rotting") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     SECTION("Passage of time") {
         weather_manager weather;
         // Item rot is a time duration.
@@ -367,7 +366,6 @@ TEST_CASE("ROT_RATE option scales remaining freshness estimate", "[item][rot][op
 }
 
 TEST_CASE("Preserving containers stop contained food rot") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     SECTION("direct rot queries do not age food in a sealed can") {
         prepare_map_storage_test();
 
@@ -510,7 +508,6 @@ TEST_CASE("Preserving containers stop contained food rot") {
 }
 
 TEST_CASE("Items rot away") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     SECTION("Item in reality bubble rots away") {
         weather_manager weather;
         // Item should rot away when it has 2x of its shelf life in rot.
@@ -560,7 +557,6 @@ TEST_CASE("Items rot away") {
 }
 
 TEST_CASE("Items don't rot away on map load if in a freezer") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     map m(2);
     weather_manager weather;
     if (calendar::turn <= calendar::start_of_cataclysm) {
@@ -643,7 +639,6 @@ TEST_CASE("Items don't rot away on map load if in a freezer") {
 }
 
 TEST_CASE("Vehicle storage temperature controls food rot") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     SECTION("powered freezers preserve food when removed after missed processing") {
         auto fixture = make_storage(vpart_id("minifreezer"), true);
         add_sashimi_to_vehicle_part(*fixture.veh, fixture.part_index);
@@ -860,7 +855,6 @@ TEST_CASE("Vehicle storage temperature controls food rot") {
 }
 
 TEST_CASE("Contained item keeps parent location while temporarily detached") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     prepare_map_storage_test();
 
     auto container = item::spawn("bag_plastic");
@@ -895,7 +889,6 @@ TEST_CASE("Sealed containers keep rotten nested contents on location removal", "
 }
 
 TEST_CASE("Map powered fridge and freezer furniture controls food rot") {
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     SECTION("powered freezer furniture preserves food") {
         prepare_map_storage_test();
         const auto pos = tripoint_bub_ms(60, 60, 0);

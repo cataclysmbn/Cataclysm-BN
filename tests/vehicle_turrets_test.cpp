@@ -107,7 +107,6 @@ TEST_CASE("vehicle_turret", "[vehicle][gun][magazine][.]") {
 
 TEST_CASE("vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret][autoload]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     map& here = get_map();
     vehicle* veh =
         here.add_vehicle(vproto_id("none"), tripoint_bub_ms(65, 65, 0), 270_degrees, 0, 0);
@@ -158,7 +157,6 @@ TEST_CASE("vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret]
 
 TEST_CASE("vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][turret][npc][iff]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     build_test_map(ter_id("t_dirt"));
     map& here = get_map();
     set_time(calendar::turn_zero + 12_hours);

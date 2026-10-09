@@ -55,7 +55,6 @@ static auto set_up_player_vision() -> void {
 
 TEST_CASE("Aiming at a clearly visible target", "[ranged][aiming]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     set_up_player_vision();
     player& shooter = g->u;
     arm_character(shooter, "glock_19");
@@ -171,7 +170,6 @@ TEST_CASE("Aiming at a loaded target on another z-level", "[ranged][aiming][zlev
 
 TEST_CASE("Aiming at a target behind wall", "[ranged][aiming]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     player& shooter = g->u;
     clear_character(shooter, true);
     shooter.add_effect(efftype_id("debug_clairvoyance"), 1_seconds);

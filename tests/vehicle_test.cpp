@@ -398,7 +398,6 @@ TEST_CASE("vehicle speed control free in cruise mode", "[vehicle][speed]") {
 
 TEST_CASE("can autodrive", "[vehicle][autodrive]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     set_time(calendar::turn_zero + 12_hours);
 
     auto& here = get_map();

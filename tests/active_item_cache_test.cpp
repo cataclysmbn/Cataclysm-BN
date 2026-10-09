@@ -260,7 +260,6 @@ TEST_CASE("content_removal_helpers_invalidate_processing_cache", "[item]") {
 
 TEST_CASE("active_item_cache_slow_items_accrue_elapsed_time", "[item]") {
     clear_all_state();
-    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     calendar::turn = calendar::start_of_cataclysm;
 
     auto cache = active_item_cache();
