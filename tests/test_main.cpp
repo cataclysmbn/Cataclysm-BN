@@ -313,6 +313,7 @@ struct global_snapshot {
     std::string active_dimension;
     bool save_tx_active;
     std::string avatar_name;
+    int turn;
     std::map<std::string, std::string> world_default_options;
 
     auto operator==(const global_snapshot&) const -> bool = default; // *NOPAD*
@@ -328,6 +329,7 @@ auto take_global_snapshot() -> global_snapshot {
         .map_size = get_map().getmapsize(),
         .avatar_dimension = get_avatar().get_dimension().str(),
         .active_dimension = g_active_dimension_id.str(),
+        .turn = to_turns<int>(calendar::turn - calendar::turn_zero),
         .avatar_name = get_avatar().name,
         .save_tx_active =
             g->get_active_world() != nullptr && g->get_active_world()->is_save_tx_active(),
@@ -349,6 +351,7 @@ auto describe_leaks(const global_snapshot& before, const global_snapshot& after)
     report("get_avatar().get_dimension()", before.avatar_dimension, after.avatar_dimension);
     report("is_save_tx_active()", std::to_string(before.save_tx_active),
            std::to_string(after.save_tx_active));
+    report("calendar::turn", std::to_string(before.turn), std::to_string(after.turn));
     report("get_avatar().name", before.avatar_name, after.avatar_name);
     report("g_active_dimension_id", before.active_dimension, after.active_dimension);
     for (const auto& [name, value] : after.world_default_options) {
