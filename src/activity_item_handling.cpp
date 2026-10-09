@@ -710,7 +710,11 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
         p.mod_moves( -ait.consumed_moves );
 
         if( p.is_worn( *ait.loc ) ) {
-            if( !p.takeoff( *ait.loc, &res ) ) {
+            // consumed_moves already includes the takeoff cost
+            const auto moves = p.moves;
+            const auto taken_off = p.takeoff( *ait.loc, &res );
+            p.set_moves( moves );
+            if( !taken_off ) {
                 // Skip item if failed to take it off
                 debugmsg( "Failed to obtain worn target item of ACT_DROP" );
                 items.pop_front();

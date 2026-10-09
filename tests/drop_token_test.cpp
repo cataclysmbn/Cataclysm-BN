@@ -469,6 +469,22 @@ TEST_CASE(
     CHECK(dropped_favorites == 0);
 }
 
+TEST_CASE("dropping worn container costs the displayed moves", "[activity][drop_token]") {
+    clear_all_state();
+    avatar dummy;
+    REQUIRE(!dummy.wear_item(item::spawn("backpack"), false));
+
+    auto drop = drop_locations{};
+    drop.push_back(drop_location(*dummy.worn.front(), 1));
+    auto drop_list = pickup::reorder_for_dropping(dummy, drop);
+    REQUIRE(drop_list.size() == 1);
+    const auto displayed_cost = drop_list.front().consumed_moves;
+
+    dummy.set_moves(1000);
+    pickup::obtain_and_tokenize_items(dummy, drop_list);
+    CHECK(dummy.moves == 1000 - displayed_cost);
+}
+
 static auto iterators_in_vector(item_stack& the_stack) -> std::vector<item_stack::iterator> {
     std::vector<item_stack::iterator> unstacked;
 
