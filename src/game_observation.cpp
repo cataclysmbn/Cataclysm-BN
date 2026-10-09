@@ -176,14 +176,14 @@ auto write_known_overmap( JsonOut &json, const game &current ) -> void
     const auto max = point{ 8, 8 };
     for( const auto &offset : point_range<point>( min, max ) ) {
         const auto pos = tripoint_abs_omt{ omt.xy() + offset, omt.z() };
-        if( !buffer.seen( pos ) ) {
+        if( !buffer.seen_loaded( pos ) ) {
             continue;
         }
         json.start_object();
         json.member( "x", pos.x() );
         json.member( "y", pos.y() );
         json.member( "z", pos.z() );
-        json.member( "terrain", buffer.ter_existing( pos ).id().str() );
+        json.member( "terrain", buffer.ter_loaded( pos ).id().str() );
         json.end_object();
     }
     json.end_array();

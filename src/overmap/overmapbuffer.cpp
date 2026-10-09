@@ -383,6 +383,12 @@ auto overmapbuffer::get_existing(const point_abs_om& p) -> overmap* {
     return nullptr;
 }
 
+auto overmapbuffer::find_loaded(const point_abs_om& p) -> overmap* {
+    read_lock<std::shared_mutex> _l(mutex);
+    const auto it = overmaps.find(p);
+    return it == overmaps.end() ? nullptr : it->second.get();
+}
+
 auto overmapbuffer::has(const point_abs_om& p) -> bool { return get_existing(p) != nullptr; }
 
 auto overmapbuffer::get_om_global(const point_abs_omt& p) -> overmap_with_local_coords {
@@ -730,6 +736,13 @@ auto overmapbuffer::seen(const tripoint_abs_omt& p) -> bool {
     return false;
 }
 
+auto overmapbuffer::seen_loaded(const tripoint_abs_omt& p) -> bool {
+    if (pocket_info_ && !pocket_info_->bounds.contains(p)) { return true; }
+    const auto [om_pos, local] = project_remain<coords::om>(p.xy());
+    const auto* om = find_loaded(om_pos);
+    return om != nullptr && om->seen(tripoint_om_omt(local, p.z()));
+}
+
 void overmapbuffer::set_seen(const tripoint_abs_omt& p, bool seen) {
     const overmap_with_local_coords om_loc = get_om_global(p);
     if (is_ot_match("empty_rock", ter(p), ot_match_type::type)
@@ -751,6 +764,14 @@ auto overmapbuffer::ter_existing(const tripoint_abs_omt& p) -> const oter_id& {
     const overmap_with_local_coords om_loc = get_existing_om_global(p);
     if (!om_loc.om) { return ot_null; }
     return om_loc.om->ter(om_loc.local);
+}
+
+auto overmapbuffer::ter_loaded(const tripoint_abs_omt& p) -> const oter_id& {
+    if (pocket_info_ && !pocket_info_->bounds.contains(p)) { return bounds_oter_id_; }
+    static const oter_id ot_null;
+    const auto [om_pos, local] = project_remain<coords::om>(p.xy());
+    const auto* om = find_loaded(om_pos);
+    return om == nullptr ? ot_null : om->ter(tripoint_om_omt(local, p.z()));
 }
 
 void overmapbuffer::ter_set(const tripoint_abs_omt& p, const oter_id& id) {

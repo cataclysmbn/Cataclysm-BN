@@ -10,11 +10,15 @@
 #include "map/map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
+#include "overmap/overmapbuffer_registry.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "rng.h"
 #include "state_helpers.h"
 #include "weather/weather.h"
+#include "world.h"
 
 #include <sstream>
 #include <string>
@@ -266,5 +270,42 @@ TEST_CASE(
 
     CHECK(state.json.find("meat_cooked") != std::string::npos);
     CHECK(items_before() == before);
+    CHECK(rng_get_engine() == engine);
+}
+
+TEST_CASE(
+    "game observation does not load saved overmaps outside memory", "[client][state][overmap]") {
+    clear_all_state();
+    const auto reset_ready = game_ready_guard{game_session::running()};
+    build_test_map(ter_id("t_floor"));
+    auto& you = get_avatar();
+    const auto original_position = you.abs_pos();
+    const auto dimension = g->get_current_dimension_id();
+    auto& buffer = get_overmapbuffer(dimension);
+    // Saved overmap files are shared by the test world: remove them with the loaded copies.
+    const auto cleanup = on_out_of_scope([&]() {
+        you.setpos(original_position);
+        buffer.clear();
+        g->get_active_world()->delete_dimension_data(dimension.str());
+        clear_all_state();
+    });
+    // The avatar stands on the east edge of its overmap so the observed radius reaches the next
+    // one.
+    const auto east_edge = tripoint_abs_omt{OMAPX - 1, OMAPY / 2, 0};
+    you.setpos(project_to<coords::ms>(east_edge));
+    const auto neighbor = point_abs_om{1, 0};
+    buffer.get(neighbor);
+    buffer.save(dimension);
+    buffer.clear();
+    buffer.get(point_abs_om{0, 0});
+    REQUIRE(g->get_active_world()->overmap_exists(neighbor));
+    REQUIRE(buffer.find_loaded(neighbor) == nullptr);
+    game_session::set_running(true);
+    const auto engine = rng_get_engine();
+
+    const auto state = game_observation::capture();
+
+    CHECK(state.json.find("known_overmap") != std::string::npos);
+    CHECK(buffer.find_loaded(neighbor) == nullptr);
     CHECK(rng_get_engine() == engine);
 }
