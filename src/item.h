@@ -492,6 +492,8 @@ class item : public location_visitable<item>, public game_object<item>
          */
         std::string tname( unsigned int quantity = 1, bool with_prefix = true,
                            unsigned int truncate = 0 ) const;
+        /// @ref tname for passive observation: rot refreshed while naming is not kept.
+        auto tname_passive() const -> std::string;
         std::string display_money( unsigned int quantity, unsigned int total,
                                    const std::optional<unsigned int> &selected = std::nullopt ) const;
         /**

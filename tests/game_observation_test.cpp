@@ -30,6 +30,13 @@ struct game_ready_guard {
     ~game_ready_guard() { game_session::set_running(previous); }
 };
 
+auto saved(const auto& value) -> std::string {
+    auto stream = std::ostringstream{};
+    auto json = JsonOut{stream};
+    value.serialize(json);
+    return stream.str();
+}
+
 } // namespace
 
 TEST_CASE("game observation marks an absent game as not ready", "[client][state]") {
@@ -220,4 +227,44 @@ TEST_CASE("game observation contains player inventory and visible world only", "
     CHECK(observed_barrier_count == 1);
     CHECK(visible_floor_is_traversable);
     CHECK_FALSE(barrier_is_traversable);
+}
+
+TEST_CASE(
+    "game observation names perishable items without updating their rot", "[client][state][rng]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto reset_ready = game_ready_guard{game_session::running()};
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
+    calendar::turn = calendar::turn_zero + 12_hours;
+    build_test_map(ter_id("t_floor"));
+    auto& you = get_avatar();
+    auto& here = get_map();
+    const auto visible = you.bub_pos() + tripoint_east;
+    auto carried = item::spawn("meat_cooked");
+    auto ground = item::spawn("meat_cooked");
+    auto backpack = item::spawn("backpack");
+    backpack->put_in(item::spawn("meat_cooked"));
+    REQUIRE(carried->goes_bad());
+    you.i_add(std::move(carried));
+    you.i_add(std::move(backpack));
+    here.add_item_or_charges(visible, std::move(ground));
+    here.invalidate_map_cache(0);
+    here.build_map_cache(0);
+    here.update_visibility_cache(0);
+    REQUIRE(you.sees(visible));
+    calendar::turn += 3_hours;
+    game_session::set_running(true);
+    const auto items_before = [&]() {
+        auto result = saved(you);
+        for (const auto* thing : here.i_at(visible)) { result += saved(*thing); }
+        return result;
+    };
+    const auto before = items_before();
+    const auto engine = rng_get_engine();
+
+    const auto state = game_observation::capture();
+
+    CHECK(state.json.find("meat_cooked") != std::string::npos);
+    CHECK(items_before() == before);
+    CHECK(rng_get_engine() == engine);
 }

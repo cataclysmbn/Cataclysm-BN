@@ -26,7 +26,7 @@ auto write_item( JsonOut &json, const item &thing, const bool include_contents =
 {
     json.start_object();
     json.member( "type_id", thing.typeId().str() );
-    json.member( "name", thing.tname() );
+    json.member( "name", thing.tname_passive() );
     json.member( "count", thing.count() );
     json.member( "invlet", thing.invlet == 0 ? std::string{} : std::string( 1, thing.invlet ) );
     if( include_contents && !thing.contents.empty() ) {
