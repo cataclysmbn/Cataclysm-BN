@@ -89,13 +89,11 @@ struct draw_data_t {
     bool debug_grids = false;
 };
 
-#if defined(TILES)
 struct tiles_redraw_info {
     tripoint_abs_omt center;
     bool blink = false;
 };
 extern tiles_redraw_info redraw_info;
-#endif
 
 auto fmt_omt_coords(const tripoint_abs_omt& coord) -> std::string;
 

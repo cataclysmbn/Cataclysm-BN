@@ -12,6 +12,8 @@ if (NOT VCPKG_MANIFEST_MODE)
     list(APPEND CMAKE_MODULE_PATH
             ${CMAKE_SOURCE_DIR}/CMakeModules/Find)
 endif()
+set(CATA_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+include(CataClientSources)
 
 
 option(CATA_FORMAT_TARGETS "Enable C++ formatting targets" ON)
@@ -31,6 +33,8 @@ cmake_dependent_option(DYNAMIC_ATLAS
     TILES OFF
 )
 option(CURSES "Build curses version." "ON")
+option(MCP "Build the headless BN MCP client." "OFF")
+option(IMGUI "Build the optional Dear ImGui SDL3 client." "OFF")
 option(SOUND "Support for in-game sounds & music." "OFF")
 option(BACKTRACE "Support for printing stack backtraces on crash" "ON")
 option(LIBBACKTRACE "Print backtrace with libbacktrace." "OFF")
@@ -203,12 +207,7 @@ else ()
     endif ()
 endif ()
 
-# Can't compile curses and tiles build's at same time
-if (TILES)
-    set(CURSES OFF)
-endif ()
-
-if (TILES OR CURSES OR SOUND)
+if (TILES OR CURSES OR SOUND OR IMGUI)
     set(CATA_SDL ON CACHE BOOL
         "Link SDL3 core for GPU platform services used by existing game targets." FORCE)
 endif ()
@@ -263,6 +262,8 @@ message(STATUS "DYNAMIC_LINKING               : ${DYNAMIC_LINKING}")
 message(STATUS "TILES                         : ${TILES}")
 message(STATUS "DYNAMIC_ATLAS                 : ${DYNAMIC_ATLAS}")
 message(STATUS "CURSES                        : ${CURSES}")
+message(STATUS "MCP                           : ${MCP}")
+message(STATUS "IMGUI                         : ${IMGUI}")
 message(STATUS "SOUND                         : ${SOUND}")
 message(STATUS "BACKTRACE                     : ${BACKTRACE}")
 message(STATUS "LIBBACKTRACE                  : ${LIBBACKTRACE}")
@@ -606,10 +607,9 @@ if (TILES)
                  or try compiling without -DTILES=1 for a text-only compilation. \
                  See docs/en/dev/guides/building/cmake.md for details and more info.")
     endif ()
-    add_definitions(-DTILES)
 endif ()
 
-if (CURSES)
+if (CURSES AND NOT WIN32)
     # Find the ncurses library for a text based compile
     message(STATUS "Searching for Curses library --")
     set(CURSES_NEED_NCURSES TRUE)
@@ -791,14 +791,19 @@ if (CCACHE_FOUND AND CATA_CCACHE)
     set(CMAKE_CXX_LINKER_LAUNCHER   ${CATA_CCACHE_CMD})
 endif ()
 
+if (IMGUI)
+    FetchContent_Declare(
+        imgui
+        GIT_REPOSITORY https://github.com/ocornut/imgui.git
+        GIT_TAG f5befd2d29e66809cd1110a152e375a7f1981f06)
+    FetchContent_MakeAvailable(imgui)
+endif ()
+
 add_subdirectory(src)
 add_subdirectory(data)
 
 if (UNIX AND DYNAMIC_LINKING)
     set(CATA_INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>")
-    if (TARGET cataclysm-bn-tiles)
-        set_target_properties(cataclysm-bn-tiles PROPERTIES INSTALL_RPATH "${CATA_INSTALL_RPATH}")
-    endif()
     if (TARGET cataclysm-bn)
         set_target_properties(cataclysm-bn PROPERTIES INSTALL_RPATH "${CATA_INSTALL_RPATH}")
     endif()
@@ -857,11 +862,7 @@ if (WIN32 AND CATA_SDL AND TARGET cata_windows_lavapipe_runtime)
 endif()
 
 if (APPLE AND RELEASE AND (TILES OR CURSES))
-    if (TILES)
-        set(CATA_OSX_GAME_TARGET cataclysm-bn-tiles)
-    else()
-        set(CATA_OSX_GAME_TARGET cataclysm-bn)
-    endif()
+    set(CATA_OSX_GAME_TARGET cataclysm-bn)
 
     set(CATA_OSX_APP_DIR "${CMAKE_SOURCE_DIR}/Cataclysm.app")
     set(CATA_OSX_CONTENTS_DIR "${CATA_OSX_APP_DIR}/Contents")
@@ -877,6 +878,14 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
     endif()
 
     set(CATA_OSX_COPY_RESOURCE_COMMANDS)
+    foreach(client TILES MCP)
+        if (${client})
+            string(TOLOWER "${client}" client_name)
+            list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+                COMMAND ${CMAKE_COMMAND} -E create_symlink cataclysm-bn
+                    "${CATA_OSX_RESOURCES_DIR}/cataclysm-bn-${client_name}")
+        endif ()
+    endforeach()
     if (TILES)
         list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/gfx" "${CATA_OSX_RESOURCES_DIR}/gfx")

@@ -1,9 +1,6 @@
 #include "ime.h"
 
-#ifdef __ANDROID__
-#include "options.h"
-#include "sdltiles.h"
-#endif
+#include "client_presentation.h"
 
 #ifdef _WIN32
 
@@ -63,7 +60,7 @@ class imm_wrapper
         }
 
         bool ime_enabled() {
-            if( hImm ) {
+            if( hImm && getWindowHandle() != nullptr ) {
                 // NOLINTNEXTLINE(misc-misplaced-const)
                 const HWND hwnd = getWindowHandle();
                 // NOLINTNEXTLINE(misc-misplaced-const)
@@ -76,7 +73,7 @@ class imm_wrapper
         }
 
         void enable_ime() {
-            if( hImm ) {
+            if( hImm && getWindowHandle() != nullptr ) {
                 // NOLINTNEXTLINE(misc-misplaced-const)
                 const HWND hwnd = getWindowHandle();
                 // NOLINTNEXTLINE(misc-misplaced-const)
@@ -87,7 +84,7 @@ class imm_wrapper
         }
 
         void disable_ime() {
-            if( hImm ) {
+            if( hImm && getWindowHandle() != nullptr ) {
                 // NOLINTNEXTLINE(misc-misplaced-const)
                 const HWND hwnd = getWindowHandle();
                 // NOLINTNEXTLINE(misc-misplaced-const)
@@ -115,9 +112,7 @@ static bool ime_enabled()
 void enable_ime()
 {
 #if defined( __ANDROID__ )
-    if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-        SDL_StartTextInput( get_sdl_window().get() );
-    }
+    game_client::presentation().start_text_input();
 #elif defined( _WIN32 )
     imm.enable_ime();
 #endif

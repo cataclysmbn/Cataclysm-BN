@@ -122,12 +122,8 @@ static const mtype_id mon_generator( "mon_generator" );
 extern std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
 
-#if defined(TILES)
-#include "sdl_wrappers.h"
-#include "cata_tiles.h"
-#include "dynamic_atlas.h"
-#include "sdltiles.h"
-#endif
+#include "client_presentation.h"
+#include "client_display.h"
 
 namespace debug_menu
 {
@@ -258,9 +254,7 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
             { uilist_entry( DEBUG_DISPLAY_TERRAIN_SOUND_ABSORPTION, true, 'Q', _( "Toggle display terrain sound absorption" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SOUND_WALLS, true, 'q', _( "Toggle display sound walls" ) ) },
-#if defined(TILES)
-            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, true, 'z', _( "Toggle zone overlay" ) ) },
-#endif
+            { uilist_entry( ACTION_TOGGLE_ZONE_OVERLAY, game_client::has_tiles(), 'z', _( "Toggle zone overlay" ) ) },
             { uilist_entry( DEBUG_SET_AUTOMOVE, true, 'A', _( "Set automove target" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CAT, true, 'm', _( "Show mutation category levels" ) ) },
             { uilist_entry( DEBUG_SHOW_MUT_CHANCES, true, 'u', _( "Show mutation trait chances" ) ) },
@@ -280,13 +274,9 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_TEST_MAP_EXTRA_DISTRIBUTION, true, 'e', _( "Test map extra list" ) ) },
             { uilist_entry( DEBUG_RESET_IGNORED_MESSAGES, true, 'I', _( "Reset ignored debug messages" ) ) },
             { uilist_entry( DEBUG_SWAP_CHAR, true, 'x', _( "Control NPC follower" ) ) },
-#if defined(TILES)
-            { uilist_entry( DEBUG_RELOAD_TILES, true, 'D', _( "Reload tileset and show missing tiles" ) ) },
-#endif
-#if defined(TILES) && defined(DYNAMIC_ATLAS)
-            { uilist_entry( DEBUG_DUMP_TILES, true, 'F', _( "Dump dynamic tile atlas" ) ) },
-            { uilist_entry( DEBUG_DISPLAY_TILESET_NO_VFX, true, 'j', _( "Toggle tileset visual effects" ) ) },
-#endif
+            { uilist_entry( DEBUG_RELOAD_TILES, game_client::has_tiles(), 'D', _( "Reload tileset and show missing tiles" ) ) },
+            { uilist_entry( DEBUG_DUMP_TILES, game_client::presentation().dynamic_atlas_available(), 'F', _( "Dump dynamic tile atlas" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_TILESET_NO_VFX, game_client::presentation().dynamic_atlas_available(), 'j', _( "Toggle tileset visual effects" ) ) },
         };
         uilist_initializer.insert( uilist_initializer.begin(), debug_only_options.begin(),
                                    debug_only_options.end() );
@@ -1920,7 +1910,6 @@ void debug()
         break;
 
         case DEBUG_SHOW_SOUND: {
-#if defined(TILES)
             const auto &sounds_to_draw = sounds::get_monster_sounds();
 
             shared_ptr_fast<game::draw_callback_t> sound_cb = make_shared_fast<game::draw_callback_t>( [&]() {
@@ -1938,9 +1927,6 @@ void debug()
 
             ui_manager::redraw();
             inp_mngr.wait_for_any_key();
-#else
-            popup( _( "This binary was not compiled with tiles support." ) );
-#endif
         }
         break;
 
@@ -2247,14 +2233,10 @@ void debug()
             // write to log
             DebugLog( DL::Info, DC::Main ) << " GAME REPORT:\n" << report;
             std::string popup_msg = _( "Report written to debug.log" );
-#if defined(TILES)
             // copy to clipboard
-            int clipboard_result = SDL_SetClipboardText( report.c_str() );
-            printErrorIf( clipboard_result != 0, "Error while copying the game report to the clipboard." );
-            if( clipboard_result == 0 ) {
+            if( game_client::presentation().set_clipboard_text( report ) ) {
                 popup_msg += _( " and to the clipboard." );
             }
-#endif
             popup( popup_msg );
         }
         break;
@@ -2323,9 +2305,7 @@ void debug()
             break;
         }
         case DEBUG_DUMP_TILES: {
-#if defined(TILES) && defined(DYNAMIC_ATLAS)
-            tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
-#endif
+            game_client::presentation().dump_atlas( PATH_INFO::config_dir() );
             break;
         }
         case DEBUG_DISPLAY_TILESET_NO_VFX: {

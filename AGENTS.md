@@ -101,6 +101,7 @@ deno task dprint fmt
 ```
 
 - **Verify**: Build and fix any issues. Do not skip the game binary target when validating code changes; build `cataclysm-bn-tiles` together with tests.
+- **MUST** isolate validation game invocations on XDG builds with both `--userdir <profile>/` and `--configdir <profile>/config/`; verify the resolved config directory with `--paths` before runtime. Never modify or restore personal configuration without a known baseline.
 
 ```sh
 # Build project and tests

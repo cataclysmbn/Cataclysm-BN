@@ -14,6 +14,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
+#include "client_presentation.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -1275,9 +1276,9 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
     ctxt.register_action( "TEXT.HOME" );
     ctxt.register_action( "TEXT.END" );
     ctxt.register_action( "TEXT.DELETE" );
-#if defined( TILES )
-    ctxt.register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::presentation().clipboard_available() ) {
+        ctxt.register_action( "TEXT.PASTE" );
+    }
     ctxt.register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "ANY_INPUT" );

@@ -4,6 +4,8 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
+#include "client_display.h"
+#include "client_interaction.h"
 #include "crafting.h"
 #include "creature.h"
 #include "cursesdef.h"
@@ -1138,12 +1140,11 @@ action_id handle_action_menu()
                 // debug _is_a menu.
                 entry->txt += "…";
             }
-#if !defined(TILES)
-            register_actions( { ACTION_TOGGLE_FULLSCREEN } );
-#endif
-#if defined(TILES)
-            register_actions( { ACTION_TOGGLE_PIXEL_MINIMAP, ACTION_RELOAD_TILESET  } );
-#endif // TILES
+            if( !game_client::has_tiles() ) {
+                register_actions( { ACTION_TOGGLE_FULLSCREEN } );
+            } else {
+                register_actions( { ACTION_TOGGLE_PIXEL_MINIMAP, ACTION_RELOAD_TILESET  } );
+            }
             register_actions( {
                 ACTION_TOGGLE_PANEL_ADM, ACTION_DISPLAY_SCENT, ACTION_DISPLAY_SCENT_TYPE,
                 ACTION_DISPLAY_TEMPERATURE, ACTION_DISPLAY_VEHICLE_AI, ACTION_DISPLAY_VISIBILITY,
@@ -1188,11 +1189,9 @@ action_id handle_action_menu()
                 ACTION_WAIT, ACTION_SLEEP, ACTION_BIONICS, ACTION_MUTATIONS, ACTION_PERKS,
                 ACTION_CONTROL_VEHICLE, ACTION_ITEMACTION, ACTION_TOGGLE_THIEF_MODE
             } );
-#if defined(TILES)
-            if( use_tiles ) {
+            if( game_client::has_tiles() && use_tiles ) {
                 register_actions( { ACTION_ZOOM_OUT, ACTION_ZOOM_IN } );
             }
-#endif
             register_lua_action_entries( category_id );
         } else {
             register_lua_action_entries( category_id );
@@ -1264,6 +1263,59 @@ action_id handle_main_menu()
     }
 }
 
+namespace
+{
+
+struct direction_choice {
+    tripoint_rel_ms offset;
+    std::string label;
+};
+
+auto direction_choices( const bool allow_vertical ) -> std::vector<direction_choice>
+{
+    auto result = std::vector<direction_choice> {
+        { .offset = tripoint_rel_ms::north(), .label = _( "North" ) },
+        { .offset = tripoint_rel_ms::north_east(), .label = _( "North East" ) },
+        { .offset = tripoint_rel_ms::east(), .label = _( "East" ) },
+        { .offset = tripoint_rel_ms::south_east(), .label = _( "South East" ) },
+        { .offset = tripoint_rel_ms::south(), .label = _( "South" ) },
+        { .offset = tripoint_rel_ms::south_west(), .label = _( "South West" ) },
+        { .offset = tripoint_rel_ms::west(), .label = _( "West" ) },
+        { .offset = tripoint_rel_ms::north_west(), .label = _( "North West" ) },
+        { .offset = tripoint_rel_ms::zero(), .label = _( "Here" ) },
+    };
+    if( allow_vertical ) {
+        result.push_back( { .offset = tripoint_rel_ms::above(), .label = _( "Above" ) } );
+        result.push_back( { .offset = tripoint_rel_ms::below(), .label = _( "Below" ) } );
+    }
+    return result;
+}
+
+auto direction_interaction_snapshot( const std::string &message,
+                                     const std::vector<direction_choice> &directions )
+-> game_client::interaction_snapshot
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = _( "Choose direction" ),
+        .message = message,
+        .allow_cancel = true,
+    };
+    std::ranges::transform( directions, std::back_inserter( snapshot.choices ),
+    []( const auto & entry ) {
+        return game_client::interaction_choice{
+            .id = game_client::opaque_interaction_id( "direction", {
+                std::to_string( entry.offset.x() ), std::to_string( entry.offset.y() ),
+                std::to_string( entry.offset.z() )
+            } ),
+            .label = entry.label,
+        };
+    } );
+    return snapshot;
+}
+
+} // namespace
+
 std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         const bool allow_vertical )
 {
@@ -1282,18 +1334,42 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
     //~ %s: "Close where?" "Pry where?" etc.
     popup.message( _( "%s (Direction button)" ), message ).on_top( true );
 
-    std::string action;
+    const auto directions = direction_choices( allow_vertical );
+    const auto face_and_return = []( const tripoint_rel_ms & vec ) {
+        // Make player's sprite face left/right if interacting with something to the left or right
+        if( vec.x() > 0 ) {
+            g->u.facing = FD_RIGHT;
+        } else if( vec.x() < 0 ) {
+            g->u.facing = FD_LEFT;
+        }
+        return std::optional<tripoint_rel_ms> { vec };
+    };
+    auto action = std::string{};
     do {
         ui_manager::redraw();
-        action = ctxt.handle_input();
-        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
-            // Make player's sprite face left/right if interacting with something to the left or right
-            if( vec->x() > 0 ) {
-                g->u.facing = FD_RIGHT;
-            } else if( vec->x() < 0 ) {
-                g->u.facing = FD_LEFT;
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+                return direction_interaction_snapshot( message, directions );
+            } );
+            action = ctxt.handle_input();
+        }
+        const auto &event = ctxt.get_raw_input();
+        if( event.interaction ) {
+            if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
+                const auto snapshot = direction_interaction_snapshot( message, directions );
+                const auto choice = std::ranges::find( snapshot.choices,
+                                                       event.interaction->target_id,
+                                                       &game_client::interaction_choice::id );
+                if( choice != snapshot.choices.end() ) {
+                    const auto index = std::distance( snapshot.choices.begin(), choice );
+                    return face_and_return( directions[static_cast<std::size_t>( index )].offset );
+                }
             }
-            return vec;
+        }
+        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
+            return face_and_return( *vec );
         } else if( action == "pause" ) {
             return tripoint_rel_ms::zero();
         } else if( action == "LEVEL_UP" ) {

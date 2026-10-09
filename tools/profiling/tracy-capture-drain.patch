@@ -1,0 +1,11 @@
+diff --git a/capture/src/capture.cpp b/capture/src/capture.cpp
+--- a/capture/src/capture.cpp
++++ b/capture/src/capture.cpp
+@@ -208,6 +208,7 @@ int main( int argc, char** argv )
+         if( s_disconnect.load( std::memory_order_relaxed ) )
+         {
+             worker.Disconnect();
++            while( worker.IsConnected() ) std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+             // Relaxed order is sufficient because only this thread ever reads
+             // this value.
+             s_disconnect.store(false, std::memory_order_relaxed );

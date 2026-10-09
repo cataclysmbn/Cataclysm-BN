@@ -16,10 +16,7 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
-#if defined(TILES)
-#   include "cata_tiles.h"
-#   include "sdltiles.h"
-#endif // TILES
+#include "client_render_hooks.h"
 #include "cata_utility.h" // for normal_cdf
 #include "creature.h"
 #include "damage.h"
@@ -355,30 +352,28 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
     const auto is_thrown = proj.has_effect( ammo_effect_THROWN );
     const auto *thrown_item = proj.get_drop();
     auto custom_bullet_sprite = std::string{};
-#if defined(TILES)
-    if( tilecontext ) {
-        const auto set_sprite_from_lookup = [&]( const std::string & candidate, TILE_CATEGORY category ) {
-            if( !custom_bullet_sprite.empty() ) { return; }
-            auto lookup = tilecontext->find_tile_looks_like( candidate, category );
-            if( lookup ) { custom_bullet_sprite = lookup->id(); }
-        };
-
-        const auto set_sprite_from_item = [&]( const item & it, const bool allow_item_fallback ) {
-            const auto id = it.typeId().str();
-            set_sprite_from_lookup( "animation_bullet_" + id, C_BULLET );
-            if( allow_item_fallback ) { set_sprite_from_lookup( id, C_ITEM ); }
-        };
-
-        if( thrown_item ) { set_sprite_from_item( *thrown_item, is_thrown ); }
-
-        if( custom_bullet_sprite.empty() && source_weapon ) {
-            const auto ammo_type = source_weapon->ammo_current();
-            if( !ammo_type.is_null() ) {
-                set_sprite_from_lookup( "animation_bullet_" + ammo_type.str(), C_BULLET );
-            }
+    const auto set_sprite_from_lookup = [&]( const std::string & candidate,
+    const game_client::tile_category category ) {
+        if( custom_bullet_sprite.empty() ) {
+            custom_bullet_sprite = game_client::find_projectile_sprite( candidate, category ).value_or( "" );
+        }
+    };
+    const auto set_sprite_from_item = [&]( const item & it, const bool allow_item_fallback ) {
+        const auto id = it.typeId().str();
+        set_sprite_from_lookup( "animation_bullet_" + id, game_client::tile_category::bullet );
+        if( allow_item_fallback ) {
+            set_sprite_from_lookup( id, game_client::tile_category::item );
+        }
+    };
+    if( thrown_item ) {
+        set_sprite_from_item( *thrown_item, is_thrown );
+    }
+    if( custom_bullet_sprite.empty() && source_weapon ) {
+        const auto ammo_type = source_weapon->ammo_current();
+        if( !ammo_type.is_null() ) {
+            set_sprite_from_lookup( "animation_bullet_" + ammo_type.str(), game_client::tile_category::bullet );
         }
     }
-#endif // TILES
 
     // If we were targetting a tile rather than a monster, don't overshoot
     // Unless the target was a wall, then we are aiming high enough to overshoot

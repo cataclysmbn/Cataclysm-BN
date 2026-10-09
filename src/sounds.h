@@ -91,6 +91,8 @@ extern bool sound_enabled;
 
 } // namespace sounds
 
+extern float g_sfx_volume_multiplier;
+
 template<>
 struct enum_traits<sounds::sound_t> {
     static constexpr auto last = sounds::sound_t::_LAST;

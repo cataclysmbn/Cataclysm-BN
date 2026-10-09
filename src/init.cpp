@@ -14,6 +14,8 @@
 #include "catalua.h"
 #include "catalua_impl.h"
 #include "clothing_mod.h"
+#include "client_display.h"
+#include "client_render_hooks.h"
 #include "clzones.h"
 #include "construction.h"
 #include "construction_category.h"
@@ -123,9 +125,6 @@
 #include <string>
 #include <vector>
 
-#if defined(TILES)
-#  include "mod_tileset.h"
-#endif
 
 struct DynamicDataLoader::cached_streams {
     lru_cache<std::string, shared_ptr_fast<std::istringstream>> cache;
@@ -492,12 +491,7 @@ void DynamicDataLoader::initialize()
     add( "named_color", &RGBColor::load_named_color );
     add( "perk", &perk::load_perks );
     add( "vehicle_blacklist", &vehicle_prototype::load_vehicle_blacklist );
-#if defined(TILES)
-    add( "mod_tileset", &load_mod_tileset );
-#else
-    // No TILES - no tilesets
-    add( "mod_tileset", &load_ignored_type );
-#endif
+    add( "mod_tileset", &game_client::load_mod_tileset );
 }
 
 void DynamicDataLoader::load_data_from_path( const std::string &path, const std::string &src,
@@ -697,10 +691,7 @@ void DynamicDataLoader::unload_data()
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
     RGBColor::unload_names();
-    perk::reset();
-#if defined(TILES)
-    reset_mod_tileset();
-#endif
+    game_client::reset_mod_tileset();
 
     // Has to be cleaned last in case one of the above data collections
     // holds references to Lua functions or tables.
@@ -721,7 +712,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
     ui.new_context( _( "Finalizing" ) );
 
     using named_entry = std::pair<std::string, std::function<void()>>;
-    const std::vector<named_entry> entries = {{
+    std::vector<named_entry> entries = {{
             { _( "Flags" ), &json_flag::finalize_all },
             { _( "Mutation Flags" ), &json_trait_flag::finalize_all },
             { _( "Body parts" ), &body_part_type::finalize_all },
@@ -782,12 +773,11 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Achievements" ), &achievement::finalize },
             { _( "Localization" ), &l10n_data::load_mod_catalogues },
             { _( "Enchantments" ), &enchantment::finalize_all },
-            { _( "Perks" ), &perk::finalize_all },
-#if defined(TILES)
-            { _( "Tileset" ), &load_tileset },
-#endif
         }
     };
+    if( game_client::has_tiles() ) {
+        entries.emplace_back( _( "Tileset" ), &game_client::load_tileset );
+    }
 
     for( const named_entry &e : entries ) {
         ui.add_entry( e.first );

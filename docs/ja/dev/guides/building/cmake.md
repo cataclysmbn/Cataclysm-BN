@@ -36,6 +36,34 @@ CataclysmBN をビルドするには、以下のライブラリと開発用ヘ�
 
 ## ビルド環境
 
+タイル、curses、MCP は一つの実行ファイルから実行できます。クライアントの有効化と選択については[エンジンとクライアント](../../explanation/engine_clients.md)を、エージェントの接続については[MCP を通じてプレイする](../mcp.md)を参照してください。
+
+### クライアント構成
+
+`linux-clients` プリセットは、共有実行ファイルでタイル、curses、MCP を有効にします。
+
+```sh
+cmake --preset linux-clients
+cmake --build --preset linux-clients --target cataclysm-bn
+```
+
+この構成に省略可能な Dear ImGui 実証用クライアントを追加するには、次を実行します。
+
+```sh
+cmake --preset linux-clients -DIMGUI=ON
+cmake --build --preset linux-clients --target cataclysm-bn-imgui
+```
+
+SDL、タイル、curses、サウンドを含まない CPU 専用 MCP ビルドには、次を使います。
+
+```sh
+cmake -B out/build/headless -DMCP=ON -DTILES=OFF -DCURSES=OFF \
+  -DSOUND=OFF -DCATA_SDL=OFF
+cmake --build out/build/headless --target cataclysm-bn-mcp
+```
+
+互換ターゲットは同じ共有実行ファイルをビルドし、対応する名前で起動したときに各クライアントを選択する名前を提供します。
+
 最新バージョンのソースコード tarball は [git](https://github.com/cataclysmbn/Cataclysm-BN) から取得できます。
 
 ```sh
@@ -371,6 +399,8 @@ cmake-gui -S . -B out/build/linux-slim
 | --------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `CURSES`              | `ON`                                      | curses 版をビルドします。                                                                                   |
 | `TILES`               | `OFF`                                     | グラフィックタイルセット版をビルドします。                                                                  |
+| `MCP`                 | `OFF`                                     | ヘッドレス MCP クライアントをビルドします。                                                                 |
+| `IMGUI`               | `OFF`                                     | 省略可能な Dear ImGui SDL3 実証用クライアントをビルドします。                                               |
 | `SOUND`               | `ON`                                      | オーディオサポートをビルドします。                                                                          |
 | `LANGUAGES`           | `" "`                                     | 指定した言語サポートをビルドします。                                                                        |
 | `TESTS`               | `ON`                                      | テストユニットをビルドします。                                                                              |

@@ -1,31 +1,23 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
-#if defined(SDL_SOUND)
+
+namespace sfx
+{
+/// Select an audio presentation variant without advancing the simulation RNG.
+auto presentation_random_effect_index( std::size_t count ) -> std::size_t;
+} // namespace sfx
 
 /**
  * Attempt to initialize an audio device.  Returns false if initialization fails.
  */
+auto sound_supported() -> bool;
 bool init_sound();
 void shutdown_sound();
 void play_music( const std::string &playlist );
 void stop_music();
 void update_volumes();
 void load_soundset();
-
-#else
-
-inline bool init_sound()
-{
-    return false;
-}
-inline void shutdown_sound() { }
-inline void play_music( const std::string &/*playlist*/ )
-{
-}
-inline void update_volumes() { }
-inline void load_soundset() { }
-
-#endif
 
 

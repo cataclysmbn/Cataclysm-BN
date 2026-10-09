@@ -1,14 +1,14 @@
 #pragma once
-#if !(defined(TILES) || defined(_WIN32))
+#if !defined(TILES) || defined(CATA_CURSES_CLIENT)
 
 #include "hsv_color.h"
 #include "color_loader.h"
 
-namespace ncurses
+namespace game_client::curses
 {
 
-auto color_to_RGB( const nc_color &color ) -> RGBColor;
+auto color_to_RGB_native( const nc_color &color ) -> RGBColor;
 
-} // namespace ncurses
+} // namespace game_client::curses
 
 #endif

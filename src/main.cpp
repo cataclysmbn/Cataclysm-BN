@@ -1,6 +1,39 @@
 /* Entry point and main loop for Cataclysm
  */
 
+#include "catalua.h"
+#include "client_backend.h"
+#include "client_presentation.h"
+#include "color.h"
+#include "crash.h"
+#include "cursesdef.h"
+#include "debug.h"
+#include "filesystem.h"
+#include "game.h"
+#include "game_session.h"
+#include "engine_client_session.h"
+#include "game_ui.h"
+#include "get_version.h"
+#include "init.h"
+#include "input.h"
+#include "language.h"
+#include "loading_ui.h"
+#include "main_menu.h"
+#include "mapsharing.h"
+#include "options.h"
+#include "output.h"
+#include "path_display.h"
+#include "path_info.h"
+#include "platform/client_platform.h"
+#include "preload_config.h"
+#include "replay/replay.h"
+#include "rng.h"
+#include "runtime_handlers.h"
+#include "sdlsound.h"
+#include "string_formatter.h"
+#include "type_id.h"
+#include "ui_manager.h"
+
 #include <array>
 #include <clocale>
 #include <cstdio>
@@ -8,144 +41,16 @@
 #include <cstring>
 #include <ctime>
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 #include <locale>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
-#include <filesystem>
 #include <vector>
-#if defined(_WIN32)
-#   include "platform_win.h"
-#else
-#   include <csignal>
-#endif
-#include "catalua.h"
-#include "color.h"
-#include "crash.h"
-#include "cursesdef.h"
-#include "debug.h"
-#include "filesystem.h"
-#include "game.h"
-#include "game_ui.h"
-#include "init.h"
-#include "input.h"
-#include "language.h"
-#include "loading_ui.h"
-#include "runtime_handlers.h"
-#include "string_formatter.h"
-#include "main_menu.h"
-#include "mapsharing.h"
-#include "options.h"
-#include "output.h"
-#include "path_info.h"
-#include "rng.h"
-#include "type_id.h"
-#include "ui_manager.h"
-#include "path_display.h"
-#include "get_version.h"
-
-#if defined(PREFIX)
-#   undef PREFIX
-#   include "prefix.h"
-#endif
-
-class ui_adaptor;
-
-#if defined(CATA_SDL)
-#   if !defined(SDL_MAIN_HANDLED)
-#       define SDL_MAIN_HANDLED
-#   endif
-#   include <SDL3/SDL.h>
-#   include "compute/gpu_platform.h"
-#   include "platform/sdl_video.h"
-#endif
-#if defined(TILES)
-#   include <SDL3/SDL_main.h>
-#   include "sdl_wrappers.h"
-#endif
-#include "preload_config.h"
-#include "sdlsound.h"
-
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_system.h>
-#include <android/log.h>
-#include <unistd.h>
-
-// Taken from: https://codelab.wordpress.com/2014/11/03/how-to-use-standard-output-streams-for-logging-in-android-apps/
-// Force Android standard output to adb logcat output
-
-static int pfd[2];
-static pthread_t thr;
-static const char *tag = "cdda";
-
-static void *thread_func( void * )
-{
-    ssize_t rdsz;
-    char buf[128];
-    for( ;; ) {
-        if( ( ( rdsz = read( pfd[0], buf, sizeof buf - 1 ) ) > 0 ) ) {
-            if( buf[rdsz - 1] == '\n' ) {
-                --rdsz;
-            }
-            buf[rdsz] = 0;  /* add null-terminator */
-            __android_log_write( ANDROID_LOG_DEBUG, tag, buf );
-        }
-    }
-    return nullptr;
-}
-
-int start_logger( const char *app_name )
-{
-    tag = app_name;
-
-    /* make stdout line-buffered and stderr unbuffered */
-    setvbuf( stdout, nullptr, _IOLBF, 0 );
-    setvbuf( stderr, nullptr, _IONBF, 0 );
-
-    /* create the pipe and redirect stdout and stderr */
-    pipe( pfd );
-    dup2( pfd[1], 1 );
-    dup2( pfd[1], 2 );
-
-    /* spawn the logging thread */
-    if( pthread_create( &thr, nullptr, thread_func, nullptr ) == -1 ) {
-        return -1;
-    }
-    pthread_detach( thr );
-    return 0;
-}
-
-#endif //__ANDROID__
-
-#if !defined(_WIN32)
-#if defined(TILES)
-[[ noreturn ]]
-static void signal_handler( int )
-{
-    exit_handler( 0 );
-}
-#else
-static void signal_handler( int signal )
-{
-    if( signal == SIGINT ) {
-        const int old_timeout = inp_mngr.get_timeout();
-        inp_mngr.reset_timeout();
-        bool confirmed = query_yn( _( "Really Quit?  All unsaved changes will be lost." ) );
-        inp_mngr.set_timeout( old_timeout );
-        ui_manager::redraw_invalidated();
-        catacurses::doupdate();
-        if( !confirmed ) {
-            return;
-        }
-    }
-    exit_handler( 0 );
-}
-#endif //defined(TILES)
-#endif //!defined(_WIN32)
 
 /**
  * Report fatal error in a user-friendly way
@@ -153,20 +58,8 @@ static void signal_handler( int signal )
  */
 static void report_fatal_error( const std::string &msg )
 {
-#if defined(TILES)
-    if( test_mode ) {
-#endif
-        std::cerr << "Cataclysm BN: Fatal error" << '\n' << msg << '\n';
-#if defined(TILES)
-    } else {
-        SDL_ShowSimpleMessageBox(
-            SDL_MESSAGEBOX_ERROR,
-            "Cataclysm BN: Fatal error",
-            msg.c_str(),
-            nullptr
-        );
-    }
-#endif
+    std::cerr << "Cataclysm BN: Fatal error" << '\n' << msg << '\n';
+    game_client::presentation().show_error( msg );
 }
 
 namespace
@@ -177,55 +70,49 @@ struct arg_handler {
     //! called with the number of parameters after the flag was encountered, along with the array
     //! of following parameters. It must return an integer indicating how many parameters were
     //! consumed by the call or -1 to indicate that a required argument was missing.
-    using handler_method = std::function<int ( int, const char ** )>;
+    using handler_method = std::function<int( int, const char ** )>;
 
-    const char *flag;  //!< The commandline parameter to handle (e.g., "--seed").
-    const char *param_documentation;  //!< Human readable description of this arguments parameter.
-    const char *documentation;  //!< Human readable documentation for this argument.
+    const char *flag;                //!< The commandline parameter to handle (e.g., "--seed").
+    const char *param_documentation; //!< Human readable description of this arguments parameter.
+    const char *documentation;       //!< Human readable documentation for this argument.
     const char *help_group; //!< Section of the help message in which to include this argument.
-    handler_method handler;  //!< The callback to be invoked when this argument is encountered.
+    handler_method handler; //!< The callback to be invoked when this argument is encountered.
 };
 
-#if defined(CATA_SDL)
-auto init_sdl_platform( bool init_audio ) -> bool
+void printHelpMessage(
+    const arg_handler *first_pass_arguments, size_t num_first_pass_arguments,
+    const arg_handler *second_pass_arguments, size_t num_second_pass_arguments );
+} // namespace
+
+auto run_game( int argc, char *argv[] ) -> int
 {
-    auto init_flags = SDL_InitFlags{ SDL_INIT_VIDEO };
-#if defined(SDL_SOUND)
-    if( init_audio ) {
-        init_flags |= SDL_INIT_AUDIO;
+    game_client::register_builtin_backends();
+    auto selected_client = game_client::default_client_kind();
+    const auto program_name =
+        argc > 0 ? std::filesystem::path( argv[0] ).stem().string() : std::string{};
+    if( program_name == "cataclysm-bn-tiles" ) {
+        selected_client = game_client::client_kind::tiles;
+    } else if( program_name == "cataclysm-bn-mcp" ) {
+        selected_client = game_client::client_kind::mcp;
+    } else if( program_name == "cataclysm-bn-imgui" ) {
+        selected_client = game_client::client_kind::imgui;
     }
-#else
-    ( void )init_audio;
-#endif
-
-    if( !SDL_Init( init_flags ) ) {
-        DebugLog( DL::Error, DC::Main ) << "SDL_Init failed: " << SDL_GetError();
-        return false;
+    for( auto index = 1; index < argc; ++index ) {
+        const auto argument = std::string( argv[index] );
+        if( argument.starts_with( "--client=" ) ) {
+            selected_client = game_client::parse_client_kind( argument.substr( 9 ) );
+        } else if( argument == "--client" ) {
+            if( index + 1 == argc ) {
+                throw std::invalid_argument( "--client requires tiles, curses, mcp, or imgui" );
+            }
+            selected_client = game_client::parse_client_kind( argv[++index] );
+        }
     }
-
-    atexit( SDL_Quit );
-    return true;
-}
-#endif
-
-void printHelpMessage( const arg_handler *first_pass_arguments, size_t num_first_pass_arguments,
-                       const arg_handler *second_pass_arguments, size_t num_second_pass_arguments );
-}  // namespace
-
-#if defined(USE_WINMAIN)
-int APIENTRY WinMain( HINSTANCE /* hInstance */, HINSTANCE /* hPrevInstance */,
-                      LPSTR /* lpCmdLine */, int /* nCmdShow */ )
-{
-    int argc = __argc;
-    char **argv = __argv;
-#elif defined(__ANDROID__)
-extern "C" int SDL_main( int argc, char **argv ) {
-#else
-int main( int argc, char *argv[] )
-{
-#endif
     init_crash_handlers();
-    int seed = time( nullptr );
+    auto seed = static_cast<unsigned int>( time( nullptr ) );
+    auto seed_explicit = false;
+    auto replay_record_path = std::string{};
+    auto replay_play_path = std::string{};
     bool verifyexit = false;
     bool check_mods = false;
     auto check_mods_mode = init::check_mods_mode::default_mods;
@@ -236,59 +123,54 @@ int main( int argc, char *argv[] )
     std::vector<std::string> opts;
     std::string world; /** if set try to load first save in this world on startup */
 
-#if defined(__ANDROID__)
-    // Start the standard output logging redirector
-    start_logger( "cdda" );
-
-    // On Android first launch, we copy all data files from the APK into the app's writeable folder so std::io stuff works.
-    // Use the external storage so it's publicly modifiable data (so users can mess with installed data, save games etc.)
-    std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
-
-    PATH_INFO::init_base_path( external_storage_path );
-#else
-    // Set default file paths
-#if defined(PREFIX)
-    PATH_INFO::init_base_path( std::string( PREFIX ) );
-#else
-    PATH_INFO::init_base_path( "" );
-#endif
-#endif
-
-#if defined(__ANDROID__)
-    PATH_INFO::init_user_dir( external_storage_path );
-#else
-#   if defined(USE_HOME_DIR) || defined(USE_XDG_DIR)
-    PATH_INFO::init_user_dir( "" );
-#   else
-    PATH_INFO::init_user_dir( "." );
-#   endif
-#endif
-    PATH_INFO::set_standard_filenames();
+    client_platform::initialize_paths( selected_client != game_client::client_kind::mcp );
 
     MAP_SHARING::setDefaults();
     {
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 17> first_pass_arguments = {{
+        const std::array<arg_handler, 20> first_pass_arguments = {
+            {   {
+                    "--client", "tiles|curses|mcp|imgui", "Select the runtime client backend",
+                    section_default,
+                    // Client selection has already been parsed before platform setup.
+                    []( int num_args, const char ** /*params*/ ) -> int { return num_args < 1 ? -1 : 1; }
+                },
                 {
                     "--seed", "<string of letters and or numbers>",
-                    "Sets the random number generator's seed value",
-                    section_default,
-                    [&seed]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
-                        const unsigned char *hash_input = reinterpret_cast<const unsigned char *>( params[0] );
-                        seed = djb2_hash( hash_input );
+                    "Sets the random number generator's seed value", section_default,
+                    [&seed, &seed_explicit]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
+                        const unsigned char *hash_input = reinterpret_cast<const unsigned char *>(
+                            params[0] );
+                        seed = static_cast<unsigned int>( djb2_hash( hash_input ) );
+                        seed_explicit = true;
                         return 1;
                     }
                 },
                 {
-                    "--jsonverify", nullptr,
-                    "Checks the BN json files",
+                    "--replay-record", "<jsonl path>",
+                    "Record client input and deterministic RNG seed to a new replay file",
                     section_default,
+                    [&replay_record_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
+                        replay_record_path = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--replay-play", "<jsonl path>",
+                    "Play recorded input without waiting for a human or automation client",
+                    section_default,
+                    [&replay_play_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
+                        replay_play_path = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--jsonverify", nullptr, "Checks the BN json files", section_default,
                     [&verifyexit]( int, const char ** ) -> int {
                         test_mode = true;
                         verifyexit = true;
@@ -297,22 +179,17 @@ int main( int argc, char *argv[] )
                 },
                 {
                     "--check-mods", "[mods…]",
-                    "Checks the json files belonging to default or specified BN mods",
-                    section_default,
+                    "Checks the json files belonging to default or specified BN mods", section_default,
                     [&check_mods, &opts]( int n, const char *params[] ) -> int {
                         check_mods = true;
                         test_mode = true;
-                        for( int i = 0; i < n; ++i )
-                        {
-                            opts.emplace_back( params[ i ] );
-                        }
+                        for( int i = 0; i < n; ++i ) { opts.emplace_back( params[i] ); }
                         return 0;
                     }
                 },
                 {
                     "--check-all-mods", nullptr,
-                    "Checks the json files belonging to all non-obsolete BN mods",
-                    section_default,
+                    "Checks the json files belonging to all non-obsolete BN mods", section_default,
                     [&check_mods, &check_mods_mode]( int, const char ** ) -> int {
                         check_mods = true;
                         check_mods_mode = init::check_mods_mode::all_mods;
@@ -321,26 +198,18 @@ int main( int argc, char *argv[] )
                     }
                 },
                 {
-                    "--dump-stats", "<what> [mode = TSV] [opts…]",
-                    "Dumps item stats",
-                    section_default,
+                    "--dump-stats", "<what> [mode = TSV] [opts…]", "Dumps item stats", section_default,
                     [&dump, &dmode, &opts]( int n, const char *params[] ) -> int {
-                        if( n < 1 )
-                        {
-                            return -1;
-                        }
+                        if( n < 1 ) { return -1; }
                         test_mode = true;
-                        dump = params[ 0 ];
-                        for( int i = 2; i < n; ++i )
-                        {
-                            opts.emplace_back( params[ i ] );
-                        }
+                        dump = params[0];
+                        for( int i = 2; i < n; ++i ) { opts.emplace_back( params[i] ); }
                         if( n >= 2 )
                         {
-                            if( !strcmp( params[ 1 ], "TSV" ) ) {
+                            if( !strcmp( params[1], "TSV" ) ) {
                                 dmode = dump_mode::TSV;
                                 return 0;
-                            } else if( !strcmp( params[ 1 ], "HTML" ) ) {
+                            } else if( !strcmp( params[1], "HTML" ) ) {
                                 dmode = dump_mode::HTML;
                                 return 0;
                             } else {
@@ -351,36 +220,25 @@ int main( int argc, char *argv[] )
                     }
                 },
                 {
-                    "--world", "<name>",
-                    "Load world",
-                    section_default,
+                    "--world", "<name>", "Load world", section_default,
                     [&world]( int n, const char *params[] ) -> int {
-                        if( n < 1 )
-                        {
-                            return -1;
-                        }
+                        if( n < 1 ) { return -1; }
                         world = params[0];
                         return 1;
                     }
                 },
                 {
-                    "--basepath", "<path>",
-                    "Base path for all game data subdirectories",
-                    section_default,
+                    "--basepath", "<path>", "Base path for all game data subdirectories", section_default,
                     []( int num_args, const char **params )
                     {
-                        if( num_args < 1 ) {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::init_base_path( params[0] );
                         PATH_INFO::set_standard_filenames();
                         return 1;
                     }
                 },
                 {
-                    "--shared", nullptr,
-                    "Activates the map-sharing mode",
-                    section_map_sharing,
+                    "--shared", nullptr, "Activates the map-sharing mode", section_map_sharing,
                     []( int, const char ** ) -> int {
                         MAP_SHARING::setSharing( true );
                         MAP_SHARING::setCompetitive( true );
@@ -393,10 +251,7 @@ int main( int argc, char *argv[] )
                     "Instructs map-sharing code to use this name for your character.",
                     section_map_sharing,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         MAP_SHARING::setUsername( params[0] );
                         return 1;
                     }
@@ -407,23 +262,16 @@ int main( int argc, char *argv[] )
                     "access to the cheat functions.",
                     section_map_sharing,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         MAP_SHARING::addAdmin( params[0] );
                         return 1;
                     }
                 },
                 {
                     "--adddebugger", "<username>",
-                    "Informs map-sharing code that you're running inside a debugger",
-                    section_map_sharing,
+                    "Informs map-sharing code that you're running inside a debugger", section_map_sharing,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         MAP_SHARING::addDebugger( params[0] );
                         return 1;
                     }
@@ -443,18 +291,14 @@ int main( int argc, char *argv[] )
                     "Base path for user-overrides to files from the ./data directory and named below",
                     section_user_directory,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::init_user_dir( params[0] );
                         PATH_INFO::set_standard_filenames();
                         return 1;
                     }
                 },
                 {
-                    "--dont-debugmsg", nullptr,
-                    "If set, no debug messages will be printed",
+                    "--dont-debugmsg", nullptr, "If set, no debug messages will be printed",
                     section_default,
                     []( int, const char ** ) -> int {
                         dont_debugmsg = true;
@@ -462,28 +306,20 @@ int main( int argc, char *argv[] )
                     }
                 },
                 {
-                    "--lua-doc", "<output path>",
-                    "Generate Lua docs to given path and exit",
+                    "--lua-doc", "<output path>", "Generate Lua docs to given path and exit",
                     section_default,
                     [&]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         test_mode = true;
                         lua_doc_output_path = params[0];
                         return 0;
                     }
                 },
                 {
-                    "--lua-types", "<output path>",
-                    "Generate Lua types to given path and exit",
+                    "--lua-types", "<output path>", "Generate Lua types to given path and exit",
                     section_default,
                     [&]( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         test_mode = true;
                         lua_types_output_path = params[0];
                         return 0;
@@ -492,15 +328,9 @@ int main( int argc, char *argv[] )
                 {
                     "--gpu-backend", "<driver>",
                     "Override the SDL_GPU backend driver for diagnostics (vulkan / direct3d12 / metal / software).",
-                    nullptr,
-                    []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
-#if defined(CATA_SDL)
+                    nullptr, []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
                         preload_config::set_gpu_backend_override( params[0] );
-#endif
                         return 1;
                     }
                 }
@@ -511,8 +341,7 @@ int main( int argc, char *argv[] )
         // in a second pass.
         const std::array<arg_handler, 8> second_pass_arguments = {{
                 {
-                    "--worldmenu", nullptr,
-                    "Enables the world menu in the map-sharing code",
+                    "--worldmenu", nullptr, "Enables the world menu in the map-sharing code",
                     section_map_sharing,
                     []( int, const char ** ) -> int {
                         MAP_SHARING::setWorldmenu( true );
@@ -520,92 +349,63 @@ int main( int argc, char *argv[] )
                     }
                 },
                 {
-                    "--datadir", "<directory name>",
-                    "Sub directory from which game data is loaded",
+                    "--datadir", "<directory name>", "Sub directory from which game data is loaded",
                     nullptr,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_datadir( params[0] );
                         return 1;
                     }
                 },
                 {
-                    "--savedir", "<directory name>",
-                    "Subdirectory for game saves",
-                    section_user_directory,
+                    "--savedir", "<directory name>", "Subdirectory for game saves", section_user_directory,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_savedir( params[0] );
                         return 1;
                     }
                 },
                 {
-                    "--configdir", "<directory name>",
-                    "Subdirectory for game configuration",
+                    "--configdir", "<directory name>", "Subdirectory for game configuration",
                     section_user_directory,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_config_dir( params[0] );
                         return 1;
                     }
                 },
                 {
-                    "--memorialdir", "<directory name>",
-                    "Subdirectory for memorials",
+                    "--memorialdir", "<directory name>", "Subdirectory for memorials",
                     section_user_directory,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_memorialdir( params[0] );
                         return 1;
                     }
                 },
                 {
-                    "--optionfile", "<filename>",
-                    "Name of the options file within the configdir",
+                    "--optionfile", "<filename>", "Name of the options file within the configdir",
                     section_user_directory,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_options( params[0] );
                         return 1;
                     }
                 },
                 {
                     "--autopickupfile", "<filename>",
-                    "Name of the autopickup options file within the configdir",
-                    nullptr,
+                    "Name of the autopickup options file within the configdir", nullptr,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_autopickup( params[0] );
                         return 1;
                     }
                 },
                 {
                     "--motdfile", "<filename>",
-                    "Name of the message of the day file within the motd directory",
-                    nullptr,
+                    "Name of the message of the day file within the motd directory", nullptr,
                     []( int num_args, const char **params ) -> int {
-                        if( num_args < 1 )
-                        {
-                            return -1;
-                        }
+                        if( num_args < 1 ) { return -1; }
                         PATH_INFO::set_motd( params[0] );
                         return 1;
                     }
@@ -640,7 +440,8 @@ int main( int argc, char *argv[] )
                     if( !strcmp( argv[0], arg_handler.flag ) ) {
                         argc--;
                         argv++;
-                        int args_consumed = arg_handler.handler( argc, const_cast<const char **>( argv ) );
+                        int args_consumed =
+                            arg_handler.handler( argc, const_cast<const char **>( argv ) );
                         if( args_consumed < 0 ) {
                             cata_printf( "Failed parsing parameter '%s'\n", *( argv - 1 ) );
                             exit( 1 );
@@ -683,12 +484,32 @@ int main( int argc, char *argv[] )
             }
         }
         if( asked_game_path ) {
-            cata_printf( remove_color_tags( resolved_game_paths() ) );
+            cata_printf( resolved_game_paths( false ) );
             return 0;
         }
     }
 
+    if( !replay_record_path.empty() && !replay_play_path.empty() ) {
+        throw std::invalid_argument( "--replay-record and --replay-play are mutually exclusive" );
+    }
+    if( test_mode && ( !replay_record_path.empty() || !replay_play_path.empty() ) ) {
+        throw std::invalid_argument( "Replay requires an interactive game session" );
+    }
+
+    game_client::set_active_backend( game_client::create_backend( selected_client ) );
+    game_client::active_backend().prepare();
+
     preload_config::load();
+
+    const auto needs_compute = lua_doc_output_path.empty() && lua_types_output_path.empty();
+    const auto client_capabilities = game_client::active_backend().capabilities();
+    if( !client_platform::initialize_sdl_services( {
+    .video = !test_mode || needs_compute,
+    .audio = !test_mode && selected_client != game_client::client_kind::mcp,
+    .headless = test_mode || !client_capabilities.requires_display} ) ) {
+        std::cerr << "Unable to initialize SDL engine services.\n";
+        return 1;
+    }
 
     std::string current_path = std::filesystem::current_path().string();
 
@@ -698,9 +519,7 @@ int main( int argc, char *argv[] )
                               "Current path: \"%s\"\n"
                               "Please ensure the current working directory is correct.\n"
                               "Perhaps you meant to start \"cataclysm-launcher\"?\n",
-                              PATH_INFO::datadir(),
-                              current_path
-                          );
+                              PATH_INFO::datadir(), current_path );
         report_fatal_error( msg );
         exit( 1 );
     }
@@ -711,9 +530,7 @@ int main( int argc, char *argv[] )
                                   "Can't open or create \"%s\"\n"
                                   "Current path: \"%s\"\n"
                                   "Please ensure you have write permission.\n",
-                                  dir.c_str(),
-                                  current_path
-                              );
+                                  dir.c_str(), current_path );
             report_fatal_error( msg );
             exit( 1 );
         }
@@ -722,129 +539,76 @@ int main( int argc, char *argv[] )
                                   "Can't write to \"%s\"\n"
                                   "Current path: \"%s\"\n"
                                   "Please ensure you have write permission and free storage space.\n",
-                                  dir.c_str(),
-                                  current_path
-                              );
+                                  dir.c_str(), current_path );
             report_fatal_error( msg );
             exit( 1 );
         }
     };
 
-#if defined(__ANDROID__)
-    if( !dir_exist( PATH_INFO::user_dir() ) ) {
-        check_dir_good( PATH_INFO::user_dir() );
-        std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
-        if( dir_exist( external_storage_path + "/config" ) ) {
-            std::filesystem::copy( external_storage_path + "/config", PATH_INFO::user_dir() + "config",
-                                   std::filesystem::copy_options::recursive );
-            std::filesystem::copy( external_storage_path + "/font", PATH_INFO::user_dir() + "font",
-                                   std::filesystem::copy_options::recursive );
-            std::filesystem::copy( external_storage_path + "/gfx", PATH_INFO::user_dir() + "gfx",
-                                   std::filesystem::copy_options::recursive );
-            std::filesystem::copy( external_storage_path + "/save", PATH_INFO::user_dir() + "save",
-                                   std::filesystem::copy_options::recursive );
-            std::filesystem::copy( external_storage_path + "/sound", PATH_INFO::user_dir() + "sound",
-                                   std::filesystem::copy_options::recursive );
-            std::filesystem::copy( external_storage_path + "/templates", PATH_INFO::user_dir() + "templates",
-                                   std::filesystem::copy_options::recursive );
-        }
-    }
-#endif
+    client_platform::migrate_user_files( check_dir_good );
     check_dir_good( PATH_INFO::user_dir() );
     check_dir_good( PATH_INFO::config_dir() );
     check_dir_good( PATH_INFO::savedir() );
 
     setupDebug( DebugOutput::file );
 
-    if( !init_language_system() ) {
-        exit_handler( -999 );
-    }
+    if( !init_language_system() ) { exit_handler( -999 ); }
 
-#if defined(CATA_SDL)
-    DebugLog( DL::Info, DC::Main ) << "SDL version used during compile is "
-                                   << SDL_MAJOR_VERSION << "."
-                                   << SDL_MINOR_VERSION << "."
-                                   << SDL_MICRO_VERSION;
-
-    const int linked_ver = SDL_GetVersion();
-    DebugLog( DL::Info, DC::Main ) << "SDL version used during linking and in runtime is "
-                                   << SDL_VERSIONNUM_MAJOR( linked_ver ) << "."
-                                   << SDL_VERSIONNUM_MINOR( linked_ver ) << "."
-                                   << SDL_VERSIONNUM_MICRO( linked_ver );
-#endif
-
-#if !defined(TILES)
     get_options().init();
     get_options().load();
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
-#if defined(CATA_SDL)
-    switch( use_offscreen_video_driver_for_headless_sdl() ) {
-        case offscreen_sdl_hint_result::applied:
-            DebugLog( DL::Info, DC::Main ) << "SDL video driver set to offscreen for headless curses";
-            break;
-        case offscreen_sdl_hint_result::failed:
-            DebugLog( DL::Warn, DC::Main ) << "SDL video driver offscreen hint failed: " << SDL_GetError();
-            break;
-        case offscreen_sdl_hint_result::skipped:
-            break;
-    }
-    if( !init_sdl_platform( !test_mode ) ) {
-        return 1;
-    }
-#endif
-#elif defined(CATA_SDL)
-    if( test_mode && lua_doc_output_path.empty() && lua_types_output_path.empty() &&
-        !init_sdl_platform( false ) ) {
-        return 1;
-    }
-#endif
 
-    // in test mode don't initialize curses to avoid escape sequences being inserted into output stream
+    // in test mode don't initialize curses to avoid escape sequences being inserted into output
+    // stream
     if( !test_mode ) {
         try {
             // set minimum FULL_SCREEN sizes
             FULL_SCREEN_WIDTH = 80;
             FULL_SCREEN_HEIGHT = 24;
-            catacurses::init_interface();
+            game_client::active_backend().initialize();
         } catch( const std::exception &err ) {
             // can't use any curses function as it has not been initialized
             std::cerr << "Error while initializing the interface: " << err.what() << '\n';
-            DebugLog( DL::Error, DC::Main ) << "Error while initializing the interface: " << err.what();
+            DebugLog( DL::Error, DC::Main )
+                    << "Error while initializing the interface: " << err.what();
             return 1;
         }
-#if defined(SDL_SOUND) && !defined(TILES)
+    }
+
+    if( !test_mode && selected_client == game_client::client_kind::curses ) {
         init_sound();
         atexit( shutdown_sound );
         load_soundset();
-#endif
     }
+    if( needs_compute ) { client_platform::initialize_compute(); }
 
-#if defined(CATA_SDL)
-    if( lua_doc_output_path.empty() && lua_types_output_path.empty() ) {
-        cata_gpu::init();
-        atexit( cata_gpu::shutdown );
+    if( !replay_record_path.empty() ) {
+        replay::configure_recording( replay_record_path, {.rng_seed = seed == 0 ? 1u : seed} );
+    } else if( !replay_play_path.empty() ) {
+        if( seed_explicit ) {
+            replay::configure_playback( replay_play_path, {.rng_seed = seed == 0 ? 1u : seed} );
+        } else {
+            replay::configure_playback( replay_play_path );
+        }
     }
-#endif
-
-#if defined(TILES)
-    if( test_mode ) {
-        get_options().init();
-        get_options().load();
+    replay::start();
+    if( replay::is_enabled() ) {
+        rng_set_deterministic_seed( replay::playback_metadata().rng_seed );
+        atexit( []() {
+            replay::stop();
+            rng_clear_deterministic_seed();
+        } );
+    } else {
+        rng_set_engine_seed( seed );
     }
-    set_language();
-#endif
-
-    rng_set_engine_seed( seed );
 
     g = std::make_unique<game>();
     // First load and initialize everything that does not
     // depend on the mods.
     try {
         g->load_static_data();
-        if( verifyexit ) {
-            exit_handler( 0 );
-        }
+        if( verifyexit ) { exit_handler( 0 ); }
         if( !dump.empty() ) {
             init_colors();
             exit( g->dump_stats( dump, dmode, opts ) ? 0 : 1 );
@@ -869,9 +633,10 @@ int main( int argc, char *argv[] )
 
     if( !lua_doc_output_path.empty() || !lua_types_output_path.empty() ) {
         init_colors();
-        const auto doc_script = std::filesystem::path{PATH_INFO::datadir()} / "raw" / "generate_docs.lua";
-        const auto types_script = std::filesystem::path{PATH_INFO::datadir()} / "raw" /
-                                  "generate_types.lua";
+        const auto doc_script =
+            std::filesystem::path{PATH_INFO::datadir()} / "raw" / "generate_docs.lua";
+        const auto types_script =
+            std::filesystem::path{PATH_INFO::datadir()} / "raw" / "generate_types.lua";
 
         if( !lua_doc_output_path.empty() ) {
             const bool doc_result = cata::generate_lua_docs( doc_script, lua_doc_output_path );
@@ -898,55 +663,54 @@ int main( int argc, char *argv[] )
 
     catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
 
-#if !defined(_WIN32)
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = signal_handler;
-    sigemptyset( &sigIntHandler.sa_mask );
-    sigIntHandler.sa_flags = 0;
-    sigaction( SIGINT, &sigIntHandler, nullptr );
-#endif
+    client_platform::install_quit_handler( selected_client == game_client::client_kind::curses );
 
     prompt_select_lang_on_startup();
     replay_buffered_debugmsg_prompts();
 
-    while( true ) {
-        if( !world.empty() ) {
-            if( !g->load( world ) ) {
-                break;
-            }
-            world.clear(); // ensure quit returns to opening screen
+    try {
+        while( true ) {
+            game_session::set_running( false );
+            if( !world.empty() ) {
+                game_session::set_phase( "loading" );
+                if( !g->load( world ) ) { break; }
+                world.clear(); // ensure quit returns to opening screen
 
-        } else {
-            main_menu menu;
-            if( !menu.opening_screen() ) {
-                break;
+            } else {
+                main_menu menu;
+                if( !menu.opening_screen() ) { break; }
             }
+
+            shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
+            options_manager::cache_balance_options();
+            game_session::set_running( true );
+            while( !g->do_turn() );
+            game_session::set_running( false );
         }
-
-        shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
-        options_manager::cache_balance_options();
-        while( !g->do_turn() );
+    } catch( const std::exception &error ) {
+        std::cerr << "Cataclysm BN: " << error.what() << '\n';
+        replay::stop();
+        exit_handler( 1 );
     }
 
-    exit_handler( -999 );
+    game_session::set_phase( "shutting_down" );
+    engine_client::process_session().interrupt();
+    exit_handler( replay::is_enabled() ? 0 : -999 );
     return 0;
 }
 
 namespace
 {
-void printHelpMessage( const arg_handler *first_pass_arguments,
-                       size_t num_first_pass_arguments,
-                       const arg_handler *second_pass_arguments,
-                       size_t num_second_pass_arguments )
+void printHelpMessage(
+    const arg_handler *first_pass_arguments, size_t num_first_pass_arguments,
+    const arg_handler *second_pass_arguments, size_t num_second_pass_arguments )
 {
 
     // Group all arguments by help_group.
     std::multimap<std::string, const arg_handler *> help_map;
     for( size_t i = 0; i < num_first_pass_arguments; ++i ) {
         std::string help_group;
-        if( first_pass_arguments[i].help_group ) {
-            help_group = first_pass_arguments[i].help_group;
-        }
+        if( first_pass_arguments[i].help_group ) { help_group = first_pass_arguments[i].help_group; }
         help_map.insert( std::make_pair( help_group, &first_pass_arguments[i] ) );
     }
     for( size_t i = 0; i < num_second_pass_arguments; ++i ) {
@@ -966,25 +730,21 @@ void printHelpMessage( const arg_handler *first_pass_arguments,
     print the paths used by the game and exit
 
 Command line parameters:
-)" );
+)");
     std::string current_help_group;
     auto it = help_map.begin();
     auto it_end = help_map.end();
-    for( ; it != it_end; ++it ) {
-        if( it->first != current_help_group ) {
+    for (; it != it_end; ++it) {
+        if (it->first != current_help_group) {
             current_help_group = it->first;
-            cata_printf( "\n%s\n", current_help_group.c_str() );
+            cata_printf("\n%s\n", current_help_group.c_str());
         }
 
-        const arg_handler *handler = it->second;
-        cata_printf( "%s", handler->flag );
-        if( handler->param_documentation ) {
-            cata_printf( " %s", handler->param_documentation );
-        }
-        cata_printf( "\n" );
-        if( handler->documentation ) {
-            cata_printf( "    %s\n", handler->documentation );
-        }
+        const arg_handler* handler = it->second;
+        cata_printf("%s", handler->flag);
+        if (handler->param_documentation) { cata_printf(" %s", handler->param_documentation); }
+        cata_printf("\n");
+        if (handler->documentation) { cata_printf("    %s\n", handler->documentation); }
     }
 }
-}  // namespace
+} // namespace

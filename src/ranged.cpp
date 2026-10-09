@@ -13,6 +13,8 @@
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
+#include "client_interaction.h"
+#include "client_presentation.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -79,6 +81,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -543,6 +546,8 @@ class target_ui
 
         // Create window and set up input context
         void init_window_and_input();
+
+        auto interaction_snapshot() -> game_client::interaction_snapshot;
 
         // Handle input related to cursor movement.
         // Returns 'true' if action was recognized and processed.
@@ -2989,6 +2994,90 @@ int burst_penalty( const Character &p, const item &gun, int gun_recoil )
 
 } // namespace ranged
 
+auto target_ui::interaction_snapshot() -> game_client::interaction_snapshot
+{
+    const auto position_of = []( const tripoint_bub_ms & position ) {
+        return game_client::interaction_position{
+            .x = position.x(),
+            .y = position.y(),
+            .z = position.z(),
+        };
+    };
+    const auto status_name = [this]() {
+        switch( status ) {
+            case Status::Good:
+                return std::string( "good" );
+            case Status::BadTarget:
+                return std::string( "bad_target" );
+            case Status::OutOfAmmo:
+                return std::string( "out_of_ammo" );
+            case Status::OutOfRange:
+                return std::string( "out_of_range" );
+        }
+        return std::string( "bad_target" );
+    };
+    auto candidates = std::vector<game_client::interaction_target_candidate> {};
+    const auto add_candidate = [&]( const tripoint_bub_ms & position, const std::string & label,
+    const std::string & description, const bool creature ) {
+        const auto identity = std::vector<std::string> {
+            std::to_string( position.x() ), std::to_string( position.y() ),
+            std::to_string( position.z() ), label, creature ? "creature" : "tile",
+        };
+        candidates.push_back( {
+            .id = game_client::opaque_interaction_id( "target", identity ),
+            .label = label,
+            .description = description,
+            .position = position_of( position ),
+            .creature = creature,
+        } );
+    };
+    if( dst_critter != nullptr ) {
+        add_candidate( dst, dst_critter->disp_name(), _( "Current visible target" ), true );
+    } else {
+        add_candidate( dst, _( "Current cursor tile" ), _( "The empty tile under the targeting cursor" ),
+                       false );
+    }
+    for( const auto *candidate : targets ) {
+        if( candidate == dst_critter ) {
+            continue;
+        }
+        add_candidate( candidate->bub_pos(), candidate->disp_name(), _( "Visible targeting candidate" ),
+                       true );
+    }
+    auto minimum = game_client::interaction_position{
+        .x = std::numeric_limits<int>::min(),
+        .y = std::numeric_limits<int>::min(),
+        .z = -OVERMAP_DEPTH,
+    };
+    auto maximum = game_client::interaction_position{
+        .x = std::numeric_limits<int>::max(),
+        .y = std::numeric_limits<int>::max(),
+        .z = OVERMAP_HEIGHT,
+    };
+    if( limit_to_reality_bubble ) {
+        minimum.x = 0;
+        minimum.y = 0;
+        maximum.x = ( 2 * g_half_mapsize + 1 ) * SEEX - 1;
+        maximum.y = ( 2 * g_half_mapsize + 1 ) * SEEY - 1;
+    }
+    return {
+        .kind = game_client::interaction_kind::target,
+        .title = remove_color_tags( uitext_title() ),
+        .allow_cancel = true,
+        .target = game_client::interaction_target{
+            .source = position_of( src ),
+            .cursor = position_of( dst ),
+            .minimum_position = minimum,
+            .maximum_position = maximum,
+            .range = range,
+            .distance_metric = trigdist ? "trig" : "square",
+            .status = status_name(),
+            .limit_to_reality_bubble = limit_to_reality_bubble,
+            .candidates = std::move( candidates ),
+        },
+    };
+}
+
 target_handler::trajectory target_ui::run()
 {
     if( mode == TargetMode::Spell && !no_mana && !casting->can_cast( *you ) ) {
@@ -3126,8 +3215,22 @@ target_handler::trajectory target_ui::run()
 
         // Wait for user input (or use value retrieved from activity)
         if( action.empty() ) {
-            int timeout = get_option<int>( "EDGE_SCROLL" );
+            const auto timeout = get_option<int>( "EDGE_SCROLL" );
+            const auto interaction = game_client::interaction_scope( ctxt, [this]() {
+                return interaction_snapshot();
+            } );
             action = ctxt.handle_input( timeout );
+            const auto &event = ctxt.get_raw_input();
+            if( event.interaction &&
+                event.interaction->operation == game_client::interaction_operation::set_target ) {
+                const auto position = *event.interaction->position;
+                set_cursor_pos( tripoint_bub_ms( position.x, position.y, position.z ) );
+                continue;
+            }
+            if( event.interaction &&
+                event.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            }
         }
 
         // If an aiming mode is selected, use "*_SHOT" instead of "FIRE"
@@ -4020,12 +4123,12 @@ void target_ui::draw_terrain_overlay()
         return this_z;
     };
 
-    // FIXME: TILES version of g->draw_line helpfully draws a cursor at last point.
+    // FIXME: Graphical renderer version of g->draw_line helpfully draws a cursor at last point.
     //        This creates a fake cursor if 'dst' is on a z-level we cannot see.
 
     // Draw approximate line of fire for each turret in range
     if( mode == TargetMode::Turrets && draw_turret_lines ) {
-        // TODO: TILES version doesn't know how to draw more than 1 line at a time.
+        // TODO: Graphical renderer version doesn't know how to draw more than 1 line at a time.
         //       We merge all lines together and draw them as a big malformed one
         std::set<tripoint_bub_ms> points;
         for( const turret_with_lof &it : turrets_in_range ) {
@@ -4036,10 +4139,10 @@ void target_ui::draw_terrain_overlay()
         }
         // Since "trajectory" for each turret is just a straight line,
         // we can draw it even if the player can't see some parts
-        points.erase( dst ); // Workaround for fake cursor on TILES
+        points.erase( dst ); // Workaround for fake cursor on graphical renderer
         std::vector<tripoint_bub_ms> l( points.begin(), points.end() );
         if( dst.z() == center.z() ) {
-            // Workaround for fake cursor bug on TILES
+            // Workaround for fake cursor bug on graphical renderer
             l.push_back( dst );
         }
         g->draw_line( src, center, l, true );
@@ -4052,7 +4155,7 @@ void target_ui::draw_terrain_overlay()
         g->draw_line( dst, center, this_z, true );
     }
 
-    // TILES draw_line uses a target endpoint sprite.  Keep the cursor explicit
+    // Graphical draw_line uses a target endpoint sprite.  Keep the cursor explicit
     // so aiming at empty tiles and z-level edges has the normal cursor marker.
     if( dst.z() == center.z() ) {
         g->draw_cursor( dst );
@@ -4065,33 +4168,21 @@ void target_ui::draw_terrain_overlay()
             if( tile.z() != center.z() ) {
                 continue;
             }
-#ifdef TILES
-            if( use_tiles ) {
-                g->draw_highlight( tile );
-            } else {
-#endif
+            if( !game_client::presentation().draw_target_tile( *g, tile ) ) {
                 get_map().drawsq( g->w_terrain, tile, params );
-#ifdef TILES
             }
-#endif
         }
     } else if( mode == TargetMode::Shape || ( mode == TargetMode::Fire && shape_gen ) ) {
         drawsq_params params = drawsq_params().highlight( true ).center( center );
         for( const std::pair<const tripoint_bub_ms, double> &pr : shape_coverage ) {
             const tripoint_bub_ms &tile = pr.first;
-#ifdef TILES
-            if( use_tiles ) {
-                g->draw_highlight( tile );
-            } else {
-#endif
+            if( !game_client::presentation().draw_target_tile( *g, tile ) ) {
                 get_map().drawsq( g->w_terrain, tile, params );
                 Creature *critter = g->critter_at( tile );
                 if( critter != nullptr ) {
                     g->draw_critter_highlighted( *critter, center );
                 }
-#ifdef TILES
             }
-#endif
         }
     }
 }

@@ -222,6 +222,9 @@ Creature::Creature( const Creature &source )
     dodge_bonus = source.dodge_bonus;
     block_bonus = source.block_bonus;
     hit_bonus = source.hit_bonus;
+    bash_bonus = source.bash_bonus;
+    cut_bonus = source.cut_bonus;
+    size_bonus = source.size_bonus;
 
     fake = source.fake;
     pain = source.pain;

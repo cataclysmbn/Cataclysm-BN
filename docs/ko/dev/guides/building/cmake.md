@@ -36,6 +36,34 @@ CataclysmBN을 빌드하려면 다음 라이브러리와 개발 헤더가 설치
 
 ## 빌드 환경
 
+타일, curses, MCP는 하나의 실행 파일에서 실행할 수 있습니다. 클라이언트를 활성화하고 선택하는 방법은 [엔진과 클라이언트](../../explanation/engine_clients.md)를, 에이전트를 연결하는 방법은 [MCP로 플레이하기](../mcp.md)를 참조하세요.
+
+### 클라이언트 구성
+
+`linux-clients` 프리셋은 공유 실행 파일에서 타일, curses, MCP를 활성화합니다:
+
+```sh
+cmake --preset linux-clients
+cmake --build --preset linux-clients --target cataclysm-bn
+```
+
+이 구성에 선택 사항인 Dear ImGui 시험용 클라이언트를 추가하려면 다음을 실행하세요:
+
+```sh
+cmake --preset linux-clients -DIMGUI=ON
+cmake --build --preset linux-clients --target cataclysm-bn-imgui
+```
+
+SDL, 타일, curses, 사운드가 없는 CPU 전용 MCP 빌드는 다음과 같이 구성하세요:
+
+```sh
+cmake -B out/build/headless -DMCP=ON -DTILES=OFF -DCURSES=OFF \
+  -DSOUND=OFF -DCATA_SDL=OFF
+cmake --build out/build/headless --target cataclysm-bn-mcp
+```
+
+호환 대상은 같은 공유 실행 파일을 빌드하며, 해당 이름으로 실행하면 각각의 클라이언트를 선택하는 이름을 제공합니다.
+
 [git](https://github.com/cataclysmbn/Cataclysm-BN)에서 최신 버전의 소스 코드 tarball을 받을 수 있습니다.
 
 ```sh
@@ -371,6 +399,8 @@ cmake-gui -S . -B out/build/linux-slim
 | --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `CURSES`              | `ON`                                       | curses 버전을 빌드합니다.                                                                        |
 | `TILES`               | `OFF`                                      | 그래픽 타일셋 버전을 빌드합니다.                                                                 |
+| `MCP`                 | `OFF`                                      | 헤드리스 MCP 클라이언트를 빌드합니다.                                                            |
+| `IMGUI`               | `OFF`                                      | 선택 사항인 Dear ImGui SDL3 시험용 클라이언트를 빌드합니다.                                      |
 | `SOUND`               | `ON`                                       | 오디오 지원을 빌드합니다.                                                                        |
 | `LANGUAGES`           | `" "`                                      | 지정된 언어 지원을 빌드합니다.                                                                   |
 | `TESTS`               | `ON`                                       | 테스트 유닛을 빌드합니다.                                                                        |

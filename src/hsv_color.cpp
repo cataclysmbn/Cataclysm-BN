@@ -1,16 +1,17 @@
 #include "hsv_color.h"
 
+#include "color_loader.h"
+#include "cursesport.h"
+#include "cursesdef.h"
+#include <array>
+
 #include <algorithm>
 #include <sstream>
 
 #include "rng.h"
 #include "translations.h"
 
-#if defined(TILES)
-#include "sdl_utils.h"
-#else
-#include "ncurses_def.h"
-#endif
+
 
 static std::unordered_map<RGBColor, std::string> named_colors = {};
 static std::unordered_map<RGBColor, std::string> similar_name_cache = {};
@@ -95,11 +96,19 @@ std::string RGBColor::friendly_name() const
 
 auto curses_color_to_RGB( const nc_color &color ) -> RGBColor
 {
-#if defined(TILES)
-    return curses_color_to_SDL( color );
-#else
-    return ncurses::color_to_RGB( color );;
-#endif
+    // All clients use the same logical palette; native renderers own its device conversion.
+    static const auto palette = []() {
+        auto colors = std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> {};
+        color_loader<RGBColor> {}.load( colors );
+        return colors;
+    }
+    ();
+    const auto pair_index = std::clamp( color.to_color_pair_index(), 0,
+                                        static_cast<int>( cata_cursesport::colorpairs.size() ) - 1 );
+    const auto &pair = cata_cursesport::colorpairs[pair_index];
+    auto index = static_cast<int>( pair.FG != catacurses::black ? pair.FG : pair.BG );
+    if( color.is_bold() ) { index += palette.size() / 2; }
+    return palette[std::clamp( index, 0, static_cast<int>( palette.size() ) - 1 )];
 }
 
 static auto median( const uint8_t a, const uint8_t b, const uint8_t c )

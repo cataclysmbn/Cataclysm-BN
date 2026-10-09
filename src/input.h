@@ -13,6 +13,7 @@
 #include <list>
 #endif
 
+#include "client_interaction_data.h"
 #include "coordinates.h"
 #include "translations.h"
 
@@ -98,7 +99,8 @@ enum class input_event_t : int  {
     timeout,
     keyboard,
     gamepad,
-    mouse
+    mouse,
+    interaction
 };
 
 /**
@@ -126,6 +128,7 @@ struct input_event {
     std::string text;
     std::string edit;
     bool edit_refresh;
+    std::optional<game_client::interaction_event> interaction;
 
 #if defined(__ANDROID__)
     // Used exclusively by the quick shortcuts to determine how stale a shortcut is
@@ -160,6 +163,9 @@ struct input_event {
         sequence = other.sequence;
         mouse_pos = other.mouse_pos;
         text = other.text;
+        edit = other.edit;
+        edit_refresh = other.edit_refresh;
+        interaction = other.interaction;
         shortcut_last_used_action_counter = other.shortcut_last_used_action_counter;
         return *this;
     }
@@ -188,7 +194,7 @@ struct input_event {
             }
         }
 
-        return true;
+        return interaction == other.interaction;
     }
 };
 
@@ -401,6 +407,17 @@ extern input_manager inp_mngr;
  * This turns this class into an abstraction method between actual
  * input(keyboard, gamepad etc.) and game.
  */
+/// Native contexts publish on Android; metadata contexts never enter the live stack.
+enum class input_context_mode {
+    native,
+    metadata,
+};
+
+struct input_context_options {
+    std::string category = "default";
+    input_context_mode mode = input_context_mode::native;
+};
+
 class input_context
 {
     public:
@@ -409,30 +426,27 @@ class input_context
         static std::list<input_context *> input_context_stack;
 #endif
 
-        input_context() : registered_any_input( false ), category( "default" ),
-            coordinate_input_received( false ), handling_coordinate_input( false ) {
-#if defined(__ANDROID__)
-            input_context_stack.push_back( this );
-            allow_text_entry = false;
-#endif
-        }
+        input_context() : input_context( input_context_options{} ) {}
         // TODO: consider making the curses WINDOW an argument to the constructor, so that mouse input
         // outside that window can be ignored
-        input_context( const std::string &category ) : registered_any_input( false ), category( category ),
-            coordinate_input_received( false ), handling_coordinate_input( false ) {
+        input_context( const std::string &category ) : input_context( input_context_options{ .category = category } ) {}
+
+        explicit input_context( const input_context_options &opts ) : registered_any_input( false ),
+            category( opts.category ), coordinate_input_received( false ),
+            handling_coordinate_input( false ), mode_( opts.mode ) {
 #if defined(__ANDROID__)
-            input_context_stack.push_back( this );
+            if( mode_ == input_context_mode::native ) { input_context_stack.push_back( this ); }
             allow_text_entry = false;
 #endif
         }
 
-#if defined(__ANDROID__)
-        input_context( const input_context &other ) : input_context() {
+        input_context( const input_context &other ) : input_context( input_context_options{ .mode = other.mode_ } ) {
             *this = other;
         }
 
+#if defined(__ANDROID__)
         virtual ~input_context() {
-            input_context_stack.remove( this );
+            if( mode_ == input_context_mode::native ) { input_context_stack.remove( this ); }
         }
 
         // HACK: hack to allow creating manual keybindings for getch() instances, uilists etc. that don't use an input_context outside of the Android version
@@ -477,10 +491,17 @@ class input_context
                               action_descriptor ) != registered_actions.end();
         }
 
-        input_context &operator=( const input_context &other ) {
+#endif
+        /// Assignment copies metadata, not the destination's publication identity.
+        auto operator=( const input_context &other ) -> input_context & { // *NOPAD*
+            if( this == &other ) { return *this; }
             registered_actions = other.registered_actions;
+#if defined(__ANDROID__)
             registered_manual_keys = other.registered_manual_keys;
             allow_text_entry = other.allow_text_entry;
+#else
+            edittext = other.edittext;
+#endif
             registered_any_input = other.registered_any_input;
             category = other.category;
             coordinate = other.coordinate;
@@ -493,6 +514,7 @@ class input_context
             return *this;
         }
 
+#if defined(__ANDROID__)
         bool operator==( const input_context &other ) const {
             return category == other.category &&
                    registered_actions == other.registered_actions &&
@@ -674,7 +696,14 @@ class input_context
         /**
          * Get the human-readable name for an action.
          */
-        std::string get_action_name( const std::string &action_id ) const;
+        auto get_action_name( const std::string &action_id ) const -> std::string;
+        /// Same native name selection, admitted before translated cache/return copies.
+        auto get_action_name_bounded( const std::string &action_id,
+                                      std::size_t max_bytes ) const -> std::optional<std::string>;
+        /// Borrowed native name source for admission before materializing metadata labels.
+        /// Invalidated by changes to this context or the input manager's action registry.
+        auto action_name_source( const std::string &action_id ) const
+        -> std::optional<std::reference_wrapper<const translation>>;
 
         /* For the future, something like this might be nice:
          * const std::string register_action(const std::string& action_descriptor, x, y, width, height);
@@ -732,6 +761,7 @@ class input_context
         input_event next_action;
         bool iso_mode = false; // should this context follow the game's isometric settings?
         int timeout = -1;
+        input_context_mode mode_ = input_context_mode::native;
 
         /**
          * When registering for actions within an input_context, callers can
@@ -768,8 +798,15 @@ class input_context
         std::vector<std::string> filter_strings_by_phrase( const std::vector<std::string> &strings,
                 const std::string &phrase ) const;
     public:
+        /// Allocation-free metadata traversal; lifetime is that of this context.
+        auto registered_actions_view() const -> const std::vector<std::string> & { // *NOPAD*
+            return registered_actions;
+        }
         std::vector<std::string> get_registered_actions_copy() const {
             return registered_actions;
+        }
+        const std::string &category_name() const {
+            return category;
         }
 };
 
@@ -782,5 +819,3 @@ bool gamepad_available();
 
 // rotate a delta direction clockwise
 void rotate_direction_cw( int &dx, int &dy );
-
-

@@ -6,6 +6,7 @@
 #include <array>
 #include <chrono>
 #include <map>
+#include <random>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -20,10 +21,10 @@
 #include "messages.h"
 #include "options.h"
 #include "path_info.h"
-#include "rng.h"
-#include "sdl_wrappers.h"
 #include "sounds.h"
 #include "units_angle.h"
+
+auto sound_supported() -> bool { return true; }
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
@@ -143,8 +144,6 @@ static sfx_resources_t sfx_resources;
 static std::vector<id_and_variant> sfx_preload;
 static std::map<std::string, std::chrono::steady_clock::time_point> played_sound_time_map;
 static std::map<int, double> sound_durations;
-
-bool sounds::sound_enabled = false;
 
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
@@ -384,7 +383,7 @@ auto play_music( const std::string &playlist ) -> void
     }
     if( list.shuffle ) {
         // NOLINTNEXTLINE(cata-determinism)
-        static auto eng = cata_default_random_engine(
+        static auto eng = std::minstd_rand0(
                               std::chrono::system_clock::now().time_since_epoch().count() );
         std::shuffle( playlist_indexes.begin(), playlist_indexes.end(), eng );
     }
@@ -528,10 +527,10 @@ auto sfx::load_playlist( const JsonObject &jsobj ) -> void
 static auto find_random_effect( const id_and_variant &id_variants_pair ) -> const sound_effect *
 {
     const auto iter = sfx_resources.sound_effects.find( id_variants_pair );
-    if( iter == sfx_resources.sound_effects.end() ) {
+    if( iter == sfx_resources.sound_effects.end() || iter->second.empty() ) {
         return nullptr;
     }
-    return &random_entry_ref( iter->second );
+    return &iter->second[sfx::presentation_random_effect_index( iter->second.size() )];
 }
 
 static auto find_random_effect( const std::string &id,

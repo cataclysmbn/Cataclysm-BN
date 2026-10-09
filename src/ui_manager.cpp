@@ -11,7 +11,8 @@
 #include "cursesdef.h"
 #include "game_ui.h"
 #include "point.h"
-#include "sdltiles.h"
+#include "client_presentation.h"
+#include "client_display.h"
 #include "profile.h"
 
 using ui_stack_t = std::vector<std::reference_wrapper<ui_adaptor>>;
@@ -19,9 +20,7 @@ using ui_stack_t = std::vector<std::reference_wrapper<ui_adaptor>>;
 static bool redraw_in_progress = false;
 static bool showing_debug_message = false;
 static bool restart_redrawing = false;
-#if defined( TILES )
-static std::optional<SDL_Rect> prev_clip_rect;
-#endif
+static auto prev_clip_rect = std::optional<rectangle<point>> {};
 static ui_stack_t ui_stack;
 
 ui_adaptor::ui_adaptor() : disabling_uis_below( false ), is_debug_message_ui( false ),
@@ -44,23 +43,8 @@ ui_adaptor::ui_adaptor( ui_adaptor::debug_message_ui ) : disabling_uis_below( tr
     if( redraw_in_progress ) {
         restart_redrawing = true;
     }
-#if defined( TILES )
-    // Reset the clip rect because the debug message UI might be created in a
-    // redraw callback when a clip rect is active. When the UI is deconstructed,
-    // restore the previous clip rect to prevent the redraw callback from
-    // drawing outside the clip area, which will cause stuck graphics. This
-    // alone does not prevent the graphics from becoming borked in other ways,
-    // but `ui_manager` will redo the entire redrawing as soon as the redraw
-    // callback returns.
-    const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
-    if( SDL_RenderClipEnabled( renderer.get() ) ) {
-        prev_clip_rect = SDL_Rect();
-        SDL_GetRenderClipRect( renderer.get(), &prev_clip_rect.value() );
-        SDL_SetRenderClipRect( renderer.get(), nullptr );
-    } else {
-        prev_clip_rect = std::nullopt;
-    }
-#endif
+    // A debug popup can interrupt drawing inside a clipped native viewport.
+    prev_clip_rect = game_client::presentation().suspend_clip();
     // The debug message might be shown during a normal UI's redraw callback,
     // so we need to invalidate the frame buffer so it does not interfere
     // with the display of the debug message.
@@ -73,13 +57,7 @@ ui_adaptor::~ui_adaptor()
     if( is_debug_message_ui ) {
         assert( showing_debug_message );
         showing_debug_message = false;
-#if defined( TILES )
-        // See ui_adaptor( debug_message_ui )
-        if( prev_clip_rect.has_value() ) {
-            const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
-            SDL_SetRenderClipRect( renderer.get(), &prev_clip_rect.value() );
-        }
-#endif
+        game_client::presentation().restore_clip( prev_clip_rect );
     }
     for( auto it = ui_stack.rbegin(); it < ui_stack.rend(); ++it ) {
         if( &it->get() == this ) {
@@ -98,14 +76,7 @@ void ui_adaptor::position_from_window( const catacurses::window &win )
     } else {
         const rectangle<point> old_dimensions = dimensions;
         // ensure position is updated before calling invalidate
-#ifdef TILES
-        const window_dimensions dim = get_window_dimensions( win );
-        dimensions = rectangle<point>(
-                         dim.window_pos_pixel, dim.window_pos_pixel + dim.window_size_pixel );
-#else
-        const point origin( getbegx( win ), getbegy( win ) );
-        dimensions = rectangle<point>( origin, origin + point( getmaxx( win ), getmaxy( win ) ) );
-#endif
+        dimensions = game_client::presentation().window_bounds( win );
         invalidated = true;
         ui_manager::invalidate( old_dimensions, false );
     }
@@ -115,13 +86,7 @@ void ui_adaptor::position( point topleft, point size )
 {
     const rectangle<point> old_dimensions = dimensions;
     // ensure position is updated before calling invalidate
-#ifdef TILES
-    const window_dimensions dim = get_window_dimensions( topleft, size );
-    dimensions = rectangle<point>( dim.window_pos_pixel,
-                                   dim.window_pos_pixel + dim.window_size_pixel );
-#else
-    dimensions = rectangle<point>( topleft, topleft + size );
-#endif
+    dimensions = game_client::presentation().cell_bounds( topleft, size );
     invalidated = true;
     ui_manager::invalidate( old_dimensions, false );
 }
@@ -138,48 +103,29 @@ void ui_adaptor::on_screen_resize( const screen_resize_callback_t &fun )
 
 void ui_adaptor::set_cursor( const catacurses::window &w, const point &pos )
 {
-#if !defined( TILES )
     cursor_type = cursor::custom;
     cursor_pos = point( getbegx( w ), getbegy( w ) ) + pos;
-#else
-    // Unimplemented
-    cursor_type = cursor::disabled;
-    static_cast<void>( w );
-    static_cast<void>( pos );
-#endif
+
 }
 
 void ui_adaptor::record_cursor( const catacurses::window &w )
 {
-#if !defined( TILES )
     cursor_type = cursor::custom;
     cursor_pos = point( getbegx( w ) + getcurx( w ), getbegy( w ) + getcury( w ) );
-#else
-    // Unimplemented
-    cursor_type = cursor::disabled;
-    static_cast<void>( w );
-#endif
+
 }
 
 void ui_adaptor::record_term_cursor()
 {
-#if !defined( TILES )
     cursor_type = cursor::custom;
     cursor_pos = point( getcurx( catacurses::newscr ), getcury( catacurses::newscr ) );
-#else
-    // Unimplemented
-    cursor_type = cursor::disabled;
-#endif
+
 }
 
 void ui_adaptor::default_cursor()
 {
-#if !defined( TILES )
     cursor_type = cursor::last;
-#else
-    // Unimplemented
-    cursor_type = cursor::disabled;
-#endif
+
 }
 
 void ui_adaptor::disable_cursor()
@@ -189,11 +135,8 @@ void ui_adaptor::disable_cursor()
 
 static void restore_cursor( const point &p )
 {
-#if !defined( TILES )
     wmove( catacurses::newscr, p );
-#else
-    static_cast<void>( p );
-#endif
+
 }
 
 void ui_adaptor::mark_resize() const

@@ -3,9 +3,14 @@
 #include <algorithm>
 #include <array>
 #include <memory>
+#include <sstream>
 
 #include "cached_options.h"
 #include "catacharset.h"
+#include "client_interaction.h"
+#include "client_interaction_metadata.h"
+#include "evaluation_decision.h"
+#include "json.h"
 #include "ime.h"
 #include "input.h"
 #include "output.h"
@@ -260,8 +265,174 @@ std::shared_ptr<ui_adaptor> query_popup::create_or_get_adaptor( bool disable_bel
     return ui;
 }
 
+auto query_popup::register_input_actions( input_context &ctxt ) const -> void
+{
+    if( cancel || !options.empty() ) { ctxt.register_action( "HELP_KEYBINDINGS" ); }
+    if( !options.empty() ) {
+        ctxt.register_action( "LEFT" );
+        ctxt.register_action( "RIGHT" );
+        ctxt.register_action( "CONFIRM" );
+        for( const auto &opt : options ) { ctxt.register_action( opt.action ); }
+    }
+    if( anykey ) {
+        ctxt.register_action( "ANY_INPUT" );
+        ctxt.register_action( "COORDINATE" );
+    }
+    if( cancel ) { ctxt.register_action( "QUIT" ); }
+}
+
+auto query_popup::make_interaction( const input_context &ctxt,
+                                    const std::vector<std::string> *labels ) const ->
+game_client::interaction_snapshot // *NOPAD*
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .message = remove_color_tags( text ),
+        .allow_cancel = cancel,
+    };
+    snapshot.choices.reserve( options.size() + ( ( anykey || cancel ) && options.empty() ? 1 : 0 ) );
+    for( auto index = std::size_t{ 0 }; index < options.size(); ++index ) {
+        const auto &option = options[index];
+        const auto label = labels ? ( *labels )[index] : ctxt.get_action_name( option.action );
+        snapshot.choices.push_back( {
+            .id = "option:" + std::to_string( index ),
+            .label = remove_color_tags( label ),
+            .description = option.action,
+            .selected = index == cur,
+            .highlighted = index == cur,
+        } );
+    }
+    if( ( anykey || cancel ) && options.empty() ) {
+        const auto action = anykey ? "ANY_INPUT" : "QUIT";
+        const auto label = labels ? labels->front() : ctxt.get_action_name( action );
+        snapshot.choices.push_back( {
+            .id = "acknowledge",
+            .label = label,
+            .description = action,
+            .selected = true,
+            .highlighted = true,
+        } );
+    }
+    return snapshot;
+}
+
+auto query_popup::query_evaluation() -> result
+{
+    namespace evaluation = game_client::evaluation;
+    try {
+        evaluation::throw_if_incomplete();
+        if( !anykey && !cancel && options.empty() ) {
+            evaluation::fail_current( evaluation::failure::invalid_response );
+        }
+        auto budget = evaluation::construction_budget{};
+        budget.add_bytes( 4096 ); // Fixed JSON members, context/row storage and encoder growth.
+        budget.add_text( text );
+        budget.add_text( category );
+        budget.add_array( options.size(), 2048 );
+        for( const auto &option : options ) { budget.add_text( option.action ); }
+        // Construct in place: metadata mode never publishes, even on Android or without NRVO.
+        auto ctxt = input_context( input_context_options{ .category = category, .mode = input_context_mode::metadata } );
+        register_input_actions( ctxt );
+        for( const auto &action : ctxt.registered_actions_view() ) {
+            budget.add_text( action );
+            const auto source = ctxt.action_name_source( action );
+            if( source ) { budget.add_text( source->get().debug_get_raw() ); }
+            const auto &events = inp_mngr.get_input_for_action( action, category );
+            budget.add_array( events.size(), 512 );
+            for( const auto &event : events ) {
+                budget.add_array( event.sequence.size(), 64 );
+                budget.add_array( event.modifiers.size(), 64 );
+            }
+        }
+        auto labels = std::vector<std::string> {};
+        labels.reserve( options.size() + ( options.empty() ? 1 : 0 ) );
+        const auto add_label = [&]( const auto & action ) {
+            auto label = ctxt.get_action_name_bounded( action, budget.remaining_text_capacity() );
+            if( !label ) { evaluation::fail_current( evaluation::failure::resource_limit ); }
+            budget.add_text( *label );
+            labels.push_back( std::move( *label ) );
+        };
+        for( const auto &option : options ) { add_label( option.action ); }
+        if( options.empty() ) { add_label( anykey ? "ANY_INPUT" : "QUIT" ); }
+        // Full owned snapshot and schema construction begins only after all admission checks.
+        auto snapshot = game_client::normalize_interaction_metadata( ctxt, make_interaction( ctxt,
+                        &labels ) );
+        auto stream = std::ostringstream{};
+        auto json = JsonOut( stream );
+        json.start_object();
+        json.member( "text", text );
+        json.member( "anykey", anykey );
+        json.member( "cancel", cancel );
+        json.member( "cursor", cur );
+        json.member( "ontop", ontop );
+        json.member( "fullscr", fullscr );
+        json.member( "color", static_cast<int>( default_text_color ) );
+        json.member( "bindings" );
+        json.start_array();
+        // Describe actual bindings, but never predict by executing arbitrary option filters.
+        for( const auto &action : ctxt.registered_actions_view() ) {
+            json.start_object();
+            json.member( "action", action );
+            json.member( "events" );
+            json.start_array();
+            for( const auto &event : inp_mngr.get_input_for_action( action, category ) ) {
+                json.start_object();
+                json.member( "type", static_cast<int>( event.type ) );
+                json.member( "sequence", event.sequence );
+                json.member( "modifiers", event.modifiers );
+                json.end_object();
+            }
+            json.end_array();
+            json.end_object();
+        }
+        json.end_array();
+        json.end_object();
+        evaluation::construction_complete();
+        auto event = evaluation::consume( { .interaction = snapshot, .popup_schema = stream.str() } );
+        auto response = result{};
+        response.wait_input = !anykey;
+        response.evt = std::move( event );
+        if( response.evt.interaction ) {
+            if( response.evt.type != input_event_t::interaction || !response.evt.sequence.empty() ||
+                !response.evt.modifiers.empty() || !response.evt.text.empty() ||
+                !response.evt.edit.empty() || response.evt.edit_refresh ||
+                !game_client::validate_interaction_metadata( snapshot, *response.evt.interaction ) ) {
+                evaluation::fail_current( evaluation::failure::invalid_response );
+            }
+        } else {
+            if( response.evt.sequence.empty() ||
+                ( response.evt.type != input_event_t::keyboard &&
+                  response.evt.type != input_event_t::mouse &&
+                  response.evt.type != input_event_t::gamepad ) ||
+                ( response.evt.type == input_event_t::mouse &&
+                  response.evt.get_first_input() == MOUSE_MOVE ) ) {
+                evaluation::fail_current( evaluation::failure::invalid_response );
+            }
+            response.action = ctxt.input_to_action( response.evt );
+            if( response.action == "LEFT" || response.action == "RIGHT" ||
+                response.action == "HELP_KEYBINDINGS" ) {
+                evaluation::fail_current( evaluation::failure::invalid_response );
+            }
+            if( anykey && response.action == "ERROR" ) { response.action = "ANY_INPUT"; }
+        }
+        // The very same native response implementation invokes the actual option filter once.
+        response = apply_response( std::move( response ) );
+        evaluation::throw_if_incomplete(); // Filters may nest or catch a pending request.
+        if( response.wait_input || response.action == "ERROR" ) {
+            evaluation::fail_current( evaluation::failure::invalid_response );
+        }
+        return response;
+    } catch( const evaluation::interrupted & ) {
+        throw;
+    } catch( ... ) {
+        evaluation::fail_current( evaluation::failure::exception );
+        throw;
+    }
+}
+
 query_popup::result query_popup::query_once()
 {
+    if( game_client::evaluation::active() ) { return query_evaluation(); }
     if( !anykey && !cancel && options.empty() ) {
         return { false, "ERROR", {} };
     }
@@ -274,31 +445,16 @@ query_popup::result query_popup::query_once()
 
     ui_manager::redraw();
 
-    input_context ctxt( category );
-    if( cancel || !options.empty() ) {
-        ctxt.register_action( "HELP_KEYBINDINGS" );
-    }
-    if( !options.empty() ) {
-        ctxt.register_action( "LEFT" );
-        ctxt.register_action( "RIGHT" );
-        ctxt.register_action( "CONFIRM" );
-        for( const auto &opt : options ) {
-            ctxt.register_action( opt.action );
-        }
-    }
-    if( anykey ) {
-        ctxt.register_action( "ANY_INPUT" );
-        // Mouse movement, button, and wheel
-        ctxt.register_action( "COORDINATE" );
-    }
-    if( cancel ) {
-        ctxt.register_action( "QUIT" );
-    }
+    auto ctxt = input_context( category );
+    register_input_actions( ctxt );
 
     result res;
     // Assign outside construction of `res` to ensure execution order
     res.wait_input = !anykey;
     do {
+        const auto interaction = game_client::interaction_scope( ctxt, [this, &ctxt]() {
+            return make_interaction( ctxt );
+        } );
         res.action = ctxt.handle_input();
         res.evt = ctxt.get_raw_input();
     } while(
@@ -308,7 +464,32 @@ query_popup::result query_popup::query_once()
         ( res.evt.type == input_event_t::keyboard && res.evt.sequence.empty() )
     );
 
-    if( cancel && res.action == "QUIT" ) {
+    return apply_response( std::move( res ) );
+}
+
+auto query_popup::apply_response( result res ) -> result
+{
+    if( res.evt.interaction &&
+        res.evt.interaction->operation == game_client::interaction_operation::cancel ) {
+        res.action = "QUIT";
+        res.wait_input = false;
+    } else if( res.evt.interaction &&
+               res.evt.interaction->operation == game_client::interaction_operation::choose ) {
+        if( res.evt.interaction->target_id == "acknowledge" ) {
+            res.action = anykey ? "ANY_INPUT" : "QUIT";
+            res.wait_input = false;
+        } else {
+            const auto selected_option = std::ranges::find_if( options, [&]( const auto & option ) {
+                const auto index = static_cast<std::size_t>( &option - options.data() );
+                return res.evt.interaction->target_id == "option:" + std::to_string( index );
+            } );
+            if( selected_option != options.end() ) {
+                cur = static_cast<std::size_t>( std::distance( options.begin(), selected_option ) );
+                res.action = options[cur].action;
+                res.wait_input = !options[cur].filter( res.evt );
+            }
+        }
+    } else if( cancel && res.action == "QUIT" ) {
         res.wait_input = false;
     } else if( res.action == "LEFT" ) {
         if( cur > 0 ) {
@@ -347,6 +528,7 @@ query_popup::result query_popup::query_once()
 
 query_popup::result query_popup::query()
 {
+    if( game_client::evaluation::active() ) { return query_evaluation(); }
     ime_sentry sentry( ime_sentry::disable );
 
     std::shared_ptr<ui_adaptor> ui = create_or_get_adaptor();
@@ -413,8 +595,6 @@ void throbber_popup::refresh()
         ui_manager::redraw();
         refresh_display();
         last_update = now;
-#if defined(TILES)
-        SDL_PumpEvents();
-#endif // TILES
+        inp_mngr.pump_events();
     }
 }

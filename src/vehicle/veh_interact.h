@@ -34,10 +34,8 @@ enum task_reason {
 
 class ui_adaptor;
 class vehicle;
-struct vehicle_part;
-#if defined(TILES)
 struct vehicle_preview_window;
-#endif
+struct vehicle_part;
 
 // For marking 'leaking' tanks/reactors/batteries
 const std::string leak_marker = "<color_red>*</color>";
@@ -93,9 +91,7 @@ private:
     catacurses::window w_details;
     catacurses::window w_name;
 
-#if defined(TILES)
     std::unique_ptr<vehicle_preview_window> tile_preview;
-#endif
 
     bool ui_hidden = false;
     weak_ptr_fast<ui_adaptor> ui;
@@ -166,9 +162,7 @@ private:
 
     void display_grid();
     void display_veh();
-#if defined(TILES)
     void display_veh_tiles();
-#endif
     void display_stats() const;
     void display_name();
     void display_mode();

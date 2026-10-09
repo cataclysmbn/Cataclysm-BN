@@ -4,6 +4,7 @@
 #define _UNICODE 1
 #endif
 #include "cursesport.h" // IWYU pragma: associated
+#include "client_backend.h"
 
 #include <cstdlib>
 #include <fstream>
@@ -33,6 +34,8 @@
 //Globals                           *
 //***********************************
 
+namespace
+{
 static constexpr int ERR = -1;
 const wchar_t *szWindowClass = L"CataCurseWindow";    //Class name :D
 HINSTANCE WindowINST;   //the instance of the window
@@ -57,6 +60,8 @@ bool initialized = false;
 
 static int TERMINAL_WIDTH;
 static int TERMINAL_HEIGHT;
+
+} // namespace
 
 //***********************************
 //Non-curses, Window functions      *
@@ -170,7 +175,7 @@ static void create_backbuffer()
     DeleteObject( SelectObject( backbuffer, backbit ) ); //load the buffer into DC
 }
 
-bool handle_resize( int, int )
+auto game_client::windows::handle_resize_native( int, int ) -> bool
 {
     if( !initialized ) {
         return false;
@@ -183,6 +188,7 @@ bool handle_resize( int, int )
         WindowWidth = TERMINAL_WIDTH * fontwidth;
         WindowHeight = TERMINAL_HEIGHT * fontheight;
         catacurses::stdscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
+        catacurses::newscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
         catacurses::resizeterm();
         create_backbuffer();
         SetBkMode( backbuffer, TRANSPARENT ); //Transparent font backgrounds
@@ -197,12 +203,12 @@ bool handle_resize( int, int )
     return true;
 }
 
-void resize_term( const int cell_w, const int cell_h )
+auto game_client::windows::resize_native( const int cell_w, const int cell_h ) -> void
 {
     RECT WndRect;
     WndRect.left = WndRect.top = 0;
-    WndRect.right = cell_w * fontwidth * get_scaling_factor();
-    WndRect.bottom = cell_h * fontheight * get_scaling_factor();
+    WndRect.right = cell_w * fontwidth * game_client::windows::scaling_factor_native();
+    WndRect.bottom = cell_h * fontheight * game_client::windows::scaling_factor_native();
     if( !AdjustWindowRect( &WndRect, WndStyle, false ) ) {
         return;
     }
@@ -212,7 +218,8 @@ void resize_term( const int cell_w, const int cell_h )
         return;
     }
     GetClientRect( WindowHandle, &WndRect );
-    handle_resize( WndRect.right - WndRect.left, WndRect.bottom - WndRect.top );
+    game_client::windows::handle_resize_native( WndRect.right - WndRect.left,
+            WndRect.bottom - WndRect.top );
 }
 
 // Copied from sdlcurses.cpp
@@ -431,10 +438,10 @@ inline void FillRectDIB( int x, int y, int width, int height, unsigned char colo
     }
 }
 
-void cata_cursesport::curses_drawwindow( const catacurses::window &w )
+auto game_client::windows::draw_window_native( const catacurses::window &w ) -> void
 {
 
-    WINDOW *const win = w.get<WINDOW>();
+    cata_cursesport::WINDOW *const win = w.get<cata_cursesport::WINDOW>();
     int i = 0;
     int j = 0;
     int drawx = 0;
@@ -446,7 +453,7 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
             win->line[j].touched = false;
 
             for( i = 0; i < win->width; i++ ) {
-                const cursecell &cell = win->line[j].chars[i];
+                const cata_cursesport::cursecell &cell = win->line[j].chars[i];
                 if( cell.ch.empty() ) {
                     // second cell of a multi-cell character
                     continue;
@@ -559,29 +566,29 @@ static void CheckMessages()
     }
     if( needs_resize ) {
         restore_on_out_of_scope<int> prev_lastchar( lastchar );
-        handle_resize( 0, 0 );
+        game_client::windows::handle_resize_native( 0, 0 );
         refresh_display();
     }
 }
 
 // Calculates the new width of the window
-int projected_window_width()
+auto game_client::windows::projected_width_native() -> int
 {
     return get_option<int>( "TERMINAL_X" ) * fontwidth;
 }
 
 // Calculates the new height of the window
-int projected_window_height()
+auto game_client::windows::projected_height_native() -> int
 {
     return get_option<int>( "TERMINAL_Y" ) * fontheight;
 }
 
-int get_terminal_width()
+auto game_client::windows::terminal_width_native() -> int
 {
     return TERMINAL_WIDTH;
 }
 
-int get_terminal_height()
+auto game_client::windows::terminal_height_native() -> int
 {
     return TERMINAL_HEIGHT;
 }
@@ -591,7 +598,7 @@ int get_terminal_height()
 //***********************************
 
 // Basic Init, create the font, backbuffer, etc
-void catacurses::init_interface()
+auto game_client::windows::initialize_native() -> void
 {
     lastchar = -1;
     inputdelay = -1;
@@ -649,7 +656,10 @@ void catacurses::init_interface()
     }
     init_colors();
 
-    stdscr = newwin( get_option<int>( "TERMINAL_Y" ), get_option<int>( "TERMINAL_X" ), point_zero );
+    catacurses::stdscr = catacurses::newwin( get_option<int>( "TERMINAL_Y" ),
+                         get_option<int>( "TERMINAL_X" ), point_zero );
+    catacurses::newscr = catacurses::newwin( get_option<int>( "TERMINAL_Y" ),
+                         get_option<int>( "TERMINAL_X" ), point_zero );
     //newwin calls `new WINDOW`, and that will throw, but not return nullptr.
 
     initialized = true;
@@ -663,7 +673,7 @@ static uint64_t GetPerfCount()
     return Count;
 }
 
-void input_manager::pump_events()
+auto game_client::windows::pump_events_native() -> void
 {
     if( test_mode ) {
         return;
@@ -673,17 +683,16 @@ void input_manager::pump_events()
     CheckMessages();
 
     lastchar = ERR;
-    previously_pressed_key = 0;
 }
 
-input_event input_manager::get_input_event()
+auto game_client::windows::read_input_native() -> input_event
 {
     // standards note: getch is sometimes required to call refresh
     // see, e.g., http://linux.die.net/man/3/getch
     // so although it's non-obvious, that refresh() call (and maybe InvalidateRect?) IS supposed to be there
     uint64_t Frequency;
     QueryPerformanceFrequency( reinterpret_cast<PLARGE_INTEGER>( &Frequency ) );
-    wrefresh( catacurses::stdscr );
+    catacurses::wrefresh( catacurses::stdscr );
     InvalidateRect( WindowHandle, nullptr, true );
     lastchar = ERR;
     if( inputdelay < 0 ) {
@@ -708,10 +717,9 @@ input_event input_manager::get_input_event()
         ShowCursor( false );
     }
 
-    previously_pressed_key = 0;
     input_event rval;
     if( lastchar == ERR ) {
-        if( input_timeout > 0 ) {
+        if( inputdelay > 0 ) {
             rval.type = input_event_t::timeout;
         } else {
             rval.type = input_event_t::error;
@@ -719,12 +727,10 @@ input_event input_manager::get_input_event()
     } else {
         // == Unicode DELETE
         if( lastchar == 127 ) {
-            previously_pressed_key = KEY_BACKSPACE;
             return input_event( KEY_BACKSPACE, input_event_t::keyboard );
         }
         rval.type = input_event_t::keyboard;
         rval.text = utf32_to_utf8( lastchar );
-        previously_pressed_key = lastchar;
         // for compatibility only add the first byte, not the code point
         // as it would  conflict with the special keys defined by ncurses
         rval.add_input( lastchar );
@@ -733,20 +739,11 @@ input_event input_manager::get_input_event()
     return rval;
 }
 
-bool gamepad_available()
-{
-    return false;
-}
-
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window & )
-{
-    // TODO: implement this properly
-    return std::nullopt;
-}
-
 // Ends the terminal, destroy everything
-void catacurses::endwin()
+auto game_client::windows::shutdown_native() -> void
 {
+    catacurses::stdscr = {};
+    catacurses::newscr = {};
     DeleteObject( font );
     WinDestroy();
     // Unload it
@@ -768,27 +765,70 @@ RGBQUAD color_loader<RGBQUAD>::from_rgb( const int r, const int g, const int b )
     return result;
 }
 
-void input_manager::set_timeout( const int t )
+auto game_client::windows::set_timeout_native( const int t ) -> void
 {
-    input_timeout = t;
     inputdelay = t;
 }
 
-void cata_cursesport::handle_additional_window_clear( WINDOW * )
+auto game_client::windows::set_cursor_native( const int visibility ) -> void
+{
+    CursorVisible = visibility != 0;
+    ShowCursor( CursorVisible );
+}
+
+auto game_client::windows::clear_window_native( const catacurses::window & /*window*/ ) -> void
 {
 }
 
-int get_scaling_factor()
+auto game_client::windows::scaling_factor_native() -> int
 {
     return 1;
 }
 
-HWND getWindowHandle()
+namespace game_client
 {
-    return WindowHandle;
+
+namespace
+{
+
+class windows_backend final : public backend
+{
+    public:
+        auto native_window_handle() const -> void *override { return WindowHandle; }
+        auto initialize() -> void override { windows::initialize_native(); }
+        auto shutdown() -> void override { windows::shutdown_native(); }
+        auto present() -> void override { windows::present_native(); }
+        auto draw_window( const catacurses::window &window ) -> void override { windows::draw_window_native( window ); }
+        auto clear_window( const catacurses::window &window ) -> void override { windows::clear_window_native( window ); }
+        auto set_cursor( const int visibility ) -> void override { windows::set_cursor_native( visibility ); }
+        auto set_timeout( const int timeout_ms ) -> void override { windows::set_timeout_native( timeout_ms ); }
+        auto read_input( const int timeout_ms ) -> input_event override {
+            windows::set_timeout_native( timeout_ms );
+            return windows::read_input_native();
+        }
+        auto pump_events() -> void override { windows::pump_events_native(); }
+        auto resize( const point cell_size ) -> void override { windows::resize_native( cell_size.x, cell_size.y ); }
+        auto projected_size() const -> point override {
+            return point( windows::projected_width_native(), windows::projected_height_native() );
+        }
+        auto terminal_size() const -> point override {
+            return point( windows::terminal_width_native(), windows::terminal_height_native() );
+        }
+        auto capabilities() const -> client_capabilities override {
+            return { .tiles = false, .mouse = false, .gamepad = false };
+        }
+};
+
+} // namespace
+
+auto make_curses_backend() -> backend_ptr
+{
+    return std::make_unique<windows_backend>();
 }
 
-void refresh_display()
+} // namespace game_client
+
+auto game_client::windows::present_native() -> void
 {
     RedrawWindow( WindowHandle, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW );
 }

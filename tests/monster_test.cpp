@@ -48,6 +48,27 @@ auto count_items_at(const tripoint_bub_ms& pos, const itype_id& type) -> int {
 
 } // namespace
 
+TEST_CASE("fresh monsters have deterministic stair state", "[monster][replay]") {
+    const auto test_monster = monster(mtype_id("debug_mon"));
+
+    CHECK(test_monster.staircount == 0);
+}
+
+TEST_CASE("monster copies preserve transient Creature bonuses", "[monster][copy][replay]") {
+    auto source = monster(mtype_id("debug_mon"));
+    const auto base_size = source.get_size();
+    source.mod_bash_bonus(11);
+    source.mod_cut_bonus(13);
+    source.mod_size_bonus(1);
+
+    REQUIRE(source.get_size() != base_size);
+    const auto copy = monster(source);
+
+    CHECK(copy.get_bash_bonus() == source.get_bash_bonus());
+    CHECK(copy.get_cut_bonus() == source.get_cut_bonus());
+    CHECK(copy.get_size() == source.get_size());
+}
+
 TEST_CASE("extended monster death drops append to inherited drops", "[monster][death_drops]") {
     clear_all_state();
     const auto global_spawn_rate = override_option("ITEM_SPAWNRATE", "1.0");

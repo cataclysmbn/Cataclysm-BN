@@ -716,7 +716,7 @@ class monster : public Creature, public location_visitable<monster>
         std::optional<time_point> lastseen_turn;
 
         // Stair data.
-        int staircount;
+        int staircount = 0;
 
         // Ammunition if we use a gun.
         std::map<itype_id, int> ammo;

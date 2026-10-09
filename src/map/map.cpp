@@ -61,6 +61,7 @@
 #include "map_feature_descriptions.h"
 #include "map_iterator.h"
 #include "map_memory.h"
+#include "map_perception.h"
 #include "map_selector.h"
 #include "mapbuffer.h"
 #include "mapdata.h"
@@ -105,6 +106,7 @@
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "visitable.h"
+#include "water_source.h"
 #include "weather/weather.h"
 #include "weighted_list.h"
 
@@ -461,18 +463,44 @@ auto map::resize(int new_mapsize) -> void {
 }
 
 auto map::bind_dimension(const dimension_id& dim) -> void {
-    const auto changed = bound_dimension_ != dim;
+    if (bound_dimension_ == dim) {
+        refresh_active_submap_view();
+        return;
+    }
+
+    // All vehicle caches contain raw pointers into the bound mapbuffer.  Drop
+    // them before the old dimension can be unloaded or its submaps destroyed.
+    clear_vehicle_cache();
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        clear_vehicle_list(zlev);
+        auto& cache = get_cache(zlev);
+        cache.suspension_cache.clear();
+        cache.suspension_cache_initialized = false;
+    }
+    dirty_vehicle_list.clear();
+    last_full_vehicle_list.clear();
+    last_full_vehicle_list_dirty = true;
+    funnel_locations_.clear();
+    max_populated_zlev.reset();
+    support_cache_dirty.clear();
+    visibility_variables_cache = {};
+    {
+        const auto lock = std::unique_lock(*skew_vision_cache_mutex);
+        skew_vision_cache.assign(vision_cache_slots, vision_cache_slot{});
+    }
+    m_last_lightmap_source_signature_valid = false;
+    release_active_load_region();
+
     bound_dimension_ = dim;
     refresh_active_submap_view();
-    if (changed) {
-        // Cached vehicle pointers belong to the old buffer, which may now be unloaded.
-        dirty_vehicle_list.clear();
-        for (auto z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; ++z) { clear_vehicle_list(z); }
-        for (const auto p : bubble_submaps()) {
-            update_vehicle_list(get_submap_at(project_to<coords::ms>(p)), p.z());
-        }
-        reset_vehicle_cache();
+    for (const auto zlev : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        invalidate_map_cache(zlev);
     }
+    // Rebuild vehicle tracking from the newly bound buffer.
+    for (const auto p : bubble_submaps()) {
+        update_vehicle_list(get_submap_at(project_to<coords::ms>(p)), p.z());
+    }
+    reset_vehicle_cache();
 }
 
 auto map::refresh_active_submap_view() -> void {
@@ -2384,19 +2412,15 @@ auto map::get_known_connections(
     if (!ch.inbounds(p.xy())) { return 0; }
     uint8_t val = 0;
     std::function<bool(const tripoint_bub_ms&)> is_memorized;
-#ifdef TILES
     if (use_tiles) {
         is_memorized = [&](const tripoint_bub_ms& q) {
             return !g->u.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
         };
     } else {
-#endif
         is_memorized = [&](const tripoint_bub_ms& q) {
             return g->u.get_memorized_symbol(map_local_to_abs(*this, q));
         };
-#ifdef TILES
     }
-#endif
 
     const bool overridden = override.contains(p);
     const bool is_transparent =
@@ -2436,19 +2460,15 @@ auto map::get_known_connections_f(
     uint8_t val = 0;
     std::function<bool(const tripoint_bub_ms&)> is_memorized;
     avatar& player_character = get_avatar();
-#ifdef TILES
     if (use_tiles) {
         is_memorized = [&](const tripoint_bub_ms& q) {
             return !player_character.get_memorized_tile(map_local_to_abs(*this, q)).tile.empty();
         };
     } else {
-#endif
         is_memorized = [&](const tripoint_bub_ms& q) {
             return player_character.get_memorized_symbol(map_local_to_abs(*this, q));
         };
-#ifdef TILES
     }
-#endif
 
     const bool overridden = override.contains(p);
     const bool is_transparent =
@@ -5300,53 +5320,46 @@ void map::add_item(const tripoint_bub_ms& p, detached_ptr<item>&& new_item) {
     return;
 }
 
-auto map::water_from(const tripoint_bub_ms& p) -> detached_ptr<item> {
-    if (has_flag("SALT_WATER", p)) {
-        return item::spawn("salt_water", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
-    }
+auto map::water_source_at(const tripoint_bub_ms& p) const -> std::optional<water_source> {
+    if (has_flag("SALT_WATER", p)) { return water_source{.type = itype_id("salt_water")}; }
 
-    const ter_id terrain_id = ter(p);
+    const auto terrain_id = ter(p);
     if (terrain_id == t_sewage) {
-        detached_ptr<item> ret =
-            item::spawn("water_sewage", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
-        ret->poison = rng(1, 7);
-        return ret;
+        return water_source{.type = itype_id("water_sewage"), .poison = water_source_poison::sewage};
     }
-
-
-    // iexamine::water_source requires a valid liquid from this function.
     if (terrain_id.obj().examine == &iexamine::water_source) {
-        detached_ptr<item> ret =
-            item::spawn("water", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
-        int poison_chance = 0;
-        if (terrain_id.obj().has_flag(TFLAG_DEEP_WATER)) {
-            if (terrain_id.obj().has_flag(TFLAG_CURRENT)) {
-                poison_chance = 20;
-            } else {
-                poison_chance = 4;
-            }
-        } else {
-            if (terrain_id.obj().has_flag(TFLAG_CURRENT)) {
-                poison_chance = 10;
-            } else {
-                poison_chance = 3;
-            }
-        }
-        if (one_in(poison_chance)) { ret->poison = rng(1, 4); }
-        return ret;
+        return water_source{.type = itype_id("water"), .poison = water_source_poison::natural};
     }
     if (furn(p).obj().examine == &iexamine::water_source) {
-        return item::spawn("water", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
+        return water_source{.type = itype_id("water")};
     }
     if (furn(p).obj().examine == &iexamine::clean_water_source
         || terrain_id.obj().examine == &iexamine::clean_water_source) {
-        return item::spawn("water_clean", calendar::start_of_cataclysm, item::INFINITE_CHARGES);
+        return water_source{.type = itype_id("water_clean")};
     }
     if (furn(p).obj().examine == &iexamine::liquid_source) {
-        // Terrains have no "provides_liquids" to work with generic source
-        return item::spawn(furn(p).obj().provides_liquids, calendar::turn, item::INFINITE_CHARGES);
+        return water_source{.type = furn(p).obj().provides_liquids, .birthday = calendar::turn};
     }
-    return detached_ptr<item>();
+    return std::nullopt;
+}
+
+auto map::water_from(const tripoint_bub_ms& p) -> detached_ptr<item> {
+    const auto source = water_source_at(p);
+    if (!source) { return {}; }
+    auto ret = item::spawn(source->type, source->birthday, item::INFINITE_CHARGES);
+    if (source->poison == water_source_poison::sewage) {
+        ret->poison = rng(1, 7);
+    } else if (source->poison == water_source_poison::natural) {
+        const auto& terrain = ter(p).obj();
+        auto poison_chance = 0;
+        if (terrain.has_flag(TFLAG_DEEP_WATER)) {
+            poison_chance = terrain.has_flag(TFLAG_CURRENT) ? 20 : 4;
+        } else {
+            poison_chance = terrain.has_flag(TFLAG_CURRENT) ? 10 : 3;
+        }
+        if (one_in(poison_chance)) { ret->poison = rng(1, 4); }
+    }
+    return ret;
 }
 
 void map::make_inactive(item& loc) {
@@ -9529,6 +9542,7 @@ auto map::mark_visibility_cache_dirty(const int zlev) -> void {
     if (!inbounds_z(zlev)) { return; }
     get_cache(zlev).visibility_cache_dirty = true;
     visibility_caches_dirty_ = true;
+    map_perception::invalidate_visibility(*this);
 }
 
 auto map::mark_visibility_caches_clean() -> void {
@@ -9692,6 +9706,7 @@ void map::invalidate_visibility_caches() {
 }
 
 void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
+    map_perception::invalidate_cell(*this, p);
     level_cache& ch = get_cache(p.z());
     const int offset = p.x() + p.y() * ch.cache_x;
     if (offset >= 0 && offset < ch.cache_x * ch.cache_y) {
@@ -9706,6 +9721,7 @@ void map::set_memory_seen_cache_dirty(const tripoint_bub_ms& p) {
 }
 
 auto map::set_memory_seen_cache_dirty(const int zlev) -> void {
+    map_perception::invalidate_visibility(*this);
     level_cache& ch = get_cache(zlev);
     ch.map_memory_seen_cache.reset();
     ch.map_memory_seen_cache_dirty_points.clear();

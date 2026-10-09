@@ -36,6 +36,37 @@ In order to compile localization files, you'll also need `gettext` package.
 
 ## Build Environment
 
+Tiles, curses, and MCP can run from one executable. See
+[Engine and clients](../../explanation/engine_clients.md) for enabling and selecting clients,
+and [Playing through MCP](../mcp.md) for connecting an agent.
+
+### Client configurations
+
+The `linux-clients` preset enables Tiles, curses, and MCP in the shared executable:
+
+```sh
+cmake --preset linux-clients
+cmake --build --preset linux-clients --target cataclysm-bn
+```
+
+Add the optional Dear ImGui proof client to that configuration with:
+
+```sh
+cmake --preset linux-clients -DIMGUI=ON
+cmake --build --preset linux-clients --target cataclysm-bn-imgui
+```
+
+For a CPU-only MCP build without SDL, Tiles, curses, or sound, use:
+
+```sh
+cmake -B out/build/headless -DMCP=ON -DTILES=OFF -DCURSES=OFF \
+  -DSOUND=OFF -DCATA_SDL=OFF
+cmake --build out/build/headless --target cataclysm-bn-mcp
+```
+
+The compatibility targets build the same shared executable and provide names that select the
+corresponding client when launched.
+
 You can obtain the source code tarball for the latest version from
 [git](https://github.com/cataclysmbn/Cataclysm-BN).
 
@@ -392,6 +423,8 @@ Installation prefix for binaries, resources, and documentation files.
 | --------------------- | --------------------------------------- | --------------------------------------------------------------------------------- |
 | `CURSES`              | `ON`                                    | Build curses version.                                                             |
 | `TILES`               | `OFF`                                   | Build graphical tileset version.                                                  |
+| `MCP`                 | `OFF`                                   | Build the headless MCP client.                                                    |
+| `IMGUI`               | `OFF`                                   | Build the optional Dear ImGui SDL3 proof client.                                  |
 | `SOUND`               | `ON`                                    | Build audio support.                                                              |
 | `LANGUAGES`           | `" "`                                   | Build specificed language support.                                                |
 | `TESTS`               | `ON`                                    | Build test units.                                                                 |

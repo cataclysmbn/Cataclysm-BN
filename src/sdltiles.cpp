@@ -73,6 +73,8 @@
 #    include <type_traits>
 #    include <unordered_map>
 #    include <vector>
+#include "client_backend.h"
+#include "client_presentation.h"
 
 #if defined(__linux__)
 #   include <cstdlib> // getenv()/setenv()
@@ -500,7 +502,7 @@ SDL_FRect get_android_render_rect( float DisplayBufferWidth, float DisplayBuffer
 
 #endif
 
-void refresh_display()
+auto game_client::tiles::present_native() -> void
 {
     needupdate = false;
     lastupdate = SDL_GetTicks();
@@ -534,7 +536,7 @@ static void try_sdl_update()
 {
     Uint64 now = SDL_GetTicks();
     if( now - lastupdate >= interval ) {
-        refresh_display();
+        game_client::tiles::present_native();
     } else {
         needupdate = true;
     }
@@ -561,7 +563,7 @@ static void invalidate_framebuffer( std::vector<curseline> &framebuffer )
     }
 }
 
-void reinitialize_framebuffer( const bool force_invalidate )
+auto game_client::tiles::reinitialize_framebuffer( const bool force_invalidate ) -> void
 {
     static int prev_height = -1;
     static int prev_width = -1;
@@ -635,17 +637,17 @@ static void invalidate_framebuffer_proportion( cata_cursesport::WINDOW *win )
 }
 
 // clear the framebuffer when werase is called on certain windows that don't use the main terminal font
-void cata_cursesport::handle_additional_window_clear( WINDOW *win )
+auto game_client::tiles::clear_window_native( const catacurses::window &window ) -> void
 {
     if( !g ) {
         return;
     }
-    if( win == g->w_terrain || win == g->w_overmap ) {
+    if( window == g->w_terrain || window == g->w_overmap ) {
         invalidate_framebuffer( oversized_framebuffer );
     }
 }
 
-void clear_window_area( const catacurses::window &win_ )
+auto game_client::tiles::clear_window_area_native( const catacurses::window &win_ ) -> void
 {
     cata_cursesport::WINDOW *const win = win_.get<cata_cursesport::WINDOW>();
     geometry->rect( renderer, point( win->pos.x * fontwidth, win->pos.y * fontheight ),
@@ -1604,7 +1606,7 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w )
     return draw_window( font, w, point( win->pos.x * ::fontwidth, win->pos.y * ::fontheight ) );
 }
 
-void cata_cursesport::curses_drawwindow( const catacurses::window &w )
+auto game_client::tiles::draw_window_native( const catacurses::window &w ) -> void
 {
     if( clear_display_buffer_before_redraw ) {
         clear_display_buffer_before_redraw = false;
@@ -1616,7 +1618,7 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         SDL_SetRenderLogicalPresentation( renderer.get(), WindowWidth / scaling_factor,
                                           WindowHeight / scaling_factor, SDL_LOGICAL_PRESENTATION_STRETCH );
     }
-    WINDOW *const win = w.get<WINDOW>();
+    cata_cursesport::WINDOW *const win = w.get<cata_cursesport::WINDOW>();
     bool update = false;
     if( g && w == g->w_terrain && use_tiles ) {
         // color blocks overlay; drawn on top of tiles and on top of overlay strings (if any).
@@ -1762,7 +1764,7 @@ void cata_cursesport::curses_drawwindow( const catacurses::window &w )
         draw_window( font, w );
 
         // Make sure the entire minimap window is black before drawing.
-        clear_window_area( w );
+        game_client::tiles::clear_window_area_native( w );
         tilecontext->draw_minimap(
             point( win->pos.x * fontwidth, win->pos.y * fontheight ),
             tripoint_bub_ms( g->u.bub_pos().xy(), g->ter_view_p.z() ),
@@ -2105,7 +2107,7 @@ static int sdl_keysym_to_curses( const SDL_Keycode sym, const SDL_Keymod mod )
     }
 }
 
-bool handle_resize( int w, int h )
+auto game_client::tiles::handle_resize_native( const int w, const int h ) -> bool
 {
     if( ( w != WindowWidth ) || ( h != WindowHeight ) ) {
         WindowWidth = w;
@@ -2114,6 +2116,7 @@ bool handle_resize( int w, int h )
         TERMINAL_HEIGHT = WindowHeight / fontheight / scaling_factor;
         need_invalidate_framebuffers = true;
         catacurses::stdscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
+        catacurses::newscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
         throwErrorIf( !SetupRenderTarget(), "SetupRenderTarget failed" );
         game_ui::init_ui();
         ui_manager::screen_resized();
@@ -2122,13 +2125,13 @@ bool handle_resize( int w, int h )
     return false;
 }
 
-void resize_term( const int cell_w, const int cell_h )
+auto game_client::tiles::resize_native( const int cell_w, const int cell_h ) -> void
 {
     int w = cell_w * fontwidth * scaling_factor;
     int h = cell_h * fontheight * scaling_factor;
     SDL_SetWindowSize( window.get(), w, h );
     SDL_GetWindowSize( window.get(), &w, &h );
-    handle_resize( w, h );
+    game_client::tiles::handle_resize_native( w, h );
 }
 
 void toggle_fullscreen_window()
@@ -2157,7 +2160,7 @@ void toggle_fullscreen_window()
     int nw = 0;
     int nh = 0;
     SDL_GetWindowSize( window.get(), &nw, &nh );
-    handle_resize( nw, nh );
+    game_client::tiles::handle_resize_native( nw, nh );
     fullscreen = !fullscreen;
 }
 
@@ -3154,7 +3157,7 @@ static void CheckMessages()
             if( !quick_shortcuts_toggle_handled ) {
                 quick_shortcuts_enabled = !quick_shortcuts_enabled;
                 quick_shortcuts_toggle_handled = true;
-                refresh_display();
+                game_client::tiles::present_native();
 
                 // Display an Android toast message
                 {
@@ -3243,7 +3246,7 @@ static void CheckMessages()
                 WindowHeight = ev.window.data2;
                 SDL_Delay( 500 );
                 SDL_GetWindowSurface( window.get() );
-                refresh_display();
+                game_client::tiles::present_native();
                 needupdate = true;
                 break;
 #endif
@@ -3305,7 +3308,7 @@ static void CheckMessages()
                             if( !last_input.text.empty() || !inp_mngr.get_keyname( lc, input_event_t::keyboard ).empty() ) {
                                 qsl.remove( last_input );
                                 add_quick_shortcut( qsl, last_input, false, true );
-                                refresh_display();
+                                game_client::tiles::present_native();
                             }
                         } else if( lc == '\n' || lc == KEY_ESCAPE ) {
                             if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
@@ -3358,7 +3361,7 @@ static void CheckMessages()
                                                              touch_input_context.get_category() )];
                                 qsl.remove( last_input );
                                 add_quick_shortcut( qsl, last_input, false, true );
-                                refresh_display();
+                                game_client::tiles::present_native();
                             } else if( lc == '\n' || lc == KEY_ESCAPE ) {
                                 if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
                                     SDL_StopTextInput( ::window.get() );
@@ -3576,7 +3579,7 @@ static void CheckMessages()
                     finger_down_time = 0;
                     finger_repeat_time = 0;
                     needupdate = true; // ensure virtual joystick and quick shortcuts are updated properly
-                    refresh_display(); // as above, but actually redraw it now as well
+                    game_client::tiles::present_native(); // as above, but actually redraw it now as well
                 } else if( ev.tfinger.fingerID == 2 ) {
                     if( is_two_finger_touch ) {
                         // on second finger release, just remember the x/y position so we can calculate delta once first finger is done
@@ -3600,12 +3603,13 @@ static void CheckMessages()
     bool resized = false;
     if( resize_dims.has_value() ) {
         restore_on_out_of_scope<input_event> prev_last_input( last_input );
-        needupdate = resized = handle_resize( resize_dims.value().x, resize_dims.value().y );
+        needupdate = resized = game_client::tiles::handle_resize_native( resize_dims.value().x,
+                               resize_dims.value().y );
     }
     // resizing already reinitializes the render target
     if( !resized && render_target_reset ) {
         throwErrorIf( !SetupRenderTarget(), "SetupRenderTarget failed" );
-        reinitialize_framebuffer( true );
+        game_client::tiles::reinitialize_framebuffer( true );
         needupdate = true;
         restore_on_out_of_scope<input_event> prev_last_input( last_input );
         // FIXME: SDL_RENDER_TARGETS_RESET only seems to be fired after the first redraw
@@ -3629,13 +3633,13 @@ static void CheckMessages()
 //***********************************
 
 // Calculates the new width of the window
-int projected_window_width()
+auto game_client::tiles::projected_width_native() -> int
 {
     return get_option<int>( "TERMINAL_X" ) * fontwidth;
 }
 
 // Calculates the new height of the window
-int projected_window_height()
+auto game_client::tiles::projected_height_native() -> int
 {
     return get_option<int>( "TERMINAL_Y" ) * fontheight;
 }
@@ -3769,16 +3773,10 @@ static void init_term_size_and_scaling_factor()
 }
 
 //Basic Init, create the font, backbuffer, etc
-void catacurses::init_interface()
+auto game_client::tiles::initialize_native() -> void
 {
     last_input = input_event();
     inputdelay = -1;
-
-    InitSDL();
-
-    get_options().init();
-    get_options().load();
-    get_options().save();
 
     font_loader fl;
     fl.load();
@@ -3794,6 +3792,8 @@ void catacurses::init_interface()
     fl.overmap_fontheight = get_option<int>( "OVERMAP_FONT_HEIGHT" );
     ::fontwidth = fl.fontwidth;
     ::fontheight = fl.fontheight;
+
+    InitSDL();
 
     init_term_size_and_scaling_factor();
 
@@ -3862,7 +3862,10 @@ void catacurses::init_interface()
         throw;
     }
 
-    stdscr = newwin( get_terminal_height(), get_terminal_width(), point_zero );
+    catacurses::stdscr = catacurses::newwin( game_client::tiles::terminal_height_native(),
+                         game_client::tiles::terminal_width_native(), point_zero );
+    catacurses::newscr = catacurses::newwin( game_client::tiles::terminal_height_native(),
+                         game_client::tiles::terminal_width_native(), point_zero );
     //newwin calls `new WINDOW`, and that will throw, but not return nullptr.
 
 #if defined(__ANDROID__)
@@ -3911,8 +3914,10 @@ void load_tileset()
 }
 
 //Ends the terminal, destroy everything
-void catacurses::endwin()
+auto game_client::tiles::shutdown_native() -> void
 {
+    catacurses::stdscr = {};
+    catacurses::newscr = {};
     tilecontext.reset();
     overmap_tilecontext.reset();
     font.reset();
@@ -3932,13 +3937,16 @@ SDL_Color color_loader<SDL_Color>::from_rgb( const int r, const int g, const int
     return result;
 }
 
-void input_manager::set_timeout( const int t )
+auto game_client::tiles::set_timeout_native( const int t ) -> void
 {
-    input_timeout = t;
     inputdelay = t;
 }
 
-void input_manager::pump_events()
+auto game_client::tiles::set_cursor_native( const int /*visibility*/ ) -> void
+{
+}
+
+auto game_client::tiles::pump_events_native() -> void
 {
     if( test_mode ) {
         return;
@@ -3948,15 +3956,13 @@ void input_manager::pump_events()
     CheckMessages();
 
     last_input = input_event();
-    previously_pressed_key = 0;
 }
 
 // This is how we're actually going to handle input events, SDL getch
 // is simply a wrapper around this.
-input_event input_manager::get_input_event()
+auto game_client::tiles::read_input_native() -> input_event
 {
     ZoneScopedN( "sdl_input_get_input_event" );
-    previously_pressed_key = 0;
 
     // standards note: getch is sometimes required to call refresh
     // see, e.g., http://linux.die.net/man/3/getch
@@ -3966,7 +3972,7 @@ input_event input_manager::get_input_event()
     // move events.
     if( needupdate ) {
         ZoneScopedN( "sdl_input_wrefresh" );
-        wrefresh( catacurses::stdscr );
+        catacurses::wrefresh( catacurses::stdscr );
     }
 
     if( inputdelay < 0 ) {
@@ -4006,7 +4012,6 @@ input_event input_manager::get_input_event()
         last_input.mouse_pos.x = static_cast<int>( mx );
         last_input.mouse_pos.y = static_cast<int>( my );
     } else if( last_input.type == input_event_t::keyboard ) {
-        previously_pressed_key = last_input.get_first_input();
 #if defined(__ANDROID__)
         android_vibrate();
 #endif
@@ -4020,7 +4025,7 @@ input_event input_manager::get_input_event()
     return last_input;
 }
 
-bool gamepad_available()
+auto game_client::tiles::gamepad_available_native() -> bool
 {
     return joystick != nullptr;
 }
@@ -4057,7 +4062,7 @@ static window_dimensions get_window_dimensions( const catacurses::window &win,
     }
 
     // multiplied by the user's specified scaling factor regardless of whether tiles are in use
-    dim.scaled_font_size *= get_scaling_factor();
+    dim.scaled_font_size *= game_client::tiles::scaling_factor_native();
 
     if( win ) {
         cata_cursesport::WINDOW *const pwin = win.get<cata_cursesport::WINDOW>();
@@ -4124,65 +4129,20 @@ void clear_sdl_display_buffer()
 void clear_sdl_display_buffer_before_redraw()
 {
     clear_display_buffer_before_redraw = true;
-    reinitialize_framebuffer( true );
+    game_client::tiles::reinitialize_framebuffer( true );
 }
 
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
-        &capture_win_ )
-{
-    if( !coordinate_input_received ) {
-        return std::nullopt;
-    }
-
-    const catacurses::window &capture_win = capture_win_ ? capture_win_ : g->w_terrain;
-    const window_dimensions dim = get_window_dimensions( capture_win );
-
-    const int &fw = dim.scaled_font_size.x;
-    const int &fh = dim.scaled_font_size.y;
-    point win_min = dim.window_pos_pixel;
-    point win_size = dim.window_size_pixel;
-    const point win_max = win_min + win_size;
-
-    // Translate mouse coordinates to map coordinates based on tile size
-    // Check if click is within bounds of the window we care about
-    const inclusive_rectangle<point> win_bounds( win_min, win_max );
-    if( !win_bounds.contains( coordinate ) ) {
-        return std::nullopt;
-    }
-
-    point_bub_ms view_offset;
-    if( capture_win == g->w_terrain ) {
-        view_offset = g->ter_view_p.xy();
-    }
-
-    const point screen_pos = coordinate - win_min;
-    point_bub_ms p;
-    if( tile_iso && use_tiles ) {
-        const float win_mid_x = win_min.x + win_size.x / 2.0f;
-        const float win_mid_y = -win_min.y + win_size.y / 2.0f;
-        const int screen_col = std::round( ( screen_pos.x - win_mid_x ) / ( fw / 2.0 ) );
-        const int screen_row = std::round( ( screen_pos.y - win_mid_y ) / ( fw / 4.0 ) );
-        const point_rel_ms selected( ( screen_col - screen_row ) / 2, ( screen_row + screen_col ) / 2 );
-        p = view_offset + selected;
-    } else {
-        const point_rel_ms selected( screen_pos.x / fw, screen_pos.y / fh );
-        p = view_offset + selected - dim.window_size_cell / 2;
-    }
-
-    return tripoint_bub_ms( p, g->get_levz() );
-}
-
-int get_terminal_width()
+auto game_client::tiles::terminal_width_native() -> int
 {
     return TERMINAL_WIDTH;
 }
 
-int get_terminal_height()
+auto game_client::tiles::terminal_height_native() -> int
 {
     return TERMINAL_HEIGHT;
 }
 
-int get_scaling_factor()
+auto game_client::tiles::scaling_factor_native() -> int
 {
     return scaling_factor;
 }
@@ -4219,38 +4179,135 @@ static int overmap_font_height()
     return ( overmap_font ? overmap_font.get() : font.get() )->height;
 }
 
-void to_map_font_dim_width( int &w )
+auto game_client::tiles::to_map_font_dim_width( int &w ) -> void
 {
     w = ( w * fontwidth ) / map_font_width();
 }
 
-void to_map_font_dim_height( int &h )
+auto game_client::tiles::to_map_font_dim_height( int &h ) -> void
 {
     h = ( h * fontheight ) / map_font_height();
 }
 
-void to_map_font_dimension( int &w, int &h )
+auto game_client::tiles::to_map_font_dimension( int &w, int &h ) -> void
 {
-    to_map_font_dim_width( w );
-    to_map_font_dim_height( h );
+    game_client::tiles::to_map_font_dim_width( w );
+    game_client::tiles::to_map_font_dim_height( h );
 }
 
-void from_map_font_dimension( int &w, int &h )
+auto game_client::tiles::from_map_font_dimension( int &w, int &h ) -> void
 {
     w = ( w * map_font_width() + fontwidth - 1 ) / fontwidth;
     h = ( h * map_font_height() + fontheight - 1 ) / fontheight;
 }
 
-void to_overmap_font_dimension( int &w, int &h )
+auto game_client::tiles::to_overmap_font_dimension( int &w, int &h ) -> void
 {
     w = ( w * fontwidth ) / overmap_font_width();
     h = ( h * fontheight ) / overmap_font_height();
 }
 
-bool is_draw_tiles_mode()
+auto game_client::tiles::is_draw_tiles_mode() -> bool
 {
     return use_tiles;
 }
+
+auto game_client::tiles::project_input_coordinates( const point coordinate,
+        const catacurses::window &capture_window_ ) -> std::optional<tripoint_bub_ms>
+{
+    const auto &capture_window = capture_window_ ? capture_window_ : g->w_terrain;
+    const auto dim = get_window_dimensions( capture_window );
+    const auto &font_width = dim.scaled_font_size.x;
+    const auto &font_height = dim.scaled_font_size.y;
+    const auto win_min = dim.window_pos_pixel;
+    const auto win_size = dim.window_size_pixel;
+    const auto win_max = win_min + win_size;
+    if( !inclusive_rectangle<point>( win_min, win_max ).contains( coordinate ) ) {
+        return std::nullopt;
+    }
+    auto view_offset = point_bub_ms{};
+    if( capture_window == g->w_terrain ) {
+        view_offset = g->ter_view_p.xy();
+    }
+    const auto screen_pos = coordinate - win_min;
+    if( tile_iso && use_tiles ) {
+        const auto win_mid_x = win_min.x + win_size.x / 2.0f;
+        const auto win_mid_y = -win_min.y + win_size.y / 2.0f;
+        const auto screen_col = static_cast<int>( std::round( ( screen_pos.x - win_mid_x ) /
+                                ( font_width / 2.0 ) ) );
+        const auto screen_row = static_cast<int>( std::round( ( screen_pos.y - win_mid_y ) /
+                                ( font_width / 4.0 ) ) );
+        const auto selected = point_rel_ms( ( screen_col - screen_row ) / 2,
+                                            ( screen_row + screen_col ) / 2 );
+        return tripoint_bub_ms( view_offset + selected, g->get_levz() );
+    }
+    const auto selected = point_rel_ms( screen_pos.x / font_width, screen_pos.y / font_height );
+    return tripoint_bub_ms( view_offset + selected - dim.window_size_cell / 2,
+                            g->get_levz() );
+}
+
+namespace game_client
+{
+
+namespace
+{
+
+class tiles_backend final : public backend
+{
+    public:
+#if defined(_WIN32)
+        auto native_window_handle() const -> void *override {
+            return window ? SDL_GetPointerProperty( SDL_GetWindowProperties( window.get() ),
+                                                    SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr ) : nullptr;
+        }
+#endif
+        auto prepare() -> void override { game_client::install_tiles_presentation(); }
+        auto initialize() -> void override { game_client::tiles::initialize_native(); }
+        auto shutdown() -> void override { game_client::tiles::shutdown_native(); }
+        auto present() -> void override { game_client::tiles::present_native(); }
+        auto draw_window( const catacurses::window &window ) -> void override { game_client::tiles::draw_window_native( window ); }
+        auto clear_window( const catacurses::window &window ) -> void override { game_client::tiles::clear_window_native( window ); }
+        auto set_cursor( const int visibility ) -> void override {
+            game_client::tiles::set_cursor_native( visibility );
+        }
+        auto set_timeout( const int timeout_ms ) -> void override {
+            game_client::tiles::set_timeout_native( timeout_ms );
+        }
+        auto read_input( const int timeout_ms ) -> input_event override {
+            game_client::tiles::set_timeout_native( timeout_ms );
+            return game_client::tiles::read_input_native();
+        }
+        auto pump_events() -> void override { game_client::tiles::pump_events_native(); }
+        auto resize( const point cell_size ) -> void override { game_client::tiles::resize_native( cell_size.x, cell_size.y ); }
+        auto projected_size() const -> point override {
+            return point( game_client::tiles::projected_width_native(),
+                          game_client::tiles::projected_height_native() );
+        }
+        auto terminal_size() const -> point override {
+            return point( game_client::tiles::terminal_width_native(),
+                          game_client::tiles::terminal_height_native() );
+        }
+        auto project_input_coordinates( const point coordinate,
+                                        const catacurses::window &capture_window ) const
+        -> std::optional<tripoint_bub_ms> override {
+            return game_client::tiles::project_input_coordinates( coordinate, capture_window );
+        }
+        auto scaling_factor() const -> int override { return game_client::tiles::scaling_factor_native(); }
+        auto capabilities() const -> client_capabilities override {
+            return { .tiles = true, .mouse = true,
+                     .gamepad = game_client::tiles::gamepad_available_native(),
+                     .requires_display = true };
+        }
+};
+
+} // namespace
+
+auto make_tiles_backend() -> backend_ptr
+{
+    return std::make_unique<tiles_backend>();
+}
+
+} // namespace game_client
 
 /** Saves a screenshot of the current viewport, as a PNG file, to the given location.
 * @param file_path: A full path to the file where the screenshot should be saved.
@@ -4275,15 +4332,7 @@ void repoint_overmap_tilecontext()
 {
     overmap_tilecontext = std::make_shared<cata_tiles>( renderer, geometry );
 }
-#ifdef _WIN32
-HWND getWindowHandle()
-{
-    return static_cast<HWND>( SDL_GetPointerProperty(
-                                  SDL_GetWindowProperties( ::window.get() ),
-                                  SDL_PROP_WINDOW_WIN32_HWND_POINTER,
-                                  nullptr ) );
-}
-#endif
+
 
 const SDL_Renderer_Ptr &get_sdl_renderer()
 {

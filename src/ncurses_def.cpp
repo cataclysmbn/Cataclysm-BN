@@ -1,541 +1,382 @@
-#if !(defined(TILES) || defined(_WIN32))
+#if !defined(_WIN32) && (defined(CURSES) || defined(CATA_CURSES_CLIENT))
 
-// input.h must be include *before* the ncurses header. The latter has some macro
-// defines that clash with the constants defined in input.h (e.g. KEY_UP).
-#include "input.h"
+#    include "input.h"
 
-// ncurses can define some functions as macros, but we need those identifiers
-// to be unchanged by the preprocessor, as we use them as function names.
-#define NCURSES_NOMACROS
-#if !defined(__APPLE__)
-#define NCURSES_WIDECHAR 1
-#endif
-#if defined(__CYGWIN__)
-#include <ncurses/curses.h>
-#else
-#include <curses.h>
-#endif
+#    define NCURSES_NOMACROS
+#    if !defined(__APPLE__)
+#        define NCURSES_WIDECHAR 1
+#    endif
+#    if defined(__CYGWIN__)
+#        include <ncurses/curses.h>
+#    else
+#        include <curses.h>
+#    endif
 
-#include <cstring>
-#include <langinfo.h>
-#include <stdexcept>
+#    include "catacharset.h"
+#    include "client_backend.h"
+#    include "color.h"
+#    include "color_loader.h"
+#    include "cursesdef.h"
+#    include "cursesport.h"
+#    include "debug.h"
+#    include "game_ui.h"
+#    include "hsv_color.h"
+#    include "output.h"
 
-#include "cursesdef.h"
-#include "catacharset.h"
-#include "color.h"
-#include "game_ui.h"
-#include "output.h"
-#include "ui_manager.h"
+#    include <algorithm>
+#    include <array>
+#    include <cstdint>
+#    include <cstring>
+#    include <langinfo.h>
+#    include <ranges>
+#    include <stdexcept>
 
-#include "ncurses_def.h"
-
-struct pairs {
-    catacurses::base_color FG;
-    catacurses::base_color BG;
-};
-
-template<>
-RGBColor color_loader<RGBColor>::from_rgb( const int r, const int g, const int b )
+namespace
 {
-    RGBColor result;
-    result.b = b;       //Blue
-    result.g = g;       //Green
-    result.r = r;       //Red
-    result.a = 0xFF;    // Opaque
-    return result;
+
+auto native_stdscr() -> ::WINDOW * { return ::stdscr; }
+
+std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> windows_palette;
+int native_timeout = -1;
+
+auto native_pair_index( const int foreground, const int background ) -> short
+{
+    // Pair zero is the terminal's white-on-black default. Reserve the other 63 combinations.
+    const auto encoded = ( foreground & 7 ) * 8 + ( background & 7 );
+    return static_cast<short>( encoded == 56 ? 0 : encoded < 56 ? encoded + 1 : encoded );
+}
+auto native_pair( const cata_cursesport::cursecell &cell ) -> short
+{
+    return COLOR_PAIRS >= 64 ? native_pair_index( cell.FG, cell.BG ) : 0;
+}
+auto ensure_term_size() -> void;
+auto check_encoding() -> void;
+
+} // namespace
+
+auto game_client::curses::color_to_RGB_native( const nc_color &color ) -> RGBColor
+{
+    const auto pair_id = color.to_color_pair_index();
+    const auto &pair = cata_cursesport::colorpairs[std::clamp( pair_id, 0, 99 )];
+    auto palette_index =
+        pair.FG != catacurses::black ? static_cast<int>( pair.FG ) : static_cast<int>( pair.BG );
+    if( color.is_bold() ) { palette_index += color_loader<RGBColor>::COLOR_NAMES_COUNT / 2; }
+    return windows_palette
+           [std::clamp( palette_index, 0, static_cast<int>( windows_palette.size() ) - 1 )];
 }
 
-static std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> windowsPalette;
-static std::array<pairs, 100> colorpairs;
-
-auto ncurses::color_to_RGB( const nc_color &color ) -> RGBColor
+auto game_client::curses::draw_window_native( const catacurses::window &window ) -> void
 {
-    const int pair_id = color.to_color_pair_index();
-    const auto pair = colorpairs[pair_id];
-
-    int palette_index = pair.FG != 0 ? pair.FG : pair.BG;
-
-    if( color.is_bold() ) {
-        palette_index += color_loader<RGBColor>::COLOR_NAMES_COUNT / 2;
-    }
-    return windowsPalette[palette_index];
-}
-
-static void curses_check_result( const int result, const int expected, const char *const /*name*/ )
-{
-    if( result != expected ) {
-        // TODO: debug message
-    }
-}
-
-catacurses::window catacurses::newwin( const int nlines, const int ncols, point begin )
-{
-    // TODO: check for errors
-    const auto w = ::newwin( nlines, ncols, begin.y, begin.x );
-    return std::shared_ptr<void>( w, []( void *const w ) {
-        ::curses_check_result( ::delwin( static_cast<::WINDOW *>( w ) ), OK, "delwin" );
-    } );
-}
-
-void catacurses::wnoutrefresh( const window &win )
-{
-    return curses_check_result( ::wnoutrefresh( win.get<::WINDOW>() ), OK, "wnoutrefresh" );
-}
-
-void catacurses::wrefresh( const window &win )
-{
-    return curses_check_result( ::wrefresh( win.get<::WINDOW>() ), OK, "wrefresh" );
-}
-
-void catacurses::werase( const window &win )
-{
-    return curses_check_result( ::werase( win.get<::WINDOW>() ), OK, "werase" );
-}
-
-int catacurses::getmaxx( const window &win )
-{
-    return ::getmaxx( win.get<::WINDOW>() );
-}
-
-int catacurses::getmaxy( const window &win )
-{
-    return ::getmaxy( win.get<::WINDOW>() );
-}
-
-int catacurses::getbegx( const window &win )
-{
-    return ::getbegx( win.get<::WINDOW>() );
-}
-
-int catacurses::getbegy( const window &win )
-{
-    return ::getbegy( win.get<::WINDOW>() );
-}
-
-int catacurses::getcurx( const window &win )
-{
-    return ::getcurx( win.get<::WINDOW>() );
-}
-
-int catacurses::getcury( const window &win )
-{
-    return ::getcury( win.get<::WINDOW>() );
-}
-
-void catacurses::wattroff( const window &win, const int attrs )
-{
-    return curses_check_result( ::wattroff( win.get<::WINDOW>(), attrs ), OK, "wattroff" );
-}
-
-void catacurses::wattron( const window &win, const nc_color &attrs )
-{
-    return curses_check_result( ::wattron( win.get<::WINDOW>(), attrs ), OK, "wattron" );
-}
-
-void catacurses::wmove( const window &win, point p )
-{
-    return curses_check_result( ::wmove( win.get<::WINDOW>(), p.y, p.x ), OK, "wmove" );
-}
-
-void catacurses::mvwprintw( const window &win, point p, const std::string &text )
-{
-    return curses_check_result( ::mvwprintw( win.get<::WINDOW>(), p.y, p.x, "%s", text.c_str() ),
-                                OK, "mvwprintw" );
-}
-
-void catacurses::wprintw( const window &win, const std::string &text )
-{
-    return curses_check_result( ::wprintw( win.get<::WINDOW>(), "%s", text.c_str() ),
-                                OK, "wprintw" );
-}
-
-void catacurses::refresh()
-{
-    return curses_check_result( ::refresh(), OK, "refresh" );
-}
-
-void refresh_display()
-{
-    catacurses::doupdate();
-}
-
-void catacurses::doupdate()
-{
-    return curses_check_result( ::doupdate(), OK, "doupdate" );
-}
-
-void catacurses::clear()
-{
-    return curses_check_result( ::clear(), OK, "clear" );
-}
-
-void catacurses::erase()
-{
-    return curses_check_result( ::erase(), OK, "erase" );
-}
-
-void catacurses::endwin()
-{
-    return curses_check_result( ::endwin(), OK, "endwin" );
-}
-
-void catacurses::wborder( const window &win, const chtype ls, const chtype rs, const chtype ts,
-                          const chtype bs, const chtype tl, const chtype tr, const chtype bl, const chtype br )
-{
-    return curses_check_result( ::wborder( win.get<::WINDOW>(), ls, rs, ts, bs, tl, tr, bl, br ), OK,
-                                "wborder" );
-}
-
-void catacurses::mvwhline( const window &win, point p, const chtype ch, const int n )
-{
-    return curses_check_result( ::mvwhline( win.get<::WINDOW>(), p.y, p.x, ch, n ), OK,
-                                "mvwhline" );
-}
-
-void catacurses::mvwvline( const window &win, point p, const chtype ch, const int n )
-{
-    return curses_check_result( ::mvwvline( win.get<::WINDOW>(), p.y, p.x, ch, n ), OK,
-                                "mvwvline" );
-}
-
-void catacurses::mvwaddch( const window &win, point p, const chtype ch )
-{
-    // HACK: can't print some box drawing characters as integers, use strings instead
-    switch( ch ) {
-        case LINE_XDXO_UNICODE:
-            return mvwprintw( win, p, LINE_XDXO_S );
-        case LINE_DXOX_UNICODE:
-            return mvwprintw( win, p, LINE_DXOX_S );
-        case LINE_XOXD_UNICODE:
-            return mvwprintw( win, p, LINE_XOXD_S );
-        case LINE_OXDX_UNICODE:
-            return mvwprintw( win, p, LINE_OXDX_S );
-        default:
-            return curses_check_result( ::mvwaddch( win.get<::WINDOW>(), p.y, p.x, ch ), OK, "mvwaddch" );
-    }
-}
-
-void catacurses::waddch( const window &win, const chtype ch )
-{
-    // HACK: can't print some box drawing characters as integers, use strings instead
-    switch( ch ) {
-        case LINE_XDXO_UNICODE:
-            return wprintw( win, LINE_XDXO_S );
-        case LINE_DXOX_UNICODE:
-            return wprintw( win, LINE_DXOX_S );
-        case LINE_XOXD_UNICODE:
-            return wprintw( win, LINE_XOXD_S );
-        case LINE_OXDX_UNICODE:
-            return wprintw( win, LINE_OXDX_S );
-        default:
-            return curses_check_result( ::waddch( win.get<::WINDOW>(), ch ), OK, "waddch" );
-    }
-}
-
-void catacurses::wredrawln( const window &win, const int beg_line, const int num_lines )
-{
-    return curses_check_result( ::wredrawln( win.get<::WINDOW>(), beg_line, num_lines ), OK,
-                                "wredrawln" );
-}
-
-void catacurses::wclear( const window &win )
-{
-    return curses_check_result( ::wclear( win.get<::WINDOW>() ), OK, "wclear" );
-}
-
-void catacurses::curs_set( const int visibility )
-{
-    return curses_check_result( ::curs_set( visibility ), OK, "curs_set" );
-}
-
-// As long as these assertions hold, we can just case base_color into short and
-// forward the result to ncurses init_pair. Otherwise we would have to translate them.
-static_assert( catacurses::black == COLOR_BLACK,
-               "black must have the same value as COLOR_BLACK (from ncurses)" );
-static_assert( catacurses::red == COLOR_RED,
-               "red must have the same value as COLOR_RED (from ncurses)" );
-static_assert( catacurses::green == COLOR_GREEN,
-               "green must have the same value as COLOR_GREEN (from ncurses)" );
-static_assert( catacurses::yellow == COLOR_YELLOW,
-               "yellow must have the same value as COLOR_YELLOW (from ncurses)" );
-static_assert( catacurses::blue == COLOR_BLUE,
-               "blue must have the same value as COLOR_BLUE (from ncurses)" );
-static_assert( catacurses::magenta == COLOR_MAGENTA,
-               "magenta must have the same value as COLOR_MAGENTA (from ncurses)" );
-static_assert( catacurses::cyan == COLOR_CYAN,
-               "cyan must have the same value as COLOR_CYAN (from ncurses)" );
-static_assert( catacurses::white == COLOR_WHITE,
-               "base_color::white must have the same value as COLOR_WHITE (from ncurses)" );
-
-void catacurses::init_pair( const short pair, const base_color f, const base_color b )
-{
-    colorpairs[pair].FG = f;
-    colorpairs[pair].BG = b;
-    return curses_check_result( ::init_pair( pair, static_cast<short>( f ), static_cast<short>( b ) ),
-                                OK, "init_pair" );
-}
-
-catacurses::window catacurses::newscr;
-catacurses::window catacurses::stdscr;
-
-void catacurses::resizeterm()
-{
-    const int new_x = ::getmaxx( stdscr.get<::WINDOW>() );
-    const int new_y = ::getmaxy( stdscr.get<::WINDOW>() );
-    if( ::is_term_resized( new_x, new_y ) ) {
-        game_ui::init_ui();
-        ui_manager::screen_resized();
-        catacurses::doupdate();
-    }
-}
-
-// init_interface is defined in another cpp file, depending on build type:
-// wincurse.cpp for Windows builds without SDL and sdltiles.cpp for SDL builds.
-void catacurses::init_interface()
-{
-    // ::endwin will free the pointer returned by ::initscr
-    stdscr = std::shared_ptr<void>( ::initscr(), []( void *const ) { } );
-    if( !stdscr ) {
-        throw std::runtime_error( "initscr failed" );
-    }
-    newscr = window( std::shared_ptr<void>( ::newscr, []( void *const ) { } ) );
-    if( !newscr ) {
-        throw std::runtime_error( "null newscr" );
-    }
-#if !defined(__CYGWIN__)
-    // ncurses mouse registration
-    mousemask( BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, nullptr );
-#endif
-    // our curses wrapper does not support changing this behavior, ncurses must
-    // behave exactly like the wrapper, therefor:
-    noecho();  // Don't echo keypresses
-    cbreak();  // C-style breaks (e.g. ^C to SIGINT)
-    keypad( stdscr.get<::WINDOW>(), true ); // Numpad is numbers
-    set_escdelay( 10 ); // Make Escape actually responsive
-    // TODO: error checking
-    start_color();
-    color_loader<RGBColor>().load( windowsPalette );
-    init_colors();
-}
-
-void input_manager::pump_events()
-{
-    if( test_mode ) {
-        return;
-    }
-
-    // Handle all events, but ignore any keypress
-    int key = ERR;
-    bool resize = false;
-    const int prev_timeout = input_timeout;
-    set_timeout( 0 );
-    do {
-        key = getch();
-        if( key == KEY_RESIZE ) {
-            resize = true;
+    auto *const source = window.get<cata_cursesport::WINDOW>();
+    auto *const target = native_stdscr();
+    if( source == nullptr || target == nullptr ) { return; }
+    for( int y = 0; y < source->height; ++y ) {
+        const auto target_y = source->pos.y + y;
+        if( target_y < 0 || target_y >= ::getmaxy( target ) ) { continue; }
+        for( int x = 0; x < source->width; ++x ) {
+            const auto target_x = source->pos.x + x;
+            if( target_x < 0 || target_x >= ::getmaxx( target ) ) { continue; }
+            const auto &cell = source->line[y].chars[x];
+            ::wmove( target, target_y, target_x );
+            ::wattrset( target,
+                        COLOR_PAIR( native_pair( cell ) ) | ( static_cast<int>( cell.FG ) >= 8 ? A_BOLD : 0 )
+                        | ( static_cast<int>( cell.BG ) >= 8 ? A_BLINK : 0 ) );
+            if( !cell.ch.empty() ) { ::waddstr( target, cell.ch.c_str() ); }
         }
-    } while( key != ERR );
-    set_timeout( prev_timeout );
+        source->line[y].touched = false;
+    }
+    source->draw = false;
+}
+
+auto game_client::curses::clear_window_native( const catacurses::window & /*window*/ ) -> void {}
+
+auto game_client::curses::present_native() -> void
+{
+    if( native_stdscr() != nullptr ) {
+        const auto *const screen = catacurses::newscr.get<cata_cursesport::WINDOW>();
+        if( screen != nullptr ) {
+            const auto cursor = screen->cursor;
+            if( cursor.x >= 0 && cursor.y >= 0 && cursor.x < ::getmaxx( native_stdscr() )
+                && cursor.y < ::getmaxy( native_stdscr() ) ) {
+                ::wmove( native_stdscr(), cursor.y, cursor.x );
+            }
+        }
+        ::wrefresh( native_stdscr() );
+    }
+}
+
+auto game_client::curses::initialize_native() -> void
+{
+    if( native_stdscr() == nullptr ) {
+        if( ::initscr() == nullptr ) { throw std::runtime_error( "initscr failed" ); }
+        ::noecho();
+        ::cbreak();
+        ::keypad( native_stdscr(), true );
+        ::set_escdelay( 10 );
+        ::start_color();
+        if( COLOR_PAIRS >= 64 && COLORS >= 8 ) {
+            for( const auto foreground : std::views::iota( 0, 8 ) ) {
+                for( const auto background : std::views::iota( 0, 8 ) ) {
+                    const auto pair = native_pair_index( foreground, background );
+                    if( pair != 0 ) {
+                        ::init_pair( pair, static_cast<short>( foreground ),
+                                     static_cast<short>( background ) );
+                    }
+                }
+            }
+        }
+#    if !defined(__CYGWIN__)
+        ::mousemask( BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, nullptr );
+#    endif
+    }
+    color_loader<RGBColor>().load( windows_palette );
+    init_colors();
+    const auto height = ::getmaxy( native_stdscr() );
+    const auto width = ::getmaxx( native_stdscr() );
+    catacurses::stdscr = catacurses::newwin( height, width, point_zero );
+    catacurses::newscr = catacurses::newwin( height, width, point_zero );
+    check_encoding();
+    ensure_term_size();
+}
+
+auto game_client::curses::shutdown_native() -> void
+{
+    catacurses::stdscr = {};
+    catacurses::newscr = {};
+    if( native_stdscr() != nullptr ) { ::endwin(); }
+}
+
+auto game_client::curses::set_cursor_native( const int visibility ) -> void
+{
+    ::curs_set( visibility );
+}
+
+auto game_client::curses::pump_events_native() -> void
+{
+    if( test_mode ) { return; }
+    const auto previous_timeout = native_timeout;
+    game_client::curses::set_timeout_native( 0 );
+    auto key = ::getch();
+    auto resize = false;
+    while( key != ERR ) {
+        resize = resize || key == KEY_RESIZE;
+        key = ::getch();
+    }
+    game_client::curses::set_timeout_native( previous_timeout );
     if( resize ) {
+        game_client::curses::resize_native(
+            game_client::curses::terminal_width_native(),
+            game_client::curses::terminal_height_native() );
         catacurses::resizeterm();
     }
-
-    previously_pressed_key = 0;
 }
 
-input_event input_manager::get_input_event()
+auto game_client::curses::read_input_native() -> input_event
 {
-    int key = ERR;
-    input_event rval;
+    catacurses::doupdate();
+    auto key = ERR;
+    input_event result;
     do {
-        previously_pressed_key = 0;
-        // flush any output
-        catacurses::doupdate();
-        key = getch();
+        key = ::getch();
         if( key != ERR ) {
-            int newch;
-            // Clear the buffer of characters that match the one we're going to act on.
-            const int prev_timeout = input_timeout;
-            set_timeout( 0 );
-            do {
-                newch = getch();
-            } while( newch != ERR && newch == key );
-            set_timeout( prev_timeout );
-            // If we read a different character than the one we're going to act on, re-queue it.
-            if( newch != ERR && newch != key ) {
-                ungetch( newch );
-            }
+            auto newch = ERR;
+            const auto previous_timeout = native_timeout;
+            game_client::curses::set_timeout_native( 0 );
+            do { newch = ::getch(); }
+            while( newch != ERR && newch == key );
+            game_client::curses::set_timeout_native( previous_timeout );
+            if( newch != ERR && newch != key ) { ::ungetch( newch ); }
         }
-        rval = input_event();
+        result = input_event();
         if( key == ERR ) {
-            if( input_timeout > 0 ) {
-                rval.type = input_event_t::timeout;
-            } else {
-                rval.type = input_event_t::error;
-            }
-            // ncurses mouse handling
+            result.type = native_timeout > 0 ? input_event_t::timeout : input_event_t::error;
         } else if( key == KEY_RESIZE ) {
+            game_client::curses::resize_native(
+                game_client::curses::terminal_width_native(),
+                game_client::curses::terminal_height_native() );
             catacurses::resizeterm();
         } else if( key == KEY_MOUSE ) {
             MEVENT event;
-            if( getmouse( &event ) == OK ) {
-                rval.type = input_event_t::mouse;
-                rval.mouse_pos = point( event.x, event.y );
+            if( ::getmouse( &event ) == OK ) {
+                result.type = input_event_t::mouse;
+                result.mouse_pos = point( event.x, event.y );
                 if( event.bstate & BUTTON1_CLICKED ) {
-                    rval.add_input( MOUSE_BUTTON_LEFT );
+                    result.add_input( MOUSE_BUTTON_LEFT );
                 } else if( event.bstate & BUTTON3_CLICKED ) {
-                    rval.add_input( MOUSE_BUTTON_RIGHT );
+                    result.add_input( MOUSE_BUTTON_RIGHT );
                 } else if( event.bstate & REPORT_MOUSE_POSITION ) {
-                    rval.add_input( MOUSE_MOVE );
-                    if( input_timeout > 0 ) {
-                        // Mouse movement seems to clear ncurses timeout
-                        set_timeout( input_timeout );
-                    }
+                    result.add_input( MOUSE_MOVE );
                 } else {
-                    rval.type = input_event_t::error;
+                    result.type = input_event_t::error;
                 }
             } else {
-                rval.type = input_event_t::error;
+                result.type = input_event_t::error;
             }
         } else {
-            if( key == 127 ) { // == Unicode DELETE
-                previously_pressed_key = KEY_BACKSPACE;
-                return input_event( KEY_BACKSPACE, input_event_t::keyboard );
-            }
-            rval.type = input_event_t::keyboard;
-            rval.text.append( 1, static_cast<char>( key ) );
-            // Read the UTF-8 sequence (if any)
-            if( key < 127 ) {
-                // Single byte sequence
-            } else if( 194 <= key && key <= 223 ) {
-                rval.text.append( 1, static_cast<char>( getch() ) );
-            } else if( 224 <= key && key <= 239 ) {
-                rval.text.append( 1, static_cast<char>( getch() ) );
-                rval.text.append( 1, static_cast<char>( getch() ) );
-            } else if( 240 <= key && key <= 244 ) {
-                rval.text.append( 1, static_cast<char>( getch() ) );
-                rval.text.append( 1, static_cast<char>( getch() ) );
-                rval.text.append( 1, static_cast<char>( getch() ) );
-            } else {
-                // Other control character, etc. - no text at all, return an event
-                // without the text property
-                previously_pressed_key = key;
+            if( key == 127 ) { return input_event( KEY_BACKSPACE, input_event_t::keyboard ); }
+            result.type = input_event_t::keyboard;
+            result.text.append( 1, static_cast<char>( key ) );
+            if( key >= 194 && key <= 223 ) {
+                result.text.append( 1, static_cast<char>( ::getch() ) );
+            } else if( key >= 224 && key <= 239 ) {
+                result.text.append( 1, static_cast<char>( ::getch() ) );
+                result.text.append( 1, static_cast<char>( ::getch() ) );
+            } else if( key >= 240 && key <= 244 ) {
+                result.text.append( 1, static_cast<char>( ::getch() ) );
+                result.text.append( 1, static_cast<char>( ::getch() ) );
+                result.text.append( 1, static_cast<char>( ::getch() ) );
+            } else if( key >= 127 ) {
                 return input_event( key, input_event_t::keyboard );
             }
-            // Now we have loaded an UTF-8 sequence (possibly several bytes)
-            // but we should only return *one* key, so return the code point of it.
-            const uint32_t cp = UTF8_getch( rval.text );
-            if( cp == UNKNOWN_UNICODE ) {
-                // Invalid UTF-8 sequence, this should never happen, what now?
-                // Maybe return any error instead?
-                previously_pressed_key = key;
-                return input_event( key, input_event_t::keyboard );
-            }
-            previously_pressed_key = cp;
-            // for compatibility only add the first byte, not the code point
-            // as it would  conflict with the special keys defined by ncurses
-            rval.add_input( key );
+            const auto codepoint = UTF8_getch( result.text );
+            if( codepoint == UNKNOWN_UNICODE ) { return input_event( key, input_event_t::keyboard ); }
+            result.add_input( key );
         }
     } while( key == KEY_RESIZE );
-
-    return rval;
+    return result;
 }
 
-void input_manager::set_timeout( const int delay )
+auto game_client::curses::set_timeout_native( const int timeout ) -> void
 {
-    timeout( delay );
-    // Use this to determine when curses should return a input_event_t::timeout event.
-    input_timeout = delay;
+    native_timeout = timeout;
+    ::timeout( timeout < 0 ? -1 : timeout );
 }
 
-nc_color nc_color::from_color_pair_index( const int index )
+auto game_client::curses::terminal_width_native() -> int
 {
-    return nc_color( COLOR_PAIR( index ) );
+    return native_stdscr() == nullptr ? 0 : ::getmaxx( native_stdscr() );
 }
 
-int nc_color::to_color_pair_index() const
+auto game_client::curses::terminal_height_native() -> int
 {
-    return PAIR_NUMBER( attribute_value );
+    return native_stdscr() == nullptr ? 0 : ::getmaxy( native_stdscr() );
 }
 
-nc_color nc_color::bold() const
+namespace
 {
-    return nc_color( attribute_value | A_BOLD );
-}
-
-bool nc_color::is_bold() const
-{
-    return attribute_value & A_BOLD;
-}
-
-nc_color nc_color::blink() const
-{
-    return nc_color( attribute_value | A_BLINK );
-}
-
-bool nc_color::is_blink() const
-{
-    return attribute_value & A_BLINK;
-}
-
-void ensure_term_size();
-void check_encoding();
-
-void ensure_term_size()
+auto ensure_term_size() -> void
 {
     // do not use ui_adaptor here to avoid re-entry
-    const int minHeight = FULL_SCREEN_HEIGHT;
-    const int minWidth = FULL_SCREEN_WIDTH;
-    int maxy = getmaxy( catacurses::stdscr );
-    int maxx = getmaxx( catacurses::stdscr );
+    const auto minHeight = FULL_SCREEN_HEIGHT;
+    const auto minWidth = FULL_SCREEN_WIDTH;
+    auto maxy = getmaxy( catacurses::stdscr );
+    auto maxx = getmaxx( catacurses::stdscr );
 
     while( maxy < minHeight || maxx < minWidth ) {
         catacurses::erase();
         if( maxy < minHeight && maxx < minWidth ) {
-            fold_and_print( catacurses::stdscr, point_zero, maxx, c_white,
-                            _( "Whoa!  Your terminal is tiny!  This game requires a minimum terminal size of "
-                               "%dx%d to work properly.  %dx%d just won't do.  Maybe a smaller font would help?" ),
-                            minWidth, minHeight, maxx, maxy );
+            fold_and_print(
+                catacurses::stdscr, point_zero, maxx, c_white,
+                _( "Whoa!  Your terminal is tiny!  This game requires a minimum terminal size of "
+                   "%dx%d to work properly.  %dx%d just won't do.  Maybe a smaller font would help?" ),
+                minWidth, minHeight, maxx, maxy );
         } else if( maxx < minWidth ) {
-            fold_and_print( catacurses::stdscr, point_zero, maxx, c_white,
-                            _( "Oh!  Hey, look at that.  Your terminal is just a little too narrow.  This game "
-                               "requires a minimum terminal size of %dx%d to function.  It just won't work "
-                               "with only %dx%d.  Can you stretch it out sideways a bit?" ),
-                            minWidth, minHeight, maxx, maxy );
+            fold_and_print(
+                catacurses::stdscr, point_zero, maxx, c_white,
+                _( "Oh!  Hey, look at that.  Your terminal is just a little too narrow.  This game "
+                   "requires a minimum terminal size of %dx%d to function.  It just won't work "
+                   "with only %dx%d.  Can you stretch it out sideways a bit?" ),
+                minWidth, minHeight, maxx, maxy );
         } else {
-            fold_and_print( catacurses::stdscr, point_zero, maxx, c_white,
-                            _( "Woah, woah, we're just a little short on space here.  The game requires a "
-                               "minimum terminal size of %dx%d to run.  %dx%d isn't quite enough!  Can you "
-                               "make the terminal just a smidgen taller?" ),
-                            minWidth, minHeight, maxx, maxy );
+            fold_and_print(
+                catacurses::stdscr, point_zero, maxx, c_white,
+                _( "Woah, woah, we're just a little short on space here.  The game requires a "
+                   "minimum terminal size of %dx%d to run.  %dx%d isn't quite enough!  Can you "
+                   "make the terminal just a smidgen taller?" ),
+                minWidth, minHeight, maxx, maxy );
         }
         catacurses::refresh();
         // do not use input_manager or input_context here to avoid re-entry
-        getch();
+        ::getch();
+        game_client::curses::resize_native( ::getmaxx( native_stdscr() ), ::getmaxy( native_stdscr() ) );
         maxy = getmaxy( catacurses::stdscr );
         maxx = getmaxx( catacurses::stdscr );
     }
 }
 
-void check_encoding()
+auto check_encoding() -> void
 {
     // Check whether LC_CTYPE supports the UTF-8 encoding
     // and show a warning if it doesn't
     if( std::strcmp( nl_langinfo( CODESET ), "UTF-8" ) != 0 ) {
         // do not use ui_adaptor here to avoid re-entry
-        int key = ERR;
+        auto key = ERR;
         do {
-            const char *unicode_error_msg =
-                _( "You don't seem to have a valid Unicode locale.  You may see some weird "
-                   "characters (e.g. empty boxes or question marks). You have been warned." );
+            const auto unicode_error_msg = _(
+                                               "You don't seem to have a valid Unicode locale.  You may see some weird "
+                                               "characters (e.g. empty boxes or question marks). You have been warned." );
             catacurses::erase();
-            const int maxx = getmaxx( catacurses::stdscr );
+            const auto maxx = getmaxx( catacurses::stdscr );
             fold_and_print( catacurses::stdscr, point_zero, maxx, c_white, unicode_error_msg );
             catacurses::refresh();
             // do not use input_manager or input_context here to avoid re-entry
-            key = getch();
+            key = ::getch();
+            game_client::curses::
+            resize_native( ::getmaxx( native_stdscr() ), ::getmaxy( native_stdscr() ) );
         } while( key == KEY_RESIZE || key == KEY_MOUSE );
     }
 }
 
-#endif
+} // namespace
+
+auto game_client::curses::resize_native( const int cell_w, const int cell_h ) -> void
+{
+    // resizeterm() queues another KEY_RESIZE; the shared UI already handles this event.
+    ::resize_term( cell_h, cell_w );
+    if( native_stdscr() != nullptr ) {
+        catacurses::stdscr = catacurses::newwin( cell_h, cell_w, point_zero );
+        catacurses::newscr = catacurses::newwin( cell_h, cell_w, point_zero );
+    }
+}
+
+namespace game_client
+{
+
+namespace
+{
+
+class curses_backend final: public backend
+{
+    public:
+        auto initialize() -> void override { game_client::curses::initialize_native(); }
+        auto shutdown() -> void override { game_client::curses::shutdown_native(); }
+        auto present() -> void override { game_client::curses::present_native(); }
+        auto draw_window( const catacurses::window &window ) -> void override {
+            game_client::curses::draw_window_native( window );
+        }
+        auto clear_window( const catacurses::window &window ) -> void override {
+            game_client::curses::clear_window_native( window );
+        }
+        auto set_cursor( const int visibility ) -> void override {
+            game_client::curses::set_cursor_native( visibility );
+        }
+        auto set_timeout( const int timeout_ms ) -> void override {
+            game_client::curses::set_timeout_native( timeout_ms );
+        }
+        auto read_input( const int timeout_ms ) -> input_event override {
+            const auto previous_timeout = inp_mngr.get_timeout();
+            game_client::curses::set_timeout_native( timeout_ms );
+            auto result = game_client::curses::read_input_native();
+            game_client::curses::set_timeout_native( previous_timeout );
+            return result;
+        }
+        auto pump_events() -> void override { game_client::curses::pump_events_native(); }
+        auto resize( const point cell_size ) -> void override {
+            game_client::curses::resize_native( cell_size.x, cell_size.y );
+        }
+        auto projected_size() const -> point override {
+            return point( game_client::curses::terminal_width_native(),
+                          game_client::curses::terminal_height_native() );
+        }
+        auto capabilities() const -> client_capabilities override {
+            return {.tiles = false, .mouse = true, .gamepad = false};
+        }
+};
+
+} // namespace
+
+auto make_curses_backend() -> backend_ptr { return std::make_unique<curses_backend>(); }
+
+} // namespace game_client
+
+#endif // CATA_CURSES_CLIENT

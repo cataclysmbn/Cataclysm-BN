@@ -1,20 +1,21 @@
-#if defined(TILES)
 
-#    include "vehicle_preview.h"
+#include "vehicle_preview.h"
 
-#    include "cata_tiles.h"
-#    include "cursesport.h"
-#    include "game.h"
-#    include "map/map.h"
-#    include "output.h"
-#    include "sdltiles.h"
-#    include "units_utility.h"
-#    include "veh_type.h"
-#    include "vehicle.h"
-#    include "vehicle_part.h"
-#    include "vpart_position.h"
+#include "cata_tiles.h"
+#include "cursesport.h"
+#include "game.h"
+#include "map/map.h"
+#include "output.h"
+#include "sdl_wrappers.h"
+#include "sdltiles.h"
+#include "units_angle.h"
+#include "units_utility.h"
+#include "veh_type.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
+#include "vpart_position.h"
 
-#    include <algorithm>
+#include <algorithm>
 
 // Local empty string for tile_search_params
 static const std::string empty_string;
@@ -116,7 +117,64 @@ public:
     }
 };
 
-void vehicle_preview_window::prepare(const catacurses::window& win) {
+namespace {
+class tiles_vehicle_preview_window final: public vehicle_preview_window {
+public:
+    ~tiles_vehicle_preview_window() override;
+    auto prepare(const catacurses::window& win) -> void override;
+    auto display(const vehicle& veh, tripoint_mnt_veh cursor, int highlight_part) -> void override;
+    auto clear() -> void override;
+    auto zoom_in() -> void override;
+    auto zoom_out() -> void override;
+    auto get_zoom() const -> int override { return zoom; }
+
+private:
+    // The window we're rendering into (for bounds calculation)
+    catacurses::window w_preview;
+
+    // Window position in terminal units
+    point win_pos;
+    // Window size in terminal units
+    int win_cols = 0;
+    int win_lines = 0;
+
+    // Pixel dimensions of a terminal cell
+    int termx_pixels = 0;
+    int termy_pixels = 0;
+
+    // Zoom settings
+    static constexpr int MIN_ZOOM = 8;
+    static constexpr int MAX_ZOOM = 64;
+    static constexpr int DEFAULT_ZOOM = 16;
+    int zoom = DEFAULT_ZOOM;
+    bool saved_original_zoom = false;
+    float original_zoom = DEFAULT_ZOOM;
+
+    /**
+     * Draw a single vehicle part at the given pixel position.
+     * @param vp_id The vehicle part type to draw
+     * @param pixel_pos Position in pixels (SDL coordinates)
+     * @param part_mod 0=normal, 1=open, 2=broken
+     * @param veh_facing Vehicle facing direction
+     * @param bg_color Background color tint (for painting)
+     * @param fg_color Foreground color tint (for painting)
+     */
+    void draw_vpart_at_pixel(
+        const vpart_id& vp_id, point pixel_pos, int part_mod, units::angle veh_facing,
+        const tint_config& bg_color = {}, const tint_config& fg_color = {});
+
+    /** Draw a highlight overlay at the given pixel position */
+    void draw_highlight_at_pixel(point pixel_pos);
+
+    /** Draw a cursor at the given pixel position */
+    void draw_cursor_at_pixel(point pixel_pos);
+
+    /** Calculate the center of the window in pixels */
+    auto calc_window_center_pixels() const -> point;
+};
+} // namespace
+
+void tiles_vehicle_preview_window::prepare(const catacurses::window& win) {
     w_preview = win;
     win_pos = point(getbegx(win), getbegy(win));
     win_cols = getmaxx(win);
@@ -134,14 +192,14 @@ void vehicle_preview_window::prepare(const catacurses::window& win) {
     tilecontext->set_draw_scale(zoom);
 }
 
-auto vehicle_preview_window::calc_window_center_pixels() const -> point {
+auto tiles_vehicle_preview_window::calc_window_center_pixels() const -> point {
     // Calculate center of window in pixel coordinates
     const int center_x = win_pos.x * termx_pixels + (win_cols * termx_pixels) / 2;
     const int center_y = win_pos.y * termy_pixels + (win_lines * termy_pixels) / 2;
     return point(center_x, center_y);
 }
 
-void vehicle_preview_window::zoom_in() {
+void tiles_vehicle_preview_window::zoom_in() {
     if (zoom < MAX_ZOOM) {
         zoom *= 2;
         zoom = std::min(zoom, MAX_ZOOM);
@@ -149,7 +207,7 @@ void vehicle_preview_window::zoom_in() {
     }
 }
 
-void vehicle_preview_window::zoom_out() {
+void tiles_vehicle_preview_window::zoom_out() {
     if (zoom > MIN_ZOOM) {
         zoom /= 2;
         zoom = std::max(zoom, MIN_ZOOM);
@@ -157,7 +215,7 @@ void vehicle_preview_window::zoom_out() {
     }
 }
 
-void vehicle_preview_window::draw_vpart_at_pixel(
+void tiles_vehicle_preview_window::draw_vpart_at_pixel(
     const vpart_id& vp_id, point pixel_pos, int part_mod, units::angle veh_facing,
     const tint_config& bg_color, const tint_config& fg_color) {
     const int rotation_degrees = static_cast<int>(std::round(to_degrees(veh_facing)));
@@ -166,17 +224,17 @@ void vehicle_preview_window::draw_vpart_at_pixel(
     adapter->draw_vpart_tile(vp_id, pixel_pos, part_mod, rotation_degrees, bg_color, fg_color);
 }
 
-void vehicle_preview_window::draw_highlight_at_pixel(point pixel_pos) {
+void tiles_vehicle_preview_window::draw_highlight_at_pixel(point pixel_pos) {
     veh_preview_adapter* adapter = veh_preview_adapter::convert(&*tilecontext);
     adapter->draw_highlight_tile(pixel_pos);
 }
 
-void vehicle_preview_window::draw_cursor_at_pixel(point pixel_pos) {
+void tiles_vehicle_preview_window::draw_cursor_at_pixel(point pixel_pos) {
     veh_preview_adapter* adapter = veh_preview_adapter::convert(&*tilecontext);
     adapter->draw_cursor_tile(pixel_pos);
 }
 
-void vehicle_preview_window::display(
+void tiles_vehicle_preview_window::display(
     const vehicle& veh, tripoint_mnt_veh cursor, int highlight_part) {
     const veh_preview_adapter* adapter = veh_preview_adapter::convert(&*tilecontext);
     const point center_px = calc_window_center_pixels();
@@ -235,9 +293,10 @@ void vehicle_preview_window::display(
     SDL_SetRenderClipRect(renderer.get(), nullptr);
 }
 
-vehicle_preview_window::~vehicle_preview_window() { clear(); }
 
-void vehicle_preview_window::clear() {
+tiles_vehicle_preview_window::~tiles_vehicle_preview_window() { clear(); }
+
+void tiles_vehicle_preview_window::clear() {
     if (saved_original_zoom) { tilecontext->set_draw_scale(original_zoom); }
 
     // Ensure clip rectangle is cleared
@@ -245,4 +304,11 @@ void vehicle_preview_window::clear() {
     SDL_SetRenderClipRect(renderer.get(), nullptr);
 }
 
-#endif // TILES
+
+namespace game_client {
+auto install_tiles_vehicle_preview() -> void {
+    set_vehicle_preview_factory([]() -> std::unique_ptr<vehicle_preview_window> {
+        return std::make_unique<tiles_vehicle_preview_window>();
+    });
+}
+} // namespace game_client

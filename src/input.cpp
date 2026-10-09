@@ -1,5 +1,16 @@
 #include "input.h"
 
+#if defined(__ANDROID__)
+std::list<input_context *> input_context::input_context_stack;
+#endif
+
+// The narrow host platform target compiles the real Android lifecycle above/in input.h,
+// without linking a host-layout input_context to Android-layout objects or requiring SDL/NDK.
+#if !defined(CATA_INPUT_LIFECYCLE_TEST)
+#include "client_input.h"
+#include "client_display.h"
+#include "client_interaction.h"
+
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -70,15 +81,6 @@ static std::string int_to_str( int number )
     buffer.imbue( std::locale::classic() );
     buffer << number;
     return buffer.str();
-}
-
-bool is_mouse_enabled()
-{
-#if defined(_WIN32) && !defined(TILES)
-    return false;
-#else
-    return true;
-#endif
 }
 
 //helper function for those have problem inputting certain characters.
@@ -699,8 +701,6 @@ const std::string &input_context::input_to_action( const input_event &inp ) cons
 }
 
 #if defined(__ANDROID__)
-std::list<input_context *> input_context::input_context_stack;
-
 void input_context::register_manual_key( manual_key mk )
 {
     // Prevent duplicates
@@ -939,7 +939,17 @@ const std::string &input_context::handle_input( const int timeout )
     while( true ) {
         {
             ZoneScopedN( "input_context_get_input_event" );
+            const auto active_context = game_client::input_context_scope( *this, category,
+                                        inp_mngr.get_timeout() );
             next_action = inp_mngr.get_input_event();
+        }
+        if( next_action.interaction ) {
+            const auto valid = game_client::validate_interaction_event( *this, *next_action.interaction );
+            if( !valid ) {
+                throw std::runtime_error( "Semantic interaction rejected: " + valid.error() );
+            }
+            result = &ANY_INPUT;
+            break;
         }
         if( next_action.type == input_event_t::timeout ) {
             result = &TIMEOUT;
@@ -1118,9 +1128,9 @@ action_id input_context::display_menu( const bool permit_execute_action )
     ctxt.register_action( "TEXT.HOME" );
     ctxt.register_action( "TEXT.END" );
     ctxt.register_action( "TEXT.DELETE" );
-#if defined( TILES )
-    ctxt.register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::has_tiles() ) {
+        ctxt.register_action( "TEXT.PASTE" );
+    }
     ctxt.register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt.register_action( "ANY_INPUT" );
 
@@ -1476,63 +1486,32 @@ void input_manager::wait_for_any_key()
     }
 }
 
-#if !(defined(TILES) || defined(_WIN32))
-// Also specify that we don't have a gamepad plugged in.
-bool gamepad_available()
+auto input_context::action_name_source( const std::string &action_id ) const ->
+std::optional<std::reference_wrapper<const translation>> // *NOPAD*
 {
-    return false;
+    const auto action_override = action_name_overrides.find( action_id );
+    if( action_override != action_name_overrides.end() ) { return std::cref( action_override->second ); }
+    const auto &attributes = inp_mngr.get_action_attributes( action_id, category );
+    if( !attributes.name.empty() ) { return std::cref( attributes.name ); }
+    // A local unnamed action masks the global binding, but keeps its native label fallback.
+    const auto &defaults = inp_mngr.get_action_attributes( action_id, default_context_id );
+    if( !defaults.name.empty() ) { return std::cref( defaults.name ); }
+    return std::nullopt;
 }
 
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
-        &capture_win )
+auto input_context::get_action_name( const std::string &action_id ) const -> std::string
 {
-    if( !coordinate_input_received ) {
-        return std::nullopt;
-    }
-    const point view_size( getmaxx( capture_win ), getmaxy( capture_win ) );
-    const point win_min( getbegx( capture_win ),
-                         getbegy( capture_win ) );
-    const half_open_rectangle<point> win_bounds( win_min, win_min + view_size );
-    if( !win_bounds.contains( coordinate ) ) {
-        return std::nullopt;
-    }
-
-    point_bub_ms view_offset;
-    if( capture_win == g->w_terrain ) {
-        view_offset = g->ter_view_p.xy();
-    }
-
-    const point_bub_ms p = view_offset - ( view_size / 2 - coordinate );
-    return tripoint_bub_ms( p, g->get_levz() );
+    const auto source = action_name_source( action_id );
+    return source ? source->get().translated() : action_id;
 }
-#endif
 
-std::string input_context::get_action_name( const std::string &action_id ) const
+auto input_context::get_action_name_bounded( const std::string &action_id,
+        const std::size_t max_bytes ) const -> std::optional<std::string>
 {
-    // 1) Check action name overrides specific to this input_context
-    const auto action_name_override =
-        action_name_overrides.find( action_id );
-    if( action_name_override != action_name_overrides.end() ) {
-        return action_name_override->second.translated();
-    }
-
-    // 2) Check if the hotkey has a name
-    const action_attributes &attributes = inp_mngr.get_action_attributes( action_id, category );
-    if( !attributes.name.empty() ) {
-        return attributes.name.translated();
-    }
-
-    // 3) If the hotkey has no name, the user has created a local hotkey in
-    // this context that is masking the global hotkey. Fallback to the global
-    // hotkey's name.
-    const action_attributes &default_attributes = inp_mngr.get_action_attributes( action_id,
-            default_context_id );
-    if( !default_attributes.name.empty() ) {
-        return default_attributes.name.translated();
-    }
-
-    // 4) Unable to find suitable name. Keybindings configuration likely borked
-    return action_id;
+    const auto source = action_name_source( action_id );
+    if( source ) { return source->get().translated_bounded( max_bytes ); }
+    return action_id.size() <= max_bytes ? std::optional{ action_id } :
+           std::nullopt;
 }
 
 // (Press X (or Y)|Try) to Z
@@ -1614,3 +1593,4 @@ void input_context::reset_timeout()
 {
     timeout = -1;
 }
+#endif // !CATA_INPUT_LIFECYCLE_TEST

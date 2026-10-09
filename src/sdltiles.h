@@ -62,6 +62,16 @@ const SDL_Window_Ptr &get_sdl_window();
 /// before loading tilesets (the game sets it up in init_interface()).
 auto set_sdl_renderer( SDL_Renderer_Ptr r ) -> void;
 
+namespace game_client::tiles
+{
+auto clear_window_area_native( const catacurses::window &window ) -> void;
+auto reinitialize_framebuffer( bool force_invalidate ) -> void;
+auto to_map_font_dim_width( int &width ) -> void;
+auto to_map_font_dim_height( int &height ) -> void;
+auto to_map_font_dimension( int &width, int &height ) -> void;
+auto from_map_font_dimension( int &width, int &height ) -> void;
+auto to_overmap_font_dimension( int &width, int &height ) -> void;
+auto is_draw_tiles_mode() -> bool;
+} // namespace game_client::tiles
+
 #endif // TILES
-
-

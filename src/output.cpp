@@ -1,4 +1,7 @@
 #include "output.h"
+#include "client_presentation.h"
+#include "client_display.h"
+#include "client_interaction.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -40,9 +43,6 @@
 #include "point.h"
 #include "wcwidth.h"
 
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-#endif
 
 // Display data
 int TERMX;
@@ -393,6 +393,7 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
 
         lines = foldstring( text, text_w );
         max_beg_line = std::max( 0, static_cast<int>( lines.size() ) - text_h );
+        beg_line = std::min( beg_line, max_beg_line );
 
         ui.position_from_window( w );
     };
@@ -411,11 +412,24 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         wnoutrefresh( w );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = title,
+            .message = text,
+            .allow_cancel = true,
+        };
+    } );
+
     std::string action;
     do {
         ui_manager::redraw();
 
         action = ctxt.handle_input();
+        if( const auto &event = ctxt.get_raw_input().interaction;
+            event && event->operation == game_client::interaction_operation::cancel ) {
+            action = "QUIT";
+        }
         if( action == "UP" ) {
             if( beg_line > 0 ) {
                 --beg_line;
@@ -433,7 +447,7 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         } else if( action == "PAGE_DOWN" ) {
             // always scroll an entire page's length
             if( beg_line < max_beg_line ) {
-                beg_line += text_h;
+                beg_line = std::min( beg_line + text_h, max_beg_line );
             }
         }
     } while( action != "CONFIRM" && action != "QUIT" );
@@ -806,9 +820,7 @@ input_event draw_item_info( const int iLeft, const int iWidth, const int iTop, c
         catacurses::newwin( iHeight, iWidth,
                             point( iLeft, iTop ) );
 
-#if defined(TILES)
-    clear_window_area( win );
-#endif // TILES
+    game_client::presentation().clear_window( win );
     wclear( win );
     wnoutrefresh( win );
 
@@ -1847,10 +1859,7 @@ scrollingcombattext::cSCT::cSCT( point p_pos, const direction p_oDir,
     oDir = p_oDir;
 
     // translate from player relative to screen relative direction
-    iso_mode = false;
-#if defined(TILES)
     iso_mode = tile_iso && use_tiles;
-#endif
     oUp = iso_mode ? direction::NORTHEAST : direction::NORTH;
     oUpRight = iso_mode ? direction::EAST : direction::NORTHEAST;
     oRight = iso_mode ? direction::SOUTHEAST : direction::EAST;
@@ -1894,12 +1903,8 @@ void scrollingcombattext::add( point pos, direction p_oDir,
 
         int iCurStep = 0;
 
-        bool tiled = false;
-        bool iso_mode = false;
-#if defined(TILES)
-        tiled = use_tiles;
-        iso_mode = tile_iso && use_tiles;
-#endif
+        const auto tiled = use_tiles;
+        const auto iso_mode = tile_iso && use_tiles;
 
         if( p_sType == "hp" ) {
             //Remove old HP bar
@@ -2191,27 +2196,7 @@ std::string format_volume( const units::volume &volume, int width, bool *out_tru
     }
 }
 
-// In non-SDL mode, width/height is just what's specified in the menu
-#if !defined(TILES)
-// We need to override these for Windows console resizing
-#   if !defined(_WIN32)
-int get_terminal_width()
-{
-    int width = get_option<int>( "TERMINAL_X" );
-    return width < FULL_SCREEN_WIDTH ? FULL_SCREEN_WIDTH : width;
-}
-
-int get_terminal_height()
-{
-    return get_option<int>( "TERMINAL_Y" );
-}
-#   endif
-
-bool is_draw_tiles_mode()
-{
-    return false;
-}
-#endif
+auto is_draw_tiles_mode() -> bool { return game_client::has_tiles() && use_tiles; }
 
 void mvwprintz( const catacurses::window &w, point p, const nc_color &FG,
                 const std::string &text )

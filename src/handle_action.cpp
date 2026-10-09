@@ -11,6 +11,8 @@
 #include "bionics_ui.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "cata_utility.h"
+#include "map_perception.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_hooks.h"
@@ -18,6 +20,7 @@
 #include "character_display.h"
 #include "character_martial_arts.h"
 #include "character_turn.h"
+#include "client_display.h"
 #include "clzones.h"
 #include "color.h"
 #include "construction.h"
@@ -408,14 +411,8 @@ input_context game::get_player_input( std::string &action )
             animate_weather = weather_has_anim && get_option<bool>( "ANIMATION_RAIN" );
             animate_sct = !SCT.vSCT.empty() && uquit != QUIT_WATCH && get_option<bool>( "ANIMATION_SCT" );
 
-#if defined(TILES)
             // Tiles need the animation-aware loop so minimap and terrain animation state can be checked.
-            return true;
-#else
-            // Otherwise we need to see if we actually should animate.
-            // Minimap and Terrain never animate in !TILES
-            return animate_weather || animate_sct || uquit == QUIT_WATCH;
-#endif
+            return game_client::has_tiles() || animate_weather || animate_sct || uquit == QUIT_WATCH;
         }
         return false;
     }
@@ -1930,6 +1927,8 @@ void game::open_consume_item_menu()
 bool game::handle_action()
 {
     ZoneScopedN( "handle_action" );
+    map_perception::acquire();
+    const auto acquire_after_action = on_out_of_scope( []() { map_perception::acquire(); } );
     std::string action;
     input_context ctxt;
     action_id act = ACTION_NULL;

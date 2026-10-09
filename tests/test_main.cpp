@@ -23,6 +23,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "client_backend.h"
 #include "color.h"
 #include "coordinates.h"
 #include "debug.h"
@@ -393,6 +394,14 @@ auto main(int argc, const char* argv[]) -> int {
     }
 
     test_mode = true;
+#if defined(CATA_MCP)
+    game_client::set_active_backend(game_client::make_mcp_backend());
+#elif defined(TILES)
+    game_client::set_active_backend(game_client::make_tiles_backend());
+#else
+    game_client::set_active_backend(game_client::make_curses_backend());
+#endif
+    game_client::active_backend().prepare();
 
     setupDebug(DebugOutput::std_err);
 

@@ -9,7 +9,18 @@
 #include "color_loader.h"
 #include "cursesport.h"
 #include "debug.h"
+#include "hsv_color.h"
 #include "sdltiles.h"
+
+RGBColor::RGBColor( const SDL_Color &color ) : r( color.r ), g( color.g ), b( color.b ),
+    a( color.a )
+{
+}
+
+RGBColor::operator SDL_Color() const
+{
+    return SDL_Color{ r, g, b, a };
+}
 
 color_pixel_function_map builtin_color_pixel_functions = {
     { "color_pixel_none", nullptr },

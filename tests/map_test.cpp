@@ -1588,6 +1588,41 @@ TEST_CASE("placed_monsters_inherit_bound_dimension") {
     CHECK(mon->get_dimension() == test_dim);
 }
 
+TEST_CASE("map_dimension_rebind_discards_vehicle_cache_before_unload") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto original_dim = here.get_bound_dimension();
+    const auto test_dim = dimension_id("map_dimension_rebind_discards_vehicle_cache");
+    const auto cleanup = on_out_of_scope([&]() {
+        g->clear_zombies();
+        here.bind_dimension(original_dim);
+        MAPBUFFER_REGISTRY.unload_dimension(test_dim);
+    });
+
+    here.bind_dimension(test_dim);
+    const auto vehicle_pos = tripoint_bub_ms(g_half_mapsize_x + 2, g_half_mapsize_y, 0);
+    REQUIRE(g->place_critter_at(mtype_id("mon_zombie"), vehicle_pos) != nullptr);
+    auto* const vehicle = here.add_vehicle(vproto_id("none"), vehicle_pos, 0_degrees, 0, 0);
+    REQUIRE(vehicle != nullptr);
+    REQUIRE(vehicle->install_part(tripoint_mnt_veh::zero(), vpart_id("frame_vertical")) >= 0);
+    here.add_vehicle_to_cache(vehicle);
+    here.build_map_cache(0, true);
+
+    CHECK(here.get_cache_ref(0).vehicle_list.contains(vehicle));
+
+    here.bind_dimension(test_dim);
+    CHECK(here.get_cache_ref(0).vehicle_list.contains(vehicle));
+
+    g->clear_zombies();
+    here.bind_dimension(original_dim);
+    CHECK_FALSE(here.get_cache_ref(0).vehicle_list.contains(vehicle));
+    CHECK_FALSE(here.get_cache_ref(0).zone_vehicles.contains(vehicle));
+    MAPBUFFER_REGISTRY.unload_dimension(test_dim);
+    here.build_map_cache(0, true);
+    CHECK(here.get_bound_dimension() == original_dim);
+}
+
 static auto operator<<(std::ostream& os, const ter_id& tid) -> std::ostream& { // *NOPAD*
     os << tid.id().c_str();
     return os;

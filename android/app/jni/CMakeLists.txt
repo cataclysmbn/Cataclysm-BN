@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 project(CataclysmBNAndroid C CXX)
+option(MCP "Build the headless BN MCP client." "OFF")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -8,6 +9,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 get_filename_component(CATA_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
 set(CATA_SRC_DIR "${CATA_SOURCE_DIR}/src")
+list(APPEND CMAKE_MODULE_PATH "${CATA_SOURCE_DIR}/CMakeModules")
+include(CataClientSources)
 
 file(GLOB CATA_ANDROID_SPV_SHADERS CONFIGURE_DEPENDS "${CATA_SOURCE_DIR}/data/shaders/*.spv")
 if(CATA_ANDROID_SPV_SHADERS STREQUAL "")
@@ -23,6 +26,16 @@ endif()
 
 file(GLOB_RECURSE CATACLYSM_BN_SOURCES CONFIGURE_DEPENDS "${CATA_SRC_DIR}/*.cpp")
 list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(lua|sol|third-party)/")
+set(CATA_MAIN_CPP "${CATA_SRC_DIR}/main.cpp")
+set(CLIENT_PLATFORM_CPP
+    "${CATA_SRC_DIR}/platform/client_platform.cpp"
+    "${CATA_SRC_DIR}/platform/client_registry.cpp"
+    "${CATA_SRC_DIR}/platform/client_entry.cpp")
+set(CATA_MESSAGES_CPP "${CATA_SRC_DIR}/messages.cpp")
+set(CATA_MCP_SERVER_CPP "${CATA_SRC_DIR}/mcp_server.cpp")
+list(REMOVE_ITEM CATACLYSM_BN_SOURCES
+    ${CATA_MAIN_CPP} ${CATA_MESSAGES_CPP} ${CATA_MCP_SERVER_CPP} ${CLIENT_PLATFORM_CPP}
+    ${CATA_CLIENT_SOURCES_TO_REMOVE})
 file(GLOB LUA_SOURCES CONFIGURE_DEPENDS "${CATA_SRC_DIR}/lua/*.c")
 file(GLOB SQLITE_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/sqlite3/sqlite3.c")
 file(GLOB CATALUA_BINDINGS_SOURCES CONFIGURE_DEPENDS "${CATA_SRC_DIR}/catalua_bindings*.cpp")
@@ -76,9 +89,10 @@ auto_import_prebuilt_library(SDL3_image "SDL3_image" "libSDL3_image.so")
 auto_import_prebuilt_library(SDL3_mixer "SDL3_mixer" "libSDL3_mixer.so")
 auto_import_prebuilt_library(SDL3_ttf "SDL3_ttf" "libSDL3_ttf.so")
 
-add_library(main SHARED ${CATACLYSM_BN_SOURCES} ${LUA_SOURCES})
+add_library(cataclysm-bn-engine STATIC ${CATACLYSM_BN_SOURCES} ${LUA_SOURCES})
+set_target_properties(cataclysm-bn-engine PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_include_directories(main PUBLIC
+target_include_directories(cataclysm-bn-engine PUBLIC
     "${CATA_SRC_DIR}"
     "${CATA_SRC_DIR}/lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/SDL3/include"
@@ -87,29 +101,64 @@ target_include_directories(main PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/SDL3_ttf/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/libhidapi")
 
-target_compile_definitions(main PRIVATE
+target_compile_definitions(cataclysm-bn-engine PUBLIC
     CATA_SDL=1
-    TILES=1
-    DYNAMIC_ATLAS=1
-    SDL_SOUND=1
     LUA=1
     BACKTRACE=1)
-target_compile_options(main PRIVATE
+target_compile_options(cataclysm-bn-engine PRIVATE
     -Wextra
     -Wall
     -Wno-unknown-warning-option
     -fsigned-char
     -ffast-math)
-target_link_options(main PRIVATE -fuse-ld=lld)
-target_link_libraries(main PRIVATE
-    hidapi
+target_link_options(cataclysm-bn-engine PRIVATE -fuse-ld=lld)
+target_link_libraries(cataclysm-bn-engine PRIVATE
     SDL3
-    SDL3_image
-    SDL3_mixer
-    SDL3_ttf
     sqlite3
-    GLESv1_CM
-    GLESv2
-    dl
-    log
     z)
+
+function(add_android_client target)
+    add_library(${target} OBJECT ${ARGN})
+    set_target_properties(${target} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_link_libraries(${target} PRIVATE cataclysm-bn-engine)
+    target_compile_options(${target} PRIVATE
+        -Wextra -Wall -Wno-unknown-warning-option -fsigned-char -ffast-math)
+endfunction()
+
+add_android_client(cataclysm-bn-platform ${CLIENT_PLATFORM_CPP})
+target_compile_definitions(cataclysm-bn-platform PRIVATE CATA_HAS_TILES)
+add_android_client(cataclysm-bn-client-common ${CATA_CLIENT_COMMON_SOURCES})
+add_android_client(cataclysm-bn-client-audio ${CATA_AUDIO_SOURCES})
+target_compile_definitions(cataclysm-bn-client-audio PRIVATE SDL_SOUND=1)
+target_link_libraries(cataclysm-bn-client-audio PRIVATE SDL3_mixer)
+add_android_client(cataclysm-bn-tiles-client ${CATA_TILES_SOURCES})
+target_compile_definitions(cataclysm-bn-tiles-client PRIVATE TILES=1 DYNAMIC_ATLAS=1)
+target_link_libraries(cataclysm-bn-tiles-client PRIVATE
+    hidapi SDL3 SDL3_image SDL3_ttf GLESv1_CM GLESv2 dl log z)
+
+if (MCP)
+    add_library(cataclysm-bn-mcp-protocol STATIC ${CATA_MCP_SERVER_CPP})
+    set_target_properties(cataclysm-bn-mcp-protocol PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    target_include_directories(cataclysm-bn-mcp-protocol PUBLIC "${CATA_SRC_DIR}")
+    add_android_client(cataclysm-bn-mcp-client ${CATA_MCP_SOURCES})
+    target_compile_definitions(cataclysm-bn-mcp-client PRIVATE CATA_MCP)
+    target_compile_definitions(cataclysm-bn-platform PRIVATE CATA_HAS_MCP)
+endif ()
+
+add_library(main SHARED "${CATA_SRC_DIR}/main.cpp" "${CATA_MESSAGES_CPP}")
+target_include_directories(main PUBLIC
+    "${CATA_SRC_DIR}"
+    "${CATA_SRC_DIR}/lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL3/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL3_image/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL3_mixer/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SDL3_ttf/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/libhidapi")
+target_compile_definitions(main PRIVATE CATA_SDL=1 LUA=1 BACKTRACE=1)
+target_link_libraries(main PRIVATE
+    cataclysm-bn-platform cataclysm-bn-client-common cataclysm-bn-client-audio
+    cataclysm-bn-tiles-client cataclysm-bn-engine
+    hidapi SDL3 SDL3_image SDL3_mixer SDL3_ttf sqlite3 GLESv1_CM GLESv2 dl log z)
+if (MCP)
+    target_link_libraries(main PRIVATE cataclysm-bn-mcp-client cataclysm-bn-mcp-protocol)
+endif ()

@@ -1,4 +1,6 @@
 #include "ui.h"
+#include "client_interaction.h"
+#include "client_presentation.h"
 
 #include <algorithm>
 #include <cassert>
@@ -21,11 +23,6 @@
 #include "string_utils.h"
 #include "ui_manager.h"
 
-#if defined(__ANDROID__)
-#include <SDL3/SDL.h>
-
-#include "options.h"
-#endif
 
 catacurses::window new_centered_win( int nlines, int ncols )
 {
@@ -256,9 +253,9 @@ input_context uilist::create_filter_input_context() const
     ctxt.register_action( "TEXT.HOME" );
     ctxt.register_action( "TEXT.END" );
     ctxt.register_action( "TEXT.DELETE" );
-#if defined( TILES )
-    ctxt.register_action( "TEXT.PASTE" );
-#endif
+    if( game_client::presentation().clipboard_available() ) {
+        ctxt.register_action( "TEXT.PASTE" );
+    }
     ctxt.register_action( "TEXT.INPUT_FROM_FILE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "ANY_INPUT" );
@@ -1068,12 +1065,55 @@ void uilist::query( bool loop, int timeout )
 #endif
 
     do {
-        ret_act = ctxt.handle_input( timeout );
-        const auto event = ctxt.get_raw_input();
+        auto event = input_event{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, [this]() {
+                auto snapshot = game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices,
+                    .title = remove_color_tags( title ),
+                    .message = remove_color_tags( text ),
+                    .allow_cancel = allow_cancel,
+                };
+                snapshot.choices.reserve( fentries.size() );
+                for( const auto entry_index : fentries ) {
+                    const auto &entry = entries[entry_index];
+                    snapshot.choices.push_back( {
+                        .id = "entry:" + std::to_string( entry_index ),
+                        .label = remove_color_tags( entry.txt ),
+                        .description = remove_color_tags( entry.desc ),
+                        .enabled = entry.enabled,
+                        .selectable = entry.enabled || allow_disabled,
+                        .selected = entry_index == selected,
+                        .highlighted = entry_index == selected,
+                    } );
+                }
+                return snapshot;
+            } );
+            ret_act = ctxt.handle_input( timeout );
+            event = ctxt.get_raw_input();
+        }
         keypress = event.get_first_input();
         const auto iter = keymap.find( keypress );
 
-        if( scrollby( scroll_amount_from_action( ret_act ) ) ) {
+        if( event.interaction &&
+            event.interaction->operation == game_client::interaction_operation::cancel ) {
+            ret = UILIST_CANCEL;
+        } else if( event.interaction &&
+                   event.interaction->operation == game_client::interaction_operation::choose ) {
+            const auto choice = std::ranges::find_if( fentries, [&]( const auto entry_index ) {
+                return event.interaction->target_id == "entry:" + std::to_string( entry_index );
+            } );
+            if( choice != fentries.end() ) {
+                selected = *choice;
+                fselected = static_cast<int>( std::distance( fentries.begin(), choice ) );
+                if( callback != nullptr ) {
+                    callback->select( this );
+                }
+                if( entries[selected].enabled || allow_disabled ) {
+                    ret = entries[selected].retval;
+                }
+            }
+        } else if( scrollby( scroll_amount_from_action( ret_act ) ) ) {
             /* nothing */
         } else if( filtering && ret_act == "FILTER" ) {
             inputfilter();
