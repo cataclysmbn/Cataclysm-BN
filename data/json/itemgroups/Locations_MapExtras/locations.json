@@ -1073,6 +1073,7 @@
     "id": "museum_armor_pet",
     "items": [
       [ "chainmail_armor_medium_quadruped", 30 ],
+      [ "plate_armor_medium_quadruped", 30 ],
       [ "leather_armor_medium_quadruped", 30 ],
       [ "leatherbone_armor_medium_quadruped", 30 ],
       [ "saddlebag", 30 ],
