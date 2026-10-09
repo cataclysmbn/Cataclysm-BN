@@ -52,9 +52,6 @@ auto actor_state() -> std::string {
 auto sample(const std::expected<std::string, error>& value) -> void {
     REQUIRE(value);
     CHECK(value->size() <= maximum_inline_bytes);
-    if (std::getenv("BN_WIRE_SCHEMA_SAMPLES") != nullptr) {
-        std::cout << "WIRE_SAMPLE " << *value << '\n';
-    }
 }
 } // namespace
 
