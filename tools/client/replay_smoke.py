@@ -374,16 +374,14 @@ def record_tutorial(command, output, waits):
         walkable = walkable_positions(state)
         frontier = deque([start_key])
         previous = {start_key: None}
-        previous_action = {}
         while frontier:
             current = frontier.popleft()
             for (dx, dy), action in directions:
                 neighbor = (current[0] + dx, current[1] + dy, current[2])
                 if neighbor in walkable and neighbor not in previous:
                     previous[neighbor] = current
-                    previous_action[neighbor] = action
                     frontier.append(neighbor)
-        return start_key, previous, previous_action
+        return start_key, previous
 
     known_walkable = set()
 
@@ -506,7 +504,7 @@ def record_tutorial(command, output, waits):
                        if any(item["type_id"] == type_id for item in tile.get("items", []))]
             if len(matches) > 1:
                 raise RuntimeError(f"Expected one tutorial {type_id!r} tile, found {matches!r}")
-            start_key, previous, _previous_action = live_paths(state)
+            start_key, previous = live_paths(state)
             if len(matches) == 1:
                 match = matches[0]
                 match_key = (match["x"], match["y"], match["z"])
