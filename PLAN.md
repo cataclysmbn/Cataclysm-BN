@@ -56,29 +56,34 @@ there, in what order, and how each step is accepted. Read both at session start,
 Exit: full Tiles and MCP suites on the final tree show no failures other than those reproduced on
 `upstream/main` with the same command.
 
-## Phase 1 — One protocol (M1 completion)
+## Phase 1 — Playable loop first (M1 completion)
 
-Merge 1.0 (interaction) and the removed 2.0 draft (world, presentation) into a single versioned contract.
+Decision 2026-10-10: a working external client comes before presentation events. Design reference:
+`out/lanes/l2/protocol-unification.md` (rev 2); presentation-event parts of it wait for Phase 2.
 
-- One session clock `(epoch, sequence, revision)` for interaction, world and presentation.
-- World values in absolute map-square coordinates with dimension; knowledge states unknown / remembered / visible /
-  sensed decided by engine perception at the logical boundary.
-- Presentation events name game facts (projectile moved, impact, explosion phase, field changed), not Tiles draw
-  kinds (`cursor`, `highlight`, `below`, `line`). Targets accept absolute coordinates; the bubble frame becomes an
-  engine-internal detail.
-- Remove UI-local state from interaction values where it is not engine state (audit `highlighted`, panes, page
-  offset semantics).
+Slice: an external client walks around, looks at cells, picks up and drops items, and uses every existing
+semantic menu, against a live `cataclysm-bn` over stdio.
 
-Acceptance: schema + C++ value tests; a Deno headless consumer negotiates, snapshots, submits a command and
-reconstructs interaction state from a live `cataclysm-bn` process over stdio.
+- Unified protocol `1.0`: one session clock `(epoch, sequence, revision)`; interaction values from today's 1.0
+  (renamed/trimmed per the design); world values (visible and remembered cells, disclosed entities, avatar) in
+  absolute map-square coordinates with dimension, knowledge decided by engine perception.
+- Methods: hello, snapshot/subscribe, interaction choices paging, world cells query, command submit (semantic
+  operations and registered actions such as movement). Push: state-change events after each input boundary.
+- No presentation events, no socket transport, no reconnect in this phase.
 
-## Phase 2 — First vertical slice (M0/M2 → M3)
+Acceptance:
 
-1. Recover the explosion-clock candidate from its archive ref onto the current branch; review logical time +
-   insertion ordinal scheduling against the approved compatibility decision.
-2. Emit engine events for one thrown grenade: throw, projectile steps, landing, fuse, explosion phases, damage,
-   terrain/field changes, in causal order, with visibility decided by the engine.
-3. Tiles renders the same slice from those events with existing effects intact.
+1. A Deno headless consumer drives a live process: negotiate, snapshot, move the avatar N steps, pick up an item
+   through the pickup menu, and its reconstructed state equals a fresh snapshot after every step.
+2. The egui client (separate repo) replaces its fake model with the protocol, shows the real map and inventory,
+   and its kittest suite runs against a recorded engine session.
+3. Full Tiles and MCP suites unchanged versus the Phase 0 baseline.
+
+## Phase 2 — Presentation events (M0/M2 → M3)
+
+The explosion clock (M0/M2) is already on the branch. Emit ordered presentation events for one thrown grenade
+(throw, projectile segments, landing, fuse, explosion phases, damage, field/terrain changes) with engine-decided
+visibility; Tiles renders the same slice with existing effects intact.
 
 Acceptance: the Deno consumer reconstructs the same ordered events the in-process recording sink captured;
 authoritative state and RNG equal with presentation on and off; Tiles capture before/after shows the effects.
