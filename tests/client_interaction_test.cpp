@@ -1751,6 +1751,17 @@ TEST_CASE(
             });
             REQUIRE_FALSE(invalid_length);
             length_error = invalid_length.error();
+            for (const auto* wide : {"\xED\x95\x9C", "\xEF\xBC\x91"}) {
+                const auto invalid_unicode = game_client::resolve_interaction_command({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::fill,
+                    .target_id = snapshot.field->id,
+                    .value = wide,
+                    .submit = true,
+                });
+                REQUIRE_FALSE(invalid_unicode);
+                CHECK(invalid_unicode.error().starts_with("invalid:"));
+            }
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::fill,

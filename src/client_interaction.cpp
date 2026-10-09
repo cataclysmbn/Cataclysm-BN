@@ -347,7 +347,7 @@ auto validate_field_value( const interaction_field &field, const std::string &va
         }
         if( field.type == "integer" ) {
             const auto is_sign = codepoint == '-' && position == 0;
-            if( !is_sign && !isdigit( codepoint ) ) {
+            if( !is_sign && ( codepoint < '0' || codepoint > '9' ) ) {
                 return std::unexpected(
                            "invalid: integer field accepts an optional leading minus and digits" );
             }
