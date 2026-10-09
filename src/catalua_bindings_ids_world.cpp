@@ -1,5 +1,6 @@
 #include "ammo_effect.h"
 #include "catalua_bindings_ids_common.h"
+#include "construction.h"
 #include "magic/magic.h"
 #include "map/mapdata.h"
 #include "monstergenerator.h"
@@ -21,4 +22,5 @@ auto cata::detail::reg_game_ids_world( sol::state &lua ) -> void
     reg_id<ter_t, true>( lua );
     reg_id<trap, true>( lua );
     reg_id<ammo_effect, true>( lua );
+    reg_id<construction, true>( lua );
 }

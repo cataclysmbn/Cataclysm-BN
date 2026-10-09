@@ -70,6 +70,7 @@ class npc;
 class player;
 class query_popup;
 class recipe;
+struct construction;
 class Skill;
 class SkillLevel;
 class SkillLevelMap;
@@ -115,6 +116,9 @@ struct armor_portion_data;
 class vitamin;
 struct explosion_data;
 struct requirement_data;
+struct item_comp;
+struct tool_comp;
+struct quality_requirement;
 class inventory;
 class known_magic;
 struct RGBColor;
@@ -244,6 +248,9 @@ LUNA_VAL( armor_portion_data, "ArmorPortionData" );
 LUNA_VAL( effect, "Effect" );
 LUNA_VAL( explosion_data, "ExplosionData" );
 LUNA_VAL( requirement_data, "RequirementData" );
+LUNA_VAL( item_comp, "ItemComp" );
+LUNA_VAL( tool_comp, "ToolComp" );
+LUNA_VAL( quality_requirement, "QualityRequirement" );
 LUNA_VAL( inventory, "Inventory" );
 LUNA_VAL( bionic, "Bionic" );
 LUNA_VAL( RGBColor, "RGBColor" )
@@ -257,6 +264,7 @@ LUNA_ID( disease_type, "DiseaseType" )
 LUNA_VAL_WITH_ID( enchantment, "Enchantment" )
 LUNA_ID( enchantment_value, "EnchantmentValue" )
 LUNA_ID( enchantment_flag, "EnchantmentFlag" )
+LUNA_ID( construction, "Construction" )
 LUNA_ID( effect_type, "EffectType" )
 LUNA_ID( faction, "Faction" )
 LUNA_ID( field_type, "FieldType" )

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_type_operators.h"
 #include "translations.h"
 #include "type_id.h"
 #include "coordinates.h"
@@ -107,6 +108,8 @@ struct construction {
 
         // Can be built in the dark
         bool dark_craftable = false;
+
+        LUA_TYPE_OPS( construction, id );
 
     private:
         std::string get_time_string() const;
