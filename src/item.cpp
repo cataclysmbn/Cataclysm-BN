@@ -8123,7 +8123,7 @@ double item::bonus_from_enchantments( double base, enchantment_value_id value,
 
 auto item::get_relic_recharge_scheme() const -> std::vector<relic_recharge>
 {
-    auto recharge_schemes = std::vector<relic_recharge>{};
+    auto recharge_schemes = std::vector<relic_recharge> {};
     if( type->relic_data ) {
         recharge_schemes = type->relic_data->get_recharge_scheme();
     }
