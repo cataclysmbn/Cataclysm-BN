@@ -2646,7 +2646,7 @@ item::sound_data item::gun_noise( const bool burst ) const
 
         // Default behavior for normal guns without sound class defined.
     } else if( noise > 0 ) {
-        if( noise < 50 ) {
+        if( noise < 100 ) {
             return { noise, burst ? _( "Brrrip!" ) : _( "plink!" ) };
         } else if( noise < 120 ) {
             return { noise, burst ? _( "Brrrap!" ) : _( "bang!" ) };
