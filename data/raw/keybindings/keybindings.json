@@ -2157,6 +2157,13 @@
   },
   {
     "type": "keybinding",
+    "name": "View Perks",
+    "category": "DEFAULTMODE",
+    "id": "perks",
+    "bindings": [ { "input_method": "keyboard", "key": "CTRL+P" } ]
+  },
+  {
+    "type": "keybinding",
     "name": "Re-layer armor/clothing",
     "category": "DEFAULTMODE",
     "id": "sort_armor",

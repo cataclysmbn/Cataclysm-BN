@@ -9,6 +9,7 @@
 #include "bodypart.h"
 #include "cached_item_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua_icallback_actor.h"
@@ -90,6 +91,7 @@
 #include "string_id_utils.h"
 #include "string_utils.h"
 #include "text_snippets.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
@@ -5035,15 +5037,29 @@ void item::on_wield( player &p, int mv )
     // Update encumbrance in case we were wearing it
     p.flag_encumbrance();
 
-    if( type->iwieldable_callbacks ) {
-        type->iwieldable_callbacks->call_on_wield( p, *this, mv );
+    if( !is_pool_worker_thread() ) {
+        const auto &hook_results = cata::run_hooks( "on_character_wield",
+        [&]( sol::table & params ) {
+            params["who"] = &p;
+            params["item"] = this;
+        } );
+        if( type->iwieldable_callbacks ) {
+            type->iwieldable_callbacks->call_on_wield( p, *this, mv );
+        }
     }
 }
 
 void item::on_unwield( Character &who )
 {
-    if( type->iwieldable_callbacks ) {
-        type->iwieldable_callbacks->call_on_unwield( who, *this );
+    if( !is_pool_worker_thread() ) {
+        const auto &hook_results = cata::run_hooks( "on_character_unwield",
+        [&]( sol::table & params ) {
+            params["who"] = &who;
+            params["item"] = *this;
+        } );
+        if( type->iwieldable_callbacks ) {
+            type->iwieldable_callbacks->call_on_unwield( who, *this );
+        }
     }
 }
 

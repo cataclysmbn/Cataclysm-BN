@@ -798,6 +798,10 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "add_npc_follower", []( npc & p ) { g->add_npc_follower( p.getID() ); } );
     luna::set_fx( lib, "remove_npc_follower", []( npc & p ) { g->remove_npc_follower( p.getID() ); } );
 
+    luna::set_fx( lib, "fling_creature", []( Creature & c, const units::angle & dir, float force,
+    bool controlled ) {
+        g->fling_creature( &c, dir, force, controlled );
+    } );
     DOC( "Register a Lua-defined action menu entry in the in-game action menu." );
     luna::set_fx( lib, "inv_map_splice", []( sol::table opts ) -> item* {
         auto title = opts.get<std::string>( "title" );

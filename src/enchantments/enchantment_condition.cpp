@@ -210,7 +210,8 @@ auto enchantment_condition_lua::check_item_character_condition(
         bool ret = res;
         return ret;
     } catch (std::runtime_error& e) {
-        debugmsg("Failed to run enchantment condition %s for `item_and_character`", name);
+        debugmsg("Failed to run enchantment condition %s for `item_and_character`: %s", name,
+                 e.what());
         return false;
     }
 }
@@ -230,7 +231,7 @@ auto enchantment_condition_lua::check_item_condition(const item& it) const -> bo
         bool ret = res;
         return ret;
     } catch (std::runtime_error& e) {
-        debugmsg("Failed to run enchantment condition %s for `item`", name);
+        debugmsg("Failed to run enchantment condition %s for `item`: %s", name, e.what());
         return false;
     }
 }
@@ -252,7 +253,7 @@ auto enchantment_condition_lua::check_character_condition(
         bool ret = res;
         return ret;
     } catch (std::runtime_error& e) {
-        debugmsg("Failed to run enchantment condition %s for `character`", name);
+        debugmsg("Failed to run enchantment condition %s for `character`: %s", name, e.what());
         return false;
     }
 }
@@ -272,7 +273,7 @@ auto enchantment_condition_lua::check_generic_condition(const bool active) const
         bool ret = res;
         return ret;
     } catch (std::runtime_error& e) {
-        debugmsg("Failed to run enchantment condition %s for `global`", name);
+        debugmsg("Failed to run enchantment condition %s for `global`: %s", name, e.what());
         return false;
     }
 }

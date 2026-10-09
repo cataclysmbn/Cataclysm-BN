@@ -192,6 +192,8 @@ enum action_id : int {
     ACTION_BIONICS,
     /** Open the mutations menu */
     ACTION_MUTATIONS,
+    /** Open the perks menu */
+    ACTION_PERKS,
     /** Open the armor sorting menu */
     ACTION_SORT_ARMOR,
     /** Auto select and attack hostile creature within range */

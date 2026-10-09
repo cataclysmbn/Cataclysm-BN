@@ -18,6 +18,8 @@ constexpr auto hook_names = std::array
     "on_character_try_takeoff",
     "on_character_item_takeoff",
     "on_character_item_wear",
+    "on_character_wield",
+    "on_character_unwield",
     "on_character_wake_up",
     "on_control_npc",
     "on_craft_result",

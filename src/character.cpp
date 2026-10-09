@@ -74,6 +74,7 @@
 #include "overlay_ordering.h"
 #include "overmap/omdata.h"
 #include "overmap/overmapbuffer.h"
+#include "perk.h"
 #include "player.h"
 #include "player_activity.h"
 #include "profession.h"
@@ -404,6 +405,8 @@ static const enchantment_value_id ench_val_WEIGHTMOD_INVENTORY( "WEIGHTMOD_INVEN
 static const enchantment_value_id ench_val_WEIGHTMOD_BIONICS( "WEIGHTMOD_BIONICS" );
 static const enchantment_value_id ench_val_WEIGHTMOD_WEAPON( "WEIGHTMOD_WEAPON" );
 
+static const enchantment_value_id ench_val_SIGHT_RANGE( "SIGHT_RANGE" );
+
 static const enchantment_value_id ench_val_STRENGTH_PERMANENT( "STRENGTH_PERMANENT" );
 static const enchantment_value_id ench_val_DEXTERITY_PERMANENT( "DEXTERITY_PERMANENT" );
 static const enchantment_value_id ench_val_INTELLIGENCE_PERMANENT( "INTELLIGENCE_PERMANENT" );
@@ -590,6 +593,7 @@ void Character::move_operator_common( Character &&source ) noexcept
     cached_time = source.cached_time ;
 
     addictions = std::move( source.addictions );
+    perks = std::move( source.perks );
 
     mounted_creature = std::move( source.mounted_creature );
     mounted_creature_id = source.mounted_creature_id ;
@@ -911,6 +915,8 @@ int Character::sight_range( int light_level ) const
     int range = static_cast<int>( -std::log( get_vision_threshold( static_cast<int>
                                   ( get_map().ambient_light_at( bub_pos() ) ) ) / static_cast<float>( light_level ) ) *
                                   ( 1.0 / LIGHT_TRANSPARENCY_OPEN_AIR ) );
+
+    range += bonus_from_enchantments( range, ench_val_SIGHT_RANGE );
 
     // Clamp to [1, sight_max].
     return clamp( range, 1, sight_max );
@@ -2589,6 +2595,26 @@ int Character::get_mod_stat_from_bionic( const character_stat &Stat ) const
         }
     }
     return ret;
+}
+
+std::vector<perk_id> Character::get_perks() const
+{
+    return perks | std::ranges::to<std::vector>();
+}
+
+void Character::add_perk( const perk_id &perk )
+{
+    perks.insert( perk );
+}
+
+void Character::remove_perk( const perk_id &perk )
+{
+    perks.erase( perk );
+}
+
+bool Character::has_perk( const perk_id &perk ) const
+{
+    return perks.contains( perk );
 }
 
 detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
@@ -9437,6 +9463,15 @@ void Character::recalculate_enchantment_cache()
             }
         }
     }
+
+    for( const auto &perk_id : get_perks() ) {
+        for( const enchantment &ench : perk_id->get_enchantments() ) {
+            if( ench.is_active( *this, true ) ) {
+                enchantment_cache->force_add( ench );
+            }
+        }
+    }
+
     enchantment_cache->activate_effects( *this );
     enchantment_cache->deactivate_removed_effects( *this, old_ench_sources );
 

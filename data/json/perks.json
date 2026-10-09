@@ -1,0 +1,10 @@
+[
+  {
+    "id": "PROF_DICEMASTER",
+    "type": "perk",
+    "name": "Dungeon Master",
+    "description": "Weeks spent picking through manuals and researching topics you aren't versed in has taught you to find what you need to know more quickly.  You read slightly faster, and suffer no reading time penalty for books too complex for you to easily understand.",
+    "category": "Profession",
+    "enchantments": [ { "flags": [ "NO_READING_COMPLEXITY_PENALTY" ] } ]
+  }
+]
