@@ -5307,6 +5307,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
             tagtext += _( " (scanned)" );
         }
     }
+    if( const auto paint = iuse_paint_stuff::try_get_paint_color( *this ); paint && *paint != RGBColor{} ) {
+        tagtext += string_format( " (%s)", paint->friendly_name() );
+    }
     if( has_flag( flag_ETHEREAL_ITEM ) ) {
         tagtext += string_format( _( " (%s turns)" ), get_var( "ethereal" ) );
     } else if( goes_bad() || is_food() ) {
