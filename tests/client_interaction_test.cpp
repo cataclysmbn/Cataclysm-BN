@@ -332,19 +332,6 @@ struct trade_fixture_guard {
     }
 };
 
-auto find_trade_choice(
-    const game_client::interaction_snapshot& snapshot, const std::string& type,
-    const std::string& role) {
-    const auto pane = std::ranges::find(snapshot.panes, role, &game_client::interaction_pane::role);
-    REQUIRE(pane != snapshot.panes.end());
-    return std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-        return choice.pane_id == pane->id
-            && std::ranges::any_of(choice.columns, [&](const auto& column) {
-                   return column.label == "Type" && column.value == type;
-               });
-    });
-}
-
 auto find_choice_type(
     const game_client::interaction_snapshot& snapshot, const std::string& type,
     const std::string& role) {
@@ -430,10 +417,10 @@ TEST_CASE(
         CHECK(std::ranges::count(snapshot.panes, "player", &game_client::interaction_pane::role)
               == 1);
         CHECK(snapshot.message.find("acceptable") != std::string::npos);
-        CHECK(find_trade_choice(snapshot, "test_fire_ax", "player") == snapshot.choices.end());
+        CHECK(find_choice_type(snapshot, "test_fire_ax", "player") == snapshot.choices.end());
         if (step == 0) {
-            const auto charges = find_trade_choice(snapshot, "test_platinum_bit", "npc");
-            const auto pipes = find_trade_choice(snapshot, "test_pipe", "player");
+            const auto charges = find_choice_type(snapshot, "test_platinum_bit", "npc");
+            const auto pipes = find_choice_type(snapshot, "test_pipe", "player");
             REQUIRE(charges != snapshot.choices.end());
             REQUIRE(pipes != snapshot.choices.end());
             CHECK(charges->available_count == 10);
@@ -467,8 +454,8 @@ TEST_CASE(
             });
         }
         if (step == 1) {
-            const auto charges = find_trade_choice(snapshot, "test_platinum_bit", "npc");
-            const auto pipes = find_trade_choice(snapshot, "test_pipe", "player");
+            const auto charges = find_choice_type(snapshot, "test_platinum_bit", "npc");
+            const auto pipes = find_choice_type(snapshot, "test_pipe", "player");
             REQUIRE(charges != snapshot.choices.end());
             REQUIRE(pipes != snapshot.choices.end());
             CHECK(charges->selected);
@@ -482,8 +469,8 @@ TEST_CASE(
             });
         }
         if (step == 2) {
-            const auto charges = find_trade_choice(snapshot, "test_platinum_bit", "npc");
-            const auto pipes = find_trade_choice(snapshot, "test_pipe", "player");
+            const auto charges = find_choice_type(snapshot, "test_platinum_bit", "npc");
+            const auto pipes = find_choice_type(snapshot, "test_pipe", "player");
             REQUIRE(charges != snapshot.choices.end());
             REQUIRE(pipes != snapshot.choices.end());
             CHECK(charges->selected_count == 3);
@@ -498,7 +485,7 @@ TEST_CASE(
             });
         }
         if (step == 3) {
-            const auto charges = find_trade_choice(snapshot, "test_platinum_bit", "npc");
+            const auto charges = find_choice_type(snapshot, "test_platinum_bit", "npc");
             REQUIRE(charges != snapshot.choices.end());
             CHECK_FALSE(charges->selected);
             CHECK(charges->selected_count == 0);
@@ -506,9 +493,8 @@ TEST_CASE(
             return resolve_action("FILTER");
         }
         if (step == 5) {
-            CHECK(
-                find_trade_choice(snapshot, "test_platinum_bit", "npc") == snapshot.choices.end());
-            CHECK(find_trade_choice(snapshot, "test_pipe", "player") != snapshot.choices.end());
+            CHECK(find_choice_type(snapshot, "test_platinum_bit", "npc") == snapshot.choices.end());
+            CHECK(find_choice_type(snapshot, "test_pipe", "player") != snapshot.choices.end());
             CHECK(std::ranges::none_of(snapshot.choices, [&](const auto& choice) {
                 return choice.id == hidden_id;
             }));
@@ -530,7 +516,7 @@ TEST_CASE(
             return resolve_action("RESET_FILTER");
         }
         if (step == 6) {
-            const auto singleton = find_trade_choice(snapshot, "test_halligan", "npc");
+            const auto singleton = find_choice_type(snapshot, "test_halligan", "npc");
             REQUIRE(singleton != snapshot.choices.end());
             CHECK(singleton->available_count == 1);
             CHECK_FALSE(singleton->selected);
@@ -542,7 +528,7 @@ TEST_CASE(
             });
         }
         if (step == 7) {
-            const auto singleton = find_trade_choice(snapshot, "test_halligan", "npc");
+            const auto singleton = find_choice_type(snapshot, "test_halligan", "npc");
             REQUIRE(singleton != snapshot.choices.end());
             CHECK(singleton->selected_count == 1);
             step = 8;
@@ -553,7 +539,7 @@ TEST_CASE(
             });
         }
         REQUIRE(step == 8);
-        const auto singleton = find_trade_choice(snapshot, "test_halligan", "npc");
+        const auto singleton = find_choice_type(snapshot, "test_halligan", "npc");
         REQUIRE(singleton != snapshot.choices.end());
         CHECK(singleton->selected_count == 0);
         step = 9;
@@ -595,7 +581,7 @@ TEST_CASE(
                 .submit = true,
             });
         }
-        const auto target = find_trade_choice(snapshot, "test_platinum_bit", "npc");
+        const auto target = find_choice_type(snapshot, "test_platinum_bit", "npc");
         REQUIRE(target != snapshot.choices.end());
         if (step == 0) {
             CHECK(target->selected_count == 0);
@@ -653,7 +639,7 @@ TEST_CASE(
         const auto snapshot = game_client::current_interaction({.limit = 200});
         if (snapshot.context == "NPC_TRADE") {
             if (step == 0) {
-                const auto target = find_trade_choice(snapshot, "test_pipe", "npc");
+                const auto target = find_choice_type(snapshot, "test_pipe", "npc");
                 REQUIRE(target != snapshot.choices.end());
                 step = 1;
                 return resolve({
@@ -708,7 +694,7 @@ TEST_CASE(
             const auto snapshot = game_client::current_interaction({.limit = 200});
             if (snapshot.context == "NPC_TRADE") {
                 if (step == 0) {
-                    const auto target = find_trade_choice(snapshot, "test_pipe", "npc");
+                    const auto target = find_choice_type(snapshot, "test_pipe", "npc");
                     REQUIRE(target != snapshot.choices.end());
                     step = 1;
                     return resolve({
@@ -758,7 +744,7 @@ TEST_CASE(
             if (snapshot.context == "NPC_TRADE") {
                 if (step == 0) {
                     const auto target =
-                        find_trade_choice(snapshot, "test_overweight_cube", "player");
+                        find_choice_type(snapshot, "test_overweight_cube", "player");
                     REQUIRE(target != snapshot.choices.end());
                     step = 1;
                     return resolve({
@@ -817,7 +803,7 @@ TEST_CASE(
             const auto snapshot = game_client::current_interaction({.limit = 200});
             if (snapshot.context == "NPC_TRADE") {
                 if (step == 0) {
-                    const auto target = find_trade_choice(snapshot, "test_pipe", "npc");
+                    const auto target = find_choice_type(snapshot, "test_pipe", "npc");
                     REQUIRE(target != snapshot.choices.end());
                     step = 1;
                     return resolve({
