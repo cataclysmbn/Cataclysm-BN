@@ -38,7 +38,11 @@ class session final : public command_authority
         std::optional<input_event> validated_input_;
         std::optional<event_stream> stream_;
         std::optional<public_event> event_;
+        /// Fixed view of the event stream; shrinks to one row when a boundary cannot be published.
+        projection reference_;
         auto capture( projection page ) const -> std::expected<state_value, error>;
+        auto publish_candidate() -> std::expected<void, error>;
+        auto restart_epoch() -> void;
         auto refresh_result() -> void;
 };
 

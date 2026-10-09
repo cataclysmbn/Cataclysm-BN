@@ -43,7 +43,7 @@ auto session::interrupt() -> void
     validated_input_.reset();
 }
 
-auto session::replace_world() -> void
+auto session::restart_epoch() -> void
 {
     interrupt();
     retired_ = active_;
@@ -54,6 +54,12 @@ auto session::replace_world() -> void
     active_.reset();
     stream_.reset();
     event_.reset();
+}
+
+auto session::replace_world() -> void
+{
+    restart_epoch();
+    reference_ = {};
 }
 
 auto session::capture( const projection page ) const -> std::expected<state_value, error>
@@ -70,27 +76,47 @@ auto session::capture( const projection page ) const -> std::expected<state_valu
     } );
 }
 
-auto session::publish_boundary() -> std::expected<void, error>
+auto session::publish_candidate() -> std::expected<void, error>
 {
-    // Startup language/debug prompts are genuine native input boundaries, not engine readiness.
-    if( phase_ == "starting" ) { phase_ = "menu"; }
-    const auto candidate = capture( {} );
+    const auto candidate = capture( reference_ );
     if( !candidate ) { return std::unexpected( candidate.error() ); }
     event_.reset();
     if( !stream_ ) {
         auto created = event_stream::create( { .session_epoch = epoch_, .state = *candidate } );
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
-    } else {
-        auto sink = null_event_sink{};
-        auto replacement = engine_client::replacement{ .state = *candidate };
-        if( active_ && active_->stage == command_stage::executing ) {
-            replacement.command_id = active_->command_id;
-        }
-        auto published = stream_->replace( disclosure::publish, std::move( replacement ), sink );
-        if( !published ) { return std::unexpected( published.error() ); }
-        event_ = std::move( *published );
+        return {};
     }
+    auto sink = null_event_sink{};
+    auto replacement = engine_client::replacement{ .state = *candidate };
+    if( active_ && active_->stage == command_stage::executing ) {
+        replacement.command_id = active_->command_id;
+    }
+    auto published = stream_->replace( disclosure::publish, std::move( replacement ), sink );
+    if( published ) {
+        event_ = std::move( *published );
+        return {};
+    }
+    // The snapshot fits but its event envelope does not: clients resynchronize from a snapshot.
+    if( published.error() != error::resource_limit ) { return std::unexpected( published.error() ); }
+    const auto resynchronized = stream_->resynchronize( disclosure::publish, *candidate );
+    if( !resynchronized ) { return std::unexpected( resynchronized.error() ); }
+    return {};
+}
+
+auto session::publish_boundary() -> std::expected<void, error>
+{
+    // Startup language/debug prompts are genuine native input boundaries, not engine readiness.
+    if( phase_ == "starting" ) { phase_ = "menu"; }
+    auto published = publish_candidate();
+    if( !published && published.error() == error::resource_limit && reference_.limit > 1 ) {
+        // An oversized default page must not end the session. The reference view is fixed per
+        // stream, so a one-row view starts a new epoch; clients still page their own views.
+        reference_.limit = 1;
+        if( stream_ ) { restart_epoch(); }
+        published = publish_candidate();
+    }
+    if( !published ) { return published; }
     if( active_ && active_->stage == command_stage::executing ) {
         const auto completed = lifecycle_->complete_at_boundary( stream_->current_snapshot() );
         if( !completed && completed.error() != error::invalid_lifecycle ) {

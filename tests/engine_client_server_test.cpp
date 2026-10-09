@@ -10,6 +10,8 @@
 #    include <algorithm>
 #    include <sstream>
 #    include <streambuf>
+#    include <string>
+#    include <utility>
 #    include <vector>
 
 namespace {
@@ -62,6 +64,32 @@ struct input_boundary {
             };
         }};
     input_boundary() {
+        context.register_action("YES");
+        game_client::begin_input_boundary();
+    }
+};
+
+/// One hundred choices make the default 100-row page exceed the inline limit when sized large.
+struct wide_boundary {
+    input_context context{"YESNO"};
+    std::size_t description_bytes;
+    std::string label;
+    game_client::input_context_scope input{context, "YESNO"};
+    game_client::interaction_scope interaction{
+        context, [this] {
+            auto value = game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices, .allow_cancel = true};
+            for (auto i = 0; i < 100; ++i) {
+                value.choices.push_back(
+                    {.id = "choice:" + std::to_string(i),
+                     .label = label,
+                     .description = std::string(description_bytes, 'x')});
+            }
+            return value;
+        }};
+    explicit wide_boundary(const std::size_t bytes, std::string text = "Choice")
+        : description_bytes{bytes},
+          label{std::move(text)} {
         context.register_action("YES");
         game_client::begin_input_boundary();
     }
@@ -243,6 +271,63 @@ TEST_CASE(
     REQUIRE(completed);
     REQUIRE(completed->completed);
     CHECK(completed->completed->state_revision > initial->state_revision);
+}
+
+TEST_CASE(
+    "oversized default page publishes a one-row reference instead of failing the session",
+    "[engine_client_server]") {
+    auto boundary = wide_boundary{3000};
+    auto authority = engine_client::session{};
+    REQUIRE(authority.publish_boundary());
+    const auto one_row = authority.read_snapshot({.offset = 0, .limit = 1});
+    REQUIRE(one_row);
+    CHECK(one_row->state.interaction->choices.size() == 1);
+    const auto default_page = authority.read_snapshot({});
+    REQUIRE_FALSE(default_page);
+    CHECK(default_page.error() == engine_client::error::resource_limit);
+}
+
+TEST_CASE(
+    "oversized later boundary starts a new epoch and keeps the session alive",
+    "[engine_client_server]") {
+    auto authority = engine_client::session{};
+    auto first_epoch = std::string{};
+    {
+        auto small = input_boundary{};
+        REQUIRE(authority.publish_boundary());
+        first_epoch = authority.epoch();
+    }
+    auto wide = wide_boundary{3000};
+    REQUIRE(authority.publish_boundary());
+    CHECK(authority.epoch() != first_epoch);
+    REQUIRE(authority.read_snapshot({.offset = 0, .limit = 1}));
+}
+
+TEST_CASE(
+    "boundary whose event envelope overflows resynchronizes from a snapshot",
+    "[engine_client_server]") {
+    auto resynchronized = 0;
+    for (auto bytes = std::size_t{2400}; bytes < 2700; bytes += 4) {
+        auto authority = engine_client::session{};
+        const auto epoch = authority.epoch();
+        auto before_revision = engine_client::counter{};
+        {
+            auto narrow = wide_boundary{bytes - 100, "Before"};
+            REQUIRE(authority.publish_boundary());
+            const auto before = authority.read_snapshot({.offset = 0, .limit = 1});
+            REQUIRE(before);
+            before_revision = before->state_revision;
+        }
+        auto wide = wide_boundary{bytes, "After"};
+        const auto published = authority.publish_boundary();
+        REQUIRE(published);
+        const auto after = authority.read_snapshot({.offset = 0, .limit = 1});
+        REQUIRE(after);
+        // Past the page limit the session restarts its epoch, which has no earlier revision.
+        if (authority.epoch() == epoch) { CHECK(after->state_revision > before_revision); }
+        if (!authority.latest_event()) { ++resynchronized; }
+    }
+    CHECK(resynchronized > 0);
 }
 
 TEST_CASE(
