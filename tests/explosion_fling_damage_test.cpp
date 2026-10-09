@@ -22,6 +22,7 @@ TEST_CASE(
     "[explosion][npc]["
     "avatar]") {
     clear_all_state();
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
     override_option opt("OLD_EXPLOSIONS", "false");
     clear_map();
     move_player_out_of_the_way();

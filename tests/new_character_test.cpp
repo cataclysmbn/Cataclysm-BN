@@ -190,6 +190,7 @@ TEST_CASE("scenario_reset_preserves_or_defaults_hair_style", "[new_character][sc
 
 TEST_CASE("starting_items", "[slow]") {
     clear_all_state();
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
     // Every starting trait that interferes with food/clothing
     const std::vector<trait_id> mutations =
         {trait_id("ANTIFRUIT"), trait_id("ANTIJUNK"), trait_id("ANTIWHEAT"),
