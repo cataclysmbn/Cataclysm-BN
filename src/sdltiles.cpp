@@ -4207,11 +4207,6 @@ auto game_client::tiles::to_overmap_font_dimension( int &w, int &h ) -> void
     h = ( h * fontheight ) / overmap_font_height();
 }
 
-auto game_client::tiles::is_draw_tiles_mode() -> bool
-{
-    return use_tiles;
-}
-
 auto game_client::tiles::project_input_coordinates( const point coordinate,
         const catacurses::window &capture_window_ ) -> std::optional<tripoint_bub_ms>
 {

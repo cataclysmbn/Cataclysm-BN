@@ -71,7 +71,6 @@ auto to_map_font_dim_height( int &height ) -> void;
 auto to_map_font_dimension( int &width, int &height ) -> void;
 auto from_map_font_dimension( int &width, int &height ) -> void;
 auto to_overmap_font_dimension( int &width, int &height ) -> void;
-auto is_draw_tiles_mode() -> bool;
 } // namespace game_client::tiles
 
 #endif // TILES
