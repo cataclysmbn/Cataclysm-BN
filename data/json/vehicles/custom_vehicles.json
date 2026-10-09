@@ -347,10 +347,10 @@
       { "x": 0, "y": 1, "chance": 10, "item_groups": "car_misc" },
       { "x": -3, "y": 0, "chance": 10, "item_groups": "car_kit" },
       { "x": -3, "y": 0, "chance": 8, "item_groups": "fuel_diesel" },
-      { "x": -2, "y": 0, "chance": 40, "items": [ "762_54R" ] },
-      { "x": -2, "y": 0, "chance": 20, "items": [ "762_54R", "762_54R" ] },
-      { "x": -2, "y": 0, "chance": 10, "items": [ "762_54R", "762_54R" ] },
-      { "x": -2, "y": 0, "chance": 5, "items": [ "762_54R", "762_54R" ] }
+      { "x": -2, "y": 0, "chance": 40, "item_groups": [ "on_hand_762R" ] },
+      { "x": -2, "y": 0, "chance": 20, "item_groups": [ "on_hand_762R", "on_hand_762R" ] },
+      { "x": -2, "y": 0, "chance": 10, "item_groups": [ "on_hand_762R", "on_hand_762R" ] },
+      { "x": -2, "y": 0, "chance": 5, "item_groups": [ "on_hand_762R", "on_hand_762R" ] }
     ]
   },
   {
