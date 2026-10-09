@@ -245,40 +245,6 @@ void draw_custom_explosion_curses( game &g,
     }
 }
 
-[[maybe_unused]]
-auto get_bullet_dir( const std::vector<tripoint_bub_ms> &trajectory, size_t i ) -> direction
-{
-    return i == 0 && trajectory.size() > 1 ?
-           direction_from( trajectory[i], trajectory[i + 1] ) :
-           ( i >= 1 && i < trajectory.size() ) ?
-           direction_from( trajectory[i - 1], trajectory[i] ) :
-           direction::NORTH;
-}
-
-[[maybe_unused]] auto get_bullet_rotation( direction dir ) -> int
-{
-    switch( dir ) {
-        case direction::NORTH:
-            return 0;
-        case direction::NORTHEAST:
-            return 5;
-        case direction::EAST:
-            return 3;
-        case direction::SOUTHEAST:
-            return 8;
-        case direction::SOUTH:
-            return 2;
-        case direction::SOUTHWEST:
-            return 7;
-        case direction::WEST:
-            return 1;
-        case direction::NORTHWEST:
-            return 6;
-        default:
-            return 0;
-    }
-}
-
 } // namespace
 
 void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, const nc_color &col,
@@ -928,12 +894,11 @@ void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_m
         return;
     }
 
-    bucketed_points buckets = bucket_by_distance( origin, aoe );
-    // That hardcoded value could be improved... Not sure about the name
-    size_t max_bucket_count = std::min<size_t>( 10, aoe.size() );
-    bucketed_points waves = optimal_bucketing( buckets, max_bucket_count );
-
     if( !game_client::animation().draw_cone_aoe( { .origin = origin, .coverage = &aoe } ) ) {
+        bucketed_points buckets = bucket_by_distance( origin, aoe );
+        // That hardcoded value could be improved... Not sure about the name
+        size_t max_bucket_count = std::min<size_t>( 10, aoe.size() );
+        bucketed_points waves = optimal_bucketing( buckets, max_bucket_count );
         draw_cone_aoe_curses( origin, waves );
     }
 }
