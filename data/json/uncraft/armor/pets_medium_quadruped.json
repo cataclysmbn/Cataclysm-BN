@@ -27,6 +27,15 @@
     "components": [ [ [ "link_sheet", 18 ] ], [ [ "leather", 3 ] ], [ [ "chain_link", 458 ] ] ]
   },
   {
+    "result": "plate_armor_medium_quadruped",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "100 s",
+    "qualities": [ { "id": "SAW_M_FINE", "level": 1 } ],
+    "components": [ [ [ "steel_armor", 16 ] ], [ [ "leather", 3 ] ] ]
+  },
+  {
     "result": "leather_armor_medium_quadruped",
     "type": "uncraft",
     "skill_used": "tailor",
