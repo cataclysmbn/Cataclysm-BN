@@ -320,4 +320,52 @@ TEST_CASE(
     CHECK(trader.amount_of(type) == 1);
 }
 
+TEST_CASE(
+    "trade choice identities do not repair stale ownership of stack members",
+    "[client][interaction][npc_trade][trade_observation][observation][mcp]") {
+    const auto fixture = trade_observation_fixture{};
+    auto& manager = *g->faction_manager_ptr;
+    const auto restore_factions = restore_on_out_of_scope<faction_manager>{std::move(manager)};
+    manager.create_if_needed();
+    const auto cleanup_npcs = on_out_of_scope([]() {
+        game_client::memory::set_input_provider({});
+        test_mode = true;
+        clear_all_state();
+    });
+    auto& trader = spawn_npc(trade_pos + tripoint_south, "test_talker");
+    clear_character(trader, false);
+    trader.set_fac(faction_id("tacoma_commune"));
+    trader.mission = NPC_MISSION_SHOPKEEP;
+    auto first = item::spawn("test_info_jersey", calendar::turn);
+    auto second = item::spawn("test_info_jersey", calendar::turn);
+    first->set_owner(trader);
+    second->set_owner(trader);
+    auto& stale_member = trader.i_add(std::move(second));
+    trader.i_add(std::move(first));
+    auto state = npc_trading::trade_state{};
+    npc_trading::setup_trade_state(state, 0, trader);
+    REQUIRE(state.theirs.size() == 1);
+    REQUIRE(state.theirs.front().locs.size() == 2);
+    // Native setup validates only the stack's first member; install the defect after it.
+    stale_member.set_old_owner(faction_id("test_info_missing_previous_owner"));
+    const auto stale_before = saved(stale_member);
+    REQUIRE(stale_before.find("test_info_missing_previous_owner") != std::string::npos);
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        ++reads;
+        const auto authority_before = nearby_authority();
+        const auto rng_before = rng_get_engine();
+        const auto first_snapshot = game_client::current_interaction({.limit = 200});
+        REQUIRE(first_snapshot.context == "NPC_TRADE");
+        CHECK(saved(stale_member) == stale_before);
+        CHECK(nearby_authority() == authority_before);
+        CHECK(rng_get_engine() == rng_before);
+        CHECK(game_client::serialize_interaction(game_client::current_interaction({.limit = 200}))
+              == game_client::serialize_interaction(first_snapshot));
+        return action("QUIT");
+    });
+    CHECK_FALSE(trading_window(state).perform_trade(trader, "Trade"));
+    CHECK(reads == 1);
+}
+
 #endif

@@ -26,6 +26,7 @@
 #include "itype.h"
 #include "npc.h"
 #include "output.h"
+#include "ownership_observation.h"
 #include "player.h"
 #include "point.h"
 #include "string_formatter.h"
@@ -80,7 +81,7 @@ auto trade_item_source_identity( const item &candidate ) -> std::string
         position = string_format( "%d:%d:%d", pos.x(), pos.y(), pos.z() );
     }
     return string_format( "%d:%s:%s", static_cast<int>( candidate.where() ), position,
-                          candidate.get_owner().str() );
+                          item_owner_for_observation( candidate ).str() );
 }
 
 auto trade_item_identity( const item &candidate ) -> std::string

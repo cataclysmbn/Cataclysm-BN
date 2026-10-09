@@ -287,6 +287,7 @@ class item : public location_visitable<item>, public game_object<item>
         friend item &null_item_reference();
         friend auto item_available_for_crafting_observation( const item &value,
                 const Character &actor ) -> bool;
+        friend auto item_owner_for_observation( const item &value ) -> faction_id;
 
         ~item();
         void on_destroy();

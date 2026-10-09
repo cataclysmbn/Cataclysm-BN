@@ -19,3 +19,10 @@ auto item_available_for_crafting_observation( const item &value, const Character
     // Compare the stored owner ID, as native is_owned_by does, not the metadata's runtime ID.
     return ( actor_id && *actor_id == value.owner ) || owner->likes_u < -10;
 }
+
+auto item_owner_for_observation( const item &value ) -> faction_id
+{
+    const auto missing = !value.owner.is_null() &&
+                         !g->faction_manager_ptr->get_for_display( value.owner );
+    return missing ? faction_id::NULL_ID() : value.owner;
+}
