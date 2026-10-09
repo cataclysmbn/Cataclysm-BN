@@ -289,6 +289,36 @@ void charge_watcher_tile::load( JsonObject &jo )
     jo.read( "transform", transform );
 }
 
+namespace
+{
+auto can_recharge( const item &n ) -> bool { return n.has_flag( flag_RECHARGE ) || n.has_flag( flag_USE_UPS ); }
+auto needs_charge( const item &n ) -> bool
+{
+    return n.ammo_capacity() > n.ammo_remaining() ||
+           ( n.type->battery && n.type->battery->max_capacity > n.energy_remaining() );
+}
+} // namespace
+
+auto charger_tile::is_charging( const tripoint_abs_ms &p, mapbuffer &mb ) const -> bool
+{
+    const auto split = project_remain<coords::sm>( p );
+    const submap *sm = mb.lookup_submap( split.quotient_tripoint );
+    if( sm == nullptr ) {
+        return false;
+    }
+    return std::ranges::any_of( sm->get_items( split.remainder ), []( const auto & outer ) {
+        auto found = false;
+        outer->visit_items( [&found]( const item * it ) {
+            if( !can_recharge( *it ) ) {
+                return VisitResponse::NEXT;
+            }
+            found = needs_charge( *it );
+            return found ? VisitResponse::ABORT : VisitResponse::SKIP;
+        } );
+        return found;
+    } );
+}
+
 void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
                                     distribution_grid &grid )
 {
@@ -305,11 +335,10 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
     for( item *const outer : sm->get_items( p_within_sm ) ) {
         outer->visit_items( [&power, &grid]( item * it ) {
             item &n = *it;
-            if( !n.has_flag( flag_RECHARGE ) && !n.has_flag( flag_USE_UPS ) ) {
+            if( !can_recharge( n ) ) {
                 return VisitResponse::NEXT;
             }
-            if( n.ammo_capacity() > n.ammo_remaining() ||
-                ( n.type->battery && n.type->battery->max_capacity > n.energy_remaining() ) ) {
+            if( needs_charge( n ) ) {
                 while( power >= 1000 || x_in_y( power, 1000 ) ) {
                     const int missing = grid.mod_resource( -1 );
                     if( missing == 0 ) {

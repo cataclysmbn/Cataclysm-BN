@@ -57,6 +57,8 @@ class charger_tile : public active_tile_data
         /* In W */
         int power;
 
+        /// True if an item on tile `p` can accept charge, i.e. the charger actually draws power.
+        auto is_charging( const tripoint_abs_ms &p, mapbuffer &mb ) const -> bool;
         void update_internal( time_point to, const tripoint_abs_ms &p, distribution_grid &grid ) override;
         active_tile_data *clone() const override;
         const std::string &get_type() const override;

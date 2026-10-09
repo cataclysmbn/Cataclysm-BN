@@ -229,7 +229,7 @@ auto distribution_grid::get_power_stat_local() const -> power_stat
         const auto &pos = loc.absolute;
 
         if( auto *s = active_tiles::furn_at<solar_tile>( pos, mb ) ) { return to_stat( s->get_power_w() ); }
-        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( -c->power ); }
+        if( auto *c = active_tiles::furn_at<charger_tile>( pos, mb ) ) { return to_stat( c->is_charging( pos, mb ) ? -c->power : 0 ); }
         if( auto *sc = active_tiles::furn_at<steady_consumer_tile>( pos, mb ) ) { return to_stat( -sc->power ); }
         if( auto *vc = active_tiles::furn_at<vehicle_connector_tile>( pos, mb ) ) { return get_vehicle_stats( vc ); }
 
