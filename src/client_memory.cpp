@@ -51,21 +51,6 @@ auto resize_window( const catacurses::window &window, const int width, const int
     native->draw = true;
 }
 
-auto color_palette() -> std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> &
-{
-    static auto palette = std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> {
-        {
-            RGBColor{0, 0, 0, 255}, RGBColor{196, 0, 0, 255}, RGBColor{0, 196, 0, 255},
-            RGBColor{196, 180, 30, 255}, RGBColor{0, 0, 196, 255}, RGBColor{196, 0, 180, 255},
-            RGBColor{0, 170, 200, 255}, RGBColor{196, 196, 196, 255}, RGBColor{80, 80, 80, 255},
-            RGBColor{255, 80, 80, 255}, RGBColor{80, 255, 80, 255}, RGBColor{255, 255, 80, 255},
-            RGBColor{80, 80, 255, 255}, RGBColor{255, 80, 255, 255}, RGBColor{80, 255, 255, 255},
-            RGBColor{255, 255, 255, 255}
-        }
-    };
-    return palette;
-}
-
 } // namespace
 
 namespace game_client::memory
@@ -97,7 +82,8 @@ auto initialize( const int width, const int height ) -> void
     resize( width, height );
     catacurses::stdscr = catacurses::newwin( height, width, point_zero );
     catacurses::newscr = catacurses::newwin( height, width, point_zero );
-    color_loader<RGBColor>().load( color_palette() );
+    auto palette = std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> {};
+    color_loader<RGBColor>().load( palette );
     init_colors();
 }
 
@@ -219,17 +205,6 @@ auto read_input() -> input_event
     auto result = input_event{};
     result.type = state().timeout > 0 ? input_event_t::timeout : input_event_t::error;
     return result;
-}
-
-auto color_to_rgb( const nc_color &color ) -> RGBColor
-{
-    const auto pair_id = color.to_color_pair_index();
-    const auto &pair = cata_cursesport::colorpairs[std::clamp( pair_id, 0, 99 )];
-    auto palette_index =
-        pair.FG != catacurses::black ? static_cast<int>( pair.FG ) : static_cast<int>( pair.BG );
-    if( color.is_bold() ) { palette_index += color_loader<RGBColor>::COLOR_NAMES_COUNT / 2; }
-    return color_palette()[std::clamp(
-                               palette_index, 0, static_cast<int>( color_loader<RGBColor>::COLOR_NAMES_COUNT ) - 1 )];
 }
 
 } // namespace game_client::memory

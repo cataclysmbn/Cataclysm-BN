@@ -10,8 +10,6 @@
 #include <string>
 #include <unordered_map>
 
-class nc_color;
-struct RGBColor;
 namespace catacurses
 {
 class window;
@@ -39,7 +37,7 @@ class backend
 {
     public:
         virtual ~backend() = default;
-        virtual auto native_window_handle() const -> void * { return nullptr; }
+        virtual auto native_window_handle() const -> void* { return nullptr; }
 
         /// Performs client setup that must happen after selection and before game data loads.
         virtual auto prepare() -> void {}
@@ -98,7 +96,6 @@ namespace curses
 {
 auto draw_window_native( const catacurses::window &window ) -> void;
 auto clear_window_native( const catacurses::window &window ) -> void;
-auto color_to_RGB_native( const nc_color &color ) -> RGBColor;
 auto initialize_native() -> void;
 auto shutdown_native() -> void;
 auto present_native() -> void;
@@ -115,7 +112,6 @@ namespace mcp
 {
 auto draw_window_native( const catacurses::window &window ) -> void;
 auto clear_window_native( const catacurses::window &window ) -> void;
-auto color_to_RGB_native( const nc_color &color ) -> RGBColor;
 auto initialize_native() -> void;
 auto shutdown_native() -> void;
 auto present_native() -> void;

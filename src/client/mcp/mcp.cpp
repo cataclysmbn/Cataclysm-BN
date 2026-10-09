@@ -5,7 +5,6 @@
 #    include "cursesdef.h"
 #    include "engine_client_session.h"
 #    include "game_constants.h"
-#    include "hsv_color.h"
 #    include "mcp_session.h"
 #    include "options.h"
 #    include "output.h"
@@ -28,8 +27,6 @@ auto set_cursor_native(const int visibility) -> void { memory::set_cursor(visibi
 auto draw_window_native(const catacurses::window& window) -> void { memory::draw_window(window); }
 
 auto clear_window_native(const catacurses::window& window) -> void { memory::clear_window(window); }
-
-auto color_to_RGB_native(const nc_color& color) -> RGBColor { return memory::color_to_rgb(color); }
 
 auto present_native() -> void { memory::present(); }
 

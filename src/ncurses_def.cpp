@@ -34,9 +34,8 @@
 namespace
 {
 
-auto native_stdscr() -> ::WINDOW * { return ::stdscr; }
+auto native_stdscr() -> ::WINDOW* { return ::stdscr; }
 
-std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> windows_palette;
 int native_timeout = -1;
 
 auto native_pair_index( const int foreground, const int background ) -> short
@@ -53,17 +52,6 @@ auto ensure_term_size() -> void;
 auto check_encoding() -> void;
 
 } // namespace
-
-auto game_client::curses::color_to_RGB_native( const nc_color &color ) -> RGBColor
-{
-    const auto pair_id = color.to_color_pair_index();
-    const auto &pair = cata_cursesport::colorpairs[std::clamp( pair_id, 0, 99 )];
-    auto palette_index =
-        pair.FG != catacurses::black ? static_cast<int>( pair.FG ) : static_cast<int>( pair.BG );
-    if( color.is_bold() ) { palette_index += color_loader<RGBColor>::COLOR_NAMES_COUNT / 2; }
-    return windows_palette
-           [std::clamp( palette_index, 0, static_cast<int>( windows_palette.size() ) - 1 )];
-}
 
 auto game_client::curses::draw_window_native( const catacurses::window &window ) -> void
 {
@@ -129,7 +117,8 @@ auto game_client::curses::initialize_native() -> void
         ::mousemask( BUTTON1_CLICKED | BUTTON3_CLICKED | REPORT_MOUSE_POSITION, nullptr );
 #    endif
     }
-    color_loader<RGBColor>().load( windows_palette );
+    auto palette = std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> {};
+    color_loader<RGBColor>().load( palette );
     init_colors();
     const auto height = ::getmaxy( native_stdscr() );
     const auto width = ::getmaxx( native_stdscr() );

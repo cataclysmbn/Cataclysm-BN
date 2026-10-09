@@ -5,8 +5,6 @@
 
 #include <functional>
 
-class nc_color;
-struct RGBColor;
 namespace catacurses
 {
 class window;
@@ -43,6 +41,5 @@ auto set_cursor( int visibility ) -> void;
 auto set_timeout( int timeout ) -> void;
 auto present() -> void;
 auto read_input() -> input_event;
-auto color_to_rgb( const nc_color &color ) -> RGBColor;
 
 } // namespace game_client::memory
