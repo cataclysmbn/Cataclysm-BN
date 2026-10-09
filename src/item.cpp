@@ -189,6 +189,7 @@ static const trait_flag_str_id trait_flag_CANNIBAL( "CANNIBAL" );
 static const trait_id trait_CARNIVORE( "CARNIVORE" );
 static const trait_id trait_ILLITERATE( "ILLITERATE" );
 static const trait_id trait_LIGHTWEIGHT( "LIGHTWEIGHT" );
+static const trait_id trait_PROJUNK2( "PROJUNK2" );
 static const trait_id trait_TOLERANCE( "TOLERANCE" );
 static const trait_id trait_WOOLALLERGY( "WOOLALLERGY" );
 
@@ -2071,6 +2072,14 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
     const std::pair<int, int> fun_for_food_item = you.fun_for( *food_item );
     if( fun_for_food_item.first != 0 && parts->test( iteminfo_parts::FOOD_JOY ) ) {
         info.emplace_back( "FOOD", _( "Enjoyability: " ), fun_for_food_item.first );
+    }
+
+    const auto healthy = food_item->get_comestible()->healthy;
+    // Character::consume_effects skips unhealthy food for this trait
+    const auto ignores_healthy = healthy < 0 && you.has_trait( trait_PROJUNK2 ) &&
+                                 !food_item->has_flag( flag_NO_INGEST );
+    if( healthy != 0 && !ignores_healthy && parts->test( iteminfo_parts::FOOD_HEALTHY ) ) {
+        info.emplace_back( "FOOD", _( "Healthy: " ), healthy );
     }
 
     if( parts->test( iteminfo_parts::FOOD_PORTIONS ) ) {
