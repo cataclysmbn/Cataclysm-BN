@@ -1,4 +1,5 @@
 #include "engine_client_jsonrpc.h"
+#include "engine_client_utf8.h"
 
 #include <algorithm>
 #include <charconv>
@@ -22,23 +23,6 @@ auto space( char byte ) -> bool
 auto require( bool condition ) -> void
 {
     if( !condition ) { throw parse_error::invalid_json; }
-}
-auto append_scalar( std::string &text, std::uint32_t scalar ) -> void
-{
-    if( scalar < 0x80 ) { text.push_back( static_cast<char>( scalar ) ); }
-    else if( scalar < 0x800 ) {
-        text.push_back( static_cast<char>( 0xc0 | ( scalar >> 6 ) ) );
-        text.push_back( static_cast<char>( 0x80 | ( scalar & 0x3f ) ) );
-    } else if( scalar < 0x10000 ) {
-        text.push_back( static_cast<char>( 0xe0 | ( scalar >> 12 ) ) );
-        text.push_back( static_cast<char>( 0x80 | ( ( scalar >> 6 ) & 0x3f ) ) );
-        text.push_back( static_cast<char>( 0x80 | ( scalar & 0x3f ) ) );
-    } else {
-        text.push_back( static_cast<char>( 0xf0 | ( scalar >> 18 ) ) );
-        text.push_back( static_cast<char>( 0x80 | ( ( scalar >> 12 ) & 0x3f ) ) );
-        text.push_back( static_cast<char>( 0x80 | ( ( scalar >> 6 ) & 0x3f ) ) );
-        text.push_back( static_cast<char>( 0x80 | ( scalar & 0x3f ) ) );
-    }
 }
 
 /// JsonIn's substr/tell/skip_value are not strict lexical seams: skip_value recurses,
@@ -113,7 +97,7 @@ class scanner
                     }
                     if( decoded ) { decoded->push_back( value ); }
                 } else {
-                    utf8_tail( static_cast<unsigned char>( byte ) );
+                    utf8_tail();
                     if( decoded ) { decoded->append( input_.substr( start, offset_ - start ) ); }
                 }
             }
@@ -190,31 +174,11 @@ class scanner
             }
             return value;
         }
-        auto utf8_tail( unsigned char lead ) -> void {
-            if( lead < 0x80 ) { return; }
-            auto remaining = 0;
-            auto scalar = std::uint32_t{0};
-            auto minimum = std::uint32_t{0};
-            if( lead >= 0xc2 && lead <= 0xdf ) {
-                remaining = 1;
-                scalar = lead & 0x1f;
-                minimum = 0x80;
-            } else if( lead >= 0xe0 && lead <= 0xef ) {
-                remaining = 2;
-                scalar = lead & 0x0f;
-                minimum = 0x800;
-            } else if( lead >= 0xf0 && lead <= 0xf4 ) {
-                remaining = 3;
-                scalar = lead & 0x07;
-                minimum = 0x10000;
-            } else { throw parse_error::invalid_json; }
-            while( remaining-- > 0 ) {
-                const auto byte = static_cast<unsigned char>( take() );
-                require( ( byte & 0xc0 ) == 0x80 );
-                scalar = ( scalar << 6 ) | ( byte & 0x3f );
-            }
-            require( scalar >= minimum && scalar <= 0x10ffff &&
-                     !( scalar >= 0xd800 && scalar <= 0xdfff ) );
+        auto utf8_tail() -> void {
+            // The lead byte was already consumed by take().
+            auto offset = offset_ - 1;
+            require( utf8_scalar( input_, offset ) );
+            offset_ = offset;
         }
         auto number() -> void {
             accept( '-' );
