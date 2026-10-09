@@ -59,7 +59,6 @@
     "price_postapoc": "80 USD",
     "color": "yellow",
     "encumbrance": 12,
-    "coverage": 90,
     "max_charges": 60,
     "charges_per_use": 30,
     "ammo": "essence_dull_type",

@@ -344,7 +344,7 @@
     "symbol": "[",
     "color": "light_gray",
     "covers": [ "torso", "head", "arms", "legs" ],
-    "coverage": 65,
+    "coverage": 90,
     "encumbrance": 10,
     "max_charges": 1000,
     "initial_charges": 500,
