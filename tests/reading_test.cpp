@@ -476,6 +476,7 @@ TEST_CASE("active night vision tiers allow fine detail vision in darkness", "[re
 
 TEST_CASE("Losing book during reading", "[reading][book]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     set_time(calendar::turn_zero + 12_hours);
     avatar& u = get_avatar();
     SECTION("Book in inventory") {

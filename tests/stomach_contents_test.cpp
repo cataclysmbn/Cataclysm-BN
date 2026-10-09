@@ -61,6 +61,7 @@ static void eat_all_nutrients(player& p) {
 // player does not thirst or tire or require vitamins
 TEST_CASE("starve_test", "[starve][slow]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     player& dummy = g->u;
     reset_time();
     clear_stomach(dummy);
@@ -95,6 +96,7 @@ TEST_CASE("starve_test", "[starve][slow]") {
 // player does not thirst or tire or require vitamins
 TEST_CASE("starve_test_hunger3", "[starve][slow]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     player& dummy = g->u;
     reset_time();
     clear_stomach(dummy);
@@ -133,6 +135,7 @@ TEST_CASE("starve_test_hunger3", "[starve][slow]") {
 // does eating enough food per day keep you alive
 TEST_CASE("all_nutrition_starve_test", "[!mayfail][starve][slow]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     // change this bool when editing the test
     const bool print_tests = false;
     player& dummy = g->u;

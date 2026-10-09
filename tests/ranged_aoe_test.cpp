@@ -266,6 +266,7 @@ TEST_CASE(
     "[ranged]["
     "projectile]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     rng_set_engine_seed(deterministic_rng_seeds.front());
 
     const auto shooter_pos = tripoint_bub_ms(60, 60, 0);

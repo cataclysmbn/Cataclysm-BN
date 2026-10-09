@@ -20,6 +20,7 @@ static const time_point midday = calendar::turn_zero + 12_hours;
 
 TEST_CASE("monsters shouldn't see through floors", "[vision]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     calendar::turn = midday;
     monster& upper = spawn_and_clear({5, 5, 0}, true);
     monster& adjacent = spawn_and_clear({5, 6, 0}, true);

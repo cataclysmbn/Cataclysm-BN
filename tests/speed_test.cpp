@@ -48,6 +48,7 @@ static auto prepare_player() -> player& { // *NOPAD*
 
 TEST_CASE("Character regains moves each turn", "[speed]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     player& guy = prepare_player();
 
     advance_turn(guy);
@@ -57,6 +58,7 @@ TEST_CASE("Character regains moves each turn", "[speed]") {
 
 TEST_CASE("Player action scale modifies move gain", "[speed]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     const auto global_scale = override_option("TIME_ACTION_SCALE", "50");
     const auto player_scale = override_option("PLAYER_ACTION_SCALE", "50");
 
@@ -218,6 +220,7 @@ TEST_CASE("Calendar tick reset exposes the next global action turn", "[speed]") 
 
 TEST_CASE("Calendar tick helpers expose elapsed turn boundaries", "[speed]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
 
     calendar::turn = calendar::turn_zero + 12_turns;
     const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick(3);
@@ -230,6 +233,7 @@ TEST_CASE("Calendar tick helpers expose elapsed turn boundaries", "[speed]") {
 
 TEST_CASE("Body updates consume scaled calendar tick duration", "[speed][needs]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     const auto global_scale = override_option("TIME_ACTION_SCALE", "17");
 
     auto& guy = *get_player_character().as_player();
@@ -362,6 +366,7 @@ static void pain_penalty_test(player& guy, int pain, int speed_exp) {
 
 TEST_CASE("Character is slowed down by pain", "[speed][pain]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     player& guy = prepare_player();
 
     WHEN("10 pain") { pain_penalty_test(guy, 10, 95); }

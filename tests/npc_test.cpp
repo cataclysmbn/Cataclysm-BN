@@ -497,6 +497,7 @@ TEST_CASE("control_npc_updates_positions_and_reality_bubble", "[npc][control]") 
 
 TEST_CASE("npc_can_target_player") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     // Set to daytime for visibiliity
     calendar::turn = calendar::turn_zero + 12_hours;
 

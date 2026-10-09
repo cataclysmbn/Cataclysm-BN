@@ -475,6 +475,7 @@ TEST_CASE("vision_wall_can_be_lit_by_player", "[shadowcasting][vision]") {
 
 TEST_CASE("vision_crouching_blocks_vision_but_not_light", "[shadowcasting][vision]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     vision_test_case t{
         {
             "###",
@@ -535,6 +536,7 @@ TEST_CASE("nv_range_math_correct", "[vision]") {
 
 TEST_CASE("vision_single_tile_skylight", "[shadowcasting][vision]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     /**
      * Diffused sunlight through the single-tile roof opening should be symmetrical.
      */
@@ -602,6 +604,7 @@ TEST_CASE("vision_player_opaque_neighbors_still_visible_night", "[shadowcasting]
 TEST_CASE("vision_see_out_of_vehicle", "[shadowcasting][vision]") {
 
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     vision_test_case t{
         {
             "                 ",

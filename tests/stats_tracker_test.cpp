@@ -449,6 +449,7 @@ TEST_CASE("stats_tracker_watchers", "[stats]") {
 }
 
 TEST_CASE("achievements_tracker", "[stats]") {
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     override_option opt("24_HOUR", "military");
 
     std::map<string_id<achievement>, const achievement*> achievements_completed;

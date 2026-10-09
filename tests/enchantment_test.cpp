@@ -42,6 +42,7 @@ static void clear_items(Character& guy) {
 
 TEST_CASE("Enchantments grant mutations", "[magic][enchantment][trait][mutation]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     Character& guy = get_player_character();
     clear_character(*guy.as_player(), true);
 
@@ -95,6 +96,7 @@ TEST_CASE("Enchantments grant mutations", "[magic][enchantment][trait][mutation]
 
 TEST_CASE("Enchantments apply effects", "[magic][enchantment][effect]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     Character& guy = get_player_character();
     clear_character(*guy.as_player(), true);
 
@@ -185,6 +187,7 @@ static void tests_stats(
 
 TEST_CASE("Enchantments modify stats", "[magic][enchantment][character]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     Character& guy = get_player_character();
     clear_character(*guy.as_player(), true);
 
@@ -245,6 +248,7 @@ static void tests_speed(Character& guy, int sp_base, int sp_exp) {
 
 TEST_CASE("Enchantments modify speed", "[magic][enchantment][speed]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     Character& guy = get_player_character();
     clear_character(*guy.as_player(), true);
 
@@ -278,6 +282,7 @@ static void tests_attack_cost(
 
 TEST_CASE("Enchantments modify attack cost", "[magic][enchantment][melee]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     Character& guy = get_player_character();
     clear_character(*guy.as_player(), true);
 
@@ -360,6 +365,7 @@ static void tests_metabolic_rate(Character& guy, float norm, float exp) {
 
 TEST_CASE("Enchantments modify metabolic rate", "[magic][enchantment][metabolism]") {
     clear_all_state();
+    const auto restore_turn = restore_on_out_of_scope<time_point>(calendar::turn);
     Character& guy = get_player_character();
     clear_character(*guy.as_player(), true);
 
