@@ -473,6 +473,7 @@ TEST_CASE("npc-movement") {
 
 TEST_CASE("control_npc_updates_positions_and_reality_bubble", "[npc][control]") {
     clear_all_state();
+    const auto restore_name = restore_on_out_of_scope<std::string>(get_avatar().name);
 
     avatar& you = get_avatar();
     g->place_player(tripoint_bub_ms(60, 60, 0));
