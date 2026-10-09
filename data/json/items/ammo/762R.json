@@ -2,7 +2,7 @@
   {
     "id": "762_54R",
     "type": "AMMO",
-    "name": { "str": "7.62x54mmR" },
+    "name": { "str": "7.62x54mmR FMJ" },
     "description": "7.62x54mmR ammunition with 150gr FMJ bullets.  The 7.62x54mmR round is one of the oldest still in common use, primarily due to the popularity of the Mosin-Nagant rifle.  Although it has not been used by militaries for several decades it remains popular with civilians.  It is a powerful cartridge capable of killing most targets with one shot.",
     "weight": "18 g",
     "volume": "250 ml",
@@ -27,7 +27,7 @@
     "id": "bp_762_54R",
     "copy-from": "762_54R",
     "type": "AMMO",
-    "name": { "str": "7.62x54mmR, black powder" },
+    "name": { "str": "7.62x54mmR FMJ, black powder" },
     "proportional": {
       "price": 0.5,
       "price_postapoc": 0.5,
@@ -36,5 +36,35 @@
       "dispersion": 1.2
     },
     "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  },
+  {
+    "id": "762_54R_7n1",
+    "copy-from": "762_54R",
+    "looks_like": "762_54R",
+    "type": "AMMO",
+    "name": { "str": "7.62x54mmR 7N1" },
+    "casing": "762R_casing",
+    "loudness": 160,
+    "speed": 823,
+    "description": "7.62x54mmR ammunition with 151gr steel core penetrator bullets.  The 7.62x54mmR round is one of the oldest still in common use, and these armor piercing rounds are still widely used across Eastern European militaries.  It is a powerful cartridge capable of killing most targets with one shot.",
+    "relative": { "damage": { "damage_type": "bullet", "amount": -7, "armor_penetration": 17 }, "dispersion": -10 },
+    "proportional": { "recoil": 1.1 },
+    "extend": { "effects": [ "NEVER_MISFIRES" ] }
+  },
+  {
+    "id": "bp_762_54R_7n1",
+    "copy-from": "762_54R_7n1",
+    "looks_like": "bp_762_54R",
+    "type": "AMMO",
+    "name": { "str": "7.62x54mmR 7N1, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] },
+    "delete": { "effects": [ "NEVER_MISFIRES" ] }
   }
 ]
