@@ -184,6 +184,36 @@ for (const file of ["staged space.md", "staged space.lua"]) {
   })
 }
 
+Deno.test("staged non-game JSON goes to deno fmt and game JSON to the native formatter", async () => {
+  await fixture(async (root, run) => {
+    await Deno.mkdir(`${root}/.github`)
+    await Deno.mkdir(`${root}/data`)
+    await Deno.writeTextFile(`${root}/.github/vcpkg.json`, "{}\n")
+    await Deno.writeTextFile(`${root}/data/item.json`, "[]\n")
+    const add = await new Deno.Command("/usr/bin/git", {
+      args: ["add", "--", ".github/vcpkg.json", "data/item.json"],
+      cwd: root,
+      clearEnv: true,
+      env: { PATH: "/usr/bin:/bin", HOME: `${root}/home`, GIT_CONFIG_GLOBAL: "/dev/null" },
+    }).output()
+    assert(add.success, "fixture staging failed")
+    await run()
+    const calls = (await Deno.readTextFile(`${root}/calls.jsonl`)).trim().split("\n").map((line) =>
+      JSON.parse(line)
+    )
+    const deno = calls.find((call) => call.name === "deno")
+    const native = calls.find((call) => call.name === "format-json.sh")
+    assert(
+      JSON.stringify(deno?.args) === '["fmt",".github/vcpkg.json"]',
+      "non-game JSON lost its deno fmt path",
+    )
+    assert(
+      JSON.stringify(native?.args) === '["data/item.json"]',
+      "game JSON must reach the native formatter only",
+    )
+  })
+})
+
 Deno.test("empty staging invokes no formatter", async () => {
   await fixture(async (root, run) => {
     await run()

@@ -88,8 +88,13 @@ if [[ "$mode" == staged ]]; then
                 append_stage_file "$file"
                 ;;
             *.json)
-                if [[ "$file" != data/names/* ]]; then
+                if [[ "$file" == data/names/* ]]; then
+                    :
+                elif [[ "$file" == data/* ]]; then
                     json_files+=( "$file" )
+                    append_stage_file "$file"
+                else
+                    doc_files+=( "$file" )
                     append_stage_file "$file"
                 fi
                 ;;
