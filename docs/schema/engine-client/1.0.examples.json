@@ -82,7 +82,14 @@
           "id": "e:avatar",
           "at": { "dim": "", "x": 3, "y": 4, "z": 0 },
           "name": "Ada",
-          "stats": [{ "id": "hp", "label": "HP", "value": 80 }]
+          "stats": [{ "id": "hp", "label": "HP", "value": 80 }],
+          "inventory": [
+            {
+              "look": { "kind": "item", "id": "rock", "glyph": "*", "color": "light_gray" },
+              "name": "rock",
+              "count": 2
+            }
+          ]
         },
         "environment": { "turn": "5184000", "time": "2026-04-01T08:00:00Z", "weather": "clear" },
         "entities": [
