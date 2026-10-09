@@ -20,6 +20,8 @@
 #include "weather/weather.h"
 #include "world.h"
 
+#include <algorithm>
+#include <array>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -279,21 +281,25 @@ TEST_CASE(
     const auto reset_ready = game_ready_guard{game_session::running()};
     build_test_map(ter_id("t_floor"));
     auto& you = get_avatar();
-    const auto original_position = you.abs_pos();
     const auto dimension = g->get_current_dimension_id();
     auto& buffer = get_overmapbuffer(dimension);
     // Saved overmap files are shared by the test world: remove them with the loaded copies.
     const auto cleanup = on_out_of_scope([&]() {
-        you.setpos(original_position);
         buffer.clear();
         g->get_active_world()->delete_dimension_data(dimension.str());
         clear_all_state();
     });
-    // The avatar stands on the east edge of its overmap so the observed radius reaches the next
-    // one.
-    const auto east_edge = tripoint_abs_omt{OMAPX - 1, OMAPY / 2, 0};
-    you.setpos(project_to<coords::ms>(east_edge));
-    const auto neighbor = point_abs_om{1, 0};
+    // The observed radius must reach an overmap other than the avatar's own; moving the avatar
+    // across an overmap would make the map shift load thousands of submaps.
+    const auto omt = project_to<coords::omt>(you.abs_pos());
+    const auto own = project_to<coords::om>(omt.xy());
+    const auto reaches_other = [&](const point& corner) {
+        return project_to<coords::om>(omt.xy() + corner) != own;
+    };
+    const auto corners = std::array{point{-8, 0}, point{8, 0}, point{0, -8}, point{0, 8}};
+    const auto reached = std::ranges::find_if(corners, reaches_other);
+    REQUIRE(reached != corners.end());
+    const auto neighbor = project_to<coords::om>(omt.xy() + *reached);
     buffer.get(neighbor);
     buffer.save(dimension);
     buffer.clear();
