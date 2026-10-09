@@ -349,7 +349,9 @@ class tiles_loading_image_renderer final: public loading_image_renderer {
     loading_image_cache image_cache;
     bool selected = false;
     auto draw_current(loading_image_selection_state& state) -> bool {
-        while (!state.current_path.empty()) {
+        // Advancement wraps around, so one traversal is the most that can find a loadable image.
+        for (auto attempts = state.paths.size(); attempts > 0 && !state.current_path.empty();
+             --attempts) {
             const auto* const cache = get_loading_image_cache(image_cache, state.current_path);
             if (cache != nullptr) {
                 const auto rect = get_loading_image_rect(cache->image_size);

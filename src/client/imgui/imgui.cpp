@@ -84,7 +84,9 @@ auto accepting_input() -> bool {
 auto queue_command(input_command command) -> void {
     auto& client = state();
     if (!accepting_input() || client.pending_input) { return; }
-    command.input_id = *client.waiting_input_id;
+    // Semantic commands carry their boundary in the nested interaction; the outer field is
+    // raw-only.
+    if (!command.interaction) { command.input_id = *client.waiting_input_id; }
     auto resolved = resolve_input_command(command, memory::screen_size());
     if (resolved) {
         client.pending_input =
@@ -198,7 +200,11 @@ auto special_key_command(const SDL_KeyboardEvent& event) -> std::optional<input_
         case SDLK_F13:
         case SDLK_F14:
         case SDLK_F15:
-            name = "F" + std::to_string(event.key - SDLK_F1 + 1);
+            // F1-F12 and F13-F15 are separate scancode ranges, so their keycodes are not
+            // contiguous.
+            name = "F"
+                 + std::to_string(
+                       event.key <= SDLK_F12 ? event.key - SDLK_F1 + 1 : event.key - SDLK_F13 + 13);
             break;
         default:
             break;
@@ -686,7 +692,14 @@ public:
 
     auto shutdown() -> void override { release_resources(state()); }
 
-    auto native_window_handle() const -> void* override { return state().window; }
+#    if defined(_WIN32)
+    auto native_window_handle() const -> void* override {
+        return state().window
+                 ? SDL_GetPointerProperty(SDL_GetWindowProperties(state().window),
+                                          SDL_PROP_WINDOW_WIN32_HWND_POINTER, nullptr)
+                 : nullptr;
+    }
+#    endif
     auto present() -> void override {
         process_events();
         render_frame();
