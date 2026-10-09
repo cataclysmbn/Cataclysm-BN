@@ -16,6 +16,7 @@
 #include "map_helpers.h"
 #include "memory_fast.h"
 #include "npc.h"
+#include "npc_attitude_message.h"
 #include "npc_class.h"
 #include "numeric_interval.h"
 #include "pimpl.h"
@@ -558,4 +559,31 @@ TEST_CASE("random npc spawn chance") {
     CHECK(npc_overmap::spawn_chance_in_hour(2 * days_in_year, 1.0) == Approx(0.5 / 24.0));
     CHECK(npc_overmap::spawn_chance_in_hour(4 * days_in_year, 1.0) == Approx(0.25 / 24.0));
     CHECK(npc_overmap::spawn_chance_in_hour(8 * days_in_year, 1.0) == Approx(0.125 / 24.0));
+}
+
+TEST_CASE("activity_attitude_does_not_change_visible_attitude", "[npc][attitude]") {
+    const auto guy = npc();
+    const auto change = [&](npc_attitude from, npc_attitude to, npc_attitude before_activity) {
+        return visible_attitude_change(
+            guy, {.from = from, .to = to, .before_activity = before_activity});
+    };
+
+    SECTION("hostile NPC starts and stops an activity") {
+        CHECK_FALSE(change(NPCATT_KILL, NPCATT_ACTIVITY, NPCATT_NULL));
+        CHECK_FALSE(change(NPCATT_ACTIVITY, NPCATT_KILL, NPCATT_KILL));
+    }
+
+    SECTION("follower gets angry during an activity") {
+        const auto angry = change(NPCATT_ACTIVITY, NPCATT_KILL, NPCATT_FOLLOW);
+        REQUIRE(angry);
+        CHECK(angry->from == attitude_group::friendly);
+        CHECK(angry->to == attitude_group::hostile);
+    }
+
+    SECTION("attitude change without an activity") {
+        const auto calm = change(NPCATT_KILL, NPCATT_NULL, NPCATT_NULL);
+        REQUIRE(calm);
+        CHECK(calm->from == attitude_group::hostile);
+        CHECK(calm->to == attitude_group::neutral);
+    }
 }
