@@ -8,6 +8,7 @@
 #include "client_input.h"
 #include "input.h"
 #include "json.h"
+#include "translation_snapshot.h"
 #include "wcwidth.h"
 
 #include <algorithm>
@@ -86,28 +87,13 @@ thread_local auto next_provider_token = std::size_t {0};
 
 constexpr auto maximum_page_size = std::size_t {200};
 
-class stable_hash
+auto hex_digest( const localization::content_hash &hash ) -> std::string
 {
-    public:
-        auto add( const std::string_view value ) -> void {
-            for( const auto byte : value ) {
-                value_ ^= static_cast<unsigned char>( byte );
-                value_ *= 1099511628211ULL;
-            }
-            value_ ^= 0xffU;
-            value_ *= 1099511628211ULL;
-        }
-
-        auto str() const -> std::string {
-            auto output = std::ostringstream{};
-            output.imbue( std::locale::classic() );
-            output << std::hex << std::setfill( '0' ) << std::setw( 16 ) << value_;
-            return output.str();
-        }
-
-    private:
-        std::uint64_t value_ = 14695981039346656037ULL;
-};
+    auto output = std::ostringstream{};
+    output.imbue( std::locale::classic() );
+    output << std::hex << std::setfill( '0' ) << std::setw( 16 ) << hash.value();
+    return output.str();
+}
 
 auto provider_for( const input_context &context ) -> const provider_entry *
 {
@@ -118,7 +104,7 @@ auto provider_for( const input_context &context ) -> const provider_entry *
     return provider == providers.rend() ? nullptr : &*provider;
 }
 
-auto add_position( stable_hash &hash, const interaction_position &position ) -> void
+auto add_position( localization::content_hash &hash, const interaction_position &position ) -> void
 {
     hash.add( std::to_string( position.x ) );
     hash.add( std::to_string( position.y ) );
@@ -201,7 +187,7 @@ auto schema_for( const interaction_snapshot &snapshot,
             hash.add( candidate.creature ? "creature" : "tile" );
         }
     }
-    return hash.str();
+    return hex_digest( hash );
 }
 
 auto normalize( const input_context &context, interaction_snapshot snapshot,
@@ -228,7 +214,7 @@ struct acquired_interaction {
     auto find_id( const Values &values, const std::vector<std::size_t> *index,
                   const std::string &id ) const -> const typename Values::value_type * { // *NOPAD*
         if( index != nullptr ) {
-            const auto found = std::ranges::lower_bound( *index, id, {}, [this, &values]( const auto ordinal )
+            const auto found = std::ranges::lower_bound( *index, id, {}, [&values]( const auto ordinal )
             -> const std::string & { // *NOPAD*
                 ++work.id_comparisons;
                 return values[ordinal].id;
@@ -616,9 +602,9 @@ auto interaction_kind_name( const interaction_kind kind ) -> std::string
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )
 -> std::string
 {
-    auto hash = stable_hash{};
+    auto hash = localization::content_hash{};
     for( const auto &part : identity ) { hash.add( part ); }
-    return prefix + ":" + hash.str();
+    return prefix + ":" + hex_digest( hash );
 }
 
 auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::string
