@@ -56,13 +56,6 @@ auto get_scaling_factor() -> int {
     return game_client::backend_selected() ? game_client::active_backend().scaling_factor() : 1;
 }
 
-auto handle_resize(const int width, const int height) -> bool {
-    if (game_client::backend_selected()) {
-        game_client::active_backend().resize(point(width, height));
-    }
-    return true;
-}
-
 auto resize_client_term(const int width, const int height) -> void {
     if (game_client::backend_selected()) {
         game_client::active_backend().resize(point(width, height));

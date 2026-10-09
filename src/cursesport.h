@@ -70,6 +70,5 @@ extern std::array<pairs, 100> colorpairs;
 
 int projected_window_width();
 int projected_window_height();
-bool handle_resize( int w, int h );
 void resize_client_term( int cell_w, int cell_h );
 int get_scaling_factor();
