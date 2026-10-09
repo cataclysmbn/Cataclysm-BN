@@ -1,0 +1,62 @@
+[
+  {
+    "id": "mon_test_clock_flung",
+    "type": "MONSTER",
+    "copy-from": "mon_test_explosion_sturdy_target",
+    "name": { "str": "clock fling target" },
+    "hp": 1000,
+    "weight": "10000 g"
+  },
+  {
+    "id": "mon_test_clock_collision",
+    "type": "MONSTER",
+    "copy-from": "mon_test_explosion_sturdy_target",
+    "name": { "str": "clock collision target" },
+    "hp": 1000,
+    "weight": "1000000 g"
+  },
+  {
+    "id": "test_t_clock_wall",
+    "type": "terrain",
+    "name": "clock breach wall",
+    "description": "A deterministic breach wall for explosion clock tests.",
+    "symbol": "#",
+    "color": "cyan",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "test_t_explosion_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "BLOCK_WIND" ],
+    "bash": { "str_min": 1, "str_max": 1, "sound": "crash!", "sound_fail": "whump!", "ter_set": "test_t_explosion_floor" }
+  },
+  {
+    "id": "test_t_clock_chain_wall",
+    "type": "terrain",
+    "name": "clock chain wall",
+    "description": "A deterministic explosive breach wall for explosion clock tests.",
+    "symbol": "#",
+    "color": "red",
+    "move_cost": 0,
+    "coverage": 100,
+    "roof": "test_t_explosion_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "BLOCK_WIND" ],
+    "bash": {
+      "str_min": 1,
+      "str_max": 1,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "test_t_explosion_floor",
+      "explosive": 5
+    }
+  },
+  {
+    "id": "test_clock_projectile",
+    "type": "GENERIC",
+    "name": { "str": "clock projectile" },
+    "description": "A steel projectile for explosion clock characterization.",
+    "weight": "150 g",
+    "volume": "30 ml",
+    "material": [ "steel" ],
+    "symbol": "*",
+    "color": "light_gray"
+  }
+]

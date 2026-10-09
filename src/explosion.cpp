@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "explosion_queue.h"
+#include "explosion_test.h"
 #include "flag.h"
 #include "flat_set.h"
 #include "fragment_cloud.h" // IWYU pragma: associated
@@ -64,8 +65,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <chrono>
+#include <compare>
 #include <cstddef>
-#include <limits>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -73,6 +76,7 @@
 #include <random>
 #include <ranges>
 #include <set>
+#include <stdexcept>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -100,6 +104,39 @@ namespace
 {
 
 const auto flag_CONSOLE = std::string( "CONSOLE" );
+
+struct explosion_clock_state {
+    explosion_handler::testing::clock_options options;
+    explosion_handler::testing::clock_observation observation;
+};
+
+// Test-only owned state. In production this remains disengaged.
+auto controlled_explosion_clock = std::optional<explosion_clock_state> {};
+
+auto explosion_clock_now() -> long long
+{
+    if( controlled_explosion_clock ) {
+        auto &state = *controlled_explosion_clock;
+        state.observation.elapsed_ms += state.options.clock_read_ms;
+        return state.observation.elapsed_ms;
+    }
+    using presentation_clock = std::chrono::steady_clock;
+    static_assert( presentation_clock::is_steady );
+    return std::chrono::time_point_cast<std::chrono::milliseconds>(
+               presentation_clock::now() ).time_since_epoch().count();
+}
+
+auto record_explosion_trace( explosion_handler::testing::trace_entry entry ) -> void
+{
+    if( controlled_explosion_clock ) {
+        auto &trace = controlled_explosion_clock->observation.trace;
+        // Bound characterization probes; this is not the production queue cap.
+        if( trace.size() >= 100000 ) {
+            throw std::runtime_error( "Explosion characterization trace limit exceeded" );
+        }
+        trace.push_back( std::move( entry ) );
+    }
+}
 
 auto is_dead_for_explosion( const Creature &critter ) -> bool
 {
@@ -280,6 +317,26 @@ constexpr float FLING_SLOWDOWN = 5.0;
 
 namespace explosion_handler
 {
+
+testing::scoped_explosion_clock::scoped_explosion_clock( const clock_options &options )
+{
+    if( !test_mode || controlled_explosion_clock || options.clock_read_ms <= 0 ||
+        options.redraw_ms < 0 ) {
+        throw std::logic_error( "Invalid explosion characterization clock scope" );
+    }
+    controlled_explosion_clock.emplace( explosion_clock_state{ .options = options, .observation = {} } );
+}
+
+testing::scoped_explosion_clock::~scoped_explosion_clock()
+{
+    controlled_explosion_clock.reset();
+}
+
+auto testing::scoped_explosion_clock::observation() const -> clock_observation
+{
+    return controlled_explosion_clock->observation;
+}
+
 class ExplosionEvent
 {
     public:
@@ -374,12 +431,23 @@ class ExplosionProcess
         const std::optional<Creature *> emitter;
     private:
         using dist_point_pair = std::pair<float, tripoint_bub_ms>;
-        using time_event_pair = std::pair<float, ExplosionEvent>;
+        struct event_key {
+            float time;
+            std::uint64_t ordinal;
+            auto operator<=>( const event_key & ) const = default; // *NOPAD*
+        };
+        struct timed_event {
+            event_key key;
+            ExplosionEvent event;
+        };
+        struct event_later {
+            auto operator()( const timed_event &left, const timed_event &right ) const -> bool { return left.key > right.key; }
+        };
 
         std::vector<dist_point_pair> blast_map;
         std::vector<dist_point_pair> shrapnel_map;
-        std::priority_queue<time_event_pair, std::vector<time_event_pair>, pair_greater_cmp_first>
-        event_queue;
+        std::priority_queue<timed_event, std::vector<timed_event>, event_later> event_queue;
+        std::uint64_t next_insertion_ordinal = 0;
 
         std::optional<player *> player_flung;
         std::map<const Creature *, int> mobs_blasted;
@@ -387,11 +455,12 @@ class ExplosionProcess
         std::set<const Creature *> flung_set;
         std::vector<tripoint_bub_ms> recombination_targets;
 
+        /// Logical time of the event being processed; never advanced by presentation.
         float cur_relative_time;
-        long long last_update_ms;
+        const long long presentation_start_ms;
         bool request_redraw;
     public:
-        void run();
+        auto run() -> void;
 
         std::map<const Creature *, int> get_blasted() {
             return mobs_blasted;
@@ -419,53 +488,58 @@ class ExplosionProcess
             emitter( responsible ),
             player_flung( std::nullopt ),
             cur_relative_time( 0.0 ),
-            last_update_ms(
-                std::chrono::time_point_cast<std::chrono::milliseconds>
-                ( std::chrono::system_clock::now() ).time_since_epoch().count()
-            ),
+            presentation_start_ms( explosion_clock_now() ),
             request_redraw( false ) {}
     private:
         static bool dist_comparator( dist_point_pair a, dist_point_pair b ) {
             return a.first < b.first;
         };
-        static bool time_comparator( const time_event_pair &a, const time_event_pair &b ) {
-            return a.first < b.first;
-        };
-
-        void update_timings() {
-            if( !is_animated() ) {
-                // Arbitrary large number since for null delays
-                //   we just want to scroll thru events as fast as possible
-                cur_relative_time += 1e6;
-                return;
+        /// Pace the next logical timestamp without changing dispatch or physics.
+        auto pace_until( const float logical_time ) -> void {
+            if( !is_animated() ) { return; }
+            const auto animation_delay = get_option<int>( "ANIMATION_DELAY" );
+            const auto elapsed_ms = explosion_clock_now() - presentation_start_ms;
+            // At delay10 a radius10 blast propagates in one second. Rendering cost
+            // can make presentation late, but never changes which event is next.
+            const auto target_ms = static_cast<long long>( logical_time * 10.0 * animation_delay );
+            const auto delay_ms = target_ms - elapsed_ms;
+            if( delay_ms <= 0 ) { return; }
+            if( controlled_explosion_clock ) {
+                controlled_explosion_clock->observation.sleep_ms += delay_ms;
+                controlled_explosion_clock->observation.elapsed_ms += delay_ms;
+            } else {
+                const auto delay = timespec {
+                    .tv_sec = static_cast<time_t>( delay_ms / 1000 ),
+                    .tv_nsec = static_cast<long>( ( delay_ms % 1000 ) * 1000000 )
+                };
+                nanosleep( &delay, nullptr );
             }
-            const int animation_delay = get_option<int>( "ANIMATION_DELAY" );
-            const auto now = std::chrono::time_point_cast<std::chrono::milliseconds>
-                             ( std::chrono::system_clock::now() ).time_since_epoch().count();
-            const long long ms_diff = now - last_update_ms;
-            // Multiplied by 10x to calibrate it such that at 10 animation delay, an explosion
-            //   of radius 10 will take exactly 1 second to fully propagate
-            const float rel_diff = static_cast<float>( ms_diff ) / ( 10.0 * animation_delay );
-            cur_relative_time += rel_diff;
-            last_update_ms = now;
         }
 
         void fill_maps();
         void init_event_queue();
         inline float generate_fling_angle( const tripoint_bub_ms from, const tripoint_bub_ms to );
         inline bool is_occluded( const tripoint_bub_ms from, const tripoint_bub_ms to );
-        void add_event( const float delay, const ExplosionEvent &event ) {
+        auto add_event( const float delay, const ExplosionEvent &event ) -> void {
             assert( delay >= 0 );
-            event_queue.emplace( cur_relative_time + delay + std::numeric_limits<float>::epsilon(), event );
+            // Children are relative to the processed event, not elapsed wall time.
+            // Equal times are ordered explicitly; no floating epsilon is needed.
+            event_queue.push( {
+                .key = { .time = cur_relative_time + delay, .ordinal = next_insertion_ordinal++ },
+                .event = event
+            } );
         }
         auto is_animated() const -> bool {
-            if( test_mode || get_option<int>( "ANIMATION_DELAY" ) <= 0 ) { return false; }
+            const auto bypass_test_mode = controlled_explosion_clock &&
+                                          controlled_explosion_clock->options.bypass_test_mode;
+            if( ( test_mode && !bypass_test_mode ) ||
+                get_option<int>( "ANIMATION_DELAY" ) <= 0 ) { return false; }
 
-            const int skip_after = get_option<int>( "SKIP_EXPLOSION_ANIMATION_AFTER" );
+            const auto skip_after = get_option<int>( "SKIP_EXPLOSION_ANIMATION_AFTER" );
             return skip_after == 0 || get_explosion_queue().get_count() <= skip_after;
         }
 
-        bool process_next();
+        auto process_next() -> bool;
         void blast_tile( const tripoint_bub_ms position, const int rl_distance );
         void project_shrapnel( const tripoint_bub_ms position );
         void add_field( const tripoint_bub_ms position, const field_type_id field,
@@ -590,32 +664,31 @@ inline float ExplosionProcess::generate_fling_angle( const tripoint_bub_ms from,
     }
 }
 
-bool ExplosionProcess::process_next()
+auto ExplosionProcess::process_next() -> bool
 {
     if( event_queue.empty() ) {
         return false;
     }
 
-    // We don't need to wait in testing mode or if there is no animation delay
-    if( is_animated() ) {
-        const float next_event_time = event_queue.top().first;
-        const double relative_time_step = static_cast<double>( next_event_time - cur_relative_time );
-        const double animation_delay = static_cast<double>( get_option<int>( "ANIMATION_DELAY" ) );
+    cur_relative_time = event_queue.top().key.time;
+    pace_until( cur_relative_time );
 
-        // We balance the timing in such a way
-        //   that, at 10 ANIMATION_DELAY, it will take an explosion of radius 10
-        //   exactly 1 second to propagate fully
-        // NOLINTNEXTLINE(cata-no-long)
-        const long int delay_ms = static_cast<long int>( relative_time_step * 10.0 * animation_delay );
-        if( delay_ms > 0 ) {
-            const timespec delay = timespec {0, delay_ms * 1000000L};
-            nanosleep( &delay, nullptr );
+    // A presentation frame may contain all events at this exact logical time.
+    // Pop before dispatch: a zero-delay child cannot replace the event being handled,
+    // and heap reallocations cannot invalidate its payload during the handler.
+    while( !event_queue.empty() && event_queue.top().key.time == cur_relative_time ) {
+        const auto scheduled = event_queue.top();
+        event_queue.pop();
+        const auto &event = scheduled.event;
+
+        if( controlled_explosion_clock ) {
+            const auto names = std::array{ "item", "mob", "blast", "shrapnel", "field_add", "field_remove" };
+            record_explosion_trace( {
+                .kind = names[static_cast<int>( event.kind )], .position = event.position,
+                .scheduled_time = scheduled.key.time, .relative_time = cur_relative_time,
+                .insertion_ordinal = scheduled.key.ordinal, .detail = {}
+            } );
         }
-    }
-    update_timings();
-
-    while( !event_queue.empty() && cur_relative_time >= event_queue.top().first ) {
-        const auto &event = event_queue.top().second;
 
         switch( event.kind ) {
             case ExplosionEvent::Kind::SHRAPNEL:
@@ -642,7 +715,6 @@ bool ExplosionProcess::process_next()
                 );
                 break;
         };
-        event_queue.pop();
     }
 
     return true;
@@ -741,6 +813,8 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
     }
 
     map &here = get_map();
+    const auto terrain_before = controlled_explosion_clock ? here.ter( position ).id().str() :
+                                std::string{};
 
     if( blast_power ) {
         // Item damage comes first in order to prevent dropped loot from being destroyed immediately.
@@ -928,6 +1002,13 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         }
     }
 
+    if( controlled_explosion_clock && terrain_before != here.ter( position ).id().str() ) {
+        record_explosion_trace( {
+            .kind = "terrain", .position = position, .relative_time = cur_relative_time,
+            .detail = terrain_before + "->" + here.ter( position ).id().str()
+        } );
+    }
+
     // Finally, add fields if we can
     if( here.passable( position ) ) {
         const float radius_percent = static_cast<float>( rl_distance ) / blast_radius;
@@ -1027,6 +1108,12 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
                 here.impassable( maybe_new_position ) ||
                 ( is_mob && maybe_new_position != position && g->critter_at( maybe_new_position ) ) ||
                 here.obstructed_by_vehicle_rotation( position, maybe_new_position ) ) {
+                if( controlled_explosion_clock ) {
+                    record_explosion_trace( {
+                        .kind = "collision", .position = maybe_new_position,
+                        .relative_time = cur_relative_time, .detail = is_mob ? "mob" : "item"
+                    } );
+                }
                 // TODO: Bash the obstacle with whatever is flung?
 
                 // Just a 180 degree flip
@@ -1044,6 +1131,12 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
     bool do_next = new_velocity >= 1;
 
     if( new_position != position ) {
+        if( controlled_explosion_clock ) {
+            record_explosion_trace( {
+                .kind = "movement", .position = new_position, .relative_time = cur_relative_time,
+                .detail = is_mob ? "mob" : "item"
+            } );
+        }
         if( is_mob ) {
             std::get<Creature *>( cur_target )->setpos( new_position );
         } else {
@@ -1134,6 +1227,12 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
 
                     auto *attacker = emitter.has_value() ? emitter.value() : nullptr;
                     auto dealt_damage = hit_creature->deal_damage( attacker, hit_part, dmg ).total_damage();
+                    if( controlled_explosion_clock ) {
+                        record_explosion_trace( {
+                            .kind = "item_impact", .position = new_position, .relative_time = cur_relative_time,
+                            .detail = std::to_string( dealt_damage )
+                        } );
+                    }
 
                     if( get_avatar().sees( *hit_creature ) ) {
                         if( dealt_damage > 0 ) {
@@ -1182,7 +1281,7 @@ void ExplosionProcess::move_entity( const tripoint_bub_ms position,
     }
 }
 
-void ExplosionProcess::run()
+auto ExplosionProcess::run() -> void
 {
     fill_maps();
     init_event_queue();
@@ -1190,7 +1289,7 @@ void ExplosionProcess::run()
     // We need to temporary disable it because
     //   larger explosions may end up filling
     //   the texture pool, causing a crash
-    bool disable_minimap = is_animated() && pixel_minimap_option;
+    bool disable_minimap = !controlled_explosion_clock && is_animated() && pixel_minimap_option;
     if( disable_minimap ) {
         g->toggle_pixel_minimap();
     }
@@ -1199,11 +1298,17 @@ void ExplosionProcess::run()
     while( process_next() ) {
         // No need to redraw in testing mode
         if( request_redraw && is_animated() ) {
-            ui_manager::redraw();
-            refresh_display();
+            if( controlled_explosion_clock ) {
+                auto &state = *controlled_explosion_clock;
+                state.observation.redraws++;
+                state.observation.redraw_ms += state.options.redraw_ms;
+                state.observation.elapsed_ms += state.options.redraw_ms;
+            } else {
+                ui_manager::redraw();
+                refresh_display();
+            }
             request_redraw = false;
         }
-        update_timings();
     };
 
     // Reenable disabled options
@@ -2149,6 +2254,12 @@ void explosion_queue::execute()
         queued_explosion exp = std::move( elems.front() );
         elems.pop_front();
         explosion_count++;
+        if( controlled_explosion_clock ) {
+            record_explosion_trace( {
+                .kind = "drain", .position = exp.pos,
+                .detail = std::to_string( explosion_count )
+            } );
+        }
         switch( exp.type ) {
             case ExplosionType::Regular:
                 explosion_funcs::regular( exp );
