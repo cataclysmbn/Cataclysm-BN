@@ -19,7 +19,7 @@
           "hdframe_horizontal",
           "plating_steel",
           "turret_mount",
-          { "part": "m249", "ammo": 60, "ammo_types": [ "556" ], "ammo_qty": [ 10, 100 ] },
+          { "part": "m249", "ammo": 60, "ammo_types": [ "556" ], "ammo_qty": [ 3, 30 ] },
           "hddoor_opaque"
         ]
       },
@@ -39,7 +39,7 @@
           "hdroof",
           { "part": "tank", "fuel": "diesel" },
           "turret_mount",
-          { "part": "m249", "ammo": 80, "ammo_types": [ "556" ], "ammo_qty": [ 10, 100 ] }
+          { "part": "m249", "ammo": 80, "ammo_types": [ "556" ], "ammo_qty": [ 3, 30 ] }
         ]
       },
       { "x": 1, "y": 3, "parts": [ "hdframe_vertical", "reinforced_windshield" ] },
