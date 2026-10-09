@@ -335,13 +335,6 @@ auto write_result( JsonOut &out, const command_result &value ) -> void
     out.end_object();
 }
 } // namespace
-auto serialize_result( const command_result &value ) -> std::string
-{
-    auto output = std::ostringstream{};
-    auto out = JsonOut{output};
-    write_result( out, value );
-    return output.str();
-}
 auto serialize_command_response( const command_result &command, const event_batch &batch )
 -> std::expected<std::string, error>
 {

@@ -166,6 +166,5 @@ auto serialize_state( const state_value &state ) -> std::string;
 auto serialize_snapshot( const snapshot &value ) -> std::string;
 auto serialize_negotiation( const negotiated_contract &value,
                             const std::string &epoch ) -> std::string;
-auto serialize_result( const command_result &value ) -> std::string;
 
 } // namespace engine_client

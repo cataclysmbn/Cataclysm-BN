@@ -21,11 +21,11 @@ auto make_stream(engine_client::snapshot snapshot) -> engine_client::event_strea
     REQUIRE(created);
     return std::move(*created);
 }
-auto check_wire_sample(const std::string& value) -> void {
-    CHECK_FALSE(value.empty());
-    if (std::getenv("BN_CONTRACT_SCHEMA_SAMPLES") != nullptr) {
-        std::cout << "SCHEMA_SAMPLE " << value << '\n';
-    }
+auto check_wire_sample(const std::string& value) -> void { CHECK_FALSE(value.empty()); }
+auto check_command_response(const engine_client::command_result& value) -> void {
+    const auto encoded = engine_client::serialize_command_response(value, {});
+    REQUIRE(encoded);
+    check_wire_sample(*encoded);
 }
 class test_authority final: public engine_client::command_authority {
 public:
@@ -130,7 +130,7 @@ TEST_CASE(
     CHECK(received->stage == engine_client::command_stage::received);
     CHECK_FALSE(received->validation_succeeded);
     CHECK_FALSE(received->execution_started);
-    check_wire_sample(engine_client::serialize_result(*received));
+    check_command_response(*received);
     CHECK_FALSE(lifecycle.execution_started());
     CHECK_FALSE(lifecycle.complete_at_boundary(observed));
     CHECK_FALSE(lifecycle.submit(request));
@@ -144,11 +144,11 @@ TEST_CASE(
     CHECK(resolved->type == legacy->type);
     CHECK(resolved->interaction == legacy->interaction);
     CHECK(lifecycle.result(received->command_id)->stage == engine_client::command_stage::validated);
-    check_wire_sample(engine_client::serialize_result(*lifecycle.result(received->command_id)));
+    check_command_response(*lifecycle.result(received->command_id));
     CHECK_FALSE(lifecycle.validate(observed, point{80, 24})); // Cannot resolve or deliver twice.
     REQUIRE(lifecycle.execution_started());
     CHECK(lifecycle.result(received->command_id)->stage == engine_client::command_stage::executing);
-    check_wire_sample(engine_client::serialize_result(*lifecycle.result(received->command_id)));
+    check_command_response(*lifecycle.result(received->command_id));
     CHECK_FALSE(lifecycle.execution_started());
     CHECK_FALSE(lifecycle.complete_at_boundary(observed));
     game_client::begin_input_boundary();
@@ -191,7 +191,7 @@ TEST_CASE(
     CHECK_FALSE(lifecycle.result(received->command_id)); // No unbounded terminal history.
     REQUIRE(lifecycle.interrupt());
     CHECK(lifecycle.result(next->command_id)->stage == engine_client::command_stage::interrupted);
-    check_wire_sample(engine_client::serialize_result(*lifecycle.result(next->command_id)));
+    check_command_response(*lifecycle.result(next->command_id));
 }
 
 TEST_CASE(
@@ -383,8 +383,10 @@ TEST_CASE(
     REQUIRE(result);
     CHECK(result->stage == engine_client::command_stage::rejected);
     CHECK_FALSE(result->execution_started);
-    check_wire_sample(engine_client::serialize_result(*result));
-    CHECK(engine_client::serialize_result(*result).find("SECRET_SENTINEL") == std::string::npos);
+    const auto encoded = engine_client::serialize_command_response(*result, {});
+    REQUIRE(encoded);
+    check_wire_sample(*encoded);
+    CHECK(encoded->find("SECRET_SENTINEL") == std::string::npos);
     CHECK(actor_state() == before);
     CHECK(rng_get_engine() == rng);
 }
