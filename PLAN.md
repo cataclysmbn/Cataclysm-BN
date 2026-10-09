@@ -134,7 +134,7 @@ validated commits onto `feat/magnum-opus`.
 
 - Configure: `cmake --preset linux-full -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
   -DLUA_DOCS_ON_BUILD=OFF -DMCP=ON -DIMGUI=ON`. Executables land in the worktree root.
-- Run: `systemd-run --user --scope -q -p MemoryMax=24G -p MemorySwapMax=0 ./<binary> --rng-seed 424242
+- Run: `systemd-run --user --scope --slice=bnwork.slice -q -p MemoryMax=24G -p MemorySwapMax=0 ./<binary> --rng-seed 424242
   --user-dir=<private dir>/` via `pueue add -p -g cata`.
 - A failure is pre-existing only if reproduced on `upstream/main` with the same command and order.
 - Format with `build-scripts/fmt.sh cpp <files>`; never bypass hooks; commit only validated changes; no push
