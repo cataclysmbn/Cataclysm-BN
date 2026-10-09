@@ -104,7 +104,7 @@ if (BUILD_TESTING)
 
         add_test(
             NAME test-tiles
-            COMMAND sh -c "$<TARGET_FILE:cata_test-tiles> --rng-seed time"
+            COMMAND sh -c "$<TARGET_FILE:cata_test-tiles> --rng-seed time --user-dir=${CMAKE_CURRENT_BINARY_DIR}/test-tiles-profile/"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         if (NOT "${CMAKE_EXPORT_COMPILE_COMMANDS}")
@@ -128,7 +128,7 @@ if (BUILD_TESTING)
 
         add_test(
             NAME test
-            COMMAND sh -c "$<TARGET_FILE:cata_test> --rng-seed time"
+            COMMAND sh -c "$<TARGET_FILE:cata_test> --rng-seed time --user-dir=${CMAKE_CURRENT_BINARY_DIR}/test-profile/"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         if (NOT "${CMAKE_EXPORT_COMPILE_COMMANDS}")
@@ -151,6 +151,11 @@ if (BUILD_TESTING)
             cataclysm-bn-engine cataclysm-bn-client-common cataclysm-bn-mcp-client
             cataclysm-bn-client-audio cataclysm-bn-mcp-protocol)
         target_compile_options(cata_test-perception-mcp PRIVATE ${CATCH2_COMPILE_OPTIONS})
+        add_test(NAME test-perception-mcp
+            COMMAND $<TARGET_FILE:cata_test-perception-mcp>
+                "[map_perception_bionics_boundary]" --rng-seed 424242
+                --user-dir=${CMAKE_CURRENT_BINARY_DIR}/cata_test-perception-mcp-profile/
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         add_executable(cata_test-mcp ${CATACLYSM_BN_TEST_SOURCES})
         target_compile_definitions(cata_test-mcp PRIVATE CATA_MCP)
@@ -224,7 +229,7 @@ if (BUILD_TESTING)
 
         add_test(
             NAME test-mcp
-            COMMAND sh -c "$<TARGET_FILE:cata_test-mcp> --rng-seed time"
+            COMMAND sh -c "$<TARGET_FILE:cata_test-mcp> --rng-seed time --user-dir=${CMAKE_CURRENT_BINARY_DIR}/test-mcp-profile/"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
         if (NOT "${CMAKE_EXPORT_COMPILE_COMMANDS}")
             target_precompile_headers(cata_test-mcp PRIVATE
