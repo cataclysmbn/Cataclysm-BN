@@ -89,7 +89,6 @@ struct session_state {
     std::unique_ptr<std::ostream> output;
     bool started = false;
     bool stop = false;
-    bool closed = false;
 };
 
 auto state() -> session_state &
@@ -219,7 +218,6 @@ auto provide_input( const int /*timeout_ms*/ ) -> input_event
         }
         if( !session.transport ||
             !session.transport->pump_until_input( std::cin, *session.output, std::cerr ) ) {
-            session.closed = true;
             break;
         }
     }
@@ -340,11 +338,6 @@ auto finish_session() -> void
     session.transport.reset();
     session.events.clear();
     session.started = false;
-}
-
-auto should_stop() -> bool
-{
-    return state().stop;
 }
 
 } // namespace bn::mcp

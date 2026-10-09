@@ -13,7 +13,4 @@ auto request_stop() -> void;
 /// Releases the memory client callbacks after the game has finished its normal shutdown.
 auto finish_session() -> void;
 
-/// True after stdin closes or request_stop() is called.
-auto should_stop() -> bool;
-
 } // namespace bn::mcp
