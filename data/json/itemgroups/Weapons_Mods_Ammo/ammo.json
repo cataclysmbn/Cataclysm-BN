@@ -307,6 +307,7 @@
       { "item": "bp_762_51", "prob": 70, "charges": [ 1, 100 ] },
       { "item": "bp_762_51_incendiary", "prob": 5, "charges": [ 1, 100 ] },
       { "item": "bp_762_54R", "prob": 55, "charges": [ 1, 100 ] },
+      { "item": "bp_762_54R_7n1", "prob": 50, "charges": [ 1, 100 ] },
       { "item": "bp_762_m43", "prob": 20, "charges": [ 1, 100 ] },
       { "item": "bp_762_m87", "prob": 35, "charges": [ 1, 100 ] },
       { "item": "reloaded_4570_bp", "prob": 25, "charges": [ 1, 100 ] }
