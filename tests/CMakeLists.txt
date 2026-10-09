@@ -1,29 +1,4 @@
 if (BUILD_TESTING)
-    # Register deterministic RNG trace probes only in the shared engine source
-    # and its focused test source. Non-test builds remain uninstrumented.
-    set_property(SOURCE "${CMAKE_SOURCE_DIR}/src/rng.cpp"
-        DIRECTORY "${CMAKE_SOURCE_DIR}/src"
-        APPEND PROPERTY COMPILE_DEFINITIONS CATA_RNG_TRACE_TESTING)
-    set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/deterministic_rng_test.cpp"
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        APPEND PROPERTY COMPILE_DEFINITIONS CATA_RNG_TRACE_TESTING)
-
-    # Deterministic pre-engagement allocation/interruption faults, test builds only.
-    set_property(SOURCE "${CMAKE_SOURCE_DIR}/src/evaluation_decision.cpp"
-        DIRECTORY "${CMAKE_SOURCE_DIR}/src"
-        APPEND PROPERTY COMPILE_DEFINITIONS CATA_EVALUATION_DECISION_TESTING)
-    set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/evaluation_decision_test.cpp"
-        APPEND PROPERTY COMPILE_DEFINITIONS
-            CATA_EVALUATION_DECISION_TESTING CATA_TRANSLATION_COPY_TESTING CATA_LANGUAGE_TESTING)
-    # Real catalogue fixture publication is available only in test builds.
-    set_property(SOURCE "${CMAKE_SOURCE_DIR}/src/language.cpp"
-        DIRECTORY "${CMAKE_SOURCE_DIR}/src"
-        APPEND PROPERTY COMPILE_DEFINITIONS CATA_LANGUAGE_TESTING)
-    # Behavior-neutral completed-copy observation for the pre-admission translated-label RED.
-    set_property(SOURCE "${CMAKE_SOURCE_DIR}/src/translations.cpp"
-        DIRECTORY "${CMAKE_SOURCE_DIR}/src"
-        APPEND PROPERTY COMPILE_DEFINITIONS CATA_TRANSLATION_COPY_TESTING)
-
     # Explicit opt-in requires a real private graphical session (for example Xvfb).
     # Native message controls remain runnable by ordinary headless CTest.
     option(CATA_NATIVE_PREVIEW_GRAPHICS "Enable real graphical character-preview CTest" OFF)

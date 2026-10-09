@@ -89,12 +89,7 @@ auto cata_thread_pool::submit( const rng_deterministic_key &key,
 {
     const auto deterministic_seed = rng_deterministic_seed_for_current_context( key );
     if( deterministic_seed ) {
-        const auto trace = reserve_rng_task_trace( {
-            .kind = rng_task_trace_kind::keyed_task, .stream = key.stream,
-            .key = key.id, .seed = *deterministic_seed,
-        } );
-        auto wrapped_task = [task = std::move( task ), deterministic_seed, trace]() {
-            [[maybe_unused]] const auto trace_binding = rng_task_trace_binding( trace );
+        auto wrapped_task = [task = std::move( task ), deterministic_seed]() {
             [[maybe_unused]] const auto scope = rng_deterministic_task_scope( *deterministic_seed );
             task();
         };
