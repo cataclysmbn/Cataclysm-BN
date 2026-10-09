@@ -521,6 +521,21 @@
   },
   {
     "type": "item_group",
+    "id": "bionics_broken_cyborg",
+    "subtype": "distribution",
+    "//": "Non-faulty bionics harvestable from prototype/broken cyborgs.",
+    "items": [
+      [ "bio_armor_head", 2 ],
+      [ "bio_armor_torso", 2 ],
+      [ "bio_armor_arms", 2 ],
+      [ "bio_armor_legs", 2 ],
+      [ "bio_armor_eyes", 2 ],
+      [ "bio_razors", 2 ],
+      [ "bio_torsionratchet", 1 ]
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "bionics_bank_vault",
     "subtype": "distribution",
     "//": "Bionics for bank vault.",

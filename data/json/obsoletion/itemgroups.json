@@ -248,20 +248,5 @@
       { "item": "tool_rdx_charge", "prob": 10 },
       { "item": "v29", "prob": 10 }
     ]
-  },
-  {
-    "type": "item_group",
-    "id": "bionics_broken_cyborg",
-    "subtype": "distribution",
-    "//": "Formerly made prototype/broken cyborgs match what player version has, now they can drop any bionic.",
-    "items": [
-      [ "bio_armor_head", 2 ],
-      [ "bio_armor_torso", 2 ],
-      [ "bio_armor_arms", 2 ],
-      [ "bio_armor_legs", 2 ],
-      [ "bio_armor_eyes", 2 ],
-      [ "bio_razors", 2 ],
-      [ "bio_torsionratchet", 1 ]
-    ]
   }
 ]

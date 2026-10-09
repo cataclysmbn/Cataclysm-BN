@@ -164,22 +164,29 @@
     "id": "cyborg_harvest",
     "type": "item_group",
     "subtype": "distribution",
-    "//": "Outright called a cyborg, so 75% chance of yielding CBMs",
+    "//": "Outright called a cyborg, so 2/3 chance of yielding CBMs, favor armor bionics more heavily.",
     "entries": [
-      { "distribution": [ { "item": "null", "prob": 50 }, { "group": "bionic_salvage_junk", "prob": 50 } ], "prob": 25 },
-      { "group": "bionics", "prob": 75 }
+      { "distribution": [ { "item": "null", "prob": 50 }, { "group": "bionic_salvage_junk", "prob": 50 } ], "prob": 33 },
+      {
+        "distribution": [ { "item": "bionics", "prob": 50 }, { "group": "bionics_broken_cyborg", "prob": 50 } ],
+        "prob": 66
+      }
     ]
   },
   {
     "id": "cyborg_harvest_uncommon",
     "type": "item_group",
     "subtype": "distribution",
-    "//": "Lab mutant spawns, spawn a random bionic or power storage CBM about a third of the time.",
+    "//": "Lab mutant spawns, spawn a random bionic, power storage CBM, or armor bionics about a third of the time.",
     "entries": [
       { "item": "null", "prob": 33 },
       { "group": "bionic_salvage_junk", "prob": 33 },
       {
-        "distribution": [ { "group": "bionic_power_storage_civ", "prob": 50 }, { "group": "bionics", "prob": 50 } ],
+        "distribution": [
+          { "group": "bionic_power_storage_civ", "prob": 33 },
+          { "group": "bionics", "prob": 33 },
+          { "group": "bionics_broken_cyborg", "prob": 33 }
+        ],
         "prob": 33
       }
     ]
@@ -240,11 +247,11 @@
     "id": "harvest_bionics_common",
     "type": "item_group",
     "subtype": "distribution",
-    "//": "Standard bionic enemies have a 25% chance of generating nothing, 25% components, 50% CBMs",
+    "//": "Lower-tier bionic harvests have a 1/3 chance of generating nothing, 1/3 components, 1/3 CBMs",
     "entries": [
-      { "item": "null", "prob": 25 },
-      { "group": "bionic_salvage_junk", "prob": 25 },
-      { "group": "bionics_common", "prob": 50 }
+      { "item": "null", "prob": 33 },
+      { "group": "bionic_salvage_junk", "prob": 33 },
+      { "group": "bionics_common", "prob": 33 }
     ]
   },
   {
