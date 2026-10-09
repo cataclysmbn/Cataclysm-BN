@@ -1470,7 +1470,7 @@ bool monster::avoid_trap( const tripoint_bub_ms & /* pos */, const trap &tr ) co
     if( digging() || flies() ) {
         return true;
     }
-    return dice( 3, type->sk_dodge + 1 ) >= dice( 3, tr.get_avoidance() );
+    return dice( 3, static_cast<int>( get_dodge_base() + 1 ) ) >= dice( 3, tr.get_avoidance() );
 }
 
 bool monster::has_flag( const m_flag f ) const
