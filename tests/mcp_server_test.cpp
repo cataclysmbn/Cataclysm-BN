@@ -3,11 +3,17 @@
 #    include "catch/catch.hpp"
 #    include "json.h"
 #    include "mcp_server.h"
+#    include "mcp_session.h"
 
 #    include <functional>
 #    include <sstream>
 #    include <string>
 #    include <vector>
+
+#    if !defined(_WIN32)
+#        include <csignal>
+#        include <unistd.h>
+#    endif
 
 namespace {
 
@@ -679,6 +685,23 @@ TEST_CASE("MCP rejects fractional and exponent mouse coordinates", "[mcp][protoc
     }
     CHECK(fixture.submitted.empty());
 }
+
+#    if !defined(_WIN32)
+TEST_CASE(
+    "MCP session ignores SIGPIPE so a closed output pipe becomes a write error", "[mcp][session]") {
+    const auto stdout_copy = dup(STDOUT_FILENO);
+    REQUIRE(stdout_copy >= 0);
+    const auto previous = std::signal(SIGPIPE, SIG_DFL);
+    REQUIRE(previous != SIG_ERR);
+    bn::mcp::start_session();
+    const auto installed = std::signal(SIGPIPE, SIG_DFL);
+    bn::mcp::finish_session();
+    REQUIRE(dup2(stdout_copy, STDOUT_FILENO) >= 0);
+    close(stdout_copy);
+    std::signal(SIGPIPE, previous);
+    CHECK(installed == SIG_IGN);
+}
+#    endif
 
 TEST_CASE("MCP rejects empty and oversized key batches", "[mcp][session]") {
     auto fixture = protocol_fixture{};

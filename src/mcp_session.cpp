@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <csignal>
 #include <cstdio>
 #include <deque>
 #include <iostream>
@@ -290,6 +291,10 @@ auto start_session() -> void
     if( session.started ) {
         return;
     }
+#if !defined(_WIN32)
+    // A consumer that closes the pipe must surface as a write error, not terminate the game.
+    std::signal( SIGPIPE, SIG_IGN );
+#endif
     const auto protocol_fd = duplicate_stdout();
     if( protocol_fd < 0 || !redirect_stdout_to_stderr() ) {
         if( protocol_fd >= 0 ) {
