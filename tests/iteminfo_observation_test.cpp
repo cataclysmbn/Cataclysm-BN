@@ -24,6 +24,8 @@
 #include "state_helpers.h"
 #include "text_snippets.h"
 #include "type_id.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
 #include "water_source.h"
 
 #include <algorithm>
@@ -1307,4 +1309,29 @@ TEST_CASE(
     const auto after = saved(get_map().i_at(info_test_pos).only_item());
     CHECK(after.find("test_info_missing_owner") == std::string::npos);
     CHECK(after.find("test_info_missing_previous_owner") == std::string::npos);
+}
+
+TEST_CASE(
+    "crafting observation keeps inventory letters of vehicle cargo",
+    "[iteminfo][observation][vehicle]") {
+    const auto fixture = observation_fixture{};
+    auto& here = get_map();
+    auto* const cart = here.add_vehicle(
+        vproto_id("shopping_cart"), info_test_pos + tripoint_east, 0_degrees, 0, 0);
+    REQUIRE(cart != nullptr);
+    const auto cargo = here.veh_at(info_test_pos + tripoint_east).part_with_feature("CARGO", true);
+    REQUIRE(cargo);
+    cargo->vehicle().get_items(cargo->part_index()).clear();
+    auto lettered = item::spawn("test_info_jersey", calendar::turn);
+    lettered->invlet = 'z';
+    REQUIRE_FALSE(cargo->vehicle().add_item(cargo->part(), std::move(lettered)));
+    const auto& stored = cargo->vehicle().get_items(cargo->part_index()).only_item();
+    REQUIRE(stored.invlet == 'z');
+    const auto before = observation_baseline{stored};
+
+    const auto inventory = get_avatar().crafting_inventory_for_display();
+
+    CHECK(inventory.has_amount(itype_id("test_info_jersey"), 1));
+    CHECK(stored.invlet == 'z');
+    before.check(stored);
 }

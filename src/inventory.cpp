@@ -613,7 +613,7 @@ auto inventory::form_from_map_points( const inventory_from_map_points_request &r
         if( cargo ) {
             const auto items = veh->get_items( cargo->part_index() );
             for( const auto &it : items ) {
-                add_item_by_items_type_cache( *it, false, false, false );
+                add_item_by_items_type_cache( *it, request.observation, false, false );
             }
         }
 
