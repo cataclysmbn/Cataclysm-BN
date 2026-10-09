@@ -50,6 +50,22 @@ TEST_CASE("client commands preserve text and distinguish activity polling", "[in
         game_client::resolve_input_command({.modifiers = {"CTRL"}, .text = "text"}, point(80, 24)));
 }
 
+TEST_CASE("client commands synthesize text only for unmodified printable keys", "[input][client]") {
+    const auto plain = game_client::resolve_input_command({.key = "X"}, point(80, 24));
+    REQUIRE(plain.has_value());
+    CHECK(plain->text == "X");
+
+    const auto control =
+        game_client::resolve_input_command({.key = "X", .modifiers = {"CTRL"}}, point(80, 24));
+    REQUIRE(control.has_value());
+    CHECK(control->text.empty());
+
+    const auto explicit_text = game_client::
+        resolve_input_command({.key = "X", .modifiers = {"CTRL"}, .text = "y"}, point(80, 24));
+    REQUIRE(explicit_text.has_value());
+    CHECK(explicit_text->text == "y");
+}
+
 TEST_CASE("client idle commands require the current nonblocking boundary", "[input][client]") {
     auto context = input_context("DEFAULTMODE");
     context.register_action("ANY_INPUT");

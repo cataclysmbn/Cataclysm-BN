@@ -135,7 +135,9 @@ auto resolve_input_command( const input_command &command, const point screen_siz
     }
     if( code == 0 ) { return std::unexpected( "Unknown key" ); }
     auto result = input_event( code, input_event_t::keyboard );
-    result.text = command.text.empty() && command.key.size() == 1 ? command.key : command.text;
+    // A modified key (Ctrl+X) is a command, not typed text.
+    result.text = command.text.empty() && command.modifiers.empty() && command.key.size() == 1 ?
+                  command.key : command.text;
     return result;
 }
 
