@@ -2011,6 +2011,10 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         info.emplace_back( "FOOD", _( "Enjoyability: " ), fun_for_food_item.first );
     }
 
+    if( food_item->get_comestible()->healthy != 0 && parts->test( iteminfo_parts::FOOD_HEALTHY ) ) {
+        info.emplace_back( "FOOD", _( "Healthy: " ), food_item->get_comestible()->healthy );
+    }
+
     if( parts->test( iteminfo_parts::FOOD_PORTIONS ) ) {
         info.emplace_back( "FOOD", _( "Portions: " ),
                            std::abs( static_cast<int>( food_item->charges ) * batch ) );
