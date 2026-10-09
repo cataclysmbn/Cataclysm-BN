@@ -14215,7 +14215,7 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
             force = std::min<float>( 1.5f * critter.type->hp, flvel );
             const int damage = rng( force, force * 2.0f ) / 6;
             c->impact( damage, pt );
-            critter.impact(damage, pt);
+            critter.impact( damage, pt );
             critter.check_dead_state();
             if( !critter.is_dead() ) {
                 thru = false;

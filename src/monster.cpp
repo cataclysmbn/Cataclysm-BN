@@ -3162,7 +3162,8 @@ int monster::impact( int force, const tripoint_bub_ms &p )
         total_dealt += 10 * mod;
     }
 
-    const int bash_damage = std::max( 0.0f, force * mod - ( get_armor_bash( bodypart_id( "torso" ) ) / 2 ) );
+    const int bash_damage = std::max( 0.0f,
+                                      force * mod - ( get_armor_bash( bodypart_id( "torso" ) ) / 2 ) );
     apply_damage( nullptr, bodypart_id( "torso" ), bash_damage );
     total_dealt += force * mod;
 
