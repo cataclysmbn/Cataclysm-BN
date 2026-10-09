@@ -8121,14 +8121,14 @@ double item::bonus_from_enchantments( double base, enchantment_value_id value,
     return ret;
 }
 
-const std::vector<relic_recharge> &item::get_relic_recharge_scheme() const
+auto item::get_relic_recharge_scheme() const -> std::vector<relic_recharge>
 {
-    std::vector<relic_recharge> recharge_schemes;
+    auto recharge_schemes = std::vector<relic_recharge>{};
     if( type->relic_data ) {
         recharge_schemes = type->relic_data->get_recharge_scheme();
     }
     if( is_relic( true ) ) {
-        std::vector<relic_recharge> dynamic_recharge_schemes = relic_data->get_recharge_scheme();
+        const auto &dynamic_recharge_schemes = relic_data->get_recharge_scheme();
         recharge_schemes.insert( recharge_schemes.end(), dynamic_recharge_schemes.begin(),
                                  dynamic_recharge_schemes.end() );
     }
