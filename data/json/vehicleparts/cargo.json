@@ -323,6 +323,7 @@
     "type": "vehicle_part",
     "id": "trunk",
     "name": { "str": "trunk" },
+    "description": "A large, enclosed cargo space that you can walk over.  Its contents are covered, so light sources stored inside won't illuminate nearby squares.",
     "flags": [ "CARGO", "LOCKABLE_CARGO", "COVERED", "BOARDABLE" ]
   },
   {
@@ -386,6 +387,7 @@
     "type": "vehicle_part",
     "id": "trunk_flat",
     "name": { "str": "flat trunk" },
+    "description": "A low cargo box with a hatch on top.  It holds less than a trunk and can't be walked through, but it doesn't need a roof over it to stay aerodynamic.",
     "looks_like": "hatch",
     "size": "100 L",
     "flags": [ "OBSTACLE", "HALF_BOARD", "NO_ROOF_NEEDED", "CARGO", "LOCKABLE_CARGO" ],
