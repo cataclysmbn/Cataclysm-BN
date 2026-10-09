@@ -43,6 +43,7 @@
 #include "fungal_effects.h"
 #include "game.h"
 #include "game_constants.h"
+#include "hanging_rope.h"
 #include "harvest.h"
 #include "iexamine.h"
 #include "input.h"
@@ -6770,6 +6771,11 @@ auto map::draw_maptile(
         item_sym.clear(); // clear the item symbol so `sym` is used instead.
 
         if (!veh->forward_velocity() && !veh->player_in_control(g->u)) { memory_sym = sym; }
+    } else if (is_hanging_rope_visible(*this, p)) {
+        const auto [rope_veh, rope_part] = get_rope_at(p);
+        sym = rope_veh->part_sym(rope_part, true);
+        tercol = rope_veh->part_color(rope_part, true);
+        item_sym.clear();
     }
 
     if (param.memorize() && check_and_set_seen_cache(p)) {
