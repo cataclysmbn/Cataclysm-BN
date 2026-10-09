@@ -150,8 +150,9 @@ Answers to `out/lanes/l2/protocol-unification.md` §7 and lane follow-ups:
 4. Native list state (`focus`, `pane.filter`) stays for the 1:1 port; clients may ignore it.
 5. One controller connection submits commands; others spectate (finalised in Phase 3).
 6. `engine_client_delivery.{h,cpp}` is deleted; Phase 3 rebuilds only what its slow-consumer test needs.
-7. Damage numbers follow native disclosure: shown for monsters exactly when the native damage-number option
-   would show them.
+7. Damage numbers follow native disclosure: `amount` is published exactly where the native message log
+   prints it, i.e. damage dealt by or to the avatar (`src/creature.cpp` hit messages); scrolling combat text
+   shows HP bars, not numbers.
 8. Legacy MCP tools stay separate in Phase 1 and are rebuilt on the new values after the world model lands.
 9. Event-replay files carry appearance inline (`look`), no embedded data table.
 10. Remembered map knowledge is part of save equality: acquisition is decided by the engine, never by rendering
