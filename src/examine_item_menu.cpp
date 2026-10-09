@@ -371,6 +371,9 @@ hint_rating rate_action_eat( const avatar &you, const item &it )
     if( !you.can_consume( it ) ) {
         return hint_rating::cant;
     }
+    if( !you.get_consumable_from( const_cast<item &>( it ) ).is_comestible() ) {
+        return hint_rating::good;
+    }
 
     const ret_val<edible_rating> rating = you.will_eat( it );
     if( rating.success() ) {
