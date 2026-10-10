@@ -2,10 +2,14 @@
 
 #include <algorithm> //std::min
 #include <cstddef>
+#include <map>
+#include <string>
+#include <vector>
 #include <memory>
 #include <unordered_map>
 
 #include "character.h"
+#include "client_choice.h"
 #include "enums.h"
 #include "input.h"
 #include "inventory.h"
@@ -357,13 +361,76 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
         }
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto modes = std::map<mutation_menu_mode, std::string> {
+            { mutation_menu_mode::reassigning, _( "Reassigning" ) },
+            { mutation_menu_mode::activating, _( "Activating" ) },
+            { mutation_menu_mode::examining, _( "Examining" ) },
+            { mutation_menu_mode::hiding, _( "Hiding" ) },
+        };
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Mutations" ),
+            .message = modes.at( menu_mode ),
+            .allow_cancel = true,
+        };
+        const auto add = [&]( const std::vector<trait_id> &traits, const mutation_tab_mode tab ) {
+            for( auto i = std::size_t{ 0 }; i < traits.size(); ++i ) {
+                const auto &branch = traits[i].obj();
+                const auto &data = who.my_mutations[traits[i]];
+                const auto active_kind = tab == mutation_tab_mode::active;
+                auto state = std::string();
+                if( active_kind ) {
+                    state = data.powered ? _( "Active" ) : _( "Inactive" );
+                    if( branch.cost > 0 ) { state += string_format( _( ", %d RU" ), branch.cost ); }
+                    if( branch.cooldown > 0 ) { state += string_format( _( ", %d turns" ), branch.cooldown ); }
+                }
+                snapshot.choices.push_back( {
+                    .id = "mutation:" + traits[i].str(), .label = branch.name(),
+                    .description = remove_color_tags( branch.desc() ),
+                    .selected = data.powered,
+                    .highlighted = tab_mode == tab && cursor == static_cast<int>( i ),
+                    .columns = {
+                        { .label = _( "Kind" ), .value = active_kind ? _( "Active" ) : _( "Passive" ) },
+                        { .label = _( "Key" ), .value = std::string( 1, data.key ) },
+                        { .label = _( "State" ), .value = state },
+                        { .label = _( "Sprite" ), .value = data.show_sprite ? _( "Shown" ) : _( "Hidden" ) },
+                    },
+                } );
+            }
+        };
+        add( passive, mutation_tab_mode::passive );
+        add( active, mutation_tab_mode::active );
+        for( const auto *id : { "TOGGLE_EXAMINE", "REASSIGN", "TOGGLE_SPRITE" } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     mutations_ui_result ret;
     bool exit = false;
     while( !exit ) {
         recalc_max_scroll_position();
         ui_manager::redraw();
         bool handled = false;
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            // A chosen mutation is Enter on it: the same cursor, whichever mode the menu is in.
+            const auto trait = trait_id( id.substr( id.find( ':' ) + 1 ) );
+            const auto in_active = std::ranges::find( active, trait );
+            const auto in_passive = std::ranges::find( passive, trait );
+            if( in_active != active.end() ) {
+                tab_mode = mutation_tab_mode::active;
+                cursor = static_cast<int>( in_active - active.begin() );
+            } else if( in_passive != passive.end() ) {
+                tab_mode = mutation_tab_mode::passive;
+                cursor = static_cast<int>( in_passive - passive.begin() );
+            } else {
+                return std::string();
+            }
+            return std::string( "CONFIRM" );
+        } );
         const input_event evt = ctxt.get_raw_input();
         if( evt.type == input_event_t::keyboard && !evt.sequence.empty() ) {
             const int ch = evt.get_first_input();

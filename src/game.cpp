@@ -1,4 +1,6 @@
 #include "game.h"
+#include "client_choice.h"
+#include "iteminfo_request.h"
 
 #include "achievement.h"
 #include "action.h"
@@ -10604,6 +10606,49 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
             trail_end_x );
     add_draw_callback( trail_cb );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Items around you" ),
+            .allow_cancel = true,
+        };
+        if( ground_items.empty() ) {
+            snapshot.message = _( "You don't see any items around you!" );
+        } else if( !sFilter.empty() ) {
+            snapshot.message = string_format( _( "Filter: %s" ), sFilter );
+        }
+        for( auto i = std::size_t{ 0 }; i < filtered_items.size(); ++i ) {
+            const auto &stack = filtered_items[i];
+            const auto is_active = activeItem == &stack;
+            const auto &first = stack.vIG[is_active ? page_num : 0];
+            auto label = stack.example->tname();
+            if( first.count > 1 ) { label += string_format( "[%d]", first.count ); }
+            const auto priority = static_cast<int>( i ) < highPEnd ? _( "High" ) :
+                                  static_cast<int>( i ) >= lowPStart ? _( "Low" ) : std::string();
+            snapshot.choices.push_back( {
+                .id = "item:" + std::to_string( i ), .label = remove_color_tags( label ),
+                .description = is_active ? remove_color_tags( stack.example->info_string( { .mode = iteminfo_mode::observation } ) )
+                    : std::string(),
+                      .highlighted = is_active,
+                      .columns = {
+                    { .label = _( "Distance" ), .value = std::to_string( rl_dist( point_rel_ms::zero(), first.pos.xy() ) ) },
+                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( point_rel_ms::zero(), first.pos.xy() ) ) },
+                    { .label = _( "Category" ), .value = stack.example->get_category().name() },
+                    { .label = _( "Stacks" ), .value = std::to_string( stack.vIG.size() ) },
+                    { .label = _( "Priority" ), .value = priority },
+                },
+            } );
+        }
+        for( const auto *id : {
+                 "LEFT", "RIGHT", "EXAMINE", "COMPARE", "TRAVEL_TO", "FILTER", "RESET_FILTER",
+                 "PRIORITY_INCREASE", "PRIORITY_DECREASE", "SORT", "NEXT_TAB"
+             } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     do {
         bool recalc_unread = false;
         if( action == "COMPARE" && activeItem ) {
@@ -10824,7 +10869,19 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
 
         ui_manager::redraw();
 
-        action = ctxt.handle_input();
+        action = game_client::action_of( ctxt, ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "item:" ) ) {
+                // The row among the item rows, past the category headings of the native list.
+                auto remaining = std::stoi( id.substr( 5 ) );
+                iActive = 0;
+                for( ; iActive < iItemNum; ++iActive ) {
+                    if( mSortCategory[iActive].empty() && remaining-- == 0 ) { break; }
+                }
+                iScrollPos = 0;
+                page_num = 0;
+            }
+            return std::string();
+        } );
     } while( action != "QUIT" );
 
     u.view_offset = stored_view_offset;

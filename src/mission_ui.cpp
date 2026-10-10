@@ -1,12 +1,14 @@
 #include "game.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
 
 #include "avatar.h"
 #include "calendar.h"
+#include "client_choice.h"
 #include "color.h"
 #include "debug.h"
 #include "input.h"
@@ -157,6 +159,56 @@ void game::list_missions()
         wnoutrefresh( w_missions );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto tab_names = std::array<std::string, 3> { _( "ACTIVE MISSIONS" ),
+                   _( "COMPLETED MISSIONS" ), _( "FAILED MISSIONS" )
+                                                          };
+        const auto nope = std::array<std::string, 3> { _( "You have no active missions!" ),
+                   _( "You haven't completed any missions!" ), _( "You haven't failed any missions!" )
+                                                     };
+        const auto current = static_cast<std::size_t>( tab );
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Missions" ),
+            .message = umissions.empty() ? nope[current] : std::string(),
+            .allow_cancel = true,
+        };
+        for( auto i = std::size_t{ 0 }; i < tab_names.size(); ++i ) {
+            const auto id = "tab" + std::to_string( i );
+            snapshot.panes.push_back( { .id = id, .label = tab_names[i], .role = i == current ? "focused" : "category" } );
+            snapshot.choices.push_back( { .id = "tab:" + std::to_string( i ), .label = tab_names[i],
+                                          .selected = i == current } );
+        }
+        for( auto i = std::size_t{ 0 }; i < umissions.size(); ++i ) {
+            auto *miss = umissions[i];
+            auto text = std::string();
+            if( miss->get_npc_id().is_valid() ) {
+                if( const auto *guy = g->find_npc( miss->get_npc_id() ) ) {
+                    text += string_format( _( "For %s" ), guy->disp_name() ) + "\n";
+                }
+            }
+            auto description = miss->get_description();
+            for( const auto &reward : miss->get_likely_rewards() ) {
+                description = replace_all( description, "<reward_count:" + reward.second.str() + ">",
+                                           string_format( "%d", reward.first ) );
+            }
+            text += description;
+            if( miss->has_deadline() ) {
+                text += "\n" + string_format( _( "Deadline: %s" ), to_string( miss->get_deadline() ) );
+            }
+            if( miss->has_target() ) {
+                text += "\n" + string_format( _( "Target: %s   You: %s" ), miss->get_target().to_string(),
+                                              u.abs_omt_pos().to_string() );
+            }
+            snapshot.choices.push_back( {
+                .id = "mission:" + std::to_string( i ), .label = miss->name(),
+                .description = std::move( text ), .pane_id = "tab" + std::to_string( current ),
+                .selected = u.get_active_mission() == miss, .highlighted = selection == i,
+            } );
+        }
+        return snapshot;
+    } );
+
     while( true ) {
         umissions.clear();
         if( tab < tab_mode::FIRST_TAB || tab >= tab_mode::NUM_TABS ) {
@@ -183,7 +235,18 @@ void game::list_missions()
             selection = 0;
         }
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "tab:" ) ) {
+                tab = static_cast<tab_mode>( std::stoi( id.substr( 4 ) ) );
+                selection = 0;
+            } else if( id.starts_with( "mission:" ) ) {
+                selection = std::stoul( id.substr( 8 ) );
+                // Enter makes the mission active and leaves; on the other tabs it only selects.
+                return tab == tab_mode::TAB_ACTIVE ? std::string( "CONFIRM" ) : std::string();
+            }
+            return std::string();
+        } );
         if( action == "RIGHT" ) {
             tab = static_cast<tab_mode>( static_cast<int>( tab ) + 1 );
             if( tab >= tab_mode::NUM_TABS ) {
