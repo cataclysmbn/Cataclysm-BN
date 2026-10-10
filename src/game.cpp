@@ -221,6 +221,7 @@
 class computer;
 
 #include "client_display.h"
+#include "client_interaction.h"
 
 
 #if defined(_WIN32)
@@ -9564,10 +9565,30 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
         const auto edge_scroll = mouse_edge_scrolling_terrain( ctxt );
         const int scroll_timeout = get_option<int>( "EDGE_SCROLL" );
         const bool edge_scrolling = edge_scroll != tripoint_rel_ms::zero() && scroll_timeout >= 0;
+        const auto position_of = []( const tripoint_bub_ms & position ) {
+            return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
+        };
+        const auto look_interaction = game_client::interaction_scope( ctxt, [&]() {
+            return game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::target,
+                .title = _( "Look Around" ),
+                .allow_cancel = true,
+                .target = game_client::interaction_target{
+                    .source = position_of( u.bub_pos() ),
+                    .cursor = position_of( lp ),
+                    .distance_metric = "square",
+                    .status = "look",
+                },
+            };
+        } );
         if( edge_scrolling ) {
             action = ctxt.handle_input( scroll_timeout );
         } else {
             action = ctxt.handle_input();
+        }
+        if( ctxt.get_raw_input().interaction &&
+            ctxt.get_raw_input().interaction->operation == game_client::interaction_operation::cancel ) {
+            action = "QUIT";
         }
         ( void ) zone_blink; // kept for callback signature
         if( action == "LIST_ITEMS" ) {

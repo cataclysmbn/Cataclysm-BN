@@ -4393,4 +4393,31 @@ TEST_CASE(
     CHECK(game_client::current_interaction().choices.front().id == "outer");
 }
 
+TEST_CASE(
+    "look around publishes its cursor and leaves on semantic cancel",
+    "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    auto reads = 0;
+    auto cursor = tripoint_bub_ms{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.target);
+        CHECK(snapshot.kind == game_client::interaction_kind::target);
+        CHECK(snapshot.allow_cancel);
+        cursor = {snapshot.target->cursor.x, snapshot.target->cursor.y, snapshot.target->cursor.z};
+        if (reads++ == 0) { return resolve_action("RIGHT"); }
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    const auto result = g->look_around();
+    CHECK_FALSE(result);
+    REQUIRE(reads == 2);
+    CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
+}
+
 #endif // CATA_MCP
