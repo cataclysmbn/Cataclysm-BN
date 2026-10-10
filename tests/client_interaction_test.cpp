@@ -918,6 +918,9 @@ TEST_CASE(
         REQUIRE(snapshot.panes.size() == 2);
         CHECK_FALSE(snapshot.allow_set_count);
         CHECK(snapshot.allow_cancel);
+        // With no container around, that area cannot take items; the native screen draws it red.
+        CHECK(std::ranges::contains(snapshot.panes.front().blocked_areas, "ITEMS_CONTAINER"));
+        CHECK_FALSE(std::ranges::contains(snapshot.panes.front().blocked_areas, "ITEMS_INVENTORY"));
         CHECK(std::ranges::count(snapshot.panes, "source", &game_client::interaction_pane::role)
               == 1);
         CHECK(

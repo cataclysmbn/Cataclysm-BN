@@ -275,10 +275,12 @@ auto interaction_json( const boundary_state &state ) -> json
     }
     compat["panes"] = json::array();
     for( const auto &pane : native.panes ) {
-        compat["panes"].push_back( {{"id", pane.id}, {"label", pane.label}, {"role", pane.role},
+        auto value = json{{"id", pane.id}, {"label", pane.label}, {"role", pane.role},
             {"area_id", pane.area_id}, {"area_label", pane.area_label},
             {"area_description", pane.area_description}, {"filter", pane.filter},
-            {"storage_kind", pane.storage_kind}} );
+            {"storage_kind", pane.storage_kind}};
+        if( !pane.blocked_areas.empty() ) { value["blocked_areas"] = pane.blocked_areas; }
+        compat["panes"].push_back( std::move( value ) );
     }
     result["compat"] = std::move( compat );
     return result;

@@ -73,6 +73,8 @@ struct interaction_pane {
     std::string area_description;
     std::string filter;
     std::string storage_kind;
+    /// Registered actions of the areas this pane cannot put items in, which the native screen draws red.
+    std::vector<std::string> blocked_areas;
 };
 
 struct interaction_field {
