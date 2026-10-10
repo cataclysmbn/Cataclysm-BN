@@ -402,6 +402,30 @@ auto visible_at( const map &here, const tripoint_bub_ms &p ) -> bool
     return normally_visible( here, p );
 }
 
+auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
+{
+    auto result = std::vector<tripoint_bub_ms> {};
+    const auto &you = get_avatar();
+    // A blind avatar sees only within clairvoyance, which needs the per-cell test.
+    const auto blind = you.is_blind();
+    if( blind && you.clairvoyance() == 0 ) { return result; }
+    const auto &vision = here.get_visibility_variables_cache();
+    for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
+        const auto &cache = here.access_cache( z );
+        if( cache.visibility_cache.size() < static_cast<size_t>( cache.cache_x * cache.cache_y ) ) { continue; }
+        for( const auto x : std::views::iota( 0, cache.cache_x ) ) {
+            for( const auto y : std::views::iota( 0, cache.cache_y ) ) {
+                if( here.get_visibility( cache.visibility_cache[cache.idx( x, y )], vision ) != VIS_CLEAR ) {
+                    continue;
+                }
+                const auto p = tripoint_bub_ms( x, y, z );
+                if( !blind || normally_visible( here, p ) ) { result.push_back( p ); }
+            }
+        }
+    }
+    return result;
+}
+
 auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool
 {
     if( !here.inbounds( p ) ) {

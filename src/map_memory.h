@@ -2,6 +2,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include "game_constants.h"
 #include "memory_fast.h"
@@ -193,6 +194,12 @@ class map_memory
          * @param pos tile position, in global ms coords.
          */
         int get_symbol( const tripoint_abs_ms &pos );
+
+        /**
+         * Every position with a stored tile, terrain or symbol. Reads existing submaps only and
+         * allocates or loads none, so the cost follows what is known, not the size of the world.
+         */
+        std::vector<tripoint_abs_ms> memorized_positions() const;
 
         /**
          * Clears memorized overlay tile (furniture/vpart/trap) and symbol, leaving terrain memory intact.

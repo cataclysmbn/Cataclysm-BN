@@ -134,6 +134,8 @@ class avatar : public player
         int get_memorized_symbol( const tripoint_abs_ms &p ) const;
         void clear_memorized_overlay( const tripoint_abs_ms &pos );
         void clear_memorized_tile( const tripoint_abs_ms &pos );
+        /** Every position the avatar has any map memory of, without loading or allocating memory. */
+        std::vector<tripoint_abs_ms> memorized_positions() const;
         /** Returns last stored map tile in given location in tiles mode */
         bool has_memorized_tile_for_autodrive( const tripoint_abs_ms &p ) const;
 

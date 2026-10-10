@@ -1,4 +1,5 @@
 #include "map_memory.h"
+#include <ranges>
 
 #include "cuboid_rectangle.h"
 #include "debug.h"
@@ -112,6 +113,25 @@ void map_memory::clear_memorized_tile( const tripoint_abs_ms &pos )
     sm.set_symbol( p.remainder, mm_submap::default_symbol );
     sm.set_tile( p.remainder, mm_submap::default_tile );
     sm.set_terrain_tile( p.remainder, mm_submap::default_tile );
+}
+
+std::vector<tripoint_abs_ms> map_memory::memorized_positions() const
+{
+    auto result = std::vector<tripoint_abs_ms> {};
+    for( const auto &[sm_pos, sm] : submaps ) {
+        if( !sm || sm->is_empty() ) { continue; }
+        for( const auto y : std::views::iota( 0, SEEY ) ) {
+            for( const auto x : std::views::iota( 0, SEEX ) ) {
+                const auto local = point_sm_ms( x, y );
+                if( sm->tile( local ) != mm_submap::default_tile ||
+                    sm->terrain_tile( local ) != mm_submap::default_tile ||
+                    sm->symbol( local ) != mm_submap::default_symbol ) {
+                    result.push_back( project_combine( sm_pos, local ) );
+                }
+            }
+        }
+    }
+    return result;
 }
 
 bool map_memory::prepare_region( const tripoint_abs_ms &p1, const tripoint_abs_ms &p2 )

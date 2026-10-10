@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 #include "coordinates.h"
 
@@ -24,6 +25,9 @@ auto cosmetic_variant() -> int;
 
 /// Detailed ordinary sight from the completed visibility cache, without refreshing it.
 auto visible_at( const map &here, const tripoint_bub_ms &p ) -> bool;
+
+/// Every position ordinary sight shows, found by one pass over the completed visibility caches.
+auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>;
 
 /// Read completed engine visibility, including exposed vehicle roofs and actor self-awareness.
 auto detailed_at( const map &here, const tripoint_bub_ms &p ) -> bool;

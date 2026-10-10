@@ -334,6 +334,11 @@ void avatar::clear_memorized_tile( const tripoint_abs_ms &pos )
     }
 }
 
+std::vector<tripoint_abs_ms> avatar::memorized_positions() const
+{
+    return player_map_memory->memorized_positions();
+}
+
 bool avatar::has_memorized_tile_for_autodrive( const tripoint_abs_ms &p ) const
 {
     return player_map_memory->has_memory_for_autodrive( p );

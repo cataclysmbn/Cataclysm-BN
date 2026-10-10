@@ -29,6 +29,7 @@
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 
 namespace engine_client::world
@@ -181,20 +182,28 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you, cell 
     return true;
 }
 
-auto capture_cell( map &here, const avatar &you, const tripoint_bub_ms &p,
-                   const std::string &dimension ) -> std::optional<cell>
+/// Cells the avatar knows by memory or by a vehicle it is entitled to perceive; nothing else costs time.
+auto capture_known( map &here, const avatar &you, const std::string &dimension,
+                    std::map<position, cell> &cells ) -> void
 {
-    auto out = cell{ .at = position_of( here, p, dimension ) };
-    if( map_perception::visible_at( here, p ) ) {
-        return fill_visible( here, p, you, out ) ? std::optional{ std::move( out ) } :
-               std::nullopt;
+    for( const auto &p : map_perception::visible_cells( here ) ) {
+        auto out = cell{ .at = position_of( here, p, dimension ) };
+        if( fill_visible( here, p, you, out ) ) { cells.emplace( out.at, std::move( out ) ); }
     }
-    out.known = knowledge::remembered;
-    out.memory = memory_at( you, map_local_to_abs( here, p ) );
-    // A vehicle the avatar is entitled to know about is perceived live, the ground beneath it is not.
-    if( map_perception::detailed_at( here, p ) ) { out.vehicle = vehicle_part_at( here, p, you ); }
-    return out.memory || out.vehicle ? std::optional{ std::move( out ) } :
-           std::nullopt;
+    const auto remember = [&]( const tripoint_bub_ms & p ) {
+        if( !here.inbounds( p ) || map_perception::visible_at( here, p ) ) { return; }
+        const auto at = position_of( here, p, dimension );
+        if( cells.contains( at ) ) { return; }
+        auto out = cell{ .at = at, .known = knowledge::remembered,
+                         .memory = memory_at( you, map_local_to_abs( here, p ) ) };
+        // A vehicle the avatar is entitled to know about is perceived live, the ground beneath it is not.
+        if( map_perception::detailed_at( here, p ) ) { out.vehicle = vehicle_part_at( here, p, you ); }
+        if( out.memory || out.vehicle ) { cells.emplace( at, std::move( out ) ); }
+    };
+    for( const auto &abs : you.memorized_positions() ) { remember( abs_to_map_local( here, abs ) ); }
+    for( const auto &wrapped : here.get_vehicles() ) {
+        for( const auto &part : wrapped.v->get_all_parts() ) { remember( part.pos() ); }
+    }
 }
 
 /// Opaque IDs for creatures the avatar has been shown. The weak pointer pins the creature's control
@@ -293,15 +302,7 @@ auto capture_world() -> world_state
         .environment = environment_value{
             .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
             .weather = get_weather().weather_id.str() } };
-    for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
-        for( const auto y : std::views::iota( 0, size * SEEY ) ) {
-            for( const auto x : std::views::iota( 0, size * SEEX ) ) {
-                if( auto out = capture_cell( here, you, tripoint_bub_ms( x, y, z ), dimension ) ) {
-                    state.cells.emplace( out->at, std::move( *out ) );
-                }
-            }
-        }
-    }
+    capture_known( here, you, dimension, state.cells );
     return state;
 }
 
