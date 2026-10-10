@@ -144,12 +144,12 @@ auto move_player_out_of_the_way() -> void {
 }
 
 auto rebind_map_dimension(const dimension_id& dim) -> void {
-    auto& here = get_map();
-    here.bind_dimension(dim);
-    const auto begin = point_abs_sm(here.get_abs_sub().x(), here.get_abs_sub().y());
-    here.update_active_load_region(
-        begin, begin + point_rel_sm(here.getmapsize(), here.getmapsize()));
-    submap_loader.update();
+    get_map().bind_dimension(dim);
+    // Tests hold no load requests: a bubble request left on the old dimension would make
+    // is_simulated() reject the rebound map, and one on the new dimension would leak.
+    submap_loader.drain_lazy_loads();
+    g->release_active_load_regions();
+    submap_loader.flush_prev_desired();
 }
 
 auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start)

@@ -19,8 +19,8 @@ void clear_map();
 void clear_overmap();
 void put_player_underground();
 auto move_player_out_of_the_way() -> void;
-/// Binds the real map to `dim` and requests the reality bubble there again, which a rebind
-/// releases.
+/// Binds the real map to `dim` and releases every load request, as a test that loads its map
+/// directly holds none.
 auto rebind_map_dimension(const dimension_id& dim) -> void;
 auto spawn_test_monster(const std::string& monster_type, const tripoint_bub_ms& start)
     -> monster&; // *NOPAD*
