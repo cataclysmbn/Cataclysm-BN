@@ -183,6 +183,17 @@ auto classify( const changes &delta ) -> std::string
     return "interaction.changed";
 }
 
+auto remember( std::vector<message_value> &log, const message_value &line ) -> void
+{
+    const auto old = std::ranges::find( log, line.id, &message_value::id );
+    if( old != log.end() ) {
+        *old = line;
+        return;
+    }
+    log.push_back( line );
+    if( log.size() > maximum_log_lines ) { log.erase( log.begin() ); }
+}
+
 public_event::public_event( event_value value ) : value_( std::move( value ) ) {}
 auto public_event::value() const -> const event_value & { return value_; } // *NOPAD*
 
@@ -249,6 +260,7 @@ auto event_stream::publish_message( message_request request ) -> std::expected<p
         return std::unexpected( error::resource_limit );
     }
     current_.at.sequence = event.value().sequence;
+    remember( current_.log, *event.value().message );
     return event;
 }
 
@@ -298,6 +310,7 @@ auto apply_event( snapshot &receiver, const std::string &epoch, const public_eve
     auto next = receiver.value;
     if( const auto applied = apply( next, value.delta ); !applied ) { return applied; }
     receiver.value = std::move( next );
+    if( value.message ) { remember( receiver.log, *value.message ); }
     receiver.at.sequence = value.sequence;
     receiver.at.revision = value.revision;
     return {};

@@ -16,6 +16,9 @@ const inside = (area: { min: Pos; max: Pos }, pos: Pos) =>
   pos.dim === area.min.dim && pos.x >= area.min.x && pos.x <= area.max.x &&
   pos.y >= area.min.y && pos.y <= area.max.y && pos.z >= area.min.z && pos.z <= area.max.z
 
+/** The newest log lines a snapshot carries. */
+const maximumLogLines = 100
+
 export class Mirror {
   at!: Clock
   coverage?: { min: Pos; max: Pos }
@@ -40,6 +43,7 @@ export class Mirror {
     mirror.avatar = header.avatar
     mirror.environment = header.environment
     mirror.route = header.route ?? []
+    mirror.messages = header.messages ?? []
     for (const entity of header.entities) mirror.entities.set(entity.id, entity)
     assertEquals(parts.length, header.parts, "every announced part arrives")
     parts.forEach((part, index) => {
@@ -96,8 +100,10 @@ export class Mirror {
 
   #log(line: Mirror["messages"][number]) {
     const at = this.messages.findIndex((entry) => entry.id === line.id)
-    if (at < 0) this.messages.push(line)
-    else this.messages[at] = line
+    if (at >= 0) this.messages[at] = line
+    else this.messages.push(line)
+    // The stream keeps the newest lines only.
+    if (this.messages.length > maximumLogLines) this.messages.shift()
   }
 
   /** Mutates in place; callers apply it to a copy (see applyEvents). */
@@ -126,7 +132,7 @@ export class Mirror {
     if (changes.interaction) this.interaction = changes.interaction
   }
 
-  /** Order-independent comparable form of the state; transient messages are not state. */
+  /** Order-independent comparable form of the stream: state plus the message log a snapshot carries. */
   state() {
     const sorted = <T>(map: Map<string, T>) => [...map.entries()].sort(([a], [b]) => a < b ? -1 : 1)
     return {
@@ -137,6 +143,7 @@ export class Mirror {
       avatar: this.avatar ?? null,
       environment: this.environment ?? null,
       route: this.route,
+      messages: this.messages,
       cells: sorted(this.cells),
       entities: sorted(this.entities),
     }

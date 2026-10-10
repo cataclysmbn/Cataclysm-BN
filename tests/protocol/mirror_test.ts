@@ -88,3 +88,52 @@ Deno.test("message lines append in order and a repeat replaces its line without 
     ["Bang.", 2],
   ])
 })
+
+Deno.test("a snapshot carries the log, and applying events gives the log a fresh snapshot carries", () => {
+  const line = (id: string, text: string, count = 1) => ({
+    id,
+    text,
+    kind: "neutral",
+    color: "c_white",
+    count,
+  })
+  const header = {
+    at,
+    coverage: { min: pos(0), max: pos(9) },
+    interaction: boundary("b:0"),
+    entities: [],
+    messages: [line("1", "Saved line."), line("2", "Another.")],
+    parts: 0,
+  }
+  const mirror = Mirror.fromSnapshot(header, [])
+  assertEquals(mirror.state().messages.map((entry) => entry.text), ["Saved line.", "Another."])
+  const logged = (sequence: number, data: ReturnType<typeof line>) => ({
+    sequence: String(sequence),
+    revision: "0",
+    type: "message.logged",
+    changes: {},
+    data,
+  })
+  mirror.applyEvents("e", [logged(1, line("2", "Another.", 2)), logged(2, line("3", "New."))])
+  // What a subscribe at sequence 2 would carry.
+  const later = Mirror.fromSnapshot({
+    ...header,
+    at: { epoch: "e", sequence: "2", revision: "0" },
+    messages: [line("1", "Saved line."), line("2", "Another.", 2), line("3", "New.")],
+  }, [])
+  assertEquals(mirror.state(), later.state())
+})
+
+Deno.test("the log keeps the newest hundred lines", () => {
+  const mirror = fresh()
+  const logged = (n: number) => ({
+    sequence: String(n),
+    revision: "0",
+    type: "message.logged",
+    changes: {},
+    data: { id: String(n), text: `line ${n}`, kind: "neutral", color: "c_white", count: 1 },
+  })
+  mirror.applyEvents("e", Array.from({ length: 105 }, (_, i) => logged(i + 1)))
+  assertEquals(mirror.messages.length, 100)
+  assertEquals(mirror.messages[0].text, "line 6")
+})

@@ -19,6 +19,8 @@ inline constexpr auto maximum_rows = std::size_t {200};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
 inline constexpr auto maximum_frame_bytes = std::size_t {1048576};
 inline constexpr auto cells_per_part = std::size_t {512};
+/// The newest message log lines a snapshot carries.
+inline constexpr auto maximum_log_lines = std::size_t {100};
 inline constexpr auto cells_per_query = std::size_t {4096};
 inline constexpr auto maximum_safe_integer = std::uint64_t {9007199254740991};
 inline constexpr auto maximum_id_bytes = std::size_t {256};

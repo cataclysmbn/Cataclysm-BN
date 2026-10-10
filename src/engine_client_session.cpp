@@ -99,8 +99,9 @@ auto session::publish_boundary() -> std::expected<void, error>
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
         // The whole log is new to this stream: a loaded game's saved lines and a new game's first
-        // line were written before it existed, so the next boundary publishes them.
+        // line were written before it existed. They enter the stream's log, which a snapshot carries.
         message_cursor_ = {};
+        publish_messages( std::nullopt );
         presentation::collect( true );
         return {};
     }

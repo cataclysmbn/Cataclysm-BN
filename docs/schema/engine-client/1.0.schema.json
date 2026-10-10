@@ -2597,6 +2597,14 @@
             "$ref": "#/$defs/entity"
           }
         },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/data_message_logged"
+          },
+          "maxItems": 100,
+          "description": "The newest message log lines, oldest first, as `message.logged` events carry them. Omitted when the log is empty. Applying the stream's `message.logged` events to this list (a repeat replaces the line with the same id; keep the newest 100) gives the list a later subscribe returns."
+        },
         "parts": {
           "type": "integer",
           "minimum": 0,

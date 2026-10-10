@@ -88,7 +88,13 @@ struct event_batch {
 struct snapshot {
     clock_point at = {};
     state_value value = {};
+    /// The newest `maximum_log_lines` message lines, oldest first. Not state: lines take no
+    /// revision, but a receiver that applies the stream's `message.logged` events holds exactly
+    /// this log, so a fresh subscribe equals it.
+    std::vector<message_value> log = {};
 };
+/// Adds a line to a log: a repeat replaces the line with the same id, the oldest line falls off.
+auto remember( std::vector<message_value> &log, const message_value &line ) -> void;
 
 struct message_request {
     message_value message = {};
