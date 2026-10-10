@@ -341,8 +341,12 @@ auto capture_known( map &here, const avatar &you, const std::string &dimension,
         if( cells.contains( at ) ) { return; }
         auto out = cell{ .at = at, .known = knowledge::remembered,
                          .memory = memory_at( you, map_local_to_abs( here, p ) ) };
-        // A vehicle the avatar is entitled to know about is perceived live, the ground beneath it is not.
-        if( map_perception::detailed_at( here, p ) ) { out.vehicle = vehicle_part_at( here, p, you ); }
+        // A vehicle the avatar is entitled to know about is perceived live, so its square is a visible one;
+        // the ground beneath it is not perceived.
+        if( map_perception::detailed_at( here, p ) ) {
+            out.vehicle = vehicle_part_at( here, p, you );
+            if( out.vehicle ) { out.known = knowledge::visible; }
+        }
         if( out.memory || out.vehicle ) { cells.emplace( at, std::move( out ) ); }
     };
     for( const auto &abs : you.memorized_positions() ) { remember( abs_to_map_local( here, abs ) ); }

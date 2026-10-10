@@ -865,3 +865,26 @@ TEST_CASE("world capture marks a square holding a corpse that can rise", "[engin
     CHECK_FALSE(find_cell(state, at(setup.start + tripoint_west))->reviving);
     CHECK_FALSE(find_cell(state, at(setup.start))->reviving);
 }
+
+TEST_CASE(
+    "world capture never gives a remembered square a live vehicle part", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    REQUIRE(here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false) != nullptr);
+    REQUIRE(here.veh_at(car_at));
+    here.board_vehicle(car_at, &you);
+    you.setpos(car_at);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    // A remembered square carries its memory only; what is perceived live is a visible square.
+    for (const auto& [position, entry] : state.cells) {
+        CAPTURE(position.x, position.y, position.z);
+        if (entry.known == ec::knowledge::remembered) {
+            CHECK(entry.memory);
+            CHECK_FALSE(entry.vehicle);
+        }
+        if (entry.vehicle && !entry.light) { CHECK(entry.known == ec::knowledge::visible); }
+    }
+}
