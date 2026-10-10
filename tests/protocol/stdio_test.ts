@@ -275,12 +275,26 @@ Deno.test({
       )
       assert(move, `no movement action in ${JSON.stringify(session.mirror.interaction.actions)}`)
 
+      // The loaded world is known: cells and the avatar.
+      assert(session.mirror.cells.size > 0, "known cells")
+      const avatarBefore = session.mirror.avatar.at
+      const typesBefore = session.eventTypes.length
       const before = BigInt(session.mirror.at.sequence)
       const step = await session.submit({ kind: "action", action_id: move })
       assertEquals(step.stages, ["received", "validated", "executing", "completed"])
       assert(BigInt(session.mirror.at.sequence) > before, "the boundary published an event")
       const completed = session.stages.get(step.id!)!
       assertEquals(completed.at(-1), "completed")
+      // Movement publishes what the avatar now knows, and the avatar moved by one square.
+      const worldTypes = session.eventTypes.slice(typesBefore).filter((type) =>
+        type === "cells.seen" || type === "coverage.moved"
+      )
+      assert(worldTypes.length > 0, `world change event after moving: ${session.eventTypes}`)
+      const avatarAfter = session.mirror.avatar.at
+      assertEquals(
+        Math.abs(avatarAfter.x - avatarBefore.x) + Math.abs(avatarAfter.y - avatarBefore.y),
+        1,
+      )
 
       // Lost-notification recovery.
       const recovered = await client.result("bn.command.result", {
