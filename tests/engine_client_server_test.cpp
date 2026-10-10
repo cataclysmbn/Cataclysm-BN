@@ -1,10 +1,13 @@
 #if defined(CATA_MCP)
 
+#    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "engine_client_session.h"
 #    include "input.h"
+#    include "json.h"
 #    include "mcp_server.h"
+#    include "rng.h"
 
 #    include <sstream>
 #    include <string>
@@ -163,8 +166,18 @@ TEST_CASE("subscribing twice changes neither the clock nor the game", "[engine_c
     auto test = fixture{};
     REQUIRE(test.authority.publish_boundary());
     const auto before = test.authority.at();
+    const auto rng = rng_get_engine();
+    const auto actor = [] {
+        auto output = std::ostringstream{};
+        auto json = JsonOut{output};
+        get_avatar().serialize(json);
+        return output.str();
+    };
+    const auto actor_before = actor();
     test.pump(hello + subscribe + subscribe);
     CHECK(test.authority.at() == before);
+    CHECK(rng_get_engine() == rng);
+    CHECK(actor() == actor_before);
 }
 
 TEST_CASE("a command streams its stages around its events", "[engine_client_server]") {

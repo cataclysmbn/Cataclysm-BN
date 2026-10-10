@@ -7,7 +7,25 @@
  *   --allow-run --allow-env tests/protocol/stdio_test.ts
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
+import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
 import { Mirror } from "./mirror.ts"
+
+// Every message the engine really sends is checked against the published schema.
+const schema = JSON.parse(
+  await Deno.readTextFile(
+    new URL("../../docs/schema/engine-client/1.0.schema.json", import.meta.url),
+  ),
+)
+const ajv = new Ajv2020({ strict: false })
+ajv.addSchema(schema, "bn")
+const validate = (def: string, value: unknown, what: string) => {
+  const check = ajv.getSchema(`bn#/$defs/${def}`)
+  assert(check, def)
+  assert(
+    check(value),
+    `${what} violates ${def}: ${JSON.stringify(check.errors)}\n${JSON.stringify(value)}`,
+  )
+}
 
 // deno-lint-ignore no-explicit-any
 type Value = any
@@ -65,8 +83,13 @@ class Client {
     )
     while (true) {
       const message = await this.#line()
-      if (message.id === id) return message
+      if (message.id === id) {
+        if (message.error) validate("application_error", message.error.data, `${method} error`)
+        else validate(schema["x-methods"][method].result, message.result, `${method} result`)
+        return message
+      }
       assert(message.id === undefined, `unexpected response ${JSON.stringify(message)}`)
+      validate(schema["x-notifications"][message.method], message.params, message.method)
       this.notes.push(message)
     }
   }
@@ -79,7 +102,11 @@ class Client {
 
   /** Next notification, from the backlog first. */
   async note(): Promise<Value> {
-    return this.notes.shift() ?? await this.#line()
+    const queued = this.notes.shift()
+    if (queued) return queued
+    const message = await this.#line()
+    validate(schema["x-notifications"][message.method], message.params, message.method)
+    return message
   }
 
   async close() {
