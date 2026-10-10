@@ -373,6 +373,38 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "an open menu boundary carries its input context's navigation keys",
+    "[engine_client_contract]") {
+    // The menu's own bindings (including the default context's) are what a client forwards to
+    // move the engine's cursor, page, confirm and cancel.
+    auto context = input_context{"UILIST"};
+    for (const auto* id : {"UP", "DOWN", "PAGE_UP", "PAGE_DOWN", "CONFIRM", "QUIT"}) {
+        context.register_action(id);
+    }
+    const auto input_scope = game_client::input_context_scope{context, "UILIST"};
+    const auto scope = game_client::interaction_scope{
+        context, [] {
+            return game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices,
+                .choices = {{.id = "a", .label = "A"}, {.id = "b", .label = "B"}}};
+        }};
+    game_client::begin_input_boundary();
+    const auto boundary = capture();
+    REQUIRE(boundary.interaction);
+    const auto binds = [&](const std::string& id, const std::string& key) {
+        const auto found = std::ranges::find(boundary.actions, id, &engine_client::action::id);
+        REQUIRE(found != boundary.actions.end());
+        return std::ranges::find(found->keys, key) != found->keys.end();
+    };
+    CHECK(binds("UP", "UP"));
+    CHECK(binds("DOWN", "DOWN"));
+    CHECK(binds("PAGE_UP", "PPAGE"));
+    CHECK(binds("PAGE_DOWN", "NPAGE"));
+    CHECK(binds("CONFIRM", "RETURN"));
+    CHECK(binds("QUIT", "ESC"));
+}
+
+TEST_CASE(
     "bubble conversion rejects what the native int range cannot hold", "[engine_client_contract]") {
     const auto frame = engine_client::bubble_frame{.dim = "", .x = 1000, .y = -1000};
     const auto at = [](const int x, const int y) {
