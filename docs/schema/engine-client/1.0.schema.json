@@ -2125,6 +2125,10 @@
         },
         "color": {
           "type": "string"
+        },
+        "tile": {
+          "type": "string",
+          "description": "Tile id the native tiles draw the explosion with."
         }
       },
       "required": [
