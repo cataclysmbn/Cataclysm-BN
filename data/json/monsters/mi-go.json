@@ -26,7 +26,7 @@
     "armor_bullet": 10,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -75,7 +75,7 @@
     "armor_bullet": 10,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -125,7 +125,7 @@
     "armor_bullet": 10,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -174,7 +174,7 @@
     "armor_bullet": 18,
     "vision_day": 50,
     "vision_night": 20,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -227,7 +227,7 @@
     "armor_bullet": 22,
     "vision_day": 50,
     "vision_night": 25,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [
@@ -279,7 +279,7 @@
     "armor_bullet": 4,
     "vision_day": 50,
     "vision_night": 25,
-    "harvest": "zombie_meatslug",
+    "harvest": "migo_standard",
     "path_settings": { "max_dist": 50 },
     "scents_ignored": [ "sc_fetid" ],
     "special_attacks": [

@@ -1559,5 +1559,16 @@
       { "drop": "veggy", "type": "offal", "mass_ratio": 0.05 },
       { "drop": "radiant_core", "base_num": 1, "max": 1, "type": "offal" }
     ]
+  },
+  {
+    "id": "migo_standard",
+    "type": "harvest",
+    "message": "You pry open and cut through the chitinous surface, exposing foul-smelling tissue underneath.",
+    "entries": [
+      { "drop": "blood_tainted", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "veggy_tainted", "type": "flesh", "mass_ratio": 0.4 },
+      { "drop": "chitin_piece", "type": "skin", "mass_ratio": 0.1 },
+      { "drop": "fetid_goop", "type": "offal", "mass_ratio": 0.1 }
+    ]
   }
 ]
