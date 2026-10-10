@@ -127,6 +127,8 @@ struct input_event {
     // the input is not UTF-8 or not even text.
     std::string text;
     std::string edit;
+    /// A registered action to run by id, as the action menu does for actions without a key binding.
+    std::string action;
     bool edit_refresh;
     std::optional<game_client::interaction_event> interaction;
 

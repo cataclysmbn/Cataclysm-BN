@@ -249,6 +249,7 @@ auto read_event(const JsonObject& object) -> replay_event {
     event.mouse_pos = point(position[0], position[1]);
     event.text = object.get_string("text");
     event.edit = object.get_string("edit");
+    event.action = object.get_string("action", "");
     event.edit_refresh = object.get_bool("edit_refresh");
     if (event.type == input_event_t::interaction) {
         auto semantic = object.get_object("interaction");
@@ -507,6 +508,7 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
     json.end_array();
     json.member("text", event.text);
     json.member("edit", event.edit);
+    if (!event.action.empty()) { json.member("action", event.action); }
     json.member("edit_refresh", event.edit_refresh);
     if (event.interaction) {
         json.member("interaction");

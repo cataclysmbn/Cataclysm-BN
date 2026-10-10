@@ -2,6 +2,7 @@
 
 #    include "cata_utility.h"
 #    include "catch/catch.hpp"
+#    include "client_command.h"
 #    include "client_input.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
@@ -210,6 +211,50 @@ TEST_CASE(
         auto elsewhere = target(10, 20);
         elsewhere.target.dim = frame.dim + "_elsewhere";
         CHECK_FALSE(engine_client::travel_click(elsewhere));
+    }
+}
+
+TEST_CASE(
+    "every action the default mode offers resolves to that action",
+    "[client][mcp][input][engine_client_contract]") {
+    const auto guard = memory_screen_guard{};
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+    auto context = get_default_mode_input_context();
+    auto offered = std::vector<game_client::input_action>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        offered = game_client::available_input_actions();
+        auto idle = input_event{};
+        idle.type = input_event_t::timeout;
+        return idle;
+    });
+    context.handle_input(0);
+    REQUIRE_FALSE(offered.empty());
+    // The action menu runs an action by id whether or not a key is bound to it.
+    REQUIRE(std::ranges::any_of(offered, [](const auto& action) {
+        return action.bindings.empty();
+    }));
+    for (const auto& action : offered) {
+        // The keybindings help opens its own menu instead of returning the action.
+        if (action.id == "HELP_KEYBINDINGS") { continue; }
+        auto resolved = std::expected<input_event, std::string>{};
+        game_client::memory::set_input_provider([&](const int /*timeout*/) {
+            auto command = game_client::input_command{};
+            command.action = action.id;
+            resolved = game_client::resolve_input_command(command, point(8, 4));
+            if (resolved) { return *resolved; }
+            // An unresolvable action must not leave the context waiting for a valid input.
+            auto idle = input_event{};
+            idle.type = input_event_t::timeout;
+            return idle;
+        });
+        INFO(action.id);
+        const auto result = context.handle_input();
+        CHECK(resolved.has_value());
+        CHECK(result == action.id);
     }
 }
 

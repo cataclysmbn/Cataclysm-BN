@@ -117,10 +117,13 @@ auto resolve_input_command( const input_command &command, const point screen_siz
         const auto binding = ranges::find_if( action->bindings, []( const auto & event ) {
             return event.type == input_event_t::keyboard && !event.sequence.empty();
         } );
-        if( binding == action->bindings.end() ) {
-            return std::unexpected( "Action has no keyboard binding in the active context" );
-        }
-        return *binding;
+        // Like the action menu, run the action by its id: two actions may share one key, and some
+        // have no key at all.
+        auto result = binding != action->bindings.end() ? *binding :
+                      input_event( 0, input_event_t::keyboard );
+        if( binding == action->bindings.end() ) { result.sequence.clear(); }
+        result.action = action->id;
+        return result;
     }
     if( command.key.empty() ) {
         const auto codepoint = UTF8_getch( command.text );

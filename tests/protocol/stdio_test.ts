@@ -1090,3 +1090,26 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name: "stdio: an offered action without a key binding is executed by its id",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assert(
+        session.mirror.interaction.actions.some((a: Value) => a.id === "pickup_feet"),
+        "pickup_feet is offered",
+      )
+      const picked = await session.submit({ kind: "action", action_id: "pickup_feet" })
+      assertEquals(picked.stages.at(-1), "completed")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

@@ -958,6 +958,11 @@ const std::string &input_context::handle_input( const int timeout )
 
         const auto &action = [&]() -> const std::string & {
             ZoneScopedN( "input_context_input_to_action" );
+            if( !next_action.action.empty() )
+            {
+                const auto found = std::ranges::find( registered_actions, next_action.action );
+                return found != registered_actions.end() ? *found : CATA_ERROR;
+            }
             return input_to_action( next_action );
         }();
 
