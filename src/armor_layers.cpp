@@ -1,4 +1,5 @@
 #include "armor_layers.h"
+#include "client_choice.h"
 
 #include <algorithm>
 #include <array>
@@ -731,6 +732,52 @@ void show_armor_layers_ui( Character &who )
         wnoutrefresh( w_encumb );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Sort Armor" ),
+            .allow_cancel = true,
+        };
+        const auto name_of = [&]( const bodypart_id & part ) {
+            return part.id() ? body_part_name_as_heading( part, 1 ) : std::string( _( "All" ) );
+        };
+        for( auto i = std::size_t{ 0 }; i < armor_cat.size(); ++i ) {
+            const auto id = "tab" + std::to_string( i );
+            snapshot.panes.push_back( { .id = id, .label = name_of( armor_cat[i] ),
+                                        .role = static_cast<int>( i ) == tabindex ? "focused" : "category" } );
+            snapshot.choices.push_back( { .id = "tab:" + std::to_string( i ), .label = name_of( armor_cat[i] ),
+                                          .selected = static_cast<int>( i ) == tabindex } );
+        }
+        const auto &part = armor_cat[tabindex];
+        if( part.id() ) {
+            snapshot.message = string_format( _( "Total Protection: Bash %d, Cut %d, Ballistic %d" ),
+                                              static_cast<int>( who.get_armor_bash( part ) ),
+                                              static_cast<int>( who.get_armor_cut( part ) ),
+                                              static_cast<int>( who.get_armor_bullet( part ) ) );
+        }
+        for( auto i = std::size_t{ 0 }; i < tmp_worn.size(); ++i ) {
+            const auto &worn = **access_tmp_worn( i );
+            snapshot.choices.push_back( {
+                .id = "armor:" + std::to_string( i ), .label = remove_color_tags( worn.display_name() ),
+                .pane_id = "tab" + std::to_string( tabindex ),
+                .selected = static_cast<int>( i ) == selected,
+                .highlighted = static_cast<int>( i ) == leftListIndex,
+                .columns = {
+                    { .label = _( "Storage" ), .value = format_volume( worn.get_storage() ) },
+                    { .label = _( "Hidden" ), .value = worn.has_flag( json_flag_HIDDEN ) ? _( "Yes" ) : _( "No" ) },
+                },
+            } );
+        }
+        for( const auto *id : {
+                 "MOVE_ARMOR", "UP", "DOWN", "CHANGE_SIDE", "TOGGLE_CLOTH", "SORT_ARMOR",
+                 "EQUIP_ARMOR", "EQUIP_ARMOR_HERE", "REMOVE_ARMOR", "ASSIGN_INVLETS", "USAGE_HELP"
+             } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     avatar &you = get_avatar();
     bool exit = false;
     while( !exit ) {
@@ -778,7 +825,18 @@ void show_armor_layers_ui( Character &who )
         leftListIndex = std::min( leftListIndex, new_index_upper_bound );
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "tab:" ) ) {
+                tabindex = std::stoi( id.substr( 4 ) );
+                leftListIndex = leftListOffset = 0;
+                selected = -1;
+            } else if( id.starts_with( "armor:" ) && selected < 0 ) {
+                // A grabbed item moves with the cursor, which only the move actions do.
+                leftListIndex = std::stoi( id.substr( 6 ) );
+            }
+            return std::string();
+        } );
         if( who.is_npc() && action == "ASSIGN_INVLETS" ) {
             // It doesn't make sense to assign invlets to NPC items
             continue;

@@ -7,6 +7,7 @@
 
 #include "cached_options.h"
 #include "engine_client_world.h"
+#include "line.h"
 #include "avatar.h"
 #include "game.h"
 #include "map/map.h"
@@ -205,7 +206,9 @@ auto record_custom_explosion( const tripoint_bub_ms &at,
     push( { .type = "explosion.ended", .id = id } );
 }
 
-auto record_text( const point at, const std::string &first, const game_message_type first_type,
+auto record_text( const point at, const direction scroll, const std::string &kind,
+                  const std::string &first,
+                  const game_message_type first_type,
                   const std::string &second, const game_message_type second_type ) -> void
 {
     if( !state().collecting || !animated() || !( test_mode || get_option<bool>( "ANIMATION_SCT" ) ) ) {
@@ -220,6 +223,7 @@ auto record_text( const point at, const std::string &first, const game_message_t
     push( { .type = "combat_text.shown",
             .at = world::position_at( square ),
             .segments = std::move( segments ),
+            .scroll = position{ .x = displace_XY( scroll ).x, .y = displace_XY( scroll ).y }, .kind = kind,
             .duration_ms = step_ms() * scrollingcombattext::iMaxSteps } );
 }
 

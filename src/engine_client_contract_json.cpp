@@ -48,6 +48,11 @@ auto to_json( const look &value ) -> json
     if( value.rotation && *value.rotation != 0 ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
+    if( value.tint ) {
+        result["tint"] = json::object();
+        if( !value.tint->bg.empty() ) { result["tint"]["bg"] = value.tint->bg; }
+        if( !value.tint->fg.empty() ) { result["tint"]["fg"] = value.tint->fg; }
+    }
     return result;
 }
 /// A look in a cell layer, whose `kind` the layer already says; a cell layer is always shaped, so
@@ -94,9 +99,10 @@ auto to_json( const cell &value ) -> json
     if( value.terrain ) { result["terrain"] = layer_json( *value.terrain, "terrain" ); }
     if( value.furniture ) { result["furniture"] = layer_json( *value.furniture, "furniture" ); }
     if( !value.fields.empty() ) { result["fields"] = to_array( value.fields ); }
-    if( !value.traps.empty() ) { result["traps"] = layer_array( value.traps, "trap" ); }
-    if( !value.items.empty() ) { result["items"] = layer_array( value.items, "item" ); }
-    if( value.vehicle ) { result["vehicle"] = layer_json( *value.vehicle, "vehicle_part" ); }
+    if( value.reviving ) { result["reviving"] = true; }
+    if( !value.traps.empty() ) { result["traps"] = to_array( value.traps ); }
+    if( !value.items.empty() ) { result["items"] = to_array( value.items ); }
+    if( value.vehicle ) { result["vehicle"] = to_json( *value.vehicle ); }
     if( value.light ) { result["light"] = *value.light; }
     if( value.memory ) {
         result["memory"] = {{"terrain", layer_json( value.memory->terrain, "terrain" )}};
@@ -363,6 +369,8 @@ auto to_json( const event_value &value ) -> json
             for( const auto &segment : fact.segments ) {
                 data["segments"].push_back( {{"text", segment.text}, {"color", segment.color}} );
             }
+            if( fact.scroll ) { data["scroll"] = {{"x", fact.scroll->x}, {"y", fact.scroll->y}}; }
+            if( !fact.kind.empty() ) { data["kind"] = fact.kind; }
         }
         result["data"] = std::move( data );
         if( fact.duration_ms != 0 ) { result["display"] = {{"duration_ms", fact.duration_ms}}; }
@@ -422,6 +430,13 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
     if( !world.route.empty() ) { header["route"] = to_array( world.route ); }
     header["entities"] = json::array();
     for( const auto &entry : world.entities ) { header["entities"].push_back( to_json( entry.second ) ); }
+    if( !value.log.empty() ) {
+        header["messages"] = json::array();
+        for( const auto &line : value.log ) {
+            header["messages"].push_back( {{"id", std::to_string( line.id )}, {"text", line.text},
+                {"kind", line.kind}, {"color", line.color}, {"count", line.count}} );
+        }
+    }
     header["parts"] = result.parts.size();
     result.header = header.dump();
     if( result.header.size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }

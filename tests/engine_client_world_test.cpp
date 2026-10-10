@@ -27,6 +27,7 @@
 #include "rng.h"
 #include "state_helpers.h"
 #include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
 #include "weather/weather.h"
 
@@ -835,4 +836,55 @@ TEST_CASE(
     for (const auto& id : east.looks_like) { CHECK(id.starts_with("vp_")); }
     // Facing south turns the part two quarter turns from east-facing 3: native 3 - dir4.
     CHECK(place(90_degrees).rotation == 2);
+    // The part the native view displays gives the paint, which is the part's own color.
+    auto& here = get_map();
+    const auto vp = here.veh_at(setup.start + tripoint(-4, 3, 0));
+    REQUIRE(vp);
+    vp->vehicle()
+        .part(vp.part_displayed()->part_index())
+        .set_color(RGBColor{}, RGBColor{0x44, 0x55, 0x66, 255});
+    map_perception::acquire();
+    const auto painted = ec::world::capture_world();
+    const auto* painted_cell = find_cell(painted, at(setup.start + tripoint(-4, 3, 0)));
+    REQUIRE(painted_cell != nullptr);
+    REQUIRE(painted_cell->vehicle);
+    REQUIRE(painted_cell->vehicle->tint);
+    CHECK(painted_cell->vehicle->tint->fg == "#445566");
+    CHECK(painted_cell->vehicle->tint->bg.empty());
+}
+
+TEST_CASE("world capture marks a square holding a corpse that can rise", "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto grave = setup.start + tripoint_east;
+    get_map().add_item_or_charges(grave, item::make_corpse(mtype_id("mon_zombie"), calendar::turn));
+    get_map().add_item_or_charges(setup.start + tripoint_west, item::spawn("rock"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(find_cell(state, at(grave)) != nullptr);
+    CHECK(find_cell(state, at(grave))->reviving);
+    CHECK_FALSE(find_cell(state, at(setup.start + tripoint_west))->reviving);
+    CHECK_FALSE(find_cell(state, at(setup.start))->reviving);
+}
+
+TEST_CASE(
+    "world capture never gives a remembered square a live vehicle part", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    auto& you = get_avatar();
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    REQUIRE(here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false) != nullptr);
+    REQUIRE(here.veh_at(car_at));
+    here.board_vehicle(car_at, &you);
+    you.setpos(car_at);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    // A remembered square carries its memory only; what is perceived live is a visible square.
+    for (const auto& [position, entry] : state.cells) {
+        CAPTURE(position.x, position.y, position.z);
+        if (entry.known == ec::knowledge::remembered) {
+            CHECK(entry.memory);
+            CHECK_FALSE(entry.vehicle);
+        }
+        if (entry.vehicle && !entry.light) { CHECK(entry.known == ec::knowledge::visible); }
+    }
 }

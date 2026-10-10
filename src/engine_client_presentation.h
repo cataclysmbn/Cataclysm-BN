@@ -35,6 +35,10 @@ struct presentation_value {
     /// Tile id the native tiles draw an explosion with (`explosion`, `fd_smoke`, ...).
     std::string tile = {};
     std::vector<text_segment> segments = {};
+    /// Combat text only: the unit step the native text scrolls by each animation step.
+    std::optional<position> scroll = std::nullopt;
+    /// Combat text only: `hp` for a creature's hit-point readout, which stays beside it.
+    std::string kind = {};
     /// How long the native animation holds this fact, from the ANIMATION_DELAY option.
     std::uint64_t duration_ms = 0;
     auto operator<=>( const presentation_value & ) const = default; // *NOPAD*
@@ -72,7 +76,8 @@ auto record_explosion( const tripoint_bub_ms &at, int radius, const nc_color &co
 auto record_custom_explosion( const tripoint_bub_ms &at,
                               const std::map<tripoint_bub_ms, nc_color> &area,
                               const std::string &tile ) -> void;
-auto record_text( point at, const std::string &first, game_message_type first_type,
-                  const std::string &second, game_message_type second_type ) -> void;
+auto record_text( point at, direction scroll, const std::string &kind, const std::string &first,
+                  game_message_type first_type, const std::string &second,
+                  game_message_type second_type ) -> void;
 
 } // namespace engine_client::presentation

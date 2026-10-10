@@ -180,6 +180,26 @@ if (BUILD_TESTING)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
         set_tests_properties(test-debug-mcp PROPERTIES LABELS "debug;native_messages" TIMEOUT 240)
 
+        # The message log screen needs the real message authority and its native filter prompt.
+        add_executable(cata_test-messages-mcp
+            test_main.cpp client_messages_interaction_test.cpp
+            state_helpers.cpp player_helpers.cpp map_helpers.cpp
+            options_helpers.cpp tile_helpers.cpp
+            ${CMAKE_SOURCE_DIR}/src/messages.cpp)
+        target_compile_definitions(cata_test-messages-mcp PRIVATE CATA_MCP CATA_MESSAGES_NATIVE_TEST)
+        target_link_libraries(cata_test-messages-mcp PRIVATE
+            cataclysm-bn-engine cataclysm-bn-client-common
+            cataclysm-bn-mcp-client cataclysm-bn-client-audio cataclysm-bn-mcp-protocol)
+        target_compile_options(cata_test-messages-mcp PRIVATE ${CATCH2_COMPILE_OPTIONS})
+        add_test(NAME test-messages-mcp
+            COMMAND $<TARGET_FILE:cata_test-messages-mcp> "[screens]" --rng-seed 424242
+                --user-dir=${CMAKE_CURRENT_BINARY_DIR}/cata_test-messages-mcp-profile/
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        set_tests_properties(test-messages-mcp PROPERTIES LABELS "messages;native_messages")
+        if (COMMAND cata_copy_windows_lavapipe_runtime)
+            cata_copy_windows_lavapipe_runtime(cata_test-messages-mcp)
+        endif ()
+
         # Core fuel-observation tests use native messages and native manager actions.
         add_executable(cata_test-bionics-fuel-mcp
             test_main.cpp bionics_fuel_observation_test.cpp

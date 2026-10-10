@@ -2229,9 +2229,55 @@ tab_direction set_bionics( avatar &u, points_left &points )
         }
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto page_names = std::array<std::string, 3> { _( "Advantage" ), _( "Disadvantage" ),
+                   _( "Neutral" )
+                                                           };
+        auto rows = std::vector<newchar_row> {};
+        for( auto page = 0; page < used_pages; ++page ) {
+            for( auto line = std::size_t{ 0 }; line < vStartingBionics[page].size(); ++line ) {
+                const auto &entry = vStartingBionics[page][line];
+                const auto &bio = entry.id.obj();
+                rows.push_back( {
+                    .id = "bionic:" + entry.id.str(), .label = bio.name.translated(),
+                    .description = remove_color_tags( bio.description.translated() ),
+                    .selected = entry.avatar_has,
+                    .highlighted = page == iCurWorkingPage &&
+                    static_cast<int>( line ) == iCurrentLine[page],
+                    .enabled = !entry.forbidden && !entry.conflicts,
+                    .columns = {
+                        newchar_column( _( "Points" ), std::to_string( bio.points ) ),
+                        newchar_column( _( "Kind" ), page_names[page] ),
+                    },
+                } );
+            }
+        }
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random bionic" ) } );
+        rows.push_back( { .id = "action:REROLL_CHARACTER", .label = _( "Reroll the character" ) } );
+        return newchar_snapshot( _( "BIONICS" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "BIONICS" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            for( auto page = 0; page < used_pages; ++page ) {
+                for( auto line = std::size_t{ 0 }; line < vStartingBionics[page].size(); ++line ) {
+                    if( "bionic:" + vStartingBionics[page][line].id.str() == id ) {
+                        iCurWorkingPage = page;
+                        iCurrentLine[page] = static_cast<int>( line );
+                    }
+                }
+            }
+            return std::string( "CONFIRM" );
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            if( use_character_preview ) {
+                character_preview->clear();
+            }
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( game_client::has_tiles() ) {
             if( action == "zoom_in" && use_character_preview ) {
                 character_preview->zoom_in();
@@ -3419,9 +3465,47 @@ tab_direction set_magic( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto rows = std::vector<newchar_row> {};
+        for( auto i = 0; i < num_spells; ++i ) {
+            const auto &spell = spell_list[i].first;
+            const auto knows = u.magic->knows_spell( spell );
+            rows.push_back( {
+                .id = "spell:" + spell.str(), .label = spell->name.translated(),
+                .description = remove_color_tags( spell->description.translated() ),
+                .selected = knows, .highlighted = i == cur_pos,
+                .columns = {
+                    newchar_column( _( "Class" ), spell->spell_class == trait_id( "NONE" )
+                                    ? _( "Classless" ) : spell->spell_class->name() ),
+                    newchar_column( _( "Level" ),
+                                    knows ? std::to_string( u.magic->get_spell( spell ).get_level() ) : std::string() ),
+                    newchar_column( _( "Cost" ), std::to_string( knows ? spell->increase_points
+                                    : spell->starting_points ) ),
+                },
+            } );
+        }
+        rows.push_back( { .id = "action:RIGHT", .label = _( "Learn or increase the selected spell" ) } );
+        rows.push_back( { .id = "action:LEFT", .label = _( "Decrease or forget the selected spell" ) } );
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random spell" ) } );
+        return newchar_snapshot( _( "MAGIC" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "MAGIC" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            for( auto i = 0; i < num_spells; ++i ) {
+                if( "spell:" + spell_list[i].first.str() == id ) {
+                    cur_pos = i;
+                    current_spell = spell_list[i].first;
+                }
+            }
+            return std::string();
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( action == "DOWN" ) {
             cur_pos = modulo( cur_pos + 1, num_spells );
             current_spell = spell_list[cur_pos].first;

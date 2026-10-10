@@ -543,6 +543,13 @@ auto server::failed() const -> bool
     return failed_;
 }
 
+auto server::end_reason() const -> std::string
+{
+    if( failed_ ) { return "an invalid or unwritable protocol frame"; }
+    if( eof_ ) { return "the client closed its end of stdin"; }
+    return "input ended without a reason";
+}
+
 auto server::reject_pending( std::string error ) -> void
 {
     session_.interrupt( engine_client::error::validation_failed );

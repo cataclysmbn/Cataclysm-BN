@@ -8,6 +8,7 @@
 #include "game_session.h"
 #include "get_version.h"
 #include "message_types.h"
+#include "options.h"
 #include "output.h"
 #include "world.h"
 #include "worldfactory.h"
@@ -54,6 +55,21 @@ auto session::interrupt( const error reason ) -> void
     validated_input_.reset();
 }
 
+namespace
+{
+auto to_message( const Messages::feed_entry &entry ) -> message_value
+{
+    const auto kind = std::ranges::find( msg_type_and_names(), entry.type,
+                                         &std::pair<game_message_type, const char *>::first );
+    return {
+        .id = entry.id, .text = remove_color_tags( entry.text ),
+        .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
+        .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
+        .count = static_cast<counter>( entry.count )
+    };
+}
+} // namespace
+
 auto session::restart_epoch( const std::string_view reason ) -> void
 {
     interrupt( error::stale_epoch );
@@ -99,8 +115,14 @@ auto session::publish_boundary() -> std::expected<void, error>
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
         // The whole log is new to this stream: a loaded game's saved lines and a new game's first
-        // line were written before it existed, so the next boundary publishes them.
+        // line were written before it existed. They enter the stream's log, which a snapshot carries.
         message_cursor_ = {};
+        auto seeded = std::vector<message_value> {};
+        for( const auto &entry : Messages::feed_since( message_cursor_ ) ) {
+            message_cursor_ = { .id = entry.id, .count = entry.count };
+            seeded.push_back( to_message( entry ) );
+        }
+        stream_->seed_log( std::move( seeded ) );
         presentation::collect( true );
         return {};
     }
@@ -146,17 +168,7 @@ auto session::publish_messages( const std::optional<std::string> &command ) -> v
 {
     for( const auto &entry : Messages::feed_since( message_cursor_ ) ) {
         message_cursor_ = { .id = entry.id, .count = entry.count };
-        const auto kind = std::ranges::find( msg_type_and_names(), entry.type,
-                                             &std::pair<game_message_type, const char *>::first );
-        auto published = stream_->publish_message( {
-            .message = {
-                .id = entry.id, .text = remove_color_tags( entry.text ),
-                .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
-                .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
-                .count = static_cast<counter>( entry.count )
-            },
-            .command = command
-        } );
+        auto published = stream_->publish_message( { .message = to_message( entry ), .command = command } );
         // A line that cannot be published is skipped; the log itself still holds it.
         if( published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } ); }
     }
@@ -242,7 +254,11 @@ auto session::take_push() -> std::vector<push_item> { return std::exchange( push
 
 auto describe_engine() -> engine_info
 {
-    auto result = engine_info{ .build = getVersionString() };
+    auto result = engine_info{
+        .build = getVersionString(),
+        .use_tiles = get_option<bool>( "USE_TILES" ),
+        .tileset = get_option<std::string>( "TILES" ),
+    };
     if( world_generator && world_generator->active_world && world_generator->active_world->info ) {
         for( const auto &mod : world_generator->active_world->info->active_mod_order ) {
             result.mods.push_back( mod.str() );

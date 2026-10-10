@@ -209,6 +209,21 @@
           "type": "integer",
           "minimum": 2,
           "description": "Items on the square when there are several, on the displayed (last) item; the native view highlights such a stack."
+        },
+        "tint": {
+          "type": "object",
+          "properties": {
+            "bg": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "fg": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Paint of a vehicle part. A tileset tints the part's background and foreground sprites with it (the native view blends hue and saturation toward it); a missing member is unpainted."
         }
       },
       "required": [
@@ -380,6 +395,10 @@
             "terrain"
           ],
           "additionalProperties": false
+        },
+        "reviving": {
+          "const": true,
+          "description": "A corpse on the square can rise; the native view marks the square. Present only on visible squares."
         }
       },
       "required": [
@@ -2559,6 +2578,33 @@
             ],
             "additionalProperties": false
           }
+        },
+        "scroll": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "y": {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false,
+          "description": "The unit step the text moves by each animation step."
+        },
+        "kind": {
+          "enum": [
+            "hp"
+          ],
+          "description": "hp: a creature's hit-point readout, which stays beside it."
         }
       },
       "required": [
@@ -2629,6 +2675,24 @@
               "items": {
                 "type": "string"
               }
+            },
+            "display": {
+              "type": "object",
+              "properties": {
+                "tiles": {
+                  "type": "boolean",
+                  "description": "The USE_TILES option."
+                },
+                "tileset": {
+                  "type": "string",
+                  "description": "The TILES option: the tileset the native client would load."
+                }
+              },
+              "required": [
+                "tiles",
+                "tileset"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -2708,6 +2772,14 @@
           "items": {
             "$ref": "#/$defs/entity"
           }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/data_message_logged"
+          },
+          "maxItems": 100,
+          "description": "The newest message log lines, oldest first, as `message.logged` events carry them. Omitted when the log is empty. Applying the stream's `message.logged` events to this list (a repeat replaces the line with the same id; keep the newest 100) gives the list a later subscribe returns."
         },
         "parts": {
           "type": "integer",

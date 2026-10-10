@@ -262,7 +262,12 @@ auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> s
 {
     using ordered = nlohmann::ordered_json;
     return ordered{{"version", contract_version}, {"epoch", epoch},
-        {"engine", {{"build", engine.build}, {"mods", engine.mods}}},
+        {
+            "engine", {
+                {"build", engine.build}, {"mods", engine.mods},
+                {"display", {{"tiles", engine.use_tiles}, {"tileset", engine.tileset}}}
+            }
+        },
         {
             "limits", {{"frame_bytes", maximum_frame_bytes}, {"cells_per_part", cells_per_part},
                 {"cells_per_query", cells_per_query}

@@ -153,7 +153,9 @@ TEST_CASE("command operations", "[engine_client_wire]") {
 }
 
 TEST_CASE("serialized values", "[engine_client_wire]") {
-    const auto hello = serialize_hello("epoch:a", {.build = "0.9", .mods = {"bn"}});
+    const auto hello = serialize_hello(
+        "epoch:a", {.build = "0.9", .mods = {"bn"}, .use_tiles = false, .tileset = "MSX"});
+    CHECK(contains(hello, R"("display":{"tiles":false,"tileset":"MSX"})"));
     CHECK(contains(hello, R"("version":"1.0")"));
     CHECK(contains(hello, R"("mods":["bn"])"));
     CHECK(contains(hello, R"("cells_per_part":512)"));

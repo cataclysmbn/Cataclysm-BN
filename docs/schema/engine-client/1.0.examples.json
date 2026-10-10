@@ -256,6 +256,155 @@
       }
     },
     {
+      "name": "subscribe result with the message log",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [
+            {
+              "id": "UP",
+              "name": "Move up",
+              "keys": [
+                "UP",
+                "k"
+              ]
+            }
+          ],
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "kind": "choices",
+            "allow_cancel": true,
+            "allow_set_count": false,
+            "title": "Cataclysm: Bright Nights",
+            "message": "",
+            "choices": [
+              {
+                "id": "tab:new_game",
+                "label": "New Game",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": true,
+                "columns": []
+              },
+              {
+                "id": "tab:load",
+                "label": "Load",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "tab:quit",
+                "label": "Quit",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:custom",
+                "label": "Custom Character",
+                "description": "Allows you to fully customize the character.",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:tutorial",
+                "label": "Tutorial",
+                "description": "",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              }
+            ],
+            "choice_total": 5,
+            "compat": {
+              "focus": {
+                "choice_id": "tab:new_game"
+              },
+              "panes": [
+                {
+                  "id": "new_game",
+                  "label": "New Game",
+                  "role": "focused",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "load",
+                  "label": "Load",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "quit",
+                  "label": "Quit",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                }
+              ]
+            }
+          }
+        },
+        "entities": [],
+        "messages": [
+          {
+            "id": "3",
+            "text": "You have survived the initial wave of panic.",
+            "kind": "neutral",
+            "color": "c_white",
+            "count": 1
+          },
+          {
+            "id": "7",
+            "text": "You open the door.",
+            "kind": "neutral",
+            "color": "c_white",
+            "count": 2
+          }
+        ],
+        "parts": 0
+      }
+    },
+    {
       "name": "subscribe result in a world",
       "def": "subscribe_result",
       "value": {
@@ -491,8 +640,12 @@
                 "vp_frame"
               ],
               "subtile": "open",
-              "rotation": 3
-            }
+              "rotation": 3,
+              "tint": {
+                "fg": "#445566"
+              }
+            },
+            "reviving": true
           },
           {
             "at": {
@@ -1378,7 +1531,11 @@
                   "text": " crit",
                   "color": "yellow"
                 }
-              ]
+              ],
+              "scroll": {
+                "x": 0,
+                "y": -1
+              }
             },
             "display": {
               "duration_ms": 80
@@ -2275,6 +2432,162 @@
         },
         "glyph": ".",
         "color": "light_gray"
+      }
+    },
+    {
+      "name": "subscribe result with a message line without text",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [
+            {
+              "id": "UP",
+              "name": "Move up",
+              "keys": [
+                "UP",
+                "k"
+              ]
+            }
+          ],
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "kind": "choices",
+            "allow_cancel": true,
+            "allow_set_count": false,
+            "title": "Cataclysm: Bright Nights",
+            "message": "",
+            "choices": [
+              {
+                "id": "tab:new_game",
+                "label": "New Game",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": true,
+                "columns": []
+              },
+              {
+                "id": "tab:load",
+                "label": "Load",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "tab:quit",
+                "label": "Quit",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:custom",
+                "label": "Custom Character",
+                "description": "Allows you to fully customize the character.",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:tutorial",
+                "label": "Tutorial",
+                "description": "",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              }
+            ],
+            "choice_total": 5,
+            "compat": {
+              "focus": {
+                "choice_id": "tab:new_game"
+              },
+              "panes": [
+                {
+                  "id": "new_game",
+                  "label": "New Game",
+                  "role": "focused",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "load",
+                  "label": "Load",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "quit",
+                  "label": "Quit",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                }
+              ]
+            }
+          }
+        },
+        "entities": [],
+        "messages": [
+          {
+            "id": "3",
+            "text": "",
+            "kind": "neutral",
+            "color": "c_white",
+            "count": 1
+          }
+        ],
+        "parts": 0
+      },
+      "why": "a log line has the shape of a message.logged line: its text is not empty"
+    },
+    {
+      "name": "vehicle tint that is not a hex color",
+      "def": "look",
+      "value": {
+        "kind": "vehicle_part",
+        "id": "door",
+        "glyph": "+",
+        "color": "white",
+        "tint": {
+          "fg": "gray"
+        }
       }
     }
   ]
