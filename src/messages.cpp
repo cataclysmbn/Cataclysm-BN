@@ -1,5 +1,6 @@
 #include "messages.h"
 #include "message_feed.h"
+#include "client_choice.h"
 #include "client_presentation.h"
 #include "message_types.h"
 #include "calendar.h"
@@ -724,7 +725,39 @@ void Messages::dialog::input( const ui_adaptor &ui )
             filter.text( filter_str );
         }
     } else {
-        const std::string &action = ctxt.handle_input();
+        const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+            auto snapshot = game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices,
+                .title = _( "Messages" ),
+                .message = filter_str.empty() ? std::string() : string_format( _( "Filter: %s" ), filter_str ),
+                .allow_cancel = true,
+            };
+            const auto type_names = msg_type_and_names() | std::ranges::to<std::map>();
+            auto last = std::optional<size_t> {};
+            for( const auto folded_ind : folded_filtered ) {
+                const auto msg_ind = folded_all[folded_ind].first;
+                if( last == msg_ind ) { continue; }
+                last = msg_ind;
+                const auto &msg = player_messages.history( msg_ind );
+                const auto type = type_names.find( msg.type );
+                snapshot.choices.push_back( {
+                    .id = "message:" + std::to_string( msg_ind ),
+                    .label = remove_color_tags( msg.get_with_count() ), .selectable = false,
+                    .columns = {
+                        { .label = _( "Time" ), .value = to_string_clipped( calendar::turn - msg.timestamp_in_turns, clipped_align::right ) },
+                        { .label = _( "Type" ), .value = type == type_names.end() ? std::string() : type->second },
+                    },
+                } );
+            }
+            for( const auto *id : { "FILTER", "RESET_FILTER", "COPY_MESSAGE", "ERASE_HISTORY" } ) {
+                snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                              .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+            }
+            return snapshot;
+        } );
+        const auto action = game_client::action_of( ctxt, ctxt.handle_input(), []( const std::string & ) {
+            return std::string();
+        } );
         if( action == "DOWN" && offset + max_lines < folded_filtered.size() ) {
             ++offset;
         } else if( action == "UP" && offset > 0 ) {
