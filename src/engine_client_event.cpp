@@ -24,8 +24,10 @@ auto inside( const bounds &area, const position &at ) -> bool
 auto valid_event( const event_value &value ) -> bool
 {
     const auto message = value.type == "message.logged";
-    return value.sequence != 0 && ( value.revision != 0 || message ) && !value.type.empty() &&
-           message == value.message.has_value() && ( !message || value.delta.empty() ) &&
+    const auto transient = message || value.presentation.has_value();
+    return value.sequence != 0 && ( value.revision != 0 || transient ) && !value.type.empty() &&
+           message == value.message.has_value() && ( !transient || value.delta.empty() ) &&
+           ( !value.presentation || ( !message && value.presentation->type == value.type ) ) &&
            ( !value.message || ( value.message->id != 0 && !value.message->text.empty() &&
                                  value.message->count != 0 ) ) &&
            ( !value.cause || ( *value.cause != 0 && *value.cause < value.sequence ) ) &&
@@ -238,6 +240,28 @@ auto event_stream::publish_message( message_request request ) -> std::expected<p
             .type = "message.logged",
             .command = std::move( request.command ),
             .message = std::move( request.message ),
+        }};
+    if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
+    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
+        maximum_event_bytes ) {
+        return std::unexpected( error::resource_limit );
+    }
+    current_.at.sequence = event.value().sequence;
+    return event;
+}
+
+auto event_stream::publish_presentation( presentation_request request ) ->
+std::expected<public_event, error>
+{
+    if( current_.at.sequence == std::numeric_limits<counter>::max() ) {
+        return std::unexpected( error::resource_limit );
+    }
+    auto event = public_event{{
+            .sequence = current_.at.sequence + 1,
+            .revision = current_.at.revision,
+            .type = request.fact.type,
+            .command = std::move( request.command ),
+            .presentation = std::move( request.fact ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
     if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >

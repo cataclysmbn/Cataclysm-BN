@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine_client_contract.h"
+#include "engine_client_presentation.h"
 #include "loading_ui_client.h"
 
 #include <expected>
@@ -67,6 +68,9 @@ struct event_value {
     changes delta = {};
     /// Present exactly for `message.logged`, which changes no state.
     std::optional<message_value> message = std::nullopt;
+    /// Present exactly for the presentation types (`projectile.moved`, `explosion.*`,
+    /// `combat_text.shown`), which change no state.
+    std::optional<presentation_value> presentation = std::nullopt;
 };
 /// Owned value with read-only access after construction.
 class public_event
@@ -90,6 +94,10 @@ struct message_request {
     message_value message = {};
     std::optional<std::string> command = std::nullopt;
 };
+struct presentation_request {
+    presentation_value fact = {};
+    std::optional<std::string> command = std::nullopt;
+};
 struct publish_request {
     disclosure decision = disclosure::publish;
     state_value next = {};
@@ -109,6 +117,8 @@ class event_stream
         auto publish( publish_request request ) -> std::expected<std::optional<public_event>, error>;
         /// A transient event: consumes a sequence, never a revision. resource_limit when it cannot fit a frame.
         auto publish_message( message_request request ) -> std::expected<public_event, error>;
+        /// A transient animation fact: consumes a sequence, never a revision.
+        auto publish_presentation( presentation_request request ) -> std::expected<public_event, error>;
         /// Engine-boundary recovery when an event cannot be encoded: adopt `next` and advance the
         /// revision only. Subscribers must be told `resync` and take a fresh snapshot.
         auto rebase( state_value next ) -> std::expected<void, error>;

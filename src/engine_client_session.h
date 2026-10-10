@@ -69,6 +69,7 @@ class session final : public command_authority
         auto capture() const -> std::expected<state_value, error>;
         auto restart_epoch( std::string_view reason ) -> void;
         auto refresh_result() -> void;
+        auto publish_presentation( const std::optional<std::string> &command ) -> void;
         auto publish_messages( const std::optional<std::string> &command ) -> void;
 };
 

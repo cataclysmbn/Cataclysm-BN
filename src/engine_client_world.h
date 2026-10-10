@@ -1,6 +1,8 @@
 #pragma once
 
+#include "coordinates.h"
 #include "engine_client_state.h"
+#include "color.h"
 
 /// What the avatar currently sees and remembers, as the owned `world_state` of the 1.0 contract.
 ///
@@ -16,5 +18,9 @@ namespace engine_client::world
 {
 
 auto capture_world() -> world_state;
+/// The absolute square of a reality-bubble square, in the loaded map's dimension.
+auto position_at( const tripoint_bub_ms &p ) -> position;
+/// The native color name of `color`.
+auto color_name( const nc_color &color ) -> std::string;
 
 } // namespace engine_client::world

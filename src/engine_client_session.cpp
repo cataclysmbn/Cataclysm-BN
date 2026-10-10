@@ -99,11 +99,13 @@ auto session::publish_boundary() -> std::expected<void, error>
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
         message_cursor_ = Messages::feed_end();
+        presentation::collect( true );
         return {};
     }
     auto request = publish_request{ .next = *candidate };
     if( active_ && active_->stage == command_stage::executing ) { request.command = active_->command_id; }
     const auto command = request.command;
+    publish_presentation( command );
     auto published = stream_->publish( std::move( request ) );
     if( published ) {
         if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
@@ -127,6 +129,15 @@ auto session::publish_boundary() -> std::expected<void, error>
         refresh_result();
     }
     return {};
+}
+
+auto session::publish_presentation( const std::optional<std::string> &command ) -> void
+{
+    for( auto &fact : presentation::take() ) {
+        // A fact that cannot be published is skipped; it changes no state.
+        auto published = stream_->publish_presentation( { .fact = std::move( fact ), .command = command } );
+        if( published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } ); }
+    }
 }
 
 auto session::publish_messages( const std::optional<std::string> &command ) -> void

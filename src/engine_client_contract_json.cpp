@@ -282,6 +282,30 @@ auto to_json( const event_value &value ) -> json
             {"color", line.color}, {"count", line.count}
         };
     }
+    if( value.presentation ) {
+        const auto &fact = *value.presentation;
+        auto data = json::object();
+        if( value.type == "projectile.moved" ) {
+            data = {{"projectile", fact.id}, {"path", to_array( fact.cells )}};
+            if( fact.appearance ) { data["look"] = to_json( *fact.appearance ); }
+        } else if( value.type == "explosion.started" ) {
+            data = {{"explosion", fact.id}};
+            if( fact.at ) { data["at"] = to_json( *fact.at ); }
+            if( fact.radius ) { data["radius"] = *fact.radius; }
+            if( !fact.color.empty() ) { data["color"] = fact.color; }
+        } else if( value.type == "explosion.blast" || value.type == "explosion.shrapnel" ) {
+            data = {{"explosion", fact.id}, {"cells", to_array( fact.cells )}};
+        } else if( value.type == "explosion.ended" ) {
+            data = {{"explosion", fact.id}};
+        } else if( value.type == "combat_text.shown" ) {
+            data = {{"at", to_json( *fact.at )}, {"segments", json::array()}};
+            for( const auto &segment : fact.segments ) {
+                data["segments"].push_back( {{"text", segment.text}, {"color", segment.color}} );
+            }
+        }
+        result["data"] = std::move( data );
+        if( fact.duration_ms != 0 ) { result["display"] = {{"duration_ms", fact.duration_ms}}; }
+    }
     return result;
 }
 } // namespace

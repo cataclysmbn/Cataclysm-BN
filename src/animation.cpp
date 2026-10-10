@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "cached_options.h"
+#include "engine_client_presentation.h"
 #include "character.h"
 #include "client_display.h"
 #include "client_animation.h"
@@ -250,6 +251,7 @@ void draw_custom_explosion_curses( game &g,
 void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, const nc_color &col,
                                         const std::string &exp_name )
 {
+    engine_client::presentation::record_explosion( p, r, col );
     if( !game_client::animation().draw_explosion( { .position = p, .radius = r,
             .color = col, .name = exp_name } ) ) {
         draw_explosion_curses( *g, p, r, col );
@@ -260,6 +262,7 @@ void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &position,
         const std::map<tripoint_bub_ms, nc_color> &all_area,
         const std::string &exp_name )
 {
+    engine_client::presentation::record_custom_explosion( position, all_area );
     if( test_mode ) {
         // Avoid drawing animation state during tests.
         return;
@@ -389,6 +392,8 @@ void game::draw_bullet( const tripoint_bub_ms &t, const int i,
                         const std::vector<tripoint_bub_ms> &trajectory, const char bullet,
                         const std::string &custom_sprite )
 {
+    engine_client::presentation::record_bullet( { .at = t, .index = i, .bullet = bullet,
+            .custom_sprite = custom_sprite } );
     refresh_player_visibility_cache_if_needed();
     if( !game_client::animation().draw_bullet( { .position = t, .index = i,
             .trajectory = &trajectory, .bullet = bullet, .custom_sprite = custom_sprite } ) ) {
@@ -466,6 +471,7 @@ void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
         return;
     }
 
+    engine_client::presentation::record_trajectories( options );
     g->refresh_player_visibility_cache_if_needed();
 
     if( !game_client::animation().draw_bullet_trajectories( { .trajectories = &options } ) ) {
@@ -590,6 +596,7 @@ void draw_line_curses( game &g, const std::vector<tripoint_bub_ms> &points )
 
 void draw_line_of( const draw_sprite_line_options &options )
 {
+    engine_client::presentation::record_line( options );
     if( !game_client::animation().draw_line_of( options ) ) {
         g->draw_line( options.p, options.points );
     }

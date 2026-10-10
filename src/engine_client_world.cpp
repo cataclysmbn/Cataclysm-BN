@@ -485,6 +485,17 @@ auto capture_avatar( map &here, const avatar &you,
 
 } // namespace
 
+auto position_at( const tripoint_bub_ms &p ) -> position
+{
+    const auto &here = get_map();
+    return position_of( here, p, here.get_bound_dimension().str() );
+}
+
+auto color_name( const nc_color &color ) -> std::string
+{
+    return color_of( color );
+}
+
 auto capture_world() -> world_state
 {
     if( !g || !game_session::running() ) { return {}; }

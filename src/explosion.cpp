@@ -1,6 +1,7 @@
 #include "explosion.h" // IWYU pragma: associated
 
 #include "animation.h"
+#include "engine_client_presentation.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bodypart.h"
@@ -460,6 +461,10 @@ class ExplosionProcess
         float cur_relative_time;
         const long long presentation_start_ms;
         bool request_redraw;
+        /// What the engine clients are told about this blast, one logical time step at a time.
+        std::string presentation_id;
+        std::vector<tripoint_bub_ms> frame_blast;
+        std::vector<tripoint_bub_ms> frame_shrapnel;
     public:
         auto run() -> void;
 
@@ -717,6 +722,9 @@ auto ExplosionProcess::process_next() -> bool
                 break;
         };
     }
+    engine_client::presentation::record_blast_frame( presentation_id, frame_blast, frame_shrapnel );
+    frame_blast.clear();
+    frame_shrapnel.clear();
 
     return true;
 }
@@ -730,6 +738,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     if( is_occluded( center, position ) ) {
         return;
     }
+    frame_shrapnel.push_back( position );
 
     projectile fragment = shrapnel.value();
     fragment.add_effect( ammo_effect_NULL_SOURCE );
@@ -815,6 +824,7 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
     if( is_occluded( center, position ) ) {
         return;
     }
+    frame_blast.push_back( position );
 
     map &here = get_map();
     const auto terrain_before = controlled_explosion_clock ? here.ter( position ).id().str() :
@@ -1289,6 +1299,7 @@ auto ExplosionProcess::run() -> void
 {
     fill_maps();
     init_event_queue();
+    presentation_id = engine_client::presentation::begin_blast( center, blast_radius, is_fiery );
 
     // We need to temporary disable it because
     //   larger explosions may end up filling
@@ -1316,6 +1327,7 @@ auto ExplosionProcess::run() -> void
             request_redraw = false;
         }
     };
+    engine_client::presentation::end_blast( presentation_id );
 
     // Reenable disabled options
     if( disable_minimap ) {
