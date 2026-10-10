@@ -714,7 +714,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         }
         snapshot.choices.push_back( {
             .id = ids[visible_index],
-            .label = candidate.display_name( stack.size() ),
+            .label = remove_color_tags( candidate.display_name( stack.size() ) ),
             .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
             .enabled = true,
             .selectable = true,

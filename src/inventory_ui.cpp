@@ -2016,8 +2016,9 @@ bool inventory_selector::has_available_choices() const
 
 auto inventory_selector::interaction_snapshot() const -> game_client::interaction_snapshot
 {
-    const auto message = filter.empty() ? std::string{} :
-                         string_format( _( "Filter: %s" ), filter );
+    const auto message = !filter.empty() ? string_format( _( "Filter: %s" ), filter ) :
+                         empty() ? std::string{ _( "Your inventory is empty." ) } :
+                         std::string{};
     auto result = game_client::interaction_snapshot{
         .kind = game_client::interaction_kind::inventory,
         .title = remove_color_tags( title ),
