@@ -78,8 +78,13 @@ class public_event
     public:
         explicit public_event( event_value value );
         auto value() const -> const event_value &; // *NOPAD*
+        /// The event as the sole event of its own `bn.events` params, serialized once when it was
+        /// published; empty for an event that never went through a stream.
+        auto wire() const -> const std::string &; // *NOPAD*
     private:
+        friend class event_stream;
         event_value value_;
+        std::string wire_;
 };
 struct event_batch {
     std::string epoch = {};
@@ -133,6 +138,7 @@ class event_stream
         auto rebase( state_value next ) -> std::expected<void, error>;
     private:
         explicit event_stream( snapshot initial );
+        auto seal( public_event &event ) const -> bool;
         snapshot current_;
 };
 

@@ -6358,6 +6358,11 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
             auto& origin_cache = get_cache(player_pos.z());
             std::fill(origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f);
             m_last_seen_cache_origin = player_pos;
+            // The pass rebuilt every level's seen cache. Left set, the flags make the next
+            // build_map_cache schedule another rebuild, and each refresh waits on the GPU again.
+            std::ranges::for_each(visibility_download_levels, [this](const int z) {
+                get_cache(z).seen_cache_dirty = false;
+            });
         }
         mark_visibility_caches_clean();
         mark_overmap_seen_from_visibility(get_cache_ref(zlev));

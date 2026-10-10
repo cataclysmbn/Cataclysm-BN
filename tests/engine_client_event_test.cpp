@@ -423,39 +423,17 @@ TEST_CASE(
     CHECK(stream.current().at.sequence == 0);
 }
 
-TEST_CASE("a snapshot carries the newest hundred message lines", "[engine_client_event]") {
-    auto stream = stream_of(world_of({visible_cell(1)}));
-    auto receiver = stream.current();
-    auto events = std::vector<public_event>{};
-    for (const auto id : std::views::iota(counter{1}, counter{106})) {
-        const auto published = stream.publish_message(line(id, "line " + std::to_string(id)));
-        REQUIRE(published);
-        events.push_back(*published);
-    }
-    REQUIRE(apply_batch(receiver, {.epoch = "epoch:a", .events = events}));
-    CHECK(stream.current().log.size() == maximum_log_lines);
-    CHECK(stream.current().log.front().text == "line 6");
-    CHECK(receiver.log.size() == maximum_log_lines);
-    CHECK(receiver.log.front().text == "line 6");
-    CHECK(receiver.log.back().text == stream.current().log.back().text);
-    const auto wire = serialize_snapshot(stream.current());
-    REQUIRE(wire);
-    CHECK(nlohmann::json::parse(wire->header)["messages"].size() == maximum_log_lines);
-}
+TEST_CASE("a published event carries its own wire form", "[engine_client_event]") {
+    auto stream = stream_of(world_of({visible_cell(1)}, {}), "epoch:wire");
+    const auto event = publish(stream, world_of({visible_cell(1), visible_cell(2)}, {}));
 
-TEST_CASE("a repeated line replaces its line in the snapshot's log", "[engine_client_event]") {
-    auto stream = stream_of(world_of({visible_cell(1)}));
-    REQUIRE(stream.publish_message(line(7, "You open the door.")));
-    REQUIRE(stream.publish_message(line(8, "Bang.")));
-    REQUIRE(stream.publish_message(line(7, "You open the door.", 2)));
-    REQUIRE(stream.current().log.size() == 2);
-    CHECK(stream.current().log[0].count == 2);
-    CHECK(stream.current().log[1].text == "Bang.");
-}
+    CHECK_FALSE(event.wire().empty());
+    CHECK(event.wire() == serialize_events({.epoch = "epoch:wire", .events = {event}}));
+    // An event built outside a stream has none, so consumers serialize it themselves.
+    CHECK(public_event{event.value()}.wire().empty());
 
-TEST_CASE("an empty log is left out of the snapshot header", "[engine_client_event]") {
-    const auto stream = stream_of(world_of({visible_cell(1)}));
-    const auto wire = serialize_snapshot(stream.current());
-    REQUIRE(wire);
-    CHECK_FALSE(nlohmann::json::parse(wire->header).contains("messages"));
+    const auto message = stream.publish_message(
+        {.message = {.id = 1, .text = "Hi", .kind = "neutral"}});
+    REQUIRE(message);
+    CHECK(message->wire() == serialize_events({.epoch = "epoch:wire", .events = {*message}}));
 }
