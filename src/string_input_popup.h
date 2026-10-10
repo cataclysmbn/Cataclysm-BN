@@ -18,6 +18,11 @@ class ui_adaptor;
 class utf8_wrapper;
 struct point;
 
+namespace game_client
+{
+struct interaction_snapshot;
+} // namespace game_client
+
 /**
  * Shows a window querying the user for input.
  *
@@ -281,6 +286,8 @@ class string_input_popup // NOLINT(cata-xy)
         /**@}*/
 
         std::map<long, std::function<bool()>> callbacks;
+        /// Adds the rows of the screen around this input field to the interaction it publishes.
+        std::function < auto( game_client::interaction_snapshot & )->void > extend_interaction;
 };
 
 

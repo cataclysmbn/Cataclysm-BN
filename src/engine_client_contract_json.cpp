@@ -174,6 +174,15 @@ auto to_json( const game_client::interaction_choice &choice ) -> json
     for( const auto &column : choice.columns ) {
         result["columns"].push_back( {{"label", column.label}, {"value", column.value}} );
     }
+    if( choice.editor ) {
+        const auto &editor = *choice.editor;
+        auto value = json{{"type", editor.type}, {"value", editor.value}, {"values", json::array()},
+            {"max_length", editor.max_length}};
+        for( const auto &entry : editor.values ) { value["values"].push_back( {{"id", entry.id}, {"label", entry.label}} ); }
+        if( editor.minimum ) { value["minimum"] = *editor.minimum; }
+        if( editor.maximum ) { value["maximum"] = *editor.maximum; }
+        result["editor"] = std::move( value );
+    }
     if( choice.selected_count ) { result["selected_count"] = *choice.selected_count; }
     if( choice.minimum_count ) { result["minimum_count"] = *choice.minimum_count; }
     if( choice.available_count ) { result["available_count"] = *choice.available_count; }

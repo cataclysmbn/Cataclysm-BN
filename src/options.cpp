@@ -15,6 +15,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "client_display.h"
+#include "client_interaction.h"
 #include "client_presentation.h"
 #include "color.h"
 #include "cursesdef.h"
@@ -3942,6 +3943,47 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         wnoutrefresh( w_options );
     } );
 
+    // What a client can set on an option directly, from the same values the native menu cycles through.
+    const auto editor_of = []( const cOpt & opt ) -> game_client::interaction_editor {
+        const auto type = opt.getType();
+        auto editor = game_client::interaction_editor{ .value = opt.getValue( true ) };
+        if( type == "int" || type == "int_map" )
+        {
+            editor.value = std::to_string( opt.iSet );
+        }
+        if( type == "bool" )
+        {
+            editor.type = "bool";
+        } else if( type == "string_select" )
+        {
+            editor.type = "select";
+            for( const auto &item : opt.getItems() ) {
+                editor.values.push_back( { .id = item.first, .label = item.second.translated() } );
+            }
+        } else if( type == "int_map" )
+        {
+            editor.type = "select";
+            for( const auto &[value, name] : opt.mIntValues ) {
+                editor.values.push_back( { .id = std::to_string( value ), .label = name } );
+            }
+        } else if( type == "int" )
+        {
+            editor.type = "integer";
+            editor.minimum = opt.iMin;
+            editor.maximum = opt.iMax;
+        } else if( type == "float" )
+        {
+            editor.type = "float";
+            editor.minimum = opt.fMin;
+            editor.maximum = opt.fMax;
+        } else
+        {
+            editor.type = "text";
+            editor.max_length = opt.getMaxLength() > 0 ? opt.getMaxLength() : -1;
+        }
+        return editor;
+    };
+
     while( true ) {
         ui_manager::redraw();
 
@@ -3951,7 +3993,87 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
         auto &cOPTIONS = ( ingame || world_options_only ) && iCurrentPage == iWorldOptPage ?
                          ACTIVE_WORLD_OPTIONS : OPTIONS;
 
-        const std::string action = ctxt.handle_input();
+        // Tabs are the pages; the rows are the entries of the current page, as the native menu draws them.
+        const auto make_interaction = [&]() {
+            auto snapshot = game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices,
+                .title = world_options_only ? _( "World options" ) : _( "Options" ),
+                .allow_cancel = true,
+            };
+            for( auto index = std::size_t{ 0 }; !world_options_only && index < pages_.size(); ++index ) {
+                const auto selected = static_cast<int>( index ) == iCurrentPage;
+                const auto label = ingame && static_cast<int>( index ) == iWorldOptPage ?
+                                   std::string{ _( "Current world" ) } :
+                                   pages_[index].name_.translated();
+                snapshot.panes.push_back( { .id = "page:" + pages_[index].id_, .label = label,
+                                            .role = selected ? "focused" : "category" } );
+                snapshot.choices.push_back( { .id = "page:" + pages_[index].id_, .label = label,
+                                              .selected = selected, .highlighted = selected } );
+            }
+            for( auto index = 0; index < static_cast<int>( page_items.size() ); ++index ) {
+                const auto &item = page_items[index];
+                if( item.type == ItemType::BlankLine || ( item.type == ItemType::Option &&
+                        !groups_state[item.group] ) ) {
+                    continue;
+                }
+                auto choice = game_client::interaction_choice{
+                    .description = item.fmt_tooltip( find_group( item.group ), cOPTIONS ),
+                    .pane_id = "page:" + page.id_,
+                    .selected = index == iCurrentLine, .highlighted = index == iCurrentLine,
+                };
+                if( item.type == ItemType::GroupHeader ) {
+                    choice.id = "group:" + item.data;
+                    choice.label = find_group( item.data ).name_.translated();
+                    choice.columns = { { .label = _( "Expanded" ), .value = groups_state[item.data] ? "true" : "false" } };
+                } else {
+                    const auto &opt = cOPTIONS.find( item.data )->second;
+                    choice.id = "option:" + item.data;
+                    choice.label = ( item.group.empty() ? "" : "  " ) + opt.getMenuText();
+                    choice.columns = { { .label = _( "Value" ), .value = opt.getValueName() } };
+                    choice.editor = editor_of( opt );
+                    if( opt.hasPrerequisite() && !opt.checkPrerequisite() ) {
+                        choice.enabled = choice.selectable = false;
+                        choice.denial = string_format( _( "Prerequisite for this option not met!\n(%s)" ),
+                                                       get_options().get_option( opt.getPrerequisite() ).getMenuText() );
+                    }
+                }
+                snapshot.choices.push_back( std::move( choice ) );
+            }
+            return snapshot;
+        };
+
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
+            action = ctxt.handle_input();
+        }
+
+        // A semantic choice moves the native cursor and then runs the native action, like a keypress.
+        const auto raw_input = ctxt.get_raw_input();
+        if( const auto &event = raw_input.interaction ) {
+            const auto row = std::ranges::find_if( page_items, [&]( const PageItem & item ) {
+                return event->target_id == ( item.type == ItemType::GroupHeader ? "group:" : "option:" ) +
+                       item.data;
+            } );
+            const auto page_index = std::ranges::find_if( pages_, [&]( const Page & candidate ) {
+                return event->target_id == "page:" + candidate.id_;
+            } );
+            action.clear();
+            if( event->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( page_index != pages_.end() ) {
+                iCurrentPage = static_cast<int>( page_index - pages_.begin() );
+                iCurrentLine = 0;
+                iStartPos = 0;
+            } else if( row != page_items.end() ) {
+                iCurrentLine = static_cast<int>( row - page_items.begin() );
+                if( event->operation == game_client::interaction_operation::fill ) {
+                    cOPTIONS[row->data].setValue( event->value );
+                } else {
+                    action = "CONFIRM";
+                }
+            }
+        }
 
         if( world_options_only && ( action == "NEXT_TAB" || action == "PREV_TAB" ||
                                     ( action == "QUIT" && ( !on_quit || on_quit() ) ) ) ) {

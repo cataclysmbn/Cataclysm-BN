@@ -1161,6 +1161,104 @@
           }
         ]
       }
+    },
+    {
+      "name": "options row with each editor type",
+      "def": "choice",
+      "value": {
+        "id": "option:SAFEMODEPROXIMITY",
+        "label": "Safe mode proximity distance",
+        "description": "",
+        "denial": "",
+        "pane_id": "page:general",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "label": "Value",
+            "value": "7"
+          }
+        ],
+        "editor": {
+          "type": "integer",
+          "value": "7",
+          "values": [],
+          "max_length": -1,
+          "minimum": 0,
+          "maximum": 60
+        }
+      }
+    },
+    {
+      "name": "select editor",
+      "def": "choice",
+      "value": {
+        "id": "option:DROP_EMPTY",
+        "label": "Drop empty containers",
+        "description": "",
+        "denial": "",
+        "pane_id": "page:general",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "label": "Value",
+            "value": "No"
+          }
+        ],
+        "editor": {
+          "type": "select",
+          "value": "no",
+          "values": [
+            {
+              "id": "no",
+              "label": "No"
+            },
+            {
+              "id": "watertight",
+              "label": "Watertight"
+            },
+            {
+              "id": "all",
+              "label": "All"
+            }
+          ],
+          "max_length": -1
+        }
+      }
+    },
+    {
+      "name": "submit fill on an editor row",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "2c1f"
+        },
+        "operation": {
+          "kind": "fill",
+          "field_id": "option:SAFEMODEPROXIMITY",
+          "value": "8",
+          "submit": true
+        }
+      }
+    },
+    {
+      "name": "key field of a keybinding prompt",
+      "def": "field",
+      "value": {
+        "id": "field:key",
+        "label": "New key for Move East",
+        "description": "",
+        "value": "",
+        "type": "key",
+        "max_length": -1,
+        "printable": false
+      }
     }
   ],
   "invalid": [
@@ -1817,6 +1915,33 @@
           }
         ]
       }
+    },
+    {
+      "name": "editor of an unknown type",
+      "def": "choice",
+      "value": {
+        "id": "option:X",
+        "label": "X",
+        "description": "",
+        "denial": "",
+        "pane_id": "page:general",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "label": "Value",
+            "value": "1"
+          }
+        ],
+        "editor": {
+          "type": "slider",
+          "value": "1",
+          "values": [],
+          "max_length": -1
+        }
+      },
+      "why": "editor.type is one of bool, select, integer, float, text"
     }
   ]
 }

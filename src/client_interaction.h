@@ -28,6 +28,22 @@ struct interaction_column {
     std::string value;
 };
 
+struct interaction_editor_value {
+    std::string id;
+    std::string label;
+};
+
+/// A value the client may set on a choice directly with `fill`, instead of cycling it natively.
+/// `type` is `bool`, `select`, `integer`, `float` or `text`.
+struct interaction_editor {
+    std::string type;
+    std::string value;
+    std::vector<interaction_editor_value> values;
+    std::optional<double> minimum;
+    std::optional<double> maximum;
+    int max_length = -1;
+};
+
 struct interaction_choice {
     std::string id;
     std::string label;
@@ -41,6 +57,7 @@ struct interaction_choice {
     bool selected = false;
     bool highlighted = false;
     std::vector<interaction_column> columns;
+    std::optional<interaction_editor> editor;
     std::optional<std::uint64_t> selected_count;
     std::optional<std::uint64_t> minimum_count;
     std::optional<std::uint64_t> available_count;

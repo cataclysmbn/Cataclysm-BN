@@ -894,6 +894,60 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991
+        },
+        "editor": {
+          "type": "object",
+          "description": "A value the client can set directly with `fill` (field_id is this choice's id) instead of cycling it natively. `bool` takes `true` or `false`, `select` one of `values[].id`, `integer` and `float` a number within `minimum` and `maximum`, `text` a string of at most `max_length` (-1: unbounded). `value` is the current value in the same form.",
+          "properties": {
+            "type": {
+              "enum": [
+                "bool",
+                "select",
+                "integer",
+                "float",
+                "text"
+              ]
+            },
+            "value": {
+              "type": "string"
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "label"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "minimum": {
+              "type": "number"
+            },
+            "maximum": {
+              "type": "number"
+            },
+            "max_length": {
+              "type": "integer",
+              "minimum": -1
+            }
+          },
+          "required": [
+            "type",
+            "value",
+            "values",
+            "max_length"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -966,7 +1020,8 @@
         "type": {
           "enum": [
             "text",
-            "integer"
+            "integer",
+            "key"
           ]
         },
         "max_length": {

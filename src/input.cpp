@@ -1273,6 +1273,40 @@ action_id input_context::display_menu( const bool permit_execute_action )
     };
     ui.on_redraw( redraw );
 
+    // The modes and one row per action, as the native menu lists them; the filter field is the native one.
+    const auto extend_interaction = [&]( game_client::interaction_snapshot & snapshot ) {
+        snapshot.title = _( "Keybindings" );
+        snapshot.allow_cancel = true;
+        snapshot.panes = { { .id = "modes", .label = _( "Mode" ), .role = "category" },
+            { .id = "actions", .label = _( "Actions" ), .role = "focused" }
+        };
+        const auto add_mode = [&]( const std::string & id, const std::string & mode_action,
+        const bool active ) {
+            snapshot.choices.push_back( { .id = "mode:" + id, .label = ctxt.get_action_name( mode_action ),
+                                          .pane_id = "modes", .selected = active, .highlighted = active } );
+        };
+        add_mode( "add_local", "ADD_LOCAL", status == s_add );
+        add_mode( "add_global", "ADD_GLOBAL", status == s_add_global );
+        add_mode( "remove", "REMOVE", status == s_remove );
+        if( permit_execute_action ) {
+            add_mode( "execute", "EXECUTE", status == s_execute );
+        }
+        for( const auto &action_id : filtered_registered_actions ) {
+            auto is_local = false;
+            const auto &attributes = inp_mngr.get_action_attributes( action_id, category, &is_local );
+            snapshot.choices.push_back( {
+                .id = "action:" + action_id, .label = get_action_name( action_id ), .pane_id = "actions",
+                .columns = { { .label = _( "Keys" ), .value = get_desc( action_id ) },
+                    {
+                        .label = _( "Scope" ), .value = attributes.input_events.empty() ? _( "Unbound" ) :
+                        is_local ? _( "Local" ) : _( "Global" )
+                    }
+                },
+            } );
+        }
+    };
+    spopup.extend_interaction = extend_interaction;
+
     // do not switch IME mode now, but restore previous mode on return
     ime_sentry sentry( ime_sentry::keep );
     while( true ) {
@@ -1282,6 +1316,11 @@ action_id input_context::display_menu( const bool permit_execute_action )
             filter_phrase = spopup.query_string( false );
             action = ctxt.input_to_action( ctxt.get_raw_input() );
         } else {
+            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+                auto snapshot = game_client::interaction_snapshot{ .kind = game_client::interaction_kind::choices };
+                extend_interaction( snapshot );
+                return snapshot;
+            } );
             action = ctxt.handle_input();
         }
         raw_input_char = ctxt.get_raw_input().get_first_input();
@@ -1294,6 +1333,30 @@ action_id input_context::display_menu( const bool permit_execute_action )
         filtered_registered_actions = filter_strings_by_phrase( org_registered_actions, filter_phrase );
         if( scroll_offset > filtered_registered_actions.size() ) {
             scroll_offset = 0;
+        }
+
+        // A semantic choice acts like the keypress that picks the same mode or action.
+        auto picked_action = std::optional<size_t> {};
+        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
+            const auto &target = raw.interaction->target_id;
+            const auto picked = std::ranges::find_if( filtered_registered_actions, [&](
+            const std::string & id ) {
+                return target == "action:" + id;
+            } );
+            action.clear();
+            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( target == "mode:add_local" ) {
+                action = "ADD_LOCAL";
+            } else if( target == "mode:add_global" ) {
+                action = "ADD_GLOBAL";
+            } else if( target == "mode:remove" ) {
+                action = "REMOVE";
+            } else if( target == "mode:execute" ) {
+                action = "EXECUTE";
+            } else if( picked != filtered_registered_actions.end() ) {
+                picked_action = static_cast<size_t>( picked - filtered_registered_actions.begin() );
+            }
         }
 
         // In addition to the modifiable hotkeys, we also check for hardcoded
@@ -1361,10 +1424,10 @@ action_id input_context::display_menu( const bool permit_execute_action )
             hotkeys = ctxt.get_available_single_char_hotkeys( display_help_hotkeys );
         } else if( !filtered_registered_actions.empty() && status != s_show ) {
             const size_t hotkey_index = hotkeys.find_first_of( raw_input_char );
-            if( hotkey_index == std::string::npos ) {
+            if( !picked_action && hotkey_index == std::string::npos ) {
                 continue;
             }
-            const size_t action_index = hotkey_index + scroll_offset;
+            const size_t action_index = picked_action ? *picked_action : hotkey_index + scroll_offset;
             if( action_index >= filtered_registered_actions.size() ) {
                 continue;
             }

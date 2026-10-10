@@ -1,12 +1,14 @@
 #include "color.h"
 
 #include <algorithm> // for std::count
+#include <array>
 #include <cstdlib>
 #include <iterator>
 #include <map>
 #include <vector>
 
 #include "cata_utility.h"
+#include "client_interaction.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "filesystem.h"
@@ -869,10 +871,52 @@ void color_manager::show_gui()
         wnoutrefresh( w_colors );
     } );
 
+    // The two columns the cursor can be in, and one row per color with its custom colors.
+    const auto make_interaction = [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices, .title = _( " COLOR MANAGER " ), .allow_cancel = true,
+        };
+        const auto column_labels = std::array<std::string, 2> { _( "Normal" ), _( "Invert" ) };
+        for( auto column = 1; column <= iTotalCols; ++column ) {
+            snapshot.choices.push_back( { .id = "column:" + std::to_string( column ), .label = column_labels[column - 1],
+                                          .pane_id = "columns", .selected = column == iCurrentCol, .highlighted = column == iCurrentCol } );
+        }
+        auto index = 0;
+        for( const auto &[name, entry] : name_color_map ) {
+            snapshot.choices.push_back( {
+                .id = "color:" + name, .label = name, .pane_id = "colors",
+                .selected = index == iCurrentLine, .highlighted = index == iCurrentLine,
+                .columns = { { .label = column_labels[0], .value = entry.name_custom.empty() ? _( "default" ) : entry.name_custom },
+                    { .label = column_labels[1], .value = entry.name_invert_custom.empty() ? _( "default" ) : entry.name_invert_custom }
+                },
+            } );
+            ++index;
+        }
+        return snapshot;
+    };
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
+            action = ctxt.handle_input();
+        }
+        // A semantic choice moves the cursor and then acts like the matching key.
+        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
+            const auto &target = raw.interaction->target_id;
+            action.clear();
+            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( target.starts_with( "column:" ) ) {
+                iCurrentCol = std::stoi( target.substr( 7 ) );
+            } else if( target.starts_with( "color:" ) ) {
+                iCurrentLine = static_cast<int>( std::distance( name_color_map.begin(),
+                                                 name_color_map.find( target.substr( 6 ) ) ) );
+                action = "CONFIRM";
+            }
+        }
 
         if( action == "QUIT" ) {
             break;

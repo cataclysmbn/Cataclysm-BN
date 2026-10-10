@@ -1,10 +1,12 @@
 #include "distraction_manager.h"
 
+#include <algorithm>
 #include <functional>
 #include <fstream>
 #include <string>
 
 #include "cata_utility.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "input.h"
@@ -169,10 +171,53 @@ void distraction_manager_gui::show()
         wnoutrefresh( w );
     } );
 
+    // One row per distraction; the editor value is whether it interrupts, the inverse of what is stored.
+    const auto make_interaction = [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Distractions manager" ),
+            .allow_cancel = true,
+        };
+        for( auto index = 0; index < num_distractions; ++index ) {
+            const auto &[name, description] = distraction_desc.at( distractions_status[index] );
+            const auto enabled = !distractions.at( distractions_status[index] );
+            snapshot.choices.push_back( {
+                .id = "distraction:" + io::enum_to_string( distractions_status[index] ),
+                .label = _( name ), .description = _( description ),
+                .selected = index == currentLine, .highlighted = index == currentLine,
+                .columns = { { .label = _( "Status" ), .value = enabled ? _( "Enabled" ) : _( "Disabled" ) } },
+                .editor = game_client::interaction_editor{ .type = "bool", .value = enabled ? "true" : "false" },
+            } );
+        }
+        return snapshot;
+    };
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string currentAction = ctx.handle_input();
+        auto currentAction = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctx, make_interaction );
+            currentAction = ctx.handle_input();
+        }
+        // A semantic choice moves the cursor and then acts like the matching key.
+        if( const auto raw = ctx.get_raw_input(); raw.interaction ) {
+            const auto row = std::ranges::find_if( distractions_status, [&]( const distraction_type type ) {
+                return raw.interaction->target_id == "distraction:" + io::enum_to_string( type );
+            } );
+            currentAction.clear();
+            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
+                currentAction = "QUIT";
+            } else if( row != distractions_status.end() ) {
+                currentLine = static_cast<int>( row - distractions_status.begin() );
+                cur_distraction = *row;
+                if( raw.interaction->operation == game_client::interaction_operation::fill ) {
+                    distractions[cur_distraction] = raw.interaction->value == "false";
+                } else {
+                    currentAction = "CONFIRM";
+                }
+            }
+        }
 
         if( currentAction == "QUIT" ) {
             save();

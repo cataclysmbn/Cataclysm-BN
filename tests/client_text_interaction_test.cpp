@@ -598,15 +598,14 @@ TEST_CASE(
         }
         if (reads == 4) {
             CHECK(snapshot.context == "HELP_KEYBINDINGS");
-            CHECK_FALSE(snapshot.structured);
-            CHECK(snapshot.actions_only);
-            CHECK(snapshot.message.empty());
-            CHECK(snapshot.choices.empty());
+            CHECK(snapshot.structured);
+            CHECK(snapshot.kind == game_client::interaction_kind::choices);
+            CHECK(snapshot.title == "Keybindings");
+            CHECK(std::ranges::any_of(snapshot.choices, [](const auto& choice) {
+                return choice.id == "mode:add_local" && choice.selected;
+            }));
             CHECK_FALSE(snapshot.field);
-            CHECK_FALSE(snapshot.allow_cancel);
-            CHECK_FALSE(game_client::resolve_interaction_command(
-                {.input_id = snapshot.input_id,
-                 .operation = game_client::interaction_operation::cancel}));
+            CHECK(snapshot.allow_cancel);
             return resolve_action("QUIT");
         }
         if (reads == 5) {

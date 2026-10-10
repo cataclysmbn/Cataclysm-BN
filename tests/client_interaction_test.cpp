@@ -30,6 +30,7 @@
 #    include "monster.h"
 #    include "npc.h"
 #    include "npctrade.h"
+#    include "options.h"
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "path_info.h"
@@ -4419,6 +4420,220 @@ TEST_CASE(
     CHECK_FALSE(result.position);
     REQUIRE(reads == 2);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
+}
+
+TEST_CASE(
+    "a choice editor accepts only values of its own type and range",
+    "[client][interaction][settings][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto ctxt = input_context{"EDITOR_TEST"};
+    const auto editor = [](std::string type, std::string value) {
+        return game_client::interaction_editor{.type = std::move(type), .value = std::move(value)};
+    };
+    auto number = editor("integer", "5");
+    number.minimum = 0;
+    number.maximum = 10;
+    auto real = editor("float", "0.5");
+    real.minimum = 0;
+    real.maximum = 1.5;
+    auto text = editor("text", "");
+    text.max_length = 3;
+    auto select = editor("select", "a");
+    select.values = {{.id = "a", .label = "A"}, {.id = "b", .label = "B"}};
+    const auto scope = game_client::interaction_scope(ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .choices =
+                {
+                    {.id = "flag", .label = "Flag", .editor = editor("bool", "true")},
+                    {.id = "mode", .label = "Mode", .editor = select},
+                    {.id = "count", .label = "Count", .editor = number},
+                    {.id = "ratio", .label = "Ratio", .editor = real},
+                    {.id = "name", .label = "Name", .editor = text},
+                    {.id = "locked",
+                     .label = "Locked",
+                     .selectable = false,
+                     .editor = editor("bool", "false")},
+                    {.id = "plain", .label = "Plain"},
+                },
+            .field = game_client::interaction_field{.id = "key", .type = "key"},
+        };
+    });
+    const auto active = game_client::input_context_scope(ctxt, "EDITOR_TEST");
+    const auto schema = game_client::current_interaction().schema_id;
+    const auto fill = [&](const std::string& id, const std::string& value) {
+        return game_client::validate_interaction_event(
+            ctxt,
+            {.operation = game_client::interaction_operation::fill,
+             .schema_id = schema,
+             .target_id = id,
+             .value = value,
+             .submit = true});
+    };
+
+    CHECK(fill("flag", "false"));
+    CHECK_FALSE(fill("flag", "False"));
+    CHECK(fill("mode", "b"));
+    CHECK_FALSE(fill("mode", "c"));
+    CHECK(fill("count", "0"));
+    CHECK(fill("count", "10"));
+    CHECK_FALSE(fill("count", "11"));
+    CHECK_FALSE(fill("count", "-1"));
+    CHECK_FALSE(fill("count", "2.5"));
+    CHECK_FALSE(fill("count", ""));
+    CHECK(fill("ratio", "1.5"));
+    CHECK_FALSE(fill("ratio", "1.51"));
+    CHECK_FALSE(fill("ratio", "nan"));
+    CHECK(fill("name", "abc"));
+    CHECK_FALSE(fill("name", "abcd"));
+    CHECK_FALSE(fill("locked", "true"));
+    CHECK_FALSE(fill("plain", "x"));
+    CHECK(fill("key", "F9"));
+    CHECK(fill("key", "="));
+    CHECK_FALSE(fill("key", "no such key"));
+}
+
+TEST_CASE(
+    "the native options menu publishes pages and editable options and applies fill",
+    "[client][interaction][settings][mcp]") {
+    const auto guard = interaction_test_guard{};
+    const auto original = get_option<int>("SAFEMODEPROXIMITY");
+    auto step = 0;
+    auto seen_page = std::string{};
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction({.limit = 200});
+        const auto find = [&](const std::string& id) {
+            return std::ranges::find(snapshot.choices, id, &game_client::interaction_choice::id);
+        };
+        if (snapshot.context != "OPTIONS") {
+            REQUIRE(step == 3);
+            step = 4;
+            const auto no =
+                std::ranges::find(snapshot.choices, "No", &game_client::interaction_choice::label);
+            REQUIRE(no != snapshot.choices.end());
+            return resolve(
+                {.input_id = snapshot.input_id,
+                 .operation = game_client::interaction_operation::choose,
+                 .target_id = no->id});
+        }
+        const auto row = find("option:SAFEMODEPROXIMITY");
+        if (step == 0) {
+            REQUIRE(row != snapshot.choices.end());
+            REQUIRE(row->editor);
+            CHECK(row->editor->type == "integer");
+            CHECK(row->editor->value == std::to_string(original));
+            CHECK(
+                std::ranges::count_if(
+                    snapshot.choices,
+                    [](const auto& choice) {
+                        return !choice.pane_id && choice.id.starts_with("page:");
+                    })
+                >= 5);
+            const auto too_big = game_client::resolve_interaction_command(
+                {.input_id = snapshot.input_id,
+                 .operation = game_client::interaction_operation::fill,
+                 .target_id = row->id,
+                 .value = std::to_string(*row->editor->maximum + 1),
+                 .submit = true});
+            REQUIRE_FALSE(too_big);
+            CHECK(too_big.error().starts_with("invalid:"));
+            step = 1;
+            return resolve(
+                {.input_id = snapshot.input_id,
+                 .operation = game_client::interaction_operation::fill,
+                 .target_id = row->id,
+                 .value = "7",
+                 .submit = true});
+        }
+        if (step == 1) {
+            REQUIRE(row != snapshot.choices.end());
+            CHECK(row->editor->value == "7");
+            CHECK(row->columns.front().value == "7");
+            seen_page = snapshot.choices.front().id;
+            step = 2;
+            return resolve(
+                {.input_id = snapshot.input_id,
+                 .operation = game_client::interaction_operation::choose,
+                 .target_id = "page:interface"});
+        }
+        REQUIRE(step == 2);
+        CHECK(row == snapshot.choices.end());
+        CHECK(find("page:interface")->selected);
+        step = 3;
+        return resolve(
+            {.input_id = snapshot.input_id,
+             .operation = game_client::interaction_operation::cancel});
+    });
+
+    get_options().show(false);
+    CHECK(step == 4);
+    CHECK(seen_page == "page:general");
+    CHECK(get_option<int>("SAFEMODEPROXIMITY") == original);
+}
+
+TEST_CASE(
+    "the native keybindings menu adds a key through the key field and discards it unsaved",
+    "[client][interaction][settings][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto ctxt = input_context{"KEYBINDING_TEST"};
+    ctxt.register_action("UP");
+    const auto before = inp_mngr.get_input_for_action("UP", "default");
+    auto step = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction({.limit = 200});
+        const auto command =
+            [&](const game_client::interaction_operation operation, const std::string& target,
+                const std::string& value = {}) {
+                return resolve(
+                    {.input_id = snapshot.input_id,
+                     .operation = operation,
+                     .target_id = target,
+                     .value = value,
+                     .submit = value.empty() ? std::nullopt : std::optional{true}});
+            };
+        const auto row =
+            std::ranges::find(snapshot.choices, "action:UP", &game_client::interaction_choice::id);
+        if (snapshot.field && snapshot.field->type == "key") {
+            REQUIRE(step == 2);
+            const auto unknown = game_client::resolve_interaction_command(
+                {.input_id = snapshot.input_id,
+                 .operation = game_client::interaction_operation::fill,
+                 .target_id = snapshot.field->id,
+                 .value = "no such key",
+                 .submit = true});
+            CHECK_FALSE(unknown);
+            step = 3;
+            return command(game_client::interaction_operation::fill, snapshot.field->id, "F9");
+        }
+        if (step == 0) {
+            REQUIRE(row != snapshot.choices.end());
+            CHECK(snapshot.title == "Keybindings");
+            step = 1;
+            return command(game_client::interaction_operation::choose, "mode:add_global");
+        }
+        if (step == 1) {
+            step = 2;
+            return command(game_client::interaction_operation::choose, "action:UP");
+        }
+        if (step == 3) {
+            REQUIRE(row != snapshot.choices.end());
+            CHECK(row->columns.front().value.find("F9") != std::string::npos);
+            step = 5;
+            return command(game_client::interaction_operation::cancel, "");
+        }
+        REQUIRE(step == 5);
+        step = 6;
+        const auto no =
+            std::ranges::find(snapshot.choices, "No", &game_client::interaction_choice::label);
+        REQUIRE(no != snapshot.choices.end());
+        return command(game_client::interaction_operation::choose, no->id);
+    });
+
+    ctxt.display_menu();
+    CHECK(step == 6);
+    CHECK(inp_mngr.get_input_for_action("UP", "default") == before);
 }
 
 #endif // CATA_MCP

@@ -1,6 +1,7 @@
 #include "safemode_ui.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <fstream>
 #include <map>
@@ -10,6 +11,7 @@
 
 #include "avatar.h"
 #include "cata_utility.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -250,12 +252,74 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         wnoutrefresh( w );
     } );
 
+    // Tabs, the columns the cursor can be in, and one row per rule, as the native screen shows them.
+    const auto make_interaction = [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices, .title = custom_name_in, .allow_cancel = true,
+        };
+        const auto tab_labels = std::array<std::string, 2> { _( "Global" ), _( "Character" ) };
+        for( auto index = 0; index < MAX_TAB; ++index ) {
+            snapshot.choices.push_back( { .id = "page:" + std::to_string( index ), .label = tab_labels[index],
+                                          .selected = index == tab, .highlighted = index == tab } );
+        }
+        const auto column_labels = std::array<std::string, 5> { _( "Rules" ), _( "Attitude" ), _( "Dist" ),
+                   _( "B/W" ), pgettext( "category", "Cat" )
+                                                              };
+        for( auto index = 0; index < num_columns; ++index ) {
+            snapshot.choices.push_back( { .id = "column:" + std::to_string( index ), .label = column_labels[index],
+                                          .pane_id = "columns", .selected = index == column, .highlighted = index == column } );
+        }
+        const auto &rules = tab == GLOBAL_TAB ? global_rules : character_rules;
+        for( auto index = 0; !( tab == CHARACTER_TAB && g->u.name.empty() ) &&
+             index < static_cast<int>( rules.size() ); ++index ) {
+            const auto &rule = rules[index];
+            snapshot.choices.push_back( {
+                .id = "rule:" + std::to_string( index ),
+                .label = rule.rule.empty() ? _( "<empty rule>" ) : rule.rule,
+                .pane_id = "rules", .selected = index == line, .highlighted = index == line,
+                .columns = { {
+                        .label = column_labels[1], .value = rule.category == Categories::HOSTILE_SPOTTED ?
+                        Creature::get_attitude_ui_data( rule.attitude ).first.translated() : "---"
+                    },
+                    {
+                        .label = column_labels[2], .value = rule.category == Categories::SOUND || !rule.whitelist ?
+                        std::to_string( rule.proximity ) : "---"
+                    },
+                    { .label = column_labels[3], .value = rule.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) },
+                    { .label = column_labels[4], .value = rule.category == Categories::SOUND ? _( "Sound" ) : _( "Hostile" ) },
+                    { .label = _( "Active" ), .value = rule.active ? _( "True" ) : _( "False" ) }
+                },
+            } );
+        }
+        return snapshot;
+    };
+
     while( true ) {
         auto &current_tab = ( tab == GLOBAL_TAB ) ? global_rules : character_rules;
 
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
+            action = ctxt.handle_input();
+        }
+        // A semantic choice moves the cursor and then acts like the matching key.
+        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
+            const auto &target = raw.interaction->target_id;
+            action.clear();
+            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( target.starts_with( "page:" ) ) {
+                tab = std::stoi( target.substr( 5 ) );
+                line = 0;
+            } else if( target.starts_with( "column:" ) ) {
+                column = std::stoi( target.substr( 7 ) );
+            } else if( target.starts_with( "rule:" ) ) {
+                line = std::stoi( target.substr( 5 ) );
+                action = "CONFIRM";
+            }
+        }
 
         if( action == "NEXT_TAB" ) {
             tab++;

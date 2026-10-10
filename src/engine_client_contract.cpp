@@ -212,6 +212,10 @@ auto validate_boundary( const boundary_state &state ) -> std::expected<void, err
             ( choice.area_id && !valid_id( *choice.area_id ) ) ) {
             return std::unexpected( error::validation_failed );
         }
+        if( choice.editor && ( !valid_id( choice.editor->type ) ||
+        !std::ranges::all_of( choice.editor->values, []( const auto & entry ) { return valid_id( entry.id ); } ) ) ) {
+            return std::unexpected( error::validation_failed );
+        }
         if( ( choice.available_count && *choice.available_count > maximum_safe_integer ) ||
             ( choice.selected_count && *choice.selected_count > maximum_safe_integer ) ||
             ( choice.minimum_count && *choice.minimum_count > maximum_safe_integer ) ) {
@@ -220,7 +224,8 @@ auto validate_boundary( const boundary_state &state ) -> std::expected<void, err
     }
     if( !std::ranges::all_of( value.panes, []( const auto & pane ) { return valid_id( pane.id ); } ) ||
     ( value.field && ( !valid_id( value.field->id ) ||
-                       ( value.field->type != "text" && value.field->type != "integer" ) ) ) ||
+                       ( value.field->type != "text" && value.field->type != "integer" &&
+                         value.field->type != "key" ) ) ) ||
     ( value.target && !std::ranges::all_of( value.target->candidates, []( const auto & entry ) { return valid_id( entry.id ); } ) ) ) {
         return std::unexpected( error::validation_failed );
     }

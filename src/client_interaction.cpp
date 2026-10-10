@@ -12,6 +12,7 @@
 #include "wcwidth.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <iomanip>
 #include <limits>
@@ -153,6 +154,16 @@ auto schema_for( const interaction_snapshot &snapshot,
         for( const auto &column : choice.columns ) {
             hash.add( column.label );
             hash.add( column.value );
+        }
+        if( choice.editor ) {
+            hash.add( choice.editor->type );
+            hash.add( std::to_string( choice.editor->max_length ) );
+            hash.add( choice.editor->minimum ? std::to_string( *choice.editor->minimum ) : "no-minimum" );
+            hash.add( choice.editor->maximum ? std::to_string( *choice.editor->maximum ) : "no-maximum" );
+            for( const auto &value : choice.editor->values ) {
+                hash.add( value.id );
+                hash.add( value.label );
+            }
         }
         hash.add( choice.minimum_count ? std::to_string( *choice.minimum_count ) : "default-minimum" );
         hash.add( choice.available_count ? std::to_string( *choice.available_count ) : "no-limit" );
@@ -321,6 +332,11 @@ auto materialize( acquired_interaction acquired,
 auto validate_field_value( const interaction_field &field, const std::string &value )
 -> std::expected<void, std::string>
 {
+    if( field.type == "key" ) {
+        return inp_mngr.get_keycode( value ) != 0 || utf8_wrapper( value ).length() == 1 ?
+               std::expected<void, std::string> {} :
+               std::unexpected( "invalid: field value is not a key name" );
+    }
     const auto text = utf8_wrapper( value );
     if( field.max_length > 0 && text.display_width() > static_cast<std::size_t>( field.max_length ) ) {
         return std::unexpected( "invalid: field value exceeds max_length" );
@@ -341,6 +357,36 @@ auto validate_field_value( const interaction_field &field, const std::string &va
             }
         }
         ++position;
+    }
+    return {};
+}
+
+/// The value must be one the editor offers, so a client cannot set what the native menu would refuse.
+auto validate_editor_value( const interaction_editor &editor, const std::string &value )
+-> std::expected<void, std::string>
+{
+    if( editor.type == "bool" ) {
+        if( value != "true" && value != "false" ) {
+            return std::unexpected( "invalid: bool editor accepts true or false" );
+        }
+    } else if( editor.type == "select" ) {
+        if( std::ranges::none_of( editor.values, [&value]( const auto & entry ) { return entry.id == value; } ) ) {
+            return std::unexpected( "invalid: value is not one of the editor values" );
+        }
+    } else if( editor.type == "integer" || editor.type == "float" ) {
+        auto parsed = 0.0;
+        const auto *const end = value.data() + value.size();
+        const auto result = std::from_chars( value.data(), end, parsed );
+        if( value.empty() || result.ec != std::errc{} || result.ptr != end || !std::isfinite( parsed ) ||
+            ( editor.type == "integer" && parsed != std::trunc( parsed ) ) ) {
+            return std::unexpected( "invalid: editor value is not a number of its type" );
+        }
+        if( ( editor.minimum && parsed < *editor.minimum ) || ( editor.maximum &&
+                parsed > *editor.maximum ) ) {
+            return std::unexpected( "invalid: editor value is outside its range" );
+        }
+    } else {
+        return validate_field_value( { .max_length = editor.max_length }, value );
     }
     return {};
 }
@@ -447,6 +493,10 @@ auto validate( const acquired_interaction &acquired, const interaction_event &ev
     }
     if( event.target_id.empty() || !event.submit || event.count || event.position ) {
         return std::unexpected( "invalid: fill requires field_id, value, and explicit submit" );
+    }
+    if( const auto choice = acquired.choice( event.target_id ); choice != nullptr && choice->editor ) {
+        if( !choice->selectable ) { return std::unexpected( "disabled: choice is not selectable" ); }
+        return validate_editor_value( *choice->editor, event.value );
     }
     if( !snapshot.field || snapshot.field->id != event.target_id ) {
         return std::unexpected( "invalid: field_id is not in the active interaction" );
@@ -668,6 +718,25 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
             json.end_object();
         }
         json.end_array();
+        if( choice.editor ) {
+            json.member( "editor" );
+            json.start_object();
+            json.member( "type", choice.editor->type );
+            json.member( "value", choice.editor->value );
+            json.member( "values" );
+            json.start_array();
+            for( const auto &value : choice.editor->values ) {
+                json.start_object();
+                json.member( "id", value.id );
+                json.member( "label", value.label );
+                json.end_object();
+            }
+            json.end_array();
+            if( choice.editor->minimum ) { json.member( "minimum", *choice.editor->minimum ); }
+            if( choice.editor->maximum ) { json.member( "maximum", *choice.editor->maximum ); }
+            json.member( "max_length", choice.editor->max_length );
+            json.end_object();
+        }
         if( choice.selected_count ) { json.member( "selected_count", *choice.selected_count ); }
         if( choice.minimum_count ) { json.member( "minimum_count", *choice.minimum_count ); }
         if( choice.available_count ) { json.member( "available_count", *choice.available_count ); }

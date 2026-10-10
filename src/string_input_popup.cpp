@@ -432,7 +432,7 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
         auto ev = input_event{};
         {
             const auto interaction = game_client::interaction_scope( *ctxt, [this, &ret, printable]() {
-                return game_client::interaction_snapshot{
+                auto snapshot = game_client::interaction_snapshot{
                     .kind = game_client::interaction_kind::field,
                     .title = remove_color_tags( _title ),
                     .message = remove_color_tags( _description ),
@@ -447,6 +447,8 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
                         .printable = printable,
                     },
                 };
+                if( extend_interaction ) { extend_interaction( snapshot ); }
+                return snapshot;
             } );
             action = ctxt->handle_input();
             ev = ctxt->get_raw_input();

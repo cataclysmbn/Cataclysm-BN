@@ -299,6 +299,12 @@ game_client::interaction_snapshot // *NOPAD*
             .highlighted = index == cur,
         } );
     }
+    if( anykey ) {
+        // The key itself cannot travel as a choice: a client names it, as keybinding files do.
+        snapshot.field = game_client::interaction_field{
+            .id = "field:key", .label = remove_color_tags( text ), .type = "key",
+        };
+    }
     if( ( anykey || cancel ) && options.empty() ) {
         const auto action = anykey ? "ANY_INPUT" : "QUIT";
         const auto label = anykey ? _( "Press any key" ) : ctxt.get_action_name( action );
@@ -354,6 +360,15 @@ auto query_popup::apply_response( result res ) -> result
     if( res.evt.interaction &&
         res.evt.interaction->operation == game_client::interaction_operation::cancel ) {
         res.action = "QUIT";
+        res.wait_input = false;
+    } else if( res.evt.interaction &&
+               res.evt.interaction->operation == game_client::interaction_operation::fill ) {
+        const auto key = res.evt.interaction->value;
+        const auto code = inp_mngr.get_keycode( key );
+        res.evt = input_event( code != 0 ? code : static_cast<int>( UTF8_getch( key ) ),
+                               input_event_t::keyboard );
+        res.evt.text = code == 0 ? key : std::string{};
+        res.action = "ANY_INPUT";
         res.wait_input = false;
     } else if( res.evt.interaction &&
                res.evt.interaction->operation == game_client::interaction_operation::choose ) {

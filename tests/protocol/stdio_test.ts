@@ -807,3 +807,284 @@ Deno.test({
     }
   },
 })
+
+/** Main menu to the Settings tab entry `id`, at the first menu boundary. */
+async function openSetting(session: Session, id: string) {
+  await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
+  await session.submit({ kind: "choose", choice_id: "tab:settings" })
+  assertEquals((await session.submit({ kind: "choose", choice_id: id })).stages.at(-1), "completed")
+}
+
+const shown = (session: Session): Value[] => session.mirror.interaction.interaction.choices
+const rowOf = (session: Session, id: string) => shown(session).find((entry) => entry.id === id)
+const press = (session: Session, id: string) => session.submit({ kind: "choose", choice_id: id })
+const setTo = (session: Session, id: string, value: string) =>
+  session.submit({ kind: "fill", field_id: id, value, submit: true })
+
+/** Leave a settings screen the way Escape does and answer its save prompt. */
+async function leaveAndSave(session: Session, done: () => boolean) {
+  assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+  assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
+  await session.acknowledge(done)
+}
+
+const inMainMenu = (session: Session) => () =>
+  session.mirror.interaction.interaction?.context === "MAIN_MENU"
+
+async function startSession(client: Client): Promise<Session> {
+  await client.result("bn.hello", {
+    versions: ["1.0"],
+    client: { name: "settings-test", version: "1" },
+  })
+  const session = new Session(client)
+  await session.start()
+  return session
+}
+
+Deno.test({
+  name: "stdio: options and keybindings are changed through the wire, persist and take effect",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
+      await openSetting(session, "settings:options")
+      const options = session.mirror.interaction.interaction
+      assertEquals(options.context, "OPTIONS")
+      const pages = shown(session).filter((entry) => entry.pane_id === undefined)
+      assert(pages.length >= 5 && pages.every((entry) => entry.id.startsWith("page:")))
+      // Find the page that holds an option, as a client would when a tab is clicked.
+      const find = async (id: string) => {
+        for (const page of pages) {
+          await press(session, page.id)
+          if (rowOf(session, id)) return rowOf(session, id)
+        }
+        throw new Error(`no option ${id}`)
+      }
+      const safe = await find("option:SAFEMODE")
+      assertEquals(safe.editor.type, "bool")
+      assertEquals(safe.editor.value, "true")
+      assertEquals((await setTo(session, "option:SAFEMODE", "false")).stages.at(-1), "completed")
+      assertEquals(rowOf(session, "option:SAFEMODE").editor.value, "false")
+      // A number outside the native range is refused and changes nothing.
+      const near = await find("option:SAFEMODEPROXIMITY")
+      assertEquals(near.editor.type, "integer")
+      const clock = { ...session.mirror.at }
+      assertEquals(
+        (await setTo(session, near.id, String(near.editor.maximum + 1))).stages.at(-1),
+        "rejected",
+      )
+      assertEquals(session.mirror.at, clock)
+      assertEquals((await setTo(session, near.id, "7")).stages.at(-1), "completed")
+      assertEquals(rowOf(session, near.id).editor.value, "7")
+      // A select takes one of its own values; a foreign one is refused.
+      const select = shown(session).concat(...[]).find((entry) =>
+        entry.editor?.type === "select"
+      ) ??
+        await (async () => {
+          for (const page of pages) {
+            await press(session, page.id)
+            const found = shown(session).find((entry) => entry.editor?.type === "select")
+            if (found) return found
+          }
+        })()
+      assert(select, "a select option exists")
+      assertEquals((await setTo(session, select.id, "no such value")).stages.at(-1), "rejected")
+      await leaveAndSave(session, inMainMenu(session))
+      await client.close()
+
+      // Relaunch on the same profile: the saved values are what the menu shows.
+      client = new Client(binary, profile)
+      session = await startSession(client)
+      await openSetting(session, "settings:options")
+      assertEquals((await find("option:SAFEMODE")).editor.value, "false")
+      assertEquals((await find("option:SAFEMODEPROXIMITY")).editor.value, "7")
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      await session.acknowledge(() =>
+        session.mirror.interaction.interaction?.context === "MAIN_MENU"
+      )
+
+      // In the game, the same menu applies a saved change at once: safe mode follows the option.
+      await press(session, "tab:new_game")
+      await press(session, "new_game:tutorial")
+      assertEquals((await client.note()).method, "bn.resync")
+      session = new Session(client)
+      await session.start()
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      // Safe mode is off after the native toggle; the saved option turns the sidebar flag back on.
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "safemode" })).stages.at(-1),
+        "completed",
+      )
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(session.mirror.avatar.sidebar.safe_mode.enabled, false)
+      // The in-game keybindings menu binds a key to Options, which then opens the same menu.
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "HELP_KEYBINDINGS" })).stages.at(-1),
+        "completed",
+      )
+      await setTo(session, session.mirror.interaction.interaction.field.id, "Options")
+      assert(rowOf(session, "action:open_options"), "Options is listed")
+      await press(session, "mode:add_local")
+      await press(session, "action:open_options")
+      assertEquals((await setTo(session, "field:key", "=")).stages.at(-1), "completed")
+      await answerPrompts(session)
+      await leaveAndSave(session, () => session.mirror.interaction.interaction === null)
+      const opened = await session.submit({ kind: "action", action_id: "open_options" })
+      assertEquals(opened.stages.at(-1), "completed")
+      assertEquals(session.mirror.interaction.interaction.context, "OPTIONS")
+      await find("option:AUTOSAFEMODE")
+      assertEquals((await setTo(session, "option:AUTOSAFEMODE", "true")).stages.at(-1), "completed")
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(session.mirror.avatar.sidebar.safe_mode.enabled, true)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+/** The native yes/no prompts that may sit between two keybinding steps. */
+async function answerPrompts(session: Session) {
+  while (session.mirror.interaction.interaction?.context !== "HELP_KEYBINDINGS") {
+    assertEquals((await session.choose("Yes")).stages.at(-1), "completed")
+  }
+}
+
+const keysOf = (session: Session, id: string) => rowOf(session, id).columns[0].value
+
+Deno.test({
+  name: "stdio: a keybinding is removed and added through the wire, persists and moves the avatar",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
+      await openSetting(session, "settings:keybindings")
+      const menu = session.mirror.interaction.interaction
+      assertEquals([menu.title, menu.field.type], ["Keybindings", "text"])
+      assertEquals(
+        shown(session).filter((entry) => entry.pane_id === "modes").map((entry) => entry.id),
+        ["mode:add_local", "mode:add_global", "mode:remove"],
+      )
+      // The filter is the native one: only the matching actions remain.
+      await setTo(session, menu.field.id, "Move East")
+      assertEquals(
+        shown(session).filter((entry) => entry.pane_id === "actions").map((entry) => entry.id),
+        ["action:RIGHT"],
+      )
+      assertEquals(keysOf(session, "action:RIGHT"), "l, RIGHT, 6 or NUMPAD_6")
+      // Remove every key, then add one.
+      await press(session, "mode:remove")
+      assertEquals(rowOf(session, "mode:remove").selected, true)
+      await press(session, "action:RIGHT")
+      await answerPrompts(session)
+      assertEquals(rowOf(session, "action:RIGHT").columns[1].value, "Unbound")
+      await press(session, "mode:add_global")
+      await press(session, "action:RIGHT")
+      const prompt = session.mirror.interaction.interaction
+      assertEquals(prompt.field.type, "key")
+      // A key the game does not know is refused; a real one is taken.
+      assertEquals((await setTo(session, prompt.field.id, "no such key")).stages.at(-1), "rejected")
+      assertEquals((await setTo(session, prompt.field.id, "z")).stages.at(-1), "completed")
+      await answerPrompts(session)
+      assertEquals(keysOf(session, "action:RIGHT"), "z")
+      await leaveAndSave(session, inMainMenu(session))
+      await client.close()
+
+      // Relaunch on the same profile: the menu shows the saved key, and it moves the avatar.
+      client = new Client(binary, profile)
+      session = await startSession(client)
+      await openSetting(session, "settings:keybindings")
+      await setTo(session, session.mirror.interaction.interaction.field.id, "Move East")
+      assertEquals(keysOf(session, "action:RIGHT"), "z")
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      await session.acknowledge(() =>
+        session.mirror.interaction.interaction?.context === "MAIN_MENU"
+      )
+      await press(session, "tab:new_game")
+      await press(session, "new_game:tutorial")
+      assertEquals((await client.note()).method, "bn.resync")
+      session = new Session(client)
+      await session.start()
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const before = session.mirror.avatar.at
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "RIGHT" })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(session.mirror.avatar.at.x, before.x + 1)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: the other settings screens are structured and a distraction persists",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const binary = Deno.env.get("BN_BINARY")!
+    let client = new Client(binary, profile)
+    try {
+      let session = await startSession(client)
+      const leave = async () => {
+        assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+        await session.acknowledge(inMainMenu(session))
+      }
+      // Each screen publishes its tabs and columns or rows; the rule screens start empty.
+      for (
+        const [entry, context, first] of [
+          ["settings:autopickup", "AUTO_PICKUP", "column:1"],
+          ["settings:safemode", "SAFEMODE", "page:0"],
+          ["settings:colors", "COLORS", "column:1"],
+        ]
+      ) {
+        await openSetting(session, entry)
+        const screen = session.mirror.interaction.interaction
+        assertEquals([screen.context, shown(session)[0].id], [context, first])
+        await leave()
+      }
+      const colors = await (async () => {
+        await openSetting(session, "settings:colors")
+        return shown(session).filter((row) => row.id.startsWith("color:"))
+      })()
+      assert(colors.length > 10 && colors.every((row) => row.columns.length === 2))
+      // Choosing a color row opens the native list of colors for the cursor's column.
+      await press(session, colors[0].id)
+      assert(session.mirror.interaction.interaction.choices.length > 10)
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals(session.mirror.interaction.interaction.context, "COLORS")
+      await leave()
+
+      await openSetting(session, "settings:distractions")
+      const rows = shown(session)
+      assert(rows.length >= 8 && rows.every((row) => row.editor.type === "bool"))
+      const target = rows[0]
+      assertEquals(target.editor.value, "true")
+      assertEquals((await setTo(session, target.id, "false")).stages.at(-1), "completed")
+      assertEquals(rowOf(session, target.id).columns[0].value, "Disabled")
+      await leave()
+      await client.close()
+
+      client = new Client(binary, profile)
+      session = await startSession(client)
+      await openSetting(session, "settings:distractions")
+      assertEquals(rowOf(session, target.id).editor.value, "false")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

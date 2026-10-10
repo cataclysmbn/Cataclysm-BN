@@ -1,12 +1,14 @@
 #include "auto_pickup.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <utility>
 
 #include "avatar.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -224,6 +226,34 @@ void user_interface::show()
         ctxt.register_action( "SWITCH_AUTO_PICKUP_OPTION" );
     }
 
+    // Tabs, the two columns the cursor can be in, and one row per rule, as the native screen shows them.
+    const auto make_interaction = [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices, .title = title, .allow_cancel = true,
+        };
+        for( auto index = std::size_t{ 0 }; tabs.size() > 1 && index < tabs.size(); ++index ) {
+            snapshot.choices.push_back( { .id = "page:" + std::to_string( index ), .label = tabs[index].title,
+                                          .selected = index == iTab, .highlighted = index == iTab } );
+        }
+        const auto column_labels = std::array<std::string, 2> { _( "Rules" ), _( "I/E" ) };
+        for( auto column = 1; column <= iTotalCols; ++column ) {
+            snapshot.choices.push_back( { .id = "column:" + std::to_string( column ), .label = column_labels[column - 1],
+                                          .pane_id = "columns", .selected = column == iColumn, .highlighted = column == iColumn } );
+        }
+        const auto &rules = tabs[iTab].new_rules;
+        for( auto index = 0; index < static_cast<int>( rules.size() ); ++index ) {
+            snapshot.choices.push_back( {
+                .id = "rule:" + std::to_string( index ),
+                .label = rules[index].sRule.empty() ? _( "<empty rule>" ) : rules[index].sRule,
+                .pane_id = "rules", .selected = index == iLine, .highlighted = index == iLine,
+                .columns = { { .label = _( "I/E" ), .value = rules[index].bExclude ? _( "Exclude" ) : _( "Include" ) },
+                    { .label = _( "Active" ), .value = rules[index].bActive ? _( "True" ) : _( "False" ) }
+                },
+            } );
+        }
+        return snapshot;
+    };
+
     while( true ) {
         rule_list &cur_rules = tabs[iTab].new_rules;
 
@@ -231,7 +261,28 @@ void user_interface::show()
 
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        auto action = std::string{};
+        {
+            const auto interaction = game_client::interaction_scope( ctxt, make_interaction );
+            action = ctxt.handle_input();
+        }
+        // A semantic choice moves the cursor and then acts like the matching key.
+        if( const auto raw = ctxt.get_raw_input(); raw.interaction ) {
+            const auto &target = raw.interaction->target_id;
+            action.clear();
+            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
+                action = "QUIT";
+            } else if( target.starts_with( "page:" ) && std::stoul( target.substr( 5 ) ) < tabs.size() ) {
+                iTab = std::stoul( target.substr( 5 ) );
+                iLine = 0;
+            } else if( target.starts_with( "column:" ) ) {
+                iColumn = std::stoi( target.substr( 7 ) );
+            } else if( target.starts_with( "rule:" ) &&
+                       std::stoi( target.substr( 5 ) ) < static_cast<int>( cur_rules.size() ) ) {
+                iLine = std::stoi( target.substr( 5 ) );
+                action = "CONFIRM";
+            }
+        }
 
         if( action == "NEXT_TAB" ) {
             iTab++;
