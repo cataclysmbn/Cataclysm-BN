@@ -2144,6 +2144,37 @@ TEST_CASE(
         CHECK(ground_item_count(id) == 1);
     }
 
+    SECTION("the header predicts the carried weight and volume of the marked stacks") {
+        const auto fixture = pickup_fixture_guard{};
+        const auto id = itype_id("test_screwdriver");
+        std::ranges::for_each(std::views::iota(0, 3), [&](const auto /*index*/) {
+            add_ground_item(id);
+        });
+        auto reads = 0;
+        auto before = std::string{};
+        game_client::memory::set_input_provider([&](const int /*timeout*/) {
+            const auto snapshot = game_client::current_interaction();
+            REQUIRE(snapshot.context == "PICKUP");
+            CHECK(snapshot.message.starts_with("PICK Wgt "));
+            CHECK(snapshot.message.contains("Vol "));
+            if (reads++ == 0) {
+                before = snapshot.message;
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::set_count,
+                    .target_id = snapshot.choices.front().id,
+                    .count = 2,
+                });
+            }
+            CHECK(snapshot.message != before);
+            return resolve_action("CONFIRM");
+        });
+
+        pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
+        finish_pickup_activity(get_avatar());
+        CHECK(reads == 2);
+    }
+
     SECTION("three of ten charges") {
         const auto fixture = pickup_fixture_guard{};
         const auto id = itype_id("test_platinum_bit");
