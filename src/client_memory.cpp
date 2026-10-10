@@ -22,6 +22,8 @@ struct memory_state {
     int timeout = -1;
     game_client::memory::input_provider input;
     std::function < auto( const game_client::screen_snapshot & )->void > present;
+    /// A window other than stdscr has been drawn since stdscr last was.
+    bool overlaid = false;
 };
 
 auto state() -> memory_state &
@@ -162,6 +164,7 @@ auto draw_window( const catacurses::window &window ) -> void
     auto *const source = window.get<cata_cursesport::WINDOW>();
     if( source == nullptr ) { return; }
     auto &memory = state();
+    memory.overlaid = source != catacurses::stdscr.get<cata_cursesport::WINDOW>();
     for( int y = 0; y < source->height; ++y ) {
         const auto target_y = source->pos.y + y;
         if( target_y < 0 || target_y >= memory.height ) { continue; }
@@ -199,7 +202,8 @@ auto present() -> void
 auto read_input() -> input_event
 {
     const auto *const stdscr = catacurses::stdscr.get<cata_cursesport::WINDOW>();
-    if( stdscr != nullptr && stdscr->draw ) { draw_window( catacurses::stdscr ); }
+    // The base window drawn after the windows on top of it would blank them.
+    if( stdscr != nullptr && stdscr->draw && !state().overlaid ) { draw_window( catacurses::stdscr ); }
     present();
     if( const auto provider = state().input ) { return provider( state().timeout ); }
     auto result = input_event{};

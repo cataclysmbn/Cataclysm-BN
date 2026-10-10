@@ -218,7 +218,8 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
         auto interaction = game_client::current_interaction( {.offset = 0, .limit = limit} );
         if( !interaction.structured ) {
             // A view with no structured interaction still shows its composed screen to the client.
-            result.interaction = screen_interaction( interaction.context );
+            result.interaction = screen_interaction( std::string(
+                                     game_client::active_input_context().category ) );
             break;
         }
         result.interaction = std::move( interaction );
