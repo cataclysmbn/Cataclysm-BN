@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "coordinates.h"
@@ -17,6 +18,29 @@ struct orientation {
     int subtile = 0;
     int rotation = 0;
 };
+
+/// The native tile selection of a cell's furniture and trap, and of its terrain with the connection mask.
+struct cell_orientations {
+    uint8_t terrain_mask = 0;
+    orientation terrain;
+    orientation furniture;
+    orientation trap;
+};
+
+/// What decides which squares the avatar sees, read once when many squares are looked at.
+struct sight {
+    bool blind = false;
+    int clairvoyance = 0;
+};
+auto current_sight() -> sight;
+
+/// Connections to the neighbours the avatar knows and, for unconnected furniture, the alignment to walls
+/// or workbenches, for a currently visible cell.
+auto visible_orientations( const map &here, const tripoint_bub_ms &p,
+                           const sight &view ) -> cell_orientations;
+
+/// The multitile key `tile_config.json` names a native subtile index by; empty for an unknown index.
+auto multitile_key( int subtile ) -> std::string;
 
 /// Pure SEWN connection mask conversion, shared by knowledge and presentation.
 auto orient( uint8_t connections ) -> orientation;

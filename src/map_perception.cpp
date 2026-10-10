@@ -116,14 +116,13 @@ struct cell_facts {
     int vehicle_symbol = 0;
 };
 
-auto normally_visible( const map &here, const tripoint_bub_ms &p ) -> bool
+auto normally_visible( const map &here, const tripoint_bub_ms &p, const sight &view ) -> bool
 {
     if( !here.inbounds( p ) ) {
         return false;
     }
-    const auto &you = get_avatar();
-    if( you.is_blind() && ( you.clairvoyance() == 0 ||
-                            rl_dist( you.bub_pos(), p ) > you.clairvoyance() ) ) {
+    if( view.blind && ( view.clairvoyance == 0 ||
+                        rl_dist( get_avatar().bub_pos(), p ) > view.clairvoyance ) ) {
         return false;
     }
     const auto &cache = here.access_cache( p.z() );
@@ -131,13 +130,18 @@ auto normally_visible( const map &here, const tripoint_bub_ms &p ) -> bool
                                 here.get_visibility_variables_cache() ) == VIS_CLEAR;
 }
 
+auto normally_visible( const map &here, const tripoint_bub_ms &p ) -> bool
+{
+    return normally_visible( here, p, current_sight() );
+}
+
 /// Only semantic historical knowledge can supply an invisible neighbor, never live terrain.
-auto known_terrain( const map &here, const tripoint_bub_ms &p ) -> ter_id
+auto known_terrain( const map &here, const tripoint_bub_ms &p, const sight &view ) -> ter_id
 {
     if( !here.inbounds( p ) ) {
         return ter_id();
     }
-    if( normally_visible( here, p ) ) {
+    if( normally_visible( here, p, view ) ) {
         return here.ter( p );
     }
     const auto abs = map_local_to_abs( here, p );
@@ -150,12 +154,12 @@ auto known_terrain( const map &here, const tripoint_bub_ms &p ) -> ter_id
     return !tile.empty() && id.is_valid() ? id.id() : ter_id();
 }
 
-auto known_furniture( const map &here, const tripoint_bub_ms &p ) -> furn_id
+auto known_furniture( const map &here, const tripoint_bub_ms &p, const sight &view ) -> furn_id
 {
     if( !here.inbounds( p ) ) {
         return furn_id();
     }
-    if( normally_visible( here, p ) ) {
+    if( normally_visible( here, p, view ) ) {
         return here.furn( p );
     }
     const auto remembered = get_avatar().get_memorized_tile( map_local_to_abs( here, p ) );
@@ -163,12 +167,12 @@ auto known_furniture( const map &here, const tripoint_bub_ms &p ) -> furn_id
     return !remembered.tile.empty() && id.is_valid() ? id.id() : furn_id();
 }
 
-auto known_trap( const map &here, const tripoint_bub_ms &p ) -> trap_id
+auto known_trap( const map &here, const tripoint_bub_ms &p, const sight &view ) -> trap_id
 {
     if( !here.inbounds( p ) ) {
         return trap_id();
     }
-    if( normally_visible( here, p ) ) {
+    if( normally_visible( here, p, view ) ) {
         const auto &tr = here.tr_at( p );
         return tr.can_see( p, get_avatar() ) ? tr.loadid : trap_id();
     }
@@ -210,7 +214,59 @@ struct cell_memory {
     memorized_terrain_tile overlay{};
 };
 
-auto derive( const map &here, const cell_facts &facts ) -> cell_memory
+/// The native tile selection of a cell: connections to its known neighbours and, for unconnected
+/// furniture, the alignment to walls or workbenches.
+auto orientations( const map &here, const cell_facts &facts,
+                   const sight &view ) -> cell_orientations
+{
+    const auto &p = facts.position;
+    auto terrain_neighbors = std::array<ter_id, 4> {};
+    for( const auto i : std::views::iota( 0, 4 ) ) {
+        terrain_neighbors[i] = known_terrain( here, p + neighbors[i], view );
+    }
+    auto result = cell_orientations{};
+    result.terrain_mask = connection_mask( facts.terrain, terrain_neighbors );
+    result.terrain = orient( result.terrain_mask );
+    if( facts.furniture ) {
+        auto furniture_neighbors = std::array<furn_id, 4> {};
+        for( const auto i : std::views::iota( 0, 4 ) ) {
+            furniture_neighbors[i] = known_furniture( here, p + neighbors[i], view );
+        }
+        result.furniture = orient( connection_mask( facts.furniture, furniture_neighbors ) );
+        if( result.furniture.subtile == unconnected ) {
+            auto walls = 0;
+            auto workbenches = 0;
+            for( const auto i : std::views::iota( 0, 4 ) ) {
+                // Alignment mask is NESW, unlike connection masks.
+                const auto bit = std::array{ 4, 2, 8, 1 } [i];
+                const auto &ter = terrain_neighbors[i].obj();
+                if( ter.has_flag( TFLAG_WALL ) || ter.has_flag( "WINDOW" ) ||
+                    ter.has_flag( "DOOR" ) ) {
+                    walls |= bit;
+                }
+                if( furniture_neighbors[i] && furniture_neighbors[i]->workbench ) {
+                    workbenches |= bit;
+                }
+            }
+            const auto use_workbench = facts.furniture->has_flag( "ALIGN_WORKBENCH" ) && workbenches;
+            const auto alignment = use_workbench ? workbenches : walls;
+            const auto rotations = std::array{ 0, 0, 1, 0, 2, 1, 1, 1, 3, 0, 0, 0, 3, 3, 2, 0 };
+            result.furniture.rotation = ( rotations[alignment] + ( use_workbench ? 2 : 0 ) ) % 4;
+        }
+    }
+    if( facts.trap ) {
+        auto mask = uint8_t{ 0 };
+        for( const auto i : std::views::iota( 0, 4 ) ) {
+            if( known_trap( here, p + neighbors[i], view ) == facts.trap ) {
+                mask |= 1 << i;
+            }
+        }
+        result.trap = orient( mask );
+    }
+    return result;
+}
+
+auto derive( const map &here, const cell_facts &facts, const sight &view ) -> cell_memory
 {
     const auto &p = facts.position;
     if( facts.vehicle_only ) {
@@ -236,64 +292,27 @@ auto derive( const map &here, const cell_facts &facts ) -> cell_memory
         }
         return result;
     }
-    auto terrain_neighbors = std::array<ter_id, 4> {};
-    auto furniture_neighbors = std::array<furn_id, 4> {};
-    auto trap_neighbors = std::array<trap_id, 4> {};
-    for( const auto i : std::views::iota( 0, 4 ) ) {
-        terrain_neighbors[i] = known_terrain( here, p + neighbors[i] );
-        furniture_neighbors[i] = known_furniture( here, p + neighbors[i] );
-        trap_neighbors[i] = known_trap( here, p + neighbors[i] );
-    }
+    const auto shapes = orientations( here, facts, view );
     auto result = cell_memory{ .position = map_local_to_abs( here, p ) };
-    const auto terrain_mask = connection_mask( facts.terrain, terrain_neighbors );
-    const auto terrain_orientation = orient( terrain_mask );
     result.symbol = facts.terrain->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ?
-                    wall_symbol( terrain_mask, facts.terrain->symbol() ) : facts.terrain->symbol();
+                    wall_symbol( shapes.terrain_mask, facts.terrain->symbol() ) : facts.terrain->symbol();
     if( !facts.terrain->has_flag( TFLAG_NO_MEMORY ) &&
         !facts.terrain->has_flag( TFLAG_Z_TRANSPARENT ) ) {
         result.terrain = { .tile = facts.terrain.id().str(),
-                           .subtile = terrain_orientation.subtile, .rotation = terrain_orientation.rotation
+                           .subtile = shapes.terrain.subtile, .rotation = shapes.terrain.rotation
                          };
     }
     if( facts.furniture ) {
-        auto furniture_orientation = orient( connection_mask( facts.furniture, furniture_neighbors ) );
-        if( furniture_orientation.subtile == unconnected ) {
-            auto walls = 0;
-            auto workbenches = 0;
-            for( const auto i : std::views::iota( 0, 4 ) ) {
-                // Alignment mask is NESW, unlike connection masks.
-                const auto bit = std::array{ 4, 2, 8, 1 } [i];
-                const auto &ter = terrain_neighbors[i].obj();
-                if( ter.has_flag( TFLAG_WALL ) || ter.has_flag( "WINDOW" ) ||
-                    ter.has_flag( "DOOR" ) ) {
-                    walls |= bit;
-                }
-                if( furniture_neighbors[i] && furniture_neighbors[i]->workbench ) {
-                    workbenches |= bit;
-                }
-            }
-            const auto use_workbench = facts.furniture->has_flag( "ALIGN_WORKBENCH" ) && workbenches;
-            const auto alignment = use_workbench ? workbenches : walls;
-            const auto rotations = std::array{ 0, 0, 1, 0, 2, 1, 1, 1, 3, 0, 0, 0, 3, 3, 2, 0 };
-            furniture_orientation.rotation = ( rotations[alignment] + ( use_workbench ? 2 : 0 ) ) % 4;
-        }
         result.symbol = facts.furniture->symbol();
         result.overlay = { .tile = facts.furniture.id().str(),
-                           .subtile = furniture_orientation.subtile, .rotation = furniture_orientation.rotation
+                           .subtile = shapes.furniture.subtile, .rotation = shapes.furniture.rotation
                          };
     }
     if( facts.trap ) {
         result.symbol = facts.trap->sym == '%' ? '*' : facts.trap->sym;
         if( facts.trap.id().str() != "tr_ledge" ) {
-            auto mask = uint8_t{ 0 };
-            for( const auto i : std::views::iota( 0, 4 ) ) {
-                if( trap_neighbors[i] == facts.trap ) {
-                    mask |= 1 << i;
-                }
-            }
-            const auto tr_orientation = orient( mask );
             result.overlay = { .tile = facts.trap.id().str(),
-                               .subtile = tr_orientation.subtile, .rotation = tr_orientation.rotation
+                               .subtile = shapes.trap.subtile, .rotation = shapes.trap.rotation
                              };
         }
     }
@@ -348,6 +367,29 @@ auto observe( const map &here, const tripoint_bub_ms &p ) -> cell_facts
 
 } // namespace
 
+auto current_sight() -> sight
+{
+    const auto &you = get_avatar();
+    const auto blind = you.is_blind();
+    return { .blind = blind, .clairvoyance = blind ? you.clairvoyance() : 0 };
+}
+
+auto visible_orientations( const map &here, const tripoint_bub_ms &p,
+                           const sight &view ) -> cell_orientations
+{
+    auto facts = cell_facts{ .position = p, .terrain = here.ter( p ), .furniture = here.furn( p ) };
+    if( const auto &tr = here.tr_at( p ); tr.can_see( p, get_avatar() ) ) { facts.trap = tr.loadid; }
+    return orientations( here, facts, view );
+}
+
+auto multitile_key( const int subtile ) -> std::string
+{
+    const auto keys = std::array<const char *, num_multitile_types> {
+        "center", "corner", "edge", "t_connection", "end_piece", "unconnected", "open", "broken"
+    };
+    return subtile >= 0 && subtile < num_multitile_types ? keys[subtile] : "";
+}
+
 auto cosmetic_variant() -> int
 {
     static auto cosmetic = std::minstd_rand( 1 );
@@ -378,7 +420,8 @@ auto connected_wall_symbol( const map &here, const tripoint_bub_ms &p ) -> int
     const auto terrain = here.ter( p );
     if( !terrain->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ) { return terrain->symbol(); }
     auto adjacent = std::array<ter_id, 4> {};
-    for( const auto i : std::views::iota( 0, 4 ) ) { adjacent[i] = known_terrain( here, p + neighbors[i] ); }
+    const auto view = current_sight();
+    for( const auto i : std::views::iota( 0, 4 ) ) { adjacent[i] = known_terrain( here, p + neighbors[i], view ); }
     return wall_symbol( connection_mask( terrain, adjacent ), terrain->symbol() );
 }
 
@@ -647,8 +690,9 @@ auto acquire() -> acquisition_counts
     // Derive against the completed facts and previous memory, before committing anything.
     auto memories = std::vector<cell_memory> {};
     memories.reserve( facts.size() );
+    const auto view = current_sight();
     for( const auto &cell : facts ) {
-        memories.push_back( derive( here, cell ) );
+        memories.push_back( derive( here, cell, view ) );
     }
     state.committing = true;
     const auto finish_commit = on_out_of_scope( []() { state.committing = false; } );
