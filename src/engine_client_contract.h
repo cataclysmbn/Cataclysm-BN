@@ -61,6 +61,10 @@ struct bubble_frame {
     int y = 0;
 };
 auto current_bubble_frame() -> bubble_frame;
+/// Absolute square to bubble coordinates; nullopt in another dimension or when the result does
+/// not fit the native int range.
+auto to_bubble( const position &target, const bubble_frame &frame )
+-> std::optional<game_client::interaction_position>;
 
 /// What the player may do at one native input boundary. The numeric native input_id stays internal.
 struct boundary_state {

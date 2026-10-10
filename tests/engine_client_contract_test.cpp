@@ -3,6 +3,7 @@
 #include "engine_client_contract.h"
 #include "input.h"
 
+#include <climits>
 #include <string>
 #include <utility>
 
@@ -293,4 +294,50 @@ TEST_CASE("a boundary without interaction expects a null schema", "[engine_clien
     const auto rejected = lifecycle.validate(at_of(boundary), boundary, point{80, 24});
     REQUIRE_FALSE(rejected);
     CHECK(rejected.error() == engine_client::error::stale_interaction_schema);
+}
+
+TEST_CASE(
+    "bubble conversion rejects what the native int range cannot hold", "[engine_client_contract]") {
+    const auto frame = engine_client::bubble_frame{.dim = "", .x = 1000, .y = -1000};
+    const auto at = [](const int x, const int y) {
+        return engine_client::position{.dim = "", .x = x, .y = y, .z = 3};
+    };
+    CHECK(engine_client::to_bubble(at(1010, -990), frame)
+          == game_client::interaction_position{.x = 10, .y = 10, .z = 3});
+    // INT_MIN - 1000 and INT_MAX + 1000 overflow int; they must not reach the native checks.
+    CHECK_FALSE(engine_client::to_bubble(at(INT_MIN, 0), frame));
+    CHECK_FALSE(engine_client::to_bubble(at(0, INT_MAX), frame));
+    CHECK(engine_client::to_bubble(at(INT_MIN + 1000, 0), frame));
+    CHECK_FALSE(engine_client::to_bubble({.dim = "elsewhere"}, frame));
+}
+
+TEST_CASE("an oversized choices page is a recoverable resource limit", "[engine_client_contract]") {
+    auto context = input_context{"HEAVY"};
+    const auto input_scope = game_client::input_context_scope{context, "HEAVY"};
+    const auto scope = game_client::interaction_scope{
+        context, [] {
+            auto value = game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices};
+            for (auto i = 0; i < 200; ++i) {
+                value.choices.push_back(
+                    {.id = "choice:" + std::to_string(i),
+                     .label = "Row",
+                     .description = std::string(4000, 'x')});
+            }
+            return value;
+        }};
+    game_client::begin_input_boundary();
+    const auto boundary = capture();
+    const auto page = [&](const std::size_t limit) {
+        return engine_client::read_choices(
+            {.epoch = "epoch:test", .boundary_id = boundary.id, .offset = 0, .limit = limit},
+            "epoch:test");
+    };
+    const auto heavy = page(200);
+    REQUIRE_FALSE(heavy);
+    CHECK(heavy.error() == engine_client::error::resource_limit);
+    const auto light = page(10);
+    REQUIRE(light);
+    CHECK(light->choices.size() == 10);
+    CHECK(light->total == 200);
 }

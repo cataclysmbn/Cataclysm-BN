@@ -163,10 +163,7 @@ std::expected<game_client::input_command, error>
         native.interaction = semantic->command;
         native.interaction->input_id = game_client::current_input_id();
         if( semantic->target ) {
-            const auto frame = current_bubble_frame();
-            native.interaction->position = game_client::interaction_position{
-                .x = semantic->target->x - frame.x, .y = semantic->target->y - frame.y,
-                .z = semantic->target->z };
+            native.interaction->position = to_bubble( *semantic->target, current_bubble_frame() );
         }
     } else {
         native.action = std::get<registered_action>( input_->operation ).id;

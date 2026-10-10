@@ -139,6 +139,17 @@ auto current_bubble_frame() -> bubble_frame
     return { .dim = g->get_current_dimension_id().str(), .x = origin.x(), .y = origin.y() };
 }
 
+auto to_bubble( const position &target, const bubble_frame &frame )
+-> std::optional<game_client::interaction_position>
+{
+    constexpr auto limits = std::numeric_limits<int> {};
+    const auto x = std::int64_t{target.x} - frame.x;
+    const auto y = std::int64_t{target.y} - frame.y;
+    if( target.dim != frame.dim || x < limits.min() || x > limits.max() || y < limits.min() ||
+        y > limits.max() ) { return std::nullopt; }
+    return game_client::interaction_position{ .x = static_cast<int>( x ), .y = static_cast<int>( y ), .z = target.z };
+}
+
 auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>
 {
     if( options.epoch.empty() ) { return std::unexpected( error::resource_limit ); }
@@ -208,11 +219,16 @@ auto read_choices( const choices_request &request, const std::string &epoch )
     }
     auto interaction = game_client::current_interaction( {.offset = request.offset, .limit = request.limit} );
     if( !interaction.structured ) { return std::unexpected( error::not_ready ); }
-    return choices_page{
+    auto page = choices_page{
         .boundary_id = request.boundary_id,
         .total = interaction.choice_total,
         .choices = std::move( interaction.choices ),
     };
+    // A page that cannot be sent is a recoverable error: the client asks for fewer rows.
+    if( serialize_choices( page ).size() > maximum_inline_bytes ) {
+        return std::unexpected( error::resource_limit );
+    }
+    return page;
 }
 
 command_lifecycle::command_lifecycle( std::string epoch, const command_authority &authority ) :
@@ -269,13 +285,8 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         command.input_id = game_client::current_input_id();
         if( semantic->target ) {
             // Absolute target to the live bubble; the native bounds and range still decide.
-            const auto frame = current_bubble_frame();
-            if( semantic->target->dim != frame.dim ) { return reject( error::validation_failed ); }
-            command.position = game_client::interaction_position{
-                .x = semantic->target->x - frame.x,
-                .y = semantic->target->y - frame.y,
-                .z = semantic->target->z,
-            };
+            command.position = to_bubble( *semantic->target, current_bubble_frame() );
+            if( !command.position ) { return reject( error::validation_failed ); }
         }
         auto checked = game_client::resolve_checked_interaction( {
             .command = command,
