@@ -58,7 +58,11 @@ TEST_CASE("wire interaction is trimmed and renamed", "[engine_client_contract]")
             return game_client::interaction_snapshot{
                 .kind = game_client::interaction_kind::choices,
                 .allow_cancel = true,
-                .panes = {{.id = "pane:left", .label = "Left", .filter = "rock"}},
+                .panes =
+                    {{.id = "pane:left",
+                      .label = "Left",
+                      .filter = "rock",
+                      .blocked_areas = {"ITEMS_CONTAINER"}}},
                 .choices = {{.id = "choice:yes", .label = "Yes", .highlighted = true}},
             };
         }};
@@ -68,6 +72,7 @@ TEST_CASE("wire interaction is trimmed and renamed", "[engine_client_contract]")
     CHECK(contains(
         wire, R"("compat":{"focus":{"choice_id":"choice:yes"},"panes":[{"id":"pane:left")"));
     CHECK(contains(wire, R"("filter":"rock")"));
+    CHECK(contains(wire, R"("blocked_areas":["ITEMS_CONTAINER"])"));
     for (const auto* removed :
          {"structured", "actions_only", "choice_page", "highlighted", "projection", "input_id",
           "bubble_ms", "frame_id"}) {
