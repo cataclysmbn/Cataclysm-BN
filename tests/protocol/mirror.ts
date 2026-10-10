@@ -43,8 +43,30 @@ export class Mirror {
     return mirror
   }
 
-  /** Apply events in order; any gap, duplicate or epoch change is a protocol failure. */
+  /** Copy that shares nothing mutable with this mirror. */
+  clone(): Mirror {
+    const copy = new Mirror()
+    copy.at = structuredClone(this.at)
+    copy.coverage = structuredClone(this.coverage)
+    copy.interaction = structuredClone(this.interaction)
+    copy.avatar = structuredClone(this.avatar)
+    copy.environment = structuredClone(this.environment)
+    copy.cells = structuredClone(this.cells)
+    copy.entities = structuredClone(this.entities)
+    return copy
+  }
+
+  /**
+   * Apply events in order. Any gap, duplicate, epoch change or unfit change throws and leaves
+   * this mirror exactly as it was: the batch is applied to a copy and then adopted.
+   */
   applyEvents(epoch: string, events: Value[]) {
+    const next = this.clone()
+    next.#apply(epoch, events)
+    Object.assign(this, next)
+  }
+
+  #apply(epoch: string, events: Value[]) {
     assertEquals(epoch, this.at.epoch, "epoch change needs a new subscribe")
     for (const event of events) {
       assertEquals(BigInt(event.sequence), BigInt(this.at.sequence) + 1n, "sequence is contiguous")
@@ -60,6 +82,7 @@ export class Mirror {
     }
   }
 
+  /** Mutates in place; callers apply it to a copy (see applyEvents). */
   applyChanges(changes: Value) {
     if (changes.coverage) {
       this.coverage = changes.coverage
