@@ -2,6 +2,7 @@
 #include "client_input.h"
 #include "client_interaction_validation.h"
 #include "game.h"
+#include "input.h"
 #include "map/map.h"
 
 #include <algorithm>
@@ -171,7 +172,15 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
     result.id = live_boundary_id( options.epoch );
     result.frame = current_bubble_frame();
     for( const auto &entry : game_client::available_input_actions() ) {
-        result.actions.push_back( {.id = entry.id, .name = entry.name} );
+        auto keys = entry.bindings
+        | std::views::filter( []( const auto & event ) {
+            return event.type == input_event_t::keyboard && event.sequence.size() == 1;
+        } )
+        | std::views::transform( []( const auto & event ) {
+            return inp_mngr.get_keyname( event.sequence.front(), event.type, true );
+        } )
+        | std::ranges::to<std::vector>();
+        result.actions.push_back( {.id = entry.id, .name = entry.name, .keys = std::move( keys )} );
     }
     // A value over the byte bound keeps fewer rows; choice_total still states the full count.
     for( auto limit = maximum_rows; limit > 0; limit /= 2 ) {

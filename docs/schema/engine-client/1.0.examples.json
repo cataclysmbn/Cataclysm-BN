@@ -82,7 +82,11 @@
           "actions": [
             {
               "id": "UP",
-              "name": "Move up"
+              "name": "Move up",
+              "keys": [
+                "UP",
+                "k"
+              ]
             }
           ],
           "interaction": {
@@ -138,7 +142,11 @@
           "actions": [
             {
               "id": "UP",
-              "name": "Move up"
+              "name": "Move up",
+              "keys": [
+                "UP",
+                "k"
+              ]
             }
           ],
           "interaction": {
@@ -1331,7 +1339,11 @@
           "actions": [
             {
               "id": "UP",
-              "name": "Move up"
+              "name": "Move up",
+              "keys": [
+                "UP",
+                "k"
+              ]
             }
           ],
           "interaction": {

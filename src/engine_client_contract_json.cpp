@@ -238,7 +238,7 @@ auto to_json( const boundary_state &state ) -> json
             }
         }};
     result["actions"] = json::array();
-    for( const auto &entry : state.actions ) { result["actions"].push_back( {{"id", entry.id}, {"name", entry.name}} ); }
+    for( const auto &entry : state.actions ) { result["actions"].push_back( {{"id", entry.id}, {"name", entry.name}, {"keys", entry.keys}} ); }
     result["interaction"] = interaction_json( state );
     return result;
 }

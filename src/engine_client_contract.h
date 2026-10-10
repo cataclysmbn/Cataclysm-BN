@@ -52,6 +52,8 @@ struct readiness {
 struct action {
     std::string id = {};
     std::string name = {};
+    /// Portable names of the single keys that run this action in the active input context.
+    std::vector<std::string> keys = {};
 };
 /// Where the reality bubble sits in absolute coordinates. Native interaction positions are
 /// bubble-relative; they become absolute only on the wire.

@@ -3,6 +3,7 @@
 #include "engine_client_contract.h"
 #include "input.h"
 
+#include <algorithm>
 #include <climits>
 #include <string>
 #include <utility>
@@ -294,6 +295,25 @@ TEST_CASE("a boundary without interaction expects a null schema", "[engine_clien
     const auto rejected = lifecycle.validate(at_of(boundary), boundary, point{80, 24});
     REQUIRE_FALSE(rejected);
     CHECK(rejected.error() == engine_client::error::stale_interaction_schema);
+}
+
+TEST_CASE(
+    "boundary actions list the single keys the active context binds", "[engine_client_contract]") {
+    auto context = input_context{"DEFAULTMODE"};
+    context.register_action("LEVEL_DOWN");
+    context.register_action("QUIT");
+    const auto input_scope = game_client::input_context_scope{context, "DEFAULTMODE"};
+    game_client::begin_input_boundary();
+    const auto boundary = capture();
+    const auto binds = [&](const std::string& id, const std::string& key) {
+        const auto found = std::ranges::find(boundary.actions, id, &engine_client::action::id);
+        REQUIRE(found != boundary.actions.end());
+        return std::ranges::find(found->keys, key) != found->keys.end();
+    };
+    CHECK(binds("LEVEL_DOWN", ">"));
+    CHECK(binds("QUIT", "ESC"));
+    CHECK_FALSE(binds("QUIT", ">"));
+    CHECK(contains(engine_client::serialize_boundary(boundary), R"("keys":[)"));
 }
 
 TEST_CASE(

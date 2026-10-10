@@ -1165,6 +1165,12 @@
               },
               "name": {
                 "type": "string"
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
