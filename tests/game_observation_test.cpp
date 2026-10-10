@@ -281,29 +281,38 @@ TEST_CASE(
     const auto reset_ready = game_ready_guard{game_session::running()};
     build_test_map(ter_id("t_floor"));
     auto& you = get_avatar();
+    const auto original_position = you.abs_pos();
     const auto dimension = g->get_current_dimension_id();
     auto& buffer = get_overmapbuffer(dimension);
     // Saved overmap files are shared by the test world: remove them with the loaded copies.
     const auto cleanup = on_out_of_scope([&]() {
+        you.setpos(original_position);
         buffer.clear();
         g->get_active_world()->delete_dimension_data(dimension.str());
         clear_all_state();
     });
-    // The observed radius must reach an overmap other than the avatar's own; moving the avatar
-    // across an overmap would make the map shift load thousands of submaps.
+    // Earlier test cases leave the avatar anywhere, but the observed radius must reach an
+    // overmap other than the avatar's own. Walk to just inside the nearest overmap edge: farther
+    // moves make the map shift load more submaps.
     const auto omt = project_to<coords::omt>(you.abs_pos());
     const auto own = project_to<coords::om>(omt.xy());
-    const auto reaches_other = [&](const point& corner) {
-        return project_to<coords::om>(omt.xy() + corner) != own;
+    const auto local = omt.xy().raw() - project_to<coords::omt>(own).raw();
+    struct exit_edge {
+        point step;
+        int distance;
     };
-    const auto corners = std::array{point{-8, 0}, point{8, 0}, point{0, -8}, point{0, 8}};
-    const auto reached = std::ranges::find_if(corners, reaches_other);
-    REQUIRE(reached != corners.end());
-    const auto neighbor = project_to<coords::om>(omt.xy() + *reached);
+    const auto edges = std::array{
+        exit_edge{point_east, OMAPX - local.x}, exit_edge{point_west, local.x + 1},
+        exit_edge{point_south, OMAPY - local.y}, exit_edge{point_north, local.y + 1}};
+    const auto nearest = std::ranges::min(edges, {}, &exit_edge::distance);
+    const auto edge = tripoint_abs_omt{
+        point_abs_omt{omt.xy().raw() + nearest.step * (nearest.distance - 1)}, omt.z()};
+    you.setpos(project_to<coords::ms>(edge));
+    const auto neighbor = point_abs_om{own.raw() + nearest.step};
     buffer.get(neighbor);
     buffer.save(dimension);
     buffer.clear();
-    buffer.get(point_abs_om{0, 0});
+    buffer.get(own);
     REQUIRE(g->get_active_world()->overmap_exists(neighbor));
     REQUIRE(buffer.find_loaded(neighbor) == nullptr);
     game_session::set_running(true);
