@@ -645,6 +645,9 @@ struct pickup_interaction_options {
     const std::string &source;
     const std::string &source_identity;
     int selected;
+    /// What the avatar would carry, and could carry, once every marked stack is picked up.
+    units::mass weight_predict;
+    units::volume volume_predict;
 };
 
 auto item_pickup_identity( const item &candidate ) -> std::string
@@ -680,14 +683,28 @@ auto pickup_choice_ids( const pickup_interaction_options &opts ) -> std::vector<
     return ids;
 }
 
+/// The native header line: predicted and capacity weight and volume, then the filter in effect.
+auto pickup_interaction_message( const pickup_interaction_options &opts ) -> std::string
+{
+    const auto weight = []( const units::mass value ) {
+        return string_format( "%.1f", round_up( convert_weight( value ), 1 ) );
+    };
+    auto message = string_format( _( "PICK Wgt %1$s/%2$s  Vol %3$s/%4$s" ),
+                                  weight( opts.weight_predict ), weight( g->u.weight_capacity() ),
+                                  format_volume( opts.volume_predict ), format_volume( g->u.volume_capacity() ) );
+    if( !opts.filter.empty() ) {
+        message += "\n" + string_format( _( "Filter: %s" ), opts.filter );
+    }
+    return message;
+}
+
 auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
 -> game_client::interaction_snapshot
 {
     auto snapshot = game_client::interaction_snapshot{
         .kind = game_client::interaction_kind::inventory,
         .title = _( "Pick up" ),
-.message = opts.filter.empty() ? std::string{} :
-        string_format( _( "Filter: %s" ), opts.filter ),
+        .message = pickup_interaction_message( opts ),
         .allow_cancel = true,
         .allow_set_count = true,
     };
@@ -1302,6 +1319,8 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
                         .source = opts.source,
                         .source_identity = opts.source_identity,
                         .selected = selected,
+                        .weight_predict = weight_predict,
+                        .volume_predict = volume_predict,
                     } );
                 } );
                 action = ctxt.handle_input();
@@ -1321,6 +1340,8 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
                         .source = opts.source,
                         .source_identity = opts.source_identity,
                         .selected = selected,
+                        .weight_predict = weight_predict,
+                        .volume_predict = volume_predict,
                     } );
                     const auto choice = std::ranges::find( snapshot.choices,
                                                            event.interaction->target_id,
