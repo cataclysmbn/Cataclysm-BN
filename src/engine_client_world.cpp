@@ -29,6 +29,7 @@
 #include "output.h"
 #include "panels_snapshot.h"
 #include "panels_utility.h"
+#include "profile.h"
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
@@ -510,6 +511,7 @@ auto color_name( const nc_color &color ) -> std::string
 
 auto capture_world() -> world_state
 {
+    ZoneScopedN( "engine_client_capture_world" );
     if( !g || !game_session::running() ) { return {}; }
     auto &here = get_map();
     const auto &you = get_avatar();

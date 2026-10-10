@@ -9,6 +9,7 @@
 #include "get_version.h"
 #include "message_types.h"
 #include "output.h"
+#include "profile.h"
 #include "world.h"
 #include "worldfactory.h"
 
@@ -74,6 +75,7 @@ auto session::replace_world() -> void { restart_epoch( "world_replaced" ); }
 
 auto session::capture() const -> std::expected<state_value, error>
 {
+    ZoneScopedN( "engine_client_capture" );
     const auto permissions = current_permissions();
     auto boundary = capture_boundary( {
         .epoch = epoch_,
@@ -90,6 +92,7 @@ auto session::capture() const -> std::expected<state_value, error>
 
 auto session::publish_boundary() -> std::expected<void, error>
 {
+    ZoneScopedN( "engine_client_publish_boundary" );
     // Startup language/debug prompts are genuine native input boundaries, not engine readiness.
     if( phase_ == "starting" ) { phase_ = "menu"; }
     auto candidate = capture();
@@ -106,7 +109,10 @@ auto session::publish_boundary() -> std::expected<void, error>
     if( active_ && active_->stage == command_stage::executing ) { request.command = active_->command_id; }
     const auto command = request.command;
     publish_presentation( command );
-    auto published = stream_->publish( std::move( request ) );
+    auto published = [&] {
+        ZoneScopedN( "engine_client_stream_publish" );
+        return stream_->publish( std::move( request ) );
+    }();
     if( published ) {
         if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
     } else if( published.error() == error::resource_limit ||
