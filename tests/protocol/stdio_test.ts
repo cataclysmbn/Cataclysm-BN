@@ -60,26 +60,24 @@ class Client {
     this.#reader = this.#process.stdout.pipeThrough(new TextDecoderStream()).getReader()
   }
 
-  /** `utime + stime` of the engine in clock ticks; a loading engine is silent on stdout but busy. */
-  async #cpuTicks(): Promise<number> {
-    try {
-      const stat = await Deno.readTextFile(`/proc/${this.#process.pid}/stat`)
-      const fields = stat.slice(stat.lastIndexOf(")") + 1).trim().split(/\s+/)
-      return Number(fields[11]) + Number(fields[12])
-    } catch {
-      return 0
-    }
+  /** CPU seconds the engine has used (`ps`: reading /proc needs --allow-all); a loading engine is silent but busy. */
+  async #cpuSeconds(): Promise<number> {
+    const { stdout } = await new Deno.Command("ps", {
+      args: ["-o", "cputimes=", "-p", String(this.#process.pid)],
+      stderr: "null",
+    }).output()
+    return Number(new TextDecoder().decode(stdout)) || 0
   }
 
   async #line(): Promise<Value> {
     let last = performance.now()
-    let ticks = await this.#cpuTicks()
+    let seconds = await this.#cpuSeconds()
     // Kill the engine only after `stall` without output and without CPU use.
     const watch = setInterval(async () => {
-      const now = await this.#cpuTicks()
-      if (now !== ticks) [ticks, last] = [now, performance.now()]
+      const now = await this.#cpuSeconds()
+      if (now !== seconds) [seconds, last] = [now, performance.now()]
       if (performance.now() - last > stall) this.#process.kill("SIGKILL")
-    }, 1000)
+    }, 5000)
     try {
       while (!this.#buffer.includes("\n")) {
         const part = await this.#reader.read()
