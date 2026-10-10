@@ -18,7 +18,7 @@
 
 #if defined(_WIN32)
 #include <io.h>
-#include <windows.h>
+#include "platform_win.h"
 #else
 #include <poll.h>
 #include <unistd.h>
