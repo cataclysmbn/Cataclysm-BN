@@ -232,6 +232,16 @@ auto stdin_ready() -> bool
 #endif
 }
 
+/// Leaves the process with the reason on stderr, which the client shows on its error screen.
+[[noreturn]] auto leave( const std::string &why ) -> void
+{
+    auto &session = state();
+    std::cerr << "mcp: the engine is exiting: "
+              << ( session.stop ? "a stop was requested" :
+                   session.transport ? session.transport->end_reason() : why ) << std::endl;
+    exit_handler( session.transport && session.transport->failed() ? 1 : 0 );
+}
+
 auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
@@ -260,7 +270,7 @@ auto provide_input( const int timeout_ms ) -> input_event
             }
             while( session.transport && session.events.empty() && stdin_ready() ) {
                 if( !session.transport->poll_input( std::cin, *session.output, std::cerr ) ) {
-                    exit_handler( session.transport->failed() ? 1 : 0 );
+                    leave( "input ended while an activity was running" );
                 }
             }
             if( !session.events.empty() ) {
@@ -275,7 +285,7 @@ auto provide_input( const int timeout_ms ) -> input_event
             break;
         }
     }
-    exit_handler( session.transport && session.transport->failed() ? 1 : 0 );
+    leave( "no transport" );
 }
 
 auto report_loading( const game_client::loading_progress &progress ) -> void
