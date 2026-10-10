@@ -4,12 +4,13 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
-#include "clothing_link.h"
+#include "client_interaction.h"
 #include "crafting.h"
 #include "game_inventory.h"
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
+#include "iteminfo_request.h"
 #include "itype.h"
 #include "map/map.h"
 #include "messages.h"
@@ -27,13 +28,15 @@
 #include "options.h"
 #include "ui.h"
 
-struct action_entry {
-    std::string action;
-    std::function<bool()> on_select;
-};
-
 namespace examine_item_menu
 {
+
+struct action_entry {
+    std::string action;
+    std::string name;
+    hint_rating hint = hint_rating::good;
+    std::function<bool()> on_select;
+};
 
 bool run(
     item &loc,
@@ -104,14 +107,16 @@ bool run(
     int number = INT_MIN ) {
         action_entry ae;
         ae.action = act;
+        ae.hint = hint;
         ae.on_select = std::move( on_select );
-        actions.push_back( std::move( ae ) );
 
         ctxt.register_action( act );
 
         std::string bound_key = ctxt.key_bound_to( act );
         int bound_key_i = bound_key.size() == 1 ? bound_key[0] : '?';
         std::string act_name = ctxt.get_action_name( act );
+        ae.name = act_name;
+        actions.push_back( std::move( ae ) );
         if( number == INT_MIN ) {
             action_list.addentry( actions.size(), true, bound_key_i, act_name );
         } else {
@@ -346,13 +351,39 @@ bool run(
         action_list.show( ui );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = remove_color_tags( itm.tname() ),
+            .message = remove_color_tags( itm.info_string( { .mode = iteminfo_mode::observation } ) ),
+            .allow_cancel = true,
+        };
+        for( auto index = std::size_t{ 0 }; index < actions.size(); ++index ) {
+            snapshot.choices.push_back( {
+                .id = "action:" + actions[index].action, .label = actions[index].name,
+                .enabled = actions[index].hint != hint_rating::cant,
+                .highlighted = static_cast<int>( index ) == selected_action,
+            } );
+        }
+        return snapshot;
+    } );
+
     bool exit = false;
     bool ret_val = true;
     while( !exit ) {
         ui->invalidate_ui();
         ui_manager::redraw();
 
-        const std::string &action = ctxt.handle_input();
+        auto input = std::string{ ctxt.handle_input() };
+        const auto raw = ctxt.get_raw_input();
+        if( raw.interaction ) {
+            if( raw.interaction->operation == game_client::interaction_operation::cancel ) {
+                input = "QUIT";
+            } else if( raw.interaction->operation == game_client::interaction_operation::choose ) {
+                input = raw.interaction->target_id.substr( raw.interaction->target_id.find( ':' ) + 1 );
+            }
+        }
+        const std::string &action = input;
 
         if( action == "QUIT" || action == "LEFT" ) {
             ret_val = false;
