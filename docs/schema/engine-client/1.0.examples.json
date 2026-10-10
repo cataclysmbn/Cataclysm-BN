@@ -1599,6 +1599,61 @@
         "glyph": ".",
         "color": "light_gray"
       }
+    },
+    {
+      "def": "look",
+      "name": "look of a mutation overlay",
+      "value": {
+        "kind": "overlay",
+        "id": "mutation_hair_long",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_mutation_hair_long",
+        "mutation": {
+          "types": [
+            "hair_style"
+          ],
+          "flags": []
+        }
+      }
+    },
+    {
+      "def": "entity",
+      "name": "entity with the mutations of a character by type",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "environment with the tilesets the game data adds",
+      "value": {
+        "turn": "0",
+        "time": "Spring, day 1 8:00:00 AM",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/data/json/external_tileset/vehicle_parts.json",
+            "base": "/g/data/json/",
+            "index": 1,
+            "compatibility": [
+              "UNDEAD_PEOPLE_BASE"
+            ]
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -2502,6 +2557,41 @@
         "color": "white",
         "tint": {
           "fg": "gray"
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "mod tileset without its compatibility",
+      "value": {
+        "turn": "0",
+        "time": "t",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/a.json",
+            "base": "/g/",
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "def": "entity",
+      "name": "sensed entity with traits",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "sensed",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
         }
       }
     }

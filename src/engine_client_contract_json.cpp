@@ -47,6 +47,9 @@ auto to_json( const look &value ) -> json
     if( value.rotation ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
+    if( value.mutation ) {
+        result["mutation"] = {{"types", value.mutation->types}, {"flags", value.mutation->flags}};
+    }
     if( value.tint ) {
         result["tint"] = json::object();
         if( !value.tint->bg.empty() ) { result["tint"]["bg"] = value.tint->bg; }
@@ -100,6 +103,7 @@ auto to_json( const entity &value ) -> json
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( value.name ) { result["name"] = *value.name; }
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
+    if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( value.attitude ) { result["attitude"] = *value.attitude; }
     if( value.aware ) { result["aware"] = true; }
     if( !value.statuses.empty() ) { result["statuses"] = value.statuses; }
@@ -156,6 +160,7 @@ auto to_json( const avatar_value &value ) -> json
         {"stats", to_array( value.stats )}, {"sidebar", to_json( value.sidebar )}};
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
+    if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     return result;
@@ -164,6 +169,13 @@ auto to_json( const environment_value &value ) -> json
 {
     auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
     if( !value.season.empty() ) { result["season"] = value.season; }
+    if( !value.mod_tilesets.empty() ) {
+        result["mod_tilesets"] = json::array();
+        for( const auto &file : value.mod_tilesets ) {
+            result["mod_tilesets"].push_back( {{"path", file.path}, {"base", file.base}, {"index", file.index},
+                {"compatibility", file.compatibility}} );
+        }
+    }
     return result;
 }
 auto to_json( const bounds &value ) -> json

@@ -29,6 +29,13 @@ struct look_tint {
     std::string fg = {};
     auto operator<=>( const look_tint & ) const = default; // *NOPAD*
 };
+/// What a tileset needs to tint the sprite of a mutation: the types and flags of the mutation, which
+/// its `tint_pairs` are keyed by.
+struct look_mutation {
+    std::vector<std::string> types = {};
+    std::vector<std::string> flags = {};
+    auto operator<=>( const look_mutation & ) const = default; // *NOPAD*
+};
 /// Appearance from game data, so text clients need no tileset. The optional members give a tiled
 /// client what only the engine can know: the sprite id when it is not `id`, the data's fallback
 /// ids, and the shape the native tile selection computed from the neighbours.
@@ -54,6 +61,8 @@ struct look {
     std::optional<int> stack = std::nullopt;
     /// Paint a tileset multiplies into the part's sprites: the vehicle part's own colors.
     std::optional<look_tint> tint = std::nullopt;
+    /// Set on the overlay of a mutation.
+    std::optional<look_mutation> mutation = std::nullopt;
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {
@@ -92,6 +101,8 @@ struct entity {
     std::optional<std::string> name = std::nullopt;
     /// Sprites drawn over a character, bottom first: worn and wielded items, mutations, bionics.
     std::vector<look> overlays = {};
+    /// The ids of the mutations of a character by mutation type, which tint the mutation overlays.
+    std::map<std::string, std::vector<std::string>> traits = {};
     /// How the creature regards the avatar (hostile, friendly, neutral, any) and whether it is aware of
     /// it: the native view marks monsters and NPCs with it.
     std::optional<std::string> attitude = std::nullopt;
@@ -178,6 +189,7 @@ struct avatar_value {
     std::string name = {};
     std::optional<look> appearance = std::nullopt;
     std::vector<look> overlays = {};
+    std::map<std::string, std::vector<std::string>> traits = {};
     std::vector<avatar_stat> stats = {};
     /// The wielded item, the worn items, then the carried stacks. Items have no instance IDs.
     std::vector<inventory_entry> inventory = {};
@@ -186,11 +198,23 @@ struct avatar_value {
     std::vector<inventory_entry> ground = {};
     auto operator<=>( const avatar_value & ) const = default; // *NOPAD*
 };
+/// A file of the game data that adds sprites to the tilesets its `compatibility` names.
+struct mod_tileset_file {
+    /// The JSON file, and the folder its sheet files are named from.
+    std::string path = {};
+    std::string base = {};
+    /// Which `mod_tileset` of the file this is, counting from 1.
+    int index = 1;
+    std::vector<std::string> compatibility = {};
+    auto operator<=>( const mod_tileset_file & ) const = default; // *NOPAD*
+};
 struct environment_value {
     std::string turn = {};
     std::string time = {};
     std::string weather = {};
     std::string season = {};
+    /// The tilesets of the loaded game data, in the order the native view applies them.
+    std::vector<mod_tileset_file> mod_tilesets = {};
     auto operator<=>( const environment_value & ) const = default; // *NOPAD*
 };
 

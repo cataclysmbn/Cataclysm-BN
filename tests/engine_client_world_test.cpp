@@ -888,3 +888,41 @@ TEST_CASE(
         if (entry.vehicle && !entry.light) { CHECK(entry.known == ec::knowledge::visible); }
     }
 }
+
+TEST_CASE(
+    "world capture names the types of a mutation overlay and the mutations of a character by type",
+    "[engine_client_world]") {
+    make_scene();
+    auto& you = get_avatar();
+    you.toggle_trait(trait_id("hair_black"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    CHECK(state.avatar->traits.at("hair_color") == std::vector<std::string>{"hair_black"});
+    const auto hair =
+        std::ranges::find(state.avatar->overlays, "mutation_hair_black", &ec::look::id);
+    if (hair != state.avatar->overlays.end()) {
+        REQUIRE(hair->mutation);
+        CHECK(std::ranges::count(hair->mutation->types, "hair_color") == 1);
+    }
+    // Worn items are not mutations and carry no types.
+    for (const auto& overlay : state.avatar->overlays) {
+        if (overlay.id && overlay.id->starts_with("worn_")) { CHECK_FALSE(overlay.mutation); }
+    }
+}
+
+TEST_CASE(
+    "world capture lists the mod tilesets of the game data with the tilesets they are for",
+    "[engine_client_world]") {
+    make_scene();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.environment);
+    const auto& files = state.environment->mod_tilesets;
+    const auto vehicles = std::ranges::find_if(files, [](const auto& file) {
+        return file.path.ends_with("external_tileset/vehicle_parts.json");
+    });
+    REQUIRE(vehicles != files.end());
+    CHECK(std::ranges::count(vehicles->compatibility, "UNDEAD_PEOPLE_BASE") == 1);
+    CHECK(vehicles->index == 1);
+    CHECK(vehicles->base.find("data/json") != std::string::npos);
+}
