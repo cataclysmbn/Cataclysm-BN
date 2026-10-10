@@ -4,6 +4,7 @@
 #    include "client_memory.h"
 #    include "cursesdef.h"
 #    include "engine_client_session.h"
+#    include "engine_client_world.h"
 #    include "game_constants.h"
 #    include "mcp_session.h"
 #    include "options.h"
@@ -15,6 +16,7 @@ auto initialize_native() -> void {
     const auto width = std::max(FULL_SCREEN_WIDTH, get_option<int>("TERMINAL_X"));
     const auto height = std::max(FULL_SCREEN_HEIGHT, get_option<int>("TERMINAL_Y"));
     memory::initialize(width, height);
+    engine_client::process_session().set_world_capture(&engine_client::world::capture_world);
 }
 
 auto shutdown_native() -> void {
