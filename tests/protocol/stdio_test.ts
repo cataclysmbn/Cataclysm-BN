@@ -29,7 +29,8 @@ const validate = (def: string, value: unknown, what: string) => {
 
 // deno-lint-ignore no-explicit-any
 type Value = any
-const deadline = 300_000
+/** The engine is killed after this long without output and without CPU use; either one restarts the wait. */
+const stall = 120_000
 
 class Client {
   #process: Deno.ChildProcess
@@ -59,16 +60,35 @@ class Client {
     this.#reader = this.#process.stdout.pipeThrough(new TextDecoderStream()).getReader()
   }
 
+  /** `utime + stime` of the engine in clock ticks; a loading engine is silent on stdout but busy. */
+  async #cpuTicks(): Promise<number> {
+    try {
+      const stat = await Deno.readTextFile(`/proc/${this.#process.pid}/stat`)
+      const fields = stat.slice(stat.lastIndexOf(")") + 1).trim().split(/\s+/)
+      return Number(fields[11]) + Number(fields[12])
+    } catch {
+      return 0
+    }
+  }
+
   async #line(): Promise<Value> {
-    const timer = setTimeout(() => this.#process.kill("SIGKILL"), deadline)
+    let last = performance.now()
+    let ticks = await this.#cpuTicks()
+    // Kill the engine only after `stall` without output and without CPU use.
+    const watch = setInterval(async () => {
+      const now = await this.#cpuTicks()
+      if (now !== ticks) [ticks, last] = [now, performance.now()]
+      if (performance.now() - last > stall) this.#process.kill("SIGKILL")
+    }, 1000)
     try {
       while (!this.#buffer.includes("\n")) {
         const part = await this.#reader.read()
         assert(!part.done, "engine closed stdout")
         this.#buffer += part.value
+        last = performance.now()
       }
     } finally {
-      clearTimeout(timer)
+      clearInterval(watch)
     }
     const end = this.#buffer.indexOf("\n")
     const line = this.#buffer.slice(0, end)
