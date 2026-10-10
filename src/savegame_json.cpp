@@ -4092,6 +4092,7 @@ void map_memory::load_legacy( JsonIn &jsin )
     }
     jsin.end_array();
 
+    replaced();
     for( const std::pair<const tripoint_abs_ms, mig_elem> &elem : elems ) {
         const auto cp = project_remain<coords::sm>( elem.first );
         shared_ptr_fast<mm_submap> sm = find_submap( cp.quotient_tripoint );

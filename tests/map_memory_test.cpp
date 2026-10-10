@@ -196,3 +196,35 @@ TEST_CASE("shift_map_memory_seen_cache") {
         }
     }
 }
+
+TEST_CASE("map_memory_revision_changes_on_every_way_memory_changes", "[map_memory][revision]") {
+    map_memory memory;
+    const auto changes = [&](const char* what, const auto& change) {
+        CAPTURE(what);
+        const auto before = memory.revision();
+        change();
+        CHECK(memory.revision() != before);
+    };
+    const auto pos = p2;
+    changes("memorize_tile", [&] { memory.memorize_tile(pos, "f_bench", 0, 0); });
+    changes("memorize_terrain_tile", [&] { memory.memorize_terrain_tile(pos, "t_floor", 0, 0); });
+    changes("memorize_symbol", [&] { memory.memorize_symbol(pos, 'x'); });
+    changes("clear_memorized_overlay", [&] { memory.clear_memorized_overlay(pos); });
+    changes("clear_memorized_tile", [&] { memory.clear_memorized_tile(pos); });
+    changes("clear", [&] { memory.clear(); });
+    changes("load", [&] { memory.load(pos); });
+    changes("save", [&] { memory.save(pos); });
+    CHECK(map_memory{}.revision() != map_memory{}.revision());
+}
+
+TEST_CASE("map_memory_revision_ignores_reads", "[map_memory][revision]") {
+    map_memory memory;
+    memory.memorize_tile(p2, "f_bench", 0, 0);
+    const auto before = memory.revision();
+    CHECK(memory.get_tile(p2).tile == "f_bench");
+    CHECK(memory.get_symbol(p2) == 0);
+    CHECK(memory.get_terrain_tile(p2).tile.empty());
+    CHECK(memory.memorized_positions().size() == 1);
+    CHECK(memory.has_memory_for_autodrive(p2));
+    CHECK(memory.revision() == before);
+}
