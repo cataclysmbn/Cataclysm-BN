@@ -1205,8 +1205,8 @@ TEST_CASE(
         client::memory::set_input_provider([&](const int /*timeout*/) {
             if (++reads > 1) { throw std::runtime_error("construction raw Space budget"); }
             observation = client::current_interaction();
-            const auto state = engine_client::capture_state(
-                {.session_epoch = "literal-report-budget-epoch",
+            const auto state = engine_client::capture_boundary(
+                {.epoch = "literal-report-budget-epoch",
                  .ready = {.phase = "waiting_for_input",
                            .game_ready = false,
                            .accepts_interaction_commands = true}});
