@@ -275,10 +275,19 @@ auto interaction_json( const boundary_state &state ) -> json
     }
     compat["panes"] = json::array();
     for( const auto &pane : native.panes ) {
-        compat["panes"].push_back( {{"id", pane.id}, {"label", pane.label}, {"role", pane.role},
+        auto value = json{{"id", pane.id}, {"label", pane.label}, {"role", pane.role},
             {"area_id", pane.area_id}, {"area_label", pane.area_label},
             {"area_description", pane.area_description}, {"filter", pane.filter},
-            {"storage_kind", pane.storage_kind}} );
+            {"storage_kind", pane.storage_kind}};
+        if( !pane.sort.empty() ) { value["sort"] = pane.sort; }
+        if( pane.totals ) {
+            const auto &t = *pane.totals;
+            value["totals"] = {{"weight", t.weight}, {"weight_max", t.weight_max}, {"weight_unit", t.weight_unit},
+                {"volume", t.volume}, {"volume_max", t.volume_max}, {"volume_unit", t.volume_unit},
+                {"over_weight", t.over_weight}, {"over_volume", t.over_volume}
+            };
+        }
+        compat["panes"].push_back( std::move( value ) );
     }
     result["compat"] = std::move( compat );
     return result;

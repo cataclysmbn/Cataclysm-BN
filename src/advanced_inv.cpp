@@ -245,6 +245,39 @@ void advanced_inventory::init()
     dest = ( save_state->active_left ) ? right : left;
 }
 
+auto advanced_inventory::max_volume_of( const advanced_inventory_pane &pane ) const -> units::volume
+{
+    auto &s = squares[pane.get_area()];
+    if( pane.get_area() == AIM_CONTAINER && s.get_container( pane.in_vehicle() ) != nullptr ) {
+        return s.get_container( pane.in_vehicle() )->get_container_capacity();
+    }
+    if( pane.in_vehicle() ) { return s.veh->max_volume( s.vstor ); }
+    return get_map().max_volume( s.pos );
+}
+
+auto advanced_inventory::totals_of( const advanced_inventory_pane &pane ) const ->
+game_client::interaction_totals
+{
+    auto result = game_client::interaction_totals{ .weight_unit = weight_units(), .volume_unit = volume_units_abbr() };
+    const auto weight = []( const units::mass value ) { return string_format( "%.1f", convert_weight( value ) ); };
+    if( pane.get_area() == AIM_INVENTORY || pane.get_area() == AIM_WORN ) {
+        result.weight = weight( g->u.weight_carried() );
+        result.weight_max = weight( g->u.weight_capacity() );
+        result.volume = format_volume( g->u.volume_carried() );
+        result.volume_max = format_volume( g->u.volume_capacity() );
+        result.over_weight = g->u.weight_carried() > g->u.weight_capacity();
+        result.over_volume = g->u.volume_carried().value() > g->u.volume_capacity().value();
+    } else if( pane.get_area() == AIM_ALL ) {
+        result.weight = weight( squares[pane.get_area()].weight );
+        result.volume = format_volume( squares[pane.get_area()].volume );
+    } else {
+        result.weight = weight( squares[pane.get_area()].weight );
+        result.volume = format_volume( squares[pane.get_area()].volume );
+        result.volume_max = format_volume( max_volume_of( pane ) );
+    }
+    return result;
+}
+
 void advanced_inventory::print_items( const advanced_inventory_pane &pane, bool active )
 {
     const auto &items = pane.items;
@@ -284,15 +317,8 @@ void advanced_inventory::print_items( const advanced_inventory_pane &pane, bool 
                                  "%3.1f %s  %s %s", convert_weight( squares[pane.get_area()].weight ), weight_units(),
                                  format_volume( squares[pane.get_area()].volume ), volume_units_abbr() );
         } else {
-            units::volume maxvolume = 0_ml;
+            const units::volume maxvolume = max_volume_of( pane );
             auto &s = squares[pane.get_area()];
-            if( pane.get_area() == AIM_CONTAINER && s.get_container( pane.in_vehicle() ) != nullptr ) {
-                maxvolume = s.get_container( pane.in_vehicle() )->get_container_capacity();
-            } else if( pane.in_vehicle() ) {
-                maxvolume = s.veh->max_volume( s.vstor );
-            } else {
-                maxvolume = get_map().max_volume( s.pos );
-            }
             formatted_head = string_format(
                                  "%3.1f %s  %s/%s %s", convert_weight( s.weight ), weight_units(),
                                  format_volume( s.volume ), format_volume( maxvolume ), volume_units_abbr() );
@@ -1023,6 +1049,8 @@ auto advanced_inventory::interaction_snapshot() const -> game_client::interactio
             .area_description = area.desc[cargo],
             .filter = pane.filter,
             .storage_kind = storage_kind,
+            .totals = totals_of( pane ),
+            .sort = get_sortname( pane.sortby ),
         } );
         for( const auto item_index : std::views::iota( std::size_t{0}, pane.items.size() ) ) {
             const auto &entry = pane.items[item_index];

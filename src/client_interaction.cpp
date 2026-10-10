@@ -141,6 +141,11 @@ auto schema_for( const interaction_snapshot &snapshot,
         hash.add( pane.area_description );
         hash.add( pane.filter );
         hash.add( pane.storage_kind );
+        hash.add( pane.sort );
+        if( pane.totals ) {
+            hash.add( pane.totals->weight_max + pane.totals->volume_max + pane.totals->weight_unit +
+                      pane.totals->volume_unit );
+        }
     }
     auto ordinal = std::size_t{0};
     for( const auto &choice : snapshot.choices ) {
@@ -697,6 +702,20 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
         json.member( "area_description", pane.area_description );
         json.member( "filter", pane.filter );
         json.member( "storage_kind", pane.storage_kind );
+        json.member( "sort", pane.sort );
+        if( pane.totals ) {
+            json.member( "totals" );
+            json.start_object();
+            json.member( "weight", pane.totals->weight );
+            json.member( "weight_max", pane.totals->weight_max );
+            json.member( "weight_unit", pane.totals->weight_unit );
+            json.member( "volume", pane.totals->volume );
+            json.member( "volume_max", pane.totals->volume_max );
+            json.member( "volume_unit", pane.totals->volume_unit );
+            json.member( "over_weight", pane.totals->over_weight );
+            json.member( "over_volume", pane.totals->over_volume );
+            json.end_object();
+        }
         json.end_object();
     }
     json.end_array();

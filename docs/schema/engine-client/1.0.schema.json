@@ -1036,6 +1036,33 @@
         },
         "storage_kind": {
           "type": "string"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "weight": { "type": "string" },
+            "weight_max": { "type": "string" },
+            "weight_unit": { "type": "string" },
+            "volume": { "type": "string" },
+            "volume_max": { "type": "string" },
+            "volume_unit": { "type": "string" },
+            "over_weight": { "type": "boolean" },
+            "over_volume": { "type": "boolean" }
+          },
+          "required": [
+            "weight",
+            "weight_max",
+            "weight_unit",
+            "volume",
+            "volume_max",
+            "volume_unit",
+            "over_weight",
+            "over_volume"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

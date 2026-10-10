@@ -64,6 +64,19 @@ struct interaction_choice {
     std::optional<std::uint64_t> available_count;
 };
 
+/// What a pane holds against what it can hold, as the native screen prints it beside the area name:
+/// weight and volume in the pane's own units, with a maximum where the native screen shows one.
+struct interaction_totals {
+    std::string weight;
+    std::string weight_max;
+    std::string weight_unit;
+    std::string volume;
+    std::string volume_max;
+    std::string volume_unit;
+    bool over_weight = false;
+    bool over_volume = false;
+};
+
 struct interaction_pane {
     std::string id;
     std::string label;
@@ -73,6 +86,9 @@ struct interaction_pane {
     std::string area_description;
     std::string filter;
     std::string storage_kind;
+    std::optional<interaction_totals> totals;
+    /// How the pane's rows are ordered, as the native title names it; empty when not sortable.
+    std::string sort;
 };
 
 struct interaction_field {

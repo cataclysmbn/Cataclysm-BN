@@ -1599,6 +1599,31 @@
         "glyph": ".",
         "color": "light_gray"
       }
+    },
+    {
+      "name": "advanced inventory pane with totals",
+      "def": "pane",
+      "value": {
+        "id": "pane-destination",
+        "label": "Destination",
+        "role": "destination",
+        "area_id": "area-center",
+        "area_label": "Directly under you",
+        "area_description": "",
+        "filter": "",
+        "storage_kind": "ground",
+        "sort": "name",
+        "totals": {
+          "weight": "0.0",
+          "weight_max": "",
+          "weight_unit": "kg",
+          "volume": "0.00",
+          "volume_max": "1000.00",
+          "volume_unit": "L",
+          "over_weight": false,
+          "over_volume": false
+        }
+      }
     }
   ],
   "invalid": [
@@ -2502,6 +2527,31 @@
         "color": "white",
         "tint": {
           "fg": "gray"
+        }
+      }
+    },
+    {
+      "name": "pane totals missing a field",
+      "def": "pane",
+      "why": "totals requires every field",
+      "value": {
+        "id": "pane-destination",
+        "label": "Destination",
+        "role": "destination",
+        "area_id": "area-center",
+        "area_label": "Directly under you",
+        "area_description": "",
+        "filter": "",
+        "storage_kind": "ground",
+        "sort": "name",
+        "totals": {
+          "weight": "0.0",
+          "weight_max": "",
+          "weight_unit": "kg",
+          "volume": "0.00",
+          "volume_unit": "L",
+          "over_weight": false,
+          "over_volume": false
         }
       }
     }
