@@ -82,7 +82,6 @@ struct fd_output_buffer final : std::streambuf {
 
 struct session_state {
     std::deque<key_event> events;
-    std::string actions_json = "{\"actions\":[]}";
     screen_snapshot screen{ .json = "{\"width\":0,\"height\":0,\"cells\":[]}" };
     std::unique_ptr<server> transport;
     std::unique_ptr<fd_output_buffer> output_buffer;
@@ -124,7 +123,7 @@ auto redirect_stdout_to_stderr() -> bool
 #endif
 }
 
-auto update_actions() -> void
+auto serialize_actions() -> std::string
 {
     const auto active = game_client::active_input_context();
     auto output = std::ostringstream{};
@@ -157,7 +156,7 @@ auto update_actions() -> void
     }
     json.end_array();
     json.end_object();
-    state().actions_json = output.str();
+    return output.str();
 }
 
 auto has_input() -> bool
@@ -184,7 +183,7 @@ auto observe() -> screen_snapshot
 
 auto actions() -> std::string
 {
-    return state().actions_json;
+    return serialize_actions();
 }
 
 auto structured_state() -> screen_snapshot
@@ -204,7 +203,6 @@ auto provide_input( const int /*timeout_ms*/ ) -> input_event
 {
     auto &session = state();
     while( !session.stop ) {
-        update_actions();
         if( !session.events.empty() ) {
             const auto request = std::move( session.events.front() );
             session.events.pop_front();
