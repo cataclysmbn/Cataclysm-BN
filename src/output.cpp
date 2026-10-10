@@ -1896,7 +1896,7 @@ void scrollingcombattext::add( point pos, direction p_oDir,
                                const std::string &p_sText2, const game_message_type p_gmt2,
                                const std::string &p_sType )
 {
-    engine_client::presentation::record_text( pos, p_sText, p_gmt, p_sText2, p_gmt2 );
+    engine_client::presentation::record_text( pos, p_oDir, p_sType, p_sText, p_gmt, p_sText2, p_gmt2 );
     // TODO: A non-hack
     if( test_mode ) {
         return;

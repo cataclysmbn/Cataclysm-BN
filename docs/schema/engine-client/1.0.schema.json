@@ -2420,6 +2420,33 @@
             ],
             "additionalProperties": false
           }
+        },
+        "scroll": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "y": {
+              "type": "integer",
+              "minimum": -1,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false,
+          "description": "The unit step the text moves by each animation step."
+        },
+        "kind": {
+          "enum": [
+            "hp"
+          ],
+          "description": "hp: a creature's hit-point readout, which stays beside it."
         }
       },
       "required": [

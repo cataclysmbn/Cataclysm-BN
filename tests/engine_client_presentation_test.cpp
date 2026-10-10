@@ -154,6 +154,9 @@ TEST_CASE("combat text publishes its colored segments", "[engine_client_event]")
     CHECK(facts.front().type == "combat_text.shown");
     REQUIRE(facts.front().segments.size() == 2);
     CHECK(facts.front().segments[0].text == "-12");
+    REQUIRE(facts.front().scroll);
+    CHECK(facts.front().scroll->x == 0);
+    CHECK(facts.front().scroll->y == -1); // NORTH, as native scrolls it
     CHECK(facts.front().segments[0].color != facts.front().segments[1].color);
 }
 

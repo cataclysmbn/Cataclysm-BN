@@ -344,6 +344,8 @@ auto to_json( const event_value &value ) -> json
             for( const auto &segment : fact.segments ) {
                 data["segments"].push_back( {{"text", segment.text}, {"color", segment.color}} );
             }
+            if( fact.scroll ) { data["scroll"] = {{"x", fact.scroll->x}, {"y", fact.scroll->y}}; }
+            if( !fact.kind.empty() ) { data["kind"] = fact.kind; }
         }
         result["data"] = std::move( data );
         if( fact.duration_ms != 0 ) { result["display"] = {{"duration_ms", fact.duration_ms}}; }
