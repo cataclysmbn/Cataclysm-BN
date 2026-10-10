@@ -387,3 +387,28 @@ TEST_CASE(
     }
     get_avatar().clear_destination();
 }
+
+TEST_CASE(
+    "world route is empty for a click on or beyond a closed door, as for the native click",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto door = setup.start + tripoint(2, 5, 0);
+    get_map().ter_set(door, ter_id("t_door_c"));
+    const auto click_from = [&](const tripoint_bub_ms& from, const tripoint_bub_ms& to) {
+        step_to(from);
+        auto act = ACTION_NULL;
+        const auto second = g->try_get_left_click_action(act, to);
+        const auto route = ec::world::capture_world().route;
+        CHECK_FALSE(second);
+        CHECK(act == ACTION_NULL);
+        CHECK(get_avatar().bub_pos() == from);
+        CHECK_FALSE(get_avatar().has_destination());
+        get_avatar().clear_destination();
+        return route;
+    };
+    // The legacy avatar pathfinder routes through no closed door, so the engine plans nothing
+    // and the click is a no-op: adjacent door, distant door, and a square only the door reaches.
+    CHECK(click_from(setup.start + tripoint(1, 5, 0), door).empty());
+    CHECK(click_from(setup.start, door).empty());
+    CHECK(click_from(setup.start, setup.start + tripoint(4, 5, 0)).empty());
+}
