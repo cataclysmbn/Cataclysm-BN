@@ -715,6 +715,9 @@ TEST_CASE(
     CHECK(corpse->tile == "corpse_mon_zombie");
     REQUIRE_FALSE(corpse->looks_like.empty());
     CHECK(corpse->looks_like.front() == "corpse");
+    // Two items make a stack, which the displayed (last) item reports.
+    CHECK(cell->items.back().stack == 2);
+    CHECK_FALSE(cell->items.front().stack);
 }
 
 TEST_CASE(
@@ -728,6 +731,11 @@ TEST_CASE(
     REQUIRE(state.entities.size() == 1);
     const auto& monster = *state.entities.begin()->second.appearance;
     CHECK(monster.facing == "left");
+    const auto& zombie_entity = state.entities.begin()->second;
+    CHECK(
+        zombie_entity.attitude == Creature::attitude_raw_string(zombie.attitude_to(get_avatar())));
+    CHECK(zombie_entity.aware
+          == (zombie.sees(get_avatar()) && !get_avatar().has_trait(trait_id("INATTENTIVE"))));
     CHECK(monster.id == "mon_zombie");
     CHECK(monster.looks_like.empty() == zombie.type->looks_like.empty());
 

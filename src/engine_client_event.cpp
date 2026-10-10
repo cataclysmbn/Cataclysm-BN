@@ -56,7 +56,9 @@ auto valid_entity( const entity &value ) -> bool
         case knowledge::visible:
             return !value.sense;
         case knowledge::sensed:
-            return !value.appearance && !value.name && value.overlays.empty() && value.statuses.empty();
+            return !value.appearance && !value.name && value.overlays.empty() && !value.attitude &&
+                   !value.aware &&
+                   value.statuses.empty();
         case knowledge::remembered:
             return false;
     }

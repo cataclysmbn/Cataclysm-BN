@@ -41,6 +41,9 @@ struct look {
     std::optional<int> rotation = std::nullopt;
     /// Side a creature faces: left or right.
     std::optional<std::string> facing = std::nullopt;
+    /// Items on the square when there are several; set on the displayed (last) item, which the native
+    /// view then highlights.
+    std::optional<int> stack = std::nullopt;
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {
@@ -77,6 +80,10 @@ struct entity {
     std::optional<std::string> name = std::nullopt;
     /// Sprites drawn over a character, bottom first: worn and wielded items, mutations, bionics.
     std::vector<look> overlays = {};
+    /// How the creature regards the avatar (hostile, friendly, neutral, any) and whether it is aware of
+    /// it: the native view marks monsters and NPCs with it.
+    std::optional<std::string> attitude = std::nullopt;
+    bool aware = false;
     std::vector<std::string> statuses = {};
     std::optional<std::string> sense = std::nullopt;
     auto operator<=>( const entity & ) const = default; // *NOPAD*

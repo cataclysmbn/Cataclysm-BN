@@ -195,6 +195,11 @@
             "right"
           ],
           "description": "Side a creature faces; tilesets flip the sprite for left."
+        },
+        "stack": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Items on the square when there are several, on the displayed (last) item; the native view highlights such a stack."
         }
       },
       "required": [
@@ -376,6 +381,19 @@
             "$ref": "#/$defs/look"
           },
           "description": "Sprites drawn over a character, bottom first, as looks of kind overlay: id is the overlay (worn_<item>, wielded_<item>, mutation_<id>, bionic or effect), tile and looks_like the tileset ids to try in the native order. A tileset without a sprite for an overlay draws nothing."
+        },
+        "attitude": {
+          "enum": [
+            "hostile",
+            "friendly",
+            "neutral",
+            "any"
+          ],
+          "description": "How the creature regards the avatar; the native view marks monsters and NPCs with an overlay of it."
+        },
+        "aware": {
+          "const": true,
+          "description": "Present when the creature is aware of the avatar (its overlay says it sees the player)."
         }
       },
       "required": [
@@ -401,7 +419,9 @@
               "look": false,
               "name": false,
               "statuses": false,
-              "overlays": false
+              "overlays": false,
+              "attitude": false,
+              "aware": false
             }
           }
         },

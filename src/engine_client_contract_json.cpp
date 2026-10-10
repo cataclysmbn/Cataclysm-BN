@@ -45,6 +45,7 @@ auto to_json( const look &value ) -> json
     if( value.subtile ) { result["subtile"] = *value.subtile; }
     if( value.rotation ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
+    if( value.stack ) { result["stack"] = *value.stack; }
     return result;
 }
 template<typename Values>
@@ -92,6 +93,8 @@ auto to_json( const entity &value ) -> json
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( value.name ) { result["name"] = *value.name; }
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
+    if( value.attitude ) { result["attitude"] = *value.attitude; }
+    if( value.aware ) { result["aware"] = true; }
     if( !value.statuses.empty() ) { result["statuses"] = value.statuses; }
     if( value.sense ) { result["sense"] = *value.sense; }
     return result;

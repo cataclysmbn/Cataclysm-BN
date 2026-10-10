@@ -39,6 +39,7 @@
 #include "weather/weather.h"
 
 static const itype_id itype_corpse( "corpse" );
+static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 
 namespace engine_client::world
 {
@@ -276,6 +277,9 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
             }
         }
         out.items.push_back( item_look( top ) );
+        if( const auto count = here.maptile_at( p ).get_item_count(); count > 1 ) {
+            out.items.back().stack = static_cast<int>( count );
+        }
     }
     out.vehicle = vehicle_part_at( here, p, you );
     if( here.ter( p )->has_flag( TFLAG_NO_MEMORY ) && !out.furniture && out.fields.empty() &&
@@ -416,7 +420,9 @@ auto capture_entities( const map &here, const avatar &you, const std::string &di
             .at = position_of( here, critter->bub_pos(), dimension ),
             .appearance = std::move( appearance ),
             .name = critter->get_name(),
-            .overlays = overlays_of( *critter ) } );
+            .overlays = overlays_of( *critter ),
+            .attitude = Creature::attitude_raw_string( critter->attitude_to( you ) ),
+            .aware = critter->sees( you ) && !you.has_trait( trait_INATTENTIVE ) } );
     }
     return entities;
 }
