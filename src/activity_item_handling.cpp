@@ -2395,19 +2395,27 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
     if( stage < 0 ) {
         stage = INIT;
         //num_processed
-        act.values.push_back( 0 );
+        if( act.values.empty() ) {
+            act.values.push_back( 0 );
+        }
     }
     int &num_processed = act.values[ 0 ];
 
     map &here = get_map();
     const auto abspos = p.abs_pos();
     auto &mgr = zone_manager::get_manager();
+    const auto skip_personal = p.is_npc();
+    if( !skip_personal && act.values.size() >= 5 ) {
+        const auto pin = tripoint_abs_ms( act.values[2], act.values[3], act.values[4] );
+        mgr.apply_sort_filter( static_cast<loot_sort_selection>( act.values[1] ), pin );
+    }
     if( here.check_vehicle_zones( g->get_levz() ) ) {
         mgr.cache_vzones();
     }
 
     if( stage == INIT ) {
-        act.coord_set = mgr.get_near( zone_type_LOOT_UNSORTED, abspos, ACTIVITY_SEARCH_DISTANCE );
+        act.coord_set = mgr.get_near( zone_type_LOOT_UNSORTED, abspos, ACTIVITY_SEARCH_DISTANCE, nullptr,
+                                      your_fac, skip_personal );
         stage = THINK;
     }
 
@@ -2448,7 +2456,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
             // skip tiles in IGNORE zone and tiles on fire
             // (to prevent taking out wood off the lit brazier)
             // and inaccessible furniture, like filled charcoal kiln
-            if( mgr.has( zone_type_LOOT_IGNORE, src ) ||
+            if( mgr.has( zone_type_LOOT_IGNORE, src, your_fac, skip_personal ) ||
                 here.get_field( src_loc, fd_fire ) != nullptr ||
                 !here.can_put_items_ter_furn( src_loc ) ) {
                 continue;
@@ -2559,23 +2567,24 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
             }
 
             // skip favorite items in ignore favorite zones
-            if( thisitem.is_favorite && mgr.has( zone_type_LOOT_IGNORE_FAVORITES, src ) ) {
+            if( thisitem.is_favorite && mgr.has( zone_type_LOOT_IGNORE_FAVORITES, src, your_fac,
+                                                 skip_personal ) ) {
                 continue;
             }
 
             const zone_type_id id = mgr.get_near_zone_type_for_item( thisitem, abspos,
-                                    ACTIVITY_SEARCH_DISTANCE );
+                                    ACTIVITY_SEARCH_DISTANCE, skip_personal );
 
             // checks whether the item is already on correct loot zone or not
             // if it is, we can skip such item, if not we move the item to correct pile
             // think empty bag on food pile, after you ate the content
-            if( mgr.has( id, src ) ) {
+            if( mgr.has( id, src, your_fac, skip_personal ) ) {
                 continue;
             }
 
             const std::unordered_set<tripoint_abs_ms> &dest_set = mgr.get_near( id, abspos,
                     ACTIVITY_SEARCH_DISTANCE,
-                    &thisitem );
+                    &thisitem, your_fac, skip_personal );
             for( const auto &dest : dest_set ) {
                 const auto dest_loc = abs_to_bub( dest );
 

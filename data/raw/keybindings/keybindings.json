@@ -2873,6 +2873,27 @@
   },
   {
     "type": "keybinding",
+    "id": "ADD_PERSONAL_ZONE",
+    "category": "ZONES_MANAGER",
+    "name": "Add personal zone",
+    "bindings": [ { "input_method": "keyboard", "key": "p" }, { "input_method": "keyboard", "key": "P" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ENABLE_PERSONAL_ZONES",
+    "category": "ZONES_MANAGER",
+    "name": "Enable personal zones",
+    "bindings": [ { "input_method": "keyboard", "key": "z" }, { "input_method": "keyboard", "key": "Z" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "DISABLE_PERSONAL_ZONES",
+    "category": "ZONES_MANAGER",
+    "name": "Disable personal zones",
+    "bindings": [ { "input_method": "keyboard", "key": "x" }, { "input_method": "keyboard", "key": "X" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "REMOVE_ZONE",
     "category": "ZONES_MANAGER",
     "name": "Remove zone",

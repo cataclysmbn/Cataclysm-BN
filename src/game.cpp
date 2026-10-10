@@ -318,6 +318,7 @@ auto fling_bash_damage( const Creature &c, const float flvel ) -> int
 
 } // namespace
 
+static const activity_id ACT_MOVE_LOOT( "ACT_MOVE_LOOT" );
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
 static const activity_id ACT_AUTODRIVE( "ACT_AUTODRIVE" );
 static const activity_id ACT_CRAFT( "ACT_CRAFT" );
@@ -2518,9 +2519,33 @@ void game::process_voluntary_act_interrupt()
     }
 }
 
+static auto avatar_is_sorting_loot( const avatar &who ) -> bool
+{
+    const auto is_sort = []( const player_activity & act ) {
+        return act.id() == ACT_MOVE_LOOT;
+    };
+    if( who.activity && is_sort( *who.activity ) ) {
+        return true;
+    }
+    // The walk to a loot tile stores the sort before the avatar arrives.
+    // has_destination_activity() is true only when already standing on that tile.
+    if( !who.get_destination_activity().is_null() && is_sort( who.get_destination_activity() ) ) {
+        return true;
+    }
+    for( const auto &act : who.backlog ) {
+        if( act && is_sort( *act ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void game::process_activity()
 {
     ZoneScoped;
+    if( !avatar_is_sorting_loot( u ) ) {
+        zone_manager::get_manager().clear_sort_filter();
+    }
     if( !u.activity ) {
         return;
     }
@@ -2545,6 +2570,9 @@ void game::process_activity()
         if( activity_finished || activity_changed || activity_progressed ) {
             restore_debug_infinite_speed_moves( before_avatar_moves );
         }
+    }
+    if( !avatar_is_sorting_loot( u ) ) {
+        zone_manager::get_manager().clear_sort_filter();
     }
 }
 
@@ -9400,6 +9428,13 @@ static void zones_manager_shortcuts( const catacurses::window &w_info, const boo
     shortcut_print( w_info, point( tmpx, 3 ), c_white, submap_color,
                     _( "<G> - Submap grid" ) );
 
+    tmpx = 1;
+    tmpx += shortcut_print( w_info, point( tmpx, 4 ), c_white, c_light_green,
+                            _( "<P>ersonal zone" ) ) + 2;
+    tmpx += shortcut_print( w_info, point( tmpx, 4 ), c_white, c_light_green,
+                            _( "<Z> enable personal" ) ) + 2;
+    shortcut_print( w_info, point( tmpx, 4 ), c_white, c_light_green, _( "<X> disable personal" ) );
+
     wnoutrefresh( w_info );
 }
 
@@ -9451,7 +9486,7 @@ void game::zones_manager()
 
     u.view_offset = tripoint_rel_ms::zero();
 
-    const int zone_ui_height = 12;
+    const int zone_ui_height = 13;
     const int zone_options_height = 7;
 
     const int width = 45;
@@ -9504,12 +9539,16 @@ void game::zones_manager()
     ctxt.register_action( "SHOW_ZONE_ON_MAP" );
     ctxt.register_action( "ENABLE_ZONE" );
     ctxt.register_action( "DISABLE_ZONE" );
+    ctxt.register_action( "ADD_PERSONAL_ZONE" );
+    ctxt.register_action( "ENABLE_PERSONAL_ZONES" );
+    ctxt.register_action( "DISABLE_PERSONAL_ZONES" );
     ctxt.register_action( "SHOW_ALL_ZONES" );
     ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
     auto &mgr = zone_manager::get_manager();
+    mgr.clear_sort_filter();
     int start_index = 0;
     int active_index = 0;
     bool stuff_changed = false;
@@ -9642,6 +9681,53 @@ void game::zones_manager()
         return std::nullopt;
     };
 
+    auto query_personal_position =
+    [&]() -> std::optional<std::pair<tripoint_rel_ms, tripoint_rel_ms>> {
+        on_out_of_scope invalidate_current_ui( [&]()
+        {
+            ui.mark_resize();
+        } );
+        restore_on_out_of_scope<bool> show_prev( show );
+        restore_on_out_of_scope<std::optional<tripoint_abs_ms>> zone_start_prev( zone_start );
+        restore_on_out_of_scope<std::optional<tripoint_abs_ms>> zone_end_prev( zone_end );
+        restore_on_out_of_scope<bool> zone_cursor_prev( zone_cursor );
+        show = false;
+        zone_start = std::nullopt;
+        zone_end = std::nullopt;
+        zone_cursor = true;
+        ui.mark_resize();
+
+        static_popup popup;
+        popup.on_top( true );
+        popup.message( "%s", _( "Select first point." ) );
+
+        const auto origin = u.bub_pos();
+        auto center = origin + u.view_offset;
+
+        const look_around_result first = look_around( /*show_window=*/false, center, center, false, true,
+                false );
+        if( first.position )
+        {
+            popup.message( "%s", _( "Select second point." ) );
+
+            const look_around_result second = look_around( /*show_window=*/false, center, *first.position,
+                    true, true, false );
+            if( second.position ) {
+                const auto first_rel = tripoint_rel_ms(
+                    std::min( first.position->x(), second.position->x() ) - origin.x(),
+                    std::min( first.position->y(), second.position->y() ) - origin.y(),
+                    std::min( first.position->z(), second.position->z() ) - origin.z() );
+                const auto second_rel = tripoint_rel_ms(
+                    std::max( first.position->x(), second.position->x() ) - origin.x(),
+                    std::max( first.position->y(), second.position->y() ) - origin.y(),
+                    std::max( first.position->z(), second.position->z() ) - origin.z() );
+                return std::pair<tripoint_rel_ms, tripoint_rel_ms>( first_rel, second_rel );
+            }
+        }
+
+        return std::nullopt;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         if( !show ) {
             return;
@@ -9681,7 +9767,9 @@ void game::zones_manager()
 
                     //Draw Zone name
                     mvwprintz( w_zones, point( 3, iNum - start_index ), colorLine,
-                               trim_by_length( zone.get_name(), 15 ) );
+                               //~ "P: <Zone Name>" marks a personal zone
+                               trim_by_length( ( zone.get_is_personal() ? _( "P: " ) : "" ) + zone.get_name(),
+                                               15 ) );
 
                     //Draw Type name
                     mvwprintz( w_zones, point( 20, iNum - start_index ), colorLine,
@@ -9751,6 +9839,44 @@ void game::zones_manager()
 
                 stuff_changed = true;
             } while( false );
+        } else if( action == "ADD_PERSONAL_ZONE" ) {
+            do {
+                const auto maybe_id = mgr.query_type( true );
+                if( !maybe_id.has_value() ) {
+                    break;
+                }
+
+                const zone_type_id &id = maybe_id.value();
+                auto options = zone_options::create( id );
+
+                if( !options->query_at_creation() ) {
+                    break;
+                }
+
+                auto default_name = options->get_zone_name_suggestion();
+                if( default_name.empty() ) {
+                    default_name = mgr.get_name_from_type( id );
+                }
+                const auto maybe_name = mgr.query_name( default_name );
+                if( !maybe_name.has_value() ) {
+                    break;
+                }
+                const std::string &name = maybe_name.value();
+
+                current_zone_type = id;
+                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
+                const auto position = query_personal_position();
+                if( !position ) {
+                    break;
+                }
+
+                mgr.add( name, id, g->u.get_faction()->id, false, true, position->first,
+                         position->second, options );
+
+                zones = get_zones();
+                active_index = zone_cnt - 1;
+                stuff_changed = true;
+            } while( false );
         } else if( action == "SHOW_ALL_ZONES" ) {
             show_all_zones = !show_all_zones;
             zones = get_zones();
@@ -9811,11 +9937,20 @@ void game::zones_manager()
                         }
                         break;
                     case 4: {
-                        const auto pos = query_position();
-                        if( pos && ( pos->first != zone.get_start_point() ||
-                                     pos->second != zone.get_end_point() ) ) {
-                            zone.set_position( *pos );
-                            stuff_changed = true;
+                        if( zone.get_is_personal() ) {
+                            const auto pos = query_personal_position();
+                            if( pos && ( u.abs_pos() + pos->first != zone.get_start_point() ||
+                                         u.abs_pos() + pos->second != zone.get_end_point() ) ) {
+                                zone.set_position( *pos );
+                                stuff_changed = true;
+                            }
+                        } else {
+                            const auto pos = query_position();
+                            if( pos && ( pos->first != zone.get_start_point() ||
+                                         pos->second != zone.get_end_point() ) ) {
+                                zone.set_position( *pos );
+                                stuff_changed = true;
+                            }
                         }
                         break;
                     }
@@ -9850,7 +9985,14 @@ void game::zones_manager()
                             }
 
                             const auto new_end_point = zone.get_end_point() - zone.get_start_point() + new_start_point;
-                            zone.set_position( std::pair<tripoint_abs_ms, tripoint_abs_ms>( new_start_point, new_end_point ) );
+                            if( zone.get_is_personal() ) {
+                                const auto origin = u.abs_pos();
+                                zone.set_position( std::pair<tripoint_rel_ms, tripoint_rel_ms>(
+                                                       new_start_point - origin, new_end_point - origin ) );
+                            } else {
+                                zone.set_position( std::pair<tripoint_abs_ms, tripoint_abs_ms>( new_start_point,
+                                                   new_end_point ) );
+                            }
                             stuff_changed = true;
                         }
                     }
@@ -9892,6 +10034,22 @@ void game::zones_manager()
                 zones[active_index].get().set_enabled( false );
 
                 stuff_changed = true;
+            } else if( action == "ENABLE_PERSONAL_ZONES" ) {
+                for( const auto &zone_ref : zones ) {
+                    auto &zone = zone_ref.get();
+                    if( zone.get_is_personal() && !zone.get_enabled() ) {
+                        zone.set_enabled( true );
+                        stuff_changed = true;
+                    }
+                }
+            } else if( action == "DISABLE_PERSONAL_ZONES" ) {
+                for( const auto &zone_ref : zones ) {
+                    auto &zone = zone_ref.get();
+                    if( zone.get_is_personal() && zone.get_enabled() ) {
+                        zone.set_enabled( false );
+                        stuff_changed = true;
+                    }
+                }
             }
         }
 

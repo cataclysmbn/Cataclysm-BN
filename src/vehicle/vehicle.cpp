@@ -7558,7 +7558,7 @@ auto vehicle::refresh_zones() -> bool {
                 continue;
             }
             auto zone_pos = abs_part_location(part_idx);
-            // Set the position of the zone to that part
+            // manual=false keeps a pinned personal-zone sort from sliding when vehicles refresh.
             zone.set_position(
                 std::pair<tripoint_abs_ms, tripoint_abs_ms>(zone_pos, zone_pos), false);
             new_zones.emplace(z.first, zone);

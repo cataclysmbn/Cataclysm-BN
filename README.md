@@ -71,6 +71,17 @@ Please read the official docs for details:
 - [building with MSYS2](docs/en/dev/guides/building/msys.md)
 - [building with vcpkg](docs/en/dev/guides/building/vs_vcpkg.md)
 
+## Personal loot zones
+
+Zone manager (`Y`), then `P`, adds a loot zone stored relative to your character. It moves with you and is listed with a `P:` prefix. Only loot zone types can be personal. `Z` enables every personal zone in the list, and `X` disables them.
+
+`Shift+O` (zone actions) asks which sort to run:
+
+- **Sort out regular zones** uses map zones and ignores personal zones for that run.
+- **Sort out personal zones** uses personal zones only. The rectangles stay where they were when sorting started, so the destination does not slide as you walk.
+
+Friendly NPCs do not use personal zones. They keep using static camp zones.
+
 ## Contributing
 
 > Cataclysm: Bright Nights developed under Creative Commons Attribution ShareAlike 3.0 license. The
