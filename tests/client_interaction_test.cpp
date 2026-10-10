@@ -4396,10 +4396,10 @@ TEST_CASE(
 TEST_CASE(
     "look around publishes its cursor and leaves on semantic cancel",
     "[client][interaction][mcp]") {
-    const auto guard = interaction_test_guard{};
     clear_map();
     auto& you = get_avatar();
     clear_character(you, false);
+    const auto guard = interaction_test_guard{};
     auto reads = 0;
     auto cursor = tripoint_bub_ms{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -4414,8 +4414,9 @@ TEST_CASE(
             .operation = game_client::interaction_operation::cancel,
         });
     });
-    const auto result = g->look_around();
-    CHECK_FALSE(result);
+    auto center = you.bub_pos();
+    const auto result = g->look_around(false, center, center, false, false, false);
+    CHECK_FALSE(result.position);
     REQUIRE(reads == 2);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
 }
