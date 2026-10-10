@@ -12,8 +12,11 @@ namespace engine_client
 {
 namespace
 {
+// The MSVC standard library's node containers do not promise noexcept move assignment.
+#if !defined(_MSC_VER)
 static_assert( std::is_nothrow_move_assignable_v<state_value> );
 static_assert( std::is_nothrow_move_assignable_v<snapshot> );
+#endif
 
 /// One event must fit a frame with room for its siblings in the same notification.
 constexpr auto maximum_event_bytes = maximum_frame_bytes / 2;
