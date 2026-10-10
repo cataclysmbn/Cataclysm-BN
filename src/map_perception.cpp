@@ -410,12 +410,17 @@ auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
     const auto blind = you.is_blind();
     if( blind && you.clairvoyance() == 0 ) { return result; }
     const auto &vision = here.get_visibility_variables_cache();
+    // Classify each light level once instead of calling the map per cell.
+    auto clear = std::array < bool, static_cast<size_t>( lit_level::BLANK ) + 1 > {};
+    for( const auto level : std::views::iota( 0, static_cast<int>( clear.size() ) ) ) {
+        clear[level] = here.get_visibility( static_cast<lit_level>( level ), vision ) == VIS_CLEAR;
+    }
     for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         const auto &cache = here.access_cache( z );
         if( cache.visibility_cache.size() < static_cast<size_t>( cache.cache_x * cache.cache_y ) ) { continue; }
         for( const auto x : std::views::iota( 0, cache.cache_x ) ) {
             for( const auto y : std::views::iota( 0, cache.cache_y ) ) {
-                if( here.get_visibility( cache.visibility_cache[cache.idx( x, y )], vision ) != VIS_CLEAR ) {
+                if( !clear[static_cast<size_t>( cache.visibility_cache[cache.idx( x, y )] )] ) {
                     continue;
                 }
                 const auto p = tripoint_bub_ms( x, y, z );
