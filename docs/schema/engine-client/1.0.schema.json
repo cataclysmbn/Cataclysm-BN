@@ -237,7 +237,59 @@
         "at",
         "known"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "known": {
+                "const": "remembered"
+              }
+            },
+            "required": [
+              "known"
+            ]
+          },
+          "then": {
+            "properties": {
+              "terrain": false,
+              "furniture": false,
+              "fields": false,
+              "traps": false,
+              "items": false,
+              "vehicle": false,
+              "light": false
+            },
+            "required": [
+              "memory"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "known": {
+                "const": "sensed"
+              }
+            },
+            "required": [
+              "known"
+            ]
+          },
+          "then": {
+            "properties": {
+              "terrain": false,
+              "furniture": false,
+              "fields": false,
+              "traps": false,
+              "items": false,
+              "vehicle": false,
+              "light": false,
+              "memory": false
+            }
+          }
+        }
+      ]
     },
     "entity": {
       "type": "object",
@@ -275,7 +327,45 @@
         "at",
         "known"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "known": {
+                "const": "sensed"
+              }
+            },
+            "required": [
+              "known"
+            ]
+          },
+          "then": {
+            "properties": {
+              "look": false,
+              "name": false,
+              "statuses": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "known": {
+                "const": "visible"
+              }
+            },
+            "required": [
+              "known"
+            ]
+          },
+          "then": {
+            "properties": {
+              "sense": false
+            }
+          }
+        }
+      ]
     },
     "avatar": {
       "type": "object",
@@ -2253,7 +2343,8 @@
         "reason": {
           "enum": [
             "world_replaced",
-            "overflow"
+            "overflow",
+            "state_removed"
           ]
         },
         "lost_after": {

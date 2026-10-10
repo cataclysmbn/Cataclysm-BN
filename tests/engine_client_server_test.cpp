@@ -35,10 +35,12 @@ auto world_cell(const int x) -> cell {
             .terrain = look{.kind = "terrain", .id = "t_dirt", .glyph = ".", .color = "brown"}};
 }
 auto known_cells = std::vector<int>{1, 2};
+auto with_avatar = true;
 auto capture_test_world() -> world_state {
     auto result = world_state{};
     result.coverage = bounds{.min = {.x = 0, .y = -5, .z = 0}, .max = {.x = 1000, .y = 5, .z = 0}};
     for (const auto x : known_cells) { result.cells[{.x = x}] = world_cell(x); }
+    if (with_avatar) { result.avatar = avatar_value{.id = "e:avatar", .name = "Ada"}; }
     return result;
 }
 
@@ -77,6 +79,7 @@ struct fixture {
     }};
     fixture() {
         known_cells = {1, 2};
+        with_avatar = true;
         authority.set_world_capture(&capture_test_world);
     }
     /// Feed `text`, then stop at the next native input. Ending without queued input ends the
@@ -316,6 +319,21 @@ TEST_CASE("a registered action is submittable as a command", "[engine_client_ser
     CHECK(contains(test.output.str(), R"("stage":"validated")"));
     REQUIRE(test.queued.size() == 1);
     CHECK(test.queued.front().action == "YES");
+}
+
+TEST_CASE("a capture that drops the avatar resynchronizes subscribers", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.authority.take_push();
+    with_avatar = false;
+    test.next_boundary();
+    const auto pushed = test.authority.take_push();
+    REQUIRE(pushed.size() == 1);
+    const auto* notice = std::get_if<resync_notice>(&pushed.front());
+    REQUIRE(notice);
+    CHECK(notice->reason == "state_removed");
+    CHECK(test.authority.current()->value.world.avatar == std::nullopt);
 }
 
 #endif

@@ -101,9 +101,12 @@ auto session::publish_boundary() -> std::expected<void, error>
     auto published = stream_->publish( std::move( request ) );
     if( published ) {
         if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
-    } else if( published.error() == error::resource_limit ) {
-        // The change does not fit one event: adopt the state and make subscribers start over.
-        push_.emplace_back( resync_notice{ .epoch = epoch_, .reason = "overflow",
+    } else if( published.error() == error::resource_limit ||
+               published.error() == error::resync_required ) {
+        // The change does not fit one event or cannot be expressed: adopt the state and make
+        // subscribers start over.
+        push_.emplace_back( resync_notice{ .epoch = epoch_,
+                                           .reason = published.error() == error::resource_limit ? "overflow" : "state_removed",
                                            .lost_after = stream_->current().at.sequence } );
         if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
     } else { return std::unexpected( published.error() ); }

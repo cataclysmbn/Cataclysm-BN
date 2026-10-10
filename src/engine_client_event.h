@@ -82,6 +82,8 @@ class event_stream
         static auto create( std::string epoch, state_value initial ) -> std::expected<event_stream, error>;
         auto current() const -> const snapshot &; // *NOPAD*
         /// Nothing is published when the decision is withheld or the state did not change.
+        /// `resync_required`: the state drops a coverage, avatar or environment, which no event
+        /// can express; the caller rebases and tells subscribers to start over.
         auto publish( publish_request request ) -> std::expected<std::optional<public_event>, error>;
         /// Engine-boundary recovery when an event cannot be encoded: adopt `next` and advance the
         /// revision only. Subscribers must be told `resync` and take a fresh snapshot.

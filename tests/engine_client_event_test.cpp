@@ -261,3 +261,63 @@ TEST_CASE(
     REQUIRE_FALSE(big_header);
     CHECK(big_header.error() == error::resource_limit);
 }
+
+TEST_CASE(
+    "a capture that drops coverage, avatar or environment forces a resync",
+    "[engine_client_event]") {
+    auto full = world_of({visible_cell(1)});
+    full.world.avatar = avatar_value{.id = "e:avatar", .at = pos(1), .name = "Ada"};
+    full.world.environment = environment_value{.turn = "1", .time = "t", .weather = "clear"};
+    for (const auto what : {0, 1, 2}) {
+        CAPTURE(what);
+        auto stream = stream_of(full);
+        auto next = full;
+        next.interaction = menu("boundary:2");
+        if (what == 0) {
+            next.world.coverage.reset();
+            next.world.cells.clear();
+        }
+        if (what == 1) { next.world.avatar.reset(); }
+        if (what == 2) { next.world.environment.reset(); }
+        const auto before = stream.current().at;
+        const auto published = stream.publish({.next = next});
+        REQUIRE_FALSE(published);
+        CHECK(published.error() == error::resync_required);
+        CHECK(stream.current().at == before);
+        REQUIRE(stream.rebase(next));
+        CHECK(stream.current().at == clock_point{"epoch:a", 0, 1});
+        CHECK(same_state(stream.current().value, next));
+    }
+}
+
+TEST_CASE("knowledge limits what a value may disclose", "[engine_client_event]") {
+    const auto rejects = [](const state_value& value) {
+        const auto created = event_stream::create("epoch:a", value);
+        REQUIRE_FALSE(created);
+        CHECK(created.error() == error::validation_failed);
+    };
+    auto remembered_with_terrain = remembered_cell(1);
+    remembered_with_terrain.terrain = dirt();
+    rejects(world_of({remembered_with_terrain}));
+    auto remembered_without_memory = remembered_cell(1);
+    remembered_without_memory.memory.reset();
+    rejects(world_of({remembered_without_memory}));
+    auto sensed_cell = cell{.at = pos(1), .known = knowledge::sensed, .terrain = dirt()};
+    rejects(world_of({sensed_cell}));
+    auto sensed_looks = monster("e:1", 1);
+    sensed_looks.known = knowledge::sensed;
+    rejects(world_of({}, {sensed_looks}));
+    auto visible_with_sense = monster("e:1", 1);
+    visible_with_sense.sense = "sound";
+    rejects(world_of({}, {visible_with_sense}));
+
+    // A bad capture later in the stream publishes nothing and consumes nothing.
+    auto stream = stream_of(world_of({visible_cell(1)}));
+    const auto leak = stream.publish({.next = world_of({remembered_with_terrain})});
+    REQUIRE_FALSE(leak);
+    CHECK(leak.error() == error::validation_failed);
+    CHECK(stream.current().at == clock_point{"epoch:a", 0, 0});
+    auto sensed_entity =
+        entity{.id = "e:2", .at = pos(2), .known = knowledge::sensed, .sense = "sound"};
+    CHECK(stream.publish({.next = world_of({visible_cell(1)}, {sensed_entity})}));
+}

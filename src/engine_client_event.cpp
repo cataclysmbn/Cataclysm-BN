@@ -27,6 +27,52 @@ auto valid_event( const event_value &value ) -> bool
            ( !value.cause || ( *value.cause != 0 && *value.cause < value.sequence ) ) &&
            ( !value.command || ( !value.command->empty() && value.command->size() <= maximum_id_bytes ) );
 }
+/// Knowledge decides which facts a value may carry (design 3.3): remembered cells only their
+/// memory, sensed cells and entities no appearance. A capture that violates it never publishes.
+auto valid_cell( const cell &value ) -> bool
+{
+    const auto live = value.terrain || value.furniture || !value.fields.empty() ||
+                      !value.traps.empty() ||
+                      !value.items.empty() || value.vehicle || value.light;
+    switch( value.known ) {
+        case knowledge::remembered:
+            return !live && value.memory;
+        case knowledge::visible:
+            return true;
+        case knowledge::sensed:
+            return !live && !value.memory;
+    }
+    return false;
+}
+auto valid_entity( const entity &value ) -> bool
+{
+    switch( value.known ) {
+        case knowledge::visible:
+            return !value.sense;
+        case knowledge::sensed:
+            return !value.appearance && !value.name && value.statuses.empty();
+        case knowledge::remembered:
+            return false;
+    }
+    return false;
+}
+auto valid_world( const world_state &world ) -> bool
+{
+    return std::ranges::all_of( world.cells, []( const auto & entry ) { return valid_cell( entry.second ); } )
+    &&
+    std::ranges::all_of( world.entities, []( const auto & entry ) { return valid_entity( entry.second ); } );
+}
+auto validate_state( const state_value &value ) -> std::expected<void, error>
+{
+    if( !valid_world( value.world ) ) { return std::unexpected( error::validation_failed ); }
+    return validate_boundary( value.interaction );
+}
+/// The diff cannot say that a coverage, avatar or environment disappeared.
+auto removes_value( const state_value &from, const state_value &to ) -> bool
+{
+    return ( from.world.coverage && !to.world.coverage ) || ( from.world.avatar && !to.world.avatar ) ||
+           ( from.world.environment && !to.world.environment );
+}
 template<typename Key, typename Value, typename Remove>
 auto erase_where( std::map<Key, Value> &values, const Remove &remove ) -> void
 {
@@ -131,9 +177,7 @@ auto event_stream::create( std::string epoch,
                            state_value initial ) -> std::expected<event_stream, error>
 {
     if( epoch.empty() || epoch.size() > maximum_id_bytes ) { return std::unexpected( error::validation_failed ); }
-    if( const auto valid = validate_boundary( initial.interaction ); !valid ) {
-        return std::unexpected( valid.error() );
-    }
+    if( const auto valid = validate_state( initial ); !valid ) { return std::unexpected( valid.error() ); }
     return event_stream{snapshot{.at = {.epoch = std::move( epoch )}, .value = std::move( initial )}};
 }
 auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
@@ -142,9 +186,8 @@ auto event_stream::publish( publish_request request ) ->
 std::expected<std::optional<public_event>, error>
 {
     if( request.decision == disclosure::withheld ) { return std::nullopt; }
-    if( const auto valid = validate_boundary( request.next.interaction ); !valid ) {
-        return std::unexpected( valid.error() );
-    }
+    if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
+    if( removes_value( current_.value, request.next ) ) { return std::unexpected( error::resync_required ); }
     if( request.cause && ( *request.cause == 0 || *request.cause > current_.at.sequence ) ) {
         return std::unexpected( error::validation_failed );
     }
@@ -176,7 +219,7 @@ std::expected<std::optional<public_event>, error>
 
 auto event_stream::rebase( state_value next ) -> std::expected<void, error>
 {
-    if( const auto valid = validate_boundary( next.interaction ); !valid ) { return valid; }
+    if( const auto valid = validate_state( next ); !valid ) { return valid; }
     if( current_.at.revision == std::numeric_limits<counter>::max() ) {
         return std::unexpected( error::resource_limit );
     }
