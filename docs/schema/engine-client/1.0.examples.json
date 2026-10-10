@@ -1259,6 +1259,129 @@
         "max_length": -1,
         "printable": false
       }
+    },
+    {
+      "name": "projectile, explosion and combat text facts",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "8",
+            "revision": "7",
+            "type": "projectile.moved",
+            "command": "command:9",
+            "data": {
+              "projectile": "projectile:1",
+              "path": [
+                {
+                  "dim": "",
+                  "x": 3,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 4,
+                  "y": 4,
+                  "z": 0
+                }
+              ],
+              "look": {
+                "kind": "projectile",
+                "id": null,
+                "glyph": "*",
+                "color": "red"
+              }
+            },
+            "display": {
+              "duration_ms": 20
+            }
+          },
+          {
+            "sequence": "9",
+            "revision": "7",
+            "type": "explosion.started",
+            "command": "command:9",
+            "data": {
+              "explosion": "explosion:1",
+              "at": {
+                "dim": "",
+                "x": 5,
+                "y": 4,
+                "z": 0
+              },
+              "radius": 3,
+              "color": "red"
+            },
+            "display": {
+              "duration_ms": 40
+            }
+          },
+          {
+            "sequence": "10",
+            "revision": "7",
+            "type": "explosion.blast",
+            "command": "command:9",
+            "data": {
+              "explosion": "explosion:2",
+              "cells": [
+                {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 6,
+                  "y": 4,
+                  "z": 0
+                }
+              ]
+            },
+            "display": {
+              "duration_ms": 10
+            }
+          },
+          {
+            "sequence": "11",
+            "revision": "7",
+            "type": "explosion.ended",
+            "command": "command:9",
+            "data": {
+              "explosion": "explosion:1"
+            }
+          },
+          {
+            "sequence": "12",
+            "revision": "7",
+            "type": "combat_text.shown",
+            "command": "command:9",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 5,
+                "y": 4,
+                "z": 0
+              },
+              "segments": [
+                {
+                  "text": "-12",
+                  "color": "light_red"
+                },
+                {
+                  "text": " crit",
+                  "color": "yellow"
+                }
+              ]
+            },
+            "display": {
+              "duration_ms": 80
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -1942,6 +2065,31 @@
         }
       },
       "why": "editor.type is one of bool, select, integer, float, text"
+    },
+    {
+      "name": "combat text without segments",
+      "def": "events_notification",
+      "why": "combat_text.shown carries at least one colored segment",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "12",
+            "revision": "7",
+            "type": "combat_text.shown",
+            "command": "command:9",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 5,
+                "y": 4,
+                "z": 0
+              },
+              "segments": []
+            }
+          }
+        ]
+      }
     }
   ]
 }

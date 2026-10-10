@@ -1364,7 +1364,8 @@
             "explosion.ended",
             "terrain.changed",
             "furniture.changed",
-            "field.changed"
+            "field.changed",
+            "combat_text.shown"
           ]
         },
         "cause": {
@@ -1839,6 +1840,28 @@
               "data"
             ]
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "combat_text.shown"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data_combat_text_shown"
+              }
+            },
+            "required": [
+              "data"
+            ]
+          }
         }
       ]
     },
@@ -2017,6 +2040,9 @@
             "$ref": "#/$defs/pos"
           },
           "minItems": 1
+        },
+        "look": {
+          "$ref": "#/$defs/look"
         }
       },
       "required": [
@@ -2195,6 +2221,41 @@
         "intensity"
       ],
       "additionalProperties": false
+    },
+    "data_combat_text_shown": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "color"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "at",
+        "segments"
+      ],
+      "additionalProperties": false,
+      "description": "Floating text at a square, as the native scrolling combat text: one or two colored segments."
     },
     "hello_params": {
       "type": "object",
