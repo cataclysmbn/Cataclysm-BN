@@ -53,6 +53,7 @@ auto to_json( const look &value ) -> json
             {"flags", value.mutation->flags}
         };
     }
+    if( !value.tint_keys.empty() ) { result["tint_keys"] = value.tint_keys; }
     if( value.tint ) {
         result["tint"] = json::object();
         if( !value.tint->bg.empty() ) { result["tint"]["bg"] = value.tint->bg; }

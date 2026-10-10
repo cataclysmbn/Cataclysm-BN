@@ -1684,6 +1684,97 @@
           }
         ]
       }
+    },
+    {
+      "def": "look",
+      "name": "look of a mutation overlay",
+      "value": {
+        "kind": "overlay",
+        "id": "mutation_hair_long",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_mutation_hair_long",
+        "mutation": {
+          "id": "hair_long",
+          "types": [
+            "hair_style"
+          ],
+          "flags": []
+        }
+      }
+    },
+    {
+      "def": "entity",
+      "name": "entity with the mutations of a character by type",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "environment with the tilesets the game data adds",
+      "value": {
+        "turn": "0",
+        "time": "Spring, day 1 8:00:00 AM",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/data/json/external_tileset/vehicle_parts.json",
+            "base": "/g/data/json/",
+            "index": 1,
+            "compatibility": [
+              "UNDEAD_PEOPLE_BASE"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "def": "cell",
+      "name": "cell holding a loaded vehicle cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "vehicle": {
+          "kind": "vehicle_part",
+          "id": "trunk",
+          "glyph": "H",
+          "color": "brown"
+        },
+        "cargo": true
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of an item overlay with the ids its tints are keyed by",
+      "value": {
+        "kind": "overlay",
+        "id": "worn_jeans",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_worn_jeans",
+        "tint_keys": [
+          "VARSIZE",
+          "jeans"
+        ]
+      }
     }
   ],
   "invalid": [

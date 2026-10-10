@@ -251,6 +251,13 @@
             "flags"
           ],
           "additionalProperties": false
+        },
+        "tint_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Set on the overlay of a worn or wielded item, a bionic or an effect: the ids a tileset's tints are keyed by, in the order the native view tries them: the flags, then the id."
         }
       },
       "required": [

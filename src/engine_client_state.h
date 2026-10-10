@@ -64,6 +64,9 @@ struct look {
     std::optional<look_tint> tint = std::nullopt;
     /// Set on the overlay of a mutation.
     std::optional<look_mutation> mutation = std::nullopt;
+    /// Set on the overlay of a worn or wielded item, a bionic or an effect: the ids a tileset's tints are
+    /// keyed by, in the order the native view tries them (the flags, then the id).
+    std::vector<std::string> tint_keys = {};
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {

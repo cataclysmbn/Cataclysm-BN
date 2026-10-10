@@ -797,6 +797,10 @@ TEST_CASE(
         CHECK(overlay->looks_like[1] == std::string(gender) + "worn_" + parent.str());
     }
     CHECK(overlay->looks_like.size() <= 20);
+    // A tileset's tints for the item are keyed by its flags, then its id.
+    REQUIRE_FALSE(overlay->tint_keys.empty());
+    CHECK(overlay->tint_keys.back() == "scarf_fur");
+    CHECK(overlay->tint_keys.size() == item::spawn("scarf_fur")->get_flags().size() + 1);
 
     // Monsters wear nothing.
     spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 1, 0));

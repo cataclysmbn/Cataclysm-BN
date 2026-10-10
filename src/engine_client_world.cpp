@@ -12,6 +12,8 @@
 #include "creature.h"
 #include "game.h"
 #include "game_session.h"
+#include "bionics.h"
+#include "effect.h"
 #include "item.h"
 #include "tileray.h"
 #include "units_angle.h"
@@ -451,6 +453,16 @@ auto overlays_of( const Creature &critter ) -> std::vector<look>
                 .id = ( *mut )->first.str(),
                 .types = { branch.types.begin(), branch.types.end() },
                 .flags = branch.flags | std::views::transform( &trait_flag_str_id::str ) | std::ranges::to<std::vector>() };
+        } else if( const auto *const thing = std::get_if<const item *>( &entry.entry ) ) {
+            result.tint_keys = ( *thing )->get_flags() | std::views::transform( &flag_id::str ) |
+                               std::ranges::to<std::vector>();
+            result.tint_keys.push_back( ( *thing )->typeId().str() );
+        } else if( const auto *const bio = std::get_if<const bionic *>( &entry.entry ) ) {
+            result.tint_keys = ( *bio )->id->flags | std::views::transform( &flag_id::str ) |
+                               std::ranges::to<std::vector>();
+            result.tint_keys.push_back( ( *bio )->id.str() );
+        } else if( const auto *const eff = std::get_if<const effect *>( &entry.entry ) ) {
+            result.tint_keys = { ( *eff )->get_id().str() };
         }
         return result;
     } ) | std::ranges::to<std::vector>();
