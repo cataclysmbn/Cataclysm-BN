@@ -29,6 +29,8 @@ struct bounds {
 struct look {
     std::string kind = {};
     std::optional<std::string> id = std::nullopt;
+    /// Player-facing name as the native look shows it ("floor" for t_floor); absent when the data has none.
+    std::optional<std::string> name = std::nullopt;
     std::string glyph = {};
     std::string color = {};
     /// Tile id native tilesets look up when it differs from `id` (corpses, characters).

@@ -1431,6 +1431,17 @@
           "You can see a zombie here."
         ]
       }
+    },
+    {
+      "name": "look with the native display name",
+      "def": "look",
+      "value": {
+        "kind": "terrain",
+        "id": "t_floor",
+        "name": "wooden floor",
+        "glyph": ".",
+        "color": "light_gray"
+      }
     }
   ],
   "invalid": [
@@ -2166,6 +2177,20 @@
         }
       },
       "why": "context requires pos"
+    },
+    {
+      "name": "look name of the wrong type",
+      "def": "look",
+      "why": "name is the display string, not an object",
+      "value": {
+        "kind": "terrain",
+        "id": "t_floor",
+        "name": {
+          "en": "wooden floor"
+        },
+        "glyph": ".",
+        "color": "light_gray"
+      }
     }
   ]
 }

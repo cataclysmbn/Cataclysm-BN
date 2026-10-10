@@ -127,6 +127,7 @@ auto terrain_look( const ter_id &id, const int symbol,
                    const map_perception::orientation &shape ) -> look
 {
     auto result = make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
+    result.name = id->name();
     result.looks_like = looks_like_chain<ter_str_id>( id->looks_like );
     return with_shape( std::move( result ), shape );
 }
@@ -134,6 +135,7 @@ auto terrain_look( const ter_id &id, const int symbol,
 auto furniture_look( const furn_id &id, const map_perception::orientation &shape ) -> look
 {
     auto result = make_look( "furniture", id.id().str(), glyph_of( id->symbol() ), id->color() );
+    result.name = id->name();
     result.looks_like = looks_like_chain<furn_str_id>( id->looks_like );
     return with_shape( std::move( result ), shape );
 }
@@ -141,6 +143,7 @@ auto furniture_look( const furn_id &id, const map_perception::orientation &shape
 auto trap_look( const trap &tr, const map_perception::orientation &shape ) -> look
 {
     auto result = make_look( "trap", tr.id.str(), glyph_of( tr.sym ), tr.color );
+    result.name = tr.name();
     result.looks_like = looks_like_chain<trap_str_id>( tr.looks_like );
     return with_shape( std::move( result ), shape );
 }
@@ -150,6 +153,7 @@ auto vehicle_part_look( const vpart_info &info, const char modifier, const int d
 {
     auto result = make_look( "vehicle_part", info.id.str(), glyph_of( special_symbol( info.sym ) ),
                              info.color );
+    result.name = info.name();
     result.tile = "vp_" + info.id.str();
     for( const auto &id : looks_like_chain<vpart_id>( info.looks_like ) ) { result.looks_like.push_back( "vp_" + id ); }
     result.subtile = map_perception::multitile_key( modifier == 1 ? open_ : modifier == 2 ? broken :
@@ -161,6 +165,7 @@ auto vehicle_part_look( const vpart_info &info, const char modifier, const int d
 auto item_look( const item &thing ) -> look
 {
     auto result = make_look( "item", thing.typeId().str(), thing.symbol(), thing.color() );
+    result.name = thing.type_name();
     const auto *monster = thing.get_mtype();
     if( thing.typeId() == itype_corpse && monster != nullptr ) {
         result.tile = "corpse_" + monster->id.str();
@@ -247,6 +252,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         if( !entry.is_field_alive() ) { continue; }
         auto appearance = make_look( "field", type.id().str(), entry.symbol(), entry.color() );
         appearance.looks_like = looks_like_chain<field_type_str_id>( type->looks_like );
+        appearance.name = type->get_name( std::max( entry.get_field_intensity() - 1, 0 ) );
         // Only the displayed field is drawn, joined to neighbours showing the same field.
         if( type == displayed ) {
             auto mask = uint8_t{ 0 };

@@ -157,6 +157,10 @@
             "null"
           ]
         },
+        "name": {
+          "type": "string",
+          "description": "Player-facing name the native look shows, translated: \"wooden floor\" for t_floor. Absent for creatures (the entity's name) and ids the data no longer knows."
+        },
         "glyph": {
           "type": "string"
         },

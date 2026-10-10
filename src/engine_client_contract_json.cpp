@@ -40,6 +40,7 @@ auto to_json( const look &value ) -> json
 {
     auto result = json{{"kind", value.kind}, {"id", value.id ? json( *value.id ) : json( nullptr )},
         {"glyph", value.glyph}, {"color", value.color}};
+    if( value.name ) { result["name"] = *value.name; }
     if( value.tile ) { result["tile"] = *value.tile; }
     if( !value.looks_like.empty() ) { result["looks_like"] = value.looks_like; }
     if( value.subtile ) { result["subtile"] = *value.subtile; }

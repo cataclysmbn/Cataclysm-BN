@@ -697,6 +697,24 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture names each look by the display name the native look shows",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto floor = setup.start + tripoint_north;
+    get_map().ter_set(floor, ter_id("t_floor"));
+    get_map().add_item_or_charges(floor, item::spawn("rock"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* cell = find_cell(state, at(floor));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->terrain);
+    CHECK(cell->terrain->name == ter_id("t_floor")->name());
+    CHECK(cell->terrain->name == "wooden floor");
+    REQUIRE_FALSE(cell->items.empty());
+    CHECK(cell->items.back().name == item::spawn("rock")->type_name());
+}
+
+TEST_CASE(
     "world capture lists the uppermost item last and names a corpse by its monster",
     "[engine_client_world]") {
     const auto setup = make_scene();
