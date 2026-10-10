@@ -49,7 +49,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 `operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) `action`(이동 키 같은 등록된 행동) 또는 `travel`(맵 클릭) 중 하나입니다.
 
 ```json
-{ "kind": "choose", "choice_id": "root:0" }
+{ "kind": "choose", "choice_id": "tab:new_game" }
 { "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 { "kind": "action", "action_id": "RIGHT" }
 { "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
@@ -72,7 +72,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 - `pos = {dim, x, y, z}`는 절대 맵 칸이며, `dim`은 게임 차원이고 기본 차원은 `""`입니다. 현실 거품 좌표는 전송 형식에 나타나지 않습니다.
 - `look = {kind, id, glyph, color}`는 게임 데이터의 외형을 담으므로 텍스트 클라이언트에는 타일셋이 필요 없습니다.
-- `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 처음 최대 200행을 담지만 크기 때문에 더 적을 수 있으므로, 나머지는 `bn.interaction.choices`를 `offset = choices.length`부터 읽습니다. 전체 행 수는 `choice_total`입니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다.
+- `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 처음 최대 200행을 담지만 크기 때문에 더 적을 수 있으므로, 나머지는 `bn.interaction.choices`를 `offset = choices.length`부터 읽습니다. 전체 행 수는 `choice_total`입니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다. 메인 메뉴는 네이티브와 같이 탭 구조입니다. 각 탭은 `pane_id`가 없는 선택지(`tab:new_game`, `tab:load` 등, 선택된 탭은 `selected`)이고, 그 뒤에 선택된 탭의 항목만 해당 탭의 `pane_id`와 함께 이어집니다(`new_game:tutorial`, `settings:options`, `load:<world>`). 다른 탭을 선택하면 그 탭의 항목을 담은 새 interaction이 게시됩니다. ID는 위치나 언어에 의존하지 않습니다.
 - 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`(능력치와 소지품 `inventory`), `environment`, 로드된 `coverage`, 대기 중인 `route`(계획이 없으면 비어 있거나 없음)로 구성됩니다.
 - 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `route`, `interaction`을 교체합니다.
 

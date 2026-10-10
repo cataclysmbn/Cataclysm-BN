@@ -94,6 +94,135 @@
       }
     },
     {
+      "name": "subscribe result at the main menu",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [
+            {
+              "id": "UP",
+              "name": "Move up"
+            }
+          ],
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "kind": "choices",
+            "allow_cancel": true,
+            "allow_set_count": false,
+            "title": "Cataclysm: Bright Nights",
+            "message": "",
+            "choices": [
+              {
+                "id": "tab:new_game",
+                "label": "New Game",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": true,
+                "columns": []
+              },
+              {
+                "id": "tab:load",
+                "label": "Load",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "tab:quit",
+                "label": "Quit",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:custom",
+                "label": "Custom Character",
+                "description": "Allows you to fully customize the character.",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:tutorial",
+                "label": "Tutorial",
+                "description": "",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              }
+            ],
+            "choice_total": 5,
+            "compat": {
+              "focus": {
+                "choice_id": "tab:new_game"
+              },
+              "panes": [
+                {
+                  "id": "new_game",
+                  "label": "New Game",
+                  "role": "focused",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "load",
+                  "label": "Load",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "quit",
+                  "label": "Quit",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                }
+              ]
+            }
+          }
+        },
+        "entities": [],
+        "parts": 0
+      }
+    },
+    {
       "name": "subscribe result in a world",
       "def": "subscribe_result",
       "value": {
@@ -923,6 +1052,136 @@
         "offset": 0,
         "limit": 201
       }
+    },
+    {
+      "name": "menu entry with an empty tab id",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "actions": [
+            {
+              "id": "UP",
+              "name": "Move up"
+            }
+          ],
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "kind": "choices",
+            "allow_cancel": true,
+            "allow_set_count": false,
+            "title": "Cataclysm: Bright Nights",
+            "message": "",
+            "choices": [
+              {
+                "id": "tab:new_game",
+                "label": "New Game",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": true,
+                "columns": []
+              },
+              {
+                "id": "tab:load",
+                "label": "Load",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "tab:quit",
+                "label": "Quit",
+                "description": "",
+                "denial": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:custom",
+                "label": "Custom Character",
+                "description": "Allows you to fully customize the character.",
+                "denial": "",
+                "pane_id": "",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              },
+              {
+                "id": "new_game:tutorial",
+                "label": "Tutorial",
+                "description": "",
+                "denial": "",
+                "pane_id": "new_game",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": []
+              }
+            ],
+            "choice_total": 5,
+            "compat": {
+              "focus": {
+                "choice_id": "tab:new_game"
+              },
+              "panes": [
+                {
+                  "id": "new_game",
+                  "label": "New Game",
+                  "role": "focused",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "load",
+                  "label": "Load",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                },
+                {
+                  "id": "quit",
+                  "label": "Quit",
+                  "role": "category",
+                  "area_id": "",
+                  "area_label": "",
+                  "area_description": "",
+                  "filter": "",
+                  "storage_kind": ""
+                }
+              ]
+            }
+          }
+        },
+        "entities": [],
+        "parts": 0
+      },
+      "why": "pane_id names the tab an entry belongs to and is never empty"
     },
     {
       "name": "removed projection member",

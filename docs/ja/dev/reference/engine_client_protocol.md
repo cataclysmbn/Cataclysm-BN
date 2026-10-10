@@ -49,7 +49,7 @@ title: エンジン/クライアントプロトコル 1.0
 `operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、`action`(移動キーなど登録済みの行動)、または `travel`(マップのクリック)のいずれかです。
 
 ```json
-{ "kind": "choose", "choice_id": "root:0" }
+{ "kind": "choose", "choice_id": "tab:new_game" }
 { "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 { "kind": "action", "action_id": "RIGHT" }
 { "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
@@ -72,7 +72,7 @@ title: エンジン/クライアントプロトコル 1.0
 
 - `pos = {dim, x, y, z}` は絶対マップマスで、`dim` はゲームのディメンション、プライマリは `""` です。リアリティバブル座標はワイヤ上に現れません。
 - `look = {kind, id, glyph, color}` はゲームデータ由来の見た目を持つため、テキストクライアントにタイルセットは不要です。
-- `interaction` はネイティブのメニューやダイアログです。`choices` は最大 200 行ですがサイズにより少なくなることがあるため、残りは `bn.interaction.choices` を `offset = choices.length` から読みます。全体の行数は `choice_total` です。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。
+- `interaction` はネイティブのメニューやダイアログです。`choices` は最大 200 行ですがサイズにより少なくなることがあるため、残りは `bn.interaction.choices` を `offset = choices.length` から読みます。全体の行数は `choice_total` です。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。メインメニューはネイティブと同じタブ構成です。各タブは `pane_id` を持たない選択肢(`tab:new_game`、`tab:load` など。選択中のタブは `selected`)で、その後に選択中のタブの項目だけが、そのタブの `pane_id` 付きで続きます(`new_game:tutorial`、`settings:options`、`load:<world>`)。別のタブを選ぶと、そのタブの項目を持つ新しい interaction が公開されます。ID は位置にも言語にも依存しません。
 - ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値と所持品 `inventory`)、`environment`、読み込み済みの `coverage`、保留中の `route`(計画がなければ空または省略)で構成されます。
 - すべてのイベントは汎用の `changes` ブロックを持ち、`coverage`、`cells`、`forgotten`、`entities`、`gone` の順に適用した後、`avatar`、`environment`、`route`、`interaction` を置き換えます。
 

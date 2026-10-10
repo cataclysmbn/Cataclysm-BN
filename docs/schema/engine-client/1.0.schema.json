@@ -513,7 +513,8 @@
           "type": "string"
         },
         "pane_id": {
-          "$ref": "#/$defs/opaque_id"
+          "$ref": "#/$defs/opaque_id",
+          "description": "The pane or tab this entry belongs to. Tab rows of a tabbed menu have none."
         },
         "area_id": {
           "$ref": "#/$defs/opaque_id"

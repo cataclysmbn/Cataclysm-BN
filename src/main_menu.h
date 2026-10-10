@@ -29,6 +29,7 @@ class main_menu
         std::vector<std::string> vMenuItems; // MOTD, New Game, Load Game, etc.
         std::vector<std::string> vWorldSubItems;
         std::vector<std::string> vNewGameSubItems;
+        std::vector<std::string> vNewGameIds; // protocol ids of vNewGameSubItems
         std::vector<std::string> vNewGameHints;
         std::vector<char> vWorldHotkeys;
         std::vector<std::string> vSettingsSubItems;

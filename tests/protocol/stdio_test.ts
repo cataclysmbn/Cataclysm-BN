@@ -299,9 +299,56 @@ Deno.test({
       await session.acknowledge(() =>
         session.mirror.interaction.interaction?.context === "MAIN_MENU"
       )
+      // The main menu is tabbed: tab rows have no pane_id, entries belong to the selected tab only.
+      const menu = () => {
+        const choices = session.mirror.interaction.interaction.choices as Value[]
+        const tabs = choices.filter((entry) => entry.pane_id === undefined)
+        return {
+          tabs: tabs.map((entry) => entry.id),
+          selected: tabs.filter((entry) => entry.selected).map((entry) => entry.id),
+          entries: choices.filter((entry) => entry.pane_id !== undefined),
+        }
+      }
+      const allTabs = [
+        "tab:motd",
+        "tab:new_game",
+        "tab:load",
+        "tab:world",
+        "tab:settings",
+        "tab:help",
+        "tab:credits",
+        "tab:quit",
+      ]
+      assertEquals(menu().tabs, allTabs)
+      const settings = await session.choose("Settings")
+      assertEquals(settings.stages, ["received", "validated", "executing", "completed"])
+      assertEquals(menu().tabs, allTabs)
+      assertEquals(menu().selected, ["tab:settings"])
+      assertEquals(menu().entries.map((entry) => entry.id), [
+        "settings:options",
+        "settings:keybindings",
+        "settings:autopickup",
+        "settings:safemode",
+        "settings:distractions",
+        "settings:colors",
+      ])
       const newGame = await session.choose("New Game")
       assertEquals(newGame.stages, ["received", "validated", "executing", "completed"])
       assert(session.eventTypes.includes("interaction.changed"))
+      assertEquals(menu().tabs, allTabs)
+      assertEquals(menu().selected, ["tab:new_game"])
+      assertEquals(
+        menu().entries.map((entry) => [entry.id, entry.pane_id]),
+        [
+          "custom",
+          "preset",
+          "random",
+          "play_now_default",
+          "play_now",
+          "tutorial",
+          "defence",
+        ].map((id) => [`new_game:${id}`, "new_game"]),
+      )
 
       // Entering the world replaces the authority: the command is interrupted, the stream resyncs.
       const chosenAt = performance.now()

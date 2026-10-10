@@ -49,7 +49,7 @@ Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says w
 `operation.kind` is one of `choose`, `fill`, `set_count`, `set_target`, `cancel` (semantic menus) `action` (a registered action such as a movement key) or `travel` (a map click).
 
 ```json
-{ "kind": "choose", "choice_id": "root:0" }
+{ "kind": "choose", "choice_id": "tab:new_game" }
 { "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 { "kind": "action", "action_id": "RIGHT" }
 { "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
@@ -72,7 +72,7 @@ While the world loads, the game thread is busy and reaches no input boundary, so
 
 - `pos = {dim, x, y, z}` is an absolute map square; `dim` is the game dimension, `""` for the primary one. Reality-bubble coordinates never appear on the wire.
 - `look = {kind, id, glyph, color}` carries appearance from game data, so text clients need no tileset.
-- `interaction` is the native menu or dialog: `choices` holds up to the first 200 rows, fewer when they would be too large; read the rest with `bn.interaction.choices` starting at `offset = choices.length`. `choice_total` is the full count. `compat.focus` and `compat.panes` keep native list state for 1:1 ports; clients may ignore them.
+- `interaction` is the native menu or dialog: `choices` holds up to the first 200 rows, fewer when they would be too large; read the rest with `bn.interaction.choices` starting at `offset = choices.length`. `choice_total` is the full count. `compat.focus` and `compat.panes` keep native list state for 1:1 ports; clients may ignore them. The main menu is tabbed like the native one: every tab is a choice without `pane_id` (`tab:new_game`, `tab:load`, ...; the selected one has `selected`), followed by the entries of the selected tab only, each with that tab's `pane_id` (`new_game:tutorial`, `settings:options`, `load:<world>`). Choosing another tab publishes a new interaction with that tab's entries; ids never depend on position or language.
 - The world is what the avatar knows: `cells` (`remembered`, `visible` or `sensed`), `entities`, `avatar` (stats and `inventory`), `environment`, the loaded `coverage` and the pending `route` (empty or absent when nothing is planned).
 - Every event carries a generic `changes` block, applied in this order: `coverage`, `cells`, `forgotten`, `entities`, `gone`, then `avatar`, `environment`, `route` and `interaction` replace.
 
