@@ -813,6 +813,7 @@ Deno.test({
     try {
       const session = await enterTutorial(client)
       const before = session.mirror.messages.length
+      assert(before > 0, "the subscribe snapshot already carries the log the game wrote")
       // The same native message twice in a row is one line whose count rises.
       for (let step = 0; step < 2; step++) {
         const up = await session.submit({ kind: "action", action_id: "LEVEL_UP" })
