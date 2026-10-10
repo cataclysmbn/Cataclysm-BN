@@ -105,9 +105,13 @@ auto record_trajectories( const draw_bullet_trajectories_options &options ) -> v
 auto record_line( const draw_sprite_line_options &options ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() || options.points.empty() ) { return; }
+    if( !feed.collecting || !animated() ) { return; }
+    // The caller resizes its trajectory past the end, which leaves value-initialized squares.
+    auto points = options.points;
+    std::erase( points, tripoint_bub_ms::zero() );
+    if( points.empty() ) { return; }
     push( { .type = "projectile.moved", .id = "projectile:" + std::to_string( ++feed.next_projectile ),
-            .cells = path_of( options.points ), .appearance = bullet_look( '*', options.sprite ),
+            .cells = path_of( points ), .appearance = bullet_look( '*', options.sprite ),
             .duration_ms = step_ms() } );
 }
 

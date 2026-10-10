@@ -99,6 +99,9 @@ TEST_CASE("a shot drawn as a line publishes its whole path at once", "[engine_cl
     CHECK(facts.front().type == "projectile.moved");
     CHECK(facts.front().cells.size() >= 5);
     CHECK(facts.front().cells.front().x == world::position_at(from).x + 1);
+    CHECK(std::ranges::none_of(facts.front().cells, [](const auto& cell) {
+        return cell == world::position_at(tripoint_bub_ms::zero());
+    }));
 }
 
 TEST_CASE("an explosion publishes its start, shaped blast rings and end", "[engine_client_event]") {
