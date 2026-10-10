@@ -117,6 +117,9 @@ class event_stream
     public:
         static auto create( std::string epoch, state_value initial ) -> std::expected<event_stream, error>;
         auto current() const -> const snapshot &; // *NOPAD*
+        /// Puts lines the game wrote before this stream existed into its log: a snapshot carries them,
+        /// and they take no sequence, since no subscriber can have missed an event.
+        auto seed_log( std::vector<message_value> lines ) -> void;
         /// Nothing is published when the decision is withheld or the state did not change.
         /// `resync_required`: the state drops a coverage, avatar or environment, which no event
         /// can express; the caller rebases and tells subscribers to start over.

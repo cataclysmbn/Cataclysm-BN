@@ -89,3 +89,15 @@ TEST_CASE(
     CHECK(fresh.log[1].count == 2);
     CHECK(receiver.log[1].count == 2);
 }
+
+TEST_CASE(
+    "lines the game wrote before the stream existed take no sequence", "[engine_client_session]") {
+    Messages::clear_messages();
+    Messages::add_msg("One.");
+    Messages::add_msg("Two.");
+    auto session = ec::session{};
+    REQUIRE(session.publish_boundary());
+    CHECK(session.current()->at.sequence == 0);
+    CHECK(session.current()->log.size() == 2);
+    CHECK(session.take_push().empty());
+}

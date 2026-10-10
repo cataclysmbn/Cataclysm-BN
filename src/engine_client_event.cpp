@@ -205,6 +205,10 @@ auto event_stream::create( std::string epoch,
     if( const auto valid = validate_state( initial ); !valid ) { return std::unexpected( valid.error() ); }
     return event_stream{snapshot{.at = {.epoch = std::move( epoch )}, .value = std::move( initial )}};
 }
+auto event_stream::seed_log( std::vector<message_value> lines ) -> void
+{
+    for( const auto &line : lines ) { remember( current_.log, line ); }
+}
 auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
 
 auto event_stream::publish( publish_request request ) ->
