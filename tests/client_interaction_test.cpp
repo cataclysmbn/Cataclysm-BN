@@ -19,7 +19,10 @@
 #    include "crafting.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "debug_test_support.h"
 #    include "drop_token.h"
+#    include "engine_client_event.h"
+#    include "engine_client_session.h"
 #    include "faction.h"
 #    include "game.h"
 #    include "input.h"
@@ -3635,6 +3638,41 @@ TEST_CASE(
     CHECK(step == 6);
     CHECK_FALSE(you.activity);
     CHECK(uistate.read_recipes.count(pipe.ident()) == 1);
+}
+
+TEST_CASE(
+    "debugmsg reaches an engine client as a structured interaction with its text",
+    "[client][interaction][debug_prompt][mcp]") {
+    const auto guard = interaction_test_guard{};
+    const auto debug = debug_test_support::scoped_state{};
+    auto authority = engine_client::session{};
+    auto published = std::string{};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(++reads == 1);
+        REQUIRE(authority.publish_boundary());
+        const auto current = authority.current();
+        REQUIRE(current);
+        const auto wire = engine_client::serialize_snapshot(*current);
+        REQUIRE(wire);
+        published = wire->header;
+        for (const auto& part : wire->parts) { published += part; }
+        const auto snapshot = game_client::current_interaction();
+        const auto found = std::ranges::find(
+            snapshot.choices, std::string("Continue"), &game_client::interaction_choice::label);
+        REQUIRE(found != snapshot.choices.end());
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::choose,
+            .target_id = found->id,
+        });
+    });
+    debugmsg("wire path marker %d", 4217);
+    CHECK(reads == 1);
+    CHECK(published.contains("DEBUG_MSG"));
+    CHECK(published.contains("wire path marker 4217"));
+    CHECK(published.contains("Continue"));
+    CHECK(published.contains("Ignore"));
 }
 
 TEST_CASE(
