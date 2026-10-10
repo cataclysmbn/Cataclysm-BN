@@ -301,7 +301,7 @@ game_client::interaction_snapshot // *NOPAD*
     }
     if( ( anykey || cancel ) && options.empty() ) {
         const auto action = anykey ? "ANY_INPUT" : "QUIT";
-        const auto label = ctxt.get_action_name( action );
+        const auto label = anykey ? _( "Press any key" ) : ctxt.get_action_name( action );
         snapshot.choices.push_back( {
             .id = "acknowledge",
             .label = label,

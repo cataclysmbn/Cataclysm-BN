@@ -1685,6 +1685,8 @@ TEST_CASE(
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
             REQUIRE(snapshot.choices.size() == 1);
+            CHECK(snapshot.choices.front().description == "ANY_INPUT");
+            CHECK(snapshot.choices.front().label == "Press any key");
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,
