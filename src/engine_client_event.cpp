@@ -211,12 +211,18 @@ auto event_stream::publish( publish_request request ) ->
 std::expected<std::optional<public_event>, error>
 {
     if( request.decision == disclosure::withheld ) { return std::nullopt; }
-    if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
+    {
+        ZoneScopedN( "engine_client_validate_state" );
+        if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
+    }
     if( removes_value( current_.value, request.next ) ) { return std::unexpected( error::resync_required ); }
     if( request.cause && ( *request.cause == 0 || *request.cause > current_.at.sequence ) ) {
         return std::unexpected( error::validation_failed );
     }
-    auto delta = diff( current_.value, request.next );
+    auto delta = [&] {
+        ZoneScopedN( "engine_client_diff" );
+        return diff( current_.value, request.next );
+    }();
     if( delta.empty() ) { return std::nullopt; }
     if( current_.at.revision == std::numeric_limits<counter>::max() ||
         current_.at.sequence == std::numeric_limits<counter>::max() ) {
