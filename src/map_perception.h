@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "coordinates.h"
+#include "map_memory.h"
 
 class map;
 class vehicle;
@@ -19,6 +20,12 @@ struct orientation {
 
 /// Pure SEWN connection mask conversion, shared by knowledge and presentation.
 auto orient( uint8_t connections ) -> orientation;
+
+/// Wall line glyph of a memorized terrain tile, `fallback` when the tile carries no connections.
+auto remembered_wall_symbol( const memorized_terrain_tile &tile, int fallback ) -> int;
+
+/// Terrain symbol of a visible cell; auto-wall terrain draws the lines it connects to known neighbours.
+auto connected_wall_symbol( const map &here, const tripoint_bub_ms &p ) -> int;
 
 /// Live randomized glyphs use a separate presentation-only generator.
 auto cosmetic_variant() -> int;

@@ -71,7 +71,7 @@ title: エンジン/クライアントプロトコル 1.0
 ## 値
 
 - `pos = {dim, x, y, z}` は絶対マップマスで、`dim` はゲームのディメンション、プライマリは `""` です。リアリティバブル座標はワイヤ上に現れません。
-- `look = {kind, id, glyph, color}` はゲームデータ由来の見た目を持つため、テキストクライアントにタイルセットは不要です。
+- `look = {kind, id, glyph, color}` はゲームデータ由来の見た目を持つため、テキストクライアントにタイルセットは不要です。自動壁の地形はアバターが知っている接続に応じた線文字を持ち、記憶されたマスは `memory.terrain` の上に `memory.overlay`（家具、罠、乗り物部品）を保持します。
 - `interaction` はネイティブのメニューやダイアログです。`choices` は最大 200 行ですがサイズにより少なくなることがあるため、残りは `bn.interaction.choices` を `offset = choices.length` から読みます。全体の行数は `choice_total` です。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。メインメニューはネイティブと同じタブ構成です。各タブは `pane_id` を持たない選択肢(`tab:new_game`、`tab:load` など。選択中のタブは `selected`)で、その後に選択中のタブの項目だけが、そのタブの `pane_id` 付きで続きます(`new_game:tutorial`、`settings:options`、`load:<world>`)。別のタブを選ぶと、そのタブの項目を持つ新しい interaction が公開されます。ID は位置にも言語にも依存しません。
 - ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値と所持品 `inventory`)、`environment`、読み込み済みの `coverage`、保留中の `route`(計画がなければ空または省略)で構成されます。
 - すべてのイベントは汎用の `changes` ブロックを持ち、`coverage`、`cells`、`forgotten`、`entities`、`gone` の順に適用した後、`avatar`、`environment`、`route`、`interaction` を置き換えます。

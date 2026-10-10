@@ -75,9 +75,9 @@ auto make_look( const char *kind, const std::string &id, const std::string &glyp
     return { .kind = kind, .id = id, .glyph = glyph, .color = color_of( color ) };
 }
 
-auto terrain_look( const ter_id &id ) -> look
+auto terrain_look( const ter_id &id, const int symbol ) -> look
 {
-    return make_look( "terrain", id.id().str(), glyph_of( id->symbol() ), id->color() );
+    return make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
 }
 
 auto furniture_look( const furn_id &id ) -> look
@@ -102,8 +102,9 @@ auto item_look( const item &thing ) -> look
 }
 
 /// Stored memory names data ids only; an id the data no longer knows keeps its id with an empty appearance.
-auto remembered_look( const std::string &tile, const bool overlay ) -> look
+auto remembered_look( const memorized_terrain_tile &stored, const bool overlay ) -> look
 {
+    const auto &tile = stored.tile;
     if( overlay && tile.starts_with( "vp_" ) ) {
         const auto part = vpart_id( tile.substr( 3 ) );
         if( part.is_valid() ) { return vehicle_part_look( part.obj() ); }
@@ -113,21 +114,24 @@ auto remembered_look( const std::string &tile, const bool overlay ) -> look
         }
         if( const auto trap = trap_str_id( tile ); trap.is_valid() ) { return trap_look( trap.obj() ); }
     } else if( const auto terrain = ter_str_id( tile ); terrain.is_valid() ) {
-        return terrain_look( terrain.id() );
+        const auto &id = terrain.id();
+        // Walls draw by the lines they connected when last seen, as in the native text view.
+        return terrain_look( id, id->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ?
+                             map_perception::remembered_wall_symbol( stored, id->symbol() ) : id->symbol() );
     }
     return { .kind = overlay ? "furniture" : "terrain", .id = tile };
 }
 
 auto memory_at( const avatar &you, const tripoint_abs_ms &abs ) -> std::optional<memory_layers>
 {
-    const auto terrain = you.get_terrain_tile( abs ).tile;
-    const auto overlay = you.get_memorized_tile( abs ).tile;
-    if( terrain.empty() && overlay.empty() ) { return std::nullopt; }
+    const auto terrain = you.get_terrain_tile( abs );
+    const auto overlay = you.get_memorized_tile( abs );
+    if( terrain.tile.empty() && overlay.tile.empty() ) { return std::nullopt; }
     // Without a terrain layer only the stored glyph is known.
-    auto result = memory_layers{ .terrain = terrain.empty() ?
+    auto result = memory_layers{ .terrain = terrain.tile.empty() ?
                                             look{ .kind = "terrain", .glyph = glyph_of( you.get_memorized_symbol( abs ) ) } :
                                             remembered_look( terrain, false ) };
-    if( !overlay.empty() ) { result.overlay = remembered_look( overlay, true ); }
+    if( !overlay.tile.empty() ) { result.overlay = remembered_look( overlay, true ); }
     return result;
 }
 
@@ -178,7 +182,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you, cell 
         out.items.empty() && !out.vehicle ) {
         return false;
     }
-    out.terrain = terrain_look( here.ter( p ) );
+    out.terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ) );
     return true;
 }
 

@@ -181,10 +181,10 @@ auto known_trap( const map &here, const tripoint_bub_ms &p ) -> trap_id
 auto wall_symbol( const uint8_t mask, const int fallback ) -> int
 {
     const auto symbols = std::array{
-        fallback, LINE_XOXO, LINE_OXOX, LINE_XXOO,
-        LINE_XOXO, LINE_XOXO, LINE_OXXO, LINE_XXXO,
-        LINE_OXOX, LINE_XOOX, LINE_OXOX, LINE_XXOX,
-        LINE_OOXX, LINE_XOXX, LINE_OXXX, LINE_XXXX
+        fallback, LINE_XOXO, LINE_OXOX, LINE_OXXO,
+        LINE_OXOX, LINE_OOXX, LINE_OXOX, LINE_OXXX,
+        LINE_XOXO, LINE_XOXO, LINE_XXOO, LINE_XXXO,
+        LINE_XOOX, LINE_XOXX, LINE_XXOX, LINE_XXXX
     };
     return symbols[mask];
 }
@@ -230,17 +230,8 @@ auto derive( const map &here, const cell_facts &facts ) -> cell_memory
             const auto historical = ter_str_id( result.terrain.tile );
             result.symbol = 0;
             if( !result.terrain.tile.empty() && historical.is_valid() ) {
-                result.symbol = historical->symbol();
-                if( historical->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ) {
-                    for( const auto mask : std::views::iota( 0, 16 ) ) {
-                        const auto shape = orient( mask );
-                        if( shape.subtile == result.terrain.subtile &&
-                            shape.rotation == result.terrain.rotation ) {
-                            result.symbol = wall_symbol( mask, result.symbol );
-                            break;
-                        }
-                    }
-                }
+                result.symbol = historical->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ?
+                                remembered_wall_symbol( result.terrain, historical->symbol() ) : historical->symbol();
             }
         }
         return result;
@@ -370,6 +361,25 @@ auto orient( const uint8_t connections ) -> orientation
                                       edge, corner, t_connection, corner, t_connection, t_connection, center };
     const auto rotations = std::array{ 0, 0, 1, 0, 3, 3, 1, 0, 2, 0, 1, 1, 2, 3, 2, 0 };
     return { .subtile = subtiles[connections & 15], .rotation = rotations[connections & 15] };
+}
+
+auto remembered_wall_symbol( const memorized_terrain_tile &tile, const int fallback ) -> int
+{
+    const auto masks = std::views::iota( 0, 16 );
+    const auto found = std::ranges::find_if( masks, [&]( const int mask ) {
+        const auto shape = orient( mask );
+        return shape.subtile == tile.subtile && shape.rotation == tile.rotation;
+    } );
+    return found == masks.end() ? fallback : wall_symbol( *found, fallback );
+}
+
+auto connected_wall_symbol( const map &here, const tripoint_bub_ms &p ) -> int
+{
+    const auto terrain = here.ter( p );
+    if( !terrain->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ) { return terrain->symbol(); }
+    auto adjacent = std::array<ter_id, 4> {};
+    for( const auto i : std::views::iota( 0, 4 ) ) { adjacent[i] = known_terrain( here, p + neighbors[i] ); }
+    return wall_symbol( connection_mask( terrain, adjacent ), terrain->symbol() );
 }
 
 auto vehicle_known( const map &here, const vehicle &veh ) -> bool

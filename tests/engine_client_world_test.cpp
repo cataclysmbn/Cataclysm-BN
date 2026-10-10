@@ -2,6 +2,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "catacharset.h"
 #include "catch/catch.hpp"
 #include "engine_client_event.h"
 #include "engine_client_world.h"
@@ -13,6 +14,7 @@
 #include "map_memory.h"
 #include "map_perception.h"
 #include "monster.h"
+#include "output.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "rng.h"
@@ -411,4 +413,82 @@ TEST_CASE(
     CHECK(click_from(setup.start + tripoint(1, 5, 0), door).empty());
     CHECK(click_from(setup.start, door).empty());
     CHECK(click_from(setup.start, setup.start + tripoint(4, 5, 0)).empty());
+}
+
+TEST_CASE(
+    "world capture keeps seen furniture as remembered overlay along a walk out of sight",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto benches =
+        std::views::iota(-5, -1)
+        | std::views::transform([&](const int dx) { return setup.start + tripoint(dx, -4, 0); })
+        | std::ranges::to<std::vector>();
+    for (const auto& bench : benches) { get_map().furn_set(bench, furn_id("f_bench")); }
+    map_perception::acquire();
+    const auto start_state = ec::world::capture_world();
+    for (const auto& bench : benches) {
+        const auto* seen = find_cell(start_state, at(bench));
+        REQUIRE(seen != nullptr);
+        REQUIRE(seen->known == ec::knowledge::visible);
+        REQUIRE(seen->furniture);
+    }
+
+    // Every square of the walk from the room's middle to behind the partition.
+    for (const auto step : std::views::iota(1, 6)) {
+        step_to(setup.start + tripoint(step - 1, step, 0));
+        const auto state = ec::world::capture_world();
+        for (const auto& bench : benches) {
+            CAPTURE(step, bench);
+            const auto* cell = find_cell(state, at(bench));
+            REQUIRE(cell != nullptr);
+            if (cell->known == ec::knowledge::visible) {
+                CHECK(cell->furniture);
+            } else {
+                REQUIRE(cell->memory);
+                REQUIRE(cell->memory->overlay);
+                CHECK(cell->memory->overlay->id == "f_bench");
+            }
+        }
+    }
+    const auto end_state = ec::world::capture_world();
+    const auto* last = find_cell(end_state, at(benches.front()));
+    CHECK(last->known == ec::knowledge::remembered);
+}
+
+TEST_CASE(
+    "world capture draws a wall run with its connected line glyph, seen or remembered",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    // A second layer of wall on the east side hides the partition from the doorway side.
+    for (const auto dy : std::views::iota(-6, 5)) {
+        get_map().ter_set(setup.start + tripoint(3, dy, 0), ter_id("t_wall"));
+    }
+    map_perception::acquire();
+    const auto wall = setup.start + tripoint(2, -2, 0);
+    const auto seen_state = ec::world::capture_world();
+    const auto* seen = find_cell(seen_state, at(wall));
+    REQUIRE(seen != nullptr);
+    REQUIRE(seen->known == ec::knowledge::visible);
+    REQUIRE(seen->terrain);
+    CHECK(seen->terrain->glyph == LINE_XOXO_S);
+
+    step_to(setup.start + tripoint(4, 5, 0));
+    REQUIRE_FALSE(get_avatar().sees(wall));
+    const auto remembered_state = ec::world::capture_world();
+    const auto* remembered = find_cell(remembered_state, at(wall));
+    REQUIRE(remembered != nullptr);
+    REQUIRE(remembered->known == ec::knowledge::remembered);
+    REQUIRE(remembered->memory);
+    CHECK(remembered->memory->terrain.glyph == LINE_XOXO_S);
+
+    // A corner joins the walls to its east and south.
+    for (const auto& p : {tripoint(-3, 4, 0), tripoint(-2, 4, 0), tripoint(-3, 5, 0)}) {
+        get_map().ter_set(setup.start + p, ter_id("t_wall"));
+    }
+    step_to(setup.start);
+    const auto corner_state = ec::world::capture_world();
+    const auto* corner = find_cell(corner_state, at(setup.start + tripoint(-3, 4, 0)));
+    REQUIRE(corner != nullptr);
+    REQUIRE(corner->terrain);
+    CHECK(corner->terrain->glyph == LINE_OXXO_S);
 }
