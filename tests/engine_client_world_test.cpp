@@ -35,6 +35,8 @@ struct scene {
 
 auto make_scene() -> scene {
     clear_all_state();
+    // Earlier cases may have shown the avatar this area; the scene asserts what it alone reveals.
+    get_avatar().clear_map_memory();
     build_test_map(ter_id("t_floor"));
     calendar::turn = calendar::turn_zero + 12_hours;
     get_weather().weather_id = weather_type_id("clear");
