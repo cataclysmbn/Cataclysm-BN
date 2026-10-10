@@ -98,6 +98,8 @@ struct environment_value {
 /// What the avatar knows. Cells are sparse: absent inside the coverage means unknown.
 struct world_state {
     std::optional<bounds> coverage = std::nullopt;
+    /// The squares of the avatar's level a map click resolves to: the native terrain window.
+    std::optional<bounds> view = std::nullopt;
     std::map<position, cell> cells = {};
     std::map<std::string, entity> entities = {};
     std::optional<avatar_value> avatar = std::nullopt;

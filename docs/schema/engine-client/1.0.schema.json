@@ -8,6 +8,10 @@
       "params": "hello_params",
       "result": "hello_result"
     },
+    "bn.viewport": {
+      "params": "viewport",
+      "result": "empty_params"
+    },
     "bn.subscribe": {
       "params": "empty_params",
       "result": "subscribe_result"
@@ -869,6 +873,10 @@
         "coverage": {
           "$ref": "#/$defs/bounds"
         },
+        "view": {
+          "$ref": "#/$defs/bounds",
+          "description": "The squares of the avatar's level a map click selects: the native terrain window, which follows the avatar."
+        },
         "cells": {
           "type": "array",
           "items": {
@@ -921,7 +929,7 @@
       },
       "required": [],
       "additionalProperties": false,
-      "description": "Applied in member order: coverage, cells, forgotten, entities, gone, then avatar/environment/route/interaction replace."
+      "description": "Applied in member order: coverage, view, cells, forgotten, entities, gone, then avatar/environment/route/interaction replace."
     },
     "display": {
       "type": "object",
@@ -1803,6 +1811,9 @@
             "version"
           ],
           "additionalProperties": false
+        },
+        "viewport": {
+          "$ref": "#/$defs/viewport"
         }
       },
       "required": [
@@ -1888,6 +1899,10 @@
         },
         "coverage": {
           "$ref": "#/$defs/bounds"
+        },
+        "view": {
+          "$ref": "#/$defs/bounds",
+          "description": "The squares of the avatar's level a map click selects: the native terrain window, which follows the avatar."
         },
         "interaction": {
           "$ref": "#/$defs/interaction_boundary"
@@ -2488,6 +2503,27 @@
         "$ref": "#/$defs/pos"
       },
       "description": "The native auto-move route a map click planned and not yet confirmed: the squares to walk, nearest first, ending at the clicked square. Empty or absent when nothing is planned."
+    },
+    "viewport": {
+      "type": "object",
+      "properties": {
+        "cols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 512
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 512
+        }
+      },
+      "required": [
+        "cols",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "description": "Map cells the client can show, as columns and rows of the native terrain window."
     }
   }
 }

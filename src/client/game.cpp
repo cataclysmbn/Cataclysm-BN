@@ -11,10 +11,12 @@
 #include "input.h"
 #include "options.h"
 #include "output.h"
+#include "panels.h"
 #include "ui_manager.h"
 #include "world.h"
 #include "worldfactory.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <ctime>
@@ -37,6 +39,15 @@ auto game_ui::init_ui() -> void {
     } else {
         FULL_SCREEN_HEIGHT = TERMY % 2 ? 25 : 24;
     }
+}
+
+auto game_ui::resize_terrain_window(const point cells) -> void {
+    auto& panels = panel_manager::get_manager();
+    resize_client_term(
+        std::max(FULL_SCREEN_WIDTH, cells.x + panels.get_width_left() + panels.get_width_right()),
+        std::max(FULL_SCREEN_HEIGHT, cells.y));
+    init_ui();
+    ui_manager::screen_resized();
 }
 
 auto game::toggle_fullscreen() -> void {

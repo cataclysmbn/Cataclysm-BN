@@ -306,6 +306,14 @@ auto capture_world() -> world_state
         .environment = environment_value{
             .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
             .weather = get_weather().weather_id.str() } };
+    // The terrain window moves with the view, not the world: its squares are where a click lands.
+    if( const auto window = g->click_window() ) {
+        const auto z = g->get_levz();
+        state.view = bounds{
+            .min = position_of( here, tripoint_bub_ms( window->p_min.x(), window->p_min.y(), z ), dimension ),
+            .max = position_of( here, tripoint_bub_ms( window->p_max.x() - 1, window->p_max.y() - 1, z ),
+                                dimension ) };
+    }
     capture_known( here, you, dimension, state.cells );
     for( const auto &step : g->get_destination_preview() ) {
         state.route.push_back( position_of( here, step, dimension ) );

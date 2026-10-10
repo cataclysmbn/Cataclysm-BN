@@ -26,7 +26,8 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 
 | Method                   | Params                                    | Result                                           |
 | ------------------------ | ----------------------------------------- | ------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`                      | `version`, `epoch`, `engine`, `limits`           |
+| `bn.hello`               | `versions`, `client`, `viewport?`         | `version`, `epoch`, `engine`, `limits`           |
+| `bn.viewport`            | `cols`, `rows`                            | none                                             |
 | `bn.subscribe`           | none                                      | snapshot header; parts and events follow         |
 | `bn.unsubscribe`         | none                                      | none                                             |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (reads only)   |
@@ -73,7 +74,8 @@ While the world loads, the game thread is busy and reaches no input boundary, so
 - `pos = {dim, x, y, z}` is an absolute map square; `dim` is the game dimension, `""` for the primary one. Reality-bubble coordinates never appear on the wire.
 - `look = {kind, id, glyph, color}` carries appearance from game data, so text clients need no tileset. Auto-wall terrain carries the line glyph for the connections the avatar knows, as the native text view draws it; a remembered cell keeps `memory.overlay` (furniture, trap or vehicle part) over `memory.terrain`.
 - `interaction` is the native menu or dialog: `choices` holds up to the first 200 rows, fewer when they would be too large; read the rest with `bn.interaction.choices` starting at `offset = choices.length`. `choice_total` is the full count. `compat.focus` and `compat.panes` keep native list state for 1:1 ports; clients may ignore them. The main menu is tabbed like the native one: every tab is a choice without `pane_id` (`tab:new_game`, `tab:load`, ...; the selected one has `selected`), followed by the entries of the selected tab only, each with that tab's `pane_id` (`new_game:tutorial`, `settings:options`, `load:<world>`). Choosing another tab publishes a new interaction with that tab's entries; ids never depend on position or language.
-- The world is what the avatar knows: `cells` (`remembered`, `visible` or `sensed`), `entities`, `avatar` (stats and `inventory`), `environment`, the loaded `coverage` and the pending `route` (empty or absent when nothing is planned).
-- Every event carries a generic `changes` block, applied in this order: `coverage`, `cells`, `forgotten`, `entities`, `gone`, then `avatar`, `environment`, `route` and `interaction` replace.
+- The world is what the avatar knows: `cells` (`remembered`, `visible` or `sensed`), `entities`, `avatar` (stats and `inventory`), `environment`, the loaded `coverage`, the `view` and the pending `route` (empty or absent when nothing is planned). `view` is the native terrain window as `{min, max}` squares of the avatar's level (it follows the avatar): a `travel` click is accepted only inside it, anything else is rejected with `validation_failed`.
+- The terrain window is sized like a native window resize. `viewport = {cols, rows}` (1 to 512 map cells) in `bn.hello`, or later `bn.viewport`, resizes the terminal to those cells plus the side panels, so the engine shows that much map around the avatar; the effective `view` is authoritative because the native minimum terminal size still applies. A client that sends none gets the default terminal.
+- Every event carries a generic `changes` block, applied in this order: `coverage`, `view`, `cells`, `forgotten`, `entities`, `gone`, then `avatar`, `environment`, `route` and `interaction` replace.
 
 Events are `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen` and, later, the presentation types listed in the schema. A new event type needs a new exact version.

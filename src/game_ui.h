@@ -1,8 +1,12 @@
 #pragma once
 
+#include "point.h"
+
 namespace game_ui
 {
 void init_ui();
+/// Resizes the terminal as a window resize would, so the terrain window shows `cells`.
+auto resize_terrain_window( point cells ) -> void;
 } // namespace game_ui
 
 // defined in sdltiles.cpp

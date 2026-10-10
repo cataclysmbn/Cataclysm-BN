@@ -56,3 +56,14 @@ Deno.test("a route change replaces the planned route and an empty one clears it"
   mirror.applyEvents("e", [event(3, { route: [] })])
   assertEquals(mirror.state().route, [])
 })
+
+Deno.test("a view change replaces the clickable view whole", () => {
+  const mirror = fresh()
+  assertEquals(mirror.state().view, null)
+  const view = { min: pos(0), max: pos(4) }
+  mirror.applyEvents("e", [event(1, { view })])
+  assertEquals(mirror.state().view, view)
+  const moved = { min: pos(1), max: pos(5) }
+  mirror.applyEvents("e", [event(2, { view: moved })])
+  assertEquals(mirror.state().view, moved)
+})

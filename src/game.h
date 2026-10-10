@@ -1082,6 +1082,8 @@ class game : public submap_load_listener
         auto get_destination_preview() const -> const std::vector<tripoint_bub_ms>& { // *NOPAD*
             return destination_preview;
         }
+        /// The squares of the current level the terrain window shows, so a click can select them.
+        auto click_window() const -> std::optional<half_open_rectangle<point_bub_ms>>;
         /// The terrain window cell whose click selects `target`; nullopt when it is not shown.
         auto click_cell_of( const tripoint_bub_ms &target ) const -> std::optional<point>;
     private:

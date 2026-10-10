@@ -567,6 +567,12 @@ auto server::write_notifications( std::ostream &out ) -> bool
 
 auto server::flush_push( std::ostream &out ) -> bool
 {
+    queue_push();
+    return write_notifications( out );
+}
+
+auto server::queue_push() -> void
+{
     using namespace engine_client;
     const auto notify = [this]( const std::string_view method, const std::string & params ) {
         notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"" + std::string{method} +
@@ -599,7 +605,6 @@ auto server::flush_push( std::ostream &out ) -> bool
         }
     }
     flush_batch();
-    return write_notifications( out );
 }
 
 auto server::deliver_input() -> bool
@@ -657,9 +662,21 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::command_busy );
         }
         hello_ = true;
+        if( decoded->view && host_.resize_viewport ) {
+            host_.resize_viewport( decoded->view->cols, decoded->view->rows );
+        }
         return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine() ) );
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
+    if( request.method == "bn.viewport" ) {
+        const auto decoded = decode_viewport_request( params );
+        if( !decoded ) { return invalid(); }
+        if( host_.resize_viewport ) { host_.resize_viewport( decoded->cols, decoded->rows ); }
+        // The new view is part of what the client reads, so it is published like any other change.
+        if( const auto published = session_.publish_boundary(); !published ) { return fail( published.error() ); }
+        queue_push();
+        return rpc::make_result( request, "{}" );
+    }
     if( request.method == "bn.subscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }
         const auto current = session_.current();
@@ -739,7 +756,8 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     if( !pending_requests_ || !deferred_frame_ ) { return terminal(); }
     while( const auto envelope = pending_requests_->next() ) {
         const auto method = rpc::method_of( *envelope );
-        const auto is_direct = method == "bn.hello" || method == "bn.subscribe" ||
+        const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
+                               method == "bn.subscribe" ||
                                method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
                                method == "bn.command.submit" || method == "bn.command.result";
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};

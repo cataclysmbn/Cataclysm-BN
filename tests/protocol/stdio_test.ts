@@ -192,6 +192,13 @@ class Session {
     }
   }
 
+  /** Resize the terrain window and follow the pushes until the engine reports a different view. */
+  async viewport(cols: number, rows: number) {
+    const before = JSON.stringify(this.mirror.view)
+    await this.client.result("bn.viewport", { cols, rows })
+    while (JSON.stringify(this.mirror.view) === before) this.#handle(await this.client.note())
+  }
+
   async choose(label: string) {
     const choice = this.mirror.interaction.interaction.choices.find((entry: Value) =>
       entry.enabled && entry.label === label
@@ -309,6 +316,7 @@ Deno.test({
       const hello = await client.result("bn.hello", {
         versions: ["0.0", "1.0"],
         client: { name: "stdio-test", version: "1" },
+        viewport: { cols: 40, rows: 25 },
       })
       assertEquals(hello.version, "1.0")
       assertEquals(hello.limits.frame_bytes, 1048576)
@@ -502,6 +510,27 @@ Deno.test({
       const far = await session.submit({ kind: "travel", pos: { ...aim, x: aim.x + 5000 } })
       assertEquals(far.stages.at(-1), "rejected")
       assertEquals(session.mirror.at, clock2)
+
+      // The declared 40x25 viewport is the clickable view, which follows the avatar. Its far east
+      // edge lies outside the 36x24 window of the default terminal, yet a click there is accepted.
+      const size = (view: Value) => [view.max.x - view.min.x + 1, view.max.y - view.min.y + 1]
+      assertEquals(size(session.mirror.view!), [40, 25])
+      const edge = { ...session.mirror.avatar.at, x: session.mirror.view!.max.x }
+      const wide = await session.submit({ kind: "travel", pos: edge })
+      assertEquals(wide.stages.at(-1), "completed", "a click inside the declared view is accepted")
+
+      // Shrinking is a native window resize, bounded by the native minimum terminal: the same click
+      // is outside the new view and rejected without effect.
+      await session.viewport(30, 10)
+      const [columns] = size(session.mirror.view!)
+      assert(columns < 40, `the window shrank: ${JSON.stringify(session.mirror.view)}`)
+      const clock3 = { ...session.mirror.at }
+      const narrow = await session.submit({
+        kind: "travel",
+        pos: { ...edge, x: session.mirror.avatar.at.x + 19 },
+      })
+      assertEquals(narrow.stages.at(-1), "rejected")
+      assertEquals(session.mirror.at, clock3)
 
       // The reconstructed state equals a fresh subscribe.
       const fresh = await session.subscribe()

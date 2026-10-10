@@ -10,10 +10,17 @@
 namespace engine_client
 {
 
+/// Map cells the client can show: the native terrain window it wants, in columns and rows.
+struct viewport {
+    int cols = 0;
+    int rows = 0;
+};
+constexpr int maximum_viewport_cells = 512;
 struct hello_request {
     std::vector<std::string> versions = {};
     std::string client_name = {};
     std::string client_version = {};
+    std::optional<viewport> view = std::nullopt;
 };
 struct result_request {
     std::string epoch = {};
@@ -31,6 +38,8 @@ enum class decode_error { invalid_json, invalid_params, resource_limit };
 /// Decode one complete application value, at most maximum_inline_bytes UTF-8 bytes.
 /// Pure, owned results: no native provider, authority, receipt allocation or gameplay RNG access.
 auto decode_hello_request( std::string_view input ) -> std::expected<hello_request, decode_error>;
+/// `{cols, rows}` for `bn.viewport`.
+auto decode_viewport_request( std::string_view input ) -> std::expected<viewport, decode_error>;
 /// `{}` for `bn.subscribe` and `bn.unsubscribe`.
 auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>;
 auto decode_choices_request( std::string_view input )

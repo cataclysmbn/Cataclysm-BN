@@ -70,7 +70,8 @@ auto validate_state( const state_value &value ) -> std::expected<void, error>
 /// The diff cannot say that a coverage, avatar or environment disappeared.
 auto removes_value( const state_value &from, const state_value &to ) -> bool
 {
-    return ( from.world.coverage && !to.world.coverage ) || ( from.world.avatar && !to.world.avatar ) ||
+    return ( from.world.coverage && !to.world.coverage ) || ( from.world.view && !to.world.view ) ||
+           ( from.world.avatar && !to.world.avatar ) ||
            ( from.world.environment && !to.world.environment );
 }
 template<typename Key, typename Value, typename Remove>
@@ -85,7 +86,8 @@ auto erase_where( std::map<Key, Value> &values, const Remove &remove ) -> void
 
 auto changes::empty() const -> bool
 {
-    return !coverage && cells.empty() && forgotten.empty() && entities.empty() && gone.empty() &&
+    return !coverage && !view && cells.empty() && forgotten.empty() && entities.empty() &&
+           gone.empty() &&
            !avatar && !environment && !route && !interaction;
 }
 auto same_state( const state_value &left, const state_value &right ) -> bool
@@ -99,6 +101,7 @@ auto diff( const state_value &from, const state_value &to ) -> changes
     if( to.world.coverage && to.world.coverage != from.world.coverage ) {
         result.coverage = to.world.coverage;
     }
+    if( to.world.view && to.world.view != from.world.view ) { result.view = to.world.view; }
     // Cells and entities outside a new coverage are dropped by the coverage itself.
     const auto survives = [&]( const position & at ) {
         return !result.coverage || inside( *result.coverage, at );
@@ -135,6 +138,7 @@ auto apply( state_value &value, const changes &delta ) -> std::expected<void, er
         erase_where( world.cells, [&]( const auto & entry ) { return !inside( *delta.coverage, entry.first ); } );
         erase_where( world.entities, [&]( const auto & entry ) { return !inside( *delta.coverage, entry.second.at ); } );
     }
+    if( delta.view ) { world.view = delta.view; }
     auto seen_cells = std::set<position> {};
     for( const auto &entry : delta.cells ) {
         if( !world.coverage || !inside( *world.coverage, entry.at ) ||
@@ -166,7 +170,7 @@ auto classify( const changes &delta ) -> std::string
 {
     if( delta.coverage ) { return "coverage.moved"; }
     if( !delta.cells.empty() || !delta.forgotten.empty() || !delta.entities.empty() ||
-        !delta.gone.empty() || delta.avatar || delta.route ) { return "cells.seen"; }
+        !delta.gone.empty() || delta.avatar || delta.route || delta.view ) { return "cells.seen"; }
     if( delta.environment ) { return "turn.passed"; }
     return "interaction.changed";
 }

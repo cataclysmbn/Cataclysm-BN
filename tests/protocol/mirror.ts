@@ -19,6 +19,8 @@ const inside = (area: { min: Pos; max: Pos }, pos: Pos) =>
 export class Mirror {
   at!: Clock
   coverage?: { min: Pos; max: Pos }
+  /** The squares a map click selects (the terrain window); replaced whole by an event. */
+  view?: { min: Pos; max: Pos }
   interaction!: Value
   avatar?: Value
   environment?: Value
@@ -31,6 +33,7 @@ export class Mirror {
     const mirror = new Mirror()
     mirror.at = header.at
     mirror.coverage = header.coverage
+    mirror.view = header.view
     mirror.interaction = header.interaction
     mirror.avatar = header.avatar
     mirror.environment = header.environment
@@ -51,6 +54,7 @@ export class Mirror {
     const copy = new Mirror()
     copy.at = structuredClone(this.at)
     copy.coverage = structuredClone(this.coverage)
+    copy.view = structuredClone(this.view)
     copy.interaction = structuredClone(this.interaction)
     copy.avatar = structuredClone(this.avatar)
     copy.environment = structuredClone(this.environment)
@@ -97,6 +101,7 @@ export class Mirror {
         if (!inside(changes.coverage, entity.at)) this.entities.delete(k)
       }
     }
+    if (changes.view) this.view = changes.view
     for (const cell of changes.cells ?? []) this.cells.set(key(cell.at), cell)
     for (const pos of changes.forgotten ?? []) {
       assert(this.cells.delete(key(pos)), "forgotten names a known cell")
@@ -117,6 +122,7 @@ export class Mirror {
     return {
       at: this.at,
       coverage: this.coverage ?? null,
+      view: this.view ?? null,
       interaction: this.interaction,
       avatar: this.avatar ?? null,
       environment: this.environment ?? null,

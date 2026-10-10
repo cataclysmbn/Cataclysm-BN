@@ -140,9 +140,16 @@ std::variant<semantic_operation, registered_action, travel_operation>
 }
 
 struct empty_request {};
+auto read_request( const json &value, viewport &result ) -> void
+{
+    members( value, {"cols", "rows"} );
+    result.cols = static_cast<int>( integer( value, "cols", 1, maximum_viewport_cells ) );
+    result.rows = static_cast<int>( integer( value, "rows", 1, maximum_viewport_cells ) );
+}
 auto read_request( const json &value, hello_request &result ) -> void
 {
-    members( value, {"versions", "client"} );
+    members( value, {"versions", "client"}, {"viewport"} );
+    if( value.contains( "viewport" ) ) { read_request( value.at( "viewport" ), result.view.emplace() ); }
     const auto &versions = value.at( "versions" );
     require( versions.is_array() && !versions.empty() );
     auto seen = std::set<std::string> {};
@@ -219,6 +226,8 @@ auto valid_id( const std::string &value ) -> bool
 
 auto decode_hello_request( std::string_view input ) -> std::expected<hello_request, decode_error>
 { return decode<hello_request>( input ); }
+auto decode_viewport_request( std::string_view input ) -> std::expected<viewport, decode_error>
+{ return decode<viewport>( input ); }
 auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>
 {
     const auto decoded = decode<empty_request>( input );

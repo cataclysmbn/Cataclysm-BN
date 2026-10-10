@@ -3698,17 +3698,23 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
     return true;
 }
 
+auto game::click_window() const -> std::optional<half_open_rectangle<point_bub_ms>>
+{
+    if( !w_terrain ) { return std::nullopt; }
+    const auto view_size = point( getmaxx( w_terrain ), getmaxy( w_terrain ) );
+    const auto min = ter_view_p.xy().raw() - view_size / 2;
+    return half_open_rectangle<point_bub_ms>( point_bub_ms( min ), point_bub_ms( min + view_size ) );
+}
+
 auto game::click_cell_of( const tripoint_bub_ms &target ) const -> std::optional<point>
 {
-    if( !w_terrain || target.z() != get_levz() ) {
+    const auto window = click_window();
+    if( !window || target.z() != get_levz() || !window->contains( target.xy() ) ) {
         return std::nullopt;
     }
-    const auto view_size = point( getmaxx( w_terrain ), getmaxy( w_terrain ) );
     const auto win_min = point( getbegx( w_terrain ), getbegy( w_terrain ) );
-    const auto cell = win_min + target.xy().raw() - ter_view_p.xy().raw() + view_size / 2;
-    const auto win_bounds = half_open_rectangle<point>( win_min, win_min + view_size );
-    return win_bounds.contains( cell ) ? std::optional{ cell } :
-           std::nullopt;
+    return win_min + target.xy().raw() - ter_view_p.xy().raw() +
+           point( getmaxx( w_terrain ), getmaxy( w_terrain ) ) / 2;
 }
 
 bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target )

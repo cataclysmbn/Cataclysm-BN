@@ -26,7 +26,8 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 | 메서드                   | 매개변수                                  | 결과                                          |
 | ------------------------ | ----------------------------------------- | --------------------------------------------- |
-| `bn.hello`               | `versions`, `client`                      | `version`, `epoch`, `engine`, `limits`        |
+| `bn.hello`               | `versions`, `client`, `viewport?`         | `version`, `epoch`, `engine`, `limits`        |
+| `bn.viewport`            | `cols`, `rows`                            | 없음                                          |
 | `bn.subscribe`           | 없음                                      | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨    |
 | `bn.unsubscribe`         | 없음                                      | 없음                                          |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (읽기 전용) |
@@ -73,7 +74,8 @@ title: 엔진/클라이언트 프로토콜 1.0
 - `pos = {dim, x, y, z}`는 절대 맵 칸이며, `dim`은 게임 차원이고 기본 차원은 `""`입니다. 현실 거품 좌표는 전송 형식에 나타나지 않습니다.
 - `look = {kind, id, glyph, color}`는 게임 데이터의 외형을 담으므로 텍스트 클라이언트에는 타일셋이 필요 없습니다. 자동 벽 지형은 아바타가 아는 연결 상태에 맞는 선 문자를 담으며, 기억된 칸은 `memory.terrain` 위에 `memory.overlay`(가구, 함정, 차량 부품)를 유지합니다.
 - `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 처음 최대 200행을 담지만 크기 때문에 더 적을 수 있으므로, 나머지는 `bn.interaction.choices`를 `offset = choices.length`부터 읽습니다. 전체 행 수는 `choice_total`입니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다. 메인 메뉴는 네이티브와 같이 탭 구조입니다. 각 탭은 `pane_id`가 없는 선택지(`tab:new_game`, `tab:load` 등, 선택된 탭은 `selected`)이고, 그 뒤에 선택된 탭의 항목만 해당 탭의 `pane_id`와 함께 이어집니다(`new_game:tutorial`, `settings:options`, `load:<world>`). 다른 탭을 선택하면 그 탭의 항목을 담은 새 interaction이 게시됩니다. ID는 위치나 언어에 의존하지 않습니다.
-- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`(능력치와 소지품 `inventory`), `environment`, 로드된 `coverage`, 대기 중인 `route`(계획이 없으면 비어 있거나 없음)로 구성됩니다.
-- 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `route`, `interaction`을 교체합니다.
+- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`(능력치와 소지품 `inventory`), `environment`, 로드된 `coverage`, `view`, 대기 중인 `route`(계획이 없으면 비어 있거나 없음)로 구성됩니다. `view`는 아바타가 있는 층에서 네이티브 지형 창이 보여 주는 `{min, max}` 칸입니다(아바타를 따라 움직임). `travel` 클릭은 이 안에서만 받아들여지고, 밖이면 `validation_failed`로 거부됩니다.
+- 지형 창은 네이티브 창 크기 변경과 같은 방식으로 정해집니다. `bn.hello`의 `viewport = {cols, rows}`(맵 칸 1~512) 또는 이후의 `bn.viewport`는 터미널을 그 칸 수에 옆 패널을 더한 크기로 바꿔, 엔진이 아바타 주변의 그만큼을 보여 주게 합니다. 네이티브 최소 터미널 크기가 여전히 적용되므로 실제 `view`가 기준입니다. 아무것도 보내지 않으면 기본 터미널이 쓰입니다.
+- 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `view`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `route`, `interaction`을 교체합니다.
 
 이벤트는 `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`이며, 이후 스키마에 나열된 연출 유형이 추가됩니다. 새 이벤트 유형에는 새로운 정확한 버전이 필요합니다.

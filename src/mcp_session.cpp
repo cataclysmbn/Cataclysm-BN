@@ -28,6 +28,7 @@
 #include "client_interaction.h"
 #include "client_memory.h"
 #include "client_snapshot.h"
+#include "game_ui.h"
 #include "input.h"
 #include "mcp_server.h"
 #include "json.h"
@@ -192,6 +193,11 @@ auto structured_state() -> screen_snapshot
     return { .json = current.json, .text = current.text };
 }
 
+auto resize_viewport( const int cols, const int rows ) -> void
+{
+    game_ui::resize_terrain_window( { cols, rows } );
+}
+
 auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_snapshot
 {
     const auto current = game_client::current_interaction( { .offset = offset, .limit = limit } );
@@ -314,7 +320,8 @@ auto start_session() -> void
         .submit = submit_events,
         .has_input = has_input,
         .actions = actions,
-        .interaction = interaction
+        .interaction = interaction,
+        .resize_viewport = resize_viewport
     } );
     session.started = true;
     game_client::memory::set_input_provider( provide_input );

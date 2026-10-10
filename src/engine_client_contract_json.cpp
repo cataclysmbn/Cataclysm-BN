@@ -198,6 +198,7 @@ auto to_json( const changes &delta ) -> json
 {
     auto result = json::object();
     if( delta.coverage ) { result["coverage"] = to_json( *delta.coverage ); }
+    if( delta.view ) { result["view"] = to_json( *delta.view ); }
     if( !delta.cells.empty() ) { result["cells"] = to_array( delta.cells ); }
     if( !delta.forgotten.empty() ) { result["forgotten"] = to_array( delta.forgotten ); }
     if( !delta.entities.empty() ) { result["entities"] = to_array( delta.entities ); }
@@ -266,6 +267,7 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
     }
     auto header = json{{"at", to_json( value.at )}};
     if( world.coverage ) { header["coverage"] = to_json( *world.coverage ); }
+    if( world.view ) { header["view"] = to_json( *world.view ); }
     header["interaction"] = to_json( value.value.interaction );
     if( world.avatar ) { header["avatar"] = to_json( *world.avatar ); }
     if( world.environment ) { header["environment"] = to_json( *world.environment ); }

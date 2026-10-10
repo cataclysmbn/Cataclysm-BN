@@ -38,11 +38,17 @@ auto world_cell(const int x) -> cell {
             .terrain = look{.kind = "terrain", .id = "t_dirt", .glyph = ".", .color = "brown"}};
 }
 auto known_cells = std::vector<int>{1, 2};
+auto declared_viewport = std::vector<std::pair<int, int>>{};
 auto with_avatar = true;
 auto capture_test_world() -> world_state {
     auto result = world_state{};
     result.coverage = bounds{.min = {.x = 0, .y = -5, .z = 0}, .max = {.x = 1000, .y = 5, .z = 0}};
     for (const auto x : known_cells) { result.cells[{.x = x}] = world_cell(x); }
+    if (!declared_viewport.empty()) {
+        const auto [cols, rows] = declared_viewport.back();
+        result.view =
+            bounds{.min = {.x = 0, .y = 0, .z = 0}, .max = {.x = cols - 1, .y = rows - 1, .z = 0}};
+    }
     if (with_avatar) { result.avatar = avatar_value{.id = "e:avatar", .name = "Ada"}; }
     return result;
 }
@@ -78,10 +84,13 @@ struct fixture {
                 return true;
             },
         .has_input = [this] { return !queued.empty(); },
+        .resize_viewport =
+            [](const int cols, const int rows) { declared_viewport.push_back({cols, rows}); },
         .contract_session = &authority,
     }};
     fixture() {
         known_cells = {1, 2};
+        declared_viewport.clear();
         with_avatar = true;
         authority.set_world_capture(&capture_test_world);
     }
@@ -139,6 +148,52 @@ TEST_CASE("hello is required and checks the version", "[engine_client_server]") 
     CHECK(index_of(out, R"("id":1)") < index_of(out, R"("id":2)"));
     CHECK(contains(out, R"("version":"1.0")"));
     CHECK(contains(out, R"("epoch":")" + test.authority.epoch()));
+}
+
+TEST_CASE(
+    "hello may declare the map viewport and bn.viewport resizes it", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    const auto declare = [](const std::string& view) {
+        return rpc(
+            "bn.hello",
+            R"({"versions":["1.0"],"client":{"name":"t","version":"1"},"viewport":)" + view + "}",
+            "1");
+    };
+    SECTION("a hello without a viewport leaves the terminal alone") {
+        test.pump(hello);
+        CHECK(declared_viewport.empty());
+    }
+    SECTION("a declared viewport reaches the host once and shapes the next published view") {
+        test.pump(declare(R"({"cols":40,"rows":25})") + subscribe);
+        CHECK(declared_viewport == std::vector<std::pair<int, int>>{{40, 25}});
+        test.next_boundary();
+        CHECK(test.authority.current()->value.world.view->max == position{.x = 39, .y = 24});
+    }
+    SECTION("an invalid viewport is rejected without resizing") {
+        test.pump(
+            declare(R"({"cols":0,"rows":25})") + declare(R"({"cols":40})")
+            + declare(R"({"cols":513,"rows":25})") + declare(R"({"cols":40,"rows":25,"extra":1})"));
+        CHECK(declared_viewport.empty());
+        CHECK(contains(test.output.str(), R"("code":-32602)"));
+    }
+    SECTION("bn.viewport resizes and publishes the new view as one event") {
+        test.pump(
+            declare(R"({"cols":40,"rows":25})") + subscribe
+            + rpc("bn.viewport", R"({"cols":60,"rows":30})", "5"));
+        CHECK(declared_viewport == std::vector<std::pair<int, int>>{{40, 25}, {60, 30}});
+        const auto out = test.output.str();
+        CHECK(contains(out, R"("id":5,"result":{})"));
+        CHECK(test.authority.current()->value.world.view->max == position{.x = 59, .y = 29});
+        CHECK(contains(
+            out,
+            R"("changes":{"view":{"min":{"dim":"","x":0,"y":0,"z":0},"max":{"dim":"","x":59,"y":29,"z":0}}})"));
+    }
+    SECTION("bn.viewport needs a hello first") {
+        test.pump(rpc("bn.viewport", R"({"cols":60,"rows":30})", "5"));
+        CHECK(declared_viewport.empty());
+        CHECK(contains(test.output.str(), R"("kind":"negotiation_failed")"));
+    }
 }
 
 TEST_CASE("subscribe answers first and then sends the cell parts", "[engine_client_server]") {

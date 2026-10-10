@@ -41,6 +41,9 @@ struct mcp_host {
     std::function < auto() -> std::string > actions;
     /// Describe the current structured interaction, with bounded choice pagination.
     std::function < auto( std::size_t, std::size_t ) -> screen_snapshot > interaction;
+    /// Resize the terrain window to this many map cells, as a native window resize would.
+    /// Optional: unset means the client's viewport is ignored.
+    std::function < auto( int, int ) -> void > resize_viewport;
     /// Production defaults to the process authority; tests may bind an isolated real session.
     engine_client::session *contract_session = nullptr;
 };
@@ -115,6 +118,8 @@ class server
         auto publish_boundary( std::ostream &out ) -> bool;
         /// Turn what the session published into notifications and write them, in order.
         auto flush_push( std::ostream &out ) -> bool;
+        /// Turn what the session published into notifications written after the current response.
+        auto queue_push() -> void;
         auto write_notifications( std::ostream &out ) -> bool;
         auto deliver_input() -> bool;
         auto direct( const engine_client::jsonrpc::request &request ) ->

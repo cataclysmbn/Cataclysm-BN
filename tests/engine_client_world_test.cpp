@@ -492,3 +492,38 @@ TEST_CASE(
     REQUIRE(corner->terrain);
     CHECK(corner->terrain->glyph == LINE_OXXO_S);
 }
+
+TEST_CASE(
+    "world view is the terrain window and exactly the squares a click selects",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto shown = [&](const int cols, const int rows) {
+        g->w_terrain = catacurses::newwin(rows, cols, point_zero);
+        g->ter_view_p = setup.start;
+        return ec::world::capture_world();
+    };
+
+    SECTION("a 40x25 window reaches squares a 36x24 one cannot") {
+        const auto state = shown(40, 25);
+        REQUIRE(state.view);
+        CHECK(state.view->min == at(setup.start + tripoint(-20, -12, 0)));
+        CHECK(state.view->max == at(setup.start + tripoint(19, 12, 0)));
+        const auto far_east = setup.start + tripoint(19, 0, 0);
+        CHECK(g->click_cell_of(far_east));
+        CHECK_FALSE(g->click_cell_of(far_east + tripoint_east));
+        CHECK_FALSE(g->click_cell_of(setup.start + tripoint(0, 13, 0)));
+        CHECK(g->click_cell_of(setup.start + tripoint(0, 12, 0)));
+
+        const auto native = shown(36, 24);
+        REQUIRE(native.view);
+        CHECK(native.view->max == at(setup.start + tripoint(17, 11, 0)));
+        CHECK_FALSE(g->click_cell_of(far_east));
+    }
+    SECTION("without a terrain window there is no view and no click target") {
+        g->w_terrain = {};
+        const auto state = ec::world::capture_world();
+        CHECK_FALSE(state.view);
+        CHECK_FALSE(g->click_cell_of(setup.start));
+    }
+    g->w_terrain = {};
+}
