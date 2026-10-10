@@ -98,7 +98,9 @@ auto session::publish_boundary() -> std::expected<void, error>
         auto created = event_stream::create( epoch_, std::move( *candidate ) );
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
-        message_cursor_ = Messages::feed_end();
+        // The whole log is new to this stream: a loaded game's saved lines and a new game's first
+        // line were written before it existed, so the next boundary publishes them.
+        message_cursor_ = {};
         presentation::collect( true );
         return {};
     }

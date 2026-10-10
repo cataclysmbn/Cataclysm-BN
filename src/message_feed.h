@@ -22,8 +22,6 @@ struct feed_entry {
     int count = 1;
 };
 
-/// Where a reader that starts now has already seen everything.
-auto feed_end() -> feed_cursor;
 /// Messages added after `after` in log order, plus the cursor's own message when it repeated since.
 /// Messages hidden by the cooldown are skipped as the native sidebar does.
 auto feed_since( const feed_cursor &after ) -> std::vector<feed_entry>;
