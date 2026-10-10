@@ -8,6 +8,7 @@
 #include "game_session.h"
 #include "get_version.h"
 #include "message_types.h"
+#include "options.h"
 #include "output.h"
 #include "world.h"
 #include "worldfactory.h"
@@ -243,7 +244,11 @@ auto session::take_push() -> std::vector<push_item> { return std::exchange( push
 
 auto describe_engine() -> engine_info
 {
-    auto result = engine_info{ .build = getVersionString() };
+    auto result = engine_info{
+        .build = getVersionString(),
+        .use_tiles = get_option<bool>( "USE_TILES" ),
+        .tileset = get_option<std::string>( "TILES" ),
+    };
     if( world_generator && world_generator->active_world && world_generator->active_world->info ) {
         for( const auto &mod : world_generator->active_world->info->active_mod_order ) {
             result.mods.push_back( mod.str() );

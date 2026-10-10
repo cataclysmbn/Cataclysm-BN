@@ -67,6 +67,9 @@ struct application_error {
 struct engine_info {
     std::string build = {};
     std::vector<std::string> mods = {};
+    /// The `USE_TILES` and `TILES` options: how the native client would draw the map.
+    bool use_tiles = true;
+    std::string tileset = {};
 };
 /// Validate IDs/UTF-8 and the output bound before returning a complete serialized value.
 auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> std::string;

@@ -2517,6 +2517,24 @@
               "items": {
                 "type": "string"
               }
+            },
+            "display": {
+              "type": "object",
+              "properties": {
+                "tiles": {
+                  "type": "boolean",
+                  "description": "The USE_TILES option."
+                },
+                "tileset": {
+                  "type": "string",
+                  "description": "The TILES option: the tileset the native client would load."
+                }
+              },
+              "required": [
+                "tiles",
+                "tileset"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
