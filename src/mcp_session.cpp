@@ -234,8 +234,7 @@ auto stdin_ready() -> bool
 }
 
 #if !defined(_WIN32)
-/// SDL turns SIGTERM and SIGINT into a quit event that ends the engine as if its client had closed
-/// stdin. Said so by name instead, and the process dies of the signal like any other.
+/// Says which signal ended the engine, then dies of it like any other process.
 extern "C" auto name_the_signal( const int sig ) -> void
 {
     const auto text = sig == SIGTERM ? "mcp: the engine is exiting: received SIGTERM\n" :
@@ -259,16 +258,6 @@ extern "C" auto name_the_signal( const int sig ) -> void
 auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
-#if !defined(_WIN32)
-    // After SDL has installed its own handlers.
-    static const auto named = []() {
-        std::signal( SIGTERM, name_the_signal );
-        std::signal( SIGINT, name_the_signal );
-        return true;
-    }
-    ();
-    static_cast<void>( named );
-#endif
     while( !session.stop ) {
         if( !session.events.empty() ) {
             const auto request = std::move( session.events.front() );
@@ -388,6 +377,11 @@ auto start_session() -> void
 #if !defined(_WIN32)
     // A consumer that closes the pipe must surface as a write error, not terminate the game.
     std::signal( SIGPIPE, SIG_IGN );
+    // SDL would turn SIGTERM and SIGINT into a quit event that ends the engine as if its client had
+    // closed stdin; ours name the signal, from the first moment, even while the game loads.
+    setenv( "SDL_NO_SIGNAL_HANDLERS", "1", 1 );
+    std::signal( SIGTERM, name_the_signal );
+    std::signal( SIGINT, name_the_signal );
 #endif
     const auto protocol_fd = duplicate_stdout();
     if( protocol_fd < 0 || !redirect_stdout_to_stderr() ) {

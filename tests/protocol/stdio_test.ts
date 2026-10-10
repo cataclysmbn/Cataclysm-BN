@@ -1354,3 +1354,54 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name: "stdio: SIGTERM before the first subscribe is named too",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const process = new Deno.Command(Deno.env.get("BN_BINARY")!, {
+      args: ["--client=mcp", "--userdir", `${profile}/`, "--configdir", `${profile}/config/`],
+      stdin: "piped",
+      stdout: "piped",
+      stderr: "piped",
+    }).spawn()
+    try {
+      const writer = process.stdin.getWriter()
+      const send = (value: Value) =>
+        writer.write(new TextEncoder().encode(JSON.stringify(value) + "\n"))
+      const reader = process.stdout.pipeThrough(new TextDecoderStream()).getReader()
+      let seen = ""
+      const until = async (needle: string) => {
+        while (!seen.includes(needle)) {
+          const { value, done } = await reader.read()
+          assert(!done, `the engine closed before ${needle}`)
+          seen += value
+        }
+      }
+      await send({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "bn.hello",
+        params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+      })
+      // Answered before any input boundary: the engine is still starting, not waiting for input.
+      await until(`"id":1`)
+      process.kill("SIGTERM")
+      const [status, stderr] = await Promise.all([
+        process.status,
+        new Response(process.stderr).text(),
+      ])
+      assert(
+        stderr.includes("mcp: the engine is exiting: received SIGTERM"),
+        `stderr: ${stderr.slice(-400)}`,
+      )
+      assertEquals(status.signal, "SIGTERM", "ended by the signal, not by exit code 0")
+    } finally {
+      try {
+        process.kill("SIGKILL")
+      } catch { /* already gone */ }
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
