@@ -10277,6 +10277,42 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
             trail_end_x );
     g->add_draw_callback( trail_cb );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Vehicles" ),
+            .message = vehicle_list.empty() ? _( "You don't see any vehicles around you!" ) : std::string(),
+            .allow_cancel = true,
+        };
+        for( auto i = std::size_t{ 0 }; i < vehicle_list.size(); ++i ) {
+            const auto &entry = vehicle_list[i];
+            const auto &veh = *entry.veh;
+            auto details = string_format( "[%s]\n", veh.type.str() );
+            details += string_format( _( "Speed: %d %s" ), static_cast<int>( convert_velocity( veh.velocity,
+                                      VU_VEHICLE ) ),
+                                      velocity_units( VU_VEHICLE ) ) + "\n";
+            details += string_format( _( "Engine: %s" ), veh.engine_on ? _( "on" ) : _( "off" ) ) + "\n";
+            details += ( veh.sufficient_wheel_config() ? _( "This vehicle has enough wheels." )
+                         : _( "This vehicle does not have enough wheels." ) ) + std::string( "\n" );
+            details += _( "Status: " ) + veh.vehicle_damage_summary().first;
+            if( !veh.floating.empty() ) {
+                details += "\n" + std::string( veh.can_float() ? _( "This vehicle can float." ) :
+                                               _( "This vehicle can't float." ) );
+            }
+            snapshot.choices.push_back( {
+                .id = "vehicle:" + std::to_string( i ), .label = veh.name,
+                .description = remove_color_tags( details ),
+                .highlighted = static_cast<int>( i ) == iActive,
+                .columns = {
+                    { .label = _( "Distance" ), .value = std::to_string( entry.dist ) },
+                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( viewer.bub_pos(), entry.pos ) ) },
+                },
+            } );
+        }
+        snapshot.choices.push_back( { .id = "action:NEXT_TAB", .label = remove_color_tags( ctxt.get_action_name( "NEXT_TAB" ) ) } );
+        return snapshot;
+    } );
+
     do {
         if( action == "UP" ) {
             iActive--;
@@ -10313,7 +10349,10 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
         g->invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
-        action = ctxt.handle_input();
+        action = game_client::action_of( ctxt, ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "vehicle:" ) ) { iActive = std::stoi( id.substr( 8 ) ); }
+            return std::string();
+        } );
     } while( action != "QUIT" );
 
     viewer.view_offset = stored_view_offset;
@@ -11189,6 +11228,57 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
             trail_end_x );
     add_draw_callback( trail_cb );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Monsters" ),
+            .message = monster_list.empty() ? _( "You don't see any monsters around you!" ) : std::string(),
+            .allow_cancel = true,
+        };
+        for( auto i = std::size_t{ 0 }; i < monster_list.size(); ++i ) {
+            const auto *critter = monster_list[i];
+            const auto *m = dynamic_cast<const monster *>( critter );
+            const auto *p = dynamic_cast<const npc *>( critter );
+            auto hp_text = std::string();
+            auto hp_color = c_white;
+            if( m != nullptr ) {
+                m->get_HP_Bar( hp_color, hp_text );
+            } else {
+                std::tie( hp_text, hp_color ) = ::get_hp_bar( critter->get_hp(), critter->get_hp_max(), false );
+            }
+            const auto attitude = m != nullptr ? m->get_attitude().first
+                                  : p != nullptr ? npc_attitude_name( p->get_attitude() ) : std::string();
+            snapshot.choices.push_back( {
+                .id = "monster:" + std::to_string( i ),
+                .label = m != nullptr ? m->name() : critter->disp_name(),
+                .description = static_cast<int>( i ) == iActive ? remove_color_tags( critter->extended_description() )
+                : std::string(),
+                .highlighted = static_cast<int>( i ) == iActive,
+                .columns = {
+                    {
+                        .label = _( "Attitude" ), .value = player_knows
+                        ? Creature::get_attitude_ui_data( critter->attitude_to( u ) ).first.translated() : std::string()
+                    },
+                    { .label = _( "Health" ), .value = player_knows ? hp_text : std::string() },
+                    { .label = _( "State" ), .value = attitude },
+                    { .label = _( "Aware" ), .value = player_knows && critter->sees( g->u ) ? _( "Yes" ) : _( "No" ) },
+                    { .label = _( "Distance" ), .value = std::to_string( rl_dist( u.bub_pos(), critter->bub_pos() ) ) },
+                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( u.bub_pos(), critter->bub_pos() ) ) },
+                },
+            } );
+        }
+        auto actions = std::vector<const char *> { "NEXT_TAB", "SAFEMODE_BLACKLIST_ADD", "SAFEMODE_BLACKLIST_REMOVE" };
+        if( bVMonsterLookFire ) {
+            actions.push_back( "look" );
+            actions.push_back( "fire" );
+        }
+        for( const auto *id : actions ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     do {
         if( action == "UP" ) {
             iActive--;
@@ -11258,7 +11348,10 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
 
         ui_manager::redraw();
 
-        action = ctxt.handle_input();
+        action = game_client::action_of( ctxt, ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "monster:" ) ) { iActive = std::stoi( id.substr( 8 ) ); }
+            return std::string();
+        } );
     } while( action != "QUIT" );
 
     u.view_offset = stored_view_offset;

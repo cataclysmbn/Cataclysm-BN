@@ -1,4 +1,5 @@
 #include "panels.h"
+#include "client_choice.h"
 #include "client_display.h"
 
 #include "action.h"
@@ -2938,6 +2939,38 @@ void panel_manager::show_adm()
         wnoutrefresh( w );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto &panels = layouts[current_layout_id];
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Sidebar Options" ),
+            .message = swapping ? _( "Choose where the panel goes" ) : std::string(),
+            .allow_cancel = true,
+        };
+        for( const auto &[row, index] : row_indices ) {
+            snapshot.choices.push_back( {
+                .id = "panel:" + std::to_string( index ), .label = _( panels[index].get_name() ),
+                .selected = panels[index].toggle,
+                .highlighted = current_col == 0 && row == current_row,
+                .columns = { { .label = _( "Order" ), .value = std::to_string( row + 1 ) } },
+            } );
+        }
+        auto row = std::size_t{ 0 };
+        for( const auto &layout : layouts ) {
+            snapshot.choices.push_back( {
+                .id = "layout:" + std::to_string( row ), .label = _( layout.first ),
+                .selected = layout.first == current_layout_id,
+                .highlighted = current_col == 2 && row == current_row,
+            } );
+            ++row;
+        }
+        for( const auto *id : { "TOGGLE_PANEL", "MOVE_PANEL" } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     while( !exit ) {
         auto &panels = layouts[current_layout_id];
 
@@ -2958,7 +2991,25 @@ void panel_manager::show_adm()
 
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "layout:" ) ) {
+                // Choosing a layout is Enter on it.
+                current_col = 2;
+                current_row = std::stoul( id.substr( 7 ) );
+                return std::string( "MOVE_PANEL" );
+            }
+            if( !id.starts_with( "panel:" ) ) { return std::string(); }
+            const auto index = std::stoul( id.substr( 6 ) );
+            const auto found = std::ranges::find_if( row_indices, [&]( const auto & entry ) {
+                return entry.second == index;
+            } );
+            if( found == row_indices.end() ) { return std::string(); }
+            current_col = 0;
+            current_row = found->first;
+            // A chosen panel is toggled; while one is picked up for moving, it is the place to drop it.
+            return std::string( swapping ? "MOVE_PANEL" : "TOGGLE_PANEL" );
+        } );
         if( action == "UP" ) {
             if( current_row > 0 ) {
                 current_row -= 1;
