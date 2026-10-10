@@ -122,11 +122,11 @@ struct subscribe_size {
 auto measure_subscribe(const ec::world_state& world) -> subscribe_size {
     auto value = ec::snapshot{};
     value.value.world = world;
-    auto result = subscribe_size{
-        .bytes = ec::serialize_snapshot_header(value).size(),
-        .parts = ec::snapshot_part_count(value)};
+    const auto wire = ec::serialize_snapshot(value);
+    REQUIRE(wire);
+    auto result = subscribe_size{.bytes = wire->header.size(), .parts = wire->parts.size()};
     for (const auto index : std::views::iota(std::size_t{0}, result.parts)) {
-        const auto text = ec::serialize_snapshot_part(value, index);
+        const auto& text = wire->parts[index];
         result.bytes += text.size();
         auto input = std::istringstream{text};
         auto json = JsonIn{input};
