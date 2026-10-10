@@ -388,6 +388,19 @@
     "components": [ [ [ "oxy_powder", 100 ] ], [ [ "lye_powder", 100 ] ] ]
   },
   {
+    "type": "recipe",
+    "result": "foamcrete_slurry",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_LAUNCHER",
+    "skill_used": "cooking",
+    "skills_required": [ "survival", 2 ],
+    "difficulty": 4,
+    "time": "20 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CHEM", "level": 1 } ],
+    "components": [ [ [ "concrete", 1 ] ], [ [ "plastic_chunk", 2 ] ], [ [ "water", 2 ], [ "water_clean", 2 ] ] ]
+  },
+  {
     "result": "cannon_explosive_shell",
     "type": "recipe",
     "category": "CC_AMMO",

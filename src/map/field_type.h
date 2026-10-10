@@ -100,6 +100,7 @@ struct field_intensity_level {
     nc_color color = c_white;
     bool dangerous = false;
     bool transparent = true;
+    bool impassable = false;
     int move_cost = 0;
     int extra_radiation_min = 0;
     int extra_radiation_max = 0;
@@ -197,6 +198,9 @@ public:
     auto get_dangerous(int level = 0) const -> bool { return get_intensity_level(level).dangerous; }
     auto get_transparent(int level = 0) const -> bool {
         return get_intensity_level(level).transparent;
+    }
+    auto get_impassable(int level = 0) const -> bool {
+        return get_intensity_level(level).impassable;
     }
     auto get_tint() const -> nc_color { return tint; }
     auto get_tint_rgb() const -> std::optional<RGBColor> { return tint_rgb; }

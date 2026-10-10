@@ -859,7 +859,7 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
                 granted->item_tags.insert( flag_id( cb.flag ) );
             }
             // If the item has an ammunition, this loads it to capacity, including magazines.
-            if( !granted->ammo_default().is_null() ) {
+            if( !granted->ammo_default().is_null() && granted->ammo_remaining() == 0 ) {
                 granted->ammo_set( granted->ammo_default(), -1 );
             }
 

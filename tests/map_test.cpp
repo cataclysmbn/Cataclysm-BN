@@ -672,6 +672,26 @@ TEST_CASE("repeated_liquid_spills_intensify_before_expanding", "[map][item][liqu
     CHECK(count_field_tiles_in_radius(here, center, 2, water_field) > 1);
 }
 
+TEST_CASE("field_intensity_can_make_a_tile_impassable", "[map][field][movement]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms{60, 60, 0};
+    const auto foamcrete = field_type_id("fd_foamcrete");
+    here.ter_set(pos, ter_id("t_floor"));
+    here.furn_set(pos, furn_id("f_null"));
+    here.remove_field(pos, foamcrete);
+
+    REQUIRE(here.passable(pos));
+    REQUIRE(here.add_field(pos, foamcrete, 1));
+    CHECK_FALSE(here.passable(pos));
+
+    CHECK(here.set_field_intensity(pos, foamcrete, 2) == 2);
+    CHECK_FALSE(here.passable(pos));
+    CHECK(here.move_cost(pos) == 0);
+}
+
 TEST_CASE(
     "liquid_drop_on_independent_map_consumes_its_source_item",
     "[map][item][liquid][field][fluid_regression]") {

@@ -2620,6 +2620,11 @@ auto map::move_cost(const tripoint_bub_ms& p, const vehicle* ignored_vehicle) co
     if (get_mapbuffer().is_outside_pocket_dimension_bounds(map_local_to_abs(*this, p))) {
         return 0;
     }
+    if (std::ranges::any_of(field_at(p), [](const auto& entry) {
+            return entry.second.is_impassable();
+        })) {
+        return 0;
+    }
 
     const furn_t& furniture = furn(p).obj();
     const ter_t& terrain = ter(p).obj();

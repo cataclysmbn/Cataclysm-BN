@@ -39,6 +39,11 @@
     "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 }
   },
   {
+    "id": "FOAMCRETE",
+    "type": "ammo_effect",
+    "aoe": { "field_type": "fd_foamcrete", "intensity_min": 1, "intensity_max": 2, "size": 0, "check_passable": true }
+  },
+  {
     "id": "NAPALM",
     "type": "ammo_effect",
     "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 3 },

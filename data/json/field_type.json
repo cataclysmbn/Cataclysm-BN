@@ -245,6 +245,36 @@
     "looks_like": "fd_sap"
   },
   {
+    "id": "fd_foamcrete",
+    "type": "field_type",
+    "intensity_levels": [
+      {
+        "name": "foamcrete splatter",
+        "transparent": false,
+        "impassable": true,
+        "sym": "~",
+        "color": "light_gray",
+        "move_cost": 200
+      },
+      { "name": "thick foamcrete", "color": "light_gray", "move_cost": 200 }
+    ],
+    "description_affix": "covered_in",
+    "priority": 2,
+    "phase": "solid",
+    "display_field": true,
+    "half_life": "12 hours",
+    "looks_like": "t_wall_resin",
+    "tint": "#fff2a6",
+    "bash": {
+      "str_min": 8,
+      "str_max": 12,
+      "sound_vol": "50 dB",
+      "sound_fail_vol": "50 dB",
+      "sound": "crack!",
+      "msg_success": "You smash the hardened foamcrete."
+    }
+  },
+  {
     "id": "fd_fire",
     "type": "field_type",
     "legacy_enum_id": 10,
