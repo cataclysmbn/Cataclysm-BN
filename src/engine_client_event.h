@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine_client_contract.h"
+#include "loading_ui_client.h"
 
 #include <expected>
 #include <optional>
@@ -113,6 +114,9 @@ struct snapshot_wire {
 };
 /// resource_limit when the header (entities, inventory) or a single cell cannot fit one piece.
 auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire, error>;
+/// Params of `bn.loading`: one loading step, or `done` once the screen is gone.
+auto serialize_loading( const std::string &epoch, const game_client::loading_progress &progress )
+-> std::string;
 auto serialize_resync( const std::string &epoch, std::string_view reason, counter lost_after )
 -> std::string;
 

@@ -275,6 +275,18 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
     if( result.header.size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
     return result;
 }
+auto serialize_loading( const std::string &epoch, const game_client::loading_progress &progress )
+-> std::string
+{
+    if( progress.done ) { return json{{"epoch", epoch}, {"done", true}}.dump(); }
+    auto value = json{{"epoch", epoch}, {"title", progress.title}, {"entries", progress.entries},
+        {"index", progress.index}};
+    if( progress.image ) {
+        value["image"] = json{{"path", progress.image->path}};
+        if( progress.image->author ) { value["image"]["author"] = *progress.image->author; }
+    }
+    return value.dump();
+}
 auto serialize_resync( const std::string &epoch, const std::string_view reason,
                        const counter lost_after )
 -> std::string

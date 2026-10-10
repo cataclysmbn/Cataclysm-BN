@@ -51,8 +51,11 @@ class loading_ui
         std::unique_ptr<ui_adaptor> ui;
         std::unique_ptr<loading_image_splash> ui_splash;
         loading_image_selection_state loading_image_selection;
+        bool reported = false;
 
         void init();
+        /// Tell the loading observer, if any, what the screen shows now.
+        void report();
     public:
         loading_ui( bool display );
         ~loading_ui();

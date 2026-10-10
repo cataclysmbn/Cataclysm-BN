@@ -623,6 +623,41 @@
       }
     },
     {
+      "name": "loading progress with an image",
+      "def": "loading_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "title": "Loading files",
+        "entries": [
+          "Terrain",
+          "Items"
+        ],
+        "index": 1,
+        "image": {
+          "path": "data/json/loading/Ada_dawn.webp",
+          "author": "Ada"
+        }
+      }
+    },
+    {
+      "name": "loading progress without an image",
+      "def": "loading_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "title": "Loading",
+        "entries": [],
+        "index": 0
+      }
+    },
+    {
+      "name": "loading done",
+      "def": "loading_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "done": true
+      }
+    },
+    {
       "name": "stale submit error",
       "def": "application_error",
       "value": {
@@ -656,6 +691,27 @@
     }
   ],
   "invalid": [
+    {
+      "name": "loading done with progress members",
+      "def": "loading_notification",
+      "why": "done ends the loading screen and carries nothing else",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "done": true,
+        "title": "Loading"
+      }
+    },
+    {
+      "name": "loading index out of range type",
+      "def": "loading_notification",
+      "why": "index is a non-negative integer",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "title": "Loading",
+        "entries": [],
+        "index": -1
+      }
+    },
     {
       "name": "bubble coordinate in a target",
       "def": "submit_params",

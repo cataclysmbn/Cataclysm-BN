@@ -12,6 +12,7 @@
 #include "client_command.h"
 #include "engine_client_jsonrpc.h"
 #include "engine_client_session.h"
+#include "loading_ui_client.h"
 
 namespace bn::mcp
 {
@@ -77,6 +78,10 @@ class server
 
         /// Interrupt what is outstanding and write the notifications that caused. For shutdown.
         auto finish( std::ostream &out ) -> bool;
+
+        /// Write a `bn.loading` notification now, from the game thread, while the game is busy
+        /// loading. Only a client that completed `bn.hello` receives it.
+        auto notify_loading( const game_client::loading_progress &progress, std::ostream &out ) -> void;
 
         /// True when input ended because of an invalid or unreadable stdio frame.
         auto failed() const -> bool;

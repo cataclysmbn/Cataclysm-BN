@@ -321,3 +321,36 @@ TEST_CASE("knowledge limits what a value may disclose", "[engine_client_event]")
         entity{.id = "e:2", .at = pos(2), .known = knowledge::sensed, .sense = "sound"};
     CHECK(stream.publish({.next = world_of({visible_cell(1)}, {sensed_entity})}));
 }
+
+TEST_CASE(
+    "loading progress serializes the screen the native client shows", "[engine_client_event]") {
+    const auto progress = game_client::loading_progress{
+        .title = "Loading",
+        .entries = {"Terrain", "Items"},
+        .index = 1,
+        .image = game_client::
+            loading_image_info{.path = "data/json/loading/Ada_dawn.webp", .author = "Ada"}};
+    CHECK(nlohmann::json::parse(serialize_loading("epoch:a", progress))
+          == nlohmann::json::parse(
+              R"({"epoch":"epoch:a","title":"Loading","entries":["Terrain","Items"],"index":1,
+                  "image":{"path":"data/json/loading/Ada_dawn.webp","author":"Ada"}})"));
+}
+
+TEST_CASE("loading progress omits what is unknown", "[engine_client_event]") {
+    const auto progress = game_client::loading_progress{
+        .title = "Loading",
+        .entries = {},
+        .image = game_client::loading_image_info{.path = "loading/dawn.webp"}};
+    CHECK(nlohmann::json::parse(serialize_loading("epoch:a", progress))
+          == nlohmann::json::parse(
+              R"({"epoch":"epoch:a","title":"Loading","entries":[],"index":0,
+                  "image":{"path":"loading/dawn.webp"}})"));
+    CHECK(
+        nlohmann::json::parse(serialize_loading("epoch:a", {.title = "No image"})).contains("image")
+        == false);
+}
+
+TEST_CASE("loading completion carries only the epoch and done", "[engine_client_event]") {
+    CHECK(nlohmann::json::parse(serialize_loading("epoch:a", {.title = "ignored", .done = true}))
+          == nlohmann::json::parse(R"({"epoch":"epoch:a","done":true})"));
+}

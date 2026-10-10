@@ -34,7 +34,7 @@ title: エンジン/クライアントプロトコル 1.0
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                      |
 | `bn.command.result`      | `epoch`, `command_id`                     | 最新のステージ。失われた通知の回復に使う               |
 
-エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync` です。購読中のクライアントへ入力境界ごとに送られます。
+エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading` です。`bn.loading` 以外は、購読中のクライアントへ入力境界ごとに送られます。
 
 エラーはコード `1000` と `error.data = {kind, action?, at?}` を使い、`action` が次の対応(`hello`、`subscribe`、`retry`)を示します。
 
@@ -55,6 +55,15 @@ title: エンジン/クライアントプロトコル 1.0
 ```
 
 ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` です。`completed` は次のネイティブ入力境界に到達したことを意味し、長い行動が終わったことではありません。その `at` はその境界の終点です。同時に実行できるコマンドは 1 つです(`command_busy`)。
+
+## 読み込み画面
+
+ワールドの読み込み中はゲームスレッドが処理中で入力境界に到達しないため、`bn.hello` を済ませたクライアントには、ネイティブの読み込み画面の各ステップで `bn.loading` が送られます(購読の有無は問いません)。進行状況はネイティブクライアントが表示する画面と同じです。`title` は現在のコンテキスト(例: "Loading files")、`entries` はその一覧、`index` は処理中の項目(それ以前は完了)、`image` はネイティブクライアントと同じ方法で選ばれた読み込み画像です。`image.path` はゲームのベースパスからの相対パスで、ファイル名に作者が含まれない場合 `author` は省略されます。読み込み画面が終わると `done` が一度だけ送られ、その後に通常どおり `bn.resync` や `bn.events` が続きます。`epoch` はそのステップを送った時点の epoch です。
+
+```text
+<- {"jsonrpc":"2.0","method":"bn.loading","params":{"epoch":"epoch:e7f3","title":"Loading files","entries":["Terrain","Items"],"index":1,"image":{"path":"data/json/loading/Ada_dawn.webp","author":"Ada"}}}
+<- {"jsonrpc":"2.0","method":"bn.loading","params":{"epoch":"epoch:e7f3","done":true}}
+```
 
 ## 値
 

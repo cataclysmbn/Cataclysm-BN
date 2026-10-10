@@ -496,6 +496,15 @@ auto server::finish( std::ostream &out ) -> bool
     return flush_push( out );
 }
 
+auto server::notify_loading( const game_client::loading_progress &progress,
+                             std::ostream &out ) -> void
+{
+    if( !hello_ || failed_ ) { return; }
+    notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"bn.loading\",\"params\":" +
+                              engine_client::serialize_loading( session_.epoch(), progress ) + "}" );
+    if( !write_notifications( out ) ) { failed_ = true; }
+}
+
 auto server::failed() const -> bool
 {
     return failed_;

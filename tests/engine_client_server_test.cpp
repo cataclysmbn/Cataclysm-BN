@@ -369,4 +369,22 @@ TEST_CASE("shutdown flushes the stage changes it caused", "[engine_client_server
     CHECK(executing < interrupted);
 }
 
+TEST_CASE("loading notifications reach only a client that said hello", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    const auto progress = game_client::loading_progress{.title = "Loading", .entries = {"a"}};
+    test.server.notify_loading(progress, test.output);
+    CHECK(test.output.str().empty());
+
+    REQUIRE(test.authority.publish_boundary());
+    test.pump(hello);
+    test.output.str("");
+    test.server.notify_loading(progress, test.output);
+    test.server.notify_loading({.done = true}, test.output);
+    const auto out = test.output.str();
+    CHECK(contains(out, R"("method":"bn.loading","params":{"epoch":")" + test.authority.epoch()));
+    CHECK(contains(out, R"("title":"Loading","entries":["a"],"index":0})"));
+    CHECK(index_of(out, R"("title":"Loading")") < index_of(out, R"("done":true)"));
+}
+
 #endif

@@ -34,7 +34,7 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                |
 | `bn.command.result`      | `epoch`, `command_id`                     | latest stage, for recovering a lost notification |
 
-Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`. They are sent at input boundaries to a subscribed client.
+Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`. All but `bn.loading` are sent at input boundaries to a subscribed client.
 
 Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says what to do next (`hello`, `subscribe`, `retry`).
 
@@ -55,6 +55,15 @@ Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says w
 ```
 
 Stages: `received`, `validated`, `executing`, `completed`; or `rejected`; or `interrupted`. `completed` means the next native input boundary was reached, not that a long activity finished; its `at` is the endpoint of that boundary. One command is outstanding at a time (`command_busy`).
+
+## Loading
+
+While the world loads, the game thread is busy and reaches no input boundary, so a client that said `bn.hello` gets `bn.loading` instead, written at each step of the native loading screen (subscribed or not). Progress is the screen the native client shows: `title` is the current context (for example "Loading files"), `entries` its list, `index` the entry in progress (earlier ones are done) and `image` the loading image, chosen like the native client does. `image.path` is relative to the game's base path, `author` is omitted when the file name has none. `done` is sent once when the loading screen ends; after it the usual `bn.resync` or `bn.events` follow. `epoch` is the epoch in force when the step was sent.
+
+```text
+<- {"jsonrpc":"2.0","method":"bn.loading","params":{"epoch":"epoch:e7f3","title":"Loading files","entries":["Terrain","Items"],"index":1,"image":{"path":"data/json/loading/Ada_dawn.webp","author":"Ada"}}}
+<- {"jsonrpc":"2.0","method":"bn.loading","params":{"epoch":"epoch:e7f3","done":true}}
+```
 
 ## Values
 

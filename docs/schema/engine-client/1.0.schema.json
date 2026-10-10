@@ -37,7 +37,8 @@
     "bn.snapshot.part": "snapshot_part",
     "bn.events": "events_notification",
     "bn.command": "command_notification",
-    "bn.resync": "resync_notification"
+    "bn.resync": "resync_notification",
+    "bn.loading": "loading_notification"
   },
   "$defs": {
     "counter": {
@@ -2357,6 +2358,71 @@
         "lost_after"
       ],
       "additionalProperties": false
+    },
+    "loading_notification": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "title": {
+              "type": "string"
+            },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "image": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "author": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "epoch",
+            "title",
+            "entries",
+            "index"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "done": {
+              "const": true
+            }
+          },
+          "required": [
+            "epoch",
+            "done"
+          ],
+          "additionalProperties": false
+        }
+      ]
     },
     "application_error": {
       "type": "object",

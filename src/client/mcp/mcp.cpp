@@ -6,6 +6,7 @@
 #    include "engine_client_session.h"
 #    include "engine_client_world.h"
 #    include "game_constants.h"
+#    include "loading_ui_client.h"
 #    include "mcp_session.h"
 #    include "options.h"
 #    include "output.h"
@@ -17,6 +18,7 @@ auto initialize_native() -> void {
     const auto height = std::max(FULL_SCREEN_HEIGHT, get_option<int>("TERMINAL_Y"));
     memory::initialize(width, height);
     engine_client::process_session().set_world_capture(&engine_client::world::capture_world);
+    set_loading_image_factory(&make_selecting_loading_image_renderer);
 }
 
 auto shutdown_native() -> void {

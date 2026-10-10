@@ -1,8 +1,6 @@
 #include "catch/catch.hpp"
-#if defined(TILES)
-#    include "client/tiles/loading_images.h"
-#endif
 #include "item_factory.h"
+#include "loading_ui_client.h"
 #include "options.h"
 #include "rng.h"
 #include "rng_observation.h"
@@ -110,8 +108,7 @@ TEST_CASE("audio variant selection does not advance simulation RNG", "[rng][soun
     CHECK(rng_get_engine() == expected);
 }
 
-#if defined(TILES)
-TEST_CASE("loading image order does not advance simulation RNG", "[rng][tiles][replay]") {
+TEST_CASE("loading image order does not advance simulation RNG", "[rng][replay]") {
     const auto restore = restore_rng{};
     rng_set_deterministic_seed(92822);
     const auto expected = rng_get_engine();
@@ -119,12 +116,11 @@ TEST_CASE("loading image order does not advance simulation RNG", "[rng][tiles][r
 
     for (const auto sample_index : std::views::iota(0, 64)) {
         static_cast<void>(sample_index);
-        game_client::tiles::shuffle_loading_image_paths(paths);
+        game_client::shuffle_loading_image_paths(paths);
     }
 
     CHECK(rng_get_engine() == expected);
 }
-#endif
 
 TEST_CASE("item definition validation does not advance simulation RNG", "[rng][item][replay]") {
     const auto restore = restore_rng{};

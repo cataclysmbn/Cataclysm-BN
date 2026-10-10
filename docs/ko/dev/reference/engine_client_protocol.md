@@ -34,7 +34,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`             |
 | `bn.command.result`      | `epoch`, `command_id`                     | 최신 단계. 유실된 알림을 복구할 때 사용       |
 
-엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`입니다. 구독한 클라이언트에 입력 경계마다 전송됩니다.
+엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`입니다. `bn.loading`을 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다.
 
 오류는 코드 `1000`과 `error.data = {kind, action?, at?}`를 사용하며, `action`은 다음에 할 일(`hello`, `subscribe`, `retry`)을 알려 줍니다.
 
@@ -55,6 +55,15 @@ title: 엔진/클라이언트 프로토콜 1.0
 ```
 
 단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`입니다. `completed`는 다음 네이티브 입력 경계에 도달했다는 뜻이지 긴 활동이 끝났다는 뜻이 아닙니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`).
+
+## 로딩 화면
+
+월드를 불러오는 동안 게임 스레드는 작업 중이라 입력 경계에 도달하지 않으므로, `bn.hello`를 마친 클라이언트는 네이티브 로딩 화면의 단계마다 `bn.loading`을 받습니다(구독 여부와 무관). 진행 상황은 네이티브 클라이언트가 보여 주는 화면과 같습니다. `title`은 현재 단계(예: "Loading files"), `entries`는 그 목록, `index`는 진행 중인 항목(앞선 항목은 완료), `image`는 네이티브 클라이언트와 같은 방식으로 고른 로딩 이미지입니다. `image.path`는 게임 기본 경로 기준 상대 경로이며, 파일 이름에 제작자가 없으면 `author`는 생략됩니다. 로딩 화면이 끝나면 `done`이 한 번 전송되고, 그 뒤에 평소처럼 `bn.resync`나 `bn.events`가 이어집니다. `epoch`는 해당 단계를 보낼 때의 epoch입니다.
+
+```text
+<- {"jsonrpc":"2.0","method":"bn.loading","params":{"epoch":"epoch:e7f3","title":"Loading files","entries":["Terrain","Items"],"index":1,"image":{"path":"data/json/loading/Ada_dawn.webp","author":"Ada"}}}
+<- {"jsonrpc":"2.0","method":"bn.loading","params":{"epoch":"epoch:e7f3","done":true}}
+```
 
 ## 값
 

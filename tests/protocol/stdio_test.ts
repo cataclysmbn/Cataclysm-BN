@@ -73,7 +73,7 @@ class Client {
     const end = this.#buffer.indexOf("\n")
     const line = this.#buffer.slice(0, end)
     this.#buffer = this.#buffer.slice(end + 1)
-    return JSON.parse(line)
+    return { ...JSON.parse(line), receivedAt: performance.now() }
   }
 
   async request(method: string, params: unknown): Promise<Value> {
@@ -128,6 +128,8 @@ class Session {
   stages = new Map<string, string[]>()
   eventTypes: string[] = []
   resyncs: Value[] = []
+  /** `bn.loading` notifications with their arrival time, in arrival order. */
+  loading: Value[] = []
 
   constructor(readonly client: Client) {}
 
@@ -155,6 +157,8 @@ class Session {
       const stages = this.stages.get(params.command_id) ?? ["received"]
       stages.push(params.stage)
       this.stages.set(params.command_id, stages)
+    } else if (method === "bn.loading") {
+      this.loading.push({ ...params, receivedAt: note.receivedAt })
     } else if (method === "bn.resync") {
       this.resyncs.push(params)
     } else {
@@ -212,6 +216,49 @@ class Session {
   }
 }
 
+/** Loading progress is ordered, ends with `done`, and names images the client can find. */
+const checkLoading = async (loading: Value[], chosenAt: number) => {
+  assert(loading.length > 1, "loading notifications before the world snapshot")
+  const done = loading.at(-1)
+  assertEquals(done.done, true)
+  const progress = loading.slice(0, -1)
+  assert(progress.every((note) => note.done === undefined), "done only once, last")
+  const contexts: { title: string; steps: number; entries: number; start: number }[] = []
+  let previous: Value
+  for (const note of progress) {
+    assert(note.index >= 0 && note.index < note.entries.length, "index selects an entry")
+    // A context restarts its list, so the same title can come again with the index back at 0.
+    if (previous?.title !== note.title || note.index < previous.index) {
+      contexts.push({ title: note.title, steps: 0, entries: 0, start: note.receivedAt })
+    }
+    const context = contexts.at(-1)!
+    context.steps++
+    context.entries = note.entries.length
+    if (note.image) {
+      assert(!note.image.path.startsWith("/"), "image path is relative to the base path")
+      await Deno.stat(new URL(`../../${note.image.path}`, import.meta.url))
+    }
+    previous = note
+  }
+  assert(progress.some((note) => note.image), "a loading image is chosen")
+  // Time spent in each loading context: from its first notification to the next context's.
+  console.log(`loading total ${((done.receivedAt - chosenAt) / 1000).toFixed(1)} s`)
+  const slowest = progress.slice(0, -1).map((note, i) => ({
+    step: `${note.title}: ${note.entries[note.index]}`,
+    seconds: (loading[i + 1].receivedAt - note.receivedAt) / 1000,
+  })).sort((a, b) => b.seconds - a.seconds).slice(0, 5)
+  for (const { step, seconds } of slowest) {
+    console.log(`loading slowest ${step}: ${seconds.toFixed(2)} s`)
+  }
+  for (const [i, context] of contexts.entries()) {
+    const end = contexts[i + 1]?.start ?? done.receivedAt
+    console.log(
+      `loading ${context.title}: ${context.steps} steps, ${context.entries} entries, ` +
+        `${((end - context.start) / 1000).toFixed(2)} s`,
+    )
+  }
+}
+
 Deno.test({
   name: "stdio: hello, subscribe, choose and move; stream equals a fresh subscribe",
   ignore: !Deno.env.get("BN_BINARY"),
@@ -257,8 +304,10 @@ Deno.test({
       assert(session.eventTypes.includes("interaction.changed"))
 
       // Entering the world replaces the authority: the command is interrupted, the stream resyncs.
+      const chosenAt = performance.now()
       const tutorial = await session.choose("Tutorial")
       assertEquals(tutorial.stages.at(-1), "interrupted")
+      await checkLoading(session.loading, chosenAt)
       const resync = await client.note()
       assertEquals(resync.method, "bn.resync")
       session.resyncs.push(resync.params)

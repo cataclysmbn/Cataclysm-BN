@@ -224,6 +224,14 @@ auto provide_input( const int /*timeout_ms*/ ) -> input_event
     exit_handler( session.transport && session.transport->failed() ? 1 : 0 );
 }
 
+auto report_loading( const game_client::loading_progress &progress ) -> void
+{
+    auto &session = state();
+    if( session.transport && session.output ) {
+        session.transport->notify_loading( progress, *session.output );
+    }
+}
+
 auto serialize_screen( const game_client::screen_snapshot &screen ) -> screen_snapshot
 {
     auto output = std::ostringstream{};
@@ -313,6 +321,7 @@ auto start_session() -> void
     session.started = true;
     game_client::memory::set_input_provider( provide_input );
     game_client::memory::set_present_callback( publish_screen );
+    game_client::set_loading_observer( report_loading );
 }
 
 auto request_stop() -> void
@@ -334,6 +343,7 @@ auto finish_session() -> void
     request_stop();
     game_client::memory::set_input_provider( {} );
     game_client::memory::set_present_callback( {} );
+    game_client::set_loading_observer( nullptr );
     session.output.reset();
     session.output_buffer.reset();
     session.transport.reset();

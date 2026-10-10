@@ -5,11 +5,13 @@
 #include "color.h"
 #include "input.h"
 #include "options.h"
+#include "path_info.h"
 #include "output.h"
 #include "ui.h"
 #include "ui_manager.h"
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 
 auto get_scaled_loading_image_size( const loading_image_scaling_options &opts ) ->
 std::optional<point>
@@ -47,6 +49,9 @@ loading_ui::loading_ui( bool display )
 
 loading_ui::~loading_ui()
 {
+    if( reported ) {
+        game_client::notify_loading( { .done = true } );
+    }
     game_client::presentation().clear_display();
 }
 
@@ -109,6 +114,29 @@ void loading_ui::init()
     }
 }
 
+void loading_ui::report()
+{
+    if( menu == nullptr || !game_client::has_loading_observer() ) {
+        return;
+    }
+    reported = true;
+    auto progress = game_client::loading_progress{ .title = menu->text };
+    for( const auto &entry : menu->entries ) {
+        progress.entries.push_back( remove_color_tags( entry.txt ) );
+    }
+    progress.index = static_cast<std::size_t>( std::max( menu->selected, 0 ) );
+    if( !loading_image_selection.current_path.empty() ) {
+        // The client knows the base path, not the working directory this path was found from.
+        const auto path = std::filesystem::path( loading_image_selection.current_path ).lexically_normal();
+        const auto relative = path.lexically_relative( std::filesystem::path(
+                                  PATH_INFO::base_path() ).lexically_normal() );
+        progress.image = { .path = ( relative.empty() || *relative.begin() == ".." ? path : relative ).generic_string(),
+                           .author = loading_image_selection.current_author
+                         };
+    }
+    game_client::notify_loading( progress );
+}
+
 void loading_ui::proceed()
 {
     init();
@@ -135,5 +163,6 @@ void loading_ui::show()
         ui_manager::redraw();
         refresh_display();
         inp_mngr.pump_events();
+        report();
     }
 }
