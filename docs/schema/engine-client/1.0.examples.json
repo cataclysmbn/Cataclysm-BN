@@ -1655,6 +1655,26 @@
           }
         ]
       }
+    },
+    {
+      "def": "cell",
+      "name": "cell holding a loaded vehicle cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "vehicle": {
+          "kind": "vehicle_part",
+          "id": "trunk",
+          "glyph": "H",
+          "color": "brown"
+        },
+        "cargo": true
+      }
     }
   ],
   "invalid": [
@@ -2594,6 +2614,28 @@
             "hair_black"
           ]
         }
+      }
+    },
+    {
+      "def": "cell",
+      "name": "remembered cell with a loaded cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "remembered",
+        "memory": {
+          "terrain": {
+            "kind": "terrain",
+            "id": "t_floor",
+            "glyph": ".",
+            "color": "c_cyan"
+          }
+        },
+        "cargo": true
       }
     }
   ]

@@ -29,6 +29,7 @@
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 
 #include <algorithm>
@@ -928,4 +929,37 @@ TEST_CASE(
     // Paths are the engine's own, relative to the game folder it runs from.
     CHECK(vehicles->base.ends_with("json"));
     CHECK_FALSE(vehicles->path.starts_with("/"));
+}
+
+TEST_CASE(
+    "world capture marks a vehicle cargo part that holds items and no other part",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    auto* veh = here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false);
+    REQUIRE(veh != nullptr);
+    auto loaded = std::optional<tripoint_bub_ms>{};
+    auto empty = std::optional<tripoint_bub_ms>{};
+    for (const auto& part : veh->get_all_parts()) {
+        const auto position = part.pos();
+        const auto vp = here.veh_at(position);
+        const auto cargo = vp ? vp.part_with_feature("CARGO", true) : std::nullopt;
+        if (cargo && !loaded) {
+            veh->add_item(cargo->part_index(), item::spawn("rock"));
+            loaded = position;
+        } else if (!vp.part_with_feature("CARGO", true) && !empty) {
+            empty = position;
+        }
+    }
+    REQUIRE(loaded);
+    REQUIRE(empty);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* with_items = find_cell(state, at(*loaded));
+    const auto* without = find_cell(state, at(*empty));
+    REQUIRE(with_items != nullptr);
+    REQUIRE(without != nullptr);
+    CHECK(with_items->cargo);
+    CHECK_FALSE(without->cargo);
 }

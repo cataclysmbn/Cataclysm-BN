@@ -340,6 +340,10 @@
         "reviving": {
           "const": true,
           "description": "A corpse on the square can rise; the native view marks the square. Present only on visible squares."
+        },
+        "cargo": {
+          "const": true,
+          "description": "A cargo part of a vehicle on the square holds items; the native view highlights the part. Present only on visible squares."
         }
       },
       "required": [
@@ -367,7 +371,8 @@
               "traps": false,
               "items": false,
               "vehicle": false,
-              "light": false
+              "light": false,
+              "cargo": false
             },
             "required": [
               "memory"
@@ -394,7 +399,8 @@
               "items": false,
               "vehicle": false,
               "light": false,
-              "memory": false
+              "memory": false,
+              "cargo": false
             }
           }
         }

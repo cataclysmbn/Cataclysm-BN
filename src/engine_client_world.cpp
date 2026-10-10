@@ -311,6 +311,10 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         }
     }
     out.vehicle = vehicle_part_at( here, p, you );
+    if( const auto vp = here.veh_at( p ) ) {
+        const auto cargo = vp.part_with_feature( "CARGO", true );
+        out.cargo = cargo && !vp->vehicle().get_items( cargo->part_index() ).empty();
+    }
     if( here.could_see_items( p, you ) ) {
         out.reviving = std::ranges::any_of( here.i_at( p ), []( const item * thing ) {
             return thing != nullptr && thing->is_corpse() && ( thing->can_revive() ||

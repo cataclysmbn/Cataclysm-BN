@@ -86,6 +86,8 @@ struct cell {
     std::vector<field_entry> fields = {};
     /// A corpse on the square can rise; the native view marks it.
     bool reviving = false;
+    /// A cargo part of a vehicle on the square holds items; the native view highlights the part.
+    bool cargo = false;
     std::vector<look> traps = {};
     std::vector<look> items = {};
     std::optional<look> vehicle = std::nullopt;

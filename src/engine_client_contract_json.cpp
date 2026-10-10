@@ -89,6 +89,7 @@ auto to_json( const cell &value ) -> json
     if( value.furniture ) { result["furniture"] = to_json( *value.furniture ); }
     if( !value.fields.empty() ) { result["fields"] = to_array( value.fields ); }
     if( value.reviving ) { result["reviving"] = true; }
+    if( value.cargo ) { result["cargo"] = true; }
     if( !value.traps.empty() ) { result["traps"] = to_array( value.traps ); }
     if( !value.items.empty() ) { result["items"] = to_array( value.items ); }
     if( value.vehicle ) { result["vehicle"] = to_json( *value.vehicle ); }
