@@ -10,6 +10,7 @@
 #include "character.h"
 #include "character_functions.h"
 #include "character_id.h"
+#include "client_interaction.h"
 #include "debug.h"
 #include "enums.h"
 #include "faction.h"
@@ -411,10 +412,47 @@ void veh_interact::do_main_loop() {
 
     shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor();
 
+    const auto interaction = game_client::interaction_scope(main_context, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = veh->name,
+            .allow_cancel = true,
+        };
+        for (const auto index : parts_here) {
+            const auto& part = veh->part(index);
+            snapshot.message += remove_color_tags(part.name()) + '\n';
+        }
+        for (const auto* id :
+             {"INSTALL", "REPAIR", "MEND", "REFILL", "REMOVE", "SIPHON", "UNLOAD", "CHANGE_SHAPE",
+              "ASSIGN_CREW", "RENAME", "RELABEL"}) {
+            snapshot.choices.push_back({
+                .id = std::string("action:") + id,
+                .label = remove_color_tags(main_context.get_action_name(id)),
+            });
+        }
+        for (const auto* id : {"UP", "DOWN", "LEFT", "RIGHT"}) {
+            snapshot.choices.push_back({
+                .id = std::string("action:") + id,
+                .label = string_format(
+                    _("Move the cursor: %s"), remove_color_tags(main_context.get_action_name(id))),
+            });
+        }
+        return snapshot;
+    });
+
     while (!finish) {
         calc_overview();
         ui_manager::redraw();
-        const std::string action = main_context.handle_input();
+        auto input = std::string{main_context.handle_input()};
+        const auto raw = main_context.get_raw_input();
+        if (raw.interaction) {
+            if (raw.interaction->operation == game_client::interaction_operation::cancel) {
+                input = "QUIT";
+            } else if (raw.interaction->operation == game_client::interaction_operation::choose) {
+                input = raw.interaction->target_id.substr(raw.interaction->target_id.find(':') + 1);
+            }
+        }
+        const std::string& action = input;
         msg.reset();
         if (const std::optional<tripoint_rel_ms> vec = main_context.get_direction(action)) {
             const point_rel_veh vehicle_delta = vec->xy().rotate(1).reinterpret_as<point_rel_veh>();
