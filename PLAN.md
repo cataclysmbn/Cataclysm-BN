@@ -167,6 +167,10 @@ Answers to `out/lanes/l2/protocol-unification.md` §7 and lane follow-ups:
     capture tests are rewritten for that API.
 13. The Deno headless consumer may later grow into a browser client; no work now.
 
+14. Infrastructure uses established libraries instead of hand-rolled code: JSON parsing/serialisation for the
+    engine-client protocol moves to nlohmann/json (pinned via FetchContent), replacing the custom framing parser,
+    wire decoder and UTF-8 helpers; JSON-RPC framing keeps only newline delimiting and size bounds.
+
 ### Input replay work items (M6 support)
 
 - Record and immediately play back in the same run; no long-lived recording fixtures.
