@@ -1,6 +1,7 @@
 #if defined(CATA_MCP)
 
 #    include "avatar.h"
+#    include "bionics.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
 #    include "client_input.h"
@@ -12,12 +13,15 @@
 #    include "game.h"
 #    include "game_constants.h"
 #    include "input.h"
+#    include "magic/magic.h"
 #    include "newcharacter.h"
 #    include "output.h"
 #    include "player_helpers.h"
+#    include "profession.h"
 #    include "state_helpers.h"
 
 #    include <algorithm>
+#    include <functional>
 #    include <string>
 #    include <vector>
 
@@ -80,6 +84,47 @@ auto tab_id(const game_client::interaction_snapshot& snapshot, const std::string
     });
     REQUIRE(tab != snapshot.choices.end());
     return tab->id;
+}
+
+/// Runs the creation with a scripted client. Popups are answered here (a name into the field, yes
+/// to a question, a plain message dismissed); the description tab is finished here too, once
+/// `script` has returned the tab to go to. `script` sees every other creation screen.
+auto create_with(
+    avatar& you, std::vector<std::string>& popups,
+    const std::function<auto(const game_client::interaction_snapshot&)->input_event>& script)
+    -> bool {
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.structured);
+        if (snapshot.field) {
+            return event_of({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::fill,
+                .target_id = snapshot.field->id,
+                .value = "Ada",
+                .submit = true,
+            });
+        }
+        if (!snapshot.context.starts_with("NEW_CHAR_")) {
+            popups.push_back(snapshot.message);
+            const auto yes = std::ranges::
+                find(snapshot.choices, "YES", &game_client::interaction_choice::description);
+            return yes != snapshot.choices.end()
+                     ? choose(snapshot, yes->id)
+                     : event_of({
+                           .input_id = snapshot.input_id,
+                           .operation = game_client::interaction_operation::cancel,
+                       });
+        }
+        if (snapshot.context == "NEW_CHAR_DESCRIPTION") {
+            const auto name = find_row(snapshot, "field:name");
+            REQUIRE(name != snapshot.choices.end());
+            return choose(
+                snapshot, name->columns.front().value == "Ada" ? "action:NEXT_TAB" : "field:name");
+        }
+        return script(snapshot);
+    });
+    return you.create(character_type::CUSTOM);
 }
 
 } // namespace
@@ -205,6 +250,120 @@ TEST_CASE(
     CHECK(traits_after == traits_before + 1);
     CHECK(stage == 8);
     CHECK(std::ranges::find(contexts, "NEW_CHAR_STATS") == contexts.end());
+}
+
+TEST_CASE(
+    "the bionics tab lists the profession's bionics and refuses to remove a locked one",
+    "[client][interaction][mcp][newchar]") {
+    clear_all_state();
+    auto& you = get_avatar();
+    const auto original_name = you.name;
+    struct restore_name {
+        avatar& you;
+        std::string name;
+        ~restore_name() { you.name = name; }
+    } const restore{you, original_name};
+    const auto guard = newchar_guard{};
+    auto popups = std::vector<std::string>{};
+    auto stage = 0;
+    auto prepper_has_metabolics = false;
+    auto points_before = std::string{};
+    const auto created = create_with(you, popups, [&](const auto& snapshot) {
+        switch (stage++) {
+            case 0:
+                return choose(snapshot, tab_id(snapshot, "PROFESSION"));
+            case 1:
+                return choose(snapshot, "profession:bionic_prepper");
+            case 2:
+                return choose(snapshot, tab_id(snapshot, "BIONICS"));
+            case 3: {
+                const auto bionic = find_row(snapshot, "bionic:bio_metabolics");
+                REQUIRE(bionic != snapshot.choices.end());
+                prepper_has_metabolics = bionic->selected;
+                CHECK_FALSE(bionic->description.empty());
+                CHECK(bionic->columns.size() == 2);
+                points_before = snapshot.message;
+                return choose(snapshot, "bionic:bio_metabolics");
+            }
+            case 4: {
+                // A locked bionic stays installed and the points are untouched.
+                const auto bionic = find_row(snapshot, "bionic:bio_metabolics");
+                REQUIRE(bionic != snapshot.choices.end());
+                CHECK(bionic->selected);
+                CHECK(bionic->highlighted);
+                CHECK(snapshot.message == points_before);
+                return choose(snapshot, tab_id(snapshot, "OVERVIEW"));
+            }
+            default:
+                FAIL("unexpected extra character creation screen " << snapshot.context);
+        }
+        return input_event{};
+    });
+    CHECK(created);
+    CHECK(prepper_has_metabolics);
+    CHECK(you.prof->ident() == profession_id("bionic_prepper"));
+    CHECK(you.has_bionic(bionic_id("bio_metabolics")));
+    REQUIRE(popups.size() >= 1);
+    CHECK(popups.front().find("prevents you from removing") != std::string::npos);
+}
+
+TEST_CASE(
+    "the magic tab lists the spells a profession allows and learning one costs points",
+    "[client][interaction][mcp][newchar]") {
+    clear_all_state();
+    auto& you = get_avatar();
+    const auto original_name = you.name;
+    struct restore_name {
+        avatar& you;
+        std::string name;
+        ~restore_name() { you.name = name; }
+    } const restore{you, original_name};
+    const auto guard = newchar_guard{};
+    auto popups = std::vector<std::string>{};
+    auto stage = 0;
+    auto points_before = std::string{};
+    const auto created = create_with(you, popups, [&](const auto& snapshot) {
+        switch (stage++) {
+            case 0: {
+                // No profession chosen yet: the default one allows no spell, so there is no tab.
+                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& choice) {
+                    return choice.label == "MAGIC";
+                }));
+                return choose(snapshot, tab_id(snapshot, "PROFESSION"));
+            }
+            case 1:
+                return choose(snapshot, "profession:test_spellcaster");
+            case 2:
+                return choose(snapshot, tab_id(snapshot, "MAGIC"));
+            case 3: {
+                const auto spell = find_row(snapshot, "spell:test_spell_apprentice");
+                REQUIRE(spell != snapshot.choices.end());
+                CHECK_FALSE(spell->selected);
+                CHECK_FALSE(spell->description.empty());
+                points_before = snapshot.message;
+                return choose(snapshot, spell->id);
+            }
+            case 4: {
+                const auto spell = find_row(snapshot, "spell:test_spell_apprentice");
+                REQUIRE(spell != snapshot.choices.end());
+                CHECK(spell->highlighted);
+                CHECK_FALSE(spell->selected);
+                return choose(snapshot, "action:RIGHT");
+            }
+            case 5: {
+                const auto spell = find_row(snapshot, "spell:test_spell_apprentice");
+                REQUIRE(spell != snapshot.choices.end());
+                CHECK(spell->selected);
+                CHECK(snapshot.message != points_before);
+                return choose(snapshot, tab_id(snapshot, "OVERVIEW"));
+            }
+            default:
+                FAIL("unexpected extra character creation screen " << snapshot.context);
+        }
+        return input_event{};
+    });
+    CHECK(created);
+    CHECK(you.magic->knows_spell(spell_id("test_spell_apprentice")));
 }
 
 #endif // CATA_MCP
