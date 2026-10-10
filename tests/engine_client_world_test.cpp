@@ -925,5 +925,7 @@ TEST_CASE(
     REQUIRE(vehicles != files.end());
     CHECK(std::ranges::count(vehicles->compatibility, "UNDEAD_PEOPLE_BASE") == 1);
     CHECK(vehicles->index == 1);
-    CHECK(vehicles->base.find("data/json") != std::string::npos);
+    // Paths are the engine's own, relative to the game folder it runs from.
+    CHECK(vehicles->base.ends_with("json"));
+    CHECK_FALSE(vehicles->path.starts_with("/"));
 }

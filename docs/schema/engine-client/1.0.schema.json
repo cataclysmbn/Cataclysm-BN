@@ -885,11 +885,11 @@
             "properties": {
               "path": {
                 "type": "string",
-                "description": "The JSON file."
+                "description": "The JSON file, as the engine names it: relative to the game folder it runs from, unless absolute."
               },
               "base": {
                 "type": "string",
-                "description": "The folder the sheet files of the file are named from."
+                "description": "The folder the sheet files of the file are named from, named the same way."
               },
               "index": {
                 "type": "integer",
