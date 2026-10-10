@@ -73,6 +73,10 @@ class server
         /// Process protocol messages on the game thread until submit has queued input.
         auto pump_until_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool;
 
+        /// Serve one request frame that is already waiting while an activity runs, without
+        /// awaiting input or completing the command. False when input ended or failed.
+        auto poll_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool;
+
         /// Publish the state between two steps of an auto-move, which reads no input.
         auto publish_step( std::ostream &out ) -> bool;
 
@@ -104,6 +108,7 @@ class server
         bool initialize_requested_ = false;
         bool initialized_ = false;
         bool pump_mode_ = false;
+        bool polling_ = false;
         bool eof_ = false;
         bool failed_ = false;
         std::optional<deferred_response> pending_response_;

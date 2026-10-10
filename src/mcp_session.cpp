@@ -19,6 +19,7 @@
 #if defined(_WIN32)
 #include <io.h>
 #else
+#include <poll.h>
 #include <unistd.h>
 #endif
 
@@ -205,6 +206,17 @@ auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_
     return { .json = game_client::serialize_interaction( current ), .text = text };
 }
 
+/// Whether a request frame can be read without waiting.
+auto stdin_ready() -> bool
+{
+#if defined(_WIN32)
+    return false;
+#else
+    auto fd = pollfd { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
+    return std::cin.rdbuf()->in_avail() > 0 || poll( &fd, 1, 0 ) > 0;
+#endif
+}
+
 auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
@@ -221,8 +233,17 @@ auto provide_input( const int timeout_ms ) -> input_event
             }
         }
         // A zero-timeout poll is a running activity checking for interruption, not input being
-        // awaited: the command stays open and the activity continues to its end.
+        // awaited: the command stays open and the activity continues to its end. Requests that
+        // are already waiting are served, so the client can interrupt it.
         if( timeout_ms == 0 ) {
+            while( session.transport && session.events.empty() && stdin_ready() ) {
+                if( !session.transport->poll_input( std::cin, *session.output, std::cerr ) ) {
+                    exit_handler( session.transport->failed() ? 1 : 0 );
+                }
+            }
+            if( !session.events.empty() ) {
+                continue;
+            }
             auto polled = input_event{};
             polled.type = input_event_t::timeout;
             return polled;

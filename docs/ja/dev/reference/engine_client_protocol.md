@@ -28,6 +28,7 @@ title: エンジン/クライアントプロトコル 1.0
 | ------------------------ | ----------------------------------------- | ------------------------------------------------------ |
 | `bn.hello`               | `versions`, `client`, `viewport?`         | `version`, `epoch`, `engine`, `limits`                 |
 | `bn.viewport`            | `cols`, `rows`                            | なし                                                   |
+| `bn.interrupt`           | なし                                      | なし                                                   |
 | `bn.subscribe`           | なし                                      | スナップショットヘッダー。続いてパートとイベントが届く |
 | `bn.unsubscribe`         | なし                                      | なし                                                   |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (読み取り専用)       |
@@ -58,7 +59,7 @@ title: エンジン/クライアントプロトコル 1.0
 
 `travel` は、インタラクションのない境界で、画面内の絶対マップマスに対する Tiles と curses の左クリックです。最初のクリックはエンジン自身のルートを `route` として公開し、同じマスをもう一度クリックするとネイティブの自動移動が始まります。その後アバターは 1 歩ずつ歩き、各歩でそのコマンドに紐づく通常のイベントが公開され、エンジンが止まる場所(到着、モンスターの視界入りなど)で止まります。歩行が終わって再び入力を待つとコマンドは `completed` になります。他のコマンドや別のマスのクリックは計画を置き換えるか消します。クライアントがルートを自分で計算することはありません。
 
-ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` で、`interrupted` の `error` が理由を示します(ワールドが入れ替わると `stale_epoch`、ゲームが入力を拒否すると `validation_failed`、それ以外は `not_ready`)。`completed` は入力が再び待たれていることを意味します。待機などの行動は、終わるか、ゲームが何かを尋ねる(ポップアップや中断)まで先に実行されます。その `at` はその境界の終点です。同時に実行できるコマンドは 1 つです(`command_busy`)。
+ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` で、`interrupted` の `error` が理由を示します(ワールドが入れ替わると `stale_epoch`、ゲームが入力を拒否すると `validation_failed`、それ以外は `not_ready`)。`completed` は入力が再び待たれていることを意味します。待機などの行動は、終わるか、ゲームが何かを尋ねる(ポップアップや中断)まで先に実行されます。その `at` はその境界の終点です。同時に実行できるコマンドは 1 つです(`command_busy`)。 待機などの行動の実行中もリクエストには応答します。`bn.interrupt` はネイティブの中断キーを押し、行動は Tiles と同様に中止するか尋ね、その質問が次の境界になります。行動中でなければ `not_ready` で失敗します。
 
 ## 読み込み画面
 

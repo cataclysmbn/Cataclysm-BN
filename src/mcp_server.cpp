@@ -490,6 +490,23 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
     return false;
 }
 
+auto server::poll_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool
+{
+    if( failed_ || eof_ ) { return false; }
+    polling_ = true;
+    const auto frame = rpc::read_frame( in, options_.max_frame_bytes );
+    if( frame.status == frame_status::eof ) {
+        eof_ = true;
+    } else if( frame.status != frame_status::complete ) {
+        failed_ = true;
+        err << frame_error( frame.status, options_.max_frame_bytes ) << '\n';
+    } else if( !dispatch( frame.bytes, out, err ) ) {
+        failed_ = true;
+    }
+    polling_ = false;
+    return !failed_ && !eof_;
+}
+
 auto server::publish_step( std::ostream &out ) -> bool
 {
     if( failed_ || eof_ ) { return false; }
@@ -677,6 +694,17 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         queue_push();
         return rpc::make_result( request, "{}" );
     }
+    if( request.method == "bn.interrupt" ) {
+        if( !decode_empty_request( params ) ) { return invalid(); }
+        // Only an activity that is running can be interrupted; otherwise input is awaited and the
+        // client answers it with a command.
+        if( !polling_ ) { return fail( error::not_ready ); }
+        // The native interrupt key; the activity asks for confirmation as in Tiles.
+        auto key = game_client::input_command{};
+        key.action = "pause";
+        if( !host_.submit( {key} ) ) { return fail( error::not_ready ); }
+        return rpc::make_result( request, "{}" );
+    }
     if( request.method == "bn.subscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }
         const auto current = session_.current();
@@ -757,7 +785,7 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     while( const auto envelope = pending_requests_->next() ) {
         const auto method = rpc::method_of( *envelope );
         const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
-                               method == "bn.subscribe" ||
+                               method == "bn.interrupt" || method == "bn.subscribe" ||
                                method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
                                method == "bn.command.submit" || method == "bn.command.result";
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};

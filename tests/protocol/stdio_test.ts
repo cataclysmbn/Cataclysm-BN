@@ -29,7 +29,7 @@ const validate = (def: string, value: unknown, what: string) => {
 
 // deno-lint-ignore no-explicit-any
 type Value = any
-const deadline = 120_000
+const deadline = 300_000
 
 class Client {
   #process: Deno.ChildProcess
@@ -167,7 +167,7 @@ class Session {
   }
 
   /** Submit against what the mirror believes, then follow pushes until the command is terminal. */
-  async submit(operation: Value, patch: Value = {}) {
+  async submit(operation: Value, patch: Value = {}, during?: () => Promise<void>) {
     const mirror = this.mirror
     const response = await this.client.request("bn.command.submit", {
       epoch: mirror.at.epoch,
@@ -182,6 +182,7 @@ class Session {
     if (response.error) return { error: response.error, stages: [] as string[] }
     const id = response.result.command_id
     this.stages.set(id, ["received"])
+    await during?.()
     while (true) {
       const stages = this.stages.get(id)!
       const last = stages.at(-1)
@@ -707,6 +708,59 @@ Deno.test({
       // The menu is offered every time, and the activity is not cut short at a boundary.
       assertEquals(await wait("5 minutes"), 300n)
       assertEquals(await wait("5 minutes"), 300n)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: a long wait is interrupted mid-activity like the native interrupt key",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      // Tutorial lessons pop up while the first turns pass; let them out of the way first.
+      await session.submit({ kind: "action", action_id: "wait" })
+      await session.choose("5 minutes")
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      // Nothing runs, so there is nothing to interrupt.
+      const idle = await client.request("bn.interrupt", {})
+      assertEquals(idle.error.data.kind, "not_ready")
+
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "wait" })).stages.at(-1),
+        "completed",
+      )
+      const before = BigInt(session.mirror.environment.turn)
+      const hours = 6n * 3600n
+      const choice = session.mirror.interaction.interaction.choices.find((entry: Value) =>
+        entry.label.startsWith("6 hours")
+      )
+      assert(choice, "6 hours entry")
+      // The request is answered while the activity runs; the activity asks whether to stop.
+      const waiting = await session.submit(
+        { kind: "choose", choice_id: choice.id },
+        {},
+        async () => {
+          assertEquals(await client.result("bn.interrupt", {}), {})
+        },
+      )
+      assertEquals(waiting.stages.at(-1), "completed")
+      const query = session.mirror.interaction.interaction
+      assert(query, "the activity asks before stopping")
+      assert(BigInt(session.mirror.environment.turn) - before < hours, "stopped early")
+      const asked = BigInt(session.mirror.environment.turn)
+      await session.choose("Yes")
+      assertEquals(session.mirror.interaction.interaction, null)
+      const stopped = BigInt(session.mirror.environment.turn)
+      assert(stopped - before < hours, `the wait ended early: ${stopped - before}`)
+      assert(stopped - asked < 60n, "the confirmed stop ends the activity at once")
       await client.close()
     } finally {
       client.kill()

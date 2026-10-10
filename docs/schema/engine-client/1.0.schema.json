@@ -12,6 +12,10 @@
       "params": "viewport",
       "result": "empty_params"
     },
+    "bn.interrupt": {
+      "params": "empty_params",
+      "result": "empty_params"
+    },
     "bn.subscribe": {
       "params": "empty_params",
       "result": "subscribe_result"

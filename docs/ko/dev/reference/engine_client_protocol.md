@@ -28,6 +28,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 | ------------------------ | ----------------------------------------- | --------------------------------------------- |
 | `bn.hello`               | `versions`, `client`, `viewport?`         | `version`, `epoch`, `engine`, `limits`        |
 | `bn.viewport`            | `cols`, `rows`                            | 없음                                          |
+| `bn.interrupt`           | 없음                                      | 없음                                          |
 | `bn.subscribe`           | 없음                                      | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨    |
 | `bn.unsubscribe`         | 없음                                      | 없음                                          |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (읽기 전용) |
@@ -58,7 +59,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 `travel`은 상호작용이 없는 경계에서 화면에 보이는 절대 맵 칸에 대한 Tiles와 curses의 왼쪽 클릭입니다. 첫 클릭은 엔진 자체의 경로를 `route`로 게시하고, 같은 칸을 다시 클릭하면 네이티브 자동 이동이 시작됩니다. 이후 아바타는 한 걸음씩 걸으며 걸음마다 해당 명령에 연결된 일반 이벤트가 게시되고, 엔진이 멈추는 곳(도착, 몬스터 시야 진입 등)에서 멈춥니다. 걷기가 끝나 다시 입력을 기다리면 명령은 `completed`가 됩니다. 다른 명령이나 다른 칸 클릭은 계획을 바꾸거나 지웁니다. 클라이언트는 경로를 직접 계산하지 않습니다.
 
-단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`이며, `interrupted`의 `error`가 이유를 알려 줍니다(월드가 교체되면 `stale_epoch`, 게임이 입력을 거부하면 `validation_failed`, 그 외에는 `not_ready`). `completed`는 입력이 다시 대기 중이라는 뜻입니다. 대기 같은 활동은 끝나거나 게임이 무언가를 물을 때(팝업, 중단)까지 먼저 실행됩니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`).
+단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`이며, `interrupted`의 `error`가 이유를 알려 줍니다(월드가 교체되면 `stale_epoch`, 게임이 입력을 거부하면 `validation_failed`, 그 외에는 `not_ready`). `completed`는 입력이 다시 대기 중이라는 뜻입니다. 대기 같은 활동은 끝나거나 게임이 무언가를 물을 때(팝업, 중단)까지 먼저 실행됩니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`). 대기 같은 활동이 실행되는 동안에도 요청에는 응답합니다. `bn.interrupt`는 네이티브 중단 키를 눌러 활동이 Tiles처럼 중지할지 묻게 하며, 그 질문이 다음 경계가 됩니다. 활동 중이 아니면 `not_ready`로 실패합니다.
 
 ## 로딩 화면
 
