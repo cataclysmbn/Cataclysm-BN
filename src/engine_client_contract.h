@@ -102,6 +102,20 @@ struct choices_page {
 auto read_choices( const choices_request &request, const std::string &epoch )
 -> std::expected<choices_page, error>;
 
+struct describe_request {
+    std::string epoch = {};
+    std::string boundary_id = {};
+    position target;
+};
+/// What the native mouse view prints for a square, one entry per printed line.
+struct tile_description {
+    std::vector<std::string> lines = {};
+};
+/// Passive read of the hovered square's native description; nothing is selected or planned.
+/// Rejected with `validation_failed` outside the terrain window or on another level.
+auto describe_tile( const describe_request &request, const std::string &epoch )
+-> std::expected<tile_description, error>;
+
 struct registered_action {
     std::string id = {};
 };
@@ -115,8 +129,10 @@ struct semantic_operation {
 /// the native route (`world_state::route`), a second click on its end starts native auto-move.
 struct travel_operation {
     position target;
+    /// `left` is Tiles' SELECT; `right` is SEC_SELECT, which examines, closes, picks up or fires.
+    std::string button = "left";
 };
-/// The native left-click input that selects `operation.target`; nullopt when another dimension or
+/// The native click input that selects `operation.target`; nullopt when another dimension or
 /// level, or a square outside the terrain window.
 auto travel_click( const travel_operation &operation ) -> std::optional<game_client::input_command>;
 struct expectation {

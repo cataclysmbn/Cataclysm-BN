@@ -32,6 +32,7 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 | `bn.subscribe`           | none                                      | snapshot header; parts and events follow         |
 | `bn.unsubscribe`         | none                                      | none                                             |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (reads only)   |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`             | `lines` (reads only)                             |
 | `bn.world.cells`         | `epoch`, `min`, `max`                     | `at`, `cells`, `forgotten` (reads only)          |
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                |
 | `bn.command.result`      | `epoch`, `command_id`                     | latest stage, for recovering a lost notification |
@@ -60,6 +61,8 @@ Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says w
 Every boundary action lists `keys`, the portable names (`ESC`, `SPACE`, `RETURN`, `UP`, `>`, ...) of the single keyboard keys the active input context binds to it; an action without keys cannot be run by `action`. A client that wants to act on a pressed key finds the action whose `keys` contain it instead of guessing from the key settings files.
 
 `travel` is the left click of Tiles and curses on an absolute map square in view, at a boundary without interaction. The first click publishes the engine's own route as `route`; clicking the same square again starts native auto-move. The avatar then walks one step at a time, each step publishing ordinary events attached to that command, and stops where the engine stops (arrival, a monster coming into view, ...). The command is `completed` when the walk ends and input is awaited again. Any other command or a click elsewhere replaces or clears the plan. A client never computes routes.
+
+`context` is the right click (SEC_SELECT) on the same square: the native action examines an adjacent square, closes an adjacent door, picks up at the avatar, fires at a seen monster, or first cancels a planned route. `bn.world.describe` returns the text the native mouse view prints for a hovered square in the terrain window (`validation_failed` outside it); it selects and plans nothing. A wheel step in a menu is the registered action `SCROLL_UP` or `SCROLL_DOWN` (the engine moves the native cursor by three rows).
 
 Stages: `received`, `validated`, `executing`, `completed`; or `rejected`; or `interrupted`, whose `error` says why (`stale_epoch` when the world was replaced, `validation_failed` when the game refused the input, `not_ready` otherwise). `completed` means input is awaited again: a wait or other activity first runs to its end, or until the game asks something (a pop-up, an interruption); its `at` is the endpoint of that boundary. One command is outstanding at a time (`command_busy`). While a wait or other activity runs, requests are still answered; `bn.interrupt` presses the native interrupt key, so the activity asks whether to stop as in Tiles, and that question is the next boundary. Outside an activity it fails with `not_ready`.
 

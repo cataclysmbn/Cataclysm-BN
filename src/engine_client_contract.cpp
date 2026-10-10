@@ -2,6 +2,8 @@
 #include "client_input.h"
 #include "client_memory.h"
 #include "client_interaction_validation.h"
+#include "cursesdef.h"
+#include "cursesport.h"
 #include "game.h"
 #include "input.h"
 #include "map/map.h"
@@ -162,7 +164,33 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
     if( !target ) { return std::nullopt; }
     const auto cell = g->click_cell_of( tripoint_bub_ms( target->x, target->y, target->z ) );
     if( !cell ) { return std::nullopt; }
-    return game_client::input_command{ .mouse_position = *cell, .mouse_button = "left" };
+    return game_client::input_command{ .mouse_position = *cell, .mouse_button = operation.button };
+}
+
+auto describe_tile( const describe_request &request, const std::string &epoch )
+-> std::expected<tile_description, error>
+{
+    if( request.epoch != epoch ) { return std::unexpected( error::stale_epoch ); }
+    if( request.boundary_id != live_boundary_id( epoch ) ) { return std::unexpected( error::stale_boundary ); }
+    const auto target = to_bubble( request.target, current_bubble_frame() );
+    const auto at = target ? tripoint_bub_ms( target->x, target->y, target->z ) : tripoint_bub_ms();
+    if( !target || !g->click_cell_of( at ) ) { return std::unexpected( error::validation_failed ); }
+    // The mouse view prints into a window; read the text back from a private one.
+    constexpr auto width = 60;
+    constexpr auto height = 24;
+    const auto window = catacurses::newwin( height, width, point_zero );
+    auto line = 1;
+    g->pre_print_all_tile_info( at, window, line, height - 2,
+                                get_map().get_visibility_variables_cache() );
+    const auto *const printed = window.get<cata_cursesport::WINDOW>();
+    auto result = tile_description{};
+    for( const auto &row : printed->line ) {
+        auto text = std::string{};
+        for( const auto &cell : row.chars ) { text += cell.ch; }
+        const auto last = text.find_last_not_of( ' ' );
+        if( last != std::string::npos ) { result.lines.push_back( text.substr( 0, last + 1 ) ); }
+    }
+    return result;
 }
 
 /// What a view without a structured interaction shows: the text of the composed screen, so a client

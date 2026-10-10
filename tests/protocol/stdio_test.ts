@@ -1179,3 +1179,44 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name: "stdio: the native mouse view describes a square and a context click is the right button",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      const here = session.mirror.avatar.at
+      const describe = (pos: Value, boundary = session.mirror.interaction.boundary_id) =>
+        client.request("bn.world.describe", {
+          epoch: session.mirror.at.epoch,
+          boundary_id: boundary,
+          pos,
+        })
+      // The avatar's own square: the native mouse view prints something, and nothing changes.
+      const before = JSON.stringify(session.mirror.state())
+      const described = await describe(here)
+      assert(described.result.lines.length > 0, JSON.stringify(described))
+      assert(described.result.lines.every((line: string) => line === line.trimEnd()))
+      assertEquals(JSON.stringify(session.mirror.state()), before)
+      // A square outside the terrain window and a stale boundary are refused with their kinds.
+      const far = await describe({ ...here, x: here.x + 5000 })
+      assertEquals(far.error.data.kind, "validation_failed")
+      const stale = await describe(here, "boundary:old")
+      assertEquals(stale.error.data.kind, "stale_boundary")
+
+      // Right click on a far square: the native SEC_SELECT finds nothing relevant and the command
+      // still completes; on the avatar's square it is the pickup action.
+      const nothing = await session.submit({ kind: "context", pos: { ...here, x: here.x + 4 } })
+      assertEquals(nothing.stages.at(-1), "completed")
+      const self = await session.submit({ kind: "context", pos: here })
+      assertEquals(self.stages.at(-1), "completed")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

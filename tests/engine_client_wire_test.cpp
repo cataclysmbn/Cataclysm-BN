@@ -98,6 +98,29 @@ TEST_CASE("command operations", "[engine_client_wire]") {
             R"({"kind":"travel","pos":{"space":"reality_bubble_map_square","frame_id":"b","x":1,"y":1,"z":0}})",
             "null")));
     }
+    SECTION("a context click is the right button on an absolute square") {
+        const auto decoded = decode_command_request(
+            command(R"({"kind":"context","pos":{"dim":"","x":2,"y":3,"z":0}})", "null"));
+        REQUIRE(decoded);
+        const auto* click = std::get_if<travel_operation>(&decoded->operation);
+        REQUIRE(click);
+        CHECK(click->button == "right");
+        CHECK(click->target == position{.dim = "", .x = 2, .y = 3, .z = 0});
+        const auto left = decode_command_request(
+            command(R"({"kind":"travel","pos":{"dim":"","x":2,"y":3,"z":0}})", "null"));
+        REQUIRE(left);
+        CHECK(std::get<travel_operation>(left->operation).button == "left");
+        CHECK_FALSE(decode_command_request(command(R"({"kind":"context"})", "null")));
+    }
+    SECTION("describe takes an epoch, a boundary and one square") {
+        const auto decoded = decode_describe_request(
+            R"({"epoch":"e","boundary_id":"b","pos":{"dim":"","x":2,"y":3,"z":0}})");
+        REQUIRE(decoded);
+        CHECK(decoded->target == position{.dim = "", .x = 2, .y = 3, .z = 0});
+        CHECK_FALSE(decode_describe_request(R"({"epoch":"e","boundary_id":"b"})"));
+        CHECK_FALSE(decode_describe_request(
+            R"({"epoch":"e","boundary_id":"b","pos":{"dim":"","x":2,"y":3,"z":0},"extra":1})"));
+    }
     SECTION("fill always states submit; count is a safe integer") {
         CHECK(decode_command_request(
             command(R"({"kind":"fill","field_id":"f","value":"x","submit":false})")));

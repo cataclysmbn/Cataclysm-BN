@@ -740,6 +740,13 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !page ) { return fail( page.error() ); }
         return rpc::make_result( request, serialize_choices( *page ) );
     }
+    if( request.method == "bn.world.describe" ) {
+        const auto decoded = decode_describe_request( params );
+        if( !decoded ) { return invalid(); }
+        const auto text = describe_tile( *decoded, session_.epoch() );
+        if( !text ) { return fail( text.error() ); }
+        return rpc::make_result( request, serialize_description( *text ) );
+    }
     if( request.method == "bn.command.submit" ) {
         const auto decoded = decode_command_request( params );
         if( !decoded ) { return invalid(); }
@@ -796,6 +803,7 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
         const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
                                method == "bn.interrupt" || method == "bn.subscribe" ||
                                method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
+                               method == "bn.world.describe" ||
                                method == "bn.command.submit" || method == "bn.command.result";
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};
         if( is_direct ) {

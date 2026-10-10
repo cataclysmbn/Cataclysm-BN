@@ -32,6 +32,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 | `bn.subscribe`           | 없음                                      | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨    |
 | `bn.unsubscribe`         | 없음                                      | 없음                                          |
 | `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (읽기 전용) |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`             | `lines` (읽기 전용)                           |
 | `bn.world.cells`         | `epoch`, `min`, `max`                     | `at`, `cells`, `forgotten` (읽기 전용)        |
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`             |
 | `bn.command.result`      | `epoch`, `command_id`                     | 최신 단계. 유실된 알림을 복구할 때 사용       |
@@ -60,6 +61,8 @@ title: 엔진/클라이언트 프로토콜 1.0
 모든 경계 액션은 활성 입력 컨텍스트가 그 액션에 묶은 단일 키보드 키의 이식 가능한 이름(`ESC`, `SPACE`, `RETURN`, `UP`, `>` 등)을 `keys`로 나열합니다. 키가 없는 액션은 `action`으로 실행할 수 없습니다. 눌린 키로 동작하려는 클라이언트는 키 설정 파일에서 추측하지 말고 `keys`에 그 키가 있는 액션을 찾아야 합니다.
 
 `travel`은 상호작용이 없는 경계에서 화면에 보이는 절대 맵 칸에 대한 Tiles와 curses의 왼쪽 클릭입니다. 첫 클릭은 엔진 자체의 경로를 `route`로 게시하고, 같은 칸을 다시 클릭하면 네이티브 자동 이동이 시작됩니다. 이후 아바타는 한 걸음씩 걸으며 걸음마다 해당 명령에 연결된 일반 이벤트가 게시되고, 엔진이 멈추는 곳(도착, 몬스터 시야 진입 등)에서 멈춥니다. 걷기가 끝나 다시 입력을 기다리면 명령은 `completed`가 됩니다. 다른 명령이나 다른 칸 클릭은 계획을 바꾸거나 지웁니다. 클라이언트는 경로를 직접 계산하지 않습니다.
+
+`context`는 같은 칸에 대한 오른쪽 클릭(SEC_SELECT)입니다. 네이티브에서는 인접한 칸을 조사하거나, 인접한 문을 닫거나, 발밑 아이템을 줍거나, 보이는 몬스터를 쏘거나, 계획된 경로를 먼저 취소합니다. `bn.world.describe`는 터미널 창 안의 칸에 마우스를 올렸을 때 네이티브 마우스 뷰가 출력하는 텍스트를 돌려줍니다(범위 밖은 `validation_failed`). 아무것도 선택하거나 계획하지 않습니다. 메뉴의 휠 한 단계는 등록된 행동 `SCROLL_UP` 또는 `SCROLL_DOWN`이며 엔진이 네이티브 커서를 세 행 옮깁니다.
 
 단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`이며, `interrupted`의 `error`가 이유를 알려 줍니다(월드가 교체되면 `stale_epoch`, 게임이 입력을 거부하면 `validation_failed`, 그 외에는 `not_ready`). `completed`는 입력이 다시 대기 중이라는 뜻입니다. 대기 같은 활동은 끝나거나 게임이 무언가를 물을 때(팝업, 중단)까지 먼저 실행됩니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`). 대기 같은 활동이 실행되는 동안에도 요청에는 응답합니다. `bn.interrupt`는 네이티브 중단 키를 눌러 활동이 Tiles처럼 중지할지 묻게 하며, 그 질문이 다음 경계가 됩니다. 활동 중이 아니면 `not_ready`로 실패합니다.
 

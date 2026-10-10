@@ -101,9 +101,10 @@ std::variant<semantic_operation, registered_action, travel_operation>
         members( value, {"kind", "action_id"} );
         return registered_action{ .id = id( value, "action_id" ) };
     }
-    if( kind == "travel" ) {
+    if( kind == "travel" || kind == "context" ) {
         members( value, {"kind", "pos"} );
-        return travel_operation{ .target = read_position( value.at( "pos" ) ) };
+        return travel_operation{ .target = read_position( value.at( "pos" ) ),
+                                 .button = kind == "travel" ? "left" : "right" };
     }
     const auto parsed = game_client::parse_interaction_operation( kind );
     require( parsed.has_value() );
@@ -173,6 +174,13 @@ auto read_request( const json &value, choices_request &result ) -> void
     result.limit = static_cast<std::size_t>( integer( value, "limit", 1,
                    static_cast<std::int64_t>( maximum_rows ) ) );
 }
+auto read_request( const json &value, describe_request &result ) -> void
+{
+    members( value, {"epoch", "boundary_id", "pos"} );
+    result.epoch = id( value, "epoch" );
+    result.boundary_id = id( value, "boundary_id" );
+    result.target = read_position( value.at( "pos" ) );
+}
 auto read_request( const json &value, command_request &result ) -> void
 {
     members( value, {"epoch", "expect", "operation"} );
@@ -237,6 +245,9 @@ auto decode_empty_request( std::string_view input ) -> std::expected<void, decod
 auto decode_choices_request( std::string_view input ) ->
 std::expected<choices_request, decode_error>
 { return decode<choices_request>( input ); }
+auto decode_describe_request( std::string_view input ) ->
+std::expected<describe_request, decode_error>
+{ return decode<describe_request>( input ); }
 auto decode_command_request( std::string_view input ) ->
 std::expected<command_request, decode_error>
 { return decode<command_request>( input ); }
@@ -253,6 +264,11 @@ auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> s
                 {"cells_per_query", cells_per_query}
             }
         }}.dump();
+}
+auto serialize_description( const tile_description &value ) -> std::string
+{
+    using ordered = nlohmann::ordered_json;
+    return ordered{{"lines", value.lines}}.dump();
 }
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>
 {

@@ -1386,6 +1386,51 @@
           }
         ]
       }
+    },
+    {
+      "name": "submit context click",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "context",
+          "pos": {
+            "dim": "",
+            "x": 9,
+            "y": 4,
+            "z": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "describe request",
+      "def": "describe_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "boundary_id": "boundary:90",
+        "pos": {
+          "dim": "",
+          "x": 9,
+          "y": 4,
+          "z": 0
+        }
+      }
+    },
+    {
+      "name": "describe result",
+      "def": "describe_result",
+      "value": {
+        "lines": [
+          "Wall",
+          "You can see a zombie here."
+        ]
+      }
     }
   ],
   "invalid": [
@@ -2105,6 +2150,22 @@
         "color": "light_gray",
         "stack": 1
       }
+    },
+    {
+      "name": "context click without a position",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "context"
+        }
+      },
+      "why": "context requires pos"
     }
   ]
 }

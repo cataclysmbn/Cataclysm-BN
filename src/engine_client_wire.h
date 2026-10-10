@@ -44,10 +44,14 @@ auto decode_viewport_request( std::string_view input ) -> std::expected<viewport
 auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>;
 auto decode_choices_request( std::string_view input )
 -> std::expected<choices_request, decode_error>;
+auto decode_describe_request( std::string_view input )
+-> std::expected<describe_request, decode_error>;
 auto decode_command_request( std::string_view input )
 -> std::expected<command_request, decode_error>;
 auto decode_result_request( std::string_view input )
 -> std::expected<result_request, decode_error>;
+
+auto serialize_description( const tile_description &value ) -> std::string;
 
 /// What the client should do after an application error.
 enum class required_action { none, hello, subscribe, retry };

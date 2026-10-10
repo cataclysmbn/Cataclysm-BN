@@ -28,6 +28,10 @@
       "params": "choices_params",
       "result": "choices_result"
     },
+    "bn.world.describe": {
+      "params": "describe_params",
+      "result": "describe_result"
+    },
     "bn.world.cells": {
       "params": "world_cells_params",
       "result": "world_cells_result"
@@ -2659,6 +2663,22 @@
             "pos"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "context"
+            },
+            "pos": {
+              "$ref": "#/$defs/pos"
+            }
+          },
+          "required": [
+            "kind",
+            "pos"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -3033,6 +3053,41 @@
       ],
       "additionalProperties": false,
       "description": "Map cells the client can show, as columns and rows of the native terrain window."
+    },
+    "describe_params": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "pos": {
+          "$ref": "#/$defs/pos"
+        }
+      },
+      "required": [
+        "epoch",
+        "boundary_id",
+        "pos"
+      ],
+      "additionalProperties": false
+    },
+    "describe_result": {
+      "type": "object",
+      "properties": {
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "lines"
+      ],
+      "additionalProperties": false
     }
   }
 }

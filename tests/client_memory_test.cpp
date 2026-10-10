@@ -1,9 +1,12 @@
 #if defined(CATA_MCP)
 
+#    include "avatar.h"
+#    include "calendar.h"
 #    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
 #    include "client_input.h"
+#    include "client_interaction.h"
 #    include "client_memory.h"
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
@@ -11,11 +14,13 @@
 #    include "engine_client_contract.h"
 #    include "game.h"
 #    include "input.h"
+#    include "map_helpers.h"
 #    include "output.h"
 #    include "state_helpers.h"
 
 #    include <algorithm>
 #    include <string>
+#    include <utility>
 
 namespace {
 
@@ -306,6 +311,100 @@ TEST_CASE(
         CHECK(resolved.has_value());
         CHECK(result == action.id);
     }
+}
+
+TEST_CASE(
+    "a context click is the right button and the wheel is an action run by id",
+    "[client][mcp][input][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(2, 4, point(2, 1));
+    g->ter_view_p = tripoint_bub_ms(10, 20, 0);
+    const auto frame = engine_client::current_bubble_frame();
+    const auto click = engine_client::travel_click(
+        {.target = {.dim = frame.dim, .x = frame.x + 9, .y = frame.y + 20, .z = 0},
+         .button = "right"});
+    REQUIRE(click);
+    const auto resolved = game_client::resolve_input_command(*click, point(8, 4));
+    REQUIRE(resolved);
+    CHECK(resolved->type == input_event_t::mouse);
+    CHECK(resolved->get_first_input() == MOUSE_BUTTON_RIGHT);
+
+    // The wheel is an action of the active context, run by its id like any other.
+    auto context = input_context("MCP_WHEEL_TEST");
+    context.register_action("SCROLL_UP");
+    context.register_action("SCROLL_DOWN");
+    const auto active = game_client::input_context_scope(context, "MCP_WHEEL_TEST");
+    for (const auto* action : {"SCROLL_UP", "SCROLL_DOWN"}) {
+        auto input = game_client::input_command{};
+        input.action = action;
+        const auto step = game_client::resolve_input_command(input, point(8, 4));
+        REQUIRE(step);
+        CHECK(step->action == action);
+        game_client::memory::set_input_provider([&](const int /*timeout*/) { return *step; });
+        CHECK(context.handle_input() == action);
+    }
+    // An action the context does not register stays unresolvable.
+    auto unknown = game_client::input_command{};
+    unknown.action = "SELECT";
+    CHECK_FALSE(game_client::resolve_input_command(unknown, point(8, 4)));
+}
+
+TEST_CASE(
+    "describing a square prints the native mouse view and changes nothing",
+    "[client][mcp][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    clear_map();
+    TERMX = 80;
+    TERMY = 30;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(21, 21, point_zero);
+    const auto you = get_avatar().bub_pos();
+    g->ter_view_p = you;
+    const auto frame = engine_client::current_bubble_frame();
+    const auto epoch = std::string{"epoch:test"};
+    const auto boundary = game_client::
+        opaque_interaction_id("boundary", {epoch, std::to_string(game_client::current_input_id())});
+    const auto at = [&](const int dx) {
+        return engine_client::describe_request{
+            .epoch = epoch,
+            .boundary_id = boundary,
+            .target =
+                {.dim = frame.dim,
+                 .x = frame.x + you.x() + dx,
+                 .y = frame.y + you.y(),
+                 .z = you.z()}};
+    };
+    const auto turn = calendar::turn;
+
+    const auto here = engine_client::describe_tile(at(0), epoch);
+    REQUIRE(here);
+    CHECK_FALSE(here->lines.empty());
+    CHECK(std::ranges::none_of(here->lines, [](const auto& line) { return line.empty(); }));
+    CHECK(engine_client::describe_tile(at(1), epoch));
+    CHECK(get_avatar().bub_pos() == you);
+    CHECK(calendar::turn == turn);
+
+    auto stale = at(0);
+    stale.boundary_id = "boundary:old";
+    REQUIRE_FALSE(engine_client::describe_tile(stale, epoch));
+    CHECK(
+        engine_client::describe_tile(stale, epoch).error() == engine_client::error::stale_boundary);
+    auto other_epoch = at(0);
+    other_epoch.epoch = "epoch:other";
+    CHECK(engine_client::describe_tile(other_epoch, epoch).error()
+          == engine_client::error::stale_epoch);
+    CHECK(engine_client::describe_tile(at(40), epoch).error()
+          == engine_client::error::validation_failed);
 }
 
 TEST_CASE("memory events pass through the real input context", "[client][mcp][input]") {
