@@ -99,6 +99,8 @@ class server
 
         /// True when input ended because of an invalid or unreadable stdio frame.
         auto failed() const -> bool;
+        /// Why input ended, for the line the engine writes before it exits.
+        auto end_reason() const -> std::string;
 
         struct deferred_response {
             engine_client::jsonrpc::request_id id;
