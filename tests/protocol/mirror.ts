@@ -26,6 +26,8 @@ export class Mirror {
   environment?: Value
   /** The planned, unconfirmed auto-move route; empty when nothing is planned. */
   route: Pos[] = []
+  /** The native message log in order; a repeat replaces the line with the same id. */
+  messages: { id: string; text: string; kind: string; color: string; count: number }[] = []
   cells = new Map<string, Value>()
   entities = new Map<string, Value>()
 
@@ -59,6 +61,7 @@ export class Mirror {
     copy.avatar = structuredClone(this.avatar)
     copy.environment = structuredClone(this.environment)
     copy.route = structuredClone(this.route)
+    copy.messages = structuredClone(this.messages)
     copy.cells = structuredClone(this.cells)
     copy.entities = structuredClone(this.entities)
     return copy
@@ -86,8 +89,15 @@ export class Mirror {
         "revision advances with state",
       )
       this.applyChanges(changes)
+      if (event.type === "message.logged") this.#log(event.data)
       this.at = { epoch, sequence: event.sequence, revision: event.revision }
     }
+  }
+
+  #log(line: Mirror["messages"][number]) {
+    const at = this.messages.findIndex((entry) => entry.id === line.id)
+    if (at < 0) this.messages.push(line)
+    else this.messages[at] = line
   }
 
   /** Mutates in place; callers apply it to a copy (see applyEvents). */
@@ -116,7 +126,7 @@ export class Mirror {
     if (changes.interaction) this.interaction = changes.interaction
   }
 
-  /** Order-independent comparable form. */
+  /** Order-independent comparable form of the state; transient messages are not state. */
   state() {
     const sorted = <T>(map: Map<string, T>) => [...map.entries()].sort(([a], [b]) => a < b ? -1 : 1)
     return {

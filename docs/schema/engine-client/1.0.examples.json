@@ -1034,6 +1034,43 @@
           "weapon": "fists"
         }
       }
+    },
+    {
+      "name": "native message line, then its repeat",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "50",
+            "revision": "34",
+            "type": "message.logged",
+            "command": "c:5",
+            "changes": {},
+            "data": {
+              "id": "7",
+              "text": "You open the door.",
+              "kind": "neutral",
+              "color": "c_white",
+              "count": 1
+            }
+          },
+          {
+            "sequence": "51",
+            "revision": "34",
+            "type": "message.logged",
+            "command": "c:5",
+            "changes": {},
+            "data": {
+              "id": "7",
+              "text": "You open the door.",
+              "kind": "neutral",
+              "color": "c_white",
+              "count": 2
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -1586,6 +1623,30 @@
           },
           "weapon": "fists"
         }
+      }
+    },
+    {
+      "name": "message repeat count zero",
+      "def": "events_notification",
+      "why": "a message is shown at least once",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "50",
+            "revision": "34",
+            "type": "message.logged",
+            "command": "c:5",
+            "changes": {},
+            "data": {
+              "id": "7",
+              "text": "You open the door.",
+              "kind": "neutral",
+              "color": "c_white",
+              "count": 0
+            }
+          }
+        ]
       }
     }
   ]

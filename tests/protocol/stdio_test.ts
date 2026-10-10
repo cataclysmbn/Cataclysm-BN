@@ -768,3 +768,32 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name: "stdio: the native message log reaches the client in order with repeat counts",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      const before = session.mirror.messages.length
+      // The same native message twice in a row is one line whose count rises.
+      for (let step = 0; step < 2; step++) {
+        const up = await session.submit({ kind: "action", action_id: "LEVEL_UP" })
+        assertEquals(up.stages.at(-1), "completed")
+      }
+      const lines = session.mirror.messages
+      assertEquals(lines.length, before + 1, "the repeat replaced its line")
+      assert(lines.at(-1)!.text.startsWith("You can't"), lines.at(-1)!.text)
+      assertEquals([lines.at(-1)!.count, lines.at(-1)!.kind], [2, "info"])
+      const ids = lines.map((line) => BigInt(line.id))
+      assertEquals(ids, [...ids].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)), "log order")
+      assert(session.eventTypes.filter((type) => type === "message.logged").length >= 2)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

@@ -1,4 +1,5 @@
 #include "enums.h"
+#include "message_feed.h"
 #include "messages.h"
 
 #include <cstddef>
@@ -24,6 +25,8 @@ void Messages::add_msg(std::string) {}
 void Messages::add_msg(const game_message_params&, std::string) {}
 void Messages::clear_messages() {}
 void Messages::deactivate() {}
+auto Messages::feed_end() -> feed_cursor { return {}; }
+auto Messages::feed_since(const feed_cursor&) -> std::vector<feed_entry> { return {}; }
 auto Messages::size() -> size_t { return 0; }
 auto Messages::has_undisplayed_messages() -> bool { return false; }
 void Messages::display_messages() {}

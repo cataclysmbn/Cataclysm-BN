@@ -2,6 +2,7 @@
 
 #include "engine_client_event.h"
 #include "engine_client_wire.h"
+#include "message_feed.h"
 
 #include <memory>
 #include <variant>
@@ -63,9 +64,12 @@ class session final : public command_authority
         std::optional<input_event> validated_input_;
         std::optional<event_stream> stream_;
         std::vector<push_item> push_;
+        /// What the stream has already announced of the native message log.
+        Messages::feed_cursor message_cursor_;
         auto capture() const -> std::expected<state_value, error>;
         auto restart_epoch( std::string_view reason ) -> void;
         auto refresh_result() -> void;
+        auto publish_messages( const std::optional<std::string> &command ) -> void;
 };
 
 auto process_session() -> session &; // *NOPAD*

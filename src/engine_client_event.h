@@ -47,6 +47,17 @@ auto same_state( const state_value &left, const state_value &right ) -> bool;
 
 /// Supplied by the engine at the logical event boundary, never queried from a sink.
 enum class disclosure { withheld, publish };
+/// `message.logged`: one line of the native message log. A repeat of the last line is published
+/// again with the same `id` and a higher `count`, replacing the line the client shows.
+struct message_value {
+    counter id = 0;
+    std::string text = {};
+    /// Native message type name: good, bad, mixed, warning, info, neutral or debug.
+    std::string kind = {};
+    /// Native color name of the type for a new message.
+    std::string color = {};
+    counter count = 1;
+};
 struct event_value {
     counter sequence = 0;
     counter revision = 0;
@@ -54,6 +65,8 @@ struct event_value {
     std::optional<counter> cause = std::nullopt;
     std::optional<std::string> command = std::nullopt;
     changes delta = {};
+    /// Present exactly for `message.logged`, which changes no state.
+    std::optional<message_value> message = std::nullopt;
 };
 /// Owned value with read-only access after construction.
 class public_event
@@ -73,6 +86,10 @@ struct snapshot {
     state_value value = {};
 };
 
+struct message_request {
+    message_value message = {};
+    std::optional<std::string> command = std::nullopt;
+};
 struct publish_request {
     disclosure decision = disclosure::publish;
     state_value next = {};
@@ -90,6 +107,8 @@ class event_stream
         /// `resync_required`: the state drops a coverage, avatar or environment, which no event
         /// can express; the caller rebases and tells subscribers to start over.
         auto publish( publish_request request ) -> std::expected<std::optional<public_event>, error>;
+        /// A transient event: consumes a sequence, never a revision. resource_limit when it cannot fit a frame.
+        auto publish_message( message_request request ) -> std::expected<public_event, error>;
         /// Engine-boundary recovery when an event cannot be encoded: adopt `next` and advance the
         /// revision only. Subscribers must be told `resync` and take a fresh snapshot.
         auto rebase( state_value next ) -> std::expected<void, error>;

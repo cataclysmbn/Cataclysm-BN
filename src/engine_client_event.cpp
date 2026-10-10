@@ -23,7 +23,11 @@ auto inside( const bounds &area, const position &at ) -> bool
 }
 auto valid_event( const event_value &value ) -> bool
 {
-    return value.sequence != 0 && value.revision != 0 && !value.type.empty() &&
+    const auto message = value.type == "message.logged";
+    return value.sequence != 0 && ( value.revision != 0 || message ) && !value.type.empty() &&
+           message == value.message.has_value() && ( !message || value.delta.empty() ) &&
+           ( !value.message || ( value.message->id != 0 && !value.message->text.empty() &&
+                                 value.message->count != 0 ) ) &&
            ( !value.cause || ( *value.cause != 0 && *value.cause < value.sequence ) ) &&
            ( !value.command || ( !value.command->empty() && value.command->size() <= maximum_id_bytes ) );
 }
@@ -220,6 +224,27 @@ std::expected<std::optional<public_event>, error>
     current_.value = std::move( request.next );
     current_.at.sequence = event.value().sequence;
     current_.at.revision = event.value().revision;
+    return event;
+}
+
+auto event_stream::publish_message( message_request request ) -> std::expected<public_event, error>
+{
+    if( current_.at.sequence == std::numeric_limits<counter>::max() ) {
+        return std::unexpected( error::resource_limit );
+    }
+    auto event = public_event{{
+            .sequence = current_.at.sequence + 1,
+            .revision = current_.at.revision,
+            .type = "message.logged",
+            .command = std::move( request.command ),
+            .message = std::move( request.message ),
+        }};
+    if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
+    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
+        maximum_event_bytes ) {
+        return std::unexpected( error::resource_limit );
+    }
+    current_.at.sequence = event.value().sequence;
     return event;
 }
 

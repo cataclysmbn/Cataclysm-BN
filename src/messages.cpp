@@ -1,4 +1,5 @@
 #include "messages.h"
+#include "message_feed.h"
 #include "client_presentation.h"
 #include "message_types.h"
 #include "calendar.h"
@@ -38,11 +39,15 @@
 namespace
 {
 
+/// Identity of a message for readers that follow the log; never reused, survives coalescing.
+auto last_message_serial = std::uint64_t { 0 };
+
 struct game_message : public JsonDeserializer, public JsonSerializer {
     std::string       message;
     time_point timestamp_in_turns  = calendar::start_of_cataclysm;
     int               timestamp_in_user_actions = 0;
     int               count = 1;
+    std::uint64_t serial = ++last_message_serial;
     // number of times this message has been seen while it was in cooldown.
     unsigned cooldown_seen = 1;
     // hide the message, because at some point it was in cooldown period.
@@ -343,6 +348,27 @@ void Messages::deserialize( const JsonObject &json )
     JsonObject obj = json.get_object( "player_messages" );
     obj.read( "messages", player_messages.messages );
     obj.read( "curmes", player_messages.curmes );
+}
+
+auto Messages::feed_end() -> feed_cursor
+{
+    const auto &messages = player_messages.messages;
+    return messages.empty() ? feed_cursor{ .id = last_message_serial } :
+           feed_cursor{ .id = messages.back().serial, .count = messages.back().count };
+}
+
+auto Messages::feed_since( const feed_cursor &after ) -> std::vector<feed_entry>
+{
+    using namespace std::views;
+    const auto unseen = [&after]( const game_message & m ) {
+        return !m.is_in_cooldown() &&
+               ( m.serial > after.id || ( m.serial == after.id && m.count > after.count ) );
+    };
+    const auto entry = []( const game_message & m ) {
+        return feed_entry{ .id = m.serial, .text = m.message, .type = m.type, .count = m.count };
+    };
+    return player_messages.messages | filter( unseen ) | transform( entry ) |
+           std::ranges::to<std::vector>();
 }
 
 void Messages::add_msg( std::string msg )

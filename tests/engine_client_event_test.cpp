@@ -382,3 +382,42 @@ TEST_CASE("loading completion carries only the epoch and done", "[engine_client_
     CHECK(nlohmann::json::parse(serialize_loading("epoch:a", {.title = "ignored", .done = true}))
           == nlohmann::json::parse(R"({"epoch":"epoch:a","done":true})"));
 }
+
+namespace {
+auto line(const counter id, const std::string& text, const counter count = 1) -> message_request {
+    return {
+        .message = {.id = id, .text = text, .kind = "neutral", .color = "c_white", .count = count},
+        .command = "c:1"};
+}
+} // namespace
+
+TEST_CASE("message lines take sequences in order and never a revision", "[engine_client_event]") {
+    auto stream = stream_of(world_of({visible_cell(1)}));
+    auto receiver = stream.current();
+    const auto first = stream.publish_message(line(7, "You open the door."));
+    const auto repeat = stream.publish_message(line(7, "You open the door.", 2));
+    REQUIRE(first);
+    REQUIRE(repeat);
+    CHECK(first->value().sequence == 1);
+    CHECK(repeat->value().sequence == 2);
+    CHECK(repeat->value().revision == stream.current().at.revision);
+    CHECK(stream.current().at.sequence == 2);
+    CHECK(apply_batch(receiver, {.epoch = "epoch:a", .events = {*first, *repeat}}));
+    CHECK(receiver.at.sequence == 2);
+    CHECK(receiver.at.revision == 0);
+    CHECK(
+        nlohmann::json::parse(
+            serialize_events({.epoch = "epoch:a", .events = {*repeat}}))["events"][0]["data"]
+        == nlohmann::json::parse(
+            R"({"id":"7","text":"You open the door.","kind":"neutral","color":"c_white","count":2})"));
+}
+
+TEST_CASE(
+    "a message line without text or count is refused without consuming a sequence",
+    "[engine_client_event]") {
+    auto stream = stream_of(world_of({visible_cell(1)}));
+    CHECK_FALSE(stream.publish_message(line(7, "")));
+    CHECK_FALSE(stream.publish_message(line(7, "x", 0)));
+    CHECK_FALSE(stream.publish_message(line(0, "x")));
+    CHECK(stream.current().at.sequence == 0);
+}

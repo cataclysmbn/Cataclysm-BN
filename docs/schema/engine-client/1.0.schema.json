@@ -1701,18 +1701,42 @@
     "data_message_logged": {
       "type": "object",
       "properties": {
+        "id": {
+          "$ref": "#/$defs/counter"
+        },
         "text": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "kind": {
+          "enum": [
+            "good",
+            "bad",
+            "mixed",
+            "warning",
+            "info",
+            "neutral",
+            "debug"
+          ]
+        },
+        "color": {
           "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
         }
       },
       "required": [
+        "id",
         "text",
-        "kind"
+        "kind",
+        "color",
+        "count"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "One line of the native message log. A repeat of the last line is published again with the same id and a higher count and replaces it."
     },
     "data_sound_heard": {
       "type": "object",

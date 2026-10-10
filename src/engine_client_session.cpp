@@ -1,10 +1,14 @@
 #include "engine_client_session.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
+#include "color.h"
 #include "game_session.h"
 #include "get_version.h"
+#include "message_types.h"
+#include "output.h"
 #include "world.h"
 #include "worldfactory.h"
 
@@ -94,10 +98,12 @@ auto session::publish_boundary() -> std::expected<void, error>
         auto created = event_stream::create( epoch_, std::move( *candidate ) );
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
+        message_cursor_ = Messages::feed_end();
         return {};
     }
     auto request = publish_request{ .next = *candidate };
     if( active_ && active_->stage == command_stage::executing ) { request.command = active_->command_id; }
+    const auto command = request.command;
     auto published = stream_->publish( std::move( request ) );
     if( published ) {
         if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
@@ -110,6 +116,7 @@ auto session::publish_boundary() -> std::expected<void, error>
                                            .lost_after = stream_->current().at.sequence } );
         if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
     } else { return std::unexpected( published.error() ); }
+    publish_messages( command );
     if( active_ && active_->stage == command_stage::executing ) {
         const auto &now = stream_->current();
         const auto completed = lifecycle_->complete_at_boundary( now.at, now.value.interaction );
@@ -120,6 +127,26 @@ auto session::publish_boundary() -> std::expected<void, error>
         refresh_result();
     }
     return {};
+}
+
+auto session::publish_messages( const std::optional<std::string> &command ) -> void
+{
+    for( const auto &entry : Messages::feed_since( message_cursor_ ) ) {
+        message_cursor_ = { .id = entry.id, .count = entry.count };
+        const auto kind = std::ranges::find( msg_type_and_names(), entry.type,
+                                             &std::pair<game_message_type, const char *>::first );
+        auto published = stream_->publish_message( {
+            .message = {
+                .id = entry.id, .text = remove_color_tags( entry.text ),
+                .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
+                .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
+                .count = static_cast<counter>( entry.count )
+            },
+            .command = command
+        } );
+        // A line that cannot be published is skipped; the log itself still holds it.
+        if( published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } ); }
+    }
 }
 
 auto session::current() const -> std::expected<snapshot, error>

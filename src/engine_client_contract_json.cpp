@@ -254,6 +254,12 @@ auto to_json( const event_value &value ) -> json
     if( value.cause ) { result["cause"] = std::to_string( *value.cause ); }
     if( value.command ) { result["command"] = *value.command; }
     result["changes"] = to_json( value.delta );
+    if( value.message ) {
+        const auto &line = *value.message;
+        result["data"] = {{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
+            {"color", line.color}, {"count", line.count}
+        };
+    }
     return result;
 }
 } // namespace

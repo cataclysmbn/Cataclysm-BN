@@ -67,3 +67,24 @@ Deno.test("a view change replaces the clickable view whole", () => {
   mirror.applyEvents("e", [event(2, { view: moved })])
   assertEquals(mirror.state().view, moved)
 })
+
+Deno.test("message lines append in order and a repeat replaces its line without a revision", () => {
+  const mirror = fresh()
+  const line = (sequence: number, id: string, text: string, count: number) => ({
+    sequence: String(sequence),
+    revision: "0",
+    type: "message.logged",
+    changes: {},
+    data: { id, text, kind: "neutral", color: "c_white", count },
+  })
+  const start = Number(mirror.at.sequence)
+  mirror.applyEvents("e", [
+    line(start + 1, "7", "You open the door.", 1),
+    line(start + 2, "8", "Bang.", 1),
+    line(start + 3, "8", "Bang.", 2),
+  ])
+  assertEquals(mirror.messages.map((entry) => [entry.text, entry.count]), [
+    ["You open the door.", 1],
+    ["Bang.", 2],
+  ])
+})
