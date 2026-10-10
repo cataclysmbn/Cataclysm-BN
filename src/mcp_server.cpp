@@ -688,6 +688,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::command_busy );
         }
         hello_ = true;
+        game_client::set_overmap_tiles( decoded->tiles );
         if( decoded->view && host_.resize_viewport ) {
             host_.resize_viewport( decoded->view->cols, decoded->view->rows );
         }

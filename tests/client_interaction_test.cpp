@@ -3784,6 +3784,54 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the overmap carries tile ids only for a client that renders tiles, and the travel route",
+    "[client][interaction][overmap][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() {
+        game_client::set_overmap_tiles(false);
+        clear_all_state();
+    });
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    const auto here = you.abs_omt_pos();
+    you.omt_path = {here + point_east, here + point_east * 2};
+    auto reads = 0;
+    auto tiles = false;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.overmap);
+        const auto& om = *snapshot.overmap;
+        ++reads;
+        CHECK(om.path.size() == 2);
+        CHECK(
+            om.path.front() == game_client::interaction_position{here.x() + 1, here.y(), here.z()});
+        if (!tiles) {
+            CHECK(om.tiles.empty());
+            CHECK(om.looks_like.empty());
+        } else {
+            REQUIRE(om.tiles.size() == om.glyphs.size());
+            CHECK(std::ranges::none_of(om.tiles, [](const auto& tile) { return tile.id.empty(); }));
+            // Squares the player has not seen are unknown terrain; the one under the player is
+            // known.
+            const auto center =
+                om.tiles[static_cast<std::size_t>((om.rows / 2) * om.cols + om.cols / 2)];
+            CHECK(center.id != "unknown_terrain");
+            CHECK(om.looks_like.contains(center.id));
+        }
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    for (const auto wants_tiles : {false, true}) {
+        tiles = wants_tiles;
+        game_client::set_overmap_tiles(wants_tiles);
+        ui::omap::display();
+    }
+    CHECK(reads == 2);
+}
+
+TEST_CASE(
     "debugmsg reaches an engine client as a structured interaction with its text",
     "[client][interaction][debug_prompt][mcp]") {
     const auto guard = interaction_test_guard{};

@@ -24,18 +24,18 @@ title: エンジン/クライアントプロトコル 1.0
 
 ## メソッド
 
-| メソッド                 | パラメータ                                | 結果                                                   |
-| ------------------------ | ----------------------------------------- | ------------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `viewport?`         | `version`, `epoch`, `engine`, `limits`                 |
-| `bn.viewport`            | `cols`, `rows`                            | なし                                                   |
-| `bn.interrupt`           | なし                                      | なし                                                   |
-| `bn.subscribe`           | なし                                      | スナップショットヘッダー。続いてパートとイベントが届く |
-| `bn.unsubscribe`         | なし                                      | なし                                                   |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit` | `boundary_id`, `total`, `choices` (読み取り専用)       |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`             | `lines`(読み取り専用)                                  |
-| `bn.world.cells`         | `epoch`, `min`, `max`                     | `at`, `cells`, `forgotten` (読み取り専用)              |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                      |
-| `bn.command.result`      | `epoch`, `command_id`                     | 最新のステージ。失われた通知の回復に使う               |
+| メソッド                 | パラメータ                                  | 結果                                                   |
+| ------------------------ | ------------------------------------------- | ------------------------------------------------------ |
+| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?` | `version`, `epoch`, `engine`, `limits`                 |
+| `bn.viewport`            | `cols`, `rows`                              | なし                                                   |
+| `bn.interrupt`           | なし                                        | なし                                                   |
+| `bn.subscribe`           | なし                                        | スナップショットヘッダー。続いてパートとイベントが届く |
+| `bn.unsubscribe`         | なし                                        | なし                                                   |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`   | `boundary_id`, `total`, `choices` (読み取り専用)       |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`               | `lines`(読み取り専用)                                  |
+| `bn.world.cells`         | `epoch`, `min`, `max`                       | `at`, `cells`, `forgotten` (読み取り専用)              |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`              | `command_id`, `stage: "received"`                      |
+| `bn.command.result`      | `epoch`, `command_id`                       | 最新のステージ。失われた通知の回復に使う               |
 
 エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading`、`bn.progress` です。`bn.loading` と `bn.progress` 以外は、購読中のクライアントへ入力境界ごとに送られます。`bn.progress`(`{epoch}`)はハートビートで、待機などの行動が入力境界に到達せずに続いている間、`bn.hello` を済ませたクライアントへ 2 秒ごとに送られます。通信が途絶えたなら、エンジンは動いていません。ワールドの読み込み中は `bn.loading` が同じ役割を果たします。
 
@@ -85,7 +85,7 @@ title: エンジン/クライアントプロトコル 1.0
 - ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値、所持品 `inventory`、足元の `ground`)、`environment`、読み込み済みの `coverage`、`view`、保留中の `route`(計画がなければ空または省略)で構成されます。`view` はアバターのいる階層でネイティブの地形ウィンドウが映すマス `{min, max}` です(アバターに追従します)。`travel` クリックはこの内側だけ受理され、外側は `validation_failed` で拒否されます。
 - `avatar.inventory` は手に持つアイテム、装備中のアイテム、持ち運ぶスタックの順に並び、各要素は `{look, name, count?, slot}` で、`slot` は `wielded`、`worn`、`carried` のいずれかです。`avatar.ground` はアバター自身のマスにあるスタックを `slot` なしの同じ形で並べます。`name` はネイティブの一覧と同じ表示名で、色マークアップを含みません。どちらの配列も空のときは省略されます。
 - `interaction` はネイティブのメニューやダイアログです。`choices` は最大 200 行ですがサイズにより少なくなることがあるため、残りは `bn.interaction.choices` を `offset = choices.length` から読みます。全体の行数は `choice_total` です。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。メインメニューはネイティブと同じタブ構成です。各タブは `pane_id` を持たない選択肢(`tab:new_game`、`tab:load` など。選択中のタブは `selected`)で、その後に選択中のタブの項目だけが、そのタブの `pane_id` 付きで続きます(`new_game:tutorial`、`settings:options`、`load:<world>`)。別のタブを選ぶと、そのタブの項目を持つ新しい interaction が公開されます。ID は位置にも言語にも依存しません。
-- オーバーマップ(`m`、アクション `map`)は `context` が `OVERMAP` の `target` 種別の interaction です。`overmap` はネイティブのウィンドウを描かれたまま運びます。`cols`、`rows`、`cells[行][列] = [グリフ, 前景, 背景]`(curses の色インデックス 0〜15: 0 黒、1 赤、2 緑、3 茶、4 青、5 マゼンタ、6 シアン、7 明るい灰、8〜15 は各色の明るい形)、左上のセルのマスを示す `origin`、`player`、サイドバーの文字列 `legend`、表示範囲内の `notes` です。ウィンドウはカーソル `target.current` を中心にし、`target.unit` は `"omt"` で、この interaction のすべての位置はマップのマスではなく絶対オーバーマップ地形マスです。`pos` 付きの `set_target` でカーソルが動き(エンジンの範囲内の任意のマス、階層は -10〜10)、`cancel` で画面を閉じ、ネイティブのオーバーマップ操作(移動の `CHOOSE_DESTINATION`、`CREATE_NOTE`、`LEVEL_UP`/`LEVEL_DOWN`、`ZOOM_IN`、各種切り替えなど)はその境界の登録アクションです。クライアントは点滅させられないため、オーバーレイ(プレイヤー、メモ、経路)は常時表示されます。
+- オーバーマップ(`m`、アクション `map`)は `context` が `OVERMAP` の `target` 種別の interaction です。`overmap` はネイティブのウィンドウを描かれたまま運びます。`cols`、`rows`、`cells[行][列] = [グリフ, 前景, 背景]`(curses の色インデックス 0〜15: 0 黒、1 赤、2 緑、3 茶、4 青、5 マゼンタ、6 シアン、7 明るい灰、8〜15 は各色の明るい形)、左上のセルのマスを示す `origin`、`player`、サイドバーの文字列 `legend`、表示範囲内の `notes` です。ウィンドウはカーソル `target.current` を中心にし、`target.unit` は `"omt"` で、この interaction のすべての位置はマップのマスではなく絶対オーバーマップ地形マスです。`pos` 付きの `set_target` でカーソルが動き(エンジンの範囲内の任意のマス、階層は -10〜10)、`cancel` で画面を閉じ、ネイティブのオーバーマップ操作(移動の `CHOOSE_DESTINATION`、`CREATE_NOTE`、`LEVEL_UP`/`LEVEL_DOWN`、`ZOOM_IN`、各種切り替えなど)はその境界の登録アクションです。クライアントは点滅させられないため、オーバーレイ(プレイヤー、メモ、経路)は常時表示されます。`path` は計画された移動経路です。`bn.hello` で `"tiles": true` を伝えたクライアントには `tiles` も届きます。セルごとの `[tile, rotation, subtile]`(ネイティブのタイル表示が選ぶ `overmap_terrain` のタイル ID、90 度回転数、マルチタイルキー)と、各タイル ID の `looks_like` フォールバックです。ほかのクライアントには送られません。
 - 設定画面はネイティブのものです。`settings:options`、`settings:keybindings`、`settings:autopickup`、`settings:safemode`、`settings:distractions`、`settings:colors` から開きます(オプションとキー割り当てはゲーム中も開けます)。`editor` を持つ行は直接設定できます。`fill` の `field_id` に行の `choice_id`、`value` にエディタの形式の値、`submit: true` を指定します。`editor.type` は `bool`(`true`/`false`)、`select`(`values[].id` のいずれか)、`integer`/`float`(`minimum`〜`maximum`)、`text`(`max_length` 以下)で、ネイティブメニューが受け付けない値はエンジンが拒否します。行への `choose` はネイティブの Enter と同じです。オプション: タブ行 `page:<id>` の後に、選択中のページの `option:<NAME>` と `group:<id>` の行が続きます。`cancel` で抜けるとネイティブの「変更を保存しますか?」が出て、保存すると適用され書き込まれます。キー割り当て: `mode:add_local`、`mode:add_global`、`mode:remove`(ネイティブが提供する場合は `mode:execute`)が次の `action:<ID>` 行の動作を決め、フィールドが名前で絞り込み、新しいキーの入力は `key` 型のフィールドで、キー割り当てファイルと同じ綴り(`z`、`=`、`F9`、`CTRL+A`)のキー名を受け取ります。自動拾いとセーフモード: タブ行 `page:<n>`、列行 `column:<n>`、`rule:<n>` 行。ルール操作(追加・削除・移動など)は画面の登録済みアクションです。注意散漫: `bool` エディタ付きの `distraction:<name>` 行(true で中断)。色: `column:<n>` と `color:<name>` 行。色を選ぶとネイティブの色リストが開きます。
 - ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値と所持品 `inventory`)、`environment`、読み込み済みの `coverage`、`view`、保留中の `route`(計画がなければ空または省略)で構成されます。`view` はアバターのいる階層でネイティブの地形ウィンドウが映すマス `{min, max}` です(アバターに追従します)。`travel` クリックはこの内側だけ受理され、外側は `validation_failed` で拒否されます。
 - `avatar.sidebar` は同じ getter から取ったネイティブのクラシックサイドバーの値です。`limbs`(`id`、`label` と状態色、`hp`、`hp_max`、バーの `color`、`broken`)、`pain`、`hunger`、`thirst`、`fatigue`、`temperature`、`power`、`location`、`weather`(ネイティブ色名の `{text, color}`)、`focus`、`morale`(`level`、ネイティブの `face`)、`stamina`、`speed`、`movement`(`counter`、`mode` は `walk`、`run`、`crouch`、`prone`)、`safe_mode`、`time`(`season`、`day`、`clock`: 時計の時刻、なければおおよその時間帯、地下では空)、任意の `ambient_temperature`(温度計がある場合のみ)、`weapon`、任意の `style`(武術スタイル)で構成されます。文字列はエンジンの表示言語で、それ以外の値は言語中立です。`stats` の項目はネイティブの `color` を持つことがあります。

@@ -1205,6 +1205,54 @@
             ],
             "additionalProperties": false
           }
+        },
+        "path": {
+          "type": "array",
+          "description": "The planned travel route, nearest square first.",
+          "items": {
+            "$ref": "#/$defs/pos"
+          }
+        },
+        "tiles": {
+          "type": "object",
+          "description": "Only for a client that said `tiles` in hello. `cells[row][col] = [tile, rotation, subtile]`: the overmap_terrain tile id, quarter turns and multitile key (empty for a plain tile). `looks_like` lists, per tile id, the ids to try next.",
+          "properties": {
+            "cells": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "items": false
+                }
+              }
+            },
+            "looks_like": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": [
+            "cells",
+            "looks_like"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -1214,7 +1262,8 @@
         "rows",
         "cells",
         "legend",
-        "notes"
+        "notes",
+        "path"
       ],
       "additionalProperties": false
     },
@@ -2409,6 +2458,10 @@
         },
         "viewport": {
           "$ref": "#/$defs/viewport"
+        },
+        "tiles": {
+          "type": "boolean",
+          "description": "The client draws tiles, so the engine adds tile ids where it has them (the overmap)."
         }
       },
       "required": [

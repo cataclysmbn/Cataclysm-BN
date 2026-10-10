@@ -4,6 +4,7 @@
 #include "type_id.h"
 
 #include <optional>
+#include <string>
 
 namespace catacurses {
 class window;
@@ -11,6 +12,7 @@ class window;
 
 class input_context;
 class nc_color;
+struct regional_settings;
 
 namespace ui {
 
@@ -96,6 +98,20 @@ struct tiles_redraw_info {
 extern tiles_redraw_info redraw_info;
 
 auto fmt_omt_coords(const tripoint_abs_omt& coord) -> std::string;
+
+/// The tile the overmap draws for a square: its terrain type id (the "overmap_terrain" tile), the
+/// quarter turns and the connection subtile the native tile selection picked.
+struct omt_tile {
+    std::string id;
+    int rotation = 0;
+    int subtile = -1;
+};
+/// The terrain of a square with its connections to the neighbours, as the tiles view selects it.
+auto omt_tile_at(const tripoint_abs_omt& omp) -> omt_tile;
+/// The tile for a square the player may not have seen: unknown terrain, or the region's display
+/// terrain.
+auto omt_tile_shown(const tripoint_abs_omt& omp, bool seen, const regional_settings& region)
+    -> omt_tile;
 
 auto get_weather_at_point(const point_abs_omt& pos) -> weather_type_id;
 auto get_note_display_info(const std::string& note) -> std::tuple<char, nc_color, size_t>;

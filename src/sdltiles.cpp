@@ -741,50 +741,10 @@ static std::optional<std::pair<tripoint_abs_omt, std::string>> get_mission_arrow
 std::string cata_tiles::get_omt_id_rotation_and_subtile(
     const tripoint_abs_omt &omp, int &rota, int &subtile )
 {
-    auto oter_at = []( const tripoint_abs_omt & p ) {
-        const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( p );
-
-        if( !uistate.overmap_show_forest_trails &&
-            is_ot_match( "forest_trail", cur_ter, ot_match_type::type ) ) {
-            return oter_id( "forest" );
-        }
-
-        return cur_ter;
-    };
-
-    oter_id ot_id = oter_at( omp );
-    const oter_t &ot = *ot_id;
-    oter_type_id ot_type_id = ot.get_type_id();
-    const oter_type_t &ot_type = *ot_type_id;
-
-    if( ot_type.has_connections() ) {
-        // This would be for connected terrain
-
-        // get terrain neighborhood
-        const oter_type_id neighborhood[4] = {
-            oter_at( omp + point_south )->get_type_id(),
-            oter_at( omp + point_east )->get_type_id(),
-            oter_at( omp + point_west )->get_type_id(),
-            oter_at( omp + point_north )->get_type_id()
-        };
-
-        char val = 0;
-
-        // populate connection information
-        for( int i = 0; i < 4; ++i ) {
-            if( ot_type.connects_to( neighborhood[i] ) ) {
-                val += 1 << i;
-            }
-        }
-
-        get_rotation_and_subtile( val, rota, subtile );
-    } else {
-        // 'Regular', nonlinear terrain only needs to worry about rotation, not
-        // subtile
-        ot.get_rotation_and_subtile( rota, subtile );
-    }
-
-    return ot_type_id.id().str();
+    const auto tile = overmap_ui::omt_tile_at( omp );
+    rota = tile.rotation;
+    subtile = tile.subtile;
+    return tile.id;
 }
 
 static point draw_string( Font &font,
@@ -903,14 +863,8 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         return false;
     };
 
-    // Cache display_oter substitution strings for the active region.
     const regional_settings &active_region_settings = ACTIVE_OVERMAP_BUFFER.get_settings(
                 center_abs_omt );
-    const bool om_has_display_oter = !active_region_settings.display_oter.is_empty();
-    const std::string om_default_oter_str = active_region_settings.default_oter.str();
-    const std::string om_display_oter_str = om_has_display_oter
-                                            ? active_region_settings.display_oter.str()
-                                            : std::string{};
 
     for( int row = min_row; row < max_row; row++ ) {
         for( int col = min_col; col < max_col; col++ ) {
@@ -933,14 +887,10 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 }
             }
             if( id.empty() ) {
-                if( see ) {
-                    id = get_omt_id_rotation_and_subtile( omp, rotation, subtile );
-                    if( om_has_display_oter && id == om_default_oter_str ) {
-                        id = om_display_oter_str;
-                    }
-                } else {
-                    id = "unknown_terrain";
-                }
+                const auto tile = overmap_ui::omt_tile_shown( omp, see, active_region_settings );
+                id = tile.id;
+                rotation = tile.rotation;
+                subtile = tile.subtile;
             }
 
             if( overmap_transparency && category != TILE_CATEGORY::C_OVERMAP_WEATHER ) {

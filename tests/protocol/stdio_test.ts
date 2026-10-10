@@ -311,10 +311,11 @@ async function makeProfile(): Promise<string> {
 }
 
 /** Hello, then New Game and Tutorial; returns the session on the loaded tutorial world. */
-async function enterTutorial(client: Client): Promise<Session> {
+async function enterTutorial(client: Client, extra: Value = {}): Promise<Session> {
   await client.result("bn.hello", {
     versions: ["1.0"],
     client: { name: "stdio-test", version: "1" },
+    ...extra,
   })
   let session = new Session(client)
   await session.start()
@@ -1262,6 +1263,38 @@ Deno.test({
       assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
       assertEquals(view(), null)
       assert(session.mirror.interaction.actions.some((a: Value) => a.id === "map"))
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: a tiles client gets overmap tile ids and the route, others do not",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client, { tiles: true })
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "map" })).stages.at(-1),
+        "completed",
+      )
+      const overmap = session.mirror.interaction.interaction.overmap
+      assertEquals(overmap.path, [])
+      const tiles = overmap.tiles
+      assert(tiles, "tile ids for a tiles client")
+      assertEquals(tiles.cells.length, overmap.rows)
+      assertEquals(tiles.cells[0].length, overmap.cols)
+      const [id, rotation, subtile] =
+        tiles.cells[Math.floor(overmap.rows / 2)][Math.floor(overmap.cols / 2)]
+      assert(typeof id === "string" && id.length > 0 && id !== "unknown_terrain", id)
+      assert(Number.isInteger(rotation) && typeof subtile === "string")
+      assert(id in tiles.looks_like)
       await client.close()
     } finally {
       client.kill()

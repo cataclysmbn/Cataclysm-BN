@@ -149,8 +149,12 @@ auto read_request( const json &value, viewport &result ) -> void
 }
 auto read_request( const json &value, hello_request &result ) -> void
 {
-    members( value, {"versions", "client"}, {"viewport"} );
+    members( value, {"versions", "client"}, {"viewport", "tiles"} );
     if( value.contains( "viewport" ) ) { read_request( value.at( "viewport" ), result.view.emplace() ); }
+    if( value.contains( "tiles" ) ) {
+        require( value.at( "tiles" ).is_boolean() );
+        result.tiles = value.at( "tiles" ).get<bool>();
+    }
     const auto &versions = value.at( "versions" );
     require( versions.is_array() && !versions.empty() );
     auto seen = std::set<std::string> {};

@@ -245,6 +245,21 @@ auto interaction_json( const boundary_state &state ) -> json
             {"cols", om.cols}, {"rows", om.rows}, {"cells", std::move( cells )},
             {"legend", om.legend}, {"notes", std::move( notes )}
         };
+        auto path = json::array();
+        for( const auto &step : om.path ) { path.push_back( to_json( step, frame ) ); }
+        result["overmap"]["path"] = std::move( path );
+        if( !om.tiles.empty() ) {
+            auto rows = json::array();
+            for( const auto y : std::views::iota( 0, om.rows ) ) {
+                auto row = json::array();
+                for( const auto x : std::views::iota( 0, om.cols ) ) {
+                    const auto &tile = om.tiles[static_cast<std::size_t>( y * om.cols + x )];
+                    row.push_back( {tile.id, tile.rotation, tile.subtile} );
+                }
+                rows.push_back( std::move( row ) );
+            }
+            result["overmap"]["tiles"] = {{"cells", std::move( rows )}, {"looks_like", om.looks_like}};
+        }
     }
     auto compat = json::object();
     if( !native.focus_choice_id.empty() ) {

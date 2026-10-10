@@ -87,6 +87,7 @@ thread_local auto providers = std::vector<provider_entry> {};
 thread_local auto next_provider_token = std::size_t {0};
 
 constexpr auto maximum_page_size = std::size_t {200};
+auto wire_overmap_tiles = false;
 
 auto hex_digest( const localization::content_hash &hash ) -> std::string
 {
@@ -521,6 +522,9 @@ interaction_scope::~interaction_scope()
     const auto entry = std::ranges::find( providers, token_, &provider_entry::token );
     if( entry != providers.end() ) { providers.erase( entry ); }
 }
+
+auto overmap_tiles() -> bool { return wire_overmap_tiles; }
+auto set_overmap_tiles( const bool tiles ) -> void { wire_overmap_tiles = tiles; }
 
 auto interaction_work() -> interaction_work_counts { return work; }
 auto reset_interaction_work() -> void { work = {}; }

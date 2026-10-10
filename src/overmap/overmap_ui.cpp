@@ -27,6 +27,7 @@
 #include "map/map.h"
 #include "map/mapbuffer.h"
 #include "map_iterator.h"
+#include "map_perception.h"
 #include "messages.h"
 #include "mission.h"
 #include "mongroup.h"
@@ -170,6 +171,51 @@ private:
     std::unordered_map<std::uintptr_t, char> list_active;
     std::unordered_map<std::size_t, std::pair<std::vector<tripoint_abs_omt>, char>> list_inactive;
 };
+
+auto omt_tile_at(const tripoint_abs_omt& omp) -> omt_tile {
+    auto oter_at = [](const tripoint_abs_omt& p) {
+        const oter_id& cur_ter = ACTIVE_OVERMAP_BUFFER.ter(p);
+
+        if (!uistate.overmap_show_forest_trails
+            && is_ot_match("forest_trail", cur_ter, ot_match_type::type)) {
+            return oter_id("forest");
+        }
+
+        return cur_ter;
+    };
+
+    const oter_t& ot = *oter_at(omp);
+    const oter_type_t& ot_type = *ot.get_type_id();
+    auto result = omt_tile{.id = ot.get_type_id().str()};
+    if (ot_type.has_connections()) {
+        // Connected terrain: the tile depends on which of the four neighbours it connects to.
+        const oter_type_id neighborhood[4] =
+            {oter_at(omp + point_south)->get_type_id(), oter_at(omp + point_east)->get_type_id(),
+             oter_at(omp + point_west)->get_type_id(), oter_at(omp + point_north)->get_type_id()};
+        auto connections = uint8_t{0};
+        for (int i = 0; i < 4; ++i) {
+            if (ot_type.connects_to(neighborhood[i])) { connections |= 1 << i; }
+        }
+        const auto shape = map_perception::orient(connections);
+        result.rotation = shape.rotation;
+        result.subtile = shape.subtile;
+    } else {
+        // Regular, nonlinear terrain only needs a rotation.
+        ot.get_rotation_and_subtile(result.rotation, result.subtile);
+    }
+    return result;
+}
+
+auto omt_tile_shown(const tripoint_abs_omt& omp, const bool seen, const regional_settings& region)
+    -> omt_tile {
+    if (!seen) { return {.id = "unknown_terrain"}; }
+    auto result = omt_tile_at(omp);
+    // The region may show its default terrain as another one.
+    if (!region.display_oter.is_empty() && result.id == region.default_oter.str()) {
+        result.id = region.display_oter.str();
+    }
+    return result;
+}
 
 auto fmt_omt_coords(const tripoint_abs_omt& coord) -> std::string {
     if (get_option<std::string>("OVERMAP_COORDINATE_FORMAT") == "subdivided") {
@@ -2028,6 +2074,27 @@ static auto overmap_interaction(const tripoint_abs_omt& center)
             const tripoint_abs_omt omp = corner + point(x, y);
             if (ACTIVE_OVERMAP_BUFFER.has_note(omp)) {
                 om.notes.push_back({position(omp), ACTIVE_OVERMAP_BUFFER.note(omp)});
+            }
+        }
+    }
+    for (const auto& step : get_avatar().omt_path) { om.path.push_back(position(step)); }
+    if (game_client::overmap_tiles()) {
+        const auto& region = ACTIVE_OVERMAP_BUFFER.get_settings(center);
+        const bool debug_vision = get_avatar().has_trait(trait_DEBUG_NIGHTVISION);
+        for (int y = 0; y < om.rows; ++y) {
+            for (int x = 0; x < om.cols; ++x) {
+                const tripoint_abs_omt omp = corner + point(x, y);
+                const bool seen = debug_vision || ACTIVE_OVERMAP_BUFFER.seen(omp);
+                const auto tile = omt_tile_shown(omp, seen, region);
+                om.tiles.push_back(
+                    {.id = tile.id,
+                     .rotation = tile.rotation,
+                     .subtile = map_perception::multitile_key(tile.subtile)});
+                if (!om.looks_like.contains(tile.id)) {
+                    const auto type = oter_type_str_id(tile.id);
+                    om.looks_like[tile.id] =
+                        type.is_valid() ? type->looks_like : std::vector<std::string>{};
+                }
             }
         }
     }

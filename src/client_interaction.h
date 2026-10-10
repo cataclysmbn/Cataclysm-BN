@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <map>
 #include <functional>
 #include <optional>
 #include <string>
@@ -110,6 +111,14 @@ struct interaction_overmap_note {
     std::string text;
 };
 
+/// The tile the native tiles view draws for an overmap square.
+struct interaction_overmap_tile {
+    std::string id;
+    int rotation = 0;
+    /// The multitile key (`edge`, `corner`, ...), empty for a plain tile.
+    std::string subtile;
+};
+
 /// The native overmap window as drawn: one glyph and curses colors per cell, row-major, with
 /// the sidebar text. Positions are absolute overmap terrain squares.
 struct interaction_overmap {
@@ -123,6 +132,12 @@ struct interaction_overmap {
     interaction_position player;
     std::vector<std::string> legend;
     std::vector<interaction_overmap_note> notes;
+    /// The planned travel route, nearest square first.
+    std::vector<interaction_position> path;
+    /// Row-major like `glyphs`; empty unless the client renders tiles.
+    std::vector<interaction_overmap_tile> tiles;
+    /// For each tile id used, the ids to try next, nearest first.
+    std::map<std::string, std::vector<std::string>> looks_like;
 };
 
 /// Pure data describing the interaction currently waiting at an input boundary.
@@ -177,6 +192,10 @@ class interaction_scope
     private:
         std::size_t token_ = 0;
 };
+
+/// Whether the connected client renders tiles, so the overmap carries tile ids (set by `bn.hello`).
+auto overmap_tiles() -> bool;
+auto set_overmap_tiles( bool tiles ) -> void;
 
 auto current_interaction( interaction_page page = {} ) -> interaction_snapshot;
 auto paginated_interaction( interaction_page_state &state ) -> interaction_snapshot;

@@ -21,6 +21,8 @@ struct hello_request {
     std::string client_name = {};
     std::string client_version = {};
     std::optional<viewport> view = std::nullopt;
+    /// The client draws tiles, so it wants tile ids where the engine has them (the overmap).
+    bool tiles = false;
 };
 struct result_request {
     std::string epoch = {};
