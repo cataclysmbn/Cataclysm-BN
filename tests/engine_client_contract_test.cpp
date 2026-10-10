@@ -2,9 +2,14 @@
 #include "client_input.h"
 #include "engine_client_contract.h"
 #include "input.h"
+#include "path_info.h"
 
 #include <algorithm>
 #include <climits>
+#include <fstream>
+#include <map>
+#include <nlohmann/json.hpp>
+#include <set>
 #include <string>
 #include <utility>
 
@@ -314,6 +319,57 @@ TEST_CASE(
     CHECK(binds("QUIT", "ESC"));
     CHECK_FALSE(binds("QUIT", ">"));
     CHECK(contains(engine_client::serialize_boundary(boundary), R"("keys":[)"));
+}
+
+TEST_CASE(
+    "every bound action of every input context carries its keys in the boundary",
+    "[engine_client_contract]") {
+    // The expected keys come from the shipped file; the boundary must carry each one (control,
+    // function, navigation and numpad keys included), so a client never needs its own key table.
+    auto stream = std::ifstream{PATH_INFO::keybindingsdir() + "keybindings.json"};
+    REQUIRE(stream.good());
+    const auto file = nlohmann::json::parse(stream);
+    auto expected = std::map<std::string, std::map<std::string, std::set<std::string>>>{};
+    for (const auto& entry : file) {
+        if (entry.value("type", "") != "keybinding") { continue; }
+        for (const auto& binding : entry.value("bindings", nlohmann::json::array())) {
+            if (binding.value("input_method", "") != "keyboard") { continue; }
+            const auto& key = binding["key"];
+            const auto names = key.is_array() ? key : nlohmann::json::array({key});
+            if (names.size() == 1 && names[0].is_string() && entry.value("category", "") != "") {
+                // The file may write a space as itself; the portable name is SPACE.
+                const auto name = names[0].get<std::string>();
+                expected[entry.value("category", "")][entry.value("id", "")].insert(
+                    name == " " ? "SPACE" : name);
+            }
+        }
+    }
+    REQUIRE(expected["DEFAULTMODE"].size() > 50);
+    auto checked = std::set<std::string>{};
+    for (const auto& [category, actions] : expected) {
+        auto context = input_context{category};
+        for (const auto& [id, keys] : actions) { context.register_action(id); }
+        const auto input_scope = game_client::input_context_scope{context, category};
+        game_client::begin_input_boundary();
+        const auto boundary = capture();
+        auto carried = std::map<std::string, std::set<std::string>>{};
+        for (const auto& action : boundary.actions) {
+            carried[action.id].insert(action.keys.begin(), action.keys.end());
+        }
+        for (const auto& [id, keys] : actions) {
+            for (const auto& key : keys) {
+                INFO(category << " " << id << " " << key);
+                CHECK(carried[id].contains(key));
+                checked.insert(key);
+            }
+        }
+    }
+    // The classes of key a client has to name: control, function, navigation and numpad.
+    for (const auto* key :
+         {"CTRL+S", "F1", "BACKTAB", "PPAGE", "NUMPAD_8", "ESC", "SPACE", "RETURN"}) {
+        INFO(key);
+        CHECK(checked.contains(key));
+    }
 }
 
 TEST_CASE(
