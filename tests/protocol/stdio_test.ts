@@ -29,7 +29,7 @@ const validate = (def: string, value: unknown, what: string) => {
 
 // deno-lint-ignore no-explicit-any
 type Value = any
-/** The engine is killed after this long without output and without CPU use; either one restarts the wait. */
+/** The engine is killed after this long without protocol traffic, busy or not: loading steps and activities send heartbeats. */
 const stall = 120_000
 
 class Client {
@@ -60,33 +60,18 @@ class Client {
     this.#reader = this.#process.stdout.pipeThrough(new TextDecoderStream()).getReader()
   }
 
-  /** CPU seconds the engine has used (`ps`: reading /proc needs --allow-all); a loading engine is silent but busy. */
-  async #cpuSeconds(): Promise<number> {
-    const { stdout } = await new Deno.Command("ps", {
-      args: ["-o", "cputimes=", "-p", String(this.#process.pid)],
-      stderr: "null",
-    }).output()
-    return Number(new TextDecoder().decode(stdout)) || 0
-  }
-
   async #line(): Promise<Value> {
-    let last = performance.now()
-    let seconds = await this.#cpuSeconds()
-    // Kill the engine only after `stall` without output and without CPU use.
-    const watch = setInterval(async () => {
-      const now = await this.#cpuSeconds()
-      if (now !== seconds) [seconds, last] = [now, performance.now()]
-      if (performance.now() - last > stall) this.#process.kill("SIGKILL")
-    }, 5000)
+    let timer: ReturnType<typeof setTimeout> | undefined
     try {
       while (!this.#buffer.includes("\n")) {
+        clearTimeout(timer)
+        timer = setTimeout(() => this.#process.kill("SIGKILL"), stall)
         const part = await this.#reader.read()
         assert(!part.done, "engine closed stdout")
         this.#buffer += part.value
-        last = performance.now()
       }
     } finally {
-      clearInterval(watch)
+      clearTimeout(timer)
     }
     const end = this.#buffer.indexOf("\n")
     const line = this.#buffer.slice(0, end)
@@ -452,10 +437,12 @@ Deno.test({
       const visible = [...session.mirror.cells.values()].filter((entry) =>
         entry.known === "visible"
       )
-      assert(visible.length > 0 && visible.every((entry) => entry.terrain?.subtile !== undefined))
-      assert(visible.every((entry) => [0, 1, 2, 3].includes(entry.terrain.rotation)))
+      // A cell layer leaves out the default `center` subtile and the turn 0.
+      const subtile = (entry: Value) => entry.terrain.subtile ?? "center"
+      assert(visible.length > 0 && visible.every((entry) => entry.terrain !== undefined))
+      assert(visible.every((entry) => [0, 1, 2, 3].includes(entry.terrain.rotation ?? 0)))
       assert(visible.every((entry) => Number.isInteger(entry.light) && entry.light >= 0))
-      assert(visible.some((entry) => entry.terrain.subtile !== "unconnected"), "connected terrain")
+      assert(visible.some((entry) => subtile(entry) !== "unconnected"), "connected terrain")
       assert(["player_male", "player_female"].includes(session.mirror.avatar.look?.tile))
       assert(["spring", "summer", "autumn", "winter"].includes(session.mirror.environment?.season))
       const avatarBefore = session.mirror.avatar.at

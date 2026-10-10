@@ -236,6 +236,59 @@ TEST_CASE("events serialize with ids as decimal strings", "[engine_client_event]
 }
 
 TEST_CASE(
+    "a cell layer leaves out the kind and the default shape it implies", "[engine_client_event]") {
+    auto plain = visible_cell(1);
+    plain.terrain->subtile = "center";
+    plain.terrain->rotation = 0;
+    auto shaped = visible_cell(2);
+    shaped.terrain->subtile = "corner";
+    shaped.terrain->rotation = 3;
+    shaped.items = {look{.kind = "item", .id = "rock", .glyph = "*", .color = "gray"}};
+    shaped.furniture = look{.kind = "terrain", .id = "f_odd", .glyph = "x", .color = "gray"};
+    auto remembered = remembered_cell(3);
+    remembered.memory->overlay =
+        look{.kind = "trap", .id = "tr_x", .glyph = "^", .color = "red", .subtile = "center"};
+    const auto wire = nlohmann::json::parse(
+        serialize_snapshot(stream_of(world_of({plain, shaped, remembered})).current())
+            ->parts.front());
+    const auto& cells = wire["cells"];
+    CHECK(cells[0]["terrain"]
+          == nlohmann::json::parse(R"({"id":"t_dirt","glyph":".","color":"brown"})"));
+    CHECK(cells[1]["terrain"]["subtile"] == "corner");
+    CHECK(cells[1]["terrain"]["rotation"] == 3);
+    CHECK_FALSE(cells[1]["items"][0].contains("kind"));
+    CHECK(cells[1]["furniture"]["kind"] == "terrain");
+    CHECK_FALSE(cells[2]["memory"]["terrain"].contains("kind"));
+    CHECK(cells[2]["memory"]["overlay"]["kind"] == "trap");
+    CHECK_FALSE(cells[2]["memory"]["overlay"].contains("subtile"));
+}
+
+TEST_CASE("an event leaves out the actions the boundary kept", "[engine_client_event]") {
+    auto first = world_of({});
+    first.interaction.actions = {{.id = "UP", .name = "Move North", .keys = {"k"}}};
+    auto stream = stream_of(first);
+    auto next = first;
+    next.interaction.id = "boundary:2";
+    const auto kept = publish(stream, next);
+    const auto kept_wire = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {kept}}));
+    const auto& kept_interaction = kept_wire["events"][0]["changes"]["interaction"];
+    CHECK(kept_interaction["boundary_id"] == "boundary:2");
+    CHECK_FALSE(kept_interaction.contains("actions"));
+
+    next.interaction.id = "boundary:3";
+    next.interaction.actions.push_back({.id = "DOWN", .name = "Move South", .keys = {"j"}});
+    const auto changed = publish(stream, next);
+    const auto changed_wire = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {changed}}));
+    CHECK(changed_wire["events"][0]["changes"]["interaction"]["actions"].size() == 2);
+    // A fresh subscribe always lists them.
+    const auto snapshot_wire = serialize_snapshot(stream.current());
+    REQUIRE(snapshot_wire);
+    CHECK(nlohmann::json::parse(snapshot_wire->header)["interaction"]["actions"].size() == 2);
+}
+
+TEST_CASE(
     "snapshot parts cover every cell exactly once within the byte bound", "[engine_client_event]") {
     auto value = world_of({});
     value.world.coverage = bounds{.min = pos(0, -5), .max = pos(1000, 5)};

@@ -129,7 +129,11 @@ export class Mirror {
     if (changes.avatar) this.avatar = changes.avatar
     if (changes.environment) this.environment = changes.environment
     if (changes.route) this.route = changes.route
-    if (changes.interaction) this.interaction = changes.interaction
+    if (changes.interaction) {
+      // The engine leaves out `actions` when the new boundary keeps the previous ones.
+      const actions = changes.interaction.actions ?? this.interaction.actions
+      this.interaction = { ...changes.interaction, actions }
+    }
   }
 
   /** Order-independent comparable form of the stream: state plus the message log a snapshot carries. */

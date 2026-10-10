@@ -56,6 +56,7 @@ struct action {
     std::string name = {};
     /// Portable names of the single keys that run this action in the active input context.
     std::vector<std::string> keys = {};
+    auto operator<=>( const action & ) const = default; // *NOPAD*
 };
 /// Where the reality bubble sits in absolute coordinates. Native interaction positions are
 /// bubble-relative; they become absolute only on the wire.
