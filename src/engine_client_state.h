@@ -23,12 +23,24 @@ struct bounds {
     position max;
     auto operator<=>( const bounds & ) const = default; // *NOPAD*
 };
-/// Appearance from game data, so text clients need no tileset.
+/// Appearance from game data, so text clients need no tileset. The optional members give a tiled
+/// client what only the engine can know: the sprite id when it is not `id`, the data's fallback
+/// ids, and the shape the native tile selection computed from the neighbours.
 struct look {
     std::string kind = {};
     std::optional<std::string> id = std::nullopt;
     std::string glyph = {};
     std::string color = {};
+    /// Tile id native tilesets look up when it differs from `id` (corpses, characters).
+    std::optional<std::string> tile = std::nullopt;
+    /// The `looks_like` chain of the game data, nearest first.
+    std::vector<std::string> looks_like = {};
+    /// Multitile key of the native selection: center, corner, edge, t_connection, end_piece, unconnected, open, broken.
+    std::optional<std::string> subtile = std::nullopt;
+    /// Quarter turns of the native selection, 0 north, 1 west, 2 south, 3 east.
+    std::optional<int> rotation = std::nullopt;
+    /// Side a creature faces: left or right.
+    std::optional<std::string> facing = std::nullopt;
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {
@@ -63,6 +75,8 @@ struct entity {
     knowledge known = knowledge::visible;
     std::optional<look> appearance = std::nullopt;
     std::optional<std::string> name = std::nullopt;
+    /// Sprites drawn over a character, bottom first: worn and wielded items, mutations, bionics.
+    std::vector<look> overlays = {};
     std::vector<std::string> statuses = {};
     std::optional<std::string> sense = std::nullopt;
     auto operator<=>( const entity & ) const = default; // *NOPAD*
@@ -140,6 +154,8 @@ struct avatar_value {
     std::string id = {};
     position at;
     std::string name = {};
+    std::optional<look> appearance = std::nullopt;
+    std::vector<look> overlays = {};
     std::vector<avatar_stat> stats = {};
     /// Carried items, in the native inventory order. Items have no instance IDs.
     std::vector<inventory_entry> inventory = {};
@@ -150,6 +166,7 @@ struct environment_value {
     std::string turn = {};
     std::string time = {};
     std::string weather = {};
+    std::string season = {};
     auto operator<=>( const environment_value & ) const = default; // *NOPAD*
 };
 

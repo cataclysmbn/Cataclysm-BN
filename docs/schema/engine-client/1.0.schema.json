@@ -142,7 +142,8 @@
             "monster",
             "npc",
             "avatar",
-            "projectile"
+            "projectile",
+            "overlay"
           ]
         },
         "id": {
@@ -156,6 +157,44 @@
         },
         "color": {
           "type": "string"
+        },
+        "tile": {
+          "type": "string",
+          "description": "Tile id native tilesets look up when it differs from id: corpses (corpse_<monster>), characters (player_male, npc_female), vehicle parts (vp_<id>)."
+        },
+        "looks_like": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "description": "The looks_like chain of the game data, nearest first, in the same namespace as the sprite id. A tiled client tries the sprite id, then these in order."
+        },
+        "subtile": {
+          "enum": [
+            "center",
+            "corner",
+            "edge",
+            "t_connection",
+            "end_piece",
+            "unconnected",
+            "open",
+            "broken"
+          ],
+          "description": "Multitile key the native tile selection chose from the known neighbours (terrain, furniture, trap, field) or the part state (vehicle part: open, broken, else center)."
+        },
+        "rotation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Quarter turns the native selection chose: 0 north, 1 west, 2 south, 3 east. Vehicle parts: the facing in four directions."
+        },
+        "facing": {
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Side a creature faces; tilesets flip the sprite for left."
         }
       },
       "required": [
@@ -224,7 +263,8 @@
         "light": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 9007199254740991
+          "maximum": 9007199254740991,
+          "description": "Native lit_level of a visible square: 0 dark, 1 low, 2 bright only, 3 lit, 4 bright. Low light draws darkened."
         },
         "memory": {
           "type": "object",
@@ -329,6 +369,13 @@
         },
         "sense": {
           "type": "string"
+        },
+        "overlays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/look"
+          },
+          "description": "Sprites drawn over a character, bottom first, as looks of kind overlay: id is the overlay (worn_<item>, wielded_<item>, mutation_<id>, bionic or effect), tile and looks_like the tileset ids to try in the native order. A tileset without a sprite for an overlay draws nothing."
         }
       },
       "required": [
@@ -353,7 +400,8 @@
             "properties": {
               "look": false,
               "name": false,
-              "statuses": false
+              "statuses": false,
+              "overlays": false
             }
           }
         },
@@ -443,6 +491,16 @@
         },
         "sidebar": {
           "$ref": "#/$defs/sidebar"
+        },
+        "look": {
+          "$ref": "#/$defs/look"
+        },
+        "overlays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/look"
+          },
+          "description": "Sprites drawn over a character, bottom first, as looks of kind overlay: id is the overlay (worn_<item>, wielded_<item>, mutation_<id>, bionic or effect), tile and looks_like the tileset ids to try in the native order. A tileset without a sprite for an overlay draws nothing."
         }
       },
       "required": [
@@ -697,6 +755,15 @@
         },
         "weather": {
           "type": "string"
+        },
+        "season": {
+          "enum": [
+            "spring",
+            "summer",
+            "autumn",
+            "winter"
+          ],
+          "description": "Season of the calendar; tilesets name seasonal sprites with a _season_<name> suffix."
         }
       },
       "required": [

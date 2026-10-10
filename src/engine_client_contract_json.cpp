@@ -38,8 +38,14 @@ auto to_json( const game_client::interaction_position &value, const bubble_frame
 }
 auto to_json( const look &value ) -> json
 {
-    return {{"kind", value.kind}, {"id", value.id ? json( *value.id ) : json( nullptr )},
+    auto result = json{{"kind", value.kind}, {"id", value.id ? json( *value.id ) : json( nullptr )},
         {"glyph", value.glyph}, {"color", value.color}};
+    if( value.tile ) { result["tile"] = *value.tile; }
+    if( !value.looks_like.empty() ) { result["looks_like"] = value.looks_like; }
+    if( value.subtile ) { result["subtile"] = *value.subtile; }
+    if( value.rotation ) { result["rotation"] = *value.rotation; }
+    if( value.facing ) { result["facing"] = *value.facing; }
+    return result;
 }
 template<typename Values>
 auto to_array( const Values &values ) -> json
@@ -85,6 +91,7 @@ auto to_json( const entity &value ) -> json
     auto result = json{{"id", value.id}, {"at", to_json( value.at )}, {"known", known_name( value.known )}};
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( value.name ) { result["name"] = *value.name; }
+    if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
     if( !value.statuses.empty() ) { result["statuses"] = value.statuses; }
     if( value.sense ) { result["sense"] = *value.sense; }
     return result;
@@ -136,12 +143,16 @@ auto to_json( const avatar_value &value ) -> json
 {
     auto result = json{{"id", value.id}, {"at", to_json( value.at )}, {"name", value.name},
         {"stats", to_array( value.stats )}, {"sidebar", to_json( value.sidebar )}};
+    if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
+    if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
     return result;
 }
 auto to_json( const environment_value &value ) -> json
 {
-    return {{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
+    auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
+    if( !value.season.empty() ) { result["season"] = value.season; }
+    return result;
 }
 auto to_json( const bounds &value ) -> json
 {

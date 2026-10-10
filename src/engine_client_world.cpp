@@ -1,6 +1,7 @@
 #include "engine_client_world.h"
 
 #include <algorithm>
+#include <cmath>
 #include <ranges>
 #include <set>
 
@@ -12,11 +13,14 @@
 #include "game.h"
 #include "game_session.h"
 #include "item.h"
+#include "tileray.h"
+#include "units_angle.h"
 #include "itype.h"
 #include "map/field.h"
 #include "map/field_type.h"
 #include "map/map.h"
 #include "map/mapdata.h"
+#include "map/submap.h"
 #include "map_memory.h"
 #include "map_perception.h"
 #include "memory_fast.h"
@@ -33,6 +37,8 @@
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "weather/weather.h"
+
+static const itype_id itype_corpse( "corpse" );
 
 namespace engine_client::world
 {
@@ -77,49 +83,116 @@ auto make_look( const char *kind, const std::string &id, const std::string &glyp
     return { .kind = kind, .id = id, .glyph = glyph, .color = color_of( color ) };
 }
 
-auto terrain_look( const ter_id &id, const int symbol ) -> look
+/// Same bound as the native `looks_like` lookup.
+constexpr auto looks_like_limit = std::size_t { 10 };
+
+/// The `looks_like` chain of a data object, nearest first, starting at `first` (the object's own value).
+template<typename Id>
+auto looks_like_chain( std::string first ) -> std::vector<std::string>
 {
-    return make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
+    auto chain = std::vector<std::string> {};
+    for( auto id = std::move( first ); !id.empty() && chain.size() < looks_like_limit; ) {
+        chain.push_back( id );
+        const auto next = Id( id );
+        id = next.is_valid() ? next->looks_like : std::string{};
+    }
+    return chain;
 }
 
-auto furniture_look( const furn_id &id ) -> look
+auto item_chain( const itype_id &first ) -> std::vector<std::string>
 {
-    return make_look( "furniture", id.id().str(), glyph_of( id->symbol() ), id->color() );
+    auto chain = std::vector<std::string> {};
+    for( auto id = first; id.is_valid() && !id.is_empty() && chain.size() < looks_like_limit;
+         id = id->looks_like ) {
+        chain.push_back( id.str() );
+    }
+    return chain;
 }
 
-auto trap_look( const trap &tr ) -> look
+auto with_shape( look value, const map_perception::orientation &shape ) -> look
 {
-    return make_look( "trap", tr.id.str(), glyph_of( tr.sym ), tr.color );
+    value.subtile = map_perception::multitile_key( shape.subtile );
+    value.rotation = shape.rotation;
+    return value;
 }
 
-auto vehicle_part_look( const vpart_info &info ) -> look
+/// Vehicle parts turn by the four directions of their facing, as the native tile selection does.
+auto vehicle_rotation( const int degrees ) -> int
 {
-    return make_look( "vehicle_part", info.id.str(), glyph_of( special_symbol( info.sym ) ),
-                      info.color );
+    return 3 - tileray( units::from_degrees( degrees ) ).dir4();
+}
+
+auto terrain_look( const ter_id &id, const int symbol,
+                   const map_perception::orientation &shape ) -> look
+{
+    auto result = make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
+    result.looks_like = looks_like_chain<ter_str_id>( id->looks_like );
+    return with_shape( std::move( result ), shape );
+}
+
+auto furniture_look( const furn_id &id, const map_perception::orientation &shape ) -> look
+{
+    auto result = make_look( "furniture", id.id().str(), glyph_of( id->symbol() ), id->color() );
+    result.looks_like = looks_like_chain<furn_str_id>( id->looks_like );
+    return with_shape( std::move( result ), shape );
+}
+
+auto trap_look( const trap &tr, const map_perception::orientation &shape ) -> look
+{
+    auto result = make_look( "trap", tr.id.str(), glyph_of( tr.sym ), tr.color );
+    result.looks_like = looks_like_chain<trap_str_id>( tr.looks_like );
+    return with_shape( std::move( result ), shape );
+}
+
+/// `modifier` and `degrees` are the native part modifier (1 open, 2 broken) and facing.
+auto vehicle_part_look( const vpart_info &info, const char modifier, const int degrees ) -> look
+{
+    auto result = make_look( "vehicle_part", info.id.str(), glyph_of( special_symbol( info.sym ) ),
+                             info.color );
+    result.tile = "vp_" + info.id.str();
+    for( const auto &id : looks_like_chain<vpart_id>( info.looks_like ) ) { result.looks_like.push_back( "vp_" + id ); }
+    result.subtile = map_perception::multitile_key( modifier == 1 ? open_ : modifier == 2 ? broken :
+                     0 );
+    result.rotation = vehicle_rotation( degrees );
+    return result;
 }
 
 auto item_look( const item &thing ) -> look
 {
-    return make_look( "item", thing.typeId().str(), thing.symbol(), thing.color() );
+    auto result = make_look( "item", thing.typeId().str(), thing.symbol(), thing.color() );
+    const auto *monster = thing.get_mtype();
+    if( thing.typeId() == itype_corpse && monster != nullptr ) {
+        result.tile = "corpse_" + monster->id.str();
+        result.looks_like = item_chain( itype_corpse );
+    } else {
+        result.looks_like = item_chain( thing.type->looks_like );
+    }
+    return result;
 }
 
 /// Stored memory names data ids only; an id the data no longer knows keeps its id with an empty appearance.
 auto remembered_look( const memorized_terrain_tile &stored, const bool overlay ) -> look
 {
     const auto &tile = stored.tile;
+    const auto shape = map_perception::orientation{ .subtile = stored.subtile, .rotation = stored.rotation };
     if( overlay && tile.starts_with( "vp_" ) ) {
         const auto part = vpart_id( tile.substr( 3 ) );
-        if( part.is_valid() ) { return vehicle_part_look( part.obj() ); }
+        if( part.is_valid() ) {
+            // Memory keeps the part modifier in the subtile and the facing in degrees.
+            return vehicle_part_look( part.obj(),
+                                      stored.subtile == open_ ? 1 : stored.subtile == broken ? 2 : 0,
+                                      stored.rotation );
+        }
     } else if( overlay ) {
         if( const auto furniture = furn_str_id( tile ); furniture.is_valid() ) {
-            return furniture_look( furniture.id() );
+            return furniture_look( furniture.id(), shape );
         }
-        if( const auto trap = trap_str_id( tile ); trap.is_valid() ) { return trap_look( trap.obj() ); }
+        if( const auto trap = trap_str_id( tile ); trap.is_valid() ) { return trap_look( trap.obj(), shape ); }
     } else if( const auto terrain = ter_str_id( tile ); terrain.is_valid() ) {
         const auto &id = terrain.id();
         // Walls draw by the lines they connected when last seen, as in the native text view.
         return terrain_look( id, id->has_flag( TFLAG_AUTO_WALL_SYMBOL ) ?
-                             map_perception::remembered_wall_symbol( stored, id->symbol() ) : id->symbol() );
+                             map_perception::remembered_wall_symbol( stored, id->symbol() ) : id->symbol(), shape );
     }
     return { .kind = overlay ? "furniture" : "terrain", .id = tile };
 }
@@ -146,9 +219,13 @@ auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &y
     const auto &veh = vp->vehicle();
     auto modifier = char{};
     const auto &part = veh.part_id_string( vp->part_index(), roof, modifier );
-    return make_look( "vehicle_part", part.str(),
-                      glyph_of( special_symbol( veh.part_sym( vp->part_index(), roof ) ) ),
-                      veh.part_color( vp->part_index(), roof ) );
+    const auto facing = veh.part_display_direction( vp->part_index(), roof );
+    auto result = part.is_valid() ?
+                  vehicle_part_look( part.obj(), modifier, static_cast<int>( std::round( to_degrees( facing ) ) ) ) :
+                  look{ .kind = "vehicle_part", .id = part.str() };
+    result.glyph = glyph_of( special_symbol( veh.part_sym( vp->part_index(), roof ) ) );
+    result.color = color_of( veh.part_color( vp->part_index(), roof ) );
+    return result;
 }
 
 auto position_of( const map &here, const tripoint_bub_ms &p,
@@ -159,32 +236,56 @@ auto position_of( const map &here, const tripoint_bub_ms &p,
 }
 
 /// Fill the facts of a currently visible cell. False when it is plain terrain the engine never memorizes.
-auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you, cell &out ) -> bool
+auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
+                   const map_perception::sight &view, cell &out ) -> bool
 {
-    if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ) ); }
+    const auto shapes = map_perception::visible_orientations( here, p, view );
+    if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture ); }
+    const auto &displayed = here.field_at( p ).displayed_field_type();
     for( const auto &[type, entry] : here.field_at( p ) ) {
         if( !entry.is_field_alive() ) { continue; }
-        out.fields.push_back( { .appearance = make_look( "field", type.id().str(), entry.symbol(),
-                                              entry.color() ),
-                                .intensity = entry.get_field_intensity() } );
+        auto appearance = make_look( "field", type.id().str(), entry.symbol(), entry.color() );
+        appearance.looks_like = looks_like_chain<field_type_str_id>( type->looks_like );
+        // Only the displayed field is drawn, joined to neighbours showing the same field.
+        if( type == displayed ) {
+            auto mask = uint8_t{ 0 };
+            for( const auto i : std::views::iota( 0, 4 ) ) {
+                const auto neighbour = p + std::array{ point_south, point_east, point_west, point_north } [i];
+                if( here.inbounds( neighbour ) && here.field_at( neighbour ).displayed_field_type() == displayed ) {
+                    mask |= 1 << i;
+                }
+            }
+            appearance = with_shape( std::move( appearance ), map_perception::orient( mask ) );
+        }
+        out.fields.push_back( { .appearance = std::move( appearance ), .intensity = entry.get_field_intensity() } );
     }
+    // Draw order: the displayed field is the one the native view draws, so it comes last.
+    std::ranges::stable_partition( out.fields, [&]( const field_entry & entry ) {
+        return entry.appearance.id != displayed.id().str();
+    } );
     if( const auto &tr = here.tr_at( p ); !tr.is_null() && tr.can_see( p, you ) ) {
-        out.traps.push_back( trap_look( tr ) );
+        out.traps.push_back( trap_look( tr, shapes.trap ) );
     }
     if( here.sees_some_items( p, you ) ) {
-        auto seen = std::set<std::string> {};
+        // The native view draws the uppermost item, so it comes last.
+        const auto &top = here.maptile_at( p ).get_uppermost_item();
+        auto seen = std::set<std::string> { top.typeId().str() };
         for( const auto *thing : here.i_at( p ) ) {
             if( thing != nullptr && seen.insert( thing->typeId().str() ).second ) {
                 out.items.push_back( item_look( *thing ) );
             }
         }
+        out.items.push_back( item_look( top ) );
     }
     out.vehicle = vehicle_part_at( here, p, you );
     if( here.ter( p )->has_flag( TFLAG_NO_MEMORY ) && !out.furniture && out.fields.empty() &&
         out.items.empty() && !out.vehicle ) {
         return false;
     }
-    out.terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ) );
+    out.terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ),
+                                shapes.terrain );
+    const auto &cache = here.access_cache( p.z() );
+    out.light = static_cast<int>( cache.visibility_cache[cache.idx( p.x(), p.y() )] );
     return true;
 }
 
@@ -192,9 +293,10 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you, cell 
 auto capture_known( map &here, const avatar &you, const std::string &dimension,
                     std::map<position, cell> &cells ) -> void
 {
+    const auto view = map_perception::current_sight();
     for( const auto &p : map_perception::visible_cells( here ) ) {
         auto out = cell{ .at = position_of( here, p, dimension ) };
-        if( fill_visible( here, p, you, out ) ) { cells.emplace( out.at, std::move( out ) ); }
+        if( fill_visible( here, p, you, view, out ) ) { cells.emplace( out.at, std::move( out ) ); }
     }
     const auto remember = [&]( const tripoint_bub_ms & p ) {
         if( !here.inbounds( p ) || map_perception::visible_at( here, p ) ) { return; }
@@ -240,6 +342,59 @@ class entity_ids
 
 auto ids = entity_ids {};
 
+/// Creatures face left or right; characters draw as their gender's sprite.
+auto creature_look( const Creature &critter, const char *kind, const std::string &id ) -> look
+{
+    auto result = make_look( kind, id, critter.symbol(), critter.basic_symbol_color() );
+    if( const auto *character = critter.as_character() ) {
+        result.tile = std::string( character->is_npc() ? "npc_" : "player_" ) +
+                      ( character->male ? "male" : "female" );
+    }
+    if( critter.facing == FD_LEFT ) { result.facing = "left"; }
+    if( critter.facing == FD_RIGHT ) { result.facing = "right"; }
+    return result;
+}
+
+/// The sprite ids a tileset may know an overlay by, in the order of the native overlay lookup: the
+/// gendered and the plain id of the overlay, then those of what its item or mutation looks like.
+auto overlay_look( const std::string &overlay, const bool male ) -> look
+{
+    auto looks_like = overlay;
+    auto type = std::string{};
+    for( const auto *prefix : { "worn_", "wielded_" } ) {
+        if( overlay.starts_with( prefix ) ) {
+            type = prefix;
+            looks_like = overlay.substr( type.size() );
+            break;
+        }
+    }
+    auto candidates = std::vector<std::string> {};
+    for( auto step = std::size_t{}; step < looks_like_limit && !looks_like.empty(); ++step ) {
+        candidates.push_back( std::string( male ? "overlay_male_" : "overlay_female_" ) + type +
+                              looks_like );
+        candidates.push_back( "overlay_" + type + looks_like );
+        if( looks_like.starts_with( "mutation_active_" ) ) {
+            looks_like = "mutation_" + looks_like.substr( std::string( "mutation_active_" ).size() );
+            continue;
+        }
+        const auto item = itype_id( looks_like );
+        if( !item.is_valid() ) { break; }
+        looks_like = item->looks_like.str();
+    }
+    auto result = look{ .kind = "overlay", .id = overlay, .tile = candidates.front() };
+    result.looks_like.assign( std::next( candidates.begin() ), candidates.end() );
+    return result;
+}
+
+auto overlays_of( const Creature &critter ) -> std::vector<look>
+{
+    const auto *character = critter.as_character();
+    if( character == nullptr ) { return {}; }
+    return character->get_overlay_ids() | std::views::transform( [&]( const auto & entry ) {
+        return overlay_look( entry.id, character->male );
+    } ) | std::ranges::to<std::vector>();
+}
+
 auto capture_entities( const map &here, const avatar &you, const std::string &dimension )
 -> std::map<std::string, entity>
 {
@@ -252,16 +407,34 @@ auto capture_entities( const map &here, const avatar &you, const std::string &di
         if( monster == nullptr && person == nullptr ) { continue; }
         const auto type = monster != nullptr ? monster->type->id.str() : person->myclass.str();
         auto id = ids.id_for( *critter );
+        auto appearance = creature_look( *critter, monster != nullptr ? "monster" : "npc", type );
+        if( monster != nullptr ) {
+            appearance.looks_like = looks_like_chain<mtype_id>( monster->type->looks_like );
+        }
         entities.emplace( id, entity{
             .id = id,
             .at = position_of( here, critter->bub_pos(), dimension ),
-            .appearance = look{
-                .kind = monster != nullptr ? "monster" : "npc", .id = type, .glyph = critter->symbol(),
-                .color = color_of( critter->basic_symbol_color() )
-            },
-            .name = critter->get_name() } );
+            .appearance = std::move( appearance ),
+            .name = critter->get_name(),
+            .overlays = overlays_of( *critter ) } );
     }
     return entities;
+}
+
+auto season_name() -> std::string
+{
+    switch( season_of_year( calendar::turn ) ) {
+        case SPRING:
+            return "spring";
+        case SUMMER:
+            return "summer";
+        case AUTUMN:
+            return "autumn";
+        case WINTER:
+            return "winter";
+        default:
+            return "";
+    }
 }
 
 auto capture_avatar( const map &here, const avatar &you,
@@ -269,6 +442,8 @@ auto capture_avatar( const map &here, const avatar &you,
 {
     auto result = avatar_value{
         .id = "e:avatar", .at = position_of( here, you.bub_pos(), dimension ), .name = you.name,
+        .appearance = creature_look( you, "avatar", "avatar" ),
+        .overlays = overlays_of( you ),
         .stats = {
             { "strength", _( "Strength" ), std::to_string( you.get_str() ), color_of( color_compare_base( you.get_str_base(), you.get_str() ) ) },
             { "dexterity", _( "Dexterity" ), std::to_string( you.get_dex() ), color_of( color_compare_base( you.get_dex_base(), you.get_dex() ) ) },
@@ -308,7 +483,7 @@ auto capture_world() -> world_state
         .avatar = capture_avatar( here, you, dimension ),
         .environment = environment_value{
             .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
-            .weather = get_weather().weather_id.str() } };
+            .weather = get_weather().weather_id.str(), .season = season_name() } };
     // The terrain window moves with the view, not the world: its squares are where a click lands.
     if( const auto window = g->click_window() ) {
         const auto z = g->get_levz();

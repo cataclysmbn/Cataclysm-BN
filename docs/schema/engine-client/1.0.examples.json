@@ -322,12 +322,33 @@
               "name": "rock",
               "count": 2
             }
+          ],
+          "look": {
+            "kind": "avatar",
+            "id": "avatar",
+            "glyph": "@",
+            "color": "white",
+            "tile": "player_female",
+            "facing": "left"
+          },
+          "overlays": [
+            {
+              "kind": "overlay",
+              "id": "worn_jacket_leather",
+              "glyph": "",
+              "color": "",
+              "tile": "overlay_female_worn_jacket_leather",
+              "looks_like": [
+                "overlay_worn_jacket_leather"
+              ]
+            }
           ]
         },
         "environment": {
           "turn": "5184000",
           "time": "2026-04-01T08:00:00Z",
-          "weather": "clear"
+          "weather": "clear",
+          "season": "spring"
         },
         "entities": [
           {
@@ -343,7 +364,11 @@
               "kind": "monster",
               "id": "mon_zombie",
               "glyph": "Z",
-              "color": "light_green"
+              "color": "light_green",
+              "looks_like": [
+                "mon_zombie_base"
+              ],
+              "facing": "right"
             }
           },
           {
@@ -386,7 +411,12 @@
               "kind": "terrain",
               "id": "t_dirt",
               "glyph": ".",
-              "color": "brown"
+              "color": "brown",
+              "looks_like": [
+                "t_grass"
+              ],
+              "subtile": "center",
+              "rotation": 0
             },
             "items": [
               {
@@ -394,16 +424,40 @@
                 "id": "rock",
                 "glyph": "*",
                 "color": "light_gray"
+              },
+              {
+                "kind": "item",
+                "id": "corpse",
+                "glyph": "%",
+                "color": "light_gray",
+                "tile": "corpse_mon_zombie",
+                "looks_like": [
+                  "corpse"
+                ]
               }
             ],
-            "light": 4,
+            "light": 1,
             "memory": {
               "terrain": {
                 "kind": "terrain",
                 "id": "t_dirt",
                 "glyph": ".",
-                "color": "brown"
+                "color": "brown",
+                "subtile": "center",
+                "rotation": 0
               }
+            },
+            "vehicle": {
+              "kind": "vehicle_part",
+              "id": "door",
+              "glyph": "+",
+              "color": "light_cyan",
+              "tile": "vp_door",
+              "looks_like": [
+                "vp_frame"
+              ],
+              "subtile": "open",
+              "rotation": 3
             }
           },
           {
@@ -419,7 +473,12 @@
                 "kind": "terrain",
                 "id": "t_grass",
                 "glyph": "\"",
-                "color": "green"
+                "color": "green",
+                "looks_like": [
+                  "t_dirt"
+                ],
+                "subtile": "edge",
+                "rotation": 1
               }
             }
           }
@@ -1645,6 +1704,53 @@
               "color": "c_white",
               "count": 0
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "rotation beyond the four turns",
+      "def": "look",
+      "value": {
+        "kind": "terrain",
+        "id": "t_wall",
+        "glyph": "#",
+        "color": "white",
+        "subtile": "edge",
+        "rotation": 4
+      }
+    },
+    {
+      "name": "subtile the tilesets do not name",
+      "def": "look",
+      "value": {
+        "kind": "terrain",
+        "id": "t_wall",
+        "glyph": "#",
+        "color": "white",
+        "subtile": "corner_inner",
+        "rotation": 0
+      }
+    },
+    {
+      "name": "sensed entity with overlays",
+      "def": "entity",
+      "value": {
+        "id": "e:13",
+        "at": {
+          "dim": "",
+          "x": 12,
+          "y": 9,
+          "z": 0
+        },
+        "known": "sensed",
+        "sense": "sound",
+        "overlays": [
+          {
+            "kind": "overlay",
+            "id": "worn_hat",
+            "glyph": "",
+            "color": ""
           }
         ]
       }

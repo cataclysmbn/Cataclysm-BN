@@ -425,6 +425,16 @@ Deno.test({
       assertEquals(typeof sidebar.hunger.text, "string")
       assert(["walk", "run", "crouch", "prone"].includes(sidebar.movement.mode))
       assert(sidebar.location.text.length > 0, "location name")
+      // A tiled client gets the engine's own tile selection for what it sees.
+      const visible = [...session.mirror.cells.values()].filter((entry) =>
+        entry.known === "visible"
+      )
+      assert(visible.length > 0 && visible.every((entry) => entry.terrain?.subtile !== undefined))
+      assert(visible.every((entry) => [0, 1, 2, 3].includes(entry.terrain.rotation)))
+      assert(visible.every((entry) => Number.isInteger(entry.light) && entry.light >= 0))
+      assert(visible.some((entry) => entry.terrain.subtile !== "unconnected"), "connected terrain")
+      assert(["player_male", "player_female"].includes(session.mirror.avatar.look?.tile))
+      assert(["spring", "summer", "autumn", "winter"].includes(session.mirror.environment?.season))
       const avatarBefore = session.mirror.avatar.at
       const typesBefore = session.eventTypes.length
       const before = BigInt(session.mirror.at.sequence)

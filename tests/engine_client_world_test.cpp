@@ -10,8 +10,10 @@
 #include "engine_client_world.h"
 #include "game.h"
 #include "game_session.h"
+#include "itype.h"
 #include "json.h"
 #include "map/map.h"
+#include "map/submap.h"
 #include "map_helpers.h"
 #include "map_memory.h"
 #include "map_perception.h"
@@ -24,6 +26,8 @@
 #include "player_helpers.h"
 #include "rng.h"
 #include "state_helpers.h"
+#include "vehicle/vehicle.h"
+#include "vehicle/vpart_position.h"
 #include "weather/weather.h"
 
 #include <algorithm>
@@ -101,6 +105,18 @@ auto oracle() -> std::map<ec::position, std::string> {
         }
     }
     return result;
+}
+
+/// A cell without the connection shape of its terrain, which also changes when a neighbour becomes
+/// known.
+auto without_shape(ec::cell value) -> ec::cell {
+    const auto strip = [](ec::look& look) {
+        look.subtile.reset();
+        look.rotation.reset();
+    };
+    if (value.terrain) { strip(*value.terrain); }
+    if (value.memory) { strip(value.memory->terrain); }
+    return value;
 }
 
 auto observed_state() -> std::string {
@@ -211,7 +227,9 @@ TEST_CASE(
     auto changed = std::set<ec::position>{};
     for (const auto& [p, cell] : after.cells) {
         const auto old = before.cells.find(p);
-        if (old == before.cells.end() || old->second != cell) { changed.insert(p); }
+        if (old == before.cells.end() || without_shape(old->second) != without_shape(cell)) {
+            changed.insert(p);
+        }
     }
     for (const auto& [p, cell] : before.cells) {
         if (!after.cells.contains(p)) { changed.insert(p); }
@@ -570,4 +588,184 @@ TEST_CASE("world capture carries the native sidebar values", "[engine_client_wor
     you.set_pain(0);
     const auto calm = ec::world::capture_world();
     CHECK(calm.avatar->sidebar.pain.text != sidebar.pain.text);
+}
+
+TEST_CASE(
+    "world capture publishes the native tile selection of terrain, seen or remembered",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    // A second layer of wall on the east side hides the partition from the doorway side.
+    for (const auto dy : std::views::iota(-6, 5)) {
+        get_map().ter_set(setup.start + tripoint(3, dy, 0), ter_id("t_wall"));
+    }
+    map_perception::acquire();
+    const auto wall = setup.start + tripoint(2, -2, 0);
+    const auto state = ec::world::capture_world();
+
+    // Native get_rotation_and_subtile: a wall with wall to its north and south is an edge,
+    // rotation 0.
+    const auto* seen = find_cell(state, at(wall));
+    REQUIRE(seen != nullptr);
+    REQUIRE(seen->terrain);
+    CHECK(seen->terrain->subtile == "edge");
+    CHECK(seen->terrain->rotation == 0);
+    // Floor surrounded by the same floor is the multitile center.
+    const auto* floor = find_cell(state, at(setup.start + tripoint_west));
+    REQUIRE(floor != nullptr);
+    CHECK(floor->terrain->subtile == "center");
+    CHECK(floor->terrain->rotation == 0);
+    // A lit midday room reports the native lit_level, lit or brighter.
+    REQUIRE(floor->light);
+    CHECK(*floor->light >= static_cast<int>(lit_level::LIT));
+    CHECK_FALSE(floor->terrain->facing);
+
+    // The memorized layer keeps the shape the avatar saw.
+    step_to(setup.start + tripoint(4, 5, 0));
+    REQUIRE_FALSE(get_avatar().sees(wall));
+    const auto remembered_state = ec::world::capture_world();
+    const auto* remembered = find_cell(remembered_state, at(wall));
+    REQUIRE(remembered != nullptr);
+    REQUIRE(remembered->known == ec::knowledge::remembered);
+    CHECK_FALSE(remembered->light);
+    CHECK(remembered->memory->terrain.subtile == "edge");
+    CHECK(remembered->memory->terrain.rotation == 0);
+}
+
+TEST_CASE(
+    "world capture names the looks_like chain of the game data nearest first",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto road = setup.start + tripoint_south;
+    get_map().ter_set(road, ter_id("t_pavement_hw_air"));
+    get_map().ter_set(setup.start + tripoint_north, ter_id("t_floor"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* cell = find_cell(state, at(road));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->terrain);
+    const auto& chain = cell->terrain->looks_like;
+    REQUIRE_FALSE(chain.empty());
+    CHECK(chain.front() == ter_id("t_pavement_hw_air")->looks_like);
+    CHECK(chain.size() <= 10);
+    for (const auto index : std::views::iota(std::size_t{1}, chain.size())) {
+        CHECK(chain[index] == ter_str_id(chain[index - 1])->looks_like);
+    }
+    // Floor has no fallback.
+    CHECK(find_cell(state, at(setup.start + tripoint_north))->terrain->looks_like.empty()
+          == ter_id("t_floor")->looks_like.empty());
+}
+
+TEST_CASE(
+    "world capture lists the uppermost item last and names a corpse by its monster",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto p = setup.start + tripoint_east;
+    auto& here = get_map();
+    here.add_item_or_charges(p, item::make_corpse(mtype_id("mon_zombie"), calendar::turn));
+    here.add_item_or_charges(p, item::spawn("rock"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* cell = find_cell(state, at(p));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->items.size() == 2);
+    CHECK(cell->items.back().id == here.maptile_at(p).get_uppermost_item().typeId().str());
+    const auto corpse = std::ranges::find(cell->items, "corpse", &ec::look::id);
+    REQUIRE(corpse != cell->items.end());
+    CHECK(corpse->tile == "corpse_mon_zombie");
+    REQUIRE_FALSE(corpse->looks_like.empty());
+    CHECK(corpse->looks_like.front() == "corpse");
+}
+
+TEST_CASE(
+    "world capture names the sprite of creatures, the avatar and the season",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& zombie = spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 1, 0));
+    zombie.facing = FD_LEFT;
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.entities.size() == 1);
+    const auto& monster = *state.entities.begin()->second.appearance;
+    CHECK(monster.facing == "left");
+    CHECK(monster.id == "mon_zombie");
+    CHECK(monster.looks_like.empty() == zombie.type->looks_like.empty());
+
+    REQUIRE(state.avatar);
+    REQUIRE(state.avatar->appearance);
+    CHECK(state.avatar->appearance->kind == "avatar");
+    CHECK(state.avatar->appearance->tile == (get_avatar().male ? "player_male" : "player_female"));
+    CHECK(state.avatar->appearance->facing == (get_avatar().facing == FD_LEFT ? "left" : "right"));
+
+    REQUIRE(state.environment);
+    auto seasons = std::set<std::string>{};
+    for (const auto quarter : std::views::iota(0, 4)) {
+        calendar::turn = calendar::turn_zero + calendar::season_length() * quarter;
+        seasons.insert(ec::world::capture_world().environment->season);
+    }
+    CHECK(seasons == std::set<std::string>{"spring", "summer", "autumn", "winter"});
+}
+
+TEST_CASE(
+    "world capture lists a character's overlays with the tileset ids to try in the native order",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& you = get_avatar();
+    you.wear_item(item::spawn("scarf_fur"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto overlay = std::ranges::find(state.avatar->overlays, "worn_scarf_fur", &ec::look::id);
+    REQUIRE(overlay != state.avatar->overlays.end());
+    CHECK(overlay->kind == "overlay");
+    const auto gender = you.male ? "overlay_male_" : "overlay_female_";
+    CHECK(overlay->tile == std::string(gender) + "worn_scarf_fur");
+    REQUIRE_FALSE(overlay->looks_like.empty());
+    CHECK(overlay->looks_like.front() == "overlay_worn_scarf_fur");
+    // Then the same pair for what the item looks like, until the chain ends.
+    const auto& parent = itype_id("scarf_fur")->looks_like;
+    if (parent.is_valid() && !parent.is_empty()) {
+        CHECK(overlay->looks_like.size() >= 3);
+        CHECK(overlay->looks_like[1] == std::string(gender) + "worn_" + parent.str());
+    }
+    CHECK(overlay->looks_like.size() <= 20);
+
+    // Monsters wear nothing.
+    spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 1, 0));
+    map_perception::acquire();
+    const auto with_zombie = ec::world::capture_world();
+    REQUIRE(with_zombie.entities.size() == 1);
+    CHECK(with_zombie.entities.begin()->second.overlays.empty());
+}
+
+TEST_CASE(
+    "world capture gives a vehicle part its sprite id, part state and four-way facing",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto place = [&](const units::angle facing) {
+        auto& here = get_map();
+        if (auto* old =
+                here.veh_at(setup.start + tripoint(-4, 3, 0))
+                    ? &here.veh_at(setup.start + tripoint(-4, 3, 0))->vehicle()
+                    : nullptr) {
+            here.destroy_vehicle(old);
+        }
+        here.add_vehicle(
+            vproto_id("bicycle"), setup.start + tripoint(-4, 3, 0), facing, 0, 0, false);
+        map_perception::acquire();
+        const auto state = ec::world::capture_world();
+        const auto vp = here.veh_at(setup.start + tripoint(-4, 3, 0));
+        REQUIRE(vp);
+        const auto* cell = find_cell(state, at(setup.start + tripoint(-4, 3, 0)));
+        REQUIRE(cell != nullptr);
+        REQUIRE(cell->vehicle);
+        return *cell->vehicle;
+    };
+    const auto east = place(0_degrees);
+    REQUIRE(east.id);
+    CHECK(east.tile == "vp_" + *east.id);
+    CHECK(east.rotation == 3);
+    CHECK(east.subtile == "center");
+    for (const auto& id : east.looks_like) { CHECK(id.starts_with("vp_")); }
+    // Facing south turns the part two quarter turns from east-facing 3: native 3 - dir4.
+    CHECK(place(90_degrees).rotation == 2);
 }
