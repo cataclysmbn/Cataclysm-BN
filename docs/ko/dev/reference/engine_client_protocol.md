@@ -46,7 +46,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 ## 명령
 
-`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) 또는 `action`(이동 키 같은 등록된 액션) 중 하나입니다.
+`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) 또는 `action`(이동 키 같은 등록된 행동) 중 하나입니다.
 
 ```json
 { "kind": "choose", "choice_id": "root:0" }
@@ -58,10 +58,10 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 ## 값
 
-- `pos = {dim, x, y, z}`는 절대 맵 칸이며, `dim`은 게임 차원이고 기본 차원은 `""`입니다. 리얼리티 버블 좌표는 전송 형식에 나타나지 않습니다.
+- `pos = {dim, x, y, z}`는 절대 맵 칸이며, `dim`은 게임 차원이고 기본 차원은 `""`입니다. 현실 거품 좌표는 전송 형식에 나타나지 않습니다.
 - `look = {kind, id, glyph, color}`는 게임 데이터의 외형을 담으므로 텍스트 클라이언트에는 타일셋이 필요 없습니다.
-- `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 `[0, min(choice_total, 200))` 행을 담고, 나머지는 `bn.interaction.choices`로 읽습니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다.
-- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar` (stats and `inventory`), `environment`, 로드된 `coverage`로 구성됩니다.
+- `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 처음 최대 200행을 담지만 크기 때문에 더 적을 수 있으므로, 나머지는 `bn.interaction.choices`를 `offset = choices.length`부터 읽습니다. 전체 행 수는 `choice_total`입니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다.
+- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`(능력치와 소지품 `inventory`), `environment`, 로드된 `coverage`로 구성됩니다.
 - 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `interaction`을 교체합니다.
 
 이벤트는 `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`이며, 이후 스키마에 나열된 연출 유형이 추가됩니다. 새 이벤트 유형에는 새로운 정확한 버전이 필요합니다.

@@ -812,7 +812,7 @@
         "compat"
       ],
       "additionalProperties": false,
-      "description": "choices holds rows [0, min(choice_total, 200)); read the rest with bn.interaction.choices."
+      "description": "choices holds at most the first 200 rows, fewer when they would be too large; read the rest with bn.interaction.choices from offset = choices.length. choice_total is the full count."
     },
     "interaction_boundary": {
       "type": "object",

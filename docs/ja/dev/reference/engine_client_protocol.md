@@ -46,7 +46,7 @@ title: エンジン/クライアントプロトコル 1.0
 
 ## コマンド
 
-`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、または `action`(移動キーなど登録済みアクション)のいずれかです。
+`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、または `action`(移動キーなど登録済みの行動)のいずれかです。
 
 ```json
 { "kind": "choose", "choice_id": "root:0" }
@@ -60,8 +60,8 @@ title: エンジン/クライアントプロトコル 1.0
 
 - `pos = {dim, x, y, z}` は絶対マップマスで、`dim` はゲームのディメンション、プライマリは `""` です。リアリティバブル座標はワイヤ上に現れません。
 - `look = {kind, id, glyph, color}` はゲームデータ由来の見た目を持つため、テキストクライアントにタイルセットは不要です。
-- `interaction` はネイティブのメニューやダイアログです。`choices` は `[0, min(choice_total, 200))` 行を持ち、残りは `bn.interaction.choices` で読みます。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。
-- ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(ステータスと `inventory`)、`environment`、読み込み済みの `coverage` で構成されます。
+- `interaction` はネイティブのメニューやダイアログです。`choices` は最大 200 行ですがサイズにより少なくなることがあるため、残りは `bn.interaction.choices` を `offset = choices.length` から読みます。全体の行数は `choice_total` です。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。
+- ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値と所持品 `inventory`)、`environment`、読み込み済みの `coverage` で構成されます。
 - すべてのイベントは汎用の `changes` ブロックを持ち、`coverage`、`cells`、`forgotten`、`entities`、`gone` の順に適用した後、`avatar`、`environment`、`interaction` を置き換えます。
 
 イベントは `interaction.changed`、`coverage.moved`、`turn.passed`、`cells.seen` で、今後スキーマに挙げた演出タイプが加わります。新しいイベントタイプには新しい正確なバージョンが必要です。

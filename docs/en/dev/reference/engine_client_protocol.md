@@ -60,7 +60,7 @@ Stages: `received`, `validated`, `executing`, `completed`; or `rejected`; or `in
 
 - `pos = {dim, x, y, z}` is an absolute map square; `dim` is the game dimension, `""` for the primary one. Reality-bubble coordinates never appear on the wire.
 - `look = {kind, id, glyph, color}` carries appearance from game data, so text clients need no tileset.
-- `interaction` is the native menu or dialog: `choices` holds rows `[0, min(choice_total, 200))`, the rest come from `bn.interaction.choices`. `compat.focus` and `compat.panes` keep native list state for 1:1 ports; clients may ignore them.
+- `interaction` is the native menu or dialog: `choices` holds up to the first 200 rows, fewer when they would be too large; read the rest with `bn.interaction.choices` starting at `offset = choices.length`. `choice_total` is the full count. `compat.focus` and `compat.panes` keep native list state for 1:1 ports; clients may ignore them.
 - The world is what the avatar knows: `cells` (`remembered`, `visible` or `sensed`), `entities`, `avatar` (stats and `inventory`), `environment` and the loaded `coverage`.
 - Every event carries a generic `changes` block, applied in this order: `coverage`, `cells`, `forgotten`, `entities`, `gone`, then `avatar`, `environment` and `interaction` replace.
 
