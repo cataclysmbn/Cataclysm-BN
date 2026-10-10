@@ -769,6 +769,8 @@ bool main_menu::opening_screen()
                 auto snapshot = game_client::interaction_snapshot{
                     .kind = game_client::interaction_kind::choices,
                     .title = "Cataclysm: Bright Nights",
+                    .message = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
+                    sel1 == getopt( main_menu_opts::CREDITS ) ? mmenu_credits : std::string{} ),
                     .allow_cancel = true,
                 };
                 for( auto index = std::size_t{ 0 }; index < vMenuItems.size(); ++index ) {

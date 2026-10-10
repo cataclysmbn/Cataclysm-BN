@@ -351,6 +351,13 @@ Deno.test({
         "tab:quit",
       ]
       assertEquals(menu().tabs, allTabs)
+      // The text tabs publish their text as the interaction message.
+      for (const [label, tab] of [["MOTD", "tab:motd"], ["Credits", "tab:credits"]]) {
+        assertEquals((await session.choose(label)).stages.at(-1), "completed")
+        assertEquals(menu().selected, [tab])
+        assert(session.mirror.interaction.interaction.message.length > 20, label)
+        assert(!session.mirror.interaction.interaction.message.includes("<color"), label)
+      }
       const settings = await session.choose("Settings")
       assertEquals(settings.stages, ["received", "validated", "executing", "completed"])
       assertEquals(menu().tabs, allTabs)
