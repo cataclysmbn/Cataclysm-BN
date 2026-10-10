@@ -176,6 +176,7 @@
     "type": "ARMOR",
     "name": { "str": "bra" },
     "description": "A simple bra.  For protecting those bits you don't want zombies to look at.",
+    "storage": "150 ml",
     "weight": "32 g",
     "volume": "250 ml",
     "price": "10 USD",
@@ -186,6 +187,8 @@
     "color": "white",
     "covers": [ "torso" ],
     "coverage": 15,
+    "encumbrance": 0,
+    "max_encumbrance": 1,
     "warmth": 5,
     "material_thickness": 1,
     "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "ALLOWS_WINGS" ]
