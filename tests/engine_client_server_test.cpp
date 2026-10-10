@@ -336,4 +336,24 @@ TEST_CASE("a capture that drops the avatar resynchronizes subscribers", "[engine
     CHECK(test.authority.current()->value.world.avatar == std::nullopt);
 }
 
+TEST_CASE("shutdown flushes the stage changes it caused", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    const auto native = game_client::resolve_input_command(test.queued.front(), point{80, 24});
+    REQUIRE(native);
+    test.authority.delivered(*native); // executing; the game now quits without another boundary
+    test.output.str("");
+    REQUIRE(test.server.finish(test.output));
+    const auto out = test.output.str();
+    const auto executing = index_of(out, R"("stage":"executing")");
+    const auto interrupted = index_of(out, R"("stage":"interrupted")");
+    REQUIRE(executing != std::string::npos);
+    REQUIRE(interrupted != std::string::npos);
+    CHECK(executing < interrupted);
+}
+
 #endif

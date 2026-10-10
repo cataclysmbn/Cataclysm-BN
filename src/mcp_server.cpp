@@ -486,8 +486,14 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
     }
     pump_mode_ = false;
     eof_ = true;
-    session_.interrupt();
+    static_cast<void>( finish( out ) );
     return false;
+}
+
+auto server::finish( std::ostream &out ) -> bool
+{
+    session_.interrupt();
+    return flush_push( out );
 }
 
 auto server::failed() const -> bool

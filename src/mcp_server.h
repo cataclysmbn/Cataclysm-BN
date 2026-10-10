@@ -75,6 +75,9 @@ class server
         /// Reject the remainder of a batch whose next input is invalid in the current context.
         auto reject_pending( std::string error = {} ) -> void;
 
+        /// Interrupt what is outstanding and write the notifications that caused. For shutdown.
+        auto finish( std::ostream &out ) -> bool;
+
         /// True when input ended because of an invalid or unreadable stdio frame.
         auto failed() const -> bool;
 

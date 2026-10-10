@@ -328,6 +328,7 @@ auto finish_session() -> void
     }
     if( session.transport && session.output ) {
         session.transport->finish_pending( *session.output, std::cerr );
+        static_cast<void>( session.transport->finish( *session.output ) );
         session.output->flush();
     }
     request_stop();
