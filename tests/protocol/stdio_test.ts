@@ -608,10 +608,12 @@ Deno.test({
       await run({ kind: "action", action_id: "LEVEL_UP" })
       assertEquals(session.mirror.avatar.at.z, 0)
 
-      // Look mode has no structured interaction but publishes its own actions; it can be left.
+      // Look mode publishes its cursor as a target interaction and its own actions; it can be left.
       await run({ kind: "action", action_id: "look" })
       const ids = session.mirror.interaction.actions.map((a: Value) => a.id)
-      assertEquals(session.mirror.interaction.interaction, null)
+      const look = session.mirror.interaction.interaction
+      assertEquals([look.kind, look.context], ["target", "LOOK"])
+      assertEquals(look.target.current, session.mirror.avatar.at)
       assert(ids.includes("QUIT") && !ids.includes("look"), ids.join())
       await run({ kind: "action", action_id: "QUIT" })
       assert(session.mirror.interaction.actions.some((a: Value) => a.id === "look"))
