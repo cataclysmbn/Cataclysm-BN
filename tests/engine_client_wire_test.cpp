@@ -136,3 +136,27 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     REQUIRE(bare);
     CHECK(*bare == R"({"kind":"command_busy"})");
 }
+
+TEST_CASE("wire decoding rejects a raw NUL that would hide a suffix", "[engine_client_wire]") {
+    CHECK_FALSE(decode_empty_request(std::string{"{}\0{\"x\":1}", 10}));
+    CHECK_FALSE(decode_result_request(std::string{"{\"epoch\":\"e\",\"command_id\":\"c\"}\0", 32}));
+}
+
+TEST_CASE("wire accepts what the schema accepts", "[engine_client_wire]") {
+    // Integral floats are JSON Schema integers; ids count characters, not bytes; the client
+    // name and version have no length bound beyond the frame.
+    CHECK(decode_choices_request(R"({"epoch":"e","boundary_id":"b","offset":1.0,"limit":2e0})"));
+    std::string id;
+    for (auto i = 0; i < 256; ++i) { id += "한"; }
+    CHECK(decode_result_request(R"({"epoch":")" + id + R"(","command_id":"c"})"));
+    CHECK_FALSE(decode_result_request(R"({"epoch":")" + id + "한" + R"(","command_id":"c"})"));
+    CHECK(decode_hello_request(
+        R"({"versions":["1.0"],"client":{"name":")" + std::string(1000, 'n')
+        + R"(","version":"1"}})"));
+    const auto with_revision = [](const std::string& revision) {
+        return R"({"epoch":"e","expect":{"revision":")" + revision
+             + R"(","boundary_id":"b","schema_id":null},"operation":{"kind":"cancel"}})";
+    };
+    CHECK(decode_command_request(with_revision("18446744073709551615")));
+    CHECK_FALSE(decode_command_request(with_revision("18446744073709551616")));
+}

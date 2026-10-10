@@ -714,7 +714,7 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     };
     if( !pending_requests_ || !deferred_frame_ ) { return terminal(); }
     while( const auto envelope = pending_requests_->next() ) {
-        const auto &method = envelope->method.decoded;
+        const auto method = rpc::method_of( *envelope );
         const auto is_direct = method == "bn.hello" || method == "bn.subscribe" ||
                                method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
                                method == "bn.command.submit" || method == "bn.command.result";

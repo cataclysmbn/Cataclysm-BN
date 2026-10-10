@@ -48,8 +48,6 @@ struct application_error {
     required_action action = required_action::none;
     std::optional<clock_point> at = std::nullopt;
 };
-/// JSON-RPC application failure mapping; the envelope is adapter-owned.
-inline constexpr auto application_error_code = 1000;
 
 struct engine_info {
     std::string build = {};

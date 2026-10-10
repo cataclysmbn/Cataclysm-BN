@@ -46,6 +46,7 @@ add_subdirectory(sol)
 if (MCP)
     add_library(cataclysm-bn-mcp-protocol STATIC ${MCP_SERVER_CPP})
     target_include_directories(cataclysm-bn-mcp-protocol PUBLIC ${CMAKE_SOURCE_DIR}/src)
+    target_link_libraries(cataclysm-bn-mcp-protocol PUBLIC nlohmann_json::nlohmann_json)
     target_compile_definitions(cataclysm-bn-mcp-protocol PRIVATE CATA_MCP)
 endif ()
 
@@ -148,6 +149,7 @@ add_library(cataclysm-bn-engine STATIC
     ${CATACLYSM_BN_SOURCES}
     ${CATACLYSM_BN_HEADERS})
 target_include_directories(cataclysm-bn-engine PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(cataclysm-bn-engine PUBLIC nlohmann_json::nlohmann_json)
 setup_common_target_properties(cataclysm-bn-engine)
 if (CATA_SDL)
     link_sdl_core(cataclysm-bn-engine)

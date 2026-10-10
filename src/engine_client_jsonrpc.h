@@ -4,6 +4,8 @@
 #include <expected>
 #include <iosfwd>
 #include <memory>
+#include <nlohmann/json.hpp>
+#include <vector>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -38,60 +40,38 @@ enum class error_code : int {
 using request_entry = std::variant<request, error_code>;
 enum class parse_error { invalid_json, resource_limit };
 
-/// Inspection is syntax-only: even invalid envelopes retain their complete member identity.
-/// Every key/string is strict Unicode; keys_unique compares decoded envelope keys.
-/// Missing, null and wrong-type values stay distinct. Extras never become params.
-enum class value_kind { missing, null_value, boolean, number, string, array, object };
-struct inspected_value {
-    value_kind type = value_kind::missing;
-    std::optional<std::string> json = std::nullopt;
-    std::optional<std::string> decoded = std::nullopt;
-};
-struct inspected_envelope {
-    value_kind type = value_kind::missing;
-    bool keys_unique = true;
-    inspected_value version = {};
-    inspected_value method = {};
-    inspected_value id = {};
-    inspected_value params = {};
-};
-class inspected_frame;
-/// Copyable position over immutable OWNED validated input; no per-member vector/index.
-/// A cursor pins input independently of its frame, other cursors, and the caller's string.
+/// A frame is one line holding a request or a batch. nlohmann/json parses it; entries keep
+/// their JSON value so policies can classify each envelope independently.
+using envelope = nlohmann::json;
+/// Position over the immutable parsed entries; copies share them, so a cursor survives
+/// across native widget calls.
 class envelope_cursor
 {
     public:
         envelope_cursor() = default;
-        /// Returns one OWNED envelope, which may itself outlive this cursor/frame.
-        auto next() -> std::optional<inspected_envelope>;
+        explicit envelope_cursor( std::shared_ptr<const std::vector<envelope>> entries ) :
+            entries_( std::move( entries ) ) {}
+        auto next() -> std::optional<envelope>;
         auto remaining() const -> std::size_t;
     private:
-        struct position {
-            std::size_t offset = 0;
-            std::size_t count = 0;
-            bool batch = false;
-        };
-        envelope_cursor( std::shared_ptr<const std::string> bytes, position pos );
-        std::shared_ptr<const std::string> bytes_;
-        position pos_;
-        friend auto inspect_frame( std::string_view ) -> std::expected<inspected_frame, parse_error>;
+        std::shared_ptr<const std::vector<envelope>> entries_;
+        std::size_t next_ = 0;
 };
 class inspected_frame
 {
     public:
         bool batch = false;
-        /// Empty batch remains batch=true with size zero for policy to reject explicitly.
+        /// Empty batch remains batch=true with size zero for the caller to reject explicitly.
         auto size() const -> std::size_t;
         auto cursor() const -> envelope_cursor;
     private:
-        inspected_frame( envelope_cursor origin, bool batch );
         envelope_cursor origin_;
         friend auto inspect_frame( std::string_view ) -> std::expected<inspected_frame, parse_error>;
 };
-/// Validate the WHOLE immutable owned frame before exposing any cursor. Policies are
-/// applied one envelope at a time; there is never a second complete representation.
+/// Parse and bound the WHOLE frame (size and nesting) before any entry is exposed.
 auto inspect_frame( std::string_view input ) -> std::expected<inspected_frame, parse_error>;
-auto apply_strict_policy( const inspected_envelope &input ) -> request_entry;
+auto method_of( const envelope &input ) -> std::string;
+auto apply_strict_policy( const envelope &input ) -> request_entry;
 
 /// Established legacy protocol messages ONLY, never native/host/rejection diagnostics.
 enum class legacy_reason {
@@ -109,7 +89,7 @@ using legacy_request_entry = std::variant<request, legacy_error>;
 /// int64 numeric IDs without decimal/exponent spelling, null error ID on invalid IDs,
 /// and no params-type restriction (valid legacy notifications remain silent).
 /// Never use this policy for direct bn methods; selection belongs to the server.
-auto apply_legacy_policy( const inspected_envelope &input ) -> legacy_request_entry;
+auto apply_legacy_policy( const envelope &input ) -> legacy_request_entry;
 
 enum class read_status { complete, eof, partial_eof, too_large, io_error };
 struct read_result {

@@ -1,453 +1,198 @@
 #include "engine_client_wire.h"
-#include "engine_client_utf8.h"
-#include "json.h"
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
+#include <nlohmann/json.hpp>
 #include <set>
-#include <sstream>
-#include <utility>
 
 namespace engine_client
 {
 namespace
 {
-auto valid_id( std::string_view value ) -> bool
-{
-    if( value.empty() || value.size() > maximum_id_bytes ) { return false; }
-    auto offset = std::size_t{0};
-    while( offset < value.size() ) {
-        if( !utf8_scalar( value, offset ) ) { return false; }
-    }
-    return true;
-}
-auto require( bool condition ) -> void
+using json = nlohmann::json;
+
+auto require( const bool condition ) -> void
 {
     if( !condition ) { throw decode_error::invalid_params; }
 }
-auto digit( char value ) -> bool { return value >= '0' && value <= '9'; }
-
-/// Only the closed request grammar below is readable: no DOM, skip-value recursion, user
-/// callbacks or arbitrary nested containers. Maximum nesting is three objects (target command).
-/// Work/storage are bounded by maximum_inline_bytes; array uniqueness is O(n log n).
-class request_reader
+/// Length in Unicode scalar values, which is what the schema's maxLength counts.
+auto scalar_count( const std::string &text ) -> std::size_t
 {
-    public:
-        explicit request_reader( std::string_view input ) : input_( input ) {
-            if( input.size() > maximum_inline_bytes ) { throw decode_error::resource_limit; }
-        }
-        auto finish() -> void {
-            whitespace();
-            if( offset_ != input_.size() ) { throw decode_error::invalid_json; }
-        }
-        auto string( std::size_t maximum = maximum_inline_bytes ) -> std::string {
-            whitespace();
-            require( peek() == '"' );
-            ++offset_;
-            auto value = std::string{};
-            while( true ) {
-                const auto byte = take();
-                if( byte == '"' ) { return value; }
-                if( static_cast<unsigned char>( byte ) < 0x20 ) { throw decode_error::invalid_json; }
-                if( byte == '\\' ) {
-                    switch( take() ) {
-                        case '"':
-                            value.push_back( '"' );
-                            break;
-                        case '\\':
-                            value.push_back( '\\' );
-                            break;
-                        case '/':
-                            value.push_back( '/' );
-                            break;
-                        case 'b':
-                            value.push_back( '\b' );
-                            break;
-                        case 'f':
-                            value.push_back( '\f' );
-                            break;
-                        case 'n':
-                            value.push_back( '\n' );
-                            break;
-                        case 'r':
-                            value.push_back( '\r' );
-                            break;
-                        case 't':
-                            value.push_back( '\t' );
-                            break;
-                        case 'u': {
-                            auto scalar = hex_unit();
-                            if( scalar >= 0xd800 && scalar <= 0xdbff ) {
-                                expect( '\\' );
-                                expect( 'u' );
-                                const auto low = hex_unit();
-                                if( low < 0xdc00 || low > 0xdfff ) { throw decode_error::invalid_json; }
-                                scalar = 0x10000 + ( ( scalar - 0xd800 ) << 10 ) + low - 0xdc00;
-                            } else if( scalar >= 0xdc00 && scalar <= 0xdfff ) { throw decode_error::invalid_json; }
-                            append_scalar( value, scalar );
-                            break;
-                        }
-                        default:
-                            throw decode_error::invalid_json;
-                    }
-                } else {
-                    const auto start = offset_ - 1;
-                    offset_ = start;
-                    if( !utf8_scalar( input_, offset_ ) ) { throw decode_error::invalid_json; }
-                    value.append( input_.substr( start, offset_ - start ) );
-                }
-                require( value.size() <= maximum );
-            }
-        }
-        auto id() -> std::string {
-            auto value = string( maximum_id_bytes );
-            require( !value.empty() );
-            return value;
-        }
-        auto optional_id() -> std::optional<std::string> {
-            whitespace();
-            if( consume( "null" ) ) { return std::nullopt; }
-            return id();
-        }
-        auto boolean() -> bool {
-            whitespace();
-            if( consume( "true" ) ) { return true; }
-            if( consume( "false" ) ) { return false; }
-            throw decode_error::invalid_params;
-        }
-        auto counter_value() -> counter {
-            const auto value = string( 20 );
-            require( !value.empty() && ( value.size() == 1 || value.front() != '0' ) );
-            require( std::ranges::all_of( value, digit ) );
-            auto result = counter{0};
-            const auto parsed = std::from_chars( value.data(), value.data() + value.size(), result );
-            require( parsed.ec == std::errc{} && parsed.ptr == value.data() + value.size() );
-            return result;
-        }
-        /// Exact decimal arithmetic, not strtod/f64. Saturate exponents before arithmetic;
-        /// a nonzero bounded result needs at most 19 significant integral digits. Zero with
-        /// any exponent is still zero. Fractional tails must be literally all zero.
-        auto integer( std::int64_t minimum, std::int64_t maximum ) -> std::int64_t {
-            whitespace();
-            const auto negative = accept( '-' );
-            require( digit( peek() ) );
-            const auto start = offset_;
-            if( accept( '0' ) ) {
-                if( digit( peek() ) ) { throw decode_error::invalid_json; }
-            } else { while( digit( peek() ) ) { ++offset_; } }
-            auto fractional_digits = std::int64_t{0};
-            if( accept( '.' ) ) {
-                if( !digit( peek() ) ) { throw decode_error::invalid_json; }
-                while( digit( peek() ) ) { ++fractional_digits; ++offset_; }
-            }
-            const auto coefficient = input_.substr( start, offset_ - start );
-            auto exponent = std::int64_t{0};
-            if( accept( 'e' ) || accept( 'E' ) ) {
-                const auto exponent_negative = accept( '-' );
-                if( !exponent_negative ) { accept( '+' ); }
-                if( !digit( peek() ) ) { throw decode_error::invalid_json; }
-                const auto saturation = static_cast<std::int64_t>( maximum_inline_bytes ) + 32;
-                while( digit( peek() ) ) {
-                    exponent = std::min( saturation, exponent * 10 + take() - '0' );
-                }
-                if( exponent_negative ) { exponent = -exponent; }
-            }
-            auto significant = std::int64_t{0};
-            auto trailing_zeroes = std::int64_t{0};
-            for( const auto byte : coefficient ) {
-                if( byte == '.' ) { continue; }
-                if( significant == 0 && byte == '0' ) { continue; }
-                ++significant;
-                trailing_zeroes = byte == '0' ? trailing_zeroes + 1 : 0;
-            }
-            if( significant == 0 ) { require( minimum <= 0 && maximum >= 0 ); return 0; }
-            const auto scale = exponent - fractional_digits;
-            require( scale >= -trailing_zeroes );
-            const auto integral_digits = significant + scale;
-            require( integral_digits > 0 && integral_digits <= 19 );
-            auto magnitude = std::uint64_t{0};
-            auto kept = std::int64_t{0};
-            for( const auto byte : coefficient ) {
-                if( byte == '.' || ( kept == 0 && byte == '0' ) ) { continue; }
-                if( kept == integral_digits ) { break; }
-                magnitude = magnitude * 10 + byte - '0';
-                ++kept;
-            }
-            while( kept++ < integral_digits ) { magnitude *= 10; }
-            if( negative ) {
-                const auto bound = minimum < 0 ? static_cast<std::uint64_t>( -( minimum + 1 ) ) + 1 : 0;
-                require( magnitude <= bound );
-                // Supported request fields never use INT64_MIN.
-                require( magnitude <= static_cast<std::uint64_t>( std::numeric_limits<std::int64_t>::max() ) );
-                const auto result = -static_cast<std::int64_t>( magnitude );
-                require( result <= maximum );
-                return result;
-            }
-            require( maximum >= 0 && magnitude <= static_cast<std::uint64_t>( maximum ) );
-            const auto result = static_cast<std::int64_t>( magnitude );
-            require( result >= minimum );
-            return result;
-        }
-        auto strings() -> std::vector<std::string> {
-            whitespace();
-            require( peek() == '[' );
-            ++offset_;
-            auto values = std::vector<std::string> {};
-            auto seen = std::set<std::string> {};
-            whitespace();
-            if( accept( ']' ) ) { return values; }
-            while( true ) {
-                auto value = string();
-                require( seen.insert( value ).second );
-                values.push_back( std::move( value ) );
-                whitespace();
-                if( accept( ']' ) ) { return values; }
-                expect( ',' );
-            }
-        }
-        /// Bit positions correspond to the fixed names supplied by the typed grammar.
-        template<typename ReadMember>
-        auto object( std::initializer_list<std::string_view> names, ReadMember read_member ) -> unsigned {
-            whitespace();
-            require( peek() == '{' );
-            ++offset_;
-            auto seen = 0u;
-            whitespace();
-            if( accept( '}' ) ) { return seen; }
-            while( true ) {
-                const auto key = string( 32 );
-                const auto found = std::ranges::find( names, key );
-                require( found != names.end() );
-                const auto index = static_cast<unsigned>( found - names.begin() );
-                const auto bit = 1u << index;
-                require( ( seen & bit ) == 0 );
-                seen |= bit;
-                whitespace();
-                expect( ':' );
-                read_member( index );
-                whitespace();
-                if( accept( '}' ) ) { return seen; }
-                expect( ',' );
-            }
-        }
-    private:
-        std::string_view input_;
-        std::size_t offset_ = 0;
-        auto peek() const -> char { return offset_ == input_.size() ? '\0' : input_[offset_]; }
-        auto take() -> char {
-            if( offset_ == input_.size() ) { throw decode_error::invalid_json; }
-            return input_[offset_++];
-        }
-        auto accept( char byte ) -> bool {
-            if( offset_ < input_.size() && input_[offset_] == byte ) { ++offset_; return true; }
-            return false;
-        }
-        auto expect( char byte ) -> void { if( !accept( byte ) ) { throw decode_error::invalid_json; } }
-        auto consume( std::string_view token ) -> bool {
-            if( input_.substr( offset_, token.size() ) != token ) { return false; }
-            offset_ += token.size();
-            return true;
-        }
-        auto whitespace() -> void {
-            while( peek() == ' ' || peek() == '\t' || peek() == '\r' || peek() == '\n' ) { ++offset_; }
-        }
-        auto hex_unit() -> std::uint32_t {
-            auto value = std::uint32_t{0};
-            for( auto count = 0; count < 4; ++count ) {
-                const auto byte = take();
-                auto hex = 0;
-                if( digit( byte ) ) { hex = byte - '0'; }
-                else if( byte >= 'a' && byte <= 'f' ) { hex = byte - 'a' + 10; }
-                else if( byte >= 'A' && byte <= 'F' ) { hex = byte - 'A' + 10; }
-                else { throw decode_error::invalid_json; }
-                value = ( value << 4 ) | hex;
-            }
-            return value;
-        }
-};
-
-auto read_position( request_reader &reader ) -> position
+    return static_cast<std::size_t>( std::ranges::count_if( text, []( const char byte ) {
+        return ( static_cast<unsigned char>( byte ) & 0xC0 ) != 0x80;
+    } ) );
+}
+/// The value must be an object whose members are all listed; `required` ones must be present.
+auto members( const json &value, const std::initializer_list<const char *> required,
+const std::initializer_list<const char *> optional = {} ) -> void {
+    require( value.is_object() );
+    for( const auto &entry : value.items() )
+    {
+        require( std::ranges::find( required, entry.key() ) != required.end() ||
+                 std::ranges::find( optional, entry.key() ) != optional.end() );
+    }
+    for( const auto *name : required ) { require( value.contains( name ) ); }
+}
+auto text( const json &object, const char *name ) -> std::string
 {
-    auto value = position{};
-    const auto fields = reader.object( {"dim", "x", "y", "z"}, [&]( auto index ) {
-        switch( index ) {
-            case 0:
-                value.dim = reader.string( maximum_id_bytes );
-                break;
-            case 1:
-                value.x = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
-                break;
-            case 2:
-                value.y = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
-                break;
-            case 3:
-                value.z = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
-                break;
-        }
-    } );
-    require( fields == 15 );
+    const auto &value = object.at( name );
+    require( value.is_string() );
+    return value.get<std::string>();
+}
+auto id( const json &object, const char *name ) -> std::string
+{
+    auto value = text( object, name );
+    require( !value.empty() && scalar_count( value ) <= maximum_id_bytes );
     return value;
 }
-auto read_operation( request_reader &reader ) -> std::variant<semantic_operation, registered_action>
+/// An integer, or an integral float such as 1.0 (JSON Schema `integer`), within [low, high].
+auto integer( const json &object, const char *name, const std::int64_t low,
+              const std::int64_t high )
+-> std::int64_t
 {
-    auto kind = std::string{};
-    auto semantic = semantic_operation{};
-    auto action_id = std::string{};
-    const auto fields = reader.object( {"kind", "choice_id", "field_id", "value", "submit",
-                                        "count", "candidate_id", "pos", "action_id"},
-    [&]( auto index ) {
-        switch( index ) {
-            case 0:
-                kind = reader.string();
-                break;
-            case 1:
-            case 2:
-            case 6:
-                semantic.command.target_id = reader.id();
-                break;
-            case 3:
-                semantic.command.value = reader.string();
-                break;
-            case 4:
-                semantic.command.submit = reader.boolean();
-                break;
-            case 5:
-                semantic.command.count = reader.integer( 0, maximum_safe_integer );
-                break;
-            case 7:
-                semantic.target = read_position( reader );
-                break;
-            case 8:
-                action_id = reader.id();
-                break;
-        }
-    } );
-    // Exact presence masks in the member order above, not truthiness of native defaults.
-    // This rejects fields from other alternatives even when empty, false or zero.
+    const auto &value = object.at( name );
+    require( value.is_number() );
+    if( value.is_number_unsigned() ) {
+        require( value.get<std::uint64_t>() <= static_cast<std::uint64_t>( high ) &&
+                 low <= static_cast<std::int64_t>( value.get<std::uint64_t>() ) );
+        return static_cast<std::int64_t>( value.get<std::uint64_t>() );
+    }
+    if( value.is_number_integer() ) {
+        const auto result = value.get<std::int64_t>();
+        require( result >= low && result <= high );
+        return result;
+    }
+    const auto real = value.get<double>();
+    require( std::isfinite( real ) && std::floor( real ) == real &&
+             std::fabs( real ) <= 9007199254740991.0 );
+    require( real >= static_cast<double>( low ) && real <= static_cast<double>( high ) );
+    return static_cast<std::int64_t>( real );
+}
+auto counter_of( const json &object, const char *name ) -> counter
+{
+    const auto value = text( object, name );
+    require( !value.empty() && value.size() <= 20 && ( value.size() == 1 || value.front() != '0' ) &&
+    std::ranges::all_of( value, []( const char byte ) { return byte >= '0' && byte <= '9'; } ) );
+    auto result = counter{0};
+    const auto parsed = std::from_chars( value.data(), value.data() + value.size(), result );
+    require( parsed.ec == std::errc{} && parsed.ptr == value.data() + value.size() );
+    return result;
+}
+auto read_position( const json &value ) -> position
+{
+    members( value, {"dim", "x", "y", "z"} );
+    return {
+        .dim = text( value, "dim" ),
+        .x = static_cast<int>( integer( value, "x", INT32_MIN, INT32_MAX ) ),
+        .y = static_cast<int>( integer( value, "y", INT32_MIN, INT32_MAX ) ),
+        .z = static_cast<int>( integer( value, "z", INT32_MIN, INT32_MAX ) ),
+    };
+}
+auto read_operation( const json &value ) -> std::variant<semantic_operation, registered_action>
+{
+    require( value.is_object() && value.contains( "kind" ) );
+    const auto kind = text( value, "kind" );
     if( kind == "action" ) {
-        require( fields == ( 1u | 256u ) );
-        return registered_action{ .id = std::move( action_id ) };
+        members( value, {"kind", "action_id"} );
+        return registered_action{ .id = id( value, "action_id" ) };
     }
     const auto parsed = game_client::parse_interaction_operation( kind );
     require( parsed.has_value() );
+    auto semantic = semantic_operation{};
     semantic.command.operation = *parsed;
     switch( *parsed ) {
         case game_client::interaction_operation::choose:
-            require( fields == ( 1u | 2u ) );
+            members( value, {"kind", "choice_id"} );
+            semantic.command.target_id = id( value, "choice_id" );
             break;
         case game_client::interaction_operation::fill:
-            require( fields == ( 1u | 4u | 8u | 16u ) );
+            members( value, {"kind", "field_id", "value", "submit"} );
+            semantic.command.target_id = id( value, "field_id" );
+            semantic.command.value = text( value, "value" );
+            require( value.at( "submit" ).is_boolean() );
+            semantic.command.submit = value.at( "submit" ).get<bool>();
             break;
         case game_client::interaction_operation::set_count:
-            require( fields == ( 1u | 2u | 32u ) );
+            members( value, {"kind", "choice_id", "count"} );
+            semantic.command.target_id = id( value, "choice_id" );
+            semantic.command.count = static_cast<std::uint64_t>(
+                                         integer( value, "count", 0, static_cast<std::int64_t>( maximum_safe_integer ) ) );
             break;
         case game_client::interaction_operation::set_target:
-            require( fields == ( 1u | 128u ) || fields == ( 1u | 64u | 128u ) );
+            members( value, {"kind", "pos"}, {"candidate_id"} );
+            if( value.contains( "candidate_id" ) ) { semantic.command.target_id = id( value, "candidate_id" ); }
+            semantic.target = read_position( value.at( "pos" ) );
             break;
         case game_client::interaction_operation::cancel:
-            require( fields == 1u );
+            members( value, {"kind"} );
             break;
     }
     return semantic;
 }
-auto read_request( request_reader &reader, hello_request &value ) -> void
-{
-    const auto fields = reader.object( {"versions", "client"}, [&]( auto index ) {
-        if( index == 0 ) {
-            value.versions = reader.strings();
-        } else {
-            const auto client = reader.object( {"name", "version"}, [&]( auto client_index ) {
-                ( client_index == 0 ? value.client_name : value.client_version ) = reader.string(
-                            maximum_id_bytes );
-            } );
-            require( client == 3 );
-        }
-    } );
-    require( fields == 3 && !value.versions.empty() );
-}
-auto read_request( request_reader &reader, choices_request &value ) -> void
-{
-    const auto fields = reader.object( {"epoch", "boundary_id", "offset", "limit"}, [&]( auto index ) {
-        switch( index ) {
-            case 0:
-                value.epoch = reader.id();
-                break;
-            case 1:
-                value.boundary_id = reader.id();
-                break;
-            case 2: {
-                const auto offset = reader.integer( 0, maximum_safe_integer );
-                require( static_cast<std::uint64_t>( offset ) <= std::numeric_limits<std::size_t>::max() );
-                value.offset = static_cast<std::size_t>( offset );
-                break;
-            }
-            case 3:
-                value.limit = static_cast<std::size_t>( reader.integer( 1, maximum_rows ) );
-                break;
-        }
-    } );
-    require( fields == 15 );
-}
-auto read_request( request_reader &reader, command_request &value ) -> void
-{
-    const auto fields = reader.object( {"epoch", "expect", "operation"}, [&]( auto index ) {
-        switch( index ) {
-            case 0:
-                value.epoch = reader.id();
-                break;
-            case 1: {
-                const auto expect = reader.object( {"revision", "boundary_id", "schema_id"},
-                [&]( auto expect_index ) {
-                    switch( expect_index ) {
-                        case 0:
-                            value.expect.revision = reader.counter_value();
-                            break;
-                        case 1:
-                            value.expect.boundary_id = reader.id();
-                            break;
-                        case 2:
-                            value.expect.schema_id = reader.optional_id();
-                            break;
-                    }
-                } );
-                require( expect == 7 );
-                break;
-            }
-            case 2:
-                value.operation = read_operation( reader );
-                break;
-        }
-    } );
-    require( fields == 7 );
-}
-auto read_request( request_reader &reader, result_request &value ) -> void
-{
-    const auto fields = reader.object( {"epoch", "command_id"}, [&]( auto index ) {
-        if( index == 0 ) { value.epoch = reader.id(); }
-        else { value.command_id = reader.id(); }
-    } );
-    require( fields == 3 );
-}
+
 struct empty_request {};
-auto read_request( request_reader &reader, empty_request & /*value*/ ) -> void
+auto read_request( const json &value, hello_request &result ) -> void
 {
-    require( reader.object( {}, []( auto /*index*/ ) {} ) == 0 );
+    members( value, {"versions", "client"} );
+    const auto &versions = value.at( "versions" );
+    require( versions.is_array() && !versions.empty() );
+    auto seen = std::set<std::string> {};
+    for( const auto &entry : versions ) {
+        require( entry.is_string() && seen.insert( entry.get<std::string>() ).second );
+        result.versions.push_back( entry.get<std::string>() );
+    }
+    const auto &client = value.at( "client" );
+    members( client, {"name", "version"} );
+    result.client_name = text( client, "name" );
+    result.client_version = text( client, "version" );
+}
+auto read_request( const json &value, empty_request & /*result*/ ) -> void { members( value, {} ); }
+auto read_request( const json &value, choices_request &result ) -> void
+{
+    members( value, {"epoch", "boundary_id", "offset", "limit"} );
+    result.epoch = id( value, "epoch" );
+    result.boundary_id = id( value, "boundary_id" );
+    result.offset = static_cast<std::size_t>( integer( value, "offset", 0,
+                    static_cast<std::int64_t>( maximum_safe_integer ) ) );
+    result.limit = static_cast<std::size_t>( integer( value, "limit", 1,
+                   static_cast<std::int64_t>( maximum_rows ) ) );
+}
+auto read_request( const json &value, command_request &result ) -> void
+{
+    members( value, {"epoch", "expect", "operation"} );
+    result.epoch = id( value, "epoch" );
+    const auto &expect = value.at( "expect" );
+    members( expect, {"revision", "boundary_id", "schema_id"} );
+    result.expect.revision = counter_of( expect, "revision" );
+    result.expect.boundary_id = id( expect, "boundary_id" );
+    if( !expect.at( "schema_id" ).is_null() ) { result.expect.schema_id = id( expect, "schema_id" ); }
+    result.operation = read_operation( value.at( "operation" ) );
+}
+auto read_request( const json &value, result_request &result ) -> void
+{
+    members( value, {"epoch", "command_id"} );
+    result.epoch = id( value, "epoch" );
+    result.command_id = id( value, "command_id" );
 }
 template<typename Request>
-auto decode( std::string_view input ) -> std::expected<Request, decode_error>
+auto decode( const std::string_view input ) -> std::expected<Request, decode_error>
 {
+    if( input.size() > maximum_inline_bytes ) { return std::unexpected( decode_error::resource_limit ); }
+    // A raw NUL ends the parser's input and would hide a suffix.
+    auto value = json( json::value_t::discarded );
+    if( input.find( '\0' ) == std::string_view::npos ) { value = json::parse( input, nullptr, false ); }
+    if( value.is_discarded() ) { return std::unexpected( decode_error::invalid_json ); }
     try {
-        auto reader = request_reader{input};
         auto result = Request{};
-        read_request( reader, result );
-        reader.finish();
+        read_request( value, result );
         return result;
     } catch( const decode_error failure ) { return std::unexpected( failure ); }
 }
-auto action_name( required_action value ) -> std::optional<std::string_view>
+auto action_name( const required_action value ) -> std::optional<std::string_view>
 {
     switch( value ) {
         case required_action::none:
@@ -461,11 +206,9 @@ auto action_name( required_action value ) -> std::optional<std::string_view>
     }
     return std::nullopt;
 }
-auto bounded_output( std::ostringstream &output ) -> std::expected<std::string, error>
+auto valid_id( const std::string &value ) -> bool
 {
-    auto result = output.str();
-    if( result.size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
-    return result;
+    return !value.empty() && scalar_count( value ) <= maximum_id_bytes;
 }
 } // namespace
 
@@ -488,38 +231,22 @@ auto decode_result_request( std::string_view input ) -> std::expected<result_req
 
 auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> std::string
 {
-    auto output = std::ostringstream{};
-    auto out = JsonOut{output};
-    out.start_object();
-    out.member( "version", contract_version );
-    out.member( "epoch", epoch );
-    out.member( "engine" );
-    out.start_object();
-    out.member( "build", engine.build );
-    out.member( "mods", engine.mods );
-    out.end_object();
-    out.member( "limits" );
-    out.start_object();
-    out.member( "frame_bytes", maximum_frame_bytes );
-    out.member( "cells_per_part", cells_per_part );
-    out.member( "cells_per_query", cells_per_query );
-    out.end_object();
-    out.end_object();
-    return output.str();
+    using ordered = nlohmann::ordered_json;
+    return ordered{{"version", contract_version}, {"epoch", epoch},
+        {"engine", {{"build", engine.build}, {"mods", engine.mods}}},
+        {
+            "limits", {{"frame_bytes", maximum_frame_bytes}, {"cells_per_part", cells_per_part},
+                {"cells_per_query", cells_per_query}
+            }
+        }}.dump();
 }
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>
 {
     if( !valid_id( value.epoch ) || !valid_id( value.command_id ) ) {
         return std::unexpected( error::validation_failed );
     }
-    auto output = std::ostringstream{};
-    auto out = JsonOut{output};
-    out.start_object();
-    out.member( "epoch", value.epoch );
-    out.member( "command_id", value.command_id );
-    out.member( "stage", "received" );
-    out.end_object();
-    return bounded_output( output );
+    return nlohmann::ordered_json{{"epoch", value.epoch}, {"command_id", value.command_id},
+        {"stage", "received"}}.dump();
 }
 auto serialize_application_error( const application_error &value ) ->
 std::expected<std::string, error>
@@ -530,17 +257,9 @@ std::expected<std::string, error>
         ( value.at && !valid_id( value.at->epoch ) ) ) {
         return std::unexpected( error::validation_failed );
     }
-    auto output = std::ostringstream{};
-    auto out = JsonOut{output};
-    out.start_object();
-    out.member( "kind", error_name( value.kind ) );
-    if( !action->empty() ) { out.member( "action", std::string( *action ) ); }
-    if( value.at ) {
-        out.member( "at" );
-        *out.get_stream() << serialize_clock( *value.at );
-        out.set_need_separator();
-    }
-    out.end_object();
-    return bounded_output( output );
+    auto result = nlohmann::ordered_json{{"kind", error_name( value.kind )}};
+    if( !action->empty() ) { result["action"] = std::string( *action ); }
+    if( value.at ) { result["at"] = nlohmann::ordered_json::parse( serialize_clock( *value.at ) ); }
+    return result.dump();
 }
 } // namespace engine_client
