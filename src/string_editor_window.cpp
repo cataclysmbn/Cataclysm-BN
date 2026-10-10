@@ -1,4 +1,6 @@
 #include "string_editor_window.h"
+#include "client_interaction.h"
+#include "translations.h"
 #include "client_presentation.h"
 #include "cata_utility.h"
 
@@ -603,10 +605,40 @@ std::pair<bool, std::string> string_editor_window::query_string()
     do {
         ui_manager::redraw();
 
-        const std::string action = ctxt->handle_input();
-
-        const input_event ev = ctxt->get_raw_input();
+        auto action = std::string{};
+        auto ev = input_event{};
+        {
+            const auto interaction = game_client::interaction_scope( *ctxt, [this]() {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::field,
+                    .title = _( "Text" ),
+                    .allow_cancel = true,
+                    .field = game_client::interaction_field{
+                        .id = "field:value", .label = _( "Text" ), .value = _utext.str(), .type = "text",
+                        .printable = true,
+                    },
+                };
+            } );
+            action = ctxt->handle_input();
+            ev = ctxt->get_raw_input();
+        }
         ch = ev.type == input_event_t::keyboard ? ev.get_first_input() : 0;
+
+        if( ev.interaction ) {
+            if( ev.interaction->operation == game_client::interaction_operation::cancel ) {
+                return { false, _utext.str() };
+            }
+            if( ev.interaction->operation == game_client::interaction_operation::fill ) {
+                _utext = utf8_wrapper( ev.interaction->value );
+                _position = _utext.length();
+                _cursor_desired_x = -1;
+                edit = utf8_wrapper();
+                ctxt->set_edittext( {} );
+                refold = true;
+                if( *ev.interaction->submit ) { return { true, _utext.str() }; }
+                continue;
+            }
+        }
 
         if( action == "TEXT.QUIT" ) {
             return { false, _utext.str() };

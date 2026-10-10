@@ -47,6 +47,7 @@
 #    include "replay/replay.h"
 #    include "rng.h"
 #    include "state_helpers.h"
+#    include "string_editor_window.h"
 #    include "string_input_popup.h"
 #    include "trade_win.h"
 #    include "ui.h"
@@ -1800,6 +1801,54 @@ TEST_CASE(
     auto canceled = string_input_popup{};
     CHECK(canceled.text("unchanged").query_string().empty());
     CHECK(canceled.canceled());
+}
+
+TEST_CASE(
+    "the multi-line text editor exposes its text as a field and takes fill and cancel",
+    "[client][interaction][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.kind == game_client::interaction_kind::field);
+        REQUIRE(snapshot.field);
+        const auto fill = [&](const std::string& value, const bool submit) {
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::fill,
+                .target_id = snapshot.field->id,
+                .value = value,
+                .submit = submit,
+            });
+        };
+        if (reads++ == 0) {
+            CHECK(snapshot.field->value == "seed");
+            return fill("print(1); print(2)", false);
+        }
+        CHECK(snapshot.field->value == "print(1); print(2)");
+        return fill("print(3)", true);
+    });
+    auto editor =
+        string_editor_window{[] { return catacurses::newwin(10, 40, point_zero); }, "seed"};
+    const auto [confirmed, text] = editor.query_string();
+    CHECK(confirmed);
+    CHECK(text == "print(3)");
+    CHECK(reads == 2);
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    auto canceled =
+        string_editor_window{[] { return catacurses::newwin(10, 40, point_zero); }, "kept"};
+    const auto [ok, kept] = canceled.query_string();
+    CHECK_FALSE(ok);
+    CHECK(kept == "kept");
 }
 
 TEST_CASE(
