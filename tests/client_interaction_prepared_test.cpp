@@ -545,70 +545,32 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "prepared pages preserve same-clock event projection and owned lifetimes",
-    "[client_interaction_prepared][engine_client_event]") {
+    "prepared pages are read passively through the engine client choices window",
+    "[client_interaction_prepared][engine_client_contract]") {
     auto context = input_context{"PREPARED_EVENTS"};
     const auto input = client::input_context_scope{context, "PREPARED_EVENTS"};
     client::begin_input_boundary();
-    auto observed = engine_client::snapshot{};
-    auto sink = engine_client::recording_event_sink{};
-    auto owned_projection = std::optional<engine_client::public_event>{};
     const auto rng = rng_get_engine();
     const auto before = actor_state();
-    {
-        const auto scope = client::
-            prepared_interaction_scope{context, client::prepare_interaction(context, model())};
-        const auto capture = [](const std::size_t offset) {
-            return engine_client::capture_state(
-                {.session_epoch = "epoch:prepared", .page = {.offset = offset, .limit = 1}});
-        };
-        const auto first = capture(0);
-        REQUIRE(first);
-        observed = {.session_epoch = "epoch:prepared", .state = *first};
-        auto created = engine_client::event_stream::create(observed);
-        REQUIRE(created);
-        auto stream = std::move(*created);
-        const auto later = capture(512);
-        REQUIRE(later);
-        const auto projection = stream.project_snapshot(*later);
-        REQUIRE(projection);
-        CHECK(projection->state_revision == 0);
-        CHECK(projection->through_public_sequence == 0);
-        CHECK(projection->state.interaction->choices.front().id == "choice:512");
-        const auto back = capture(0);
-        REQUIRE(back);
-        REQUIRE(stream.project_snapshot(*back));
-        CHECK(stream.current_snapshot().state_revision == 0);
-        CHECK(sink.events().empty());
-        client::begin_input_boundary();
-        const auto next = capture(0);
-        REQUIRE(next);
-        const auto delta =
-            stream.replace(engine_client::disclosure::publish, {.state = *next}, sink);
-        REQUIRE(delta);
-        REQUIRE(*delta);
-        const auto next_page = capture(512);
-        REQUIRE(next_page);
-        const auto projected_event = engine_client::project_event(**delta, *next_page);
-        REQUIRE(projected_event);
-        owned_projection = *projected_event;
-        CHECK(projected_event->value().public_sequence == (**delta).value().public_sequence);
-        CHECK(projected_event->value().state_revision == (**delta).value().state_revision);
-        CHECK(
-            projected_event->value().payload.state.interaction->choices.front().id == "choice:512");
-        CHECK_FALSE(stream.project_snapshot(*first));
-        CHECK_FALSE(engine_client::project_event(**delta, *first));
-        CHECK(actor_state() == before);
-        CHECK(rng_get_engine() == rng);
-    }
-    REQUIRE(owned_projection);
-    CHECK(owned_projection->value().payload.state.interaction->choices.front().id == "choice:512");
-    CHECK_FALSE(engine_client::serialize_event(*owned_projection).empty());
-    const auto batch = sink.drain();
-    REQUIRE(engine_client::apply_batch(observed, batch));
-    CHECK(observed.state_revision == 1);
-    CHECK(observed.state.interaction->choices.front().id == "choice:0");
-    CHECK_FALSE(engine_client::serialize_batch(batch).empty());
+    const auto scope =
+        client::prepared_interaction_scope{context, client::prepare_interaction(context, model())};
+    const auto boundary = engine_client::capture_boundary({.epoch = "epoch:prepared"});
+    REQUIRE(boundary);
+    REQUIRE(boundary->interaction);
+    CHECK(boundary->interaction->choices.front().id == "choice:0");
+    CHECK(boundary->interaction->choice_total == 513);
+    const auto later = engine_client::read_choices(
+        {.epoch = "epoch:prepared", .boundary_id = boundary->id, .offset = 512, .limit = 1},
+        "epoch:prepared");
+    REQUIRE(later);
+    CHECK(later->choices.front().id == "choice:512");
+    CHECK(later->total == 513);
+    client::begin_input_boundary();
+    CHECK_FALSE(engine_client::read_choices(
+        {.epoch = "epoch:prepared", .boundary_id = boundary->id, .offset = 0, .limit = 1},
+        "epoch:prepared"));
+    CHECK(actor_state() == before);
+    CHECK(rng_get_engine() == rng);
 }
 
 TEST_CASE(
@@ -690,8 +652,12 @@ TEST_CASE(
     const auto check_invalid = [&]() {
         for (const auto limit : {std::size_t{0}, std::size_t{201}}) {
             client::reset_interaction_work();
-            CHECK_FALSE(engine_client::capture_state(
-                {.session_epoch = "epoch:limits", .page = {.limit = limit}}));
+            CHECK_FALSE(engine_client::read_choices(
+                {.epoch = "epoch:limits",
+                 .boundary_id = client::opaque_interaction_id(
+                     "boundary", {"epoch:limits", std::to_string(client::current_input_id())}),
+                 .limit = limit},
+                "epoch:limits"));
             CHECK(client::interaction_work().schema_hashes == 0);
             CHECK(client::interaction_work().materialized_choices == 0);
         }

@@ -94,14 +94,17 @@ class server
         bool failed_ = false;
         std::optional<deferred_response> pending_response_;
         engine_client::session &session_;
-        std::optional<engine_client::negotiated_contract> negotiated_;
-        engine_client::projection projection_;
-        engine_client::event_batch completion_events_;
-        std::optional<std::string> completion_command_;
+        bool hello_ = false;
+        bool subscribed_ = false;
+        /// Complete notification frames waiting to be written after the current response.
+        std::vector<std::string> notifications_;
         std::optional<engine_client::jsonrpc::response_frame> deferred_frame_;
         std::optional<engine_client::jsonrpc::envelope_cursor> pending_requests_;
 
-        auto publish_boundary() -> bool;
+        auto publish_boundary( std::ostream &out ) -> bool;
+        /// Turn what the session published into notifications and write them, in order.
+        auto flush_push( std::ostream &out ) -> bool;
+        auto write_notifications( std::ostream &out ) -> bool;
         auto deliver_input() -> bool;
         auto direct( const engine_client::jsonrpc::request &request ) ->
         std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;

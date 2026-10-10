@@ -106,6 +106,9 @@ struct interaction_snapshot {
     bool allow_set_count = false;
     std::size_t choice_offset = 0;
     std::size_t choice_total = 0;
+    /// The native list cursor, reported before paging so it survives an off-page row.
+    std::string focus_choice_id;
+    std::optional<std::string> focus_pane_id;
 };
 
 struct interaction_page {

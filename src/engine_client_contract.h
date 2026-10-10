@@ -2,6 +2,7 @@
 
 #include "client_command.h"
 #include "client_interaction.h"
+#include "engine_client_state.h"
 
 #include <cstdint>
 #include <expected>
@@ -15,33 +16,33 @@ namespace engine_client
 
 inline constexpr auto contract_version = "1.0";
 inline constexpr auto maximum_rows = std::size_t {200};
-inline constexpr auto maximum_inline_events = std::size_t {8};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
+inline constexpr auto maximum_frame_bytes = std::size_t {1048576};
+inline constexpr auto cells_per_part = std::size_t {512};
+inline constexpr auto cells_per_query = std::size_t {4096};
 inline constexpr auto maximum_safe_integer = std::uint64_t {9007199254740991};
 inline constexpr auto maximum_id_bytes = std::size_t {256};
 using counter = std::uint64_t;
 
 /// Stable machine-readable errors. Details from native resolvers are intentionally not exported.
 enum class error {
-    negotiation_failed, unsupported_capability, not_ready, stale_epoch, stale_revision,
-    stale_boundary, stale_interaction_schema, validation_failed, command_busy,
-    unknown_command, invalid_lifecycle, resync_required, resource_limit,
+    negotiation_failed, not_ready, stale_epoch, stale_revision, stale_boundary,
+    stale_interaction_schema, validation_failed, command_busy, unknown_command,
+    invalid_lifecycle, resync_required, resource_limit,
 };
 auto error_name( error value ) -> std::string;
 
-struct negotiation_request {
-    std::vector<std::string> supported_versions = {};
-    std::vector<std::string> required_capabilities = {};
-    std::vector<std::string> optional_capabilities = {};
-};
-struct negotiated_contract {
-    std::vector<std::string> capabilities = {};
-};
-auto negotiate( const negotiation_request &request ) -> std::expected<negotiated_contract, error>;
 /// Invoke once for each new authoritative session/world/process, never on a read.
 auto new_session_epoch() -> std::expected<std::string, error>;
 
-/// Published information only; validation reads the bound live engine authority instead.
+/// `(epoch, sequence, revision)`: the state includes every event up to `sequence`.
+struct clock_point {
+    std::string epoch = {};
+    counter sequence = 0;
+    counter revision = 0;
+    auto operator<=>( const clock_point & ) const = default; // *NOPAD*
+};
+
 struct readiness {
     std::string phase = "starting";
     bool game_ready = false;
@@ -52,76 +53,78 @@ struct action {
     std::string id = {};
     std::string name = {};
 };
-/// Structural identity of a requested bounded view, independent of authority clocks/epochs.
-struct projection {
-    std::size_t offset = 0;
-    std::size_t limit = 100;
-    auto operator<=>( const projection & ) const = default; // *NOPAD*
+/// Where the reality bubble sits in absolute coordinates. Native interaction positions are
+/// bubble-relative; they become absolute only on the wire.
+struct bubble_frame {
+    std::string dim = {};
+    int x = 0;
+    int y = 0;
 };
-/// Reuses the owned native interaction model. Its numeric input_id is internal, not a wire ID.
-struct state_value {
+auto current_bubble_frame() -> bubble_frame;
+
+/// What the player may do at one native input boundary. The numeric native input_id stays internal.
+struct boundary_state {
+    std::string id = {};
     readiness ready = {};
-    std::string input_boundary_id = {};
     std::vector<action> actions = {};
     std::optional<game_client::interaction_snapshot> interaction = std::nullopt;
-    projection view = {};
-};
-struct snapshot {
-    std::string session_epoch = {};
-    counter state_revision = 0;
-    counter through_public_sequence = 0;
-    state_value state;
+    bubble_frame frame = {};
 };
 struct capture_options {
-    std::string session_epoch = {};
+    std::string epoch = {};
     readiness ready = {};
-    game_client::interaction_page page = {};
 };
-/// Only call at a stable native input boundary, with a P1-approved pure provider.
-/// This does not commit a revision or perform visibility acquisition.
-auto capture_state( const capture_options &options ) -> std::expected<state_value, error>;
-auto validate_state( const state_value &state ) -> std::expected<void, error>;
-auto same_state( const state_value &left, const state_value &right ) -> bool;
-/// Compare boundary-wide metadata, excluding the requested page and its choice rows.
-/// Engine captures at one stable boundary supply the rows; this is not an untrusted parser.
-auto same_boundary_state( const state_value &left, const state_value &right ) -> bool;
+/// Only call at a stable native input boundary. Reads choices `[0, 200)`, fewer when the
+/// value would exceed maximum_inline_bytes; `choice_total` always states the full count.
+/// This does not publish anything.
+auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>;
+auto validate_boundary( const boundary_state &state ) -> std::expected<void, error>;
+auto same_boundary( const boundary_state &left, const boundary_state &right ) -> bool;
 
-/// A coordinate cannot be interpreted without its explicit space/frame/dimension.
-struct coordinate {
-    std::string space = {};
-    std::string frame_id = {};
-    std::string dimension_id = {};
-    game_client::interaction_position position;
+struct choices_request {
+    std::string epoch = {};
+    std::string boundary_id = {};
+    std::size_t offset = 0;
+    std::size_t limit = 100;
 };
+struct choices_page {
+    std::string boundary_id = {};
+    std::size_t total = 0;
+    std::vector<game_client::interaction_choice> choices = {};
+};
+/// Passive page read of the live interaction at `epoch`'s current boundary.
+auto read_choices( const choices_request &request, const std::string &epoch )
+-> std::expected<choices_page, error>;
+
 struct registered_action {
     std::string id = {};
 };
-/// Native semantic fields retain their exact semantics. input_id is overwritten at live validation.
+/// Native semantic fields retain their exact semantics. `target` is absolute; the native
+/// bounds and range checks apply after it is mapped into the bubble.
 struct semantic_operation {
     game_client::interaction_command command;
-    std::optional<coordinate> target = std::nullopt;
+    std::optional<position> target = std::nullopt;
+};
+struct expectation {
+    counter revision = 0;
+    std::string boundary_id = {};
+    /// Null exactly when the boundary has no interaction.
+    std::optional<std::string> schema_id = std::nullopt;
 };
 struct command_request {
-    std::string session_epoch = {};
-    counter state_revision = 0;
-    std::string input_boundary_id = {};
-    std::string interaction_schema_id = {};
+    std::string epoch = {};
+    expectation expect = {};
     std::variant<semantic_operation, registered_action> operation;
 };
 enum class command_stage { received, validated, executing, rejected, completed, interrupted };
-struct completion {
-    counter state_revision = 0;
-    counter through_public_sequence = 0;
-    bool resync_required = false;
-};
+auto stage_name( command_stage stage ) -> std::string;
 struct command_result {
-    std::string session_epoch = {};
+    std::string epoch = {};
     std::string command_id = {};
     command_stage stage = command_stage::received;
-    bool validation_succeeded = false;
-    bool execution_started = false;
     std::optional<error> failure = std::nullopt;
-    std::optional<completion> completed = std::nullopt;
+    /// Endpoint of the boundary that completed the command.
+    std::optional<clock_point> at = std::nullopt;
 };
 
 struct command_permissions {
@@ -129,8 +132,6 @@ struct command_permissions {
     bool accepts_registered_actions = false;
 };
 /// Engine-session-owned policy, read on the game thread at validation time.
-/// Must outlive the lifecycle. Implementations read current policy, never cached wire DTOs,
-/// never execute gameplay callbacks, and are not supplied by I/O or individual requests.
 class command_authority
 {
     public:
@@ -139,18 +140,18 @@ class command_authority
 };
 
 /// One outstanding command and one replaceable terminal result, not a history map.
-/// The adapter must gate negotiated capabilities before submit and never deliver twice.
 class command_lifecycle
 {
     public:
-        command_lifecycle( std::string session_epoch, const command_authority &authority );
+        command_lifecycle( std::string epoch, const command_authority &authority );
         auto submit( command_request request ) -> std::expected<command_result, error>;
         /// Pure native resolution, not callback invocation or execution.
-        auto validate( const snapshot &current, point screen_size ) -> std::expected<input_event, error>;
+        auto validate( const clock_point &at, const boundary_state &current, point screen_size )
+        -> std::expected<input_event, error>;
         /// Call only when delivering the resolved input to the native widget.
         auto execution_started() -> std::expected<void, error>;
         /// Next *distinct* native input boundary; this is not long-activity completion.
-        auto complete_at_boundary( const snapshot &current, bool resync_required = false )
+        auto complete_at_boundary( const clock_point &at, const boundary_state &current )
         -> std::expected<void, error>;
         auto interrupt() -> std::expected<void, error>;
         auto result( const std::string &command_id ) const -> std::expected<command_result, error>;
@@ -162,9 +163,10 @@ class command_lifecycle
         std::optional<command_result> result_ = std::nullopt;
 };
 
-auto serialize_state( const state_value &state ) -> std::string;
-auto serialize_snapshot( const snapshot &value ) -> std::string;
-auto serialize_negotiation( const negotiated_contract &value,
-                            const std::string &epoch ) -> std::string;
+auto serialize_clock( const clock_point &at ) -> std::string;
+auto serialize_boundary( const boundary_state &state ) -> std::string;
+auto serialize_choices( const choices_page &page ) -> std::string;
+/// Params of `bn.command` and result of `bn.command.result`.
+auto serialize_command_result( const command_result &value ) -> std::string;
 
 } // namespace engine_client

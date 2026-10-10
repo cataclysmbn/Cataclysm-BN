@@ -4,53 +4,43 @@
 #    include "client_input.h"
 #    include "engine_client_session.h"
 #    include "input.h"
-#    include "json.h"
 #    include "mcp_server.h"
 
-#    include <algorithm>
 #    include <sstream>
-#    include <streambuf>
 #    include <string>
-#    include <utility>
 #    include <vector>
 
 namespace {
+using namespace engine_client;
 
-const auto capabilities = std::string{
-    R"({"supported_versions":["1.0"],"required_capabilities":["snapshot.readiness","snapshot.actions","snapshot.interaction","command.semantic_interaction","command.registered_action","delivery.inline_completion","events.interaction_replaced"],"optional_capabilities":[]})"};
-
-auto request(const std::string& method, const std::string& params, const std::string& id = "1")
+auto rpc(const std::string& method, const std::string& params, const std::string& id = "1")
     -> std::string {
-    return "{\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":" + params
-         + (id.empty() ? "" : ",\"id\":" + id) + "}";
+    return R"({"jsonrpc":"2.0","method":")" + method + R"(","params":)" + params
+         + (id.empty() ? "" : R"(,"id":)" + id) + "}\n";
+}
+const auto hello =
+    rpc("bn.hello", R"({"versions":["1.0"],"client":{"name":"test","version":"1"}})", "1");
+const auto subscribe = rpc("bn.subscribe", "{}", "2");
+
+auto contains(const std::string& text, const std::string& part) -> bool {
+    return text.find(part) != std::string::npos;
+}
+auto index_of(const std::string& text, const std::string& part) -> std::size_t {
+    return text.find(part);
 }
 
-auto command(const engine_client::snapshot& snapshot) -> std::string {
-    return "{\"session_epoch\":\"" + snapshot.session_epoch
-         + "\",\"based_on\":{\"state_revision\":\"" + std::to_string(snapshot.state_revision)
-         + "\",\"input_boundary_id\":\"" + snapshot.state.input_boundary_id
-         + "\",\"interaction_schema_id\":\"" + snapshot.state.interaction->schema_id
-         + "\"},\"operation\":{\"kind\":\"choose\",\"choice_id\":\"choice:yes\"}}";
+auto world_cell(const int x) -> cell {
+    return {.at = {.x = x},
+            .known = knowledge::visible,
+            .terrain = look{.kind = "terrain", .id = "t_dirt", .glyph = ".", .color = "brown"}};
 }
-
-struct fixture {
-    engine_client::session authority;
-    std::vector<bn::mcp::key_event> queued;
-    std::size_t deliveries = 0;
-    auto server() -> bn::mcp::server {
-        return bn::mcp::server{{
-            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
-            .submit =
-                [this](const auto& input) {
-                    queued = input;
-                    ++deliveries;
-                    return true;
-                },
-            .has_input = [this] { return !queued.empty(); },
-            .contract_session = &authority,
-        }};
-    }
-};
+auto known_cells = std::vector<int>{1, 2};
+auto capture_test_world() -> world_state {
+    auto result = world_state{};
+    result.coverage = bounds{.min = {.x = 0, .y = -5, .z = 0}, .max = {.x = 1000, .y = 5, .z = 0}};
+    for (const auto x : known_cells) { result.cells[{.x = x}] = world_cell(x); }
+    return result;
+}
 
 struct input_boundary {
     input_context context{"YESNO"};
@@ -60,7 +50,8 @@ struct input_boundary {
             return game_client::interaction_snapshot{
                 .kind = game_client::interaction_kind::choices,
                 .allow_cancel = true,
-                .choices = {{.id = "choice:yes", .label = "Yes"}},
+                .choices =
+                    {{.id = "choice:yes", .label = "Yes"}, {.id = "choice:no", .label = "No"}},
             };
         }};
     input_boundary() {
@@ -69,628 +60,262 @@ struct input_boundary {
     }
 };
 
-/// One hundred choices make the default 100-row page exceed the inline limit when sized large.
-struct wide_boundary {
-    input_context context{"YESNO"};
-    std::size_t description_bytes;
-    std::string label;
-    game_client::input_context_scope input{context, "YESNO"};
-    game_client::interaction_scope interaction{
-        context, [this] {
-            auto value = game_client::interaction_snapshot{
-                .kind = game_client::interaction_kind::choices, .allow_cancel = true};
-            for (auto i = 0; i < 100; ++i) {
-                value.choices.push_back(
-                    {.id = "choice:" + std::to_string(i),
-                     .label = label,
-                     .description = std::string(description_bytes, 'x')});
-            }
-            return value;
-        }};
-    explicit wide_boundary(const std::size_t bytes, std::string text = "Choice")
-        : description_bytes{bytes},
-          label{std::move(text)} {
-        context.register_action("YES");
+struct fixture {
+    session authority;
+    std::vector<bn::mcp::key_event> queued;
+    std::ostringstream output;
+    std::ostringstream errors;
+    bn::mcp::server server{{
+        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+        .submit =
+            [this](const auto& input) {
+                queued = input;
+                return true;
+            },
+        .has_input = [this] { return !queued.empty(); },
+        .contract_session = &authority,
+    }};
+    fixture() {
+        known_cells = {1, 2};
+        authority.set_world_capture(&capture_test_world);
+    }
+    /// Feed `text`, then stop at the next native input. Ending without queued input ends the
+    /// server for good, so every step but the last must submit a command.
+    auto pump(const std::string& text) -> bool {
+        auto input = std::istringstream{text};
+        return server.pump_until_input(input, output, errors);
+    }
+    auto submit_text(const std::string& operation, const std::string& schema) -> std::string {
+        const auto current = authority.current();
+        REQUIRE(current);
+        return rpc(
+            "bn.command.submit",
+            R"({"epoch":")" + authority.epoch() + R"(","expect":{"revision":")"
+                + std::to_string(current->at.revision) + R"(","boundary_id":")"
+                + current->value.interaction.id + R"(","schema_id":)" + schema + R"(},"operation":)"
+                + operation + "}",
+            "3");
+    }
+    auto schema() -> std::string {
+        return "\"" + authority.current()->value.interaction.interaction->schema_id + "\"";
+    }
+    /// A new native boundary, published before the next step reads its requests.
+    auto next_boundary() -> void {
+        game_client::begin_input_boundary();
+        REQUIRE(authority.publish_boundary());
+    }
+    auto command_id(const std::string& text) -> std::string {
+        const auto at = text.find(R"("command_id":")");
+        REQUIRE(at != std::string::npos);
+        return text.substr(at + 14, text.find('"', at + 14) - at - 14);
+    }
+    /// Deliver the queued input as the native backend would, then reach the next boundary.
+    auto run_native_input() -> void {
+        REQUIRE(queued.size() == 1);
+        const auto native = game_client::resolve_input_command(queued.front(), point{80, 24});
+        REQUIRE(native);
+        authority.delivered(*native);
+        queued.clear();
         game_client::begin_input_boundary();
     }
 };
-
-auto snapshot_params(const std::string& epoch) -> std::string {
-    return "{\"session_epoch\":\"" + epoch + "\",\"page\":{\"offset\":0,\"limit\":100}}";
-}
-
-auto result_params(const engine_client::result_request& value) -> std::string {
-    return "{\"session_epoch\":\"" + value.session_epoch + "\",\"command_id\":\"" + value.command_id
-         + "\"}";
-}
-
-struct wire_response {
-    std::istringstream input;
-    JsonIn reader;
-    JsonObject envelope;
-    explicit wire_response(const std::string& bytes)
-        : input{bytes},
-          reader{input},
-          envelope{reader.get_object()} {
-        envelope.allow_omitted_members();
-    }
-};
-
-struct recovery_expectation {
-    std::string id;
-    std::string kind;
-    std::string stage;
-    std::string action;
-    engine_client::snapshot current;
-};
-
-auto check_recovery(const std::string& bytes, const recovery_expectation& expected) -> void {
-    auto response = wire_response{bytes};
-    CHECK(response.envelope.get_string("id") == expected.id);
-    CHECK_FALSE(response.envelope.has_member("result"));
-    auto error = response.envelope.get_object("error");
-    error.allow_omitted_members();
-    CHECK(error.get_int("code") == engine_client::application_error_code);
-    auto data = error.get_object("data");
-    data.allow_omitted_members();
-    CHECK(data.get_string("kind") == expected.kind);
-    CHECK(data.get_string("stage") == expected.stage);
-    CHECK(data.get_string("required_action") == expected.action);
-    CHECK_FALSE(data.get_bool("retryable"));
-    auto current = data.get_object("current");
-    current.allow_omitted_members();
-    CHECK(current.get_string("session_epoch") == expected.current.session_epoch);
-    CHECK(current.get_string("state_revision") == std::to_string(expected.current.state_revision));
-    CHECK(current.get_string("through_public_sequence")
-          == std::to_string(expected.current.through_public_sequence));
-}
-
-class broken_output final: public std::streambuf {
-    auto xsputn(const char* /*data*/, std::streamsize /*size*/) -> std::streamsize override {
-        return 0;
-    }
-    auto overflow(int_type /*value*/) -> int_type override { return traits_type::eof(); }
-};
-
 } // namespace
 
-TEST_CASE(
-    "direct negotiation retains exact IDs and does not initialize MCP", "[engine_client_server]") {
+TEST_CASE("hello is required and checks the version", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    auto server = fixture.server();
-    const auto id = std::string{R"("\ud83d\ude00\u0000")"};
-    auto input = std::istringstream{
-        request("bn.contract.negotiate", capabilities, id) + "\n"
-        + request("bn.snapshot.get", "{}", "1.234567890123456789e+500") + "\n"
-        + request("tools/list", "{}", "3") + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    CHECK(server.run(input, output, errors) == 0);
-    CHECK(output.str().find("\"id\":" + id) != std::string::npos);
-    CHECK(output.str().find("\"id\":1.234567890123456789e+500") != std::string::npos);
-    CHECK(output.str().find("-32002") != std::string::npos);
-    CHECK(output.str().find("contract_version") != std::string::npos);
-    CHECK(fixture.queued.empty());
+    auto test = fixture{};
+    test.pump(
+        rpc("bn.subscribe", "{}", "1")
+        + rpc("bn.hello", R"({"versions":["0.9"],"client":{"name":"t","version":"1"}})", "2")
+        + hello);
+    const auto out = test.output.str();
+    CHECK(contains(out, R"("kind":"negotiation_failed","action":"hello")"));
+    CHECK(index_of(out, R"("id":1)") < index_of(out, R"("id":2)"));
+    CHECK(contains(out, R"("version":"1.0")"));
+    CHECK(contains(out, R"("epoch":")" + test.authority.epoch()));
 }
 
-TEST_CASE(
-    "direct notifications have no negotiation or authority effects", "[engine_client_server]") {
+TEST_CASE("subscribe answers first and then sends the cell parts", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto before = fixture.authority.read_snapshot({});
-    REQUIRE(before);
-    auto server = fixture.server();
-    auto input = std::istringstream{
-        "[" + request("bn.contract.negotiate", capabilities, "") + ","
-        + request("bn.command.submit", command(*before), "") + ","
-        + request("bn.snapshot.get", "{}", "") + "," + request("bn.command.result", "{}", "")
-        + "]\n" + request("bn.snapshot.get", "{}") + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    CHECK(server.run(input, output, errors) == 0);
-    CHECK(output.str().find("negotiation_failed") != std::string::npos);
-    CHECK(output.str().find("contract_version") == std::string::npos);
-    const auto lines = output.str();
-    CHECK(std::count(lines.begin(), lines.end(), '\n') == 1);
-    CHECK(fixture.queued.empty());
-    const auto after = fixture.authority.read_snapshot({});
-    REQUIRE(after);
-    CHECK(after->state_revision == before->state_revision);
-    CHECK(after->through_public_sequence == before->through_public_sequence);
+    auto test = fixture{};
+    known_cells.clear();
+    for (auto x = 0; x < static_cast<int>(cells_per_part) + 3; ++x) { known_cells.push_back(x); }
+    test.pump(hello + subscribe);
+    const auto out = test.output.str();
+    const auto response = index_of(out, R"("id":2)");
+    const auto first = index_of(out, R"("method":"bn.snapshot.part")");
+    REQUIRE(response != std::string::npos);
+    REQUIRE(first != std::string::npos);
+    CHECK(response < first);
+    CHECK(contains(out, R"("parts":2)"));
+    CHECK(contains(out, R"("index":0,"last":false)"));
+    CHECK(contains(out, R"("index":1,"last":true)"));
+    CHECK(contains(
+        out,
+        R"("at":{"epoch":")" + test.authority.epoch() + R"(","sequence":"0","revision":"0"})"));
 }
 
-TEST_CASE("complete frame validation prevents malformed suffix effects", "[engine_client_server]") {
+TEST_CASE("subscribing twice changes neither the clock nor the game", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    auto server = fixture.server();
-    auto input = std::istringstream{
-        request("bn.contract.negotiate", capabilities) + " garbage\n"
-        + request("bn.snapshot.get", "{}", "2") + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    CHECK(server.run(input, output, errors) == 0);
-    CHECK(output.str().find("-32700") != std::string::npos);
-    CHECK(output.str().find("negotiation_failed") != std::string::npos);
-    CHECK(output.str().find("contract_version") == std::string::npos);
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto before = test.authority.at();
+    test.pump(hello + subscribe + subscribe);
+    CHECK(test.authority.at() == before);
 }
 
-TEST_CASE(
-    "direct receipt precedes one native delivery and next boundary completion",
-    "[engine_client_server]") {
+TEST_CASE("a command streams its stages around its events", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto initial = fixture.authority.read_snapshot({});
-    REQUIRE(initial);
-    auto server = fixture.server();
-    const auto submit = request("bn.command.submit", command(*initial), "2");
-    auto input = std::istringstream{
-        request("bn.contract.negotiate", capabilities) + "\n[" + submit + ","
-        + request("bn.command.submit", command(*initial), "3") + "]\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    REQUIRE(server.pump_until_input(input, output, errors));
-    REQUIRE(fixture.queued.size() == 1);
-    CHECK(output.str().find("\"stage\":\"received\"") != std::string::npos);
-    CHECK(output.str().find("command_busy") != std::string::npos);
-    CHECK(output.str().find("completed") == std::string::npos);
-    auto response_input = std::istringstream{output.str().substr(output.str().find('\n') + 1)};
-    auto json = JsonIn{response_input};
-    auto responses = json.get_array();
-    auto response = responses.get_object(0);
-    response.allow_omitted_members();
-    auto receipt = response.get_object("result");
-    receipt.allow_omitted_members();
-    const auto command_id = receipt.get_string("command_id");
-    const auto result_request = engine_client::
-        result_request{.session_epoch = initial->session_epoch, .command_id = command_id};
-    REQUIRE(fixture.authority.result(result_request));
-    CHECK(
-        fixture.authority.result(result_request)->stage == engine_client::command_stage::validated);
-    const auto native = game_client::resolve_input_command(fixture.queued.front(), point{80, 24});
-    REQUIRE(native);
-    const auto event = fixture.authority.delivered(*native);
-    CHECK(event.type == input_event_t::interaction);
-    CHECK(
-        fixture.authority.result(result_request)->stage == engine_client::command_stage::executing);
-    fixture.queued.clear();
-    game_client::begin_input_boundary();
-    auto result_input = std::istringstream{
-        request("bn.command.result",
-                "{\"session_epoch\":\"" + initial->session_epoch + "\",\"command_id\":\""
-                    + command_id + "\"}",
-                "4")
-        + "\n"};
-    CHECK_FALSE(server.pump_until_input(result_input, output, errors));
-    CHECK(output.str().find("\"stage\":\"completed\"") != std::string::npos);
-    CHECK(output.str().find("native_input_delivered") != std::string::npos);
-    CHECK(output.str().find("\"resync_required\":false") != std::string::npos);
-    const auto completed = fixture.authority.result(result_request);
-    REQUIRE(completed);
-    REQUIRE(completed->completed);
-    CHECK(completed->completed->state_revision > initial->state_revision);
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    CHECK(contains(test.output.str(), R"("stage":"received")"));
+    CHECK(contains(test.output.str(), R"("method":"bn.command")"));
+    CHECK(contains(test.output.str(), R"("stage":"validated")"));
+    CHECK_FALSE(contains(test.output.str(), "executing"));
+
+    test.run_native_input();
+    known_cells.push_back(3); // the world changes while the input runs
+    test.output.str("");
+    CHECK_FALSE(test.pump(""));
+    const auto out = test.output.str();
+    const auto executing = index_of(out, R"("stage":"executing")");
+    const auto events = index_of(out, R"("method":"bn.events")");
+    const auto completed = index_of(out, R"("stage":"completed")");
+    REQUIRE(executing != std::string::npos);
+    REQUIRE(events != std::string::npos);
+    REQUIRE(completed != std::string::npos);
+    CHECK(executing < events);
+    CHECK(events < completed);
+    CHECK(contains(out, R"("type":"cells.seen")"));
+    CHECK(contains(out, R"("command":"command)"));
+    const auto now = test.authority.at();
+    REQUIRE(now);
+    CHECK(now->sequence == 1);
+    CHECK(contains(out, R"("at":{"epoch":")" + now->epoch + R"(","sequence":"1","revision":"1"})"));
 }
 
 TEST_CASE(
-    "oversized default page publishes a one-row reference instead of failing the session",
-    "[engine_client_server]") {
-    auto boundary = wide_boundary{3000};
-    auto authority = engine_client::session{};
-    REQUIRE(authority.publish_boundary());
-    const auto one_row = authority.read_snapshot({.offset = 0, .limit = 1});
-    REQUIRE(one_row);
-    CHECK(one_row->state.interaction->choices.size() == 1);
-    const auto default_page = authority.read_snapshot({});
-    REQUIRE_FALSE(default_page);
-    CHECK(default_page.error() == engine_client::error::resource_limit);
-}
-
-TEST_CASE(
-    "oversized later boundary starts a new epoch and keeps the session alive",
-    "[engine_client_server]") {
-    auto authority = engine_client::session{};
-    auto first_epoch = std::string{};
-    {
-        auto small = input_boundary{};
-        REQUIRE(authority.publish_boundary());
-        first_epoch = authority.epoch();
-    }
-    auto wide = wide_boundary{3000};
-    REQUIRE(authority.publish_boundary());
-    CHECK(authority.epoch() != first_epoch);
-    REQUIRE(authority.read_snapshot({.offset = 0, .limit = 1}));
-}
-
-TEST_CASE(
-    "boundary whose event envelope overflows resynchronizes from a snapshot",
-    "[engine_client_server]") {
-    auto resynchronized = 0;
-    for (auto bytes = std::size_t{2400}; bytes < 2700; bytes += 4) {
-        auto authority = engine_client::session{};
-        const auto epoch = authority.epoch();
-        auto before_revision = engine_client::counter{};
-        {
-            auto narrow = wide_boundary{bytes - 100, "Before"};
-            REQUIRE(authority.publish_boundary());
-            const auto before = authority.read_snapshot({.offset = 0, .limit = 1});
-            REQUIRE(before);
-            before_revision = before->state_revision;
-        }
-        auto wide = wide_boundary{bytes, "After"};
-        const auto published = authority.publish_boundary();
-        REQUIRE(published);
-        const auto after = authority.read_snapshot({.offset = 0, .limit = 1});
-        REQUIRE(after);
-        // Past the page limit the session restarts its epoch, which has no earlier revision.
-        if (authority.epoch() == epoch) { CHECK(after->state_revision > before_revision); }
-        if (!authority.latest_event()) { ++resynchronized; }
-    }
-    CHECK(resynchronized > 0);
-}
-
-TEST_CASE(
-    "world replacement interrupts an outstanding receipt without successful completion",
-    "[engine_client_server]") {
+    "a stale submit is rejected with its reason and delivers nothing", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto authority = engine_client::session{};
-    REQUIRE(authority.publish_boundary());
-    const auto initial = authority.read_snapshot({});
-    REQUIRE(initial);
-    const auto decoded = engine_client::decode_command_request(command(*initial));
-    REQUIRE(decoded);
-    const auto receipt = authority.submit(*decoded);
-    REQUIRE(receipt);
-    authority.replace_world();
-    REQUIRE(authority.publish_boundary());
-    CHECK(authority.epoch() != receipt->session_epoch);
-    const auto interrupted = authority.result(
-        {.session_epoch = receipt->session_epoch, .command_id = receipt->command_id});
-    REQUIRE(interrupted);
-    CHECK(interrupted->stage == engine_client::command_stage::interrupted);
-    CHECK_FALSE(interrupted->completed);
-    CHECK_FALSE(interrupted->execution_started);
-    CHECK_FALSE(authority.has_received());
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto stale = rpc(
+        "bn.command.submit",
+        R"({"epoch":")" + test.authority.epoch()
+            + R"(","expect":{"revision":"99","boundary_id":"boundary:old","schema_id":null},"operation":{"kind":"cancel"}})",
+        "3");
+    const auto other = rpc(
+        "bn.command.submit",
+        R"({"epoch":"epoch:other","expect":{"revision":"0","boundary_id":"b","schema_id":null},"operation":{"kind":"cancel"}})",
+        "4");
+    CHECK_FALSE(test.pump(hello + subscribe + stale + other));
+    CHECK(test.queued.empty());
+    CHECK(contains(test.output.str(), R"("stage":"rejected","error":"stale_revision")"));
+    CHECK(contains(test.output.str(), R"("kind":"stale_epoch")"));
 }
 
-TEST_CASE(
-    "output loss interrupts a receipt before native queue delivery", "[engine_client_server]") {
+TEST_CASE("bn.command.result recovers a lost notification", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto initial = fixture.authority.read_snapshot({});
-    REQUIRE(initial);
-    auto server = fixture.server();
-    auto input = std::istringstream{request("bn.contract.negotiate", capabilities) + "\n"};
-    auto good_output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    CHECK_FALSE(server.pump_until_input(input, good_output, errors));
-    // A fresh pump needs a live input stream; use one complete batch so failure happens after
-    // receipt allocation.
-    auto second = fixture.server();
-    auto batch = std::istringstream{
-        "[" + request("bn.contract.negotiate", capabilities) + ","
-        + request("bn.command.submit", command(*initial), "2") + "]\n"};
-    auto buffer = broken_output{};
-    auto output = std::ostream{&buffer};
-    CHECK_FALSE(second.pump_until_input(batch, output, errors));
-    CHECK(second.failed());
-    CHECK(fixture.queued.empty());
-    CHECK_FALSE(fixture.authority.has_received());
-}
-
-TEST_CASE("legacy batch cursor resumes only after native input returns", "[engine_client_server]") {
-    auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    auto server = fixture.server();
-    const auto first =
-        request("tools/call", R"({"name":"bn.press","arguments":{"keys":[{"key":"a"}]}})", "2");
-    const auto second =
-        request("tools/call", R"({"name":"bn.press","arguments":{"keys":[{"key":"b"}]}})", "3");
-    auto input = std::istringstream{
-        request("initialize", "{}") + "\n"
-        + R"({"jsonrpc":"2.0","method":"notifications/initialized"})" + "\n[" + first + "," + second
-        + "]\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    REQUIRE(server.pump_until_input(input, output, errors));
-    REQUIRE(fixture.queued.size() == 1);
-    CHECK(fixture.queued.front().key == "a");
-    CHECK(output.str().find("\"id\":2") == std::string::npos);
-    const auto native = game_client::resolve_input_command(fixture.queued.front(), point{80, 24});
-    REQUIRE(native);
-    CHECK(fixture.authority.delivered(*native).type == input_event_t::keyboard);
-    fixture.queued.clear();
-    game_client::begin_input_boundary();
-    REQUIRE(server.pump_until_input(input, output, errors));
-    REQUIRE(fixture.queued.size() == 1);
-    CHECK(fixture.queued.front().key == "b");
-    CHECK(output.str().find("\"id\":2") == std::string::npos);
-    fixture.queued.clear();
-    game_client::begin_input_boundary();
-    CHECK_FALSE(server.pump_until_input(input, output, errors));
-    CHECK_FALSE(server.failed());
-    CHECK(output.str().find("[{\"jsonrpc\":\"2.0\",\"id\":2") != std::string::npos);
-    CHECK(output.str().find("\"id\":3") != std::string::npos);
-    CHECK(errors.str().empty());
-}
-
-TEST_CASE(
-    "mixed decoded method policies preserve legacy errors and direct IDs",
-    "[engine_client_server]") {
-    auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    auto server = fixture.server();
-    auto input = std::istringstream{
-        "[" + request("bn.contract.\\u006eegotiate", capabilities, "1.5") + ","
-        + request("ping", "{}", "1.5") + ","
-        + R"({"jsonrpc":"2.0","method":"unknown/legacy","params":null})" + "]\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    REQUIRE(server.run(input, output, errors) == 0);
-    CHECK(output.str().find("\"id\":1.5,\"result\"") != std::string::npos);
-    CHECK(output.str().find("\"id\":null,\"error\":{\"code\":-32600") != std::string::npos);
-    CHECK(output.str().find("-32601") == std::string::npos);
-    CHECK(errors.str().empty());
-}
-
-TEST_CASE(
-    "negotiated direct authority blocks initialized legacy mutation", "[engine_client_server]") {
-    auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    auto server = fixture.server();
-    auto input = std::istringstream{
-        request("initialize", "{}") + "\n"
-        + R"({"jsonrpc":"2.0","method":"notifications/initialized"})" + "\n"
-        + request("bn.contract.negotiate", capabilities, "2") + "\n"
-        + request("tools/call", R"({"name":"bn.press","arguments":{"keys":[{"key":"a"}]}})", "3")
-        + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    CHECK(server.run(input, output, errors) == 0);
-    CHECK(output.str().find("\"code\":1000") != std::string::npos);
-    CHECK(output.str().find("\"kind\":\"invalid_lifecycle\"") != std::string::npos);
-    CHECK(fixture.queued.empty());
-}
-
-TEST_CASE(
-    "old epoch snapshot and result errors require fresh negotiation",
-    "[engine_client_server][world_epoch_recovery]") {
-    auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto old_epoch = fixture.authority.epoch();
-    auto server = fixture.server();
-    fixture.authority.replace_world();
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto current = fixture.authority.read_snapshot({});
-    REQUIRE(current);
-    REQUIRE(current->session_epoch != old_epoch);
-    auto input = std::istringstream{
-        request("bn.contract.negotiate", capabilities, R"("negotiate")") + "\n"
-        + request("bn.snapshot.get", snapshot_params(old_epoch), R"("snapshot")") + "\n"
-        + request("bn.command.result",
-                  result_params({.session_epoch = old_epoch, .command_id = "command:unknown"}),
-                  R"("result")")
-        + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    REQUIRE(server.run(input, output, errors) == 0);
-    auto responses = std::istringstream{output.str()};
-    auto line = std::string{};
-    REQUIRE(static_cast<bool>(std::getline(responses, line)));
-    REQUIRE(static_cast<bool>(std::getline(responses, line)));
-    check_recovery(
-        line,
-        {.id = "snapshot",
-         .kind = "stale_epoch",
-         .stage = "validation",
-         .action = "negotiate",
-         .current = *current});
-    REQUIRE(static_cast<bool>(std::getline(responses, line)));
-    check_recovery(
-        line,
-        {.id = "result",
-         .kind = "stale_epoch",
-         .stage = "completion",
-         .action = "negotiate",
-         .current = *current});
-    CHECK_FALSE(static_cast<bool>(std::getline(responses, line)));
-    CHECK(fixture.queued.empty());
-    CHECK(fixture.deliveries == 0);
-    CHECK_FALSE(fixture.authority.has_received());
-    CHECK(errors.str().empty());
-}
-
-TEST_CASE(
-    "fresh negotiation recovers after a delivered old command is interrupted without replay",
-    "[engine_client_server][world_epoch_recovery]") {
-    auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto initial = fixture.authority.read_snapshot({});
-    REQUIRE(initial);
-    auto server = fixture.server();
-    auto input = std::istringstream{
-        request("bn.contract.negotiate", capabilities) + "\n"
-        + request("bn.command.submit", command(*initial), R"("submit")") + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    REQUIRE(server.pump_until_input(input, output, errors));
-    REQUIRE(fixture.queued.size() == 1);
-    REQUIRE(fixture.deliveries == 1);
-    const auto receipt_offset = output.str().find('\n') + 1;
-    auto response = wire_response{output.str().substr(receipt_offset)};
-    auto receipt = response.envelope.get_object("result");
-    receipt.allow_omitted_members();
-    const auto old_command = engine_client::result_request{
-        .session_epoch = receipt.get_string("session_epoch"),
-        .command_id = receipt.get_string("command_id"),
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    const auto id = test.command_id(test.output.str());
+    CHECK(contains(test.output.str(), R"("stage":"received")"));
+    test.run_native_input();
+    test.output.str("");
+    const auto query = [&](const std::string& command, const std::string& n) {
+        return rpc(
+            "bn.command.result",
+            R"({"epoch":")" + test.authority.epoch() + R"(","command_id":")" + command + R"("})",
+            n);
     };
-    REQUIRE(old_command.session_epoch == initial->session_epoch);
-    const auto native = game_client::resolve_input_command(fixture.queued.front(), point{80, 24});
-    REQUIRE(native);
-    CHECK(fixture.authority.delivered(*native).type == input_event_t::interaction);
-    fixture.queued.clear();
-    fixture.authority.replace_world();
-    game_client::begin_input_boundary();
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto current = fixture.authority.read_snapshot({});
-    REQUIRE(current);
-    REQUIRE(current->session_epoch != initial->session_epoch);
-    const auto interrupted = fixture.authority.result(old_command);
-    REQUIRE(interrupted);
-    REQUIRE(interrupted->stage == engine_client::command_stage::interrupted);
-    CHECK(interrupted->validation_succeeded);
-    CHECK(interrupted->execution_started);
-    CHECK_FALSE(interrupted->completed);
-    CHECK_FALSE(fixture.authority.has_received());
-
-    output.str("");
-    input.str(
-        request("bn.command.result", result_params(old_command), R"("terminal")") + "\n"
-        + request("bn.snapshot.get", snapshot_params(initial->session_epoch), R"("stale")") + "\n"
-        + request("bn.contract.negotiate", capabilities, R"("fresh")") + "\n"
-        + request("bn.snapshot.get", snapshot_params(current->session_epoch), R"("snapshot")")
-        + "\n" + request("bn.command.result", result_params(old_command), R"("retired")") + "\n");
-    CHECK_FALSE(server.pump_until_input(input, output, errors));
-    CHECK_FALSE(server.failed());
-    auto responses = std::istringstream{output.str()};
-    auto line = std::string{};
-    for (const auto id : {"terminal", "stale", "fresh", "snapshot", "retired"}) {
-        REQUIRE(static_cast<bool>(std::getline(responses, line)));
-        auto reply = wire_response{line};
-        CHECK(reply.envelope.get_string("id") == id);
-        if (std::string_view{id} == "stale") {
-            check_recovery(
-                line,
-                {.id = id,
-                 .kind = "stale_epoch",
-                 .stage = "validation",
-                 .action = "negotiate",
-                 .current = *current});
-            continue;
-        }
-        CHECK_FALSE(reply.envelope.has_member("error"));
-        auto result = reply.envelope.get_object("result");
-        result.allow_omitted_members();
-        if (std::string_view{id} == "terminal" || std::string_view{id} == "retired") {
-            auto command = result.get_object("command");
-            command.allow_omitted_members();
-            CHECK(command.get_string("session_epoch") == old_command.session_epoch);
-            CHECK(command.get_string("command_id") == old_command.command_id);
-            CHECK(command.get_string("stage") == "interrupted");
-            CHECK(command.has_null("completion"));
-            auto events = result.get_object("event_batch");
-            events.allow_omitted_members();
-            CHECK(events.get_array("events").empty());
-        } else {
-            CHECK(result.get_string("session_epoch") == current->session_epoch);
-            if (std::string_view{id} == "fresh") {
-                CHECK(result.get_string("contract_version") == "1.0");
-            } else {
-                CHECK(
-                    result.get_string("state_revision") == std::to_string(current->state_revision));
-                CHECK(result.get_string("through_public_sequence")
-                      == std::to_string(current->through_public_sequence));
-                CHECK(result.has_object("state"));
-            }
-        }
-    }
-    CHECK_FALSE(static_cast<bool>(std::getline(responses, line)));
-    CHECK(fixture.deliveries == 1);
-    CHECK(fixture.queued.empty());
-    CHECK_FALSE(fixture.authority.has_received());
-    const auto after = fixture.authority.read_snapshot({});
-    REQUIRE(after);
-    CHECK(after->state_revision == current->state_revision);
-    CHECK(after->through_public_sequence == current->through_public_sequence);
-    CHECK(errors.str().empty());
+    CHECK_FALSE(test.pump(query(id, "9") + query("c:unknown", "10")));
+    CHECK(contains(test.output.str(), R"("stage":"completed")")); // the answer, not a push
+    CHECK(contains(test.output.str(), R"("kind":"unknown_command")"));
+    CHECK_FALSE(contains(test.output.str(), R"("method":"bn.command")"));
 }
 
 TEST_CASE(
-    "stale command validation never delivers or advances authority",
-    "[engine_client_server][world_epoch_recovery]") {
+    "world replacement sends one resync and silences the stale stream", "[engine_client_server]") {
     auto boundary = input_boundary{};
-    auto fixture = ::fixture{};
-    REQUIRE(fixture.authority.publish_boundary());
-    const auto current = fixture.authority.read_snapshot({});
-    REQUIRE(current);
-    auto based_on = *current;
-    auto reason = std::string{};
-    SECTION("old epoch") {
-        based_on.session_epoch = "epoch:retired";
-        reason = "stale_epoch";
-    }
-    SECTION("same epoch stale revision") {
-        ++based_on.state_revision;
-        reason = "stale_revision";
-    }
-    SECTION("same epoch stale boundary") {
-        based_on.state.input_boundary_id = "boundary:retired";
-        reason = "stale_boundary";
-    }
-    SECTION("same epoch stale schema") {
-        based_on.state.interaction->schema_id = "schema:retired";
-        reason = "stale_interaction_schema";
-    }
-    auto server = fixture.server();
-    auto input = std::istringstream{
-        request("bn.contract.negotiate", capabilities) + "\n"
-        + request("bn.command.submit", command(based_on), R"("submit")") + "\n"};
-    auto output = std::ostringstream{};
-    auto errors = std::ostringstream{};
-    CHECK_FALSE(server.pump_until_input(input, output, errors));
-    CHECK_FALSE(server.failed());
-    auto response = wire_response{output.str().substr(output.str().find('\n') + 1)};
-    auto receipt = response.envelope.get_object("result");
-    receipt.allow_omitted_members();
-    const auto rejected = engine_client::result_request{
-        .session_epoch = receipt.get_string("session_epoch"),
-        .command_id = receipt.get_string("command_id"),
-    };
-    const auto result = fixture.authority.result(rejected);
-    REQUIRE(result);
-    CHECK(result->stage == engine_client::command_stage::rejected);
-    REQUIRE(result->failure);
-    CHECK(engine_client::error_name(*result->failure) == reason);
-    CHECK_FALSE(result->execution_started);
-    CHECK_FALSE(result->completed);
-    CHECK(fixture.deliveries == 0);
-    CHECK(fixture.queued.empty());
-    CHECK_FALSE(fixture.authority.has_received());
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    const auto old_epoch = test.authority.epoch();
+    const auto lost_after = test.authority.at()->sequence;
+    test.queued.clear();
+    test.authority.replace_world();
+    test.next_boundary(); // new epoch, first publication has no event
+    known_cells.push_back(3);
+    test.next_boundary(); // an event of the new epoch the client never subscribed to
+    CHECK(test.authority.epoch() != old_epoch);
+    REQUIRE(test.authority.at()->sequence == 1);
+    test.output.str("");
+    REQUIRE(test.pump(
+        subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    const auto out = test.output.str();
+    const auto interrupted = index_of(out, R"("stage":"interrupted")");
+    const auto resync = index_of(out, R"("method":"bn.resync")");
+    REQUIRE(interrupted != std::string::npos);
+    REQUIRE(resync != std::string::npos);
+    CHECK(interrupted < resync);
+    CHECK(
+        contains(out, R"("reason":"world_replaced","lost_after":")" + std::to_string(lost_after)));
+    CHECK(contains(out, R"("epoch":")" + old_epoch));
+    CHECK_FALSE(contains(out, "bn.events"));
+    CHECK(index_of(out, R"("sequence":"1","revision":"1")") != std::string::npos); // the new
+                                                                                   // snapshot
+}
 
-    // Rejection is a terminal result, not a JSON-RPC application error. Preserve that 1.0 shape.
-    input.str(
-        request("bn.command.result", result_params(rejected), R"("rejected")") + "\n"
-        + request("bn.snapshot.get", snapshot_params(current->session_epoch), R"("snapshot")")
-        + "\n");
-    input.clear();
-    output.str("");
-    REQUIRE(server.run(input, output, errors) == 0);
-    auto responses = std::istringstream{output.str()};
-    auto line = std::string{};
-    REQUIRE(static_cast<bool>(std::getline(responses, line)));
-    auto reply = wire_response{line};
-    auto wire_result = reply.envelope.get_object("result");
-    wire_result.allow_omitted_members();
-    auto wire_command = wire_result.get_object("command");
-    wire_command.allow_omitted_members();
-    CHECK(wire_command.get_string("stage") == "rejected");
-    auto validation = wire_command.get_object("validation");
-    validation.allow_omitted_members();
-    CHECK(validation.get_string("error") == reason);
-    REQUIRE(static_cast<bool>(std::getline(responses, line)));
-    auto snapshot_reply = wire_response{line};
-    CHECK_FALSE(snapshot_reply.envelope.has_member("error"));
-    auto snapshot = snapshot_reply.envelope.get_object("result");
-    snapshot.allow_omitted_members();
-    CHECK(snapshot.get_string("session_epoch") == current->session_epoch);
-    CHECK(snapshot.get_string("state_revision") == std::to_string(current->state_revision));
-    CHECK(snapshot.get_string("through_public_sequence")
-          == std::to_string(current->through_public_sequence));
-    CHECK(errors.str().empty());
+TEST_CASE("an unsubscribed client receives no pushes", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe + rpc("bn.unsubscribe", "{}", "5")
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK_FALSE(test.pump(""));
+    CHECK(test.output.str().empty());
+}
+
+TEST_CASE("interaction choices are a passive paged read", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto before = test.authority.at();
+    const auto id = test.authority.current()->value.interaction.id;
+    test.pump(
+        hello
+        + rpc("bn.interaction.choices",
+              R"({"epoch":")" + test.authority.epoch() + R"(","boundary_id":")" + id
+                  + R"(","offset":1,"limit":5})",
+              "6"));
+    CHECK(contains(test.output.str(), R"("total":2)"));
+    CHECK(contains(test.output.str(), R"("id":"choice:no")"));
+    CHECK_FALSE(contains(test.output.str(), R"("id":"choice:yes")"));
+    CHECK(test.authority.at() == before);
+}
+
+TEST_CASE("a registered action is submittable as a command", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"action","action_id":"YES"})", test.schema())));
+    CHECK(contains(test.output.str(), R"("stage":"validated")"));
+    REQUIRE(test.queued.size() == 1);
+    CHECK(test.queued.front().action == "YES");
 }
 
 #endif

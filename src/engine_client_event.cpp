@@ -1,6 +1,8 @@
 #include "engine_client_event.h"
 
+#include <algorithm>
 #include <limits>
+#include <set>
 #include <type_traits>
 #include <utility>
 
@@ -10,215 +12,201 @@ namespace
 {
 static_assert( std::is_nothrow_move_assignable_v<state_value> );
 static_assert( std::is_nothrow_move_assignable_v<snapshot> );
-static_assert( std::is_nothrow_constructible_v < std::expected<std::optional<public_event>, error>,
-               public_event && > );
-static_assert( std::is_nothrow_constructible_v < std::expected<std::optional<snapshot>, error>,
-               snapshot && > );
 
-auto valid_event( const event_value &value ) -> std::expected<void, error>
+/// One event must fit a frame with room for its siblings in the same notification.
+constexpr auto maximum_event_bytes = maximum_frame_bytes / 2;
+
+auto inside( const bounds &area, const position &at ) -> bool
 {
-    if( value.session_epoch.empty() || value.session_epoch.size() > maximum_id_bytes ||
-        value.event_id.empty() || value.event_id.size() > maximum_id_bytes || value.public_sequence == 0 ||
-        value.base_state_revision == std::numeric_limits<counter>::max() ||
-        value.state_revision != value.base_state_revision + 1 ||
-        ( value.payload.cause_sequence && ( *value.payload.cause_sequence == 0 ||
-                                            *value.payload.cause_sequence >= value.public_sequence ) ) ||
-        ( value.payload.command_id && ( value.payload.command_id->empty() ||
-                                        value.payload.command_id->size() > maximum_id_bytes ) ) ) {
-        return std::unexpected( error::resync_required );
+    return at.dim == area.min.dim && at.x >= area.min.x && at.x <= area.max.x &&
+           at.y >= area.min.y && at.y <= area.max.y && at.z >= area.min.z && at.z <= area.max.z;
+}
+auto valid_event( const event_value &value ) -> bool
+{
+    return value.sequence != 0 && value.revision != 0 && !value.type.empty() &&
+           ( !value.cause || ( *value.cause != 0 && *value.cause < value.sequence ) ) &&
+           ( !value.command || ( !value.command->empty() && value.command->size() <= maximum_id_bytes ) );
+}
+template<typename Key, typename Value, typename Remove>
+auto erase_where( std::map<Key, Value> &values, const Remove &remove ) -> void
+{
+    for( auto it = values.begin(); it != values.end(); ) {
+        if( remove( *it ) ) { it = values.erase( it ); }
+        else { ++it; }
     }
-    if( value.payload.display ) {
-        const auto &display = *value.payload.display;
-        if( display.group_id.empty() || display.group_id.size() > maximum_id_bytes ||
-            display.count <= 0 || display.ordinal < 0 ||
-            display.ordinal >= display.count || display.duration_ms < 0 ) {
-            return std::unexpected( error::validation_failed );
-        }
-    }
-    return validate_state( value.payload.state );
 }
 } // namespace
 
-public_event::public_event( event_value value ) : value_( std::move( value ) ) {}
-auto public_event::value() const -> const event_value & { return value_; } // *NOPAD*
-auto null_event_sink::publish( public_event /*event*/ ) -> std::expected<void, error> { return {}; }
-auto recording_event_sink::publish( public_event event ) -> std::expected<void, error>
+auto changes::empty() const -> bool
 {
-    if( const auto valid = valid_event( event.value() ); !valid ) { return valid; }
-    if( !events_.empty() && ( events_.back().value().session_epoch != event.value().session_epoch ||
-                              events_.back().value().public_sequence == std::numeric_limits<counter>::max() ||
-                              event.value().public_sequence != events_.back().value().public_sequence + 1 ||
-                              event.value().base_state_revision != events_.back().value().state_revision ) ) {
-        return std::unexpected( error::resync_required );
+    return !coverage && cells.empty() && forgotten.empty() && entities.empty() && gone.empty() &&
+           !avatar && !environment && !interaction;
+}
+auto same_state( const state_value &left, const state_value &right ) -> bool
+{
+    return left.world == right.world && same_boundary( left.interaction, right.interaction );
+}
+
+auto diff( const state_value &from, const state_value &to ) -> changes
+{
+    auto result = changes{};
+    if( to.world.coverage && to.world.coverage != from.world.coverage ) {
+        result.coverage = to.world.coverage;
     }
-    if( events_.size() == maximum_inline_events ) { return std::unexpected( error::resource_limit ); }
-    auto candidate = event_batch{};
-    candidate.events = events_;
-    candidate.events.push_back( event );
-    candidate.first_sequence = candidate.events.front().value().public_sequence;
-    candidate.last_sequence = candidate.events.back().value().public_sequence;
-    if( serialize_batch( candidate ).size() > maximum_inline_bytes ) {
-        return std::unexpected( error::resource_limit );
+    // Cells and entities outside a new coverage are dropped by the coverage itself.
+    const auto survives = [&]( const position & at ) {
+        return !result.coverage || inside( *result.coverage, at );
+    };
+    for( const auto &[at, value] : to.world.cells ) {
+        const auto old = from.world.cells.find( at );
+        if( old == from.world.cells.end() || old->second != value ) { result.cells.push_back( value ); }
     }
-    events_.push_back( std::move( event ) );
+    for( const auto &[at, value] : from.world.cells ) {
+        if( survives( at ) && !to.world.cells.contains( at ) ) { result.forgotten.push_back( at ); }
+    }
+    for( const auto &[id, value] : to.world.entities ) {
+        const auto old = from.world.entities.find( id );
+        if( old == from.world.entities.end() || old->second != value ) { result.entities.push_back( value ); }
+    }
+    for( const auto &[id, value] : from.world.entities ) {
+        if( survives( value.at ) && !to.world.entities.contains( id ) ) { result.gone.push_back( {.id = id} ); }
+    }
+    if( to.world.avatar && to.world.avatar != from.world.avatar ) { result.avatar = to.world.avatar; }
+    if( to.world.environment && to.world.environment != from.world.environment ) {
+        result.environment = to.world.environment;
+    }
+    if( !same_boundary( from.interaction, to.interaction ) ) { result.interaction = to.interaction; }
+    return result;
+}
+
+auto apply( state_value &value, const changes &delta ) -> std::expected<void, error>
+{
+    auto next = value;
+    auto &world = next.world;
+    if( delta.coverage ) {
+        world.coverage = delta.coverage;
+        erase_where( world.cells, [&]( const auto & entry ) { return !inside( *delta.coverage, entry.first ); } );
+        erase_where( world.entities, [&]( const auto & entry ) { return !inside( *delta.coverage, entry.second.at ); } );
+    }
+    auto seen_cells = std::set<position> {};
+    for( const auto &entry : delta.cells ) {
+        if( !world.coverage || !inside( *world.coverage, entry.at ) ||
+            !seen_cells.insert( entry.at ).second ) {
+            return std::unexpected( error::resync_required );
+        }
+        world.cells[entry.at] = entry;
+    }
+    for( const auto &at : delta.forgotten ) {
+        if( world.cells.erase( at ) == 0 ) { return std::unexpected( error::resync_required ); }
+    }
+    auto seen_entities = std::set<std::string> {};
+    for( const auto &entry : delta.entities ) {
+        if( !seen_entities.insert( entry.id ).second ) { return std::unexpected( error::resync_required ); }
+        world.entities[entry.id] = entry;
+    }
+    for( const auto &entry : delta.gone ) {
+        if( world.entities.erase( entry.id ) == 0 ) { return std::unexpected( error::resync_required ); }
+    }
+    if( delta.avatar ) { world.avatar = delta.avatar; }
+    if( delta.environment ) { world.environment = delta.environment; }
+    if( delta.interaction ) { next.interaction = *delta.interaction; }
+    value = std::move( next );
     return {};
 }
-auto recording_event_sink::events() const -> const std::vector<public_event> & { return events_; } // *NOPAD*
-auto recording_event_sink::drain() -> event_batch
+
+auto classify( const changes &delta ) -> std::string
 {
-    auto result = event_batch{};
-    if( !events_.empty() ) {
-        result.first_sequence = events_.front().value().public_sequence;
-        result.last_sequence = events_.back().value().public_sequence;
-    }
-    result.events = std::move( events_ );
-    events_.clear();
-    return result;
+    if( delta.coverage ) { return "coverage.moved"; }
+    if( !delta.cells.empty() || !delta.forgotten.empty() || !delta.entities.empty() ||
+        !delta.gone.empty() || delta.avatar ) { return "cells.seen"; }
+    if( delta.environment ) { return "turn.passed"; }
+    return "interaction.changed";
 }
+
+public_event::public_event( event_value value ) : value_( std::move( value ) ) {}
+auto public_event::value() const -> const event_value & { return value_; } // *NOPAD*
+
 event_stream::event_stream( snapshot initial ) : current_( std::move( initial ) ) {}
-auto event_stream::create( snapshot initial ) -> std::expected<event_stream, error>
+auto event_stream::create( std::string epoch,
+                           state_value initial ) -> std::expected<event_stream, error>
 {
-    if( initial.session_epoch.empty() || initial.session_epoch.size() > maximum_id_bytes ) {
-        return std::unexpected( error::validation_failed );
-    }
-    if( const auto valid = validate_state( initial.state ); !valid ) {
+    if( epoch.empty() || epoch.size() > maximum_id_bytes ) { return std::unexpected( error::validation_failed ); }
+    if( const auto valid = validate_boundary( initial.interaction ); !valid ) {
         return std::unexpected( valid.error() );
     }
-    if( serialize_snapshot( initial ).size() > maximum_inline_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
-    return event_stream{std::move( initial )};
+    return event_stream{snapshot{.at = {.epoch = std::move( epoch )}, .value = std::move( initial )}};
 }
-auto event_stream::current_snapshot() const -> snapshot { return current_; }
-auto event_stream::project_snapshot( state_value candidate ) const -> std::expected<snapshot, error>
+auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
+
+auto event_stream::publish( publish_request request ) ->
+std::expected<std::optional<public_event>, error>
 {
-    if( const auto valid = validate_state( candidate ); !valid ) { return std::unexpected( valid.error() ); }
-    if( !same_boundary_state( current_.state, candidate ) ||
-        ( current_.state.view == candidate.view && !same_state( current_.state, candidate ) ) ) {
-        return std::unexpected( error::stale_boundary );
+    if( request.decision == disclosure::withheld ) { return std::nullopt; }
+    if( const auto valid = validate_boundary( request.next.interaction ); !valid ) {
+        return std::unexpected( valid.error() );
     }
-    auto result = current_;
-    result.state = std::move( candidate );
-    if( serialize_snapshot( result ).size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
-    return result;
-}
-auto project_event( const public_event &event,
-                    state_value candidate ) -> std::expected<public_event, error>
-{
-    if( const auto valid = valid_event( event.value() ); !valid ) { return std::unexpected( valid.error() ); }
-    if( const auto valid = validate_state( candidate ); !valid ) { return std::unexpected( valid.error() ); }
-    const auto &published = event.value().payload.state;
-    if( !same_boundary_state( published, candidate ) ||
-        ( published.view == candidate.view && !same_state( published, candidate ) ) ) {
-        return std::unexpected( error::stale_boundary );
-    }
-    auto value = event.value();
-    value.payload.state = std::move( candidate );
-    auto result = public_event{std::move( value )};
-    if( serialize_event( result ).size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
-    return result;
-}
-auto event_stream::replace( const disclosure decision, replacement candidate, event_sink &sink )
--> std::expected<std::optional<public_event>, error>
-{
-    if( decision == disclosure::withheld ) { return std::nullopt; }
-    if( const auto valid = validate_state( candidate.state ); !valid ) { return std::unexpected( valid.error() ); }
-    if( candidate.cause_sequence && ( *candidate.cause_sequence == 0 ||
-                                      *candidate.cause_sequence > current_.through_public_sequence ) ) {
+    if( request.cause && ( *request.cause == 0 || *request.cause > current_.at.sequence ) ) {
         return std::unexpected( error::validation_failed );
     }
-    if( current_.state.view != candidate.state.view ) {
-        if( same_boundary_state( current_.state, candidate.state ) ) { return std::nullopt; }
-        return std::unexpected( error::stale_boundary );
-    }
-    if( same_state( current_.state, candidate.state ) ) { return std::nullopt; }
-    if( current_.state_revision == std::numeric_limits<counter>::max() ||
-        current_.through_public_sequence == std::numeric_limits<counter>::max() ) {
+    auto delta = diff( current_.value, request.next );
+    if( delta.empty() ) { return std::nullopt; }
+    if( current_.at.revision == std::numeric_limits<counter>::max() ||
+        current_.at.sequence == std::numeric_limits<counter>::max() ) {
         return std::unexpected( error::resource_limit );
     }
-    const auto sequence = current_.through_public_sequence + 1;
+    auto type = classify( delta );
     auto event = public_event{{
-            .session_epoch = current_.session_epoch,
-            .event_id = game_client::opaque_interaction_id( "event", {current_.session_epoch, std::to_string( sequence )} ),
-            .public_sequence = sequence,
-            .base_state_revision = current_.state_revision,
-            .state_revision = current_.state_revision + 1,
-            .payload = std::move( candidate ),
+            .sequence = current_.at.sequence + 1,
+            .revision = current_.at.revision + 1,
+            .type = std::move( type ),
+            .cause = request.cause,
+            .command = std::move( request.command ),
+            .delta = std::move( delta ),
         }};
-    if( const auto valid = valid_event( event.value() ); !valid ) { return std::unexpected( valid.error() ); }
-    auto batch = event_batch{.first_sequence = sequence, .last_sequence = sequence, .events = {event}};
-    if( serialize_batch( batch ).size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
-    auto next_state = event.value().payload.state;
-    if( const auto accepted = sink.publish( event ); !accepted ) { return std::unexpected( accepted.error() ); }
-    current_.state = std::move( next_state );
-    current_.state_revision = event.value().state_revision;
-    current_.through_public_sequence = sequence;
+    if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
+    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
+        maximum_event_bytes ) {
+        return std::unexpected( error::resource_limit );
+    }
+    current_.value = std::move( request.next );
+    current_.at.sequence = event.value().sequence;
+    current_.at.revision = event.value().revision;
     return event;
 }
-auto event_stream::resynchronize( const disclosure decision, state_value candidate )
--> std::expected<std::optional<snapshot>, error>
+
+auto event_stream::rebase( state_value next ) -> std::expected<void, error>
 {
-    if( decision == disclosure::withheld ) { return std::nullopt; }
-    if( const auto valid = validate_state( candidate ); !valid ) { return std::unexpected( valid.error() ); }
-    if( current_.state.view != candidate.view ) {
-        return std::unexpected( error::stale_boundary ); // Reference view is fixed; use pure projection.
-    }
-    if( same_state( current_.state, candidate ) ) { return current_; }
-    if( current_.state_revision == std::numeric_limits<counter>::max() ) {
+    if( const auto valid = validate_boundary( next.interaction ); !valid ) { return valid; }
+    if( current_.at.revision == std::numeric_limits<counter>::max() ) {
         return std::unexpected( error::resource_limit );
     }
-    auto next = snapshot{
-        .session_epoch = current_.session_epoch,
-        .state_revision = current_.state_revision + 1,
-        .through_public_sequence = current_.through_public_sequence,
-        .state = std::move( candidate ),
-    };
-    if( serialize_snapshot( next ).size() > maximum_inline_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
-    auto result = next;
-    current_ = std::move( next );
-    return result;
+    current_.value = std::move( next );
+    ++current_.at.revision;
+    return {};
 }
-auto apply_event( snapshot &receiver, const public_event &event ) -> std::expected<void, error>
+
+auto apply_event( snapshot &receiver, const std::string &epoch, const public_event &event )
+-> std::expected<void, error>
 {
     const auto &value = event.value();
-    if( const auto valid = valid_event( value ); !valid ) { return valid; }
-    if( serialize_event( event ).size() > maximum_inline_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
-    if( value.session_epoch != receiver.session_epoch ||
-        value.payload.state.view != receiver.state.view ||
-        receiver.through_public_sequence == std::numeric_limits<counter>::max() ||
-        value.public_sequence != receiver.through_public_sequence + 1 ||
-        value.base_state_revision != receiver.state_revision ||
-        same_state( receiver.state, value.payload.state ) ) {
+    if( !valid_event( value ) ) { return std::unexpected( error::resync_required ); }
+    if( epoch != receiver.at.epoch || receiver.at.sequence == std::numeric_limits<counter>::max() ||
+        value.sequence != receiver.at.sequence + 1 ||
+        value.revision != receiver.at.revision + ( value.delta.empty() ? 0 : 1 ) ) {
         return std::unexpected( error::resync_required );
     }
-    auto next_state = value.payload.state;
-    receiver.state = std::move( next_state );
-    receiver.state_revision = value.state_revision;
-    receiver.through_public_sequence = value.public_sequence;
+    auto next = receiver.value;
+    if( const auto applied = apply( next, value.delta ); !applied ) { return applied; }
+    receiver.value = std::move( next );
+    receiver.at.sequence = value.sequence;
+    receiver.at.revision = value.revision;
     return {};
 }
 auto apply_batch( snapshot &receiver, const event_batch &batch ) -> std::expected<void, error>
 {
-    if( batch.events.empty() ) {
-        if( batch.first_sequence || batch.last_sequence ) { return std::unexpected( error::resync_required ); }
-        return {};
-    }
-    if( batch.events.size() > maximum_inline_events ||
-        serialize_batch( batch ).size() > maximum_inline_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
-    if( !batch.first_sequence || !batch.last_sequence ||
-        *batch.first_sequence != batch.events.front().value().public_sequence ||
-        *batch.last_sequence != batch.events.back().value().public_sequence ) {
-        return std::unexpected( error::resync_required );
-    }
     auto candidate = receiver;
     for( const auto &event : batch.events ) {
-        if( const auto applied = apply_event( candidate, event ); !applied ) { return applied; }
+        if( const auto applied = apply_event( candidate, batch.epoch, event ); !applied ) { return applied; }
     }
     receiver = std::move( candidate );
     return {};

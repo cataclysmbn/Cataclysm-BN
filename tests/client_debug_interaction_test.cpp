@@ -1117,8 +1117,8 @@ TEST_CASE(
         REQUIRE(snapshot.structured);
         CHECK(snapshot.context == "DEBUG_MSG");
         CHECK(snapshot.message.find(report(options)) != std::string::npos);
-        const auto admitted = engine_client::capture_state(
-            {.session_epoch = "debug-admission-epoch",
+        const auto admitted = engine_client::capture_boundary(
+            {.epoch = "debug-admission-epoch",
              .ready = {.phase = "waiting_for_input",
                        .game_ready = false,
                        .accepts_interaction_commands = true}});

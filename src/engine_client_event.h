@@ -10,29 +10,47 @@
 namespace engine_client
 {
 
+/// Everything a client reconstructs: the current boundary plus what the avatar knows.
+struct state_value {
+    boundary_state interaction;
+    world_state world;
+};
+struct gone_entity {
+    std::string id = {};
+    std::string reason = "lost_sight";
+};
+/// The only state-bearing part of an event. Applied in member order (design 3.4):
+/// coverage, cells, forgotten, entities, gone, then avatar/environment/interaction replace.
+struct changes {
+    std::optional<bounds> coverage = std::nullopt;
+    std::vector<cell> cells = {};
+    std::vector<position> forgotten = {};
+    std::vector<entity> entities = {};
+    std::vector<gone_entity> gone = {};
+    std::optional<avatar_value> avatar = std::nullopt;
+    std::optional<environment_value> environment = std::nullopt;
+    std::optional<boundary_state> interaction = std::nullopt;
+    auto empty() const -> bool;
+};
+/// The changes that turn `from` into `to`. A cell or entity that left perception is
+/// republished (`remembered`) or listed as forgotten/gone, so nothing visible survives implicitly.
+auto diff( const state_value &from, const state_value &to ) -> changes;
+/// Fails without partial effects when the changes do not fit `value` (unknown id, cell outside
+/// the coverage, duplicate entry).
+auto apply( state_value &value, const changes &delta ) -> std::expected<void, error>;
+auto same_state( const state_value &left, const state_value &right ) -> bool;
+
 /// Supplied by the engine at the logical event boundary, never queried from a sink.
 enum class disclosure { withheld, publish };
-struct presentation {
-    std::string group_id = {};
-    int ordinal = 0;
-    int count = 1;
-    int duration_ms = 0;
-};
-struct replacement {
-    state_value state;
-    std::optional<std::string> command_id = std::nullopt;
-    std::optional<counter> cause_sequence = std::nullopt;
-    std::optional<presentation> display = std::nullopt;
-};
 struct event_value {
-    std::string session_epoch = {};
-    std::string event_id = {};
-    counter public_sequence = 0;
-    counter base_state_revision = 0;
-    counter state_revision = 0;
-    replacement payload;
+    counter sequence = 0;
+    counter revision = 0;
+    std::string type = {};
+    std::optional<counter> cause = std::nullopt;
+    std::optional<std::string> command = std::nullopt;
+    changes delta = {};
 };
-/// Owned value with read-only access after construction. No world/renderer handles or borrowed data.
+/// Owned value with read-only access after construction.
 class public_event
 {
     public:
@@ -41,68 +59,55 @@ class public_event
     private:
         event_value value_;
 };
-class event_sink
-{
-    public:
-        virtual ~event_sink() = default;
-        /// Failure must not consume/store a prefix. Sink ownership never grants disclosure.
-        virtual auto publish( public_event event ) -> std::expected<void, error> = 0;
-};
-class null_event_sink final : public event_sink
-{
-    public:
-        auto publish( public_event event ) -> std::expected<void, error> override;
-};
 struct event_batch {
-    std::optional<counter> first_sequence = std::nullopt;
-    std::optional<counter> last_sequence = std::nullopt;
+    std::string epoch = {};
     std::vector<public_event> events = {};
 };
-/// Bounded in-process recorder, not transport history. Drain before accepting another batch.
-class recording_event_sink final : public event_sink
-{
-    public:
-        auto publish( public_event event ) -> std::expected<void, error> override;
-        auto events() const -> const std::vector<public_event> &; // *NOPAD*
-        auto drain() -> event_batch;
-    private:
-        std::vector<public_event> events_ = {};
+struct snapshot {
+    clock_point at = {};
+    state_value value = {};
 };
-/// Publishes complete replacement deltas; hidden candidates are rejected before IDs/counters.
-/// A failed publication leaves state/counters unchanged: retry or explicitly resynchronize.
-/// Reference projection is fixed for the stream lifetime, including boundary changes/recovery.
+
+struct publish_request {
+    disclosure decision = disclosure::publish;
+    state_value next = {};
+    std::optional<std::string> command = std::nullopt;
+    std::optional<counter> cause = std::nullopt;
+};
+/// The one ordered stream of an epoch. A failed or withheld publication consumes no
+/// sequence, revision or ID and leaves the state unchanged.
 class event_stream
 {
     public:
-        static auto create( snapshot initial ) -> std::expected<event_stream, error>;
-        auto current_snapshot() const -> snapshot;
-        /// Pure bounded projection of this committed boundary. No counters, epoch or events change.
-        /// Supply an owned P1-approved capture from the same boundary, not a new stream per page.
-        auto project_snapshot( state_value candidate ) const -> std::expected<snapshot, error>;
-        auto replace( disclosure decision, replacement candidate, event_sink &sink )
-        -> std::expected<std::optional<public_event>, error>;
-        /// Engine-boundary recovery for this state-only scope, never a passive query.
-        /// Commits a bounded snapshot without an event; receiver MUST be told resync_required.
-        /// Advances a changed revision, not sequence/epoch. Cannot recover required presentation.
-        auto resynchronize( disclosure decision, state_value candidate )
-        -> std::expected<std::optional<snapshot>, error>;
+        static auto create( std::string epoch, state_value initial ) -> std::expected<event_stream, error>;
+        auto current() const -> const snapshot &; // *NOPAD*
+        /// Nothing is published when the decision is withheld or the state did not change.
+        auto publish( publish_request request ) -> std::expected<std::optional<public_event>, error>;
+        /// Engine-boundary recovery when an event cannot be encoded: adopt `next` and advance the
+        /// revision only. Subscribers must be told `resync` and take a fresh snapshot.
+        auto rebase( state_value next ) -> std::expected<void, error>;
     private:
         explicit event_stream( snapshot initial );
         snapshot current_;
 };
-/// Pure page-specific copy of a published boundary event, with the same public identity/clocks.
-/// Capture while that boundary is valid; retain only owned bounded values for delivery.
-/// No event registry, publication or reconstruction history is allocated here.
-auto project_event( const public_event &event, state_value candidate )
--> std::expected<public_event, error>;
-/// Transactional reconstruction. Epoch/gap/base/projection violations leave the receiver unchanged.
-auto apply_event( snapshot &receiver, const public_event &event ) -> std::expected<void, error>;
+
+/// Transactional reconstruction. Epoch, gap, duplicate, revision or changes violations leave the
+/// receiver unchanged; an invalid suffix applies no prefix.
+auto apply_event( snapshot &receiver, const std::string &epoch, const public_event &event )
+-> std::expected<void, error>;
 auto apply_batch( snapshot &receiver, const event_batch &batch ) -> std::expected<void, error>;
-auto serialize_event( const public_event &event ) -> std::string;
-auto serialize_batch( const event_batch &batch ) -> std::string;
-/// Adapter-owned inline result. No result/history accumulation in the core.
-/// Oversize or incoherent responses fail atomically; return explicit resync metadata instead.
-auto serialize_command_response( const command_result &command, const event_batch &batch )
--> std::expected<std::string, error>;
+
+/// `type` for a published change set, e.g. `cells.seen`.
+auto classify( const changes &delta ) -> std::string;
+
+/// Params of `bn.events`.
+auto serialize_events( const event_batch &batch ) -> std::string;
+/// Result of `bn.subscribe`; the cells follow as `serialize_snapshot_part` notifications.
+auto serialize_snapshot_header( const snapshot &value ) -> std::string;
+auto snapshot_part_count( const snapshot &value ) -> std::size_t;
+/// Params of the `index`th `bn.snapshot.part`.
+auto serialize_snapshot_part( const snapshot &value, std::size_t index ) -> std::string;
+auto serialize_resync( const std::string &epoch, std::string_view reason, counter lost_after )
+-> std::string;
 
 } // namespace engine_client

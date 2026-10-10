@@ -10,17 +10,18 @@
 namespace engine_client
 {
 
-struct snapshot_request {
-    std::string session_epoch = {};
-    projection page = {};
+struct hello_request {
+    std::vector<std::string> versions = {};
+    std::string client_name = {};
+    std::string client_version = {};
 };
 struct result_request {
-    std::string session_epoch = {};
+    std::string epoch = {};
     std::string command_id = {};
 };
 /// A receipt is not a validation/execution result.
 struct receipt {
-    std::string session_epoch = {};
+    std::string epoch = {};
     std::string command_id = {};
 };
 
@@ -29,35 +30,33 @@ struct receipt {
 enum class decode_error { invalid_json, invalid_params, resource_limit };
 /// Decode one complete application value, at most maximum_inline_bytes UTF-8 bytes.
 /// Pure, owned results: no native provider, authority, receipt allocation or gameplay RNG access.
-auto decode_negotiation_request( std::string_view input )
--> std::expected<negotiation_request, decode_error>;
-auto decode_snapshot_request( std::string_view input )
--> std::expected<snapshot_request, decode_error>;
+auto decode_hello_request( std::string_view input ) -> std::expected<hello_request, decode_error>;
+/// `{}` for `bn.subscribe` and `bn.unsubscribe`.
+auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>;
+auto decode_choices_request( std::string_view input )
+-> std::expected<choices_request, decode_error>;
 auto decode_command_request( std::string_view input )
 -> std::expected<command_request, decode_error>;
 auto decode_result_request( std::string_view input )
 -> std::expected<result_request, decode_error>;
 
-enum class application_error_stage { negotiation, receipt, validation, execution, completion };
-enum class required_action { negotiate, read_snapshot, retry, none };
-struct error_current {
-    std::string session_epoch = {};
-    counter state_revision = 0;
-    counter through_public_sequence = 0;
-};
+/// What the client should do after an application error.
+enum class required_action { none, hello, subscribe, retry };
 /// Closed application_error data, with no free-form diagnostics or arbitrary payloads.
 struct application_error {
     error kind = error::validation_failed;
-    application_error_stage stage = application_error_stage::receipt;
-    bool retryable = false;
     required_action action = required_action::none;
-    std::optional<error_current> current = std::nullopt;
+    std::optional<clock_point> at = std::nullopt;
 };
-/// Parent-selected JSON-RPC application failure mapping; the envelope is adapter-owned.
+/// JSON-RPC application failure mapping; the envelope is adapter-owned.
 inline constexpr auto application_error_code = 1000;
-inline constexpr auto application_error_message = "Engine contract error";
 
+struct engine_info {
+    std::string build = {};
+    std::vector<std::string> mods = {};
+};
 /// Validate IDs/UTF-8 and the output bound before returning a complete serialized value.
+auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> std::string;
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>;
 auto serialize_application_error( const application_error &value )
 -> std::expected<std::string, error>;

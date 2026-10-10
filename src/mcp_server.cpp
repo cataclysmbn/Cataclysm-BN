@@ -430,7 +430,7 @@ server::server( mcp_host host, options opts ) : host_( std::move( host ) ),
 
 auto server::run( std::istream &in, std::ostream &out, std::ostream &err ) -> int
 {
-    if( !publish_boundary() ) { failed_ = true; return 1; }
+    if( !publish_boundary( out ) ) { failed_ = true; return 1; }
     while( true ) {
         auto frame = rpc::read_frame( in, options_.max_frame_bytes );
         if( frame.status == frame_status::eof ) {
@@ -454,7 +454,7 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
 {
     if( failed_ || eof_ ) { return false; }
     if( host_.has_input && host_.has_input() ) { return true; }
-    if( !publish_boundary() ) { failed_ = true; eof_ = true; return false; }
+    if( !publish_boundary( out ) ) { failed_ = true; eof_ = true; return false; }
     pump_mode_ = true;
     finish_pending( out, err );
     while( !failed_ ) {
@@ -463,7 +463,10 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
             break;
         }
         // A direct command is not queued until its complete bounded receipt frame is written.
-        if( session_.has_received() && !deferred_frame_ ) { static_cast<void>( deliver_input() ); }
+        if( session_.has_received() && !deferred_frame_ ) {
+            static_cast<void>( deliver_input() );
+            if( !flush_push( out ) ) { failed_ = true; break; }
+        }
         if( host_.has_input && host_.has_input() ) {
             pump_mode_ = false;
             return true;
@@ -526,27 +529,55 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
     }
 }
 
-auto server::publish_boundary() -> bool
+auto server::publish_boundary( std::ostream &out ) -> bool
 {
-    using namespace engine_client;
     if( !session_.publish_boundary() ) { session_.interrupt(); return false; }
-    if( completion_command_ && session_.latest_event() ) {
-        const auto &event = *session_.latest_event();
-        if( event.value().payload.command_id == completion_command_ ) {
-            completion_events_ = {};
-            const auto view = session_.read_snapshot( projection_ );
-            if( view ) {
-                const auto projected = project_event( event, view->state );
-                if( projected ) {
-                    completion_events_ = { .first_sequence = event.value().public_sequence,
-                                           .last_sequence = event.value().public_sequence,
-                                           .events = {*projected}
-                                         };
-                }
-            }
-        }
+    return flush_push( out );
+}
+
+auto server::write_notifications( std::ostream &out ) -> bool
+{
+    for( const auto &frame : std::exchange( notifications_, {} ) ) {
+        if( !rpc::write_frame( out, frame ) ) { return false; }
     }
     return true;
+}
+
+auto server::flush_push( std::ostream &out ) -> bool
+{
+    using namespace engine_client;
+    const auto notify = [this]( const std::string_view method, const std::string & params ) {
+        notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"" + std::string{method} +
+                                  "\",\"params\":" + params + "}" );
+    };
+    auto batch = event_batch{};
+    auto batch_bytes = std::size_t{0};
+    const auto flush_batch = [&]() {
+        if( !batch.events.empty() ) { notify( "bn.events", serialize_events( batch ) ); }
+        batch.events.clear();
+        batch_bytes = 0;
+    };
+    for( auto &item : session_.take_push() ) {
+        if( !subscribed_ ) { continue; }
+        if( const auto *pushed = std::get_if<event_push>( &item ) ) {
+            const auto bytes = serialize_events( {.epoch = pushed->epoch, .events = {pushed->event}} ).size();
+            if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
+            batch.epoch = pushed->epoch;
+            batch.events.push_back( pushed->event );
+            batch_bytes += bytes;
+            continue;
+        }
+        flush_batch();
+        if( const auto *command = std::get_if<command_result>( &item ) ) {
+            notify( "bn.command", serialize_command_result( *command ) );
+        } else {
+            const auto &notice = std::get<resync_notice>( item );
+            notify( "bn.resync", serialize_resync( notice.epoch, notice.reason, notice.lost_after ) );
+            subscribed_ = false;
+        }
+    }
+    flush_batch();
+    return write_notifications( out );
 }
 
 auto server::deliver_input() -> bool
@@ -562,22 +593,26 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
 {
     using namespace engine_client;
     namespace rpc = jsonrpc;
-    // Direct notifications are deliberately effect-free, including negotiation and reads.
+    // Direct notifications are deliberately effect-free, including hello and reads.
     if( !request.id.json ) { return std::nullopt; }
-    const auto fail = [&]( const error reason, const application_error_stage stage ) {
-        auto data = application_error{ .kind = reason, .stage = stage };
-        if( reason == error::negotiation_failed || reason == error::unsupported_capability ||
-            reason == error::stale_epoch ) {
-            data.action = required_action::negotiate;
-        } else if( reason == error::stale_revision || reason == error::stale_boundary ||
-                   reason == error::stale_interaction_schema ||
-                   reason == error::resync_required ) {
-            data.action = required_action::read_snapshot;
-        }
-        if( const auto current = session_.read_snapshot( projection_ ) ) {
-            data.current = error_current{ .session_epoch = current->session_epoch,
-                                          .state_revision = current->state_revision,
-                                          .through_public_sequence = current->through_public_sequence };
+    const auto fail = [&]( const error reason ) {
+        auto data = application_error{ .kind = reason, .at = session_.at() };
+        switch( reason ) {
+            case error::negotiation_failed:
+                data.action = required_action::hello;
+                break;
+            case error::stale_epoch:
+            case error::stale_revision:
+            case error::stale_boundary:
+            case error::stale_interaction_schema:
+            case error::resync_required:
+                data.action = required_action::subscribe;
+                break;
+            case error::not_ready:
+                data.action = required_action::retry;
+                break;
+            default:
+                break;
         }
         const auto encoded = serialize_application_error( data );
         if( !encoded ) { return rpc::make_error( { .id = request.id } ); }
@@ -589,74 +624,61 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     };
     const auto params = request.params ? std::string_view{*request.params} :
                         std::string_view{};
-    const auto supports = [&]( const std::string & name ) {
-        return negotiated_ &&
-               std::ranges::find( negotiated_->capabilities, name ) != negotiated_->capabilities.end();
-    };
-    if( request.method == "bn.contract.negotiate" ) {
-        const auto decoded = decode_negotiation_request( params );
+    if( request.method == "bn.hello" ) {
+        const auto decoded = decode_hello_request( params );
         if( !decoded ) { return invalid(); }
-        const auto selected = negotiate( *decoded );
-        if( !selected ) { return fail( selected.error(), application_error_stage::negotiation ); }
+        if( std::ranges::find( decoded->versions, contract_version ) == decoded->versions.end() ) {
+            return fail( error::negotiation_failed );
+        }
         // A legacy batch still waiting for native delivery cannot transfer authority mid-flight.
         if( pending_response_ || ( host_.has_input && host_.has_input() ) ) {
-            return fail( error::command_busy, application_error_stage::negotiation );
+            return fail( error::command_busy );
         }
-        negotiated_ = *selected;
-        return rpc::make_result( request, serialize_negotiation( *selected, session_.epoch() ) );
+        hello_ = true;
+        return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine() ) );
     }
-    if( !negotiated_ ) { return fail( error::negotiation_failed, application_error_stage::negotiation ); }
-    if( request.method == "bn.snapshot.get" ) {
-        const auto decoded = decode_snapshot_request( params );
+    if( !hello_ ) { return fail( error::negotiation_failed ); }
+    if( request.method == "bn.subscribe" ) {
+        if( !decode_empty_request( params ) ) { return invalid(); }
+        const auto current = session_.current();
+        if( !current ) { return fail( current.error() ); }
+        // The parts follow the response frame, before any event after `current->at`.
+        for( const auto index : std::views::iota( std::size_t{0}, snapshot_part_count( *current ) ) ) {
+            notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"bn.snapshot.part\",\"params\":" +
+                                      serialize_snapshot_part( *current, index ) + "}" );
+        }
+        subscribed_ = true;
+        return rpc::make_result( request, serialize_snapshot_header( *current ) );
+    }
+    if( request.method == "bn.unsubscribe" ) {
+        if( !decode_empty_request( params ) ) { return invalid(); }
+        subscribed_ = false;
+        return rpc::make_result( request, "{}" );
+    }
+    if( request.method == "bn.interaction.choices" ) {
+        const auto decoded = decode_choices_request( params );
         if( !decoded ) { return invalid(); }
-        if( !supports( "snapshot.readiness" ) || !supports( "snapshot.actions" ) ||
-            !supports( "snapshot.interaction" ) ) {
-            return fail( error::unsupported_capability, application_error_stage::validation );
-        }
-        if( decoded->session_epoch != session_.epoch() ) {
-            return fail( error::stale_epoch, application_error_stage::validation );
-        }
-        const auto current = session_.read_snapshot( decoded->page );
-        if( !current ) { return fail( current.error(), application_error_stage::validation ); }
-        projection_ = decoded->page;
-        return rpc::make_result( request, serialize_snapshot( *current ) );
+        const auto page = read_choices( *decoded, session_.epoch() );
+        if( !page ) { return fail( page.error() ); }
+        return rpc::make_result( request, serialize_choices( *page ) );
     }
     if( request.method == "bn.command.submit" ) {
         const auto decoded = decode_command_request( params );
         if( !decoded ) { return invalid(); }
-        const auto capability = std::holds_alternative<semantic_operation>( decoded->operation ) ?
-                                "command.semantic_interaction" : "command.registered_action";
-        if( !supports( capability ) ) {
-            return fail( error::unsupported_capability, application_error_stage::receipt );
-        }
-        if( !pump_mode_ ) { return fail( error::not_ready, application_error_stage::receipt ); }
+        if( !pump_mode_ ) { return fail( error::not_ready ); }
+        if( decoded->epoch != session_.epoch() ) { return fail( error::stale_epoch ); }
         const auto received = session_.submit( *decoded );
-        if( !received ) { return fail( received.error(), application_error_stage::receipt ); }
-        completion_command_ = received->command_id;
-        completion_events_ = {};
+        if( !received ) { return fail( received.error() ); }
         const auto encoded = serialize_receipt( *received );
-        if( !encoded ) { session_.interrupt(); return fail( encoded.error(), application_error_stage::receipt ); }
+        if( !encoded ) { session_.interrupt(); return fail( encoded.error() ); }
         return rpc::make_result( request, *encoded );
     }
     if( request.method == "bn.command.result" ) {
         const auto decoded = decode_result_request( params );
         if( !decoded ) { return invalid(); }
-        if( !supports( "delivery.inline_completion" ) ) {
-            return fail( error::unsupported_capability, application_error_stage::completion );
-        }
-        auto current = session_.result( *decoded );
-        if( !current ) { return fail( current.error(), application_error_stage::completion ); }
-        auto batch = supports( "events.interaction_replaced" ) &&
-                     completion_command_ == current->command_id ?
-                     completion_events_ : event_batch{};
-        if( current->completed && batch.events.empty() ) { current->completed->resync_required = true; }
-        auto encoded = serialize_command_response( *current, batch );
-        if( !encoded ) {
-            if( current->completed ) { current->completed->resync_required = true; }
-            encoded = serialize_command_response( *current, {} );
-        }
-        if( !encoded ) { return fail( encoded.error(), application_error_stage::completion ); }
-        return rpc::make_result( request, *encoded );
+        const auto current = session_.result( *decoded );
+        if( !current ) { return fail( current.error() ); }
+        return rpc::make_result( request, serialize_command_result( *current ) );
     }
     return rpc::make_error( { .id = request.id, .code = rpc::error_code::method_not_found } );
 }
@@ -693,7 +715,8 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     if( !pending_requests_ || !deferred_frame_ ) { return terminal(); }
     while( const auto envelope = pending_requests_->next() ) {
         const auto &method = envelope->method.decoded;
-        const auto is_direct = method == "bn.contract.negotiate" || method == "bn.snapshot.get" ||
+        const auto is_direct = method == "bn.hello" || method == "bn.subscribe" ||
+                               method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
                                method == "bn.command.submit" || method == "bn.command.result";
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};
         if( is_direct ) {
@@ -720,7 +743,7 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     auto frame = std::move( *deferred_frame_ );
     deferred_frame_.reset();
     const auto bytes = std::move( frame ).finish();
-    if( !bytes || !rpc::write_frame( out, *bytes ) ) { return terminal(); }
+    if( !bytes || !rpc::write_frame( out, *bytes ) || !write_notifications( out ) ) { return terminal(); }
     return true;
 }
 
@@ -842,10 +865,9 @@ std::expected<std::optional<rpc::response>, rpc::output_error>
                 if( !host_.state ) { return fail( rpc::legacy_reason::structured_state_unavailable ); }
                 return tool( host_.state() );
             }
-            if( negotiated_ && ( name == "bn.press" || name == "bn.interact" ) ) {
+            if( hello_ && ( name == "bn.press" || name == "bn.interact" ) ) {
                 const auto data = engine_client::serialize_application_error( {
                     .kind = engine_client::error::invalid_lifecycle,
-                    .stage = engine_client::application_error_stage::receipt,
                 } );
                 if( !data ) { return std::unexpected( rpc::output_error::invalid_value ); }
                 return rpc::make_error( { .id = request.id, .code = rpc::error_code::application_error, .data = *data } );

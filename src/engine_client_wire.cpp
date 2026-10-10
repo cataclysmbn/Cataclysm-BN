@@ -107,6 +107,11 @@ class request_reader
             require( !value.empty() );
             return value;
         }
+        auto optional_id() -> std::optional<std::string> {
+            whitespace();
+            if( consume( "null" ) ) { return std::nullopt; }
+            return id();
+        }
         auto boolean() -> bool {
             whitespace();
             if( consume( "true" ) ) { return true; }
@@ -264,30 +269,26 @@ class request_reader
         }
 };
 
-auto read_position( request_reader &reader ) -> coordinate
+auto read_position( request_reader &reader ) -> position
 {
-    auto value = coordinate{};
-    const auto fields = reader.object( {"space", "frame_id", "x", "y", "z"}, [&]( auto index ) {
+    auto value = position{};
+    const auto fields = reader.object( {"dim", "x", "y", "z"}, [&]( auto index ) {
         switch( index ) {
             case 0:
-                value.space = reader.string();
-                require( value.space == "reality_bubble_map_square" );
+                value.dim = reader.string( maximum_id_bytes );
                 break;
             case 1:
-                value.frame_id = reader.id();
+                value.x = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
                 break;
             case 2:
-                value.position.x = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
+                value.y = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
                 break;
             case 3:
-                value.position.y = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
-                break;
-            case 4:
-                value.position.z = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
+                value.z = static_cast<int>( reader.integer( INT32_MIN, INT32_MAX ) );
                 break;
         }
     } );
-    require( fields == 31 );
+    require( fields == 15 );
     return value;
 }
 auto read_operation( request_reader &reader ) -> std::variant<semantic_operation, registered_action>
@@ -296,7 +297,7 @@ auto read_operation( request_reader &reader ) -> std::variant<semantic_operation
     auto semantic = semantic_operation{};
     auto action_id = std::string{};
     const auto fields = reader.object( {"kind", "choice_id", "field_id", "value", "submit",
-                                        "count", "candidate_id", "position", "action_id"},
+                                        "count", "candidate_id", "pos", "action_id"},
     [&]( auto index ) {
         switch( index ) {
             case 0:
@@ -326,7 +327,7 @@ auto read_operation( request_reader &reader ) -> std::variant<semantic_operation
     } );
     // Exact presence masks in the member order above, not truthiness of native defaults.
     // This rejects fields from other alternatives even when empty, false or zero.
-    if( kind == "invoke_registered_action" ) {
+    if( kind == "action" ) {
         require( fields == ( 1u | 256u ) );
         return registered_action{ .id = std::move( action_id ) };
     }
@@ -352,64 +353,67 @@ auto read_operation( request_reader &reader ) -> std::variant<semantic_operation
     }
     return semantic;
 }
-auto read_request( request_reader &reader, negotiation_request &value ) -> void
+auto read_request( request_reader &reader, hello_request &value ) -> void
 {
-    const auto fields = reader.object( {"supported_versions", "required_capabilities", "optional_capabilities"},
-    [&]( auto index ) {
+    const auto fields = reader.object( {"versions", "client"}, [&]( auto index ) {
+        if( index == 0 ) {
+            value.versions = reader.strings();
+        } else {
+            const auto client = reader.object( {"name", "version"}, [&]( auto client_index ) {
+                ( client_index == 0 ? value.client_name : value.client_version ) = reader.string(
+                            maximum_id_bytes );
+            } );
+            require( client == 3 );
+        }
+    } );
+    require( fields == 3 && !value.versions.empty() );
+}
+auto read_request( request_reader &reader, choices_request &value ) -> void
+{
+    const auto fields = reader.object( {"epoch", "boundary_id", "offset", "limit"}, [&]( auto index ) {
         switch( index ) {
             case 0:
-                value.supported_versions = reader.strings();
+                value.epoch = reader.id();
                 break;
             case 1:
-                value.required_capabilities = reader.strings();
+                value.boundary_id = reader.id();
                 break;
-            case 2:
-                value.optional_capabilities = reader.strings();
+            case 2: {
+                const auto offset = reader.integer( 0, maximum_safe_integer );
+                require( static_cast<std::uint64_t>( offset ) <= std::numeric_limits<std::size_t>::max() );
+                value.offset = static_cast<std::size_t>( offset );
+                break;
+            }
+            case 3:
+                value.limit = static_cast<std::size_t>( reader.integer( 1, maximum_rows ) );
                 break;
         }
     } );
-    require( fields == 7 && !value.supported_versions.empty() );
-}
-auto read_request( request_reader &reader, snapshot_request &value ) -> void
-{
-    const auto fields = reader.object( {"session_epoch", "page"}, [&]( auto index ) {
-        if( index == 0 ) { value.session_epoch = reader.id(); }
-        else {
-            const auto page_fields = reader.object( {"offset", "limit"}, [&]( auto page_index ) {
-                if( page_index == 0 ) {
-                    const auto offset = reader.integer( 0, maximum_safe_integer );
-                    require( static_cast<std::uint64_t>( offset ) <= std::numeric_limits<std::size_t>::max() );
-                    value.page.offset = static_cast<std::size_t>( offset );
-                } else { value.page.limit = static_cast<std::size_t>( reader.integer( 1, maximum_rows ) ); }
-            } );
-            require( page_fields == 3 );
-        }
-    } );
-    require( fields == 3 );
+    require( fields == 15 );
 }
 auto read_request( request_reader &reader, command_request &value ) -> void
 {
-    const auto fields = reader.object( {"session_epoch", "based_on", "operation"}, [&]( auto index ) {
+    const auto fields = reader.object( {"epoch", "expect", "operation"}, [&]( auto index ) {
         switch( index ) {
             case 0:
-                value.session_epoch = reader.id();
+                value.epoch = reader.id();
                 break;
             case 1: {
-                const auto basis = reader.object( {"state_revision", "input_boundary_id", "interaction_schema_id"},
-                [&]( auto basis_index ) {
-                    switch( basis_index ) {
+                const auto expect = reader.object( {"revision", "boundary_id", "schema_id"},
+                [&]( auto expect_index ) {
+                    switch( expect_index ) {
                         case 0:
-                            value.state_revision = reader.counter_value();
+                            value.expect.revision = reader.counter_value();
                             break;
                         case 1:
-                            value.input_boundary_id = reader.id();
+                            value.expect.boundary_id = reader.id();
                             break;
                         case 2:
-                            value.interaction_schema_id = reader.id();
+                            value.expect.schema_id = reader.optional_id();
                             break;
                     }
                 } );
-                require( basis == 3 || basis == 7 );
+                require( expect == 7 );
                 break;
             }
             case 2:
@@ -418,16 +422,19 @@ auto read_request( request_reader &reader, command_request &value ) -> void
         }
     } );
     require( fields == 7 );
-    require( std::holds_alternative<registered_action>( value.operation ) ||
-             !value.interaction_schema_id.empty() );
 }
 auto read_request( request_reader &reader, result_request &value ) -> void
 {
-    const auto fields = reader.object( {"session_epoch", "command_id"}, [&]( auto index ) {
-        if( index == 0 ) { value.session_epoch = reader.id(); }
+    const auto fields = reader.object( {"epoch", "command_id"}, [&]( auto index ) {
+        if( index == 0 ) { value.epoch = reader.id(); }
         else { value.command_id = reader.id(); }
     } );
     require( fields == 3 );
+}
+struct empty_request {};
+auto read_request( request_reader &reader, empty_request & /*value*/ ) -> void
+{
+    require( reader.object( {}, []( auto /*index*/ ) {} ) == 0 );
 }
 template<typename Request>
 auto decode( std::string_view input ) -> std::expected<Request, decode_error>
@@ -440,33 +447,17 @@ auto decode( std::string_view input ) -> std::expected<Request, decode_error>
         return result;
     } catch( const decode_error failure ) { return std::unexpected( failure ); }
 }
-auto stage_name( application_error_stage value ) -> std::optional<std::string_view>
-{
-    switch( value ) {
-        case application_error_stage::negotiation:
-            return "negotiation";
-        case application_error_stage::receipt:
-            return "receipt";
-        case application_error_stage::validation:
-            return "validation";
-        case application_error_stage::execution:
-            return "execution";
-        case application_error_stage::completion:
-            return "completion";
-    }
-    return std::nullopt;
-}
 auto action_name( required_action value ) -> std::optional<std::string_view>
 {
     switch( value ) {
-        case required_action::negotiate:
-            return "negotiate";
-        case required_action::read_snapshot:
-            return "read_snapshot";
+        case required_action::none:
+            return std::string_view{};
+        case required_action::hello:
+            return "hello";
+        case required_action::subscribe:
+            return "subscribe";
         case required_action::retry:
             return "retry";
-        case required_action::none:
-            return "none";
     }
     return std::nullopt;
 }
@@ -478,27 +469,53 @@ auto bounded_output( std::ostringstream &output ) -> std::expected<std::string, 
 }
 } // namespace
 
-auto decode_negotiation_request( std::string_view input ) ->
-std::expected<negotiation_request, decode_error>
-{ return decode<negotiation_request>( input ); }
-auto decode_snapshot_request( std::string_view input ) ->
-std::expected<snapshot_request, decode_error>
-{ return decode<snapshot_request>( input ); }
+auto decode_hello_request( std::string_view input ) -> std::expected<hello_request, decode_error>
+{ return decode<hello_request>( input ); }
+auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>
+{
+    const auto decoded = decode<empty_request>( input );
+    if( !decoded ) { return std::unexpected( decoded.error() ); }
+    return {};
+}
+auto decode_choices_request( std::string_view input ) ->
+std::expected<choices_request, decode_error>
+{ return decode<choices_request>( input ); }
 auto decode_command_request( std::string_view input ) ->
 std::expected<command_request, decode_error>
 { return decode<command_request>( input ); }
 auto decode_result_request( std::string_view input ) -> std::expected<result_request, decode_error>
 { return decode<result_request>( input ); }
 
+auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> std::string
+{
+    auto output = std::ostringstream{};
+    auto out = JsonOut{output};
+    out.start_object();
+    out.member( "version", contract_version );
+    out.member( "epoch", epoch );
+    out.member( "engine" );
+    out.start_object();
+    out.member( "build", engine.build );
+    out.member( "mods", engine.mods );
+    out.end_object();
+    out.member( "limits" );
+    out.start_object();
+    out.member( "frame_bytes", maximum_frame_bytes );
+    out.member( "cells_per_part", cells_per_part );
+    out.member( "cells_per_query", cells_per_query );
+    out.end_object();
+    out.end_object();
+    return output.str();
+}
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>
 {
-    if( !valid_id( value.session_epoch ) || !valid_id( value.command_id ) ) {
+    if( !valid_id( value.epoch ) || !valid_id( value.command_id ) ) {
         return std::unexpected( error::validation_failed );
     }
     auto output = std::ostringstream{};
     auto out = JsonOut{output};
     out.start_object();
-    out.member( "session_epoch", value.session_epoch );
+    out.member( "epoch", value.epoch );
     out.member( "command_id", value.command_id );
     out.member( "stage", "received" );
     out.end_object();
@@ -507,28 +524,21 @@ auto serialize_receipt( const receipt &value ) -> std::expected<std::string, err
 auto serialize_application_error( const application_error &value ) ->
 std::expected<std::string, error>
 {
-    const auto stage = stage_name( value.stage );
     const auto action = action_name( value.action );
-    // error is a contiguous closed enum in the accepted core; reject invalid native enum casts.
-    if( !stage || !action || value.kind < error::negotiation_failed ||
-        value.kind > error::resource_limit ||
-        ( value.current && !valid_id( value.current->session_epoch ) ) ) {
+    // error is a contiguous closed enum; reject invalid native enum casts.
+    if( !action || value.kind < error::negotiation_failed || value.kind > error::resource_limit ||
+        ( value.at && !valid_id( value.at->epoch ) ) ) {
         return std::unexpected( error::validation_failed );
     }
     auto output = std::ostringstream{};
     auto out = JsonOut{output};
     out.start_object();
     out.member( "kind", error_name( value.kind ) );
-    out.member( "stage", std::string( *stage ) );
-    out.member( "retryable", value.retryable );
-    out.member( "required_action", std::string( *action ) );
-    if( value.current ) {
-        out.member( "current" );
-        out.start_object();
-        out.member( "session_epoch", value.current->session_epoch );
-        out.member( "state_revision", std::to_string( value.current->state_revision ) );
-        out.member( "through_public_sequence", std::to_string( value.current->through_public_sequence ) );
-        out.end_object();
+    if( !action->empty() ) { out.member( "action", std::string( *action ) ); }
+    if( value.at ) {
+        out.member( "at" );
+        *out.get_stream() << serialize_clock( *value.at );
+        out.set_need_separator();
     }
     out.end_object();
     return bounded_output( output );

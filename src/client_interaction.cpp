@@ -276,6 +276,11 @@ auto materialize( acquired_interaction acquired,
     choices.reserve( count );
     std::ranges::copy( full.choices | std::views::drop( offset ) | std::views::take( count ),
                        std::back_inserter( choices ) );
+    const auto focus = std::ranges::find( full.choices, true, &interaction_choice::highlighted );
+    const auto focus_choice = focus == full.choices.end() ? std::string{} :
+                              focus->id;
+    const auto focus_pane = focus == full.choices.end() ? std::optional<std::string> {} :
+                            focus->pane_id;
     // Immutable prepared metadata needs an owned copy.  Ephemeral legacy captures already
     // own their metadata: transfer it, including complete target candidate storage.
     // Never clone the full choices vector merely to discard off-page rows.
@@ -299,6 +304,8 @@ auto materialize( acquired_interaction acquired,
         result = std::move( acquired.legacy );
     }
     result.choices = std::move( choices );
+    result.focus_choice_id = focus_choice;
+    result.focus_pane_id = focus_pane;
     if( acquired.prepared && acquired.prepared->descriptions ) {
         for( const auto index : std::views::iota( std::size_t{0}, count ) ) {
             result.choices[index].description = acquired.prepared->description( offset + index );

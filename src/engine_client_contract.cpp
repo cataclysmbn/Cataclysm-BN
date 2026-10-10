@@ -1,5 +1,7 @@
 #include "engine_client_contract.h"
 #include "client_interaction_validation.h"
+#include "game.h"
+#include "map/map.h"
 
 #include <algorithm>
 #include <array>
@@ -22,16 +24,6 @@ static_assert( std::is_nothrow_constructible_v < std::expected<command_result, e
 static_assert( std::is_nothrow_constructible_v < std::expected<input_event, error>,
                input_event && > );
 
-constexpr auto capabilities = std::array
-{
-    "snapshot.readiness", "snapshot.actions", "snapshot.interaction",
-    "command.semantic_interaction", "command.registered_action",
-    "events.interaction_replaced", "delivery.inline_completion"
-};
-auto supported( const std::string &name ) -> bool
-{
-    return std::ranges::find( capabilities, name ) != capabilities.end();
-}
 auto terminal( const command_stage stage ) -> bool
 {
     return stage == command_stage::rejected || stage == command_stage::completed ||
@@ -41,13 +33,16 @@ auto valid_id( const std::string &value ) -> bool
 {
     return !value.empty() && value.size() <= maximum_id_bytes;
 }
+auto live_boundary_id( const std::string &epoch ) -> std::string
+{
+    return game_client::opaque_interaction_id( "boundary", {epoch, std::to_string( game_client::current_input_id() )} );
+}
 auto validate_shape( const command_request &request ) -> bool
 {
-    if( !valid_id( request.session_epoch ) || !valid_id( request.input_boundary_id ) ||
-        request.interaction_schema_id.size() > maximum_id_bytes ) { return false; }
+    if( !valid_id( request.epoch ) || !valid_id( request.expect.boundary_id ) ||
+        ( request.expect.schema_id && !valid_id( *request.expect.schema_id ) ) ) { return false; }
     const auto semantic = std::get_if<semantic_operation>( &request.operation );
     if( semantic == nullptr ) { return valid_id( std::get<registered_action>( request.operation ).id ); }
-    if( !valid_id( request.interaction_schema_id ) ) { return false; }
     const auto &command = semantic->command;
     if( command.target_id.size() > maximum_id_bytes ||
         ( command.count && *command.count > maximum_safe_integer ) ) { return false; }
@@ -63,8 +58,7 @@ auto validate_shape( const command_request &request ) -> bool
                    !command.submit && !command.position && !semantic->target;
         case game_client::interaction_operation::set_target:
             return command.value.empty() && !command.submit && !command.count && !command.position &&
-                   semantic->target && semantic->target->space == "reality_bubble_map_square" &&
-                   valid_id( semantic->target->frame_id ) && semantic->target->dimension_id.empty();
+                   semantic->target;
         case game_client::interaction_operation::cancel:
             return command.target_id.empty() && command.value.empty() && !command.submit &&
                    !command.count && !command.position && !semantic->target;
@@ -78,8 +72,6 @@ auto error_name( const error value ) -> std::string
     switch( value ) {
         case error::negotiation_failed:
             return "negotiation_failed";
-        case error::unsupported_capability:
-            return "unsupported_capability";
         case error::not_ready:
             return "not_ready";
         case error::stale_epoch:
@@ -105,25 +97,23 @@ auto error_name( const error value ) -> std::string
     }
     return "validation_failed";
 }
-auto negotiate( const negotiation_request &request ) -> std::expected<negotiated_contract, error>
+auto stage_name( const command_stage stage ) -> std::string
 {
-    namespace ranges = std::ranges;
-    if( ranges::find( request.supported_versions,
-                      contract_version ) == request.supported_versions.end() ) {
-        return std::unexpected( error::negotiation_failed );
+    switch( stage ) {
+        case command_stage::received:
+            return "received";
+        case command_stage::validated:
+            return "validated";
+        case command_stage::executing:
+            return "executing";
+        case command_stage::rejected:
+            return "rejected";
+        case command_stage::completed:
+            return "completed";
+        case command_stage::interrupted:
+            return "interrupted";
     }
-    if( !ranges::all_of( request.required_capabilities, supported ) ) {
-        return std::unexpected( error::unsupported_capability );
-    }
-    auto result = negotiated_contract{};
-    for( const auto capability : capabilities ) {
-        if( ranges::find( request.required_capabilities,
-                          capability ) != request.required_capabilities.end() ||
-            ranges::find( request.optional_capabilities, capability ) != request.optional_capabilities.end() ) {
-            result.capabilities.emplace_back( capability );
-        }
-    }
-    return result;
+    return "interrupted";
 }
 auto new_session_epoch() -> std::expected<std::string, error>
 {
@@ -142,89 +132,91 @@ auto new_session_epoch() -> std::expected<std::string, error>
         return std::unexpected( error::resource_limit );
     }
 }
-auto capture_state( const capture_options &options ) -> std::expected<state_value, error>
+
+auto current_bubble_frame() -> bubble_frame
 {
-    if( options.session_epoch.empty() || options.page.limit == 0 ||
-        options.page.limit > maximum_rows || options.page.offset > maximum_safe_integer ) {
-        return std::unexpected( error::resource_limit );
-    }
-    const auto native = game_client::current_input_id();
-    auto result = state_value{};
+    const auto origin = bub_to_abs( tripoint_bub_ms::zero() );
+    return { .dim = g->get_current_dimension_id().str(), .x = origin.x(), .y = origin.y() };
+}
+
+auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>
+{
+    if( options.epoch.empty() ) { return std::unexpected( error::resource_limit ); }
+    auto result = boundary_state{};
     result.ready = options.ready;
-    result.input_boundary_id = game_client::opaque_interaction_id( "boundary", {options.session_epoch, std::to_string( native )} );
-    result.view = {.offset = options.page.offset, .limit = options.page.limit};
+    result.id = live_boundary_id( options.epoch );
+    result.frame = current_bubble_frame();
     for( const auto &entry : game_client::available_input_actions() ) {
         result.actions.push_back( {.id = entry.id, .name = entry.name} );
     }
-    auto interaction = game_client::current_interaction( options.page );
-    if( interaction.structured ) { result.interaction = std::move( interaction ); }
-    if( const auto valid = validate_state( result ); !valid ) { return std::unexpected( valid.error() ); }
-    if( serialize_state( result ).size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
+    // A value over the byte bound keeps fewer rows; choice_total still states the full count.
+    for( auto limit = maximum_rows; limit > 0; limit /= 2 ) {
+        auto interaction = game_client::current_interaction( {.offset = 0, .limit = limit} );
+        if( !interaction.structured ) { result.interaction.reset(); break; }
+        result.interaction = std::move( interaction );
+        if( serialize_boundary( result ).size() <= maximum_inline_bytes ) { break; }
+        if( limit == 1 ) { return std::unexpected( error::resource_limit ); }
+    }
+    if( const auto valid = validate_boundary( result ); !valid ) { return std::unexpected( valid.error() ); }
     return result;
 }
-auto validate_state( const state_value &state ) -> std::expected<void, error>
+auto validate_boundary( const boundary_state &state ) -> std::expected<void, error>
 {
-    if( state.view.offset > maximum_safe_integer || state.view.limit == 0 ||
-        state.view.limit > maximum_rows ) { return std::unexpected( error::resource_limit ); }
     constexpr auto phases = std::array{"starting", "menu", "loading", "waiting_for_input", "executing", "shutting_down"};
-    if( std::ranges::find( phases, state.ready.phase ) == phases.end() ||
-        !valid_id( state.input_boundary_id ) ||
+    if( std::ranges::find( phases, state.ready.phase ) == phases.end() || !valid_id( state.id ) ||
     !std::ranges::all_of( state.actions, []( const auto & entry ) { return valid_id( entry.id ); } ) ) {
         return std::unexpected( error::validation_failed );
     }
-    if( state.interaction ) {
-        const auto &value = *state.interaction;
-        if( value.choice_offset > maximum_safe_integer || value.choice_total > maximum_safe_integer ||
-            value.choices.size() > state.view.limit ) { return std::unexpected( error::resource_limit ); }
-        if( !value.structured || !valid_id( value.schema_id ) ||
-            value.choice_offset != std::min( state.view.offset, value.choice_total ) ||
-            value.choices.size() > value.choice_total - value.choice_offset ) {
+    if( !state.interaction ) { return {}; }
+    const auto &value = *state.interaction;
+    if( value.choice_total > maximum_safe_integer || value.choices.size() > maximum_rows ) {
+        return std::unexpected( error::resource_limit );
+    }
+    if( !value.structured || !valid_id( value.schema_id ) || value.choice_offset != 0 ||
+        value.choices.size() > value.choice_total ) { return std::unexpected( error::validation_failed ); }
+    for( const auto &choice : value.choices ) {
+        if( !valid_id( choice.id ) || ( choice.pane_id && !valid_id( *choice.pane_id ) ) ||
+            ( choice.area_id && !valid_id( *choice.area_id ) ) ) {
             return std::unexpected( error::validation_failed );
         }
-        for( const auto &choice : value.choices ) {
-            if( !valid_id( choice.id ) || ( choice.pane_id && !valid_id( *choice.pane_id ) ) ||
-                ( choice.area_id && !valid_id( *choice.area_id ) ) ) {
-                return std::unexpected( error::validation_failed );
-            }
-            if( ( choice.available_count && *choice.available_count > maximum_safe_integer ) ||
-                ( choice.selected_count && *choice.selected_count > maximum_safe_integer ) ||
-                ( choice.minimum_count && *choice.minimum_count > maximum_safe_integer ) ) {
-                return std::unexpected( error::resource_limit );
-            }
+        if( ( choice.available_count && *choice.available_count > maximum_safe_integer ) ||
+            ( choice.selected_count && *choice.selected_count > maximum_safe_integer ) ||
+            ( choice.minimum_count && *choice.minimum_count > maximum_safe_integer ) ) {
+            return std::unexpected( error::resource_limit );
         }
-        if( !std::ranges::all_of( value.panes, []( const auto & pane ) { return valid_id( pane.id ); } ) ||
-        ( value.field && ( !valid_id( value.field->id ) ||
-                           ( value.field->type != "text" && value.field->type != "integer" ) ) ) ) {
-            return std::unexpected( error::validation_failed );
-        }
-        if( value.target && ( value.target->coordinate_space != "bubble_ms" ||
-        !std::ranges::all_of( value.target->candidates, []( const auto & entry ) { return valid_id( entry.id ); } ) ) ) {
-            return std::unexpected( error::validation_failed );
-        }
+    }
+    if( !std::ranges::all_of( value.panes, []( const auto & pane ) { return valid_id( pane.id ); } ) ||
+    ( value.field && ( !valid_id( value.field->id ) ||
+                       ( value.field->type != "text" && value.field->type != "integer" ) ) ) ||
+    ( value.target && !std::ranges::all_of( value.target->candidates, []( const auto & entry ) { return valid_id( entry.id ); } ) ) ) {
+        return std::unexpected( error::validation_failed );
     }
     return {};
 }
-auto same_state( const state_value &left, const state_value &right ) -> bool
+auto same_boundary( const boundary_state &left, const boundary_state &right ) -> bool
 {
-    return serialize_state( left ) == serialize_state( right );
+    return serialize_boundary( left ) == serialize_boundary( right );
 }
 
-auto same_boundary_state( const state_value &left, const state_value &right ) -> bool
+auto read_choices( const choices_request &request, const std::string &epoch )
+-> std::expected<choices_page, error>
 {
-    const auto metadata = []( auto state ) {
-        state.view = {};
-        if( state.interaction ) {
-            state.interaction->choices.clear();
-            state.interaction->choice_offset = 0;
-        }
-        return state;
+    if( request.epoch != epoch ) { return std::unexpected( error::stale_epoch ); }
+    if( request.boundary_id != live_boundary_id( epoch ) ) { return std::unexpected( error::stale_boundary ); }
+    if( request.limit == 0 || request.limit > maximum_rows || request.offset > maximum_safe_integer ) {
+        return std::unexpected( error::resource_limit );
+    }
+    auto interaction = game_client::current_interaction( {.offset = request.offset, .limit = request.limit} );
+    if( !interaction.structured ) { return std::unexpected( error::not_ready ); }
+    return choices_page{
+        .boundary_id = request.boundary_id,
+        .total = interaction.choice_total,
+        .choices = std::move( interaction.choices ),
     };
-    return same_state( metadata( left ), metadata( right ) );
 }
 
-command_lifecycle::command_lifecycle( std::string session_epoch,
-                                      const command_authority &authority ) :
-    epoch_( std::move( session_epoch ) ), authority_( authority ) {}
+command_lifecycle::command_lifecycle( std::string epoch, const command_authority &authority ) :
+    epoch_( std::move( epoch ) ), authority_( authority ) {}
 
 auto command_lifecycle::submit( command_request request ) -> std::expected<command_result, error>
 {
@@ -239,7 +231,7 @@ auto command_lifecycle::submit( command_request request ) -> std::expected<comma
     }
     const auto next_command = next_command_ + 1;
     auto received = command_result{
-        .session_epoch = epoch_,
+        .epoch = epoch_,
         .command_id = game_client::opaque_interaction_id( "command", {epoch_, std::to_string( next_command )} ),
     };
     auto response = received;
@@ -248,8 +240,8 @@ auto command_lifecycle::submit( command_request request ) -> std::expected<comma
     next_command_ = next_command;
     return response;
 }
-auto command_lifecycle::validate( const snapshot &current, const point screen_size )
--> std::expected<input_event, error>
+auto command_lifecycle::validate( const clock_point &at, const boundary_state &current,
+                                  const point screen_size ) -> std::expected<input_event, error>
 {
     if( !result_ || result_->stage != command_stage::received ) {
         return std::unexpected( error::invalid_lifecycle );
@@ -261,29 +253,33 @@ auto command_lifecycle::validate( const snapshot &current, const point screen_si
         return std::unexpected( reason );
     };
     const auto &request = *request_;
-    if( request.session_epoch != epoch_ || current.session_epoch != epoch_ ) { return reject( error::stale_epoch ); }
-    if( request.state_revision != current.state_revision ) { return reject( error::stale_revision ); }
-    const auto live_boundary = game_client::opaque_interaction_id( "boundary", {epoch_, std::to_string( game_client::current_input_id() )} );
-    if( request.input_boundary_id != current.state.input_boundary_id ||
-        request.input_boundary_id != live_boundary ) {
+    if( request.epoch != epoch_ || at.epoch != epoch_ ) { return reject( error::stale_epoch ); }
+    if( request.expect.revision != at.revision ) { return reject( error::stale_revision ); }
+    if( request.expect.boundary_id != current.id || current.id != live_boundary_id( epoch_ ) ) {
         return reject( error::stale_boundary );
     }
+    const auto live_schema = current.interaction ? std::optional{current.interaction->schema_id} :
+                             std::nullopt;
+    if( request.expect.schema_id != live_schema ) { return reject( error::stale_interaction_schema ); }
     const auto permissions = authority_.current_permissions();
     auto resolved = std::expected<input_event, std::string> { input_event{} };
     if( const auto semantic = std::get_if<semantic_operation>( &request.operation ) ) {
-        if( !permissions.accepts_interaction_commands || !current.state.interaction ) { return reject( error::not_ready ); }
-        if( request.interaction_schema_id != current.state.interaction->schema_id ) {
-            return reject( error::stale_interaction_schema );
-        }
+        if( !permissions.accepts_interaction_commands || !current.interaction ) { return reject( error::not_ready ); }
         auto command = semantic->command;
         command.input_id = game_client::current_input_id();
         if( semantic->target ) {
-            if( semantic->target->frame_id != live_boundary ) { return reject( error::stale_boundary ); }
-            command.position = semantic->target->position;
+            // Absolute target to the live bubble; the native bounds and range still decide.
+            const auto frame = current_bubble_frame();
+            if( semantic->target->dim != frame.dim ) { return reject( error::validation_failed ); }
+            command.position = game_client::interaction_position{
+                .x = semantic->target->x - frame.x,
+                .y = semantic->target->y - frame.y,
+                .z = semantic->target->z,
+            };
         }
         auto checked = game_client::resolve_checked_interaction( {
             .command = command,
-            .expected_schema = request.interaction_schema_id,
+            .expected_schema = *request.expect.schema_id,
 .target_space = semantic->target ? std::optional<std::string_view>{"bubble_ms"} : std::nullopt,
         } );
         if( !checked ) {
@@ -304,31 +300,24 @@ auto command_lifecycle::validate( const snapshot &current, const point screen_si
         if( !resolved ) { return reject( error::validation_failed ); }
     }
     result_->stage = command_stage::validated;
-    result_->validation_succeeded = true;
     return std::move( *resolved );
 }
 auto command_lifecycle::execution_started() -> std::expected<void, error>
 {
     if( !result_ || result_->stage != command_stage::validated ) { return std::unexpected( error::invalid_lifecycle ); }
     result_->stage = command_stage::executing;
-    result_->execution_started = true;
     return {};
 }
-auto command_lifecycle::complete_at_boundary( const snapshot &current, const bool resync_required )
+auto command_lifecycle::complete_at_boundary( const clock_point &at, const boundary_state &current )
 -> std::expected<void, error>
 {
     if( !result_ || result_->stage != command_stage::executing || !request_ ||
-        current.state.input_boundary_id == request_->input_boundary_id ) {
+        current.id == request_->expect.boundary_id ) {
         return std::unexpected( error::invalid_lifecycle );
     }
-    if( current.session_epoch != epoch_ ) { return std::unexpected( error::stale_epoch ); }
-    if( current.state_revision <= request_->state_revision ) { return std::unexpected( error::stale_revision ); }
+    if( at.epoch != epoch_ ) { return std::unexpected( error::stale_epoch ); }
     result_->stage = command_stage::completed;
-    result_->completed = completion{
-        .state_revision = current.state_revision,
-        .through_public_sequence = current.through_public_sequence,
-        .resync_required = resync_required,
-    };
+    result_->at = at;
     request_.reset();
     return {};
 }

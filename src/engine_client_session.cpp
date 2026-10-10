@@ -4,6 +4,9 @@
 #include <utility>
 
 #include "game_session.h"
+#include "get_version.h"
+#include "world.h"
+#include "worldfactory.h"
 
 namespace engine_client
 {
@@ -26,11 +29,15 @@ auto session::current_permissions() const -> command_permissions
 
 auto session::set_phase( std::string phase ) -> void { phase_ = std::move( phase ); }
 
+auto session::set_world_capture( const world_capture_fn capture ) -> void { world_capture_ = capture; }
+
 auto session::refresh_result() -> void
 {
-    if( active_ ) {
-        if( const auto current = lifecycle_->result( active_->command_id ) ) { active_ = *current; }
-    }
+    if( !active_ ) { return; }
+    const auto current = lifecycle_->result( active_->command_id );
+    if( !current ) { return; }
+    if( current->stage != active_->stage ) { push_.emplace_back( *current ); }
+    active_ = *current;
 }
 
 auto session::interrupt() -> void
@@ -43,82 +50,66 @@ auto session::interrupt() -> void
     validated_input_.reset();
 }
 
-auto session::restart_epoch() -> void
+auto session::restart_epoch( const std::string_view reason ) -> void
 {
     interrupt();
     retired_ = active_;
+    if( stream_ ) {
+        push_.emplace_back( resync_notice{ .epoch = epoch_, .reason = std::string{reason},
+                                           .lost_after = stream_->current().at.sequence } );
+    }
     const auto created = new_session_epoch();
     if( !created ) { throw std::runtime_error( "Engine session unavailable" ); }
     epoch_ = *created;
     lifecycle_ = std::make_unique<command_lifecycle>( epoch_, *this );
     active_.reset();
     stream_.reset();
-    event_.reset();
 }
 
-auto session::replace_world() -> void
-{
-    restart_epoch();
-    reference_ = {};
-}
+auto session::replace_world() -> void { restart_epoch( "world_replaced" ); }
 
-auto session::capture( const projection page ) const -> std::expected<state_value, error>
+auto session::capture() const -> std::expected<state_value, error>
 {
     const auto permissions = current_permissions();
-    return capture_state( {
-        .session_epoch = epoch_,
+    auto boundary = capture_boundary( {
+        .epoch = epoch_,
         .ready = {
             .phase = phase_, .game_ready = game_session::running(),
             .accepts_interaction_commands = permissions.accepts_interaction_commands,
             .accepts_registered_actions = permissions.accepts_registered_actions
         },
-        .page = { .offset = page.offset, .limit = page.limit },
     } );
-}
-
-auto session::publish_candidate() -> std::expected<void, error>
-{
-    const auto candidate = capture( reference_ );
-    if( !candidate ) { return std::unexpected( candidate.error() ); }
-    event_.reset();
-    if( !stream_ ) {
-        auto created = event_stream::create( { .session_epoch = epoch_, .state = *candidate } );
-        if( !created ) { return std::unexpected( created.error() ); }
-        stream_ = std::move( *created );
-        return {};
-    }
-    auto sink = null_event_sink{};
-    auto replacement = engine_client::replacement{ .state = *candidate };
-    if( active_ && active_->stage == command_stage::executing ) {
-        replacement.command_id = active_->command_id;
-    }
-    auto published = stream_->replace( disclosure::publish, std::move( replacement ), sink );
-    if( published ) {
-        event_ = std::move( *published );
-        return {};
-    }
-    // The snapshot fits but its event envelope does not: clients resynchronize from a snapshot.
-    if( published.error() != error::resource_limit ) { return std::unexpected( published.error() ); }
-    const auto resynchronized = stream_->resynchronize( disclosure::publish, *candidate );
-    if( !resynchronized ) { return std::unexpected( resynchronized.error() ); }
-    return {};
+    if( !boundary ) { return std::unexpected( boundary.error() ); }
+    return state_value{ .interaction = std::move( *boundary ),
+                        .world = world_capture_ ? world_capture_() : world_state{} };
 }
 
 auto session::publish_boundary() -> std::expected<void, error>
 {
     // Startup language/debug prompts are genuine native input boundaries, not engine readiness.
     if( phase_ == "starting" ) { phase_ = "menu"; }
-    auto published = publish_candidate();
-    if( !published && published.error() == error::resource_limit && reference_.limit > 1 ) {
-        // An oversized default page must not end the session. The reference view is fixed per
-        // stream, so a one-row view starts a new epoch; clients still page their own views.
-        reference_.limit = 1;
-        if( stream_ ) { restart_epoch(); }
-        published = publish_candidate();
+    auto candidate = capture();
+    if( !candidate ) { return std::unexpected( candidate.error() ); }
+    if( !stream_ ) {
+        auto created = event_stream::create( epoch_, std::move( *candidate ) );
+        if( !created ) { return std::unexpected( created.error() ); }
+        stream_ = std::move( *created );
+        return {};
     }
-    if( !published ) { return published; }
+    auto request = publish_request{ .next = *candidate };
+    if( active_ && active_->stage == command_stage::executing ) { request.command = active_->command_id; }
+    auto published = stream_->publish( std::move( request ) );
+    if( published ) {
+        if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
+    } else if( published.error() == error::resource_limit ) {
+        // The change does not fit one event: adopt the state and make subscribers start over.
+        push_.emplace_back( resync_notice{ .epoch = epoch_, .reason = "overflow",
+                                           .lost_after = stream_->current().at.sequence } );
+        if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
+    } else { return std::unexpected( published.error() ); }
     if( active_ && active_->stage == command_stage::executing ) {
-        const auto completed = lifecycle_->complete_at_boundary( stream_->current_snapshot() );
+        const auto &now = stream_->current();
+        const auto completed = lifecycle_->complete_at_boundary( now.at, now.value.interaction );
         if( !completed && completed.error() != error::invalid_lifecycle ) {
             interrupt();
             return std::unexpected( completed.error() );
@@ -128,12 +119,16 @@ auto session::publish_boundary() -> std::expected<void, error>
     return {};
 }
 
-auto session::read_snapshot( const projection page ) const -> std::expected<snapshot, error>
+auto session::current() const -> std::expected<snapshot, error>
 {
     if( !stream_ ) { return std::unexpected( error::not_ready ); }
-    const auto candidate = capture( page );
-    if( !candidate ) { return std::unexpected( candidate.error() ); }
-    return stream_->project_snapshot( *candidate );
+    return stream_->current();
+}
+
+auto session::at() const -> std::optional<clock_point>
+{
+    if( !stream_ ) { return std::nullopt; }
+    return stream_->current().at;
 }
 
 auto session::submit( command_request request ) -> std::expected<receipt, error>
@@ -144,7 +139,7 @@ auto session::submit( command_request request ) -> std::expected<receipt, error>
     active_ = *received;
     input_ = std::move( input );
     retired_.reset();
-    return receipt{ .session_epoch = received->session_epoch, .command_id = received->command_id };
+    return receipt{ .epoch = received->epoch, .command_id = received->command_id };
 }
 
 auto session::has_received() const -> bool
@@ -156,7 +151,8 @@ auto session::prepare_input( const point screen_size ) ->
 std::expected<game_client::input_command, error>
 {
     if( !stream_ || !input_ ) { return std::unexpected( error::not_ready ); }
-    const auto validated = lifecycle_->validate( stream_->current_snapshot(), screen_size );
+    const auto &now = stream_->current();
+    const auto validated = lifecycle_->validate( now.at, now.value.interaction, screen_size );
     refresh_result();
     if( !validated ) { input_.reset(); return std::unexpected( validated.error() ); }
     validated_input_ = *validated;
@@ -166,7 +162,12 @@ std::expected<game_client::input_command, error>
         native.input_id.reset();
         native.interaction = semantic->command;
         native.interaction->input_id = game_client::current_input_id();
-        if( semantic->target ) { native.interaction->position = semantic->target->position; }
+        if( semantic->target ) {
+            const auto frame = current_bubble_frame();
+            native.interaction->position = game_client::interaction_position{
+                .x = semantic->target->x - frame.x, .y = semantic->target->y - frame.y,
+                .z = semantic->target->z };
+        }
     } else {
         native.action = std::get<registered_action>( input_->operation ).id;
     }
@@ -189,13 +190,24 @@ auto session::delivered( input_event fallback ) -> input_event
 
 auto session::result( const result_request &request ) const -> std::expected<command_result, error>
 {
-    if( retired_ && request.session_epoch == retired_->session_epoch &&
+    if( retired_ && request.epoch == retired_->epoch &&
         request.command_id == retired_->command_id ) { return *retired_; }
-    if( request.session_epoch != epoch_ ) { return std::unexpected( error::stale_epoch ); }
+    if( request.epoch != epoch_ ) { return std::unexpected( error::stale_epoch ); }
     return lifecycle_->result( request.command_id );
 }
 
-auto session::latest_event() const -> const std::optional<public_event> & { return event_; } // *NOPAD*
+auto session::take_push() -> std::vector<push_item> { return std::exchange( push_, {} ); }
+
+auto describe_engine() -> engine_info
+{
+    auto result = engine_info{ .build = getVersionString() };
+    if( world_generator && world_generator->active_world && world_generator->active_world->info ) {
+        for( const auto &mod : world_generator->active_world->info->active_mod_order ) {
+            result.mods.push_back( mod.str() );
+        }
+    }
+    return result;
+}
 
 auto process_session() -> session & // *NOPAD*
 {
