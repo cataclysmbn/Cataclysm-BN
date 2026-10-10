@@ -1,0 +1,27 @@
+[
+  {
+    "id": "mounted_rm360_carbine",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted RM360 rotary carbine" },
+    "item": "rm360_carbine",
+    "folded_volume": "1 L",
+    "color": "green",
+    "broken_color": "green",
+    "looks_like": "mounted_m134",
+    "breaks_into": [ { "item": "scrap", "count": 14 }, { "item": "steel_chunk", "count": 6 }, { "item": "steel_lump", "count": 2 } ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "shotgun", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
+  },
+  {
+    "id": "mounted_l_lmg_223",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted L523-LMG" },
+    "item": "l_lmg_223",
+    "folded_volume": "3250 ml",
+    "color": "cyan",
+    "broken_color": "cyan",
+    "breaks_into": [ { "item": "scrap", "count": 24 }, { "item": "steel_chunk", "count": 9 }, { "item": "steel_lump", "count": 3 } ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 3 ], [ "rifle", 1 ] ] }, "removal": { "skills": [ [ "mechanics", 1 ] ] } }
+  }
+]
