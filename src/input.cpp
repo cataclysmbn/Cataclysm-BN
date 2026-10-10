@@ -1201,6 +1201,8 @@ action_id input_context::display_menu( const bool permit_execute_action )
     static const nc_color unbound_key = c_light_red;
     // (vertical) scroll offset
     size_t scroll_offset = 0;
+    // The row an engine client acts on: the modes first, then the actions. Native input shows none.
+    size_t cursor = 0;
     // keybindings help
     std::string legend;
     legend += colorize( _( "Unbound keys" ), unbound_key ) + "\n";
@@ -1288,7 +1290,8 @@ action_id input_context::display_menu( const bool permit_execute_action )
         const auto add_mode = [&]( const std::string & id, const std::string & mode_action,
         const bool active ) {
             snapshot.choices.push_back( { .id = "mode:" + id, .label = ctxt.get_action_name( mode_action ),
-                                          .pane_id = "modes", .selected = active, .highlighted = active } );
+                                          .pane_id = "modes", .selected = active,
+                                          .highlighted = snapshot.choices.size() == cursor } );
         };
         add_mode( "add_local", "ADD_LOCAL", status == s_add );
         add_mode( "add_global", "ADD_GLOBAL", status == s_add_global );
@@ -1301,6 +1304,7 @@ action_id input_context::display_menu( const bool permit_execute_action )
             const auto &attributes = inp_mngr.get_action_attributes( action_id, category, &is_local );
             snapshot.choices.push_back( {
                 .id = "action:" + action_id, .label = get_action_name( action_id ), .pane_id = "actions",
+                .highlighted = snapshot.choices.size() == cursor,
                 .columns = { { .label = _( "Keys" ), .value = get_desc( action_id ) },
                     {
                         .label = _( "Scope" ), .value = attributes.input_events.empty() ? _( "Unbound" ) :
@@ -1309,6 +1313,9 @@ action_id input_context::display_menu( const bool permit_execute_action )
                 },
             } );
         }
+    };
+    const auto snapshot_rows = [&]() -> size_t {
+        return 3 + ( permit_execute_action ? 1 : 0 ) + filtered_registered_actions.size();
     };
     spopup.extend_interaction = extend_interaction;
 
@@ -1339,6 +1346,7 @@ action_id input_context::display_menu( const bool permit_execute_action )
         if( scroll_offset > filtered_registered_actions.size() ) {
             scroll_offset = 0;
         }
+        cursor = std::min( cursor, snapshot_rows() - 1 );
 
         // A semantic choice acts like the keypress that picks the same mode or action.
         auto picked_action = std::optional<size_t> {};
@@ -1389,12 +1397,14 @@ action_id input_context::display_menu( const bool permit_execute_action )
                 status = s_execute;
             }
         } else if( action == "DOWN" ) {
+            cursor = cursor + 1 < snapshot_rows() ? cursor + 1 : 0;
             if( !filtered_registered_actions.empty()
                 && filtered_registered_actions.size() > display_height
                 && scroll_offset < filtered_registered_actions.size() - display_height ) {
                 scroll_offset++;
             }
         } else if( action == "UP" ) {
+            cursor = cursor > 0 ? cursor - 1 : snapshot_rows() - 1;
             if( !filtered_registered_actions.empty()
                 && scroll_offset > 0 ) {
                 scroll_offset--;

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cerrno>
 #include <csignal>
+#include <cstring>
 #include <cstdio>
 #include <deque>
 #include <iostream>
@@ -232,6 +233,18 @@ auto stdin_ready() -> bool
 #endif
 }
 
+#if !defined(_WIN32)
+/// Says which signal ended the engine, then dies of it like any other process.
+extern "C" auto name_the_signal( const int sig ) -> void
+{
+    const auto text = sig == SIGTERM ? "mcp: the engine is exiting: received SIGTERM\n" :
+                      "mcp: the engine is exiting: received SIGINT\n";
+    static_cast<void>( write( STDERR_FILENO, text, strlen( text ) ) );
+    std::signal( sig, SIG_DFL );
+    std::raise( sig );
+}
+#endif
+
 /// Leaves the process with the reason on stderr, which the client shows on its error screen.
 [[noreturn]] auto leave( const std::string &why ) -> void
 {
@@ -364,6 +377,11 @@ auto start_session() -> void
 #if !defined(_WIN32)
     // A consumer that closes the pipe must surface as a write error, not terminate the game.
     std::signal( SIGPIPE, SIG_IGN );
+    // SDL would turn SIGTERM and SIGINT into a quit event that ends the engine as if its client had
+    // closed stdin; ours name the signal, from the first moment, even while the game loads.
+    setenv( "SDL_NO_SIGNAL_HANDLERS", "1", 1 );
+    std::signal( SIGTERM, name_the_signal );
+    std::signal( SIGINT, name_the_signal );
 #endif
     const auto protocol_fd = duplicate_stdout();
     if( protocol_fd < 0 || !redirect_stdout_to_stderr() ) {

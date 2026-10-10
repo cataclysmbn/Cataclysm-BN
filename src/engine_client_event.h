@@ -36,6 +36,9 @@ struct changes {
     /// Replaces the whole route; empty clears it.
     std::optional<std::vector<position>> route = std::nullopt;
     std::optional<boundary_state> interaction = std::nullopt;
+    /// The wire leaves out the `actions` of `interaction` when they equal the previous boundary's;
+    /// a client keeps its own. Never set on a snapshot.
+    bool actions_unchanged = false;
     auto empty() const -> bool;
 };
 /// The changes that turn `from` into `to`. A cell or entity that left perception is
@@ -78,8 +81,13 @@ class public_event
     public:
         explicit public_event( event_value value );
         auto value() const -> const event_value &; // *NOPAD*
+        /// The event as the sole event of its own `bn.events` params, serialized once when it was
+        /// published; empty for an event that never went through a stream.
+        auto wire() const -> const std::string &; // *NOPAD*
     private:
+        friend class event_stream;
         event_value value_;
+        std::string wire_;
 };
 struct event_batch {
     std::string epoch = {};
@@ -133,6 +141,7 @@ class event_stream
         auto rebase( state_value next ) -> std::expected<void, error>;
     private:
         explicit event_stream( snapshot initial );
+        auto seal( public_event &event ) const -> bool;
         snapshot current_;
 };
 

@@ -570,7 +570,7 @@ TEST_CASE(
     auto previous_input = std::uint64_t{0};
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        REQUIRE(++reads <= 7);
+        REQUIRE(++reads <= 8);
         const auto snapshot = game_client::current_interaction();
         CHECK(snapshot.input_id > previous_input);
         previous_input = snapshot.input_id;
@@ -594,9 +594,16 @@ TEST_CASE(
             CHECK(snapshot.kind == game_client::interaction_kind::field);
             CHECK(snapshot.structured);
             CHECK(snapshot.message != expected_text);
-            return resolve_action("ADD_LOCAL");
+            // The first row is the cursor an engine client acts on; Down moves it.
+            CHECK(snapshot.focus_choice_id == "mode:add_local");
+            return resolve_action("DOWN");
         }
         if (reads == 4) {
+            CHECK(snapshot.kind == game_client::interaction_kind::field);
+            CHECK(snapshot.focus_choice_id == "mode:add_global");
+            return resolve_action("ADD_LOCAL");
+        }
+        if (reads == 5) {
             CHECK(snapshot.context == "HELP_KEYBINDINGS");
             CHECK(snapshot.structured);
             CHECK(snapshot.kind == game_client::interaction_kind::choices);
@@ -608,12 +615,12 @@ TEST_CASE(
             CHECK(snapshot.allow_cancel);
             return resolve_action("QUIT");
         }
-        if (reads == 5) {
+        if (reads == 6) {
             CHECK(snapshot.context == "HELP_KEYBINDINGS");
             CHECK(snapshot.kind == game_client::interaction_kind::field);
             return resolve_action("QUIT");
         }
-        if (reads == 6) {
+        if (reads == 7) {
             check_reader(snapshot);
             CHECK(snapshot.schema_id == reader_schema);
             CHECK(snapshot.message == expected_text);
@@ -628,7 +635,7 @@ TEST_CASE(
     auto widget = help{};
     widget.load();
     widget.display_help();
-    CHECK(reads == 7);
+    CHECK(reads == 8);
     CHECK_FALSE(game_client::current_interaction().structured);
 }
 

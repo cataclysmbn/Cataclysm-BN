@@ -31,6 +31,7 @@
 #include "output.h"
 #include "panels_snapshot.h"
 #include "panels_utility.h"
+#include "profile.h"
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
@@ -336,11 +337,16 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
 auto capture_known( map &here, const avatar &you, const std::string &dimension,
                     std::map<position, cell> &cells ) -> void
 {
+    ZoneScopedN( "engine_client_capture_known" );
     const auto view = map_perception::current_sight();
-    for( const auto &p : map_perception::visible_cells( here ) ) {
-        auto out = cell{ .at = position_of( here, p, dimension ) };
-        if( fill_visible( here, p, you, view, out ) ) { cells.emplace( out.at, std::move( out ) ); }
+    {
+        ZoneScopedN( "engine_client_capture_visible" );
+        for( const auto &p : map_perception::visible_cells( here ) ) {
+            auto out = cell{ .at = position_of( here, p, dimension ) };
+            if( fill_visible( here, p, you, view, out ) ) { cells.emplace( out.at, std::move( out ) ); }
+        }
     }
+    ZoneNamedN( remembered_zone, "engine_client_capture_remembered", true );
     const auto remember = [&]( const tripoint_bub_ms & p ) {
         if( !here.inbounds( p ) || map_perception::visible_at( here, p ) ) { return; }
         const auto at = position_of( here, p, dimension );
@@ -578,6 +584,7 @@ auto color_name( const nc_color &color ) -> std::string
 
 auto capture_world() -> world_state
 {
+    ZoneScopedN( "engine_client_capture_world" );
     if( !g || !game_session::running() ) { return {}; }
     auto &here = get_map();
     const auto &you = get_avatar();

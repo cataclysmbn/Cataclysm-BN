@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "bionics.h"
 #include "character.h"
+#include "client_choice.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "game.h"
@@ -12,6 +13,7 @@
 #include "json.h"
 #include "line.h"
 #include "mtype.h"
+#include "mtype_display.h"
 #include "npc.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
@@ -27,6 +29,7 @@
 #include "ui_manager.h"
 
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <cstdlib>
 #include <limits>
@@ -521,6 +524,42 @@ void faction::faction_display( const catacurses::window &fac_w, const int width 
     fold_and_print( fac_w, point( width, ++y ), getmaxx( fac_w ) - width - 2, c_light_gray, _( desc ) );
 }
 
+namespace
+{
+/// The status, condition and needs of a follower, one colored line each.
+auto npc_condition_lines( const npc &guy ) -> std::vector<std::pair<std::string, nc_color>>
+{
+    nc_color status_col = c_white;
+    std::string current_status = _( "Status: " );
+    if( guy.current_target() != nullptr ) {
+        current_status += _( "In Combat!" );
+        status_col = c_light_red;
+    } else if( guy.in_sleep_state() ) {
+        current_status += _( "Sleeping" );
+    } else if( guy.is_following() ) {
+        current_status += _( "Following" );
+    } else if( guy.is_leader() ) {
+        current_status += _( "Leading" );
+    } else if( guy.is_patrolling() ) {
+        current_status += _( "Patrolling" );
+    } else if( guy.is_guarding() ) {
+        current_status += _( "Guarding" );
+    }
+    const std::pair <std::string, nc_color> condition = guy.hp_description();
+    const std::pair <std::string, nc_color> hunger_pair = guy.get_hunger_description();
+    const std::pair <std::string, nc_color> thirst_pair = guy.get_thirst_description();
+    const std::pair <std::string, nc_color> fatigue_pair = guy.get_fatigue_description();
+    const std::string nominal = pgettext( "needs", "Nominal" );
+    return {
+        { current_status, status_col },
+        { _( "Condition: " ) + condition.first, condition.second },
+        { _( "Hunger: " ) + ( hunger_pair.first.empty() ? nominal : hunger_pair.first ), hunger_pair.second },
+        { _( "Thirst: " ) + ( thirst_pair.first.empty() ? nominal : thirst_pair.first ), thirst_pair.second },
+        { _( "Fatigue: " ) + ( fatigue_pair.first.empty() ? nominal : fatigue_pair.first ), fatigue_pair.second },
+    };
+}
+} // namespace
+
 int npc::faction_display( const catacurses::window &fac_w, const int width ) const
 {
     int retval = 0;
@@ -576,36 +615,9 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
         see_color = c_light_green;
     }
     mvwprintz( fac_w, point( width, ++y ), see_color, "%s", can_see );
-    nc_color status_col = col;
-    std::string current_status = _( "Status: " );
-    if( current_target() != nullptr ) {
-        current_status += _( "In Combat!" );
-        status_col = c_light_red;
-    } else if( in_sleep_state() ) {
-        current_status += _( "Sleeping" );
-    } else if( is_following() ) {
-        current_status += _( "Following" );
-    } else if( is_leader() ) {
-        current_status += _( "Leading" );
-    } else if( is_patrolling() ) {
-        current_status += _( "Patrolling" );
-    } else if( is_guarding() ) {
-        current_status += _( "Guarding" );
+    for( const auto &[text, line_color] : npc_condition_lines( *this ) ) {
+        mvwprintz( fac_w, point( width, ++y ), line_color, text );
     }
-    mvwprintz( fac_w, point( width, ++y ), status_col, current_status );
-
-    const std::pair <std::string, nc_color> condition = hp_description();
-    mvwprintz( fac_w, point( width, ++y ), condition.second, _( "Condition: " ) + condition.first );
-    const std::pair <std::string, nc_color> hunger_pair = get_hunger_description();
-    const std::pair <std::string, nc_color> thirst_pair = get_thirst_description();
-    const std::pair <std::string, nc_color> fatigue_pair = get_fatigue_description();
-    const std::string nominal = pgettext( "needs", "Nominal" );
-    mvwprintz( fac_w, point( width, ++y ), hunger_pair.second,
-               _( "Hunger: " ) + ( hunger_pair.first.empty() ? nominal : hunger_pair.first ) );
-    mvwprintz( fac_w, point( width, ++y ), thirst_pair.second,
-               _( "Thirst: " ) + ( thirst_pair.first.empty() ? nominal : thirst_pair.first ) );
-    mvwprintz( fac_w, point( width, ++y ), fatigue_pair.second,
-               _( "Fatigue: " ) + ( fatigue_pair.first.empty() ? nominal : fatigue_pair.first ) );
     int lines = fold_and_print( fac_w, point( width, ++y ), getmaxx( fac_w ) - width - 2, c_white,
                                 _( "Wielding: " ) + primary_weapon().tname() );
     y += lines;
@@ -840,6 +852,79 @@ void faction_manager::display() const
         return localized_compare( a->nname(), b->nname() );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto tab_names = std::array<std::string, 4> { _( "YOUR FOLLOWERS" ), _( "OTHER FACTIONS" ),
+                   _( "LORE" ), _( "CREATURES" )
+                                                          };
+        const auto current = static_cast<std::size_t>( tab );
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Factions" ),
+            .allow_cancel = true,
+        };
+        for( auto i = std::size_t{ 0 }; i < tab_names.size(); ++i ) {
+            const auto id = "tab" + std::to_string( i );
+            snapshot.panes.push_back( { .id = id, .label = tab_names[i], .role = i == current ? "focused" : "category" } );
+            snapshot.choices.push_back( { .id = "tab:" + std::to_string( i ), .label = tab_names[i],
+                                          .selected = i == current } );
+        }
+        const auto pane = "tab" + std::to_string( current );
+        const auto add = [&]( const std::size_t index, std::string id, std::string label,
+        std::string description ) {
+            snapshot.choices.push_back( {
+                .id = std::move( id ), .label = remove_color_tags( label ),
+                .description = remove_color_tags( description ), .pane_id = pane,
+                .highlighted = index == selection,
+            } );
+        };
+        switch( tab ) {
+            case tab_mode::TAB_FOLLOWERS:
+                snapshot.message = followers.empty() ? _( "You have no followers" ) : std::string();
+                for( auto i = std::size_t{ 0 }; i < followers.size(); ++i ) {
+                    auto text = std::string();
+                    for( const auto &line : npc_condition_lines( *followers[i] ) ) { text += line.first + "\n"; }
+                    text += _( "Wielding: " ) + followers[i]->primary_weapon().tname();
+                    add( i, "follower:" + std::to_string( i ), followers[i]->disp_name(), text );
+                }
+                if( guy ) {
+                    snapshot.choices.push_back( { .id = "action:CONFIRM", .label = _( "Talk to this follower" ),
+                                                  .enabled = interactable || radio_interactable || guy->has_companion_mission() } );
+                    snapshot.choices.push_back( { .id = "action:SWAPTONPC", .label = _( "Swap to this follower" ),
+                                                  .enabled = interactable } );
+                }
+                break;
+            case tab_mode::TAB_OTHERFACTIONS:
+                snapshot.message = valfac.empty() ? _( "You don't know of any factions." ) : std::string();
+                for( auto i = std::size_t{ 0 }; i < valfac.size(); ++i ) {
+                    add( i, "faction:" + std::to_string( i ), _( valfac[i]->name ),
+                         string_format( _( "Attitude to you: %s\nFaction strength: %s\n%s" ),
+                                        fac_ranking_text( valfac[i]->likes_u ), valfac[i]->power, _( valfac[i]->desc ) ) );
+                }
+                break;
+            case tab_mode::TAB_LORE:
+                snapshot.message = lore.empty() ? _( "You haven't learned anything about the world." ) :
+                                   std::string();
+                for( auto i = std::size_t{ 0 }; i < lore.size(); ++i ) {
+                    add( i, "lore:" + std::to_string( i ), _( lore[i].second ),
+                         SNIPPET.get_snippet_by_id( lore[i].first ).value().translated() );
+                }
+                break;
+            case tab_mode::TAB_CREATURES:
+                snapshot.message = creatures.empty() ? _( "You haven't recorded sightings of any creatures." ) :
+                                   std::string();
+                for( auto i = std::size_t{ 0 }; i < creatures.size(); ++i ) {
+                    auto text = std::string();
+                    for( const auto &line : mtype_display_lines( *creatures[i], 60 ) ) {
+                        text += std::string( line.indent, ' ' ) + line.text + "\n";
+                    }
+                    add( i, "creature:" + std::to_string( i ), creatures[i]->nname(), text );
+                }
+                break;
+            default:
+                break;
+        }
+        return snapshot;
+    } );
 
     while( true ) {
         // create a list of NPCs, visible and the ones on overmapbuffer
@@ -898,7 +983,17 @@ void faction_manager::display() const
         }
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "tab:" ) ) {
+                tab = static_cast<tab_mode>( std::stoi( id.substr( 4 ) ) );
+                selection = 0;
+            } else if( const auto colon = id.find( ':' ); colon != std::string::npos ) {
+                // Rows are numbered like their lists: follower:2, faction:2, lore:2, creature:2.
+                selection = std::stoul( id.substr( colon + 1 ) );
+            }
+            return std::string();
+        } );
         if( action == "NEXT_TAB" || action == "RIGHT" ) {
             tab = static_cast<tab_mode>( static_cast<int>( tab ) + 1 );
             if( tab >= tab_mode::NUM_TABS ) {

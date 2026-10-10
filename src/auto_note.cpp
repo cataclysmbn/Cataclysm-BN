@@ -1,4 +1,5 @@
 #include "auto_note.h"
+#include "client_choice.h"
 
 #include "cata_utility.h"
 #include "color.h"
@@ -17,8 +18,10 @@
 #include "ui_manager.h"
 #include "world.h"
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
+#include <vector>
 
 namespace auto_notes
 {
@@ -320,10 +323,56 @@ void auto_note_manager_gui::show()
         wnoutrefresh( w );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctx, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Auto Notes Manager" ),
+            .message = string_format( _( "Auto notes enabled: %s" ),
+                                      get_option<bool>( "AUTO_NOTES" ) ? _( "True" ) : _( "False" ) ),
+            .allow_cancel = true,
+        };
+        if( emptyMode ) {
+            snapshot.message += "\n" + std::string(
+                                    _( "Discover more special encounters to populate this list" ) );
+        }
+        for( auto i = std::size_t{ 0 }; i < displayCache.size(); ++i ) {
+            const auto &entry = mapExtraCache[displayCache[i]];
+            snapshot.choices.push_back( {
+                .id = "extra:" + displayCache[i].str(), .label = entry.first.name(),
+                .selected = entry.second, .highlighted = static_cast<int>( i ) == currentLine,
+                .columns = {
+                    { .label = _( "Symbol" ), .value = entry.first.get_symbol() },
+                    {
+                        .label = _( "Enabled" ), .value = entry.second ? pgettext( "auto notes status value", "yes" )
+                        : pgettext( "auto notes status value", "no" )
+                    },
+                },
+            } );
+        }
+        const auto actions = emptyMode
+                             ? std::vector<const char *> { "SWITCH_AUTO_NOTE_OPTION" }
+                             :
+                             std::vector<const char *> { "SWITCH_AUTO_NOTE_OPTION", "ENABLE_MAPEXTRA_NOTE",
+                                     "DISABLE_MAPEXTRA_NOTE"
+                                                       };
+        for( const auto *id : actions ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctx.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string currentAction = ctx.handle_input();
+        const auto currentAction = game_client::action_of( ctx,
+        ctx.handle_input(), [&]( const std::string & id ) {
+            // Choosing a map extra is Enter on it, which toggles its note.
+            const auto found = std::ranges::find( displayCache, string_id<map_extra>( id.substr( 6 ) ) );
+            if( found == displayCache.end() ) { return std::string(); }
+            currentLine = static_cast<int>( found - displayCache.begin() );
+            return std::string( "CONFIRM" );
+        } );
 
         // Actions that also work with no items to display
         if( currentAction == "SWITCH_AUTO_NOTE_OPTION" ) {

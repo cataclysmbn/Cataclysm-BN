@@ -263,6 +263,11 @@ void advanced_inventory_pane::scroll_category( int offset )
     skip_category_headers( offset > 0 ? +1 : -1 );
 }
 
+auto advanced_inventory_pane::get_cur_item_ptr() const -> const advanced_inv_listitem *
+{
+    return static_cast<size_t>( index ) < items.size() ? &items[index] : nullptr;
+}
+
 advanced_inv_listitem *advanced_inventory_pane::get_cur_item_ptr()
 {
     if( static_cast<size_t>( index ) >= items.size() ) {

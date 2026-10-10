@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "profile.h"
+
 namespace engine_client
 {
 namespace
@@ -135,7 +137,10 @@ auto diff( const state_value &from, const state_value &to ) -> changes
         result.environment = to.world.environment;
     }
     if( to.world.route != from.world.route ) { result.route = to.world.route; }
-    if( !same_boundary( from.interaction, to.interaction ) ) { result.interaction = to.interaction; }
+    if( !same_boundary( from.interaction, to.interaction ) ) {
+        result.interaction = to.interaction;
+        result.actions_unchanged = from.interaction.actions == to.interaction.actions;
+    }
     return result;
 }
 
@@ -198,6 +203,7 @@ auto remember( std::vector<message_value> &log, const message_value &line ) -> v
 
 public_event::public_event( event_value value ) : value_( std::move( value ) ) {}
 auto public_event::value() const -> const event_value & { return value_; } // *NOPAD*
+auto public_event::wire() const -> const std::string & { return wire_; } // *NOPAD*
 
 event_stream::event_stream( snapshot initial ) : current_( std::move( initial ) ) {}
 auto event_stream::create( std::string epoch,
@@ -213,16 +219,30 @@ auto event_stream::seed_log( std::vector<message_value> lines ) -> void
 }
 auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
 
+/// Serializes the event once for the wire; false when it would not fit a frame.
+auto event_stream::seal( public_event &event ) const -> bool
+{
+    ZoneScopedN( "engine_client_serialize_event" );
+    event.wire_ = serialize_events( {.epoch = current_.at.epoch, .events = {event}} );
+    return event.wire_.size() <= maximum_event_bytes;
+}
+
 auto event_stream::publish( publish_request request ) ->
 std::expected<std::optional<public_event>, error>
 {
     if( request.decision == disclosure::withheld ) { return std::nullopt; }
-    if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
+    {
+        ZoneScopedN( "engine_client_validate_state" );
+        if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
+    }
     if( removes_value( current_.value, request.next ) ) { return std::unexpected( error::resync_required ); }
     if( request.cause && ( *request.cause == 0 || *request.cause > current_.at.sequence ) ) {
         return std::unexpected( error::validation_failed );
     }
-    auto delta = diff( current_.value, request.next );
+    auto delta = [&] {
+        ZoneScopedN( "engine_client_diff" );
+        return diff( current_.value, request.next );
+    }();
     if( delta.empty() ) { return std::nullopt; }
     if( current_.at.revision == std::numeric_limits<counter>::max() ||
         current_.at.sequence == std::numeric_limits<counter>::max() ) {
@@ -238,10 +258,7 @@ std::expected<std::optional<public_event>, error>
             .delta = std::move( delta ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
-        maximum_event_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
+    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
     current_.value = std::move( request.next );
     current_.at.sequence = event.value().sequence;
     current_.at.revision = event.value().revision;
@@ -261,10 +278,7 @@ auto event_stream::publish_message( message_request request ) -> std::expected<p
             .message = std::move( request.message ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
-        maximum_event_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
+    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     remember( current_.log, *event.value().message );
     return event;
@@ -284,10 +298,7 @@ std::expected<public_event, error>
             .presentation = std::move( request.fact ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
-        maximum_event_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
+    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     return event;
 }

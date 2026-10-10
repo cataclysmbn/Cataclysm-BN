@@ -64,6 +64,7 @@
 #include <vector>
 #if defined(CATA_SDL)
 #    include "compute/compute_backend.h"
+#    include "compute/gpu_failure.h"
 #    include "compute/gpu_lm.h"
 #    include "compute/gpu_platform.h"
 #    include "compute/gpu_transparency.h"
@@ -495,7 +496,8 @@ auto map::build_transparency_cache(const int zlev) -> bool {
         ZoneScopedN("build_transparency_cache_gpu");
         SDL_GPUDevice* const gpu_device = cata_gpu::get_device();
         if (gpu_device == nullptr) {
-            debugmsg("SDL_GPU transparency is required, but no GPU device is available");
+            cata_gpu::report_failure_once(
+                "SDL_GPU transparency is required, but no GPU device is available");
             return false;
         }
 
@@ -571,7 +573,7 @@ auto map::build_transparency_cache(const int zlev) -> bool {
             .zlev = zlev,
         });
         if (resident_output.buffer == nullptr) {
-            debugmsg(
+            cata_gpu::report_failure_once(
                 "SDL_GPU transparency resident output allocation failed; see debug.log for details");
             return false;
         }
@@ -590,7 +592,8 @@ auto map::build_transparency_cache(const int zlev) -> bool {
                     },
             })
             || gpu_result.empty()) {
-            debugmsg("SDL_GPU transparency dispatch failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU transparency dispatch failed; see debug.log for details");
             return false;
         }
         const auto expected_compact_result_size = refs.size() * static_cast<size_t>(SEEX * SEEY);
@@ -749,7 +752,8 @@ auto map::build_transparency_caches(const int minz, const int maxz) -> std::vect
             }
 
             if (gpu_device == nullptr) {
-                debugmsg("SDL_GPU transparency is required, but no GPU device is available");
+                cata_gpu::report_failure_once(
+                    "SDL_GPU transparency is required, but no GPU device is available");
                 return dirty_levels;
             }
 
@@ -761,7 +765,7 @@ auto map::build_transparency_caches(const int minz, const int maxz) -> std::vect
                 .zlev = zlev,
             });
             if (resident_output.buffer == nullptr) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU transparency resident output allocation failed; see debug.log for details");
                 return dirty_levels;
             }
@@ -769,7 +773,8 @@ auto map::build_transparency_caches(const int minz, const int maxz) -> std::vect
                 resident_buffer = resident_output.buffer;
                 cache_size = map_cache.cache_x * map_cache.cache_y * OVERMAP_LAYERS;
             } else if (resident_buffer != resident_output.buffer) {
-                debugmsg("SDL_GPU transparency resident buffer changed during batched dispatch");
+                cata_gpu::report_failure_once(
+                    "SDL_GPU transparency resident buffer changed during batched dispatch");
                 return dirty_levels;
             }
 
@@ -868,7 +873,8 @@ auto map::build_transparency_caches(const int minz, const int maxz) -> std::vect
                     },
             })
             || gpu_result.empty()) {
-            debugmsg("SDL_GPU batched transparency dispatch failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU batched transparency dispatch failed; see debug.log for details");
             return dirty_levels;
         }
 

@@ -998,6 +998,22 @@ bool advanced_inventory::show_sort_menu( advanced_inventory_pane &pane )
     return true;
 }
 
+namespace
+{
+/// The registered actions of the areas the pane's cursor item cannot be put in: native draws them red.
+auto blocked_areas( const advanced_inventory_pane &pane,
+                    const std::array<advanced_inv_area, NUM_AIM_LOCATIONS> &squares ) -> std::vector<std::string>
+{
+    auto result = std::vector<std::string> {};
+    for( auto square : squares ) {
+        if( !square.actionname.empty() && !square.canputitems( pane.get_cur_item_ptr() ) ) {
+            result.push_back( square.actionname );
+        }
+    }
+    return result;
+}
+} // namespace
+
 auto advanced_inventory::interaction_snapshot() const -> game_client::interaction_snapshot
 {
     auto result = game_client::interaction_snapshot{
@@ -1023,6 +1039,7 @@ auto advanced_inventory::interaction_snapshot() const -> game_client::interactio
             .area_description = area.desc[cargo],
             .filter = pane.filter,
             .storage_kind = storage_kind,
+            .blocked_areas = blocked_areas( pane, squares ),
         } );
         for( const auto item_index : std::views::iota( std::size_t{0}, pane.items.size() ) ) {
             const auto &entry = pane.items[item_index];
