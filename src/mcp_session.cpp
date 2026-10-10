@@ -5,6 +5,7 @@
 #include <chrono>
 #include <cerrno>
 #include <csignal>
+#include <cstring>
 #include <cstdio>
 #include <deque>
 #include <iostream>
@@ -232,6 +233,19 @@ auto stdin_ready() -> bool
 #endif
 }
 
+#if !defined(_WIN32)
+/// SDL turns SIGTERM and SIGINT into a quit event that ends the engine as if its client had closed
+/// stdin. Said so by name instead, and the process dies of the signal like any other.
+extern "C" auto name_the_signal( const int sig ) -> void
+{
+    const auto text = sig == SIGTERM ? "mcp: the engine is exiting: received SIGTERM\n" :
+                      "mcp: the engine is exiting: received SIGINT\n";
+    static_cast<void>( write( STDERR_FILENO, text, strlen( text ) ) );
+    std::signal( sig, SIG_DFL );
+    std::raise( sig );
+}
+#endif
+
 /// Leaves the process with the reason on stderr, which the client shows on its error screen.
 [[noreturn]] auto leave( const std::string &why ) -> void
 {
@@ -245,6 +259,16 @@ auto stdin_ready() -> bool
 auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
+#if !defined(_WIN32)
+    // After SDL has installed its own handlers.
+    static const auto named = []() {
+        std::signal( SIGTERM, name_the_signal );
+        std::signal( SIGINT, name_the_signal );
+        return true;
+    }
+    ();
+    static_cast<void>( named );
+#endif
     while( !session.stop ) {
         if( !session.events.empty() ) {
             const auto request = std::move( session.events.front() );
