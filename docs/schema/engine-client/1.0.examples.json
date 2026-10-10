@@ -1610,6 +1610,7 @@
         "color": "",
         "tile": "overlay_female_mutation_hair_long",
         "mutation": {
+          "id": "hair_long",
           "types": [
             "hair_style"
           ],

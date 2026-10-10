@@ -903,6 +903,7 @@ TEST_CASE(
         std::ranges::find(state.avatar->overlays, "mutation_hair_black", &ec::look::id);
     if (hair != state.avatar->overlays.end()) {
         REQUIRE(hair->mutation);
+        CHECK(hair->mutation->id == "hair_black");
         CHECK(std::ranges::count(hair->mutation->types, "hair_color") == 1);
     }
     // Worn items are not mutations and carry no types.

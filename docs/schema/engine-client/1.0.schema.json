@@ -227,8 +227,11 @@
         },
         "mutation": {
           "type": "object",
-          "description": "Set on the overlay of a mutation: the types and flags of the mutation, which a tileset's tint_pairs are keyed by to tint the overlay with the character's hair, skin or eye color.",
+          "description": "Set on the overlay of a mutation: its id, and its types and flags, which a tileset's tints and tint_pairs are keyed by to tint the overlay with the character's hair, skin or eye color.",
           "properties": {
+            "id": {
+              "type": "string"
+            },
             "types": {
               "type": "array",
               "items": {
@@ -243,6 +246,7 @@
             }
           },
           "required": [
+            "id",
             "types",
             "flags"
           ],

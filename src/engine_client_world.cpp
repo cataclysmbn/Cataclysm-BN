@@ -438,6 +438,7 @@ auto overlays_of( const Creature &critter ) -> std::vector<look>
         if( const auto *const mut = std::get_if<const mutation *>( &entry.entry ) ) {
             const auto &branch = ( *mut )->first.obj();
             result.mutation = look_mutation{
+                .id = ( *mut )->first.str(),
                 .types = { branch.types.begin(), branch.types.end() },
                 .flags = branch.flags | std::views::transform( &trait_flag_str_id::str ) | std::ranges::to<std::vector>() };
         }

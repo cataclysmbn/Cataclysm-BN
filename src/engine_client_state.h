@@ -29,9 +29,10 @@ struct look_tint {
     std::string fg = {};
     auto operator<=>( const look_tint & ) const = default; // *NOPAD*
 };
-/// What a tileset needs to tint the sprite of a mutation: the types and flags of the mutation, which
+/// What a tileset needs to tint the sprite of a mutation: its id, and its types and flags, which
 /// its `tint_pairs` are keyed by.
 struct look_mutation {
+    std::string id = {};
     std::vector<std::string> types = {};
     std::vector<std::string> flags = {};
     auto operator<=>( const look_mutation & ) const = default; // *NOPAD*

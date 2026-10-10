@@ -48,7 +48,9 @@ auto to_json( const look &value ) -> json
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
     if( value.mutation ) {
-        result["mutation"] = {{"types", value.mutation->types}, {"flags", value.mutation->flags}};
+        result["mutation"] = {{"id", value.mutation->id}, {"types", value.mutation->types},
+            {"flags", value.mutation->flags}
+        };
     }
     if( value.tint ) {
         result["tint"] = json::object();
