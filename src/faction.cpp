@@ -13,6 +13,7 @@
 #include "json.h"
 #include "line.h"
 #include "mtype.h"
+#include "mtype_display.h"
 #include "npc.h"
 #include "output.h"
 #include "overmap/overmapbuffer.h"
@@ -912,8 +913,11 @@ void faction_manager::display() const
                 snapshot.message = creatures.empty() ? _( "You haven't recorded sightings of any creatures." ) :
                                    std::string();
                 for( auto i = std::size_t{ 0 }; i < creatures.size(); ++i ) {
-                    add( i, "creature:" + std::to_string( i ), creatures[i]->nname(),
-                         creatures[i]->get_description() );
+                    auto text = std::string();
+                    for( const auto &line : mtype_display_lines( *creatures[i], 60 ) ) {
+                        text += std::string( line.indent, ' ' ) + line.text + "\n";
+                    }
+                    add( i, "creature:" + std::to_string( i ), creatures[i]->nname(), text );
                 }
                 break;
             default:

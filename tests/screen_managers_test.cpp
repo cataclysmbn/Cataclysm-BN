@@ -181,7 +181,9 @@ TEST_CASE(
                     REQUIRE(creatures.size() == 1);
                     const auto zombie = row(snapshot, creatures.front());
                     CHECK(zombie->highlighted);
-                    CHECK_FALSE(zombie->description.empty());
+                    CHECK(zombie->description.find("Difficulty") != std::string::npos);
+                    CHECK(zombie->description.find("Origin") != std::string::npos);
+                    CHECK(zombie->description.find("Species") != std::string::npos);
                     return choose(snapshot, "tab:2");
                 }
                 case 2: {
