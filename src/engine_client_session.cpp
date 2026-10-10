@@ -40,10 +40,10 @@ auto session::refresh_result() -> void
     active_ = *current;
 }
 
-auto session::interrupt() -> void
+auto session::interrupt( const error reason ) -> void
 {
     if( active_ ) {
-        static_cast<void>( lifecycle_->interrupt() );
+        static_cast<void>( lifecycle_->interrupt( reason ) );
         refresh_result();
     }
     input_.reset();
@@ -52,7 +52,7 @@ auto session::interrupt() -> void
 
 auto session::restart_epoch( const std::string_view reason ) -> void
 {
-    interrupt();
+    interrupt( error::stale_epoch );
     retired_ = active_;
     if( stream_ ) {
         push_.emplace_back( resync_notice{ .epoch = epoch_, .reason = std::string{reason},
@@ -114,7 +114,7 @@ auto session::publish_boundary() -> std::expected<void, error>
         const auto &now = stream_->current();
         const auto completed = lifecycle_->complete_at_boundary( now.at, now.value.interaction );
         if( !completed && completed.error() != error::invalid_lifecycle ) {
-            interrupt();
+            interrupt( completed.error() );
             return std::unexpected( completed.error() );
         }
         refresh_result();
@@ -185,7 +185,7 @@ auto session::delivered( input_event fallback ) -> input_event
             auto validated = std::exchange( validated_input_, std::nullopt );
             return std::move( *validated );
         }
-        interrupt();
+        interrupt( error::not_ready );
     }
     return fallback;
 }

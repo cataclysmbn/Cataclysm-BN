@@ -277,7 +277,7 @@ TEST_CASE(
         subscribe
         + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
     const auto out = test.output.str();
-    const auto interrupted = index_of(out, R"("stage":"interrupted")");
+    const auto interrupted = index_of(out, R"("stage":"interrupted","error":"stale_epoch")");
     const auto resync = index_of(out, R"("method":"bn.resync")");
     REQUIRE(interrupted != std::string::npos);
     REQUIRE(resync != std::string::npos);
@@ -363,7 +363,7 @@ TEST_CASE("shutdown flushes the stage changes it caused", "[engine_client_server
     REQUIRE(test.server.finish(test.output));
     const auto out = test.output.str();
     const auto executing = index_of(out, R"("stage":"executing")");
-    const auto interrupted = index_of(out, R"("stage":"interrupted")");
+    const auto interrupted = index_of(out, R"("stage":"interrupted","error":"not_ready")");
     REQUIRE(executing != std::string::npos);
     REQUIRE(interrupted != std::string::npos);
     CHECK(executing < interrupted);

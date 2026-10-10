@@ -259,25 +259,48 @@ const checkLoading = async (loading: Value[], chosenAt: number) => {
   }
 }
 
+async function makeProfile(): Promise<string> {
+  const profile = await Deno.makeTempDir({ prefix: "bn-protocol-" })
+  await Deno.mkdir(`${profile}/config`, { recursive: true })
+  await Deno.writeTextFile(
+    `${profile}/config/options.json`,
+    JSON.stringify([
+      { name: "USE_LANG", value: "en_US" },
+      { name: "ANIMATIONS", value: "false" },
+      { name: "AUTOSAVE", value: "false" },
+      { name: "COMPUTE_ACCELERATION", value: "gpu_software" },
+    ]),
+  )
+  await Deno.writeTextFile(
+    `${profile}/config/preload.json`,
+    JSON.stringify({ compute_acceleration: "gpu_software" }),
+  )
+  return profile
+}
+
+/** Hello, then New Game and Tutorial; returns the session on the loaded tutorial world. */
+async function enterTutorial(client: Client): Promise<Session> {
+  await client.result("bn.hello", {
+    versions: ["1.0"],
+    client: { name: "stdio-test", version: "1" },
+  })
+  let session = new Session(client)
+  await session.start()
+  await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
+  await session.choose("New Game")
+  await session.choose("Tutorial")
+  assertEquals((await client.note()).method, "bn.resync")
+  session = new Session(client)
+  await session.start()
+  await session.acknowledge(() => session.mirror.interaction.interaction === null)
+  return session
+}
+
 Deno.test({
   name: "stdio: hello, subscribe, choose and move; stream equals a fresh subscribe",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
-    const profile = await Deno.makeTempDir({ prefix: "bn-protocol-" })
-    await Deno.mkdir(`${profile}/config`, { recursive: true })
-    await Deno.writeTextFile(
-      `${profile}/config/options.json`,
-      JSON.stringify([
-        { name: "USE_LANG", value: "en_US" },
-        { name: "ANIMATIONS", value: "false" },
-        { name: "AUTOSAVE", value: "false" },
-        { name: "COMPUTE_ACCELERATION", value: "gpu_software" },
-      ]),
-    )
-    await Deno.writeTextFile(
-      `${profile}/config/preload.json`,
-      JSON.stringify({ compute_acceleration: "gpu_software" }),
-    )
+    const profile = await makeProfile()
     const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
       // Nothing works before hello.
@@ -355,6 +378,12 @@ Deno.test({
       const tutorial = await session.choose("Tutorial")
       assertEquals(tutorial.stages.at(-1), "interrupted")
       await checkLoading(session.loading, chosenAt)
+      // An interrupted command says why: the world it ran in is gone.
+      const interrupted = await client.result("bn.command.result", {
+        epoch,
+        command_id: tutorial.id,
+      })
+      assertEquals([interrupted.stage, interrupted.error], ["interrupted", "stale_epoch"])
       const resync = await client.note()
       assertEquals(resync.method, "bn.resync")
       session.resyncs.push(resync.params)
@@ -477,6 +506,61 @@ Deno.test({
       // The reconstructed state equals a fresh subscribe.
       const fresh = await session.subscribe()
       assertEquals(fresh.state(), session.mirror.state())
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: walking the tutorial to the stairs and back keeps every command completing",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      const stairs = { x: 1210, y: 1214 }
+      const log: string[] = []
+      const run = async (operation: Value) => {
+        const result = await session.submit(operation)
+        log.push(`${JSON.stringify(operation)} ${result.stages.at(-1)}`)
+        assertEquals(result.stages.at(-1), "completed", log.slice(-6).join("\n"))
+      }
+      const acknowledgePopups = async () => {
+        while (session.mirror.interaction.interaction) {
+          const prompt = session.mirror.interaction.interaction
+          assertEquals(prompt.context, "POPUP_WAIT")
+          await run({ kind: "choose", choice_id: prompt.choices[0].id })
+        }
+      }
+      // Lessons pop up on the way; each one is a prompt the client can answer.
+      for (let step = 0; step < 60; step++) {
+        await acknowledgePopups()
+        const at = session.mirror.avatar.at
+        if (at.x === stairs.x && at.y === stairs.y) break
+        const dir = at.x === 1202 && at.y < 1214 ? "DOWN" : at.x < stairs.x ? "RIGHT" : "LEFT"
+        await run({ kind: "action", action_id: dir })
+      }
+      await acknowledgePopups()
+      assertEquals(session.mirror.avatar.at, { dim: "", ...stairs, z: 0 })
+      await run({ kind: "action", action_id: "LEVEL_DOWN" })
+      await acknowledgePopups()
+      assertEquals(session.mirror.avatar.at.z, -1)
+      await run({ kind: "action", action_id: "LEFT" })
+      await run({ kind: "action", action_id: "RIGHT" })
+      await run({ kind: "action", action_id: "LEVEL_UP" })
+      assertEquals(session.mirror.avatar.at.z, 0)
+
+      // Look mode has no structured interaction but publishes its own actions; it can be left.
+      await run({ kind: "action", action_id: "look" })
+      const ids = session.mirror.interaction.actions.map((a: Value) => a.id)
+      assertEquals(session.mirror.interaction.interaction, null)
+      assert(ids.includes("QUIT") && !ids.includes("look"), ids.join())
+      await run({ kind: "action", action_id: "QUIT" })
+      assert(session.mirror.interaction.actions.some((a: Value) => a.id === "look"))
       await client.close()
     } finally {
       client.kill()

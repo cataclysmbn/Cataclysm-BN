@@ -165,7 +165,8 @@ class command_lifecycle
         /// Next *distinct* native input boundary; this is not long-activity completion.
         auto complete_at_boundary( const clock_point &at, const boundary_state &current )
         -> std::expected<void, error>;
-        auto interrupt() -> std::expected<void, error>;
+        /// The reason is the result's `failure`; `stale_epoch` for a replaced world, `not_ready` for a closing connection, `validation_failed` for input the game refused.
+        auto interrupt( error reason ) -> std::expected<void, error>;
         auto result( const std::string &command_id ) const -> std::expected<command_result, error>;
     private:
         std::string epoch_ = {};

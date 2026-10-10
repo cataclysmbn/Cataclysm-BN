@@ -47,7 +47,7 @@ class session final : public command_authority
         auto prepare_input( point screen_size ) -> std::expected<game_client::input_command, error>;
         /// Return the core-validated event at the actual backend delivery seam.
         auto delivered( input_event fallback ) -> input_event;
-        auto interrupt() -> void;
+        auto interrupt( error reason ) -> void;
         auto has_received() const -> bool;
         auto result( const result_request &request ) const -> std::expected<command_result, error>;
         /// Everything published since the last call; the connection decides what to send.

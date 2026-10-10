@@ -352,10 +352,11 @@ auto command_lifecycle::complete_at_boundary( const clock_point &at, const bound
     request_.reset();
     return {};
 }
-auto command_lifecycle::interrupt() -> std::expected<void, error>
+auto command_lifecycle::interrupt( const error reason ) -> std::expected<void, error>
 {
     if( !result_ || terminal( result_->stage ) ) { return std::unexpected( error::invalid_lifecycle ); }
     result_->stage = command_stage::interrupted;
+    result_->failure = reason;
     request_.reset();
     return {};
 }

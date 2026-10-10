@@ -262,7 +262,7 @@ TEST_CASE("command stages and expectations", "[engine_client_contract]") {
     SECTION("interrupt is terminal and a new submit replaces the old result") {
         const auto first = lifecycle.submit(choose_request(boundary, "choice:yes"));
         REQUIRE(first);
-        REQUIRE(lifecycle.interrupt());
+        REQUIRE(lifecycle.interrupt(engine_client::error::not_ready));
         CHECK(lifecycle.result(first->command_id)->stage
               == engine_client::command_stage::interrupted);
         const auto second = lifecycle.submit(choose_request(boundary, "choice:yes"));
@@ -287,7 +287,7 @@ TEST_CASE("a boundary without interaction expects a null schema", "[engine_clien
         .operation = engine_client::registered_action{.id = "RIGHT"}};
     REQUIRE(lifecycle.submit(request));
     CHECK(lifecycle.validate(at_of(boundary), boundary, point{80, 24}));
-    REQUIRE(lifecycle.interrupt());
+    REQUIRE(lifecycle.interrupt(engine_client::error::not_ready));
     auto wrong = request;
     wrong.expect.schema_id = "schema:invented";
     REQUIRE(lifecycle.submit(wrong));

@@ -694,7 +694,7 @@ auto run_game( int argc, char *argv[] ) -> int
     }
 
     game_session::set_phase( "shutting_down" );
-    engine_client::process_session().interrupt();
+    engine_client::process_session().interrupt( engine_client::error::not_ready );
     exit_handler( replay::is_enabled() ? 0 : -999 );
     return 0;
 }

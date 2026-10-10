@@ -499,7 +499,7 @@ auto server::publish_step( std::ostream &out ) -> bool
 
 auto server::finish( std::ostream &out ) -> bool
 {
-    session_.interrupt();
+    session_.interrupt( engine_client::error::not_ready );
     return flush_push( out );
 }
 
@@ -519,7 +519,7 @@ auto server::failed() const -> bool
 
 auto server::reject_pending( std::string error ) -> void
 {
-    session_.interrupt();
+    session_.interrupt( engine_client::error::validation_failed );
     if( pending_response_ ) {
         pending_response_->error = error.empty() ? "Input was rejected in the active context" :
                                    std::move( error );
@@ -542,7 +542,7 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
     const auto response = rpc::make_result( request, value.str() );
     if( !response || !deferred_frame_ || !deferred_frame_->append( *response ) ) {
         failed_ = true;
-        session_.interrupt();
+        session_.interrupt( engine_client::error::not_ready );
         return;
     }
     // Shutdown may finish an already-terminal frame, but must not dispatch later members.
@@ -553,7 +553,7 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
 
 auto server::publish_boundary( std::ostream &out ) -> bool
 {
-    if( !session_.publish_boundary() ) { session_.interrupt(); return false; }
+    if( !session_.publish_boundary() ) { session_.interrupt( engine_client::error::not_ready ); return false; }
     return flush_push( out );
 }
 
@@ -606,7 +606,7 @@ auto server::deliver_input() -> bool
 {
     const auto input = session_.prepare_input( game_client::memory::screen_size() );
     if( !input ) { return false; }
-    if( !host_.submit( {*input} ) ) { session_.interrupt(); return false; }
+    if( !host_.submit( {*input} ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
     return true;
 }
 
@@ -694,7 +694,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto received = session_.submit( *decoded );
         if( !received ) { return fail( received.error() ); }
         const auto encoded = serialize_receipt( *received );
-        if( !encoded ) { session_.interrupt(); return fail( encoded.error() ); }
+        if( !encoded ) { session_.interrupt( engine_client::error::not_ready ); return fail( encoded.error() ); }
         return rpc::make_result( request, *encoded );
     }
     if( request.method == "bn.command.result" ) {
@@ -716,9 +716,9 @@ auto server::dispatch( const std::string_view line, std::ostream &out, std::ostr
         const auto code = !inspected && inspected.error() == rpc::parse_error::invalid_json ?
                           rpc::error_code::parse_error : rpc::error_code::invalid_request;
         const auto response = rpc::make_error( { .id = { .json = "null" }, .code = code } );
-        if( !response || !frame.append( *response ) ) { session_.interrupt(); return false; }
+        if( !response || !frame.append( *response ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
         const auto bytes = std::move( frame ).finish();
-        if( !bytes || !rpc::write_frame( out, *bytes ) ) { session_.interrupt(); return false; }
+        if( !bytes || !rpc::write_frame( out, *bytes ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
         return true;
     }
     // The cursor pins the complete validated input, including across native widget calls.
@@ -730,7 +730,7 @@ auto server::dispatch( const std::string_view line, std::ostream &out, std::ostr
 auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
 {
     const auto terminal = [&]() {
-        session_.interrupt();
+        session_.interrupt( engine_client::error::not_ready );
         pending_requests_.reset();
         deferred_frame_.reset();
         err << "MCP: protocol output failed; closing connection\n";
