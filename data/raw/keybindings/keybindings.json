@@ -3706,6 +3706,13 @@
     "bindings": [ { "input_method": "keyboard", "key": "f" } ]
   },
   {
+    "id": "DROP_WITH_CLOTHING",
+    "type": "keybinding",
+    "category": "INVENTORY_ITEM",
+    "name": "Link to clothing",
+    "bindings": [ { "input_method": "keyboard", "key": "L" } ]
+  },
+  {
     "id": "REASSIGN",
     "type": "keybinding",
     "category": "INVENTORY_ITEM",

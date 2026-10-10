@@ -3,6 +3,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "catch/catch.hpp"
+#include "clothing_link.h"
 #include "drop_token.h"
 #include "item.h"
 #include "locations.h"
@@ -17,6 +18,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
@@ -418,6 +420,89 @@ TEST_CASE("drop overflow prefers non-favorites", "[activity][drop_token][favorit
 
     CHECK(dropped_favorites > 0);
     CHECK(dropped_non_favorites == non_favorite_count);
+}
+
+TEST_CASE("clothing links require available storage", "[activity][drop_token]") {
+    clear_all_state();
+    auto dummy = avatar{};
+    auto& pack = *item::spawn_temporary("test_pants_fur");
+    auto& other_pack = *item::spawn_temporary("test_pants_fur");
+    auto& exact_fit = *item::spawn_temporary("test_amputator");
+    auto& small = *item::spawn_temporary("test_1kg_cube");
+    REQUIRE(pack.get_storage() == exact_fit.volume());
+    pack.set_var("DROP_WITH_CLOTHING_ID", 1);
+    other_pack.set_var("DROP_WITH_CLOTHING_ID", 2);
+
+    CHECK(can_link_to_clothing(dummy, exact_fit, pack));
+    CHECK_FALSE(can_link_to_clothing(dummy, pack, pack));
+    CHECK_FALSE(can_link_to_clothing(dummy, pack, other_pack));
+    CHECK_FALSE(can_link_to_clothing(dummy, small, exact_fit));
+
+    auto linked = item::spawn("test_amputator");
+    linked->set_var("DROP_WITH_CLOTHING_TARGET", 1);
+    auto* linked_ptr = linked.get();
+    dummy.i_add(std::move(linked));
+
+    CHECK_FALSE(can_link_to_clothing(dummy, small, pack));
+    CHECK(can_link_to_clothing(dummy, small, other_pack));
+    CHECK(can_link_to_clothing(dummy, *linked_ptr, pack));
+    CHECK(can_link_to_clothing(dummy, *linked_ptr, other_pack));
+}
+
+TEST_CASE("clothing-linked items drop with their assigned clothing", "[activity][drop_token]") {
+    clear_all_state();
+    avatar dummy;
+    auto& backpack = *item::spawn_temporary("backpack");
+    auto& duffel_bag = *item::spawn_temporary("duffelbag");
+    auto& linked_item_type = *item::spawn_temporary("bottle_glass");
+
+    REQUIRE(!dummy.wear_item(item::spawn(backpack), false));
+    REQUIRE(!dummy.wear_item(item::spawn(duffel_bag), false));
+
+    const auto backpack_iter = std::ranges::find_if(dummy.worn, [](const auto* worn) {
+        return worn->typeId() == itype_id("backpack");
+    });
+    const auto duffel_iter = std::ranges::find_if(dummy.worn, [](const auto* worn) {
+        return worn->typeId() == itype_id("duffelbag");
+    });
+    REQUIRE(backpack_iter != dummy.worn.end());
+    REQUIRE(duffel_iter != dummy.worn.end());
+    auto* backpack_item = *backpack_iter;
+    auto* duffel_item = *duffel_iter;
+    backpack_item->set_var("DROP_WITH_CLOTHING_ID", 1);
+    duffel_item->set_var("DROP_WITH_CLOTHING_ID", 2);
+
+    auto linked_item = item::spawn(linked_item_type);
+    linked_item->set_var("DROP_WITH_CLOTHING_TARGET", 2);
+    linked_item->set_var("DROP_WITH_CLOTHING_NAME", duffel_item->tname());
+    dummy.i_add(std::move(linked_item));
+
+    drop_locations drop;
+    drop.emplace_back(*backpack_item, 1);
+    drop.emplace_back(*duffel_item, 1);
+    auto drop_list = pickup::reorder_for_dropping(dummy, drop);
+
+    const auto linked_position = std::ranges::find_if(drop_list, [](const auto& ait) {
+        return ait.loc->has_var("DROP_WITH_CLOTHING_TARGET");
+    });
+    REQUIRE(linked_position != drop_list.end());
+    REQUIRE(linked_position != drop_list.begin());
+    CHECK(std::prev(linked_position)->loc->get_var("DROP_WITH_CLOTHING_ID", 0) == 2);
+    CHECK(linked_position->consumed_moves == 0);
+
+    dummy.moves = 1000;
+    auto dropped_items = pickup::obtain_and_tokenize_items(dummy, drop_list);
+    const auto dropped_duffel_iter = std::ranges::find_if(dropped_items, [](const auto& it) {
+        return it->get_var("DROP_WITH_CLOTHING_ID", 0) == 2;
+    });
+    const auto dropped_linked_iter = std::ranges::find_if(dropped_items, [](const auto& it) {
+        return it->has_var("DROP_WITH_CLOTHING_TARGET");
+    });
+    REQUIRE(dropped_duffel_iter != dropped_items.end());
+    REQUIRE(dropped_linked_iter != dropped_items.end());
+    const auto* dropped_duffel = &**dropped_duffel_iter;
+    const auto* dropped_linked_item = &**dropped_linked_iter;
+    CHECK(dropped_linked_item->drop_token->is_child_of(*dropped_duffel->drop_token));
 }
 
 TEST_CASE(

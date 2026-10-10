@@ -80,6 +80,7 @@
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -576,6 +577,25 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
         return p.is_worn( loc );
     } );
 
+    auto dropping_clothing_ids = std::set<int> {};
+    for( const auto &worn_item : worn ) {
+        const auto clothing_id = worn_item.loc->get_var( "DROP_WITH_CLOTHING_ID", 0 );
+        if( clothing_id > 0 ) {
+            dropping_clothing_ids.insert( clothing_id );
+        }
+    }
+    for( const auto *stack : p.inv_const_slice() ) {
+        for( auto *it : *stack ) {
+            const auto target_id = it->get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+            if( dropping_clothing_ids.contains( target_id ) &&
+            !std::ranges::any_of( inv, [it]( const act_item & candidate ) {
+            return &*candidate.loc == it;
+        } ) ) {
+                inv.emplace_back( *it, it->count(), 0 );
+            }
+        }
+    }
+
     // Sort inventory items by volume in ascending order
     inv.sort( []( const act_item & first, const act_item & second ) {
         return first.loc->volume() < second.loc->volume();
@@ -628,12 +648,16 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
             }
             const std::vector<item *> &inv_stack = *old_inv[i];
             std::ranges::copy_if( inv_stack, std::back_inserter( non_favorite_candidates ),
-            []( const item * const it ) {
-                return !it->is_favorite && it->volume() > 0_ml;
+            [&dropping_clothing_ids]( const auto * const it ) {
+                const auto target_id = it->get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+                return !it->is_favorite && it->volume() > 0_ml &&
+                       ( target_id <= 0 || dropping_clothing_ids.contains( target_id ) );
             } );
             std::ranges::copy_if( inv_stack, std::back_inserter( favorite_candidates ),
-            []( const item * const it ) {
-                return it->is_favorite && it->volume() > 0_ml;
+            [&dropping_clothing_ids]( const auto * const it ) {
+                const auto target_id = it->get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+                return it->is_favorite && it->volume() > 0_ml &&
+                       ( target_id <= 0 || dropping_clothing_ids.contains( target_id ) );
             } );
         }
 
@@ -661,6 +685,31 @@ std::list<act_item> reorder_for_dropping( Character &p, const drop_locations &dr
 
     // Cumulatively decreases
     units::volume remaining_dropped_storage = dropped_worn_storage;
+
+    for( auto worn_iter = worn.begin(); worn_iter != worn.end(); ) {
+        const auto clothing_id = worn_iter->loc->get_var( "DROP_WITH_CLOTHING_ID", 0 );
+        if( clothing_id <= 0 || !std::ranges::any_of( inv, [clothing_id]( const act_item & candidate ) {
+        return candidate.loc->get_var( "DROP_WITH_CLOTHING_TARGET", 0 ) == clothing_id;
+        } ) ) {
+            ++worn_iter;
+            continue;
+        }
+
+        const auto clothing_storage = worn_iter->loc->get_storage();
+        res.push_back( *worn_iter );
+        for( auto inv_iter = inv.begin(); inv_iter != inv.end(); ) {
+            if( inv_iter->loc->get_var( "DROP_WITH_CLOTHING_TARGET", 0 ) == clothing_id ) {
+                auto linked_item = *inv_iter;
+                linked_item.consumed_moves = 0;
+                res.push_back( linked_item );
+                inv_iter = inv.erase( inv_iter );
+            } else {
+                ++inv_iter;
+            }
+        }
+        remaining_dropped_storage -= clothing_storage;
+        worn_iter = worn.erase( worn_iter );
+    }
 
     while( !worn.empty() && !inv.empty() ) {
         units::volume front_storage = worn.front().loc->get_storage();
@@ -700,6 +749,7 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
     std::vector<detached_ptr<item>> res;
     drop_token_provider &token_provider = drop_token::get_provider();
     item_drop_token last_token = token_provider.make_next( calendar::turn );
+    auto clothing_drop_numbers = std::unordered_map<int, int> {};
     if( items.empty() ) {
         return res;
     }
@@ -734,6 +784,16 @@ std::vector<detached_ptr<item>> obtain_and_tokenize_items( player &p, std::list<
         } else {
             last_token = *current_drop.drop_token;
             last_storage_volume = current_drop.get_storage();
+        }
+
+        const auto clothing_id = current_drop.get_var( "DROP_WITH_CLOTHING_ID", 0 );
+        if( clothing_id > 0 ) {
+            clothing_drop_numbers[clothing_id] = current_drop.drop_token->drop_number;
+        }
+        const auto target_id = current_drop.get_var( "DROP_WITH_CLOTHING_TARGET", 0 );
+        const auto target = clothing_drop_numbers.find( target_id );
+        if( target_id > 0 && target != clothing_drop_numbers.end() ) {
+            current_drop.drop_token->parent_number = target->second;
         }
 
         items.pop_front();
