@@ -490,6 +490,13 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
     return false;
 }
 
+auto server::publish_step( std::ostream &out ) -> bool
+{
+    if( failed_ || eof_ ) { return false; }
+    if( !publish_boundary( out ) ) { failed_ = true; eof_ = true; return false; }
+    return true;
+}
+
 auto server::finish( std::ostream &out ) -> bool
 {
     session_.interrupt();

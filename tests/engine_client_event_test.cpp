@@ -80,6 +80,34 @@ TEST_CASE("diff then apply reconstructs the target state", "[engine_client_event
     CHECK(diff(to, to).empty());
 }
 
+TEST_CASE(
+    "a planned route replaces the old one and an empty route clears it", "[engine_client_event]") {
+    auto from = world_of({visible_cell(1)});
+    auto planned = from;
+    planned.world.route = {pos(2), pos(3)};
+    const auto plan = diff(from, planned);
+    REQUIRE(plan.route);
+    CHECK(*plan.route == planned.world.route);
+    CHECK(classify(plan) == "cells.seen");
+    CHECK_FALSE(plan.empty());
+    auto rebuilt = from;
+    REQUIRE(apply(rebuilt, plan));
+    CHECK(same_state(rebuilt, planned));
+
+    auto replanned = planned;
+    replanned.world.route = {pos(4)};
+    CHECK(*diff(planned, replanned).route == std::vector{pos(4)});
+
+    auto cleared = planned;
+    cleared.world.route.clear();
+    const auto clear = diff(planned, cleared);
+    REQUIRE(clear.route);
+    CHECK(clear.route->empty());
+    REQUIRE(apply(rebuilt, clear));
+    CHECK(same_state(rebuilt, cleared));
+    CHECK(diff(planned, planned).empty());
+}
+
 TEST_CASE("coverage shrink drops outside facts without listing each one", "[engine_client_event]") {
     auto from = world_of({visible_cell(1), visible_cell(9)}, {monster("e:1", 9)});
     auto to = from;

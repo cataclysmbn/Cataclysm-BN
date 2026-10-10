@@ -20,6 +20,7 @@
 #include "character_display.h"
 #include "character_martial_arts.h"
 #include "character_turn.h"
+#include "client_backend.h"
 #include "client_display.h"
 #include "clzones.h"
 #include "color.h"
@@ -1938,6 +1939,9 @@ bool game::handle_action()
         // Check if we have an auto-move destination
         if( u.has_destination() ) {
             ZoneScopedN( "handle_action_get_auto_move" );
+            if( game_client::backend_selected() ) {
+                game_client::active_backend().step_boundary();
+            }
             act = u.get_next_auto_move_direction();
             if( act == ACTION_NULL ) {
                 add_msg( m_info, _( "Auto-move canceled" ) );

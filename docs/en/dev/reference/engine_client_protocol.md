@@ -46,13 +46,16 @@ Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says w
 
 ## Commands
 
-`operation.kind` is one of `choose`, `fill`, `set_count`, `set_target`, `cancel` (semantic menus) or `action` (a registered action such as a movement key).
+`operation.kind` is one of `choose`, `fill`, `set_count`, `set_target`, `cancel` (semantic menus) `action` (a registered action such as a movement key) or `travel` (a map click).
 
 ```json
 { "kind": "choose", "choice_id": "root:0" }
 { "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 { "kind": "action", "action_id": "RIGHT" }
+{ "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 ```
+
+`travel` is the left click of Tiles and curses on an absolute map square in view, at a boundary without interaction. The first click publishes the engine's own route as `route`; clicking the same square again starts native auto-move. The avatar then walks one step at a time, each step publishing ordinary events attached to that command, and stops where the engine stops (arrival, a monster coming into view, ...). The command is `completed` when the walk ends and input is awaited again. Any other command or a click elsewhere replaces or clears the plan. A client never computes routes.
 
 Stages: `received`, `validated`, `executing`, `completed`; or `rejected`; or `interrupted`. `completed` means the next native input boundary was reached, not that a long activity finished; its `at` is the endpoint of that boundary. One command is outstanding at a time (`command_busy`).
 
@@ -70,7 +73,7 @@ While the world loads, the game thread is busy and reaches no input boundary, so
 - `pos = {dim, x, y, z}` is an absolute map square; `dim` is the game dimension, `""` for the primary one. Reality-bubble coordinates never appear on the wire.
 - `look = {kind, id, glyph, color}` carries appearance from game data, so text clients need no tileset.
 - `interaction` is the native menu or dialog: `choices` holds up to the first 200 rows, fewer when they would be too large; read the rest with `bn.interaction.choices` starting at `offset = choices.length`. `choice_total` is the full count. `compat.focus` and `compat.panes` keep native list state for 1:1 ports; clients may ignore them.
-- The world is what the avatar knows: `cells` (`remembered`, `visible` or `sensed`), `entities`, `avatar` (stats and `inventory`), `environment` and the loaded `coverage`.
-- Every event carries a generic `changes` block, applied in this order: `coverage`, `cells`, `forgotten`, `entities`, `gone`, then `avatar`, `environment` and `interaction` replace.
+- The world is what the avatar knows: `cells` (`remembered`, `visible` or `sensed`), `entities`, `avatar` (stats and `inventory`), `environment`, the loaded `coverage` and the pending `route` (empty or absent when nothing is planned).
+- Every event carries a generic `changes` block, applied in this order: `coverage`, `cells`, `forgotten`, `entities`, `gone`, then `avatar`, `environment`, `route` and `interaction` replace.
 
 Events are `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen` and, later, the presentation types listed in the schema. A new event type needs a new exact version.

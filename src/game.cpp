@@ -3698,6 +3698,19 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
     return true;
 }
 
+auto game::click_cell_of( const tripoint_bub_ms &target ) const -> std::optional<point>
+{
+    if( !w_terrain || target.z() != get_levz() ) {
+        return std::nullopt;
+    }
+    const auto view_size = point( getmaxx( w_terrain ), getmaxy( w_terrain ) );
+    const auto win_min = point( getbegx( w_terrain ), getbegy( w_terrain ) );
+    const auto cell = win_min + target.xy().raw() - ter_view_p.xy().raw() + view_size / 2;
+    const auto win_bounds = half_open_rectangle<point>( win_min, win_min + view_size );
+    return win_bounds.contains( cell ) ? std::optional{ cell } :
+           std::nullopt;
+}
+
 bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target )
 {
     const bool cleared_destination = !destination_preview.empty();

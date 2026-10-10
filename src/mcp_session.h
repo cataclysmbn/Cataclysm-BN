@@ -7,6 +7,9 @@ namespace bn::mcp
 /// Protocol requests are serviced synchronously at the game's input boundaries.
 auto start_session() -> void;
 
+/// Publishes the state between two steps of a native auto-move to a subscribed client.
+auto publish_step() -> void;
+
 /// Requests input providers to stop waiting. The process may call this during orderly shutdown.
 auto request_stop() -> void;
 

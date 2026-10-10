@@ -688,6 +688,84 @@
           "z": 0
         }
       }
+    },
+    {
+      "name": "submit travel click",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "travel",
+          "pos": {
+            "dim": "",
+            "x": 9,
+            "y": 4,
+            "z": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "route planned and then cleared by a confirming click",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "cells.seen",
+            "command": "c:5",
+            "changes": {
+              "route": [
+                {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 6,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 7,
+                  "y": 4,
+                  "z": 0
+                }
+              ]
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "33",
+            "type": "cells.seen",
+            "command": "c:6",
+            "changes": {
+              "route": [],
+              "avatar": {
+                "id": "e:avatar",
+                "at": {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                "name": "Ada",
+                "stats": []
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [
@@ -952,6 +1030,45 @@
           "id": "mon_zombie",
           "glyph": "Z",
           "color": "green"
+        }
+      }
+    },
+    {
+      "name": "travel with a bubble coordinate",
+      "def": "submit_params",
+      "why": "coordinates are absolute map squares with a dimension",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "travel",
+          "pos": {
+            "space": "reality_bubble_map_square",
+            "frame_id": "boundary:90",
+            "x": 9,
+            "y": 4,
+            "z": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "travel without a position",
+      "def": "submit_params",
+      "why": "travel names the clicked square",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "travel"
         }
       }
     }

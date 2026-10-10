@@ -324,6 +324,14 @@ auto start_session() -> void
     game_client::set_loading_observer( report_loading );
 }
 
+auto publish_step() -> void
+{
+    auto &session = state();
+    if( session.transport && session.output ) {
+        static_cast<void>( session.transport->publish_step( *session.output ) );
+    }
+}
+
 auto request_stop() -> void
 {
     state().stop = true;

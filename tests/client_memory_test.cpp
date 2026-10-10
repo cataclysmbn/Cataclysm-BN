@@ -7,6 +7,7 @@
 #    include "client_memory_scope.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "engine_client_contract.h"
 #    include "game.h"
 #    include "input.h"
 #    include "output.h"
@@ -159,6 +160,57 @@ TEST_CASE("generic memory client projects offset coordinate input", "[client][mc
     CHECK(projected->x() == 10);
     CHECK(projected->y() == 20);
     CHECK(g->w_terrain == capture);
+}
+
+TEST_CASE(
+    "a travel click selects the clicked square through the real input context",
+    "[client][mcp][input][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    TERMX = 8;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    const auto capture = catacurses::newwin(2, 4, point(2, 1));
+    g->w_terrain = capture;
+    g->ter_view_p = tripoint_bub_ms(10, 20, 0);
+    const auto frame = engine_client::current_bubble_frame();
+    const auto target = [&](const int x, const int y, const int z = 0) {
+        return engine_client::travel_operation{
+            .target = {.dim = frame.dim, .x = frame.x + x, .y = frame.y + y, .z = z}};
+    };
+
+    SECTION("the click projects back to the same bubble square") {
+        auto context = input_context("MCP_TRAVEL_TEST");
+        context.register_action("ANY_INPUT");
+        context.register_action("COORDINATE");
+        for (const auto& square : {point(8, 19), point(9, 20), point(10, 19), point(11, 20)}) {
+            const auto click = engine_client::travel_click(target(square.x, square.y));
+            REQUIRE(click);
+            const auto resolved = game_client::resolve_input_command(*click, point(8, 4));
+            REQUIRE(resolved);
+            game_client::memory::set_input_provider([&](const int /*timeout*/) {
+                return *resolved;
+            });
+            CHECK(context.handle_input() == "ANY_INPUT");
+            const auto projected = context.get_coordinates(capture);
+            REQUIRE(projected);
+            CHECK(projected->xy() == tripoint_bub_ms(square.x, square.y, 0).xy());
+        }
+    }
+    SECTION("a square outside the terrain window has no click") {
+        CHECK_FALSE(engine_client::travel_click(target(7, 20)));
+        CHECK_FALSE(engine_client::travel_click(target(12, 20)));
+        CHECK_FALSE(engine_client::travel_click(target(10, 18)));
+        CHECK_FALSE(engine_client::travel_click(target(10, 21)));
+    }
+    SECTION("another level or dimension has no click") {
+        CHECK_FALSE(engine_client::travel_click(target(10, 20, 1)));
+        auto elsewhere = target(10, 20);
+        elsewhere.target.dim = frame.dim + "_elsewhere";
+        CHECK_FALSE(engine_client::travel_click(elsewhere));
+    }
 }
 
 TEST_CASE("memory events pass through the real input context", "[client][mcp][input]") {

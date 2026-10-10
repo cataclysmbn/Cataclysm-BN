@@ -45,3 +45,14 @@ Deno.test("changes that do not fit leave the mirror untouched", () => {
   assertThrows(() => mirror.applyEvents("other", [event(1, { cells: [cell(3)] })]))
   assertEquals(mirror.state(), before)
 })
+
+Deno.test("a route change replaces the planned route and an empty one clears it", () => {
+  const mirror = fresh()
+  assertEquals(mirror.state().route, [])
+  mirror.applyEvents("e", [event(1, { route: [pos(2), pos(3)] })])
+  assertEquals(mirror.state().route, [pos(2), pos(3)])
+  mirror.applyEvents("e", [event(2, { route: [pos(4)] })])
+  assertEquals(mirror.state().route, [pos(4)])
+  mirror.applyEvents("e", [event(3, { route: [] })])
+  assertEquals(mirror.state().route, [])
+})

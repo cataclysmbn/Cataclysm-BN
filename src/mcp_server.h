@@ -70,6 +70,9 @@ class server
         /// Process protocol messages on the game thread until submit has queued input.
         auto pump_until_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool;
 
+        /// Publish the state between two steps of an auto-move, which reads no input.
+        auto publish_step( std::ostream &out ) -> bool;
+
         /// Complete a deferred bn.press response using the latest published screen.
         auto finish_pending( std::ostream &out, std::ostream &err ) -> void;
 

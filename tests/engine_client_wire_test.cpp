@@ -84,6 +84,20 @@ TEST_CASE("command operations", "[engine_client_wire]") {
         CHECK(decode_command_request(
             command(R"({"kind":"set_target","pos":{"dim":"","x":1,"y":1,"z":0}})")));
     }
+    SECTION("travel click on an absolute square") {
+        const auto decoded = decode_command_request(
+            command(R"({"kind":"travel","pos":{"dim":"","x":-9,"y":4,"z":1}})", "null"));
+        REQUIRE(decoded);
+        const auto* travel = std::get_if<travel_operation>(&decoded->operation);
+        REQUIRE(travel);
+        CHECK(travel->target == position{.dim = "", .x = -9, .y = 4, .z = 1});
+        CHECK_FALSE(decode_command_request(command(R"({"kind":"travel"})", "null")));
+        CHECK_FALSE(decode_command_request(command(
+            R"({"kind":"travel","pos":{"dim":"","x":1,"y":1,"z":0},"candidate_id":"t"})", "null")));
+        CHECK_FALSE(decode_command_request(command(
+            R"({"kind":"travel","pos":{"space":"reality_bubble_map_square","frame_id":"b","x":1,"y":1,"z":0}})",
+            "null")));
+    }
     SECTION("fill always states submit; count is a safe integer") {
         CHECK(decode_command_request(
             command(R"({"kind":"fill","field_id":"f","value":"x","submit":false})")));

@@ -168,6 +168,8 @@ std::expected<game_client::input_command, error>
         if( semantic->target ) {
             native.interaction->position = to_bubble( *semantic->target, current_bubble_frame() );
         }
+    } else if( const auto travel = std::get_if<travel_operation>( &input_->operation ) ) {
+        native = *travel_click( *travel );
     } else {
         native.action = std::get<registered_action>( input_->operation ).id;
     }

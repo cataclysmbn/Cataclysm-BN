@@ -46,13 +46,16 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 ## 명령
 
-`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) 또는 `action`(이동 키 같은 등록된 행동) 중 하나입니다.
+`operation.kind`는 `choose`, `fill`, `set_count`, `set_target`, `cancel`(의미 기반 메뉴) `action`(이동 키 같은 등록된 행동) 또는 `travel`(맵 클릭) 중 하나입니다.
 
 ```json
 { "kind": "choose", "choice_id": "root:0" }
 { "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 { "kind": "action", "action_id": "RIGHT" }
+{ "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 ```
+
+`travel`은 상호작용이 없는 경계에서 화면에 보이는 절대 맵 칸에 대한 Tiles와 curses의 왼쪽 클릭입니다. 첫 클릭은 엔진 자체의 경로를 `route`로 게시하고, 같은 칸을 다시 클릭하면 네이티브 자동 이동이 시작됩니다. 이후 아바타는 한 걸음씩 걸으며 걸음마다 해당 명령에 연결된 일반 이벤트가 게시되고, 엔진이 멈추는 곳(도착, 몬스터 시야 진입 등)에서 멈춥니다. 걷기가 끝나 다시 입력을 기다리면 명령은 `completed`가 됩니다. 다른 명령이나 다른 칸 클릭은 계획을 바꾸거나 지웁니다. 클라이언트는 경로를 직접 계산하지 않습니다.
 
 단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`입니다. `completed`는 다음 네이티브 입력 경계에 도달했다는 뜻이지 긴 활동이 끝났다는 뜻이 아닙니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`).
 
@@ -70,7 +73,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 - `pos = {dim, x, y, z}`는 절대 맵 칸이며, `dim`은 게임 차원이고 기본 차원은 `""`입니다. 현실 거품 좌표는 전송 형식에 나타나지 않습니다.
 - `look = {kind, id, glyph, color}`는 게임 데이터의 외형을 담으므로 텍스트 클라이언트에는 타일셋이 필요 없습니다.
 - `interaction`은 네이티브 메뉴나 대화상자입니다. `choices`는 처음 최대 200행을 담지만 크기 때문에 더 적을 수 있으므로, 나머지는 `bn.interaction.choices`를 `offset = choices.length`부터 읽습니다. 전체 행 수는 `choice_total`입니다. `compat.focus`와 `compat.panes`는 1:1 이식을 위해 네이티브 목록 상태를 유지하며 클라이언트는 무시해도 됩니다.
-- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`(능력치와 소지품 `inventory`), `environment`, 로드된 `coverage`로 구성됩니다.
-- 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `interaction`을 교체합니다.
+- 월드는 아바타가 아는 것입니다. `cells`(`remembered`, `visible`, `sensed`), `entities`, `avatar`(능력치와 소지품 `inventory`), `environment`, 로드된 `coverage`, 대기 중인 `route`(계획이 없으면 비어 있거나 없음)로 구성됩니다.
+- 모든 이벤트는 일반 `changes` 블록을 가지며, `coverage`, `cells`, `forgotten`, `entities`, `gone` 순으로 적용한 뒤 `avatar`, `environment`, `route`, `interaction`을 교체합니다.
 
 이벤트는 `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`이며, 이후 스키마에 나열된 연출 유형이 추가됩니다. 새 이벤트 유형에는 새로운 정확한 버전이 필요합니다.

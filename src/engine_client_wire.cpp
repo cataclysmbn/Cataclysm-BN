@@ -92,13 +92,18 @@ auto read_position( const json &value ) -> position
         .z = static_cast<int>( integer( value, "z", INT32_MIN, INT32_MAX ) ),
     };
 }
-auto read_operation( const json &value ) -> std::variant<semantic_operation, registered_action>
+auto read_operation( const json &value ) ->
+std::variant<semantic_operation, registered_action, travel_operation>
 {
     require( value.is_object() && value.contains( "kind" ) );
     const auto kind = text( value, "kind" );
     if( kind == "action" ) {
         members( value, {"kind", "action_id"} );
         return registered_action{ .id = id( value, "action_id" ) };
+    }
+    if( kind == "travel" ) {
+        members( value, {"kind", "pos"} );
+        return travel_operation{ .target = read_position( value.at( "pos" ) ) };
     }
     const auto parsed = game_client::parse_interaction_operation( kind );
     require( parsed.has_value() );

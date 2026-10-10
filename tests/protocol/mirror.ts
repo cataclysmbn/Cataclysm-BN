@@ -22,6 +22,8 @@ export class Mirror {
   interaction!: Value
   avatar?: Value
   environment?: Value
+  /** The planned, unconfirmed auto-move route; empty when nothing is planned. */
+  route: Pos[] = []
   cells = new Map<string, Value>()
   entities = new Map<string, Value>()
 
@@ -32,6 +34,7 @@ export class Mirror {
     mirror.interaction = header.interaction
     mirror.avatar = header.avatar
     mirror.environment = header.environment
+    mirror.route = header.route ?? []
     for (const entity of header.entities) mirror.entities.set(entity.id, entity)
     assertEquals(parts.length, header.parts, "every announced part arrives")
     parts.forEach((part, index) => {
@@ -51,6 +54,7 @@ export class Mirror {
     copy.interaction = structuredClone(this.interaction)
     copy.avatar = structuredClone(this.avatar)
     copy.environment = structuredClone(this.environment)
+    copy.route = structuredClone(this.route)
     copy.cells = structuredClone(this.cells)
     copy.entities = structuredClone(this.entities)
     return copy
@@ -103,6 +107,7 @@ export class Mirror {
     }
     if (changes.avatar) this.avatar = changes.avatar
     if (changes.environment) this.environment = changes.environment
+    if (changes.route) this.route = changes.route
     if (changes.interaction) this.interaction = changes.interaction
   }
 
@@ -115,6 +120,7 @@ export class Mirror {
       interaction: this.interaction,
       avatar: this.avatar ?? null,
       environment: this.environment ?? null,
+      route: this.route,
       cells: sorted(this.cells),
       entities: sorted(this.entities),
     }

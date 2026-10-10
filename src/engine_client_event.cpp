@@ -86,7 +86,7 @@ auto erase_where( std::map<Key, Value> &values, const Remove &remove ) -> void
 auto changes::empty() const -> bool
 {
     return !coverage && cells.empty() && forgotten.empty() && entities.empty() && gone.empty() &&
-           !avatar && !environment && !interaction;
+           !avatar && !environment && !route && !interaction;
 }
 auto same_state( const state_value &left, const state_value &right ) -> bool
 {
@@ -121,6 +121,7 @@ auto diff( const state_value &from, const state_value &to ) -> changes
     if( to.world.environment && to.world.environment != from.world.environment ) {
         result.environment = to.world.environment;
     }
+    if( to.world.route != from.world.route ) { result.route = to.world.route; }
     if( !same_boundary( from.interaction, to.interaction ) ) { result.interaction = to.interaction; }
     return result;
 }
@@ -155,6 +156,7 @@ auto apply( state_value &value, const changes &delta ) -> std::expected<void, er
     }
     if( delta.avatar ) { world.avatar = delta.avatar; }
     if( delta.environment ) { world.environment = delta.environment; }
+    if( delta.route ) { world.route = *delta.route; }
     if( delta.interaction ) { next.interaction = *delta.interaction; }
     value = std::move( next );
     return {};
@@ -164,7 +166,7 @@ auto classify( const changes &delta ) -> std::string
 {
     if( delta.coverage ) { return "coverage.moved"; }
     if( !delta.cells.empty() || !delta.forgotten.empty() || !delta.entities.empty() ||
-        !delta.gone.empty() || delta.avatar ) { return "cells.seen"; }
+        !delta.gone.empty() || delta.avatar || delta.route ) { return "cells.seen"; }
     if( delta.environment ) { return "turn.passed"; }
     return "interaction.changed";
 }

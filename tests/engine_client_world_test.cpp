@@ -1,3 +1,4 @@
+#include "action.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_utility.h"
@@ -12,6 +13,7 @@
 #include "map_memory.h"
 #include "map_perception.h"
 #include "monster.h"
+#include "player_activity.h"
 #include "player_helpers.h"
 #include "rng.h"
 #include "state_helpers.h"
@@ -350,4 +352,38 @@ TEST_CASE(
     CHECK(sent.parts >= 2);
     CHECK(sent.ordered);
     CHECK(sent.cells == state.cells.size());
+}
+
+TEST_CASE(
+    "world route is the native click preview and confirming starts auto-move",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    const auto target = setup.start + tripoint(0, 4, 0);
+
+    auto act = ACTION_NULL;
+    CHECK_FALSE(g->try_get_left_click_action(act, target));
+    const auto preview = g->get_destination_preview();
+    REQUIRE(preview.size() == 4);
+    const auto planned = ec::world::capture_world();
+    REQUIRE(planned.route.size() == preview.size());
+    CHECK(planned.route.back() == at(target));
+    for (const auto index : std::views::iota(std::size_t{0}, preview.size())) {
+        CHECK(planned.route[index] == at(preview[index]));
+    }
+    CHECK(planned.avatar->at == at(setup.start));
+    CHECK_FALSE(get_avatar().has_destination());
+
+    SECTION("a click elsewhere replaces the plan") {
+        CHECK_FALSE(g->try_get_left_click_action(act, setup.start + tripoint(0, -3, 0)));
+        const auto replaced = ec::world::capture_world();
+        REQUIRE_FALSE(replaced.route.empty());
+        CHECK(replaced.route.back() == at(setup.start + tripoint(0, -3, 0)));
+    }
+    SECTION("the same square again starts native auto-move and clears the plan") {
+        CHECK(g->try_get_left_click_action(act, target));
+        CHECK(act == get_movement_action_from_delta(tripoint_rel_ms(0, 1, 0), iso_rotate::yes));
+        CHECK(get_avatar().has_destination());
+        CHECK(ec::world::capture_world().route.empty());
+    }
+    get_avatar().clear_destination();
 }

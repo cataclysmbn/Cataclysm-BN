@@ -50,6 +50,8 @@ class backend
         virtual auto set_timeout( int timeout_ms ) -> void = 0;
         virtual auto read_input( int timeout_ms ) -> input_event = 0;
         virtual auto pump_events() -> void = 0;
+        /// Called before each step of a native auto-move, which reads no input in between.
+        virtual auto step_boundary() -> void {}
         virtual auto resize( point cell_size ) -> void = 0;
         virtual auto projected_size() const -> point = 0;
         virtual auto terminal_size() const -> point { return projected_size(); }

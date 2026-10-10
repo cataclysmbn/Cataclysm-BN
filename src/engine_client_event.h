@@ -21,7 +21,7 @@ struct gone_entity {
     std::string reason = "lost_sight";
 };
 /// The only state-bearing part of an event. Applied in member order (design 3.4):
-/// coverage, cells, forgotten, entities, gone, then avatar/environment/interaction replace.
+/// coverage, cells, forgotten, entities, gone, then avatar/environment/route/interaction replace.
 struct changes {
     std::optional<bounds> coverage = std::nullopt;
     std::vector<cell> cells = {};
@@ -30,6 +30,8 @@ struct changes {
     std::vector<gone_entity> gone = {};
     std::optional<avatar_value> avatar = std::nullopt;
     std::optional<environment_value> environment = std::nullopt;
+    /// Replaces the whole route; empty clears it.
+    std::optional<std::vector<position>> route = std::nullopt;
     std::optional<boundary_state> interaction = std::nullopt;
     auto empty() const -> bool;
 };

@@ -102,6 +102,8 @@ struct world_state {
     std::map<std::string, entity> entities = {};
     std::optional<avatar_value> avatar = std::nullopt;
     std::optional<environment_value> environment = std::nullopt;
+    /// The native auto-move route a map click planned and not yet confirmed, nearest square first.
+    std::vector<position> route = {};
     auto operator==( const world_state & ) const -> bool = default;
 };
 

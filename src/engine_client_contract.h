@@ -109,6 +109,14 @@ struct semantic_operation {
     game_client::interaction_command command;
     std::optional<position> target = std::nullopt;
 };
+/// A left click on an absolute map square, handled as in Tiles and curses: the first click plans
+/// the native route (`world_state::route`), a second click on its end starts native auto-move.
+struct travel_operation {
+    position target;
+};
+/// The native left-click input that selects `operation.target`; nullopt when another dimension or
+/// level, or a square outside the terrain window.
+auto travel_click( const travel_operation &operation ) -> std::optional<game_client::input_command>;
 struct expectation {
     counter revision = 0;
     std::string boundary_id = {};
@@ -118,7 +126,7 @@ struct expectation {
 struct command_request {
     std::string epoch = {};
     expectation expect = {};
-    std::variant<semantic_operation, registered_action> operation;
+    std::variant<semantic_operation, registered_action, travel_operation> operation;
 };
 enum class command_stage { received, validated, executing, rejected, completed, interrupted };
 auto stage_name( command_stage stage ) -> std::string;

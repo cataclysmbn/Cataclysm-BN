@@ -207,6 +207,7 @@ auto to_json( const changes &delta ) -> json
     }
     if( delta.avatar ) { result["avatar"] = to_json( *delta.avatar ); }
     if( delta.environment ) { result["environment"] = to_json( *delta.environment ); }
+    if( delta.route ) { result["route"] = to_array( *delta.route ); }
     if( delta.interaction ) { result["interaction"] = to_json( *delta.interaction ); }
     return result;
 }
@@ -268,6 +269,7 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
     header["interaction"] = to_json( value.value.interaction );
     if( world.avatar ) { header["avatar"] = to_json( *world.avatar ); }
     if( world.environment ) { header["environment"] = to_json( *world.environment ); }
+    if( !world.route.empty() ) { header["route"] = to_array( world.route ); }
     header["entities"] = json::array();
     for( const auto &entry : world.entities ) { header["entities"].push_back( to_json( entry.second ) ); }
     header["parts"] = result.parts.size();

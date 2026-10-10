@@ -303,6 +303,9 @@ auto capture_world() -> world_state
             .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
             .weather = get_weather().weather_id.str() } };
     capture_known( here, you, dimension, state.cells );
+    for( const auto &step : g->get_destination_preview() ) {
+        state.route.push_back( position_of( here, step, dimension ) );
+    }
     return state;
 }
 

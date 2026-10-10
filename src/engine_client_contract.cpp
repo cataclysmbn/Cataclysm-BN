@@ -1,4 +1,5 @@
 #include "engine_client_contract.h"
+#include "client_input.h"
 #include "client_interaction_validation.h"
 #include "game.h"
 #include "map/map.h"
@@ -42,7 +43,10 @@ auto validate_shape( const command_request &request ) -> bool
     if( !valid_id( request.epoch ) || !valid_id( request.expect.boundary_id ) ||
         ( request.expect.schema_id && !valid_id( *request.expect.schema_id ) ) ) { return false; }
     const auto semantic = std::get_if<semantic_operation>( &request.operation );
-    if( semantic == nullptr ) { return valid_id( std::get<registered_action>( request.operation ).id ); }
+    if( semantic == nullptr ) {
+        const auto action = std::get_if<registered_action>( &request.operation );
+        return action == nullptr || valid_id( action->id );
+    }
     const auto &command = semantic->command;
     if( command.target_id.size() > maximum_id_bytes ||
         ( command.count && *command.count > maximum_safe_integer ) ) { return false; }
@@ -148,6 +152,15 @@ auto to_bubble( const position &target, const bubble_frame &frame )
     if( target.dim != frame.dim || x < limits.min() || x > limits.max() || y < limits.min() ||
         y > limits.max() ) { return std::nullopt; }
     return game_client::interaction_position{ .x = static_cast<int>( x ), .y = static_cast<int>( y ), .z = target.z };
+}
+
+auto travel_click( const travel_operation &operation ) -> std::optional<game_client::input_command>
+{
+    const auto target = to_bubble( operation.target, current_bubble_frame() );
+    if( !target ) { return std::nullopt; }
+    const auto cell = g->click_cell_of( tripoint_bub_ms( target->x, target->y, target->z ) );
+    if( !cell ) { return std::nullopt; }
+    return game_client::input_command{ .mouse_position = *cell, .mouse_button = "left" };
 }
 
 auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>
@@ -302,6 +315,13 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         }
         resolved->type = input_event_t::interaction;
         resolved->interaction = std::move( *checked );
+    } else if( const auto travel = std::get_if<travel_operation>( &request.operation ) ) {
+        if( !permissions.accepts_registered_actions ||
+            game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
+        const auto click = travel_click( *travel );
+        if( !click ) { return reject( error::validation_failed ); }
+        resolved = game_client::resolve_input_command( *click, screen_size );
+        if( !resolved ) { return reject( error::validation_failed ); }
     } else {
         if( !permissions.accepts_registered_actions ) { return reject( error::not_ready ); }
         auto native = game_client::input_command{};

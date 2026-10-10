@@ -46,13 +46,16 @@ title: エンジン/クライアントプロトコル 1.0
 
 ## コマンド
 
-`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、または `action`(移動キーなど登録済みの行動)のいずれかです。
+`operation.kind` は `choose`、`fill`、`set_count`、`set_target`、`cancel`(意味ベースのメニュー)、`action`(移動キーなど登録済みの行動)、または `travel`(マップのクリック)のいずれかです。
 
 ```json
 { "kind": "choose", "choice_id": "root:0" }
 { "kind": "set_target", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 { "kind": "action", "action_id": "RIGHT" }
+{ "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 ```
+
+`travel` は、インタラクションのない境界で、画面内の絶対マップマスに対する Tiles と curses の左クリックです。最初のクリックはエンジン自身のルートを `route` として公開し、同じマスをもう一度クリックするとネイティブの自動移動が始まります。その後アバターは 1 歩ずつ歩き、各歩でそのコマンドに紐づく通常のイベントが公開され、エンジンが止まる場所(到着、モンスターの視界入りなど)で止まります。歩行が終わって再び入力を待つとコマンドは `completed` になります。他のコマンドや別のマスのクリックは計画を置き換えるか消します。クライアントがルートを自分で計算することはありません。
 
 ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` です。`completed` は次のネイティブ入力境界に到達したことを意味し、長い行動が終わったことではありません。その `at` はその境界の終点です。同時に実行できるコマンドは 1 つです(`command_busy`)。
 
@@ -70,7 +73,7 @@ title: エンジン/クライアントプロトコル 1.0
 - `pos = {dim, x, y, z}` は絶対マップマスで、`dim` はゲームのディメンション、プライマリは `""` です。リアリティバブル座標はワイヤ上に現れません。
 - `look = {kind, id, glyph, color}` はゲームデータ由来の見た目を持つため、テキストクライアントにタイルセットは不要です。
 - `interaction` はネイティブのメニューやダイアログです。`choices` は最大 200 行ですがサイズにより少なくなることがあるため、残りは `bn.interaction.choices` を `offset = choices.length` から読みます。全体の行数は `choice_total` です。`compat.focus` と `compat.panes` は 1:1 移植のためにネイティブのリスト状態を保持します。クライアントは無視して構いません。
-- ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値と所持品 `inventory`)、`environment`、読み込み済みの `coverage` で構成されます。
-- すべてのイベントは汎用の `changes` ブロックを持ち、`coverage`、`cells`、`forgotten`、`entities`、`gone` の順に適用した後、`avatar`、`environment`、`interaction` を置き換えます。
+- ワールドはアバターが知っているものです。`cells`(`remembered`、`visible`、`sensed`)、`entities`、`avatar`(能力値と所持品 `inventory`)、`environment`、読み込み済みの `coverage`、保留中の `route`(計画がなければ空または省略)で構成されます。
+- すべてのイベントは汎用の `changes` ブロックを持ち、`coverage`、`cells`、`forgotten`、`entities`、`gone` の順に適用した後、`avatar`、`environment`、`route`、`interaction` を置き換えます。
 
 イベントは `interaction.changed`、`coverage.moved`、`turn.passed`、`cells.seen` で、今後スキーマに挙げた演出タイプが加わります。新しいイベントタイプには新しい正確なバージョンが必要です。

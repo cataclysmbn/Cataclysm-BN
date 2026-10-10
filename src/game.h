@@ -1065,7 +1065,6 @@ class game : public submap_load_listener
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
         bool try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
-        bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
 
         void item_action_menu(); // Displays item action menu
 
@@ -1076,6 +1075,15 @@ class game : public submap_load_listener
     public:
         // Draws the pixel minimap based on the player's current location
         void draw_pixel_minimap( const catacurses::window &w );
+        /// Left click on a map square: first click plans `destination_preview`, a second click on its
+        /// end starts auto-move and sets `act` to the first step.
+        bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
+        /// The route a first click planned, nearest square first, ending at the clicked square.
+        auto get_destination_preview() const -> const std::vector<tripoint_bub_ms>& { // *NOPAD*
+            return destination_preview;
+        }
+        /// The terrain window cell whose click selects `target`; nullopt when it is not shown.
+        auto click_cell_of( const tripoint_bub_ms &target ) const -> std::optional<point>;
     private:
 
         //  int autosave_timeout();  // If autosave enabled, how long we should wait for user inaction before saving.

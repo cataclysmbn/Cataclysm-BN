@@ -367,6 +367,66 @@ Deno.test({
       })
       assertEquals([rejected.stage, rejected.error], ["rejected", "stale_revision"])
 
+      // Waypoint travel: the first click publishes the engine's own route, the second walks it.
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const here = session.mirror.avatar.at
+      const reach = (pos: Value) => Math.max(Math.abs(pos.x - here.x), Math.abs(pos.y - here.y))
+      const open = (entry: Value) =>
+        entry.known === "visible" && !entry.furniture && !entry.vehicle &&
+        /floor|dirt|grass|pavement|sidewalk/.test(entry.terrain?.id ?? "")
+      const candidates = [...session.mirror.cells.values()]
+        .filter((entry) => open(entry) && reach(entry.at) >= 2 && reach(entry.at) <= 8)
+        .map((entry) => entry.at)
+        .sort((a, b) => reach(b) - reach(a))
+      assert(candidates.length > 0, `no open square in view: ${JSON.stringify(here)}`)
+      // Ask the engine until it finds a route; a wall or an unreachable square plans none.
+      let aim: Value
+      let plan: Value
+      for (const candidate of candidates.slice(0, 40)) {
+        plan = await session.submit({ kind: "travel", pos: candidate })
+        if (plan.stages.at(-1) === "rejected") {
+          const why = await client.result("bn.command.result", {
+            epoch: session.mirror.at.epoch,
+            command_id: plan.id,
+          })
+          throw new Error(
+            `travel rejected: ${why.error} ${
+              JSON.stringify(session.mirror.interaction).slice(0, 600)
+            }`,
+          )
+        }
+        assertEquals(plan.stages, ["received", "validated", "executing", "completed"])
+        if (session.mirror.route.length >= 2) {
+          aim = candidate
+          break
+        }
+      }
+      assert(
+        aim,
+        `the engine planned a route: ${
+          JSON.stringify([here, candidates.slice(0, 3), session.mirror.route])
+        }`,
+      )
+      assertEquals(session.mirror.route.at(-1), aim, "the route ends at the clicked square")
+      assertEquals(session.mirror.avatar.at, here, "the first click does not move")
+      const planned = session.mirror.route.length
+
+      const eventsBefore = session.eventTypes.length
+      const walk = await session.submit({ kind: "travel", pos: aim })
+      assertEquals(walk.stages.at(-1), "completed")
+      assertEquals(session.mirror.route, [], "confirming clears the plan")
+      const walkEvents = session.eventTypes.length - eventsBefore
+      assert(walkEvents >= planned, `events per step: ${walkEvents} for ${planned} squares`)
+      // Arrived (or stopped where the engine stopped, never past the destination).
+      const arrived = session.mirror.avatar.at
+      assertEquals(arrived, aim, "avatar stands on the destination")
+
+      // A click outside the view is rejected without effect.
+      const clock2 = { ...session.mirror.at }
+      const far = await session.submit({ kind: "travel", pos: { ...aim, x: aim.x + 5000 } })
+      assertEquals(far.stages.at(-1), "rejected")
+      assertEquals(session.mirror.at, clock2)
+
       // The reconstructed state equals a fresh subscribe.
       const fresh = await session.subscribe()
       assertEquals(fresh.state(), session.mirror.state())

@@ -911,13 +911,16 @@
         "environment": {
           "$ref": "#/$defs/environment"
         },
+        "route": {
+          "$ref": "#/$defs/route"
+        },
         "interaction": {
           "$ref": "#/$defs/interaction_boundary"
         }
       },
       "required": [],
       "additionalProperties": false,
-      "description": "Applied in member order: coverage, cells, forgotten, entities, gone, then avatar/environment/interaction replace."
+      "description": "Applied in member order: coverage, cells, forgotten, entities, gone, then avatar/environment/route/interaction replace."
     },
     "display": {
       "type": "object",
@@ -1894,6 +1897,9 @@
         "environment": {
           "$ref": "#/$defs/environment"
         },
+        "route": {
+          "$ref": "#/$defs/route"
+        },
         "entities": {
           "type": "array",
           "items": {
@@ -2122,6 +2128,22 @@
           "required": [
             "kind",
             "action_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "travel"
+            },
+            "pos": {
+              "$ref": "#/$defs/pos"
+            }
+          },
+          "required": [
+            "kind",
+            "pos"
           ],
           "additionalProperties": false
         }
@@ -2458,6 +2480,13 @@
         "kind"
       ],
       "additionalProperties": false
+    },
+    "route": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pos"
+      },
+      "description": "The native auto-move route a map click planned and not yet confirmed: the squares to walk, nearest first, ending at the clicked square. Empty or absent when nothing is planned."
     }
   }
 }
