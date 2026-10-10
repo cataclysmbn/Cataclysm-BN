@@ -18,6 +18,7 @@
 #endif
 #define CATCH_CONFIG_RUNNER
 #include "../src/map/map.h"
+#include "../src/map/submap_load_manager.h"
 #include "../src/overmap/overmap.h"
 #include "../src/overmap/overmapbuffer.h"
 #include "avatar.h"
@@ -315,6 +316,7 @@ struct global_snapshot {
     std::string avatar_dimension;
     std::string active_dimension;
     bool save_tx_active;
+    std::size_t load_requests;
     std::string avatar_name;
     std::map<std::string, std::string> world_default_options;
 
@@ -336,6 +338,7 @@ auto take_global_snapshot() -> global_snapshot {
         .avatar_name = get_avatar().name,
         .save_tx_active =
             g->get_active_world() != nullptr && g->get_active_world()->is_save_tx_active(),
+        .load_requests = submap_loader.request_count(),
         .world_default_options = std::move(options),
     };
 }
@@ -357,6 +360,8 @@ auto describe_leaks(const global_snapshot& before, const global_snapshot& after)
     report("get_avatar().get_dimension()", before.avatar_dimension, after.avatar_dimension);
     report("is_save_tx_active()", std::to_string(before.save_tx_active),
            std::to_string(after.save_tx_active));
+    report("submap_loader.request_count()", std::to_string(before.load_requests),
+           std::to_string(after.load_requests));
     report("get_avatar().name", before.avatar_name, after.avatar_name);
     report("g_active_dimension_id", before.active_dimension, after.active_dimension);
     for (const auto& [name, value] : after.world_default_options) {

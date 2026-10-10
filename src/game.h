@@ -1323,6 +1323,8 @@ class game : public submap_load_listener
         // Set during dimension transitions to prevent temperature/weather code from
         // accessing partially-loaded map data. Reset to false at the start of the next turn.
         bool swapping_dimensions = false;
+        /// Drops the reality bubble and lazy border load requests held by the active map.
+        auto release_active_load_regions() -> void;
     private:
         /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
         /// Always use this instead of assigning the two fields separately.
@@ -1336,7 +1338,6 @@ class game : public submap_load_listener
         /// is set and before bind_dimension().
         auto activate_dimension_state( const dimension_id &new_dim_id,
                                        const dimension_id &old_dim_id ) -> void;
-        auto release_active_load_regions() -> void;
         auto update_active_load_regions( const dimension_id &dim_id,
                                          const point_abs_sm &begin,
                                          const point_abs_sm &end ) -> void;

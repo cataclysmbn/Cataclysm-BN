@@ -230,6 +230,9 @@ public:
      */
     auto active_dimensions() const -> std::vector<dimension_id>;
 
+    /// Number of live load requests. Zero when nothing holds a load handle.
+    auto request_count() const -> std::size_t { return requests_.size(); }
+
     /**
      * Return all active load requests whose source is not reality_bubble.
      *
