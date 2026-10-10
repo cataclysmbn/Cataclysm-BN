@@ -46,7 +46,8 @@
     "bn.events": "events_notification",
     "bn.command": "command_notification",
     "bn.resync": "resync_notification",
-    "bn.loading": "loading_notification"
+    "bn.loading": "loading_notification",
+    "bn.progress": "progress_notification"
   },
   "$defs": {
     "counter": {
@@ -2890,6 +2891,18 @@
         "epoch",
         "reason",
         "lost_after"
+      ],
+      "additionalProperties": false
+    },
+    "progress_notification": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/opaque_id"
+        }
+      },
+      "required": [
+        "epoch"
       ],
       "additionalProperties": false
     },

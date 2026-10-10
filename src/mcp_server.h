@@ -77,6 +77,10 @@ class server
         /// awaiting input or completing the command. False when input ended or failed.
         auto poll_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool;
 
+        /// Tell a client that said hello the engine is alive while an activity keeps it from
+        /// reaching an input boundary. The caller decides how often.
+        auto heartbeat( std::ostream &out ) -> void;
+
         /// Publish the state between two steps of an auto-move, which reads no input.
         auto publish_step( std::ostream &out ) -> bool;
 

@@ -36,7 +36,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`             |
 | `bn.command.result`      | `epoch`, `command_id`                     | 최신 단계. 유실된 알림을 복구할 때 사용       |
 
-엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`입니다. `bn.loading`을 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다.
+엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`입니다. `bn.loading`과 `bn.progress`를 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다. `bn.progress`(`{epoch}`)는 하트비트로, 대기 같은 활동이 입력 경계에 도달하지 않고 계속되는 동안 `bn.hello`를 마친 클라이언트에 2초마다 전송됩니다. 통신이 끊기면 엔진이 일하지 않는다는 뜻입니다. 월드를 불러오는 동안은 `bn.loading`이 같은 역할을 합니다.
 
 오류는 코드 `1000`과 `error.data = {kind, action?, at?}`를 사용하며, `action`은 다음에 할 일(`hello`, `subscribe`, `retry`)을 알려 줍니다.
 

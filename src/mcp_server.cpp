@@ -529,6 +529,15 @@ auto server::notify_loading( const game_client::loading_progress &progress,
     if( !write_notifications( out ) ) { failed_ = true; }
 }
 
+auto server::heartbeat( std::ostream &out ) -> void
+{
+    if( !hello_ || failed_ ) { return; }
+    notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"bn.progress\",\"params\":{\"epoch\":\""
+                              +
+                              session_.epoch() + "\"}}" );
+    if( !write_notifications( out ) ) { failed_ = true; }
+}
+
 auto server::failed() const -> bool
 {
     return failed_;

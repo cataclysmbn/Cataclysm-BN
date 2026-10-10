@@ -442,4 +442,19 @@ TEST_CASE("loading notifications reach only a client that said hello", "[engine_
     CHECK(index_of(out, R"("title":"Loading")") < index_of(out, R"("done":true)"));
 }
 
+TEST_CASE("a progress heartbeat reaches only a client that said hello", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    test.server.heartbeat(test.output);
+    CHECK(test.output.str().empty());
+
+    REQUIRE(test.authority.publish_boundary());
+    test.pump(hello);
+    test.output.str("");
+    test.server.heartbeat(test.output);
+    CHECK(test.output.str()
+          == R"({"jsonrpc":"2.0","method":"bn.progress","params":{"epoch":")"
+                 + test.authority.epoch() + "\"}}\n");
+}
+
 #endif

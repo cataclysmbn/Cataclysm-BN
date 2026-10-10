@@ -150,6 +150,8 @@ class Session {
   resyncs: Value[] = []
   /** `bn.loading` notifications with their arrival time, in arrival order. */
   loading: Value[] = []
+  /** `bn.progress` heartbeats seen. */
+  progress = 0
 
   constructor(readonly client: Client) {}
 
@@ -181,6 +183,8 @@ class Session {
       this.loading.push({ ...params, receivedAt: note.receivedAt })
     } else if (method === "bn.resync") {
       this.resyncs.push(params)
+    } else if (method === "bn.progress") {
+      this.progress++
     } else {
       throw new Error(`unexpected notification ${method}`)
     }
@@ -1126,6 +1130,48 @@ Deno.test({
       )
       const picked = await session.submit({ kind: "action", action_id: "pickup_feet" })
       assertEquals(picked.stages.at(-1), "completed")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: a long activity sends progress heartbeats while it runs",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      // Tutorial lessons pop up on the first turns; let them out of the way.
+      await session.submit({ kind: "action", action_id: "wait" })
+      await session.choose("5 minutes")
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+
+      await session.submit({ kind: "action", action_id: "wait" })
+      const choice = session.mirror.interaction.interaction.choices.find((entry: Value) =>
+        entry.label.startsWith("6 hours")
+      )
+      assert(choice, "6 hours entry")
+      const before = session.progress
+      const started = performance.now()
+      // Interrupt after a few heartbeats' worth of time; the activity keeps no boundary until then.
+      const waiting = await session.submit(
+        { kind: "choose", choice_id: choice.id },
+        {},
+        async () => {
+          await new Promise((resolve) => setTimeout(resolve, 7000))
+          await client.result("bn.interrupt", {})
+        },
+      )
+      assertEquals(waiting.stages.at(-1), "completed")
+      const seconds = (performance.now() - started) / 1000
+      assert(seconds > 6, `the wait lasted ${seconds} s`)
+      assert(session.progress > before, "the engine sent heartbeats while the activity ran")
       await client.close()
     } finally {
       client.kill()

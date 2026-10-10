@@ -36,7 +36,7 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                |
 | `bn.command.result`      | `epoch`, `command_id`                     | latest stage, for recovering a lost notification |
 
-Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`. All but `bn.loading` are sent at input boundaries to a subscribed client.
+Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`. All but `bn.loading` and `bn.progress` are sent at input boundaries to a subscribed client. `bn.progress` (`{epoch}`) is a heartbeat, sent every 2 seconds to a client that said `bn.hello` while a wait or other activity runs without reaching an input boundary, so silence on the wire means the engine is not working. `bn.loading` plays the same role while the world loads.
 
 Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says what to do next (`hello`, `subscribe`, `retry`).
 

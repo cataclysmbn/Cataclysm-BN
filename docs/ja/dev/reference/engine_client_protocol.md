@@ -36,7 +36,7 @@ title: エンジン/クライアントプロトコル 1.0
 | `bn.command.submit`      | `epoch`, `expect`, `operation`            | `command_id`, `stage: "received"`                      |
 | `bn.command.result`      | `epoch`, `command_id`                     | 最新のステージ。失われた通知の回復に使う               |
 
-エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading` です。`bn.loading` 以外は、購読中のクライアントへ入力境界ごとに送られます。
+エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading`、`bn.progress` です。`bn.loading` と `bn.progress` 以外は、購読中のクライアントへ入力境界ごとに送られます。`bn.progress`(`{epoch}`)はハートビートで、待機などの行動が入力境界に到達せずに続いている間、`bn.hello` を済ませたクライアントへ 2 秒ごとに送られます。通信が途絶えたなら、エンジンは動いていません。ワールドの読み込み中は `bn.loading` が同じ役割を果たします。
 
 エラーはコード `1000` と `error.data = {kind, action?, at?}` を使い、`action` が次の対応(`hello`、`subscribe`、`retry`)を示します。
 

@@ -2,6 +2,7 @@
 #include "game_observation.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
@@ -207,6 +208,8 @@ auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_
     return { .json = game_client::serialize_interaction( current ), .text = text };
 }
 
+constexpr auto heartbeat_interval = std::chrono::seconds( 2 );
+
 /// Whether a request frame can be read without waiting.
 auto stdin_ready() -> bool
 {
@@ -248,6 +251,13 @@ auto provide_input( const int timeout_ms ) -> input_event
         // awaited: the command stays open and the activity continues to its end. Requests that
         // are already waiting are served, so the client can interrupt it.
         if( timeout_ms == 0 ) {
+            // A long activity reaches no input boundary; the heartbeat tells the client it is alive.
+            static auto last_beat = std::chrono::steady_clock::time_point{};
+            const auto now = std::chrono::steady_clock::now();
+            if( session.transport && now - last_beat >= heartbeat_interval ) {
+                last_beat = now;
+                session.transport->heartbeat( *session.output );
+            }
             while( session.transport && session.events.empty() && stdin_ready() ) {
                 if( !session.transport->poll_input( std::cin, *session.output, std::cerr ) ) {
                     exit_handler( session.transport->failed() ? 1 : 0 );
