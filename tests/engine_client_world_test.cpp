@@ -888,3 +888,86 @@ TEST_CASE(
         if (entry.vehicle && !entry.light) { CHECK(entry.known == ec::knowledge::visible); }
     }
 }
+
+namespace {
+/// The partition wall seen, then left out of sight and captured, so a capture cache holds it as
+/// memory.
+struct remembered_wall {
+    tripoint_bub_ms where;
+    tripoint_abs_ms abs;
+};
+
+auto remember_wall() -> remembered_wall {
+    const auto setup = make_scene();
+    // A second layer of wall on the east side hides the partition from the doorway side.
+    for (const auto dy : std::views::iota(-6, 5)) {
+        get_map().ter_set(setup.start + tripoint(3, dy, 0), ter_id("t_wall"));
+    }
+    map_perception::acquire();
+    const auto wall = setup.start + tripoint(2, -2, 0);
+    REQUIRE(get_avatar().sees(wall));
+    step_to(setup.start + tripoint(4, 5, 0));
+    REQUIRE_FALSE(get_avatar().sees(wall));
+    const auto state = ec::world::capture_world();
+    const auto* cell = find_cell(state, at(wall));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->known == ec::knowledge::remembered);
+    REQUIRE(cell->memory);
+    return {.where = wall, .abs = map_local_to_abs(get_map(), wall)};
+}
+
+auto memory_now(const remembered_wall& wall) -> std::optional<ec::memory_layers> {
+    const auto state = ec::world::capture_world();
+    const auto* cell = find_cell(state, at(wall.where));
+    return cell == nullptr ? std::nullopt : cell->memory;
+}
+} // namespace
+
+TEST_CASE(
+    "a remembered terrain changed in memory shows in the next capture", "[engine_client_world]") {
+    const auto wall = remember_wall();
+    CHECK(memory_now(wall)->terrain.id == "t_wall");
+    get_avatar().memorize_terrain_tile(wall.abs, "t_floor", 0, 0);
+    CHECK(memory_now(wall)->terrain.id == "t_floor");
+}
+
+TEST_CASE(
+    "a memorized overlay appears and is forgotten in the next capture", "[engine_client_world]") {
+    const auto wall = remember_wall();
+    CHECK_FALSE(memory_now(wall)->overlay);
+    get_avatar().memorize_tile(wall.abs, "f_bench", 0, 0);
+    REQUIRE(memory_now(wall)->overlay);
+    CHECK(memory_now(wall)->overlay->id == "f_bench");
+    get_avatar().clear_memorized_overlay(wall.abs);
+    CHECK_FALSE(memory_now(wall)->overlay);
+}
+
+TEST_CASE(
+    "a memorized symbol changes the next capture of a square without a terrain",
+    "[engine_client_world]") {
+    const auto wall = remember_wall();
+    get_avatar().clear_memorized_tile(wall.abs);
+    CHECK_FALSE(memory_now(wall));
+    get_avatar().memorize_tile(wall.abs, "f_bench", 0, 0);
+    get_avatar().memorize_symbol(wall.abs, 'B');
+    REQUIRE(memory_now(wall));
+    CHECK(memory_now(wall)->terrain.glyph == "B");
+    get_avatar().memorize_symbol(wall.abs, 'C');
+    CHECK(memory_now(wall)->terrain.glyph == "C");
+}
+
+TEST_CASE(
+    "forgetting one square or all of memory shows in the next capture", "[engine_client_world]") {
+    const auto wall = remember_wall();
+    const auto other = wall.where + tripoint_south;
+    const auto known = [&] {
+        const auto state = ec::world::capture_world();
+        return find_cell(state, at(other)) != nullptr;
+    };
+    REQUIRE(known());
+    get_avatar().clear_memorized_tile(wall.abs);
+    CHECK_FALSE(memory_now(wall));
+    CHECK(known());
+    get_avatar().clear_map_memory();
+    CHECK_FALSE(known());
+}
