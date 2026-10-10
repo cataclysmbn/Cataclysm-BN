@@ -607,14 +607,20 @@ auto server::queue_push() -> void
     auto batch = event_batch{};
     auto batch_bytes = std::size_t{0};
     const auto flush_batch = [&]() {
-        if( !batch.events.empty() ) { notify( "bn.events", serialize_events( batch ) ); }
+        if( batch.events.size() == 1 && !batch.events.front().wire().empty() ) {
+            notify( "bn.events", batch.events.front().wire() );
+        } else if( !batch.events.empty() ) {
+            notify( "bn.events", serialize_events( batch ) );
+        }
         batch.events.clear();
         batch_bytes = 0;
     };
     for( auto &item : session_.take_push() ) {
         if( !subscribed_ ) { continue; }
         if( const auto *pushed = std::get_if<event_push>( &item ) ) {
-            const auto bytes = serialize_events( {.epoch = pushed->epoch, .events = {pushed->event}} ).size();
+            const auto &wire = pushed->event.wire();
+            const auto bytes = !wire.empty() ? wire.size() :
+                               serialize_events( {.epoch = pushed->epoch, .events = {pushed->event}} ).size();
             if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
             batch.epoch = pushed->epoch;
             batch.events.push_back( pushed->event );

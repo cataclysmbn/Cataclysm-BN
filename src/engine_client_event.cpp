@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "profile.h"
+
 namespace engine_client
 {
 namespace
@@ -185,6 +187,7 @@ auto classify( const changes &delta ) -> std::string
 
 public_event::public_event( event_value value ) : value_( std::move( value ) ) {}
 auto public_event::value() const -> const event_value & { return value_; } // *NOPAD*
+auto public_event::wire() const -> const std::string & { return wire_; } // *NOPAD*
 
 event_stream::event_stream( snapshot initial ) : current_( std::move( initial ) ) {}
 auto event_stream::create( std::string epoch,
@@ -195,6 +198,14 @@ auto event_stream::create( std::string epoch,
     return event_stream{snapshot{.at = {.epoch = std::move( epoch )}, .value = std::move( initial )}};
 }
 auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
+
+/// Serializes the event once for the wire; false when it would not fit a frame.
+auto event_stream::seal( public_event &event ) const -> bool
+{
+    ZoneScopedN( "engine_client_serialize_event" );
+    event.wire_ = serialize_events( {.epoch = current_.at.epoch, .events = {event}} );
+    return event.wire_.size() <= maximum_event_bytes;
+}
 
 auto event_stream::publish( publish_request request ) ->
 std::expected<std::optional<public_event>, error>
@@ -221,10 +232,7 @@ std::expected<std::optional<public_event>, error>
             .delta = std::move( delta ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
-        maximum_event_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
+    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
     current_.value = std::move( request.next );
     current_.at.sequence = event.value().sequence;
     current_.at.revision = event.value().revision;
@@ -244,10 +252,7 @@ auto event_stream::publish_message( message_request request ) -> std::expected<p
             .message = std::move( request.message ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
-        maximum_event_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
+    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     return event;
 }
@@ -266,10 +271,7 @@ std::expected<public_event, error>
             .presentation = std::move( request.fact ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( serialize_events( {.epoch = current_.at.epoch, .events = {event}} ).size() >
-        maximum_event_bytes ) {
-        return std::unexpected( error::resource_limit );
-    }
+    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     return event;
 }
