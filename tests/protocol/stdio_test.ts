@@ -606,6 +606,75 @@ Deno.test({
 })
 
 Deno.test({
+  name: "stdio: the tutorial crafting menu lists recipes, searches and closes",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const interaction = () => session.mirror.interaction.interaction
+      const opened = await session.submit({ kind: "action", action_id: "craft" })
+      assertEquals(opened.stages.at(-1), "completed")
+      assertEquals(interaction().context, "CRAFTING")
+      assertEquals(interaction().kind, "choices")
+      assertEquals(interaction().field.id, "filter")
+      // Tab rows have no pane; the sub-tab and recipe rows belong to the selected tab.
+      const rows = () => interaction().choices as Value[]
+      const tabs = () => rows().filter((entry) => entry.id.startsWith("tab:"))
+      const recipes = () => rows().filter((entry) => entry.id.startsWith("recipe:"))
+      assert(tabs().length > 1 && tabs().every((entry) => entry.pane_id === undefined))
+      assertEquals(tabs().filter((entry) => entry.selected).length, 1)
+      const selected = tabs().find((entry) => entry.selected)
+      assert(rows().some((entry) => entry.id.startsWith("subtab:") && entry.pane_id !== undefined))
+
+      // Each tab lists its own recipes, with the native detail text on the row.
+      let tab: Value
+      for (const candidate of tabs()) {
+        if (candidate.id === selected.id) continue
+        assertEquals(
+          (await session.submit({ kind: "choose", choice_id: candidate.id })).stages.at(-1),
+          "completed",
+        )
+        assertEquals(interaction().context, "CRAFTING")
+        if (recipes().length > 0) {
+          tab = candidate
+          break
+        }
+      }
+      assert(tab, "some tab lists recipes")
+      assertEquals(tabs().filter((entry) => entry.selected).map((entry) => entry.id), [tab.id])
+      assert(recipes().every((entry) => entry.pane_id === tab.id.slice(4)))
+      const first = recipes()[0]
+      assert(first.description.includes("Time to complete"), first.description)
+      assert(!first.description.includes("<color"), first.description)
+
+      // Searching replaces the list; clearing restores it.
+      const all = recipes().length
+      const word = first.label.split(" ")[0]
+      const search = (value: string) =>
+        session.submit({ kind: "fill", field_id: "filter", value, submit: true })
+      assertEquals((await search(word)).stages.at(-1), "completed")
+      assertEquals(interaction().field.value, word)
+      assert(recipes().length > 0 && recipes().length <= all)
+      assert(recipes().some((entry) => entry.label.includes(word)))
+      assertEquals((await search("")).stages.at(-1), "completed")
+      assertEquals(recipes().length, all)
+
+      // Closing returns to the map.
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals(interaction(), null)
+      assert(session.mirror.interaction.actions.some((a: Value) => a.id === "craft"))
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: waiting five minutes passes five minutes and completes when input is awaited again",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {

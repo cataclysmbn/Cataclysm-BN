@@ -96,6 +96,14 @@ auto resolve(game_client::interaction_command command) -> input_event {
     return *result;
 }
 
+/// The crafting menu lists its tabs ahead of the recipes; most checks only look at the recipes.
+auto recipe_rows(game_client::interaction_snapshot snapshot) -> game_client::interaction_snapshot {
+    std::erase_if(snapshot.choices, [](const auto& choice) {
+        return choice.id.starts_with("tab:") || choice.id.starts_with("subtab:");
+    });
+    return snapshot;
+}
+
 auto resolve_action(const std::string& action) -> input_event {
     auto input = game_client::input_command{};
     input.action = action;
@@ -3548,7 +3556,7 @@ TEST_CASE(
 
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 100});
+        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
         if (snapshot.context != "CRAFTING") {
             REQUIRE(step == 1);
             step = 2;
@@ -3627,6 +3635,123 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "semantic crafting publishes tabs, search and recipe details",
+    "[client][interaction][crafting][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto restore_read = restore_on_out_of_scope<decltype(uistate.read_recipes)>(
+        uistate.read_recipes);
+    const auto restore_expanded = restore_on_out_of_scope<decltype(uistate.expanded_recipes)>(
+        uistate.expanded_recipes);
+    auto& you = get_avatar();
+    const auto& pipe = recipe_id("test_pipe").obj();
+    prepare_crafting_fixture();
+
+    const auto choose =
+        [](const game_client::interaction_snapshot& snapshot, const std::string& id) {
+            REQUIRE(
+                std::ranges::contains(snapshot.choices, id, &game_client::interaction_choice::id));
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::choose,
+                .target_id = id,
+            });
+        };
+    const auto selected =
+        [](const game_client::interaction_snapshot& snapshot, const std::string& prefix) {
+            return snapshot.choices | std::views::filter([&](const auto& choice) {
+                       return choice.selected && choice.id.starts_with(prefix);
+                   })
+                 | std::views::transform(&game_client::interaction_choice::id)
+                 | std::ranges::to<std::vector>();
+        };
+    const auto pipe_row = [&](const game_client::interaction_snapshot& snapshot) {
+        return std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
+            return choice.id.starts_with("recipe:")
+                && choice.label.find(pipe.result_name()) != std::string::npos;
+        });
+    };
+
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction({.limit = 200});
+        REQUIRE(snapshot.context == "CRAFTING");
+        const auto recipes = recipe_rows(snapshot).choices;
+        switch (step++) {
+            case 0: {
+                // Tab rows have no pane; exactly one is selected; the search is a field.
+                CHECK(
+                    std::ranges::count_if(
+                        snapshot.choices,
+                        [](const auto& choice) { return choice.id.starts_with("tab:"); })
+                    > 1);
+                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& choice) {
+                    return choice.id.starts_with("tab:") && choice.pane_id;
+                }));
+                CHECK(selected(snapshot, "tab:").size() == 1);
+                REQUIRE(snapshot.field);
+                CHECK(snapshot.field->id == "filter");
+                CHECK(snapshot.field->value.empty());
+                CHECK_FALSE(snapshot.field->description.empty());
+                CHECK_FALSE(snapshot.field->description.contains("<color"));
+                return choose(snapshot, "tab:CC_ELECTRONIC");
+            }
+            case 1: {
+                CHECK(selected(snapshot, "tab:") == std::vector<std::string>{"tab:CC_ELECTRONIC"});
+                CHECK(std::ranges::all_of(recipes, [](const auto& choice) {
+                    return choice.pane_id == "CC_ELECTRONIC";
+                }));
+                // Details come with the row, without color markup.
+                const auto row = pipe_row(snapshot);
+                REQUIRE(row != snapshot.choices.end());
+                CHECK(row->description.contains("Time to complete"));
+                CHECK_FALSE(row->description.contains("<color"));
+                return choose(snapshot, "subtab:CSC_ELECTRONIC_TOOLS");
+            }
+            case 2: {
+                CHECK(selected(snapshot, "subtab:")
+                      == std::vector<std::string>{"subtab:CSC_ELECTRONIC_TOOLS"});
+                CHECK(pipe_row(snapshot) != snapshot.choices.end());
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::fill,
+                    .target_id = "filter",
+                    .value = "no recipe is named like this",
+                    .submit = true,
+                });
+            }
+            case 3: {
+                // A search lists across the tab and freezes the sub-tabs, as native does.
+                CHECK(recipes.empty());
+                CHECK(snapshot.field->value == "no recipe is named like this");
+                CHECK(std::ranges::none_of(snapshot.choices, [](const auto& choice) {
+                    return choice.id.starts_with("subtab:");
+                }));
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::fill,
+                    .target_id = "filter",
+                    .value = "",
+                    .submit = true,
+                });
+            }
+            default: {
+                CHECK(pipe_row(snapshot) != snapshot.choices.end());
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::cancel,
+                });
+            }
+        }
+    });
+
+    you.craft(you.bub_pos());
+    CHECK(step == 5);
+    CHECK_FALSE(you.activity);
+}
+
+TEST_CASE(
     "semantic crafting cancel leaves normal and batch selections untouched",
     "[client][interaction][crafting][mcp]") {
     clear_all_state();
@@ -3647,7 +3772,7 @@ TEST_CASE(
     const auto run_cancel = [&](const bool batch) {
         auto step = 0;
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
-            const auto snapshot = game_client::current_interaction({.limit = 100});
+            const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
             if (snapshot.context != "CRAFTING") {
                 REQUIRE(step == 1);
                 step = 2;
@@ -3713,7 +3838,7 @@ TEST_CASE(
 
     auto step = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 100});
+        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
         if (snapshot.context == "CRAFTING") {
             if (step == 0) {
                 step = 1;
@@ -3866,7 +3991,7 @@ TEST_CASE(
     auto step = 0;
 
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 100});
+        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
         if (snapshot.context != "CRAFTING") {
             REQUIRE(snapshot.field);
             if (step == 1) {
@@ -3959,7 +4084,7 @@ TEST_CASE(
     replay::start();
     auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 100});
+        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
         if (snapshot.context != "CRAFTING") {
             return resolve({
                 .input_id = snapshot.input_id,
@@ -4016,7 +4141,7 @@ TEST_CASE(
 
     auto crafting_reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
-        const auto snapshot = game_client::current_interaction({.limit = 100});
+        const auto snapshot = recipe_rows(game_client::current_interaction({.limit = 100}));
         if (snapshot.context == "CRAFTING") {
             if (crafting_reads++ == 0) { return resolve_action("FILTER"); }
             const auto target =

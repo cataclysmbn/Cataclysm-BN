@@ -10,6 +10,7 @@
 #include "character.h"
 #include "character_functions.h"
 #include "client_interaction.h"
+#include "client_interaction_prepared.h"
 #include "color.h"
 #include "crafting.h"
 #include "crafting_quality.h"
@@ -217,6 +218,78 @@ struct availability {
 
 };
 
+/// The search syntax help shown beside the recipe filter.
+auto crafting_filter_help() -> std::string
+{
+    struct SearchPrefix {
+        std::string key;
+        std::string sep;
+        std::string example;
+        std::string description;
+    };
+    std::vector<SearchPrefix> prefixes = {
+        { "", "", _( "shirt" ), _( "<color_cyan>name</color> of resulting item" ) },
+        { "t", ":", _( "hotplate" ), _( "<color_cyan>tool</color> required to craft" ) },
+        { "c", ":", _( "plank" ), _( "<color_cyan>component</color> required to craft" ) },
+        { "Q", ":", _( "sewing" ), _( "<color_cyan>quality</color> required to craft (<color_cyan>text and/or numbers</color>)" ) },
+        { "Q", ":", _( "sewing>=3" ), _( "number use example" ) },
+
+        { "s", ":", _( "mechanics" ), _( "<color_cyan>any skill</color> used to craft (<color_cyan>text and/or numbers</color>)" ) },
+        { "p", ":", _( "tailoring" ), _( "<color_cyan>primary skill</color> used to craft (<color_cyan>text and/or numbers</color>)" ) },
+        {
+            "r", ":", pgettext( "memorized recipe search term", "yes" ),
+            _( "recipes which are <color_cyan>reversible</color> or not" )
+        },
+        {
+            "m", ":", pgettext( "memorized recipe search term", "yes" ),
+            _( "recipes which are <color_cyan>memorized</color> or not" )
+        },
+
+        { "q", ":", _( "metal sawing" ), _( "<color_cyan>quality</color> of resulting item (<color_cyan>text and/or numbers</color>)" ) },
+        { "b", ":", _( "cracklins" ), _( "recipe <color_cyan>byproduct</color>" ) },
+
+        { "dt", ">", _( "15" ), _( "total <color_cyan>damage</color>; <color_white>db, dc, dp</color> for bashing, cutting, piercing" ) },
+
+        { "pb", ">", _( "10" ), _( "bashing <color_cyan>protection</color>; <color_white>pc, pbl, pa, pf, pe</color> for cutting, ballistic, acid, fire, environmental" ) },
+        { "w", "<=", _( "20" ), _( "clothing <color_cyan>warmth</color>" )},
+        { "st", ">=", _( "15" ), _( "<color_cyan>storage</color> in liters" )},
+        { "en", "<=", _( "1" ), _( "clothing <color_cyan>encumbrance</color>" )},
+
+        { "d", ":", _( "reach attack" ), _( "<color_cyan>full description</color> of resulting item (slow)" ) },
+    };
+    int max_example_length = 0;
+    for( const auto &prefix : prefixes ) {
+        max_example_length = std::max( max_example_length,
+                                       utf8_width( prefix.key ) + utf8_width( prefix.sep ) + utf8_width( prefix.example ) );
+    }
+    std::string spaces( max_example_length, ' ' );
+
+    std::string description =
+        _( "You can search for result names, or use prefixes to search specific properties.\n"
+           "To search text, enter it after a colon <color_red>:</color>.\n"
+           "To search for values, enter one of operators <color_red>=, >, <, >=, <=</color> followed by a number.\n"
+           "You can search for text, numbers, or both, where applicable. To search both, use <color_red>prefix:text>number</color>.\n"
+           "You can prefix any filter with a minus <color_red>-</color> to <color_cyan>exclude</color> matching recipes.\n"
+           "Additional filters are separated by commas <color_red>,</color>.\n\n"
+           "<color_white>Prefixes:\n</color>" );
+
+    for( const auto &prefix : prefixes ) {
+        auto padding = max_example_length - utf8_width( prefix.key ) - utf8_width(
+                           prefix.sep ) - utf8_width( prefix.example );
+        description += string_format(
+                           _( " <color_yellow>%s</color><color_white>%s%s</color>%.*s  %s\n" ),
+                           prefix.key, prefix.sep, prefix.example, padding, spaces, prefix.description );
+    }
+
+    description +=
+        _( "\nFilters can be as complex as you'd like. For example,"
+           "\n<color_cyan>s:tailoring<6,st>20</color>"
+           "\n<color_cyan>p:electronics>=2,s>4,r:yes,-t:soldering iron</color>" );
+    description +=
+        _( "\nUse <color_red>up/down arrow</color> to go through your search history." );
+    return description;
+}
+
 struct crafting_interaction_options {
     const std::vector<const recipe *> &current;
     const std::vector<availability> &available;
@@ -249,6 +322,35 @@ auto crafting_interaction_snapshot( const crafting_interaction_options &opts )
         .allow_cancel = true,
         .allow_set_count = true,
     };
+    // Batch mode lists the quantities of one recipe, so tabs and search do not apply.
+    if( !opts.batch ) {
+        const auto tab_choice = [&]( const std::string & prefix, const std::string & id,
+        const bool selected ) {
+            return game_client::interaction_choice{
+                .id = prefix + id, .label = normalized_names.at( id ), .selected = selected,
+            };
+        };
+        std::ranges::for_each( craft_cat_list, [&]( const auto & id ) {
+            const auto selected = id == opts.category;
+            snapshot.panes.push_back( {
+                .id = id, .label = normalized_names.at( id ),
+                .role = selected ? "focused" : "category",
+            } );
+            snapshot.choices.push_back( tab_choice( "tab:", id, selected ) );
+        } );
+        // The native subtabs are frozen while a search is active.
+        if( opts.filter.empty() ) {
+            std::ranges::for_each( craft_subcat_list.at( opts.category ), [&]( const auto & id ) {
+                auto choice = tab_choice( "subtab:", id, id == opts.subcategory );
+                choice.pane_id = opts.category;
+                snapshot.choices.push_back( std::move( choice ) );
+            } );
+        }
+        snapshot.field = game_client::interaction_field{
+            .id = "filter", .label = _( "Search:" ),
+            .description = remove_color_tags( crafting_filter_help() ), .value = opts.filter,
+        };
+    }
     auto identity_counts = std::unordered_map<std::string, std::size_t> {};
     const auto indices = std::views::iota( std::size_t{ 0 }, opts.current.size() );
     std::ranges::transform( indices, std::back_inserter( snapshot.choices ), [&]( const auto index ) {
@@ -282,7 +384,7 @@ auto crafting_interaction_snapshot( const crafting_interaction_options &opts )
             } ),
             .label = opts.batch ? string_format( _( "%2dx %s" ), count, rec->result_name( true ) )
             : rec->result_name( true ),
-            .description = rec->description.translated(),
+            .pane_id = opts.batch ? std::nullopt : std::optional{ opts.category },
 .denial = opts.available[index].can_craft || rec->is_nested() ? std::string{} :
             _( "You can't do that!" ),
             .enabled = opts.available[index].can_craft || rec->is_nested(),
@@ -726,6 +828,66 @@ static std::vector<std::string> recipe_info(
     result.insert( result.end(), tmp.begin(), tmp.end() );
 
     return result;
+}
+
+struct crafting_prepare_options {
+    const input_context &ctxt;
+    Character &crafter;
+    const crafting_interaction_options &list;
+    bool show_unavailable;
+};
+
+/// Publishes the visible rows now and renders each recipe's details only when a client reads its page.
+auto prepare_crafting_interaction( const crafting_prepare_options &opts ) ->
+game_client::prepared_interaction_handle
+{
+    struct frozen_rows {
+        std::vector<const recipe *> recipes;
+        std::vector<availability> available;
+        std::string qry_comps;
+        std::size_t first_recipe;
+        bool batch;
+        bool show_unavailable;
+    };
+    const auto &list = opts.list;
+    auto snapshot = crafting_interaction_snapshot( list );
+    const auto first_recipe = snapshot.choices.size() - list.current.size();
+    const auto qry = trim( list.filter );
+    auto dependencies = std::vector<std::string>( first_recipe );
+    for( const auto index : std::views::iota( std::size_t{ 0 }, list.current.size() ) ) {
+        const auto &avail = list.available[index];
+        const auto flags = ( avail.known ? 1 : 0 ) | ( avail.can_craft ? 2 : 0 ) |
+                           ( avail.can_craft_non_rotten ? 4 : 0 ) | ( avail.has_all_skills ? 8 : 0 ) |
+                           ( opts.show_unavailable ? 16 : 0 );
+        dependencies.push_back( string_format( "%s:%zu:%d:%s", list.current[index]->ident().str(),
+                                               list.batch ? index + 1 : 1, flags, qry ) );
+    }
+    auto rows = std::make_shared<const frozen_rows>( frozen_rows{
+        .recipes = list.current, .available = list.available,
+        .qry_comps = qry.starts_with( "c:" ) ? qry.substr( 2 ) : std::string{},
+        .first_recipe = first_recipe, .batch = list.batch, .show_unavailable = opts.show_unavailable,
+    } );
+    return game_client::prepare_interaction( opts.ctxt, std::move( snapshot ), {
+        .dependency_keys = std::move( dependencies ),
+        .render = [rows, &crafter = opts.crafter]( const auto index )
+        {
+            if( index < rows->first_recipe ) {
+                return std::string{};
+            }
+            const auto row = index - rows->first_recipe;
+            const auto &rec = *rows->recipes[row];
+            const auto &avail = rows->available[row];
+            auto text = rec.description.translated();
+            if( !rec.is_nested() ) {
+                // Clients wrap the text themselves.
+                const auto unfolded = 10000;
+                text += "\n" + join( recipe_info( rec, avail, crafter, rows->show_unavailable, rows->qry_comps,
+                                                  rows->batch ? static_cast<int>( row ) + 1 : 1, unfolded,
+                                                  avail.color( true ) ), "\n" );
+            }
+            return remove_color_tags( text );
+        },
+    } );
 }
 
 static input_context make_crafting_context( bool highlight_unread_recipes )
@@ -1565,53 +1727,63 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
         ui_manager::redraw();
         const int scroll_recipe_info_lines = catacurses::getmaxy( w_iteminfo ) - 4;
         auto action = std::string{};
+        const auto list = crafting_interaction_options{
+            .current = current,
+            .available = available,
+            .category = tab.cur(),
+            .subcategory = subtab.cur(),
+            .filter = filterstring,
+            .line = line,
+            .batch = batch,
+        };
         {
-            const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-                return crafting_interaction_snapshot( {
-                    .current = current,
-                    .available = available,
-                    .category = tab.cur(),
-                    .subcategory = subtab.cur(),
-                    .filter = filterstring,
-                    .line = line,
-                    .batch = batch,
-                } );
-            } );
+            const auto interaction = game_client::prepared_interaction_scope( ctxt,
+            prepare_crafting_interaction( {
+                .ctxt = ctxt, .crafter = crafter, .list = list, .show_unavailable = show_unavailable
+            } ) );
             action = ctxt.handle_input();
         }
         const auto &event = ctxt.get_raw_input();
         if( event.interaction ) {
-            const auto snapshot = crafting_interaction_snapshot( {
-                .current = current,
-                .available = available,
-                .category = tab.cur(),
-                .subcategory = subtab.cur(),
-                .filter = filterstring,
-                .line = line,
-                .batch = batch,
-            } );
-            if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+            const auto &command = *event.interaction;
+            const auto snapshot = crafting_interaction_snapshot( list );
+            const auto choice = std::ranges::find( snapshot.choices, command.target_id,
+                                                   &game_client::interaction_choice::id );
+            const auto row = std::distance( snapshot.choices.begin(), choice ) -
+                             static_cast<int>( snapshot.choices.size() - current.size() );
+            if( command.operation == game_client::interaction_operation::cancel ) {
                 action = "QUIT";
-            } else if( event.interaction->operation == game_client::interaction_operation::choose ) {
-                const auto choice = std::ranges::find( snapshot.choices,
-                                                       event.interaction->target_id, &game_client::interaction_choice::id );
-                if( choice != snapshot.choices.end() ) {
-                    line = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
-                    action = "CONFIRM";
+            } else if( command.operation == game_client::interaction_operation::fill ) {
+                filterstring = command.value;
+                recalc = true;
+                recalc_unread = highlight_unread_recipes;
+                continue;
+            } else if( choice == snapshot.choices.end() ) {
+                continue;
+            } else if( command.target_id.starts_with( "tab:" ) ) {
+                while( tab.cur() != command.target_id.substr( 4 ) ) {
+                    tab.next();
                 }
-            } else if( event.interaction->operation ==
-                       game_client::interaction_operation::set_count ) {
-                const auto choice = std::ranges::find( snapshot.choices,
-                                                       event.interaction->target_id, &game_client::interaction_choice::id );
-                if( choice != snapshot.choices.end() ) {
-                    semantic_batch_line = static_cast<int>( *event.interaction->count ) - 1;
-                    if( batch ) {
-                        recalc = true;
-                        continue;
-                    }
-                    line = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
-                    action = "CYCLE_BATCH";
+                subtab = list_circularizer<std::string>( craft_subcat_list[tab.cur()] );
+                recalc = true;
+                continue;
+            } else if( command.target_id.starts_with( "subtab:" ) ) {
+                while( subtab.cur() != command.target_id.substr( 7 ) ) {
+                    subtab.next();
                 }
+                recalc = true;
+                continue;
+            } else if( command.operation == game_client::interaction_operation::choose ) {
+                line = static_cast<int>( row );
+                action = "CONFIRM";
+            } else if( command.operation == game_client::interaction_operation::set_count ) {
+                semantic_batch_line = static_cast<int>( *command.count ) - 1;
+                if( batch ) {
+                    recalc = true;
+                    continue;
+                }
+                line = static_cast<int>( row );
+                action = "CYCLE_BATCH";
             }
         }
         if( action == "SCROLL_RECIPE_INFO_UP" ) {
@@ -1780,72 +1952,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
             recalc = true;
             keepline = true;
         } else if( action == "FILTER" ) {
-            struct SearchPrefix {
-                std::string key;
-                std::string sep;
-                std::string example;
-                std::string description;
-            };
-            std::vector<SearchPrefix> prefixes = {
-                { "", "", _( "shirt" ), _( "<color_cyan>name</color> of resulting item" ) },
-                { "t", ":", _( "hotplate" ), _( "<color_cyan>tool</color> required to craft" ) },
-                { "c", ":", _( "plank" ), _( "<color_cyan>component</color> required to craft" ) },
-                { "Q", ":", _( "sewing" ), _( "<color_cyan>quality</color> required to craft (<color_cyan>text and/or numbers</color>)" ) },
-                { "Q", ":", _( "sewing>=3" ), _( "number use example" ) },
-
-                { "s", ":", _( "mechanics" ), _( "<color_cyan>any skill</color> used to craft (<color_cyan>text and/or numbers</color>)" ) },
-                { "p", ":", _( "tailoring" ), _( "<color_cyan>primary skill</color> used to craft (<color_cyan>text and/or numbers</color>)" ) },
-                {
-                    "r", ":", pgettext( "memorized recipe search term", "yes" ),
-                    _( "recipes which are <color_cyan>reversible</color> or not" )
-                },
-                {
-                    "m", ":", pgettext( "memorized recipe search term", "yes" ),
-                    _( "recipes which are <color_cyan>memorized</color> or not" )
-                },
-
-                { "q", ":", _( "metal sawing" ), _( "<color_cyan>quality</color> of resulting item (<color_cyan>text and/or numbers</color>)" ) },
-                { "b", ":", _( "cracklins" ), _( "recipe <color_cyan>byproduct</color>" ) },
-
-                { "dt", ">", _( "15" ), _( "total <color_cyan>damage</color>; <color_white>db, dc, dp</color> for bashing, cutting, piercing" ) },
-
-                { "pb", ">", _( "10" ), _( "bashing <color_cyan>protection</color>; <color_white>pc, pbl, pa, pf, pe</color> for cutting, ballistic, acid, fire, environmental" ) },
-                { "w", "<=", _( "20" ), _( "clothing <color_cyan>warmth</color>" )},
-                { "st", ">=", _( "15" ), _( "<color_cyan>storage</color> in liters" )},
-                { "en", "<=", _( "1" ), _( "clothing <color_cyan>encumbrance</color>" )},
-
-                { "d", ":", _( "reach attack" ), _( "<color_cyan>full description</color> of resulting item (slow)" ) },
-            };
-            int max_example_length = 0;
-            for( const auto &prefix : prefixes ) {
-                max_example_length = std::max( max_example_length,
-                                               utf8_width( prefix.key ) + utf8_width( prefix.sep ) + utf8_width( prefix.example ) );
-            }
-            std::string spaces( max_example_length, ' ' );
-
-            std::string description =
-                _( "You can search for result names, or use prefixes to search specific properties.\n"
-                   "To search text, enter it after a colon <color_red>:</color>.\n"
-                   "To search for values, enter one of operators <color_red>=, >, <, >=, <=</color> followed by a number.\n"
-                   "You can search for text, numbers, or both, where applicable. To search both, use <color_red>prefix:text>number</color>.\n"
-                   "You can prefix any filter with a minus <color_red>-</color> to <color_cyan>exclude</color> matching recipes.\n"
-                   "Additional filters are separated by commas <color_red>,</color>.\n\n"
-                   "<color_white>Prefixes:\n</color>" );
-
-            for( const auto &prefix : prefixes ) {
-                auto padding = max_example_length - utf8_width( prefix.key ) - utf8_width(
-                                   prefix.sep ) - utf8_width( prefix.example );
-                description += string_format(
-                                   _( " <color_yellow>%s</color><color_white>%s%s</color>%.*s  %s\n" ),
-                                   prefix.key, prefix.sep, prefix.example, padding, spaces, prefix.description );
-            }
-
-            description +=
-                _( "\nFilters can be as complex as you'd like. For example,"
-                   "\n<color_cyan>s:tailoring<6,st>20</color>"
-                   "\n<color_cyan>p:electronics>=2,s>4,r:yes,-t:soldering iron</color>" );
-            description +=
-                _( "\nUse <color_red>up/down arrow</color> to go through your search history." );
+            const std::string description = crafting_filter_help();
 
             string_input_popup()
             .title( _( "Search:" ) )
