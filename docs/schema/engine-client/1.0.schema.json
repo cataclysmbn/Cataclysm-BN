@@ -209,6 +209,21 @@
           "type": "integer",
           "minimum": 2,
           "description": "Items on the square when there are several, on the displayed (last) item; the native view highlights such a stack."
+        },
+        "tint": {
+          "type": "object",
+          "properties": {
+            "bg": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            },
+            "fg": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Paint of a vehicle part. A tileset tints the part's background and foreground sprites with it (the native view blends hue and saturation toward it); a missing member is unpainted."
         }
       },
       "required": [
@@ -294,6 +309,10 @@
             "terrain"
           ],
           "additionalProperties": false
+        },
+        "reviving": {
+          "const": true,
+          "description": "A corpse on the square can rise; the native view marks the square. Present only on visible squares."
         }
       },
       "required": [

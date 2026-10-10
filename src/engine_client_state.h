@@ -23,6 +23,12 @@ struct bounds {
     position max;
     auto operator<=>( const bounds & ) const = default; // *NOPAD*
 };
+/// The paint of a vehicle part as `#rrggbb`; an empty member is unpainted.
+struct look_tint {
+    std::string bg = {};
+    std::string fg = {};
+    auto operator<=>( const look_tint & ) const = default; // *NOPAD*
+};
 /// Appearance from game data, so text clients need no tileset. The optional members give a tiled
 /// client what only the engine can know: the sprite id when it is not `id`, the data's fallback
 /// ids, and the shape the native tile selection computed from the neighbours.
@@ -46,6 +52,8 @@ struct look {
     /// Items on the square when there are several; set on the displayed (last) item, which the native
     /// view then highlights.
     std::optional<int> stack = std::nullopt;
+    /// Paint a tileset multiplies into the part's sprites: the vehicle part's own colors.
+    std::optional<look_tint> tint = std::nullopt;
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {
@@ -66,6 +74,8 @@ struct cell {
     std::optional<look> terrain = std::nullopt;
     std::optional<look> furniture = std::nullopt;
     std::vector<field_entry> fields = {};
+    /// A corpse on the square can rise; the native view marks it.
+    bool reviving = false;
     std::vector<look> traps = {};
     std::vector<look> items = {};
     std::optional<look> vehicle = std::nullopt;

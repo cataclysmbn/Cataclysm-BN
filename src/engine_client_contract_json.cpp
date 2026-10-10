@@ -47,6 +47,11 @@ auto to_json( const look &value ) -> json
     if( value.rotation ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
+    if( value.tint ) {
+        result["tint"] = json::object();
+        if( !value.tint->bg.empty() ) { result["tint"]["bg"] = value.tint->bg; }
+        if( !value.tint->fg.empty() ) { result["tint"]["fg"] = value.tint->fg; }
+    }
     return result;
 }
 template<typename Values>
@@ -78,6 +83,7 @@ auto to_json( const cell &value ) -> json
     if( value.terrain ) { result["terrain"] = to_json( *value.terrain ); }
     if( value.furniture ) { result["furniture"] = to_json( *value.furniture ); }
     if( !value.fields.empty() ) { result["fields"] = to_array( value.fields ); }
+    if( value.reviving ) { result["reviving"] = true; }
     if( !value.traps.empty() ) { result["traps"] = to_array( value.traps ); }
     if( !value.items.empty() ) { result["items"] = to_array( value.items ); }
     if( value.vehicle ) { result["vehicle"] = to_json( *value.vehicle ); }

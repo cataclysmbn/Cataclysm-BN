@@ -34,12 +34,14 @@
 #include "type_id.h"
 #include "vehicle/veh_type.h"
 #include "vehicle/vehicle.h"
+#include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
 #include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 
 static const itype_id itype_corpse( "corpse" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
+static const flag_id flag_PULPED( "PULPED" );
 
 namespace engine_client::world
 {
@@ -216,6 +218,12 @@ auto memory_at( const avatar &you, const tripoint_abs_ms &abs ) -> std::optional
     return result;
 }
 
+auto hex_of( const RGBColor &color ) -> std::string
+{
+    if( color == RGBColor{} ) { return {}; }
+    return string_format( "#%02x%02x%02x", color.r, color.g, color.b );
+}
+
 auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &you )
 -> std::optional<look>
 {
@@ -231,6 +239,19 @@ auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &y
                   look{ .kind = "vehicle_part", .id = part.str() };
     result.glyph = glyph_of( special_symbol( veh.part_sym( vp->part_index(), roof ) ) );
     result.color = color_of( veh.part_color( vp->part_index(), roof ) );
+    // The native view paints the displayed part, or the roof over it, with the part's own colors.
+    const vehicle_part *painted = nullptr;
+    if( roof ) {
+        if( const auto index = veh.roof_at_part( vp->part_index() ); index != -1 ) { painted = &veh.cpart( index ); }
+    } else if( const auto shown = vp.part_displayed() ) {
+        painted = &shown->part();
+    }
+    if( painted != nullptr ) {
+        const auto [bg, fg] = painted->get_color();
+        if( !hex_of( bg ).empty() || !hex_of( fg ).empty() ) {
+            result.tint = look_tint{ .bg = hex_of( bg ), .fg = hex_of( fg ) };
+        }
+    }
     return result;
 }
 
@@ -288,6 +309,12 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         }
     }
     out.vehicle = vehicle_part_at( here, p, you );
+    if( here.could_see_items( p, you ) ) {
+        out.reviving = std::ranges::any_of( here.i_at( p ), []( const item * thing ) {
+            return thing != nullptr && thing->is_corpse() && ( thing->can_revive() ||
+                    ( thing->get_mtype()->zombify_into && !thing->has_flag( flag_PULPED ) ) );
+        } );
+    }
     if( here.ter( p )->has_flag( TFLAG_NO_MEMORY ) && !out.furniture && out.fields.empty() &&
         out.items.empty() && !out.vehicle ) {
         return false;
