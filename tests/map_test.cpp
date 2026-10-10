@@ -1542,7 +1542,7 @@ TEST_CASE("binding_dimensions_rebuilds_vehicle_caches", "[map][vehicle][dimensio
     const auto original_dim = here.get_bound_dimension();
     const auto other_dim = dimension_id("vehicle_cache_rebinding");
     const auto cleanup = on_out_of_scope([&]() {
-        here.bind_dimension(original_dim);
+        rebind_map_dimension(original_dim);
         MAPBUFFER_REGISTRY.unload_dimension(other_dim);
         clear_vehicles();
     });
@@ -1575,7 +1575,7 @@ TEST_CASE("placed_monsters_inherit_bound_dimension") {
     const auto test_dim = dimension_id("placed_monsters_inherit_bound_dimension");
     const auto cleanup = on_out_of_scope([&]() {
         g->clear_zombies();
-        here.bind_dimension(original_dim);
+        rebind_map_dimension(original_dim);
         MAPBUFFER_REGISTRY.unload_dimension(test_dim);
     });
 
@@ -1596,7 +1596,7 @@ TEST_CASE("map_dimension_rebind_discards_vehicle_cache_before_unload") {
     const auto test_dim = dimension_id("map_dimension_rebind_discards_vehicle_cache");
     const auto cleanup = on_out_of_scope([&]() {
         g->clear_zombies();
-        here.bind_dimension(original_dim);
+        rebind_map_dimension(original_dim);
         MAPBUFFER_REGISTRY.unload_dimension(test_dim);
     });
 
