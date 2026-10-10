@@ -36,6 +36,7 @@
 #include "preload_config.h"
 #include "rng.h"
 #include "state_helpers.h"
+#include "trap.h"
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
@@ -914,6 +915,48 @@ TEST_CASE(
     CHECK(cell->terrain->name == "wooden floor");
     REQUIRE_FALSE(cell->items.empty());
     CHECK(cell->items.back().name == item::spawn("rock")->type_name());
+}
+
+TEST_CASE(
+    "world capture names furniture, traps, fields, vehicle parts and remembered cells",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto furniture = setup.start + tripoint_west;
+    const auto trap = setup.start + tripoint_north;
+    const auto field = setup.start + tripoint_south;
+    const auto part = setup.start + tripoint(-4, 3, 0);
+    here.furn_set(furniture, furn_id("f_table"));
+    here.trap_set(trap, trap_id("tr_beartrap"));
+    get_avatar().add_known_trap(trap, trap_id("tr_beartrap").obj());
+    here.add_field(field, field_type_id("fd_fire"), 1);
+    here.add_vehicle(vproto_id("bicycle"), part, 0_degrees, 0, 0, false);
+    const auto remembered = map_local_to_abs(here, setup.start + tripoint(1, 0, -3));
+    get_avatar().memorize_terrain_tile(remembered, "t_floor", 0, 0);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* cell = find_cell(state, at(furniture));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->furniture);
+    CHECK(cell->furniture->name == furn_id("f_table")->name());
+    cell = find_cell(state, at(trap));
+    REQUIRE(cell != nullptr);
+    REQUIRE_FALSE(cell->traps.empty());
+    CHECK(cell->traps.front().name == trap_id("tr_beartrap")->name());
+    cell = find_cell(state, at(field));
+    REQUIRE(cell != nullptr);
+    REQUIRE_FALSE(cell->fields.empty());
+    CHECK(cell->fields.front().appearance.name == field_type_id("fd_fire")->get_name(0));
+    cell = find_cell(state, at(part));
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->vehicle);
+    REQUIRE(cell->vehicle->name);
+    CHECK_FALSE(cell->vehicle->name->empty());
+    cell = find_cell(
+        state, {.dim = "", .x = remembered.x(), .y = remembered.y(), .z = remembered.z()});
+    REQUIRE(cell != nullptr);
+    REQUIRE(cell->memory);
+    CHECK(cell->memory->terrain.name == ter_id("t_floor")->name());
 }
 
 TEST_CASE(
