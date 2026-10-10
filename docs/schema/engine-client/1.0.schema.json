@@ -1248,6 +1248,13 @@
         "message": {
           "type": "string"
         },
+        "banner": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fixed-width lines drawn above the menu, with color tags: the main menu's title art and version line."
+        },
         "choices": {
           "type": "array",
           "items": {

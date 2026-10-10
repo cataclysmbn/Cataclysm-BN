@@ -133,6 +133,8 @@ struct interaction_snapshot {
     interaction_kind kind = interaction_kind::custom;
     std::string title;
     std::string message;
+    /// Lines drawn above the menu in a fixed-width font, with color tags: the main menu's title art and version.
+    std::vector<std::string> banner;
     bool structured = false;
     bool actions_only = true;
     bool allow_cancel = false;

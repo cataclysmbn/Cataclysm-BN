@@ -420,6 +420,18 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     display_sub_menu( iSel, p_offset + point( offsets[iSel], offset.y - 3 ), sel_line );
 }
 
+auto main_menu::banner_lines() const -> std::vector<std::string>
+{
+    auto lines = mmenu_title;
+    if( lines.size() == 1 ) {
+        lines.front() = "<color_light_cyan>" + lines.front() + "</color>";
+    }
+    lines.emplace_back();
+    lines.push_back( "<color_light_blue>" + string_format( _( "Version: %s" ), getVersionString() ) +
+                     "</color>" );
+    return lines;
+}
+
 std::vector<std::string> main_menu::load_file( const std::string &path,
         const std::string &alt_text ) const
 {
@@ -771,6 +783,7 @@ bool main_menu::opening_screen()
                     .title = "Cataclysm: Bright Nights",
                     .message = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd :
                     sel1 == getopt( main_menu_opts::CREDITS ) ? mmenu_credits : std::string{} ),
+                    .banner = banner_lines(),
                     // Esc here only asks "Really quit?"; the Quit tab is the visible way out, as in the native menu.
                     .allow_cancel = false,
                 };

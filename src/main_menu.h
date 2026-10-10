@@ -20,6 +20,8 @@ class main_menu
         bool opening_screen();
 
     private:
+        /// The title art and version line, for clients that draw the screen themselves.
+        auto banner_lines() const -> std::vector<std::string>;
         // ASCII art that says "Cataclysm Dark Days Ahead"
         std::vector<std::string> mmenu_title;
         std::string mmenu_motd;

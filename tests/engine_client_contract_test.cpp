@@ -75,6 +75,32 @@ TEST_CASE("wire interaction is trimmed and renamed", "[engine_client_contract]")
     }
 }
 
+TEST_CASE(
+    "a menu banner is published in order and changes the schema", "[engine_client_contract]") {
+    auto context = input_context{"TITLE"};
+    const auto input_scope = game_client::input_context_scope{context, "TITLE"};
+    const auto banner_wire = [&context](std::vector<std::string> lines) {
+        const auto scope = game_client::interaction_scope{
+            context, [lines = std::move(lines)] {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices,
+                    .banner = lines,
+                    .choices = {{.id = "choice:yes", .label = "Yes"}},
+                };
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    const auto with_art = banner_wire({"<color_c_cyan>art</color>", "", "Version: x"});
+    CHECK(contains(with_art, R"("banner":["<color_c_cyan>art</color>","","Version: x"])"));
+    const auto plain = banner_wire({});
+    CHECK_FALSE(contains(plain, "banner"));
+    const auto schema = [](const std::string& wire) {
+        return wire.substr(wire.find("schema_id"), 40);
+    };
+    CHECK(schema(with_art) != schema(plain));
+}
+
 TEST_CASE("compat focus survives paging past the focused row", "[engine_client_contract]") {
     auto context = input_context{"BIGLIST"};
     const auto input_scope = game_client::input_context_scope{context, "BIGLIST"};
