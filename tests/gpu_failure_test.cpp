@@ -1,6 +1,6 @@
 #include "catch/catch.hpp"
+#include "compute/gpu_failure.h"
 #include "debug.h"
-#include "gpu_failure.h"
 
 TEST_CASE("a gpu failure is reported once per message, not on every frame", "[gpu][debug]") {
     const auto first = capture_debugmsg_during([] {

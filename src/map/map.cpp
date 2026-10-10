@@ -132,6 +132,7 @@
 
 #if defined(CATA_SDL)
 #    include "compute/compute_backend.h"
+#    include "compute/gpu_failure.h"
 #    include "compute/gpu_lm.h"
 #    include "compute/gpu_platform.h"
 #endif
@@ -6270,7 +6271,8 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
     if (cata_compute::uses_sdl_gpu_compute()) {
         SDL_GPUDevice* const gpu_device = cata_gpu::get_device();
         if (gpu_device == nullptr) {
-            debugmsg("SDL_GPU visibility is required, but no GPU device is available");
+            cata_gpu::report_failure_once(
+                "SDL_GPU visibility is required, but no GPU device is available");
             return;
         }
         const auto& visibility_cache_for_residency = get_cache_ref(zlev);
@@ -6289,7 +6291,7 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
                     .cache_y = visibility_cache_y,
                     .z_count = OVERMAP_LAYERS,
                 })) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU visibility residency bootstrap failed; see debug.log for details");
                 return;
             }
@@ -6344,14 +6346,16 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
                 .rebuild_seen_cache = rebuild_seen_cache,
             });
         if (gpu_visibility_work.id == 0) {
-            debugmsg("SDL_GPU visibility dispatch failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU visibility dispatch failed; see debug.log for details");
             return;
         }
         if (while_gpu_pending) { while_gpu_pending(); }
         const auto gpu_visibility_ok =
             cata_gpu::finish_gpu_visibility(gpu_device, gpu_visibility_work);
         if (!gpu_visibility_ok) {
-            debugmsg("SDL_GPU visibility completion failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU visibility completion failed; see debug.log for details");
             return;
         }
         if (rebuild_seen_cache) {
@@ -7480,7 +7484,8 @@ void map::shift(const point_rel_sm& sp) {
             .shift_y_submaps = sp.y(),
         });
         if (!gpu_residency_shifted) {
-            debugmsg("SDL_GPU resident lighting input shift failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU resident lighting input shift failed; see debug.log for details");
             auto shifted_levels = std::vector<int>{};
             for (const auto gridz : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
                 shifted_levels.push_back(gridz);
@@ -8805,7 +8810,8 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                 .sun_dy_per_z = m_solar.dy_per_z,
             });
         if (pending_gpu_lighting.id == 0) {
-            debugmsg("SDL_GPU lighting dispatch failed; see debug.log for details");
+            cata_gpu::report_failure_once(
+                "SDL_GPU lighting dispatch failed; see debug.log for details");
             return;
         }
         if (submap_loader.has_deferred_lazy_border_work()) {
@@ -8830,7 +8836,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
 #if defined(CATA_SDL)
         if (use_sdl_gpu_compute) {
             if (gpu_device == nullptr) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU lighting is required for 3D visibility, but no GPU device is available");
                 return;
             }
@@ -8855,7 +8861,8 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                     const bool gpu_lighting_ok =
                         cata_gpu::finish_gpu_lighting(gpu_device, pending_gpu_lighting);
                     if (!gpu_lighting_ok) {
-                        debugmsg("SDL_GPU lighting completion failed; see debug.log for details");
+                        cata_gpu::report_failure_once(
+                            "SDL_GPU lighting completion failed; see debug.log for details");
                         return;
                     }
 
@@ -8865,7 +8872,7 @@ void map::build_map_cache(const int zlev, bool skip_lightmap) {
                     });
                 }
             } else if (!dirty_lightmap_levels.empty()) {
-                debugmsg(
+                cata_gpu::report_failure_once(
                     "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available");
                 return;
             }
