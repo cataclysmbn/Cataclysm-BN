@@ -58,7 +58,7 @@ Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says w
 
 `travel` is the left click of Tiles and curses on an absolute map square in view, at a boundary without interaction. The first click publishes the engine's own route as `route`; clicking the same square again starts native auto-move. The avatar then walks one step at a time, each step publishing ordinary events attached to that command, and stops where the engine stops (arrival, a monster coming into view, ...). The command is `completed` when the walk ends and input is awaited again. Any other command or a click elsewhere replaces or clears the plan. A client never computes routes.
 
-Stages: `received`, `validated`, `executing`, `completed`; or `rejected`; or `interrupted`, whose `error` says why (`stale_epoch` when the world was replaced, `validation_failed` when the game refused the input, `not_ready` otherwise). `completed` means the next native input boundary was reached, not that a long activity finished; its `at` is the endpoint of that boundary. One command is outstanding at a time (`command_busy`).
+Stages: `received`, `validated`, `executing`, `completed`; or `rejected`; or `interrupted`, whose `error` says why (`stale_epoch` when the world was replaced, `validation_failed` when the game refused the input, `not_ready` otherwise). `completed` means input is awaited again: a wait or other activity first runs to its end, or until the game asks something (a pop-up, an interruption); its `at` is the endpoint of that boundary. One command is outstanding at a time (`command_busy`).
 
 ## Loading
 

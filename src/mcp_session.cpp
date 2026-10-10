@@ -205,7 +205,7 @@ auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_
     return { .json = game_client::serialize_interaction( current ), .text = text };
 }
 
-auto provide_input( const int /*timeout_ms*/ ) -> input_event
+auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
     while( !session.stop ) {
@@ -219,6 +219,13 @@ auto provide_input( const int /*timeout_ms*/ ) -> input_event
                 session.events.clear();
                 session.transport->reject_pending( event.error() );
             }
+        }
+        // A zero-timeout poll is a running activity checking for interruption, not input being
+        // awaited: the command stays open and the activity continues to its end.
+        if( timeout_ms == 0 ) {
+            auto polled = input_event{};
+            polled.type = input_event_t::timeout;
+            return polled;
         }
         if( !session.transport ||
             !session.transport->pump_until_input( std::cin, *session.output, std::cerr ) ) {

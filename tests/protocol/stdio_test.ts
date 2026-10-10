@@ -604,3 +604,37 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name: "stdio: waiting five minutes passes five minutes and completes when input is awaited again",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      const turn = () => BigInt(session.mirror.environment.turn)
+      // Tutorial lessons pop up as turns pass; they are prompts of their own.
+      const lessons = () =>
+        session.acknowledge(() => session.mirror.interaction.interaction === null)
+      await lessons()
+      const wait = async (label: string) => {
+        const menu = await session.submit({ kind: "action", action_id: "wait" })
+        assertEquals(menu.stages.at(-1), "completed")
+        assertEquals(session.mirror.interaction.interaction.kind, "choices")
+        const before = turn()
+        const chosen = await session.choose(label)
+        assertEquals(chosen.stages.at(-1), "completed")
+        await lessons()
+        return turn() - before
+      }
+      // The menu is offered every time, and the activity is not cut short at a boundary.
+      assertEquals(await wait("5 minutes"), 300n)
+      assertEquals(await wait("5 minutes"), 300n)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
