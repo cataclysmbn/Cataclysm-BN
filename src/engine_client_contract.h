@@ -61,6 +61,8 @@ struct bubble_frame {
     std::string dim = {};
     int x = 0;
     int y = 0;
+    /// The overmap is open: native squares are overmap terrain squares, already absolute.
+    bool omt = false;
 };
 auto current_bubble_frame() -> bubble_frame;
 /// Absolute square to bubble coordinates; nullopt in another dimension or when the result does

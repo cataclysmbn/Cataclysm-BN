@@ -105,6 +105,26 @@ struct interaction_target {
     std::vector<interaction_target_candidate> candidates;
 };
 
+struct interaction_overmap_note {
+    interaction_position position;
+    std::string text;
+};
+
+/// The native overmap window as drawn: one glyph and curses colors per cell, row-major, with
+/// the sidebar text. Positions are absolute overmap terrain squares.
+struct interaction_overmap {
+    /// The square drawn in the top-left cell.
+    interaction_position origin;
+    int cols = 0;
+    int rows = 0;
+    std::vector<std::string> glyphs;
+    std::vector<int> foreground;
+    std::vector<int> background;
+    interaction_position player;
+    std::vector<std::string> legend;
+    std::vector<interaction_overmap_note> notes;
+};
+
 /// Pure data describing the interaction currently waiting at an input boundary.
 struct interaction_snapshot {
     std::uint64_t input_id = 0;
@@ -120,6 +140,7 @@ struct interaction_snapshot {
     std::vector<interaction_choice> choices;
     std::optional<interaction_field> field;
     std::optional<interaction_target> target;
+    std::optional<interaction_overmap> overmap;
     bool allow_set_count = false;
     std::size_t choice_offset = 0;
     std::size_t choice_total = 0;

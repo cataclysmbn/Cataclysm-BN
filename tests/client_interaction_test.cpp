@@ -36,6 +36,7 @@
 #    include "options.h"
 #    include "options_helpers.h"
 #    include "output.h"
+#    include "overmap/overmap_ui.h"
 #    include "path_info.h"
 #    include "pickup.h"
 #    include "player_activity.h"
@@ -3669,6 +3670,68 @@ TEST_CASE(
     CHECK(step == 6);
     CHECK_FALSE(you.activity);
     CHECK(uistate.read_recipes.count(pipe.ident()) == 1);
+}
+
+TEST_CASE(
+    "the overmap is a structured interaction with a cursor that a client can move",
+    "[client][interaction][overmap][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto player = get_avatar().abs_omt_pos();
+    // The native screen blinks its overlays; a snapshot taken while they are on shows the marker.
+    const auto restore_overlays = restore_on_out_of_scope<bool>(uistate.overmap_show_overlays);
+    uistate.overmap_show_overlays = true;
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.context == "OVERMAP");
+        REQUIRE(snapshot.kind == game_client::interaction_kind::target);
+        REQUIRE(snapshot.overmap);
+        REQUIRE(snapshot.target);
+        const auto& om = *snapshot.overmap;
+        CHECK(snapshot.target->coordinate_space == "omt");
+        CHECK(om.cols > 20);
+        CHECK(om.rows > 10);
+        CHECK(om.glyphs.size() == static_cast<std::size_t>(om.cols * om.rows));
+        CHECK(om.foreground.size() == om.glyphs.size());
+        CHECK(om.player == game_client::interaction_position{player.x(), player.y(), player.z()});
+        CHECK_FALSE(om.legend.empty());
+        const auto cursor = snapshot.target->cursor;
+        // The window is centered on the cursor, as on the native screen.
+        CHECK(om.origin.x == cursor.x - om.cols / 2);
+        CHECK(om.origin.y == cursor.y - om.rows / 2);
+        if (step++ == 0) {
+            CHECK(cursor == om.player);
+            // The player's own square shows the player marker.
+            const auto at = (om.rows / 2) * om.cols + om.cols / 2;
+            CHECK(om.glyphs[static_cast<std::size_t>(at)] == "@");
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::set_target,
+                .position = game_client::interaction_position{cursor.x + 3, cursor.y - 2, cursor.z},
+            });
+        }
+        if (step == 2) {
+            CHECK(cursor
+                  == game_client::interaction_position{player.x() + 3, player.y() - 2, player.z()});
+            // The player marker moved off the center with the view.
+            CHECK(
+                om.glyphs[static_cast<std::size_t>((om.rows / 2) * om.cols + om.cols / 2)] != "@");
+            // Positions beyond the safe bounds are refused.
+            CHECK_FALSE(game_client::resolve_interaction_command({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::set_target,
+                .position = game_client::interaction_position{1 << 30, 0, 0},
+            }));
+        }
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    ui::omap::display();
+    CHECK(step == 2);
 }
 
 TEST_CASE(

@@ -1089,6 +1089,10 @@
         "distance_metric": {
           "type": "string"
         },
+        "unit": {
+          "const": "omt",
+          "description": "Present when positions are overmap terrain squares (the overmap is open), not map squares."
+        },
         "status": {
           "type": "string"
         },
@@ -1131,6 +1135,82 @@
         "distance_metric",
         "status",
         "candidates"
+      ],
+      "additionalProperties": false
+    },
+    "overmap": {
+      "type": "object",
+      "description": "The native overmap window as drawn, row-major. Each cell is [glyph, foreground, background] with curses color indexes 0-15 (0 black, 1 red, 2 green, 3 brown, 4 blue, 5 magenta, 6 cyan, 7 light gray, 8-15 their bright forms). Positions are overmap terrain squares.",
+      "properties": {
+        "origin": {
+          "$ref": "#/$defs/pos"
+        },
+        "player": {
+          "$ref": "#/$defs/pos"
+        },
+        "cols": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "items": false
+            }
+          }
+        },
+        "legend": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pos": {
+                "$ref": "#/$defs/pos"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "pos",
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "origin",
+        "player",
+        "cols",
+        "rows",
+        "cells",
+        "legend",
+        "notes"
       ],
       "additionalProperties": false
     },
@@ -1181,6 +1261,9 @@
         },
         "target": {
           "$ref": "#/$defs/target"
+        },
+        "overmap": {
+          "$ref": "#/$defs/overmap"
         },
         "compat": {
           "type": "object",

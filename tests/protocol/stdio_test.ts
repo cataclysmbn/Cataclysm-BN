@@ -1220,3 +1220,52 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name: "stdio: the overmap opens as a structured view, moves its cursor and closes",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const opened = await session.submit({ kind: "action", action_id: "map" })
+      assertEquals(opened.stages.at(-1), "completed")
+      const view = () => session.mirror.interaction.interaction
+      assertEquals(view().context, "OVERMAP")
+      assertEquals(view().kind, "target")
+      const first = view().overmap
+      assert(first.cols > 20 && first.rows > 10, `${first.cols}x${first.rows}`)
+      assertEquals(first.cells.length, first.rows)
+      assertEquals(first.cells[0].length, first.cols)
+      assert(first.legend.some((line: string) => line.trim().length > 0), "sidebar text")
+      assertEquals(view().target.unit, "omt")
+      assertEquals(view().target.current, first.player)
+      // The window is centered on the cursor.
+      assertEquals(first.origin.x, first.player.x - Math.floor(first.cols / 2))
+
+      const to = { ...first.player, x: first.player.x + 3, y: first.player.y - 2 }
+      const moved = await session.submit({ kind: "set_target", pos: to })
+      assertEquals(moved.stages.at(-1), "completed")
+      assertEquals(view().target.current, to)
+      assertEquals(view().overmap.origin.x, first.origin.x + 3)
+      assertEquals(view().overmap.player, first.player)
+
+      // A square outside the safe bounds is refused.
+      const far = await session.submit({
+        kind: "set_target",
+        pos: { ...to, x: 1 << 30 },
+      })
+      assertEquals(far.stages.at(-1), "rejected")
+
+      assertEquals((await session.submit({ kind: "cancel" })).stages.at(-1), "completed")
+      assertEquals(view(), null)
+      assert(session.mirror.interaction.actions.some((a: Value) => a.id === "map"))
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

@@ -221,7 +221,28 @@ auto interaction_json( const boundary_state &state ) -> json
                 {"description", candidate.description}, {"creature", candidate.creature},
                 {"position", to_json( candidate.position, frame )}} );
         }
+        if( frame.omt ) { value["unit"] = "omt"; }
         result["target"] = std::move( value );
+    }
+    if( native.overmap ) {
+        const auto &om = *native.overmap;
+        auto cells = json::array();
+        for( const auto y : std::views::iota( 0, om.rows ) ) {
+            auto row = json::array();
+            for( const auto x : std::views::iota( 0, om.cols ) ) {
+                const auto at = static_cast<std::size_t>( y * om.cols + x );
+                row.push_back( {om.glyphs[at], om.foreground[at], om.background[at]} );
+            }
+            cells.push_back( std::move( row ) );
+        }
+        auto notes = json::array();
+        for( const auto &note : om.notes ) {
+            notes.push_back( {{"pos", to_json( note.position, frame )}, {"text", note.text}} );
+        }
+        result["overmap"] = {{"origin", to_json( om.origin, frame )}, {"player", to_json( om.player, frame )},
+            {"cols", om.cols}, {"rows", om.rows}, {"cells", std::move( cells )},
+            {"legend", om.legend}, {"notes", std::move( notes )}
+        };
     }
     auto compat = json::object();
     if( !native.focus_choice_id.empty() ) {

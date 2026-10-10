@@ -7,6 +7,8 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "client_backend.h"
+#include "client_interaction.h"
 #include "clzones.h"
 #include "color.h"
 #include "coordinates.h"
@@ -1979,6 +1981,68 @@ static auto get_overmap_path_to(const tripoint_abs_omt dest, bool driving)
     }
 }
 
+/// The overmap as the native screen drew it, for clients that cannot read a terminal window.
+static auto overmap_interaction(const tripoint_abs_omt& center)
+    -> game_client::interaction_snapshot {
+    using game_client::interaction_position;
+    const auto position = [](const tripoint_abs_omt& p) {
+        return interaction_position{.x = p.x(), .y = p.y(), .z = p.z()};
+    };
+    // The world is far smaller than this; the bounds only keep the arithmetic safe.
+    constexpr int kilo_range = 1 << 24;
+    auto snapshot = game_client::interaction_snapshot{};
+    snapshot.kind = game_client::interaction_kind::target;
+    snapshot.title = _("Overmap");
+    snapshot.allow_cancel = true;
+    const auto player = get_player_character().abs_omt_pos();
+    snapshot.target = game_client::interaction_target{
+        .coordinate_space = "omt",
+        .source = position(player),
+        .cursor = position(center),
+        .minimum_position =
+            interaction_position{.x = -kilo_range, .y = -kilo_range, .z = -OVERMAP_DEPTH},
+        .maximum_position =
+            interaction_position{.x = kilo_range, .y = kilo_range, .z = OVERMAP_HEIGHT},
+        .range = 2 * kilo_range,
+        .distance_metric = "square",
+    };
+    auto& om = snapshot.overmap.emplace();
+    const auto* const map = g->w_overmap.get<cata_cursesport::WINDOW>();
+    if (map != nullptr) {
+        om.cols = map->width;
+        om.rows = map->height;
+        for (int y = 0; y < om.rows; ++y) {
+            for (int x = 0; x < om.cols; ++x) {
+                const auto& cell = map->line[y].chars[x];
+                om.glyphs.push_back(cell.ch.empty() ? " " : cell.ch);
+                om.foreground.push_back(static_cast<int>(cell.FG));
+                om.background.push_back(static_cast<int>(cell.BG));
+            }
+        }
+    }
+    const tripoint_abs_omt corner = center - point(om.cols / 2, om.rows / 2);
+    om.origin = position(corner);
+    om.player = position(player);
+    for (int y = 0; y < om.rows; ++y) {
+        for (int x = 0; x < om.cols; ++x) {
+            const tripoint_abs_omt omp = corner + point(x, y);
+            if (ACTIVE_OVERMAP_BUFFER.has_note(omp)) {
+                om.notes.push_back({position(omp), ACTIVE_OVERMAP_BUFFER.note(omp)});
+            }
+        }
+    }
+    if (const auto* const legend = g->w_omlegend.get<cata_cursesport::WINDOW>();
+        legend != nullptr) {
+        for (int y = 0; y < legend->height; ++y) {
+            auto line = std::string();
+            for (int x = 0; x < legend->width; ++x) { line += legend->line[y].chars[x].ch; }
+            while (!line.empty() && line.back() == ' ') { line.pop_back(); }
+            om.legend.push_back(std::move(line));
+        }
+    }
+    return snapshot;
+}
+
 static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw_data_t())
     -> tripoint_abs_omt {
     // the overmap context may be shared with the main view's; each view re-asserts zoom on takeover
@@ -2067,6 +2131,18 @@ static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw
         std::chrono::steady_clock::now();
     grids_draw_data grids_data;
     if (uistate.overmap_default_0) { curs.z() = 0; }
+    // A client cannot blink the overlays (player, notes, paths) on and off, so it sees them
+    // steadily.
+    const bool was_blinking = uistate.overmap_blinking;
+    const bool were_overlays = uistate.overmap_show_overlays;
+    if (game_client::backend_selected()) {
+        uistate.overmap_blinking = false;
+        uistate.overmap_show_overlays = true;
+    }
+    on_out_of_scope restore_blinking([&]() {
+        uistate.overmap_blinking = was_blinking;
+        uistate.overmap_show_overlays = were_overlays;
+    });
 
     ui.on_redraw([&](ui_adaptor& ui) {
         draw(ui, curs, orig, uistate.overmap_show_overlays, show_explored, fast_scroll, &ictxt,
@@ -2080,7 +2156,22 @@ static auto display(const tripoint_abs_omt& orig, const draw_data_t& data = draw
         // If EDGE_SCROLL is disabled, it will have a value of -1.
         // blinking won't work if handle_input() is passed a negative integer.
         if (scroll_timeout < 0) { scroll_timeout = get_option<int>("BLINK_SPEED"); }
-        action = ictxt.handle_input(scroll_timeout);
+        {
+            const auto interaction = game_client::interaction_scope(ictxt, [&]() {
+                return overmap_interaction(curs);
+            });
+            action = ictxt.handle_input(scroll_timeout);
+        }
+        if (const auto& semantic = ictxt.get_raw_input().interaction) {
+            // A client moves the cursor to a square or leaves, as the mouse and Esc do.
+            if (semantic->operation == game_client::interaction_operation::cancel) {
+                action = "QUIT";
+            } else if (semantic->operation == game_client::interaction_operation::set_target) {
+                curs = tripoint_abs_omt(
+                    semantic->position->x, semantic->position->y, semantic->position->z);
+                continue;
+            }
+        }
 
         if (const std::optional<tripoint_rel_ms> vec = ictxt.get_direction(action)) {
             int scroll_d = fast_scroll ? fast_scroll_offset : 1;

@@ -143,6 +143,7 @@ auto new_session_epoch() -> std::expected<std::string, error>
 
 auto current_bubble_frame() -> bubble_frame
 {
+    if( game_client::active_input_context().category == "OVERMAP" ) { return { .omt = true }; }
     const auto origin = bub_to_abs( tripoint_bub_ms::zero() );
     return { .dim = g->get_current_dimension_id().str(), .x = origin.x(), .y = origin.y() };
 }
@@ -382,7 +383,7 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         auto checked = game_client::resolve_checked_interaction( {
             .command = command,
             .expected_schema = *request.expect.schema_id,
-.target_space = semantic->target ? std::optional<std::string_view>{"bubble_ms"} : std::nullopt,
+.target_space = semantic->target ? std::optional<std::string_view>{current_bubble_frame().omt ? "omt" : "bubble_ms"} : std::nullopt,
         } );
         if( !checked ) {
             if( checked.error().kind == game_client::interaction_rejection::stale_boundary ) {
