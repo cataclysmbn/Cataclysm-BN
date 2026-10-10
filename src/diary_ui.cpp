@@ -9,6 +9,7 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "client_choice.h"
 #include "diary.h"
 #include "input.h"
 #include "options.h"
@@ -303,6 +304,33 @@ void diary::show_diary_ui( diary *c_diary )
         wnoutrefresh( w_info );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = string_format( _( "%s's Diary" ), c_diary->owner ),
+            .message = remove_color_tags( c_diary->get_page_text() ),
+            .allow_cancel = true,
+        };
+        for( const auto &line : c_diary->get_head_text() ) {
+            snapshot.message += "\n" + remove_color_tags( line );
+        }
+        for( const auto &line : c_diary->get_change_list() ) {
+            snapshot.message += "\n" + remove_color_tags( line );
+        }
+        const auto pages = c_diary->get_pages_list();
+        for( auto i = std::size_t{ 0 }; i < pages.size(); ++i ) {
+            snapshot.choices.push_back( {
+                .id = "page:" + std::to_string( i ), .label = remove_color_tags( pages[i] ),
+                .highlighted = static_cast<int>( i ) == selected[window_mode::PAGE_WIN],
+            } );
+        }
+        for( const auto *id : { "NEW_PAGE", "CONFIRM", "DELETE PAGE", "EXPORT_DIARY" } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     while( true ) {
 
         if( ( !c_diary->pages.empty() &&
@@ -316,7 +344,14 @@ void diary::show_diary_ui( diary *c_diary )
         ui_desc.invalidate_ui();
         ui_info.invalidate_ui();
         ui_manager::redraw_invalidated();
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "page:" ) ) {
+                currwin = window_mode::PAGE_WIN;
+                selected[window_mode::PAGE_WIN] = std::stoi( id.substr( 5 ) );
+            }
+            return std::string();
+        } );
         if( action == "RIGHT" ) {
             currwin = static_cast<window_mode>( static_cast<int>( currwin ) + 1 );
             if( currwin >= window_mode::NUM_WIN ) {

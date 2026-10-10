@@ -9113,6 +9113,46 @@ void game::zones_manager()
         wnoutrefresh( w_zones );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Zones" ),
+            .message = zone_cnt == 0 ? _( "No Zones defined." ) : std::string(),
+            .allow_cancel = true,
+        };
+        const auto here = u.abs_pos();
+        for( auto i = std::size_t{ 0 }; i < zones.size(); ++i ) {
+            const auto &zone = zones[i].get();
+            auto details = std::string();
+            if( zone.has_options() ) {
+                for( const auto &[name, value] : zone.get_options().get_descriptions() ) {
+                    details += name + ": " + value + "\n";
+                }
+            }
+            const auto center = zone.get_center_point();
+            snapshot.choices.push_back( {
+                .id = "zone:" + std::to_string( i ), .label = zone.get_name(),
+                .description = remove_color_tags( details ),
+                .selected = zone.get_enabled(), .highlighted = static_cast<int>( i ) == active_index,
+                .columns = {
+                    { .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
+                    { .label = _( "Distance" ), .value = std::to_string( static_cast<int>( trig_dist( here, center ) ) ) },
+                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( here, center ) ) },
+                    { .label = _( "Vehicle" ), .value = zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ) },
+                },
+            } );
+        }
+        for( const auto *id : {
+                 "ADD_ZONE", "REMOVE_ZONE", "CONFIRM", "MOVE_ZONE_UP", "MOVE_ZONE_DOWN",
+                 "SHOW_ZONE_ON_MAP", "ENABLE_ZONE", "DISABLE_ZONE", "SHOW_ALL_ZONES",
+                 "TOGGLE_ZONE_OVERLAY"
+             } ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     zones_manager_open = true;
     do {
         if( action == "ADD_ZONE" ) {
@@ -9321,7 +9361,10 @@ void game::zones_manager()
         ui_manager::redraw();
 
         //Wait for input
-        action = ctxt.handle_input();
+        action = game_client::action_of( ctxt, ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "zone:" ) ) { active_index = std::stoi( id.substr( 5 ) ); }
+            return std::string();
+        } );
     } while( action != "QUIT" );
     zones_manager_open = false;
     ctxt.reset_timeout();

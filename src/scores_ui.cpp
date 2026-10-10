@@ -3,12 +3,14 @@
 #include <algorithm>
 #include <cassert>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
 
 #include "achievement.h"
+#include "client_choice.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "event_statistics.h"
@@ -119,27 +121,53 @@ void show_scores_ui( const achievements_tracker &achievements, stats_tracker &st
         view.draw( c_white );
     } );
 
+    auto text = std::string();
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Scores" ),
+            .message = remove_color_tags( text ),
+            .allow_cancel = true,
+        };
+        for( const auto &[mode, name] : tabs ) {
+            const auto index = static_cast<int>( mode );
+            const auto id = "tab" + std::to_string( index );
+            snapshot.panes.push_back( { .id = id, .label = name,
+                                        .role = mode == tab ? "focused" : "category" } );
+            snapshot.choices.push_back( { .id = "tab:" + std::to_string( index ), .label = name,
+                                          .selected = mode == tab } );
+        }
+        return snapshot;
+    } );
+
     while( true ) {
         if( new_tab ) {
             switch( tab ) {
                 case tab_mode::achievements:
-                    view.set_text( get_achievements_text( achievements ) );
+                    text = get_achievements_text( achievements );
                     break;
                 case tab_mode::scores:
-                    view.set_text( get_scores_text( stats ) );
+                    text = get_scores_text( stats );
                     break;
                 case tab_mode::kills:
-                    view.set_text( kills.get_kills_text() );
+                    text = kills.get_kills_text();
                     break;
                 case tab_mode::num_tabs:
                     assert( false );
                     break;
             }
+            view.set_text( text );
         }
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
-        new_tab = false;
+        auto chosen_tab = std::optional<tab_mode> {};
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "tab:" ) ) { chosen_tab = static_cast<tab_mode>( std::stoi( id.substr( 4 ) ) ); }
+            return std::string();
+        } );
+        new_tab = chosen_tab.has_value();
+        tab = chosen_tab.value_or( tab );
         if( action == "RIGHT" || action == "NEXT_TAB" ) {
             tab = static_cast<tab_mode>( static_cast<int>( tab ) + 1 );
             if( tab >= tab_mode::num_tabs ) {
@@ -199,9 +227,20 @@ void show_kills( kill_tracker &kills )
         view.draw( c_white );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "Kills" ),
+            .message = remove_color_tags( kills.get_kills_text() ),
+            .allow_cancel = true,
+        };
+    } );
+
     while( true ) {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt, ctxt.handle_input(), []( const std::string & ) {
+            return std::string();
+        } );
         if( action == "DOWN" ) {
             view.scroll_down();
         } else if( action == "UP" ) {
