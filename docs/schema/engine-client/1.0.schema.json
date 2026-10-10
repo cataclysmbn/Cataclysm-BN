@@ -661,6 +661,95 @@
       ],
       "additionalProperties": false
     },
+    "avatar_update": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "at": {
+          "$ref": "#/$defs/pos"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              },
+              "color": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item_row"
+          }
+        },
+        "ground": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item_row"
+          }
+        },
+        "sidebar": {
+          "$ref": "#/$defs/sidebar"
+        },
+        "look": {
+          "$ref": "#/$defs/look"
+        },
+        "overlays": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/look"
+          },
+          "description": "Sprites drawn over a character, bottom first, as looks of kind overlay: id is the overlay (worn_<item>, wielded_<item>, mutation_<id>, bionic or effect), tile and looks_like the tileset ids to try in the native order. A tileset without a sprite for an overlay draws nothing."
+        },
+        "keep": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "look",
+              "overlays",
+              "stats",
+              "inventory",
+              "sidebar",
+              "ground"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Members of the previous avatar that carry over unchanged."
+        }
+      },
+      "required": [
+        "id",
+        "at"
+      ],
+      "additionalProperties": false,
+      "description": "An avatar in an event: the members named in `keep` equal the previous avatar's and are left out; every other member that is absent is empty."
+    },
     "sidebar_text": {
       "type": "object",
       "properties": {
@@ -1635,7 +1724,7 @@
           }
         },
         "avatar": {
-          "$ref": "#/$defs/avatar"
+          "$ref": "#/$defs/avatar_update"
         },
         "environment": {
           "$ref": "#/$defs/environment"

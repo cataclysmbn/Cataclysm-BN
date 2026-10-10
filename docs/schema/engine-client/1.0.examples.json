@@ -1684,6 +1684,38 @@
           }
         ]
       }
+    },
+    {
+      "name": "walk one step keeping the sidebar and stats",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "70",
+            "revision": "50",
+            "type": "cells.seen",
+            "command": "c:11",
+            "changes": {
+              "avatar": {
+                "id": "e:avatar",
+                "at": {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                "name": "Ada",
+                "keep": [
+                  "stats",
+                  "inventory",
+                  "sidebar"
+                ]
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [

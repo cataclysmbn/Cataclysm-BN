@@ -328,7 +328,15 @@ auto to_json( const changes &delta ) -> json
         result["gone"] = json::array();
         for( const auto &value : delta.gone ) { result["gone"].push_back( {{"id", value.id}, {"reason", value.reason}} ); }
     }
-    if( delta.avatar ) { result["avatar"] = to_json( *delta.avatar ); }
+    if( delta.avatar ) {
+        result["avatar"] = to_json( *delta.avatar );
+        if( !delta.avatar_kept.empty() ) {
+            std::ranges::for_each( delta.avatar_kept, [&]( const auto & member ) {
+                result["avatar"].erase( member );
+            } );
+            result["avatar"]["keep"] = delta.avatar_kept;
+        }
+    }
     if( delta.environment ) { result["environment"] = to_json( *delta.environment ); }
     if( delta.route ) { result["route"] = to_array( *delta.route ); }
     if( delta.interaction ) {

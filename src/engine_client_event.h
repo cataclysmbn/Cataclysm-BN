@@ -39,6 +39,9 @@ struct changes {
     /// The wire leaves out the `actions` of `interaction` when they equal the previous boundary's;
     /// a client keeps its own. Never set on a snapshot.
     bool actions_unchanged = false;
+    /// The members of `avatar` that equal the previous avatar's and are not empty: the wire leaves
+    /// them out and names them in `keep`, so a step does not resend the sidebar and the stats.
+    std::vector<std::string> avatar_kept = {};
     auto empty() const -> bool;
 };
 /// The changes that turn `from` into `to`. A cell or entity that left perception is
