@@ -10,6 +10,7 @@
 #include "character_martial_arts.h"
 #include "character_preview.h"
 #include "client_display.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -848,8 +849,7 @@ bool avatar::create( character_type type, const std::string &tempname )
     return true;
 }
 
-static void draw_character_tabs( const catacurses::window &w, const std::string &sTab,
-                                 const profession_id &prof )
+static auto character_tab_captions( const profession_id &prof ) -> std::vector<std::string>
 {
     std::vector<std::string> tab_captions = {
         _( "POINTS" ),
@@ -867,6 +867,145 @@ static void draw_character_tabs( const catacurses::window &w, const std::string 
     if( !prof->forbids_bionics() && !g->scen->forbids_bionics() ) {
         tab_captions.insert( tab_captions.begin() + 5, _( "BIONICS" ) );
     }
+    return tab_captions;
+}
+
+namespace
+{
+
+/// Tabs left to step over after the player chose a tab other than the next or previous one.
+auto pending_tab_steps = 0;
+
+/// The next queued step of such a jump, or NONE when the tab is where the player wants to be.
+auto pending_tab() -> tab_direction
+{
+    if( pending_tab_steps > 0 ) {
+        --pending_tab_steps;
+        return tab_direction::FORWARD;
+    }
+    if( pending_tab_steps < 0 ) {
+        ++pending_tab_steps;
+        return tab_direction::BACKWARD;
+    }
+    return tab_direction::NONE;
+}
+
+/// One selectable line of a character creation tab.
+struct newchar_row {
+    std::string id;
+    std::string label;
+    std::string description;
+    bool selected = false;
+    bool highlighted = false;
+    bool enabled = true;
+    std::vector<game_client::interaction_column> columns;
+};
+
+/// The tab strip, the points left and the rows of the current tab as one structured interaction.
+auto newchar_snapshot( const std::string &caption, const profession_id &prof,
+                       points_left &points,
+                       std::vector<newchar_row> rows ) -> game_client::interaction_snapshot
+{
+    const auto captions = character_tab_captions( prof );
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = _( "Character creation" ),
+        .message = remove_color_tags( points.to_string() ),
+        .allow_cancel = true,
+    };
+    const auto current = "tab" + std::to_string( std::ranges::find( captions, caption ) -
+                         captions.begin() );
+    for( auto index = std::size_t{ 0 }; index < captions.size(); ++index ) {
+        const auto id = "tab" + std::to_string( index );
+        snapshot.panes.push_back( {
+            .id = id, .label = captions[index], .role = id == current ? "focused" : "category",
+        } );
+        snapshot.choices.push_back( {
+            .id = "tab:" + std::to_string( index ), .label = captions[index],
+            .selected = id == current, .highlighted = false,
+        } );
+    }
+    for( auto &row : rows ) {
+        snapshot.choices.push_back( {
+            .id = std::move( row.id ), .label = std::move( row.label ),
+            .description = std::move( row.description ), .pane_id = current,
+            .enabled = row.enabled, .selected = row.selected, .highlighted = row.highlighted,
+            .columns = std::move( row.columns ),
+        } );
+    }
+    return snapshot;
+}
+
+/// What the client chose or cancelled in the input read that just returned.
+struct newchar_choice {
+    std::string id;
+    bool cancelled = false;
+};
+
+auto newchar_choice_of( input_context &ctxt ) -> std::optional<newchar_choice>
+{
+    const auto event = ctxt.get_raw_input();
+    if( !event.interaction ) { return std::nullopt; }
+    if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+        return newchar_choice{ .cancelled = true };
+    }
+    if( event.interaction->operation == game_client::interaction_operation::choose ) {
+        return newchar_choice{ .id = event.interaction->target_id };
+    }
+    return std::nullopt;
+}
+
+/// Turns a chosen tab into the step toward it; later steps are queued for the tabs in between.
+auto newchar_jump( const std::string &id, const std::string &caption,
+                   const profession_id &prof ) -> tab_direction
+{
+    if( !id.starts_with( "tab:" ) ) { return tab_direction::NONE; }
+    const auto captions = character_tab_captions( prof );
+    const auto from = std::ranges::find( captions, caption ) - captions.begin();
+    const auto to = std::stoi( id.substr( 4 ) );
+    const auto delta = static_cast<int>( to - from );
+    if( delta == 0 ) { return tab_direction::NONE; }
+    pending_tab_steps = delta > 0 ? delta - 1 : delta + 1;
+    return delta > 0 ? tab_direction::FORWARD : tab_direction::BACKWARD;
+}
+
+auto newchar_column( const std::string &label, const std::string &value ) ->
+game_client::interaction_column
+{
+    return { .label = label, .value = value };
+}
+
+/// What one input read of a character creation tab asks for: a native action, or a tab to go to.
+struct newchar_input {
+    std::string action;
+    tab_direction jump = tab_direction::NONE;
+};
+
+/// Reads input for a tab. A chosen row is given to `on_row`, which applies it to the tab's state and
+/// names the native action to run; a cancel is the native quit.
+auto newchar_read( input_context &ctxt, const std::string &caption, const profession_id &prof,
+                   const std::function < auto( const std::string & )->std::string > &on_row ) -> newchar_input
+{
+    auto result = newchar_input{ .action = ctxt.handle_input() };
+    const auto chosen = newchar_choice_of( ctxt );
+    if( !chosen ) { return result; }
+    if( chosen->cancelled ) {
+        result.action = "QUIT";
+    } else if( const auto jump = newchar_jump( chosen->id, caption, prof );
+               jump != tab_direction::NONE ) {
+        result.jump = jump;
+    } else {
+        result.action = on_row( chosen->id );
+    }
+    return result;
+}
+
+} // namespace
+
+static void draw_character_tabs( const catacurses::window &w, const std::string &sTab,
+                                 const profession_id &prof )
+{
+    const auto tab_captions = character_tab_captions( prof );
 
     draw_tabs( w, tab_captions, sTab );
     draw_border_below_tabs( w );
@@ -906,6 +1045,9 @@ void draw_sorting_indicator( const catacurses::window &w_sorting, const input_co
 
 tab_direction set_points( avatar &u, points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     tab_direction retval = tab_direction::NONE;
 
     ui_adaptor ui;
@@ -979,6 +1121,19 @@ tab_direction set_points( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto rows = std::vector<newchar_row> {};
+        for( auto i = std::size_t{ 0 }; i < opts.size(); ++i ) {
+            rows.push_back( {
+                .id = "points:" + std::to_string( i ), .label = std::get<1>( opts[i] ),
+                .description = std::get<2>( opts[i] ),
+                .selected = points.limit == std::get<0>( opts[i] ),
+                .highlighted = highlighted == static_cast<int>( i ),
+            } );
+        }
+        return newchar_snapshot( _( "POINTS" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         if( highlighted < 0 ) {
             highlighted = opts.size() - 1;
@@ -986,7 +1141,14 @@ tab_direction set_points( avatar &u, points_left &points )
             highlighted = 0;
         }
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "POINTS" ), u.prof, [&]( const std::string & id ) {
+            highlighted = std::stoi( id.substr( id.find( ':' ) + 1 ) );
+            return std::string( "CONFIRM" );
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( action == "DOWN" ) {
             highlighted++;
         } else if( action == "UP" ) {
@@ -1008,6 +1170,9 @@ tab_direction set_points( avatar &u, points_left &points )
 
 tab_direction set_stats( avatar &u, points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     const int max_stat_points = points.is_freeform() ? 20 : MAX_STAT;
 
     unsigned char sel = 1;
@@ -1168,9 +1333,57 @@ tab_direction set_stats( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        struct stat_row {
+            const char *id;
+            std::string label;
+            int value;
+            std::string description;
+        };
+        const auto stats = std::vector<stat_row> {
+            {
+                "str", _( "Strength" ), u.str_max,
+                _( "Strength affects your melee damage, the amount of weight you can carry, your total HP, your resistance to many diseases, and the effectiveness of actions which require brute force." )
+            },
+            {
+                "dex", _( "Dexterity" ), u.dex_max,
+                _( "Dexterity affects your chance to hit in melee combat, helps you steady your gun for ranged combat, and enhances many actions that require finesse." )
+            },
+            {
+                "int", _( "Intelligence" ), u.int_max,
+                _( "Intelligence is less important in most situations, but it is vital for more complex tasks like electronics crafting.  It also affects how much skill you can pick up from reading a book." )
+            },
+            {
+                "per", _( "Perception" ), u.per_max,
+                _( "Perception is the most important stat for ranged combat.  It's also used for detecting traps, camouflaged creatures, and other things of interest." )
+            },
+        };
+        auto rows = std::vector<newchar_row> {};
+        for( auto i = std::size_t{ 0 }; i < stats.size(); ++i ) {
+            rows.push_back( {
+                .id = std::string( "stat:" ) + stats[i].id, .label = stats[i].label,
+                .description = stats[i].description, .highlighted = sel == i + 1,
+                .columns = { newchar_column( _( "Value" ), std::to_string( stats[i].value ) ) },
+            } );
+        }
+        rows.push_back( { .id = "action:RIGHT", .label = _( "Increase the selected statistic" ) } );
+        rows.push_back( { .id = "action:LEFT", .label = _( "Decrease the selected statistic" ) } );
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random statistic" ) } );
+        return newchar_snapshot( _( "STATS" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "STATS" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            const auto at = std::array<std::string, 4> { "str", "dex", "int", "per" };
+            sel = static_cast<unsigned char>( 1 + std::ranges::find( at, id.substr( 5 ) ) - at.begin() );
+            return std::string();
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( action == "DOWN" ) {
             if( sel < 4 ) {
                 sel++;
@@ -1249,6 +1462,9 @@ tab_direction set_stats( avatar &u, points_left &points )
 
 tab_direction set_traits( avatar &u, points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     const int max_trait_points = get_option<int>( "MAX_TRAIT_POINTS" );
 
     // Track how many good / bad POINTS we have; cap both at MAX_TRAIT_POINTS
@@ -1525,9 +1741,55 @@ tab_direction set_traits( avatar &u, points_left &points )
         }
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto page_names = std::array<std::string, 3> { _( "Advantage" ), _( "Disadvantage" ),
+                   _( "Neutral" )
+                                                           };
+        auto rows = std::vector<newchar_row> {};
+        for( auto page = 0; page < used_pages; ++page ) {
+            for( auto line = std::size_t{ 0 }; line < vStartingTraits[page].size(); ++line ) {
+                const auto &entry = vStartingTraits[page][line];
+                const auto &branch = entry.id.obj();
+                rows.push_back( {
+                    .id = "trait:" + entry.id.str(), .label = branch.name(),
+                    .description = remove_color_tags( branch.desc() ),
+                    .selected = u.has_trait( entry.id ),
+                    .highlighted = page == iCurWorkingPage &&
+                    static_cast<int>( line ) == iCurrentLine[page],
+                    .enabled = !entry.forbidden,
+                    .columns = {
+                        newchar_column( _( "Points" ), std::to_string( branch.points ) ),
+                        newchar_column( _( "Kind" ), page_names[page] ),
+                    },
+                } );
+            }
+        }
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random trait" ) } );
+        rows.push_back( { .id = "action:REROLL_CHARACTER", .label = _( "Reroll the character" ) } );
+        return newchar_snapshot( _( "TRAITS" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "TRAITS" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            for( auto page = 0; page < used_pages; ++page ) {
+                for( auto line = std::size_t{ 0 }; line < vStartingTraits[page].size(); ++line ) {
+                    if( "trait:" + vStartingTraits[page][line].id.str() == id ) {
+                        iCurWorkingPage = page;
+                        iCurrentLine[page] = static_cast<int>( line );
+                    }
+                }
+            }
+            return std::string( "CONFIRM" );
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            if( use_character_preview ) {
+                character_preview->clear();
+            }
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( game_client::has_tiles() ) {
             if( action == "zoom_in" && use_character_preview ) {
                 character_preview->zoom_in();
@@ -1701,6 +1963,9 @@ tab_direction set_traits( avatar &u, points_left &points )
 
 tab_direction set_bionics( avatar &u, points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     const int max_trait_points = get_option<int>( "MAX_TRAIT_POINTS" );
 
     // Track how many good / bad POINTS we have; cap both at MAX_TRAIT_POINTS
@@ -2280,6 +2545,9 @@ tab_direction set_profession( avatar &u, points_left &points,
     if( direction == tab_direction::FORWARD ) {
         points.skill_points -= u.prof->point_cost();
     }
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
 
     int iheight = 0;
 
@@ -2559,6 +2827,25 @@ tab_direction set_profession( avatar &u, points_left &points,
         }
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto rows = std::vector<newchar_row> {};
+        for( auto i = 0; i < profs_length; ++i ) {
+            const auto &prof = *sorted_profs[i];
+            rows.push_back( {
+                .id = "profession:" + sorted_profs[i].str(),
+                .label = prof.gender_appropriate_name( u.male ),
+                .description = remove_color_tags( prof.description( u.male ) ),
+                .selected = sorted_profs[i] == u.prof, .highlighted = i == cur_id,
+                .columns = { newchar_column( _( "Points" ), std::to_string( prof.point_cost() ) ) },
+            } );
+        }
+        rows.push_back( { .id = "action:CHANGE_GENDER", .label = _( "Change gender" ) } );
+        rows.push_back( { .id = "action:SORT", .label = _( "Change the sort order" ) } );
+        rows.push_back( { .id = "action:FILTER", .label = _( "Filter by name" ) } );
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random profession" ) } );
+        return newchar_snapshot( _( "PROFESSION" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         if( recalc_profs ) {
             sorted_profs = g->scen->permitted_professions();
@@ -2594,7 +2881,17 @@ tab_direction set_profession( avatar &u, points_left &points,
         }
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "PROFESSION" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            for( auto i = 0; i < profs_length; ++i ) {
+                if( "profession:" + sorted_profs[i].str() == id ) { cur_id = i; }
+            }
+            return std::string( "CONFIRM" );
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( action == "DOWN" ) {
             cur_id++;
             if( cur_id > profs_length - 1 ) {
@@ -2680,6 +2977,9 @@ static int skill_increment_cost( const Character &u, const skill_id &skill )
 
 tab_direction set_skills( avatar &u, points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     ui_adaptor ui;
     catacurses::window w;
     catacurses::window w_description;
@@ -2882,9 +3182,45 @@ tab_direction set_skills( avatar &u, points_left &points )
         wnoutrefresh( w_description );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto rows = std::vector<newchar_row> {};
+        for( auto i = 0; i < num_skills; ++i ) {
+            const auto &skill = *skill_list[i].first;
+            const auto bonus = prof_skills.find( skill.ident() );
+            rows.push_back( {
+                .id = "skill:" + skill.ident().str(), .label = skill.name(),
+                .description = remove_color_tags( skill.description() ),
+                .highlighted = i == cur_pos,
+                .columns = {
+                    newchar_column( _( "Level" ), std::to_string( u.get_skill_level( skill.ident(), true ) ) ),
+                    newchar_column( _( "Profession" ),
+                                    bonus == prof_skills.end() ? std::string() : std::to_string( bonus->second ) ),
+                    newchar_column( _( "Cost" ), std::to_string( skill_increment_cost( u, skill.ident() ) ) ),
+                },
+            } );
+        }
+        rows.push_back( { .id = "action:RIGHT", .label = _( "Increase the selected skill" ) } );
+        rows.push_back( { .id = "action:LEFT", .label = _( "Decrease the selected skill" ) } );
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random skill" ) } );
+        return newchar_snapshot( _( "SKILLS" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "SKILLS" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            for( auto i = 0; i < num_skills; ++i ) {
+                if( "skill:" + skill_list[i].first->ident().str() == id ) {
+                    cur_pos = i;
+                    currentSkill = skill_list[i].first;
+                }
+            }
+            return std::string();
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( action == "DOWN" ) {
             cur_pos = modulo( cur_pos + 1, num_skills );
             currentSkill = skill_list[cur_pos].first;
@@ -2925,6 +3261,9 @@ tab_direction set_skills( avatar &u, points_left &points )
 
 tab_direction set_magic( avatar &u, points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     ui_adaptor ui;
     catacurses::window w;
     catacurses::window w_description;
@@ -3217,6 +3556,9 @@ tab_direction set_scenario( avatar &u, points_left &points,
     if( direction == tab_direction::BACKWARD ) {
         points.skill_points += u.prof->point_cost();
     }
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w );
@@ -3416,6 +3758,24 @@ tab_direction set_scenario( avatar &u, points_left &points,
         wnoutrefresh( w_flags );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto rows = std::vector<newchar_row> {};
+        for( auto i = 0; i < scens_length; ++i ) {
+            const auto &scen = *sorted_scens[i];
+            rows.push_back( {
+                .id = "scenario:" + scen.ident().str(),
+                .label = scen.gender_appropriate_name( u.male ),
+                .description = remove_color_tags( scen.description( u.male ) ),
+                .selected = scen.ident() == g->scen->ident(), .highlighted = i == cur_id,
+                .columns = { newchar_column( _( "Points" ), std::to_string( scen.point_cost() ) ) },
+            } );
+        }
+        rows.push_back( { .id = "action:SORT", .label = _( "Change the sort order" ) } );
+        rows.push_back( { .id = "action:FILTER", .label = _( "Filter by name" ) } );
+        rows.push_back( { .id = "action:RANDOMIZE", .label = _( "Select a random scenario" ) } );
+        return newchar_snapshot( _( "SCENARIO" ), u.prof, points, std::move( rows ) );
+    } );
+
     do {
         if( recalc_scens ) {
             sorted_scens.clear();
@@ -3466,7 +3826,17 @@ tab_direction set_scenario( avatar &u, points_left &points,
         }
 
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "SCENARIO" ), u.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            for( auto i = 0; i < scens_length; ++i ) {
+                if( "scenario:" + sorted_scens[i]->ident().str() == id ) { cur_id = i; }
+            }
+            return std::string( "CONFIRM" );
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( action == "DOWN" ) {
             cur_id++;
             if( cur_id > scens_length - 1 ) {
@@ -3540,6 +3910,9 @@ static void draw_age( const catacurses::window &w_age, const avatar &you, const 
 tab_direction set_description( avatar &you, const bool allow_reroll,
                                points_left &points )
 {
+    if( const auto jump = pending_tab(); jump != tab_direction::NONE ) {
+        return jump;
+    }
     static constexpr int RANDOM_START_LOC_ENTRY = INT_MIN;
     const std::string RANDOM_START_LOC_TEXT_TEMPLATE =
         _( "<color_red>* Random location *</color> (<color_white>%d</color> variants)" );
@@ -4104,13 +4477,74 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     int min_allowed_height = 145;
     int max_allowed_height = 200;
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto selected = [&]( const char_creation::description_selector field ) {
+            return current_selector == field;
+        };
+        auto rows = std::vector<newchar_row> {};
+        rows.push_back( {
+            .id = "field:name", .label = _( "Name" ), .highlighted = selected( char_creation::NAME ),
+            .columns = { newchar_column( _( "Value" ), you.name.empty() ? _( "(random)" ) : you.name ) },
+        } );
+        rows.push_back( {
+            .id = "field:height", .label = _( "Height" ),
+            .highlighted = selected( char_creation::HEIGHT ),
+            .columns = { newchar_column( _( "Value" ), string_format( _( "%d cm" ), you.base_height() ) ) },
+        } );
+        rows.push_back( {
+            .id = "field:age", .label = _( "Age" ), .highlighted = selected( char_creation::AGE ),
+            .columns = { newchar_column( _( "Value" ), string_format( _( "%d years" ), you.base_age() ) ) },
+        } );
+        rows.push_back( {
+            .id = "action:CHANGE_GENDER", .label = _( "Gender" ),
+            .columns = { newchar_column( _( "Value" ), you.male ? _( "Male" ) : _( "Female" ) ) },
+        } );
+        rows.push_back( {
+            .id = "action:CHOOSE_LOCATION", .label = _( "Starting location" ),
+            .columns = {
+                newchar_column( _( "Value" ), you.random_start_location ? _( "Random" ) :
+                                you.start_location.obj().name() )
+            },
+        } );
+        rows.push_back( { .id = "action:RANDOMIZE_CHAR_DESCRIPTION", .label = _( "Randomize name, gender, age and height" ) } );
+        if( allow_reroll ) {
+            rows.push_back( { .id = "action:REROLL_CHARACTER", .label = _( "Reroll the character" ) } );
+            rows.push_back( { .id = "action:REROLL_CHARACTER_WITH_SCENARIO", .label = _( "Reroll the character and the scenario" ) } );
+        }
+        rows.push_back( { .id = "action:SAVE_TEMPLATE", .label = _( "Save as a template" ) } );
+        rows.push_back( { .id = "action:NEXT_TAB", .label = _( "Finish the character" ) } );
+        auto snapshot = newchar_snapshot( _( "OVERVIEW" ), you.prof, points, std::move( rows ) );
+        const auto traits = you.get_mutations();
+        auto names = std::vector<std::string> {};
+        std::ranges::transform( traits, std::back_inserter( names ), []( const trait_id & id ) {
+            return id->name();
+        } );
+        snapshot.message += string_format( "\n%s %s\n%s %s\n%s %s", _( "Scenario:" ),
+                                           g->scen->gender_appropriate_name( you.male ), _( "Profession:" ),
+                                           you.prof->gender_appropriate_name( you.male ), _( "Traits:" ),
+                                           names.empty() ? _( "None!" ) : enumerate_as_string( names ) );
+        return snapshot;
+    } );
+
     do {
         const auto [new_min_age, new_max_age] = profession_age_bounds( *you.prof );
         min_allowed_age = new_min_age;
         max_allowed_age = new_max_age;
         you.set_base_age( clamp( you.base_age(), min_allowed_age, max_allowed_age ) );
         ui_manager::redraw();
-        const std::string action = ctxt.handle_input();
+        const auto input = newchar_read( ctxt, _( "OVERVIEW" ), you.prof, [&]( const std::string & id ) {
+            if( id.starts_with( "action:" ) ) { return id.substr( 7 ); }
+            current_selector = id == "field:height" ? char_creation::HEIGHT :
+                               id == "field:age" ? char_creation::AGE : char_creation::NAME;
+            return std::string( "CONFIRM" );
+        } );
+        if( input.jump != tab_direction::NONE ) {
+            if( use_character_preview ) {
+                character_preview->clear();
+            }
+            return input.jump;
+        }
+        const auto &action = input.action;
         if( game_client::has_tiles() ) {
             if( action == "zoom_in" && use_character_preview ) {
                 character_preview->zoom_in();
