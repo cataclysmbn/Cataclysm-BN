@@ -646,8 +646,23 @@ static void pldrive( const tripoint_rel_veh &p )
             return;
         }
     } else {
-        if( veh->get_avail_parts( "REMOTE_CONTROLS" ).empty() ) {
-            add_msg( m_info, _( "Can't drive this vehicle remotely.  It has no working controls." ) );
+        static const std::string rcflag = "RC_COMPATIBLE";
+        const auto all_parts_rc_compatible = [&]( const vehicle & veh ) {
+            for( const vpart_reference &vp : veh.get_all_parts() ) {
+                if( vp.part().removed ) {
+                    continue;
+                }
+                if( !vp.info().has_flag( rcflag ) ) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        const bool has_large_controls = !veh->get_avail_parts( "REMOTE_CONTROLS" ).empty();
+        const bool has_small_controls = !veh->get_avail_parts( "REMOTE_CONTROLS_SMALL" ).empty() &&
+                                        all_parts_rc_compatible( *veh );
+        if( !has_large_controls && !has_small_controls ) {
+            add_msg( m_info, _( "Can't drive this vehicle remotely.  It isn't compatible." ) );
             return;
         }
     }
