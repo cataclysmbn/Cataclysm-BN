@@ -17,6 +17,7 @@
 #include "clzones.h"
 #include "color.h"
 #include "coordinates.h"
+#include "data_vars.h"
 #include "debug.h"
 #include "debug_log_capture.h"
 #include "dimension_info.h"
@@ -2149,6 +2150,78 @@ TEST_CASE("lua_mapgen_vehicle_replacement", "[lua][mapgen]") {
     CHECK(vehicles.front()->type == vproto_id("swivel_chair"));
     CHECK(normalize(vehicles.front()->face.dir()) == normalize(overridden_facing));
     CHECK(vehicles.front()->static_drag() == vehicles.front()->static_drag(false));
+}
+
+namespace {
+
+auto check_tile_vars_test_results(const sol::table& test_data) -> void {
+    CHECK_FALSE(test_data.get<bool>("furn_has_before"));
+    CHECK(test_data.get<std::string>("furn_default") == "fallback");
+    CHECK(test_data.get<bool>("furn_set_ok"));
+    CHECK(test_data.get<bool>("furn_has_after_set"));
+    CHECK(test_data.get<std::string>("furn_value") == "furn_value");
+    CHECK(test_data.get<std::string>("cpp_furn_key_value") == "cpp_value");
+
+    CHECK_FALSE(test_data.get<bool>("ter_has_before"));
+    CHECK(test_data.get<std::string>("ter_default").empty());
+    CHECK(test_data.get<bool>("ter_set_ok"));
+    CHECK(test_data.get<std::string>("ter_value") == "ter_value");
+
+    CHECK(test_data.get<bool>("ter_erase_ok"));
+    CHECK_FALSE(test_data.get<bool>("ter_erase_again"));
+    CHECK_FALSE(test_data.get<bool>("ter_has_after_erase"));
+    CHECK(test_data.get<bool>("furn_erase_ok"));
+}
+
+} // namespace
+
+TEST_CASE("lua_map_tile_vars", "[lua][map]") {
+    clear_all_state();
+
+    auto& here = get_map();
+    const auto pos = tripoint_bub_ms{50, 50, 0};
+    here.ter_set(pos, ter_id("t_floor"));
+    here.furn_set(pos, furn_id("f_chair"));
+    here.furn_vars(pos)->clear();
+    here.ter_vars(pos)->clear();
+    here.furn_vars(pos)->set("cpp_key", "cpp_value");
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["target"] = &here;
+    test_data["pos"] = pos;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script(lua, "tile_vars_test.lua");
+
+    check_tile_vars_test_results(test_data);
+    CHECK(here.furn_vars(pos)->get("lua_key") == "furn_value");
+    CHECK_FALSE(here.furn_vars(pos)->contains("cpp_key"));
+    CHECK_FALSE(here.ter_vars(pos)->contains("lua_key"));
+}
+
+TEST_CASE("lua_mapgen_tile_vars", "[lua][mapgen]") {
+    clear_all_state();
+
+    auto& buffer = MAPBUFFER_REGISTRY.get(mapbuffer_registry::primary_dimension_id());
+    auto tm = mapgen_constructor(buffer);
+    tm.reset_scratch_omt(
+        tripoint_abs_omt(11, 13, 0), ter_id("t_floor"), furn_id("f_chair"), trap_id("tr_null"));
+    const auto pos = point_omt_ms(12, 12);
+    tm.furn_vars(pos)->set("cpp_key", "cpp_value");
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["target"] = &tm;
+    test_data["pos"] = pos;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script(lua, "tile_vars_test.lua");
+
+    check_tile_vars_test_results(test_data);
+    CHECK(tm.furn_vars(pos)->get("lua_key") == "furn_value");
+    CHECK_FALSE(tm.furn_vars(pos)->contains("cpp_key"));
+    CHECK_FALSE(tm.ter_vars(pos)->contains("lua_key"));
 }
 
 TEST_CASE("lua_table_serde", "[lua]") {
