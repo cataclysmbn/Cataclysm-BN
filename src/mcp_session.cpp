@@ -18,6 +18,7 @@
 
 #if defined(_WIN32)
 #include <io.h>
+#include <windows.h>
 #else
 #include <poll.h>
 #include <unistd.h>
@@ -210,7 +211,18 @@ auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_
 auto stdin_ready() -> bool
 {
 #if defined(_WIN32)
-    return false;
+    // Only a pipe (or a redirected file) can be tested; a console would need its own event queue.
+    const auto handle = GetStdHandle( STD_INPUT_HANDLE );
+    const auto type = GetFileType( handle );
+    if( std::cin.rdbuf()->in_avail() > 0 || type == FILE_TYPE_DISK ) {
+        return true;
+    }
+    if( type != FILE_TYPE_PIPE ) {
+        return false;
+    }
+    auto available = DWORD{ 0 };
+    // A closed pipe fails the peek; report it ready so the read observes the end of input.
+    return !PeekNamedPipe( handle, nullptr, 0, nullptr, &available, nullptr ) || available > 0;
 #else
     auto fd = pollfd { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
     return std::cin.rdbuf()->in_avail() > 0 || poll( &fd, 1, 0 ) > 0;
