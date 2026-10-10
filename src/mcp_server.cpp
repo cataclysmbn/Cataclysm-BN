@@ -642,13 +642,15 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !decode_empty_request( params ) ) { return invalid(); }
         const auto current = session_.current();
         if( !current ) { return fail( current.error() ); }
+        const auto wire = serialize_snapshot( *current );
+        if( !wire ) { return fail( wire.error() ); }
         // The parts follow the response frame, before any event after `current->at`.
-        for( const auto index : std::views::iota( std::size_t{0}, snapshot_part_count( *current ) ) ) {
+        for( const auto &part : wire->parts ) {
             notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"bn.snapshot.part\",\"params\":" +
-                                      serialize_snapshot_part( *current, index ) + "}" );
+                                      part + "}" );
         }
         subscribed_ = true;
-        return rpc::make_result( request, serialize_snapshot_header( *current ) );
+        return rpc::make_result( request, wire->header );
     }
     if( request.method == "bn.unsubscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }

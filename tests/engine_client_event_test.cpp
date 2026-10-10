@@ -2,6 +2,8 @@
 #include "engine_client_event.h"
 
 #include <algorithm>
+#include <nlohmann/json.hpp>
+#include <numeric>
 #include <string>
 #include <utility>
 
@@ -204,16 +206,58 @@ TEST_CASE("events serialize with ids as decimal strings", "[engine_client_event]
     CHECK(wire.find(R"("epoch":"epoch:a")") != std::string::npos);
 }
 
-TEST_CASE("snapshot parts cover every cell exactly once", "[engine_client_event]") {
+TEST_CASE(
+    "snapshot parts cover every cell exactly once within the byte bound", "[engine_client_event]") {
     auto value = world_of({});
-    for (auto x = 0; x < static_cast<int>(cells_per_part) + 5; ++x) {
-        value.world.coverage = bounds{.min = pos(0, -5), .max = pos(1000, 5)};
-        value.world.cells[pos(x)] = visible_cell(x);
+    value.world.coverage = bounds{.min = pos(0, -5), .max = pos(1000, 5)};
+    // Cells with heavy item lists force byte-based splitting well before the cell-count cap.
+    for (auto x = 0; x < 300; ++x) {
+        auto heavy = visible_cell(x);
+        heavy.items = std::vector<
+            look>(200, look{.kind = "item", .id = "rock", .glyph = "*", .color = "gray"});
+        value.world.cells[pos(x)] = heavy;
     }
     const auto stream = stream_of(value);
-    CHECK(snapshot_part_count(stream.current()) == 2);
+    const auto wire = serialize_snapshot(stream.current());
+    REQUIRE(wire);
+    CHECK(wire->parts.size() > 2);
     CHECK(
-        serialize_snapshot_part(stream.current(), 0).find(R"("last":false)") != std::string::npos);
-    CHECK(serialize_snapshot_part(stream.current(), 1).find(R"("last":true)") != std::string::npos);
-    CHECK(serialize_snapshot_header(stream.current()).find(R"("parts":2)") != std::string::npos);
+        wire->header.find("\"parts\":" + std::to_string(wire->parts.size())) != std::string::npos);
+    auto seen = std::vector<int>{};
+    for (auto index = std::size_t{0}; index < wire->parts.size(); ++index) {
+        const auto& part = wire->parts[index];
+        CHECK(part.size() <= maximum_inline_bytes);
+        const auto parsed = nlohmann::json::parse(part);
+        CHECK(parsed["index"] == index);
+        CHECK(parsed["last"] == (index + 1 == wire->parts.size()));
+        CHECK_FALSE(parsed["cells"].empty());
+        for (const auto& cell : parsed["cells"]) { seen.push_back(cell["at"]["x"]); }
+    }
+    auto expected = std::vector<int>(300);
+    std::iota(expected.begin(), expected.end(), 0);
+    CHECK(seen == expected);
+}
+
+TEST_CASE("a snapshot without cells has no parts", "[engine_client_event]") {
+    const auto wire = serialize_snapshot(stream_of(world_of({})).current());
+    REQUIRE(wire);
+    CHECK(wire->parts.empty());
+    CHECK(wire->header.find("\"parts\":0") != std::string::npos);
+}
+
+TEST_CASE(
+    "a value that cannot fit one frame is a recoverable resource limit", "[engine_client_event]") {
+    auto huge = visible_cell(1);
+    huge.items =
+        std::vector<look>(20000, look{.kind = "item", .id = "rock", .glyph = "*", .color = "gray"});
+    const auto big_cell = serialize_snapshot(stream_of(world_of({huge})).current());
+    REQUIRE_FALSE(big_cell);
+    CHECK(big_cell.error() == error::resource_limit);
+    auto crowded = world_of({});
+    crowded.world.avatar = avatar_value{.id = "e:avatar", .at = pos(1), .name = "Ada"};
+    crowded.world.avatar->inventory = std::vector<inventory_entry>(
+        6000, inventory_entry{.appearance = zombie(), .name = std::string(40, 'n')});
+    const auto big_header = serialize_snapshot(stream_of(crowded).current());
+    REQUIRE_FALSE(big_header);
+    CHECK(big_header.error() == error::resource_limit);
 }

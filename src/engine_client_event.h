@@ -102,11 +102,15 @@ auto classify( const changes &delta ) -> std::string;
 
 /// Params of `bn.events`.
 auto serialize_events( const event_batch &batch ) -> std::string;
-/// Result of `bn.subscribe`; the cells follow as `serialize_snapshot_part` notifications.
-auto serialize_snapshot_header( const snapshot &value ) -> std::string;
-auto snapshot_part_count( const snapshot &value ) -> std::size_t;
-/// Params of the `index`th `bn.snapshot.part`.
-auto serialize_snapshot_part( const snapshot &value, std::size_t index ) -> std::string;
+/// A snapshot as it goes on the wire: the `bn.subscribe` result, then one `bn.snapshot.part`
+/// params value per part. Every piece fits maximum_inline_bytes; parts hold at most
+/// cells_per_part cells and are split by size, so none is empty.
+struct snapshot_wire {
+    std::string header = {};
+    std::vector<std::string> parts = {};
+};
+/// resource_limit when the header (entities, inventory) or a single cell cannot fit one piece.
+auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire, error>;
 auto serialize_resync( const std::string &epoch, std::string_view reason, counter lost_after )
 -> std::string;
 

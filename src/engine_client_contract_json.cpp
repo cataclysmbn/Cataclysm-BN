@@ -240,32 +240,40 @@ auto serialize_events( const event_batch &batch ) -> std::string
     for( const auto &event : batch.events ) { events.push_back( to_json( event.value() ) ); }
     return json{{"epoch", batch.epoch}, {"events", std::move( events )}}.dump();
 }
-auto snapshot_part_count( const snapshot &value ) -> std::size_t
-{
-    return ( value.value.world.cells.size() + cells_per_part - 1 ) / cells_per_part;
-}
-auto serialize_snapshot_header( const snapshot &value ) -> std::string
+auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire, error>
 {
     const auto &world = value.value.world;
-    auto result = json{{"at", to_json( value.at )}};
-    if( world.coverage ) { result["coverage"] = to_json( *world.coverage ); }
-    result["interaction"] = to_json( value.value.interaction );
-    if( world.avatar ) { result["avatar"] = to_json( *world.avatar ); }
-    if( world.environment ) { result["environment"] = to_json( *world.environment ); }
-    result["entities"] = json::array();
-    for( const auto &entry : world.entities ) { result["entities"].push_back( to_json( entry.second ) ); }
-    result["parts"] = snapshot_part_count( value );
-    return result.dump();
-}
-auto serialize_snapshot_part( const snapshot &value, const std::size_t index ) -> std::string
-{
-    auto cells = json::array();
-    for( const auto &entry : value.value.world.cells | std::views::drop( index * cells_per_part ) |
-         std::views::take( cells_per_part ) ) {
-        cells.push_back( to_json( entry.second ) );
+    // Room for the part envelope: epoch, clock, index and flags.
+    const auto budget = maximum_inline_bytes - 1024 - 2 * value.at.epoch.size();
+    auto groups = std::vector<json> {};
+    auto bytes = std::size_t{0};
+    for( const auto &entry : world.cells ) {
+        auto cell = to_json( entry.second );
+        const auto size = cell.dump().size() + 1;
+        if( size > budget ) { return std::unexpected( error::resource_limit ); }
+        if( groups.empty() || bytes + size > budget || groups.back().size() == cells_per_part ) {
+            groups.push_back( json::array() );
+            bytes = 0;
+        }
+        groups.back().push_back( std::move( cell ) );
+        bytes += size;
     }
-    return json{{"epoch", value.at.epoch}, {"at", to_json( value.at )}, {"index", index},
-        {"last", index + 1 >= snapshot_part_count( value )}, {"cells", std::move( cells )}}.dump();
+    auto result = snapshot_wire{};
+    for( const auto index : std::views::iota( std::size_t{0}, groups.size() ) ) {
+        result.parts.push_back( json{{"epoch", value.at.epoch}, {"at", to_json( value.at )}, {"index", index},
+            {"last", index + 1 == groups.size()}, {"cells", std::move( groups[index] )}}.dump() );
+    }
+    auto header = json{{"at", to_json( value.at )}};
+    if( world.coverage ) { header["coverage"] = to_json( *world.coverage ); }
+    header["interaction"] = to_json( value.value.interaction );
+    if( world.avatar ) { header["avatar"] = to_json( *world.avatar ); }
+    if( world.environment ) { header["environment"] = to_json( *world.environment ); }
+    header["entities"] = json::array();
+    for( const auto &entry : world.entities ) { header["entities"].push_back( to_json( entry.second ) ); }
+    header["parts"] = result.parts.size();
+    result.header = header.dump();
+    if( result.header.size() > maximum_inline_bytes ) { return std::unexpected( error::resource_limit ); }
+    return result;
 }
 auto serialize_resync( const std::string &epoch, const std::string_view reason,
                        const counter lost_after )
