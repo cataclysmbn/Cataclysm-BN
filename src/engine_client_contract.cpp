@@ -1,5 +1,6 @@
 #include "engine_client_contract.h"
 #include "client_input.h"
+#include "client_memory.h"
 #include "client_interaction_validation.h"
 #include "game.h"
 #include "input.h"
@@ -164,6 +165,36 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
     return game_client::input_command{ .mouse_position = *cell, .mouse_button = "left" };
 }
 
+/// What a view without a structured interaction shows: the text of the composed screen, so a client
+/// can display it and drive it with the view's registered actions. The map itself is not a screen.
+auto screen_interaction( const std::string &context ) ->
+std::optional<game_client::interaction_snapshot>
+{
+    if( context.empty() || context == "DEFAULTMODE" ) { return std::nullopt; }
+    auto lines = std::vector<std::string> {};
+    auto text = game_client::memory::snapshot().text;
+    for( auto start = std::size_t{ 0 }; start <= text.size(); ) {
+        const auto end = std::min( text.find( '\n', start ), text.size() );
+        auto line = text.substr( start, end - start );
+        line.erase( line.find_last_not_of( ' ' ) + 1 );
+        lines.push_back( std::move( line ) );
+        start = end + 1;
+    }
+    while( !lines.empty() && lines.back().empty() ) { lines.pop_back(); }
+    if( lines.empty() ) { return std::nullopt; }
+    auto message = std::string{};
+    for( const auto &line : lines ) { message += line + '\n'; }
+    message.pop_back();
+    return game_client::interaction_snapshot{
+        .schema_id = game_client::opaque_interaction_id( "screen", { context } ),
+        .context = context,
+        .kind = game_client::interaction_kind::custom,
+        .message = std::move( message ),
+        .structured = true,
+        .actions_only = true,
+    };
+}
+
 auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>
 {
     if( options.epoch.empty() ) { return std::unexpected( error::resource_limit ); }
@@ -185,7 +216,11 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
     // A value over the byte bound keeps fewer rows; choice_total still states the full count.
     for( auto limit = maximum_rows; limit > 0; limit /= 2 ) {
         auto interaction = game_client::current_interaction( {.offset = 0, .limit = limit} );
-        if( !interaction.structured ) { result.interaction.reset(); break; }
+        if( !interaction.structured ) {
+            // A view with no structured interaction still shows its composed screen to the client.
+            result.interaction = screen_interaction( interaction.context );
+            break;
+        }
         result.interaction = std::move( interaction );
         if( serialize_boundary( result ).size() <= maximum_inline_bytes ) { break; }
         if( limit == 1 ) { return std::unexpected( error::resource_limit ); }

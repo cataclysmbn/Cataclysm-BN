@@ -14,6 +14,7 @@
 #    include "output.h"
 #    include "state_helpers.h"
 
+#    include <algorithm>
 #    include <string>
 
 namespace {
@@ -44,6 +45,55 @@ TEST_CASE("memory_screen_guard leaves a borrowed compositor intact", "[client][m
     CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()
           == borrowed.get<cata_cursesport::WINDOW>());
     CHECK(catacurses::stdscr.get<cata_cursesport::WINDOW>()->width == 7);
+}
+
+TEST_CASE(
+    "a view without a structured interaction publishes its composed screen", "[client][mcp]") {
+    auto guard = memory_screen_guard{};
+    TERMX = 20;
+    TERMY = 4;
+    game_client::memory::resize(TERMX, TERMY);
+    catacurses::stdscr = catacurses::newwin(TERMY, TERMX, point_zero);
+    catacurses::newscr = catacurses::stdscr;
+    catacurses::mvwprintw(catacurses::stdscr, point(1, 0), "Strength:    8");
+    catacurses::mvwprintw(catacurses::stdscr, point(1, 2), "Press ESC");
+    catacurses::wrefresh(catacurses::stdscr);
+
+    SECTION("a menu-like screen shows its text and the actions that drive it") {
+        auto context = input_context{"CHARACTER_SCREEN_TEST"};
+        context.register_action("QUIT");
+        const auto input_scope = game_client::input_context_scope{context, "CHARACTER_SCREEN_TEST"};
+        game_client::begin_input_boundary();
+        const auto boundary = engine_client::capture_boundary({.epoch = "epoch:screen"});
+        REQUIRE(boundary);
+        REQUIRE(boundary->interaction);
+        CHECK(boundary->interaction->context == "CHARACTER_SCREEN_TEST");
+        CHECK(boundary->interaction->message == " Strength:    8\n\n Press ESC");
+        CHECK(boundary->interaction->choices.empty());
+        REQUIRE(boundary->actions.size() == 1);
+        CHECK(std::ranges::find(boundary->actions.front().keys, "ESC")
+              != boundary->actions.front().keys.end());
+    }
+    SECTION("the map itself is not a screen") {
+        auto context = input_context{"DEFAULTMODE"};
+        context.register_action("QUIT");
+        const auto input_scope = game_client::input_context_scope{context, "DEFAULTMODE"};
+        game_client::begin_input_boundary();
+        const auto boundary = engine_client::capture_boundary({.epoch = "epoch:screen"});
+        REQUIRE(boundary);
+        CHECK_FALSE(boundary->interaction);
+    }
+    SECTION("a blank screen has nothing to show") {
+        catacurses::werase(catacurses::stdscr);
+        catacurses::wrefresh(catacurses::stdscr);
+        auto context = input_context{"BLANK_SCREEN_TEST"};
+        context.register_action("QUIT");
+        const auto input_scope = game_client::input_context_scope{context, "BLANK_SCREEN_TEST"};
+        game_client::begin_input_boundary();
+        const auto boundary = engine_client::capture_boundary({.epoch = "epoch:screen"});
+        REQUIRE(boundary);
+        CHECK_FALSE(boundary->interaction);
+    }
 }
 
 TEST_CASE("generic memory client composes overlapping windows", "[client][mcp]") {
