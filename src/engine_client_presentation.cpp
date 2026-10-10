@@ -38,6 +38,11 @@ auto push( presentation_value fact ) -> void
     auto &feed = state();
     if( feed.pending.size() < maximum_pending ) { feed.pending.push_back( std::move( fact ) ); }
 }
+/// The native game draws animations only with ANIMATIONS on; only tests force them on.
+auto animated() -> bool
+{
+    return test_mode || get_option<bool>( "ANIMATIONS" );
+}
 /// One native animation step holds this long.
 auto step_ms() -> std::uint64_t
 {
@@ -71,7 +76,7 @@ auto take() -> std::vector<presentation_value>
 auto record_bullet( const bullet_step &step ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting ) { return; }
+    if( !feed.collecting || !animated() ) { return; }
     // The native loop draws one square per call; a lower index than the last call starts a new shot.
     if( step.index <= feed.last_bullet_index || feed.last_projectile.empty() ) {
         feed.last_projectile = "projectile:" + std::to_string( ++feed.next_projectile );
@@ -84,7 +89,7 @@ auto record_bullet( const bullet_step &step ) -> void
 auto record_trajectories( const draw_bullet_trajectories_options &options ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting ) { return; }
+    if( !feed.collecting || !animated() ) { return; }
     const auto appearance = bullet_look( options.bullet, options.custom_sprite );
     for( const auto &trajectory : options.trajectories ) {
         if( trajectory.empty() ) { continue; }
@@ -100,7 +105,7 @@ auto record_trajectories( const draw_bullet_trajectories_options &options ) -> v
 auto record_line( const draw_sprite_line_options &options ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || options.points.empty() ) { return; }
+    if( !feed.collecting || !animated() || options.points.empty() ) { return; }
     push( { .type = "projectile.moved", .id = "projectile:" + std::to_string( ++feed.next_projectile ),
             .cells = path_of( options.points ), .appearance = bullet_look( '*', options.sprite ),
             .duration_ms = step_ms() } );
@@ -109,11 +114,11 @@ auto record_line( const draw_sprite_line_options &options ) -> void
 auto begin_blast( const tripoint_bub_ms &at, const int radius, const bool fiery ) -> std::string
 {
     auto &feed = state();
-    if( !feed.collecting ) { return {}; }
+    if( !feed.collecting || !animated() ) { return {}; }
     auto id = "explosion:" + std::to_string( ++feed.next_explosion );
     push( { .type = "explosion.started", .id = id, .at = world::position_at( at ),
             .radius = static_cast<std::uint64_t>( std::max( 0, radius ) ),
-            .color = world::color_name( fiery ? c_red : c_white ) } );
+            .color = world::color_name( fiery ? c_red : c_white ), .tile = "explosion" } );
     return id;
 }
 
@@ -136,24 +141,27 @@ auto end_blast( const std::string &id ) -> void
     if( !id.empty() ) { push( { .type = "explosion.ended", .id = id } ); }
 }
 
-auto record_explosion( const tripoint_bub_ms &at, const int radius, const nc_color &color ) -> void
+auto record_explosion( const tripoint_bub_ms &at, const int radius, const nc_color &color,
+                       const std::string &tile ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting ) { return; }
+    if( !feed.collecting || !animated() ) { return; }
     const auto id = "explosion:" + std::to_string( ++feed.next_explosion );
     push( { .type = "explosion.started", .id = id, .at = world::position_at( at ),
-            .radius = static_cast<std::uint64_t>( std::max( 0, radius ) ), .color = world::color_name( color ),
+            .radius = static_cast<std::uint64_t>( std::max( 0, radius ) ), .color = world::color_name( color ), .tile = tile,
             .duration_ms = step_ms() * ( std::max( 0, radius ) + 1 ) } );
     push( { .type = "explosion.ended", .id = id } );
 }
 
 auto record_custom_explosion( const tripoint_bub_ms &at,
-                              const std::map<tripoint_bub_ms, nc_color> &area ) -> void
+                              const std::map<tripoint_bub_ms, nc_color> &area,
+                              const std::string &tile ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting ) { return; }
+    if( !feed.collecting || !animated() ) { return; }
     const auto id = "explosion:" + std::to_string( ++feed.next_explosion );
-    push( { .type = "explosion.started", .id = id, .at = world::position_at( at ), .duration_ms = step_ms() } );
+    push( { .type = "explosion.started", .id = id, .at = world::position_at( at ), .tile = tile,
+            .duration_ms = step_ms() } );
     push( { .type = "explosion.blast", .id = id,
             .cells = area | std::views::keys | std::views::transform( world::position_at ) |
                      std::ranges::to<std::vector>(), .duration_ms = step_ms() } );
@@ -163,7 +171,9 @@ auto record_custom_explosion( const tripoint_bub_ms &at,
 auto record_text( const point at, const std::string &first, const game_message_type first_type,
                   const std::string &second, const game_message_type second_type ) -> void
 {
-    if( !state().collecting ) { return; }
+    if( !state().collecting || !animated() || !( test_mode || get_option<bool>( "ANIMATION_SCT" ) ) ) {
+        return;
+    }
     auto segments = std::vector<text_segment> { { first, world::color_name( msgtype_to_color( first_type ) ) } };
     if( !second.empty() ) {
         segments.push_back( { second, world::color_name( msgtype_to_color( second_type ) ) } );

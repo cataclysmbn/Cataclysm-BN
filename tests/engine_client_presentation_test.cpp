@@ -1,6 +1,7 @@
 #include "avatar.h"
 #include "ballistics.h"
 #include "cached_options.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "dispersion.h"
 #include "engine_client_event.h"
@@ -118,6 +119,7 @@ TEST_CASE("an explosion publishes its start, shaped blast rings and end", "[engi
         return fact.id == facts.front().id;
     }));
     CHECK(facts.front().radius == 4);
+    CHECK(facts.front().tile == "explosion");
     CHECK(facts.front().at.has_value());
     auto squares = std::set<position>{};
     for (const auto& fact : facts) {
@@ -174,4 +176,29 @@ TEST_CASE(
         serialize_events({.epoch = "epoch:a", .events = {*shot}}));
     CHECK(wire["events"][0]["display"]["duration_ms"] == 20);
     CHECK(wire["events"][0]["data"]["path"].size() == 2);
+}
+
+TEST_CASE("the native animation options silence the facts outside tests", "[engine_client_event]") {
+    clear_all_state();
+    const auto at = tripoint_bub_ms(10, 10, 0);
+    const auto text = [] { SCT.add(point(5, 6), direction::NORTH, "-1", m_bad); };
+    const auto bang = [&] { explosion_handler::draw_explosion(at, 2, c_red, "explosion"); };
+    {
+        const auto live = restore_on_out_of_scope(test_mode);
+        test_mode = false;
+        const override_option animations("ANIMATIONS", "false");
+        CHECK(facts_of(text).empty());
+        CHECK(facts_of(bang).empty());
+    }
+    {
+        const auto live = restore_on_out_of_scope(test_mode);
+        test_mode = false;
+        const override_option animations("ANIMATIONS", "true");
+        const override_option sct("ANIMATION_SCT", "false");
+        CHECK(facts_of(text).empty());
+        CHECK(facts_of(bang).size() == 2);
+    }
+    SCT.vSCT.clear();
+    // Tests force the animations on, so every other case sees its facts.
+    CHECK(facts_of(text).size() == 1);
 }

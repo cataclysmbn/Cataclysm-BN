@@ -296,6 +296,7 @@ auto to_json( const event_value &value ) -> json
             if( fact.at ) { data["at"] = to_json( *fact.at ); }
             if( fact.radius ) { data["radius"] = *fact.radius; }
             if( !fact.color.empty() ) { data["color"] = fact.color; }
+            if( !fact.tile.empty() ) { data["tile"] = fact.tile; }
         } else if( value.type == "explosion.blast" || value.type == "explosion.shrapnel" ) {
             data = {{"explosion", fact.id}, {"cells", to_array( fact.cells )}};
         } else if( value.type == "explosion.ended" ) {

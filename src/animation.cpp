@@ -251,7 +251,7 @@ void draw_custom_explosion_curses( game &g,
 void explosion_handler::draw_explosion( const tripoint_bub_ms &p, const int r, const nc_color &col,
                                         const std::string &exp_name )
 {
-    engine_client::presentation::record_explosion( p, r, col );
+    engine_client::presentation::record_explosion( p, r, col, exp_name );
     if( !game_client::animation().draw_explosion( { .position = p, .radius = r,
             .color = col, .name = exp_name } ) ) {
         draw_explosion_curses( *g, p, r, col );
@@ -262,7 +262,7 @@ void explosion_handler::draw_custom_explosion( const tripoint_bub_ms &position,
         const std::map<tripoint_bub_ms, nc_color> &all_area,
         const std::string &exp_name )
 {
-    engine_client::presentation::record_custom_explosion( position, all_area );
+    engine_client::presentation::record_custom_explosion( position, all_area, exp_name );
     if( test_mode ) {
         // Avoid drawing animation state during tests.
         return;

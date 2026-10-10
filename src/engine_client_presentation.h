@@ -32,6 +32,8 @@ struct presentation_value {
     std::optional<look> appearance = std::nullopt;
     std::optional<std::uint64_t> radius = std::nullopt;
     std::string color = {};
+    /// Tile id the native tiles draw an explosion with (`explosion`, `fd_smoke`, ...).
+    std::string tile = {};
     std::vector<text_segment> segments = {};
     /// How long the native animation holds this fact, from the ANIMATION_DELAY option.
     std::uint64_t duration_ms = 0;
@@ -65,9 +67,11 @@ auto begin_blast( const tripoint_bub_ms &at, int radius, bool fiery ) -> std::st
 auto record_blast_frame( const std::string &id, const std::vector<tripoint_bub_ms> &blast,
                          const std::vector<tripoint_bub_ms> &shrapnel ) -> void;
 auto end_blast( const std::string &id ) -> void;
-auto record_explosion( const tripoint_bub_ms &at, int radius, const nc_color &color ) -> void;
+auto record_explosion( const tripoint_bub_ms &at, int radius, const nc_color &color,
+                       const std::string &tile ) -> void;
 auto record_custom_explosion( const tripoint_bub_ms &at,
-                              const std::map<tripoint_bub_ms, nc_color> &area ) -> void;
+                              const std::map<tripoint_bub_ms, nc_color> &area,
+                              const std::string &tile ) -> void;
 auto record_text( point at, const std::string &first, game_message_type first_type,
                   const std::string &second, game_message_type second_type ) -> void;
 
