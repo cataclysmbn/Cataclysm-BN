@@ -133,7 +133,10 @@ auto diff( const state_value &from, const state_value &to ) -> changes
         result.environment = to.world.environment;
     }
     if( to.world.route != from.world.route ) { result.route = to.world.route; }
-    if( !same_boundary( from.interaction, to.interaction ) ) { result.interaction = to.interaction; }
+    if( !same_boundary( from.interaction, to.interaction ) ) {
+        result.interaction = to.interaction;
+        result.actions_unchanged = from.interaction.actions == to.interaction.actions;
+    }
     return result;
 }
 

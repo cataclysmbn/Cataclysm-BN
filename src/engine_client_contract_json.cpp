@@ -43,10 +43,20 @@ auto to_json( const look &value ) -> json
     if( value.name ) { result["name"] = *value.name; }
     if( value.tile ) { result["tile"] = *value.tile; }
     if( !value.looks_like.empty() ) { result["looks_like"] = value.looks_like; }
+    // No turn is the default, left out.
     if( value.subtile ) { result["subtile"] = *value.subtile; }
-    if( value.rotation ) { result["rotation"] = *value.rotation; }
+    if( value.rotation && *value.rotation != 0 ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
+    return result;
+}
+/// A look in a cell layer, whose `kind` the layer already says; a cell layer is always shaped, so
+/// the `center` subtile is the default there.
+auto layer_json( const look &value, const std::string_view layer_kind ) -> json
+{
+    auto result = to_json( value );
+    if( value.kind == layer_kind ) { result.erase( "kind" ); }
+    if( value.subtile == "center" ) { result.erase( "subtile" ); }
     return result;
 }
 template<typename Values>
@@ -56,9 +66,15 @@ auto to_array( const Values &values ) -> json
     for( const auto &value : values ) { result.push_back( to_json( value ) ); }
     return result;
 }
+auto layer_array( const std::vector<look> &values, const std::string_view layer_kind ) -> json
+{
+    auto result = json::array();
+    for( const auto &value : values ) { result.push_back( layer_json( value, layer_kind ) ); }
+    return result;
+}
 auto to_json( const field_entry &value ) -> json
 {
-    return {{"look", to_json( value.appearance )}, {"intensity", value.intensity}};
+    return {{"look", layer_json( value.appearance, "field" )}, {"intensity", value.intensity}};
 }
 auto known_name( const knowledge value ) -> const char *
 {
@@ -75,16 +91,16 @@ auto known_name( const knowledge value ) -> const char *
 auto to_json( const cell &value ) -> json
 {
     auto result = json{{"at", to_json( value.at )}, {"known", known_name( value.known )}};
-    if( value.terrain ) { result["terrain"] = to_json( *value.terrain ); }
-    if( value.furniture ) { result["furniture"] = to_json( *value.furniture ); }
+    if( value.terrain ) { result["terrain"] = layer_json( *value.terrain, "terrain" ); }
+    if( value.furniture ) { result["furniture"] = layer_json( *value.furniture, "furniture" ); }
     if( !value.fields.empty() ) { result["fields"] = to_array( value.fields ); }
-    if( !value.traps.empty() ) { result["traps"] = to_array( value.traps ); }
-    if( !value.items.empty() ) { result["items"] = to_array( value.items ); }
-    if( value.vehicle ) { result["vehicle"] = to_json( *value.vehicle ); }
+    if( !value.traps.empty() ) { result["traps"] = layer_array( value.traps, "trap" ); }
+    if( !value.items.empty() ) { result["items"] = layer_array( value.items, "item" ); }
+    if( value.vehicle ) { result["vehicle"] = layer_json( *value.vehicle, "vehicle_part" ); }
     if( value.light ) { result["light"] = *value.light; }
     if( value.memory ) {
-        result["memory"] = {{"terrain", to_json( value.memory->terrain )}};
-        if( value.memory->overlay ) { result["memory"]["overlay"] = to_json( *value.memory->overlay ); }
+        result["memory"] = {{"terrain", layer_json( value.memory->terrain, "terrain" )}};
+        if( value.memory->overlay ) { result["memory"]["overlay"] = layer_json( *value.memory->overlay, "" ); }
     }
     return result;
 }
@@ -307,7 +323,10 @@ auto to_json( const changes &delta ) -> json
     if( delta.avatar ) { result["avatar"] = to_json( *delta.avatar ); }
     if( delta.environment ) { result["environment"] = to_json( *delta.environment ); }
     if( delta.route ) { result["route"] = to_array( *delta.route ); }
-    if( delta.interaction ) { result["interaction"] = to_json( *delta.interaction ); }
+    if( delta.interaction ) {
+        result["interaction"] = to_json( *delta.interaction );
+        if( delta.actions_unchanged ) { result["interaction"].erase( "actions" ); }
+    }
     return result;
 }
 auto to_json( const event_value &value ) -> json

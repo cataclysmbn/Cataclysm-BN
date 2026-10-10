@@ -196,7 +196,7 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 3,
-          "description": "Quarter turns the native selection chose: 0 north, 1 west, 2 south, 3 east. Vehicle parts: the facing in four directions."
+          "description": "Quarter turns the native selection chose: 0 north, 1 west, 2 south, 3 east. Vehicle parts: the facing in four directions. Absent means 0."
         },
         "facing": {
           "enum": [
@@ -219,6 +219,92 @@
       ],
       "additionalProperties": false
     },
+    "layer_look": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "terrain",
+            "furniture",
+            "field",
+            "trap",
+            "item",
+            "vehicle_part",
+            "monster",
+            "npc",
+            "avatar",
+            "projectile",
+            "overlay"
+          ],
+          "description": "Left out when the cell layer already says it: terrain, furniture, trap, field, item and vehicle_part for the same-named layer, and memory.terrain as terrain."
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "description": "Player-facing name the native look shows, translated: \"wooden floor\" for t_floor. Absent for creatures (the entity's name) and ids the data no longer knows."
+        },
+        "glyph": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "tile": {
+          "type": "string",
+          "description": "Tile id native tilesets look up when it differs from id: corpses (corpse_<monster>), characters (player_male, npc_female), vehicle parts (vp_<id>)."
+        },
+        "looks_like": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 10,
+          "description": "The looks_like chain of the game data, nearest first, in the same namespace as the sprite id. A tiled client tries the sprite id, then these in order."
+        },
+        "subtile": {
+          "enum": [
+            "center",
+            "corner",
+            "edge",
+            "t_connection",
+            "end_piece",
+            "unconnected",
+            "open",
+            "broken"
+          ],
+          "description": "Multitile key the native tile selection chose from the known neighbours (terrain, furniture, trap, field) or the part state (vehicle part: open, broken, else center). Absent means center."
+        },
+        "rotation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "Quarter turns the native selection chose: 0 north, 1 west, 2 south, 3 east. Vehicle parts: the facing in four directions. Absent means 0."
+        },
+        "facing": {
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Side a creature faces; tilesets flip the sprite for left."
+        },
+        "stack": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Items on the square when there are several, on the displayed (last) item; the native view highlights such a stack."
+        }
+      },
+      "required": [
+        "id",
+        "glyph",
+        "color"
+      ],
+      "additionalProperties": false
+    },
     "cell": {
       "type": "object",
       "properties": {
@@ -233,10 +319,10 @@
           ]
         },
         "terrain": {
-          "$ref": "#/$defs/look"
+          "$ref": "#/$defs/layer_look"
         },
         "furniture": {
-          "$ref": "#/$defs/look"
+          "$ref": "#/$defs/layer_look"
         },
         "fields": {
           "type": "array",
@@ -244,7 +330,7 @@
             "type": "object",
             "properties": {
               "look": {
-                "$ref": "#/$defs/look"
+                "$ref": "#/$defs/layer_look"
               },
               "intensity": {
                 "type": "integer",
@@ -262,17 +348,17 @@
         "traps": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/look"
+            "$ref": "#/$defs/layer_look"
           }
         },
         "items": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/look"
+            "$ref": "#/$defs/layer_look"
           }
         },
         "vehicle": {
-          "$ref": "#/$defs/look"
+          "$ref": "#/$defs/layer_look"
         },
         "light": {
           "type": "integer",
@@ -284,7 +370,7 @@
           "type": "object",
           "properties": {
             "terrain": {
-              "$ref": "#/$defs/look"
+              "$ref": "#/$defs/layer_look"
             },
             "overlay": {
               "$ref": "#/$defs/look"
@@ -1422,6 +1508,59 @@
       ],
       "additionalProperties": false
     },
+    "interaction_update": {
+      "type": "object",
+      "properties": {
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "readiness": {
+          "$ref": "#/$defs/readiness"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interaction": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "boundary_id",
+        "readiness",
+        "interaction"
+      ],
+      "additionalProperties": false,
+      "description": "A boundary in an event. `actions` is left out when it equals the previous boundary's; the client keeps its own."
+    },
     "changes": {
       "type": "object",
       "properties": {
@@ -1479,7 +1618,7 @@
           "$ref": "#/$defs/route"
         },
         "interaction": {
-          "$ref": "#/$defs/interaction_boundary"
+          "$ref": "#/$defs/interaction_update"
         }
       },
       "required": [],

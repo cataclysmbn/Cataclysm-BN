@@ -36,6 +36,9 @@ struct changes {
     /// Replaces the whole route; empty clears it.
     std::optional<std::vector<position>> route = std::nullopt;
     std::optional<boundary_state> interaction = std::nullopt;
+    /// The wire leaves out the `actions` of `interaction` when they equal the previous boundary's;
+    /// a client keeps its own. Never set on a snapshot.
+    bool actions_unchanged = false;
     auto empty() const -> bool;
 };
 /// The changes that turn `from` into `to`. A cell or entity that left perception is

@@ -1442,6 +1442,91 @@
         "glyph": ".",
         "color": "light_gray"
       }
+    },
+    {
+      "name": "compact cell layers, then a boundary that keeps its actions",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "60",
+            "revision": "40",
+            "type": "cells.seen",
+            "command": "c:9",
+            "changes": {
+              "cells": [
+                {
+                  "at": {
+                    "dim": "",
+                    "x": 5,
+                    "y": 4,
+                    "z": 0
+                  },
+                  "known": "visible",
+                  "terrain": {
+                    "id": "t_floor",
+                    "glyph": ".",
+                    "color": "c_cyan",
+                    "subtile": "corner",
+                    "rotation": 2
+                  },
+                  "items": [
+                    {
+                      "id": "rock",
+                      "glyph": "*",
+                      "color": "c_light_gray"
+                    }
+                  ],
+                  "light": 3
+                },
+                {
+                  "at": {
+                    "dim": "",
+                    "x": 6,
+                    "y": 4,
+                    "z": 0
+                  },
+                  "known": "remembered",
+                  "memory": {
+                    "terrain": {
+                      "id": "t_wall",
+                      "glyph": "│",
+                      "color": "c_light_gray",
+                      "subtile": "edge",
+                      "rotation": 1
+                    },
+                    "overlay": {
+                      "kind": "trap",
+                      "id": "tr_beartrap",
+                      "glyph": "^",
+                      "color": "c_red"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "sequence": "61",
+            "revision": "41",
+            "type": "interaction.changed",
+            "command": "c:9",
+            "changes": {
+              "interaction": {
+                "boundary_id": "boundary:92",
+                "readiness": {
+                  "phase": "waiting_for_input",
+                  "game_ready": true,
+                  "accepts_interaction_commands": true,
+                  "accepts_registered_actions": true
+                },
+                "interaction": null
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [

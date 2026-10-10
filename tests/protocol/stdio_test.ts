@@ -437,10 +437,12 @@ Deno.test({
       const visible = [...session.mirror.cells.values()].filter((entry) =>
         entry.known === "visible"
       )
-      assert(visible.length > 0 && visible.every((entry) => entry.terrain?.subtile !== undefined))
-      assert(visible.every((entry) => [0, 1, 2, 3].includes(entry.terrain.rotation)))
+      // A cell layer leaves out the default `center` subtile and the turn 0.
+      const subtile = (entry: Value) => entry.terrain.subtile ?? "center"
+      assert(visible.length > 0 && visible.every((entry) => entry.terrain !== undefined))
+      assert(visible.every((entry) => [0, 1, 2, 3].includes(entry.terrain.rotation ?? 0)))
       assert(visible.every((entry) => Number.isInteger(entry.light) && entry.light >= 0))
-      assert(visible.some((entry) => entry.terrain.subtile !== "unconnected"), "connected terrain")
+      assert(visible.some((entry) => subtile(entry) !== "unconnected"), "connected terrain")
       assert(["player_male", "player_female"].includes(session.mirror.avatar.look?.tile))
       assert(["spring", "summer", "autumn", "winter"].includes(session.mirror.environment?.season))
       const avatarBefore = session.mirror.avatar.at
