@@ -315,12 +315,23 @@
             {
               "look": {
                 "kind": "item",
+                "id": "stick",
+                "glyph": "/",
+                "color": "brown"
+              },
+              "name": "stick",
+              "slot": "wielded"
+            },
+            {
+              "look": {
+                "kind": "item",
                 "id": "rock",
                 "glyph": "*",
                 "color": "light_gray"
               },
               "name": "rock",
-              "count": 2
+              "count": 2,
+              "slot": "carried"
             }
           ],
           "look": {
@@ -341,6 +352,18 @@
               "looks_like": [
                 "overlay_worn_jacket_leather"
               ]
+            }
+          ],
+          "ground": [
+            {
+              "look": {
+                "kind": "item",
+                "id": "lighter",
+                "glyph": ",",
+                "color": "blue"
+              },
+              "name": "lighter (12/25)",
+              "count": 2
             }
           ]
         },
@@ -1751,6 +1774,34 @@
             "id": "worn_hat",
             "glyph": "",
             "color": ""
+          }
+        ]
+      }
+    },
+    {
+      "name": "avatar item in an unknown slot",
+      "def": "avatar",
+      "why": "slot is wielded, worn or carried",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [],
+        "inventory": [
+          {
+            "look": {
+              "kind": "item",
+              "id": "stick",
+              "glyph": "/",
+              "color": "brown"
+            },
+            "name": "stick",
+            "slot": "pocket"
           }
         ]
       }

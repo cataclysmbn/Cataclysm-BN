@@ -91,8 +91,11 @@ struct avatar_stat {
 };
 struct inventory_entry {
     look appearance;
+    /// The display name the native UI shows, without color markup.
     std::string name = {};
     std::optional<std::uint64_t> count = std::nullopt;
+    /// "wielded", "worn" or "carried"; absent for items on the ground.
+    std::optional<std::string> slot = std::nullopt;
     auto operator<=>( const inventory_entry & ) const = default; // *NOPAD*
 };
 /// Text the native sidebar prints in a color; `color` is a native color name.
@@ -157,9 +160,11 @@ struct avatar_value {
     std::optional<look> appearance = std::nullopt;
     std::vector<look> overlays = {};
     std::vector<avatar_stat> stats = {};
-    /// Carried items, in the native inventory order. Items have no instance IDs.
+    /// The wielded item, the worn items, then the carried stacks. Items have no instance IDs.
     std::vector<inventory_entry> inventory = {};
     sidebar_value sidebar;
+    /// The stacks on the avatar's own square, which a pickup chooses from.
+    std::vector<inventory_entry> ground = {};
     auto operator<=>( const avatar_value & ) const = default; // *NOPAD*
 };
 struct environment_value {

@@ -437,7 +437,15 @@ auto season_name() -> std::string
     }
 }
 
-auto capture_avatar( const map &here, const avatar &you,
+/// One inventory row for a stack of equal items, named the way the native lists show it.
+auto stack_entry( const item &thing, const std::size_t count,
+                  std::optional<std::string> slot = std::nullopt ) -> inventory_entry
+{
+    return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = count,
+             .slot = std::move( slot ) };
+}
+
+auto capture_avatar( map &here, const avatar &you,
                      const std::string &dimension ) -> avatar_value
 {
     auto result = avatar_value{
@@ -453,13 +461,23 @@ auto capture_avatar( const map &here, const avatar &you,
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },
         .sidebar = sidebar_snapshot( you ) };
+    you.visit_items( [&]( const item * thing ) {
+        if( you.is_wielding( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "wielded" ) ); }
+        else if( you.is_worn( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "worn" ) ); }
+        return VisitResponse::NEXT;
+    } );
     for( const auto *stack : you.inv_const_slice() ) {
-        if( stack == nullptr ) { continue; }
-        for( const auto *thing : *stack ) {
-            if( thing != nullptr ) {
-                result.inventory.push_back( { .appearance = item_look( *thing ), .name = thing->type->nname( 1 ),
-                                              .count = static_cast<std::uint64_t>( thing->count() ) } );
-            }
+        if( stack != nullptr ) { result.inventory.push_back( stack_entry( *stack->front(), stack->size(), "carried" ) ); }
+    }
+    if( here.accessible_items( you.bub_pos() ) ) {
+        // The native pickup stacks equal items the same way; each stack is one choice there.
+        for( const auto *thing : here.i_at( you.bub_pos() ) ) {
+            const auto same = std::ranges::find_if( result.ground, [&]( const auto & entry ) {
+                return entry.name == remove_color_tags( thing->display_name() ) &&
+                       entry.appearance.id == thing->typeId().str();
+            } );
+            if( same != result.ground.end() ) { ++*same->count; }
+            else { result.ground.push_back( stack_entry( *thing, 1 ) ); }
         }
     }
     return result;

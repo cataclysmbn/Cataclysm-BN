@@ -358,6 +358,47 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "world capture lists what the avatar wields, wears, carries and stands on",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& you = get_avatar();
+    REQUIRE_FALSE(you.wield(item::spawn("knife_combat")));
+    REQUIRE_FALSE(you.wear_item(item::spawn("scarf_fur"), false));
+    you.i_add(item::spawn("hammer"));
+    you.i_add(item::spawn("hammer"));
+    get_map().add_item_or_charges(setup.start, item::spawn("hammer"));
+    get_map().add_item_or_charges(setup.start, item::spawn("hammer"));
+    get_map().add_item_or_charges(setup.start, item::spawn("screwdriver"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto slots = [](const auto& entries) {
+        return entries | std::views::transform([](const auto& entry) {
+                   return entry.slot.value_or("") + ":" + entry.name + ":"
+                        + std::to_string(entry.count.value_or(0));
+               })
+             | std::ranges::to<std::vector>();
+    };
+    const auto carried = slots(state.avatar->inventory);
+    CHECK(
+        std::ranges::count(carried, "wielded:" + item::spawn("knife_combat")->display_name() + ":1")
+        == 1);
+    CHECK(std::ranges::count_if(carried, [](const auto& row) { return row.starts_with("worn:"); })
+          >= 1);
+    CHECK(std::ranges::count(carried, "carried:" + item::spawn("hammer")->display_name() + ":2")
+          == 1);
+    CHECK_FALSE(std::ranges::any_of(carried, [](const auto& row) {
+        return row.find('<') != std::string::npos;
+    }));
+    const auto ground = slots(state.avatar->ground);
+    CHECK(
+        ground
+        == std::vector<std::string>{
+            ":" + item::spawn("hammer")->display_name() + ":2",
+            ":" + item::spawn("screwdriver")->display_name() + ":1"});
+}
+
+TEST_CASE(
     "world snapshot size is recorded and splits into several parts", "[engine_client_world]") {
     clear_all_state();
     build_test_map(ter_id("t_floor"));

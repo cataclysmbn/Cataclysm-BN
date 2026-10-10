@@ -424,6 +424,34 @@
         }
       ]
     },
+    "item_row": {
+      "type": "object",
+      "properties": {
+        "look": {
+          "$ref": "#/$defs/look"
+        },
+        "name": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "slot": {
+          "enum": [
+            "wielded",
+            "worn",
+            "carried"
+          ]
+        }
+      },
+      "required": [
+        "look",
+        "name"
+      ],
+      "additionalProperties": false
+    },
     "avatar": {
       "type": "object",
       "properties": {
@@ -468,25 +496,13 @@
         "inventory": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "look": {
-                "$ref": "#/$defs/look"
-              },
-              "name": {
-                "type": "string"
-              },
-              "count": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              }
-            },
-            "required": [
-              "look",
-              "name"
-            ],
-            "additionalProperties": false
+            "$ref": "#/$defs/item_row"
+          }
+        },
+        "ground": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/item_row"
           }
         },
         "sidebar": {

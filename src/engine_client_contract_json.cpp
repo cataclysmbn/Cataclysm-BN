@@ -106,6 +106,7 @@ auto to_json( const inventory_entry &value ) -> json
 {
     auto result = json{{"look", to_json( value.appearance )}, {"name", value.name}};
     if( value.count ) { result["count"] = *value.count; }
+    if( value.slot ) { result["slot"] = *value.slot; }
     return result;
 }
 auto to_json( const sidebar_text &value ) -> json
@@ -146,6 +147,7 @@ auto to_json( const avatar_value &value ) -> json
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
+    if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     return result;
 }
 auto to_json( const environment_value &value ) -> json
