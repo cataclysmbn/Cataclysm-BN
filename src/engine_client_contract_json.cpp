@@ -18,6 +18,8 @@ auto to_json( const cell &value ) -> json;
 auto to_json( const entity &value ) -> json;
 auto to_json( const avatar_stat &value ) -> json;
 auto to_json( const inventory_entry &value ) -> json;
+auto to_json( const sidebar_text &value ) -> json;
+auto to_json( const sidebar_limb &value ) -> json;
 auto to_json( const game_client::interaction_choice &choice ) -> json;
 
 auto to_json( const clock_point &at ) -> json
@@ -89,7 +91,9 @@ auto to_json( const entity &value ) -> json
 }
 auto to_json( const avatar_stat &value ) -> json
 {
-    return {{"id", value.id}, {"label", value.label}, {"value", value.value}};
+    auto result = json{{"id", value.id}, {"label", value.label}, {"value", value.value}};
+    if( !value.color.empty() ) { result["color"] = value.color; }
+    return result;
 }
 auto to_json( const inventory_entry &value ) -> json
 {
@@ -97,10 +101,41 @@ auto to_json( const inventory_entry &value ) -> json
     if( value.count ) { result["count"] = *value.count; }
     return result;
 }
+auto to_json( const sidebar_text &value ) -> json
+{
+    return {{"text", value.text}, {"color", value.color}};
+}
+auto to_json( const sidebar_limb &value ) -> json
+{
+    return {{"id", value.id}, {"label", to_json( value.label )}, {"hp", value.hp}, {"hp_max", value.hp_max},
+        {"color", value.color}, {"broken", value.broken}};
+}
+auto to_json( const sidebar_value &value ) -> json
+{
+    auto result = json{{"limbs", to_array( value.limbs )}, {"pain", to_json( value.pain )},
+        {"hunger", to_json( value.hunger )}, {"thirst", to_json( value.thirst )},
+        {"fatigue", to_json( value.fatigue )}, {"focus", value.focus},
+        {"morale", {{"level", value.morale_level}, {"face", value.morale.text}, {"color", value.morale.color}}},
+        {"stamina", {{"current", value.stamina}, {"max", value.stamina_max}, {"color", value.stamina_color}}},
+        {"speed", {{"value", value.speed}, {"color", value.speed_color}}},
+        {"movement", {{"counter", value.move_counter}, {"mode", value.move_mode}, {"color", value.move_color}}},
+        {"temperature", to_json( value.temperature )}, {"power", to_json( value.power )},
+        {"safe_mode", {{"enabled", value.safe_mode}, {"color", value.safe_color}}},
+        {"location", to_json( value.location )}, {"weather", to_json( value.weather )},
+        {
+            "time", {{"season", value.season}, {"day", value.day}, {"clock", value.clock},
+                {"has_watch", value.has_watch}
+            }
+        },
+        {"weapon", value.weapon}};
+    if( value.ambient ) { result["ambient_temperature"] = *value.ambient; }
+    if( value.style ) { result["style"] = to_json( *value.style ); }
+    return result;
+}
 auto to_json( const avatar_value &value ) -> json
 {
     auto result = json{{"id", value.id}, {"at", to_json( value.at )}, {"name", value.name},
-        {"stats", to_array( value.stats )}};
+        {"stats", to_array( value.stats )}, {"sidebar", to_json( value.sidebar )}};
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
     return result;
 }

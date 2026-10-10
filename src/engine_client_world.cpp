@@ -23,6 +23,8 @@
 #include "monster.h"
 #include "npc.h"
 #include "output.h"
+#include "panels_snapshot.h"
+#include "panels_utility.h"
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
@@ -268,13 +270,14 @@ auto capture_avatar( const map &here, const avatar &you,
     auto result = avatar_value{
         .id = "e:avatar", .at = position_of( here, you.bub_pos(), dimension ), .name = you.name,
         .stats = {
-            { "strength", _( "Strength" ), std::to_string( you.get_str() ) },
-            { "dexterity", _( "Dexterity" ), std::to_string( you.get_dex() ) },
-            { "intelligence", _( "Intelligence" ), std::to_string( you.get_int() ) },
-            { "perception", _( "Perception" ), std::to_string( you.get_per() ) },
+            { "strength", _( "Strength" ), std::to_string( you.get_str() ), color_of( color_compare_base( you.get_str_base(), you.get_str() ) ) },
+            { "dexterity", _( "Dexterity" ), std::to_string( you.get_dex() ), color_of( color_compare_base( you.get_dex_base(), you.get_dex() ) ) },
+            { "intelligence", _( "Intelligence" ), std::to_string( you.get_int() ), color_of( color_compare_base( you.get_int_base(), you.get_int() ) ) },
+            { "perception", _( "Perception" ), std::to_string( you.get_per() ), color_of( color_compare_base( you.get_per_base(), you.get_per() ) ) },
             { "moves", _( "Moves" ), std::to_string( you.get_moves() ) },
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
-        } };
+        },
+        .sidebar = sidebar_snapshot( you ) };
     for( const auto *stack : you.inv_const_slice() ) {
         if( stack == nullptr ) { continue; }
         for( const auto *thing : *stack ) {

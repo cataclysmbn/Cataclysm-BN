@@ -71,6 +71,8 @@ struct avatar_stat {
     std::string id = {};
     std::string label = {};
     std::string value = {};
+    /// Native color name of the stat, empty when the sidebar does not color it.
+    std::string color = {};
     auto operator<=>( const avatar_stat & ) const = default; // *NOPAD*
 };
 struct inventory_entry {
@@ -79,6 +81,61 @@ struct inventory_entry {
     std::optional<std::uint64_t> count = std::nullopt;
     auto operator<=>( const inventory_entry & ) const = default; // *NOPAD*
 };
+/// Text the native sidebar prints in a color; `color` is a native color name.
+struct sidebar_text {
+    std::string text = {};
+    std::string color = {};
+    auto operator<=>( const sidebar_text & ) const = default; // *NOPAD*
+};
+struct sidebar_limb {
+    std::string id = {};
+    /// The native short label (`HEAD`, `TORSO`, ...) in the limb's condition color.
+    sidebar_text label;
+    int hp = 0;
+    int hp_max = 0;
+    /// Color of the native health bar, which also marks a broken limb.
+    std::string color = {};
+    bool broken = false;
+    auto operator<=>( const sidebar_limb & ) const = default; // *NOPAD*
+};
+/// What the native sidebar (classic layout) shows, taken from the same getters.
+struct sidebar_value {
+    std::vector<sidebar_limb> limbs = {};
+    sidebar_text pain;
+    sidebar_text hunger;
+    sidebar_text thirst;
+    sidebar_text fatigue;
+    int focus = 0;
+    /// `text` is the native face for the morale level.
+    sidebar_text morale;
+    int morale_level = 0;
+    int stamina = 0;
+    int stamina_max = 0;
+    std::string stamina_color = {};
+    int speed = 0;
+    std::string speed_color = {};
+    int move_counter = 0;
+    /// `walk`, `run`, `crouch` or `prone`.
+    std::string move_mode = {};
+    std::string move_color = {};
+    /// Body temperature state with the native trend arrows.
+    sidebar_text temperature;
+    sidebar_text power;
+    bool safe_mode = false;
+    std::string safe_color = {};
+    sidebar_text location;
+    sidebar_text weather;
+    std::string season = {};
+    int day = 0;
+    /// The watch time, or the approximate time of day without a watch; empty underground.
+    std::string clock = {};
+    bool has_watch = false;
+    /// Ambient temperature, only with a thermometer.
+    std::optional<std::string> ambient = std::nullopt;
+    std::string weapon = {};
+    std::optional<sidebar_text> style = std::nullopt;
+    auto operator<=>( const sidebar_value & ) const = default; // *NOPAD*
+};
 struct avatar_value {
     std::string id = {};
     position at;
@@ -86,6 +143,7 @@ struct avatar_value {
     std::vector<avatar_stat> stats = {};
     /// Carried items, in the native inventory order. Items have no instance IDs.
     std::vector<inventory_entry> inventory = {};
+    sidebar_value sidebar;
     auto operator<=>( const avatar_value & ) const = default; // *NOPAD*
 };
 struct environment_value {

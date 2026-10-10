@@ -410,6 +410,13 @@ Deno.test({
 
       // The loaded world is known: cells and the avatar.
       assert(session.mirror.cells.size > 0, "known cells")
+      // The avatar carries the native sidebar: every limb, the needs and the time of day.
+      const sidebar = session.mirror.avatar.sidebar
+      assert(sidebar.limbs.length >= 6, "limbs")
+      assertEquals(typeof sidebar.limbs[0].hp, "number")
+      assertEquals(typeof sidebar.hunger.text, "string")
+      assert(["walk", "run", "crouch", "prone"].includes(sidebar.movement.mode))
+      assert(sidebar.location.text.length > 0, "location name")
       const avatarBefore = session.mirror.avatar.at
       const typesBefore = session.eventTypes.length
       const before = BigInt(session.mirror.at.sequence)

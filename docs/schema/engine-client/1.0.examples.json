@@ -934,6 +934,106 @@
           }
         ]
       }
+    },
+    {
+      "name": "avatar with sidebar",
+      "def": "avatar",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [
+          {
+            "id": "strength",
+            "label": "Strength",
+            "value": "8",
+            "color": "white"
+          }
+        ],
+        "sidebar": {
+          "limbs": [
+            {
+              "id": "head",
+              "label": {
+                "text": "HEAD",
+                "color": "white"
+              },
+              "hp": 55,
+              "hp_max": 55,
+              "color": "green",
+              "broken": false
+            }
+          ],
+          "pain": {
+            "text": "Pain 3",
+            "color": "light_red"
+          },
+          "hunger": {
+            "text": "Hungry",
+            "color": "yellow"
+          },
+          "thirst": {
+            "text": "",
+            "color": "white"
+          },
+          "fatigue": {
+            "text": "Tired",
+            "color": "yellow"
+          },
+          "focus": 100,
+          "morale": {
+            "level": 12,
+            "face": ":)",
+            "color": "green"
+          },
+          "stamina": {
+            "current": 1000,
+            "max": 1000,
+            "color": "green"
+          },
+          "speed": {
+            "value": 100,
+            "color": "white"
+          },
+          "movement": {
+            "counter": 0,
+            "mode": "walk",
+            "color": "white"
+          },
+          "temperature": {
+            "text": "Comfortable",
+            "color": "green"
+          },
+          "power": {
+            "text": "--",
+            "color": "light_gray"
+          },
+          "safe_mode": {
+            "enabled": true,
+            "color": "green"
+          },
+          "location": {
+            "text": "field",
+            "color": "white"
+          },
+          "weather": {
+            "text": "Clear",
+            "color": "light_cyan"
+          },
+          "time": {
+            "season": "Spring",
+            "day": 1,
+            "clock": "Around noon",
+            "has_watch": false
+          },
+          "weapon": "fists"
+        }
+      }
     }
   ],
   "invalid": [
@@ -1385,6 +1485,107 @@
       "value": {
         "cols": 0,
         "rows": 25
+      }
+    },
+    {
+      "name": "avatar sidebar with unknown movement mode",
+      "def": "avatar",
+      "why": "movement.mode is walk, run, crouch or prone",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [
+          {
+            "id": "strength",
+            "label": "Strength",
+            "value": "8",
+            "color": "white"
+          }
+        ],
+        "sidebar": {
+          "limbs": [
+            {
+              "id": "head",
+              "label": {
+                "text": "HEAD",
+                "color": "white"
+              },
+              "hp": 55,
+              "hp_max": 55,
+              "color": "green",
+              "broken": false
+            }
+          ],
+          "pain": {
+            "text": "Pain 3",
+            "color": "light_red"
+          },
+          "hunger": {
+            "text": "Hungry",
+            "color": "yellow"
+          },
+          "thirst": {
+            "text": "",
+            "color": "white"
+          },
+          "fatigue": {
+            "text": "Tired",
+            "color": "yellow"
+          },
+          "focus": 100,
+          "morale": {
+            "level": 12,
+            "face": ":)",
+            "color": "green"
+          },
+          "stamina": {
+            "current": 1000,
+            "max": 1000,
+            "color": "green"
+          },
+          "speed": {
+            "value": 100,
+            "color": "white"
+          },
+          "movement": {
+            "counter": 0,
+            "mode": "fly",
+            "color": "white"
+          },
+          "temperature": {
+            "text": "Comfortable",
+            "color": "green"
+          },
+          "power": {
+            "text": "--",
+            "color": "light_gray"
+          },
+          "safe_mode": {
+            "enabled": true,
+            "color": "green"
+          },
+          "location": {
+            "text": "field",
+            "color": "white"
+          },
+          "weather": {
+            "text": "Clear",
+            "color": "light_cyan"
+          },
+          "time": {
+            "season": "Spring",
+            "day": 1,
+            "clock": "Around noon",
+            "has_watch": false
+          },
+          "weapon": "fists"
+        }
       }
     }
   ]

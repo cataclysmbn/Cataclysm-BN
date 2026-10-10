@@ -4,6 +4,8 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "catch/catch.hpp"
+#include "character_functions.h"
+#include "color.h"
 #include "engine_client_event.h"
 #include "engine_client_world.h"
 #include "game.h"
@@ -15,6 +17,9 @@
 #include "map_perception.h"
 #include "monster.h"
 #include "output.h"
+#include "overmap/omdata.h"
+#include "overmap/overmap.h"
+#include "overmap/overmapbuffer.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "rng.h"
@@ -526,4 +531,43 @@ TEST_CASE(
         CHECK_FALSE(g->click_cell_of(setup.start));
     }
     g->w_terrain = {};
+}
+
+TEST_CASE("world capture carries the native sidebar values", "[engine_client_world]") {
+    make_scene();
+    auto& you = get_avatar();
+    you.set_pain(30);
+    you.focus_pool = 77;
+    you.set_part_hp_cur(bodypart_id("arm_l"), 0);
+    you.add_effect(efftype_id("disabled"), 1_hours, bodypart_str_id("arm_l"), true);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto& sidebar = state.avatar->sidebar;
+    const auto pain = you.get_pain_description();
+    CHECK(sidebar.pain.text == pain.first);
+    CHECK(sidebar.pain.color == get_all_colors().get_name(pain.second));
+    CHECK(sidebar.hunger.text == you.get_hunger_description().first);
+    CHECK(sidebar.thirst.text == you.get_thirst_description().first);
+    CHECK(sidebar.fatigue.text == you.get_fatigue_description().first);
+    CHECK(sidebar.focus == 77);
+    CHECK(sidebar.stamina == you.get_stamina());
+    CHECK(sidebar.stamina_max == you.get_stamina_max());
+    CHECK(sidebar.speed == you.get_speed());
+    CHECK(sidebar.move_mode == "walk");
+    CHECK(sidebar.weapon == character_funcs::fmt_wielded_weapon(you));
+    CHECK(sidebar.location.text == ACTIVE_OVERMAP_BUFFER.ter(you.abs_omt_pos())->get_name());
+    CHECK(sidebar.limbs.size() == you.get_all_body_parts(true).size());
+    const auto arm = std::ranges::find(sidebar.limbs, "arm_l", &ec::sidebar_limb::id);
+    REQUIRE(arm != sidebar.limbs.end());
+    CHECK(arm->broken);
+    CHECK(arm->hp == 0);
+    CHECK(arm->color == "c_dark_gray");
+    const auto head = std::ranges::find(sidebar.limbs, "head", &ec::sidebar_limb::id);
+    REQUIRE(head != sidebar.limbs.end());
+    CHECK_FALSE(head->broken);
+    CHECK(head->hp == you.get_part_hp_cur(bodypart_id("head")));
+    you.set_pain(0);
+    const auto calm = ec::world::capture_world();
+    CHECK(calm.avatar->sidebar.pain.text != sidebar.pain.text);
 }

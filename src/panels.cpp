@@ -36,6 +36,7 @@
 #include "overmap/overmap.h"
 #include "overmap/overmap_ui.h"
 #include "overmap/overmapbuffer.h"
+#include "panels_snapshot.h"
 #include "panels_utility.h"
 #include "path_info.h"
 #include "player.h"
@@ -1120,7 +1121,7 @@ static void draw_stats( avatar &u, const catacurses::window &w )
     wnoutrefresh( w );
 }
 
-static nc_color move_mode_color( avatar &u )
+static nc_color move_mode_color( const avatar &u )
 {
     if( u.movement_mode_is( CMM_RUN ) ) {
         return c_red;
@@ -1133,7 +1134,7 @@ static nc_color move_mode_color( avatar &u )
     }
 }
 
-static std::string move_mode_string( avatar &u )
+static std::string move_mode_string( const avatar &u )
 {
     if( u.movement_mode_is( CMM_RUN ) ) {
         return pgettext( "movement-type", "R" );
@@ -3018,4 +3019,77 @@ void panel_manager::show_adm()
 
     g->show_panel_adm = false;
     g->invalidate_main_ui_adaptor();
+}
+
+auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
+{
+    using namespace engine_client;
+    const auto name = []( const nc_color & color ) { return get_all_colors().get_name( color ); };
+    const auto text = [&]( const std::pair<std::string, nc_color> &pair ) -> sidebar_text {
+        return { .text = pair.first, .color = name( pair.second ) };
+    };
+    const auto colored = [&]( const std::pair<nc_color, std::string> &pair ) -> sidebar_text {
+        return { .text = pair.second, .color = name( pair.first ) };
+    };
+    auto result = sidebar_value{};
+    for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
+        const auto broken = u.is_limb_broken( bp.id() ) && !bp->essential;
+        const auto splinted = u.worn_with_flag( json_flag_SPLINT, bp.id() ) ||
+                              u.mutation_value( "mending_modifier" ) >= 1.0f;
+        const auto hp_cur = u.get_part_hp_cur( bp.id() );
+        const auto hp_max = u.get_part_hp_max( bp.id() );
+        result.limbs.push_back( {
+            .id = bp.id().str(),
+            .label = {
+                .text = body_part_hp_bar_ui_text( bp ),
+                .color = name( u.limb_color( bp.id(), true, true, true ) )
+            },
+            .hp = hp_cur, .hp_max = hp_max,
+            .color = name( broken ? ( splinted ? c_blue : c_dark_gray ) : get_hp_bar( hp_cur, hp_max ).second ),
+            .broken = broken } );
+    }
+    result.pain = text( u.get_pain_description() );
+    result.hunger = text( u.get_hunger_description() );
+    result.thirst = text( u.get_thirst_description() );
+    result.fatigue = text( u.get_fatigue_description() );
+    result.focus = u.focus_pool;
+    const auto morale = morale_stat( u );
+    result.morale_level = morale.second;
+    result.morale = { .text = morale_emotion( morale.second, get_face_type( u ),
+                              get_option<std::string>( "MORALE_STYLE" ) == "horizontal" ), .color = name( morale.first )
+                    };
+    result.stamina = u.get_stamina();
+    result.stamina_max = u.get_stamina_max();
+    result.stamina_color = name( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second );
+    result.speed = u.get_speed();
+    result.speed_color = name( u.get_speed() < 100 ? c_red : c_white );
+    result.move_counter = u.movecounter;
+    result.move_mode = u.movement_mode_is( CMM_RUN ) ? "run" : u.movement_mode_is(
+                           CMM_CROUCH ) ? "crouch" :
+                       u.movement_mode_is( CMM_PRONE ) ? "prone" : "walk";
+    result.move_color = name( u.movement_mode_is( CMM_WALK ) ? c_white : move_mode_color( u ) );
+    const auto temperature = temp_stat( u );
+    result.temperature = { .text = temperature.second + temp_delta_string( u ), .color = name( temperature.first ) };
+    result.power = colored( power_stat( u ) );
+    result.safe_mode = g->safe_mode || get_option<bool>( "AUTOSAFEMODE" );
+    result.safe_color = name( safe_color() );
+    result.location = { .text = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() )->get_name(), .color = name( c_white ) };
+    const auto underground = g->get_levz() < 0;
+    result.weather = underground ? sidebar_text{ .text = _( "Underground" ), .color = name( c_light_gray ) } :
+                     sidebar_text{ .text = get_weather().weather_id->name.translated(),
+                                   .color = name( get_weather().weather_id->color ) };
+    result.season = calendar::name_season( season_of_year( calendar::turn ) );
+    result.day = day_of_season<int>( calendar::turn ) + 1;
+    result.has_watch = u.has_watch();
+    result.clock = result.has_watch ? to_string_time_of_day( calendar::turn ) : underground ? "" :
+                   time_approx();
+    if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
+        u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
+        result.ambient = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
+    }
+    result.weapon = character_funcs::fmt_wielded_weapon( u );
+    if( const auto style = u.martial_arts_data->selected_style_name( u ); !style.empty() ) {
+        result.style = sidebar_text{ .text = style, .color = name( u.is_armed() ? c_red : c_blue ) };
+    }
+    return result;
 }

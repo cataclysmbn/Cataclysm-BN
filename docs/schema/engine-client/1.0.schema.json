@@ -400,6 +400,9 @@
                   "string",
                   "number"
                 ]
+              },
+              "color": {
+                "type": "string"
               }
             },
             "required": [
@@ -433,6 +436,9 @@
             ],
             "additionalProperties": false
           }
+        },
+        "sidebar": {
+          "$ref": "#/$defs/sidebar"
         }
       },
       "required": [
@@ -440,6 +446,239 @@
         "at",
         "name",
         "stats"
+      ],
+      "additionalProperties": false
+    },
+    "sidebar_text": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "sidebar": {
+      "type": "object",
+      "properties": {
+        "limbs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "label": {
+                "$ref": "#/$defs/sidebar_text"
+              },
+              "hp": {
+                "type": "integer"
+              },
+              "hp_max": {
+                "type": "integer"
+              },
+              "color": {
+                "type": "string"
+              },
+              "broken": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "label",
+              "hp",
+              "hp_max",
+              "color",
+              "broken"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "pain": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "hunger": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "thirst": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "fatigue": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "focus": {
+          "type": "integer"
+        },
+        "morale": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "integer"
+            },
+            "face": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "level",
+            "face",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        "stamina": {
+          "type": "object",
+          "properties": {
+            "current": {
+              "type": "integer"
+            },
+            "max": {
+              "type": "integer"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "current",
+            "max",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        "speed": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "integer"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        "movement": {
+          "type": "object",
+          "properties": {
+            "counter": {
+              "type": "integer"
+            },
+            "mode": {
+              "enum": [
+                "walk",
+                "run",
+                "crouch",
+                "prone"
+              ]
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "counter",
+            "mode",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        "temperature": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "power": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "safe_mode": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "enabled",
+            "color"
+          ],
+          "additionalProperties": false
+        },
+        "location": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "weather": {
+          "$ref": "#/$defs/sidebar_text"
+        },
+        "time": {
+          "type": "object",
+          "properties": {
+            "season": {
+              "type": "string"
+            },
+            "day": {
+              "type": "integer"
+            },
+            "clock": {
+              "type": "string"
+            },
+            "has_watch": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "season",
+            "day",
+            "clock",
+            "has_watch"
+          ],
+          "additionalProperties": false
+        },
+        "ambient_temperature": {
+          "type": "string"
+        },
+        "weapon": {
+          "type": "string"
+        },
+        "style": {
+          "$ref": "#/$defs/sidebar_text"
+        }
+      },
+      "required": [
+        "limbs",
+        "pain",
+        "hunger",
+        "thirst",
+        "fatigue",
+        "focus",
+        "morale",
+        "stamina",
+        "speed",
+        "movement",
+        "temperature",
+        "power",
+        "safe_mode",
+        "location",
+        "weather",
+        "time",
+        "weapon"
       ],
       "additionalProperties": false
     },
