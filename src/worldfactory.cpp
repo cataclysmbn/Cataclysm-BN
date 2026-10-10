@@ -1,3 +1,4 @@
+#include "client_choice.h"
 #include "worldfactory.h"
 
 #include <algorithm>
@@ -718,10 +719,32 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
         wnoutrefresh( w_mods );
     } );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Active world mods" ),
+            .message = world_mods.empty() ? _( "--NO ACTIVE MODS--" ) : std::string(),
+            .allow_cancel = true,
+        };
+        for( auto i = std::size_t{ 0 }; i < world_mods.size(); ++i ) {
+            snapshot.choices.push_back( {
+                .id = "mod:" + std::to_string( i ), .label = world_mods[i]->name(),
+                .description = static_cast<int>( i ) == cursor
+                ? remove_color_tags( mman_ui->get_information( &world_mods[i].obj() ) ) : std::string(),
+                .highlighted = static_cast<int>( i ) == cursor,
+            } );
+        }
+        return snapshot;
+    } );
+
     while( true ) {
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "mod:" ) ) { cursor = std::stoi( id.substr( 4 ) ); }
+            return std::string();
+        } );
 
         if( action == "UP" ) {
             cursor--;
@@ -1116,6 +1139,60 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
         fpopup.reset();
     };
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        const auto &tabs = get_mod_list_tabs();
+        const auto &current_tab = all_tabs[iCurrentTab];
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Mods" ),
+            .message = current_filter.empty() ? std::string() : string_format( _( "Filter: %s" ), current_filter ),
+            .allow_cancel = true,
+        };
+        if( current_tab.mods.empty() ) {
+            snapshot.message += ( snapshot.message.empty() ? "" : "\n" ) +
+                                std::string( current_tab.mods_unfiltered.empty() ? _( "--NO AVAILABLE MODS--" )
+                                             : _( "--NO MATCHES--" ) );
+        }
+        for( auto i = std::size_t{ 0 }; i < tabs.size(); ++i ) {
+            snapshot.panes.push_back( { .id = "tab" + std::to_string( i ), .label = _( tabs[i].second ),
+                                        .role = i == iCurrentTab ? "focused" : "category" } );
+            snapshot.choices.push_back( { .id = "tab:" + std::to_string( i ), .label = _( tabs[i].second ),
+                                          .selected = i == iCurrentTab } );
+        }
+        const auto describe = [&]( const mod_id & mod, const bool highlighted ) {
+            return highlighted ? remove_color_tags( mman_ui->get_information( &mod.obj() ) ) : std::string();
+        };
+        for( auto i = std::size_t{ 0 }; i < current_tab.mods.size(); ++i ) {
+            const auto highlighted = active_header == 0 && i == cursel[0];
+            snapshot.choices.push_back( {
+                .id = "mod:" + std::to_string( i ), .label = current_tab.mods[i]->name(),
+                .description = describe( current_tab.mods[i], highlighted ),
+                .pane_id = "tab" + std::to_string( iCurrentTab ), .highlighted = highlighted,
+            } );
+        }
+        for( auto i = std::size_t{ 0 }; i < active_mod_order.size(); ++i ) {
+            const auto highlighted = active_header == 1 && i == cursel[1];
+            snapshot.choices.push_back( {
+                .id = "active:" + std::to_string( i ), .label = active_mod_order[i]->name(),
+                .description = describe( active_mod_order[i], highlighted ),
+                .pane_id = "active", .selected = true, .highlighted = highlighted,
+                .columns = { { .label = _( "Order" ), .value = std::to_string( i + 1 ) } },
+            } );
+        }
+        auto actions = std::vector<const char *> { "ADD_MOD", "REMOVE_MOD", "FILTER", "TOGGLE_SHOW_OBSOLETE",
+                "SAVE_DEFAULT_MODS"
+                                                 };
+        if( !standalone ) {
+            actions.push_back( "NEXT_TAB" );
+            actions.push_back( "PREV_TAB" );
+        }
+        for( const auto *id : actions ) {
+            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+        }
+        return snapshot;
+    } );
+
     int tab_output = 0;
     while( tab_output == 0 ) {
         ui_manager::redraw();
@@ -1137,7 +1214,26 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
                              prev_selection;
         }
 
-        const std::string action = ctxt.handle_input();
+        const auto action = game_client::action_of( ctxt,
+        ctxt.handle_input(), [&]( const std::string & id ) {
+            if( id.starts_with( "tab:" ) ) {
+                iCurrentTab = std::stoul( id.substr( 4 ) );
+                startsel[0] = 0;
+                cursel[0] = 0;
+            } else if( id.starts_with( "mod:" ) ) {
+                active_header = 0;
+                cursel[0] = std::stoul( id.substr( 4 ) );
+                return std::string( "CONFIRM" );
+            } else if( id.starts_with( "active:" ) ) {
+                // The first choice marks the mod for the move actions, the second deactivates it.
+                const auto index = std::stoul( id.substr( 7 ) );
+                const auto marked = active_header == 1 && cursel[1] == index;
+                active_header = 1;
+                cursel[1] = index;
+                return std::string( marked ? "CONFIRM" : "" );
+            }
+            return std::string();
+        } );
 
         if( action == "DOWN" ) {
             selection = next_selection;
