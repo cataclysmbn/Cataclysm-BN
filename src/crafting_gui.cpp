@@ -384,9 +384,9 @@ auto crafting_interaction_snapshot( const crafting_interaction_options &opts )
             } ),
             .label = opts.batch ? string_format( _( "%2dx %s" ), count, rec->result_name( true ) )
             : rec->result_name( true ),
-            .pane_id = opts.batch ? std::nullopt : std::optional{ opts.category },
 .denial = opts.available[index].can_craft || rec->is_nested() ? std::string{} :
             _( "You can't do that!" ),
+            .pane_id = opts.batch ? std::nullopt : std::optional{ opts.category },
             .enabled = opts.available[index].can_craft || rec->is_nested(),
             .selectable = true,
             .selected = static_cast<int>( index ) == opts.line,
