@@ -21,6 +21,7 @@
 #    include "map/mapdata.h"
 #    include "map_helpers.h"
 #    include "map_memory.h"
+#    include "map_perception.h"
 #    include "messages.h"
 #    include "options_helpers.h"
 #    include "output.h"
@@ -368,6 +369,54 @@ TEST_CASE(
         check_same(remembered(target_abs), intermediate);
         check_unknown(occluded_abs);
         check_unknown(distant_abs);
+    });
+}
+
+TEST_CASE(
+    "a step refreshes visibility once and publishes the same perception",
+    "[map_perception_bionics_boundary][visibility_refresh][mcp]") {
+    with_dark_room([]() {
+        auto& here = get_map();
+        auto& you = get_avatar();
+        struct step_result {
+            std::vector<tripoint_bub_ms> visible;
+            size_t refreshes;
+        };
+        // One step as the game runs it: move, acquire after handle_action, do_turn's
+        // invalidation and refresh, acquire at the next handle_action.
+        const auto step = [&](const point& delta, const bool blanket) {
+            const auto before = map_perception::visibility_refresh_count();
+            you.Character::setpos(you.abs_pos() + delta);
+            here.invalidate_visibility_caches();
+            map_perception::acquire();
+            g->reset_light_level();
+            if (blanket) {
+                here.invalidate_visibility_caches();
+            } else {
+                map_perception::invalidate_stale_visibility(here);
+            }
+            here.build_map_cache(you.bub_pos().z(), true);
+            if (here.visibility_caches_dirty()) { here.update_visibility_cache(you.bub_pos().z()); }
+            map_perception::acquire();
+            auto visible = map_perception::visible_cells(here);
+            std::ranges::sort(visible, std::less<>{}, [](const auto& p) { return p.raw(); });
+            return step_result{
+                .visible = visible,
+                .refreshes = map_perception::visibility_refresh_count() - before};
+        };
+        map_perception::acquire();
+        const auto reused = step(point_east, false);
+        const auto blanket = step(point_west, true);
+        CHECK(blanket.refreshes == 2);
+        CHECK(reused.refreshes == 1);
+        CHECK_FALSE(reused.visible.empty());
+        // Same position as the blanket step's start, so the cells must match it.
+        const auto again = step(point_east, true);
+        CHECK(again.visible == reused.visible);
+        // A change the turn did not see coming still forces a rebuild.
+        you.Character::setpos(you.abs_pos() + point_east);
+        map_perception::invalidate_stale_visibility(here);
+        CHECK(here.visibility_caches_dirty());
     });
 }
 

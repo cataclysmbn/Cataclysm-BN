@@ -553,6 +553,25 @@ auto memory_changed( const tripoint_abs_ms &p ) -> void
     }
 }
 
+namespace
+{
+auto visibility_refreshes = size_t { 0 };
+} // namespace
+
+auto visibility_refresh_count() -> size_t { return visibility_refreshes; }
+auto visibility_refreshed() -> void { ++visibility_refreshes; }
+
+auto invalidate_stale_visibility( map &here ) -> void
+{
+    auto &you = get_avatar();
+    const auto vision = here.make_visibility_variables( you.bub_pos().z() );
+    if( state.owner != &here || state.position != you.abs_pos() ||
+        !same_vision( state.vision, vision ) || state.blind != you.is_blind() ||
+        state.threshold != g_visible_threshold ) {
+        here.invalidate_visibility_caches();
+    }
+}
+
 auto acquire() -> acquisition_counts
 {
     auto counts = acquisition_counts{};
@@ -569,13 +588,9 @@ auto acquire() -> acquisition_counts
     }
     you.recalc_sight_limits();
     g->reset_light_level();
-    const auto vision = here.make_visibility_variables( zlev );
     // Detect changed actor knowledge before the CPU cached-light shortcut. Unchanged
     // inputs reuse native caches; camera offset, zoom and redraw are not inputs.
-    if( state.position != you.abs_pos() || !same_vision( state.vision, vision ) ||
-        state.blind != you.is_blind() || state.threshold != g_visible_threshold ) {
-        here.invalidate_visibility_caches();
-    }
+    invalidate_stale_visibility( here );
     // Native sparse dynamic-light detection must run even with a clean visibility flag.
     ++counts.cache_checks;
     here.build_map_cache( zlev, false );
