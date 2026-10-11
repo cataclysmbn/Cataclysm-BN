@@ -8,6 +8,7 @@
 #include "cursesdef.h"
 #include "npctrade.h"
 
+class input_context;
 class item;
 class npc;
 class string_input_popup;
@@ -37,7 +38,8 @@ class trading_window
         auto show_item_data( size_t index, bool target_is_theirs ) -> info_popup_result;
         auto build_filtered_indices( const std::vector<item_pricing> &list,
                                      const std::string &filter ) const -> std::vector<size_t>;
-        auto interaction_snapshot( const npc &np ) const -> game_client::interaction_snapshot;
+        auto interaction_snapshot( const npc &np,
+                                   input_context &ctxt ) const -> game_client::interaction_snapshot;
         auto get_var_trade( const item &it, int total_count, int amount_hint ) -> int;
 
         npc_trading::trade_state &state;

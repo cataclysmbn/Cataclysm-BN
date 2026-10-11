@@ -1916,6 +1916,7 @@
         "area_description": "Free capacity: 43.83 kg, 14.97 L",
         "filter": "",
         "storage_kind": "inventory",
+        "page": { "number": 1, "count": 2 },
         "totals": {
           "weight": "1.17",
           "weight_max": "45.00",

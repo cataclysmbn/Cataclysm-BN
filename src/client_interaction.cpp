@@ -130,6 +130,7 @@ auto schema_for( const interaction_snapshot &snapshot,
     hash.add( snapshot.title );
     hash.add( snapshot.message );
     hash.add( snapshot.message_tone );
+    if( snapshot.category_mode ) { hash.add( *snapshot.category_mode ? "category-on" : "category-off" ); }
     std::ranges::for_each( snapshot.banner, [&hash]( const auto & line ) { hash.add( line ); } );
     hash.add( snapshot.allow_cancel ? "cancel" : "no-cancel" );
     hash.add( snapshot.allow_set_count ? "set-count" : "no-set-count" );
@@ -142,6 +143,12 @@ auto schema_for( const interaction_snapshot &snapshot,
         hash.add( pane.area_description );
         hash.add( pane.filter );
         hash.add( pane.storage_kind );
+        hash.add( pane.sort );
+        if( pane.page ) { hash.add( std::to_string( pane.page->number ) + "/" + std::to_string( pane.page->count ) ); }
+        if( pane.totals ) {
+            hash.add( pane.totals->weight_max + pane.totals->volume_max + pane.totals->weight_unit +
+                      pane.totals->volume_unit );
+        }
         std::ranges::for_each( pane.blocked_areas, [&hash]( const auto & area ) { hash.add( area ); } );
     }
     auto ordinal = std::size_t{0};
@@ -308,6 +315,7 @@ auto materialize( acquired_interaction acquired,
             .title = full.title,
             .message = full.message,
             .message_tone = full.message_tone,
+            .category_mode = full.category_mode,
             .banner = full.banner,
             .structured = full.structured,
             .actions_only = full.actions_only,
@@ -689,6 +697,7 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
     json.member( "title", snapshot.title );
     json.member( "message", snapshot.message );
     if( !snapshot.message_tone.empty() ) { json.member( "message_tone", snapshot.message_tone ); }
+    if( snapshot.category_mode ) { json.member( "category_mode", *snapshot.category_mode ); }
     json.member( "panes" );
     json.start_array();
     for( const auto &pane : snapshot.panes ) {
@@ -702,6 +711,13 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
         json.member( "filter", pane.filter );
         json.member( "storage_kind", pane.storage_kind );
         json.member( "sort", pane.sort );
+        if( pane.page ) {
+            json.member( "page" );
+            json.start_object();
+            json.member( "number", pane.page->number );
+            json.member( "count", pane.page->count );
+            json.end_object();
+        }
         if( pane.totals ) {
             json.member( "totals" );
             json.start_object();

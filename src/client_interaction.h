@@ -79,6 +79,12 @@ struct interaction_totals {
     bool over_volume = false;
 };
 
+/// The page a paged native list shows, counted from 1.
+struct interaction_page_position {
+    int number = 1;
+    int count = 1;
+};
+
 struct interaction_pane {
     std::string id;
     std::string label;
@@ -90,6 +96,8 @@ struct interaction_pane {
     std::string storage_kind;
     /// Registered actions of the areas this pane cannot put items in, which the native screen draws red.
     std::vector<std::string> blocked_areas;
+    /// The native page indicator; absent for a list that does not page.
+    std::optional<interaction_page_position> page;
 };
 
 struct interaction_field {
@@ -167,6 +175,8 @@ struct interaction_snapshot {
     std::string message;
     /// `good` or `bad` where the native screen colors the message line green or red; empty otherwise.
     std::string message_tone;
+    /// The state of the native category-selection mode; absent where the screen has none.
+    std::optional<bool> category_mode;
     /// Lines drawn above the menu in a fixed-width font, with color tags: the main menu's title art and version.
     std::vector<std::string> banner;
     bool structured = false;
