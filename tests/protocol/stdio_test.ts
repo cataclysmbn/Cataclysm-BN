@@ -1293,61 +1293,125 @@ Deno.test({
   },
 })
 
-Deno.test({
-  name: "stdio: SIGTERM is named on stderr and ends the engine by the signal, not by exit code 0",
-  ignore: !Deno.env.get("BN_BINARY"),
-  async fn() {
-    const profile = await makeProfile()
-    const process = new Deno.Command(Deno.env.get("BN_BINARY")!, {
-      args: ["--client=mcp", "--userdir", `${profile}/`, "--configdir", `${profile}/config/`],
-      stdin: "piped",
-      stdout: "piped",
-      stderr: "piped",
-    }).spawn()
-    try {
-      const writer = process.stdin.getWriter()
-      const send = (value: Value) =>
-        writer.write(new TextEncoder().encode(JSON.stringify(value) + "\n"))
-      const reader = process.stdout.pipeThrough(new TextDecoderStream()).getReader()
-      let seen = ""
-      const until = async (needle: string) => {
-        while (!seen.includes(needle)) {
-          const { value, done } = await reader.read()
-          assert(!done, `the engine closed before ${needle}`)
-          seen += value
-        }
-      }
-      await send({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "bn.hello",
-        params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
-      })
-      await until(`"id":1`)
-      await send({ jsonrpc: "2.0", id: 2, method: "bn.subscribe", params: {} })
-      // A subscribe is answered at an input boundary, so the engine is waiting for input by then.
-      await until(`"id":2`)
-      process.kill("SIGTERM")
-      const [status, stderr] = await Promise.all([
-        process.status,
-        new Response(process.stderr).text(),
-      ])
-      assert(
-        stderr.includes("mcp: the engine is exiting: received SIGTERM"),
-        `stderr: ${stderr.slice(-400)}`,
-      )
-      assertEquals(status.signal, "SIGTERM", "ended by the signal, not by exit code 0")
-    } finally {
+/** Rejects when `work` outlives `ms`, so a hung engine fails the test instead of the whole run. */
+const withDeadline = <T>(work: Promise<T>, ms: number, why: string) => {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(why)), ms)
+  })
+  return Promise.race([work, expired]).finally(() => clearTimeout(timer))
+}
+
+for (const sig of ["SIGTERM", "SIGINT"] as const) {
+  Deno.test({
+    name: `stdio: ${sig} is named on stderr and ends the engine by the signal, not by exit code 0`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const process = new Deno.Command(Deno.env.get("BN_BINARY")!, {
+        args: ["--client=mcp", "--userdir", `${profile}/`, "--configdir", `${profile}/config/`],
+        stdin: "piped",
+        stdout: "piped",
+        stderr: "piped",
+      }).spawn()
       try {
-        process.kill("SIGKILL")
-      } catch { /* already gone */ }
-      await Deno.remove(profile, { recursive: true })
-    }
-  },
-})
+        const writer = process.stdin.getWriter()
+        const send = (value: Value) =>
+          writer.write(new TextEncoder().encode(JSON.stringify(value) + "\n"))
+        const reader = process.stdout.pipeThrough(new TextDecoderStream()).getReader()
+        let seen = ""
+        const until = async (needle: string) => {
+          while (!seen.includes(needle)) {
+            const { value, done } = await reader.read()
+            assert(!done, `the engine closed before ${needle}`)
+            seen += value
+          }
+        }
+        await send({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "bn.hello",
+          params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+        })
+        await until(`"id":1`)
+        await send({ jsonrpc: "2.0", id: 2, method: "bn.subscribe", params: {} })
+        // A subscribe is answered at an input boundary, so the engine is waiting for input by then.
+        await until(`"id":2`)
+        process.kill(sig)
+        const [status, stderr] = await withDeadline(
+          Promise.all([process.status, new Response(process.stderr).text()]),
+          10_000,
+          `the engine outlived ${sig}`,
+        )
+        assert(
+          stderr.includes(`mcp: the engine is exiting: received ${sig}`),
+          `stderr: ${stderr.slice(-400)}`,
+        )
+        assertEquals(status.signal, sig, "ended by the signal, not by exit code 0")
+      } finally {
+        try {
+          process.kill("SIGKILL")
+        } catch { /* already gone */ }
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+
+  Deno.test({
+    name: `stdio: ${sig} before the first subscribe is named too`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const process = new Deno.Command(Deno.env.get("BN_BINARY")!, {
+        args: ["--client=mcp", "--userdir", `${profile}/`, "--configdir", `${profile}/config/`],
+        stdin: "piped",
+        stdout: "piped",
+        stderr: "piped",
+      }).spawn()
+      try {
+        const writer = process.stdin.getWriter()
+        const send = (value: Value) =>
+          writer.write(new TextEncoder().encode(JSON.stringify(value) + "\n"))
+        const reader = process.stdout.pipeThrough(new TextDecoderStream()).getReader()
+        let seen = ""
+        const until = async (needle: string) => {
+          while (!seen.includes(needle)) {
+            const { value, done } = await reader.read()
+            assert(!done, `the engine closed before ${needle}`)
+            seen += value
+          }
+        }
+        await send({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "bn.hello",
+          params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+        })
+        // Answered before any input boundary: the engine is still starting, not waiting for input.
+        await until(`"id":1`)
+        process.kill(sig)
+        const [status, stderr] = await withDeadline(
+          Promise.all([process.status, new Response(process.stderr).text()]),
+          10_000,
+          `the engine outlived ${sig}`,
+        )
+        assert(
+          stderr.includes(`mcp: the engine is exiting: received ${sig}`),
+          `stderr: ${stderr.slice(-400)}`,
+        )
+        assertEquals(status.signal, sig, "ended by the signal, not by exit code 0")
+      } finally {
+        try {
+          process.kill("SIGKILL")
+        } catch { /* already gone */ }
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+}
 
 Deno.test({
-  name: "stdio: SIGTERM before the first subscribe is named too",
+  name: "stdio: the engine exits within 10 s of stdin reaching EOF after the client died",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
@@ -1359,35 +1423,30 @@ Deno.test({
     }).spawn()
     try {
       const writer = process.stdin.getWriter()
-      const send = (value: Value) =>
-        writer.write(new TextEncoder().encode(JSON.stringify(value) + "\n"))
       const reader = process.stdout.pipeThrough(new TextDecoderStream()).getReader()
-      let seen = ""
-      const until = async (needle: string) => {
-        while (!seen.includes(needle)) {
-          const { value, done } = await reader.read()
-          assert(!done, `the engine closed before ${needle}`)
-          seen += value
-        }
-      }
-      await send({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "bn.hello",
-        params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
-      })
-      // Answered before any input boundary: the engine is still starting, not waiting for input.
-      await until(`"id":1`)
-      process.kill("SIGTERM")
-      const [status, stderr] = await Promise.all([
-        process.status,
-        new Response(process.stderr).text(),
-      ])
-      assert(
-        stderr.includes("mcp: the engine is exiting: received SIGTERM"),
-        `stderr: ${stderr.slice(-400)}`,
+      await writer.write(
+        new TextEncoder().encode(
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "bn.hello",
+            params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+          }) + "\n",
+        ),
       )
-      assertEquals(status.signal, "SIGTERM", "ended by the signal, not by exit code 0")
+      let seen = ""
+      while (!seen.includes(`"id":1`)) {
+        const { value, done } = await reader.read()
+        assert(!done, "the engine closed before the hello answer")
+        seen += value
+      }
+      await writer.close()
+      const [status] = await withDeadline(
+        Promise.all([process.status, new Response(process.stderr).text()]),
+        10_000,
+        "the engine outlived the end of its stdin",
+      )
+      assertEquals(status.signal, null, "left by itself, not killed")
     } finally {
       try {
         process.kill("SIGKILL")
