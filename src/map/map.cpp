@@ -6516,7 +6516,10 @@ void map::draw(const catacurses::window& w, const tripoint_bub_ms& center) {
 
     g->reset_light_level();
 
-    update_visibility_cache(center.z());
+    if (!get_visibility_variables_cache().variables_set
+        || get_cache_ref(center.z()).visibility_cache_dirty) {
+        update_visibility_cache(center.z());
+    }
     const visibility_variables& cache = get_visibility_variables_cache();
 
     const level_cache& draw_lc = get_cache_ref(center.z());
