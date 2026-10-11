@@ -28,12 +28,6 @@ using namespace client_screen_test;
 
 auto key_row(const int key) -> std::string { return "action:key:" + std::to_string(key); }
 
-/// The key rows follow the entries, so a long menu lists them on its last page.
-auto last_page() -> game_client::interaction_snapshot {
-    const auto first = game_client::current_interaction();
-    return game_client::current_interaction({.offset = first.choice_total - 8});
-}
-
 } // namespace
 
 TEST_CASE(
@@ -94,18 +88,19 @@ TEST_CASE(
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = game_client::current_interaction();
         REQUIRE(snapshot.structured);
-        if (snapshot.context == "UILIST" && snapshot.choices.front().id == "entry:0"
+        if (snapshot.context == "UILIST" && row(snapshot, "entry:0") != snapshot.choices.end()
             && snapshot.choices.size() < 12 && stage == 2) {
             // The category menu: ALL clears the filter.
             ++stage;
-            CHECK(snapshot.choices.front().label == "ALL");
+            CHECK(row(snapshot, "entry:0")->label == "ALL");
             return choose(snapshot, "entry:0");
         }
         switch (stage++) {
             case 0: {
-                const auto keys = last_page();
-                CHECK(row(keys, key_row('t')) != keys.choices.end());
-                CHECK(row(keys, key_row('c')) != keys.choices.end());
+                // The menu is longer than one page and the key rows are still on the first.
+                CHECK(snapshot.choice_total > snapshot.choices.size());
+                CHECK(row(snapshot, key_row('t')) != snapshot.choices.end());
+                CHECK(row(snapshot, key_row('c')) != snapshot.choices.end());
                 const auto cursor = std::ranges::
                     find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
                 REQUIRE(cursor != snapshot.choices.end());
@@ -179,9 +174,8 @@ TEST_CASE(
         REQUIRE(snapshot.structured);
         switch (stage++) {
             case 0: {
-                const auto keys = last_page();
-                CHECK(row(keys, key_row('f')) != keys.choices.end());
-                CHECK(row(keys, key_row('h')) != keys.choices.end());
+                CHECK(row(snapshot, key_row('f')) != snapshot.choices.end());
+                CHECK(row(snapshot, key_row('h')) != snapshot.choices.end());
                 return choose(snapshot, key_row('f'));
             }
             case 1: {
@@ -218,10 +212,10 @@ TEST_CASE(
         menus.push_back(snapshot.title + "|" + std::to_string(snapshot.choices.size()));
         switch (stage++) {
             case 0: {
-                const auto keys = last_page();
-                CHECK(row(keys, key_row('f')) != keys.choices.end());
-                CHECK(row(keys, key_row('F')) != keys.choices.end());
-                CHECK(row(keys, key_row('E')) != keys.choices.end());
+                CHECK(snapshot.choice_total > snapshot.choices.size());
+                CHECK(row(snapshot, key_row('f')) != snapshot.choices.end());
+                CHECK(row(snapshot, key_row('F')) != snapshot.choices.end());
+                CHECK(row(snapshot, key_row('E')) != snapshot.choices.end());
                 return choose(snapshot, key_row('f'));
             }
             case 1:

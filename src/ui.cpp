@@ -1074,7 +1074,16 @@ void uilist::query( bool loop, int timeout )
                     .message = remove_color_tags( text ),
                     .allow_cancel = allow_cancel,
                 };
-                snapshot.choices.reserve( fentries.size() );
+                // Key rows come first, like the main menu's tabs, so they are on the first page of a long menu.
+                if( callback != nullptr ) {
+                    for( const auto &callback_key : callback->keys() ) {
+                        snapshot.choices.push_back( {
+                            .id = "action:key:" + std::to_string( callback_key.key ),
+                            .label = callback_key.name,
+                        } );
+                    }
+                }
+                snapshot.choices.reserve( snapshot.choices.size() + fentries.size() );
                 for( const auto entry_index : fentries ) {
                     const auto &entry = entries[entry_index];
                     snapshot.choices.push_back( {
@@ -1086,14 +1095,6 @@ void uilist::query( bool loop, int timeout )
                         .selected = entry_index == selected,
                         .highlighted = entry_index == selected,
                     } );
-                }
-                if( callback != nullptr ) {
-                    for( const auto &callback_key : callback->keys() ) {
-                        snapshot.choices.push_back( {
-                            .id = "action:key:" + std::to_string( callback_key.key ),
-                            .label = callback_key.name,
-                        } );
-                    }
                 }
                 return snapshot;
             } );
