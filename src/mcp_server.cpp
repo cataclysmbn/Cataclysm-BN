@@ -1,4 +1,5 @@
 #include "mcp_server.h"
+#include "engine_client_world.h"
 
 #include <algorithm>
 #include <iostream>
@@ -702,6 +703,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         hello_ = true;
         game_client::set_overmap_tiles( decoded->tiles );
+        engine_client::world::set_tint_ids( { decoded->tint_ids.begin(), decoded->tint_ids.end() } );
         if( decoded->view && host_.resize_viewport ) {
             host_.resize_viewport( decoded->view->cols, decoded->view->rows );
         }

@@ -130,12 +130,36 @@ auto vehicle_rotation( const int degrees ) -> int
     return 3 - tileray( units::from_degrees( degrees ) ).dir4();
 }
 
+/// The ids of the tints the client's tileset has, from its hello: only keys among them are published.
+auto tint_ids() -> std::set<std::string> &
+{
+    static auto ids = std::set<std::string> {};
+    return ids;
+}
+
+auto flag_text( const std::string &flag ) -> const std::string & { return flag; }
+auto flag_text( const flag_id &flag ) -> const std::string & { return flag.str(); }
+
+/// What a tileset's tints are tried by for a thing, in the native order, kept to those the client has:
+/// its flags, then its id.
+template<typename Flags>
+auto tint_keys_of( const Flags &flags, const std::string &id ) -> std::vector<std::string>
+{
+    auto keys = std::vector<std::string> {};
+    for( const auto &flag : flags ) {
+        if( tint_ids().contains( flag_text( flag ) ) ) { keys.push_back( flag_text( flag ) ); }
+    }
+    if( tint_ids().contains( id ) ) { keys.push_back( id ); }
+    return keys;
+}
+
 auto terrain_look( const ter_id &id, const int symbol,
                    const map_perception::orientation &shape ) -> look
 {
     auto result = make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
     result.name = id->name();
     result.looks_like = looks_like_chain<ter_str_id>( id->looks_like );
+    result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
     return with_shape( std::move( result ), shape );
 }
 
@@ -144,6 +168,7 @@ auto furniture_look( const furn_id &id, const map_perception::orientation &shape
     auto result = make_look( "furniture", id.id().str(), glyph_of( id->symbol() ), id->color() );
     result.name = id->name();
     result.looks_like = looks_like_chain<furn_str_id>( id->looks_like );
+    result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
     return with_shape( std::move( result ), shape );
 }
 
@@ -169,6 +194,43 @@ auto vehicle_part_look( const vpart_info &info, const char modifier, const int d
     return result;
 }
 
+/// One layer of the tint an item's variables ask for: the variable of the layer, else the shared one.
+auto item_tint_layer( const data_vars::data_set &vars, const std::string &layer ) -> look_tint_layer
+{
+    auto result = look_tint_layer{};
+    const auto var = [&]( const char *name ) { return std::string( "tint_" ) + name; };
+    const auto of_layer = [&]( const char *name ) { return var( name ) + "_" + layer; };
+    auto color = RGBColor{};
+    if( vars.try_get( of_layer( "color" ), color ) || vars.try_get( var( "color" ), color ) ) {
+        result.color = string_format( "#%02x%02x%02x", color.r, color.g, color.b );
+    }
+    auto text = std::string{};
+    if( vars.try_get( of_layer( "blend_mode" ), text ) || vars.try_get( var( "blend_mode" ), text ) ) {
+        result.blend_mode = text;
+    }
+    const auto number = [&]( const char *name ) -> std::optional<float> {
+        auto value = 0.0f;
+        if( vars.try_get( of_layer( name ), value ) || vars.try_get( var( name ), value ) ) { return value; }
+        return std::nullopt;
+    };
+    result.contrast = number( "contrast" );
+    result.saturation = number( "saturation" );
+    result.brightness = number( "brightness" );
+    return result;
+}
+
+/// What a tileset tints the sprite of an item by: its flags and id, and the item's own variables.
+auto with_item_tint( look result, const item &thing ) -> look
+{
+    result.tint_keys = tint_keys_of( thing.get_flags(), thing.typeId().str() );
+    const auto &vars = thing.item_vars();
+    if( std::ranges::any_of( vars, []( const auto & entry ) { return entry.first.starts_with( "tint_" ); } ) ) {
+        auto tint = look_tint_vars{ .bg = item_tint_layer( vars, "bg" ), .fg = item_tint_layer( vars, "fg" ) };
+        if( !tint.bg.empty() || !tint.fg.empty() ) { result.tint_vars = std::move( tint ); }
+    }
+    return result;
+}
+
 auto item_look( const item &thing ) -> look
 {
     auto result = make_look( "item", thing.typeId().str(), thing.symbol(), thing.color() );
@@ -180,7 +242,7 @@ auto item_look( const item &thing ) -> look
     } else {
         result.looks_like = item_chain( thing.type->looks_like );
     }
-    return result;
+    return with_item_tint( std::move( result ), thing );
 }
 
 /// Stored memory names data ids only; an id the data no longer knows keeps its id with an empty appearance.
@@ -252,6 +314,7 @@ auto vehicle_part_at( const map &here, const tripoint_bub_ms &p, const avatar &y
         painted = &shown->part();
     }
     if( painted != nullptr ) {
+        result.tint_keys = tint_keys_of( painted->info().get_flags(), painted->info().get_id().str() );
         const auto [bg, fg] = painted->get_color();
         if( !hex_of( bg ).empty() || !hex_of( fg ).empty() ) {
             result.tint = look_tint{ .bg = hex_of( bg ), .fg = hex_of( fg ) };
@@ -454,15 +517,11 @@ auto overlays_of( const Creature &critter ) -> std::vector<look>
                 .types = { branch.types.begin(), branch.types.end() },
                 .flags = branch.flags | std::views::transform( &trait_flag_str_id::str ) | std::ranges::to<std::vector>() };
         } else if( const auto *const thing = std::get_if<const item *>( &entry.entry ) ) {
-            result.tint_keys = ( *thing )->get_flags() | std::views::transform( &flag_id::str ) |
-                               std::ranges::to<std::vector>();
-            result.tint_keys.push_back( ( *thing )->typeId().str() );
+            result = with_item_tint( std::move( result ), **thing );
         } else if( const auto *const bio = std::get_if<const bionic *>( &entry.entry ) ) {
-            result.tint_keys = ( *bio )->id->flags | std::views::transform( &flag_id::str ) |
-                               std::ranges::to<std::vector>();
-            result.tint_keys.push_back( ( *bio )->id.str() );
+            result.tint_keys = tint_keys_of( ( *bio )->id->flags, ( *bio )->id.str() );
         } else if( const auto *const eff = std::get_if<const effect *>( &entry.entry ) ) {
-            result.tint_keys = { ( *eff )->get_id().str() };
+            result.tint_keys = tint_keys_of( std::vector<std::string> {}, ( *eff )->get_id().str() );
         }
         return result;
     } ) | std::ranges::to<std::vector>();
@@ -494,6 +553,7 @@ auto capture_entities( const map &here, const avatar &you, const std::string &di
         auto id = ids.id_for( *critter );
         auto appearance = creature_look( *critter, monster != nullptr ? "monster" : "npc", type );
         if( monster != nullptr ) {
+            appearance.tint_keys = tint_keys_of( std::vector<std::string> {}, type );
             appearance.looks_like = looks_like_chain<mtype_id>( monster->type->looks_like );
         }
         entities.emplace( id, entity{
@@ -593,6 +653,8 @@ auto color_name( const nc_color &color ) -> std::string
 {
     return color_of( color );
 }
+
+auto set_tint_ids( std::set<std::string> ids ) -> void { tint_ids() = std::move( ids ); }
 
 auto capture_world() -> world_state
 {

@@ -797,10 +797,15 @@ TEST_CASE(
         CHECK(overlay->looks_like[1] == std::string(gender) + "worn_" + parent.str());
     }
     CHECK(overlay->looks_like.size() <= 20);
-    // A tileset's tints for the item are keyed by its flags, then its id.
-    REQUIRE_FALSE(overlay->tint_keys.empty());
-    CHECK(overlay->tint_keys.back() == "scarf_fur");
-    CHECK(overlay->tint_keys.size() == item::spawn("scarf_fur")->get_flags().size() + 1);
+    // Without tints in the client's tileset no key is published; with them, the keys among them.
+    CHECK(overlay->tint_keys.empty());
+    ec::world::set_tint_ids({"scarf_fur"});
+    const auto keyed = ec::world::capture_world();
+    const auto with_keys =
+        std::ranges::find(keyed.avatar->overlays, "worn_scarf_fur", &ec::look::id);
+    REQUIRE(with_keys != keyed.avatar->overlays.end());
+    CHECK(with_keys->tint_keys == std::vector<std::string>{"scarf_fur"});
+    ec::world::set_tint_ids({});
 
     // Monsters wear nothing.
     spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 1, 0));
@@ -966,4 +971,52 @@ TEST_CASE(
     REQUIRE(without != nullptr);
     CHECK(with_items->cargo);
     CHECK_FALSE(without->cargo);
+}
+
+TEST_CASE(
+    "world capture keys terrain, furniture, monsters and parts by the tints the client has",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto ground = here.ter(setup.start);
+    const auto flag = *ground->get_flags().begin();
+    here.furn_set(setup.start + tripoint_east, furn_id("f_chair"));
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    REQUIRE(here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false) != nullptr);
+    map_perception::acquire();
+    CHECK(find_cell(ec::world::capture_world(), at(setup.start))->terrain->tint_keys.empty());
+    ec::world::set_tint_ids({flag, ground.id().str(), "f_chair", "seat"});
+    const auto state = ec::world::capture_world();
+    ec::world::set_tint_ids({});
+    // The flags come first, then the id.
+    const auto& floor = find_cell(state, at(setup.start))->terrain->tint_keys;
+    CHECK(floor == (std::vector<std::string>{flag, ground.id().str()}));
+    const auto& chair = find_cell(state, at(setup.start + tripoint_east))->furniture->tint_keys;
+    CHECK(std::ranges::count(chair, "f_chair") == 1);
+    // A vehicle part is keyed by its flags and id, a part with none the client knows by nothing.
+    const auto* part = find_cell(state, at(car_at));
+    REQUIRE(part != nullptr);
+    REQUIRE(part->vehicle);
+    CHECK(part->vehicle->tint_keys.size() <= 1);
+}
+
+TEST_CASE(
+    "world capture publishes the tint an item's own variables ask for", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto thing = item::spawn("jeans");
+    thing->set_var("tint_color", RGBColor{255, 48, 48, 255});
+    thing->set_var("tint_blend_mode_fg", std::string("multiply"));
+    thing->set_var("tint_brightness", 0.5f);
+    get_map().add_item_or_charges(setup.start + tripoint_east, std::move(thing));
+    get_map().add_item_or_charges(setup.start + tripoint_west, item::spawn("jeans"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto& dyed = find_cell(state, at(setup.start + tripoint_east))->items.back();
+    REQUIRE(dyed.tint_vars);
+    CHECK(dyed.tint_vars->fg.color == "#ff3030");
+    CHECK(dyed.tint_vars->bg.color == "#ff3030");
+    CHECK(dyed.tint_vars->fg.blend_mode == "multiply");
+    CHECK(dyed.tint_vars->bg.blend_mode.empty());
+    CHECK(dyed.tint_vars->fg.brightness == 0.5f);
+    CHECK_FALSE(find_cell(state, at(setup.start + tripoint_west))->items.back().tint_vars);
 }

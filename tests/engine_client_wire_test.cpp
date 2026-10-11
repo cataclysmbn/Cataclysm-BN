@@ -28,6 +28,17 @@ TEST_CASE("hello request grammar", "[engine_client_wire]") {
     CHECK_FALSE(
         decode_hello_request(R"({"versions":["1.0","1.0"],"client":{"name":"a","version":"1"}})"));
     CHECK_FALSE(decode_hello_request(R"({"supported_versions":["1.0"]})"));
+    // The tints of the client's tileset are ids; anything else is refused.
+    const auto tints = decode_hello_request(
+        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":["hair_black","jeans"]})");
+    REQUIRE(tints);
+    CHECK(tints->tint_ids == std::vector<std::string>{"hair_black", "jeans"});
+    CHECK_FALSE(decode_hello_request(
+        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":[1]})"));
+    CHECK_FALSE(decode_hello_request(
+        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":[""]})"));
+    CHECK_FALSE(decode_hello_request(
+        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":"jeans"})"));
 }
 
 TEST_CASE("empty requests accept only an empty object", "[engine_client_wire]") {
