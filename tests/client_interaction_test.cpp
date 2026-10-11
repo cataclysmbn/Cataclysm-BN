@@ -1668,6 +1668,30 @@ TEST_CASE(
     }
 }
 
+TEST_CASE("real uilist publishes each printable entry hotkey", "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto menu = uilist{};
+    menu.title = "Hotkeys";
+    menu.entries.emplace_back(10, true, 'e', "explicit");
+    menu.entries.emplace_back(20, true, 300, "unprintable");
+    menu.entries.emplace_back(30, true, -1, "none");
+    auto observed = game_client::interaction_snapshot{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        observed = game_client::current_interaction();
+        return resolve({
+            .input_id = observed.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+
+    menu.query();
+
+    REQUIRE(observed.choices.size() == 3);
+    CHECK(observed.choices[0].hotkey == "e");
+    CHECK(observed.choices[1].hotkey.empty());
+    CHECK(observed.choices[2].hotkey == "1");
+}
+
 TEST_CASE("real uilist exposes filtered effective choices", "[client][interaction][mcp]") {
     const auto guard = interaction_test_guard{};
     auto menu = uilist{};

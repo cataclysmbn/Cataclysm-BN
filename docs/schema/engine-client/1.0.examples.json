@@ -694,6 +694,7 @@
             "label": "rock",
             "description": "A rock.",
             "denial": "",
+            "hotkey": "a",
             "pane_id": "pane:left",
             "enabled": true,
             "selectable": true,

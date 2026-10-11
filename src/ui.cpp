@@ -1090,6 +1090,7 @@ void uilist::query( bool loop, int timeout )
                         .id = "entry:" + std::to_string( entry_index ),
                         .label = remove_color_tags( entry.txt ),
                         .description = remove_color_tags( entry.desc ),
+                        .hotkey = entry.hotkey >= 33 && entry.hotkey < 126 ? std::string( 1, static_cast<char>( entry.hotkey ) ) : std::string{},
                         .enabled = entry.enabled,
                         .selectable = entry.enabled || allow_disabled,
                         .selected = entry_index == selected,

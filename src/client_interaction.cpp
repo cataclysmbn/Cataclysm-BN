@@ -723,6 +723,7 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
         json.member( "label", choice.label );
         json.member( "description", choice.description );
         json.member( "denial", choice.denial );
+        if( !choice.hotkey.empty() ) { json.member( "hotkey", choice.hotkey ); }
         if( choice.pane_id ) { json.member( "pane_id", *choice.pane_id ); }
         if( choice.area_id ) { json.member( "area_id", *choice.area_id ); }
         if( !choice.storage_kind.empty() ) { json.member( "storage_kind", choice.storage_kind ); }

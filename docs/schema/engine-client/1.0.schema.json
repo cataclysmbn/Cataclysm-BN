@@ -1201,6 +1201,11 @@
         "denial": {
           "type": "string"
         },
+        "hotkey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key that chooses the row natively, printed before the label (a uilist entry's key, an inventory item's invlet). Absent when the row has none."
+        },
         "pane_id": {
           "$ref": "#/$defs/opaque_id",
           "description": "The pane or tab this entry belongs to. Tab rows of a tabbed menu have none."

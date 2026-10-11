@@ -218,6 +218,7 @@ auto to_json( const game_client::interaction_choice &choice ) -> json
 {
     auto result = json{{"id", choice.id}, {"label", choice.label}, {"description", choice.description},
         {"denial", choice.denial}};
+    if( !choice.hotkey.empty() ) { result["hotkey"] = choice.hotkey; }
     if( choice.pane_id ) { result["pane_id"] = *choice.pane_id; }
     if( choice.area_id ) { result["area_id"] = *choice.area_id; }
     if( !choice.storage_kind.empty() ) { result["storage_kind"] = choice.storage_kind; }

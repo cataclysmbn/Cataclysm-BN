@@ -2014,6 +2014,17 @@ bool inventory_selector::has_available_choices() const
     } );
 }
 
+namespace
+{
+/// The letter the native selector prints before an item row: its invlet, else the slot's hint.
+auto invlet_hotkey( const inventory_entry &entry ) -> std::string
+{
+    const auto invlet = entry.get_invlet() != '\0' ? entry.get_invlet() :
+                        entry.invlet_hint ? entry.invlet_hint->invlet : '\0';
+    return invlet > 0 ? std::string( 1, static_cast<char>( invlet ) ) : std::string{};
+}
+} // namespace
+
 auto inventory_selector::interaction_snapshot() const -> game_client::interaction_snapshot
 {
     const auto message = !filter.empty() ? string_format( _( "Filter: %s" ), filter ) :
@@ -2072,6 +2083,7 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
                 .label = columns.size() > 1 ? columns[1].value : entry.any_item()->display_name(),
                 .description = description,
                 .denial = denial,
+                .hotkey = invlet_hotkey( entry ),
                 .enabled = entry.is_selectable(),
                 .selectable = entry.is_selectable() && denial.empty(),
                 .selected = entry.chosen_count > 0,

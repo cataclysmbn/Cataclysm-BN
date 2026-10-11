@@ -50,6 +50,8 @@ struct interaction_choice {
     std::string label;
     std::string description;
     std::string denial;
+    /// The key that chooses the row natively, as the native list prints it before the label; empty when none.
+    std::string hotkey;
     std::optional<std::string> pane_id;
     std::optional<std::string> area_id;
     std::string storage_kind;
