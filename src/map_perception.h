@@ -102,6 +102,17 @@ auto presenting() -> bool;
 /// Never call from a renderer or a passive observation.
 auto acquire() -> acquisition_counts;
 
+/// Dirty the visibility caches only when the avatar's position or vision differ from what the last
+/// acquisition saw; other changes mark the caches themselves. Lets a turn reuse the refresh that
+/// acquisition already paid for.
+auto invalidate_stale_visibility( map &here ) -> void;
+
+/// Number of visibility cache rebuilds so far.
+auto visibility_refresh_count() -> size_t;
+
+/// Called by map::update_visibility_cache.
+auto visibility_refreshed() -> void;
+
 /// Explicit blind obstacle contact. Does not inspect neighbors or disclose the ground under it.
 auto contact( const tripoint_bub_ms &p ) -> void;
 

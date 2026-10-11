@@ -6298,6 +6298,7 @@ auto map::update_visibility_cache(const int zlev, const std::function<void()>& w
         }
     }
 #endif
+    map_perception::visibility_refreshed();
     visibility_variables_cache = make_visibility_variables(zlev);
 
 #if defined(CATA_SDL)
