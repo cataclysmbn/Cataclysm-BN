@@ -52,12 +52,14 @@
 #    include "trade_win.h"
 #    include "ui.h"
 #    include "uistate.h"
+#    include "units_utility.h"
 #    include "vehicle/veh_type.h"
 #    include "vehicle/vehicle.h"
 
 #    include <atomic>
 #    include <filesystem>
 #    include <functional>
+#    include <nlohmann/json.hpp>
 #    include <set>
 #    include <stdexcept>
 #    include <string>
@@ -1111,6 +1113,59 @@ TEST_CASE(
     CHECK(you.amount_of(itype_id("test_1kg_cube")) == 1);
     CHECK(ground_charges(itype_id("test_platinum_bit")) == 10);
     CHECK_FALSE(you.activity);
+}
+
+TEST_CASE(
+    "advanced inventory panes publish their native header totals, capacities and sort mode",
+    "[client][interaction][advanced_inventory][mcp]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = advanced_inventory_fixture_guard{};
+    auto& you = get_avatar();
+    you.i_add(item::spawn("test_1kg_cube", calendar::turn));
+    get_map().add_item(
+        advanced_inventory_test_pos, item::spawn("test_platinum_bit", calendar::turn, 10));
+    const auto weight = [](const units::mass value) {
+        return string_format("%.1f", convert_weight(value));
+    };
+    auto checked = 0;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction({.limit = 200});
+        REQUIRE(snapshot.panes.size() == 2);
+        for (const auto& pane : snapshot.panes) {
+            REQUIRE(pane.totals);
+            const auto& totals = *pane.totals;
+            CHECK(totals.weight_unit == weight_units());
+            CHECK(totals.volume_unit == volume_units_abbr());
+            CHECK_FALSE(pane.sort.empty());
+            if (pane.storage_kind == "inventory" || pane.storage_kind == "worn") {
+                // Carried weight against the capacity the native header prints after the slash.
+                CHECK(totals.weight == weight(you.weight_carried()));
+                CHECK(totals.weight_max == weight(you.weight_capacity()));
+                CHECK(totals.volume == format_volume(you.volume_carried()));
+                CHECK(totals.volume_max == format_volume(you.volume_capacity()));
+                CHECK(totals.over_weight == (you.weight_carried() > you.weight_capacity()));
+            } else {
+                CHECK(totals.weight_max.empty());
+                CHECK_FALSE(totals.over_weight);
+                CHECK_FALSE(totals.weight.empty());
+                CHECK_FALSE(totals.volume.empty());
+            }
+            ++checked;
+        }
+        // The wire value carries the same fields.
+        const auto wire = nlohmann::json::parse(game_client::serialize_interaction(snapshot));
+        for (const auto& pane : wire["panes"]) {
+            CHECK(pane["totals"].contains("weight_max"));
+            CHECK(pane["sort"].is_string());
+        }
+        return resolve(
+            {.input_id = snapshot.input_id,
+             .operation = game_client::interaction_operation::cancel});
+    });
+
+    create_advanced_inv();
+    CHECK(checked == 2);
 }
 
 TEST_CASE(
