@@ -2161,6 +2161,49 @@ void map::restore_vision_transparency_cache(
 static const light_model k_sight_model =
     {sight_calc, sight_check, update_light, nullptr, sight_from_lookup, accumulate_transparency};
 
+/// Lets each tile that is not open air inherit the best seen value of its transparent neighbours,
+/// as the GPU surface pass does, so glancing surfaces do not depend on the compute backend. Reads
+/// a snapshot, so the inheritance never cascades.
+void map::apply_seen_surfaces(const tripoint_bub_ms& origin) {
+    ZoneScopedN("apply_seen_surfaces");
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        auto& cache = get_cache(z);
+        const auto raw = cache.seen_cache;
+        const auto blocked_diagonal = [&](const point& from, const point& to) {
+            const auto delta = to - from;
+            if (delta.x == 0 || delta.y == 0) { return false; }
+            const auto& blocks =
+                cache.vehicle_obscured_cache
+                    [delta.y < 0 ? cache.idx(from.x, from.y) : cache.idx(to.x, to.y)];
+            return delta.x == delta.y ? blocks.nw : blocks.ne;
+        };
+        const auto* const roof =
+            z < origin.z() && z < OVERMAP_HEIGHT ? &get_cache(z + 1).vehicle_floor_cache : nullptr;
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                const auto idx = cache.idx(x, y);
+                if (cache.transparency_cache[idx] == LIGHT_TRANSPARENCY_OPEN_AIR
+                    || tripoint_bub_ms(x, y, z) == origin) {
+                    continue;
+                }
+                const auto inherited = std::ranges::fold_left(
+                    eight_adjacent_offsets | std::views::transform([&](const auto offset) {
+                        return point(x, y) + offset;
+                    }) | std::views::filter([&](const auto n) {
+                        return n.x >= 0 && n.y >= 0 && n.x < cache.cache_x && n.y < cache.cache_y
+                            && cache.transparency_cache[cache.idx(n.x, n.y)]
+                                   > LIGHT_TRANSPARENCY_SOLID
+                            && !blocked_diagonal(n, point(x, y));
+                    }) | std::views::transform([&](const auto n) {
+                        return raw[cache.idx(n.x, n.y)];
+                    }),
+                    raw[idx], [](const float a, const float b) { return std::max(a, b); });
+                cache.seen_cache[idx] = roof != nullptr && (*roof)[idx] ? 0.0f : inherited;
+            }
+        }
+    }
+}
+
 /**
  * Calculates the Field Of View for the provided map from the given x, y
  * coordinates. Returns a lightmap for a result where the values represent a
@@ -2536,6 +2579,8 @@ void map::build_seen_cache(const tripoint_bub_ms& origin, const int target_z) {
             }
         }
     }
+
+    apply_seen_surfaces(new_origin);
 
     if (new_origin.z() == target_z) {
         restore_vision_transparency_cache(
