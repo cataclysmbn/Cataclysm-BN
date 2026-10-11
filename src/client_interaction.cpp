@@ -686,6 +686,7 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
     json.member( "allow_set_count", snapshot.allow_set_count );
     json.member( "title", snapshot.title );
     json.member( "message", snapshot.message );
+    if( !snapshot.message_tone.empty() ) { json.member( "message_tone", snapshot.message_tone ); }
     json.member( "panes" );
     json.start_array();
     for( const auto &pane : snapshot.panes ) {
