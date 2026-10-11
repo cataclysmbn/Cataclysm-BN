@@ -335,6 +335,29 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
     return true;
 }
 
+/// What the avatar's map memory shows of a square, which depends on nothing but that memory.
+struct remembered_square {
+    tripoint_abs_ms abs;
+    std::optional<memory_layers> memory;
+};
+
+/// Every memorized square with its memory, rebuilt only when the avatar's map memory has changed: a
+/// capture happens at every input prompt, and memory usually holds thousands of squares that did not.
+auto remembered_squares( const avatar &you ) -> const std::vector<remembered_square> &
+{
+    static auto squares = std::vector<remembered_square> {};
+    static auto built = memory_revision{};
+    if( const auto now = you.map_memory_revision(); now != built || squares.empty() ) {
+        ZoneScopedN( "engine_client_remembered_squares" );
+        squares.clear();
+        for( const auto &abs : you.memorized_positions() ) {
+            squares.push_back( { .abs = abs, .memory = memory_at( you, abs ) } );
+        }
+        built = now;
+    }
+    return squares;
+}
+
 /// Cells the avatar knows by memory or by a vehicle it is entitled to perceive; nothing else costs time.
 auto capture_known( map &here, const avatar &you, const std::string &dimension,
                     std::map<position, cell> &cells ) -> void
@@ -349,12 +372,11 @@ auto capture_known( map &here, const avatar &you, const std::string &dimension,
         }
     }
     ZoneNamedN( remembered_zone, "engine_client_capture_remembered", true );
-    const auto remember = [&]( const tripoint_bub_ms & p ) {
+    const auto remember = [&]( const tripoint_bub_ms & p, const std::optional<memory_layers> &memory ) {
         if( !here.inbounds( p ) || map_perception::visible_at( here, p ) ) { return; }
         const auto at = position_of( here, p, dimension );
         if( cells.contains( at ) ) { return; }
-        auto out = cell{ .at = at, .known = knowledge::remembered,
-                         .memory = memory_at( you, map_local_to_abs( here, p ) ) };
+        auto out = cell{ .at = at, .known = knowledge::remembered, .memory = memory };
         // A vehicle the avatar is entitled to know about is perceived live, so its square is a visible one;
         // the ground beneath it is not perceived.
         if( map_perception::detailed_at( here, p ) ) {
@@ -363,9 +385,13 @@ auto capture_known( map &here, const avatar &you, const std::string &dimension,
         }
         if( out.memory || out.vehicle ) { cells.emplace( at, std::move( out ) ); }
     };
-    for( const auto &abs : you.memorized_positions() ) { remember( abs_to_map_local( here, abs ) ); }
+    for( const auto &square : remembered_squares( you ) ) {
+        remember( abs_to_map_local( here, square.abs ), square.memory );
+    }
     for( const auto &wrapped : here.get_vehicles() ) {
-        for( const auto &part : wrapped.v->get_all_parts() ) { remember( part.pos() ); }
+        for( const auto &part : wrapped.v->get_all_parts() ) {
+            remember( part.pos(), memory_at( you, map_local_to_abs( here, part.pos() ) ) );
+        }
     }
 }
 
