@@ -257,7 +257,20 @@
           "items": {
             "type": "string"
           },
-          "description": "Set on the overlay of a worn or wielded item, a bionic or an effect: the ids a tileset's tints are keyed by, in the order the native view tries them: the flags, then the id."
+          "description": "The ids a tileset's tints are keyed by for this thing (flags, then the id), kept to the tint_ids the client sent in its hello, in the order the native view tries them."
+        },
+        "tint_vars": {
+          "type": "object",
+          "description": "The tint an item's own variables (tint_color, tint_blend_mode, ...) ask for, over what the tileset's tints give for the item.",
+          "properties": {
+            "bg": {
+              "$ref": "#/$defs/tint_vars_layer"
+            },
+            "fg": {
+              "$ref": "#/$defs/tint_vars_layer"
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [
@@ -2851,6 +2864,16 @@
         "tiles": {
           "type": "boolean",
           "description": "The client draws tiles, so the engine adds tile ids where it has them (the overmap)."
+        },
+        "tint_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "maxItems": 4096,
+          "description": "The ids of the tints the client's tileset has (hair colors, item or terrain ids, flags). The engine publishes on looks the tint_keys among them that apply, in the order the native view tries them."
         }
       },
       "required": [
@@ -3649,6 +3672,28 @@
       "required": [
         "lines"
       ],
+      "additionalProperties": false
+    },
+    "tint_vars_layer": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-f]{6}$"
+        },
+        "blend_mode": {
+          "type": "string"
+        },
+        "contrast": {
+          "type": "number"
+        },
+        "saturation": {
+          "type": "number"
+        },
+        "brightness": {
+          "type": "number"
+        }
+      },
       "additionalProperties": false
     }
   }

@@ -4,6 +4,9 @@
 #include "engine_client_state.h"
 #include "color.h"
 
+#include <set>
+#include <string>
+
 /// What the avatar currently sees and remembers, as the owned `world_state` of the 1.0 contract.
 ///
 /// Register once with `engine_client::process_session().set_world_capture( &capture_world )`; the
@@ -18,6 +21,8 @@ namespace engine_client::world
 {
 
 auto capture_world() -> world_state;
+/// The ids of the tints the client's tileset has. Looks carry the keys among them that apply to them.
+auto set_tint_ids( std::set<std::string> ids ) -> void;
 /// The absolute square of a reality-bubble square, in the loaded map's dimension.
 auto position_at( const tripoint_bub_ms &p ) -> position;
 /// The native color name of `color`.

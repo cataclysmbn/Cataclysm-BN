@@ -54,6 +54,18 @@ auto to_json( const look &value ) -> json
         };
     }
     if( !value.tint_keys.empty() ) { result["tint_keys"] = value.tint_keys; }
+    if( value.tint_vars ) {
+        result["tint_vars"] = json::object();
+        for( const auto &[name, layer] : {std::pair{"bg", &value.tint_vars->bg}, std::pair{"fg", &value.tint_vars->fg}} ) {
+            if( layer->empty() ) { continue; }
+            auto &out = result["tint_vars"][name] = json::object();
+            if( !layer->color.empty() ) { out["color"] = layer->color; }
+            if( !layer->blend_mode.empty() ) { out["blend_mode"] = layer->blend_mode; }
+            if( layer->contrast ) { out["contrast"] = *layer->contrast; }
+            if( layer->saturation ) { out["saturation"] = *layer->saturation; }
+            if( layer->brightness ) { out["brightness"] = *layer->brightness; }
+        }
+    }
     if( value.tint ) {
         result["tint"] = json::object();
         if( !value.tint->bg.empty() ) { result["tint"]["bg"] = value.tint->bg; }

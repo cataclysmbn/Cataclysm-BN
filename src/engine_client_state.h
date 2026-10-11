@@ -37,6 +37,24 @@ struct look_mutation {
     std::vector<std::string> flags = {};
     auto operator<=>( const look_mutation & ) const = default; // *NOPAD*
 };
+/// What an item's own variables set of the tint of one layer of its sprite, over the tileset's.
+struct look_tint_layer {
+    /// `#rrggbb`.
+    std::string color = {};
+    std::string blend_mode = {};
+    std::optional<float> contrast = std::nullopt;
+    std::optional<float> saturation = std::nullopt;
+    std::optional<float> brightness = std::nullopt;
+    auto empty() const -> bool {
+        return color.empty() && blend_mode.empty() && !contrast && !saturation && !brightness;
+    }
+    auto operator<=>( const look_tint_layer & ) const = default; // *NOPAD*
+};
+struct look_tint_vars {
+    look_tint_layer bg;
+    look_tint_layer fg;
+    auto operator<=>( const look_tint_vars & ) const = default; // *NOPAD*
+};
 /// Appearance from game data, so text clients need no tileset. The optional members give a tiled
 /// client what only the engine can know: the sprite id when it is not `id`, the data's fallback
 /// ids, and the shape the native tile selection computed from the neighbours.
@@ -64,9 +82,11 @@ struct look {
     std::optional<look_tint> tint = std::nullopt;
     /// Set on the overlay of a mutation.
     std::optional<look_mutation> mutation = std::nullopt;
-    /// Set on the overlay of a worn or wielded item, a bionic or an effect: the ids a tileset's tints are
-    /// keyed by, in the order the native view tries them (the flags, then the id).
+    /// The ids a tileset's tints are keyed by for this thing, in the order the native view tries them (the
+    /// flags, then the id), kept to the tints the client said its tileset has.
     std::vector<std::string> tint_keys = {};
+    /// The tint an item's own variables ask for, over what the tileset's tints give.
+    std::optional<look_tint_vars> tint_vars = std::nullopt;
     auto operator<=>( const look & ) const = default; // *NOPAD*
 };
 struct field_entry {

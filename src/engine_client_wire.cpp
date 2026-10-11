@@ -149,7 +149,15 @@ auto read_request( const json &value, viewport &result ) -> void
 }
 auto read_request( const json &value, hello_request &result ) -> void
 {
-    members( value, {"versions", "client"}, {"viewport", "tiles"} );
+    members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids"} );
+    if( value.contains( "tint_ids" ) ) {
+        const auto &ids = value.at( "tint_ids" );
+        require( ids.is_array() && ids.size() <= maximum_tint_ids );
+        for( const auto &id : ids ) {
+            require( id.is_string() && !id.get<std::string>().empty() && id.get<std::string>().size() <= 128 );
+            result.tint_ids.push_back( id.get<std::string>() );
+        }
+    }
     if( value.contains( "viewport" ) ) { read_request( value.at( "viewport" ), result.view.emplace() ); }
     if( value.contains( "tiles" ) ) {
         require( value.at( "tiles" ).is_boolean() );

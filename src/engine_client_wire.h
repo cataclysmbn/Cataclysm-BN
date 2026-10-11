@@ -16,6 +16,7 @@ struct viewport {
     int rows = 0;
 };
 constexpr int maximum_viewport_cells = 512;
+constexpr std::size_t maximum_tint_ids = 4096;
 struct hello_request {
     std::vector<std::string> versions = {};
     std::string client_name = {};
@@ -23,6 +24,8 @@ struct hello_request {
     std::optional<viewport> view = std::nullopt;
     /// The client draws tiles, so it wants tile ids where the engine has them (the overmap).
     bool tiles = false;
+    /// The ids of the tints the client's tileset has; the engine publishes the keys among them that apply.
+    std::vector<std::string> tint_ids = {};
 };
 struct result_request {
     std::string epoch = {};
