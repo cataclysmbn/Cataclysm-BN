@@ -106,6 +106,26 @@ TEST_CASE(
     CHECK(schema(with_art) != schema(plain));
 }
 
+TEST_CASE("a colored message line is published with its tone", "[engine_client_contract]") {
+    auto context = input_context{"NPC_TRADE"};
+    const auto input_scope = game_client::input_context_scope{context, "NPC_TRADE"};
+    const auto tone_wire = [&context](const std::string& tone) {
+        const auto scope = game_client::interaction_scope{
+            context, [tone] {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices,
+                    .message = "Credit $1.00 | Balance acceptable: yes",
+                    .message_tone = tone,
+                    .choices = {{.id = "choice:yes", .label = "Yes"}},
+                };
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    CHECK(contains(tone_wire("good"), R"("message_tone":"good")"));
+    CHECK_FALSE(contains(tone_wire(""), "message_tone"));
+}
+
 TEST_CASE("compat focus survives paging past the focused row", "[engine_client_contract]") {
     auto context = input_context{"BIGLIST"};
     const auto input_scope = game_client::input_context_scope{context, "BIGLIST"};

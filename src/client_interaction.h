@@ -165,6 +165,8 @@ struct interaction_snapshot {
     interaction_kind kind = interaction_kind::custom;
     std::string title;
     std::string message;
+    /// `good` or `bad` where the native screen colors the message line green or red; empty otherwise.
+    std::string message_tone;
     /// Lines drawn above the menu in a fixed-width font, with color tags: the main menu's title art and version.
     std::vector<std::string> banner;
     bool structured = false;

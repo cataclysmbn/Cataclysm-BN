@@ -879,11 +879,13 @@ game_client::interaction_snapshot
     const auto balance_label = np.will_exchange_items_freely() ? _( "Exchange" ) :
                                string_format( state.your_balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),
                                        format_money( std::abs( state.your_balance ) ) );
+    const auto balance_acceptable = npc_trading::npc_will_accept_trade( state, np );
     auto result = game_client::interaction_snapshot{
         .kind = game_client::interaction_kind::inventory,
         .title = string_format( _( "Trading with %s" ), np.disp_name() ),
         .message = string_format( _( "%s | Balance acceptable: %s" ), balance_label,
-                                  npc_trading::npc_will_accept_trade( state, np ) ? _( "yes" ) : _( "no" ) ),
+                                  balance_acceptable ? _( "yes" ) : _( "no" ) ),
+        .message_tone = balance_acceptable ? "good" : "bad",
         .allow_cancel = true,
         .allow_set_count = true,
     };
@@ -901,6 +903,27 @@ game_client::interaction_snapshot
                               convert_weight( weight ), weight_units(),
                               convert_volume( to_milliliter( volume ) ), volume_units_abbr() );
     };
+    // The header the native pane prints under its title: carried against capacity, none for a shopkeeper.
+    const auto capacity_totals = []( const units::mass free_weight, const units::volume free_volume,
+                                     const units::mass max_weight,
+    const units::volume max_volume ) -> game_client::interaction_totals {
+        const auto used_weight = max_weight - free_weight;
+        const auto used_volume = max_volume - free_volume;
+        const auto volume_text = []( const units::volume value )
+        {
+            return string_format( "%.2f", convert_volume( to_milliliter( value ) ) );
+        };
+        return {
+            .weight = string_format( "%.2f", convert_weight( used_weight ) ),
+            .weight_max = string_format( "%.2f", convert_weight( max_weight ) ),
+            .weight_unit = weight_units(),
+            .volume = volume_text( used_volume ),
+            .volume_max = volume_text( max_volume ),
+            .volume_unit = volume_units_abbr(),
+            .over_weight = used_weight > max_weight,
+            .over_volume = used_volume > max_volume,
+        };
+    };
     result.panes = {
         {
             .id = npc_pane_id,
@@ -911,6 +934,8 @@ game_client::interaction_snapshot
             .area_description = capacity_description( state.weight_left, state.volume_left ),
             .filter = them_filter,
             .storage_kind = trade_pane_storage_kind( state.theirs, them_filtered ),
+            .totals = np.is_shopkeeper() ? std::nullopt : std::optional{
+                capacity_totals( state.weight_left, state.volume_left, np.weight_capacity(), np.volume_capacity() ) },
         },
         {
             .id = player_pane_id,
@@ -921,6 +946,8 @@ game_client::interaction_snapshot
             .area_description = capacity_description( player_free_weight, player_free_volume ),
             .filter = you_filter,
             .storage_kind = trade_pane_storage_kind( state.yours, you_filtered ),
+            .totals = capacity_totals( player_free_weight, player_free_volume, g->u.weight_capacity(),
+                                       g->u.volume_capacity() ),
         },
     };
 
@@ -933,6 +960,15 @@ game_client::interaction_snapshot
         size_t cursor;
     };
     auto identity_counts = std::unordered_map<std::string, std::size_t> {};
+    // How the native price column colors a row: green for a good deal, red for a bad one, none when bartering freely.
+    const auto price_tone = [&]( const item_pricing & pricing, const item & candidate,
+    const bool is_theirs ) -> std::string {
+        if( np.will_exchange_items_freely() ) { return "none"; }
+        const auto base_price = candidate.price( true );
+        const auto ratio = base_price > 0 ? pricing.price / base_price : 1.0F;
+        if( ratio < 0.95F ) { return is_theirs ? "good" : "bad"; }
+        return ratio > 1.05F ? ( is_theirs ? "bad" : "good" ) : "neutral";
+    };
     const auto append_choices = [&]( const append_trade_choices_options & opts ) -> void {
         for( const auto visible_index : std::views::iota( std::size_t{0}, opts.filtered.size() ) )
         {
@@ -968,6 +1004,16 @@ game_client::interaction_snapshot
                     {.label = "Party", .value = opts.role},
                     {.label = "Source", .value = storage_kind},
                     {.label = "Unit price", .value = format_money( pricing.price )},
+                    {.label = "Price tone", .value = price_tone( pricing, candidate, opts.is_theirs )},
+                    {.label = "Category", .value = to_upper_case( candidate.get_category().name() )},
+                    {
+                        .label = "Stack weight",
+                        .value = string_format( "%.2f", convert_weight( pricing.weight * available_amount ) )
+                    },
+                    {
+                        .label = "Stack volume",
+                        .value = string_format( "%.2f", convert_volume( to_milliliter( pricing.vol * available_amount ) ) )
+                    },
                     {.label = "Available", .value = std::to_string( available_amount )},
                     {.label = "Selected", .value = std::to_string( selected_amount )},
                     {

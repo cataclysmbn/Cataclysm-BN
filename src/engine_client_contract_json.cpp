@@ -253,6 +253,7 @@ auto interaction_json( const boundary_state &state ) -> json
         {"allow_set_count", native.allow_set_count}, {"title", native.title}, {"message", native.message},
         {"choices", to_array( native.choices )}, {"choice_total", native.choice_total}};
     if( !native.banner.empty() ) { result["banner"] = native.banner; }
+    if( !native.message_tone.empty() ) { result["message_tone"] = native.message_tone; }
     if( native.field ) {
         const auto &field = *native.field;
         result["field"] = {{"id", field.id}, {"label", field.label}, {"description", field.description},

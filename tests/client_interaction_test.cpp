@@ -49,6 +49,7 @@
 #    include "state_helpers.h"
 #    include "string_editor_window.h"
 #    include "string_input_popup.h"
+#    include "string_utils.h"
 #    include "trade_win.h"
 #    include "ui.h"
 #    include "uistate.h"
@@ -451,6 +452,26 @@ TEST_CASE(
             CHECK(std::ranges::any_of(charges->columns, [](const auto& column) {
                 return column.label == "Unit price" && !column.value.empty();
             }));
+            const auto column_value = [](const auto& choice, const std::string& label) {
+                const auto found = std::ranges::
+                    find(choice.columns, label, &game_client::interaction_column::label);
+                return found == choice.columns.end() ? std::string{} : found->value;
+            };
+            CHECK_FALSE(column_value(*charges, "Category").empty());
+            CHECK_FALSE(column_value(*charges, "Stack weight").empty());
+            CHECK_FALSE(column_value(*charges, "Stack volume").empty());
+            CHECK(column_value(*charges, "Category")
+                  == to_upper_case(column_value(*charges, "Category")));
+            CHECK(column_value(*pipes, "Price tone") != "");
+            CHECK(snapshot.message_tone == (snapshot.message.ends_with(_("yes")) ? "good" : "bad"));
+            auto page = game_client::interaction_page_state{};
+            CHECK(game_client::paginated_interaction(page).message_tone == snapshot.message_tone);
+            const auto player =
+                std::ranges::find(snapshot.panes, "player", &game_client::interaction_pane::role);
+            REQUIRE(player != snapshot.panes.end());
+            REQUIRE(player->totals);
+            CHECK_FALSE(player->totals->weight_max.empty());
+            CHECK_FALSE(player->totals->volume_max.empty());
             const auto too_many = game_client::resolve_interaction_command({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::set_count,
