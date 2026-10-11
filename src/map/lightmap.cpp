@@ -2178,12 +2178,56 @@ auto diagonal_blocked(const level_cache& cache, const point& from, const point& 
     return delta.x == delta.y ? blocks.nw : blocks.ne;
 }
 
+auto has_vehicle_diagonal_block(const level_cache& cache) -> bool {
+    return std::ranges::any_of(cache.vehicle_obscured_cache, [](const auto& blocks) {
+        return blocks.nw || blocks.ne;
+    });
+}
+
+auto has_opaque_tile(const level_cache& cache) -> bool {
+    return std::ranges::any_of(cache.transparency_cache, [](const float transparency) {
+        return transparency <= LIGHT_TRANSPARENCY_SOLID;
+    });
+}
+
+/// Summed-area table of opaque tiles, to ask whether any lies in a rectangle.
+struct opaque_sums {
+    int stride;
+    std::vector<int> sums;
+
+    explicit opaque_sums(const level_cache& cache)
+        : stride(cache.cache_y + 1),
+          sums(static_cast<size_t>((cache.cache_x + 1) * stride), 0) {
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                const auto opaque =
+                    cache.transparency_cache[cache.idx(x, y)] <= LIGHT_TRANSPARENCY_SOLID;
+                sums[at(x + 1, y + 1)] =
+                    sums[at(x, y + 1)] + sums[at(x + 1, y)] - sums[at(x, y)] + (opaque ? 1 : 0);
+            }
+        }
+    }
+
+    auto at(const int x, const int y) const -> size_t {
+        return static_cast<size_t>(x * stride + y);
+    }
+
+    /// Inclusive bounds, already inside the cache.
+    auto any_in(const point& lo, const point& hi) const -> bool {
+        return sums[at(hi.x + 1, hi.y + 1)] - sums[at(lo.x, hi.y + 1)] - sums[at(hi.x + 1, lo.y)]
+                 + sums[at(lo.x, lo.y)]
+             > 0;
+    }
+};
+
 } // namespace
 
 /// Lets each tile that is not open air inherit the best seen value of its transparent neighbours,
 /// as the GPU surface pass does, so glancing surfaces do not depend on the compute backend. Reads
-/// a snapshot, so the inheritance never cascades. Levels with a vehicle diagonal block take the GPU
-/// centre ray instead of the shadowcast, since the two disagree about where those blocks cut sight.
+/// a snapshot, so the inheritance never cascades. Levels with a vehicle diagonal block take
+/// the GPU centre ray instead of the shadowcast, since the two disagree about where those cut
+/// sight. Elsewhere the shadowcast is clipped to the centre ray only where an opaque tile can
+/// make them differ.
 void map::apply_seen_surfaces(const tripoint_bub_ms& origin) {
     ZoneScopedN("apply_seen_surfaces");
     const auto round_nearest = [](const float value) {
@@ -2240,12 +2284,25 @@ void map::apply_seen_surfaces(const tripoint_bub_ms& origin) {
     };
     for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         auto& cache = get_cache(z);
-        if (std::ranges::any_of(cache.vehicle_obscured_cache, [](const auto& blocks) {
-                return blocks.nw || blocks.ne;
-            })) {
+        const auto has_diagonal = has_vehicle_diagonal_block(cache);
+        const auto any_seen = std::ranges::any_of(cache.seen_cache, [](const float seen) {
+            return seen > 0.0f;
+        });
+        if (has_diagonal || (any_seen && has_opaque_tile(cache))) {
+            const auto sums = opaque_sums(cache);
+            // The shadowcast can only err where an opaque tile lies in the box the ray spans.
+            const auto may_differ = [&](const int x, const int y) {
+                return has_diagonal
+                    || (cache.seen_cache[cache.idx(x, y)] > 0.0f
+                        && sums.any_in(
+                            {std::max(std::min(x, origin.x()) - 1, 0),
+                             std::max(std::min(y, origin.y()) - 1, 0)},
+                            {std::min(std::max(x, origin.x()) + 1, cache.cache_x - 1),
+                             std::min(std::max(y, origin.y()) + 1, cache.cache_y - 1)}));
+            };
             for (const auto x : std::views::iota(0, cache.cache_x)) {
                 for (const auto y : std::views::iota(0, cache.cache_y)) {
-                    if (tripoint_bub_ms(x, y, z) != origin) {
+                    if (tripoint_bub_ms(x, y, z) != origin && may_differ(x, y)) {
                         cache.seen_cache[cache.idx(x, y)] = ray_seen({x, y, z});
                     }
                 }
