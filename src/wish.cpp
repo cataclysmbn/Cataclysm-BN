@@ -80,7 +80,8 @@ class wish_mutate_callback: public uilist_callback
                     p->unset_mutation( vTraits[ entnum ] );
 
                 } else {
-                    p->set_mutation( vTraits[ entnum ] );
+                    // toggle_trait needs my_traits and my_mutations to agree, so drop the non-base mutation first
+                    p->unset_mutation( vTraits[ entnum ] );
                     p->toggle_trait( vTraits[ entnum ] );
                 }
                 uilist_entry &entry = menu->entries[entnum];
