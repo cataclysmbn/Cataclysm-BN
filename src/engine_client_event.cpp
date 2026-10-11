@@ -142,6 +142,7 @@ auto diff( const state_value &from, const state_value &to ) -> changes
             };
             keep( "look", before.appearance == after.appearance, !after.appearance );
             keep( "overlays", before.overlays == after.overlays, after.overlays.empty() );
+            keep( "traits", before.traits == after.traits, after.traits.empty() );
             keep( "stats", before.stats == after.stats, after.stats.empty() );
             keep( "inventory", before.inventory == after.inventory, after.inventory.empty() );
             keep( "sidebar", before.sidebar == after.sidebar, false );

@@ -788,12 +788,23 @@
           },
           "description": "Sprites drawn over a character, bottom first, as looks of kind overlay: id is the overlay (worn_<item>, wielded_<item>, mutation_<id>, bionic or effect), tile and looks_like the tileset ids to try in the native order. A tileset without a sprite for an overlay draws nothing."
         },
+        "traits": {
+          "type": "object",
+          "description": "The ids of the character's mutations by mutation type (hair_color, skin_tone, ...): the colors a tileset tints its mutation overlays with.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "keep": {
           "type": "array",
           "items": {
             "enum": [
               "look",
               "overlays",
+              "traits",
               "stats",
               "inventory",
               "sidebar",
@@ -809,7 +820,7 @@
         "at"
       ],
       "additionalProperties": false,
-      "description": "An avatar in an event: the members named in `keep` equal the previous avatar's and are left out; every other member that is absent is empty."
+      "description": "An avatar in an event: the members named in keep equal the previous avatar's and are left out; every other member that is absent is empty."
     },
     "sidebar_text": {
       "type": "object",
