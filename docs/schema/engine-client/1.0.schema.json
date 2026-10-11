@@ -224,6 +224,40 @@
           },
           "additionalProperties": false,
           "description": "Paint of a vehicle part. A tileset tints the part's background and foreground sprites with it (the native view blends hue and saturation toward it); a missing member is unpainted."
+        },
+        "mutation": {
+          "type": "object",
+          "description": "Set on the overlay of a mutation: its id, and its types and flags, which a tileset's tints and tint_pairs are keyed by to tint the overlay with the character's hair, skin or eye color.",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "flags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "types",
+            "flags"
+          ],
+          "additionalProperties": false
+        },
+        "tint_keys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Set on the overlay of a worn or wielded item, a bionic or an effect: the ids a tileset's tints are keyed by, in the order the native view tries them: the flags, then the id."
         }
       },
       "required": [
@@ -399,6 +433,10 @@
         "reviving": {
           "const": true,
           "description": "A corpse on the square can rise; the native view marks the square. Present only on visible squares."
+        },
+        "cargo": {
+          "const": true,
+          "description": "A cargo part of a vehicle on the square holds items; the native view highlights the part. Present only on visible squares."
         }
       },
       "required": [
@@ -426,7 +464,8 @@
               "traps": false,
               "items": false,
               "vehicle": false,
-              "light": false
+              "light": false,
+              "cargo": false
             },
             "required": [
               "memory"
@@ -453,7 +492,8 @@
               "items": false,
               "vehicle": false,
               "light": false,
-              "memory": false
+              "memory": false,
+              "cargo": false
             }
           }
         }
@@ -508,6 +548,16 @@
         "aware": {
           "const": true,
           "description": "Present when the creature is aware of the avatar (its overlay says it sees the player)."
+        },
+        "traits": {
+          "type": "object",
+          "description": "The ids of the character's mutations by mutation type (hair_color, skin_tone, ...): the colors a tileset tints its mutation overlays with.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       },
       "required": [
@@ -535,7 +585,8 @@
               "statuses": false,
               "overlays": false,
               "attitude": false,
-              "aware": false
+              "aware": false,
+              "traits": false
             }
           }
         },
@@ -651,6 +702,16 @@
             "$ref": "#/$defs/look"
           },
           "description": "Sprites drawn over a character, bottom first, as looks of kind overlay: id is the overlay (worn_<item>, wielded_<item>, mutation_<id>, bionic or effect), tile and looks_like the tileset ids to try in the native order. A tileset without a sprite for an overlay draws nothing."
+        },
+        "traits": {
+          "type": "object",
+          "description": "The ids of the character's mutations by mutation type (hair_color, skin_tone, ...): the colors a tileset tints its mutation overlays with.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       },
       "required": [
@@ -1003,6 +1064,42 @@
             "winter"
           ],
           "description": "Season of the calendar; tilesets name seasonal sprites with a _season_<name> suffix."
+        },
+        "mod_tilesets": {
+          "type": "array",
+          "description": "The files of the game data that add sprites to tilesets, in the order the native view loads them. A tiled client numbers their sprites after those of its tileset, for the files whose compatibility names it.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The JSON file, as the engine names it: relative to the game folder it runs from, unless absolute."
+              },
+              "base": {
+                "type": "string",
+                "description": "The folder the sheet files of the file are named from, named the same way."
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Which mod_tileset of the file this is, counting from 1."
+              },
+              "compatibility": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The TILES names of the tilesets it adds sprites to."
+              }
+            },
+            "required": [
+              "path",
+              "base",
+              "index",
+              "compatibility"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [

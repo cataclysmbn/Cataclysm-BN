@@ -1686,34 +1686,93 @@
       }
     },
     {
-      "name": "walk one step keeping the sidebar and stats",
-      "def": "events_notification",
+      "def": "look",
+      "name": "look of a mutation overlay",
       "value": {
-        "epoch": "epoch:e7f3",
-        "events": [
+        "kind": "overlay",
+        "id": "mutation_hair_long",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_mutation_hair_long",
+        "mutation": {
+          "id": "hair_long",
+          "types": [
+            "hair_style"
+          ],
+          "flags": []
+        }
+      }
+    },
+    {
+      "def": "entity",
+      "name": "entity with the mutations of a character by type",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "environment with the tilesets the game data adds",
+      "value": {
+        "turn": "0",
+        "time": "Spring, day 1 8:00:00 AM",
+        "weather": "clear",
+        "mod_tilesets": [
           {
-            "sequence": "70",
-            "revision": "50",
-            "type": "cells.seen",
-            "command": "c:11",
-            "changes": {
-              "avatar": {
-                "id": "e:avatar",
-                "at": {
-                  "dim": "",
-                  "x": 5,
-                  "y": 4,
-                  "z": 0
-                },
-                "name": "Ada",
-                "keep": [
-                  "stats",
-                  "inventory",
-                  "sidebar"
-                ]
-              }
-            }
+            "path": "/g/data/json/external_tileset/vehicle_parts.json",
+            "base": "/g/data/json/",
+            "index": 1,
+            "compatibility": [
+              "UNDEAD_PEOPLE_BASE"
+            ]
           }
+        ]
+      }
+    },
+    {
+      "def": "cell",
+      "name": "cell holding a loaded vehicle cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "vehicle": {
+          "kind": "vehicle_part",
+          "id": "trunk",
+          "glyph": "H",
+          "color": "brown"
+        },
+        "cargo": true
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of an item overlay with the ids its tints are keyed by",
+      "value": {
+        "kind": "overlay",
+        "id": "worn_jeans",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_worn_jeans",
+        "tint_keys": [
+          "VARSIZE",
+          "jeans"
         ]
       }
     }
@@ -2620,6 +2679,63 @@
         "tint": {
           "fg": "gray"
         }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "mod tileset without its compatibility",
+      "value": {
+        "turn": "0",
+        "time": "t",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/a.json",
+            "base": "/g/",
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "def": "entity",
+      "name": "sensed entity with traits",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "sensed",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "cell",
+      "name": "remembered cell with a loaded cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "remembered",
+        "memory": {
+          "terrain": {
+            "kind": "terrain",
+            "id": "t_floor",
+            "glyph": ".",
+            "color": "c_cyan"
+          }
+        },
+        "cargo": true
       }
     }
   ]

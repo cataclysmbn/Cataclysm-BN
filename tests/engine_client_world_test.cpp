@@ -29,6 +29,7 @@
 #include "vehicle/vehicle.h"
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
+#include "vehicle/vpart_range.h"
 #include "weather/weather.h"
 
 #include <algorithm>
@@ -796,6 +797,10 @@ TEST_CASE(
         CHECK(overlay->looks_like[1] == std::string(gender) + "worn_" + parent.str());
     }
     CHECK(overlay->looks_like.size() <= 20);
+    // A tileset's tints for the item are keyed by its flags, then its id.
+    REQUIRE_FALSE(overlay->tint_keys.empty());
+    CHECK(overlay->tint_keys.back() == "scarf_fur");
+    CHECK(overlay->tint_keys.size() == item::spawn("scarf_fur")->get_flags().size() + 1);
 
     // Monsters wear nothing.
     spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 1, 0));
@@ -887,4 +892,78 @@ TEST_CASE(
         }
         if (entry.vehicle && !entry.light) { CHECK(entry.known == ec::knowledge::visible); }
     }
+}
+
+TEST_CASE(
+    "world capture names the types of a mutation overlay and the mutations of a character by type",
+    "[engine_client_world]") {
+    make_scene();
+    auto& you = get_avatar();
+    you.toggle_trait(trait_id("hair_black"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    CHECK(state.avatar->traits.at("hair_color") == std::vector<std::string>{"hair_black"});
+    const auto hair =
+        std::ranges::find(state.avatar->overlays, "mutation_hair_black", &ec::look::id);
+    if (hair != state.avatar->overlays.end()) {
+        REQUIRE(hair->mutation);
+        CHECK(hair->mutation->id == "hair_black");
+        CHECK(std::ranges::count(hair->mutation->types, "hair_color") == 1);
+    }
+    // Worn items are not mutations and carry no types.
+    for (const auto& overlay : state.avatar->overlays) {
+        if (overlay.id && overlay.id->starts_with("worn_")) { CHECK_FALSE(overlay.mutation); }
+    }
+}
+
+TEST_CASE(
+    "world capture lists the mod tilesets of the game data with the tilesets they are for",
+    "[engine_client_world]") {
+    make_scene();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.environment);
+    const auto& files = state.environment->mod_tilesets;
+    const auto vehicles = std::ranges::find_if(files, [](const auto& file) {
+        return file.path.ends_with("external_tileset/vehicle_parts.json");
+    });
+    REQUIRE(vehicles != files.end());
+    CHECK(std::ranges::count(vehicles->compatibility, "UNDEAD_PEOPLE_BASE") == 1);
+    CHECK(vehicles->index == 1);
+    // Paths are the engine's own, relative to the game folder it runs from.
+    CHECK(vehicles->base.ends_with("json"));
+    CHECK_FALSE(vehicles->path.starts_with("/"));
+}
+
+TEST_CASE(
+    "world capture marks a vehicle cargo part that holds items and no other part",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    auto* veh = here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false);
+    REQUIRE(veh != nullptr);
+    auto loaded = std::optional<tripoint_bub_ms>{};
+    auto empty = std::optional<tripoint_bub_ms>{};
+    for (const auto& part : veh->get_all_parts()) {
+        const auto position = part.pos();
+        const auto vp = here.veh_at(position);
+        const auto cargo = vp ? vp.part_with_feature("CARGO", true) : std::nullopt;
+        if (cargo && !loaded) {
+            veh->add_item(cargo->part_index(), item::spawn("rock"));
+            loaded = position;
+        } else if (!vp.part_with_feature("CARGO", true) && !empty) {
+            empty = position;
+        }
+    }
+    REQUIRE(loaded);
+    REQUIRE(empty);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* with_items = find_cell(state, at(*loaded));
+    const auto* without = find_cell(state, at(*empty));
+    REQUIRE(with_items != nullptr);
+    REQUIRE(without != nullptr);
+    CHECK(with_items->cargo);
+    CHECK_FALSE(without->cargo);
 }

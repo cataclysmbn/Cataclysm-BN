@@ -41,7 +41,8 @@ auto valid_cell( const cell &value ) -> bool
 {
     const auto live = value.terrain || value.furniture || !value.fields.empty() ||
                       !value.traps.empty() ||
-                      !value.items.empty() || value.vehicle || value.light || value.reviving;
+                      !value.items.empty() || value.vehicle || value.light || value.reviving ||
+                      value.cargo;
     switch( value.known ) {
         case knowledge::remembered:
             return !live && value.memory;
@@ -58,7 +59,8 @@ auto valid_entity( const entity &value ) -> bool
         case knowledge::visible:
             return !value.sense;
         case knowledge::sensed:
-            return !value.appearance && !value.name && value.overlays.empty() && !value.attitude &&
+            return !value.appearance && !value.name && value.overlays.empty() && value.traits.empty() &&
+                   !value.attitude &&
                    !value.aware &&
                    value.statuses.empty();
         case knowledge::remembered:

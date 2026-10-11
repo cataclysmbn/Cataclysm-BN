@@ -12,10 +12,14 @@
 #include "creature.h"
 #include "game.h"
 #include "game_session.h"
+#include "bionics.h"
+#include "effect.h"
 #include "item.h"
 #include "tileray.h"
 #include "units_angle.h"
 #include "itype.h"
+#include "client_render_hooks.h"
+#include "mutation.h"
 #include "map/field.h"
 #include "map/field_type.h"
 #include "map/map.h"
@@ -310,6 +314,10 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         }
     }
     out.vehicle = vehicle_part_at( here, p, you );
+    if( const auto vp = here.veh_at( p ) ) {
+        const auto cargo = vp.part_with_feature( "CARGO", true );
+        out.cargo = cargo && !vp->vehicle().get_items( cargo->part_index() ).empty();
+    }
     if( here.could_see_items( p, you ) ) {
         out.reviving = std::ranges::any_of( here.i_at( p ), []( const item * thing ) {
             return thing != nullptr && thing->is_corpse() && ( thing->can_revive() ||
@@ -438,8 +446,38 @@ auto overlays_of( const Creature &critter ) -> std::vector<look>
     const auto *character = critter.as_character();
     if( character == nullptr ) { return {}; }
     return character->get_overlay_ids() | std::views::transform( [&]( const auto & entry ) {
-        return overlay_look( entry.id, character->male );
+        auto result = overlay_look( entry.id, character->male );
+        if( const auto *const mut = std::get_if<const mutation *>( &entry.entry ) ) {
+            const auto &branch = ( *mut )->first.obj();
+            result.mutation = look_mutation{
+                .id = ( *mut )->first.str(),
+                .types = { branch.types.begin(), branch.types.end() },
+                .flags = branch.flags | std::views::transform( &trait_flag_str_id::str ) | std::ranges::to<std::vector>() };
+        } else if( const auto *const thing = std::get_if<const item *>( &entry.entry ) ) {
+            result.tint_keys = ( *thing )->get_flags() | std::views::transform( &flag_id::str ) |
+                               std::ranges::to<std::vector>();
+            result.tint_keys.push_back( ( *thing )->typeId().str() );
+        } else if( const auto *const bio = std::get_if<const bionic *>( &entry.entry ) ) {
+            result.tint_keys = ( *bio )->id->flags | std::views::transform( &flag_id::str ) |
+                               std::ranges::to<std::vector>();
+            result.tint_keys.push_back( ( *bio )->id.str() );
+        } else if( const auto *const eff = std::get_if<const effect *>( &entry.entry ) ) {
+            result.tint_keys = { ( *eff )->get_id().str() };
+        }
+        return result;
     } ) | std::ranges::to<std::vector>();
+}
+
+/// The ids of the mutations of a character by mutation type.
+auto traits_of( const Creature &critter ) -> std::map<std::string, std::vector<std::string>>
+{
+    auto result = std::map<std::string, std::vector<std::string>> {};
+    const auto *character = critter.as_character();
+    if( character == nullptr ) { return result; }
+    for( const auto &id : character->get_mutations() ) {
+        for( const auto &type : id.obj().types ) { result[type].push_back( id.str() ); }
+    }
+    return result;
 }
 
 auto capture_entities( const map &here, const avatar &you, const std::string &dimension )
@@ -464,10 +502,20 @@ auto capture_entities( const map &here, const avatar &you, const std::string &di
             .appearance = std::move( appearance ),
             .name = critter->get_name(),
             .overlays = overlays_of( *critter ),
+            .traits = traits_of( *critter ),
             .attitude = Creature::attitude_raw_string( critter->attitude_to( you ) ),
             .aware = critter->sees( you ) && !you.has_trait( trait_INATTENTIVE ) } );
     }
     return entities;
+}
+
+/// The files of game data that add sprites to tilesets, in the order the native view loads them.
+auto mod_tileset_files() -> std::vector<mod_tileset_file>
+{
+    return game_client::declared_mod_tilesets() | std::views::transform( []( const auto & file ) {
+        return mod_tileset_file{ .path = file.full_path, .base = file.base_path, .index = file.index,
+                                 .compatibility = file.compatibility };
+    } ) | std::ranges::to<std::vector>();
 }
 
 auto season_name() -> std::string
@@ -501,6 +549,7 @@ auto capture_avatar( map &here, const avatar &you,
         .id = "e:avatar", .at = position_of( here, you.bub_pos(), dimension ), .name = you.name,
         .appearance = creature_look( you, "avatar", "avatar" ),
         .overlays = overlays_of( you ),
+        .traits = traits_of( you ),
         .stats = {
             { "strength", _( "Strength" ), std::to_string( you.get_str() ), color_of( color_compare_base( you.get_str_base(), you.get_str() ) ) },
             { "dexterity", _( "Dexterity" ), std::to_string( you.get_dex() ), color_of( color_compare_base( you.get_dex_base(), you.get_dex() ) ) },
@@ -562,7 +611,8 @@ auto capture_world() -> world_state
         .avatar = capture_avatar( here, you, dimension ),
         .environment = environment_value{
             .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
-            .weather = get_weather().weather_id.str(), .season = season_name() } };
+            .weather = get_weather().weather_id.str(), .season = season_name(),
+            .mod_tilesets = mod_tileset_files() } };
     // The terrain window moves with the view, not the world: its squares are where a click lands.
     if( const auto window = g->click_window() ) {
         const auto z = g->get_levz();

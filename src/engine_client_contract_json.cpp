@@ -48,6 +48,12 @@ auto to_json( const look &value ) -> json
     if( value.rotation && *value.rotation != 0 ) { result["rotation"] = *value.rotation; }
     if( value.facing ) { result["facing"] = *value.facing; }
     if( value.stack ) { result["stack"] = *value.stack; }
+    if( value.mutation ) {
+        result["mutation"] = {{"id", value.mutation->id}, {"types", value.mutation->types},
+            {"flags", value.mutation->flags}
+        };
+    }
+    if( !value.tint_keys.empty() ) { result["tint_keys"] = value.tint_keys; }
     if( value.tint ) {
         result["tint"] = json::object();
         if( !value.tint->bg.empty() ) { result["tint"]["bg"] = value.tint->bg; }
@@ -100,6 +106,7 @@ auto to_json( const cell &value ) -> json
     if( value.furniture ) { result["furniture"] = layer_json( *value.furniture, "furniture" ); }
     if( !value.fields.empty() ) { result["fields"] = to_array( value.fields ); }
     if( value.reviving ) { result["reviving"] = true; }
+    if( value.cargo ) { result["cargo"] = true; }
     if( !value.traps.empty() ) { result["traps"] = to_array( value.traps ); }
     if( !value.items.empty() ) { result["items"] = to_array( value.items ); }
     if( value.vehicle ) { result["vehicle"] = to_json( *value.vehicle ); }
@@ -116,6 +123,7 @@ auto to_json( const entity &value ) -> json
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( value.name ) { result["name"] = *value.name; }
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
+    if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( value.attitude ) { result["attitude"] = *value.attitude; }
     if( value.aware ) { result["aware"] = true; }
     if( !value.statuses.empty() ) { result["statuses"] = value.statuses; }
@@ -172,6 +180,7 @@ auto to_json( const avatar_value &value ) -> json
         {"stats", to_array( value.stats )}, {"sidebar", to_json( value.sidebar )}};
     if( value.appearance ) { result["look"] = to_json( *value.appearance ); }
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
+    if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     return result;
@@ -180,6 +189,13 @@ auto to_json( const environment_value &value ) -> json
 {
     auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
     if( !value.season.empty() ) { result["season"] = value.season; }
+    if( !value.mod_tilesets.empty() ) {
+        result["mod_tilesets"] = json::array();
+        for( const auto &file : value.mod_tilesets ) {
+            result["mod_tilesets"].push_back( {{"path", file.path}, {"base", file.base}, {"index", file.index},
+                {"compatibility", file.compatibility}} );
+        }
+    }
     return result;
 }
 auto to_json( const bounds &value ) -> json
