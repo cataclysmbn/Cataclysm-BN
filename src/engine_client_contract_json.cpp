@@ -254,6 +254,7 @@ auto interaction_json( const boundary_state &state ) -> json
         {"choices", to_array( native.choices )}, {"choice_total", native.choice_total}};
     if( !native.banner.empty() ) { result["banner"] = native.banner; }
     if( !native.message_tone.empty() ) { result["message_tone"] = native.message_tone; }
+    if( native.category_mode ) { result["category_mode"] = *native.category_mode; }
     if( native.field ) {
         const auto &field = *native.field;
         result["field"] = {{"id", field.id}, {"label", field.label}, {"description", field.description},
@@ -325,6 +326,15 @@ auto interaction_json( const boundary_state &state ) -> json
             {"area_id", pane.area_id}, {"area_label", pane.area_label},
             {"area_description", pane.area_description}, {"filter", pane.filter},
             {"storage_kind", pane.storage_kind}};
+        if( !pane.sort.empty() ) { value["sort"] = pane.sort; }
+        if( pane.page ) { value["page"] = {{"number", pane.page->number}, {"count", pane.page->count}}; }
+        if( pane.totals ) {
+            const auto &t = *pane.totals;
+            value["totals"] = {{"weight", t.weight}, {"weight_max", t.weight_max}, {"weight_unit", t.weight_unit},
+                {"volume", t.volume}, {"volume_max", t.volume_max}, {"volume_unit", t.volume_unit},
+                {"over_weight", t.over_weight}, {"over_volume", t.over_volume}
+            };
+        }
         if( !pane.blocked_areas.empty() ) { value["blocked_areas"] = pane.blocked_areas; }
         compat["panes"].push_back( std::move( value ) );
     }

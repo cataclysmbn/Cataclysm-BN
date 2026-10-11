@@ -1353,6 +1353,43 @@
         "storage_kind": {
           "type": "string"
         },
+        "sort": {
+          "type": "string"
+        },
+        "page": {
+          "type": "object",
+          "properties": {
+            "number": { "type": "integer", "minimum": 1 },
+            "count": { "type": "integer", "minimum": 1 }
+          },
+          "required": ["number", "count"],
+          "additionalProperties": false,
+          "description": "The native page indicator of a paged list, counted from 1 (the NPC trade window)."
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "weight": { "type": "string" },
+            "weight_max": { "type": "string" },
+            "weight_unit": { "type": "string" },
+            "volume": { "type": "string" },
+            "volume_max": { "type": "string" },
+            "volume_unit": { "type": "string" },
+            "over_weight": { "type": "boolean" },
+            "over_volume": { "type": "boolean" }
+          },
+          "required": [
+            "weight",
+            "weight_max",
+            "weight_unit",
+            "volume",
+            "volume_max",
+            "volume_unit",
+            "over_weight",
+            "over_volume"
+          ],
+          "additionalProperties": false
+        },
         "blocked_areas": {
           "type": "array",
           "items": {
@@ -1642,6 +1679,10 @@
         "message_tone": {
           "enum": ["good", "bad"],
           "description": "Present where the native screen colors the message line, green for good and red for bad: the NPC trade balance."
+        },
+        "category_mode": {
+          "type": "boolean",
+          "description": "Present where the native screen has a category-selection mode: whether it is on (the NPC trade window)."
         },
         "banner": {
           "type": "array",

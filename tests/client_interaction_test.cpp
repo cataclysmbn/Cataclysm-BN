@@ -466,6 +466,13 @@ TEST_CASE(
             CHECK(snapshot.message_tone == (snapshot.message.ends_with(_("yes")) ? "good" : "bad"));
             auto page = game_client::interaction_page_state{};
             CHECK(game_client::paginated_interaction(page).message_tone == snapshot.message_tone);
+            CHECK(snapshot.category_mode == std::optional{false});
+            CHECK(std::ranges::all_of(snapshot.panes, [](const auto& pane) {
+                return pane.page && pane.page->number == 1 && pane.page->count >= 1;
+            }));
+            CHECK(charges->hotkey.size() == 1);
+            CHECK(pipes->hotkey.size() == 1);
+            CHECK(charges->hotkey != pipes->hotkey);
             const auto player =
                 std::ranges::find(snapshot.panes, "player", &game_client::interaction_pane::role);
             REQUIRE(player != snapshot.panes.end());

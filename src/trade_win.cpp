@@ -841,7 +841,7 @@ auto trading_window::build_filtered_indices( const std::vector<item_pricing> &li
     | std::ranges::to<std::vector>();
 }
 
-auto trading_window::interaction_snapshot( const npc &np ) const ->
+auto trading_window::interaction_snapshot( const npc &np, input_context &ctxt ) const ->
 game_client::interaction_snapshot
 {
     const auto their_selected = std::ranges::fold_left(
@@ -886,6 +886,7 @@ game_client::interaction_snapshot
         .message = string_format( _( "%s | Balance acceptable: %s" ), balance_label,
                                   balance_acceptable ? _( "yes" ) : _( "no" ) ),
         .message_tone = balance_acceptable ? "good" : "bad",
+        .category_mode = category_mode,
         .allow_cancel = true,
         .allow_set_count = true,
     };
@@ -924,6 +925,30 @@ game_client::interaction_snapshot
             .over_volume = used_volume > max_volume,
         };
     };
+    // The page each pane shows and the letters the native list prints before its rows.
+    const auto item_hotkeys = ctxt.get_available_single_char_hotkeys(
+                                  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+    struct page_view {
+        std::size_t offset;
+        std::size_t end;
+        game_client::interaction_page_position position;
+    };
+    const auto view_page = [&]( const std::vector<item_pricing> &list,
+                                const std::vector<size_t> &filtered,
+    const std::size_t offset ) -> page_view {
+        const auto starts = build_page_starts( list, filtered, entries_per_page );
+        const auto index = page_index_for_offset( starts, offset );
+        return {
+            .offset = offset,
+            .end = index + 1 < starts.size() ? starts[index + 1] : filtered.size(),
+            .position = {
+                .number = static_cast<int>( index + 1 ),
+                .count = static_cast<int>( std::max( starts.size(), size_t{1} ) )
+            },
+        };
+    };
+    const auto them_page = view_page( state.theirs, them_filtered, them_off );
+    const auto you_page = view_page( state.yours, you_filtered, you_off );
     result.panes = {
         {
             .id = npc_pane_id,
@@ -936,6 +961,7 @@ game_client::interaction_snapshot
             .storage_kind = trade_pane_storage_kind( state.theirs, them_filtered ),
             .totals = np.is_shopkeeper() ? std::nullopt : std::optional{
                 capacity_totals( state.weight_left, state.volume_left, np.weight_capacity(), np.volume_capacity() ) },
+            .page = them_page.position,
         },
         {
             .id = player_pane_id,
@@ -948,6 +974,7 @@ game_client::interaction_snapshot
             .storage_kind = trade_pane_storage_kind( state.yours, you_filtered ),
             .totals = capacity_totals( player_free_weight, player_free_volume, g->u.weight_capacity(),
                                        g->u.volume_capacity() ),
+            .page = you_page.position,
         },
     };
 
@@ -958,6 +985,7 @@ game_client::interaction_snapshot
         std::string role;
         bool is_theirs;
         size_t cursor;
+        page_view page;
     };
     auto identity_counts = std::unordered_map<std::string, std::size_t> {};
     // How the native price column colors a row: green for a good deal, red for a bad one, none when bartering freely.
@@ -992,6 +1020,9 @@ game_client::interaction_snapshot
                 .id = game_client::opaque_interaction_id( "trade-item", identity ),
                 .label = candidate.display_name( available_amount ),
                 .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
+                .hotkey = visible_index >= opts.page.offset && visible_index < opts.page.end &&
+                visible_index - opts.page.offset < item_hotkeys.size() ?
+                std::string( 1, item_hotkeys[visible_index - opts.page.offset] ) : std::string{},
                 .pane_id = opts.pane_id,
                 .area_id = area_id,
                 .storage_kind = storage_kind,
@@ -1041,6 +1072,7 @@ game_client::interaction_snapshot
         .role = "npc",
         .is_theirs = true,
         .cursor = them_cursor,
+        .page = them_page,
     } );
     append_choices( {
         .list = state.yours,
@@ -1049,6 +1081,7 @@ game_client::interaction_snapshot
         .role = "player",
         .is_theirs = false,
         .cursor = you_cursor,
+        .page = you_page,
     } );
     return result;
 }
@@ -1442,7 +1475,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
         auto action = std::string{};
         {
             const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-                return interaction_snapshot( np );
+                return interaction_snapshot( np, ctxt );
             } );
             action = ctxt.handle_input();
         }
@@ -1451,7 +1484,7 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
             if( event.interaction->operation == game_client::interaction_operation::cancel ) {
                 action = "QUIT";
             } else {
-                const auto snapshot = interaction_snapshot( np );
+                const auto snapshot = interaction_snapshot( np, ctxt );
                 const auto choice = std::ranges::find(
                                         snapshot.choices, event.interaction->target_id,
                                         &game_client::interaction_choice::id );
