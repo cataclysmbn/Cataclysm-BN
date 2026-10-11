@@ -20,7 +20,7 @@ title: エンジン/クライアントプロトコル 1.0
 <- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"completed","at":{"epoch":"epoch:e7f3","sequence":"41","revision":"32"}}}
 ```
 
-`parts` 個のスナップショットパートを集めてから、`bn.events` を順に適用します。欠落(gap)、epoch の不一致、`bn.resync` があれば `bn.subscribe` を再度呼びます。新しいスナップショットは状態のみを復元し、`lost_after` 以降の一時的なイベントは失われたものとして扱われ、再送されません。
+`parts` 個のスナップショットパートを集めてから、`bn.events` を順に適用します。欠落(gap)、epoch の不一致、`bn.resync` があれば `bn.subscribe` を再度呼びます。新しいスナップショットは状態のみを復元し、`lost_after` 以降の一時的なイベントは失われたものとして扱われ、再送されません。 エンジンはイベント履歴を保持しません。`bn.unsubscribe` の後や遅れた後に戻る方法は `bn.subscribe` だけで、そのスナップショット(再送ではない)が最後に見た `(epoch, sequence)` に取って代わります。購読解除中に送ったコマンドはプッシュされないため、結果は `bn.command.result` で読みます。古い `epoch` を指定したリクエストはすべて `stale_epoch` と `action: "subscribe"` で失敗します。
 
 ## メソッド
 

@@ -20,7 +20,7 @@ An external client plays the game over newline-delimited JSON-RPC 2.0 on the std
 <- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"completed","at":{"epoch":"epoch:e7f3","sequence":"41","revision":"32"}}}
 ```
 
-Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an epoch mismatch or `bn.resync` means: call `bn.subscribe` again. A new snapshot restores state only; transient events after `lost_after` are lost, never replayed.
+Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an epoch mismatch or `bn.resync` means: call `bn.subscribe` again. A new snapshot restores state only; transient events after `lost_after` are lost, never replayed. The engine keeps no event history: after `bn.unsubscribe`, or after falling behind, `bn.subscribe` is the only way back, and its snapshot (never a replay) supersedes the last seen `(epoch, sequence)`. Commands sent while unsubscribed are not pushed; read their outcome with `bn.command.result`. Any request that names a stale `epoch` fails with `stale_epoch` and `action: "subscribe"`.
 
 ## Methods
 

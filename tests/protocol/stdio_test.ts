@@ -1396,3 +1396,108 @@ Deno.test({
     }
   },
 })
+
+Deno.test({
+  name:
+    "stdio: a client that unsubscribes recovers by a fresh snapshot, and a stale epoch is refused",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      await client.result("bn.hello", {
+        versions: ["1.0"],
+        client: { name: "stdio-test", version: "1" },
+      })
+      const session = new Session(client)
+      await session.start()
+      await session.acknowledge(() =>
+        session.mirror.interaction.interaction?.context === "MAIN_MENU"
+      )
+      const stale = session.mirror
+      const epoch = stale.at.epoch
+
+      // Unsubscribed, a command still runs; nothing is pushed, and its outcome is read by id.
+      await client.result("bn.unsubscribe", {})
+      const choice = stale.interaction.interaction.choices.find((entry: Value) =>
+        entry.enabled && entry.label === "Settings"
+      )
+      const submit = await client.result("bn.command.submit", {
+        epoch,
+        expect: {
+          revision: stale.at.revision,
+          boundary_id: stale.interaction.boundary_id,
+          schema_id: stale.interaction.interaction.schema_id,
+        },
+        operation: { kind: "choose", choice_id: choice.id },
+      })
+      let outcome = await client.result("bn.command.result", {
+        epoch,
+        command_id: submit.command_id,
+      })
+      for (let poll = 0; outcome.stage !== "completed" && poll < 600; poll++) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        outcome = await client.result("bn.command.result", { epoch, command_id: submit.command_id })
+      }
+      assertEquals(outcome.stage, "completed")
+      assertEquals(client.notes.filter((note) => note.method !== "bn.progress"), [])
+
+      // Subscribing again is an explicit snapshot: it supersedes the last seen sequence, and the
+      // mirror it builds shows what happened meanwhile.
+      const fresh = await session.subscribe()
+      assertEquals(fresh.at.epoch, epoch)
+      assert(
+        BigInt(fresh.at.sequence) > BigInt(stale.at.sequence),
+        "snapshot is newer than the last seen",
+      )
+      assertNotEquals(fresh.state(), stale.state())
+      assertEquals(fresh.at, outcome.at)
+      session.mirror = fresh
+
+      // The stream continues contiguously from that snapshot and equals another fresh one.
+      const next = session.mirror.interaction.interaction.choices.find((entry: Value) =>
+        entry.enabled && entry.label === "New Game"
+      )
+      assertEquals(
+        (await session.submit({ kind: "choose", choice_id: next.id })).stages.at(-1),
+        "completed",
+      )
+      assertEquals(session.mirror.state(), (await session.subscribe()).state())
+
+      // A stale epoch is refused with the documented error, by every request that names one.
+      const old = "epoch:stale"
+      const at = session.mirror.at
+      const expect = {
+        revision: at.revision,
+        boundary_id: session.mirror.interaction.boundary_id,
+        schema_id: null,
+      }
+      for (
+        const [method, params] of [
+          ["bn.command.submit", { epoch: old, expect, operation: { kind: "cancel" } }],
+          ["bn.command.result", { epoch: old, command_id: submit.command_id }],
+          ["bn.interaction.choices", {
+            epoch: old,
+            boundary_id: expect.boundary_id,
+            offset: 0,
+            limit: 1,
+          }],
+          ["bn.world.describe", {
+            epoch: old,
+            boundary_id: expect.boundary_id,
+            pos: { dim: "", x: 0, y: 0, z: 0 },
+          }],
+        ] as [string, Value][]
+      ) {
+        const refused = await client.request(method, params)
+        assertEquals(refused.error?.data?.kind, "stale_epoch", method)
+        assertEquals(refused.error.data.action, "subscribe", method)
+        assertEquals(refused.error.data.at.epoch, epoch, method)
+      }
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

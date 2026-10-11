@@ -20,7 +20,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 <- {"jsonrpc":"2.0","method":"bn.command","params":{"epoch":"epoch:e7f3","command_id":"c:5","stage":"completed","at":{"epoch":"epoch:e7f3","sequence":"41","revision":"32"}}}
 ```
 
-`parts` 개수만큼 스냅샷 파트를 모은 뒤 `bn.events`를 순서대로 적용합니다. 누락(gap), epoch 불일치, `bn.resync`가 오면 `bn.subscribe`를 다시 호출합니다. 새 스냅샷은 상태만 복원하며, `lost_after` 이후의 일시적 이벤트는 유실로 보고되고 다시 전송되지 않습니다.
+`parts` 개수만큼 스냅샷 파트를 모은 뒤 `bn.events`를 순서대로 적용합니다. 누락(gap), epoch 불일치, `bn.resync`가 오면 `bn.subscribe`를 다시 호출합니다. 새 스냅샷은 상태만 복원하며, `lost_after` 이후의 일시적 이벤트는 유실로 보고되고 다시 전송되지 않습니다. 엔진은 이벤트 이력을 보관하지 않습니다. `bn.unsubscribe` 이후나 뒤처진 뒤에는 `bn.subscribe`만이 복구 방법이며, 그 스냅샷(재전송이 아님)이 마지막으로 본 `(epoch, sequence)`를 대체합니다. 구독 해제 중 보낸 명령은 푸시되지 않으므로 `bn.command.result`로 결과를 읽습니다. 오래된 `epoch`를 지정한 요청은 모두 `stale_epoch`와 `action: "subscribe"`로 실패합니다.
 
 ## 메서드
 
