@@ -166,9 +166,21 @@ class uilist;
 * event completely". This is unchanged before or after the PR.
 * @{
 */
+/// A key a callback tests on its own, outside the input context's actions. The menu publishes it as an
+/// `action:key:<code>` row so a client can press it, and runs the callback's key handler with that key.
+struct uilist_key {
+    int key;
+    std::string name;
+};
+
 class uilist_callback
 {
     public:
+
+        /// The raw keys `key` reacts to, for clients that only send actions and choices.
+        virtual std::vector<uilist_key> keys() const {
+            return {};
+        }
 
         /**
         * After a new item is selected, call this once

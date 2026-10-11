@@ -1087,6 +1087,14 @@ void uilist::query( bool loop, int timeout )
                         .highlighted = entry_index == selected,
                     } );
                 }
+                if( callback != nullptr ) {
+                    for( const auto &callback_key : callback->keys() ) {
+                        snapshot.choices.push_back( {
+                            .id = "action:key:" + std::to_string( callback_key.key ),
+                            .label = callback_key.name,
+                        } );
+                    }
+                }
                 return snapshot;
             } );
             ret_act = ctxt.handle_input( timeout );
@@ -1098,6 +1106,16 @@ void uilist::query( bool loop, int timeout )
         if( event.interaction &&
             event.interaction->operation == game_client::interaction_operation::cancel ) {
             ret = UILIST_CANCEL;
+        } else if( event.interaction &&
+                   event.interaction->operation == game_client::interaction_operation::choose &&
+                   event.interaction->target_id.starts_with( "action:key:" ) ) {
+            // A client pressed a key the callback tests itself.
+            auto pressed = input_event();
+            pressed.type = input_event_t::keyboard;
+            pressed.sequence.push_back( std::stoi( event.interaction->target_id.substr( 11 ) ) );
+            if( callback != nullptr ) {
+                callback->key( ctxt, pressed, selected, this );
+            }
         } else if( event.interaction &&
                    event.interaction->operation == game_client::interaction_operation::choose ) {
             const auto choice = std::ranges::find_if( fentries, [&]( const auto entry_index ) {

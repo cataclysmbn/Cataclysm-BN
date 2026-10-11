@@ -65,6 +65,13 @@ class wish_mutate_callback: public uilist_callback
         }
 
         wish_mutate_callback() = default;
+
+        std::vector<uilist_key> keys() const override {
+            return {
+                { .key = 't', .name = _( "Toggle the selected mutation" ) },
+                { .key = 'c', .name = _( "Filter by mutation category" ) },
+            };
+        }
         bool key( const input_context &, const input_event &event, int entnum, uilist *menu ) override {
             const int input = event.get_first_input();
             if( input == 't' && p->has_trait( vTraits[ entnum ] ) ) {
@@ -512,6 +519,15 @@ class wish_monster_callback: public uilist_callback
             lastent = -2;
         }
 
+        std::vector<uilist_key> keys() const override {
+            return {
+                { .key = 'f', .name = _( "Toggle friendly" ) },
+                { .key = 'i', .name = _( "Increase the group size" ) },
+                { .key = 'd', .name = _( "Decrease the group size" ) },
+                { .key = 'h', .name = _( "Toggle hallucination" ) },
+            };
+        }
+
         bool key( const input_context &, const input_event &event, int /*entnum*/,
                   uilist * /*menu*/ ) override {
             if( event.get_first_input() == 'f' ) {
@@ -694,6 +710,14 @@ class wish_item_callback: public uilist_callback
                     incontainer = true;
                 }
             }
+        }
+
+        std::vector<uilist_key> keys() const override {
+            return {
+                { .key = 'f', .name = _( "Choose a container" ) },
+                { .key = 'F', .name = _( "Add a flag" ) },
+                { .key = 'E', .name = _( "Toggle spawning everything" ) },
+            };
         }
 
         bool key( const input_context &, const input_event &event, int /*entnum*/,
