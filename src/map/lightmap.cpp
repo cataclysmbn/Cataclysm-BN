@@ -86,6 +86,67 @@ auto has_vertical_light_blocker(const level_cache& cache, const int x, const int
     return cache.floor_cache[idx] || cache.vehicle_floor_cache[idx];
 }
 
+static constexpr auto DAYLIGHT_DIFFUSION_PASSES = 16;
+
+/// Spreads daylight seeds into the covered transparent tiles around them, pass for pass as the GPU
+/// lm_daylight_diffuse shader does, and raises lm to the result. Seeds are never lowered.
+auto diffuse_daylight(level_cache& cache, std::vector<float> seeds) -> void {
+    constexpr auto cardinals = std::array{point_north, point_south, point_east, point_west};
+    const auto transparent_at = [&](const point p) {
+        return p.x >= 0 && p.y >= 0 && p.x < cache.cache_x && p.y < cache.cache_y
+            && cache.transparency_cache[cache.idx(p.x, p.y)] > LIGHT_TRANSPARENCY_SOLID;
+    };
+    // Only covered tiles within the pass count of a transparent seed can receive light.
+    auto active = std::vector<point>{};
+    auto reached = std::vector<char>(seeds.size(), 0);
+    auto frontier = std::vector<point>{};
+    for (const auto x : std::views::iota(0, cache.cache_x)) {
+        for (const auto y : std::views::iota(0, cache.cache_y)) {
+            if (seeds[cache.idx(x, y)] > 0.0f && transparent_at({x, y})) {
+                frontier.emplace_back(x, y);
+            }
+            reached[cache.idx(x, y)] = seeds[cache.idx(x, y)] > 0.0f;
+        }
+    }
+    for (auto step = 0; step < DAYLIGHT_DIFFUSION_PASSES; ++step) {
+        auto next = std::vector<point>{};
+        for (const auto& from : frontier) {
+            for (const auto offset : cardinals) {
+                const auto to = from + offset;
+                if (transparent_at(to) && !reached[cache.idx(to.x, to.y)]) {
+                    reached[cache.idx(to.x, to.y)] = 1;
+                    next.push_back(to);
+                    active.push_back(to);
+                }
+            }
+        }
+        frontier = std::move(next);
+    }
+    auto next_seeds = seeds;
+    for (const auto pass : std::views::iota(0, DAYLIGHT_DIFFUSION_PASSES)) {
+        const auto air_decay = std::exp(-LIGHT_TRANSPARENCY_OPEN_AIR);
+        const auto decay =
+            pass == 0 ? air_decay
+                      : air_decay * static_cast<float>(pass) / static_cast<float>(pass + 1);
+        for (const auto& p : active) {
+            const auto best = std::ranges::fold_left(
+                cardinals | std::views::transform([&](const auto offset) { return p + offset; })
+                    | std::views::filter(transparent_at) | std::views::transform([&](const auto n) {
+                          return seeds[cache.idx(n.x, n.y)];
+                      })
+                    | std::views::filter([](const float v) { return v > LIGHT_AMBIENT_LOW; }),
+                seeds[cache.idx(p.x, p.y)],
+                [&](const float a, const float v) { return std::max(a, v * decay); });
+            next_seeds[cache.idx(p.x, p.y)] = best < LIGHT_AMBIENT_LOW ? 0.0f : best;
+        }
+        seeds.swap(next_seeds);
+    }
+    for (const auto& p : active) {
+        const auto idx = cache.idx(p.x, p.y);
+        cache.lm[idx] = std::max(cache.lm[idx], seeds[idx]);
+    }
+}
+
 struct vehicle_external_light_cache_scope {
     level_cache& cache;
     std::vector<std::pair<std::size_t, float>> transparency_restore;
@@ -1276,6 +1337,35 @@ void map::build_sunlight_cache(int pzlev) {
                     }
                 });
         }
+    }
+
+    if (!m_solar.direct_active) { return; }
+    // Covered columns get no seed; the rest take their sun state, as the GPU ambient pass does.
+    const auto max_shadow_light =
+        static_cast<float>(default_daylight_level()) * SOLAR_SHADOW_SCATTER;
+    const auto shadow_light_level =
+        std::max(LIGHT_AMBIENT_LOW, std::min(g->natural_light_level(0), max_shadow_light));
+    auto covered = std::vector<char>(get_cache_ref(zlev_max).lm.size(), 0);
+    for (int zlev = zlev_max; zlev >= -OVERMAP_DEPTH; zlev--) {
+        auto& cache = get_cache(zlev);
+        auto seeds = std::vector<float>(covered.size(), 0.0f);
+        const auto daylight = g->natural_light_level(zlev);
+        auto any_seed = false;
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                const auto idx = cache.idx(x, y);
+                if (covered[idx]) { continue; }
+                const auto state = direct_sunlight_state_at(point_bub_ms(x, y), zlev);
+                seeds[idx] =
+                    state == direct_sunlight_state::direct ? daylight
+                    : state == direct_sunlight_state::shadow
+                        ? shadow_light_level
+                        : 0.0f;
+                any_seed |= seeds[idx] > 0.0f;
+                covered[idx] |= has_vertical_light_blocker(cache, x, y);
+            }
+        }
+        if (any_seed) { diffuse_daylight(cache, std::move(seeds)); }
     }
 }
 
