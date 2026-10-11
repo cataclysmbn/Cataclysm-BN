@@ -17,6 +17,7 @@
 #    include "init.h"
 #    include "input.h"
 #    include "json.h"
+#    include "map/field_type.h"
 #    include "map/map.h"
 #    include "map/mapdata.h"
 #    include "map_helpers.h"
@@ -417,6 +418,84 @@ TEST_CASE(
         you.Character::setpos(you.abs_pos() + point_east);
         map_perception::invalidate_stale_visibility(here);
         CHECK(here.visibility_caches_dirty());
+    });
+}
+
+namespace {
+/// One turn's visibility refresh as game::do_turn and acquire() run it, without the
+/// full-invalidation oracle: gated invalidation, lightmap rebuild, refresh only if something marked
+/// the cache dirty.
+auto refresh_gated() -> std::vector<tripoint_bub_ms> {
+    auto& here = get_map();
+    const auto z = get_avatar().bub_pos().z();
+    g->reset_light_level();
+    map_perception::invalidate_stale_visibility(here);
+    here.build_map_cache(z, false);
+    if (here.visibility_caches_dirty()) { here.update_visibility_cache(z); }
+    auto visible = map_perception::visible_cells(here);
+    std::ranges::sort(visible, std::less<>{}, [](const auto& p) { return p.raw(); });
+    return visible;
+}
+
+/// What the pre-branch blanket invalidation would have shown for the current world.
+auto refresh_blanket() -> std::vector<tripoint_bub_ms> {
+    auto& here = get_map();
+    const auto z = get_avatar().bub_pos().z();
+    g->reset_light_level();
+    here.invalidate_visibility_caches();
+    here.build_map_cache(z, false);
+    here.update_visibility_cache(z);
+    auto visible = map_perception::visible_cells(here);
+    std::ranges::sort(visible, std::less<>{}, [](const auto& p) { return p.raw(); });
+    return visible;
+}
+} // namespace
+
+TEST_CASE(
+    "a fire spreading in the dark lights cells without the avatar moving or the blanket invalidation",
+    "[map_perception_bionics_boundary][visibility_refresh][mcp]") {
+    with_dark_room([]() {
+        auto& here = get_map();
+        const auto origin = get_avatar().bub_pos();
+        map_perception::acquire();
+        const auto dark = refresh_gated();
+        const auto spark = origin + point_east * 6;
+        here.add_field(spark, fd_fire, 2);
+        const auto lit = refresh_gated();
+        CHECK(lit.size() > dark.size());
+        CHECK(std::ranges::contains(lit, spark));
+        here.add_field(spark + point_east * 2, fd_fire, 2);
+        const auto spread = refresh_gated();
+        CHECK(spread.size() > lit.size());
+        CHECK(spread == refresh_blanket());
+        here.remove_field(spark, fd_fire);
+        here.remove_field(spark + point_east * 2, fd_fire);
+        CHECK(refresh_gated() == dark);
+    });
+}
+
+TEST_CASE(
+    "a door closed by a monster hides the lit room behind it without the avatar moving",
+    "[map_perception_bionics_boundary][visibility_refresh][mcp]") {
+    with_dark_room([]() {
+        auto& here = get_map();
+        const auto origin = get_avatar().bub_pos();
+        const auto door = origin + point_east * 3;
+        for (const auto dy : std::views::iota(-6, 7)) {
+            here.ter_set(door + point(0, dy), ter_id("t_wall"));
+        }
+        here.ter_set(door, ter_id("t_door_o"));
+        const auto flame = origin + point_east * 6;
+        here.add_field(flame, fd_fire, 2);
+        map_perception::acquire();
+        const auto open = refresh_gated();
+        REQUIRE(std::ranges::contains(open, flame));
+        here.ter_set(door, ter_id("t_door_c"));
+        const auto closed = refresh_gated();
+        CHECK_FALSE(std::ranges::contains(closed, flame));
+        CHECK(closed == refresh_blanket());
+        here.ter_set(door, ter_id("t_door_o"));
+        CHECK(refresh_gated() == open);
     });
 }
 
