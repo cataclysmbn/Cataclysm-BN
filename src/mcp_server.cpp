@@ -623,8 +623,11 @@ auto server::queue_push() -> void
         batch.events.clear();
         batch_bytes = 0;
     };
+    // A resync ends the stream for what follows it, but the command that finished in the same
+    // publication still owes its subscriber the outcome: the snapshot does not carry it.
+    const auto was_subscribed = subscribed_;
     for( auto &item : session_.take_push() ) {
-        if( !subscribed_ ) { continue; }
+        if( !( subscribed_ || ( was_subscribed && std::holds_alternative<command_result>( item ) ) ) ) { continue; }
         if( const auto *pushed = std::get_if<event_push>( &item ) ) {
             const auto &wire = pushed->event.wire();
             const auto bytes = !wire.empty() ? wire.size() :
