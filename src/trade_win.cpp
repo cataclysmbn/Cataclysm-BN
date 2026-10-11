@@ -1006,6 +1006,14 @@ game_client::interaction_snapshot
                     {.label = "Unit price", .value = format_money( pricing.price )},
                     {.label = "Price tone", .value = price_tone( pricing, candidate, opts.is_theirs )},
                     {.label = "Category", .value = to_upper_case( candidate.get_category().name() )},
+                    {
+                        .label = "Stack weight",
+                        .value = string_format( "%.2f", convert_weight( pricing.weight * available_amount ) )
+                    },
+                    {
+                        .label = "Stack volume",
+                        .value = string_format( "%.2f", convert_volume( to_milliliter( pricing.vol * available_amount ) ) )
+                    },
                     {.label = "Available", .value = std::to_string( available_amount )},
                     {.label = "Selected", .value = std::to_string( selected_amount )},
                     {

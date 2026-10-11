@@ -458,10 +458,14 @@ TEST_CASE(
                 return found == choice.columns.end() ? std::string{} : found->value;
             };
             CHECK_FALSE(column_value(*charges, "Category").empty());
+            CHECK_FALSE(column_value(*charges, "Stack weight").empty());
+            CHECK_FALSE(column_value(*charges, "Stack volume").empty());
             CHECK(column_value(*charges, "Category")
                   == to_upper_case(column_value(*charges, "Category")));
             CHECK(column_value(*pipes, "Price tone") != "");
             CHECK(snapshot.message_tone == (snapshot.message.ends_with(_("yes")) ? "good" : "bad"));
+            auto page = game_client::interaction_page_state{};
+            CHECK(game_client::paginated_interaction(page).message_tone == snapshot.message_tone);
             const auto player =
                 std::ranges::find(snapshot.panes, "player", &game_client::interaction_pane::role);
             REQUIRE(player != snapshot.panes.end());

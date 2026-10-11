@@ -129,6 +129,7 @@ auto schema_for( const interaction_snapshot &snapshot,
     hash.add( snapshot.context );
     hash.add( snapshot.title );
     hash.add( snapshot.message );
+    hash.add( snapshot.message_tone );
     std::ranges::for_each( snapshot.banner, [&hash]( const auto & line ) { hash.add( line ); } );
     hash.add( snapshot.allow_cancel ? "cancel" : "no-cancel" );
     hash.add( snapshot.allow_set_count ? "set-count" : "no-set-count" );
@@ -306,6 +307,7 @@ auto materialize( acquired_interaction acquired,
             .kind = full.kind,
             .title = full.title,
             .message = full.message,
+            .message_tone = full.message_tone,
             .banner = full.banner,
             .structured = full.structured,
             .actions_only = full.actions_only,
