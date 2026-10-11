@@ -1,5 +1,8 @@
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -306,7 +309,9 @@ class time_duration
         }
         template<typename T>
         friend constexpr T to_moves( const time_duration &duration ) {
-            return to_turns<int>( duration ) * 100;
+            const auto moves = to_turns<std::int64_t>( duration ) * 100;
+            return static_cast<T>( std::clamp<std::int64_t>( moves, std::numeric_limits<T>::lowest(),
+                                   std::numeric_limits<T>::max() ) );
         }
         /**@{*/
 
