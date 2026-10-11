@@ -894,6 +894,10 @@ class technique_help_callback : public uilist_callback
     public:
         explicit technique_help_callback( std::string text ) : reference_text( std::move( text ) ) {}
 
+        std::vector<uilist_key> keys() const override {
+            return { { .key = KEY_F( 1 ), .name = _( "Technique reference" ) } };
+        }
+
         bool key( const input_context &ctxt, const input_event &event, int,
                   uilist * ) override {
             if( ctxt.input_to_action( event ) == "HELP_KEYBINDINGS" ||
