@@ -404,6 +404,24 @@ TEST_CASE("a capture that drops the avatar resynchronizes subscribers", "[engine
     CHECK(test.authority.current()->value.world.avatar == std::nullopt);
 }
 
+TEST_CASE(
+    "a command that finishes in a resyncing publication still reports completed",
+    "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input(); // executing, then the next native boundary
+    test.output.str("");
+    with_avatar = false; // the change cannot be one event: subscribers start over
+    REQUIRE(test.server.publish_step(test.output));
+    const auto out = test.output.str();
+    CHECK(contains(out, R"("method":"bn.resync")"));
+    CHECK(contains(out, R"("stage":"completed")"));
+}
+
 TEST_CASE("shutdown flushes the stage changes it caused", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
