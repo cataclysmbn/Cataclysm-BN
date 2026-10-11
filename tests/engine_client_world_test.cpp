@@ -900,6 +900,154 @@ TEST_CASE(
     }
 }
 
+TEST_CASE(
+    "world capture names the types of a mutation overlay and the mutations of a character by type",
+    "[engine_client_world]") {
+    make_scene();
+    auto& you = get_avatar();
+    you.toggle_trait(trait_id("hair_black"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    CHECK(state.avatar->traits.at("hair_color") == std::vector<std::string>{"hair_black"});
+    const auto hair =
+        std::ranges::find(state.avatar->overlays, "mutation_hair_black", &ec::look::id);
+    if (hair != state.avatar->overlays.end()) {
+        REQUIRE(hair->mutation);
+        CHECK(hair->mutation->id == "hair_black");
+        CHECK(std::ranges::count(hair->mutation->types, "hair_color") == 1);
+    }
+    // Worn items are not mutations and carry no types.
+    for (const auto& overlay : state.avatar->overlays) {
+        if (overlay.id && overlay.id->starts_with("worn_")) { CHECK_FALSE(overlay.mutation); }
+    }
+}
+
+TEST_CASE(
+    "world capture lists the mod tilesets of the game data with the tilesets they are for",
+    "[engine_client_world]") {
+    make_scene();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.environment);
+    const auto& files = state.environment->mod_tilesets;
+    const auto vehicles = std::ranges::find_if(files, [](const auto& file) {
+        return file.path.ends_with("external_tileset/vehicle_parts.json");
+    });
+    REQUIRE(vehicles != files.end());
+    CHECK(std::ranges::count(vehicles->compatibility, "UNDEAD_PEOPLE_BASE") == 1);
+    CHECK(vehicles->index == 1);
+    // Paths are the engine's own, relative to the game folder it runs from.
+    CHECK(vehicles->base.ends_with("json"));
+    CHECK_FALSE(vehicles->path.starts_with("/"));
+}
+
+TEST_CASE(
+    "world capture marks a vehicle cargo part that holds items and no other part",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    auto* veh = here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false);
+    REQUIRE(veh != nullptr);
+    auto loaded = std::optional<tripoint_bub_ms>{};
+    auto empty = std::optional<tripoint_bub_ms>{};
+    for (const auto& part : veh->get_all_parts()) {
+        const auto position = part.pos();
+        const auto vp = here.veh_at(position);
+        const auto cargo = vp ? vp.part_with_feature("CARGO", true) : std::nullopt;
+        if (cargo && !loaded) {
+            veh->add_item(cargo->part_index(), item::spawn("rock"));
+            loaded = position;
+        } else if (!vp.part_with_feature("CARGO", true) && !empty) {
+            empty = position;
+        }
+    }
+    REQUIRE(loaded);
+    REQUIRE(empty);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto* with_items = find_cell(state, at(*loaded));
+    const auto* without = find_cell(state, at(*empty));
+    REQUIRE(with_items != nullptr);
+    REQUIRE(without != nullptr);
+    CHECK(with_items->cargo);
+    CHECK_FALSE(without->cargo);
+}
+
+TEST_CASE(
+    "world capture keys terrain, furniture, monsters and parts by the tints the client has",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto ground = here.ter(setup.start);
+    const auto flag = *ground->get_flags().begin();
+    here.furn_set(setup.start + tripoint_east, furn_id("f_chair"));
+    const auto car_at = setup.start + tripoint(-5, -4, 0);
+    REQUIRE(here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false) != nullptr);
+    map_perception::acquire();
+    CHECK(find_cell(ec::world::capture_world(), at(setup.start))->terrain->tint_keys.empty());
+    ec::world::set_tint_ids({flag, ground.id().str(), "f_chair", "seat"});
+    const auto state = ec::world::capture_world();
+    ec::world::set_tint_ids({});
+    // The flags come first, then the id.
+    const auto& floor = find_cell(state, at(setup.start))->terrain->tint_keys;
+    CHECK(floor == (std::vector<std::string>{flag, ground.id().str()}));
+    const auto& chair = find_cell(state, at(setup.start + tripoint_east))->furniture->tint_keys;
+    CHECK(std::ranges::count(chair, "f_chair") == 1);
+    // A vehicle part is keyed by its flags and id, a part with none the client knows by nothing.
+    const auto* part = find_cell(state, at(car_at));
+    REQUIRE(part != nullptr);
+    REQUIRE(part->vehicle);
+    CHECK(part->vehicle->tint_keys.size() <= 1);
+}
+
+TEST_CASE(
+    "world capture publishes the tint an item's own variables ask for", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto thing = item::spawn("jeans");
+    thing->set_var("tint_color", RGBColor{255, 48, 48, 255});
+    thing->set_var("tint_blend_mode_fg", std::string("multiply"));
+    thing->set_var("tint_brightness", 0.5f);
+    get_map().add_item_or_charges(setup.start + tripoint_east, std::move(thing));
+    get_map().add_item_or_charges(setup.start + tripoint_west, item::spawn("jeans"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto& dyed = find_cell(state, at(setup.start + tripoint_east))->items.back();
+    REQUIRE(dyed.tint_vars);
+    CHECK(dyed.tint_vars->fg.color == "#ff3030");
+    CHECK(dyed.tint_vars->bg.color == "#ff3030");
+    CHECK(dyed.tint_vars->fg.blend_mode == "multiply");
+    CHECK(dyed.tint_vars->bg.blend_mode.empty());
+    CHECK(dyed.tint_vars->fg.brightness == 0.5f);
+    CHECK_FALSE(find_cell(state, at(setup.start + tripoint_west))->items.back().tint_vars);
+}
+
+TEST_CASE(
+    "world capture publishes the tint variables of terrain and furniture and the tint of a field",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto furn_at = setup.start + tripoint_east;
+    here.furn_set(furn_at, furn_id("f_chair"));
+    here.ter_vars(setup.start)->set("tint_color_fg", RGBColor{16, 32, 48, 255});
+    here.furn_vars(furn_at)->set("tint_brightness", 0.5f);
+    here.add_field(setup.start + tripoint_west, field_type_id("fd_acid_water"), 1);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    const auto& floor = *find_cell(state, at(setup.start))->terrain;
+    REQUIRE(floor.tint_vars);
+    CHECK(floor.tint_vars->fg.color == "#102030");
+    CHECK(floor.tint_vars->bg.color.empty());
+    const auto& chair = *find_cell(state, at(furn_at))->furniture;
+    REQUIRE(chair.tint_vars);
+    CHECK(chair.tint_vars->fg.brightness == 0.5f);
+    CHECK_FALSE(find_cell(state, at(setup.start + tripoint_west))->terrain->tint_vars);
+    const auto& field = find_cell(state, at(setup.start + tripoint_west))->fields.back().appearance;
+    REQUIRE(field.tint);
+    CHECK(field.tint->bg == field.tint->fg);
+    CHECK_FALSE(field.tint->fg.empty());
+}
+
 namespace {
 /// The partition wall seen, then left out of sight and captured, so a capture cache holds it as
 /// memory.

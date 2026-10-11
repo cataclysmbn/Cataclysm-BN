@@ -153,47 +153,6 @@ auto tint_keys_of( const Flags &flags, const std::string &id ) -> std::vector<st
     return keys;
 }
 
-auto terrain_look( const ter_id &id, const int symbol,
-                   const map_perception::orientation &shape ) -> look
-{
-    auto result = make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
-    result.name = id->name();
-    result.looks_like = looks_like_chain<ter_str_id>( id->looks_like );
-    result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
-    return with_shape( std::move( result ), shape );
-}
-
-auto furniture_look( const furn_id &id, const map_perception::orientation &shape ) -> look
-{
-    auto result = make_look( "furniture", id.id().str(), glyph_of( id->symbol() ), id->color() );
-    result.name = id->name();
-    result.looks_like = looks_like_chain<furn_str_id>( id->looks_like );
-    result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
-    return with_shape( std::move( result ), shape );
-}
-
-auto trap_look( const trap &tr, const map_perception::orientation &shape ) -> look
-{
-    auto result = make_look( "trap", tr.id.str(), glyph_of( tr.sym ), tr.color );
-    result.name = tr.name();
-    result.looks_like = looks_like_chain<trap_str_id>( tr.looks_like );
-    return with_shape( std::move( result ), shape );
-}
-
-/// `modifier` and `degrees` are the native part modifier (1 open, 2 broken) and facing.
-auto vehicle_part_look( const vpart_info &info, const char modifier, const int degrees ) -> look
-{
-    auto result = make_look( "vehicle_part", info.id.str(), glyph_of( special_symbol( info.sym ) ),
-                             info.color );
-    result.name = info.name();
-    result.tile = "vp_" + info.id.str();
-    for( const auto &id : looks_like_chain<vpart_id>( info.looks_like ) ) { result.looks_like.push_back( "vp_" + id ); }
-    result.subtile = map_perception::multitile_key( modifier == 1 ? open_ : modifier == 2 ? broken :
-                     0 );
-    result.rotation = vehicle_rotation( degrees );
-    return result;
-}
-
 /// One layer of the tint an item's variables ask for: the variable of the layer, else the shared one.
 auto item_tint_layer( const data_vars::data_set &vars, const std::string &layer ) -> look_tint_layer
 {
@@ -219,15 +178,66 @@ auto item_tint_layer( const data_vars::data_set &vars, const std::string &layer 
     return result;
 }
 
+/// What a thing's own variables ask for of its tint, over the tileset's: nothing when they set none.
+auto tint_vars_of( const data_vars::data_set &vars ) -> std::optional<look_tint_vars>
+{
+    if( !std::ranges::any_of( vars, []( const auto & entry ) { return entry.first.starts_with( "tint_" ); } ) ) {
+        return std::nullopt;
+    }
+    auto tint = look_tint_vars{ .bg = item_tint_layer( vars, "bg" ), .fg = item_tint_layer( vars, "fg" ) };
+    if( tint.bg.empty() && tint.fg.empty() ) { return std::nullopt; }
+    return tint;
+}
+
 /// What a tileset tints the sprite of an item by: its flags and id, and the item's own variables.
 auto with_item_tint( look result, const item &thing ) -> look
 {
     result.tint_keys = tint_keys_of( thing.get_flags(), thing.typeId().str() );
-    const auto &vars = thing.item_vars();
-    if( std::ranges::any_of( vars, []( const auto & entry ) { return entry.first.starts_with( "tint_" ); } ) ) {
-        auto tint = look_tint_vars{ .bg = item_tint_layer( vars, "bg" ), .fg = item_tint_layer( vars, "fg" ) };
-        if( !tint.bg.empty() || !tint.fg.empty() ) { result.tint_vars = std::move( tint ); }
-    }
+    result.tint_vars = tint_vars_of( thing.item_vars() );
+    return result;
+}
+
+auto terrain_look( const ter_id &id, const int symbol, const map_perception::orientation &shape,
+                   const data_vars::data_set *vars = nullptr ) -> look
+{
+    auto result = make_look( "terrain", id.id().str(), glyph_of( symbol ), id->color() );
+    result.name = id->name();
+    result.looks_like = looks_like_chain<ter_str_id>( id->looks_like );
+    result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
+    if( vars != nullptr ) { result.tint_vars = tint_vars_of( *vars ); }
+    return with_shape( std::move( result ), shape );
+}
+
+auto furniture_look( const furn_id &id, const map_perception::orientation &shape,
+                     const data_vars::data_set *vars = nullptr ) -> look
+{
+    auto result = make_look( "furniture", id.id().str(), glyph_of( id->symbol() ), id->color() );
+    result.name = id->name();
+    result.looks_like = looks_like_chain<furn_str_id>( id->looks_like );
+    result.tint_keys = tint_keys_of( id->get_flags(), id.id().str() );
+    if( vars != nullptr ) { result.tint_vars = tint_vars_of( *vars ); }
+    return with_shape( std::move( result ), shape );
+}
+
+auto trap_look( const trap &tr, const map_perception::orientation &shape ) -> look
+{
+    auto result = make_look( "trap", tr.id.str(), glyph_of( tr.sym ), tr.color );
+    result.name = tr.name();
+    result.looks_like = looks_like_chain<trap_str_id>( tr.looks_like );
+    return with_shape( std::move( result ), shape );
+}
+
+/// `modifier` and `degrees` are the native part modifier (1 open, 2 broken) and facing.
+auto vehicle_part_look( const vpart_info &info, const char modifier, const int degrees ) -> look
+{
+    auto result = make_look( "vehicle_part", info.id.str(), glyph_of( special_symbol( info.sym ) ),
+                             info.color );
+    result.name = info.name();
+    result.tile = "vp_" + info.id.str();
+    for( const auto &id : looks_like_chain<vpart_id>( info.looks_like ) ) { result.looks_like.push_back( "vp_" + id ); }
+    result.subtile = map_perception::multitile_key( modifier == 1 ? open_ : modifier == 2 ? broken :
+                     0 );
+    result.rotation = vehicle_rotation( degrees );
     return result;
 }
 
@@ -335,13 +345,18 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, cell &out ) -> bool
 {
     const auto shapes = map_perception::visible_orientations( here, p, view );
-    if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture ); }
+    if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture, here.furn_vars( p ) ); }
     const auto &displayed = here.field_at( p ).displayed_field_type();
     for( const auto &[type, entry] : here.field_at( p ) ) {
         if( !entry.is_field_alive() ) { continue; }
         auto appearance = make_look( "field", type.id().str(), entry.symbol(), entry.color() );
         appearance.looks_like = looks_like_chain<field_type_str_id>( type->looks_like );
         appearance.name = type->get_name( std::max( entry.get_field_intensity() - 1, 0 ) );
+        // The native view paints a field by the tint its type sets, both layers alike.
+        const auto rgb = type->get_tint_rgb().or_else( [&]() -> std::optional<RGBColor> {
+            return type->get_tint() == c_unset ? std::nullopt : std::optional( curses_color_to_RGB( type->get_tint() ) );
+        } );
+        if( rgb && !hex_of( *rgb ).empty() ) { appearance.tint = look_tint{ .bg = hex_of( *rgb ), .fg = hex_of( *rgb ) }; }
         // Only the displayed field is drawn, joined to neighbours showing the same field.
         if( type == displayed ) {
             auto mask = uint8_t{ 0 };
@@ -392,7 +407,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
         return false;
     }
     out.terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ),
-                                shapes.terrain );
+                                shapes.terrain, here.ter_vars( p ) );
     const auto &cache = here.access_cache( p.z() );
     out.light = static_cast<int>( cache.visibility_cache[cache.idx( p.x(), p.y() )] );
     return true;
