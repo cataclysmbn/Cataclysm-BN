@@ -3100,7 +3100,9 @@ void veh_interact::complete_vehicle(Character& who) {
 
             // TODO: allow boarding for non-players as well.
             player* const pl = g->critter_at<player>(vehp);
-            if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl) { here.board_vehicle(vehp, pl); }
+            if (vpinfo.has_flag(VPFLAG_BOARDABLE) && pl && !pl->in_vehicle) {
+                here.board_vehicle(vehp, pl);
+            }
 
             who.add_msg_if_player(
                 m_good, _("You install a %1$s into the %2$s."), veh->part(partnum).name(),
