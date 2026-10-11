@@ -126,7 +126,12 @@ export class Mirror {
     for (const gone of changes.gone ?? []) {
       assert(this.entities.delete(gone.id), "gone names a known entity")
     }
-    if (changes.avatar) this.avatar = changes.avatar
+    if (changes.avatar) {
+      // The members named in `keep` carry over from the previous avatar.
+      const { keep = [], ...next } = changes.avatar
+      for (const member of keep) next[member] = this.avatar?.[member]
+      this.avatar = next
+    }
     if (changes.environment) this.environment = changes.environment
     if (changes.route) this.route = changes.route
     if (changes.interaction) {

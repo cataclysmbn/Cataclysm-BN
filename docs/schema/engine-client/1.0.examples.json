@@ -1601,219 +1601,27 @@
       }
     },
     {
-      "name": "compact cell layers, then a boundary that keeps its actions",
-      "def": "events_notification",
+      "name": "advanced inventory pane with totals",
+      "def": "pane",
       "value": {
-        "epoch": "epoch:e7f3",
-        "events": [
-          {
-            "sequence": "60",
-            "revision": "40",
-            "type": "cells.seen",
-            "command": "c:9",
-            "changes": {
-              "cells": [
-                {
-                  "at": {
-                    "dim": "",
-                    "x": 5,
-                    "y": 4,
-                    "z": 0
-                  },
-                  "known": "visible",
-                  "terrain": {
-                    "id": "t_floor",
-                    "glyph": ".",
-                    "color": "c_cyan",
-                    "subtile": "corner",
-                    "rotation": 2
-                  },
-                  "items": [
-                    {
-                      "id": "rock",
-                      "glyph": "*",
-                      "color": "c_light_gray"
-                    }
-                  ],
-                  "light": 3
-                },
-                {
-                  "at": {
-                    "dim": "",
-                    "x": 6,
-                    "y": 4,
-                    "z": 0
-                  },
-                  "known": "remembered",
-                  "memory": {
-                    "terrain": {
-                      "id": "t_wall",
-                      "glyph": "│",
-                      "color": "c_light_gray",
-                      "subtile": "edge",
-                      "rotation": 1
-                    },
-                    "overlay": {
-                      "kind": "trap",
-                      "id": "tr_beartrap",
-                      "glyph": "^",
-                      "color": "c_red"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "sequence": "61",
-            "revision": "41",
-            "type": "interaction.changed",
-            "command": "c:9",
-            "changes": {
-              "interaction": {
-                "boundary_id": "boundary:92",
-                "readiness": {
-                  "phase": "waiting_for_input",
-                  "game_ready": true,
-                  "accepts_interaction_commands": true,
-                  "accepts_registered_actions": true
-                },
-                "interaction": null
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "def": "look",
-      "name": "look of a mutation overlay",
-      "value": {
-        "kind": "overlay",
-        "id": "mutation_hair_long",
-        "glyph": "",
-        "color": "",
-        "tile": "overlay_female_mutation_hair_long",
-        "mutation": {
-          "id": "hair_long",
-          "types": [
-            "hair_style"
-          ],
-          "flags": []
-        }
-      }
-    },
-    {
-      "def": "entity",
-      "name": "entity with the mutations of a character by type",
-      "value": {
-        "id": "e:3",
-        "at": {
-          "dim": "",
-          "x": 1,
-          "y": 2,
-          "z": 0
-        },
-        "known": "visible",
-        "traits": {
-          "hair_color": [
-            "hair_black"
-          ]
-        }
-      }
-    },
-    {
-      "def": "environment",
-      "name": "environment with the tilesets the game data adds",
-      "value": {
-        "turn": "0",
-        "time": "Spring, day 1 8:00:00 AM",
-        "weather": "clear",
-        "mod_tilesets": [
-          {
-            "path": "/g/data/json/external_tileset/vehicle_parts.json",
-            "base": "/g/data/json/",
-            "index": 1,
-            "compatibility": [
-              "UNDEAD_PEOPLE_BASE"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "def": "cell",
-      "name": "cell holding a loaded vehicle cargo part",
-      "value": {
-        "at": {
-          "dim": "",
-          "x": 1,
-          "y": 2,
-          "z": 0
-        },
-        "known": "visible",
-        "vehicle": {
-          "kind": "vehicle_part",
-          "id": "trunk",
-          "glyph": "H",
-          "color": "brown"
-        },
-        "cargo": true
-      }
-    },
-    {
-      "def": "look",
-      "name": "look of an item overlay with the ids its tints are keyed by",
-      "value": {
-        "kind": "overlay",
-        "id": "worn_jeans",
-        "glyph": "",
-        "color": "",
-        "tile": "overlay_female_worn_jeans",
-        "tint_keys": [
-          "VARSIZE",
-          "jeans"
-        ]
-      }
-    },
-    {
-      "def": "hello_params",
-      "name": "hello with the tints of a tileset",
-      "value": {
-        "versions": [
-          "1.0"
-        ],
-        "client": {
-          "name": "bn-client",
-          "version": "1"
-        },
-        "tiles": true,
-        "tint_ids": [
-          "hair_black",
-          "jeans"
-        ]
-      }
-    },
-    {
-      "def": "look",
-      "name": "look of a dyed item",
-      "value": {
-        "kind": "item",
-        "id": "jeans",
-        "glyph": "[",
-        "color": "blue",
-        "tint_keys": [
-          "jeans"
-        ],
-        "tint_vars": {
-          "bg": {
-            "color": "#ff3030"
-          },
-          "fg": {
-            "color": "#ff3030",
-            "blend_mode": "multiply",
-            "brightness": 0.5
-          }
+        "id": "pane-destination",
+        "label": "Destination",
+        "role": "destination",
+        "area_id": "area-center",
+        "area_label": "Directly under you",
+        "area_description": "",
+        "filter": "",
+        "storage_kind": "ground",
+        "sort": "name",
+        "totals": {
+          "weight": "0.0",
+          "weight_max": "",
+          "weight_unit": "kg",
+          "volume": "0.00",
+          "volume_max": "1000.00",
+          "volume_unit": "L",
+          "over_weight": false,
+          "over_volume": false
         }
       }
     }
@@ -2723,90 +2531,27 @@
       }
     },
     {
-      "def": "environment",
-      "name": "mod tileset without its compatibility",
+      "name": "pane totals missing a field",
+      "def": "pane",
+      "why": "totals requires every field",
       "value": {
-        "turn": "0",
-        "time": "t",
-        "weather": "clear",
-        "mod_tilesets": [
-          {
-            "path": "/g/a.json",
-            "base": "/g/",
-            "index": 1
-          }
-        ]
-      }
-    },
-    {
-      "def": "entity",
-      "name": "sensed entity with traits",
-      "value": {
-        "id": "e:3",
-        "at": {
-          "dim": "",
-          "x": 1,
-          "y": 2,
-          "z": 0
-        },
-        "known": "sensed",
-        "traits": {
-          "hair_color": [
-            "hair_black"
-          ]
-        }
-      }
-    },
-    {
-      "def": "cell",
-      "name": "remembered cell with a loaded cargo part",
-      "value": {
-        "at": {
-          "dim": "",
-          "x": 1,
-          "y": 2,
-          "z": 0
-        },
-        "known": "remembered",
-        "memory": {
-          "terrain": {
-            "kind": "terrain",
-            "id": "t_floor",
-            "glyph": ".",
-            "color": "c_cyan"
-          }
-        },
-        "cargo": true
-      }
-    },
-    {
-      "def": "hello_params",
-      "name": "hello with an empty tint id",
-      "value": {
-        "versions": [
-          "1.0"
-        ],
-        "client": {
-          "name": "bn-client",
-          "version": "1"
-        },
-        "tint_ids": [
-          ""
-        ]
-      }
-    },
-    {
-      "def": "look",
-      "name": "item tint of a color that is not hex",
-      "value": {
-        "kind": "item",
-        "id": "jeans",
-        "glyph": "[",
-        "color": "blue",
-        "tint_vars": {
-          "fg": {
-            "color": "red"
-          }
+        "id": "pane-destination",
+        "label": "Destination",
+        "role": "destination",
+        "area_id": "area-center",
+        "area_label": "Directly under you",
+        "area_description": "",
+        "filter": "",
+        "storage_kind": "ground",
+        "sort": "name",
+        "totals": {
+          "weight": "0.0",
+          "weight_max": "",
+          "weight_unit": "kg",
+          "volume": "0.00",
+          "volume_unit": "L",
+          "over_weight": false,
+          "over_volume": false
         }
       }
     }

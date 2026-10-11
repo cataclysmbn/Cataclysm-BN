@@ -17,6 +17,7 @@ struct advanced_inv_save_state;
 namespace game_client
 {
 struct interaction_snapshot;
+struct interaction_totals;
 } // namespace game_client
 
 void create_advanced_inv();
@@ -92,7 +93,8 @@ class advanced_inventory
          */
         std::array<advanced_inventory_pane, NUM_PANES> panes;
         static const advanced_inventory_pane null_pane;
-        std::array<advanced_inv_area, NUM_AIM_LOCATIONS> squares;
+        /// Mutable because reading a container area refreshes the remembered container index.
+        mutable std::array<advanced_inv_area, NUM_AIM_LOCATIONS> squares;
 
         catacurses::window head;
 
@@ -134,6 +136,10 @@ class advanced_inventory
         static std::string get_sortname( advanced_inv_sortby sortby );
         bool move_all_items( bool nested_call = false );
         void print_items( const advanced_inventory_pane &pane, bool active );
+        /// The most volume the area of `pane` can hold, as the native header prints after the slash.
+        auto max_volume_of( const advanced_inventory_pane &pane ) const -> units::volume;
+        /// The numbers of the pane's header, for clients that do not draw the curses window.
+        auto totals_of( const advanced_inventory_pane &pane ) const -> game_client::interaction_totals;
         void recalc_pane( side p );
         void redraw_pane( side p );
         void redraw_sidebar();

@@ -289,6 +289,52 @@ TEST_CASE("an event leaves out the actions the boundary kept", "[engine_client_e
 }
 
 TEST_CASE(
+    "an event names the avatar members it kept instead of resending them",
+    "[engine_client_event]") {
+    auto first = world_of({});
+    first.world.avatar = avatar_value{
+        .id = "e:avatar",
+        .at = pos(1),
+        .name = "Ada",
+        .stats = {{.id = "strength", .label = "Strength", .value = "8"}}};
+    first.world.avatar->sidebar.focus = 100;
+    first.world.avatar->inventory = {{.appearance = dirt(), .name = "rock"}};
+    auto stream = stream_of(first);
+
+    auto walked = first;
+    walked.world.avatar->at = pos(2);
+    const auto step = publish(stream, walked);
+    const auto step_wire = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {step}}));
+    const auto& step_avatar = step_wire["events"][0]["changes"]["avatar"];
+    CHECK(step_avatar["at"]["x"] == 2);
+    CHECK(step_avatar["name"] == "Ada");
+    CHECK_FALSE(step_avatar.contains("stats"));
+    CHECK_FALSE(step_avatar.contains("sidebar"));
+    CHECK_FALSE(step_avatar.contains("inventory"));
+    CHECK(step_avatar["keep"] == nlohmann::json::parse(R"(["stats","inventory","sidebar"])"));
+
+    auto hurt = walked;
+    hurt.world.avatar->sidebar.focus = 90;
+    hurt.world.avatar->inventory.clear();
+    const auto next = publish(stream, hurt);
+    const auto next_wire = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {next}}));
+    const auto& next_avatar = next_wire["events"][0]["changes"]["avatar"];
+    CHECK(next_avatar["sidebar"]["focus"] == 90);
+    CHECK_FALSE(next_avatar.contains("inventory"));
+    CHECK(next_avatar["keep"] == nlohmann::json::parse(R"(["stats"])"));
+
+    // A fresh subscribe always lists everything.
+    const auto snapshot_wire = serialize_snapshot(stream.current());
+    REQUIRE(snapshot_wire);
+    const auto header = nlohmann::json::parse(snapshot_wire->header);
+    CHECK(header["avatar"].contains("stats"));
+    CHECK(header["avatar"].contains("sidebar"));
+    CHECK_FALSE(header["avatar"].contains("keep"));
+}
+
+TEST_CASE(
     "snapshot parts cover every cell exactly once within the byte bound", "[engine_client_event]") {
     auto value = world_of({});
     value.world.coverage = bounds{.min = pos(0, -5), .max = pos(1000, 5)};

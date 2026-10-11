@@ -132,7 +132,23 @@ auto diff( const state_value &from, const state_value &to ) -> changes
     for( const auto &[id, value] : from.world.entities ) {
         if( survives( value.at ) && !to.world.entities.contains( id ) ) { result.gone.push_back( {.id = id} ); }
     }
-    if( to.world.avatar && to.world.avatar != from.world.avatar ) { result.avatar = to.world.avatar; }
+    if( to.world.avatar && to.world.avatar != from.world.avatar ) {
+        result.avatar = to.world.avatar;
+        if( from.world.avatar ) {
+            const auto &before = *from.world.avatar;
+            const auto &after = *to.world.avatar;
+            const auto keep = [&]( const char *member, const bool same, const bool empty ) {
+                if( same && !empty ) { result.avatar_kept.emplace_back( member ); }
+            };
+            keep( "look", before.appearance == after.appearance, !after.appearance );
+            keep( "overlays", before.overlays == after.overlays, after.overlays.empty() );
+            keep( "traits", before.traits == after.traits, after.traits.empty() );
+            keep( "stats", before.stats == after.stats, after.stats.empty() );
+            keep( "inventory", before.inventory == after.inventory, after.inventory.empty() );
+            keep( "sidebar", before.sidebar == after.sidebar, false );
+            keep( "ground", before.ground == after.ground, after.ground.empty() );
+        }
+    }
     if( to.world.environment && to.world.environment != from.world.environment ) {
         result.environment = to.world.environment;
     }
