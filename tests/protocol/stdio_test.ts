@@ -173,8 +173,11 @@ class Session {
     }
   }
 
-  /** Submit against what the mirror believes, then follow pushes until the command is terminal. */
-  async submit(operation: Value, patch: Value = {}, during?: () => Promise<void>) {
+  /**
+   * Submit against what the mirror believes, then follow pushes until the command is terminal.
+   * `afterHeartbeat` runs once, when the first `bn.progress` heartbeat of the command arrives.
+   */
+  async submit(operation: Value, patch: Value = {}, afterHeartbeat?: () => Promise<void>) {
     const mirror = this.mirror
     const response = await this.client.request("bn.command.submit", {
       epoch: mirror.at.epoch,
@@ -189,7 +192,7 @@ class Session {
     if (response.error) return { error: response.error, stages: [] as string[] }
     const id = response.result.command_id
     this.stages.set(id, ["received"])
-    await during?.()
+    const heartbeats = this.progress
     while (true) {
       const stages = this.stages.get(id)!
       const last = stages.at(-1)
@@ -197,6 +200,11 @@ class Session {
         return { id, stages, error: undefined }
       }
       this.#handle(await this.client.note())
+      if (afterHeartbeat && this.progress > heartbeats) {
+        const run = afterHeartbeat
+        afterHeartbeat = undefined
+        await run()
+      }
     }
   }
 
@@ -1145,19 +1153,15 @@ Deno.test({
       )
       assert(choice, "6 hours entry")
       const before = session.progress
-      const started = performance.now()
-      // Interrupt after a few heartbeats' worth of time; the activity keeps no boundary until then.
+      // Interrupt at the first heartbeat: how long the wait lasts depends on the engine's speed.
       const waiting = await session.submit(
         { kind: "choose", choice_id: choice.id },
         {},
         async () => {
-          await new Promise((resolve) => setTimeout(resolve, 7000))
           await client.result("bn.interrupt", {})
         },
       )
       assertEquals(waiting.stages.at(-1), "completed")
-      const seconds = (performance.now() - started) / 1000
-      assert(seconds > 6, `the wait lasted ${seconds} s`)
       assert(session.progress > before, "the engine sent heartbeats while the activity ran")
       await client.close()
     } finally {
