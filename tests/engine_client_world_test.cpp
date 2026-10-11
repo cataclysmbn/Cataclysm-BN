@@ -24,6 +24,7 @@
 #include "overmap/overmapbuffer.h"
 #include "player_activity.h"
 #include "player_helpers.h"
+#include "preload_config.h"
 #include "rng.h"
 #include "state_helpers.h"
 #include "vehicle/vehicle.h"
@@ -970,4 +971,51 @@ TEST_CASE(
     CHECK(known());
     get_avatar().clear_map_memory();
     CHECK_FALSE(known());
+}
+
+namespace {
+
+/// Every memorized square of the avatar's levels after a walk through the scene under `accel`.
+auto walked_memory(const preload_config::compute_accel accel, const time_duration time_of_day)
+    -> std::string {
+    const auto previous = preload_config::get_compute_accel();
+    preload_config::set_compute_accel(accel);
+    const auto restore = on_out_of_scope([&] { preload_config::set_compute_accel(previous); });
+    const auto setup = make_scene();
+    calendar::turn = calendar::turn_zero + time_of_day;
+    g->reset_light_level();
+    get_map().invalidate_map_cache(0);
+    get_avatar().clear_map_memory();
+    map_perception::acquire();
+    for (const auto step : std::views::iota(1, 6)) {
+        step_to(setup.start + tripoint(step - 1, step, 0));
+    }
+    auto& you = get_avatar();
+    auto& here = get_map();
+    auto out = std::ostringstream{};
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        for (const auto y : std::views::iota(0, here.getmapsize() * SEEY)) {
+            for (const auto x : std::views::iota(0, here.getmapsize() * SEEX)) {
+                const auto abs = map_local_to_abs(here, tripoint_bub_ms(x, y, z));
+                const auto terrain = you.get_terrain_tile(abs);
+                if (!terrain.tile.empty()) {
+                    out << x << ',' << y << ',' << z << ':' << terrain.tile << '/'
+                        << you.get_memorized_tile(abs).tile << ';';
+                }
+            }
+        }
+    }
+    return out.str();
+}
+
+} // namespace
+
+TEST_CASE(
+    "map memory after a walk is the same under CPU and GPU compute", "[engine_client_world]") {
+    const auto time_of_day = GENERATE(12_hours, 0_hours, 6_hours);
+    CAPTURE(time_of_day);
+    const auto cpu = walked_memory(preload_config::compute_accel::cpu, time_of_day);
+    const auto gpu = walked_memory(preload_config::compute_accel::gpu_software, time_of_day);
+    REQUIRE_FALSE(cpu.empty());
+    CHECK(cpu == gpu);
 }
