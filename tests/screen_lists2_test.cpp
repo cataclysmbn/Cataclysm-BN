@@ -47,6 +47,9 @@ TEST_CASE(
     clear_character(you, false);
     spawn_test_monster("mon_zombie", you.bub_pos() + tripoint_east);
     spawn_test_monster("mon_zombie", you.bub_pos() + tripoint_east * 3);
+    // The main loop refreshes the visibility caches before it reads the `V` key; sight checks
+    // read stale caches until then.
+    g->refresh_player_visibility_cache_if_needed();
     const auto guard = screen_guard{};
     auto stage = 0;
     open_screen(open_nearby_lists, [&](const auto& snapshot) {
