@@ -7,8 +7,7 @@
 // This pass runs after lm_seen_compute.  It lets a target inherit visibility
 // from any raw-visible adjacent transparent tile.  The source buffer is the raw
 // center-ray result, not this pass's output, so this closes one-tile surface
-// notches without cascading visibility through rooms.  An inherited value is capped at the open-air
-// falloff of the target's own distance so surfaces never outshine the CPU shadowcast result.
+// notches without cascading visibility through rooms.
 
 static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
 static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
@@ -102,9 +101,6 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         return;
     }
 
-    // A surface cannot be seen better than open air at its own distance, as the CPU shadowcast
-    // gives it, however much brighter the neighbour it borrows from is.
-    float open_air_limit = exp( -LIGHT_TRANSPARENCY_OPEN_AIR * (float)dist );
     float best = primary;
 
     for( uint offset_index = 0u; offset_index < 8u; ++offset_index ) {
@@ -143,7 +139,7 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
             continue;
         }
 
-        best = max( best, min( seen_src_all[nidx], open_air_limit ) );
+        best = max( best, seen_src_all[nidx] );
     }
 
     if( tz < player_z_idx && tz + 1 < z_count ) {
