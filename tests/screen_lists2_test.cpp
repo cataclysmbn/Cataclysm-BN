@@ -1,6 +1,7 @@
 #if defined(CATA_MCP)
 
 #    include "avatar.h"
+#    include "calendar.h"
 #    include "catch/catch.hpp"
 #    include "client_screen_support.h"
 #    include "game.h"
@@ -14,6 +15,7 @@
 #    include "state_helpers.h"
 #    include "technique_reference.h"
 #    include "vehicle/vehicle.h"
+#    include "weather/weather.h"
 #    include "worldfactory.h"
 
 #    include <string>
@@ -47,8 +49,13 @@ TEST_CASE(
     clear_character(you, false);
     spawn_test_monster("mon_zombie", you.bub_pos() + tripoint_east);
     spawn_test_monster("mon_zombie", you.bub_pos() + tripoint_east * 3);
-    // The main loop refreshes the visibility caches before it reads the `V` key; sight checks
-    // read stale caches until then.
+    // Sight needs daylight and the main loop refreshes the lighting and visibility caches before
+    // it reads the `V` key; clear_all_state leaves midnight and stale caches.
+    calendar::turn = calendar::turn_zero + 12_hours;
+    get_weather().weather_id = weather_type_id("clear");
+    g->reset_light_level();
+    g->m.invalidate_map_cache(0);
+    g->m.build_map_cache(0);
     g->refresh_player_visibility_cache_if_needed();
     const auto guard = screen_guard{};
     auto stage = 0;
