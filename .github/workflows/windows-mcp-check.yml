@@ -1,0 +1,117 @@
+name: Windows MCP check
+
+# Builds the engine-client (MCP) code with MSVC; nothing else. Runs on pushes to ci/windows-magnum-opus, or by hand.
+on:
+  push:
+    branches: [ci/windows-magnum-opus]
+  workflow_dispatch:
+    inputs:
+      tests:
+        description: "Also build cata_test-mcp"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  shader-artifacts:
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build shadercross
+        uses: ./.github/actions/build-shadercross
+      - name: Generate shaders
+        run: bash build-scripts/generate-shaders.sh
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders/
+          if-no-files-found: error
+
+  windows:
+    needs: shader-artifacts
+    strategy:
+      fail-fast: false
+      matrix:
+        debug: [embedded, none]
+    name: Windows MSVC with MCP (debug info ${{ matrix.debug }})
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download generated shaders
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders/
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install stable CMake
+        uses: lukka/get-cmake@v3.31.6
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
+            core.exportVariable("ACTIONS_RESULTS_URL", process.env.ACTIONS_RESULTS_URL || "")
+            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
+      - name: Configure vcpkg binary cache
+        run: '"VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $env:GITHUB_ENV'
+      - name: Install vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          vcpkgDirectory: "${{ github.workspace }}/../b/vcpkg"
+      - name: Integrate vcpkg
+        run: vcpkg integrate install
+      - name: Configure
+        env:
+          VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
+        run: |
+          if ("${{ matrix.debug }}" -eq "none") {
+            Set-Content -Path "$env:RUNNER_TEMP/no-debug-info.cmake" -Value 'set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "")'
+          } else {
+            Set-Content -Path "$env:RUNNER_TEMP/no-debug-info.cmake" -Value '# keep the toolchain default'
+          }
+          $include = "$env:RUNNER_TEMP/no-debug-info.cmake" -replace '\\', '/'
+          $tests = ("${{ inputs.tests }}" -eq "true" -or "${{ github.event_name }}" -eq "push") ? "True" : "False"
+          cmake -G Ninja `
+            -S "${{ github.workspace }}" `
+            -B "${{ github.workspace }}/out/build/windows-mcp" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DDYNAMIC_LINKING=False `
+            -DCURSES=False `
+            -DLOCALIZE=False `
+            -DTILES=True `
+            -DSOUND=True `
+            -DMCP=ON `
+            "-DCMAKE_PROJECT_INCLUDE=$include" `
+            "-DTESTS=$tests" `
+            -DRELEASE=ON `
+            -DJSON_FORMAT=OFF `
+            -DCATA_FORMAT_TARGETS=OFF `
+            -DCMAKE_INSTALL_MESSAGE=NEVER
+      - name: Build the engine
+        run: cmake --build "${{ github.workspace }}/out/build/windows-mcp" --config Release --target cataclysm-bn-tiles -- -k 0
+      - name: Largest engine objects
+        if: always()
+        run: |
+          Get-ChildItem "${{ github.workspace }}/out/build/windows-mcp/src/CMakeFiles/cataclysm-bn-engine.dir" -Recurse -Filter *.obj |
+            Sort-Object Length -Descending | Select-Object -First 25 |
+            ForEach-Object { "{0,10:N0} MB  {1}" -f ($_.Length / 1MB), $_.Name }
+          $total = (Get-ChildItem "${{ github.workspace }}/out/build/windows-mcp/src/CMakeFiles/cataclysm-bn-engine.dir" -Recurse -Filter *.obj | Measure-Object Length -Sum).Sum
+          "total objects: {0:N0} MB" -f ($total / 1MB)
+          Get-ChildItem "${{ github.workspace }}/out/build/windows-mcp/src/CMakeFiles/cataclysm-bn-engine.dir" -Recurse -Filter *.obj |
+            Where-Object { $_.Name -match '^(engine_client|client_|mcp_|replay|overmap_ui|crafting_gui|map_perception|input|ui\.|debug|main_menu)' } |
+            Sort-Object Length -Descending |
+            ForEach-Object { "{0,10:N1} MB  {1}" -f ($_.Length / 1MB), $_.Name }
+      - name: Build the MCP tests
+        if: inputs.tests || github.event_name == 'push'
+        run: cmake --build "${{ github.workspace }}/out/build/windows-mcp" --config Release --target cata_test-mcp -- -k 0
