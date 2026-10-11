@@ -129,6 +129,42 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the mutation wish menu toggle key promotes a non-base trait without desyncing traits",
+    "[client][interaction][mcp][screens][rawkeys]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    auto trait = trait_id::NULL_ID();
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.structured);
+        switch (stage++) {
+            case 0: {
+                const auto cursor = std::ranges::
+                    find(snapshot.choices, true, &game_client::interaction_choice::highlighted);
+                REQUIRE(cursor != snapshot.choices.end());
+                for (const auto& branch : mutation_branch::get_all()) {
+                    if (branch.name() == cursor->label) { trait = branch.id; }
+                }
+                REQUIRE(trait != trait_id::NULL_ID());
+                you.set_mutation(trait);
+                REQUIRE_FALSE(you.has_base_trait(trait));
+                return choose(snapshot, key_row('t'));
+            }
+            default:
+                return cancel(snapshot);
+        }
+    });
+    debug_menu::wishmutate(&you);
+    CHECK(stage >= 2);
+    CHECK(you.has_base_trait(trait));
+    CHECK(you.has_trait(trait));
+}
+
+TEST_CASE(
     "the monster wish menu spawns a friendly monster after the friendly key row",
     "[client][interaction][mcp][screens][rawkeys]") {
     clear_all_state();
