@@ -2167,21 +2167,93 @@ void map::restore_vision_transparency_cache(
 static const light_model k_sight_model =
     {sight_calc, sight_check, update_light, nullptr, sight_from_lookup, accumulate_transparency};
 
+namespace {
+
+auto diagonal_blocked(const level_cache& cache, const point& from, const point& to) -> bool {
+    const auto delta = to - from;
+    if (delta.x == 0 || delta.y == 0) { return false; }
+    const auto& blocks =
+        cache.vehicle_obscured_cache
+            [delta.y < 0 ? cache.idx(from.x, from.y) : cache.idx(to.x, to.y)];
+    return delta.x == delta.y ? blocks.nw : blocks.ne;
+}
+
+} // namespace
+
 /// Lets each tile that is not open air inherit the best seen value of its transparent neighbours,
 /// as the GPU surface pass does, so glancing surfaces do not depend on the compute backend. Reads
-/// a snapshot, so the inheritance never cascades.
+/// a snapshot, so the inheritance never cascades. Levels with a vehicle diagonal block take the GPU
+/// centre ray instead of the shadowcast, since the two disagree about where those blocks cut sight.
 void map::apply_seen_surfaces(const tripoint_bub_ms& origin) {
     ZoneScopedN("apply_seen_surfaces");
+    const auto round_nearest = [](const float value) {
+        return static_cast<int>(std::lround(value));
+    };
+    const auto ray_seen = [&](const tripoint_bub_ms& target) {
+        const auto& target_cache = get_cache_ref(target.z());
+        const auto delta = target - origin;
+        const auto dist = rl_dist(origin, target);
+        if (dist > g_max_view_distance) { return 0.0f; }
+        const auto steps = std::max(
+            {std::abs(delta.x()), std::abs(delta.y()),
+             static_cast<int>(std::ceil(static_cast<float>(std::abs(delta.z())) * Z_LEVEL_SCALE)),
+             1});
+        const auto crosses_floor = [&](const int k) -> bool {
+            const auto t = (static_cast<float>(k) + 0.5f) / static_cast<float>(std::abs(delta.z()));
+            const auto floor_z = delta.z() > 0 ? origin.z() + k + 1 : origin.z() - k;
+            if (floor_z < -OVERMAP_DEPTH || floor_z > OVERMAP_HEIGHT) { return false; }
+            const auto& floor = get_cache_ref(floor_z);
+            return floor.floor_cache[floor.idx(
+                std::clamp(origin.x() + round_nearest(static_cast<float>(delta.x()) * t), 0,
+                           target_cache.cache_x - 1),
+                std::clamp(origin.y() + round_nearest(static_cast<float>(delta.y()) * t), 0,
+                           target_cache.cache_y - 1))];
+        };
+        if (std::ranges::any_of(std::views::iota(0, std::abs(delta.z())), crosses_floor)) {
+            return 0.0f;
+        }
+        const auto step_tile = [&](const int i) {
+            const auto t = static_cast<float>(i) / static_cast<float>(steps);
+            return tripoint_bub_ms(
+                std::clamp(origin.x() + round_nearest(static_cast<float>(delta.x()) * t), 0,
+                           target_cache.cache_x - 1),
+                std::clamp(origin.y() + round_nearest(static_cast<float>(delta.y()) * t), 0,
+                           target_cache.cache_y - 1),
+                std::clamp(origin.z() + round_nearest(static_cast<float>(delta.z()) * t),
+                           -OVERMAP_DEPTH, OVERMAP_HEIGHT));
+        };
+        auto avg_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+        for (const auto i : std::views::iota(1, steps)) {
+            const auto prev = step_tile(i - 1);
+            const auto cur = step_tile(i);
+            const auto& cur_cache = get_cache_ref(cur.z());
+            if (diagonal_blocked(cur_cache, point(prev.x(), prev.y()), point(cur.x(), cur.y()))) {
+                return 0.0f;
+            }
+            const auto transparency = cur_cache.transparency_cache[cur_cache.idx(cur.x(), cur.y())];
+            if (transparency <= LIGHT_TRANSPARENCY_SOLID) { return 0.0f; }
+            avg_transparency =
+                (static_cast<float>(i - 1) * avg_transparency + transparency)
+                / static_cast<float>(i);
+        }
+        return std::exp(-avg_transparency * static_cast<float>(dist));
+    };
     for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
         auto& cache = get_cache(z);
+        if (std::ranges::any_of(cache.vehicle_obscured_cache, [](const auto& blocks) {
+                return blocks.nw || blocks.ne;
+            })) {
+            for (const auto x : std::views::iota(0, cache.cache_x)) {
+                for (const auto y : std::views::iota(0, cache.cache_y)) {
+                    if (tripoint_bub_ms(x, y, z) != origin) {
+                        cache.seen_cache[cache.idx(x, y)] = ray_seen({x, y, z});
+                    }
+                }
+            }
+        }
         const auto raw = cache.seen_cache;
         const auto blocked_diagonal = [&](const point& from, const point& to) {
-            const auto delta = to - from;
-            if (delta.x == 0 || delta.y == 0) { return false; }
-            const auto& blocks =
-                cache.vehicle_obscured_cache
-                    [delta.y < 0 ? cache.idx(from.x, from.y) : cache.idx(to.x, to.y)];
-            return delta.x == delta.y ? blocks.nw : blocks.ne;
+            return diagonal_blocked(cache, from, to);
         };
         const auto* const roof =
             z < origin.z() && z < OVERMAP_HEIGHT ? &get_cache(z + 1).vehicle_floor_cache : nullptr;
