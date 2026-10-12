@@ -133,6 +133,38 @@ class wish_mutate_callback: public uilist_callback
             return false;
         }
 
+        auto row_details( const uilist &/*menu*/, const int entry_index ) const
+        -> uilist_row_details override {
+            if( entry_index < 0 || static_cast<size_t>( entry_index ) >= vTraits.size() ) {
+                return {};
+            }
+            const mutation_branch &mdata = vTraits[entry_index].obj();
+            auto text = std::string( mdata.valid ? _( "Valid" ) : _( "Nonvalid" ) );
+            text += "\n" + string_format( _( "Id: %s" ), mdata.id.str() );
+            const auto list = [&]( const std::string & label, const auto & ids, const auto & name ) {
+                if( !ids.empty() ) {
+                    text += "\n" + label + " " + enumerate_as_string( ids, name, enumeration_conjunction::none );
+                }
+            };
+            const auto trait_name = [&]( const trait_id & id ) {
+                return colorize( mutation_branch::get_name( id ), p->has_trait( id ) ? c_green : c_light_gray );
+            };
+            list( _( "Prereqs:" ), mdata.prereqs, trait_name );
+            list( _( "Prereqs, 2d:" ), mdata.prereqs2, trait_name );
+            if( mdata.threshold_tier != 0 ) {
+                text += "\n" + string_format( _( "Threshold tier: %d" ), mdata.threshold_tier );
+            }
+            list( _( "Cancels:" ), mdata.cancels, trait_name );
+            list( _( "Becomes:" ), mdata.replacements, trait_name );
+            list( _( "Add-ons:" ), mdata.additions, trait_name );
+            list( _( "Type:" ), mdata.types, []( const std::string & type ) { return type; } );
+            list( _( "Category:" ), mdata.category, []( const mutation_category_id & id ) { return id.str(); } );
+            //~ pts: points, vis: visibility, ugly: ugliness
+            text += "\n" + string_format( _( "pts: %d vis: %d ugly: %d" ), mdata.points,
+                                          mdata.visibility, mdata.ugliness );
+            return { .description = text };
+        }
+
         void refresh( uilist *menu ) override {
             // If it is our first time in menu - collect some data to map with uilist entry later
             if( !started ) {
@@ -550,6 +582,23 @@ class wish_monster_callback: public uilist_callback
             return false;
         }
 
+        auto row_details( const uilist &menu, const int entry_index ) const
+        -> uilist_row_details override {
+            // A monster per row would be built for every row of the list, so only the highlighted one is.
+            if( entry_index != menu.selected || entry_index < 0 ||
+                static_cast<size_t>( entry_index ) >= mtypes.size() ) {
+                return {};
+            }
+            auto shown = monster( mtypes[entry_index]->id );
+            if( friendly ) {
+                shown.friendly = -1;
+            }
+            const auto header = string_format( "#%d: %s (%d)%s%s", entry_index, shown.type->nname(), group,
+                                               friendly ? _( " (friendly)" ) : "",
+                                               hallucination ? _( " (hallucination)" ) : "" );
+            return { .description = colorize( header, c_cyan ) + "\n" + shown.extended_description() };
+        }
+
         void refresh( uilist *menu ) override {
             catacurses::window w_info = catacurses::newwin( menu->w_height - 2, menu->pad_right,
                                         point( menu->w_x + menu->w_width - 1 - menu->pad_right, 1 ) );
@@ -741,6 +790,22 @@ class wish_item_callback: public uilist_callback
                 return true;
             }
             return false;
+        }
+
+        auto row_details( const uilist &menu, const int entry_index ) const
+        -> uilist_row_details override {
+            // The item info of every row would be built on each read, so only the highlighted one is.
+            if( entry_index != menu.selected || entry_index < 0 ||
+                static_cast<size_t>( entry_index ) >= standard_itype_ids.size() ) {
+                return {};
+            }
+            const auto &type = *standard_itype_ids[entry_index];
+            const auto header = string_format( "#%d: %s%s%s", entry_index, type.get_id().c_str(),
+                                               incontainer ? string_format( _( " (in %s)" ),
+                                                       container ? container->str() : _( "default container" ) ) : "",
+                                               has_flag ? _( " (flagged)" ) : "" );
+            const auto info = item::spawn_temporary( &type, calendar::turn )->info();
+            return { .description = colorize( header, c_cyan ) + "\n" + format_item_info( info, {} ) };
         }
 
         void refresh( uilist *menu ) override {
