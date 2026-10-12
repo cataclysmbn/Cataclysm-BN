@@ -144,8 +144,8 @@ auto tint_generation() -> std::size_t & // *NOPAD*
     return generation;
 }
 
-auto flag_text( const std::string &flag ) -> const std::string & { return flag; }
-auto flag_text( const flag_id &flag ) -> const std::string & { return flag.str(); }
+auto flag_text( const std::string &flag ) -> const std::string& { return flag; }
+auto flag_text( const flag_id &flag ) -> const std::string& { return flag.str(); }
 
 /// What a tileset's tints are tried by for a thing, in the native order, kept to those the client has:
 /// its flags, then its id.
@@ -825,6 +825,8 @@ struct patch_basis {
     memory_revision memory = {};
     std::size_t tints = 0;
     std::vector<tripoint_bub_ms> visible = {};
+    /// The seen squares that made a cell.
+    std::set<tripoint_bub_ms> live = {};
     std::set<tripoint_bub_ms> vehicles = {};
     std::vector<tripoint_abs_ms> squares = {};
 };
@@ -860,17 +862,26 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
                            basis.coverage == patch.world.coverage;
     auto visible = map_perception::visible_cells( here );
     auto vehicles = vehicle_squares( here );
+    auto live = std::set<tripoint_bub_ms> {};
     if( !continues ) {
         capture_known( here, you, dimension, patch.cells );
         patch.exhaustive = true;
+        std::ranges::copy_if( visible, std::inserter( live, live.end() ), [&]( const auto & p ) { return patch.cells.contains( position_of( here, p, dimension ) ); } );
         basis.squares = you.memorized_positions();
     } else {
         const auto view = map_perception::current_sight();
         // Squares that are seen now come first: a square is named once, by what the avatar knows of it.
         const auto &known = previous.value.world.cells;
+        // A square seen before and now held a cell only if the last patch made one of it.
+        const auto same_view = visible == basis.visible;
         for( const auto &p : visible ) {
-            if( auto out = visible_cell( here, p, you, view, dimension ) ) { patch.cells.emplace( out->at, std::move( *out ) ); }
-            else if( const auto at = position_of( here, p, dimension ); known.contains( at ) ) { patch.unknown.insert( at ); }
+            if( auto out = visible_cell( here, p, you, view, dimension ) ) {
+                live.insert( p );
+                patch.cells.emplace( out->at, std::move( *out ) );
+            } else if( same_view ? basis.live.contains( p ) : known.contains( position_of( here, p,
+                       dimension ) ) ) {
+                patch.unknown.insert( position_of( here, p, dimension ) );
+            }
         }
         const auto name = [&]( const tripoint_bub_ms & p ) {
             const auto at = position_of( here, p, dimension );
@@ -893,7 +904,7 @@ auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_
     basis = {
         .valid = true, .epoch = previous.at.epoch, .revision = previous.at.revision,
         .coverage = patch.world.coverage, .memory = memory, .tints = tint_generation(),
-        .visible = std::move( visible ), .vehicles = std::move( vehicles ),
+        .visible = std::move( visible ), .live = std::move( live ), .vehicles = std::move( vehicles ),
         .squares = std::move( basis.squares )
     };
     return patch;
