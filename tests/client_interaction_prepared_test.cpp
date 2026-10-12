@@ -228,6 +228,31 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "prepared pages keep the overmap, vehicle and canvas of the model",
+    "[client_interaction_prepared]") {
+    auto context = input_context{"WINDOWS"};
+    const auto input = client::input_context_scope{context, "WINDOWS"};
+    client::begin_input_boundary();
+    auto snapshot = model(3);
+    snapshot.overmap = client::interaction_overmap{.cols = 2, .rows = 1, .glyphs = {"a", "b"}};
+    snapshot.vehicle = client::interaction_vehicle{.name = "Truck", .mode = "main"};
+    snapshot.canvas = client::interaction_canvas{.cols = 1, .rows = {{{.text = "x"}}}};
+    auto expected = std::string{};
+    {
+        const auto legacy = client::interaction_scope{context, [&]() { return snapshot; }};
+        expected = client::serialize_interaction(client::current_interaction());
+    }
+    const auto scope =
+        client::prepared_interaction_scope{context, client::prepare_interaction(context, snapshot)};
+    const auto page = client::current_interaction();
+    REQUIRE(page.overmap.has_value());
+    REQUIRE(page.vehicle.has_value());
+    REQUIRE(page.canvas.has_value());
+    CHECK(page.vehicle->name == "Truck");
+    CHECK(client::serialize_interaction(page) == expected);
+}
+
+TEST_CASE(
     "prepared schema preserves full-model hash inclusions and exclusions",
     "[client_interaction_prepared]") {
     auto context = input_context{"HASH"};

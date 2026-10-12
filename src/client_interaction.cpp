@@ -42,6 +42,15 @@ auto index_for( const auto &values ) -> std::vector<std::size_t>
     } );
     return index;
 }
+
+/// Copy everything but the choices, which stay with the caller untouched.
+auto without_choices( interaction_snapshot &full ) -> interaction_snapshot
+{
+    auto choices = std::move( full.choices );
+    auto result = full;
+    full.choices = std::move( choices );
+    return result;
+}
 } // namespace
 
 /// Defined only here: callers can retain const ownership but cannot access or mutate the model.
@@ -50,7 +59,8 @@ class prepared_interaction
     public:
         prepared_interaction( const input_context &context, interaction_snapshot snapshot,
                               std::optional<lazy_choice_descriptions> descriptions = std::nullopt )
-            : context( &context ), snapshot( std::move( snapshot ) ),
+            : context( &context ), metadata( without_choices( snapshot ) ),
+              snapshot( std::move( snapshot ) ),
               choices( index_for( this->snapshot.choices ) ),
               targets( this->snapshot.target ? index_for( this->snapshot.target->candidates ) :
                        std::vector<std::size_t> {} ), descriptions( std::move( descriptions ) ),
@@ -68,6 +78,8 @@ class prepared_interaction
         }
 
         const input_context *const context;
+        /// Every field but the choices, so a page copies the whole value and cannot drop a new field.
+        const interaction_snapshot metadata;
         const interaction_snapshot snapshot;
         const std::vector<std::size_t> choices;
         const std::vector<std::size_t> targets;
@@ -311,25 +323,7 @@ auto materialize( acquired_interaction acquired,
     // Never clone the full choices vector merely to discard off-page rows.
     auto result = interaction_snapshot{};
     if( acquired.prepared ) {
-        result = {
-            .schema_id = full.schema_id,
-            .context = full.context,
-            .kind = full.kind,
-            .title = full.title,
-            .message = full.message,
-            .message_tone = full.message_tone,
-            .category_mode = full.category_mode,
-            .banner = full.banner,
-            .structured = full.structured,
-            .actions_only = full.actions_only,
-            .allow_cancel = full.allow_cancel,
-            .panes = full.panes,
-            .field = full.field,
-            .target = full.target,
-            .canvas = full.canvas,
-            .refresh_ms = full.refresh_ms,
-            .allow_set_count = full.allow_set_count,
-        };
+        result = acquired.prepared->metadata;
     } else {
         result = std::move( acquired.legacy );
     }
