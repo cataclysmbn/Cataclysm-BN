@@ -17,6 +17,12 @@ namespace engine_client
 inline constexpr auto contract_version = "1.0";
 inline constexpr auto maximum_rows = std::size_t {200};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
+/// Delivery credits a client may hold, each paying for one pushed `bn.events` or `bn.command` frame.
+inline constexpr auto maximum_credits = std::size_t {256};
+/// What the engine keeps for a client that holds no credits: past either bound it drops all of it
+/// and sends `bn.resync` instead.
+inline constexpr auto maximum_held_frames = std::size_t {256};
+inline constexpr auto maximum_held_bytes = std::size_t {1048576};
 inline constexpr auto maximum_frame_bytes = std::size_t {1048576};
 inline constexpr auto cells_per_part = std::size_t {512};
 /// The newest message log lines a snapshot carries.

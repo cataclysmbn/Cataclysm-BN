@@ -69,6 +69,7 @@ public:
     }
     auto pump_events() -> void override { mcp::pump_events_native(); }
     auto step_boundary() -> void override { bn::mcp::publish_step(); }
+    auto activity_boundary() -> void override { bn::mcp::publish_activity(); }
     auto resize(const point cell_size) -> void override {
         memory::resize(cell_size.x, cell_size.y);
     }

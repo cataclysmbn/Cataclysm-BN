@@ -142,6 +142,11 @@ class Session {
   /** The events that tell what happened rather than what the avatar knows, whole and in arrival order. */
   told: Value[] = []
   resyncs: Value[] = []
+  /** Pushed frames the client may be sent before it pays; 0 for a client that asked for no credits. */
+  window = 0
+  #unpaid = 0
+  /** `bn.events` frames with the time they arrived and the types they carried, in arrival order. */
+  frames: { at: number; types: string[]; turns: string[] }[] = []
   /** `bn.loading` notifications with their arrival time, in arrival order. */
   loading: Value[] = []
   /** `bn.progress` heartbeats seen. */
@@ -164,10 +169,24 @@ class Session {
     this.mirror = await this.subscribe()
   }
 
-  #handle(note: Value) {
+  /** Grant credits back once half the window has been read; one request per many frames. */
+  async pay() {
+    if (this.window === 0 || this.#unpaid < Math.max(1, this.window / 2)) return
+    const frames = this.#unpaid
+    this.#unpaid = 0
+    await this.client.result("bn.credit", { frames })
+  }
+
+  handle(note: Value) {
     const { method, params } = note
+    if (method === "bn.events" || method === "bn.command") this.#unpaid++
     if (method === "bn.events") {
       this.mirror.applyEvents(params.epoch, params.events)
+      this.frames.push({
+        at: note.receivedAt,
+        types: params.events.map((e: Value) => e.type),
+        turns: params.events.flatMap((e: Value) => e.changes?.environment?.turn ?? []),
+      })
       for (const event of params.events) {
         this.eventTypes.push(event.type)
         if (!stateEvents.includes(event.type)) this.told.push(event)
@@ -191,7 +210,11 @@ class Session {
    * Submit against what the mirror believes, then follow pushes until the command is terminal.
    * `afterHeartbeat` runs once, when the first `bn.progress` heartbeat of the command arrives.
    */
-  async submit(operation: Value, patch: Value = {}, afterHeartbeat?: () => Promise<void>) {
+  async submit(
+    operation: Value,
+    patch: Value = {},
+    afterHeartbeat?: () => Promise<void>,
+  ) {
     const mirror = this.mirror
     const response = await this.client.request("bn.command.submit", {
       epoch: mirror.at.epoch,
@@ -213,7 +236,8 @@ class Session {
       if (["completed", "rejected", "interrupted"].includes(last!)) {
         return { id, stages, error: undefined }
       }
-      this.#handle(await this.client.note())
+      this.handle(await this.client.note())
+      await this.pay()
       if (afterHeartbeat && this.progress > heartbeats) {
         const run = afterHeartbeat
         afterHeartbeat = undefined
@@ -226,7 +250,7 @@ class Session {
   async viewport(cols: number, rows: number) {
     const before = JSON.stringify(this.mirror.view)
     await this.client.result("bn.viewport", { cols, rows })
-    while (JSON.stringify(this.mirror.view) === before) this.#handle(await this.client.note())
+    while (JSON.stringify(this.mirror.view) === before) this.handle(await this.client.note())
   }
 
   async choose(label: string) {
@@ -325,13 +349,16 @@ async function enterTutorial(client: Client, extra: Value = {}): Promise<Session
     client: { name: "stdio-test", version: "1" },
     ...extra,
   })
+  const window = extra.delivery?.credits ?? 0
   let session = new Session(client)
+  session.window = window
   await session.start()
   await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
   await session.choose("New Game")
   await session.choose("Tutorial")
   assertEquals((await client.note()).method, "bn.resync")
   session = new Session(client)
+  session.window = window
   await session.start()
   await session.acknowledge(() => session.mirror.interaction.interaction === null)
   return session
@@ -1772,5 +1799,155 @@ Deno.test({
       client.kill()
       await Deno.remove(profile, { recursive: true })
     }
+  },
+})
+
+/** Open the wait menu and return the choice whose label starts with `label`. */
+const waitChoice = async (session: Session, label: string) => {
+  await session.submit({ kind: "action", action_id: "wait" })
+  const choice = session.mirror.interaction.interaction.choices.find((entry: Value) =>
+    entry.label.startsWith(label)
+  )
+  assert(choice, `${label} entry`)
+  return choice
+}
+
+/** Let the tutorial's first-turn lessons out of the way. */
+const settle = async (session: Session) => {
+  await session.acknowledge(() => session.mirror.interaction.interaction === null)
+  await session.submit({ kind: "action", action_id: "wait" })
+  await session.choose("5 minutes")
+  await session.acknowledge(() => session.mirror.interaction.interaction === null)
+}
+
+/** What the engine owns after a wait, without the clock of the stream, the turn and the sidebar's focus, which differ between two runs of the same session. */
+const authority = (session: Session) => {
+  const avatar = structuredClone(session.mirror.avatar)
+  delete avatar.sidebar.focus
+  const environment = structuredClone(session.mirror.environment)
+  delete environment.turn
+  return JSON.stringify({
+    avatar,
+    environment,
+    entities: [...session.mirror.entities.values()],
+  })
+}
+
+const hour = 3600n
+
+/** Where two JSON values first differ, for a failure message. */
+const firstDiff = (a: Value, b: Value, path = ""): string | undefined => {
+  if (typeof a !== "object" || typeof b !== "object" || !a || !b) {
+    return a === b ? undefined : `${path}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`
+  }
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    const found = firstDiff(a[key], b[key], `${path}/${key}`)
+    if (found) return found
+  }
+}
+
+Deno.test({
+  name:
+    "stdio: a long wait streams its turns to a client with credits before the command completes",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client, { delivery: { credits: 256 } })
+      await settle(session)
+      const choice = await waitChoice(session, "1 hour")
+      const before = session.frames.length
+      const turn = BigInt(session.mirror.environment.turn)
+      // The client only reads; it pays credits back once per 128 frames, never per turn.
+      const waiting = await session.submit({ kind: "choose", choice_id: choice.id })
+      assertEquals(waiting.stages.at(-1), "completed")
+      const frames = session.frames.slice(before).filter((frame) => frame.turns.length > 0)
+      const seen = new Set(frames.flatMap((frame) => frame.turns))
+      console.log(`wait of 1 hour: ${frames.length} frames carried ${seen.size} distinct turns`)
+      assert(seen.size >= 100, `turns reached the client while the wait ran: ${seen.size}`)
+      assertEquals(session.resyncs.length, 0)
+      assert(BigInt(session.mirror.environment.turn) - turn >= hour)
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
+    "stdio: a client that stops paying credits during a long wait is resynced and the game is unchanged",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const ends: string[] = []
+    for (const mode of ["none", "pushing", "stalled"]) {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+      try {
+        const extra = mode === "none" ? {} : { delivery: { credits: 256 } }
+        const session = await enterTutorial(client, extra)
+        await settle(session)
+        const choice = await waitChoice(session, "1 hour")
+        const turn = BigInt(session.mirror.environment.turn)
+        const mark = session.frames.length
+        const started = performance.now()
+        // The stalled client paid for everything until now and stops paying here.
+        if (mode === "stalled") session.window = 0
+        if (mode === "stalled") {
+          const mirror = session.mirror
+          const sent = await client.result("bn.command.submit", {
+            epoch: mirror.at.epoch,
+            expect: {
+              revision: mirror.at.revision,
+              boundary_id: mirror.interaction.boundary_id,
+              schema_id: mirror.interaction.interaction.schema_id,
+            },
+            operation: { kind: "choose", choice_id: choice.id },
+          })
+          while (!session.resyncs.length) session.handle(await client.note())
+          // The credits it still had were all it got: the rest was dropped for a resync, not buffered.
+          assertEquals(session.resyncs.map((resync) => resync.reason), ["backpressure"])
+          assert(
+            session.frames.length - mark <= 256,
+            `${session.frames.length - mark} frames past 256 credits`,
+          )
+          // The engine did not wait for the client: the wait runs to its end, and the receipt tells.
+          let stage = ""
+          while (!["completed", "interrupted", "rejected"].includes(stage)) {
+            stage = (await client.result("bn.command.result", {
+              epoch: mirror.at.epoch,
+              command_id: sent.command_id,
+            })).stage
+            await new Promise((resolve) => setTimeout(resolve, 200))
+          }
+          assertEquals(stage, "completed")
+          // What arrived while polling predates the snapshot that replaces it.
+          client.notes.length = 0
+        } else {
+          const waiting = await session.submit({ kind: "choose", choice_id: choice.id })
+          assertEquals(waiting.stages.at(-1), "completed")
+        }
+        console.log(`wait of 1 hour, ${mode} client: ${Math.round(performance.now() - started)} ms`)
+        session.mirror = await session.subscribe()
+        assert(BigInt(session.mirror.environment.turn) - turn >= hour)
+        ends.push(authority(session))
+        await client.close()
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    }
+    assertEquals(
+      firstDiff(JSON.parse(ends[1]), JSON.parse(ends[0])),
+      undefined,
+      "a pushing client changes nothing",
+    )
+    assertEquals(
+      firstDiff(JSON.parse(ends[2]), JSON.parse(ends[0])),
+      undefined,
+      "a stalled client changes nothing",
+    )
   },
 })

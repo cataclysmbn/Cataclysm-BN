@@ -24,22 +24,32 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 ## 메서드
 
-| 메서드                   | 매개변수                                    | 결과                                          |
-| ------------------------ | ------------------------------------------- | --------------------------------------------- |
-| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?` | `version`, `epoch`, `engine`, `limits`        |
-| `bn.viewport`            | `cols`, `rows`                              | 없음                                          |
-| `bn.interrupt`           | 없음                                        | 없음                                          |
-| `bn.subscribe`           | 없음                                        | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨    |
-| `bn.unsubscribe`         | 없음                                        | 없음                                          |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`   | `boundary_id`, `total`, `choices` (읽기 전용) |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`               | `lines` (읽기 전용)                           |
-| `bn.world.cells`         | `epoch`, `min`, `max`                       | `at`, `cells`, `forgotten` (읽기 전용)        |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`              | `command_id`, `stage: "received"`             |
-| `bn.command.result`      | `epoch`, `command_id`                       | 최신 단계. 유실된 알림을 복구할 때 사용       |
+| 메서드                   | 매개변수                                                 | 결과                                                |
+| ------------------------ | -------------------------------------------------------- | --------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?`, `delivery?` | `version`, `epoch`, `engine`, `limits`, `delivery?` |
+| `bn.viewport`            | `cols`, `rows`                                           | 없음                                                |
+| `bn.interrupt`           | 없음                                                     | 없음                                                |
+| `bn.subscribe`           | 없음                                                     | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨          |
+| `bn.unsubscribe`         | 없음                                                     | 없음                                                |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                | `boundary_id`, `total`, `choices` (읽기 전용)       |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                            | `lines` (읽기 전용)                                 |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                    | `at`, `cells`, `forgotten` (읽기 전용)              |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                           | `command_id`, `stage: "received"`                   |
+| `bn.command.result`      | `epoch`, `command_id`                                    | 최신 단계. 유실된 알림을 복구할 때 사용             |
+| `bn.credit`              | `frames`                                                 | 부여 후 보유 `credits`                              |
 
 엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`입니다. `bn.loading`과 `bn.progress`를 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다. `bn.progress`(`{epoch}`)는 하트비트로, 대기 같은 활동이 입력 경계에 도달하지 않고 계속되는 동안 `bn.hello`를 마친 클라이언트에 2초마다 전송됩니다. 통신이 끊기면 엔진이 일하지 않는다는 뜻입니다. 월드를 불러오는 동안은 `bn.loading`이 같은 역할을 합니다.
 
 오류는 코드 `1000`과 `error.data = {kind, action?, at?}`를 사용하며, `action`은 다음에 할 일(`hello`, `subscribe`, `retry`)을 알려 줍니다.
+
+## 전달 크레딧
+
+`bn.hello`의 `delivery = {credits}`(1~256)로 켭니다. 결과에는 `delivery = {credits, held_frames, held_bytes}`가 붙습니다. `delivery`를 보내지 않으면 아래는 적용되지 않으며, 푸시되는 프레임은 전과 같이 입력 경계와 자동 이동 단계에서 즉시 기록됩니다.
+
+- 푸시되는 `bn.events`와 `bn.command` 프레임은 크레딧 1을 소비합니다. 남은 크레딧이 없으면 엔진은 프레임을 순서대로 보관했다가 `bn.credit {frames}`로 더 부여되면 기록합니다(결과는 부여 후 보유 크레딧이며 상한은 256, 보관된 프레임은 응답 뒤에 이어집니다). 스냅샷 부분, `bn.resync`, `bn.loading`, `bn.progress`는 크레딧을 쓰지 않습니다.
+- 엔진이 클라이언트 하나를 위해 보관하는 양은 최대 `held_frames` 프레임, `held_bytes` 바이트입니다. 둘 중 하나를 넘기면 전부 버리고, 이유 `backpressure`의 `bn.resync`(`lost_after`는 기록한 가장 최근 sequence)를 보낸 뒤 클라이언트가 `bn.subscribe`를 호출할 때까지 푸시를 멈춥니다. 그 스냅샷이 버려진 것을 대체합니다. 버려진 `bn.command` 프레임은 `bn.command.result`로 복구합니다.
+- 크레딧이 있는 클라이언트는 진행 중인 활동(대기, 제작 등)의 매 턴 뒤에도 프레임을 받으며, 이는 명령이 완료되기 전에 도착합니다. `bn.command`의 `completed`는 여전히 입력 경계에서 옵니다. 스트림은 클라이언트를 기다리지 않습니다. 크레딧 부여를 멈춘 클라이언트가 엔진에 지우는 비용은 보관 상한까지이며, 게임, RNG, 저장은 모두 읽는 클라이언트나 클라이언트가 없는 경우와 같습니다.
+- 크레딧은 읽겠다는 약속입니다. 엔진은 크레딧이 있는 프레임을 파이프가 비기를 기다리지 않고 기록하므로, 클라이언트는 크레딧을 준 만큼 읽어야 합니다.
 
 ## 하나의 시계
 

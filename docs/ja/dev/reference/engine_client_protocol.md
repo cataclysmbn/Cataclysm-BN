@@ -24,22 +24,32 @@ title: エンジン/クライアントプロトコル 1.0
 
 ## メソッド
 
-| メソッド                 | パラメータ                                  | 結果                                                   |
-| ------------------------ | ------------------------------------------- | ------------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?` | `version`, `epoch`, `engine`, `limits`                 |
-| `bn.viewport`            | `cols`, `rows`                              | なし                                                   |
-| `bn.interrupt`           | なし                                        | なし                                                   |
-| `bn.subscribe`           | なし                                        | スナップショットヘッダー。続いてパートとイベントが届く |
-| `bn.unsubscribe`         | なし                                        | なし                                                   |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`   | `boundary_id`, `total`, `choices` (読み取り専用)       |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`               | `lines`(読み取り専用)                                  |
-| `bn.world.cells`         | `epoch`, `min`, `max`                       | `at`, `cells`, `forgotten` (読み取り専用)              |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`              | `command_id`, `stage: "received"`                      |
-| `bn.command.result`      | `epoch`, `command_id`                       | 最新のステージ。失われた通知の回復に使う               |
+| メソッド                 | パラメータ                                               | 結果                                                   |
+| ------------------------ | -------------------------------------------------------- | ------------------------------------------------------ |
+| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?`, `delivery?` | `version`, `epoch`, `engine`, `limits`, `delivery?`    |
+| `bn.viewport`            | `cols`, `rows`                                           | なし                                                   |
+| `bn.interrupt`           | なし                                                     | なし                                                   |
+| `bn.subscribe`           | なし                                                     | スナップショットヘッダー。続いてパートとイベントが届く |
+| `bn.unsubscribe`         | なし                                                     | なし                                                   |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                | `boundary_id`, `total`, `choices` (読み取り専用)       |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                            | `lines`(読み取り専用)                                  |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                    | `at`, `cells`, `forgotten` (読み取り専用)              |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                           | `command_id`, `stage: "received"`                      |
+| `bn.command.result`      | `epoch`, `command_id`                                    | 最新のステージ。失われた通知の回復に使う               |
+| `bn.credit`              | `frames`                                                 | 付与後の保有 `credits`                                 |
 
 エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading`、`bn.progress` です。`bn.loading` と `bn.progress` 以外は、購読中のクライアントへ入力境界ごとに送られます。`bn.progress`(`{epoch}`)はハートビートで、待機などの行動が入力境界に到達せずに続いている間、`bn.hello` を済ませたクライアントへ 2 秒ごとに送られます。通信が途絶えたなら、エンジンは動いていません。ワールドの読み込み中は `bn.loading` が同じ役割を果たします。
 
 エラーはコード `1000` と `error.data = {kind, action?, at?}` を使い、`action` が次の対応(`hello`、`subscribe`、`retry`)を示します。
+
+## 配信クレジット
+
+`bn.hello` の `delivery = {credits}`(1〜256)で有効にします。結果には `delivery = {credits, held_frames, held_bytes}` が付きます。`delivery` を送らない場合、以下は適用されず、プッシュされるフレームは従来どおり入力境界と自動移動のステップで即座に書き込まれます。
+
+- プッシュされる `bn.events` と `bn.command` のフレームは 1 クレジットを消費します。残りがなければエンジンはフレームを順序どおり保持し、`bn.credit {frames}` で追加されたときに書き込みます(結果は付与後の保有クレジットで上限 256。保持されたフレームはレスポンスの後に続きます)。スナップショットの部分、`bn.resync`、`bn.loading`、`bn.progress` はクレジットを消費しません。
+- エンジンが 1 つのクライアントのために保持するのは最大 `held_frames` フレーム・`held_bytes` バイトです。どちらかを超えると全て破棄し、理由 `backpressure` の `bn.resync`(`lost_after` は書き込んだ最新の sequence)を送り、クライアントが `bn.subscribe` を呼ぶまでプッシュを止めます。そのスナップショットが破棄分を置き換えます。破棄された `bn.command` フレームは `bn.command.result` で取得できます。
+- クレジットを持つクライアントは、実行中の行動(待機、製作など)の各ターンの後にもフレームを受け取り、それはコマンドの完了より前に届きます。`bn.command` の `completed` は引き続き入力境界で送られます。ストリームはクライアントを待ちません。クレジットを付与しなくなったクライアントがエンジンに強いるのは保持上限までで、ゲーム、その RNG、セーブは、すべてを読むクライアントや存在しないクライアントの場合と同一です。
+- クレジットは「読む」という約束です。エンジンはクレジット済みのフレームをパイプが空くのを待たずに書き込むため、クライアントはクレジットを渡した分を読まなければなりません。
 
 ## 単一の時計
 

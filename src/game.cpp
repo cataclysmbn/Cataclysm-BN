@@ -1,4 +1,5 @@
 #include "game.h"
+#include "client_backend.h"
 #include "client_choice.h"
 #include "iteminfo_request.h"
 
@@ -2501,6 +2502,9 @@ void game::process_activity()
         if( activity_finished || activity_changed || activity_progressed ) {
             restore_debug_infinite_speed_moves( before_avatar_moves );
         }
+    }
+    if( u.activity && game_client::backend_selected() ) {
+        game_client::active_backend().activity_boundary();
     }
 }
 

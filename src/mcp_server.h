@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <iosfwd>
 #include <optional>
@@ -90,6 +91,10 @@ class server
         /// Publish the state between two steps of an auto-move, which reads no input.
         auto publish_step( std::ostream &out ) -> bool;
 
+        /// Publish what a running activity changed, for a client that negotiated credit delivery
+        /// and reads as it goes; any other client sees the activity's result at the next boundary.
+        auto publish_activity( std::ostream &out ) -> bool;
+
         /// Complete a deferred bn.press response using the latest published screen.
         auto finish_pending( std::ostream &out, std::ostream &err ) -> void;
 
@@ -107,6 +112,10 @@ class server
         auto failed() const -> bool;
         /// Why input ended, for the line the engine writes before it exits.
         auto end_reason() const -> std::string;
+
+        /// What credit delivery is holding for a client that has no credits left.
+        auto held_frames() const -> std::size_t;
+        auto held_bytes() const -> std::size_t;
 
         struct deferred_response {
             engine_client::jsonrpc::request_id id;
@@ -129,10 +138,23 @@ class server
         bool subscribed_ = false;
         /// Complete notification frames waiting to be written after the current response.
         std::vector<std::string> notifications_;
+        /// Pushed frames a client with credit delivery has yet to be paid for, oldest first.
+        struct held_frame {
+            std::string bytes;
+            bool credited = true;
+            /// Newest event sequence the frame carries.
+            engine_client::counter through = 0;
+        };
+        /// Pushed frames the client can still be sent; set once hello asked for credit delivery.
+        std::optional<std::size_t> credits_;
+        std::deque<held_frame> held_;
+        std::size_t held_bytes_ = 0;
+        /// Newest event sequence written to the client since its snapshot.
+        engine_client::counter delivered_through_ = 0;
         std::optional<engine_client::jsonrpc::response_frame> deferred_frame_;
         std::optional<engine_client::jsonrpc::envelope_cursor> pending_requests_;
 
-        auto publish_boundary( std::ostream &out ) -> bool;
+        auto publish_boundary( std::ostream &out, bool settles = true ) -> bool;
         /// Turn what the session published into notifications and write them, in order.
         auto flush_push( std::ostream &out ) -> bool;
         /// Turn what the session published into notifications written after the current response.

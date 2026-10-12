@@ -9,6 +9,7 @@
 #    include "mcp_server.h"
 #    include "rng.h"
 
+#    include <algorithm>
 #    include <sstream>
 #    include <string>
 #    include <vector>
@@ -30,6 +31,21 @@ auto contains(const std::string& text, const std::string& part) -> bool {
 }
 auto index_of(const std::string& text, const std::string& part) -> std::size_t {
     return text.find(part);
+}
+
+auto count_of(const std::string& text, const std::string& part) -> std::size_t {
+    auto count = std::size_t{0};
+    for (auto at = text.find(part); at != std::string::npos; at = text.find(part, at + 1)) {
+        ++count;
+    }
+    return count;
+}
+auto hello_with(const std::string& delivery) -> std::string {
+    return rpc(
+        "bn.hello",
+        R"({"versions":["1.0"],"client":{"name":"test","version":"1"},"delivery":)" + delivery
+            + "}",
+        "1");
 }
 
 auto world_cell(const int x) -> cell {
@@ -113,6 +129,18 @@ struct fixture {
     }
     auto schema() -> std::string {
         return "\"" + authority.current()->value.interaction.interaction->schema_id + "\"";
+    }
+    /// Serve each line of `text` as one request while an activity runs; the server stays alive.
+    auto poll(const std::string& text) -> void {
+        auto input = std::istringstream{text};
+        for (auto lines = count_of(text, "\n"); lines > 0; --lines) {
+            REQUIRE(server.poll_input(input, output, errors));
+        }
+    }
+    /// One activity step: the world changes and the engine publishes it without any input boundary.
+    auto step() -> void {
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        REQUIRE(server.publish_step(output));
     }
     /// A new native boundary, published before the next step reads its requests.
     auto next_boundary() -> void {
@@ -558,6 +586,171 @@ TEST_CASE("a progress heartbeat reaches only a client that said hello", "[engine
         R"({"jsonrpc":"2.0","method":"bn.progress","params":{"epoch":")" + test.authority.epoch()
         + "\"}}\n";
     CHECK(test.output.str() == expected);
+}
+
+TEST_CASE("a hello without delivery pushes every step as before", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello + subscribe);
+    test.output.str("");
+    for (auto step = 0; step < 5; ++step) { test.step(); }
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 5);
+    CHECK_FALSE(contains(test.output.str(), "bn.resync"));
+    CHECK_FALSE(contains(test.output.str(), "delivery"));
+}
+
+TEST_CASE("hello declares the delivery bound it granted", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":2})"));
+    CHECK(contains(
+        test.output.str(), R"("delivery":{"credits":2,"held_frames":256,"held_bytes":1048576})"));
+}
+
+TEST_CASE("a delivery window outside 1..256 is invalid params", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    for (const auto* window :
+         {R"({"credits":0})", R"({"credits":257})", R"({"credits":"2"})", R"({})",
+          R"({"credits":2,"extra":1})"}) {
+        test.output.str("");
+        test.poll(hello_with(window));
+        CHECK(contains(test.output.str(), R"("code":-32602)"));
+    }
+}
+
+TEST_CASE("pushed frames wait for credits and then arrive in order", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":2})") + subscribe);
+    test.output.str("");
+    for (auto step = 0; step < 5; ++step) { test.step(); }
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 2);
+    CHECK_FALSE(contains(test.output.str(), "bn.resync"));
+
+    test.poll(rpc("bn.credit", R"({"frames":3})", "9"));
+    const auto out = test.output.str();
+    CHECK(count_of(out, R"("method":"bn.events")") == 5);
+    CHECK(contains(out, R"("id":9,"result":{"credits":3})"));
+    CHECK(index_of(out, R"("sequence":"1")") < index_of(out, R"("sequence":"5")"));
+    CHECK(index_of(out, R"("id":9)") < index_of(out, R"("sequence":"3")"));
+}
+
+TEST_CASE(
+    "credits are capped at the window and need a negotiated delivery", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello + rpc("bn.credit", R"({"frames":1})", "9"));
+    CHECK(contains(test.output.str(), R"("kind":"negotiation_failed")"));
+
+    auto capped = fixture{};
+    capped.poll(hello_with(R"({"credits":200})") + rpc("bn.credit", R"({"frames":100})", "9"));
+    CHECK(contains(capped.output.str(), R"("id":9,"result":{"credits":256})"));
+    capped.output.str("");
+    capped.poll(rpc("bn.credit", R"({"frames":0})", "10"));
+    CHECK(contains(capped.output.str(), R"("code":-32602)"));
+}
+
+TEST_CASE("a client that grants no credits is resynced, not buffered", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":1})") + subscribe);
+    test.output.str("");
+    auto most_frames = std::size_t{0};
+    auto most_bytes = std::size_t{0};
+    for (auto step = 0; step < 300; ++step) {
+        test.step();
+        most_frames = std::max(most_frames, test.server.held_frames());
+        most_bytes = std::max(most_bytes, test.server.held_bytes());
+    }
+    CHECK(most_frames == maximum_held_frames);
+    CHECK(most_bytes <= maximum_held_bytes);
+    CHECK(test.server.held_frames() == 0);
+    const auto out = test.output.str();
+    CHECK(count_of(out, R"("method":"bn.events")") == 1);
+    REQUIRE(count_of(out, R"("method":"bn.resync")") == 1);
+    CHECK(contains(out, R"("reason":"backpressure","lost_after":"1")"));
+    // Its snapshot, not a replay, is the way back; credits keep their count.
+    test.output.str("");
+    test.poll(subscribe + rpc("bn.credit", R"({"frames":1})", "9"));
+    CHECK(contains(test.output.str(), R"("method":"bn.snapshot.part")"));
+    test.output.str("");
+    test.step();
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 1);
+}
+
+TEST_CASE(
+    "a running activity is published only to a client with credits", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello + subscribe);
+    test.output.str("");
+    known_cells.push_back(3);
+    CHECK(test.server.publish_activity(test.output));
+    CHECK(test.output.str().empty());
+    CHECK(test.authority.at()->sequence == 0);
+
+    auto credited = fixture{};
+    REQUIRE(credited.authority.publish_boundary());
+    credited.poll(hello_with(R"({"credits":2})") + subscribe);
+    credited.output.str("");
+    known_cells.push_back(4);
+    CHECK(credited.server.publish_activity(credited.output));
+    CHECK(count_of(credited.output.str(), R"("method":"bn.events")") == 1);
+}
+
+TEST_CASE(
+    "a step of a running activity does not complete its command", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello_with(R"({"credits":8})") + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK(test.server.publish_activity(test.output));
+    CHECK(contains(test.output.str(), R"("type":"cells.seen")"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    known_cells.push_back(4);
+    CHECK_FALSE(test.pump(""));
+    CHECK(contains(test.output.str(), R"("stage":"completed")"));
+}
+
+TEST_CASE(
+    "the game is identical with a pushing, a stalled and no client", "[engine_client_delivery]") {
+    struct run {
+        counter sequence;
+        counter revision;
+        cata_default_random_engine rng;
+    };
+    const auto play = [](const std::string& opening) {
+        auto boundary = input_boundary{};
+        auto test = fixture{};
+        REQUIRE(test.authority.publish_boundary());
+        if (!opening.empty()) { test.poll(opening); }
+        for (auto step = 0; step < 300; ++step) { test.step(); }
+        const auto at = test.authority.at();
+        REQUIRE(at);
+        return run{at->sequence, at->revision, rng_get_engine()};
+    };
+    const auto none = play("");
+    const auto pushing = play(hello_with(R"({"credits":256})") + subscribe);
+    const auto stalled = play(hello_with(R"({"credits":1})") + subscribe);
+    CHECK(pushing.sequence == none.sequence);
+    CHECK(pushing.revision == none.revision);
+    CHECK(stalled.sequence == none.sequence);
+    CHECK(stalled.revision == none.revision);
+    CHECK(pushing.rng == none.rng);
+    CHECK(stalled.rng == none.rng);
 }
 
 #endif

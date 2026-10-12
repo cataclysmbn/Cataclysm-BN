@@ -43,6 +43,10 @@
     "bn.command.result": {
       "params": "result_params",
       "result": "command_result"
+    },
+    "bn.credit": {
+      "params": "credit_params",
+      "result": "credit_result"
     }
   },
   "x-notifications": {
@@ -3133,6 +3137,22 @@
           },
           "maxItems": 4096,
           "description": "The ids of the tints the client's tileset has (hair colors, item or terrain ids, flags). The engine publishes on looks the tint_keys among them that apply, in the order the native view tries them."
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "credits": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256,
+              "description": "Pushed `bn.events` and `bn.command` frames the engine may send before the client grants more with `bn.credit`."
+            }
+          },
+          "required": [
+            "credits"
+          ],
+          "additionalProperties": false,
+          "description": "Opt in to credit delivery. Without it every pushed frame is written at once, as before."
         }
       },
       "required": [
@@ -3212,6 +3232,34 @@
             "cells_per_query"
           ],
           "additionalProperties": false
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "credits": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256,
+              "description": "The window granted, which is also the initial credit."
+            },
+            "held_frames": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At most this many pushed frames wait for credits."
+            },
+            "held_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At most this many bytes of pushed frames wait for credits."
+            }
+          },
+          "required": [
+            "credits",
+            "held_frames",
+            "held_bytes"
+          ],
+          "additionalProperties": false,
+          "description": "Present exactly when the hello asked for credit delivery. Past either held bound the engine drops what is waiting and sends `bn.resync` with reason `backpressure`; `lost_after` is the newest sequence it wrote."
         }
       },
       "required": [
@@ -3219,6 +3267,35 @@
         "epoch",
         "engine",
         "limits"
+      ],
+      "additionalProperties": false
+    },
+    "credit_params": {
+      "type": "object",
+      "properties": {
+        "frames": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        }
+      },
+      "required": [
+        "frames"
+      ],
+      "additionalProperties": false
+    },
+    "credit_result": {
+      "type": "object",
+      "properties": {
+        "credits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 256,
+          "description": "Credits held after the grant, capped at 256; frames waiting for credits follow the response."
+        }
+      },
+      "required": [
+        "credits"
       ],
       "additionalProperties": false
     },
@@ -3744,7 +3821,8 @@
           "enum": [
             "world_replaced",
             "overflow",
-            "state_removed"
+            "state_removed",
+            "backpressure"
           ]
         },
         "lost_after": {
