@@ -28,7 +28,7 @@ struct text_segment {
 struct presentation_value {
     /// `projectile.moved`, `projectile.hit`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
     /// `combat_text.shown`, `item.activated`, `item.thrown`, `item.landed`, `entity.damaged`,
-    /// `terrain.changed`, `furniture.changed` or `field.changed`.
+    /// `terrain.changed`, `furniture.changed`, `field.changed` or `sound.heard`.
     std::string type = {};
     /// Opaque ID of the projectile or explosion; empty for combat text. An `item.landed` of an item
     /// no attack launched has none.
@@ -48,7 +48,10 @@ struct presentation_value {
     std::string entity = {};
     /// `entity.damaged`: the body part hit, when the creature has parts.
     std::string part = {};
+    /// The damage of `entity.damaged`, the intensity of `field.changed`, the decibels of `sound.heard`.
     std::optional<std::uint64_t> amount = std::nullopt;
+    /// `sound.heard`: what the avatar hears.
+    std::string text = {};
     /// `field.changed`: the field type, with `amount` its intensity afterwards (0 when gone).
     std::string field = {};
     /// `item.activated`: whole turns left on a fuse.
@@ -142,6 +145,15 @@ struct activation_options {
     std::optional<int> turns = std::nullopt;
 };
 auto record_activation( const activation_options &options ) -> void;
+struct sound_options {
+    /// What the avatar makes of the sound, as the native message names it.
+    const std::string &text;
+    int volume = 0;
+    /// The square the native game marks the sound on: never the source, and none when the avatar sees it.
+    std::optional<tripoint_bub_ms> marker = std::nullopt;
+};
+/// A sound reached the avatar, past its hearing, sleep and deafness.
+auto record_sound( const sound_options &options ) -> void;
 struct damage_options {
     const Creature &hurt;
     bodypart_id part;

@@ -292,6 +292,13 @@ auto record_activation( const activation_options &options ) -> void
             .turns = options.turns ? std::optional<std::uint64_t>( std::max( 0, *options.turns ) ) : std::nullopt } );
 }
 
+auto record_sound( const sound_options &options ) -> void
+{
+    if( !state().collecting ) { return; }
+    push( { .type = "sound.heard", .at = options.marker ? std::optional( world::position_at( *options.marker ) ) : std::nullopt,
+            .amount = static_cast<std::uint64_t>( std::max( 0, options.volume ) ), .text = options.text } );
+}
+
 auto record_damage( const damage_options &options ) -> void
 {
     if( !state().collecting || options.amount <= 0 || !seen( options.hurt.bub_pos() ) ) { return; }

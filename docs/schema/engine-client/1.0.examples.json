@@ -2549,6 +2549,41 @@
           }
         ]
       }
+    },
+    {
+      "name": "sound heard with a marker and one from a source in view",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "31",
+            "revision": "12",
+            "type": "sound.heard",
+            "command": "command:14",
+            "data": {
+              "text": "a loud explosion",
+              "volume": 74,
+              "marker": {
+                "dim": "",
+                "x": 70,
+                "y": 61,
+                "z": 0
+              }
+            }
+          },
+          {
+            "sequence": "32",
+            "revision": "12",
+            "type": "sound.heard",
+            "command": "command:14",
+            "data": {
+              "text": "Tick.",
+              "volume": 52
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [

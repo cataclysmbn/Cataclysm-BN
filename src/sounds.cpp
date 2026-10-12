@@ -8,6 +8,7 @@
 #include "coordinates.h"
 #include "creature.h"
 #include "debug.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "faction.h"
 #include "game.h"
@@ -2807,6 +2808,7 @@ void sounds::process_sound_markers( Character *who )
             // Place footstep markers.
             if( element.sound.origin == who->bub_pos() || who->sees( element.sound.origin ) ) {
                 // If we are or can see the source, don't draw a marker.
+                engine_client::presentation::record_sound( { .text = description, .volume = db_vol } );
                 continue;
             }
 
@@ -2833,9 +2835,12 @@ void sounds::process_sound_markers( Character *who )
             }
 
             // Then place the sound marker in a random one.
+            auto marker = std::optional<tripoint_bub_ms>();
             if( !unseen_points.empty() ) {
-                sound_markers.emplace( random_entry( unseen_points ), element.sound );
+                marker = random_entry( unseen_points );
+                sound_markers.emplace( *marker, element.sound );
             }
+            engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .marker = marker } );
         }
     }
     // Volume gets reset to zero later in the turn order after the player has acted.

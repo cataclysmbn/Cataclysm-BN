@@ -16,7 +16,9 @@
 #include "options_helpers.h"
 #include "projectile.h"
 #include "ranged.h"
+#include "sounds.h"
 #include "state_helpers.h"
+#include "type_id.h"
 #include "weather/weather.h"
 
 #include <algorithm>
@@ -254,4 +256,81 @@ TEST_CASE("a thrown item's hit carries the id of its throw", "[engine_client_fac
     CHECK(facts[hit].id == facts[thrown].id);
     CHECK(facts[flight].id == facts[thrown].id);
     CHECK(facts[landed].id == facts[thrown].id);
+}
+
+namespace {
+
+/// The avatar hears what is queued now, the way the turn order lets it.
+auto listen() -> std::vector<presentation_value> {
+    get_map().batch_flood_fill_sounds();
+    sounds::process_sound_markers(&get_avatar());
+    return of_type(presentation::take(), "sound.heard");
+}
+
+auto make_noise(const tripoint_bub_ms& at, const short volume, const std::string& description)
+    -> void {
+    sounds::reset_sounds();
+    sounds::sound(
+        {.volume = volume,
+         .origin = at,
+         .category = sounds::sound_t::alarm,
+         .description = description,
+         .movement_noise = true});
+}
+
+/// Walls two squares around the avatar, so that what lies outside is out of sight.
+auto wall_in() -> void {
+    auto& here = get_map();
+    for (const auto& wall : here.points_in_radius(you_at, 2)) {
+        const auto reach =
+            std::max(std::abs(wall.x() - you_at.x()), std::abs(wall.y() - you_at.y()));
+        if (reach == 2) { here.ter_set(wall, ter_id("t_wall")); }
+    }
+    scene::refresh();
+}
+
+} // namespace
+
+TEST_CASE(
+    "a sound the avatar sees the source of is heard without a marker",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    const auto at = you_at + tripoint_east * 3;
+    make_noise(at, 80, "Tick.");
+    const auto heard = listen();
+    REQUIRE(heard.size() == 1);
+    CHECK(heard[0].text == "Tick.");
+    CHECK(heard[0].amount > 0);
+    CHECK_FALSE(heard[0].at.has_value());
+}
+
+TEST_CASE(
+    "a sound behind a wall is placed on a square the avatar cannot see",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    wall_in();
+    const auto at = you_at + tripoint_east * 5;
+    REQUIRE_FALSE(get_avatar().sees(at));
+    make_noise(at, 90, "a muffled crash");
+    const auto heard = listen();
+    REQUIRE(heard.size() == 1);
+    CHECK(heard[0].text == "a muffled crash");
+    // The marker is the fuzzed square the native game draws, never a square in view.
+    REQUIRE(heard[0].at.has_value());
+    const auto marker = *heard[0].at;
+    CHECK(std::abs(marker.x - engine_client::world::position_at(at).x) <= 3);
+    CHECK(std::abs(marker.y - engine_client::world::position_at(at).y) <= 3);
+}
+
+TEST_CASE(
+    "a sound too faint, too far or to a deaf avatar is not heard",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    make_noise(you_at + tripoint_east * 40, 30, "a whisper");
+    CHECK(listen().empty());
+
+    make_noise(you_at + tripoint_east * 3, 80, "Tick.");
+    get_avatar().add_effect(efftype_id("deaf"), 10_minutes);
+    REQUIRE(get_avatar().is_deaf());
+    CHECK(listen().empty());
 }
