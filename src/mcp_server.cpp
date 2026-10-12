@@ -534,9 +534,10 @@ auto server::publish_activity( std::ostream &out ) -> bool
     const auto began = now();
     if( began < next_activity_publish_ ) { return true; }
     if( !publish_boundary( out, false ) ) { failed_ = true; eof_ = true; return false; }
-    // Publishing may take a fifth of the activity's time, so a long one costs a client little more than none.
+    // Publishing may take a fifth of the activity's time, so a long one costs a client little more than none;
+    // a client that capped its frame rate gets no more than that, whichever is sparser.
     const auto ended = now();
-    next_activity_publish_ = ended + 4 * ( ended - began );
+    next_activity_publish_ = std::max( ended + 4 * ( ended - began ), began + activity_period_ );
     return true;
 }
 
@@ -760,6 +761,11 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         hello_ = true;
         credits_ = decoded->credits;
+        activity_period_ = decoded->max_hz ?
+                           std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+                               std::chrono::nanoseconds{ std::chrono::seconds{ 1 } } / static_cast<std::int64_t>
+                               ( *decoded->max_hz ) ) :
+                           std::chrono::steady_clock::duration{};
         held_.clear();
         held_bytes_ = 0;
         game_client::set_overmap_tiles( decoded->tiles );
@@ -767,8 +773,9 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( decoded->view && host_.resize_viewport ) {
             host_.resize_viewport( decoded->view->cols, decoded->view->rows );
         }
-        return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine(),
-                                 credits_ ) );
+        const auto grant = credits_ ? std::optional{ delivery_grant{ .credits = *credits_, .max_hz = decoded->max_hz } } :
+                           std::nullopt;
+        return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine(), grant ) );
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
     if( request.method == "bn.viewport" ) {

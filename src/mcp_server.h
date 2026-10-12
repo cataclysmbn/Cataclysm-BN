@@ -154,6 +154,8 @@ class server
         std::optional<std::size_t> credits_;
         std::deque<held_frame> held_;
         std::size_t held_bytes_ = 0;
+        /// The shortest wall time between two publications of a running activity the client asked for.
+        std::chrono::steady_clock::duration activity_period_{};
         /// The earliest time a running activity is published again.
         std::chrono::steady_clock::time_point next_activity_publish_{};
         /// Newest event sequence written to the client since its snapshot.

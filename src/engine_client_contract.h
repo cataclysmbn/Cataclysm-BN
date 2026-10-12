@@ -19,6 +19,8 @@ inline constexpr auto maximum_rows = std::size_t {200};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
 /// Delivery credits a client may hold, each paying for one pushed `bn.events` or `bn.command` frame.
 inline constexpr auto maximum_credits = std::size_t {256};
+/// The most frames per second a client may ask activity publication for; a display refreshes no faster.
+inline constexpr auto maximum_frame_rate = std::size_t {240};
 /// What the engine keeps for a client that holds no credits: past either bound it drops all of it
 /// and sends `bn.resync` instead.
 inline constexpr auto maximum_held_frames = std::size_t {256};
