@@ -1461,6 +1461,114 @@
       }
     },
     {
+      "name": "character sheet speed row",
+      "def": "choice",
+      "value": {
+        "id": "character-speed-1",
+        "label": "Current Speed:",
+        "description": "",
+        "denial": "",
+        "pane_id": "speed",
+        "enabled": true,
+        "selectable": false,
+        "selected": false,
+        "columns": [
+          {
+            "label": "Value",
+            "value": "98"
+          },
+          {
+            "label": "Color",
+            "value": "c_red"
+          }
+        ]
+      }
+    },
+    {
+      "name": "bionic row with power, state, fuel and color",
+      "def": "choice",
+      "value": {
+        "id": "bionic-1",
+        "label": "Flashlight, 0.50 kJ act",
+        "description": "",
+        "denial": "",
+        "pane_id": "active",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "label": "Manual (shortcut)",
+            "value": "a"
+          },
+          {
+            "label": "Power",
+            "value": "0.50 kJ act, OFF"
+          },
+          {
+            "label": "State",
+            "value": "Off"
+          },
+          {
+            "label": "Fuel",
+            "value": ""
+          },
+          {
+            "label": "Color",
+            "value": "c_light_red"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mutation row with kind, cost and color",
+      "def": "choice",
+      "value": {
+        "id": "mutation:night_vision",
+        "label": "Night vision",
+        "description": "",
+        "denial": "",
+        "pane_id": "passive",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "label": "Kind",
+            "value": "Passive"
+          },
+          {
+            "label": "Key",
+            "value": "a"
+          },
+          {
+            "label": "State",
+            "value": ""
+          },
+          {
+            "label": "Sprite",
+            "value": "Shown"
+          },
+          {
+            "label": "Innate",
+            "value": "Yes"
+          },
+          {
+            "label": "Cost",
+            "value": "0"
+          },
+          {
+            "label": "Cooldown",
+            "value": "0"
+          },
+          {
+            "label": "Color",
+            "value": "c_cyan"
+          }
+        ]
+      }
+    },
+    {
       "name": "select editor",
       "def": "choice",
       "value": {
