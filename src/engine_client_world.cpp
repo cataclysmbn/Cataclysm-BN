@@ -144,8 +144,8 @@ auto tint_generation() -> std::size_t & // *NOPAD*
     return generation;
 }
 
-auto flag_text( const std::string &flag ) -> const std::string& { return flag; }
-auto flag_text( const flag_id &flag ) -> const std::string& { return flag.str(); }
+auto flag_text( const std::string &flag ) -> const std::string & { return flag; }
+auto flag_text( const flag_id &flag ) -> const std::string & { return flag.str(); }
 
 /// What a tileset's tints are tried by for a thing, in the native order, kept to those the client has:
 /// its flags, then its id.
@@ -347,10 +347,20 @@ auto position_of( const map &here, const tripoint_bub_ms &p,
     return { .dim = dimension, .x = abs.x(), .y = abs.y(), .z = abs.z() };
 }
 
+/// Whether a square has nothing a cell publishes: terrain the engine never memorizes, and no furniture,
+/// field, item or vehicle on it. Open air above the ground is most of what the avatar sees outdoors.
+auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &you ) -> bool
+{
+    return here.ter( p )->has_flag( TFLAG_NO_MEMORY ) && here.furn( p ) == f_null &&
+           !here.veh_at( p ) && !here.sees_some_items( p, you ) &&
+    std::ranges::none_of( here.field_at( p ), []( const auto & field ) { return field.second.is_field_alive(); } );
+}
+
 /// Fill the facts of a currently visible cell. False when it is plain terrain the engine never memorizes.
 auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, cell &out ) -> bool
 {
+    if( bare_unmemorized( here, p, you ) ) { return false; }
     const auto shapes = map_perception::visible_orientations( here, p, view );
     if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture, here.furn_vars( p ) ); }
     const auto &displayed = here.field_at( p ).displayed_field_type();
