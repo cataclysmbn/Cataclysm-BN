@@ -5308,6 +5308,8 @@ TEST_CASE(
     // the panel behind the "more info" key, not only the one-line style summary
     CHECK(row.description.find("can be used with all weapons") != std::string::npos);
     CHECK(row.description.find("arm block") != std::string::npos);
+    // the entry's own description and the style panel are two blocks, not one run-on sentence
+    CHECK(row.description.find("kicking.\n--\n") != std::string::npos);
 }
 
 TEST_CASE(
@@ -5331,6 +5333,28 @@ TEST_CASE(
     const auto& row = selected_entry(snapshot);
     INFO(row.label << ": " << row.description);
     CHECK(row.description.find("Distance: 3") != std::string::npos);
+}
+
+TEST_CASE(
+    "real spellbook menu publishes the selected spell's info without an entry description",
+    "[client][interaction][mcp][uilist_panel]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+
+    const auto snapshot = first_menu_snapshot([]() {
+        auto callback = spellbook_callback{};
+        callback.add_spell(spell_id("test_spell_pew"));
+        auto menu = uilist{};
+        menu.callback = &callback;
+        menu.entries.emplace_back("test_spell_pew");
+        menu.query();
+    });
+
+    const auto& row = selected_entry(snapshot);
+    INFO(row.label << ": " << row.description);
+    CHECK(row.description.find("Difficulty") != std::string::npos);
+    // no entry description, so no leading separator
+    CHECK_FALSE(row.description.starts_with("\n--"));
 }
 
 TEST_CASE(

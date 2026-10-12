@@ -1089,10 +1089,12 @@ void uilist::query( bool loop, int timeout )
                     const auto &entry = entries[entry_index];
                     auto details = callback != nullptr ? callback->row_details( *this,
                                    static_cast<int>( entry_index ) ) : uilist_row_details{};
+                    // Native draws the entry description under a rule, apart from the callback's panel.
+                    const auto separator = entry.desc.empty() || details.description.empty() ? "" : "\n--\n";
                     snapshot.choices.push_back( {
                         .id = "entry:" + std::to_string( entry_index ),
                         .label = remove_color_tags( entry.txt ),
-                        .description = remove_color_tags( entry.desc ) + details.description,
+                        .description = remove_color_tags( entry.desc ) + separator + details.description,
                         .hotkey = entry.hotkey >= 33 && entry.hotkey < 126 ? std::string( 1, static_cast<char>( entry.hotkey ) ) : std::string{},
                         .enabled = entry.enabled,
                         .selectable = entry.enabled || allow_disabled,
