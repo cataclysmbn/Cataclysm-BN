@@ -26,6 +26,12 @@ struct hello_request {
     bool tiles = false;
     /// The ids of the tints the client's tileset has; the engine publishes the keys among them that apply.
     std::vector<std::string> tint_ids = {};
+    /// Opt-in credit delivery: the pushed frames the engine may send before the client grants more.
+    std::optional<std::size_t> credits = std::nullopt;
+};
+/// `bn.credit`: more pushed frames the client is ready to read.
+struct credit_request {
+    std::size_t frames = 0;
 };
 struct result_request {
     std::string epoch = {};
@@ -47,6 +53,8 @@ auto decode_hello_request( std::string_view input ) -> std::expected<hello_reque
 auto decode_viewport_request( std::string_view input ) -> std::expected<viewport, decode_error>;
 /// `{}` for `bn.subscribe` and `bn.unsubscribe`.
 auto decode_empty_request( std::string_view input ) -> std::expected<void, decode_error>;
+/// `{frames}` for `bn.credit`.
+auto decode_credit_request( std::string_view input ) -> std::expected<credit_request, decode_error>;
 auto decode_choices_request( std::string_view input )
 -> std::expected<choices_request, decode_error>;
 auto decode_describe_request( std::string_view input )
@@ -77,7 +85,9 @@ struct engine_info {
     std::string tileset = {};
 };
 /// Validate IDs/UTF-8 and the output bound before returning a complete serialized value.
-auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> std::string;
+/// `credits` is the window granted to a client that asked for credit delivery.
+auto serialize_hello( const std::string &epoch, const engine_info &engine,
+                      std::optional<std::size_t> credits = std::nullopt ) -> std::string;
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>;
 auto serialize_application_error( const application_error &value )
 -> std::expected<std::string, error>;

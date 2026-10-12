@@ -550,6 +550,10 @@ auto server::heartbeat( std::ostream &out ) -> void
     if( !write_notifications( out ) ) { failed_ = true; }
 }
 
+auto server::held_frames() const -> std::size_t { return held_.size(); }
+
+auto server::held_bytes() const -> std::size_t { return held_bytes_; }
+
 auto server::failed() const -> bool
 {
     return failed_;
@@ -607,7 +611,24 @@ auto server::write_notifications( std::ostream &out ) -> bool
     for( const auto &frame : std::exchange( notifications_, {} ) ) {
         if( !rpc::write_frame( out, frame ) ) { return false; }
     }
-    return true;
+    while( !held_.empty() && ( !held_.front().credited || credits_.value_or( 0 ) > 0 ) ) {
+        const auto &next = held_.front();
+        if( !rpc::write_frame( out, next.bytes ) ) { return false; }
+        if( next.credited ) { --*credits_; }
+        delivered_through_ = std::max( delivered_through_, next.through );
+        held_bytes_ -= next.bytes.size();
+        held_.pop_front();
+    }
+    if( held_.size() <= engine_client::maximum_held_frames &&
+        held_bytes_ <= engine_client::maximum_held_bytes ) { return true; }
+    // A client without credits does not get an ever longer queue: it starts over from a snapshot.
+    held_.clear();
+    subscribed_ = false;
+    auto resync = "{\"jsonrpc\":\"2.0\",\"method\":\"bn.resync\",\"params\":" +
+                  engine_client::serialize_resync( session_.epoch(), "backpressure", delivered_through_ ) + "}";
+    held_bytes_ = resync.size();
+    held_.push_back( { .bytes = std::move( resync ), .credited = false } );
+    return write_notifications( out );
 }
 
 auto server::flush_push( std::ostream &out ) -> bool
@@ -619,17 +640,25 @@ auto server::flush_push( std::ostream &out ) -> bool
 auto server::queue_push() -> void
 {
     using namespace engine_client;
-    const auto notify = [this]( const std::string_view method, const std::string & params ) {
-        notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"" + std::string{method} +
-                                  "\",\"params\":" + params + "}" );
+    // Without credit delivery a frame is written at once; with it, when the client can be paid.
+    const auto notify = [this]( const std::string_view method, const std::string & params,
+    const counter through = 0 ) {
+        auto frame = "{\"jsonrpc\":\"2.0\",\"method\":\"" + std::string{method} +
+                     "\",\"params\":" + params + "}";
+        if( !credits_ ) { notifications_.push_back( std::move( frame ) ); return; }
+        held_bytes_ += frame.size();
+        held_.push_back( { .bytes = std::move( frame ), .credited = method != "bn.resync",
+                           .through = through } );
     };
     auto batch = event_batch{};
     auto batch_bytes = std::size_t{0};
     const auto flush_batch = [&]() {
+        if( batch.events.empty() ) { return; }
+        const auto through = batch.events.back().value().sequence;
         if( batch.events.size() == 1 && !batch.events.front().wire().empty() ) {
-            notify( "bn.events", batch.events.front().wire() );
-        } else if( !batch.events.empty() ) {
-            notify( "bn.events", serialize_events( batch ) );
+            notify( "bn.events", batch.events.front().wire(), through );
+        } else {
+            notify( "bn.events", serialize_events( batch ), through );
         }
         batch.events.clear();
         batch_bytes = 0;
@@ -716,12 +745,16 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::command_busy );
         }
         hello_ = true;
+        credits_ = decoded->credits;
+        held_.clear();
+        held_bytes_ = 0;
         game_client::set_overmap_tiles( decoded->tiles );
         engine_client::world::set_tint_ids( { decoded->tint_ids.begin(), decoded->tint_ids.end() } );
         if( decoded->view && host_.resize_viewport ) {
             host_.resize_viewport( decoded->view->cols, decoded->view->rows );
         }
-        return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine() ) );
+        return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine(),
+                                 credits_ ) );
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
     if( request.method == "bn.viewport" ) {
@@ -755,13 +788,27 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"bn.snapshot.part\",\"params\":" +
                                       part + "}" );
         }
+        // The snapshot supersedes whatever was still waiting for credits.
+        held_.clear();
+        held_bytes_ = 0;
+        delivered_through_ = current->at.sequence;
         subscribed_ = true;
         return rpc::make_result( request, wire->header );
     }
     if( request.method == "bn.unsubscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }
         subscribed_ = false;
+        held_.clear();
+        held_bytes_ = 0;
         return rpc::make_result( request, "{}" );
+    }
+    if( request.method == "bn.credit" ) {
+        const auto decoded = decode_credit_request( params );
+        if( !decoded ) { return invalid(); }
+        if( !credits_ ) { return fail( error::negotiation_failed ); }
+        // The held frames follow the response, in the order they were published.
+        credits_ = std::min( *credits_ + decoded->frames, maximum_credits );
+        return rpc::make_result( request, "{\"credits\":" + std::to_string( *credits_ ) + "}" );
     }
     if( request.method == "bn.interaction.choices" ) {
         const auto decoded = decode_choices_request( params );
@@ -841,7 +888,8 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
         const auto method = rpc::method_of( *envelope );
         const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
                                method == "bn.interrupt" || method == "bn.subscribe" ||
-                               method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
+                               method == "bn.unsubscribe" || method == "bn.credit" ||
+                               method == "bn.interaction.choices" ||
                                method == "bn.world.describe" || method == "bn.world.cells" ||
                                method == "bn.command.submit" || method == "bn.command.result";
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};

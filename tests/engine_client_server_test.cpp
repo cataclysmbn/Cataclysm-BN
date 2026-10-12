@@ -9,7 +9,7 @@
 #    include "mcp_server.h"
 #    include "rng.h"
 
-#    include <optional>
+#    include <algorithm>
 #    include <sstream>
 #    include <string>
 #    include <vector>
@@ -662,7 +662,16 @@ TEST_CASE("a client that grants no credits is resynced, not buffered", "[engine_
     REQUIRE(test.authority.publish_boundary());
     test.poll(hello_with(R"({"credits":1})") + subscribe);
     test.output.str("");
-    for (auto step = 0; step < 300; ++step) { test.step(); }
+    auto most_frames = std::size_t{0};
+    auto most_bytes = std::size_t{0};
+    for (auto step = 0; step < 300; ++step) {
+        test.step();
+        most_frames = std::max(most_frames, test.server.held_frames());
+        most_bytes = std::max(most_bytes, test.server.held_bytes());
+    }
+    CHECK(most_frames == maximum_held_frames);
+    CHECK(most_bytes <= maximum_held_bytes);
+    CHECK(test.server.held_frames() == 0);
     const auto out = test.output.str();
     CHECK(count_of(out, R"("method":"bn.events")") == 1);
     REQUIRE(count_of(out, R"("method":"bn.resync")") == 1);
@@ -679,7 +688,8 @@ TEST_CASE("a client that grants no credits is resynced, not buffered", "[engine_
 TEST_CASE(
     "the game is identical with a pushing, a stalled and no client", "[engine_client_delivery]") {
     struct run {
-        std::optional<clock_point> at;
+        counter sequence;
+        counter revision;
         cata_default_random_engine rng;
     };
     const auto play = [](const std::string& opening) {
@@ -688,13 +698,17 @@ TEST_CASE(
         REQUIRE(test.authority.publish_boundary());
         if (!opening.empty()) { test.poll(opening); }
         for (auto step = 0; step < 300; ++step) { test.step(); }
-        return run{test.authority.at(), rng_get_engine()};
+        const auto at = test.authority.at();
+        REQUIRE(at);
+        return run{at->sequence, at->revision, rng_get_engine()};
     };
     const auto none = play("");
     const auto pushing = play(hello_with(R"({"credits":256})") + subscribe);
     const auto stalled = play(hello_with(R"({"credits":1})") + subscribe);
-    CHECK(pushing.at == none.at);
-    CHECK(stalled.at == none.at);
+    CHECK(pushing.sequence == none.sequence);
+    CHECK(pushing.revision == none.revision);
+    CHECK(stalled.sequence == none.sequence);
+    CHECK(stalled.revision == none.revision);
     CHECK(pushing.rng == none.rng);
     CHECK(stalled.rng == none.rng);
 }

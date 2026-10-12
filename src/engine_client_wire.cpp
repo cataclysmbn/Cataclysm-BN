@@ -149,7 +149,13 @@ auto read_request( const json &value, viewport &result ) -> void
 }
 auto read_request( const json &value, hello_request &result ) -> void
 {
-    members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids"} );
+    members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids", "delivery"} );
+    if( value.contains( "delivery" ) ) {
+        const auto &delivery = value.at( "delivery" );
+        members( delivery, {"credits"} );
+        result.credits = static_cast<std::size_t>( integer( delivery, "credits", 1,
+                         static_cast<std::int64_t>( maximum_credits ) ) );
+    }
     if( value.contains( "tint_ids" ) ) {
         const auto &ids = value.at( "tint_ids" );
         require( ids.is_array() && ids.size() <= maximum_tint_ids );
@@ -176,6 +182,12 @@ auto read_request( const json &value, hello_request &result ) -> void
     result.client_version = text( client, "version" );
 }
 auto read_request( const json &value, empty_request & /*result*/ ) -> void { members( value, {} ); }
+auto read_request( const json &value, credit_request &result ) -> void
+{
+    members( value, {"frames"} );
+    result.frames = static_cast<std::size_t>( integer( value, "frames", 1,
+                    static_cast<std::int64_t>( maximum_credits ) ) );
+}
 auto read_request( const json &value, choices_request &result ) -> void
 {
     members( value, {"epoch", "boundary_id", "offset", "limit"} );
@@ -261,6 +273,8 @@ auto decode_empty_request( std::string_view input ) -> std::expected<void, decod
     if( !decoded ) { return std::unexpected( decoded.error() ); }
     return {};
 }
+auto decode_credit_request( std::string_view input ) -> std::expected<credit_request, decode_error>
+{ return decode<credit_request>( input ); }
 auto decode_choices_request( std::string_view input ) ->
 std::expected<choices_request, decode_error>
 { return decode<choices_request>( input ); }
@@ -276,10 +290,11 @@ std::expected<command_request, decode_error>
 auto decode_result_request( std::string_view input ) -> std::expected<result_request, decode_error>
 { return decode<result_request>( input ); }
 
-auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> std::string
+auto serialize_hello( const std::string &epoch, const engine_info &engine,
+                      const std::optional<std::size_t> credits ) -> std::string
 {
     using ordered = nlohmann::ordered_json;
-    return ordered{{"version", contract_version}, {"epoch", epoch},
+    auto result = ordered{{"version", contract_version}, {"epoch", epoch},
         {
             "engine", {
                 {"build", engine.build}, {"mods", engine.mods},
@@ -290,7 +305,13 @@ auto serialize_hello( const std::string &epoch, const engine_info &engine ) -> s
             "limits", {{"frame_bytes", maximum_frame_bytes}, {"cells_per_part", cells_per_part},
                 {"cells_per_query", cells_per_query}
             }
-        }}.dump();
+        }};
+    if( credits ) {
+        result["delivery"] = {{"credits", *credits}, {"held_frames", maximum_held_frames},
+            {"held_bytes", maximum_held_bytes}
+        };
+    }
+    return result.dump();
 }
 auto serialize_description( const tile_description &value ) -> std::string
 {
