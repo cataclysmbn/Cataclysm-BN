@@ -5390,4 +5390,63 @@ TEST_CASE(
         == 0);
 }
 
+TEST_CASE(
+    "debug effect menus let a client open the effect list and read the selected effect's panel",
+    "[client][interaction][mcp][uilist_panel]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    const auto body_part = you.get_all_body_parts().at(1);
+    uistate.debug_menu.effect = wisheffect_state{};
+
+    // edit menu -> "add effect" key -> effect list -> "change body part" key -> body part list
+    auto observed = std::vector<game_client::interaction_snapshot>{};
+    const auto find_key = [](const game_client::interaction_snapshot& snapshot, const int key) {
+        return std::ranges::
+            find(snapshot.choices, "action:key:" + std::to_string(key),
+                 &game_client::interaction_choice::id);
+    };
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        observed.push_back(game_client::current_interaction({.limit = 1000}));
+        const auto& snapshot = observed.back();
+        auto command = game_client::interaction_command{
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        };
+        const auto press = [&](const int key) {
+            if (find_key(snapshot, key) != snapshot.choices.end()) {
+                command.operation = game_client::interaction_operation::choose;
+                command.target_id = "action:key:" + std::to_string(key);
+            }
+        };
+        if (observed.size() == 1) {
+            press('a');
+        } else if (observed.size() == 2) {
+            press('b');
+        } else if (observed.size() == 3) {
+            command.operation = game_client::interaction_operation::choose;
+            command.target_id = "entry:1";
+        }
+        return resolve(command);
+    });
+    debug_menu::effect_edit_menu(you);
+
+    REQUIRE(observed.size() >= 4);
+    const auto& list = observed[1];
+    INFO(list.title << ": " << selected_entry(list).description);
+    const auto& row = selected_entry(list);
+    CHECK(row.description.find("ID: " + row.label) != std::string::npos);
+    CHECK(row.description.find("Body part") != std::string::npos);
+    CHECK(row.description.find("Global") != std::string::npos);
+    CHECK(row.description.find("Duration") != std::string::npos);
+    CHECK(row.description.find("Permanent") != std::string::npos);
+    // the effect list's own handled actions are offered to the client
+    for (const auto key : {'b', 'i', 'd', 'o'}) {
+        CHECK(find_key(list, key) != list.choices.end());
+    }
+    // picking a body part through the client changes the panel of the redrawn list
+    CHECK(selected_entry(observed[3]).description.find(body_part->name.translated())
+          != std::string::npos);
+}
+
 #endif // CATA_MCP
