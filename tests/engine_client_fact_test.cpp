@@ -334,3 +334,118 @@ TEST_CASE(
     REQUIRE(get_avatar().is_deaf());
     CHECK(listen().empty());
 }
+
+TEST_CASE(
+    "a creature stepping in view is published with where it came from",
+    "[engine_client_fact][engine_client_creature]") {
+    const auto room = scene{};
+    const auto from = you_at + tripoint_east * 3;
+    auto& zombie = spawn_test_monster("mon_zombie", from);
+    scene::refresh();
+    presentation::take();
+    zombie.setpos(from + tripoint_east);
+    const auto moved = of_type(presentation::take(), "entity.moved");
+    REQUIRE(moved.size() == 1);
+    CHECK(moved[0].entity == engine_client::world::entity_id(zombie));
+    CHECK(moved[0].origin == engine_client::world::position_at(from));
+    CHECK(moved[0].at == engine_client::world::position_at(from + tripoint_east));
+    CHECK(moved[0].kind == "walk");
+
+    zombie.setpos(from + tripoint_east * 5);
+    const auto thrown = of_type(presentation::take(), "entity.moved");
+    REQUIRE(thrown.size() == 1);
+    CHECK(thrown[0].kind == "propelled");
+}
+
+TEST_CASE(
+    "a creature coming into view or leaving it by its own step is told once",
+    "[engine_client_fact][engine_client_creature]") {
+    const auto room = scene{};
+    wall_in();
+    const auto inside = you_at + tripoint_east;
+    const auto outside = you_at + tripoint_east * 5;
+    auto& zombie = spawn_test_monster("mon_zombie", outside);
+    scene::refresh();
+    REQUIRE_FALSE(get_avatar().sees(outside));
+    presentation::take();
+    // Out of sight both before and after: nothing.
+    zombie.setpos(outside + tripoint_north);
+    CHECK(presentation::take().empty());
+    // Into sight: told where it is now, not where it came from.
+    zombie.setpos(inside);
+    auto facts = presentation::take();
+    REQUIRE(facts.size() == 1);
+    CHECK(facts[0].type == "entity.moved");
+    CHECK_FALSE(facts[0].origin.has_value());
+    CHECK(facts[0].at == engine_client::world::position_at(inside));
+    // Out of sight again: gone, and no longer a creature the client follows.
+    zombie.setpos(outside);
+    facts = presentation::take();
+    REQUIRE(facts.size() == 1);
+    CHECK(facts[0].type == "entity.gone");
+    CHECK(facts[0].kind == "lost_sight");
+    CHECK(facts[0].entity == engine_client::world::entity_id(zombie));
+    CHECK(presentation::take().empty());
+}
+
+TEST_CASE(
+    "a creature the avatar loses sight of by turning a corner is gone",
+    "[engine_client_fact][engine_client_creature]") {
+    const auto room = scene{};
+    const auto at = you_at + tripoint_east * 4;
+    auto& zombie = spawn_test_monster("mon_zombie", at);
+    scene::refresh();
+    presentation::take();
+    get_map().ter_set(you_at + tripoint_east * 2, ter_id("t_wall"));
+    get_map().ter_set(you_at + tripoint_east * 2 + tripoint_north, ter_id("t_wall"));
+    get_map().ter_set(you_at + tripoint_east * 2 + tripoint_south, ter_id("t_wall"));
+    scene::refresh();
+    REQUIRE_FALSE(get_avatar().sees(zombie));
+    const auto facts = presentation::take();
+    REQUIRE(facts.size() == 1);
+    CHECK(facts[0].type == "entity.gone");
+    CHECK(facts[0].kind == "lost_sight");
+    CHECK(facts[0].entity == engine_client::world::entity_id(zombie));
+}
+
+TEST_CASE(
+    "a creature that dies or is removed is told with its reason",
+    "[engine_client_fact][engine_client_creature]") {
+    const auto room = scene{};
+    auto& dying = spawn_test_monster("mon_zombie", you_at + tripoint_east * 3);
+    auto& leaving = spawn_test_monster("mon_zombie", you_at + tripoint_east * 4);
+    scene::refresh();
+    presentation::take();
+    const auto dying_id = engine_client::world::entity_id(dying);
+    const auto leaving_id = engine_client::world::entity_id(leaving);
+    dying.die(nullptr);
+    auto facts = presentation::take();
+    REQUIRE(facts.size() >= 1);
+    CHECK(facts[0].type == "entity.gone");
+    CHECK(facts[0].kind == "died");
+    CHECK(facts[0].entity == dying_id);
+    g->remove_zombie(leaving);
+    g->cleanup_dead();
+    facts = of_type(presentation::take(), "entity.gone");
+    REQUIRE(facts.size() == 1);
+    CHECK(facts[0].kind == "removed");
+    CHECK(facts[0].entity == leaving_id);
+}
+
+TEST_CASE(
+    "a busy turn publishes no more creature moves than the bound",
+    "[engine_client_fact][engine_client_creature]") {
+    const auto room = scene{};
+    const auto from = you_at + tripoint_east * 3;
+    auto& zombie = spawn_test_monster("mon_zombie", from);
+    scene::refresh();
+    presentation::take();
+    for (auto step = 0; step < 400; ++step) {
+        zombie.setpos(step % 2 == 0 ? from + tripoint_east : from);
+    }
+    CHECK(of_type(presentation::take(), "entity.moved").size()
+          == presentation::maximum_ambient_facts);
+    // The next take starts afresh.
+    zombie.setpos(from + tripoint_east);
+    CHECK(of_type(presentation::take(), "entity.moved").size() == 1);
+}

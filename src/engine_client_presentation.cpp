@@ -34,6 +34,10 @@ struct feed_state {
     std::string current_projectile = {};
     std::optional<std::size_t> flight_start = std::nullopt;
     std::size_t blast_step_start = 0;
+    /// Busy facts pushed since the last `take`, against `maximum_ambient_facts`.
+    std::size_t ambient = 0;
+    /// The creatures the client was last told it sees.
+    std::set<std::string> known = {};
     std::vector<presentation_value> pending = {};
     /// Blasts whose start is held back until something of them is seen, and those already announced.
     std::map<std::string, presentation_value> held = {};
@@ -49,6 +53,14 @@ auto push( presentation_value fact ) -> void
 {
     auto &feed = state();
     if( feed.pending.size() < maximum_pending ) { feed.pending.push_back( std::move( fact ) ); }
+}
+/// A fact of a busy kind: a crowded turn keeps the first `maximum_ambient_facts` of them.
+auto push_ambient( presentation_value fact ) -> void
+{
+    auto &feed = state();
+    if( feed.ambient >= maximum_ambient_facts ) { return; }
+    ++feed.ambient;
+    push( std::move( fact ) );
 }
 /// The native game draws animations only with ANIMATIONS on; only tests force them on.
 auto animated() -> bool
@@ -95,14 +107,28 @@ auto collect( const bool on ) -> void
 {
     auto &feed = state();
     feed.collecting = on;
-    if( !on ) { feed.pending.clear(); }
+    if( !on ) {
+        feed.pending.clear();
+        feed.known.clear();
+    }
 }
 
 auto take() -> std::vector<presentation_value>
 {
-    state().thrown_projectile.clear();
-    state().flight_start.reset();
-    return std::exchange( state().pending, {} );
+    auto &feed = state();
+    feed.thrown_projectile.clear();
+    feed.flight_start.reset();
+    feed.ambient = 0;
+    if( feed.collecting ) {
+        // Creatures that dropped out of the disclosed set without a step or a death of their own.
+        auto now = world::disclosed_entity_ids();
+        for( const auto &id : feed.known ) {
+            if( now.contains( id ) ) { continue; }
+            push( { .type = "entity.gone", .entity = id, .kind = world::entity_alive( id ) ? "lost_sight" : "removed" } );
+        }
+        feed.known = std::move( now );
+    }
+    return std::exchange( feed.pending, {} );
 }
 
 auto record_bullet( const bullet_step &step ) -> void
@@ -237,10 +263,12 @@ auto record_throw( const throw_options &options ) -> void
 {
     auto &feed = state();
     if( !feed.collecting || !( seen( options.from ) || seen( options.to ) ) ) { return; }
+    auto by = world::entity_id( options.by );
+    if( by.empty() ) { return; }
     feed.thrown_projectile = new_projectile( feed );
     push( { .type = "item.thrown", .id = feed.thrown_projectile, .appearance = world::item_appearance( options.thrown ),
             .origin = world::position_at( options.from ), .target = world::position_at( options.to ),
-            .entity = world::entity_id( options.by ) } );
+            .entity = std::move( by ) } );
 }
 
 flight_scope::flight_scope() : outer_id_( state().current_projectile ),
@@ -299,10 +327,41 @@ auto record_sound( const sound_options &options ) -> void
             .amount = static_cast<std::uint64_t>( std::max( 0, options.volume ) ), .text = options.text } );
 }
 
+auto record_move( const move_options &options ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || feed.ambient >= maximum_ambient_facts || options.mover.is_avatar() ) { return; }
+    const auto left = get_map().inbounds( options.from ) && seen( options.from );
+    const auto arrived = get_avatar().sees( options.mover );
+    if( !left && !arrived ) { return; }
+    auto id = world::entity_id( options.mover );
+    if( id.empty() ) { return; }
+    if( arrived ) {
+        push_ambient( { .type = "entity.moved", .at = world::position_at( options.to ),
+                        .origin = left ? std::optional( world::position_at( options.from ) ) : std::nullopt,
+                        .entity = std::move( id ), .kind = rl_dist( options.from, options.to ) <= 1 ? "walk" : "propelled" } );
+    } else {
+        feed.known.erase( id );
+        push_ambient( { .type = "entity.gone", .entity = std::move( id ), .kind = "lost_sight" } );
+    }
+}
+
+auto record_death( const Creature &dead ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || dead.is_avatar() || !seen( dead.bub_pos() ) ) { return; }
+    auto id = world::entity_id( dead );
+    if( id.empty() ) { return; }
+    feed.known.erase( id );
+    push( { .type = "entity.gone", .entity = std::move( id ), .kind = "died" } );
+}
+
 auto record_damage( const damage_options &options ) -> void
 {
     if( !state().collecting || options.amount <= 0 || !seen( options.hurt.bub_pos() ) ) { return; }
-    push( { .type = "entity.damaged", .entity = world::entity_id( options.hurt ),
+    auto hurt = world::entity_id( options.hurt );
+    if( hurt.empty() ) { return; }
+    push( { .type = "entity.damaged", .entity = std::move( hurt ),
             .part = options.hurt.as_character() ? options.part.id().str() : std::string{},
             .amount = static_cast<std::uint64_t>( options.amount ) } );
 }

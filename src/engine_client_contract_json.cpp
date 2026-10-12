@@ -465,6 +465,11 @@ auto to_json( const event_value &value ) -> json
         } else if( value.type == "item.landed" ) {
             data = {{"at", to_json( *fact.at )}, {"look", to_json( *fact.appearance )}};
             if( !fact.id.empty() ) { data["projectile"] = fact.id; }
+        } else if( value.type == "entity.moved" ) {
+            data = {{"id", fact.entity}, {"to", to_json( *fact.at )}, {"mode", fact.kind}};
+            if( fact.origin ) { data["from"] = to_json( *fact.origin ); }
+        } else if( value.type == "entity.gone" ) {
+            data = {{"id", fact.entity}, {"reason", fact.kind}};
         } else if( value.type == "sound.heard" ) {
             data = {{"text", fact.text}, {"volume", *fact.amount}};
             if( fact.at ) { data["marker"] = to_json( *fact.at ); }

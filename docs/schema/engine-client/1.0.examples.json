@@ -2584,6 +2584,83 @@
           }
         ]
       }
+    },
+    {
+      "name": "creature steps, is pushed, leaves sight, then dies",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "15",
+            "type": "entity.moved",
+            "command": "command:16",
+            "data": {
+              "id": "e:7",
+              "from": {
+                "dim": "",
+                "x": 66,
+                "y": 4,
+                "z": 0
+              },
+              "to": {
+                "dim": "",
+                "x": 65,
+                "y": 4,
+                "z": 0
+              },
+              "mode": "walk"
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "15",
+            "type": "entity.moved",
+            "command": "command:16",
+            "data": {
+              "id": "e:8",
+              "to": {
+                "dim": "",
+                "x": 64,
+                "y": 5,
+                "z": 0
+              },
+              "mode": "propelled"
+            }
+          },
+          {
+            "sequence": "43",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:9",
+              "reason": "lost_sight"
+            }
+          },
+          {
+            "sequence": "44",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:7",
+              "reason": "died"
+            }
+          },
+          {
+            "sequence": "45",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:10",
+              "reason": "removed"
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [

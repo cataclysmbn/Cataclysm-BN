@@ -32,7 +32,12 @@ auto position_at( const tripoint_bub_ms &p ) -> position;
 /// The native color name of `color`.
 auto color_name( const nc_color &color ) -> std::string;
 /// The opaque ID of a creature the avatar sees; minted on the first disclosure, like the entities of the snapshot.
+/// Empty for a creature the game does not track (a fake turret NPC, a monster not yet placed).
 auto entity_id( const Creature &critter ) -> std::string;
+/// The IDs of the creatures a snapshot would disclose now.
+auto disclosed_entity_ids() -> std::set<std::string>;
+/// Whether the creature of an ID given out before is still in the game and not dead.
+auto entity_alive( const std::string &id ) -> bool;
 /// Appearance from game data, as a cell layer publishes it without a shape.
 auto item_appearance( const item &thing ) -> look;
 auto terrain_appearance( const ter_id &id ) -> look;

@@ -28,7 +28,7 @@ struct text_segment {
 struct presentation_value {
     /// `projectile.moved`, `projectile.hit`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
     /// `combat_text.shown`, `item.activated`, `item.thrown`, `item.landed`, `entity.damaged`,
-    /// `terrain.changed`, `furniture.changed`, `field.changed` or `sound.heard`.
+    /// `terrain.changed`, `furniture.changed`, `field.changed`, `sound.heard`, `entity.moved` or `entity.gone`.
     std::string type = {};
     /// Opaque ID of the projectile or explosion; empty for combat text. An `item.landed` of an item
     /// no attack launched has none.
@@ -40,7 +40,8 @@ struct presentation_value {
     std::optional<look> appearance = std::nullopt;
     /// `terrain.changed` and `furniture.changed`: what the square held before.
     std::optional<look> previous = std::nullopt;
-    /// `item.thrown`: where the item left from and where it was aimed.
+    /// `item.thrown` and `entity.moved`: where the item or creature left from (`entity.moved` leaves it out
+    /// when the avatar did not see that square) and, for a throw, where it was aimed.
     std::optional<position> origin = std::nullopt;
     std::optional<position> target = std::nullopt;
     /// Opaque ID of the creature that threw (`item.thrown`), was hit (`projectile.hit`, when the avatar sees it) or was hurt
@@ -63,7 +64,8 @@ struct presentation_value {
     std::vector<text_segment> segments = {};
     /// Combat text only: the unit step the native text scrolls by each animation step.
     std::optional<position> scroll = std::nullopt;
-    /// Combat text only: `hp` for a creature's hit-point readout, which stays beside it.
+    /// Combat text: `hp` for a creature's hit-point readout, which stays beside it. `entity.moved`: `walk` for a
+    /// step to a neighboring square, `propelled` for any longer move. `entity.gone`: `lost_sight`, `died` or `removed`.
     std::string kind = {};
     /// How long the native animation holds this fact, from the ANIMATION_DELAY option.
     std::uint64_t duration_ms = 0;
@@ -76,6 +78,10 @@ struct presentation_value {
 /// Nothing is recorded until a session starts collecting.
 namespace engine_client::presentation
 {
+
+/// The most facts of the busy kinds (creatures moving, terrain and fields changing) one `take` holds. The
+/// state delta of the boundary carries what the rest changed.
+constexpr auto maximum_ambient_facts = std::size_t { 256 };
 
 auto collect( bool on ) -> void;
 /// Everything recorded since the last call, in the order the game produced it.
@@ -154,6 +160,16 @@ struct sound_options {
 };
 /// A sound reached the avatar, past its hearing, sleep and deafness.
 auto record_sound( const sound_options &options ) -> void;
+struct move_options {
+    const Creature &mover;
+    tripoint_bub_ms from;
+    tripoint_bub_ms to;
+};
+/// A creature stepped or was moved: `entity.moved` where the avatar sees it arrive, `entity.gone` where it left
+/// the avatar's sight.
+auto record_move( const move_options &options ) -> void;
+/// A creature the avatar sees died.
+auto record_death( const Creature &dead ) -> void;
 struct damage_options {
     const Creature &hurt;
     bodypart_id part;

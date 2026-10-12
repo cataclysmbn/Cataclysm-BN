@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "detached_ptr.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -781,12 +782,16 @@ auto npc::setpos_preserving_movement_state( const tripoint_abs_ms &new_pos ) -> 
 auto npc::setpos_impl( const tripoint_abs_ms &new_pos, const bool preserve_movement_state ) -> void
 {
     const auto old_pos = position;
+    const auto from = bub_pos();
     const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
     if( is_active() ) {
         get_mapbuffer().update_active_npc_pos( *this, new_pos );
     }
     Character::setpos( new_pos );
+    if( old_pos != new_pos ) {
+        engine_client::presentation::record_move( { .mover = *this, .from = from, .to = bub_pos() } );
+    }
     if( old_pos != new_pos && !preserve_movement_state ) {
         clear_transient_movement_state_after_reposition();
     }
@@ -2784,6 +2789,7 @@ void npc::die( Creature *nkiller )
         // *only* set to true in this function!
         return;
     }
+    engine_client::presentation::record_death( *this );
     // Need to unboard from vehicle before dying, otherwise
     // the vehicle code cannot find us
     if( in_vehicle ) {
