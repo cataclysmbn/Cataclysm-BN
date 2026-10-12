@@ -761,6 +761,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         hello_ = true;
         credits_ = decoded->credits;
+        // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
+        subscribed_ = false;
         held_.clear();
         held_bytes_ = 0;
         game_client::set_overmap_tiles( decoded->tiles );
