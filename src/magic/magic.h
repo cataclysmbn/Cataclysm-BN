@@ -670,6 +670,7 @@ private:
 public:
     void add_spell(const spell_id& sp);
     void refresh(uilist* menu) override;
+    auto row_details(const uilist& menu, int entry_index) const -> uilist_row_details override;
 };
 
 // Utility structure to run area queries over weight map. It uses shortest-path-expanding-tree,

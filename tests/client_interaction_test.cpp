@@ -8,6 +8,7 @@
 #    include "cata_utility.h"
 #    include "catch/catch.hpp"
 #    include "character_functions.h"
+#    include "character_martial_arts.h"
 #    include "client_command.h"
 #    include "client_input.h"
 #    include "client_interaction.h"
@@ -19,6 +20,7 @@
 #    include "crafting.h"
 #    include "cursesdef.h"
 #    include "cursesport.h"
+#    include "debug_menu.h"
 #    include "debug_test_support.h"
 #    include "drop_token.h"
 #    include "engine_client_event.h"
@@ -28,7 +30,9 @@
 #    include "input.h"
 #    include "inventory_ui.h"
 #    include "item.h"
+#    include "json.h"
 #    include "magic/magic.h"
+#    include "magic/magic_teleporter_list.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "monster.h"
@@ -64,6 +68,7 @@
 #    include <functional>
 #    include <nlohmann/json.hpp>
 #    include <set>
+#    include <sstream>
 #    include <stdexcept>
 #    include <string>
 #    include <vector>
@@ -5258,6 +5263,107 @@ TEST_CASE(
         INFO(reads[0].choices[i].label);
         CHECK(reads[0].choices[i].description == reads[1].choices[i].description);
     }
+}
+
+namespace {
+
+/// The first snapshot of the menu the callable opens; the menu is cancelled right after.
+template <typename Open>
+auto first_menu_snapshot(Open&& open) -> game_client::interaction_snapshot {
+    auto observed = std::vector<game_client::interaction_snapshot>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        observed.push_back(game_client::current_interaction({.limit = 1000}));
+        return resolve({
+            .input_id = observed.back().input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    open();
+    REQUIRE_FALSE(observed.empty());
+    return observed.front();
+}
+
+auto selected_entry(const game_client::interaction_snapshot& snapshot)
+    -> const game_client::interaction_choice& {
+    const auto row = std::ranges::find_if(snapshot.choices, [](const auto& choice) {
+        return choice.id.starts_with("entry:") && choice.selected;
+    });
+    REQUIRE(row != snapshot.choices.end());
+    return *row;
+}
+
+} // namespace
+
+TEST_CASE(
+    "real martial art style menu publishes the selected style's info window",
+    "[client][interaction][mcp][uilist_panel]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+
+    const auto snapshot = first_menu_snapshot([&]() { you.martial_arts_data->pick_style(you); });
+
+    const auto& row = selected_entry(snapshot);
+    INFO(row.label << ": " << row.description);
+    // the panel behind the "more info" key, not only the one-line style summary
+    CHECK(row.description.find("can be used with all weapons") != std::string::npos);
+    CHECK(row.description.find("arm block") != std::string::npos);
+}
+
+TEST_CASE(
+    "real translocator menu publishes the selected gate's distance",
+    "[client][interaction][mcp][uilist_panel]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    const auto restore = on_out_of_scope([&you]() {
+        you.translocators = pimpl<teleporter_list>();
+    });
+    const auto target = you.abs_omt_pos() + point(3, 0);
+    auto data = std::istringstream{string_format(
+        R"({"known_teleporters":[{"position":[%d,%d,%d],"name":"north gate"}]})", target.x(),
+        target.y(), target.z())};
+    auto in = JsonIn{data};
+    you.translocators->deserialize(in);
+
+    const auto snapshot = first_menu_snapshot([&]() { you.translocators->translocate({}); });
+
+    const auto& row = selected_entry(snapshot);
+    INFO(row.label << ": " << row.description);
+    CHECK(row.description.find("Distance: 3") != std::string::npos);
+}
+
+TEST_CASE(
+    "real wish menus publish the selected mutation, monster and item panels",
+    "[client][interaction][mcp][uilist_panel]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+
+    const auto mutation = first_menu_snapshot([&]() { debug_menu::wishmutate(&you); });
+    INFO(selected_entry(mutation).label << ": " << selected_entry(mutation).description);
+    CHECK(selected_entry(mutation).description.find("Id:") != std::string::npos);
+    CHECK(selected_entry(mutation).description.find("pts:") != std::string::npos);
+
+    const auto monster = first_menu_snapshot([&]() { debug_menu::wishmonster(std::nullopt); });
+    INFO(selected_entry(monster).label << ": " << selected_entry(monster).description);
+    CHECK(selected_entry(monster).description.find(selected_entry(monster).label)
+          != std::string::npos);
+    CHECK(selected_entry(monster).description.size() > selected_entry(monster).label.size());
+
+    const auto item = first_menu_snapshot([&]() { debug_menu::wishitem(&you); });
+    INFO(selected_entry(item).label << ": " << selected_entry(item).description);
+    CHECK(selected_entry(item).description.find("#") != std::string::npos);
+    CHECK(selected_entry(item).description.find("Volume") != std::string::npos);
+    // only the selected row carries the panel; the other rows of a thousand-row list stay cheap
+    CHECK(
+        std::ranges::count_if(
+            item.choices,
+            [](const auto& choice) {
+                return choice.id.starts_with("entry:") && !choice.selected
+                    && !choice.description.empty();
+            })
+        == 0);
 }
 
 #endif // CATA_MCP

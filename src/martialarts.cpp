@@ -1494,6 +1494,173 @@ struct cat_order {
     }
 };
 
+namespace
+{
+/// The text native draws for a style in its "more info" window.
+auto style_description_text( const martialart &ma ) -> std::string
+{
+    std::string buffer;
+
+    if( ma.force_unarmed ) {
+        buffer += _( "<bold>This style forces you to use unarmed strikes, even if wielding a weapon.</bold>" );
+        buffer += "\n";
+    } else if( ma.allow_melee ) {
+        buffer += _( "<bold>This style can be used with all weapons.</bold>" );
+        buffer += "\n";
+    } else if( ma.strictly_melee ) {
+        buffer += _( "<bold>This is an armed combat style.</bold>" );
+        buffer += "\n";
+    }
+
+    buffer += "--\n";
+
+    if( ma.arm_block_with_bio_armor_arms || ma.arm_block != 99 ||
+        ma.leg_block_with_bio_armor_legs || ma.leg_block != 99 ) {
+        int unarmed_skill =  get_player_character().get_skill_level( skill_unarmed );
+        if( get_player_character().has_active_bionic( bio_cqb ) ) {
+            unarmed_skill = std::max( unarmed_skill, BIO_CQB_LEVEL );
+        }
+        if( ma.arm_block_with_bio_armor_arms ) {
+            buffer += _( "You can <info>arm block</info> by installing the <info>Arms Alloy Plating CBM</info>" );
+            buffer += "\n";
+        } else if( ma.arm_block != 99 ) {
+            buffer += string_format(
+                          _( "You can <info>arm block</info> at <info>unarmed combat:</info> <stat>%s</stat>/<stat>%s</stat>" ),
+                          unarmed_skill, ma.arm_block ) + "\n";
+        }
+
+        if( ma.leg_block_with_bio_armor_legs ) {
+            buffer += _( "You can <info>leg block</info> by installing the <info>Legs Alloy Plating CBM</info>" );
+            buffer += "\n";
+        } else if( ma.leg_block != 99 ) {
+            buffer += string_format(
+                          _( "You can <info>leg block</info> at <info>unarmed combat:</info> <stat>%s</stat>/<stat>%s</stat>" ),
+                          unarmed_skill, ma.leg_block );
+            buffer += "\n";
+        }
+        buffer += "--\n";
+    }
+
+    auto buff_desc = [&]( const std::string & title, const std::vector<mabuff_id> &buffs,
+    bool passive = false ) {
+        if( !buffs.empty() ) {
+            buffer += string_format( _( "<header>%s buffs:</header>" ), title );
+            for( const auto &buff : buffs ) {
+                buffer += "\n" + buff->get_description( passive );
+            }
+            buffer += "--\n";
+        }
+    };
+
+    buff_desc( _( "Passive" ), ma.static_buffs, true );
+    buff_desc( _( "Move" ), ma.onmove_buffs );
+    buff_desc( _( "Pause" ), ma.onpause_buffs );
+    buff_desc( _( "Hit" ), ma.onhit_buffs );
+    buff_desc( _( "Miss" ), ma.onmiss_buffs );
+    buff_desc( _( "Attack" ), ma.onattack_buffs );
+    buff_desc( _( "Crit" ), ma.oncrit_buffs );
+    buff_desc( _( "Kill" ), ma.onkill_buffs );
+    buff_desc( _( "Dodge" ), ma.ondodge_buffs );
+    buff_desc( _( "Block" ), ma.onblock_buffs );
+    buff_desc( _( "Get hit" ), ma.ongethit_buffs );
+
+    for( const auto &tech : ma.techniques ) {
+        buffer += string_format( _( "<header>Technique:</header> <bold>%s</bold>   " ),
+                                 _( tech.obj().name ) ) + "\n";
+        buffer += tech.obj().get_description() + "--\n";
+    }
+
+    if( !( ma.weapons.empty() && ma.weapon_category.empty() ) ) {
+        Character &player = get_player_character();
+        std::map< weapon_category_id, std::vector<std::string>, cat_order > weapons_by_category;
+        // Iterate over every item in the game.
+        for( const itype *itp : item_controller->all() ) {
+            const itype_id &weap_id = itp->get_id();
+            bool wielded = player.primary_weapon().typeId() == weap_id;
+            bool carried = player.has_item_with( [weap_id]( const item & it ) {
+                return it.typeId() == weap_id;
+            } );
+            // Check if the item has any one of the weapon categories listed in the MA.
+            for( const weapon_category_id &cat : ma.weapon_category ) {
+                auto cat_check = [cat]( const weapon_category_id & category ) {
+                    return category == cat;
+                };
+                if( std::any_of( itp->weapon_category.begin(),
+                                 itp->weapon_category.end(), cat_check ) ) {
+                    // If so, add it to the categories it applies to.
+                    std::string weaponname = wielded ? colorize( item::nname( weap_id ) + _( " [wielded]" ),
+                                             c_light_cyan ) :
+                                             carried ? colorize( item::nname( weap_id ), c_yellow ) : item::nname( weap_id );
+                    weapons_by_category[cat].push_back( weaponname );
+                }
+            }
+        }
+
+        buffer += _( "<bold>Weapons:</bold>" ) + std::string( "\n" );
+
+        for( std::pair< const weapon_category_id, std::vector<std::string> > &list : weapons_by_category ) {
+            // This removes duplicate names (e.g. a real weapon and a replica sharing the same name) from the weapon list.
+            list.second.erase( std::unique( list.second.begin(), list.second.end() ), list.second.end() );
+            // then sort weapons within alphabetically.
+            std::sort( list.second.begin(), list.second.end(), localized_compare );
+            // If item factory somehow manages to crap out and it has no translation/name, use the ID.
+            std::string cat_name = list.first.is_valid() ? list.first->name().translated()
+                                   : colorize( "ID: " + std::string( list.first ), c_red );
+            buffer += std::string( "<header>" ) + cat_name + ": " +
+                      std::string( "</header>" );
+            buffer += enumerate_as_string( list.second ) + std::string( "\n" );
+        }
+
+        if( !ma.weapons.empty() ) {
+            std::vector<std::string> weapons;
+            for( const itype_id &wid : ma.weapons ) {
+                const itype_id &weap_id = wid->get_id();
+                bool wielded = player.primary_weapon().typeId() == weap_id;
+                bool carried = player.has_item_with( [weap_id]( const item & it ) {
+                    return it.typeId() == weap_id;
+                } );
+                std::string weaponname = wielded ? colorize( item::nname( wid ) + _( " [wielded]" ),
+                                         c_light_cyan ) :
+                                         carried ? colorize( item::nname( wid ), c_yellow ) : item::nname( wid );
+                weapons.push_back( weaponname );
+            }
+            // Sorting alphabetically makes it easier to find a specific weapon
+            std::sort( weapons.begin(), weapons.end(), localized_compare );
+            // This removes duplicate names (e.g. a real weapon and a replica sharing the same name) from the weapon list.
+            auto last = std::unique( weapons.begin(), weapons.end() );
+            weapons.erase( last, weapons.end() );
+            buffer += _( "<header>Special: </header>" );
+            buffer += enumerate_as_string( weapons );
+        }
+    }
+    if( !ma.mutation.empty() ) {
+        Character &player = get_player_character();
+        buffer += _( "<bold>Mutations:</bold>" ) + std::string( "\n" );
+        std::vector<std::string> mutations;
+        for( const trait_id &mut : ma.mutation ) {
+            std::string mutname = player.has_trait( mut ) ? colorize( mut->name() + _( " [have]" ),
+                                  c_light_cyan ) : mut->name();
+            mutations.push_back( mutname );
+        }
+        std::sort( mutations.begin(), mutations.end(), localized_compare );
+        buffer += enumerate_as_string( mutations );
+    }
+
+    return replace_colors( buffer );
+}
+} // namespace
+
+auto ma_style_callback::row_details( const uilist &menu,
+                                     const int entry_index ) const -> uilist_row_details
+{
+    // The text walks every item, so only the highlighted style carries it.
+    const auto index = static_cast<size_t>( entry_index );
+    if( entry_index != menu.selected || index < offset || index - offset >= styles.size() ) {
+        return {};
+    }
+    return { .description = style_description_text( styles[index - offset].obj() ) };
+}
+
 bool ma_style_callback::key( const input_context &ctxt, const input_event &event, int entnum,
                              uilist * )
 {
@@ -1508,157 +1675,10 @@ bool ma_style_callback::key( const input_context &ctxt, const input_event &event
     }
     if( !style_selected.str().empty() ) {
         const martialart &ma = style_selected.obj();
-
-        std::string buffer;
-
-        if( ma.force_unarmed ) {
-            buffer += _( "<bold>This style forces you to use unarmed strikes, even if wielding a weapon.</bold>" );
-            buffer += "\n";
-        } else if( ma.allow_melee ) {
-            buffer += _( "<bold>This style can be used with all weapons.</bold>" );
-            buffer += "\n";
-        } else if( ma.strictly_melee ) {
-            buffer += _( "<bold>This is an armed combat style.</bold>" );
-            buffer += "\n";
-        }
-
-        buffer += "--\n";
-
-        if( ma.arm_block_with_bio_armor_arms || ma.arm_block != 99 ||
-            ma.leg_block_with_bio_armor_legs || ma.leg_block != 99 ) {
-            int unarmed_skill =  get_player_character().get_skill_level( skill_unarmed );
-            if( get_player_character().has_active_bionic( bio_cqb ) ) {
-                unarmed_skill = std::max( unarmed_skill, BIO_CQB_LEVEL );
-            }
-            if( ma.arm_block_with_bio_armor_arms ) {
-                buffer += _( "You can <info>arm block</info> by installing the <info>Arms Alloy Plating CBM</info>" );
-                buffer += "\n";
-            } else if( ma.arm_block != 99 ) {
-                buffer += string_format(
-                              _( "You can <info>arm block</info> at <info>unarmed combat:</info> <stat>%s</stat>/<stat>%s</stat>" ),
-                              unarmed_skill, ma.arm_block ) + "\n";
-            }
-
-            if( ma.leg_block_with_bio_armor_legs ) {
-                buffer += _( "You can <info>leg block</info> by installing the <info>Legs Alloy Plating CBM</info>" );
-                buffer += "\n";
-            } else if( ma.leg_block != 99 ) {
-                buffer += string_format(
-                              _( "You can <info>leg block</info> at <info>unarmed combat:</info> <stat>%s</stat>/<stat>%s</stat>" ),
-                              unarmed_skill, ma.leg_block );
-                buffer += "\n";
-            }
-            buffer += "--\n";
-        }
-
-        auto buff_desc = [&]( const std::string & title, const std::vector<mabuff_id> &buffs,
-        bool passive = false ) {
-            if( !buffs.empty() ) {
-                buffer += string_format( _( "<header>%s buffs:</header>" ), title );
-                for( const auto &buff : buffs ) {
-                    buffer += "\n" + buff->get_description( passive );
-                }
-                buffer += "--\n";
-            }
-        };
-
-        buff_desc( pgettext( "martial art buff", "Passive" ), ma.static_buffs, true );
-        buff_desc( pgettext( "martial art buff", "Move" ), ma.onmove_buffs );
-        buff_desc( pgettext( "martial art buff", "Pause" ), ma.onpause_buffs );
-        buff_desc( pgettext( "martial art buff", "Hit" ), ma.onhit_buffs );
-        buff_desc( pgettext( "martial art buff", "Miss" ), ma.onmiss_buffs );
-        buff_desc( pgettext( "martial art buff", "Attack" ), ma.onattack_buffs );
-        buff_desc( pgettext( "martial art buff", "Crit" ), ma.oncrit_buffs );
-        buff_desc( pgettext( "martial art buff", "Kill" ), ma.onkill_buffs );
-        buff_desc( pgettext( "martial art buff", "Dodge" ), ma.ondodge_buffs );
-        buff_desc( pgettext( "martial art buff", "Block" ), ma.onblock_buffs );
-        buff_desc( pgettext( "martial art buff", "Get hit" ), ma.ongethit_buffs );
-
-        for( const auto &tech : ma.techniques ) {
-            buffer += string_format( _( "<header>Technique:</header> <bold>%s</bold>   " ),
-                                     _( tech.obj().name ) ) + "\n";
-            buffer += tech.obj().get_description() + "--\n";
-        }
-
-        if( !( ma.weapons.empty() && ma.weapon_category.empty() ) ) {
-            Character &player = get_player_character();
-            std::map< weapon_category_id, std::vector<std::string>, cat_order > weapons_by_category;
-            // Iterate over every item in the game.
-            for( const itype *itp : item_controller->all() ) {
-                const itype_id &weap_id = itp->get_id();
-                bool wielded = player.primary_weapon().typeId() == weap_id;
-                bool carried = player.has_item_with( [weap_id]( const item & it ) {
-                    return it.typeId() == weap_id;
-                } );
-                // Check if the item has any one of the weapon categories listed in the MA.
-                for( const weapon_category_id &cat : ma.weapon_category ) {
-                    auto cat_check = [cat]( const weapon_category_id & category ) {
-                        return category == cat;
-                    };
-                    if( std::any_of( itp->weapon_category.begin(),
-                                     itp->weapon_category.end(), cat_check ) ) {
-                        // If so, add it to the categories it applies to.
-                        std::string weaponname = wielded ? colorize( item::nname( weap_id ) + _( " [wielded]" ),
-                                                 c_light_cyan ) :
-                                                 carried ? colorize( item::nname( weap_id ), c_yellow ) : item::nname( weap_id );
-                        weapons_by_category[cat].push_back( weaponname );
-                    }
-                }
-            }
-
-            buffer += _( "<bold>Weapons:</bold>" ) + std::string( "\n" );
-
-            for( std::pair< const weapon_category_id, std::vector<std::string> > &list : weapons_by_category ) {
-                // This removes duplicate names (e.g. a real weapon and a replica sharing the same name) from the weapon list.
-                list.second.erase( std::unique( list.second.begin(), list.second.end() ), list.second.end() );
-                // then sort weapons within alphabetically.
-                std::sort( list.second.begin(), list.second.end(), localized_compare );
-                // If item factory somehow manages to crap out and it has no translation/name, use the ID.
-                std::string cat_name = list.first.is_valid() ? list.first->name().translated()
-                                       : colorize( "ID: " + std::string( list.first ), c_red );
-                buffer += std::string( "<header>" ) + cat_name + ": " +
-                          std::string( "</header>" );
-                buffer += enumerate_as_string( list.second ) + std::string( "\n" );
-            }
-
-            if( !ma.weapons.empty() ) {
-                std::vector<std::string> weapons;
-                for( const itype_id &wid : ma.weapons ) {
-                    const itype_id &weap_id = wid->get_id();
-                    bool wielded = player.primary_weapon().typeId() == weap_id;
-                    bool carried = player.has_item_with( [weap_id]( const item & it ) {
-                        return it.typeId() == weap_id;
-                    } );
-                    std::string weaponname = wielded ? colorize( item::nname( wid ) + _( " [wielded]" ),
-                                             c_light_cyan ) :
-                                             carried ? colorize( item::nname( wid ), c_yellow ) : item::nname( wid );
-                    weapons.push_back( weaponname );
-                }
-                // Sorting alphabetically makes it easier to find a specific weapon
-                std::sort( weapons.begin(), weapons.end(), localized_compare );
-                // This removes duplicate names (e.g. a real weapon and a replica sharing the same name) from the weapon list.
-                auto last = std::unique( weapons.begin(), weapons.end() );
-                weapons.erase( last, weapons.end() );
-                buffer += _( "<header>Special: </header>" );
-                buffer += enumerate_as_string( weapons );
-            }
-        }
-        if( !ma.mutation.empty() ) {
-            Character &player = get_player_character();
-            buffer += _( "<bold>Mutations:</bold>" ) + std::string( "\n" );
-            std::vector<std::string> mutations;
-            for( const trait_id &mut : ma.mutation ) {
-                std::string mutname = player.has_trait( mut ) ? colorize( mut->name() + _( " [have]" ),
-                                      c_light_cyan ) : mut->name();
-                mutations.push_back( mutname );
-            }
-            std::sort( mutations.begin(), mutations.end(), localized_compare );
-            buffer += enumerate_as_string( mutations );
-        }
+        const std::string text = style_description_text( ma );
 
         catacurses::window w;
 
-        const std::string text = replace_colors( buffer );
         int width = 0;
         int height = 0;
         int iLines = 0;

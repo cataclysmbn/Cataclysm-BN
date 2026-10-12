@@ -2467,6 +2467,85 @@ static auto color_number(const float num) -> std::string {
     }
 }
 
+struct spellbook_stat_row {
+    std::string label;
+    int base;
+    float increment;
+    int final_value;
+};
+
+struct spellbook_stats {
+    /// The colored damage type, empty when the spell has none to show.
+    std::string damage_type;
+    std::vector<spellbook_stat_row> rows;
+};
+
+static auto spellbook_stats_of(const spell_type& sp) -> spellbook_stats {
+    const std::string fx = sp.effect_name;
+    std::string damage_string;
+    std::string aoe_string;
+    auto stats = spellbook_stats{};
+    if (fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack"
+        || fx == "line_attack") {
+        damage_string = _("Damage");
+        aoe_string = _("AoE");
+        if (sp.min_damage > 0 && sp.max_damage > 0) {
+            const spell fake_spell(sp.id);
+            stats.damage_type =
+                colorize(fake_spell.damage_type_string(), fake_spell.damage_type_color());
+        }
+    } else if (fx == "spawn_item" || fx == "summon_monster") {
+        damage_string = _("Spawned");
+    } else if (fx == "recover_energy") {
+        damage_string = _("Recover");
+    } else if (fx == "teleport_random") {
+        aoe_string = _("Variance");
+    } else if (fx == "area_pull" || fx == "area_push" || fx == "ter_transform") {
+        aoe_string = _("AoE");
+    }
+
+    auto& rows = stats.rows;
+    if (sp.max_damage != 0 && sp.min_damage != 0 && !damage_string.empty()) {
+        rows.emplace_back(damage_string, sp.min_damage, sp.damage_increment, sp.max_damage);
+    }
+    if (sp.max_range != 0 && sp.min_range != 0) {
+        rows.emplace_back(_("Range"), sp.min_range, sp.range_increment, sp.max_range);
+    }
+    if (sp.min_aoe != 0 && sp.max_aoe != 0 && !aoe_string.empty()) {
+        rows.emplace_back(aoe_string, sp.min_aoe, sp.aoe_increment, sp.max_aoe);
+    }
+    if (sp.min_duration != 0 && sp.max_duration != 0) {
+        rows.emplace_back(_("Duration"), sp.min_duration, static_cast<float>(sp.duration_increment),
+                          sp.max_duration);
+    }
+    rows.emplace_back(
+        _("Cast Cost"), sp.base_energy_cost, sp.energy_increment, sp.final_energy_cost);
+    rows.emplace_back(
+        _("Cast Time"), sp.base_casting_time, sp.casting_time_increment, sp.final_casting_time);
+    return stats;
+}
+
+static auto spellbook_class_name(const spell_type& sp) -> std::string {
+    return sp.spell_class == trait_NONE ? _("Classless") : sp.spell_class->name();
+}
+
+/// The spellbook panel as text for clients that cannot see the menu's window.
+static auto spellbook_info_text(const spell_type& sp) -> std::string {
+    const auto stats = spellbook_stats_of(sp);
+    auto text = string_format(
+        "%s (%s)\n%s\n%s: %d %s: %d", colorize(sp.name, c_light_green), spellbook_class_name(sp),
+        sp.description, _("Difficulty"), sp.difficulty, _("Max Level"), sp.max_level);
+    if (!stats.damage_type.empty()) {
+        text += string_format("\n%s: %s", _("Damage Type"), stats.damage_type);
+    }
+    for (const auto& row : stats.rows) {
+        text += string_format(
+            "\n%s: %s %s %s", row.label, color_number(row.base), color_number(row.increment),
+            color_number(row.final_value));
+    }
+    return text;
+}
+
 static void draw_spellbook_info(const spell_type& sp, uilist* menu) {
     const int width = menu->pad_left - 4;
     const int start_x = 2;
@@ -2474,11 +2553,9 @@ static void draw_spellbook_info(const spell_type& sp, uilist* menu) {
     const catacurses::window w = menu->window;
     nc_color gray = c_light_gray;
     nc_color yellow = c_yellow;
-    const spell fake_spell(sp.id);
 
     const std::string spell_name = colorize(sp.name, c_light_green);
-    const std::string spell_class =
-        sp.spell_class == trait_NONE ? _("Classless") : sp.spell_class->name();
+    const std::string spell_class = spellbook_class_name(sp);
     print_colored_text(w, point(start_x, line), gray, gray, spell_name);
     print_colored_text(
         w, point(menu->pad_left - utf8_width(spell_class) - 1, line++), yellow, yellow,
@@ -2492,31 +2569,11 @@ static void draw_spellbook_info(const spell_type& sp, uilist* menu) {
     mvwprintz(w, point(start_x + width / 2, line++), c_light_gray,
               string_format("%s: %d", _("Max Level"), sp.max_level));
 
-    const std::string fx = sp.effect_name;
-    std::string damage_string;
-    std::string aoe_string;
-    bool has_damage_type = false;
-    if (fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack"
-        || fx == "line_attack") {
-        damage_string = _("Damage");
-        aoe_string = _("AoE");
-        has_damage_type = sp.min_damage > 0 && sp.max_damage > 0;
-    } else if (fx == "spawn_item" || fx == "summon_monster") {
-        damage_string = _("Spawned");
-    } else if (fx == "recover_energy") {
-        damage_string = _("Recover");
-    } else if (fx == "teleport_random") {
-        aoe_string = _("Variance");
-    } else if (fx == "area_pull" || fx == "area_push" || fx == "ter_transform") {
-        aoe_string = _("AoE");
-    }
-
-    if (has_damage_type) {
+    const auto stats = spellbook_stats_of(sp);
+    if (!stats.damage_type.empty()) {
         print_colored_text(
             w, point(start_x, line++), gray, gray,
-            string_format(
-                "%s: %s", _("Damage Type"),
-                colorize(fake_spell.damage_type_string(), fake_spell.damage_type_color())));
+            string_format("%s: %s", _("Damage Type"), stats.damage_type));
     }
     line++;
 
@@ -2532,37 +2589,20 @@ static void draw_spellbook_info(const spell_type& sp, uilist* menu) {
             left_justify(_("per lvl"), 7),
             //~ translation should not exceed 7 console cells
             left_justify(_("max lvl"), 7)));
-    std::vector<std::tuple<std::string, int, float, int>> rows;
 
-    if (sp.max_damage != 0 && sp.min_damage != 0 && !damage_string.empty()) {
-        rows.emplace_back(damage_string, sp.min_damage, sp.damage_increment, sp.max_damage);
-    }
-
-    if (sp.max_range != 0 && sp.min_range != 0) {
-        rows.emplace_back(_("Range"), sp.min_range, sp.range_increment, sp.max_range);
-    }
-
-    if (sp.min_aoe != 0 && sp.max_aoe != 0 && !aoe_string.empty()) {
-        rows.emplace_back(aoe_string, sp.min_aoe, sp.aoe_increment, sp.max_aoe);
-    }
-
-    if (sp.min_duration != 0 && sp.max_duration != 0) {
-        rows.emplace_back(_("Duration"), sp.min_duration, static_cast<float>(sp.duration_increment),
-                          sp.max_duration);
-    }
-
-    rows.emplace_back(
-        _("Cast Cost"), sp.base_energy_cost, sp.energy_increment, sp.final_energy_cost);
-    rows.emplace_back(
-        _("Cast Time"), sp.base_casting_time, sp.casting_time_increment, sp.final_casting_time);
-
-    for (std::tuple<std::string, int, float, int>& row : rows) {
-        mvwprintz(w, point(start_x, line), c_light_gray, std::get<0>(row));
-        print_colored_text(w, point(start_x + 11, line), gray, gray, color_number(std::get<1>(row)));
-        print_colored_text(w, point(start_x + 19, line), gray, gray, color_number(std::get<2>(row)));
-        print_colored_text(w, point(start_x + 27, line), gray, gray, color_number(std::get<3>(row)));
+    for (const auto& row : stats.rows) {
+        mvwprintz(w, point(start_x, line), c_light_gray, row.label);
+        print_colored_text(w, point(start_x + 11, line), gray, gray, color_number(row.base));
+        print_colored_text(w, point(start_x + 19, line), gray, gray, color_number(row.increment));
+        print_colored_text(w, point(start_x + 27, line), gray, gray, color_number(row.final_value));
         line++;
     }
+}
+
+auto spellbook_callback::row_details(const uilist& /*menu*/, const int entry_index) const
+    -> uilist_row_details {
+    if (entry_index < 0 || static_cast<size_t>(entry_index) >= spells.size()) { return {}; }
+    return {.description = spellbook_info_text(spells[entry_index])};
 }
 
 void spellbook_callback::refresh(uilist* menu) {

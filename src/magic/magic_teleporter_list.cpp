@@ -162,6 +162,13 @@ private:
 
 public:
     teleporter_callback(std::map<int, tripoint_abs_omt>& ip): index_pairs(ip) {}
+    auto row_details(const uilist& /*menu*/, const int entry_index) const
+        -> uilist_row_details override {
+        const auto gate = index_pairs.find(entry_index);
+        if (gate == index_pairs.end()) { return {}; }
+        const auto dist = rl_dist(get_avatar().abs_omt_pos(), gate->second);
+        return {.description = string_format(_("Distance: %d %s"), dist, gate->second.to_string())};
+    }
     void refresh(uilist* menu) override {
         const int entnum = menu->selected;
         const int start_x = menu->w_width - menu->pad_right;

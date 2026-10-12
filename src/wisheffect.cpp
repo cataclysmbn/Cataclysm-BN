@@ -180,13 +180,12 @@ class effect_select_callback : public uilist_callback
 
         }
 
-        void refresh( uilist *menu ) override {
-            wisheffect_state &last_val = uistate.debug_menu.effect;
-            size_t selected = clamp<size_t>( menu->selected, 0, all_effects.size() - 1 );
-            input_context ctxt( menu->input_category );
+        /// The effect panel for entry `entry_index`, as the native side panel prints it.
+        auto panel_text( const int entry_index, const std::string &input_category ) const -> std::string {
+            const wisheffect_state &last_val = uistate.debug_menu.effect;
+            const size_t selected = clamp<size_t>( entry_index, 0, all_effects.size() - 1 );
+            input_context ctxt( input_category );
 
-            const point start( menu->w_width - menu->pad_right, 3 );
-            const int width = menu->w_width - start.x;
             std::stringstream ss;
             ss << string_format( "ID: %s\n", all_effects[selected].str() );
             const auto eff_type = all_effects[ selected];
@@ -218,7 +217,19 @@ class effect_select_callback : public uilist_callback
             ss << string_format( "Permanent: %s\n", eff_type->is_permanent()
                                  ? "Yes"
                                  : "No" );
-            fold_and_print_from( menu->window, start, width, 0, c_light_gray, replace_colors( ss.str() ) );
+            return replace_colors( ss.str() );
+        }
+
+        auto row_details( const uilist &menu, const int entry_index ) const
+        -> uilist_row_details override {
+            return { .description = panel_text( entry_index, menu.input_category ) };
+        }
+
+        void refresh( uilist *menu ) override {
+            const point start( menu->w_width - menu->pad_right, 3 );
+            const int width = menu->w_width - start.x;
+            fold_and_print_from( menu->window, start, width, 0, c_light_gray,
+                                 panel_text( menu->selected, menu->input_category ) );
             wnoutrefresh( menu->window );
         }
 
