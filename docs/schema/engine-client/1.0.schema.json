@@ -1521,6 +1521,130 @@
       ],
       "additionalProperties": false
     },
+    "vehicle": {
+      "type": "object",
+      "description": "The native vehicle interaction window (veh_interact). `mode` select is the pick-a-part list of siphon, crew and the like. `cells` is the grid around the cursor in screen cells relative to it (x right, y down); `parts` are the parts on the cursor square, topmost first; `stats` are the native stat lines in reading order (an empty string is a blank slot). In a task list (install, repair, remove, mend, refill) the choices are the candidate parts, `tabs` is the install tab bar, and `detail` previews the highlighted part with its requirements. Choosing the highlighted part starts the task, choosing another part moves the highlight.",
+      "properties": {
+        "name": { "type": "string" },
+        "owner": { "type": "string" },
+        "owned": {
+          "type": "boolean",
+          "description": "The player owns the vehicle, so rename, crew and label are allowed."
+        },
+        "mode": { "enum": ["main", "install", "repair", "remove", "mend", "refill", "select"] },
+        "cursor": {
+          "type": "object",
+          "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } },
+          "required": ["x", "y"],
+          "additionalProperties": false
+        },
+        "blocked": {
+          "type": "boolean",
+          "description": "Terrain, furniture or a creature keeps the cursor square from taking a part."
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dx": { "type": "integer" },
+              "dy": { "type": "integer" },
+              "glyph": { "type": "string" },
+              "color": {
+                "type": "string",
+                "description": "A game color name such as `light_gray`."
+              }
+            },
+            "required": ["dx", "dy", "glyph", "color"],
+            "additionalProperties": false
+          }
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name with its contents or cargo load, as the native part list prints it."
+              },
+              "open": {
+                "type": "string",
+                "description": "The mark before the name: `[` for structure, `(` for armor, `-` otherwise."
+              },
+              "close": { "type": "string" },
+              "health": { "type": "integer", "minimum": 0, "maximum": 100 },
+              "broken": { "type": "boolean" }
+            },
+            "required": ["name", "open", "close", "health", "broken"],
+            "additionalProperties": false
+          }
+        },
+        "stats": { "type": "array", "items": { "type": "string" } },
+        "tabs": {
+          "type": "object",
+          "description": "The install tab bar. Choose `tab:<index>` to switch.",
+          "properties": {
+            "labels": { "type": "array", "items": { "type": "string" } },
+            "selected": { "type": "integer", "minimum": 0 },
+            "filter": { "type": "string" }
+          },
+          "required": ["labels", "selected", "filter"],
+          "additionalProperties": false
+        },
+        "detail": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "time": { "type": "string", "description": "Absent when the pane has no time line." },
+            "stats": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": { "label": { "type": "string" }, "value": { "type": "string" } },
+                "required": ["label", "value"],
+                "additionalProperties": false
+              }
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": { "enum": ["skill", "component", "tool", "extra"] },
+                  "text": {
+                    "type": "string",
+                    "description": "A component or tool row lists its alternatives joined with OR."
+                  },
+                  "met": { "type": "boolean" }
+                },
+                "required": ["kind", "text", "met"],
+                "additionalProperties": false
+              }
+            },
+            "can_do": {
+              "type": "boolean",
+              "description": "Every requirement is met, so choosing the part starts the task."
+            }
+          },
+          "required": ["name", "description", "stats", "requirements", "can_do"],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "owner",
+        "owned",
+        "mode",
+        "cursor",
+        "blocked",
+        "cells",
+        "parts",
+        "stats"
+      ],
+      "additionalProperties": false
+    },
     "overmap": {
       "type": "object",
       "description": "The native overmap window as drawn, row-major. Each cell is [glyph, foreground, background] with curses color indexes 0-15 (0 black, 1 red, 2 green, 3 brown, 4 blue, 5 magenta, 6 cyan, 7 light gray, 8-15 their bright forms). Positions are overmap terrain squares.",
@@ -1711,6 +1835,9 @@
         },
         "overmap": {
           "$ref": "#/$defs/overmap"
+        },
+        "vehicle": {
+          "$ref": "#/$defs/vehicle"
         },
         "compat": {
           "type": "object",

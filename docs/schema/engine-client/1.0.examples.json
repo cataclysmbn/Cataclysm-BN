@@ -1928,9 +1928,68 @@
           "over_volume": false
         }
       }
+    },
+    {
+      "name": "vehicle install list with the highlighted part's requirements",
+      "def": "vehicle",
+      "value": {
+        "name": "Bicycle",
+        "owner": "Ada",
+        "owned": true,
+        "mode": "install",
+        "cursor": { "x": 0, "y": 1 },
+        "blocked": false,
+        "cells": [
+          { "dx": 0, "dy": 0, "glyph": "o", "color": "light_gray" },
+          { "dx": 0, "dy": -1, "glyph": "H", "color": "light_gray" }
+        ],
+        "parts": [{ "name": "frame", "open": "[", "close": "]", "health": 62, "broken": false }],
+        "stats": ["Safe/Top Speed:  12/ 24 km/h", "", "Mass:    16 kg"],
+        "tabs": {
+          "labels": ["All", "Cargo", "Light", "Util", "Hull", "Internal", "Other", "Filter"],
+          "selected": 0,
+          "filter": ""
+        },
+        "detail": {
+          "name": "wooden board",
+          "description": "A board mounted on the frame.",
+          "time": "30 minutes",
+          "stats": [{ "label": "Durability", "value": "120" }],
+          "requirements": [
+            { "kind": "skill", "text": "mechanics 1", "met": true },
+            { "kind": "component", "text": "2x plank", "met": true },
+            { "kind": "tool", "text": "hammer OR rock", "met": false },
+            { "kind": "extra", "text": "1 tool with lifting 1 OR strength 10", "met": true }
+          ],
+          "can_do": false
+        }
+      }
     }
   ],
   "invalid": [
+    {
+      "name": "vehicle requirement without its met state",
+      "def": "vehicle",
+      "why": "every requirement row says whether it is met",
+      "value": {
+        "name": "Bicycle",
+        "owner": "Ada",
+        "owned": true,
+        "mode": "remove",
+        "cursor": { "x": 0, "y": 0 },
+        "blocked": false,
+        "cells": [],
+        "parts": [],
+        "stats": [],
+        "detail": {
+          "name": "frame",
+          "description": "",
+          "stats": [],
+          "requirements": [{ "kind": "tool", "text": "wrench" }],
+          "can_do": true
+        }
+      }
+    },
     {
       "name": "loading done with progress members",
       "def": "loading_notification",

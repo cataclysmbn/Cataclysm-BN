@@ -165,6 +165,74 @@ struct interaction_overmap {
     std::map<std::string, std::vector<std::string>> looks_like;
 };
 
+/// One requirement of the vehicle task being previewed. `kind` is `skill`, `component`, `tool` or `extra`;
+/// a component or tool row lists its alternatives joined with `OR`.
+struct interaction_requirement {
+    std::string kind;
+    std::string text;
+    bool met = true;
+};
+
+/// What the vehicle screen's detail pane shows for the part under its list cursor.
+struct interaction_vehicle_detail {
+    std::string name;
+    std::string description;
+    /// How long the task takes, as the native pane prints it; empty when the pane has no time line.
+    std::string time;
+    std::vector<interaction_column> stats;
+    std::vector<interaction_requirement> requirements;
+    /// Whether the task can be started now: every requirement is met.
+    bool can_do = true;
+};
+
+/// A square of the vehicle grid, relative to the cursor in screen cells (x right, y down).
+struct interaction_vehicle_cell {
+    int dx = 0;
+    int dy = 0;
+    std::string glyph;
+    std::string color;
+};
+
+/// One part mounted on the cursor square, topmost first, as the native part list prints it.
+struct interaction_vehicle_part {
+    /// The name with its contents or cargo load, such as `battery (200/400 charge)`.
+    std::string name;
+    /// The marks the native list puts around the name: `[` `]` for structure, `(` `)` for armor, `-` `-` otherwise.
+    std::string open;
+    std::string close;
+    /// Remaining health, 0 to 100.
+    int health = 100;
+    bool broken = false;
+};
+
+/// The tabs of the install list.
+struct interaction_vehicle_tabs {
+    std::vector<std::string> labels;
+    int selected = 0;
+    std::string filter;
+};
+
+/// The native vehicle interaction window (`veh_interact`): the grid around the cursor part, the parts on
+/// the cursor square, the vehicle stats, and in a task list the preview of the highlighted part.
+struct interaction_vehicle {
+    std::string name;
+    std::string owner;
+    bool owned = true;
+    /// `main`, `install`, `repair`, `remove`, `mend`, `refill`, or `select` for another pick-a-part list.
+    std::string mode;
+    /// The cursor in the vehicle's own frame.
+    interaction_position cursor;
+    /// The cursor square cannot take a part (terrain, furniture or a creature is in the way).
+    bool blocked = false;
+    /// Occupied squares, including the cursor square when a part is on it.
+    std::vector<interaction_vehicle_cell> cells;
+    std::vector<interaction_vehicle_part> parts;
+    /// The native stat lines, in reading order; an empty line is a blank slot.
+    std::vector<std::string> stats;
+    std::optional<interaction_vehicle_tabs> tabs;
+    std::optional<interaction_vehicle_detail> detail;
+};
+
 /// Pure data describing the interaction currently waiting at an input boundary.
 struct interaction_snapshot {
     std::uint64_t input_id = 0;
@@ -187,6 +255,7 @@ struct interaction_snapshot {
     std::optional<interaction_field> field;
     std::optional<interaction_target> target;
     std::optional<interaction_overmap> overmap;
+    std::optional<interaction_vehicle> vehicle;
     bool allow_set_count = false;
     std::size_t choice_offset = 0;
     std::size_t choice_total = 0;

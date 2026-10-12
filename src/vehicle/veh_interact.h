@@ -1,5 +1,6 @@
 #pragma once
 
+#include "client_interaction.h"
 #include "color.h"
 #include "coordinates.h"
 #include "cursesdef.h"
@@ -11,6 +12,7 @@
 
 #include <functional>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -118,10 +120,32 @@ private:
 
     auto serialize_activity() -> std::unique_ptr<player_activity>;
 
-    /** Format list of requirements returning true if all are met */
+    /** Format list of requirements returning true if all are met, and add them to `detail` */
     auto format_reqs(
         std::string& msg, const requirement_data& reqs, const std::map<skill_id, int>& skills,
-        int moves) const -> bool;
+        int moves) -> bool;
+
+    /** The screen a client sees: the task list in progress (`main` while there is none). */
+    std::string mode = "main";
+    /** The highlighted entry of the repair and remove lists. */
+    int list_pos = 0;
+    /** The preview of the part under the list cursor, with its requirements. */
+    std::optional<game_client::interaction_vehicle_detail> detail;
+    /** How many of `can_mount` the player has the materials for; they come first. */
+    int installable_count = 0;
+
+    auto make_interaction() -> game_client::interaction_snapshot;
+    /** The native stat lines in reading order; an empty line is a blank slot. */
+    auto stat_lines() const -> std::vector<std::string>;
+    /** Whether the cursor square cannot take a part. */
+    auto cursor_obstructed() const -> bool;
+    /**
+     * Turns a client's semantic input into the action the native list would receive.
+     * `part:N` moves the highlight at `pos` to N, or confirms when N is already there; `tab:N` and
+     * other ids are returned as they are. Returns an empty action when the input only moved the
+     * highlight.
+     */
+    auto interaction_action(const std::string& action, int* pos, size_t size) -> std::string;
 
     auto part_at(tripoint_bub_ms d) -> int;
     void move_cursor(tripoint_rel_veh d, int dstart_at = 0);

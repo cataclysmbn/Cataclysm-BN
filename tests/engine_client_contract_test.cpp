@@ -149,6 +149,48 @@ TEST_CASE("a paged category list publishes its mode and page", "[engine_client_c
     CHECK(contains(wire(true), R"("count":3)"));
 }
 
+TEST_CASE(
+    "a vehicle window is published with its grid, parts and requirements",
+    "[engine_client_contract]") {
+    auto context = input_context{"VEH_INTERACT"};
+    const auto input_scope = game_client::input_context_scope{context, "VEH_INTERACT"};
+    const auto wire = [&context](const bool task) {
+        const auto scope = game_client::interaction_scope{
+            context, [task] {
+                auto value = game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices,
+                    .choices = {{.id = "action:INSTALL", .label = "install"}},
+                };
+                auto& view = value.vehicle.emplace();
+                view.name = "Bicycle";
+                view.mode = task ? "remove" : "main";
+                view.cells = {{.dx = 0, .dy = 0, .glyph = "o", .color = "light_gray"}};
+                view.parts = {{.name = "frame", .open = "[", .close = "]", .health = 80}};
+                view.stats = {"Mass: 16 kg"};
+                if (task) {
+                    view.detail = game_client::interaction_vehicle_detail{
+                        .name = "frame",
+                        .time = "1 minute",
+                        .requirements = {{.kind = "tool", .text = "wrench", .met = false}},
+                        .can_do = false,
+                    };
+                }
+                return value;
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    const auto main = wire(false);
+    CHECK(contains(main, R"("vehicle":{)"));
+    CHECK(contains(main, R"("cells":[{"dx":0,"dy":0,"glyph":"o","color":"light_gray"}])"));
+    CHECK(contains(main, R"("close":"]")"));
+    CHECK_FALSE(contains(main, "detail"));
+    const auto task = wire(true);
+    CHECK(contains(task, R"("requirements":[{"kind":"tool","text":"wrench","met":false}])"));
+    CHECK(contains(task, R"("can_do":false)"));
+    CHECK(contains(task, R"("time":"1 minute")"));
+}
+
 TEST_CASE("compat focus survives paging past the focused row", "[engine_client_contract]") {
     auto context = input_context{"BIGLIST"};
     const auto input_scope = game_client::input_context_scope{context, "BIGLIST"};

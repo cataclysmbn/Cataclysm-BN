@@ -54,6 +54,7 @@
 #    include "ui.h"
 #    include "uistate.h"
 #    include "units_utility.h"
+#    include "vehicle/veh_interact.h"
 #    include "vehicle/veh_type.h"
 #    include "vehicle/vehicle.h"
 
@@ -4974,5 +4975,136 @@ TEST_CASE(
     CHECK(step == 6);
     CHECK(inp_mngr.get_input_for_action("UP", "default") == before);
 }
+
+TEST_CASE(
+    "vehicle interaction publishes the grid, denial reasons and the requirements of each task",
+    "[client][interaction][veh_interact][mcp]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    set_time(calendar::turn_zero + 12_hours);
+    auto& you = get_avatar();
+    const auto origin = tripoint_bub_ms(60, 60, 0);
+    you.setpos(origin + point_south);
+    auto* veh = get_map().add_vehicle(vproto_id("bicycle"), origin, 0_degrees, 0, 0);
+    REQUIRE(veh != nullptr);
+    auto step = 0;
+    auto all_parts = std::size_t{0};
+    auto cursor = game_client::interaction_position{};
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction({.limit = 400});
+        REQUIRE(snapshot.context == "VEH_INTERACT");
+        REQUIRE(snapshot.vehicle);
+        const auto& view = *snapshot.vehicle;
+        const auto find = [&](const std::string& id) {
+            return std::ranges::find(snapshot.choices, id, &game_client::interaction_choice::id);
+        };
+        const auto command =
+            [&](const game_client::interaction_operation operation, const std::string& id) {
+                ++step;
+                return resolve(
+                    {.input_id = snapshot.input_id, .operation = operation, .target_id = id});
+            };
+        const auto choose = game_client::interaction_operation::choose;
+        const auto highlighted = std::ranges::find_if(snapshot.choices, [](const auto& choice) {
+            return choice.highlighted;
+        });
+        switch (step) {
+            case 0: {
+                // The main screen: the grid with the cursor part, the part list, the stat lines.
+                CHECK(view.mode == "main");
+                CHECK(view.name == veh->name);
+                CHECK(std::ranges::any_of(view.cells, [](const auto& cell) {
+                    return cell.dx == 0 && cell.dy == 0 && !cell.glyph.empty();
+                }));
+                CHECK_FALSE(view.parts.empty());
+                CHECK_FALSE(view.stats.empty());
+                CHECK_FALSE(view.detail);
+                CHECK(view.owned);
+                // Every denied action says why; nothing is damaged yet, so repair is denied.
+                for (const auto& choice : snapshot.choices) {
+                    CHECK(choice.enabled == choice.denial.empty());
+                }
+                REQUIRE(find("action:REPAIR") != snapshot.choices.end());
+                CHECK_FALSE(find("action:REPAIR")->enabled);
+                CHECK(
+                    find("action:REPAIR")->denial == "There are no damaged parts on this vehicle.");
+                REQUIRE(find("action:INSTALL") != snapshot.choices.end());
+                CHECK(find("action:INSTALL")->enabled);
+                cursor = view.cursor;
+                return command(choose, "action:INSTALL");
+            }
+            case 1: {
+                // The install list: tabs, candidate parts, and the requirements of the highlighted
+                // one.
+                CHECK(view.mode == "install");
+                REQUIRE(view.tabs);
+                CHECK(view.tabs->labels.size() == 8);
+                CHECK(view.tabs->selected == 0);
+                REQUIRE(highlighted != snapshot.choices.end());
+                CHECK(highlighted->id == "part:0");
+                REQUIRE(view.detail);
+                CHECK(view.detail->name == highlighted->label);
+                CHECK_FALSE(view.detail->requirements.empty());
+                CHECK_FALSE(view.detail->time.empty());
+                // Without the materials the highlighted part cannot be installed, and says why.
+                CHECK(highlighted->enabled == view.detail->can_do);
+                CHECK((view.detail->can_do || !highlighted->denial.empty()));
+                all_parts = std::ranges::count_if(snapshot.choices, [](const auto& choice) {
+                    return choice.id.starts_with("part:");
+                });
+                REQUIRE(all_parts > 2);
+                return command(choose, "tab:1");
+            }
+            case 2: {
+                CHECK(view.tabs->selected == 1);
+                const auto shown = std::ranges::count_if(snapshot.choices, [](const auto& choice) {
+                    return choice.id.starts_with("part:");
+                });
+                CHECK(static_cast<std::size_t>(shown) < all_parts);
+                return command(choose, "tab:0");
+            }
+            case 3:
+                // Choosing a part other than the highlighted one only moves the highlight.
+                REQUIRE(find("part:1") != snapshot.choices.end());
+                CHECK_FALSE(find("part:1")->highlighted);
+                return command(choose, "part:1");
+            case 4:
+                CHECK(view.mode == "install");
+                REQUIRE(highlighted != snapshot.choices.end());
+                CHECK(highlighted->id == "part:1");
+                return command(game_client::interaction_operation::cancel, "");
+            case 5:
+                CHECK(view.mode == "main");
+                CHECK_FALSE(view.detail);
+                return command(choose, "action:REMOVE");
+            case 6: {
+                CHECK(view.mode == "remove");
+                REQUIRE(view.detail);
+                CHECK(view.detail->name == highlighted->label);
+                // Removing needs a tool the character lacks, which the rows say.
+                CHECK(std::ranges::any_of(view.detail->requirements, [](const auto& need) {
+                    return !need.met;
+                }));
+                CHECK_FALSE(view.detail->can_do);
+                CHECK_FALSE(highlighted->enabled);
+                return command(game_client::interaction_operation::cancel, "");
+            }
+            case 7:
+                CHECK(view.mode == "main");
+                return command(choose, "action:RIGHT");
+            case 8:
+                CHECK(view.cursor != cursor);
+                return command(game_client::interaction_operation::cancel, "");
+            default:
+                FAIL("the vehicle screen outlived its cancel");
+                return resolve({});
+        }
+    });
+
+    veh_interact::run(*veh, tripoint_mnt_veh::zero());
+    CHECK(step == 9);
+}
+
 
 #endif // CATA_MCP
