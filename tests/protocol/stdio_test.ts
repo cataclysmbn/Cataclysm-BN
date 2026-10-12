@@ -2196,7 +2196,7 @@ for (const when of ["idle", "during a wait"]) {
   })
 }
 
-/** Writes `count` requests for a box of cells, each answered by a frame that fills a good part of a pipe. */
+/** Writes `count` requests for a box of cells, each answered by a frame far larger than a pipe; the engine holds at most 16 MiB of unread output, so a few are enough. */
 const floodCells = (session: Session, count: number) => {
   const at = session.mirror.avatar.at
   const params = {
@@ -2227,24 +2227,34 @@ Deno.test({
         const choice = await waitChoice(session, "6 hours")
         const turn = BigInt(session.mirror.environment.turn)
         const id = await beginWait(session, choice)
-        // The answers add up to far more than a pipe holds, so the engine's writes can only finish as the client reads.
-        const ids = floodCells(session, 64)
+        // The answers add up to far more than a pipe holds, so they reach the client only as it reads.
+        const ids = floodCells(session, 4)
         client.readDelayMs = delay
         const started = performance.now()
-        await endWait(session, id)
         await client.repliesUntil(ids.length)
-        for (const note of client.notes.splice(0)) session.handle(note)
         client.readDelayMs = 0
+        // The engine does not wait for a slow reader: a wait that outruns its credits is resynced, as
+        // when a client stops paying, and it runs to its end all the same.
+        for (const note of client.notes.splice(0)) session.handle(note)
+        let stage = session.stages.get(id)!.at(-1)!
+        while (!["completed", "interrupted", "rejected"].includes(stage)) {
+          stage = (await client.result("bn.command.result", {
+            epoch: session.mirror.at.epoch,
+            command_id: id,
+          })).stage
+          await new Promise((resolve) => setTimeout(resolve, 200))
+        }
+        client.notes.length = 0
         console.log(
           `wait of 6 hours with ${ids.length} cell answers, ${delay} ms per read: ${
             Math.round(performance.now() - started)
           } ms`,
         )
         assertEquals(client.replies.every((reply) => reply.result?.cells !== undefined), true)
-        assertEquals(session.stages.get(id)!.at(-1), "completed")
-        assertEquals(session.resyncs.length, 0)
+        assertEquals(stage, "completed")
+        assert(session.resyncs.every((resync) => resync.reason === "backpressure"))
+        session.mirror = await session.subscribe()
         assert(BigInt(session.mirror.environment.turn) - turn >= 6n * hour)
-        assertEquals(session.mirror.state(), (await session.subscribe()).state())
         ends.push(authority(session))
         await client.close()
       } finally {
@@ -2268,7 +2278,7 @@ for (const how of ["stdin and stdout closed", "SIGTERM"] as const) {
         await settle(session)
         await beginWait(session, await waitChoice(session, "6 hours"))
         // Nothing is read from here: the answers fill the pipe and the engine's write cannot finish.
-        floodCells(session, 64)
+        floodCells(session, 4)
         await new Promise((resolve) => setTimeout(resolve, 3000))
         if (how === "SIGTERM") {
           client.signal("SIGTERM")
@@ -2304,7 +2314,7 @@ for (const how of ["an oversized frame", "the end of stdin"] as const) {
         await settle(session)
         await beginWait(session, await waitChoice(session, "6 hours"))
         // The client reads nothing from here: the answers fill the pipe, and the engine must still read stdin.
-        floodCells(session, 64)
+        floodCells(session, 4)
         await new Promise((resolve) => setTimeout(resolve, 3000))
         if (how === "an oversized frame") client.raw(" ".repeat(frameBytes + 1024))
         else client.closeInput()
