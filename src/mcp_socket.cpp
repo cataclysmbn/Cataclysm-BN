@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <ranges>
 #include <streambuf>
 #include <utility>
@@ -15,6 +16,7 @@
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <afunix.h>
+#include <io.h>
 #else
 #include <fcntl.h>
 #include <poll.h>
@@ -218,7 +220,68 @@ class output_buffer final : public std::streambuf
         bool broken_ = false;
 };
 
+#if defined(_WIN32)
+auto close_pipe( const int fd ) -> void { _close( fd ); }
+#else
+auto close_pipe( const int fd ) -> void { close( fd ); }
+#endif
+
+/// Writes a pipe, the protocol's stdout, whole and in order. A client may hand the engine a
+/// non-blocking pipe: when it is full the write waits until it can take more, as a blocking pipe
+/// would, and only a pipe that failed or whose reader left fails the stream.
+class fd_output_buffer final : public std::streambuf
+{
+    public:
+        explicit fd_output_buffer( const int fd ) : fd_( fd ) {}
+        ~fd_output_buffer() override { close_pipe( fd_ ); }
+
+    protected:
+        auto xsputn( const char *data, const std::streamsize size ) -> std::streamsize override {
+            auto remaining = static_cast<size_t>( size );
+            while( remaining > 0 ) {
+#if defined(_WIN32)
+                const auto written = _write( fd_, data, static_cast<unsigned int>( remaining ) );
+#else
+                const auto written = ::write( fd_, data, remaining );
+#endif
+#if !defined(_WIN32)
+                if( written < 0 && would_block() ) {
+                    auto full = pollfd{ .fd = fd_, .events = POLLOUT, .revents = 0 };
+                    poll( &full, 1, -1 );
+                    continue;
+                }
+#else
+                if( written < 0 && errno == EINTR ) {
+                    continue;
+                }
+#endif
+                if( written <= 0 ) {
+                    return size - static_cast<std::streamsize>( remaining );
+                }
+                data += written;
+                remaining -= static_cast<size_t>( written );
+            }
+            return size;
+        }
+
+        auto overflow( const int_type character ) -> int_type override {
+            if( character == traits_type::eof() ) {
+                return 0;
+            }
+            const auto byte = static_cast<char>( character );
+            return xsputn( &byte, 1 ) == 1 ? character : traits_type::eof();
+        }
+
+    private:
+        int fd_;
+};
+
 } // namespace
+
+auto make_fd_output( const int fd ) -> std::unique_ptr<std::streambuf>
+{
+    return std::make_unique<fd_output_buffer>( fd );
+}
 
 struct socket_hub::connection {
     handle fd;
