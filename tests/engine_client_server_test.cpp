@@ -536,8 +536,8 @@ TEST_CASE(
         + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
     test.run_native_input(); // executing, then the next native boundary
     test.output.str("");
-    with_avatar = false; // the change cannot be one event: subscribers start over
-    REQUIRE(test.server.publish_step(test.output));
+    with_avatar = false;        // the change cannot be one event: subscribers start over
+    CHECK_FALSE(test.pump("")); // the input boundary where the command ends
     const auto out = test.output.str();
     CHECK(contains(out, R"("method":"bn.resync")"));
     CHECK(contains(out, R"("stage":"completed")"));
