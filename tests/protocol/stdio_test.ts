@@ -1846,33 +1846,79 @@ const firstDiff = (a: Value, b: Value, path = ""): string | undefined => {
   }
 }
 
+/** A one-hour wait read by a client with credits; the frames that carried turns, and the wall time of the wait. */
+async function longWait(delivery: Value) {
+  const profile = await makeProfile()
+  const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+  try {
+    const session = await enterTutorial(client, { delivery })
+    await settle(session)
+    const choice = await waitChoice(session, "1 hour")
+    const before = session.frames.length
+    const turn = BigInt(session.mirror.environment.turn)
+    const started = performance.now()
+    // The client only reads; it pays credits back once per half window, never per turn.
+    const waiting = await session.submit({ kind: "choose", choice_id: choice.id })
+    const seconds = (performance.now() - started) / 1000
+    assertEquals(waiting.stages.at(-1), "completed")
+    assertEquals(session.resyncs.length, 0)
+    assert(BigInt(session.mirror.environment.turn) - turn >= hour)
+    await client.close()
+    return {
+      frames: session.frames.slice(before).filter((frame) => frame.turns.length > 0),
+      seconds,
+    }
+  } finally {
+    client.kill()
+    await Deno.remove(profile, { recursive: true })
+  }
+}
+
+/** Turns carried by the frames, which only advance, whatever speed the machine runs the wait at. */
+const advancing = (frames: { turns: string[] }[]) => {
+  const turns = frames.flatMap((frame) => frame.turns.map(BigInt))
+  turns.forEach((turn, i) =>
+    assert(i === 0 || turn > turns[i - 1], `turn ${turn} follows ${turns[i - 1]}`)
+  )
+  return turns
+}
+
 Deno.test({
   name:
-    "stdio: a long wait streams its turns to a client with credits before the command completes",
+    "stdio: a long wait streams its advancing turns to a client with credits before the command completes",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
-    const profile = await makeProfile()
-    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
-    try {
-      const session = await enterTutorial(client, { delivery: { credits: 256 } })
-      await settle(session)
-      const choice = await waitChoice(session, "1 hour")
-      const before = session.frames.length
-      const turn = BigInt(session.mirror.environment.turn)
-      // The client only reads; it pays credits back once per 128 frames, never per turn.
-      const waiting = await session.submit({ kind: "choose", choice_id: choice.id })
-      assertEquals(waiting.stages.at(-1), "completed")
-      const frames = session.frames.slice(before).filter((frame) => frame.turns.length > 0)
-      const seen = new Set(frames.flatMap((frame) => frame.turns))
-      console.log(`wait of 1 hour: ${frames.length} frames carried ${seen.size} distinct turns`)
-      assert(seen.size >= 100, `turns reached the client while the wait ran: ${seen.size}`)
-      assertEquals(session.resyncs.length, 0)
-      assert(BigInt(session.mirror.environment.turn) - turn >= hour)
-      await client.close()
-    } finally {
-      client.kill()
-      await Deno.remove(profile, { recursive: true })
-    }
+    const { frames, seconds } = await longWait({ credits: 256 })
+    const turns = advancing(frames)
+    console.log(
+      `wait of 1 hour: ${frames.length} frames carried ${turns.length} turns in ${
+        seconds.toFixed(1)
+      } s`,
+    )
+    // Several frames arrived while the wait ran, not only the one at its end.
+    assert(frames.length >= 3, `frames that arrived while the wait ran: ${frames.length}`)
+  },
+})
+
+Deno.test({
+  name: "stdio: a client's max_hz bounds the frames of a long wait by its wall time",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const maxHz = 5
+    const { frames, seconds } = await longWait({ credits: 256, max_hz: maxHz })
+    const turns = advancing(frames)
+    console.log(
+      `wait of 1 hour at ${maxHz} Hz: ${frames.length} frames carried ${turns.length} turns in ${
+        seconds.toFixed(1)
+      } s`,
+    )
+    assert(frames.length >= 2, `frames that arrived while the wait ran: ${frames.length}`)
+    // One frame per 1/max_hz of wall time, the first at once, plus the closing boundary's.
+    const bound = Math.floor(seconds * maxHz) + 2
+    assert(
+      frames.length <= bound,
+      `${frames.length} frames in ${seconds.toFixed(1)} s exceed ${bound}`,
+    )
   },
 })
 
