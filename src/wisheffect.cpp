@@ -167,6 +167,15 @@ class effect_select_callback : public uilist_callback
             return handled_actions;
         }
 
+        std::vector<uilist_key> keys() const override {
+            return {
+                { .key = 'b', .name = _( "Change body part" ) },
+                { .key = 'i', .name = _( "Change intensity" ) },
+                { .key = 'd', .name = _( "Change duration" ) },
+                { .key = 'o', .name = _( "Toggle force" ) },
+            };
+        }
+
         bool key( const input_context &ctx, const input_event &key, int entnum,
                   uilist *parent_menu ) override {
             const std::string &action = ctx.input_to_action( key );
@@ -296,6 +305,18 @@ class effect_edit_callback : public uilist_callback
             return handled_actions;
         }
 
+
+        std::vector<uilist_key> keys() const override {
+            return {
+                { .key = 'a', .name = _( "Add new effect" ) },
+                { .key = 'c', .name = _( "Clear all effects" ) },
+                { .key = 'r', .name = _( "Remove effect(s) at cursor" ) },
+                { .key = 'b', .name = _( "Change body part" ) },
+                { .key = 'i', .name = _( "Change intensity" ) },
+                { .key = 'd', .name = _( "Change duration" ) },
+                { .key = 'o', .name = _( "Toggle force" ) },
+            };
+        }
 
         bool key( const input_context &ctx, const input_event &key, int entnum,
                   uilist *parent_menu ) override {
