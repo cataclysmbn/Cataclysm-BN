@@ -2090,6 +2090,30 @@
           "over_volume": false
         }
       }
+    },
+    {
+      "name": "inventory selector header with hint and carried totals",
+      "def": "pane",
+      "value": {
+        "id": "pane-inventory",
+        "label": "Inventory",
+        "role": "inventory",
+        "area_id": "",
+        "area_label": "Inventory",
+        "area_description": "Item hotkeys assigned: 3/52",
+        "filter": "",
+        "storage_kind": "",
+        "totals": {
+          "weight": "3.8",
+          "weight_max": "45.0",
+          "weight_unit": "kg",
+          "volume": "1.20",
+          "volume_max": "15.00",
+          "volume_unit": "L",
+          "over_weight": false,
+          "over_volume": false
+        }
+      }
     }
   ],
   "invalid": [

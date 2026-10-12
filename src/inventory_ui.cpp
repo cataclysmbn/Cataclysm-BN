@@ -44,6 +44,7 @@
 #endif
 
 #include <algorithm>
+#include <cstdlib>
 #include <iterator>
 #include <limits>
 #include <map>
@@ -2023,6 +2024,25 @@ auto invlet_hotkey( const inventory_entry &entry ) -> std::string
                         entry.invlet_hint ? entry.invlet_hint->invlet : '\0';
     return invlet > 0 ? std::string( 1, static_cast<char>( invlet ) ) : std::string{};
 }
+
+/// The weight and volume the native header prints at its right, with its maximum, over it when the printed value exceeds it.
+auto header_totals( const inventory_selector::stats &stats ) ->
+std::optional<game_client::interaction_totals>
+{
+    const auto &[weight, volume] = stats;
+    if( weight[0].empty() || volume[0].empty() ) {
+        return std::nullopt;
+    }
+    const auto text = []( const std::string & cell ) { return remove_color_tags( cell ); };
+    const auto over = [&text]( const std::string & value, const std::string & max ) {
+        return std::strtod( text( value ).c_str(), nullptr ) > std::strtod( text( max ).c_str(), nullptr );
+    };
+    return game_client::interaction_totals{
+        .weight = text( weight[1] ), .weight_max = text( weight[3] ), .weight_unit = weight_units(),
+        .volume = text( volume[1] ), .volume_max = text( volume[3] ), .volume_unit = volume_units_abbr(),
+        .over_weight = over( weight[1], weight[3] ), .over_volume = over( volume[1], volume[3] ),
+    };
+}
 } // namespace
 
 auto inventory_selector::interaction_snapshot() const -> game_client::interaction_snapshot
@@ -2034,9 +2054,20 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
         .kind = game_client::interaction_kind::inventory,
         .title = remove_color_tags( title ),
         .message = message,
+        .category_mode = mode == navigation_mode::CATEGORY,
         .allow_cancel = true,
         .allow_set_count = supports_semantic_count(),
     };
+    // The header of the native window: the hint under the title and the carried totals at its right.
+    result.panes.push_back( {
+        .id = game_client::opaque_interaction_id( "inventory-pane", { "inventory" } ),
+        .label = result.title,
+        .role = "inventory",
+        .area_label = result.title,
+        .area_description = remove_color_tags( hint ),
+        .filter = filter,
+        .totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt,
+    } );
     auto identity_counts = std::unordered_map<std::string, std::size_t> {};
     const auto &all_columns = get_all_columns();
     for( const auto column_index : std::views::iota( std::size_t{ 0 }, all_columns.size() ) ) {
@@ -2062,6 +2093,12 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
                     .value = remove_color_tags( preset.get_cell_text( entry, cell_index ) ),
                 } );
             }
+            // What the native column prints around the cells: the category header the row sits under,
+            // its name with the native color tags, the color of its text, and the color of its key.
+            columns.push_back( { .label = "Name markup", .value = preset.get_cell_text( entry, 0 ) } );
+            columns.push_back( { .label = "Category", .value = entry.get_category_ptr()->name() } );
+            columns.push_back( { .label = "Row color", .value = string_from_color( preset.get_color( entry ) ) } );
+            columns.push_back( { .label = "Key color", .value = string_from_color( entry.get_invlet_color() ) } );
             const auto denial = remove_color_tags( preset.get_observed_denial( entry ) );
             const auto description = remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) );
             auto identity = std::vector<std::string> {
