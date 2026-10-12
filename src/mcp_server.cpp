@@ -777,7 +777,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !decoded ) { return invalid(); }
         if( host_.resize_viewport ) { host_.resize_viewport( decoded->cols, decoded->rows ); }
         // The new view is part of what the client reads, so it is published like any other change.
-        if( const auto published = session_.publish_boundary(); !published ) { return fail( published.error() ); }
+        // A running activity is no boundary: its command is not settled by a resize.
+        if( const auto published = session_.publish_boundary( !polling_ ); !published ) { return fail( published.error() ); }
         queue_push();
         return rpc::make_result( request, "{}" );
     }
