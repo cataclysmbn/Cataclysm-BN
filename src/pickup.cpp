@@ -648,6 +648,8 @@ struct pickup_interaction_options {
     /// What the avatar would carry, and could carry, once every marked stack is picked up.
     units::mass weight_predict;
     units::volume volume_predict;
+    /// The letters the native list prints before its rows, in row order.
+    std::string hotkeys;
 };
 
 auto item_pickup_identity( const item &candidate ) -> std::string
@@ -708,6 +710,24 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         .allow_cancel = true,
         .allow_set_count = true,
     };
+    const auto text = []( const units::mass value ) { return string_format( "%.1f", round_up( convert_weight( value ), 1 ) ); };
+    snapshot.panes.push_back( {
+        .id = game_client::opaque_interaction_id( "pickup-pane", { "pickup" } ),
+        .label = snapshot.title,
+        .role = "pickup",
+        .area_label = snapshot.title,
+        .filter = opts.filter,
+        .totals = game_client::interaction_totals{
+            .weight = text( opts.weight_predict ),
+            .weight_max = text( g->u.weight_capacity() ),
+            .weight_unit = weight_units(),
+            .volume = format_volume( opts.volume_predict ),
+            .volume_max = format_volume( g->u.volume_capacity() ),
+            .volume_unit = volume_units_abbr(),
+            .over_weight = opts.weight_predict > g->u.weight_capacity(),
+            .over_volume = opts.volume_predict > g->u.volume_capacity(),
+        },
+    } );
     const auto ids = pickup_choice_ids( opts );
     snapshot.choices.reserve( opts.matches.size() );
     for( const auto visible_index : std::views::iota( std::size_t{ 0 }, opts.matches.size() ) ) {
@@ -731,8 +751,9 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         }
         snapshot.choices.push_back( {
             .id = ids[visible_index],
-            .label = remove_color_tags( candidate.display_name( stack.size() ) ),
+            .label = remove_color_tags( stack.size() > 1 ? string_format( "%d %s", stack.size(), candidate.display_name( stack.size() ) ) : candidate.display_name( stack.size() ) ),
             .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
+            .hotkey = visible_index < opts.hotkeys.size() ? std::string( 1, opts.hotkeys[visible_index] ) : std::string{},
             .enabled = true,
             .selectable = true,
             .selected = selection.pick,
@@ -743,6 +764,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
                 { .label = _( "Nesting" ), .value = std::move( nesting ) },
                 { .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
                 { .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
+                { .label = "Row color", .value = string_from_color( candidate.color_in_inventory() ) },
             },
             .selected_count = static_cast<std::uint64_t>( selected_count ),
             .minimum_count = 0,
@@ -1321,6 +1343,7 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
                         .selected = selected,
                         .weight_predict = weight_predict,
                         .volume_predict = volume_predict,
+                        .hotkeys = pickup_chars,
                     } );
                 } );
                 action = ctxt.handle_input();
@@ -1342,6 +1365,7 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
                         .selected = selected,
                         .weight_predict = weight_predict,
                         .volume_predict = volume_predict,
+                        .hotkeys = pickup_chars,
                     } );
                     const auto choice = std::ranges::find( snapshot.choices,
                                                            event.interaction->target_id,

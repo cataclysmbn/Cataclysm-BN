@@ -2138,6 +2138,58 @@ TEST_CASE(
     CHECK(reads == 4);
 }
 
+namespace {
+class snapshot_inventory_selector final: public inventory_pick_selector {
+public:
+    using inventory_pick_selector::inventory_pick_selector;
+    using inventory_selector::interaction_snapshot;
+};
+} // namespace
+
+TEST_CASE(
+    "a real inventory selector publishes its header totals, hint, categories and colors",
+    "[client][interaction][inventory][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    auto& you = get_avatar();
+    you.i_add(item::spawn("bandages"), false);
+    REQUIRE_FALSE(you.wear_item(item::spawn("tshirt"), false));
+    auto selector = snapshot_inventory_selector(you);
+    selector.set_hint("Item hotkeys assigned: <color_light_gray>1</color>/52");
+    selector.add_character_items(you);
+
+    const auto snapshot = selector.interaction_snapshot();
+    REQUIRE(snapshot.panes.size() == 1);
+    const auto& pane = snapshot.panes.front();
+    CHECK(pane.area_description == "Item hotkeys assigned: 1/52");
+    REQUIRE(pane.totals);
+    CHECK(pane.totals->weight_unit == weight_units());
+    CHECK(pane.totals->volume_unit == volume_units_abbr());
+    CHECK_FALSE(pane.totals->weight_max.empty());
+    CHECK(snapshot.category_mode == false);
+    const auto column =
+        [](const game_client::interaction_choice& choice, const std::string& label) {
+            const auto found =
+                std::ranges::find(choice.columns, label, &game_client::interaction_column::label);
+            return found == choice.columns.end() ? std::string{} : found->value;
+        };
+    const auto worn = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
+        return column(choice, "source") == "worn_or_wielded";
+    });
+    REQUIRE(worn != snapshot.choices.end());
+    CHECK(column(*worn, "Category") == "ITEMS WORN");
+    CHECK_FALSE(column(*worn, "Row color").empty());
+    CHECK_FALSE(column(*worn, "Key color").empty());
+    const auto carried = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
+        return column(choice, "source") == "inventory";
+    });
+    REQUIRE(carried != snapshot.choices.end());
+    CHECK(column(*carried, "Category") != "ITEMS WORN");
+
+    selector.set_display_stats(false);
+    CHECK_FALSE(selector.interaction_snapshot().panes.front().totals);
+}
+
 TEST_CASE(
     "bounded interaction pages control late real inventory entries and reset safely",
     "[client][interaction][inventory][mcp]") {
@@ -2284,6 +2336,10 @@ TEST_CASE(
             CHECK(choice.available_count == 3);
             CHECK(choice.minimum_count == 0);
             CHECK(choice.columns[0].value == id.str());
+            CHECK_FALSE(choice.hotkey.empty());
+            REQUIRE(snapshot.panes.size() == 1);
+            REQUIRE(snapshot.panes.front().totals);
+            CHECK_FALSE(snapshot.panes.front().totals->weight_max.empty());
             if (reads++ == 0) {
                 return resolve({
                     .input_id = snapshot.input_id,
