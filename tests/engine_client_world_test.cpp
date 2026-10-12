@@ -18,6 +18,7 @@
 #include "map_memory.h"
 #include "map_perception.h"
 #include "monster.h"
+#include "options_helpers.h"
 #include "output.h"
 #include "overmap/omdata.h"
 #include "overmap/overmap.h"
@@ -399,6 +400,37 @@ TEST_CASE(
         == std::vector<std::string>{
             ":" + item::spawn("hammer")->display_name() + ":2",
             ":" + item::spawn("screwdriver")->display_name() + ":1"});
+}
+
+TEST_CASE("world capture gives the color of an item's condition marker", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& you = get_avatar();
+    auto* shirt = item::spawn_temporary("longshirt");
+    shirt->set_damage(shirt->max_damage() / 2);
+    const auto marked = [&](const auto& entry) { return entry.appearance.id == "longshirt"; };
+    const auto capture = [&] {
+        you.i_add(item::spawn(*shirt));
+        map_perception::acquire();
+        return ec::world::capture_world();
+    };
+    SECTION("with the health bar the marker and its native color are published") {
+        override_option bar("ITEM_HEALTH_BAR", "true");
+        const auto state = capture();
+        const auto row = std::ranges::find_if(state.avatar->inventory, marked);
+        REQUIRE(row != state.avatar->inventory.end());
+        REQUIRE(row->durability);
+        CHECK(row->durability->symbol == shirt->damage_symbol());
+        CHECK(row->durability->color == "c_magenta");
+        CHECK(row->name.starts_with(row->durability->symbol + "\u00A0"));
+    }
+    SECTION("without the health bar the name has no marker to color") {
+        override_option bar("ITEM_HEALTH_BAR", "false");
+        const auto state = capture();
+        const auto row = std::ranges::find_if(state.avatar->inventory, marked);
+        REQUIRE(row != state.avatar->inventory.end());
+        CHECK_FALSE(row->durability);
+    }
+    static_cast<void>(setup);
 }
 
 TEST_CASE(
