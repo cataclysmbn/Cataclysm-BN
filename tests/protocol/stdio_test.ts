@@ -2143,7 +2143,7 @@ for (const when of ["idle", "during a wait"]) {
 }
 
 /** Writes `count` requests for a box of cells, each answered by a frame that fills a good part of a pipe. */
-const floodCells = async (session: Session, count: number) => {
+const floodCells = (session: Session, count: number) => {
   const at = session.mirror.avatar.at
   const params = {
     epoch: session.mirror.at.epoch,
@@ -2174,7 +2174,7 @@ Deno.test({
         const turn = BigInt(session.mirror.environment.turn)
         const id = await beginWait(session, choice)
         // The answers add up to far more than a pipe holds, so the engine's writes can only finish as the client reads.
-        const ids = await floodCells(session, 64)
+        const ids = floodCells(session, 64)
         client.readDelayMs = delay
         const started = performance.now()
         await endWait(session, id)
@@ -2214,7 +2214,7 @@ for (const how of ["stdin and stdout closed", "SIGTERM"] as const) {
         await settle(session)
         await beginWait(session, await waitChoice(session, "6 hours"))
         // Nothing is read from here: the answers fill the pipe and the engine's write cannot finish.
-        await floodCells(session, 64)
+        floodCells(session, 64)
         await new Promise((resolve) => setTimeout(resolve, 3000))
         if (how === "SIGTERM") {
           client.signal("SIGTERM")
