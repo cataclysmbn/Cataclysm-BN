@@ -1,3 +1,5 @@
+#include "vehicle_display.h"
+
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -149,6 +151,39 @@ auto vehicle::part_color(const int p, const bool exact) const -> nc_color {
     }
 }
 
+auto part_list_label_of(const vehicle& veh, const int part, const bool detail) -> part_list_label {
+    const vehicle_part& vp = veh.cpart(part);
+    std::string partname = vp.name();
+
+    if (vp.is_fuel_store() && !vp.ammo_current().is_null()) {
+        if (detail) {
+            if (vp.ammo_current() == itype_battery) {
+                partname +=
+                    string_format(_(" (%s/%s charge)"), vp.ammo_remaining(), vp.ammo_capacity());
+            } else {
+                const itype* pt_ammo_cur = &*vp.ammo_current();
+                auto stack = units::legacy_volume_factor / pt_ammo_cur->stack_size;
+                partname += string_format(
+                    _(" (%.1fL %s)"), round_up(units::to_liter(vp.ammo_remaining() * stack), 1),
+                    item::nname(vp.ammo_current()));
+            }
+        } else {
+            partname += string_format(" (%s)", item::nname(vp.ammo_current()));
+        }
+    }
+
+    if (veh.part_flag(part, "CARGO")) {
+        //~ used/total volume of a cargo vehicle part
+        partname += string_format(
+            _(" (vol: %s/%s %s)"), format_volume(veh.stored_volume(part)),
+            format_volume(veh.max_volume(part)), volume_units_abbr());
+    }
+
+    if (veh.part_flag(part, "ARMOR")) { return {partname, "(", ")"}; }
+    if (veh.part_info(part).location == part_location_structure) { return {partname, "[", "]"}; }
+    return {partname, "-", "-"};
+}
+
 /**
  * Prints a list of all parts to the screen inside of a boxed window, possibly
  * highlighting a selected one.
@@ -181,47 +216,10 @@ auto vehicle::print_part_list(
             break;
         }
 
-        const vehicle_part& vp = parts[pl[i]];
-
-        std::string partname = vp.name();
-
-        if (vp.is_fuel_store() && !vp.ammo_current().is_null()) {
-            if (detail) {
-                if (vp.ammo_current() == itype_battery) {
-                    partname += string_format(
-                        _(" (%s/%s charge)"), vp.ammo_remaining(), vp.ammo_capacity());
-                } else {
-                    const itype* pt_ammo_cur = &*vp.ammo_current();
-                    auto stack = units::legacy_volume_factor / pt_ammo_cur->stack_size;
-                    partname += string_format(
-                        _(" (%.1fL %s)"), round_up(units::to_liter(vp.ammo_remaining() * stack), 1),
-                        item::nname(vp.ammo_current()));
-                }
-            } else {
-                partname += string_format(" (%s)", item::nname(vp.ammo_current()));
-            }
-        }
-
-        if (part_flag(pl[i], "CARGO")) {
-            //~ used/total volume of a cargo vehicle part
-            partname += string_format(
-                _(" (vol: %s/%s %s)"), format_volume(stored_volume(pl[i])),
-                format_volume(max_volume(pl[i])), volume_units_abbr());
-        }
-
-        bool armor = part_flag(pl[i], "ARMOR");
-        std::string left_sym;
-        std::string right_sym;
-        if (armor) {
-            left_sym = "(";
-            right_sym = ")";
-        } else if (part_info(pl[i]).location == part_location_structure) {
-            left_sym = "[";
-            right_sym = "]";
-        } else {
-            left_sym = "-";
-            right_sym = "-";
-        }
+        const auto label = part_list_label_of(*this, pl[i], detail);
+        const std::string& partname = label.name;
+        const std::string& left_sym = label.open;
+        const std::string& right_sym = label.close;
         nc_color sym_color = static_cast<int>(i) == hl ? hilite(c_light_gray) : c_light_gray;
         mvwprintz(win, point(1, y), sym_color, left_sym);
         trim_and_print(win, point(2, y), getmaxx(win) - 4,
