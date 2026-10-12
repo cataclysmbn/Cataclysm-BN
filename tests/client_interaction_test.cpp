@@ -5028,4 +5028,34 @@ TEST_CASE(
     }));
 }
 
+TEST_CASE(
+    "real spell menu details do not change between reads for any known spell",
+    "[client][interaction][mcp][magic]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    std::ranges::for_each(spell_type::get_all(), [&](const auto& type) {
+        you.magic->learn_spell(type.id, you, true);
+    });
+    auto reads = std::vector<game_client::interaction_snapshot>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        reads.push_back(game_client::current_interaction({.limit = 1000}));
+        reads.push_back(game_client::current_interaction({.limit = 1000}));
+        return resolve({
+            .input_id = reads.back().input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+
+    you.magic->select_spell(you);
+
+    REQUIRE(reads.size() == 2);
+    CHECK(reads[0].schema_id == reads[1].schema_id);
+    REQUIRE(reads[0].choices.size() == reads[1].choices.size());
+    for (const auto i : std::views::iota(std::size_t{}, reads[0].choices.size())) {
+        INFO(reads[0].choices[i].label);
+        CHECK(reads[0].choices[i].description == reads[1].choices[i].description);
+    }
+}
+
 #endif // CATA_MCP

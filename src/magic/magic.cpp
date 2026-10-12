@@ -2165,13 +2165,17 @@ auto spellcasting_callback::spell_info_text(const spell& sp, const int info_widt
             string_format(_("Only affects the monsters: %s"), target_ids));
     }
 
-    const int damage = sp.damage_as_character(guy);
+    // A random-damage spell rolls on every call; its range keeps the text stable between reads.
+    const auto random_damage = sp.has_flag(spell_flag::RANDOM_DAMAGE);
+    const int damage = random_damage ? 0 : sp.damage_as_character(guy);
+    const auto summoned = random_damage ? sp.damage_string(guy) : std::to_string(sp.damage());
+    const int summoned_count = random_damage ? 2 : sp.damage();
     std::string damage_string;
     std::string aoe_string;
     // if it's any type of attack spell, the stats are normal.
     if (fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack"
         || fx == "line_attack") {
-        if (damage > 0) {
+        if (damage > 0 || (random_damage && damage == 0)) {
             damage_string = string_format(
                 "%s: %s %s", _("Damage"), colorize(sp.damage_string(guy), sp.damage_type_color()),
                 colorize(sp.damage_type_string(), sp.damage_type_color()));
@@ -2194,12 +2198,11 @@ auto spellcasting_callback::spell_info_text(const spell& sp, const int info_widt
         if (sp.aoe() > 0) { aoe_string = string_format("%s: %d", _("Variance"), sp.aoe()); }
     } else if (fx == "spawn_item") {
         damage_string = string_format(
-            "%s %d %s", _("Spawn"), sp.damage(),
-            item::nname(itype_id(sp.effect_data()), sp.damage()));
+            "%s %s %s", _("Spawn"), summoned,
+            item::nname(itype_id(sp.effect_data()), summoned_count));
     } else if (fx == "summon") {
         damage_string = string_format(
-            "%s %d %s", _("Summon"), sp.damage(),
-            _(monster(mtype_id(sp.effect_data())).get_name()));
+            "%s %s %s", _("Summon"), summoned, _(monster(mtype_id(sp.effect_data())).get_name()));
         aoe_string = string_format("%s: %d", _("Spell Radius"), sp.aoe());
     } else if (fx == "ter_transform") {
         aoe_string = string_format("%s: %s", _("Spell Radius"), sp.aoe_string());
