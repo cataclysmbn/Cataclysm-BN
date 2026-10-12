@@ -28,8 +28,11 @@ struct feed_state {
     std::uint64_t next_explosion = 0;
     int last_bullet_index = -1;
     std::string last_projectile = {};
-    /// The projectile of the item being thrown, until it lands.
+    /// The projectile of the item being thrown, until its attack begins.
     std::string thrown_projectile = {};
+    /// The projectile of the attack in progress, and where its facts begin.
+    std::string current_projectile = {};
+    std::optional<std::size_t> flight_start = std::nullopt;
     std::size_t blast_step_start = 0;
     std::vector<presentation_value> pending = {};
     /// Blasts whose start is held back until something of them is seen, and those already announced.
@@ -57,11 +60,14 @@ auto step_ms() -> std::uint64_t
 {
     return static_cast<std::uint64_t>( std::max( 0, get_option<int>( "ANIMATION_DELAY" ) ) );
 }
-/// A shot flies under the ID of the throw that launched it, else under a new one.
+auto new_projectile( feed_state &feed ) -> std::string
+{
+    return "projectile:" + std::to_string( ++feed.next_projectile );
+}
+/// A shot flies under the ID of the attack in progress, else under a new one.
 auto shot_id( feed_state &feed ) -> std::string
 {
-    return feed.thrown_projectile.empty() ? "projectile:" + std::to_string( ++feed.next_projectile ) :
-           feed.thrown_projectile;
+    return feed.current_projectile.empty() ? new_projectile( feed ) : feed.current_projectile;
 }
 auto bullet_look( const char bullet, const std::string &custom_sprite ) -> look
 {
@@ -95,6 +101,7 @@ auto collect( const bool on ) -> void
 auto take() -> std::vector<presentation_value>
 {
     state().thrown_projectile.clear();
+    state().flight_start.reset();
     return std::exchange( state().pending, {} );
 }
 
@@ -137,9 +144,13 @@ auto record_line( const draw_sprite_line_options &options ) -> void
     std::erase( points, tripoint_bub_ms::zero() );
     points = only_seen( points );
     if( points.empty() ) { return; }
-    push( { .type = "projectile.moved", .id = shot_id( feed ),
-            .cells = path_of( points ), .appearance = bullet_look( '*', options.sprite ),
-            .duration_ms = step_ms() } );
+    // The line is drawn once the attack is over; it flew before whatever the attack hit.
+    auto flight = presentation_value{ .type = "projectile.moved", .id = shot_id( feed ),
+                                      .cells = path_of( points ), .appearance = bullet_look( '*', options.sprite ),
+                                      .duration_ms = step_ms() };
+    if( !feed.flight_start || feed.pending.size() >= maximum_pending ) { return push( std::move( flight ) ); }
+    feed.pending.insert( feed.pending.begin() + std::min( *feed.flight_start, feed.pending.size() ),
+                         std::move( flight ) );
 }
 
 auto begin_blast( const tripoint_bub_ms &at, const int radius, const bool fiery ) -> std::string
@@ -226,21 +237,50 @@ auto record_throw( const throw_options &options ) -> void
 {
     auto &feed = state();
     if( !feed.collecting || !( seen( options.from ) || seen( options.to ) ) ) { return; }
-    feed.thrown_projectile = "projectile:" + std::to_string( ++feed.next_projectile );
-    // The flight that follows is this projectile's, one square per animation step.
-    feed.last_projectile = feed.thrown_projectile;
-    feed.last_bullet_index = -1;
+    feed.thrown_projectile = new_projectile( feed );
     push( { .type = "item.thrown", .id = feed.thrown_projectile, .appearance = world::item_appearance( options.thrown ),
             .origin = world::position_at( options.from ), .target = world::position_at( options.to ),
             .entity = world::entity_id( options.by ) } );
 }
 
+flight_scope::flight_scope() : outer_id_( state().current_projectile ),
+    outer_start_( state().flight_start )
+{
+    auto &feed = state();
+    if( !feed.collecting ) { return; }
+    // A throw has minted the ID of its flight already.
+    feed.current_projectile = feed.thrown_projectile.empty() ? new_projectile( feed ) :
+                              std::exchange( feed.thrown_projectile, {} );
+    feed.last_projectile = feed.current_projectile;
+    feed.last_bullet_index = -1;
+    feed.flight_start = feed.pending.size();
+}
+
+flight_scope::~flight_scope()
+{
+    auto &feed = state();
+    feed.current_projectile = std::move( outer_id_ );
+    feed.flight_start = outer_start_;
+}
+
+auto mark() -> std::size_t { return state().pending.size(); }
+
+auto record_hit( const hit_options &options ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || !seen( options.at ) || feed.pending.size() >= maximum_pending ) { return; }
+    const auto disclosed = options.struck != nullptr && get_avatar().sees( *options.struck );
+    feed.pending.insert( feed.pending.begin() + std::min( options.mark, feed.pending.size() ), {
+        .type = "projectile.hit", .id = feed.current_projectile, .at = world::position_at( options.at ),
+        .entity = disclosed ? world::entity_id( *options.struck ) : std::string{}
+    } );
+}
+
 auto record_landing( const item &landed, const tripoint_bub_ms &at ) -> void
 {
     auto &feed = state();
-    auto id = std::exchange( feed.thrown_projectile, {} );
     if( !feed.collecting || !seen( at ) ) { return; }
-    push( { .type = "item.landed", .id = std::move( id ), .at = world::position_at( at ),
+    push( { .type = "item.landed", .id = feed.current_projectile, .at = world::position_at( at ),
             .appearance = world::item_appearance( landed ) } );
 }
 

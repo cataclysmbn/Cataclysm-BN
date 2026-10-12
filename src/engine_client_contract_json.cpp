@@ -465,6 +465,9 @@ auto to_json( const event_value &value ) -> json
         } else if( value.type == "item.landed" ) {
             data = {{"at", to_json( *fact.at )}, {"look", to_json( *fact.appearance )}};
             if( !fact.id.empty() ) { data["projectile"] = fact.id; }
+        } else if( value.type == "projectile.hit" ) {
+            data = {{"projectile", fact.id}, {"at", to_json( *fact.at )}};
+            if( !fact.entity.empty() ) { data["entity"] = fact.entity; }
         } else if( value.type == "entity.damaged" ) {
             data = {{"id", fact.entity}, {"amount", *fact.amount}};
             if( !fact.part.empty() ) { data["part"] = fact.part; }

@@ -2473,6 +2473,82 @@
           ]
         }
       }
+    },
+    {
+      "name": "projectile hit on a creature, then the damage it did",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "21",
+            "revision": "9",
+            "type": "projectile.moved",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:3",
+              "path": [
+                {
+                  "dim": "",
+                  "x": 63,
+                  "y": 4,
+                  "z": 0
+                }
+              ],
+              "look": {
+                "kind": "projectile",
+                "id": null,
+                "glyph": "*",
+                "color": "red"
+              }
+            },
+            "display": {
+              "duration_ms": 20
+            }
+          },
+          {
+            "sequence": "22",
+            "revision": "9",
+            "type": "projectile.hit",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:3",
+              "at": {
+                "dim": "",
+                "x": 63,
+                "y": 4,
+                "z": 0
+              },
+              "entity": "e:7"
+            }
+          },
+          {
+            "sequence": "23",
+            "revision": "9",
+            "type": "entity.damaged",
+            "command": "command:12",
+            "data": {
+              "id": "e:7",
+              "amount": 18
+            }
+          },
+          {
+            "sequence": "24",
+            "revision": "9",
+            "type": "projectile.hit",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:4",
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 4,
+                "z": 0
+              }
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [

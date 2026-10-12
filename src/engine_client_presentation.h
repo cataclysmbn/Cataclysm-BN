@@ -26,12 +26,12 @@ struct text_segment {
 /// One native animation fact: what the Tiles and curses renderers would draw, before any renderer.
 /// Transient: it changes no state.
 struct presentation_value {
-    /// `projectile.moved`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
+    /// `projectile.moved`, `projectile.hit`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
     /// `combat_text.shown`, `item.activated`, `item.thrown`, `item.landed`, `entity.damaged`,
     /// `terrain.changed`, `furniture.changed` or `field.changed`.
     std::string type = {};
     /// Opaque ID of the projectile or explosion; empty for combat text. An `item.landed` of an item
-    /// nobody threw has none.
+    /// no attack launched has none.
     std::string id = {};
     /// The path of a projectile or the squares of one blast ring, in drawing order.
     std::vector<position> cells = {};
@@ -43,7 +43,8 @@ struct presentation_value {
     /// `item.thrown`: where the item left from and where it was aimed.
     std::optional<position> origin = std::nullopt;
     std::optional<position> target = std::nullopt;
-    /// Opaque ID of the creature that threw (`item.thrown`) or was hurt (`entity.damaged`).
+    /// Opaque ID of the creature that threw (`item.thrown`), was hit (`projectile.hit`, when the avatar sees it) or was hurt
+    /// (`entity.damaged`).
     std::string entity = {};
     /// `entity.damaged`: the body part hit, when the creature has parts.
     std::string part = {};
@@ -108,6 +109,30 @@ struct throw_options {
 };
 /// The item leaves the thrower's hand. The projectile ID it mints is the one the flight and the landing carry.
 auto record_throw( const throw_options &options ) -> void;
+/// One projectile attack. Its throw, flight, hits and landing share one ID; a nested attack gives the outer
+/// one back when it ends.
+class flight_scope
+{
+    public:
+        flight_scope();
+        ~flight_scope();
+        flight_scope( const flight_scope & ) = delete;
+        auto operator=( const flight_scope & ) -> flight_scope & = delete; // *NOPAD*
+    private:
+        std::string outer_id_;
+        std::optional<std::size_t> outer_start_;
+};
+/// How many facts are pending now: where the facts an event causes begin.
+auto mark() -> std::size_t;
+struct hit_options {
+    tripoint_bub_ms at;
+    /// The creature struck; none for an obstacle.
+    const Creature *struck = nullptr;
+    /// The `mark` taken before the hit did anything: the hit goes before its effects.
+    std::size_t mark = 0;
+};
+/// The projectile of the current `flight_scope` strikes a creature or an obstacle.
+auto record_hit( const hit_options &options ) -> void;
 /// A thrown or fired item comes to rest.
 auto record_landing( const item &landed, const tripoint_bub_ms &at ) -> void;
 struct activation_options {
