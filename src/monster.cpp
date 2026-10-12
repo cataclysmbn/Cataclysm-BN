@@ -16,6 +16,7 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -2744,13 +2745,14 @@ void monster::set_hp( const int hp )
 }
 
 void monster::apply_damage( Creature *source, item *source_weapon, item *source_projectile,
-                            bodypart_id /*bp*/,
+                            bodypart_id bp,
                             int dam,
                             const bool /*bypass_med*/ )
 {
     if( is_dead_state() ) {
         return;
     }
+    engine_client::presentation::record_damage( { .hurt = *this, .part = bp, .amount = dam } );
     hp -= dam;
     if( hp < 1 ) {
         set_killer( source );

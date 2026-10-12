@@ -33,6 +33,7 @@
 #include "detached_ptr.h"
 #include "disease.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enchantments/enchantment.h"
 #include "event.h"
 #include "event_bus.h"
@@ -10142,6 +10143,7 @@ void Character::apply_damage( Creature *source, item *source_weapon, item *sourc
         debugmsg( "Wacky body part hurt!" );
         hurt = bodypart_id( "torso" );
     }
+    engine_client::presentation::record_damage( { .hurt = *this, .part = hurt, .amount = dam } );
 
     mod_pain( dam / 2 );
 
