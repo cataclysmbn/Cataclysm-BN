@@ -2714,6 +2714,9 @@
         "text": {
           "type": "string"
         },
+        "logged": {
+          "type": "boolean"
+        },
         "volume": {
           "type": "integer",
           "minimum": 0,
