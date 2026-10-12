@@ -5137,6 +5137,7 @@ TEST_CASE(
     clear_all_state();
     const auto guard = interaction_test_guard{};
     auto& you = get_avatar();
+    const auto forget_all = on_out_of_scope([&you]() { you.magic = pimpl<known_magic>(); });
     you.magic->learn_spell(spell_id("test_spell_pew"), you, true);
     auto snapshots = std::vector<game_client::interaction_snapshot>{};
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
@@ -5189,6 +5190,8 @@ TEST_CASE(
     clear_all_state();
     const auto guard = interaction_test_guard{};
     auto& you = get_avatar();
+    // The avatar is shared with later tests; forget every spell on the way out.
+    const auto forget_all = on_out_of_scope([&you]() { you.magic = pimpl<known_magic>(); });
     std::ranges::for_each(spell_type::get_all(), [&](const auto& type) {
         you.magic->learn_spell(type.id, you, true);
     });

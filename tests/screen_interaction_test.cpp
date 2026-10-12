@@ -154,7 +154,8 @@ TEST_CASE(
         CHECK(has_choice(snapshot, "action:RIGHT"));
         if (reads == 1) {
             // The part under the cursor is named; moving the cursor is a native direction action.
-            CHECK_FALSE(snapshot.message.empty());
+            REQUIRE(snapshot.vehicle.has_value());
+            CHECK_FALSE(snapshot.vehicle->parts.empty());
             return event_of({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,
