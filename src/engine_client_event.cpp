@@ -1,6 +1,7 @@
 #include "engine_client_event.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <set>
 #include <type_traits>
@@ -195,6 +196,37 @@ auto apply( state_value &value, const changes &delta ) -> std::expected<void, er
     if( delta.interaction ) { next.interaction = *delta.interaction; }
     value = std::move( next );
     return {};
+}
+
+auto read_cells( const cells_request &request, const snapshot &current )
+-> std::expected<cells_page, error>
+{
+    if( request.epoch != current.at.epoch ) { return std::unexpected( error::stale_epoch ); }
+    const auto box = bounds{ .min = request.min, .max = request.max };
+    if( box.min.dim != box.max.dim || box.min.z != box.max.z || box.min.x > box.max.x ||
+        box.min.y > box.max.y ) { return std::unexpected( error::validation_failed ); }
+    const auto width = std::int64_t{box.max.x} - box.min.x + 1;
+    const auto height = std::int64_t{box.max.y} - box.min.y + 1;
+    if( width * height > static_cast<std::int64_t>( cells_per_query ) ) {
+        return std::unexpected( error::resource_limit );
+    }
+    const auto &world = current.value.world;
+    auto page = cells_page{ .at = current.at };
+    for( auto y = box.min.y; y <= box.max.y; ++y ) {
+        for( auto x = box.min.x; x <= box.max.x; ++x ) {
+            const auto at = position{ .dim = box.min.dim, .x = x, .y = y, .z = box.min.z };
+            if( const auto known = world.cells.find( at ); known != world.cells.end() ) {
+                page.cells.push_back( known->second );
+            } else if( world.coverage && inside( *world.coverage, at ) ) {
+                page.forgotten.push_back( at );
+            }
+        }
+    }
+    // A page that cannot be sent is a recoverable error: the client asks for a smaller box.
+    if( serialize_cells( page ).size() > maximum_inline_bytes ) {
+        return std::unexpected( error::resource_limit );
+    }
+    return page;
 }
 
 auto classify( const changes &delta ) -> std::string

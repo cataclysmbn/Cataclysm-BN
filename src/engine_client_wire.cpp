@@ -193,6 +193,13 @@ auto read_request( const json &value, describe_request &result ) -> void
     result.boundary_id = id( value, "boundary_id" );
     result.target = read_position( value.at( "pos" ) );
 }
+auto read_request( const json &value, cells_request &result ) -> void
+{
+    members( value, {"epoch", "min", "max"} );
+    result.epoch = id( value, "epoch" );
+    result.min = read_position( value.at( "min" ) );
+    result.max = read_position( value.at( "max" ) );
+}
 auto read_request( const json &value, command_request &result ) -> void
 {
     members( value, {"epoch", "expect", "operation"} );
@@ -260,6 +267,9 @@ std::expected<choices_request, decode_error>
 auto decode_describe_request( std::string_view input ) ->
 std::expected<describe_request, decode_error>
 { return decode<describe_request>( input ); }
+auto decode_cells_request( std::string_view input ) ->
+std::expected<cells_request, decode_error>
+{ return decode<cells_request>( input ); }
 auto decode_command_request( std::string_view input ) ->
 std::expected<command_request, decode_error>
 { return decode<command_request>( input ); }

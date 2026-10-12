@@ -51,6 +51,8 @@ auto decode_choices_request( std::string_view input )
 -> std::expected<choices_request, decode_error>;
 auto decode_describe_request( std::string_view input )
 -> std::expected<describe_request, decode_error>;
+auto decode_cells_request( std::string_view input )
+-> std::expected<cells_request, decode_error>;
 auto decode_command_request( std::string_view input )
 -> std::expected<command_request, decode_error>;
 auto decode_result_request( std::string_view input )

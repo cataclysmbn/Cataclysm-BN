@@ -1105,6 +1105,115 @@
       }
     },
     {
+      "name": "world cells result",
+      "def": "world_cells_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "40",
+          "revision": "31"
+        },
+        "cells": [
+          {
+            "at": {
+              "dim": "",
+              "x": 3,
+              "y": 4,
+              "z": 0
+            },
+            "known": "visible",
+            "terrain": {
+              "kind": "terrain",
+              "id": "t_dirt",
+              "glyph": ".",
+              "color": "brown",
+              "looks_like": [
+                "t_grass"
+              ],
+              "subtile": "center",
+              "rotation": 0
+            },
+            "items": [
+              {
+                "kind": "item",
+                "id": "rock",
+                "glyph": "*",
+                "color": "light_gray"
+              },
+              {
+                "kind": "item",
+                "id": "corpse",
+                "glyph": "%",
+                "color": "light_gray",
+                "tile": "corpse_mon_zombie",
+                "looks_like": [
+                  "corpse"
+                ],
+                "stack": 3
+              }
+            ],
+            "light": 1,
+            "memory": {
+              "terrain": {
+                "kind": "terrain",
+                "id": "t_dirt",
+                "glyph": ".",
+                "color": "brown",
+                "subtile": "center",
+                "rotation": 0
+              }
+            },
+            "vehicle": {
+              "kind": "vehicle_part",
+              "id": "door",
+              "glyph": "+",
+              "color": "light_cyan",
+              "tile": "vp_door",
+              "looks_like": [
+                "vp_frame"
+              ],
+              "subtile": "open",
+              "rotation": 3,
+              "tint": {
+                "fg": "#445566"
+              }
+            },
+            "reviving": true
+          },
+          {
+            "at": {
+              "dim": "",
+              "x": 2,
+              "y": 4,
+              "z": 0
+            },
+            "known": "remembered",
+            "memory": {
+              "terrain": {
+                "kind": "terrain",
+                "id": "t_grass",
+                "glyph": "\"",
+                "color": "green",
+                "looks_like": [
+                  "t_dirt"
+                ],
+                "subtile": "edge",
+                "rotation": 1
+              }
+            }
+          }
+        ],
+        "forgotten": [
+          {
+            "dim": "",
+            "x": 4,
+            "y": 4,
+            "z": 0
+          }
+        ]
+      }
+    },
+    {
       "name": "submit travel click",
       "def": "submit_params",
       "value": {

@@ -442,6 +442,11 @@ auto serialize_command_result( const command_result &value ) -> std::string
     if( value.at ) { result["at"] = to_json( *value.at ); }
     return result.dump();
 }
+auto serialize_cells( const cells_page &page ) -> std::string
+{
+    return json{{"at", to_json( page.at )}, {"cells", to_array( page.cells )},
+        {"forgotten", to_array( page.forgotten )}}.dump();
+}
 auto serialize_events( const event_batch &batch ) -> std::string
 {
     auto events = json::array();

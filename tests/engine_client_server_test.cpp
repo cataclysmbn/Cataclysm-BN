@@ -377,6 +377,53 @@ TEST_CASE("interaction choices are a passive paged read", "[engine_client_server
     CHECK(test.authority.at() == before);
 }
 
+TEST_CASE("world cells are a passive read of the known box", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto before = test.authority.at();
+    const auto rng = rng_get_engine();
+    const auto state_before = serialize_snapshot(*test.authority.current())->header;
+    const auto epoch = test.authority.epoch();
+    const auto cells =
+        [&](const std::string& id, const std::string& min, const std::string& max,
+            const std::string& with = {}) {
+            return rpc(
+                "bn.world.cells",
+                R"({"epoch":")" + (with.empty() ? epoch : with) + R"(","min":)" + min + R"(,"max":)"
+                    + max + "}",
+                id);
+        };
+    const auto at = [](const int x, const int y, const int z = 0) {
+        return R"({"dim":"","x":)" + std::to_string(x) + R"(,"y":)" + std::to_string(y) + R"(,"z":)"
+             + std::to_string(z) + "}";
+    };
+    test.pump(
+        hello + cells("3", at(0, 0), at(3, 0)) + cells("4", at(0, 0), at(3, 0), "epoch:old")
+        + cells("5", at(3, 0), at(0, 0)) + cells("6", at(0, 0, 0), at(1, 0, 1))
+        + cells("7", at(0, -5), at(1000, 5)) + cells("8", at(0, 0), at(1, 0)));
+    const auto out = test.output.str();
+    // Known squares are the snapshot's cells; unknown squares inside the coverage are forgotten.
+    CHECK(contains(out, R"("id":3,"result":{"at":{"epoch":")" + epoch));
+    CHECK(contains(
+        out, R"("forgotten":[{"dim":"","x":0,"y":0,"z":0},{"dim":"","x":3,"y":0,"z":0}]})"));
+    CHECK(contains(out, R"("id":"t_dirt")"));
+    CHECK(contains(out, R"("known":"visible")"));
+    CHECK(contains(out, R"("id":8,"result":{"at":{"epoch":")" + epoch));
+    CHECK(contains(out, R"("forgotten":[{"dim":"","x":0,"y":0,"z":0}]})"));
+    // A stale epoch, an inverted box, a box across levels and an oversized box are refused.
+    CHECK(contains(out, R"("id":4,"error")"));
+    CHECK(contains(out, R"("kind":"stale_epoch")"));
+    CHECK(contains(out, R"("id":5,"error")"));
+    CHECK(contains(out, R"("id":6,"error")"));
+    CHECK(contains(out, R"("kind":"validation_failed")"));
+    CHECK(contains(out, R"("id":7,"error")"));
+    CHECK(contains(out, R"("kind":"resource_limit")"));
+    CHECK(test.authority.at() == before);
+    CHECK(rng_get_engine() == rng);
+    CHECK(serialize_snapshot(*test.authority.current())->header == state_before);
+}
+
 TEST_CASE("a registered action is submittable as a command", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
