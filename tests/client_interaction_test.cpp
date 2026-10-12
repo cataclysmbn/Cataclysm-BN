@@ -2424,6 +2424,50 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "ground pickup rows publish the native stolen marker and item symbol, and the window placement",
+    "[client][interaction][pickup][mcp]") {
+    const auto guard = interaction_test_guard{};
+    const auto fixture = pickup_fixture_guard{};
+    const auto symbols = override_option("ITEM_SYMBOLS", "true");
+    const auto position = override_option("PICKUP_POSITION", "right");
+    g->faction_manager_ptr->create_if_needed();
+    auto& owner = spawn_npc(pickup_test_pos + tripoint_north, "test_talker");
+    owner.set_fac(faction_id("free_merchants"));
+    const auto id = itype_id("test_screwdriver");
+    auto& stolen = add_ground_item(id);
+    stolen.set_owner(owner);
+    const auto own = itype_id("test_1kg_cube");
+    add_ground_item(own);
+    auto checked = false;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        const auto markup = [&](const itype_id& type) {
+            const auto row = std::ranges::find(snapshot.choices, type.str(), [](const auto& c) {
+                return c.columns[0].value;
+            });
+            REQUIRE(row != snapshot.choices.end());
+            const auto found = std::ranges::
+                find(row->columns, "Name markup", &game_client::interaction_column::label);
+            REQUIRE(found != row->columns.end());
+            return found->value;
+        };
+        CHECK(markup(id).starts_with("<color_light_red>!</color> "));
+        CHECK(markup(id).find(item::spawn(id)->symbol() + " ") != std::string::npos);
+        CHECK_FALSE(markup(own).starts_with("<color_light_red>!</color>"));
+        CHECK(markup(own).starts_with(item::spawn(own)->symbol() + " "));
+        REQUIRE(snapshot.panes.size() == 1);
+        CHECK(snapshot.panes.front().area_id == "right");
+        checked = true;
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
+    CHECK(checked);
+}
+
+TEST_CASE(
     "semantic ground pickup preserves whole zero filter and stale validation",
     "[client][interaction][pickup][mcp]") {
     const auto guard = interaction_test_guard{};

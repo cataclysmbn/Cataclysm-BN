@@ -700,11 +700,38 @@ auto pickup_interaction_message( const pickup_interaction_options &opts ) -> std
     return message;
 }
 
-/// The native row text with its color tags: the stack size in front, the charges colored.
-auto name_markup( const item &candidate, const std::size_t stack_size ) -> std::string
+/// The native row text with its color tags: the stack size in front, the charges colored, money as cards and cash.
+auto name_markup( const std::list<item_stack::iterator> &stack,
+                  const pickup_count &selection ) -> std::string
 {
-    const auto name = candidate.display_name( stack_size );
-    return stack_size > 1 ? string_format( "%d %s", stack_size, name ) : name;
+    const auto &candidate = **stack.front();
+    auto name = std::string{};
+    if( candidate.is_money() ) {
+        const auto sum_charges = []( const auto & iters ) {
+            return std::ranges::fold_left( iters, 0u, []( const auto sum, const auto iter ) { return sum + ( *iter )->charges; } );
+        };
+        const auto charges_total = sum_charges( stack );
+        const auto partial = selection.pick && selection.count;
+        name = partial ? candidate.display_money( *selection.count, charges_total,
+                sum_charges( stack | std::views::take( *selection.count ) ) ) :
+               candidate.display_money( stack.size(), charges_total );
+    } else {
+        name = candidate.display_name( stack.size() );
+    }
+    return stack.size() > 1 ? string_format( "%d %s", stack.size(), name ) : name;
+}
+
+/// The row as the native list prints it: the ITEM_SYMBOLS glyph, and a red `!` before an item that is not the avatar's.
+auto row_markup( const std::list<item_stack::iterator> &stack,
+                 const pickup_count &selection ) -> std::string
+{
+    const auto &candidate = **stack.front();
+    auto name = name_markup( stack, selection );
+    if( get_option<bool>( "ITEM_SYMBOLS" ) ) {
+        name = string_format( "%s %s", candidate.symbol(), name );
+    }
+    return candidate.is_owned_by( g->u, true ) ? name : string_format( "<color_light_red>!</color> %s",
+            name );
 }
 
 auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
@@ -722,6 +749,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         .id = game_client::opaque_interaction_id( "pickup-pane", { "pickup" } ),
         .label = snapshot.title,
         .role = "pickup",
+        .area_id = get_option<std::string>( "PICKUP_POSITION" ),
         .area_label = snapshot.title,
         .filter = opts.filter,
         .totals = game_client::interaction_totals{
@@ -758,7 +786,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         }
         snapshot.choices.push_back( {
             .id = ids[visible_index],
-            .label = remove_color_tags( name_markup( candidate, stack.size() ) ),
+            .label = remove_color_tags( name_markup( stack, selection ) ),
             .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
             .hotkey = visible_index < opts.hotkeys.size() ? std::string( 1, opts.hotkeys[visible_index] ) : std::string{},
             .enabled = true,
@@ -771,7 +799,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
                 { .label = _( "Nesting" ), .value = std::move( nesting ) },
                 { .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
                 { .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
-                { .label = "Name markup", .value = name_markup( candidate, stack.size() ) },
+                { .label = "Name markup", .value = row_markup( stack, selection ) },
                 { .label = "Row color", .value = string_from_color( candidate.color_in_inventory() ) },
             },
             .selected_count = static_cast<std::uint64_t>( selected_count ),
