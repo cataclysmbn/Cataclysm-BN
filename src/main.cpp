@@ -663,7 +663,10 @@ auto run_game( int argc, char *argv[] ) -> int
 
     catacurses::curs_set( 0 ); // Invisible cursor here, because MAPBUFFER.load() is crash-prone
 
-    client_platform::install_quit_handler( selected_client == game_client::client_kind::curses );
+    // The mcp session already named SIGINT; the immediate-exit handler would free() inside the signal.
+    if( selected_client != game_client::client_kind::mcp ) {
+        client_platform::install_quit_handler( selected_client == game_client::client_kind::curses );
+    }
 
     prompt_select_lang_on_startup();
     replay_buffered_debugmsg_prompts();
