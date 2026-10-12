@@ -19,9 +19,11 @@
 #    include <functional>
 #    include <sstream>
 #    include <string>
+#    include <thread>
 #    include <vector>
 
 #    if !defined(_WIN32)
+#        include <csignal>
 #        include <fcntl.h>
 #        include <sys/socket.h>
 #        include <sys/un.h>
@@ -1556,6 +1558,54 @@ TEST_CASE(
     CHECK(replaced);
     replaced->reset();
     CHECK_FALSE(std::filesystem::exists(stale));
+}
+
+TEST_CASE(
+    "a non-blocking stdout that is full delays frames without losing or reordering them",
+    "[engine_client_socket]") {
+    auto ends = std::array<int, 2>{};
+    REQUIRE(pipe(ends.data()) == 0);
+    REQUIRE(fcntl(ends[1], F_SETFL, fcntl(ends[1], F_GETFL) | O_NONBLOCK) == 0);
+    auto expected = std::string{};
+    auto wrote = false;
+    auto writer = std::thread{[&] {
+        auto out = std::ostream{bn::mcp::make_fd_output(ends[1]).release()};
+        for (auto frame = 0; frame < 64; ++frame) {
+            out << std::string(4096, static_cast<char>('a' + frame % 26)) << '\n' << std::flush;
+        }
+        wrote = out.good();
+        delete out.rdbuf();
+    }};
+    for (auto frame = 0; frame < 64; ++frame) {
+        expected += std::string(4096, static_cast<char>('a' + frame % 26)) + '\n';
+    }
+    // The pipe holds 64 KiB, less than the 256 KiB sent: the reader stalls while it is full.
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    auto received = std::string{};
+    auto chunk = std::array<char, 1000>{};
+    while (received.size() < expected.size()) {
+        const auto got = read(ends[0], chunk.data(), chunk.size());
+        if (got <= 0) { break; }
+        received.append(chunk.data(), static_cast<std::size_t>(got));
+        std::this_thread::sleep_for(std::chrono::microseconds(200));
+    }
+    close(ends[0]);
+    writer.join();
+    CHECK(wrote);
+    CHECK(received == expected);
+}
+
+TEST_CASE(
+    "a stdout whose reader left fails the stream instead of ending the process",
+    "[engine_client_socket]") {
+    std::signal(SIGPIPE, SIG_IGN);
+    auto ends = std::array<int, 2>{};
+    REQUIRE(pipe(ends.data()) == 0);
+    close(ends[0]);
+    auto out = std::ostream{bn::mcp::make_fd_output(ends[1]).release()};
+    out << "frame\n" << std::flush;
+    CHECK_FALSE(out.good());
+    delete out.rdbuf();
 }
 #    endif
 
