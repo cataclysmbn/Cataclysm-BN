@@ -711,6 +711,55 @@
       }
     },
     {
+      "name": "construction menu rows with tabs and requirements",
+      "def": "choices_result",
+      "value": {
+        "boundary_id": "boundary:91",
+        "total": 3,
+        "choices": [
+          {
+            "id": "tab:ALL",
+            "label": "All",
+            "description": "",
+            "denial": "",
+            "enabled": true,
+            "selectable": true,
+            "selected": false,
+            "columns": []
+          },
+          {
+            "id": "tab:WALLS",
+            "label": "Walls",
+            "description": "",
+            "denial": "",
+            "enabled": true,
+            "selectable": true,
+            "selected": true,
+            "columns": []
+          },
+          {
+            "id": "construction:4f2a",
+            "label": "Build Wooden Wall",
+            "description": "Wooden Wall\n\nStage/Variant #1: wooden wall\nMove cost: 0\nBash str: 12 - 40\nResult: A wall made of wood.\nRequired skills: fabrication (1)\nRequires: floor\nTime to complete: 1 h 30 m\nTools required:\n  hammer\nComponents required:\n  2x4 (10)\n  nail (20)",
+            "denial": "",
+            "enabled": true,
+            "selectable": true,
+            "selected": true,
+            "columns": [
+              {
+                "label": "Favorite",
+                "value": "no"
+              },
+              {
+                "label": "Buildable",
+                "value": "yes"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "name": "submit choose",
       "def": "submit_params",
       "value": {
