@@ -700,6 +700,13 @@ auto pickup_interaction_message( const pickup_interaction_options &opts ) -> std
     return message;
 }
 
+/// The native row text with its color tags: the stack size in front, the charges colored.
+auto name_markup( const item &candidate, const std::size_t stack_size ) -> std::string
+{
+    const auto name = candidate.display_name( stack_size );
+    return stack_size > 1 ? string_format( "%d %s", stack_size, name ) : name;
+}
+
 auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
 -> game_client::interaction_snapshot
 {
@@ -751,7 +758,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         }
         snapshot.choices.push_back( {
             .id = ids[visible_index],
-            .label = remove_color_tags( stack.size() > 1 ? string_format( "%d %s", stack.size(), candidate.display_name( stack.size() ) ) : candidate.display_name( stack.size() ) ),
+            .label = remove_color_tags( name_markup( candidate, stack.size() ) ),
             .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
             .hotkey = visible_index < opts.hotkeys.size() ? std::string( 1, opts.hotkeys[visible_index] ) : std::string{},
             .enabled = true,
@@ -764,6 +771,7 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
                 { .label = _( "Nesting" ), .value = std::move( nesting ) },
                 { .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
                 { .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
+                { .label = "Name markup", .value = name_markup( candidate, stack.size() ) },
                 { .label = "Row color", .value = string_from_color( candidate.color_in_inventory() ) },
             },
             .selected_count = static_cast<std::uint64_t>( selected_count ),

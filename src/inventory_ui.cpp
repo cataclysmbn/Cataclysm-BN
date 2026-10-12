@@ -2094,7 +2094,8 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
                 } );
             }
             // What the native column prints around the cells: the category header the row sits under,
-            // the color of its text, and the color of its key.
+            // its name with the native color tags, the color of its text, and the color of its key.
+            columns.push_back( { .label = "Name markup", .value = preset.get_cell_text( entry, 0 ) } );
             columns.push_back( { .label = "Category", .value = entry.get_category_ptr()->name() } );
             columns.push_back( { .label = "Row color", .value = string_from_color( preset.get_color( entry ) ) } );
             columns.push_back( { .label = "Key color", .value = string_from_color( entry.get_invlet_color() ) } );
