@@ -395,4 +395,40 @@ TEST_CASE(
     CHECK(stage == 3);
 }
 
+TEST_CASE(
+    "looking around moves its cursor and the view on set_target",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = screen_guard{};
+    const auto start = you.bub_pos();
+    const auto east = game_client::interaction_position{start.x() + 3, start.y() + 1, start.z()};
+    auto stage = 0;
+    open_screen(
+        [] { g->look_around(); },
+        [&](const auto& snapshot) {
+            switch (stage++) {
+                case 0: {
+                    REQUIRE(snapshot.target.has_value());
+                    CHECK(snapshot.target->cursor
+                          == game_client::interaction_position{start.x(), start.y(), start.z()});
+                    const auto command = game_client::interaction_command{
+                        .input_id = snapshot.input_id,
+                        .operation = game_client::interaction_operation::set_target,
+                        .position = east};
+                    return event_of({.interaction = command});
+                }
+                case 1:
+                    CHECK(snapshot.target->cursor == east);
+                    return cancel(snapshot);
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 2);
+}
+
 #endif // CATA_MCP

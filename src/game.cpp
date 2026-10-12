@@ -9655,6 +9655,10 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                 .target = game_client::interaction_target{
                     .source = position_of( u.bub_pos() ),
                     .cursor = position_of( lp ),
+                    .minimum_position = game_client::interaction_position{ .x = 0, .y = 0, .z = -OVERMAP_DEPTH },
+                    .maximum_position = game_client::interaction_position{
+                        .x = g_mapsize_x - 1, .y = g_mapsize_y - 1, .z = OVERMAP_HEIGHT },
+                    .range = std::max( g_mapsize_x, g_mapsize_y ),
                     .distance_metric = "square",
                     .status = is_moving_zone ? "zone_move" : !select_zone ? "look" :
                     has_first_point ? "zone_second" : "zone_first",
@@ -9671,6 +9675,14 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             action = "QUIT";
         }
         ( void ) zone_blink; // kept for callback signature
+        if( const auto &event = ctxt.get_raw_input(); event.interaction &&
+            event.interaction->operation == game_client::interaction_operation::set_target ) {
+            const auto position = *event.interaction->position;
+            const auto moved = tripoint_bub_ms( position.x, position.y, position.z );
+            center += moved - lp;
+            lp = moved;
+            continue;
+        }
         if( action == "LIST_ITEMS" ) {
             list_items_monsters();
         } else if( action == "TOGGLE_FAST_SCROLL" ) {
