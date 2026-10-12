@@ -3555,12 +3555,13 @@ TEST_CASE(
                     step = 1;
                     return resolve_action("FILTER");
                 }
-                if (step == 2 && snapshot.choices.empty()) {
+                if (step == 2 && recipe_rows(snapshot).choices.empty()) {
                     return resolve_action("TOGGLE_UNAVAILABLE_CONSTRUCTIONS");
                 }
                 if (step == 2) {
-                    REQUIRE(snapshot.choices.size() == 1);
-                    const auto& choice = snapshot.choices.front();
+                    const auto rows = recipe_rows(snapshot).choices;
+                    REQUIRE(rows.size() == 1);
+                    const auto& choice = rows.front();
                     CHECK_FALSE(choice.enabled);
                     CHECK(choice.selectable);
                     CHECK_FALSE(choice.denial.empty());
@@ -3595,7 +3596,7 @@ TEST_CASE(
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,
-                .target_id = snapshot.choices.front().id,
+                .target_id = recipe_rows(snapshot).choices.front().id,
             });
         });
         CHECK_FALSE(construction_menu(false));
@@ -3608,16 +3609,15 @@ TEST_CASE(
         uistate.construction_filter = "TEST semantic unavailable construction";
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
-            if (snapshot.choices.empty()) {
-                return resolve_action("TOGGLE_UNAVAILABLE_CONSTRUCTIONS");
-            }
+            const auto rows = recipe_rows(snapshot).choices;
+            if (rows.empty()) { return resolve_action("TOGGLE_UNAVAILABLE_CONSTRUCTIONS"); }
             REQUIRE(snapshot.context == "CONSTRUCTION");
-            REQUIRE(snapshot.choices.size() == 1);
-            CHECK(snapshot.choices.front().enabled);
+            REQUIRE(rows.size() == 1);
+            CHECK(rows.front().enabled);
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,
-                .target_id = snapshot.choices.front().id,
+                .target_id = recipe_rows(snapshot).choices.front().id,
             });
         });
         const auto result = construction_menu(true);
@@ -3627,6 +3627,104 @@ TEST_CASE(
         CHECK_FALSE(you.activity);
         CHECK(you.amount_of(itype_id("test_1kg_cube")) == material_before);
     }
+}
+
+TEST_CASE(
+    "construction menu publishes category tabs, search and requirements",
+    "[client][interaction][construction][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto restore_filter = restore_on_out_of_scope<decltype(uistate.construction_filter)>(
+        uistate.construction_filter);
+    const auto restore_tab = restore_on_out_of_scope<decltype(uistate.construction_tab)>(
+        uistate.construction_tab);
+    uistate.construction_filter.clear();
+    build_test_map(ter_id("t_floor"));
+    add_crafting_fixture_item(get_avatar(), itype_id("e_scrap"), 2);
+    get_avatar().invalidate_crafting_inventory();
+    const auto choose = [](const game_client::interaction_snapshot& snapshot, const auto& id) {
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::choose,
+            .target_id = id,
+        });
+    };
+    const auto tabs = [](const game_client::interaction_snapshot& snapshot) {
+        return snapshot.choices
+             | std::views::filter([](const auto& choice) { return choice.id.starts_with("tab:"); })
+             | std::ranges::to<std::vector>();
+    };
+    auto step = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction({.limit = 200});
+        REQUIRE(snapshot.context == "CONSTRUCTION");
+        const auto rows = recipe_rows(snapshot).choices;
+        const auto mine = std::ranges::
+            find(rows, "TEST semantic construction", &game_client::interaction_choice::label);
+        switch (step++) {
+            case 0: {
+                const auto all_tabs = tabs(snapshot);
+                CHECK(all_tabs.size() > 2);
+                CHECK(std::ranges::count_if(all_tabs, &game_client::interaction_choice::selected)
+                      == 1);
+                CHECK(snapshot.panes.size() == all_tabs.size());
+                REQUIRE(snapshot.field);
+                CHECK(snapshot.field->id == "filter");
+                CHECK_FALSE(snapshot.field->description.empty());
+                CHECK_FALSE(snapshot.field->description.contains("<color"));
+                REQUIRE(
+                    std::ranges::find(all_tabs, "tab:OTHER", &game_client::interaction_choice::id)
+                    != all_tabs.end());
+                return choose(snapshot, "tab:OTHER");
+            }
+            case 1: {
+                const auto selected =
+                    tabs(snapshot)
+                    | std::views::filter([](const auto& choice) { return choice.selected; })
+                    | std::ranges::to<std::vector>();
+                REQUIRE(selected.size() == 1);
+                CHECK(selected.front().id == "tab:OTHER");
+                REQUIRE(mine != rows.end());
+                // Requirements arrive with the row as plain text: time, terrain, components.
+                CHECK(mine->description.contains("Time to complete"));
+                CHECK(mine->description.contains("Requires"));
+                CHECK(mine->description.contains("scrap"));
+                CHECK_FALSE(mine->description.contains("<color"));
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::fill,
+                    .target_id = "filter",
+                    .value = "no such construction",
+                    .submit = true,
+                });
+            }
+            case 2: {
+                // A search replaces the category tabs by one, as natively.
+                CHECK(rows.empty());
+                REQUIRE(tabs(snapshot).size() == 1);
+                CHECK(tabs(snapshot).front().id == "tab:FILTER");
+                REQUIRE(snapshot.field);
+                CHECK(snapshot.field->value == "no such construction");
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::fill,
+                    .target_id = "filter",
+                    .value = "",
+                    .submit = true,
+                });
+            }
+            default: {
+                CHECK(tabs(snapshot).size() > 2);
+                return resolve({
+                    .input_id = snapshot.input_id,
+                    .operation = game_client::interaction_operation::cancel,
+                });
+            }
+        }
+    });
+    CHECK_FALSE(construction_menu(false));
+    CHECK(step == 4);
 }
 
 TEST_CASE(
