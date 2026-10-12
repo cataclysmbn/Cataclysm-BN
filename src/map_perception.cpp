@@ -457,17 +457,31 @@ auto visible_at( const map &here, const tripoint_bub_ms &p ) -> bool
 
 auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
 {
-    auto result = std::vector<tripoint_bub_ms> {};
     const auto &you = get_avatar();
     // A blind avatar sees only within clairvoyance, which needs the per-cell test.
     const auto blind = you.is_blind();
-    if( blind && you.clairvoyance() == 0 ) { return result; }
+    if( blind && you.clairvoyance() == 0 ) { return {}; }
     const auto &vision = here.get_visibility_variables_cache();
     // Classify each light level once instead of calling the map per cell.
-    auto clear = std::array < bool, static_cast<size_t>( lit_level::BLANK ) + 1 > {};
+    using clear_levels = std::array < bool, static_cast<size_t>( lit_level::BLANK ) + 1 >;
+    auto clear = clear_levels {};
     for( const auto level : std::views::iota( 0, static_cast<int>( clear.size() ) ) ) {
         clear[level] = here.get_visibility( static_cast<lit_level>( level ), vision ) == VIS_CLEAR;
     }
+    // Scanning every level of every square costs about a millisecond, and a refresh of the visibility
+    // caches is the only thing that changes what they hold: a capture without one reuses the last scan.
+    struct scan {
+        const map *owner = nullptr;
+        size_t refreshes = 0;
+        clear_levels clear{};
+        std::vector<tripoint_bub_ms> cells;
+    };
+    static auto last = scan{};
+    if( !blind && last.owner == &here && last.refreshes == visibility_refresh_count() &&
+        last.clear == clear ) {
+        return last.cells;
+    }
+    auto result = std::vector<tripoint_bub_ms> {};
     for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
         const auto &cache = here.access_cache( z );
         if( cache.visibility_cache.size() < static_cast<size_t>( cache.cache_x * cache.cache_y ) ) { continue; }
@@ -481,6 +495,7 @@ auto visible_cells( const map &here ) -> std::vector<tripoint_bub_ms>
             }
         }
     }
+    if( !blind ) { last = { .owner = &here, .refreshes = visibility_refresh_count(), .clear = clear, .cells = result }; }
     return result;
 }
 
