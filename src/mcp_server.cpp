@@ -766,6 +766,15 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !text ) { return fail( text.error() ); }
         return rpc::make_result( request, serialize_description( *text ) );
     }
+    if( request.method == "bn.world.cells" ) {
+        const auto decoded = decode_cells_request( params );
+        if( !decoded ) { return invalid(); }
+        const auto current = session_.current();
+        if( !current ) { return fail( current.error() ); }
+        const auto page = read_cells( *decoded, *current );
+        if( !page ) { return fail( page.error() ); }
+        return rpc::make_result( request, serialize_cells( *page ) );
+    }
     if( request.method == "bn.command.submit" ) {
         const auto decoded = decode_command_request( params );
         if( !decoded ) { return invalid(); }
@@ -822,7 +831,7 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
         const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
                                method == "bn.interrupt" || method == "bn.subscribe" ||
                                method == "bn.unsubscribe" || method == "bn.interaction.choices" ||
-                               method == "bn.world.describe" ||
+                               method == "bn.world.describe" || method == "bn.world.cells" ||
                                method == "bn.command.submit" || method == "bn.command.result";
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};
         if( is_direct ) {

@@ -1172,6 +1172,55 @@ Deno.test({
 })
 
 Deno.test({
+  name: "stdio: world cells reads a box of what the avatar knows without changing it",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      const here = session.mirror.avatar.at
+      const epoch = session.mirror.at.epoch
+      const query = (min: Value, max: Value, id = epoch) =>
+        client.request("bn.world.cells", { epoch: id, min, max })
+      const key = (pos: Value) => `${pos.dim}|${pos.x}|${pos.y}|${pos.z}`
+      const before = JSON.stringify(session.mirror.state())
+      const box = {
+        min: { ...here, x: here.x - 3, y: here.y - 3 },
+        max: { ...here, x: here.x + 3, y: here.y + 3 },
+      }
+      const read = await query(box.min, box.max)
+      assertEquals(read.result.at, session.mirror.at, JSON.stringify(read))
+      // Every square of the box is either the mirror's cell, byte for byte, or forgotten.
+      const forgotten = new Set(read.result.forgotten.map((pos: Value) => key(pos)))
+      assertEquals(read.result.cells.length + forgotten.size <= 49, true)
+      assert(read.result.cells.length > 0, "the avatar knows its surroundings")
+      for (const cell of read.result.cells) {
+        assertEquals(cell, session.mirror.cells.get(key(cell.at)), key(cell.at))
+      }
+      for (const pos of read.result.forgotten) {
+        assertEquals(session.mirror.cells.has(key(pos)), false, key(pos))
+      }
+      assertEquals(JSON.stringify(session.mirror.state()), before)
+      // Inverted, cross-level, oversized and stale-epoch queries are refused with their kinds.
+      const inverted = await query(box.max, box.min)
+      assertEquals(inverted.error.data.kind, "validation_failed")
+      const levels = await query(box.min, { ...box.max, z: here.z + 1 })
+      assertEquals(levels.error.data.kind, "validation_failed")
+      const large = await query(box.min, { ...box.max, x: here.x + 64, y: here.y + 64 })
+      assertEquals(large.error.data.kind, "resource_limit")
+      const stale = await query(box.min, box.max, "epoch:old")
+      assertEquals(stale.error.data.kind, "stale_epoch")
+      assertEquals(stale.error.data.action, "subscribe")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: the native mouse view describes a square and a context click is the right button",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
@@ -1486,6 +1535,11 @@ Deno.test({
             epoch: old,
             boundary_id: expect.boundary_id,
             pos: { dim: "", x: 0, y: 0, z: 0 },
+          }],
+          ["bn.world.cells", {
+            epoch: old,
+            min: { dim: "", x: 0, y: 0, z: 0 },
+            max: { dim: "", x: 1, y: 1, z: 0 },
           }],
         ] as [string, Value][]
       ) {

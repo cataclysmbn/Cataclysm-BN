@@ -157,6 +157,20 @@ auto apply_batch( snapshot &receiver, const event_batch &batch ) -> std::expecte
 /// `type` for a published change set, e.g. `cells.seen`.
 auto classify( const changes &delta ) -> std::string;
 
+/// What the avatar knows inside a box of one level, as of `at`.
+struct cells_page {
+    clock_point at = {};
+    std::vector<cell> cells = {};
+    /// Squares of the box inside the loaded coverage that the avatar knows nothing about.
+    std::vector<position> forgotten = {};
+};
+/// Passive read of `current` for `bn.world.cells`. `stale_epoch` for another epoch,
+/// `validation_failed` for a box that is inverted, spans levels or dimensions, and
+/// `resource_limit` for more than cells_per_query squares or a page too large to send.
+auto read_cells( const cells_request &request, const snapshot &current )
+-> std::expected<cells_page, error>;
+auto serialize_cells( const cells_page &page ) -> std::string;
+
 /// Params of `bn.events`.
 auto serialize_events( const event_batch &batch ) -> std::string;
 /// A snapshot as it goes on the wire: the `bn.subscribe` result, then one `bn.snapshot.part`

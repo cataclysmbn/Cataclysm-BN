@@ -121,6 +121,12 @@ struct tile_description {
 auto describe_tile( const describe_request &request, const std::string &epoch )
 -> std::expected<tile_description, error>;
 
+struct cells_request {
+    std::string epoch = {};
+    position min;
+    position max;
+};
+
 struct registered_action {
     std::string id = {};
 };
