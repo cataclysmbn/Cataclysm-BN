@@ -1,0 +1,90 @@
+#pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <expected>
+#include <iosfwd>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+
+#include "mcp_server.h"
+
+namespace bn::mcp
+{
+
+struct socket_options {
+    /// The most bytes of unsent output a connection may hold before it is dropped.
+    std::size_t output_bound = std::size_t { 16 * 1024 * 1024 };
+};
+
+/// Serves the protocol on a local stream socket (a Unix domain socket; on Windows 10 and later,
+/// AF_UNIX) to several connections at once, each with the newline-delimited JSON-RPC framing of
+/// stdio and its own `server`: its own hello, credits, held frames and subscription.
+///
+/// The first connection, and any connection made while there is none, is the controller: it
+/// alone may command the game. Every other connection is a spectator and gets the read-only
+/// role. A connection that fails or closes is dropped without touching the others.
+///
+/// Sockets never block the game: output goes to a bounded per-connection buffer written without
+/// waiting, and a connection that lets it fill up is dropped. The controller's input is the only
+/// read the game waits for, as with stdio; while it waits, the others are served.
+class socket_hub
+{
+    public:
+        /// The most connections served at once; further ones are closed at once.
+        static constexpr auto maximum_connections = std::size_t { 8 };
+
+        /// Bind `path`, replacing a stale socket file that nothing answers on.
+        static auto listen( const std::string &path, const mcp_host &host, socket_options options = {} ) ->
+        std::expected<std::unique_ptr<socket_hub>, std::string>;
+        ~socket_hub();
+        socket_hub( const socket_hub & ) = delete;
+        auto operator=( const socket_hub & ) -> socket_hub & = delete; // *NOPAD*
+
+        /// The controller's server and streams.
+        struct endpoint {
+            server &protocol;
+            std::istream &in;
+            std::ostream &out;
+        };
+        auto controller() -> std::optional<endpoint>;
+        /// Whether serving the controller would not wait: a whole frame, or its end, has arrived.
+        auto controller_ready() -> bool;
+        /// Wait up to `wait_ms` for the controller's input, serving the others meanwhile; false when
+        /// none came.
+        auto wait_controller_ready( int wait_ms ) -> bool;
+        /// Drop the controller after its server ended or failed; its open command is interrupted.
+        auto drop_controller() -> void;
+
+        /// Accept connections, serve the spectators' frames and send pending output, waiting up to
+        /// `wait_ms` (negative: until something happens) for any of that to be possible.
+        auto service( int wait_ms ) -> void;
+        /// Send what the session published to every connection but the controller.
+        auto flush_spectators() -> void;
+        /// Tell every connection that said hello the engine is alive.
+        auto heartbeat() -> void;
+        auto notify_loading( const game_client::loading_progress &progress ) -> void;
+        /// Interrupt what is outstanding and write the notifications that caused, for shutdown.
+        auto finish() -> void;
+
+        auto connections() const -> std::size_t;
+
+    private:
+        struct connection;
+        socket_hub( std::intptr_t listener, std::string path, mcp_host host, socket_options options );
+
+        std::intptr_t listener_;
+        std::string path_;
+        mcp_host host_;
+        socket_options options_;
+        std::vector<std::unique_ptr<connection>> connections_;
+
+        auto accept_all() -> void;
+        auto serve( connection &spectator ) -> void;
+        auto reap() -> void;
+        auto wait_for_controller_input() -> bool;
+};
+
+} // namespace bn::mcp

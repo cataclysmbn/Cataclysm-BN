@@ -7,15 +7,26 @@
 #    include "input.h"
 #    include "json.h"
 #    include "mcp_server.h"
+#    include "mcp_socket.h"
 #    include "messages.h"
 #    include "rng.h"
 
 #    include <algorithm>
+#    include <array>
 #    include <chrono>
+#    include <filesystem>
+#    include <fstream>
 #    include <functional>
 #    include <sstream>
 #    include <string>
 #    include <vector>
+
+#    if !defined(_WIN32)
+#        include <fcntl.h>
+#        include <sys/socket.h>
+#        include <sys/un.h>
+#        include <unistd.h>
+#    endif
 
 namespace {
 using namespace engine_client;
@@ -1229,5 +1240,323 @@ TEST_CASE(
     CHECK_FALSE(contains(watcher.output.str(), R"("method":"bn.events")"));
     CHECK(contains(test.output.str(), R"("method":"bn.events")"));
 }
+
+#    if !defined(_WIN32)
+namespace {
+/// A client of the hub's socket. Everything it sends and reads is non-blocking, so one thread can
+/// play both ends: the test serves the hub between its own steps.
+struct unix_client {
+    int fd = -1;
+    std::string text;
+    explicit unix_client(const std::string& path): fd(socket(AF_UNIX, SOCK_STREAM, 0)) {
+        auto address = sockaddr_un{};
+        address.sun_family = AF_UNIX;
+        std::ranges::copy(path, address.sun_path);
+        REQUIRE(connect(fd, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == 0);
+    }
+    ~unix_client() { hang_up(); }
+    unix_client(const unix_client&) = delete;
+    auto operator=(const unix_client&) -> unix_client& = delete;
+    auto hang_up() -> void {
+        if (fd >= 0) { close(fd); }
+        fd = -1;
+    }
+    /// Sends all of `bytes`, serving `between` whenever the socket is full.
+    auto send(const std::string& bytes, const std::function<auto()->void>& between = {}) -> void {
+        for (auto sent = std::size_t{0}; sent < bytes.size();) {
+            const auto wrote =
+                ::send(fd, bytes.data() + sent, bytes.size() - sent, MSG_DONTWAIT | MSG_NOSIGNAL);
+            if (wrote > 0) { sent += static_cast<std::size_t>(wrote); }
+            if (between) { between(); }
+        }
+    }
+    /// What the hub has written since the last call.
+    auto receive() -> std::string {
+        auto chunk = std::array<char, 65536>{};
+        for (auto got = recv(fd, chunk.data(), chunk.size(), MSG_DONTWAIT); got > 0;
+             got = recv(fd, chunk.data(), chunk.size(), MSG_DONTWAIT)) {
+            text.append(chunk.data(), static_cast<std::size_t>(got));
+        }
+        return std::exchange(text, {});
+    }
+    /// True once the hub has closed its end; what it had already sent is read and dropped.
+    auto closed_by_hub() -> bool {
+        auto chunk = std::array<char, 65536>{};
+        auto got = ssize_t{0};
+        while ((got = recv(fd, chunk.data(), chunk.size(), MSG_DONTWAIT)) > 0) {}
+        return got == 0;
+    }
+};
+
+/// A hub on the controller fixture's session, with the test standing in for the game loop.
+struct hub_rig {
+    input_boundary boundary;
+    fixture test;
+    std::string path =
+        (std::filesystem::temp_directory_path()
+         / ("bn-hub-" + std::to_string(getpid()) + "-" + std::to_string(++made) + ".sock"))
+            .string();
+    std::unique_ptr<bn::mcp::socket_hub> hub;
+    static inline auto made = 0;
+    explicit hub_rig(const bn::mcp::socket_options options = {}) {
+        REQUIRE(test.authority.publish_boundary());
+        auto listening = bn::mcp::socket_hub::listen(
+            path,
+            {
+                .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+                .submit =
+                    [this](const auto& input) {
+                        test.queued = input;
+                        return true;
+                    },
+                .has_input = [this] { return !test.queued.empty(); },
+                .resize_viewport =
+                    [](const int cols, const int rows) {
+                        declared_viewport.push_back({cols, rows});
+                    },
+                .contract_session = &test.authority,
+            },
+            options);
+        REQUIRE(listening);
+        hub = std::move(*listening);
+    }
+    /// The game loop's turn: accept, read the spectators, send what is pending.
+    auto settle() -> void {
+        for (auto round = 0; round < 3; ++round) { hub->service(20); }
+    }
+    /// Serve the controller's whole frames the way a running activity does.
+    auto poll_controller() -> void {
+        while (hub->controller_ready()) {
+            const auto leader = hub->controller();
+            REQUIRE(leader);
+            if (!leader->protocol.poll_input(leader->in, leader->out, test.errors)) {
+                hub->drop_controller();
+            }
+        }
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "the first socket connection commands the game and later ones only read",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    rig.settle();
+    auto second = unix_client{rig.path};
+    rig.settle();
+    CHECK(rig.hub->connections() == 2);
+    const auto submit =
+        rig.test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", rig.test.schema());
+    first.send(hello + subscribe + submit);
+    second.send(hello + subscribe + submit);
+    rig.settle();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    REQUIRE(leader->protocol.pump_until_input(leader->in, leader->out, rig.test.errors));
+    // The controller's command reached the game once; the spectator's was refused.
+    REQUIRE(rig.test.queued.size() == 1);
+    CHECK(contains(first.receive(), R"("stage":"validated")"));
+    const auto read = second.receive();
+    CHECK(contains(read, R"("method":"bn.snapshot.part")"));
+    CHECK(count_of(read, R"("kind":"read_only")") == 1);
+    CHECK_FALSE(contains(read, R"("stage":"received")"));
+}
+
+TEST_CASE(
+    "a spectator is served while the game waits for the controller", "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    auto second = unix_client{rig.path};
+    rig.settle();
+    second.send(hello + subscribe);
+    CHECK_FALSE(rig.hub->wait_controller_ready(100));
+    CHECK(contains(second.receive(), R"("method":"bn.snapshot.part")"));
+    first.send(hello);
+    CHECK(rig.hub->wait_controller_ready(100));
+}
+
+TEST_CASE(
+    "a spectator's malformed or oversized frame touches no other connection",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    auto second = unix_client{rig.path};
+    auto third = unix_client{rig.path};
+    rig.settle();
+    first.send(hello + subscribe);
+    second.send(hello + subscribe);
+    third.send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    first.receive();
+    second.receive();
+    third.receive();
+    // Not JSON: answered with -32700, the connection stays.
+    second.send("this is not json\n");
+    rig.settle();
+    CHECK(contains(second.receive(), R"("code":-32700)"));
+    CHECK(rig.hub->connections() == 3);
+    // A frame past the limit cannot be answered: that connection ends, the others go on.
+    third.send(std::string(bn::mcp::server::default_max_frame_bytes + 2, 'x'), [&] {
+        rig.settle();
+    });
+    rig.settle();
+    CHECK(third.closed_by_hub());
+    CHECK(rig.hub->connections() == 2);
+    first.send(rpc("bn.unsubscribe", "{}", "8"));
+    second.send(rpc("bn.unsubscribe", "{}", "8"));
+    rig.settle();
+    rig.poll_controller();
+    CHECK(contains(first.receive(), R"("id":8,"result":{})"));
+    CHECK(contains(second.receive(), R"("id":8,"result":{})"));
+}
+
+TEST_CASE(
+    "a controller's malformed frame is answered and keeps its connection",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    rig.settle();
+    first.send("{\"jsonrpc\":\n" + hello);
+    rig.settle();
+    rig.poll_controller();
+    const auto read = first.receive();
+    CHECK(contains(read, R"("code":-32700)"));
+    CHECK(contains(read, R"("version":"1.0")"));
+    CHECK(rig.hub->connections() == 1);
+}
+
+TEST_CASE(
+    "a frame larger than the output bound is sent when the socket takes it",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{.output_bound = 64}};
+    auto first = unix_client{rig.path};
+    rig.settle();
+    first.send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    CHECK(rig.hub->connections() == 1);
+    const auto read = first.receive();
+    CHECK(contains(read, R"("version":"1.0")"));
+    CHECK(contains(read, R"("method":"bn.snapshot.part")"));
+}
+
+TEST_CASE(
+    "a spectator that never reads is dropped at its output bound, not waited for",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{.output_bound = 4096}};
+    auto first = unix_client{rig.path};
+    auto stalled = unix_client{rig.path};
+    rig.settle();
+    first.send(hello + subscribe);
+    stalled.send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    first.receive();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    // Every step is a frame for both; the controller reads its own, the stalled one reads none.
+    auto steps = 0;
+    auto frames = std::size_t{0};
+    while (rig.hub->connections() == 2 && steps < 5000) {
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        REQUIRE(leader->protocol.publish_step(leader->out));
+        frames += count_of(first.receive(), R"("method":"bn.events")");
+        rig.hub->service(0);
+        ++steps;
+    }
+    // The unread frames filled the socket and then the bound; only that connection ended.
+    CHECK(rig.hub->connections() == 1);
+    CHECK(frames == static_cast<std::size_t>(steps));
+    CHECK(steps < 5000);
+    CHECK(stalled.closed_by_hub());
+}
+
+TEST_CASE(
+    "a controller that leaves frees the role for the next connection", "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    auto second = unix_client{rig.path};
+    rig.settle();
+    first.send(
+        hello + subscribe
+        + rig.test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", rig.test.schema()));
+    rig.settle();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    REQUIRE(leader->protocol.pump_until_input(leader->in, leader->out, rig.test.errors));
+    const auto command = rig.test.command_id(first.receive());
+    first.hang_up();
+    CHECK(rig.hub->controller_ready());
+    rig.poll_controller();
+    // The spectator stays a spectator and no one commands until a connection arrives.
+    rig.test.queued.clear();
+    CHECK(rig.hub->connections() == 1);
+    CHECK_FALSE(rig.hub->controller());
+    second.send(hello + subscribe);
+    rig.settle();
+    CHECK_FALSE(rig.hub->controller());
+    auto third = unix_client{rig.path};
+    rig.settle();
+    REQUIRE(rig.hub->controller());
+    third.send(hello + subscribe);
+    CHECK(rig.hub->wait_controller_ready(100));
+    rig.poll_controller();
+    // The command the first controller left open was interrupted, so the game can go on.
+    const auto result = rig.test.authority.result(
+        {.epoch = rig.test.authority.epoch(), .command_id = command});
+    REQUIRE(result);
+    CHECK(result->stage == command_stage::interrupted);
+    CHECK(contains(third.receive(), R"("method":"bn.snapshot.part")"));
+}
+
+TEST_CASE(
+    "a connection past the limit is closed and the others are kept", "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto clients = std::vector<std::unique_ptr<unix_client>>{};
+    for (auto index = std::size_t{0}; index < bn::mcp::socket_hub::maximum_connections; ++index) {
+        clients.push_back(std::make_unique<unix_client>(rig.path));
+        rig.settle();
+    }
+    CHECK(rig.hub->connections() == bn::mcp::socket_hub::maximum_connections);
+    auto extra = unix_client{rig.path};
+    rig.settle();
+    CHECK(extra.closed_by_hub());
+    CHECK(rig.hub->connections() == bn::mcp::socket_hub::maximum_connections);
+}
+
+TEST_CASE(
+    "listening replaces a stale socket file and refuses a live or foreign path",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    const auto host = bn::mcp::mcp_host{
+        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+        .submit = [](const auto&) { return true; },
+        .contract_session = &rig.test.authority,
+    };
+    CHECK_FALSE(bn::mcp::socket_hub::listen(rig.path, host));
+    const auto plain = rig.path + ".txt";
+    { std::ofstream{plain} << "x"; }
+    CHECK_FALSE(bn::mcp::socket_hub::listen(plain, host));
+    std::filesystem::remove(plain);
+    CHECK_FALSE(bn::mcp::socket_hub::listen("", host));
+    // A killed engine leaves its socket file behind; nothing answers there, so it is replaced.
+    const auto stale = rig.path + ".stale";
+    {
+        const auto fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        auto address = sockaddr_un{};
+        address.sun_family = AF_UNIX;
+        std::ranges::copy(stale, address.sun_path);
+        REQUIRE(bind(fd, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == 0);
+        close(fd);
+    }
+    REQUIRE(std::filesystem::exists(stale));
+    auto replaced = bn::mcp::socket_hub::listen(stale, host);
+    CHECK(replaced);
+    replaced->reset();
+    CHECK_FALSE(std::filesystem::exists(stale));
+}
+#    endif
 
 #endif
