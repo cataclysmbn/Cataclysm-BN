@@ -226,7 +226,9 @@ auto close_pipe( const int fd ) -> void { _close( fd ); }
 auto close_pipe( const int fd ) -> void { close( fd ); }
 #endif
 
-/// Writes a pipe, the protocol's stdout.
+/// Writes a pipe, the protocol's stdout, whole and in order. A client may hand the engine a
+/// non-blocking pipe: when it is full the write waits until it can take more, as a blocking pipe
+/// would, and only a pipe that failed or whose reader left fails the stream.
 class fd_output_buffer final : public std::streambuf
 {
     public:
@@ -242,9 +244,17 @@ class fd_output_buffer final : public std::streambuf
 #else
                 const auto written = ::write( fd_, data, remaining );
 #endif
+#if !defined(_WIN32)
+                if( written < 0 && would_block() ) {
+                    auto full = pollfd{ .fd = fd_, .events = POLLOUT, .revents = 0 };
+                    poll( &full, 1, -1 );
+                    continue;
+                }
+#else
                 if( written < 0 && errno == EINTR ) {
                     continue;
                 }
+#endif
                 if( written <= 0 ) {
                     return size - static_cast<std::streamsize>( remaining );
                 }
