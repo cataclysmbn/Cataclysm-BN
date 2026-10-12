@@ -35,6 +35,8 @@ MCP ホストが stdio 転送で実行ファイルを起動するよう設定し
 
 転送には [MCP stdio](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#stdio) を使います。stdin と stdout 上の改行区切り JSON-RPC です。各入力フレームは終端の改行より前で最大 1 MiB です。大きすぎるフレーム、終端されていないフレーム、読み取れないフレームはセッションを 0 以外の終了ステータスで閉じ、拒否されたフレームの接頭部は実行しません。ゲームの診断は stderr に出力されます。MCP クライアントはゲーム出力をリダイレクトする前に元の stdout を複製するため、Lua やエンジンコードが診断を出力しても、プロトコルの stdout は有効な JSON-RPC のままです。端末ウィンドウは不要です。
 
+複数のクライアントで 1 つのゲームを観戦するには `--listen /path/to/bn.sock` を追加します。同じプロトコルが stdio の代わりにそのローカルソケットで提供され、コントローラー 1 つと読み取り専用の観戦者を何人でも接続できます([プロトコルリファレンス](../reference/engine_client_protocol.md)を参照)。
+
 ## プレイ
 
 | ツール           | 用途                                                                                    |

@@ -35,6 +35,8 @@ MCP 호스트가 stdio 전송 방식으로 실행 파일을 시작하도록 구�
 
 전송 방식은 [MCP stdio](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#stdio)를 사용합니다. stdin과 stdout에서 줄바꿈으로 구분된 JSON-RPC를 사용합니다. 각 입력 프레임은 끝의 줄바꿈 전까지 최대 1 MiB일 수 있습니다. 너무 크거나, 끝나지 않았거나, 읽을 수 없는 프레임은 세션을 0이 아닌 종료 상태로 닫으며 거부된 프레임의 접두부는 실행하지 않습니다. 게임 진단은 stderr로 출력됩니다. MCP 클라이언트는 게임 출력을 리디렉션하기 전에 원래 stdout을 복제하므로 Lua나 엔진 코드가 진단을 출력해도 프로토콜 stdout은 올바른 JSON-RPC로 유지됩니다. 터미널 창은 필요하지 않습니다.
 
+여러 클라이언트가 한 게임을 지켜보게 하려면 `--listen /path/to/bn.sock`을 추가합니다. 같은 프로토콜이 stdio 대신 그 로컬 소켓으로 제공되며, 컨트롤러 하나와 읽기 전용 관전자 여럿이 연결할 수 있습니다([프로토콜 레퍼런스](../reference/engine_client_protocol.md) 참고).
+
 ## 플레이
 
 | 도구             | 용도                                                                        |

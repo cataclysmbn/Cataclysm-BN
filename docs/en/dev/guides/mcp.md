@@ -39,6 +39,8 @@ Otherwise, use the opening menu to create or select a world and character.
 
 The transport uses [MCP stdio](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports#stdio): newline-delimited JSON-RPC on stdin and stdout. Each input frame may contain at most 1 MiB before its terminating newline. An oversized, unterminated, or unreadable frame closes the session with a nonzero exit status; no prefix of a rejected frame is executed. Game diagnostics go to stderr. The MCP client duplicates the original stdout before redirecting game output, so protocol stdout remains valid JSON-RPC even when Lua or engine code writes diagnostics. No terminal window is required.
 
+To let several clients watch one game, add `--listen /path/to/bn.sock`: the same protocol is then served on that local socket instead of stdio, to one controller and any number of read-only spectators (see [the protocol reference](../reference/engine_client_protocol.md)).
+
 ## Play
 
 | Tool             | Use                                                                                 |

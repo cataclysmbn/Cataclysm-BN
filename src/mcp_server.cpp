@@ -544,7 +544,7 @@ auto server::publish_activity( std::ostream &out ) -> bool
 
 auto server::finish( std::ostream &out ) -> bool
 {
-    session_.interrupt( engine_client::error::not_ready );
+    interrupt( engine_client::error::not_ready );
     return flush_push( out );
 }
 
@@ -584,7 +584,7 @@ auto server::end_reason() const -> std::string
 
 auto server::reject_pending( std::string error ) -> void
 {
-    session_.interrupt( engine_client::error::validation_failed );
+    interrupt( engine_client::error::validation_failed );
     if( pending_response_ ) {
         pending_response_->error = error.empty() ? "Input was rejected in the active context" :
                                    std::move( error );
@@ -607,7 +607,7 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
     const auto response = rpc::make_result( request, value.str() );
     if( !response || !deferred_frame_ || !deferred_frame_->append( *response ) ) {
         failed_ = true;
-        session_.interrupt( engine_client::error::not_ready );
+        interrupt( engine_client::error::not_ready );
         return;
     }
     // Shutdown may finish an already-terminal frame, but must not dispatch later members.
@@ -616,10 +616,25 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
     }
 }
 
+auto server::interrupt( const engine_client::error reason ) -> void
+{
+    if( !options_.spectator ) { session_.interrupt( reason ); }
+}
+
 auto server::publish_boundary( std::ostream &out, const bool settles ) -> bool
 {
-    if( !session_.publish_boundary( settles ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
+    if( !options_.spectator ) {
+        if( !session_.publish_boundary( settles ) ) { interrupt( engine_client::error::not_ready ); return false; }
+        if( host_.published ) { host_.published(); }
+    }
     return flush_push( out );
+}
+
+auto server::flush_pushed( std::ostream &out ) -> bool
+{
+    if( failed_ ) { return false; }
+    failed_ = !flush_push( out );
+    return !failed_;
 }
 
 auto server::write_notifications( std::ostream &out ) -> bool
@@ -682,7 +697,7 @@ auto server::queue_push() -> void
     // A resync ends the stream for what follows it, but the command that finished in the same
     // publication still owes its subscriber the outcome: the snapshot does not carry it.
     const auto was_subscribed = subscribed_;
-    for( auto &item : session_.take_push() ) {
+    for( auto &item : push_.take() ) {
         if( !( subscribed_ || ( was_subscribed && std::holds_alternative<command_result>( item ) ) ) ) { continue; }
         if( const auto *pushed = std::get_if<event_push>( &item ) ) {
             const auto &wire = pushed->event.wire();
@@ -710,7 +725,7 @@ auto server::deliver_input() -> bool
 {
     const auto input = session_.prepare_input( game_client::memory::screen_size() );
     if( !input ) { return false; }
-    if( !host_.submit( {*input} ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
+    if( !host_.submit( {*input} ) ) { interrupt( engine_client::error::not_ready ); return false; }
     return true;
 }
 
@@ -757,7 +772,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::negotiation_failed );
         }
         // A legacy batch still waiting for native delivery cannot transfer authority mid-flight.
-        if( pending_response_ || ( host_.has_input && host_.has_input() ) ) {
+        if( !options_.spectator && ( pending_response_ || ( host_.has_input && host_.has_input() ) ) ) {
             return fail( error::command_busy );
         }
         hello_ = true;
@@ -769,16 +784,23 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
                            std::chrono::steady_clock::duration{};
         held_.clear();
         held_bytes_ = 0;
-        game_client::set_overmap_tiles( decoded->tiles );
-        engine_client::world::set_tint_ids( { decoded->tint_ids.begin(), decoded->tint_ids.end() } );
-        if( decoded->view && host_.resize_viewport ) {
-            host_.resize_viewport( decoded->view->cols, decoded->view->rows );
+        // The controller decides how the game is drawn for everyone.
+        if( !options_.spectator ) {
+            game_client::set_overmap_tiles( decoded->tiles );
+            engine_client::world::set_tint_ids( { decoded->tint_ids.begin(), decoded->tint_ids.end() } );
+            if( decoded->view && host_.resize_viewport ) {
+                host_.resize_viewport( decoded->view->cols, decoded->view->rows );
+            }
         }
         const auto grant = credits_ ? std::optional{ delivery_grant{ .credits = *credits_, .max_hz = decoded->max_hz } } :
                            std::nullopt;
         return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine(), grant ) );
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
+    if( options_.spectator && ( request.method == "bn.viewport" || request.method == "bn.interrupt" ||
+                                request.method == "bn.command.submit" ) ) {
+        return fail( error::read_only );
+    }
     if( request.method == "bn.viewport" ) {
         const auto decoded = decode_viewport_request( params );
         if( !decoded ) { return invalid(); }
@@ -786,6 +808,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         // The new view is part of what the client reads, so it is published like any other change.
         // A running activity is no boundary: its command is not settled by a resize.
         if( const auto published = session_.publish_boundary( !polling_ ); !published ) { return fail( published.error() ); }
+        if( host_.published ) { host_.published(); }
         queue_push();
         return rpc::make_result( request, "{}" );
     }
@@ -864,7 +887,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto received = session_.submit( *decoded );
         if( !received ) { return fail( received.error() ); }
         const auto encoded = serialize_receipt( *received );
-        if( !encoded ) { session_.interrupt( engine_client::error::not_ready ); return fail( encoded.error() ); }
+        if( !encoded ) { interrupt( engine_client::error::not_ready ); return fail( encoded.error() ); }
         return rpc::make_result( request, *encoded );
     }
     if( request.method == "bn.command.result" ) {
@@ -886,9 +909,9 @@ auto server::dispatch( const std::string_view line, std::ostream &out, std::ostr
         const auto code = !inspected && inspected.error() == rpc::parse_error::invalid_json ?
                           rpc::error_code::parse_error : rpc::error_code::invalid_request;
         const auto response = rpc::make_error( { .id = { .json = "null" }, .code = code } );
-        if( !response || !frame.append( *response ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
+        if( !response || !frame.append( *response ) ) { interrupt( engine_client::error::not_ready ); return false; }
         const auto bytes = std::move( frame ).finish();
-        if( !bytes || !rpc::write_frame( out, *bytes ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
+        if( !bytes || !rpc::write_frame( out, *bytes ) ) { interrupt( engine_client::error::not_ready ); return false; }
         return true;
     }
     // The cursor pins the complete validated input, including across native widget calls.
@@ -900,7 +923,7 @@ auto server::dispatch( const std::string_view line, std::ostream &out, std::ostr
 auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
 {
     const auto terminal = [&]() {
-        session_.interrupt( engine_client::error::not_ready );
+        interrupt( engine_client::error::not_ready );
         pending_requests_.reset();
         deferred_frame_.reset();
         err << "MCP: protocol output failed; closing connection\n";
@@ -1058,9 +1081,10 @@ std::expected<std::optional<rpc::response>, rpc::output_error>
                 if( !host_.state ) { return fail( rpc::legacy_reason::structured_state_unavailable ); }
                 return tool( host_.state() );
             }
-            if( hello_ && ( name == "bn.press" || name == "bn.interact" ) ) {
+            if( ( hello_ || options_.spectator ) && ( name == "bn.press" || name == "bn.interact" ) ) {
                 const auto data = engine_client::serialize_application_error( {
-                    .kind = engine_client::error::invalid_lifecycle,
+                    .kind = options_.spectator ? engine_client::error::read_only :
+                    engine_client::error::invalid_lifecycle,
                 } );
                 if( !data ) { return std::unexpected( rpc::output_error::invalid_value ); }
                 return rpc::make_error( { .id = request.id, .code = rpc::error_code::application_error, .data = *data } );

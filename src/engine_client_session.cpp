@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
+#include <ranges>
 #include <stdexcept>
 #include <utility>
 
@@ -74,7 +74,7 @@ auto session::refresh_result() -> void
     if( !active_ ) { return; }
     const auto current = lifecycle_->result( active_->command_id );
     if( !current ) { return; }
-    if( current->stage != active_->stage ) { push_.emplace_back( *current ); }
+    if( current->stage != active_->stage ) { post( *current ); }
     active_ = *current;
 }
 
@@ -108,8 +108,8 @@ auto session::restart_epoch( const std::string_view reason ) -> void
     interrupt( error::stale_epoch );
     retired_ = active_;
     if( stream_ ) {
-        push_.emplace_back( resync_notice{ .epoch = epoch_, .reason = std::string{reason},
-                                           .lost_after = stream_->current().at.sequence } );
+        post( resync_notice{ .epoch = epoch_, .reason = std::string{reason},
+                             .lost_after = stream_->current().at.sequence } );
     }
     const auto created = new_session_epoch();
     if( !created ) { throw std::runtime_error( "Engine session unavailable" ); }
@@ -226,15 +226,14 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         published = stream_->publish( publish_request{ .next = *candidate, .command = command } );
     }
     if( published ) {
-        if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
-        if( before && patch_consecutive_ ) { check_oracle( *before, *published ); }
+        if( *published ) { post( event_push{ .epoch = epoch_, .event = **published } ); }
     } else if( published.error() == error::resource_limit ||
                published.error() == error::resync_required ) {
         // The change does not fit one event or cannot be expressed: adopt the state and make
         // subscribers start over.
-        push_.emplace_back( resync_notice{ .epoch = epoch_,
-                                           .reason = published.error() == error::resource_limit ? "overflow" : "state_removed",
-                                           .lost_after = stream_->current().at.sequence } );
+        post( resync_notice{ .epoch = epoch_,
+                             .reason = published.error() == error::resource_limit ? "overflow" : "state_removed",
+                             .lost_after = stream_->current().at.sequence } );
         if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
     } else { return std::unexpected( published.error() ); }
     publish_messages( command );
@@ -257,7 +256,7 @@ auto session::publish_presentation( const std::optional<std::string> &command ) 
         auto published = stream_->publish_presentation( { .fact = std::move( fact ), .command = command } );
         if( !published ) { continue; }
         if( auto *out = recording() ) { *out << published->wire() << std::endl; }
-        push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } );
+        post( event_push{ .epoch = epoch_, .event = std::move( *published ) } );
     }
 }
 
@@ -267,7 +266,7 @@ auto session::publish_messages( const std::optional<std::string> &command ) -> v
         message_cursor_ = { .id = entry.id, .count = entry.count };
         auto published = stream_->publish_message( { .message = to_message( entry ), .command = command } );
         // A line that cannot be published is skipped; the log itself still holds it.
-        if( published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } ); }
+        if( published ) { post( event_push{ .epoch = epoch_, .event = std::move( *published ) } ); }
     }
 }
 
@@ -347,7 +346,24 @@ auto session::result( const result_request &request ) const -> std::expected<com
     return lifecycle_->result( request.command_id );
 }
 
-auto session::take_push() -> std::vector<push_item> { return std::exchange( push_, {} ); }
+auto push_reader::take() -> std::vector<push_item> { return std::exchange( *inbox_, {} ); }
+
+auto session::open_push() -> push_reader
+{
+    auto reader = push_reader{};
+    readers_.push_back( reader.inbox_ );
+    return reader;
+}
+
+auto session::post( push_item item ) -> void
+{
+    std::erase_if( readers_, []( const auto & reader ) { return reader.expired(); } );
+    // The last reader takes the item itself; with one connection nothing is copied.
+    for( const auto &reader : readers_ | std::views::take( readers_.size() - 1 ) ) {
+        reader.lock()->push_back( item );
+    }
+    if( !readers_.empty() ) { readers_.back().lock()->push_back( std::move( item ) ); }
+}
 
 auto describe_engine() -> engine_info
 {

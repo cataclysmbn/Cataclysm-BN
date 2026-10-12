@@ -24,6 +24,18 @@ struct event_push {
 };
 using push_item = std::variant<event_push, command_result, resync_notice>;
 
+/// What one connection reads of the session's publications: every item posted after the reader
+/// was opened, in order. A reader that is dropped stops receiving.
+class push_reader
+{
+    public:
+        /// Everything published since the last call; the connection decides what to send.
+        auto take() -> std::vector<push_item>;
+    private:
+        friend class session;
+        std::shared_ptr<std::vector<push_item>> inbox_ = std::make_shared<std::vector<push_item>>();
+};
+
 /// World capture hook. Called on the game thread at every input boundary and returns
 /// everything the avatar currently knows (coverage, cells, entities, avatar, environment).
 /// The session diffs it against the previous capture; the hook never produces events and must
@@ -64,8 +76,8 @@ class session final : public command_authority
         auto interrupt( error reason ) -> void;
         auto has_received() const -> bool;
         auto result( const result_request &request ) const -> std::expected<command_result, error>;
-        /// Everything published since the last call; the connection decides what to send.
-        auto take_push() -> std::vector<push_item>;
+        /// A reader of what is published from now on. Every connection has its own.
+        auto open_push() -> push_reader;
     private:
         std::string epoch_;
         std::string phase_ = "starting";
@@ -82,9 +94,10 @@ class session final : public command_authority
         std::optional<command_request> input_;
         std::optional<input_event> validated_input_;
         std::optional<event_stream> stream_;
-        std::vector<push_item> push_;
+        std::vector<std::weak_ptr<std::vector<push_item>>> readers_;
         /// What the stream has already announced of the native message log.
         Messages::feed_cursor message_cursor_;
+        auto post( push_item item ) -> void;
         auto capture() const -> std::expected<state_value, error>;
         auto capture_interaction() const -> std::expected<boundary_state, error>;
         auto check_oracle( const state_value &before, const std::optional<public_event> &event ) -> void;

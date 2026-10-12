@@ -28,6 +28,12 @@ auto register_backend( const client_kind kind, backend_factory factory ) -> void
     backend_factories().insert_or_assign( kind, std::move( factory ) );
 }
 
+auto listen_endpoint() -> std::string& // *NOPAD*
+{
+    static auto result = std::string{};
+    return result;
+}
+
 auto set_active_backend( backend_ptr client ) -> void
 {
     if( !client ) { throw std::invalid_argument( "cannot select an empty client backend" ); }

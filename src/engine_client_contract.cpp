@@ -102,6 +102,8 @@ auto error_name( const error value ) -> std::string
             return "resync_required";
         case error::resource_limit:
             return "resource_limit";
+        case error::read_only:
+            return "read_only";
     }
     return "validation_failed";
 }

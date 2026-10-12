@@ -7,15 +7,26 @@
 #    include "input.h"
 #    include "json.h"
 #    include "mcp_server.h"
+#    include "mcp_socket.h"
 #    include "messages.h"
 #    include "rng.h"
 
 #    include <algorithm>
+#    include <array>
 #    include <chrono>
+#    include <filesystem>
+#    include <fstream>
 #    include <functional>
 #    include <sstream>
 #    include <string>
 #    include <vector>
+
+#    if !defined(_WIN32)
+#        include <fcntl.h>
+#        include <sys/socket.h>
+#        include <sys/un.h>
+#        include <unistd.h>
+#    endif
 
 namespace {
 using namespace engine_client;
@@ -99,6 +110,8 @@ struct fixture {
     std::vector<bn::mcp::key_event> queued;
     std::ostringstream output;
     std::ostringstream errors;
+    /// Runs when the controller publishes, as the hub that flushes the spectators does.
+    std::function<auto()->void> on_published;
     bn::mcp::server server{
         {
             .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
@@ -111,8 +124,14 @@ struct fixture {
             .resize_viewport =
                 [](const int cols, const int rows) { declared_viewport.push_back({cols, rows}); },
             .contract_session = &authority,
+            .published =
+                [this] {
+                    if (on_published) { on_published(); }
+                },
         },
         {.now = [this] { return clock(); }}};
+    /// Reads what the authority publishes, as a connection of its own would.
+    engine_client::push_reader tap = authority.open_push();
     fixture() {
         known_cells = {1, 2};
         declared_viewport.clear();
@@ -514,10 +533,10 @@ TEST_CASE("a capture that drops the avatar resynchronizes subscribers", "[engine
     auto boundary = input_boundary{};
     auto test = fixture{};
     REQUIRE(test.authority.publish_boundary());
-    test.authority.take_push();
+    test.tap.take();
     with_avatar = false;
     test.next_boundary();
-    const auto pushed = test.authority.take_push();
+    const auto pushed = test.tap.take();
     REQUIRE(pushed.size() == 1);
     const auto* notice = std::get_if<resync_notice>(&pushed.front());
     REQUIRE(notice);
@@ -1078,5 +1097,466 @@ TEST_CASE("shutdown drops the frames that credits cannot pay for", "[engine_clie
     test.poll(rpc("bn.credit", R"({"frames":256})", "9"));
     CHECK(test.server.held_frames() == 0);
 }
+
+namespace {
+/// A second connection on the controller's session that may only read.
+struct spectator {
+    std::ostringstream output;
+    std::ostringstream errors;
+    std::vector<bn::mcp::key_event> submitted;
+    std::vector<std::pair<int, int>> resized;
+    bn::mcp::server server;
+    explicit spectator(fixture& test)
+        : server{
+              {
+                  .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+                  .submit =
+                      [this](const auto& input) {
+                          submitted = input;
+                          return true;
+                      },
+                  .has_input = [] { return false; },
+                  .resize_viewport =
+                      [this](const int cols, const int rows) { resized.push_back({cols, rows}); },
+                  .contract_session = &test.authority,
+              },
+              {.now = [&test] { return test.clock(); }, .spectator = true}} {
+        test.on_published = [this] { REQUIRE(server.flush_pushed(output)); };
+    }
+    auto read(const std::string& text) -> void {
+        auto input = std::istringstream{text};
+        for (auto lines = count_of(text, "\n"); lines > 0; --lines) {
+            REQUIRE(server.poll_input(input, output, errors));
+        }
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "a spectator reads the same events as the controller, in the same order",
+    "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    test.poll(hello + subscribe);
+    watcher.read(hello + subscribe);
+    CHECK(contains(watcher.output.str(), R"("method":"bn.snapshot.part")"));
+    test.output.str("");
+    watcher.output.str("");
+    test.step();
+    test.step();
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 2);
+    CHECK(watcher.output.str() == test.output.str());
+}
+
+TEST_CASE("a spectator is refused every call that commands the game", "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(
+        hello + subscribe + rpc("initialize", "{}", "3")
+        + rpc("notifications/initialized", "{}", ""));
+    const auto at = test.authority.at();
+    watcher.output.str("");
+    watcher.read(
+        test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())
+        + rpc("bn.interrupt", "{}", "5") + rpc("bn.viewport", R"({"cols":40,"rows":20})", "6")
+        + rpc("tools/call", R"({"name":"bn.press","arguments":{"keys":[{"key":"ESCAPE"}]}})", "7"));
+    CHECK(count_of(watcher.output.str(), R"("kind":"read_only")") == 4);
+    CHECK(watcher.submitted.empty());
+    CHECK(test.queued.empty());
+    CHECK(declared_viewport.empty());
+    CHECK(watcher.resized.empty());
+    CHECK(test.authority.at() == at);
+    CHECK_FALSE(test.authority.has_received());
+}
+
+TEST_CASE("a spectator's hello leaves the controller's view alone", "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(rpc(
+        "bn.hello",
+        R"({"versions":["1.0"],"client":{"name":"w","version":"1"},"viewport":{"cols":10,"rows":10}})",
+        "1"));
+    CHECK(contains(watcher.output.str(), R"("version":"1.0")"));
+    CHECK(watcher.resized.empty());
+    CHECK(declared_viewport.empty());
+}
+
+TEST_CASE(
+    "a spectator that drops or fails does not end the controller's command",
+    "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(hello + subscribe);
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    // The spectator's end: a clean finish, and a write failure that fails its own server.
+    CHECK(watcher.server.finish(watcher.output));
+    watcher.output.setstate(std::ios::badbit);
+    auto flushed = true;
+    test.on_published = [&] { flushed = watcher.server.flush_pushed(watcher.output); };
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK_FALSE(test.pump(""));
+    CHECK(contains(test.output.str(), R"("stage":"completed")"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"interrupted")"));
+    CHECK_FALSE(flushed);
+    CHECK(watcher.server.failed());
+}
+
+TEST_CASE(
+    "each connection keeps its own credits, held frames and subscription",
+    "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(hello_with(R"({"credits":1})") + subscribe);
+    test.poll(hello_with(R"({"credits":256})") + subscribe);
+    test.output.str("");
+    watcher.output.str("");
+    for (auto step = 0; step < 6; ++step) { test.step(); }
+    // The stalled spectator holds its frames and never slows the controller's stream.
+    CHECK(watcher.server.held_frames() == 5);
+    CHECK(test.server.held_frames() == 0);
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 6);
+    CHECK(count_of(watcher.output.str(), R"("method":"bn.events")") == 1);
+    // Past its bound the spectator is resynchronized on its own; the controller is untouched.
+    for (auto step = 0; step < static_cast<int>(maximum_held_frames); ++step) { test.step(); }
+    CHECK(contains(watcher.output.str(), R"("reason":"backpressure")"));
+    CHECK_FALSE(contains(test.output.str(), R"("method":"bn.resync")"));
+    watcher.output.str("");
+    watcher.read(rpc("bn.unsubscribe", "{}", "8"));
+    test.step();
+    CHECK_FALSE(contains(watcher.output.str(), R"("method":"bn.events")"));
+    CHECK(contains(test.output.str(), R"("method":"bn.events")"));
+}
+
+#    if !defined(_WIN32)
+namespace {
+/// A client of the hub's socket. Everything it sends and reads is non-blocking, so one thread can
+/// play both ends: the test serves the hub between its own steps.
+struct unix_client {
+    int fd = -1;
+    std::string text;
+    explicit unix_client(const std::string& path): fd(socket(AF_UNIX, SOCK_STREAM, 0)) {
+        auto address = sockaddr_un{};
+        address.sun_family = AF_UNIX;
+        std::ranges::copy(path, address.sun_path);
+        REQUIRE(connect(fd, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == 0);
+    }
+    ~unix_client() { hang_up(); }
+    unix_client(const unix_client&) = delete;
+    auto operator=(const unix_client&) -> unix_client& = delete;
+    auto hang_up() -> void {
+        if (fd >= 0) { close(fd); }
+        fd = -1;
+    }
+    /// Sends all of `bytes`, serving `between` whenever the socket is full.
+    auto send(const std::string& bytes, const std::function<auto()->void>& between = {}) -> void {
+        for (auto sent = std::size_t{0}; sent < bytes.size();) {
+            const auto wrote =
+                ::send(fd, bytes.data() + sent, bytes.size() - sent, MSG_DONTWAIT | MSG_NOSIGNAL);
+            if (wrote > 0) { sent += static_cast<std::size_t>(wrote); }
+            if (between) { between(); }
+        }
+    }
+    /// What the hub has written since the last call.
+    auto receive() -> std::string {
+        auto chunk = std::array<char, 65536>{};
+        for (auto got = recv(fd, chunk.data(), chunk.size(), MSG_DONTWAIT); got > 0;
+             got = recv(fd, chunk.data(), chunk.size(), MSG_DONTWAIT)) {
+            text.append(chunk.data(), static_cast<std::size_t>(got));
+        }
+        return std::exchange(text, {});
+    }
+    /// True once the hub has closed its end; what it had already sent is read and dropped.
+    auto closed_by_hub() -> bool {
+        auto chunk = std::array<char, 65536>{};
+        auto got = ssize_t{0};
+        while ((got = recv(fd, chunk.data(), chunk.size(), MSG_DONTWAIT)) > 0) {}
+        return got == 0;
+    }
+};
+
+/// A hub on the controller fixture's session, with the test standing in for the game loop.
+struct hub_rig {
+    input_boundary boundary;
+    fixture test;
+    std::string path =
+        (std::filesystem::temp_directory_path()
+         / ("bn-hub-" + std::to_string(getpid()) + "-" + std::to_string(++made) + ".sock"))
+            .string();
+    std::unique_ptr<bn::mcp::socket_hub> hub;
+    static inline auto made = 0;
+    explicit hub_rig(const bn::mcp::socket_options options = {}) {
+        REQUIRE(test.authority.publish_boundary());
+        auto listening = bn::mcp::socket_hub::listen(
+            path,
+            {
+                .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+                .submit =
+                    [this](const auto& input) {
+                        test.queued = input;
+                        return true;
+                    },
+                .has_input = [this] { return !test.queued.empty(); },
+                .resize_viewport =
+                    [](const int cols, const int rows) {
+                        declared_viewport.push_back({cols, rows});
+                    },
+                .contract_session = &test.authority,
+            },
+            options);
+        REQUIRE(listening);
+        hub = std::move(*listening);
+    }
+    /// The game loop's turn: accept, read the spectators, send what is pending.
+    auto settle() -> void {
+        for (auto round = 0; round < 3; ++round) { hub->service(20); }
+    }
+    /// Serve the controller's whole frames the way a running activity does.
+    auto poll_controller() -> void {
+        while (hub->controller_ready()) {
+            const auto leader = hub->controller();
+            REQUIRE(leader);
+            if (!leader->protocol.poll_input(leader->in, leader->out, test.errors)) {
+                hub->drop_controller();
+            }
+        }
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "the first socket connection commands the game and later ones only read",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    rig.settle();
+    auto second = unix_client{rig.path};
+    rig.settle();
+    CHECK(rig.hub->connections() == 2);
+    const auto submit =
+        rig.test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", rig.test.schema());
+    first.send(hello + subscribe + submit);
+    second.send(hello + subscribe + submit);
+    rig.settle();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    REQUIRE(leader->protocol.pump_until_input(leader->in, leader->out, rig.test.errors));
+    // The controller's command reached the game once; the spectator's was refused.
+    REQUIRE(rig.test.queued.size() == 1);
+    CHECK(contains(first.receive(), R"("stage":"validated")"));
+    const auto read = second.receive();
+    CHECK(contains(read, R"("method":"bn.snapshot.part")"));
+    CHECK(count_of(read, R"("kind":"read_only")") == 1);
+    CHECK_FALSE(contains(read, R"("stage":"received")"));
+}
+
+TEST_CASE(
+    "a spectator is served while the game waits for the controller", "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    auto second = unix_client{rig.path};
+    rig.settle();
+    second.send(hello + subscribe);
+    CHECK_FALSE(rig.hub->wait_controller_ready(100));
+    CHECK(contains(second.receive(), R"("method":"bn.snapshot.part")"));
+    first.send(hello);
+    CHECK(rig.hub->wait_controller_ready(100));
+}
+
+TEST_CASE(
+    "a spectator's malformed or oversized frame touches no other connection",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    auto second = unix_client{rig.path};
+    auto third = unix_client{rig.path};
+    rig.settle();
+    first.send(hello + subscribe);
+    second.send(hello + subscribe);
+    third.send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    first.receive();
+    second.receive();
+    third.receive();
+    // Not JSON: answered with -32700, the connection stays.
+    second.send("this is not json\n");
+    rig.settle();
+    CHECK(contains(second.receive(), R"("code":-32700)"));
+    CHECK(rig.hub->connections() == 3);
+    // A frame past the limit cannot be answered: that connection ends, the others go on.
+    third.send(std::string(bn::mcp::server::default_max_frame_bytes + 2, 'x'), [&] {
+        rig.settle();
+    });
+    rig.settle();
+    CHECK(third.closed_by_hub());
+    CHECK(rig.hub->connections() == 2);
+    first.send(rpc("bn.unsubscribe", "{}", "8"));
+    second.send(rpc("bn.unsubscribe", "{}", "8"));
+    rig.settle();
+    rig.poll_controller();
+    CHECK(contains(first.receive(), R"("id":8,"result":{})"));
+    CHECK(contains(second.receive(), R"("id":8,"result":{})"));
+}
+
+TEST_CASE(
+    "a controller's malformed frame is answered and keeps its connection",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    rig.settle();
+    first.send("{\"jsonrpc\":\n" + hello);
+    rig.settle();
+    rig.poll_controller();
+    const auto read = first.receive();
+    CHECK(contains(read, R"("code":-32700)"));
+    CHECK(contains(read, R"("version":"1.0")"));
+    CHECK(rig.hub->connections() == 1);
+}
+
+TEST_CASE(
+    "a frame larger than the output bound is sent when the socket takes it",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{.output_bound = 64}};
+    auto first = unix_client{rig.path};
+    rig.settle();
+    first.send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    CHECK(rig.hub->connections() == 1);
+    const auto read = first.receive();
+    CHECK(contains(read, R"("version":"1.0")"));
+    CHECK(contains(read, R"("method":"bn.snapshot.part")"));
+}
+
+TEST_CASE(
+    "a spectator that never reads is dropped at its output bound, not waited for",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{.output_bound = 4096}};
+    auto first = unix_client{rig.path};
+    auto stalled = unix_client{rig.path};
+    rig.settle();
+    first.send(hello + subscribe);
+    stalled.send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    first.receive();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    // Every step is a frame for both; the controller reads its own, the stalled one reads none.
+    auto steps = 0;
+    auto frames = std::size_t{0};
+    while (rig.hub->connections() == 2 && steps < 5000) {
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        REQUIRE(leader->protocol.publish_step(leader->out));
+        frames += count_of(first.receive(), R"("method":"bn.events")");
+        rig.hub->service(0);
+        ++steps;
+    }
+    // The unread frames filled the socket and then the bound; only that connection ended.
+    CHECK(rig.hub->connections() == 1);
+    CHECK(frames == static_cast<std::size_t>(steps));
+    CHECK(steps < 5000);
+    CHECK(stalled.closed_by_hub());
+}
+
+TEST_CASE(
+    "a controller that leaves frees the role for the next connection", "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto first = unix_client{rig.path};
+    auto second = unix_client{rig.path};
+    rig.settle();
+    first.send(
+        hello + subscribe
+        + rig.test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", rig.test.schema()));
+    rig.settle();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    REQUIRE(leader->protocol.pump_until_input(leader->in, leader->out, rig.test.errors));
+    const auto command = rig.test.command_id(first.receive());
+    first.hang_up();
+    CHECK(rig.hub->controller_ready());
+    rig.poll_controller();
+    // The spectator stays a spectator and no one commands until a connection arrives.
+    rig.test.queued.clear();
+    CHECK(rig.hub->connections() == 1);
+    CHECK_FALSE(rig.hub->controller());
+    second.send(hello + subscribe);
+    rig.settle();
+    CHECK_FALSE(rig.hub->controller());
+    auto third = unix_client{rig.path};
+    rig.settle();
+    REQUIRE(rig.hub->controller());
+    third.send(hello + subscribe);
+    CHECK(rig.hub->wait_controller_ready(100));
+    rig.poll_controller();
+    // The command the first controller left open was interrupted, so the game can go on.
+    const auto result = rig.test.authority.result(
+        {.epoch = rig.test.authority.epoch(), .command_id = command});
+    REQUIRE(result);
+    CHECK(result->stage == command_stage::interrupted);
+    CHECK(contains(third.receive(), R"("method":"bn.snapshot.part")"));
+}
+
+TEST_CASE(
+    "a connection past the limit is closed and the others are kept", "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    auto clients = std::vector<std::unique_ptr<unix_client>>{};
+    for (auto index = std::size_t{0}; index < bn::mcp::socket_hub::maximum_connections; ++index) {
+        clients.push_back(std::make_unique<unix_client>(rig.path));
+        rig.settle();
+    }
+    CHECK(rig.hub->connections() == bn::mcp::socket_hub::maximum_connections);
+    auto extra = unix_client{rig.path};
+    rig.settle();
+    CHECK(extra.closed_by_hub());
+    CHECK(rig.hub->connections() == bn::mcp::socket_hub::maximum_connections);
+}
+
+TEST_CASE(
+    "listening replaces a stale socket file and refuses a live or foreign path",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{};
+    const auto host = bn::mcp::mcp_host{
+        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+        .submit = [](const auto&) { return true; },
+        .contract_session = &rig.test.authority,
+    };
+    CHECK_FALSE(bn::mcp::socket_hub::listen(rig.path, host));
+    const auto plain = rig.path + ".txt";
+    { std::ofstream{plain} << "x"; }
+    CHECK_FALSE(bn::mcp::socket_hub::listen(plain, host));
+    std::filesystem::remove(plain);
+    CHECK_FALSE(bn::mcp::socket_hub::listen("", host));
+    // A killed engine leaves its socket file behind; nothing answers there, so it is replaced.
+    const auto stale = rig.path + ".stale";
+    {
+        const auto fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        auto address = sockaddr_un{};
+        address.sun_family = AF_UNIX;
+        std::ranges::copy(stale, address.sun_path);
+        REQUIRE(bind(fd, reinterpret_cast<const sockaddr*>(&address), sizeof(address)) == 0);
+        close(fd);
+    }
+    REQUIRE(std::filesystem::exists(stale));
+    auto replaced = bn::mcp::socket_hub::listen(stale, host);
+    CHECK(replaced);
+    replaced->reset();
+    CHECK_FALSE(std::filesystem::exists(stale));
+}
+#    endif
 
 #endif

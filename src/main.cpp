@@ -130,7 +130,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 20> first_pass_arguments = {
+        const std::array<arg_handler, 21> first_pass_arguments = {
             {   {
                     "--client", "tiles|curses|mcp|imgui", "Select the runtime client backend",
                     section_default,
@@ -146,6 +146,16 @@ auto run_game( int argc, char *argv[] ) -> int
                             params[0] );
                         seed = static_cast<unsigned int>( djb2_hash( hash_input ) );
                         seed_explicit = true;
+                        return 1;
+                    }
+                },
+                {
+                    "--listen", "<socket path>",
+                    "Serve the mcp client's protocol on a local socket instead of stdio",
+                    section_default,
+                    []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
+                        game_client::listen_endpoint() = params[0];
                         return 1;
                     }
                 },
@@ -489,6 +499,9 @@ auto run_game( int argc, char *argv[] ) -> int
         }
     }
 
+    if( !game_client::listen_endpoint().empty() && selected_client != game_client::client_kind::mcp ) {
+        throw std::invalid_argument( "--listen requires --client mcp" );
+    }
     if( !replay_record_path.empty() && !replay_play_path.empty() ) {
         throw std::invalid_argument( "--replay-record and --replay-play are mutually exclusive" );
     }

@@ -38,7 +38,7 @@ using counter = std::uint64_t;
 enum class error {
     negotiation_failed, not_ready, stale_epoch, stale_revision, stale_boundary,
     stale_interaction_schema, validation_failed, command_busy, unknown_command,
-    invalid_lifecycle, resync_required, resource_limit,
+    invalid_lifecycle, resync_required, resource_limit, read_only,
 };
 auto error_name( error value ) -> std::string;
 
