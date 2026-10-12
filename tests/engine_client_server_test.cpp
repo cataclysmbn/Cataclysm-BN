@@ -918,4 +918,86 @@ TEST_CASE("a step of an auto-move does not complete its command", "[engine_clien
     CHECK(contains(test.output.str(), R"("stage":"completed")"));
 }
 
+namespace {
+/// A client with credits whose command has begun executing: the game now runs an activity.
+struct running_activity {
+    input_boundary boundary;
+    fixture test;
+    explicit running_activity(const std::string& opening = hello_with(R"({"credits":2})")) {
+        REQUIRE(test.authority.publish_boundary());
+        REQUIRE(test.pump(
+            opening + subscribe
+            + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+        test.run_native_input();
+        test.output.str("");
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "requests that start work are refused while an activity runs", "[engine_client_robustness]") {
+    auto run = running_activity{};
+    auto& test = run.test;
+    const auto at = test.authority.at();
+    test.poll(
+        test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())
+        + rpc("bn.interrupt", "{}", "5"));
+    // Commands wait for an input boundary; an interrupt is the one control an activity accepts.
+    CHECK(contains(test.output.str(), R"("kind":"not_ready")"));
+    CHECK(test.queued.size() == 1);
+    CHECK(test.queued.front().action == "pause");
+    CHECK(test.authority.at() == at);
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+}
+
+TEST_CASE(
+    "reads and credits during an activity neither complete nor restart its command",
+    "[engine_client_robustness]") {
+    auto run = running_activity{hello_with(R"({"credits":256})")};
+    auto& test = run.test;
+    for (auto step = 0; step < 4; ++step) { test.step(); }
+    const auto at = test.authority.at();
+    test.output.str("");
+    test.poll(
+        rpc("bn.viewport", R"({"cols":40,"rows":20})", "4") + subscribe
+        + rpc("bn.credit", R"({"frames":1})", "5"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    CHECK(error_codes(test.output.str()).empty());
+    CHECK(test.queued.empty());
+    CHECK(test.authority.at()->sequence >= at->sequence);
+    test.step();
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    CHECK_FALSE(test.pump(""));
+    CHECK(count_of(test.output.str(), R"("stage":"completed")") == 1);
+}
+
+TEST_CASE("a second hello starts over from a snapshot", "[engine_client_robustness]") {
+    auto run = running_activity{};
+    auto& test = run.test;
+    for (auto step = 0; step < 4; ++step) { test.step(); }
+    CHECK(test.server.held_frames() > 0);
+    test.output.str("");
+    test.poll(hello_with(R"({"credits":8})"));
+    CHECK(test.server.held_frames() == 0);
+    // The dropped frames are not followed by a stream with a hole in it.
+    test.output.str("");
+    test.step();
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 0);
+}
+
+TEST_CASE("shutdown drops the frames that credits cannot pay for", "[engine_client_robustness]") {
+    auto run = running_activity{};
+    auto& test = run.test;
+    for (auto step = 0; step < 6; ++step) { test.step(); }
+    const auto held = test.server.held_frames();
+    CHECK(held > 0);
+    test.output.str("");
+    CHECK(test.server.finish(test.output));
+    // The interruption is told only if it can be paid for, and nothing blocks on the rest.
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 0);
+    CHECK(test.server.held_bytes() <= maximum_held_bytes);
+    test.poll(rpc("bn.credit", R"({"frames":256})", "9"));
+    CHECK(test.server.held_frames() == 0);
+}
+
 #endif
