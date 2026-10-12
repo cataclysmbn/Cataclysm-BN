@@ -1889,11 +1889,12 @@ Deno.test({
         const extra = mode === "none" ? {} : { delivery: { credits: 256 } }
         const session = await enterTutorial(client, extra)
         await settle(session)
-        const choice = await waitChoice(session, "1 hour")
+        const choice = await waitChoice(session, "6 hours")
         const turn = BigInt(session.mirror.environment.turn)
         const mark = session.frames.length
         const started = performance.now()
-        // The stalled client paid for everything until now and stops paying here.
+        // The stalled client paid for everything until now and stops paying here. The engine publishes a
+        // running wait at a pace it can afford, so only a long wait overflows 256 frames.
         if (mode === "stalled") session.window = 0
         if (mode === "stalled") {
           const mirror = session.mirror
@@ -1929,7 +1930,9 @@ Deno.test({
           const waiting = await session.submit({ kind: "choose", choice_id: choice.id })
           assertEquals(waiting.stages.at(-1), "completed")
         }
-        console.log(`wait of 1 hour, ${mode} client: ${Math.round(performance.now() - started)} ms`)
+        console.log(
+          `wait of 6 hours, ${mode} client: ${Math.round(performance.now() - started)} ms`,
+        )
         session.mirror = await session.subscribe()
         assert(BigInt(session.mirror.environment.turn) - turn >= hour)
         ends.push(authority(session))
