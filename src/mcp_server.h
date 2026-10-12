@@ -36,6 +36,9 @@ struct mcp_host {
     std::function < auto( const std::vector<key_event> & ) -> bool > submit;
     /// Reports whether submit has events waiting at the game input boundary.
     std::function < auto() -> bool > has_input;
+    /// Waits up to this many milliseconds for a request frame; false when none arrived.
+    /// Optional: unset means a timed wait is never cut short.
+    std::function < auto( int ) -> bool > wait_input;
     /// Describe the active context and its registered actions/bindings as a JSON object.
     /// This is optional so clients can still operate with raw keys during startup screens.
     std::function < auto() -> std::string > actions;
@@ -70,8 +73,11 @@ class server
         /// Serve newline-delimited JSON-RPC messages until stdin closes or shutdown is requested.
         auto run( std::istream &in, std::ostream &out, std::ostream &err ) -> int;
 
-        /// Process protocol messages on the game thread until submit has queued input.
-        auto pump_until_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool;
+        /// Process protocol messages on the game thread until submit has queued input, or, with a
+        /// nonzero `refresh_ms`, until that long has passed without a request: it then returns
+        /// true with nothing queued, so a screen the engine redraws itself can move on.
+        auto pump_until_input( std::istream &in, std::ostream &out, std::ostream &err,
+                               int refresh_ms = 0 ) -> bool;
 
         /// Serve one request frame that is already waiting while an activity runs, without
         /// awaiting input or completing the command. False when input ended or failed.

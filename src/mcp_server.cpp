@@ -2,6 +2,7 @@
 #include "engine_client_world.h"
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -451,13 +452,15 @@ auto server::run( std::istream &in, std::ostream &out, std::ostream &err ) -> in
     }
 }
 
-auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream &err ) -> bool
+auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream &err,
+                               const int refresh_ms ) -> bool
 {
     if( failed_ || eof_ ) { return false; }
     if( host_.has_input && host_.has_input() ) { return true; }
     if( !publish_boundary( out ) ) { failed_ = true; eof_ = true; return false; }
     pump_mode_ = true;
     finish_pending( out, err );
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds( refresh_ms );
     while( !failed_ ) {
         if( pending_requests_ && !pending_response_ && !process_requests( out, err ) ) {
             failed_ = true;
@@ -475,6 +478,14 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
         if( pending_response_ ) {
             finish_pending( out, err );
             continue;
+        }
+        if( refresh_ms > 0 && host_.wait_input ) {
+            const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  deadline - std::chrono::steady_clock::now() ).count();
+            if( left <= 0 || !host_.wait_input( static_cast<int>( left ) ) ) {
+                pump_mode_ = false;
+                return true;
+            }
         }
         const auto frame = rpc::read_frame( in, options_.max_frame_bytes );
         if( frame.status == frame_status::eof ) { break; }
