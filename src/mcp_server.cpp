@@ -900,12 +900,8 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     if( !pending_requests_ || !deferred_frame_ ) { return terminal(); }
     while( const auto envelope = pending_requests_->next() ) {
         const auto method = rpc::method_of( *envelope );
-        const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
-                               method == "bn.interrupt" || method == "bn.subscribe" ||
-                               method == "bn.unsubscribe" || method == "bn.credit" ||
-                               method == "bn.interaction.choices" ||
-                               method == "bn.world.describe" || method == "bn.world.cells" ||
-                               method == "bn.command.submit" || method == "bn.command.result";
+        // The `bn.` namespace is the strict protocol; an unknown name in it is method_not_found, not a legacy error.
+        const auto is_direct = method.starts_with( "bn." );
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};
         if( is_direct ) {
             const auto entry = rpc::apply_strict_policy( *envelope );
