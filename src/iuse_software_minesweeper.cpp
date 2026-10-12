@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "catacharset.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "input.h"
@@ -176,6 +177,14 @@ int minesweeper_game::start_game()
 
     bool started = false;
     bool boom = false;
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "Minesweeper" ),
+            .canvas = game_client::window_canvas( { w_minesweeper_border, w_minesweeper } ),
+        };
+    } );
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_minesweeper_border );
         draw_border( w_minesweeper_border );

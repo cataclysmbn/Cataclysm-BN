@@ -13,6 +13,11 @@
 
 class input_context;
 
+namespace catacurses
+{
+class window;
+} // namespace catacurses
+
 namespace game_client
 {
 
@@ -233,6 +238,23 @@ struct interaction_vehicle {
     std::optional<interaction_vehicle_detail> detail;
 };
 
+/// A run of cells of one window row that share their colors, as curses color indexes 0-15.
+struct interaction_canvas_run {
+    std::string text;
+    int foreground = 7;
+    int background = 0;
+};
+
+/// A native window as drawn: one list of color runs per row, without the blank cells that end a row.
+struct interaction_canvas {
+    int cols = 0;
+    std::vector<std::vector<interaction_canvas_run>> rows;
+};
+
+/// Reads the cells the windows currently hold, as the first one frames them and each later one is
+/// drawn over the earlier ones; empty when the first holds none.
+auto window_canvas( const std::vector<catacurses::window> &layers ) -> interaction_canvas;
+
 /// Pure data describing the interaction currently waiting at an input boundary.
 struct interaction_snapshot {
     std::uint64_t input_id = 0;
@@ -256,6 +278,10 @@ struct interaction_snapshot {
     std::optional<interaction_target> target;
     std::optional<interaction_overmap> overmap;
     std::optional<interaction_vehicle> vehicle;
+    /// The window of a screen the engine draws itself, such as a software mini-game.
+    std::optional<interaction_canvas> canvas;
+    /// Nonzero where the engine redraws the screen on its own every this many milliseconds, with no input.
+    int refresh_ms = 0;
     bool allow_set_count = false;
     std::size_t choice_offset = 0;
     std::size_t choice_total = 0;

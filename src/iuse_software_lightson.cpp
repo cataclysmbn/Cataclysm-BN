@@ -7,6 +7,7 @@
 
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "input.h"
@@ -148,6 +149,14 @@ int lightson_game::start_game()
     ctxt.register_action( "RESET" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "Lights on!" ),
+            .canvas = game_client::window_canvas( { w_border, w } ),
+        };
+    } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         std::vector<std::string> shortcuts;

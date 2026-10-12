@@ -106,6 +106,36 @@ TEST_CASE(
     CHECK(schema(with_art) != schema(plain));
 }
 
+TEST_CASE(
+    "a window canvas is published as color runs without changing the schema",
+    "[engine_client_contract]") {
+    auto context = input_context{"GAME"};
+    const auto input_scope = game_client::input_context_scope{context, "GAME"};
+    const auto canvas_wire = [&context](std::string text, int foreground) {
+        const auto scope = game_client::interaction_scope{
+            context, [text = std::move(text), foreground] {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::custom,
+                    .canvas =
+                        game_client::interaction_canvas{
+                            .cols = 4,
+                            .rows =
+                                {{{.text = text, .foreground = foreground, .background = 3}}, {}}},
+                    .refresh_ms = 100,
+                };
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    const auto first = canvas_wire("#@", 15);
+    CHECK(contains(first, R"("canvas":{"cols":4,"rows":[[["#@",15,3]],[]]})"));
+    CHECK(contains(first, R"("refresh_ms":100)"));
+    const auto schema = [](const std::string& wire) {
+        return wire.substr(wire.find("schema_id"), 40);
+    };
+    CHECK(schema(first) == schema(canvas_wire("@#", 9)));
+}
+
 TEST_CASE("a colored message line is published with its tone", "[engine_client_contract]") {
     auto context = input_context{"NPC_TRADE"};
     const auto input_scope = game_client::input_context_scope{context, "NPC_TRADE"};

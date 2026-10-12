@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "catacharset.h"  // utf8_width()
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "input.h"
@@ -127,6 +128,16 @@ int snake_game::start_game()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    auto playing = true;
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "S N A K E" ),
+            .canvas = game_client::window_canvas( { w_snake } ),
+            .refresh_ms = playing ? iGameSpeed : 0,
+        };
+    } );
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_snake );
         print_header( w_snake );
@@ -234,6 +245,7 @@ int snake_game::start_game()
 
     } while( true );
 
+    playing = false;
     ui.on_redraw( [&]( const ui_adaptor & ) {
         snake_over( w_snake, iScore );
     } );

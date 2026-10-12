@@ -3,6 +3,7 @@
 #include <cstdlib>  // Needed for rand()
 #include <vector>
 
+#include "client_interaction.h"
 #include "input.h"
 #include "output.h"
 #include "posix_time.h"
@@ -421,12 +422,37 @@ void robot_finds_kitten::process_input()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "ANY_INPUT" );
+    const auto awaiting_any_key = [this]() {
+        return current_ui_state == ui_state::instructions ||
+               ( current_ui_state == ui_state::end_animation &&
+                 end_animation_frame + 1 == num_end_animation_frames );
+    };
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "robotfindskitten v22July2008" ),
+            .canvas = game_client::window_canvas( { bkatwin, w } ),
+        };
+        if( awaiting_any_key() ) {
+            // As the any-key popups: whatever a client presses acknowledges it.
+            snapshot.choices.push_back( {
+                .id = "acknowledge",
+                .label = _( "Press any key" ),
+                .description = "ANY_INPUT",
+                .selected = true,
+                .highlighted = true,
+            } );
+        }
+        return snapshot;
+    } );
+
     switch( current_ui_state ) {
         case ui_state::instructions: {
             const std::string action = ctxt.handle_input();
             if( action == "QUIT" ) {
                 current_ui_state = ui_state::exit;
-            } else if( action == "ANY_INPUT" && !ctxt.get_raw_input().sequence.empty() ) {
+            } else if( action == "ANY_INPUT" &&
+                       ( !ctxt.get_raw_input().sequence.empty() || ctxt.get_raw_input().interaction ) ) {
                 current_ui_state = ui_state::main;
             }
             break;
