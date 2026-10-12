@@ -48,50 +48,11 @@ namespace
 
 constexpr size_t max_pending_events = 256;
 
-auto close_fd( int fd ) -> void;
-
-struct fd_output_buffer final : std::streambuf {
-        explicit fd_output_buffer( const int fd ) : fd_( fd ) {}
-        ~fd_output_buffer() override { close_fd( fd_ ); }
-
-    protected:
-        auto xsputn( const char *data, const std::streamsize size ) -> std::streamsize override {
-            auto remaining = static_cast<size_t>( size );
-            while( remaining > 0 ) {
-#if defined(_WIN32)
-                const auto written = _write( fd_, data, static_cast<unsigned int>( remaining ) );
-#else
-                const auto written = ::write( fd_, data, remaining );
-#endif
-                if( written < 0 && errno == EINTR ) {
-                    continue;
-                }
-                if( written <= 0 ) {
-                    return size - static_cast<std::streamsize>( remaining );
-                }
-                data += written;
-                remaining -= static_cast<size_t>( written );
-            }
-            return size;
-        }
-
-        auto overflow( const int_type character ) -> int_type override {
-            if( character == traits_type::eof() ) {
-                return 0;
-            }
-            const auto byte = static_cast<char>( character );
-            return xsputn( &byte, 1 ) == 1 ? character : traits_type::eof();
-        }
-
-    private:
-        int fd_;
-};
-
 struct session_state {
     std::deque<key_event> events;
     screen_snapshot screen{ .json = "{\"width\":0,\"height\":0,\"cells\":[]}" };
     std::unique_ptr<server> transport;
-    std::unique_ptr<fd_output_buffer> output_buffer;
+    std::unique_ptr<std::streambuf> output_buffer;
     std::unique_ptr<std::ostream> output;
     /// Serves the protocol on a socket instead of stdio; then `transport` and `output` are unset.
     std::unique_ptr<socket_hub> sockets;
@@ -476,7 +437,7 @@ auto start_session() -> void
         if( !listening ) { throw std::runtime_error( listening.error() ); }
         session.sockets = std::move( *listening );
     } else {
-        session.output_buffer = std::make_unique<fd_output_buffer>( protocol_fd );
+        session.output_buffer = make_fd_output( protocol_fd );
         session.output = std::make_unique<std::ostream>( session.output_buffer.get() );
         session.transport = std::make_unique<server>( std::move( host ) );
     }

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <expected>
 #include <iosfwd>
+#include <streambuf>
 #include <memory>
 #include <optional>
 #include <string>
@@ -13,6 +14,10 @@
 
 namespace bn::mcp
 {
+
+/// A stream buffer that writes `fd`, a pipe, and closes it when destroyed. A write that cannot be
+/// completed fails the stream.
+auto make_fd_output( int fd ) -> std::unique_ptr<std::streambuf>;
 
 struct socket_options {
     /// The most bytes of unsent output a connection may hold before it is dropped.
