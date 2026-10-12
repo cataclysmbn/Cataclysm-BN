@@ -529,7 +529,14 @@ auto server::publish_step( std::ostream &out ) -> bool
 auto server::publish_activity( std::ostream &out ) -> bool
 {
     if( failed_ || eof_ ) { return false; }
-    if( credits_ && !publish_boundary( out, false ) ) { failed_ = true; eof_ = true; return false; }
+    if( !credits_ ) { return true; }
+    const auto now = options_.now ? options_.now : []() { return std::chrono::steady_clock::now(); };
+    const auto began = now();
+    if( began < next_activity_publish_ ) { return true; }
+    if( !publish_boundary( out, false ) ) { failed_ = true; eof_ = true; return false; }
+    // Publishing may take a fifth of the activity's time, so a long one costs a client little more than none.
+    const auto ended = now();
+    next_activity_publish_ = ended + 4 * ( ended - began );
     return true;
 }
 

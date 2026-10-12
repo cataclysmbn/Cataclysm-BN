@@ -7,9 +7,12 @@
 #    include "input.h"
 #    include "json.h"
 #    include "mcp_server.h"
+#    include "messages.h"
 #    include "rng.h"
 
 #    include <algorithm>
+#    include <chrono>
+#    include <functional>
 #    include <sstream>
 #    include <string>
 #    include <vector>
@@ -89,21 +92,27 @@ struct input_boundary {
 
 struct fixture {
     session authority;
+    /// The wall clock that paces activity publication; frozen, so every step is published.
+    std::function<auto()->std::chrono::steady_clock::time_point> clock = [] {
+        return std::chrono::steady_clock::time_point{};
+    };
     std::vector<bn::mcp::key_event> queued;
     std::ostringstream output;
     std::ostringstream errors;
-    bn::mcp::server server{{
-        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
-        .submit =
-            [this](const auto& input) {
-                queued = input;
-                return true;
-            },
-        .has_input = [this] { return !queued.empty(); },
-        .resize_viewport =
-            [](const int cols, const int rows) { declared_viewport.push_back({cols, rows}); },
-        .contract_session = &authority,
-    }};
+    bn::mcp::server server{
+        {
+            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+            .submit =
+                [this](const auto& input) {
+                    queued = input;
+                    return true;
+                },
+            .has_input = [this] { return !queued.empty(); },
+            .resize_viewport =
+                [](const int cols, const int rows) { declared_viewport.push_back({cols, rows}); },
+            .contract_session = &authority,
+        },
+        {.now = [this] { return clock(); }}};
     fixture() {
         known_cells = {1, 2};
         declared_viewport.clear();
@@ -704,6 +713,39 @@ TEST_CASE(
     known_cells.push_back(4);
     CHECK(credited.server.publish_activity(credited.output));
     CHECK(count_of(credited.output.str(), R"("method":"bn.events")") == 1);
+}
+
+TEST_CASE(
+    "a long activity is published at a pace of a fifth of its time and loses no turn",
+    "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    // Every look at the clock takes one millisecond, publishing included.
+    auto ticks = 0;
+    test.clock = [&ticks] {
+        return std::chrono::steady_clock::time_point{} + std::chrono::milliseconds{ticks++};
+    };
+    Messages::clear_messages();
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":256})") + subscribe);
+    test.output.str("");
+    const auto turns = 40;
+    for (auto turn = 0; turn < turns; ++turn) {
+        Messages::add_msg("turn " + std::to_string(turn) + " passed.");
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        REQUIRE(test.server.publish_activity(test.output));
+    }
+    // One publication, then four times as long as it took without one.
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == turns / 4);
+    // The boundary the activity ends at carries what the turns in between left unpublished.
+    test.step();
+    auto from = std::size_t{0};
+    for (auto turn = 0; turn < turns; ++turn) {
+        const auto at = test.output.str().find("turn " + std::to_string(turn) + " passed.", from);
+        CHECK(at != std::string::npos);
+        if (at != std::string::npos) { from = at; }
+    }
+    CHECK(contains(test.output.str(), "cells.seen"));
 }
 
 TEST_CASE(
