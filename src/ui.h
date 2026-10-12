@@ -173,9 +173,25 @@ struct uilist_key {
     std::string name;
 };
 
+struct uilist_detail_column {
+    std::string label;
+    std::string value;
+};
+
+/// What a callback draws beside an entry, as text for clients that cannot see the callback's window.
+struct uilist_row_details {
+    std::string description;
+    std::vector<uilist_detail_column> columns;
+};
+
 class uilist_callback
 {
     public:
+
+        /// The details the callback draws for entry `entry_index`, published as the row's description and columns.
+        virtual uilist_row_details row_details( const uilist &/*menu*/, int /*entry_index*/ ) const {
+            return {};
+        }
 
         /// The raw keys `key` reacts to, for clients that only send actions and choices.
         virtual std::vector<uilist_key> keys() const {

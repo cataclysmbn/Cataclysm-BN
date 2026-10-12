@@ -1813,7 +1813,10 @@ private:
     const std::string popup_distractions_hint;
     const std::string assign_hotkey_hint;
     const int assign_hotkey_hint_width;
+    const std::vector<uilist_key> key_rows;
+    static constexpr int no_fold_width = 4096;
     int info_scroll;
+    auto spell_info_text(const spell& sp, int info_width) const -> std::string;
     auto draw_spell_info(const spell& sp, const uilist* menu) -> void;
     auto update_categories(
         uilist* menu, const spell_selector_category_id& requested_category, bool rebuild_topology)
@@ -1831,6 +1834,7 @@ public:
         const std::set<int>& reserved_invlets;
         std::string distraction_action_hint;
         std::string assign_hotkey_action_hint;
+        std::vector<uilist_key> key_rows;
         bool casting_ignore = false;
     };
 
@@ -1847,7 +1851,31 @@ public:
               string_format("[%s] %s", opts.distraction_action_hint, _("Popup Distractions"))),
           assign_hotkey_hint(string_format(_("Assign Hotkey [%s]"), opts.assign_hotkey_action_hint)),
           assign_hotkey_hint_width(utf8_width(assign_hotkey_hint)),
+          key_rows(std::move(opts.key_rows)),
           casting_ignore(opts.casting_ignore) {}
+    auto keys() const -> std::vector<uilist_key> override { return key_rows; }
+    auto row_details(const uilist& /*menu*/, const int entry_index) const
+        -> uilist_row_details override {
+        const auto index = static_cast<std::size_t>(entry_index);
+        if (entry_index < 0 || index >= known_spells.size() || index >= categories.spells.size()) {
+            return {};
+        }
+        const auto& sp = *known_spells[index];
+        auto columns = std::vector<uilist_detail_column>{
+            {.label = _("Spell Level"), .value = std::to_string(sp.get_level())},
+            {.label = _("Failure Chance"),
+             .value = remove_color_tags(sp.colorized_fail_percent(guy))},
+            {.label = _("Casting Cost"),
+             .value = string_format("%s %s", sp.energy_cost_string(guy), sp.energy_string())},
+            {.label = _("Casting Time"), .value = moves_to_string(sp.casting_time(guy))},
+            {.label = _("Range"),
+             .value = sp.range() <= 0 ? _("self") : std::to_string(sp.range())},
+        };
+        if (categories.spells[index].favorite) {
+            columns.push_back({.label = _("Favorite"), .value = "*"});
+        }
+        return {.description = spell_info_text(sp, no_fold_width), .columns = std::move(columns)};
+    }
     auto key(const input_context& ctxt, const input_event& event, int entnum, uilist* menu)
         -> bool override {
         const auto& action = ctxt.input_to_action(event);
@@ -2047,17 +2075,10 @@ static auto enumerate_traits(const std::set<trait_id> st) -> std::string {
 }
 
 
-auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu) -> void {
-    const int h_offset = menu->w_width - menu->pad_right + 1;
-    // includes spaces on either side for readability
-    const int info_width = menu->pad_right - 4;
-    const int win_height = menu->w_height;
-    const int h_col1 = h_offset + 1;
-    const int h_col2 = h_offset + (info_width / 2);
-    const catacurses::window w_menu = menu->window;
+auto spellcasting_callback::spell_info_text(const spell& sp, const int info_width) const
+    -> std::string {
     // various pieces of spell data mean different things depending on the effect of the spell
     const std::string fx = sp.effect();
-    int line = 2;
     nc_color gray = c_light_gray;
     nc_color light_green = c_light_green;
     nc_color yellow = c_yellow;
@@ -2144,13 +2165,17 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
             string_format(_("Only affects the monsters: %s"), target_ids));
     }
 
-    const int damage = sp.damage_as_character(guy);
+    // A random-damage spell rolls on every call; its range keeps the text stable between reads.
+    const auto random_damage = sp.has_flag(spell_flag::RANDOM_DAMAGE);
+    const int damage = random_damage ? 0 : sp.damage_as_character(guy);
+    const auto summoned = random_damage ? sp.damage_string(guy) : std::to_string(sp.damage());
+    const int summoned_count = random_damage ? 2 : sp.damage();
     std::string damage_string;
     std::string aoe_string;
     // if it's any type of attack spell, the stats are normal.
     if (fx == "target_attack" || fx == "projectile_attack" || fx == "cone_attack"
         || fx == "line_attack") {
-        if (damage > 0) {
+        if (damage > 0 || (random_damage && damage == 0)) {
             damage_string = string_format(
                 "%s: %s %s", _("Damage"), colorize(sp.damage_string(guy), sp.damage_type_color()),
                 colorize(sp.damage_type_string(), sp.damage_type_color()));
@@ -2173,12 +2198,11 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
         if (sp.aoe() > 0) { aoe_string = string_format("%s: %d", _("Variance"), sp.aoe()); }
     } else if (fx == "spawn_item") {
         damage_string = string_format(
-            "%s %d %s", _("Spawn"), sp.damage(),
-            item::nname(itype_id(sp.effect_data()), sp.damage()));
+            "%s %s %s", _("Spawn"), summoned,
+            item::nname(itype_id(sp.effect_data()), summoned_count));
     } else if (fx == "summon") {
         damage_string = string_format(
-            "%s %d %s", _("Summon"), sp.damage(),
-            _(monster(mtype_id(sp.effect_data())).get_name()));
+            "%s %s %s", _("Summon"), summoned, _(monster(mtype_id(sp.effect_data())).get_name()));
         aoe_string = string_format("%s: %d", _("Spell Radius"), sp.aoe());
     } else if (fx == "ter_transform") {
         aoe_string = string_format("%s: %s", _("Spell Radius"), sp.aoe_string());
@@ -2216,7 +2240,18 @@ auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu)
         }
     }
 
-    std::vector<std::string> to_print_list = foldstring(oss.str(), info_width - 1);
+    return oss.str();
+}
+
+auto spellcasting_callback::draw_spell_info(const spell& sp, const uilist* menu) -> void {
+    const int h_offset = menu->w_width - menu->pad_right + 1;
+    // includes spaces on either side for readability
+    const int info_width = menu->pad_right - 4;
+    const int win_height = menu->w_height;
+    const int h_col1 = h_offset + 1;
+    const catacurses::window w_menu = menu->window;
+    std::vector<std::string> to_print_list =
+        foldstring(spell_info_text(sp, info_width), info_width - 1);
 
     const int total_lines = to_print_list.size();
     if (info_scroll > total_lines) {
@@ -2316,6 +2351,15 @@ auto known_magic::select_spell(Character& guy) -> int {
     const auto reserved_invlets = spell_selector_reserved_invlets(spell_input_context);
     auto used_invlets = sanitize_invlets(reserved_invlets);
 
+    auto key_rows = std::vector<uilist_key>{};
+    const auto add_key_row = [&](const std::string& action, std::string name) {
+        const auto keys = spell_input_context.keys_bound_to(action);
+        if (!keys.empty()) { key_rows.push_back({.key = keys.front(), .name = std::move(name)}); }
+    };
+    add_key_row(toggle_favorite_action, _("Toggle favorite"));
+    add_key_row(toggle_distractions_action, _("Toggle casting distractions"));
+    add_key_row(assign_spell_hotkey_action, _("Assign spell hotkey"));
+
     auto cb = spellcasting_callback({
         .magic = *this,
         .guy = guy,
@@ -2325,6 +2369,7 @@ auto known_magic::select_spell(Character& guy) -> int {
         .reserved_invlets = reserved_invlets,
         .distraction_action_hint = spell_input_context.get_desc(toggle_distractions_action, 1),
         .assign_hotkey_action_hint = spell_input_context.get_desc(assign_spell_hotkey_action, 1),
+        .key_rows = key_rows,
         .casting_ignore = casting_ignore,
     });
 

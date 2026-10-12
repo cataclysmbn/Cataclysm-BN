@@ -2175,6 +2175,27 @@
       }
     },
     {
+      "name": "spell menu row with the details of its side panel",
+      "def": "choice",
+      "value": {
+        "id": "entry:0",
+        "label": "Magic Missile",
+        "description": "<color_yellow>Mage</color>\nA missile of force.\nSpell Level: 3\nFailure Chance: 12.0 % Failure Chance\nCasting Cost: 15 mana\nCasting Time: 1 second\nRange: 5",
+        "denial": "",
+        "hotkey": "a",
+        "enabled": true,
+        "selectable": true,
+        "selected": true,
+        "columns": [
+          { "label": "Spell Level", "value": "3" },
+          { "label": "Failure Chance", "value": "12.0 % Failure Chance" },
+          { "label": "Casting Cost", "value": "15 mana" },
+          { "label": "Casting Time", "value": "1 second" },
+          { "label": "Range", "value": "5" }
+        ]
+      }
+    },
+    {
       "name": "trade pane with carried against capacity",
       "def": "pane",
       "value": {
