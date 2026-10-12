@@ -522,7 +522,8 @@ auto server::poll_input( std::istream &in, std::ostream &out, std::ostream &err 
 auto server::publish_step( std::ostream &out ) -> bool
 {
     if( failed_ || eof_ ) { return false; }
-    if( !publish_boundary( out ) ) { failed_ = true; eof_ = true; return false; }
+    // The walk goes on after this step: its command completes at the boundary where input is awaited.
+    if( !publish_boundary( out, false ) ) { failed_ = true; eof_ = true; return false; }
     return true;
 }
 
@@ -760,6 +761,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         hello_ = true;
         credits_ = decoded->credits;
+        // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
+        subscribed_ = false;
         held_.clear();
         held_bytes_ = 0;
         game_client::set_overmap_tiles( decoded->tiles );
@@ -776,7 +779,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !decoded ) { return invalid(); }
         if( host_.resize_viewport ) { host_.resize_viewport( decoded->cols, decoded->rows ); }
         // The new view is part of what the client reads, so it is published like any other change.
-        if( const auto published = session_.publish_boundary(); !published ) { return fail( published.error() ); }
+        // A running activity is no boundary: its command is not settled by a resize.
+        if( const auto published = session_.publish_boundary( !polling_ ); !published ) { return fail( published.error() ); }
         queue_push();
         return rpc::make_result( request, "{}" );
     }
@@ -900,12 +904,8 @@ auto server::process_requests( std::ostream &out, std::ostream &err ) -> bool
     if( !pending_requests_ || !deferred_frame_ ) { return terminal(); }
     while( const auto envelope = pending_requests_->next() ) {
         const auto method = rpc::method_of( *envelope );
-        const auto is_direct = method == "bn.hello" || method == "bn.viewport" ||
-                               method == "bn.interrupt" || method == "bn.subscribe" ||
-                               method == "bn.unsubscribe" || method == "bn.credit" ||
-                               method == "bn.interaction.choices" ||
-                               method == "bn.world.describe" || method == "bn.world.cells" ||
-                               method == "bn.command.submit" || method == "bn.command.result";
+        // The `bn.` namespace is the strict protocol; an unknown name in it is method_not_found, not a legacy error.
+        const auto is_direct = method.starts_with( "bn." );
         auto response = std::expected<std::optional<rpc::response>, rpc::output_error> {std::nullopt};
         if( is_direct ) {
             const auto entry = rpc::apply_strict_policy( *envelope );

@@ -35,13 +35,18 @@ const stall = 120_000
 class Client {
   #process: Deno.ChildProcess
   #writer: WritableStreamDefaultWriter<Uint8Array>
-  #reader: ReadableStreamDefaultReader<string>
+  #reader: ReadableStreamDefaultReader<Uint8Array>
+  #decoder = new TextDecoder()
   #buffer = ""
   #id = 0
   /** Notifications that arrived while waiting for something else, in order. */
   notes: Value[] = []
+  /** Responses to raw frames written with `raw`, which no `request` waits for. */
+  replies: Value[] = []
+  /** Pause after every chunk read, to drain the pipe slowly. */
+  readDelayMs = 0
 
-  constructor(binary: string, profile: string) {
+  constructor(binary: string, profile: string, stderr: "null" | "piped" = "null") {
     this.#process = new Deno.Command(binary, {
       args: [
         "--client=mcp",
@@ -54,10 +59,10 @@ class Client {
       ],
       stdin: "piped",
       stdout: "piped",
-      stderr: "null",
+      stderr,
     }).spawn()
     this.#writer = this.#process.stdin.getWriter()
-    this.#reader = this.#process.stdout.pipeThrough(new TextDecoderStream()).getReader()
+    this.#reader = this.#process.stdout.getReader()
   }
 
   async #line(): Promise<Value> {
@@ -68,7 +73,8 @@ class Client {
         timer = setTimeout(() => this.#process.kill("SIGKILL"), stall)
         const part = await this.#reader.read()
         assert(!part.done, "engine closed stdout")
-        this.#buffer += part.value
+        this.#buffer += this.#decoder.decode(part.value, { stream: true })
+        if (this.readDelayMs) await new Promise((resolve) => setTimeout(resolve, this.readDelayMs))
       }
     } finally {
       clearTimeout(timer)
@@ -79,13 +85,72 @@ class Client {
     return { ...JSON.parse(line), receivedAt: performance.now() }
   }
 
-  async request(method: string, params: unknown): Promise<Value> {
-    const id = ++this.#id
-    await this.#writer.write(
-      new TextEncoder().encode(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"),
-    )
+  /** Next frame that is not the response to a raw frame. */
+  async #next(): Promise<Value> {
     while (true) {
       const message = await this.#line()
+      if (message.method !== undefined || !this.rawIds.has(JSON.stringify(message.id))) {
+        return message
+      }
+      this.replies.push(message)
+    }
+  }
+
+  /** The ids written with `raw`; a malformed frame is answered with id null. */
+  rawIds = new Set<string>()
+
+  /**
+   * Queues `text` as it is, one frame per line, and expects a response with each id in `ids`.
+   * It does not wait for the engine to take the bytes: a pipe holds little, and an engine blocked on
+   * its own output reads nothing until the client does.
+   */
+  raw(text: string, ids: unknown[] = []) {
+    for (const id of ids) this.rawIds.add(JSON.stringify(id))
+    this.#queue(text)
+  }
+
+  #queue(text: string) {
+    this.#writer.write(new TextEncoder().encode(text)).catch(() => {})
+  }
+
+  /** Reads until `count` responses to raw frames have arrived; notifications on the way wait in `notes`. */
+  async repliesUntil(count: number) {
+    while (this.replies.length < count) {
+      const message = await this.#next()
+      validate(schema["x-notifications"][message.method], message.params, message.method)
+      this.notes.push(message)
+    }
+  }
+
+  /** Drops what was queued for the engine and closes its stdin, as a client that died; a write in flight ends when the engine reads or exits. */
+  closeInput() {
+    this.#writer.abort().catch(() => {})
+  }
+
+  signal(sig: Deno.Signal) {
+    this.#process.kill(sig)
+  }
+
+  /** Waits for the engine to leave; `stderr` is its text when piped. */
+  async exit(ms: number) {
+    const stderr = this.#process.stderr
+    return await withDeadline(
+      Promise.all([this.#process.status, stderr ? new Response(stderr).text() : ""]),
+      ms,
+      "the engine outlived its client",
+    ).then(([status, text]) => ({ status, stderr: text }))
+  }
+
+  /** Closes the engine's stdout for good, as a client that died. */
+  async abandonOutput() {
+    await this.#reader.cancel()
+  }
+
+  async request(method: string, params: unknown): Promise<Value> {
+    const id = ++this.#id
+    this.#queue(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n")
+    while (true) {
+      const message = await this.#next()
       if (message.id === id) {
         if (message.error) validate("application_error", message.error.data, `${method} error`)
         else validate(schema["x-methods"][method].result, message.result, `${method} result`)
@@ -107,7 +172,7 @@ class Client {
   async note(): Promise<Value> {
     const queued = this.notes.shift()
     if (queued) return queued
-    const message = await this.#line()
+    const message = await this.#next()
     validate(schema["x-notifications"][message.method], message.params, message.method)
     return message
   }
@@ -1954,3 +2019,221 @@ Deno.test({
     )
   },
 })
+
+/** Submits the chosen wait without following it, so the caller can talk to the engine while it runs. */
+const beginWait = async (session: Session, choice: Value) => {
+  const mirror = session.mirror
+  const sent = await session.client.result("bn.command.submit", {
+    epoch: mirror.at.epoch,
+    expect: {
+      revision: mirror.at.revision,
+      boundary_id: mirror.interaction.boundary_id,
+      schema_id: mirror.interaction.interaction.schema_id,
+    },
+    operation: { kind: "choose", choice_id: choice.id },
+  })
+  session.stages.set(sent.command_id, ["received"])
+  return sent.command_id as string
+}
+
+/** Follows the pushes until the command is terminal. */
+const endWait = async (session: Session, id: string) => {
+  while (!["completed", "rejected", "interrupted"].includes(session.stages.get(id)!.at(-1)!)) {
+    session.handle(await session.client.note())
+    await session.pay()
+  }
+}
+
+Deno.test({
+  name:
+    "stdio: malformed frames and commands sent during a pushing wait get their errors and change nothing",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client, { delivery: { credits: 256 } })
+      await settle(session)
+      const choice = await waitChoice(session, "6 hours")
+      const turn = BigInt(session.mirror.environment.turn)
+      const id = await beginWait(session, choice)
+      const request = (name: string, method: string, params: Value) =>
+        JSON.stringify({ jsonrpc: "2.0", id: name, method, params }) + "\n"
+      const { at, interaction } = session.mirror
+      client.raw(
+        [
+          "{not json\n",
+          "[]\n",
+          "42\n",
+          request("unknown", "bn.nope", {}),
+          request("wrong-params", "bn.credit", []),
+          // A command waits for an input boundary; the activity is not re-entered by it.
+          request("busy", "bn.command.submit", {
+            epoch: at.epoch,
+            expect: {
+              revision: at.revision,
+              boundary_id: interaction.boundary_id,
+              schema_id: null,
+            },
+            operation: { kind: "cancel" },
+          }),
+          request("credit", "bn.credit", { frames: 1 }),
+        ].join(""),
+        [null, "unknown", "wrong-params", "busy", "credit"],
+      )
+      await endWait(session, id)
+      const code = (name: string | null) =>
+        client.replies.filter((reply) => reply.id === name).map((reply) => reply.error?.code)
+      assertEquals(code(null), [-32700, -32600, -32700])
+      assertEquals(code("unknown"), [-32601])
+      assertEquals(code("wrong-params"), [-32602])
+      assertEquals(code("busy"), [1000])
+      assertEquals(
+        client.replies.find((reply) => reply.id === "busy").error.data.kind,
+        "not_ready",
+      )
+      assertEquals(client.replies.find((reply) => reply.id === "credit").result.credits > 0, true)
+      assertEquals(session.stages.get(id)!.at(-1), "completed")
+      assertEquals(session.resyncs.length, 0)
+      assert(BigInt(session.mirror.environment.turn) - turn >= 6n * hour)
+      // The stream the pushes built equals a fresh snapshot, and the engine still answers.
+      assertEquals(session.mirror.state(), (await session.subscribe()).state())
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+const frameBytes = 1048576
+
+for (const when of ["idle", "during a wait"]) {
+  Deno.test({
+    name: `stdio: a frame over the declared maximum ${when} closes the connection with the reason`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      try {
+        const extra = { delivery: { credits: 256 } }
+        if (when === "idle") {
+          const hello = await client.result("bn.hello", {
+            versions: ["1.0"],
+            client: { name: "stdio-test", version: "1" },
+            ...extra,
+          })
+          assertEquals(hello.limits.frame_bytes, frameBytes)
+          await new Session(client).start()
+        } else {
+          const session = await enterTutorial(client, extra)
+          await settle(session)
+          await beginWait(session, await waitChoice(session, "6 hours"))
+        }
+        client.raw(" ".repeat(frameBytes + 1024))
+        const { status, stderr } = await client.exit(30_000)
+        assertEquals(status.code, 1)
+        assert(stderr.includes(`exceeds ${frameBytes} bytes`), stderr.slice(-300))
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+}
+
+/** Writes `count` requests for a box of cells, each answered by a frame that fills a good part of a pipe. */
+const floodCells = (session: Session, count: number) => {
+  const at = session.mirror.avatar.at
+  const params = {
+    epoch: session.mirror.at.epoch,
+    min: { ...at, x: at.x - 32, y: at.y - 32 },
+    max: { ...at, x: at.x + 31, y: at.y + 31 },
+  }
+  const ids = Array.from({ length: count }, (_, i) => `cells-${i}`)
+  session.client.raw(
+    ids.map((id) => JSON.stringify({ jsonrpc: "2.0", id, method: "bn.world.cells", params }) + "\n")
+      .join(""),
+    ids,
+  )
+  return ids
+}
+
+Deno.test({
+  name: "stdio: a client that drains the pipe slowly gets well-formed frames and the same game",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const ends: string[] = []
+    for (const delay of [0, 50]) {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+      try {
+        const session = await enterTutorial(client, { delivery: { credits: 256 } })
+        await settle(session)
+        const choice = await waitChoice(session, "6 hours")
+        const turn = BigInt(session.mirror.environment.turn)
+        const id = await beginWait(session, choice)
+        // The answers add up to far more than a pipe holds, so the engine's writes can only finish as the client reads.
+        const ids = floodCells(session, 64)
+        client.readDelayMs = delay
+        const started = performance.now()
+        await endWait(session, id)
+        await client.repliesUntil(ids.length)
+        for (const note of client.notes.splice(0)) session.handle(note)
+        client.readDelayMs = 0
+        console.log(
+          `wait of 6 hours with ${ids.length} cell answers, ${delay} ms per read: ${
+            Math.round(performance.now() - started)
+          } ms`,
+        )
+        assertEquals(client.replies.every((reply) => reply.result?.cells !== undefined), true)
+        assertEquals(session.stages.get(id)!.at(-1), "completed")
+        assertEquals(session.resyncs.length, 0)
+        assert(BigInt(session.mirror.environment.turn) - turn >= 6n * hour)
+        assertEquals(session.mirror.state(), (await session.subscribe()).state())
+        ends.push(authority(session))
+        await client.close()
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    }
+    assertEquals(firstDiff(JSON.parse(ends[1]), JSON.parse(ends[0])), undefined)
+  },
+})
+
+for (const how of ["stdin and stdout closed", "SIGTERM"] as const) {
+  Deno.test({
+    name: `stdio: a client that stops reading during a wait is left behind by the engine: ${how}`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      try {
+        const session = await enterTutorial(client, { delivery: { credits: 256 } })
+        await settle(session)
+        await beginWait(session, await waitChoice(session, "6 hours"))
+        // Nothing is read from here: the answers fill the pipe and the engine's write cannot finish.
+        floodCells(session, 64)
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        if (how === "SIGTERM") {
+          client.signal("SIGTERM")
+        } else {
+          client.closeInput()
+          await client.abandonOutput()
+        }
+        const { status, stderr } = await client.exit(20_000)
+        if (how === "SIGTERM") {
+          assertEquals(status.signal, "SIGTERM")
+          assert(stderr.includes("received SIGTERM"), stderr.slice(-300))
+        } else {
+          assertEquals(status.signal, null, "left by itself")
+          assert(stderr.includes("mcp: the engine is exiting"), stderr.slice(-300))
+        }
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+}

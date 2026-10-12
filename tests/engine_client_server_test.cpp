@@ -536,8 +536,8 @@ TEST_CASE(
         + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
     test.run_native_input(); // executing, then the next native boundary
     test.output.str("");
-    with_avatar = false; // the change cannot be one event: subscribers start over
-    REQUIRE(test.server.publish_step(test.output));
+    with_avatar = false;        // the change cannot be one event: subscribers start over
+    CHECK_FALSE(test.pump("")); // the input boundary where the command ends
     const auto out = test.output.str();
     CHECK(contains(out, R"("method":"bn.resync")"));
     CHECK(contains(out, R"("stage":"completed")"));
@@ -793,6 +793,211 @@ TEST_CASE(
     CHECK(stalled.revision == none.revision);
     CHECK(pushing.rng == none.rng);
     CHECK(stalled.rng == none.rng);
+}
+
+namespace {
+/// The JSON-RPC error codes in `text`, in order.
+auto error_codes(const std::string& text) -> std::vector<std::string> {
+    auto codes = std::vector<std::string>{};
+    for (auto at = text.find(R"("code":)"); at != std::string::npos;
+         at = text.find(R"("code":)", at + 1)) {
+        codes.push_back(text.substr(at + 7, text.find_first_of(",}", at) - at - 7));
+    }
+    return codes;
+}
+} // namespace
+
+TEST_CASE(
+    "a malformed frame gets its JSON-RPC error and changes nothing", "[engine_client_robustness]") {
+    struct bad_frame {
+        std::string line;
+        std::string code; ///< empty when the engine owes no reply
+    };
+    const auto frames = std::vector<bad_frame>{
+        {"{not json", "-32700"},
+        {"", ""},
+        {"[]", "-32600"},
+        {"42", "-32700"}, // historical: a scalar frame is a parse error
+        {"null", "-32700"},
+        {R"({"jsonrpc":"2.0"})", "-32600"},
+        {R"({"jsonrpc":"1.0","method":"bn.subscribe","id":4})", "-32600"},
+        {R"({"jsonrpc":"2.0","method":5,"id":4})", "-32602"}, // historical shape error
+        {R"({"jsonrpc":"2.0","method":"bn.subscribe","id":{}})", "-32600"},
+        {R"({"jsonrpc":"2.0","method":"bn.nope","params":{},"id":4})", "-32601"},
+        {R"({"jsonrpc":"2.0","method":"bn.credit","params":[],"id":4})", "-32602"},
+        {R"({"jsonrpc":"2.0","method":"bn.credit","params":{"frames":"1"},"id":4})", "-32602"},
+        {R"({"jsonrpc":"2.0","method":"bn.nope","params":{}})", ""},
+        {R"({"jsonrpc":"2.0","method":"bn.credit","params":[]})", ""},
+    };
+    for (const auto* delivery : {"", R"({"credits":2})"}) {
+        for (const auto activity : {false, true}) {
+            auto boundary = input_boundary{};
+            auto test = fixture{};
+            REQUIRE(test.authority.publish_boundary());
+            test.poll((std::string{delivery}.empty() ? hello : hello_with(delivery)) + subscribe);
+            // An activity that is pushing: two credits are spent, the rest of its frames are held.
+            if (activity) {
+                for (auto step = 0; step < 6; ++step) { test.step(); }
+            }
+            const auto held = test.server.held_frames();
+            const auto sequence = test.authority.at()->sequence;
+            for (const auto& frame : frames) {
+                CAPTURE(frame.line, delivery, activity);
+                test.output.str("");
+                test.poll(frame.line + "\n");
+                const auto codes = error_codes(test.output.str());
+                CHECK(
+                    codes
+                    == (frame.code.empty() ? std::vector<std::string>{} : std::vector{frame.code}));
+                CHECK(test.server.held_frames() == held);
+                CHECK_FALSE(test.server.failed());
+            }
+            CHECK(test.authority.at()->sequence == sequence);
+            // The connection still serves a valid request, and the held frames follow it in order.
+            test.output.str("");
+            test.poll(rpc("bn.credit", R"({"frames":9})", "9"));
+            CHECK(contains(test.output.str(), R"("id":9)"));
+            if (activity && std::string{delivery}.size()) {
+                CHECK(test.server.held_frames() == 0);
+                CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 4);
+            }
+        }
+    }
+}
+
+TEST_CASE(
+    "an oversized or unterminated frame closes the connection", "[engine_client_robustness]") {
+    struct bad_input {
+        std::string text;
+        std::string reason;
+    };
+    const auto limit = bn::mcp::server::default_max_frame_bytes;
+    const auto inputs = std::vector<bad_input>{
+        {std::string(limit + 1, 'x') + "\n", "exceeds"},
+        {std::string(8 * limit, ' '), "exceeds"},
+        {R"({"jsonrpc":"2.0","method":"bn.subscribe","id":2})", "unterminated"},
+    };
+    for (const auto* delivery : {"", R"({"credits":2})"}) {
+        for (const auto& input : inputs) {
+            auto boundary = input_boundary{};
+            auto test = fixture{};
+            REQUIRE(test.authority.publish_boundary());
+            test.poll((std::string{delivery}.empty() ? hello : hello_with(delivery)) + subscribe);
+            for (auto step = 0; step < 6; ++step) { test.step(); }
+            test.output.str("");
+            auto text = std::istringstream{input.text};
+            CHECK_FALSE(test.server.poll_input(text, test.output, test.errors));
+            CHECK(test.server.failed());
+            CHECK(contains(test.errors.str(), input.reason));
+            // Nothing was dispatched, and the frames the client had credits for were not lost.
+            CHECK_FALSE(contains(test.output.str(), "result"));
+            CHECK(test.server.held_bytes() <= maximum_held_bytes);
+            // At most one frame's worth was read before giving up.
+            text.clear();
+            CHECK(static_cast<std::size_t>(text.tellg()) <= limit + 1);
+        }
+    }
+}
+
+TEST_CASE("a step of an auto-move does not complete its command", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK(test.server.publish_step(test.output));
+    CHECK(contains(test.output.str(), R"("type":"cells.seen")"));
+    CHECK(contains(test.output.str(), R"("command":")"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    known_cells.push_back(4);
+    CHECK_FALSE(test.pump(""));
+    CHECK(contains(test.output.str(), R"("stage":"completed")"));
+}
+
+namespace {
+/// A client with credits whose command has begun executing: the game now runs an activity.
+struct running_activity {
+    input_boundary boundary;
+    fixture test;
+    explicit running_activity(const std::string& opening = hello_with(R"({"credits":2})")) {
+        REQUIRE(test.authority.publish_boundary());
+        REQUIRE(test.pump(
+            opening + subscribe
+            + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+        test.run_native_input();
+        test.output.str("");
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "requests that start work are refused while an activity runs", "[engine_client_robustness]") {
+    auto run = running_activity{};
+    auto& test = run.test;
+    const auto at = test.authority.at();
+    test.poll(
+        test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())
+        + rpc("bn.interrupt", "{}", "5"));
+    // Commands wait for an input boundary; an interrupt is the one control an activity accepts.
+    CHECK(contains(test.output.str(), R"("kind":"not_ready")"));
+    CHECK(test.queued.size() == 1);
+    CHECK(test.queued.front().action == "pause");
+    CHECK(test.authority.at() == at);
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+}
+
+TEST_CASE(
+    "reads and credits during an activity neither complete nor restart its command",
+    "[engine_client_robustness]") {
+    auto run = running_activity{hello_with(R"({"credits":256})")};
+    auto& test = run.test;
+    for (auto step = 0; step < 4; ++step) { test.step(); }
+    const auto at = test.authority.at();
+    test.output.str("");
+    test.poll(
+        rpc("bn.viewport", R"({"cols":40,"rows":20})", "4") + subscribe
+        + rpc("bn.credit", R"({"frames":1})", "5"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    CHECK(error_codes(test.output.str()).empty());
+    CHECK(test.queued.empty());
+    CHECK(test.authority.at()->sequence >= at->sequence);
+    test.step();
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    CHECK_FALSE(test.pump(""));
+    CHECK(count_of(test.output.str(), R"("stage":"completed")") == 1);
+}
+
+TEST_CASE("a second hello starts over from a snapshot", "[engine_client_robustness]") {
+    auto run = running_activity{};
+    auto& test = run.test;
+    for (auto step = 0; step < 4; ++step) { test.step(); }
+    CHECK(test.server.held_frames() > 0);
+    test.output.str("");
+    test.poll(hello_with(R"({"credits":8})"));
+    CHECK(test.server.held_frames() == 0);
+    // The dropped frames are not followed by a stream with a hole in it.
+    test.output.str("");
+    test.step();
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 0);
+}
+
+TEST_CASE("shutdown drops the frames that credits cannot pay for", "[engine_client_robustness]") {
+    auto run = running_activity{};
+    auto& test = run.test;
+    for (auto step = 0; step < 6; ++step) { test.step(); }
+    const auto held = test.server.held_frames();
+    CHECK(held > 0);
+    test.output.str("");
+    CHECK(test.server.finish(test.output));
+    // The interruption is told only if it can be paid for, and nothing blocks on the rest.
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 0);
+    CHECK(test.server.held_bytes() <= maximum_held_bytes);
+    test.poll(rpc("bn.credit", R"({"frames":256})", "9"));
+    CHECK(test.server.held_frames() == 0);
 }
 
 #endif
