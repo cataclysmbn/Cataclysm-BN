@@ -899,4 +899,23 @@ TEST_CASE(
     }
 }
 
+TEST_CASE("a step of an auto-move does not complete its command", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK(test.server.publish_step(test.output));
+    CHECK(contains(test.output.str(), R"("type":"cells.seen")"));
+    CHECK(contains(test.output.str(), R"("command":"c:)"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    known_cells.push_back(4);
+    CHECK_FALSE(test.pump(""));
+    CHECK(contains(test.output.str(), R"("stage":"completed")"));
+}
+
 #endif
