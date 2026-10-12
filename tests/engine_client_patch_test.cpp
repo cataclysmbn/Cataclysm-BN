@@ -22,6 +22,8 @@
 #    include "weather/weather.h"
 
 #    include <algorithm>
+#    include <chrono>
+#    include <iostream>
 #    include <ranges>
 #    include <string>
 
@@ -231,6 +233,63 @@ TEST_CASE("a patch that does not continue the last one names every cell", "[engi
     auto other = *current;
     other.at.epoch = "another";
     CHECK(ec::world::capture_patch(other, true).exhaustive);
+}
+
+TEST_CASE("open air publishes a cell only while something is in it", "[engine_client_patch]") {
+    const auto start = make_room();
+    auto& here = get_map();
+    const auto air = start + tripoint(1, 0, 1);
+    const auto abs = map_local_to_abs(here, air);
+    const auto position = ec::position{.dim = "", .x = abs.x(), .y = abs.y(), .z = abs.z()};
+    map_perception::acquire();
+    REQUIRE(here.has_flag(TFLAG_NO_MEMORY, air));
+    CHECK_FALSE(ec::world::capture_world().cells.contains(position));
+    here.add_field(air, field_type_id("fd_smoke"), 1);
+    CHECK(ec::world::capture_world().cells.contains(position));
+    here.remove_field(air, field_type_id("fd_smoke"));
+    CHECK_FALSE(ec::world::capture_world().cells.contains(position));
+    here.add_item_or_charges(air, item::spawn("rock"));
+    CHECK(ec::world::capture_world().cells.contains(position));
+}
+
+/// Milliseconds a publication costs with a full capture and with a patch, for an avatar who has
+/// memorized `squares` squares: `cata_test-mcp "[.engine_client_patch_cost]"` prints them.
+TEST_CASE("the cost of a publication by squares memorized", "[.engine_client_patch_cost]") {
+    for (const auto radius : {0, 10, 25, 50}) {
+        const auto start = make_room();
+        auto& you = get_avatar();
+        for (const auto y : std::views::iota(-radius, radius + 1)) {
+            for (const auto x : std::views::iota(-radius, radius + 1)) {
+                you.memorize_terrain_tile(
+                    map_local_to_abs(get_map(), start + tripoint(x, y, 0)), "t_floor", 0, 0);
+            }
+        }
+        for (const auto patched : {false, true}) {
+            auto context = input_context{"YESNO"};
+            auto input = game_client::input_context_scope{context, "YESNO"};
+            context.register_action("YES");
+            game_client::begin_input_boundary();
+            auto authority = ec::session{};
+            authority.set_world_capture(
+                &ec::world::capture_world, patched ? &ec::world::capture_patch : nullptr);
+            map_perception::acquire();
+            REQUIRE(authority.publish_boundary());
+            const auto turns = 100;
+            auto elapsed = std::chrono::steady_clock::duration{};
+            for (const auto turn : std::views::iota(0, turns)) {
+                calendar::turn += 1_turns;
+                map_perception::acquire();
+                const auto began = std::chrono::steady_clock::now();
+                REQUIRE(authority.publish_boundary());
+                elapsed += std::chrono::steady_clock::now() - began;
+                CHECK(turn >= 0);
+            }
+            std::cerr << "memorized " << (2 * radius + 1) * (2 * radius + 1) << ", "
+                      << (patched ? "patch" : "full") << ": "
+                      << std::chrono::duration<double, std::milli>(elapsed).count() / turns
+                      << " ms/publication\n";
+        }
+    }
 }
 
 #endif
