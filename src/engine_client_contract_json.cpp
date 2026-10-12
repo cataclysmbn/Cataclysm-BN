@@ -471,7 +471,7 @@ auto to_json( const event_value &value ) -> json
         } else if( value.type == "entity.gone" ) {
             data = {{"id", fact.entity}, {"reason", fact.kind}};
         } else if( value.type == "sound.heard" ) {
-            data = {{"text", fact.text}, {"volume", *fact.amount}};
+            data = {{"text", fact.text}, {"volume", *fact.amount}, {"logged", fact.logged}};
             if( fact.at ) { data["marker"] = to_json( *fact.at ); }
         } else if( value.type == "projectile.hit" ) {
             data = {{"projectile", fact.id}, {"at", to_json( *fact.at )}};

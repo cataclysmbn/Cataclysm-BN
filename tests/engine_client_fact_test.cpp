@@ -283,13 +283,14 @@ auto listen() -> std::vector<presentation_value> {
     return of_type(presentation::take(), "sound.heard");
 }
 
-auto make_noise(const tripoint_bub_ms& at, const short volume, const std::string& description)
-    -> void {
+auto make_noise(
+    const tripoint_bub_ms& at, const short volume, const std::string& description,
+    const sounds::sound_t category = sounds::sound_t::alarm) -> void {
     sounds::reset_sounds();
     sounds::sound(
         {.volume = volume,
          .origin = at,
-         .category = sounds::sound_t::alarm,
+         .category = category,
          .description = description,
          .movement_noise = true});
 }
@@ -318,6 +319,21 @@ TEST_CASE(
     CHECK(heard[0].text == "Tick.");
     CHECK(heard[0].amount > 0);
     CHECK_FALSE(heard[0].at.has_value());
+}
+
+TEST_CASE(
+    "a sound the message log describes is flagged logged and one it skips is not",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    make_noise(you_at + tripoint_east * 3, 80, "Tick.");
+    auto heard = listen();
+    REQUIRE(heard.size() == 1);
+    CHECK(heard[0].logged);
+    // Combat noise at the avatar's own square is never described by the native log.
+    make_noise(you_at, 80, "a thud", sounds::sound_t::combat);
+    heard = listen();
+    REQUIRE(heard.size() == 1);
+    CHECK_FALSE(heard[0].logged);
 }
 
 TEST_CASE(

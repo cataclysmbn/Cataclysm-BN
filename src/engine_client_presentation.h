@@ -54,6 +54,8 @@ struct presentation_value {
     std::optional<std::uint64_t> amount = std::nullopt;
     /// `sound.heard`: what the avatar hears.
     std::string text = {};
+    /// `sound.heard`: the native message log also has a line for this sound.
+    bool logged = false;
     /// `field.changed`: the field type, with `amount` its intensity afterwards (0 when gone).
     std::string field = {};
     /// `item.activated`: whole turns left on a fuse.
@@ -160,6 +162,8 @@ struct sound_options {
     int volume = 0;
     /// The square the native game marks the sound on: never the source, and none when the avatar sees it.
     std::optional<tripoint_bub_ms> marker = std::nullopt;
+    /// The native game wrote a message log line for the sound.
+    bool logged = false;
 };
 /// A sound reached the avatar, past its hearing, sleep and deafness.
 auto record_sound( const sound_options &options ) -> void;
