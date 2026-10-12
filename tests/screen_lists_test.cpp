@@ -173,7 +173,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "the bionics list publishes power, state and color per row and switches its tabs",
+    "the bionics list publishes power, state and color per row and switches its tabs by the native action",
     "[client][interaction][mcp][screens]") {
     clear_all_state();
     clear_map();
@@ -183,13 +183,6 @@ TEST_CASE(
     you.add_bionic(bionic_id("bio_power_storage"));
     const auto active_id = game_client::opaque_interaction_id("bionic", {"bio_flashlight"});
     const auto passive_id = game_client::opaque_interaction_id("bionic", {"bio_power_storage"});
-    const auto tab = [](const snapshot_t& snapshot, const bool active) {
-        const auto found = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
-            return !choice.pane_id && choice.label.starts_with(active ? "ACTIVE" : "PASSIVE");
-        });
-        REQUIRE(found != snapshot.choices.end());
-        return found;
-    };
     const auto guard = screen_guard{};
     auto stage = 0;
     open_screen(
@@ -198,8 +191,9 @@ TEST_CASE(
             switch (stage++) {
                 case 0: {
                     CHECK(snapshot.context == "BIONICS");
-                    CHECK(tab(snapshot, true)->selected);
-                    CHECK_FALSE(tab(snapshot, false)->selected);
+                    REQUIRE(snapshot.panes.size() == 2);
+                    CHECK(snapshot.panes[0].role == "current");
+                    CHECK(snapshot.panes[1].role == "inactive");
                     const auto flashlight = row(snapshot, active_id);
                     REQUIRE(flashlight != snapshot.choices.end());
                     CHECK(flashlight->pane_id == "active");
@@ -207,20 +201,21 @@ TEST_CASE(
                     CHECK(column(*flashlight, "Power").find("act") != std::string::npos);
                     CHECK(column(*flashlight, "Color") == string_from_color(c_light_red));
                     CHECK(row(snapshot, passive_id) == snapshot.choices.end());
-                    return choose(snapshot, tab(snapshot, false)->id);
+                    return event_of({.action = "NEXT_TAB"});
                 }
                 case 1: {
-                    CHECK(tab(snapshot, false)->selected);
+                    REQUIRE(snapshot.panes.size() == 2);
+                    CHECK(snapshot.panes[1].role == "current");
                     CHECK(row(snapshot, active_id) == snapshot.choices.end());
                     const auto storage = row(snapshot, passive_id);
                     REQUIRE(storage != snapshot.choices.end());
                     CHECK(storage->pane_id == "passive");
                     CHECK(column(*storage, "State") == "Passive");
                     CHECK(column(*storage, "Color") == string_from_color(c_cyan));
-                    return choose(snapshot, tab(snapshot, true)->id);
+                    return event_of({.action = "NEXT_TAB"});
                 }
                 case 2:
-                    CHECK(tab(snapshot, true)->selected);
+                    CHECK(snapshot.panes[0].role == "current");
                     CHECK(row(snapshot, active_id) != snapshot.choices.end());
                     return cancel(snapshot);
                 default:

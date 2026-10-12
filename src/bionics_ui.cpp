@@ -612,11 +612,6 @@ auto bionic_choice_id( const bionic &bio ) -> std::string
     return game_client::opaque_interaction_id( "bionic", { bio.id.str() } );
 }
 
-auto bionic_tab_id( const std::string &pane ) -> std::string
-{
-    return game_client::opaque_interaction_id( "bionic-tab", { pane } );
-}
-
 struct occupied_slot_description {
     localization::translation_snapshot heading;
     int slots = 0;
@@ -1017,12 +1012,6 @@ void show_bionics_ui( Character &who )
             dependencies.push_back( bionic_description_key( description, descriptions->locale ) );
             descriptions->rows.push_back( std::move( description ) );
         }
-        // Tab rows follow the bionics and carry no description of their own.
-        for( const auto &pane : snapshot.panes ) {
-            snapshot.choices.push_back( { .id = bionic_tab_id( pane.id ), .label = pane.label,
-                                          .selected = pane.role == "current" } );
-            dependencies.emplace_back( "bionic-tab" );
-        }
         auto action = std::string{};
         {
             const auto scope = game_client::prepared_interaction_scope{
@@ -1044,17 +1033,6 @@ void show_bionics_ui( Character &who )
                 }
                 action = "QUIT";
             } else if( event->operation == game_client::interaction_operation::choose ) {
-                const auto tab = event->target_id == bionic_tab_id( "active" ) ? std::optional{ TAB_ACTIVE } :
-                                 event->target_id == bionic_tab_id( "passive" ) ? std::optional{ TAB_PASSIVE } :
-                                 std::nullopt;
-                if( tab ) {
-                    if( *tab != tab_mode ) {
-                        tab_mode = *tab;
-                        cursor = 0;
-                        scroll_position = 0;
-                    }
-                    continue;
-                }
                 const auto found = std::ranges::find_if( *current_bionic_list, [&]( const auto * bio ) {
                     return bionic_choice_id( *bio ) == event->target_id;
                 } );
