@@ -499,4 +499,47 @@ TEST_CASE(
     });
 }
 
+namespace {
+/// Every cell whose cached light level the map's current vision calls clear, level by level.
+auto clear_cells() -> std::vector<tripoint_bub_ms> {
+    const auto& here = get_map();
+    auto cells = std::vector<tripoint_bub_ms>{};
+    for (const auto z : std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1)) {
+        const auto& cache = here.access_cache(z);
+        for (const auto x : std::views::iota(0, cache.cache_x)) {
+            for (const auto y : std::views::iota(0, cache.cache_y)) {
+                if (here.get_visibility(cache.visibility_cache[cache.idx(x, y)],
+                                        here.get_visibility_variables_cache())
+                    == VIS_CLEAR) {
+                    cells.emplace_back(x, y, z);
+                }
+            }
+        }
+    }
+    return cells;
+}
+} // namespace
+
+TEST_CASE(
+    "a capture between visibility refreshes lists the cells a full scan lists",
+    "[map_perception_bionics_boundary][visibility_refresh][mcp]") {
+    with_dark_room([]() {
+        auto& here = get_map();
+        const auto origin = get_avatar().bub_pos();
+        const auto flame = origin + point_east * 6;
+        here.add_field(flame, fd_fire, 2);
+        map_perception::acquire();
+        const auto lit = refresh_gated();
+        REQUIRE(std::ranges::contains(lit, flame));
+        const auto before = map_perception::visibility_refresh_count();
+        CHECK(map_perception::visible_cells(here) == clear_cells());
+        CHECK(map_perception::visible_cells(here) == clear_cells());
+        CHECK(map_perception::visibility_refresh_count() == before);
+        // A refresh that shows less is not answered from the earlier scan.
+        here.remove_field(flame, fd_fire);
+        CHECK_FALSE(std::ranges::contains(refresh_gated(), flame));
+        CHECK(map_perception::visible_cells(here) == clear_cells());
+    });
+}
+
 #endif
