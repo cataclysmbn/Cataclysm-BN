@@ -980,103 +980,236 @@
         "epoch": "epoch:e7f3",
         "events": [
           {
-            "sequence": "43",
-            "revision": "34",
-            "type": "item.thrown",
-            "command": "c:6",
+            "changes": {},
             "data": {
-              "projectile": "p:1",
-              "look": {
-                "kind": "item",
-                "id": "grenade_act",
-                "glyph": "*",
-                "color": "green"
+              "at": {
+                "dim": "",
+                "x": 62,
+                "y": 62,
+                "z": 0
               },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "turns": 5
+            },
+            "revision": "34",
+            "sequence": "43",
+            "type": "item.activated",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
               "by": "e:avatar",
               "from": {
                 "dim": "",
-                "x": 3,
-                "y": 4,
+                "x": 62,
+                "y": 62,
                 "z": 0
               },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "projectile": "projectile:4",
               "to": {
                 "dim": "",
-                "x": 9,
-                "y": 4,
+                "x": 67,
+                "y": 62,
                 "z": 0
               }
             },
-            "changes": {
-              "avatar": {
-                "id": "e:avatar",
-                "at": {
-                  "dim": "",
-                  "x": 3,
-                  "y": 4,
-                  "z": 0
-                },
-                "name": "Ada",
-                "stats": [],
-                "inventory": []
-              }
-            }
+            "revision": "34",
+            "sequence": "44",
+            "type": "item.thrown",
+            "command": "c:6"
           },
           {
-            "sequence": "44",
-            "revision": "34",
-            "type": "projectile.moved",
-            "cause": "43",
-            "display": {
-              "group": "p:1",
-              "duration_ms": 60
-            },
+            "changes": {},
             "data": {
-              "projectile": "p:1",
+              "look": {
+                "color": "c_red",
+                "glyph": "*",
+                "id": null,
+                "kind": "projectile"
+              },
               "path": [
                 {
                   "dim": "",
-                  "x": 4,
-                  "y": 4,
-                  "z": 0
-                },
-                {
-                  "dim": "",
-                  "x": 5,
-                  "y": 4,
+                  "x": 63,
+                  "y": 62,
                   "z": 0
                 }
-              ]
-            }
-          },
-          {
-            "sequence": "45",
-            "revision": "34",
-            "type": "sound.heard",
-            "data": {
-              "text": "Tick.",
-              "volume": 20
-            }
-          },
-          {
-            "sequence": "46",
-            "revision": "34",
-            "type": "explosion.blast",
-            "cause": "43",
-            "display": {
-              "group": "x:1",
-              "duration_ms": 40
+              ],
+              "projectile": "projectile:4"
             },
+            "revision": "34",
+            "sequence": "45",
+            "type": "projectile.moved",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
             "data": {
-              "explosion": "x:1",
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "projectile": "projectile:4"
+            },
+            "revision": "34",
+            "sequence": "46",
+            "type": "item.landed",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "turns": 4
+            },
+            "revision": "34",
+            "sequence": "47",
+            "type": "item.activated",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "color": "c_white",
+              "explosion": "explosion:4",
+              "radius": 2,
+              "tile": "explosion"
+            },
+            "revision": "34",
+            "sequence": "48",
+            "type": "explosion.started",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
               "cells": [
                 {
                   "dim": "",
-                  "x": 8,
-                  "y": 4,
+                  "x": 67,
+                  "y": 62,
                   "z": 0
                 }
-              ]
-            }
+              ],
+              "explosion": "explosion:4"
+            },
+            "revision": "34",
+            "sequence": "49",
+            "type": "explosion.blast",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "amount": 60,
+              "id": "e:5"
+            },
+            "revision": "34",
+            "sequence": "50",
+            "type": "entity.damaged",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 63,
+                "z": 0
+              },
+              "from": {
+                "color": "c_brown",
+                "glyph": "+",
+                "id": "t_door_c",
+                "kind": "terrain",
+                "name": "closed wood door",
+                "subtile": "center"
+              },
+              "to": {
+                "color": "c_light_gray",
+                "glyph": ".",
+                "id": "t_rock_floor_no_roof",
+                "kind": "terrain",
+                "looks_like": [
+                  "t_rock_floor"
+                ],
+                "name": "rock floor",
+                "subtile": "center"
+              }
+            },
+            "revision": "34",
+            "sequence": "51",
+            "type": "terrain.changed",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "field": "fd_smoke",
+              "intensity": 3
+            },
+            "revision": "34",
+            "sequence": "52",
+            "type": "field.changed",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "explosion": "explosion:4"
+            },
+            "revision": "34",
+            "sequence": "53",
+            "type": "explosion.ended",
+            "command": "c:6"
           }
         ]
       }
