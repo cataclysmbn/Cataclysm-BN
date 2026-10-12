@@ -99,6 +99,8 @@ struct fixture {
     std::vector<bn::mcp::key_event> queued;
     std::ostringstream output;
     std::ostringstream errors;
+    /// Runs when the controller publishes, as the hub that flushes the spectators does.
+    std::function<auto()->void> on_published;
     bn::mcp::server server{
         {
             .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
@@ -111,8 +113,14 @@ struct fixture {
             .resize_viewport =
                 [](const int cols, const int rows) { declared_viewport.push_back({cols, rows}); },
             .contract_session = &authority,
+            .published =
+                [this] {
+                    if (on_published) { on_published(); }
+                },
         },
         {.now = [this] { return clock(); }}};
+    /// Reads what the authority publishes, as a connection of its own would.
+    engine_client::push_reader tap = authority.open_push();
     fixture() {
         known_cells = {1, 2};
         declared_viewport.clear();
@@ -514,10 +522,10 @@ TEST_CASE("a capture that drops the avatar resynchronizes subscribers", "[engine
     auto boundary = input_boundary{};
     auto test = fixture{};
     REQUIRE(test.authority.publish_boundary());
-    test.authority.take_push();
+    test.tap.take();
     with_avatar = false;
     test.next_boundary();
-    const auto pushed = test.authority.take_push();
+    const auto pushed = test.tap.take();
     REQUIRE(pushed.size() == 1);
     const auto* notice = std::get_if<resync_notice>(&pushed.front());
     REQUIRE(notice);
@@ -1077,6 +1085,149 @@ TEST_CASE("shutdown drops the frames that credits cannot pay for", "[engine_clie
     CHECK(test.server.held_bytes() <= maximum_held_bytes);
     test.poll(rpc("bn.credit", R"({"frames":256})", "9"));
     CHECK(test.server.held_frames() == 0);
+}
+
+namespace {
+/// A second connection on the controller's session that may only read.
+struct spectator {
+    std::ostringstream output;
+    std::ostringstream errors;
+    std::vector<bn::mcp::key_event> submitted;
+    std::vector<std::pair<int, int>> resized;
+    bn::mcp::server server;
+    explicit spectator(fixture& test)
+        : server{
+              {
+                  .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+                  .submit =
+                      [this](const auto& input) {
+                          submitted = input;
+                          return true;
+                      },
+                  .has_input = [] { return false; },
+                  .resize_viewport =
+                      [this](const int cols, const int rows) { resized.push_back({cols, rows}); },
+                  .contract_session = &test.authority,
+              },
+              {.now = [&test] { return test.clock(); }, .spectator = true}} {
+        test.on_published = [this] { REQUIRE(server.flush_pushed(output)); };
+    }
+    auto read(const std::string& text) -> void {
+        auto input = std::istringstream{text};
+        for (auto lines = count_of(text, "\n"); lines > 0; --lines) {
+            REQUIRE(server.poll_input(input, output, errors));
+        }
+    }
+};
+} // namespace
+
+TEST_CASE(
+    "a spectator reads the same events as the controller, in the same order",
+    "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    test.poll(hello + subscribe);
+    watcher.read(hello + subscribe);
+    CHECK(contains(watcher.output.str(), R"("method":"bn.snapshot.part")"));
+    test.output.str("");
+    watcher.output.str("");
+    test.step();
+    test.step();
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 2);
+    CHECK(watcher.output.str() == test.output.str());
+}
+
+TEST_CASE("a spectator is refused every call that commands the game", "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(
+        hello + subscribe + rpc("initialize", "{}", "3")
+        + rpc("notifications/initialized", "{}", ""));
+    const auto at = test.authority.at();
+    watcher.output.str("");
+    watcher.read(
+        test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())
+        + rpc("bn.interrupt", "{}", "5") + rpc("bn.viewport", R"({"cols":40,"rows":20})", "6")
+        + rpc("tools/call", R"({"name":"bn.press","arguments":{"keys":[{"key":"ESCAPE"}]}})", "7"));
+    CHECK(count_of(watcher.output.str(), R"("kind":"read_only")") == 4);
+    CHECK(watcher.submitted.empty());
+    CHECK(test.queued.empty());
+    CHECK(declared_viewport.empty());
+    CHECK(watcher.resized.empty());
+    CHECK(test.authority.at() == at);
+    CHECK_FALSE(test.authority.has_received());
+}
+
+TEST_CASE("a spectator's hello leaves the controller's view alone", "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(rpc(
+        "bn.hello",
+        R"({"versions":["1.0"],"client":{"name":"w","version":"1"},"viewport":{"cols":10,"rows":10}})",
+        "1"));
+    CHECK(contains(watcher.output.str(), R"("version":"1.0")"));
+    CHECK(watcher.resized.empty());
+    CHECK(declared_viewport.empty());
+}
+
+TEST_CASE(
+    "a spectator that drops or fails does not end the controller's command",
+    "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(hello + subscribe);
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    // The spectator's end: a clean finish, and a write failure that fails its own server.
+    CHECK(watcher.server.finish(watcher.output));
+    watcher.output.setstate(std::ios::badbit);
+    auto flushed = true;
+    test.on_published = [&] { flushed = watcher.server.flush_pushed(watcher.output); };
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK_FALSE(test.pump(""));
+    CHECK(contains(test.output.str(), R"("stage":"completed")"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"interrupted")"));
+    CHECK_FALSE(flushed);
+    CHECK(watcher.server.failed());
+}
+
+TEST_CASE(
+    "each connection keeps its own credits, held frames and subscription",
+    "[engine_client_spectator]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    auto watcher = spectator{test};
+    watcher.read(hello_with(R"({"credits":1})") + subscribe);
+    test.poll(hello_with(R"({"credits":256})") + subscribe);
+    test.output.str("");
+    watcher.output.str("");
+    for (auto step = 0; step < 6; ++step) { test.step(); }
+    // The stalled spectator holds its frames and never slows the controller's stream.
+    CHECK(watcher.server.held_frames() == 5);
+    CHECK(test.server.held_frames() == 0);
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 6);
+    CHECK(count_of(watcher.output.str(), R"("method":"bn.events")") == 1);
+    // Past its bound the spectator is resynchronized on its own; the controller is untouched.
+    for (auto step = 0; step < static_cast<int>(maximum_held_frames); ++step) { test.step(); }
+    CHECK(contains(watcher.output.str(), R"("reason":"backpressure")"));
+    CHECK_FALSE(contains(test.output.str(), R"("method":"bn.resync")"));
+    watcher.output.str("");
+    watcher.read(rpc("bn.unsubscribe", "{}", "8"));
+    test.step();
+    CHECK_FALSE(contains(watcher.output.str(), R"("method":"bn.events")"));
+    CHECK(contains(test.output.str(), R"("method":"bn.events")"));
 }
 
 #endif

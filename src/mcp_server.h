@@ -51,6 +51,9 @@ struct mcp_host {
     std::function < auto( int, int ) -> void > resize_viewport;
     /// Production defaults to the process authority; tests may bind an isolated real session.
     engine_client::session *contract_session = nullptr;
+    /// Called after the server publishes a boundary, so the other connections can be sent it.
+    /// Optional.
+    std::function < auto() -> void > published;
 };
 
 /// A small MCP stdio server that adapts the game client to the standard JSON-RPC protocol.
@@ -69,6 +72,9 @@ class server
             std::size_t max_frame_bytes = default_max_frame_bytes;
             /// The wall clock that paces activity publication; unset means the steady clock.
             std::function < auto() -> std::chrono::steady_clock::time_point > now;
+            /// A spectator reads the game but never commands it: it publishes nothing, interrupts
+            /// nothing and leaves the viewport and tile settings to the controller.
+            bool spectator = false;
         };
 
         explicit server( mcp_host host );
@@ -113,6 +119,9 @@ class server
         /// loading. Only a client that completed `bn.hello` receives it.
         auto notify_loading( const game_client::loading_progress &progress, std::ostream &out ) -> void;
 
+        /// Write what the session published since this server last wrote, without publishing.
+        auto flush_pushed( std::ostream &out ) -> bool;
+
         /// True when input ended because of an invalid or unreadable stdio frame.
         auto failed() const -> bool;
         /// Why input ended, for the line the engine writes before it exits.
@@ -139,6 +148,7 @@ class server
         bool failed_ = false;
         std::optional<deferred_response> pending_response_;
         engine_client::session &session_;
+        engine_client::push_reader push_ = session_.open_push();
         bool hello_ = false;
         bool subscribed_ = false;
         /// Complete notification frames waiting to be written after the current response.
@@ -164,6 +174,8 @@ class server
         std::optional<engine_client::jsonrpc::envelope_cursor> pending_requests_;
 
         auto publish_boundary( std::ostream &out, bool settles = true ) -> bool;
+        /// Interrupt the open command. A spectator has none, and never ends the controller's.
+        auto interrupt( engine_client::error reason ) -> void;
         /// Turn what the session published into notifications and write them, in order.
         auto flush_push( std::ostream &out ) -> bool;
         /// Turn what the session published into notifications written after the current response.

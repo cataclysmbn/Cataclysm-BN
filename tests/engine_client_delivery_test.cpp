@@ -31,7 +31,8 @@
 namespace {
 using namespace engine_client;
 
-enum class client_mode { absent, paying, stalled };
+/// `watched` is a paying controller with a stalled spectator beside it.
+enum class client_mode { absent, paying, stalled, watched };
 
 struct wait_run {
     std::string state;
@@ -39,6 +40,9 @@ struct wait_run {
     std::size_t frames = 0;
     std::size_t most_held_frames = 0;
     std::size_t most_held_bytes = 0;
+    std::size_t watcher_held_frames = 0;
+    std::size_t watcher_held_bytes = 0;
+    std::size_t watcher_frames = 0;
     double milliseconds = 0;
 };
 
@@ -120,12 +124,26 @@ auto wait_for(
     authority_session.set_world_capture(&engine_client::world::capture_world);
     auto output = std::ostringstream{};
     auto errors = std::ostringstream{};
+    auto watcher_output = std::ostringstream{};
+    const auto frozen = std::function<auto()->std::chrono::steady_clock::time_point>{[] {
+        return std::chrono::steady_clock::time_point{};
+    }};
+    auto watcher = bn::mcp::server{
+        {
+            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+            .submit = [](const auto&) { return true; },
+            .has_input = [] { return false; },
+            .contract_session = &authority_session,
+        },
+        {.now = paced ? std::function<auto()->std::chrono::steady_clock::time_point>{} : frozen,
+         .spectator = true}};
     auto server = bn::mcp::server{
         {
             .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
             .submit = [](const auto&) { return true; },
             .has_input = [] { return false; },
             .contract_session = &authority_session,
+            .published = [&] { REQUIRE(watcher.flush_pushed(watcher_output)); },
         },
         {.now = paced ? std::function<auto()->std::chrono::steady_clock::time_point>{} : [] {
             return std::chrono::steady_clock::time_point{};
@@ -137,8 +155,18 @@ auto wait_for(
         }
     };
     REQUIRE(authority_session.publish_boundary());
+    if (mode == client_mode::watched) {
+        auto input = std::istringstream{
+            request(
+                "bn.hello",
+                R"({"versions":["1.0"],"client":{"name":"w","version":"1"},"delivery":{"credits":1}})",
+                "1")
+            + request("bn.subscribe", "{}", "2")};
+        REQUIRE(watcher.poll_input(input, watcher_output, errors));
+        REQUIRE(watcher.poll_input(input, watcher_output, errors));
+    }
     if (mode != client_mode::absent) {
-        const auto window = mode == client_mode::paying ? "256" : "1";
+        const auto window = mode == client_mode::stalled ? "1" : "256";
         feed(request(
             "bn.hello",
             R"({"versions":["1.0"],"client":{"name":"t","version":"1"},"delivery":{"credits":)"
@@ -147,6 +175,7 @@ auto wait_for(
         feed(request("bn.subscribe", "{}", "2"));
     }
     output.str("");
+    watcher_output.str("");
 
     you.assign_activity(
         std::make_unique<player_activity>(activity_id("ACT_WAIT"), to_moves<int>(1_days), 0),
@@ -163,11 +192,16 @@ auto wait_for(
         REQUIRE(server.publish_activity(output));
         result.most_held_frames = std::max(result.most_held_frames, server.held_frames());
         result.most_held_bytes = std::max(result.most_held_bytes, server.held_bytes());
-        if (mode == client_mode::paying) { feed(request("bn.credit", R"({"frames":1})", "3")); }
+        result.watcher_held_frames = std::max(result.watcher_held_frames, watcher.held_frames());
+        result.watcher_held_bytes = std::max(result.watcher_held_bytes, watcher.held_bytes());
+        if (mode == client_mode::paying || mode == client_mode::watched) {
+            feed(request("bn.credit", R"({"frames":1})", "3"));
+        }
     }
     result.milliseconds =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count();
     result.frames = count_of(output.str(), R"("method":"bn.events")");
+    result.watcher_frames = count_of(watcher_output.str(), R"("method":"bn.events")");
     result.rng = rng_get_engine();
     result.state = authority();
     return result;
@@ -202,6 +236,23 @@ TEST_CASE(
     CHECK(stalled.most_held_bytes <= maximum_held_bytes);
     CHECK(stalled.rng == absent.rng);
     CHECK(stalled.state == absent.state);
+}
+
+TEST_CASE(
+    "a waiting avatar is identical with a stalled spectator beside a paying controller",
+    "[engine_client_delivery]") {
+    const auto start = baseline();
+    const auto turns = 40;
+    const auto absent = wait_for(client_mode::absent, start, turns);
+    const auto watched = wait_for(client_mode::watched, start, turns);
+    // The controller is paid every frame; the spectator waits for credits within the same bound.
+    CHECK(watched.frames == static_cast<std::size_t>(turns));
+    CHECK(watched.most_held_frames == 0);
+    CHECK(watched.watcher_frames == 1);
+    CHECK(watched.watcher_held_frames == static_cast<std::size_t>(turns - 1));
+    CHECK(watched.watcher_held_bytes <= maximum_held_bytes);
+    CHECK(watched.rng == absent.rng);
+    CHECK(watched.state == absent.state);
 }
 
 /// Milliseconds a turn of an hour-long wait costs the engine with no, a paying and a stalled

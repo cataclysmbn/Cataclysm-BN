@@ -17,10 +17,10 @@ auto texts(const ec::snapshot& snapshot) -> std::vector<std::string> {
          | std::ranges::to<std::vector>();
 }
 
-/// The events of one kind a session has queued for its subscribers since the last call.
-auto pushed_events(ec::session& session) -> std::vector<ec::public_event> {
+/// The events a reader has been pushed since its last call.
+auto pushed_events(ec::push_reader& reader) -> std::vector<ec::public_event> {
     auto result = std::vector<ec::public_event>{};
-    for (const auto& item : session.take_push()) {
+    for (const auto& item : reader.take()) {
         if (const auto* event = std::get_if<ec::event_push>(&item)) {
             result.push_back(event->event);
         }
@@ -73,15 +73,15 @@ TEST_CASE(
     Messages::clear_messages();
     Messages::add_msg("Before.");
     auto session = ec::session{};
+    auto reader = session.open_push();
     REQUIRE(session.publish_boundary());
     auto receiver = *session.current();
-    session.take_push();
+    reader.take();
     Messages::add_msg("After.");
     Messages::add_msg("After.");
     Messages::add_msg("Later.");
     REQUIRE(session.publish_boundary());
-    REQUIRE(
-        ec::apply_batch(receiver, {.epoch = session.epoch(), .events = pushed_events(session)}));
+    REQUIRE(ec::apply_batch(receiver, {.epoch = session.epoch(), .events = pushed_events(reader)}));
     const auto fresh = *session.current();
     CHECK(receiver.at == fresh.at);
     CHECK(texts(receiver) == texts(fresh));
@@ -96,8 +96,39 @@ TEST_CASE(
     Messages::add_msg("One.");
     Messages::add_msg("Two.");
     auto session = ec::session{};
+    auto reader = session.open_push();
     REQUIRE(session.publish_boundary());
     CHECK(session.current()->at.sequence == 0);
     CHECK(session.current()->log.size() == 2);
-    CHECK(session.take_push().empty());
+    CHECK(reader.take().empty());
+}
+
+TEST_CASE(
+    "every reader sees what is published after it opened, in order", "[engine_client_session]") {
+    Messages::clear_messages();
+    auto session = ec::session{};
+    REQUIRE(session.publish_boundary());
+    auto first = session.open_push();
+    Messages::add_msg("One.");
+    REQUIRE(session.publish_boundary());
+    auto second = session.open_push();
+    Messages::add_msg("Two.");
+    REQUIRE(session.publish_boundary());
+    const auto of_first = pushed_events(first);
+    const auto of_second = pushed_events(second);
+    CHECK(of_first.size() == 2);
+    REQUIRE(of_second.size() == 1);
+    CHECK(of_second.front().wire() == of_first.back().wire());
+    CHECK(first.take().empty());
+}
+
+TEST_CASE("a dropped reader stops receiving", "[engine_client_session]") {
+    Messages::clear_messages();
+    auto session = ec::session{};
+    REQUIRE(session.publish_boundary());
+    auto kept = session.open_push();
+    { auto dropped = session.open_push(); }
+    Messages::add_msg("One.");
+    REQUIRE(session.publish_boundary());
+    CHECK(pushed_events(kept).size() == 1);
 }

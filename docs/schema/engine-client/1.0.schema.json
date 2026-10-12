@@ -3941,7 +3941,8 @@
             "unknown_command",
             "invalid_lifecycle",
             "resync_required",
-            "resource_limit"
+            "resource_limit",
+            "read_only"
           ]
         },
         "action": {
