@@ -184,6 +184,12 @@ TEST_CASE(
         watched.step_to(start + tripoint(1, 1, 1));
         watched.step_to(start);
         watched.publish();
+        // The level above is not part of what other cases build.
+        for (const auto y : std::views::iota(-4, 5)) {
+            for (const auto x : std::views::iota(-4, 5)) {
+                here.ter_set(start + tripoint(x, y, 1), ter_id("t_open_air"));
+            }
+        }
     }
 
     SECTION("vehicles appearing, moving on and removed") {
@@ -250,6 +256,7 @@ TEST_CASE("open air publishes a cell only while something is in it", "[engine_cl
     CHECK_FALSE(ec::world::capture_world().cells.contains(position));
     here.add_item_or_charges(air, item::spawn("rock"));
     CHECK(ec::world::capture_world().cells.contains(position));
+    here.i_clear(air);
 }
 
 /// Milliseconds a publication costs with a full capture and with a patch, for an avatar who has
