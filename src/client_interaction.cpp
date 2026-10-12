@@ -326,6 +326,8 @@ auto materialize( acquired_interaction acquired,
             .panes = full.panes,
             .field = full.field,
             .target = full.target,
+            .canvas = full.canvas,
+            .refresh_ms = full.refresh_ms,
             .allow_set_count = full.allow_set_count,
         };
     } else {

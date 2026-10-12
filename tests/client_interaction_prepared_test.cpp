@@ -1011,3 +1011,21 @@ TEST_CASE(
     prepared.reset();
     CHECK(weak.expired()); // last actual owner releases renderer inputs; no provider history
 }
+
+TEST_CASE(
+    "prepared interactions keep the canvas and the refresh interval",
+    "[client_interaction_prepared]") {
+    auto context = input_context{"CANVAS"};
+    const auto input = client::input_context_scope{context, "CANVAS"};
+    auto snapshot = client::interaction_snapshot{.kind = client::interaction_kind::custom};
+    snapshot.canvas =
+        client::interaction_canvas{.cols = 3, .rows = {{{.text = "ab", .foreground = 9}}}};
+    snapshot.refresh_ms = 250;
+    const auto scope = client::prepared_interaction_scope{
+        context, client::prepare_interaction(context, std::move(snapshot))};
+    const auto result = client::current_interaction();
+    REQUIRE(result.canvas.has_value());
+    CHECK(result.canvas->cols == 3);
+    CHECK(result.canvas->rows.at(0).at(0).text == "ab");
+    CHECK(result.refresh_ms == 250);
+}
