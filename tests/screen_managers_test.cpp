@@ -7,9 +7,11 @@
 #    include "client_screen_support.h"
 #    include "clzones.h"
 #    include "diary.h"
+#    include "editmap.h"
 #    include "faction.h"
 #    include "game.h"
 #    include "kill_tracker.h"
+#    include "map/map.h"
 #    include "map_helpers.h"
 #    include "player_helpers.h"
 #    include "scores_ui.h"
@@ -243,6 +245,154 @@ TEST_CASE(
         });
     CHECK(stage == 3);
     zone_manager::reset_manager();
+}
+
+TEST_CASE(
+    "the zone manager key rows carry the native hotkeys, toggle states and availability",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    zone_manager::reset_manager();
+    zone_manager::get_manager()
+        .add("test pile", zone_type_id("LOOT_UNSORTED"), you.get_faction()->id, false, true,
+             you.abs_pos(), you.abs_pos());
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_screen(
+        [] { g->zones_manager(); },
+        [&](const auto& snapshot) {
+            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
+            switch (stage++) {
+                case 0: {
+                    CHECK(row(snapshot, "zone:0")->pane_id == "zones");
+                    CHECK(row(snapshot, "action:ADD_ZONE")->pane_id == "actions");
+                    CHECK(row(snapshot, "action:ADD_ZONE")->hotkey == "a");
+                    CHECK(row(snapshot, "action:MOVE_ZONE_UP")->hotkey == "+");
+                    CHECK(row(snapshot, "action:CONFIRM")->hotkey.empty());
+                    REQUIRE(row(snapshot, "action:debug_submap_grid") != snapshot.choices.end());
+                    CHECK_FALSE(row(snapshot, "action:SHOW_ALL_ZONES")->selected);
+                    CHECK_FALSE(row(snapshot, "action:MOVE_ZONE_UP")->enabled);
+                    return choose(snapshot, "action:SHOW_ALL_ZONES");
+                }
+                case 1: {
+                    CHECK(row(snapshot, "action:SHOW_ALL_ZONES")->selected);
+                    return choose(snapshot, "action:debug_submap_grid");
+                }
+                case 2: {
+                    CHECK(row(snapshot, "action:debug_submap_grid")->selected);
+                    return cancel(snapshot);
+                }
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 3);
+    zone_manager::reset_manager();
+}
+
+TEST_CASE(
+    "adding a zone names the selection step of its area in the look target",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    zone_manager::reset_manager();
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_screen(
+        [] { g->zones_manager(); },
+        [&](const auto& snapshot) {
+            if (const auto answer = prompt_answer(snapshot, "NO")) { return *answer; }
+            switch (stage++) {
+                case 0:
+                    CHECK(snapshot.context == "ZONES_MANAGER");
+                    CHECK(snapshot.message == "No Zones defined.");
+                    return choose(snapshot, "action:ADD_ZONE");
+                case 1:
+                    return choose(snapshot, snapshot.choices.at(0).id);
+                case 2:
+                    REQUIRE(snapshot.field.has_value());
+                    return operate(snapshot, game_client::interaction_operation::fill,
+                                   snapshot.field->id, "new zone");
+                case 3:
+                    REQUIRE(snapshot.target.has_value());
+                    CHECK(snapshot.message == "Select first point.");
+                    CHECK(snapshot.target->status == "zone_first");
+                    return event_of({.action = "CONFIRM"});
+                case 4:
+                    REQUIRE(snapshot.target.has_value());
+                    CHECK(snapshot.message == "Select second point.");
+                    CHECK(snapshot.target->status == "zone_second");
+                    return event_of({.action = "CONFIRM"});
+                case 5:
+                    CHECK(snapshot.context == "ZONES_MANAGER");
+                    CHECK(row(snapshot, "zone:0")->label == "new zone");
+                    return cancel(snapshot);
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 6);
+    zone_manager::reset_manager();
+}
+
+TEST_CASE(
+    "the map editor publishes its cursor tile, edit actions and moves the cursor on set_target",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = screen_guard{};
+    const auto start = you.bub_pos();
+    auto stage = 0;
+    open_screen(
+        [] {
+            auto edit = editmap{};
+            edit.edit();
+        },
+        [&](const auto& snapshot) {
+            switch (stage++) {
+                case 0: {
+                    CHECK(snapshot.context == "EDITMAP");
+                    REQUIRE(snapshot.target.has_value());
+                    CHECK(snapshot.target->cursor
+                          == game_client::interaction_position{start.x(), start.y(), start.z()});
+                    CHECK(snapshot.target->status == "editmap");
+                    CHECK(row(snapshot, "action:EDIT_TERRAIN")->hotkey == "e");
+                    CHECK(row(snapshot, "action:EDIT_TERRAIN")->pane_id == "actions");
+                    CHECK(row(snapshot, "action:EDITMAP_SHOW_ALL") != snapshot.choices.end());
+                    const auto terrain = row(snapshot, "tile:terrain");
+                    REQUIRE(terrain != snapshot.choices.end());
+                    CHECK(terrain->pane_id == "tile");
+                    CHECK(terrain->description == get_map().tername(start));
+                    const auto east =
+                        game_client::interaction_position{start.x() + 2, start.y(), start.z()};
+                    const auto command = game_client::interaction_command{
+                        .input_id = snapshot.input_id,
+                        .operation = game_client::interaction_operation::set_target,
+                        .position = east};
+                    return event_of({.interaction = command});
+                }
+                case 1:
+                    CHECK(
+                        snapshot.target->cursor
+                        == game_client::interaction_position{start.x() + 2, start.y(), start.z()});
+                    return choose(snapshot, "action:EDITMAP_SHOW_ALL");
+                case 2:
+                    CHECK(row(snapshot, "action:EDITMAP_SHOW_ALL")->selected);
+                    return cancel(snapshot);
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 3);
 }
 
 #endif // CATA_MCP

@@ -2286,6 +2286,38 @@
         "selected": true,
         "columns": []
       }
+    },
+    {
+      "name": "zone manager key row",
+      "def": "choice",
+      "value": {
+        "id": "action:ADD_ZONE",
+        "label": "Add zone",
+        "description": "",
+        "denial": "",
+        "hotkey": "a",
+        "pane_id": "actions",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [{ "label": "Key", "value": "a or A" }]
+      }
+    },
+    {
+      "name": "map editor tile row",
+      "def": "choice",
+      "value": {
+        "id": "tile:terrain",
+        "label": "Terrain",
+        "description": "grass",
+        "denial": "",
+        "hotkey": "",
+        "pane_id": "tile",
+        "enabled": true,
+        "selectable": false,
+        "selected": false,
+        "columns": [{ "label": "Id", "value": "t_grass" }, { "label": "Move cost", "value": "2" }]
+      }
     }
   ],
   "invalid": [

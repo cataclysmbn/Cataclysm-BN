@@ -1,5 +1,7 @@
 #include "editmap.h"
+#include "client_choice.h"
 #include "client_display.h"
+#include "client_interaction.h"
 
 #include "avatar.h"
 #include "calendar.h"
@@ -338,6 +340,89 @@ shared_ptr_fast<ui_adaptor> editmap::create_or_get_ui_adaptor()
     return current_ui;
 }
 
+namespace
+{
+
+/// The map editor as a client sees it: the cursor with the native bounds, the tile under it, and the edit actions.
+auto editmap_interaction( const editmap &em,
+                          const input_context &ctxt ) -> game_client::interaction_snapshot
+{
+    const auto position_of = []( const tripoint_bub_ms & position ) {
+        return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
+    };
+    const auto &player_character = get_player_character();
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::target,
+        .title = _( "Map editor" ),
+        .allow_cancel = true,
+        .panes = {
+            { .id = "tile", .label = _( "Tile" ), .role = "current" },
+            { .id = "actions", .label = _( "Actions" ), .role = "controls" },
+        },
+        .target = game_client::interaction_target{
+            .source = position_of( player_character.bub_pos() ),
+            .cursor = position_of( em.target ),
+            .minimum_position = game_client::interaction_position{ .x = 0, .y = 0, .z = -OVERMAP_DEPTH },
+            .maximum_position = game_client::interaction_position{
+                .x = g_mapsize_x - 1, .y = g_mapsize_y - 1, .z = OVERMAP_HEIGHT },
+            .range = std::max( g_mapsize_x, g_mapsize_y ),
+            .distance_metric = "square",
+            .status = "editmap",
+        },
+    };
+    const auto add_tile = [&]( const std::string & id, const std::string & label,
+    const std::string & description, std::vector<game_client::interaction_column> columns = {} ) {
+        snapshot.choices.push_back( { .id = "tile:" + id, .label = label, .description = description,
+                                      .pane_id = "tile", .selectable = false, .columns = std::move( columns ) } );
+    };
+    auto &here = get_map();
+    const auto &terrain = here.ter( em.target ).obj();
+    add_tile( "terrain", _( "Terrain" ), terrain.name(), {
+        { .label = _( "Id" ), .value = terrain.id.str() },
+        { .label = _( "Move cost" ), .value = std::to_string( terrain.movecost ) },
+    } );
+    if( here.furn( em.target ).to_i() > 0 ) {
+        const auto &furniture = here.furn( em.target ).obj();
+        add_tile( "furniture", _( "Furniture" ), furniture.name(), {
+            { .label = _( "Id" ), .value = furniture.id.str() },
+            { .label = _( "Move cost" ), .value = std::to_string( furniture.movecost ) },
+        } );
+    }
+    for( const auto &fld : here.get_field( em.target ) ) {
+        const auto &entry = fld.second;
+        const auto field_id = entry.get_field_type().id().str();
+        add_tile( "field:" + field_id, _( "Field" ), remove_color_tags( entry.name() ), {
+            { .label = _( "Id" ), .value = field_id },
+            { .label = _( "Intensity" ), .value = std::to_string( entry.get_field_intensity() ) },
+            { .label = _( "Age" ), .value = std::to_string( to_turns<int>( entry.get_field_age() ) ) },
+        } );
+    }
+    if( const auto &trap = here.tr_at( em.target ); trap.loadid != tr_null ) {
+        add_tile( "trap", _( "Trap" ), trap.name(), { { .label = _( "Id" ), .value = trap.id.str() } } );
+    }
+    if( const auto *critter = g->critter_at( em.target ) ) {
+        add_tile( "creature", _( "Creature" ), critter->disp_name() );
+    } else if( const auto vp = here.veh_at( em.target ) ) {
+        add_tile( "vehicle", _( "Vehicle" ), vp->vehicle().name );
+    }
+    if( const auto items = here.i_at( em.target ); !items.empty() ) {
+        add_tile( "items", _( "Items" ), ( *items.begin() )->tname(),
+        { { .label = _( "Count" ), .value = std::to_string( items.size() ) } } );
+    }
+    for( const auto *id : {
+             "EDIT_TERRAIN", "EDIT_FURNITURE", "EDIT_TRAPS", "EDIT_FIELDS", "EDIT_ITEMS", "EDIT_MONSTER",
+             "EDIT_OVERMAP", "EDITMAP_SHOW_ALL", "LEVEL_UP", "LEVEL_DOWN"
+         } ) {
+        snapshot.choices.push_back( {
+            .id = std::string( "action:" ) + id, .label = remove_color_tags( ctxt.get_action_name( id ) ),
+            .hotkey = ctxt.key_bound_to( id ), .pane_id = "actions", .selected = em.uberdraw && std::string( id ) == "EDITMAP_SHOW_ALL",
+        } );
+    }
+    return snapshot;
+}
+
+} // namespace
+
 std::optional<tripoint_bub_ms> editmap::edit()
 {
     restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( g->u.view_offset );
@@ -402,7 +487,22 @@ std::optional<tripoint_bub_ms> editmap::edit()
 
         ui_manager::redraw();
 
+        const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+            return editmap_interaction( *this, ctxt );
+        } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
+        const auto &event = ctxt.get_raw_input();
+        if( event.interaction &&
+            event.interaction->operation == game_client::interaction_operation::set_target ) {
+            const auto position = *event.interaction->position;
+            const auto moved = tripoint_bub_ms( position.x, position.y, position.z );
+            origin += moved - target;
+            target = moved;
+            recalc_target( editshape );
+            action.clear();
+        } else {
+            action = game_client::action_of( ctxt, action, []( const std::string & ) { return std::string(); } );
+        }
 
         if( action == "EDIT_TERRAIN" ) {
             edit_feature<ter_t>();

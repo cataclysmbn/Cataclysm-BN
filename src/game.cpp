@@ -9121,6 +9121,11 @@ void game::zones_manager()
             .title = _( "Zones" ),
             .message = zone_cnt == 0 ? _( "No Zones defined." ) : std::string(),
             .allow_cancel = true,
+            .panes = {
+                { .id = "zones", .label = _( "Zones" ), .role = "current" },
+                { .id = "options", .label = _( "Options" ), .role = "inactive" },
+                { .id = "actions", .label = _( "Actions" ), .role = "controls" },
+            },
         };
         const auto here = u.abs_pos();
         for( auto i = std::size_t{ 0 }; i < zones.size(); ++i ) {
@@ -9134,7 +9139,7 @@ void game::zones_manager()
             const auto center = zone.get_center_point();
             snapshot.choices.push_back( {
                 .id = "zone:" + std::to_string( i ), .label = zone.get_name(),
-                .description = remove_color_tags( details ),
+                .description = remove_color_tags( details ), .pane_id = "zones",
                 .selected = zone.get_enabled(), .highlighted = static_cast<int>( i ) == active_index,
                 .columns = {
                     { .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
@@ -9144,13 +9149,38 @@ void game::zones_manager()
                 },
             } );
         }
+        if( zone_cnt > 0 && zones[active_index].get().has_options() ) {
+            const auto descriptions = zones[active_index].get().get_options().get_descriptions();
+            for( auto i = std::size_t{ 0 }; i < descriptions.size(); ++i ) {
+                snapshot.choices.push_back( {
+                    .id = "option:" + std::to_string( i ), .label = remove_color_tags( descriptions[i].first ),
+                    .pane_id = "options", .selectable = false,
+                    .columns = { { .label = _( "Value" ), .value = remove_color_tags( descriptions[i].second ) } },
+                } );
+            }
+        }
+        const auto toggled = [&]( const std::string & id ) {
+            return ( id == "SHOW_ALL_ZONES" && show_all_zones ) ||
+                   ( id == "TOGGLE_ZONE_OVERLAY" && show_zone_overlay ) ||
+                   ( id == "debug_submap_grid" && ( debug_submap_grid_overlay || zone_submap_grid_overlay ) );
+        };
+        const auto needs_zone = [&]( const std::string & id ) {
+            return id == "REMOVE_ZONE" || id == "CONFIRM" || id == "SHOW_ZONE_ON_MAP" ||
+                   id == "ENABLE_ZONE" || id == "DISABLE_ZONE";
+        };
         for( const auto *id : {
                  "ADD_ZONE", "REMOVE_ZONE", "CONFIRM", "MOVE_ZONE_UP", "MOVE_ZONE_DOWN",
                  "SHOW_ZONE_ON_MAP", "ENABLE_ZONE", "DISABLE_ZONE", "SHOW_ALL_ZONES",
-                 "TOGGLE_ZONE_OVERLAY"
+                 "TOGGLE_ZONE_OVERLAY", "debug_submap_grid"
              } ) {
-            snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
-                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+            const auto action = std::string( id );
+            const auto moves = action == "MOVE_ZONE_UP" || action == "MOVE_ZONE_DOWN";
+            snapshot.choices.push_back( {
+                .id = "action:" + action, .label = remove_color_tags( ctxt.get_action_name( id ) ),
+                .hotkey = ctxt.key_bound_to( id ), .pane_id = "actions",
+                .enabled = ( !needs_zone( action ) || zone_cnt > 0 ) && ( !moves || zone_cnt > 1 ),
+                .selected = toggled( action ),
+            } );
         }
         return snapshot;
     } );
@@ -9619,12 +9649,15 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
             return game_client::interaction_snapshot{
                 .kind = game_client::interaction_kind::target,
                 .title = _( "Look Around" ),
+                .message = is_moving_zone ? _( "Moving zone." ) : !select_zone ? std::string() :
+                has_first_point ? _( "Select second point." ) : _( "Select first point." ),
                 .allow_cancel = true,
                 .target = game_client::interaction_target{
                     .source = position_of( u.bub_pos() ),
                     .cursor = position_of( lp ),
                     .distance_metric = "square",
-                    .status = "look",
+                    .status = is_moving_zone ? "zone_move" : !select_zone ? "look" :
+                    has_first_point ? "zone_second" : "zone_first",
                 },
             };
         } );
