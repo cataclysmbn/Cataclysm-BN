@@ -5,7 +5,9 @@
 #include "message_feed.h"
 
 #include <memory>
+#include <string>
 #include <variant>
+#include <vector>
 
 namespace engine_client
 {
@@ -27,6 +29,11 @@ using push_item = std::variant<event_push, command_result, resync_notice>;
 /// The session diffs it against the previous capture; the hook never produces events and must
 /// not change game state, RNG or memory. Unset means no world is known (menus).
 using world_capture_fn = auto( * )() -> world_state;
+/// The same capture as a patch over the state published last, naming only the cells that can differ.
+/// `consecutive`: `previous` is the state the previous patch stood for. A patch must give exactly the
+/// publication of `world_capture_fn` (the oracle checks it); without the hook every publication captures
+/// the whole world.
+using world_patch_fn = auto( * )( const snapshot &previous, bool consecutive ) -> world_patch;
 
 /// Game-thread authority shared by connections. Reads and hello never reset its clock.
 class session final : public command_authority
@@ -36,7 +43,12 @@ class session final : public command_authority
         auto epoch() const -> const std::string &; // *NOPAD*
         auto current_permissions() const -> command_permissions override;
         auto set_phase( std::string phase ) -> void;
-        auto set_world_capture( world_capture_fn capture ) -> void;
+        auto set_world_capture( world_capture_fn capture, world_patch_fn patch = nullptr ) -> void;
+        /// With the oracle on, every publication made from a patch is checked against the publication of
+        /// a full capture: the same event and the same state, or the difference is recorded (and the
+        /// process aborts when `BN_CAPTURE_ORACLE` is set). Costs a full capture and diff per publication.
+        auto set_oracle( bool on ) -> void;
+        auto oracle_mismatches() const -> const std::vector<std::string> &; // *NOPAD*
         /// World replacement interrupts the old receipt, queues `resync` and installs a new epoch.
         auto replace_world() -> void;
         /// Capture the live boundary and publish its change as one event. A step inside a running
@@ -58,6 +70,12 @@ class session final : public command_authority
         std::string epoch_;
         std::string phase_ = "starting";
         world_capture_fn world_capture_ = nullptr;
+        world_patch_fn world_patch_ = nullptr;
+        /// Whether the stream's state is what the last patch stood for, which the next one builds on.
+        bool patch_consecutive_ = false;
+        bool oracle_ = false;
+        bool oracle_aborts_ = false;
+        std::vector<std::string> oracle_mismatches_;
         std::unique_ptr<command_lifecycle> lifecycle_;
         std::optional<command_result> active_;
         std::optional<command_result> retired_;
@@ -68,6 +86,8 @@ class session final : public command_authority
         /// What the stream has already announced of the native message log.
         Messages::feed_cursor message_cursor_;
         auto capture() const -> std::expected<state_value, error>;
+        auto capture_interaction() const -> std::expected<boundary_state, error>;
+        auto check_oracle( const state_value &before, const std::optional<public_event> &event ) -> void;
         auto restart_epoch( std::string_view reason ) -> void;
         auto refresh_result() -> void;
         auto publish_presentation( const std::optional<std::string> &command ) -> void;

@@ -84,11 +84,10 @@ auto validate_state( const state_value &value ) -> std::expected<void, error>
     return validate_boundary( value.interaction );
 }
 /// The diff cannot say that a coverage, avatar or environment disappeared.
-auto removes_value( const state_value &from, const state_value &to ) -> bool
+auto removes_value( const world_state &from, const world_state &to ) -> bool
 {
-    return ( from.world.coverage && !to.world.coverage ) || ( from.world.view && !to.world.view ) ||
-           ( from.world.avatar && !to.world.avatar ) ||
-           ( from.world.environment && !to.world.environment );
+    return ( from.coverage && !to.coverage ) || ( from.view && !to.view ) ||
+           ( from.avatar && !to.avatar ) || ( from.environment && !to.environment );
 }
 template<typename Key, typename Value, typename Remove>
 auto erase_where( std::map<Key, Value> &values, const Remove &remove ) -> void
@@ -111,36 +110,32 @@ auto same_state( const state_value &left, const state_value &right ) -> bool
     return left.world == right.world && same_boundary( left.interaction, right.interaction );
 }
 
-auto diff( const state_value &from, const state_value &to ) -> changes
+namespace
+{
+/// Whether a cell or entity at `at` is still inside the coverage `delta` moves to, if it does.
+auto survives( const changes &delta, const position &at ) -> bool
+{
+    return !delta.coverage || inside( *delta.coverage, at );
+}
+/// Everything of the diff but the cells.
+auto diff_sections( const state_value &from, const world_state &world,
+                    const boundary_state &interaction ) -> changes
 {
     auto result = changes{};
-    if( to.world.coverage && to.world.coverage != from.world.coverage ) {
-        result.coverage = to.world.coverage;
-    }
-    if( to.world.view && to.world.view != from.world.view ) { result.view = to.world.view; }
-    // Cells and entities outside a new coverage are dropped by the coverage itself.
-    const auto survives = [&]( const position & at ) {
-        return !result.coverage || inside( *result.coverage, at );
-    };
-    for( const auto &[at, value] : to.world.cells ) {
-        const auto old = from.world.cells.find( at );
-        if( old == from.world.cells.end() || old->second != value ) { result.cells.push_back( value ); }
-    }
-    for( const auto &[at, value] : from.world.cells ) {
-        if( survives( at ) && !to.world.cells.contains( at ) ) { result.forgotten.push_back( at ); }
-    }
-    for( const auto &[id, value] : to.world.entities ) {
+    if( world.coverage && world.coverage != from.world.coverage ) { result.coverage = world.coverage; }
+    if( world.view && world.view != from.world.view ) { result.view = world.view; }
+    for( const auto &[id, value] : world.entities ) {
         const auto old = from.world.entities.find( id );
         if( old == from.world.entities.end() || old->second != value ) { result.entities.push_back( value ); }
     }
     for( const auto &[id, value] : from.world.entities ) {
-        if( survives( value.at ) && !to.world.entities.contains( id ) ) { result.gone.push_back( {.id = id} ); }
+        if( survives( result, value.at ) && !world.entities.contains( id ) ) { result.gone.push_back( {.id = id} ); }
     }
-    if( to.world.avatar && to.world.avatar != from.world.avatar ) {
-        result.avatar = to.world.avatar;
+    if( world.avatar && world.avatar != from.world.avatar ) {
+        result.avatar = world.avatar;
         if( from.world.avatar ) {
             const auto &before = *from.world.avatar;
-            const auto &after = *to.world.avatar;
+            const auto &after = *world.avatar;
             const auto keep = [&]( const char *member, const bool same, const bool empty ) {
                 if( same && !empty ) { result.avatar_kept.emplace_back( member ); }
             };
@@ -153,13 +148,49 @@ auto diff( const state_value &from, const state_value &to ) -> changes
             keep( "ground", before.ground == after.ground, after.ground.empty() );
         }
     }
-    if( to.world.environment && to.world.environment != from.world.environment ) {
-        result.environment = to.world.environment;
+    if( world.environment && world.environment != from.world.environment ) {
+        result.environment = world.environment;
     }
-    if( to.world.route != from.world.route ) { result.route = to.world.route; }
-    if( !same_boundary( from.interaction, to.interaction ) ) {
-        result.interaction = to.interaction;
-        result.actions_unchanged = from.interaction.actions == to.interaction.actions;
+    if( world.route != from.world.route ) { result.route = world.route; }
+    if( !same_boundary( from.interaction, interaction ) ) {
+        result.interaction = interaction;
+        result.actions_unchanged = from.interaction.actions == interaction.actions;
+    }
+    return result;
+}
+} // namespace
+
+auto diff( const state_value &from, const state_value &to ) -> changes
+{
+    auto result = diff_sections( from, to.world, to.interaction );
+    // Cells and entities outside a new coverage are dropped by the coverage itself.
+    for( const auto &[at, value] : to.world.cells ) {
+        const auto old = from.world.cells.find( at );
+        if( old == from.world.cells.end() || old->second != value ) { result.cells.push_back( value ); }
+    }
+    for( const auto &[at, value] : from.world.cells ) {
+        if( survives( result, at ) && !to.world.cells.contains( at ) ) { result.forgotten.push_back( at ); }
+    }
+    return result;
+}
+
+auto diff( const state_value &from, const boundary_state &interaction,
+           const world_patch &patch ) -> changes
+{
+    auto result = diff_sections( from, patch.world, interaction );
+    const auto &known = from.world.cells;
+    for( const auto &[at, value] : patch.cells ) {
+        const auto old = known.find( at );
+        if( old == known.end() || old->second != value ) { result.cells.push_back( value ); }
+    }
+    if( patch.exhaustive ) {
+        for( const auto &[at, value] : known ) {
+            if( survives( result, at ) && !patch.cells.contains( at ) ) { result.forgotten.push_back( at ); }
+        }
+    } else {
+        for( const auto &at : patch.unknown ) {
+            if( known.contains( at ) ) { result.forgotten.push_back( at ); }
+        }
     }
     return result;
 }
@@ -278,22 +309,9 @@ auto event_stream::seal( public_event &event ) const -> bool
     return event.wire_.size() <= maximum_event_bytes;
 }
 
-auto event_stream::publish( publish_request request ) ->
-std::expected<std::optional<public_event>, error>
+auto event_stream::issue( changes delta, std::optional<std::string> command,
+                          std::optional<counter> cause ) -> std::expected<std::optional<public_event>, error>
 {
-    if( request.decision == disclosure::withheld ) { return std::nullopt; }
-    {
-        ZoneScopedN( "engine_client_validate_state" );
-        if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
-    }
-    if( removes_value( current_.value, request.next ) ) { return std::unexpected( error::resync_required ); }
-    if( request.cause && ( *request.cause == 0 || *request.cause > current_.at.sequence ) ) {
-        return std::unexpected( error::validation_failed );
-    }
-    auto delta = [&] {
-        ZoneScopedN( "engine_client_diff" );
-        return diff( current_.value, request.next );
-    }();
     if( delta.empty() ) { return std::nullopt; }
     if( current_.at.revision == std::numeric_limits<counter>::max() ||
         current_.at.sequence == std::numeric_limits<counter>::max() ) {
@@ -304,15 +322,73 @@ std::expected<std::optional<public_event>, error>
             .sequence = current_.at.sequence + 1,
             .revision = current_.at.revision + 1,
             .type = std::move( type ),
-            .cause = request.cause,
-            .command = std::move( request.command ),
+            .cause = cause,
+            .command = std::move( command ),
             .delta = std::move( delta ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
     if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
-    current_.value = std::move( request.next );
     current_.at.sequence = event.value().sequence;
     current_.at.revision = event.value().revision;
+    return event;
+}
+
+auto event_stream::publish( publish_request request ) ->
+std::expected<std::optional<public_event>, error>
+{
+    if( request.decision == disclosure::withheld ) { return std::nullopt; }
+    {
+        ZoneScopedN( "engine_client_validate_state" );
+        if( const auto valid = validate_state( request.next ); !valid ) { return std::unexpected( valid.error() ); }
+    }
+    if( removes_value( current_.value.world, request.next.world ) ) { return std::unexpected( error::resync_required ); }
+    if( request.cause && ( *request.cause == 0 || *request.cause > current_.at.sequence ) ) {
+        return std::unexpected( error::validation_failed );
+    }
+    auto delta = [&] {
+        ZoneScopedN( "engine_client_diff" );
+        return diff( current_.value, request.next );
+    }();
+    auto event = issue( std::move( delta ), std::move( request.command ), request.cause );
+    if( event && *event ) { current_.value = std::move( request.next ); }
+    return event;
+}
+
+auto event_stream::publish( patch_request request ) ->
+std::expected<std::optional<public_event>, error>
+{
+    auto &patch = request.patch;
+    {
+        ZoneScopedN( "engine_client_validate_state" );
+        const auto valid = std::ranges::all_of( patch.cells, []( const auto & entry ) { return valid_cell( entry.second ); } )
+        &&
+        std::ranges::all_of( patch.world.entities, []( const auto & entry ) { return valid_entity( entry.second ); } );
+        if( !valid ) { return std::unexpected( error::validation_failed ); }
+        if( const auto boundary = validate_boundary( request.interaction ); !boundary ) { return std::unexpected( boundary.error() ); }
+    }
+    if( removes_value( current_.value.world, patch.world ) ) { return std::unexpected( error::resync_required ); }
+    // Without the cells of a new coverage, the patch cannot say what the coverage drops.
+    if( !patch.exhaustive && patch.world.coverage != current_.value.world.coverage ) {
+        return std::unexpected( error::validation_failed );
+    }
+    auto delta = [&] {
+        ZoneScopedN( "engine_client_diff" );
+        return diff( current_.value, request.interaction, patch );
+    }();
+    auto event = issue( std::move( delta ), std::move( request.command ), std::nullopt );
+    if( !event || !*event ) { return event; }
+    const auto &changed = ( *event )->value().delta;
+    auto &world = current_.value.world;
+    auto cells = std::move( world.cells );
+    if( patch.exhaustive ) {
+        cells = std::move( patch.cells );
+    } else {
+        for( const auto &at : changed.forgotten ) { cells.erase( at ); }
+        for( const auto &entry : changed.cells ) { cells.insert_or_assign( entry.at, std::move( patch.cells.at( entry.at ) ) ); }
+    }
+    world = std::move( patch.world );
+    world.cells = std::move( cells );
+    current_.value.interaction = std::move( request.interaction );
     return event;
 }
 

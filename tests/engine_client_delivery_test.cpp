@@ -37,6 +37,7 @@ struct wait_run {
     std::string state;
     cata_default_random_engine rng;
     std::size_t frames = 0;
+    std::size_t oracle_mismatches = 0;
     std::size_t most_held_frames = 0;
     std::size_t most_held_bytes = 0;
     double milliseconds = 0;
@@ -117,7 +118,9 @@ auto wait_for(
     context.register_action("YES");
     game_client::begin_input_boundary();
     auto authority_session = session{};
-    authority_session.set_world_capture(&engine_client::world::capture_world);
+    authority_session.set_world_capture(
+        &engine_client::world::capture_world, &engine_client::world::capture_patch);
+    authority_session.set_oracle(true);
     auto output = std::ostringstream{};
     auto errors = std::ostringstream{};
     auto server = bn::mcp::server{
@@ -168,6 +171,7 @@ auto wait_for(
     result.milliseconds =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count();
     result.frames = count_of(output.str(), R"("method":"bn.events")");
+    result.oracle_mismatches = authority_session.oracle_mismatches().size();
     result.rng = rng_get_engine();
     result.state = authority();
     return result;
@@ -190,6 +194,7 @@ TEST_CASE(
     REQUIRE(again.rng == absent.rng);
 
     const auto paying = wait_for(client_mode::paying, start, turns);
+    CHECK(paying.oracle_mismatches == 0);
     CHECK(paying.frames == static_cast<std::size_t>(turns));
     CHECK(paying.most_held_frames == 0);
     CHECK(paying.rng == absent.rng);
@@ -197,6 +202,7 @@ TEST_CASE(
 
     // One credit pays for the first turn; the other turns wait in the engine, within its bound.
     const auto stalled = wait_for(client_mode::stalled, start, turns);
+    CHECK(stalled.oracle_mismatches == 0);
     CHECK(stalled.frames == 1);
     CHECK(stalled.most_held_frames == static_cast<std::size_t>(turns - 1));
     CHECK(stalled.most_held_bytes <= maximum_held_bytes);

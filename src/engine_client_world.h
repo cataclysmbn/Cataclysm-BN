@@ -11,6 +11,11 @@
 class Creature;
 class item;
 
+namespace engine_client
+{
+struct snapshot;
+} // namespace engine_client
+
 /// What the avatar currently sees and remembers, as the owned `world_state` of the 1.0 contract.
 ///
 /// Register once with `engine_client::process_session().set_world_capture( &capture_world )`; the
@@ -25,6 +30,16 @@ namespace engine_client::world
 {
 
 auto capture_world() -> world_state;
+/// What `capture_world` would capture, as a patch over `previous`, the state the session published last:
+/// every section whole, but of the cells only those that can differ from `previous`. `consecutive` says
+/// that `previous` is the state the patch before this one captured, which the patch builds on; without it
+/// the patch is exhaustive. Same game-state guarantees as `capture_world`.
+///
+/// What it leaves out is what nothing that changes it can have touched. Sections whose inputs the engine
+/// does not announce (what a visible square holds, the creatures, the avatar's body and belongings,
+/// the environment) are captured again every time; a square the avatar does not see is named only when its
+/// map memory, the vehicle on it, or whether it is seen has changed.
+auto capture_patch( const snapshot &previous, bool consecutive ) -> world_patch;
 /// The ids of the tints the client's tileset has. Looks carry the keys among them that apply to them.
 auto set_tint_ids( std::set<std::string> ids ) -> void;
 /// The absolute square of a reality-bubble square, in the loaded map's dimension.
