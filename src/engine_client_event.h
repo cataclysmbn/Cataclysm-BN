@@ -20,6 +20,7 @@ struct state_value {
 struct gone_entity {
     std::string id = {};
     std::string reason = "lost_sight";
+    auto operator<=>( const gone_entity & ) const = default; // *NOPAD*
 };
 /// The only state-bearing part of an event. Applied in member order (design 3.4):
 /// coverage, view, cells, forgotten, entities, gone, then avatar/environment/route/interaction replace.
@@ -47,6 +48,10 @@ struct changes {
 /// The changes that turn `from` into `to`. A cell or entity that left perception is
 /// republished (`remembered`) or listed as forgotten/gone, so nothing visible survives implicitly.
 auto diff( const state_value &from, const state_value &to ) -> changes;
+/// The changes that turn `from` into the state `patch` captures: the same as `diff` of the state it
+/// stands for, found by comparing only the cells it names.
+auto diff( const state_value &from, const boundary_state &interaction,
+           const world_patch &patch ) -> changes;
 /// Fails without partial effects when the changes do not fit `value` (unknown id, cell outside
 /// the coverage, duplicate entry).
 auto apply( state_value &value, const changes &delta ) -> std::expected<void, error>;
@@ -121,6 +126,12 @@ struct publish_request {
     std::optional<std::string> command = std::nullopt;
     std::optional<counter> cause = std::nullopt;
 };
+/// A publication whose next state is given as a patch over the current one.
+struct patch_request {
+    boundary_state interaction = {};
+    world_patch patch = {};
+    std::optional<std::string> command = std::nullopt;
+};
 /// The one ordered stream of an epoch. A failed or withheld publication consumes no
 /// sequence, revision or ID and leaves the state unchanged.
 class event_stream
@@ -135,6 +146,9 @@ class event_stream
         /// `resync_required`: the state drops a coverage, avatar or environment, which no event
         /// can express; the caller rebases and tells subscribers to start over.
         auto publish( publish_request request ) -> std::expected<std::optional<public_event>, error>;
+        /// Publishes the state a patch over the current one stands for, with the event, errors and
+        /// effects `publish` of that state would give, at a cost of what the patch names and changes.
+        auto publish( patch_request request ) -> std::expected<std::optional<public_event>, error>;
         /// A transient event: consumes a sequence, never a revision. resource_limit when it cannot fit a frame.
         auto publish_message( message_request request ) -> std::expected<public_event, error>;
         /// A transient animation fact: consumes a sequence, never a revision.
@@ -145,6 +159,10 @@ class event_stream
     private:
         explicit event_stream( snapshot initial );
         auto seal( public_event &event ) const -> bool;
+        /// The event of a delta, with its sequence and revision taken; none when the delta is empty. The
+        /// caller then adopts the state the delta leads to.
+        auto issue( changes delta, std::optional<std::string> command,
+                    std::optional<counter> cause ) -> std::expected<std::optional<public_event>, error>;
         snapshot current_;
 };
 

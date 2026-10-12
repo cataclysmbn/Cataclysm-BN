@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -264,6 +265,19 @@ struct world_state {
     /// The native auto-move route a map click planned and not yet confirmed, nearest square first.
     std::vector<position> route = {};
     auto operator==( const world_state & ) const -> bool = default;
+};
+
+/// A capture that names the cells that may differ from the previous capture instead of listing every
+/// cell, so that publishing it costs what changed. A cell the patch does not name equals the previous one.
+struct world_patch {
+    /// Every section but the cells, which stay empty.
+    world_state world;
+    /// The named cells the avatar knows now.
+    std::map<position, cell> cells = {};
+    /// The named cells the avatar knows nothing about now; it leaves out those the previous state did not hold.
+    std::set<position> unknown = {};
+    /// `cells` is every cell the avatar knows: a previous cell it does not hold is forgotten.
+    bool exhaustive = false;
 };
 
 } // namespace engine_client

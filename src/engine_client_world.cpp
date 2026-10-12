@@ -14,6 +14,7 @@
 #include "game_session.h"
 #include "bionics.h"
 #include "effect.h"
+#include "engine_client_event.h"
 #include "item.h"
 #include "tileray.h"
 #include "units_angle.h"
@@ -135,6 +136,12 @@ auto tint_ids() -> std::set<std::string> &
 {
     static auto ids = std::set<std::string> {};
     return ids;
+}
+/// Changes with the tints, which every look carries the keys of.
+auto tint_generation() -> std::size_t & // *NOPAD*
+{
+    static auto generation = std::size_t{};
+    return generation;
 }
 
 auto flag_text( const std::string &flag ) -> const std::string & { return flag; }
@@ -425,13 +432,55 @@ auto remembered_squares( const avatar &you ) -> const std::vector<remembered_squ
 {
     static auto squares = std::vector<remembered_square> {};
     static auto built = memory_revision{};
-    if( const auto now = you.map_memory_revision(); now != built || squares.empty() ) {
+    static auto tints = std::size_t{};
+    if( const auto now = you.map_memory_revision();
+        now != built || tints != tint_generation() || squares.empty() ) {
         ZoneScopedN( "engine_client_remembered_squares" );
         squares.clear();
         for( const auto &abs : you.memorized_positions() ) {
             squares.push_back( { .abs = abs, .memory = memory_at( you, abs ) } );
         }
         built = now;
+        tints = tint_generation();
+    }
+    return squares;
+}
+
+/// The cell of a square the avatar sees now, none when it is plain terrain the engine never memorizes.
+auto visible_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
+                   const map_perception::sight &view, const std::string &dimension ) -> std::optional<cell>
+{
+    auto out = cell{ .at = position_of( here, p, dimension ) };
+    if( !fill_visible( here, p, you, view, out ) ) { return std::nullopt; }
+    return out;
+}
+
+/// The cell of a square the avatar does not see: what it memorized, or a vehicle it is entitled to know
+/// about. `memory` is what `memory_at` gives for the square when the caller already has it.
+auto remembered_cell( map &here, const tripoint_bub_ms &p, const avatar &you,
+                      const std::string &dimension,
+                      const std::optional<std::optional<memory_layers>> &memory = std::nullopt )
+-> std::optional<cell>
+{
+    if( !here.inbounds( p ) || map_perception::visible_at( here, p ) ) { return std::nullopt; }
+    auto out = cell{ .at = position_of( here, p, dimension ), .known = knowledge::remembered,
+                     .memory = memory ? *memory : memory_at( you, map_local_to_abs( here, p ) ) };
+    // A vehicle the avatar is entitled to know about is perceived live, so its square is a visible one;
+    // the ground beneath it is not perceived.
+    if( map_perception::detailed_at( here, p ) ) {
+        out.vehicle = vehicle_part_at( here, p, you );
+        if( out.vehicle ) { out.known = knowledge::visible; }
+    }
+    if( !out.memory && !out.vehicle ) { return std::nullopt; }
+    return out;
+}
+
+/// The squares of the parts of every vehicle in the reality bubble.
+auto vehicle_squares( map &here ) -> std::set<tripoint_bub_ms>
+{
+    auto squares = std::set<tripoint_bub_ms> {};
+    for( const auto &wrapped : here.get_vehicles() ) {
+        for( const auto &part : wrapped.v->get_all_parts() ) { squares.insert( part.pos() ); }
     }
     return squares;
 }
@@ -441,36 +490,23 @@ auto capture_known( map &here, const avatar &you, const std::string &dimension,
                     std::map<position, cell> &cells ) -> void
 {
     ZoneScopedN( "engine_client_capture_known" );
-    const auto view = map_perception::current_sight();
     {
         ZoneScopedN( "engine_client_capture_visible" );
+        const auto view = map_perception::current_sight();
         for( const auto &p : map_perception::visible_cells( here ) ) {
-            auto out = cell{ .at = position_of( here, p, dimension ) };
-            if( fill_visible( here, p, you, view, out ) ) { cells.emplace( out.at, std::move( out ) ); }
+            if( auto out = visible_cell( here, p, you, view, dimension ) ) { cells.emplace( out->at, std::move( *out ) ); }
         }
     }
     ZoneNamedN( remembered_zone, "engine_client_capture_remembered", true );
-    const auto remember = [&]( const tripoint_bub_ms & p, const std::optional<memory_layers> &memory ) {
-        if( !here.inbounds( p ) || map_perception::visible_at( here, p ) ) { return; }
-        const auto at = position_of( here, p, dimension );
-        if( cells.contains( at ) ) { return; }
-        auto out = cell{ .at = at, .known = knowledge::remembered, .memory = memory };
-        // A vehicle the avatar is entitled to know about is perceived live, so its square is a visible one;
-        // the ground beneath it is not perceived.
-        if( map_perception::detailed_at( here, p ) ) {
-            out.vehicle = vehicle_part_at( here, p, you );
-            if( out.vehicle ) { out.known = knowledge::visible; }
-        }
-        if( out.memory || out.vehicle ) { cells.emplace( at, std::move( out ) ); }
+    const auto remember = [&]( const tripoint_bub_ms & p,
+    const std::optional<std::optional<memory_layers>> &memory ) {
+        if( cells.contains( position_of( here, p, dimension ) ) ) { return; }
+        if( auto out = remembered_cell( here, p, you, dimension, memory ) ) { cells.emplace( out->at, std::move( *out ) ); }
     };
     for( const auto &square : remembered_squares( you ) ) {
         remember( abs_to_map_local( here, square.abs ), square.memory );
     }
-    for( const auto &wrapped : here.get_vehicles() ) {
-        for( const auto &part : wrapped.v->get_all_parts() ) {
-            remember( part.pos(), memory_at( you, map_local_to_abs( here, part.pos() ) ) );
-        }
-    }
+    for( const auto &p : vehicle_squares( here ) ) { remember( p, std::nullopt ); }
 }
 
 /// Opaque IDs for creatures the avatar has been shown. The weak pointer pins the creature's control
@@ -739,15 +775,17 @@ auto terrain_appearance( const ter_id &id ) -> look
 
 auto furniture_appearance( const furn_id &id ) -> look { return furniture_look( id, {} ); }
 
-auto set_tint_ids( std::set<std::string> ids ) -> void { tint_ids() = std::move( ids ); }
-
-auto capture_world() -> world_state
+auto set_tint_ids( std::set<std::string> ids ) -> void
 {
-    ZoneScopedN( "engine_client_capture_world" );
-    if( !g || !game_session::running() ) { return {}; }
-    auto &here = get_map();
-    const auto &you = get_avatar();
-    const auto dimension = here.get_bound_dimension().str();
+    tint_ids() = std::move( ids );
+    ++tint_generation();
+}
+
+namespace
+{
+/// Every section of the world but its cells.
+auto capture_sections( map &here, const avatar &you, const std::string &dimension ) -> world_state
+{
     const auto size = here.getmapsize();
     auto state = world_state{
         .coverage = bounds{
@@ -768,11 +806,97 @@ auto capture_world() -> world_state
             .max = position_of( here, tripoint_bub_ms( window->p_max.x() - 1, window->p_max.y() - 1, z ),
                                 dimension ) };
     }
-    capture_known( here, you, dimension, state.cells );
     for( const auto &step : g->get_destination_preview() ) {
         state.route.push_back( position_of( here, step, dimension ) );
     }
     return state;
+}
+
+/// What the last patch captured the cells from, which is all the next one needs to know to name only the
+/// cells that can differ. A cell the avatar does not see depends on nothing but its map memory, the tints
+/// of its looks, where the map is, whether the square is seen, and the vehicle part on it; so a square is
+/// named when it is seen now or was before, is a vehicle part now or was, or when the memory or the tints
+/// changed.
+struct patch_basis {
+    bool valid = false;
+    std::string epoch = {};
+    counter revision = 0;
+    std::optional<bounds> coverage = std::nullopt;
+    memory_revision memory = {};
+    std::size_t tints = 0;
+    std::vector<tripoint_bub_ms> visible = {};
+    std::set<tripoint_bub_ms> vehicles = {};
+    std::vector<tripoint_abs_ms> squares = {};
+};
+auto basis = patch_basis {};
+} // namespace
+
+auto capture_world() -> world_state
+{
+    ZoneScopedN( "engine_client_capture_world" );
+    if( !g || !game_session::running() ) { return {}; }
+    auto &here = get_map();
+    const auto &you = get_avatar();
+    const auto dimension = here.get_bound_dimension().str();
+    auto state = capture_sections( here, you, dimension );
+    capture_known( here, you, dimension, state.cells );
+    return state;
+}
+
+auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_patch
+{
+    ZoneScopedN( "engine_client_capture_patch" );
+    if( !g || !game_session::running() ) {
+        basis.valid = false;
+        return { .exhaustive = true };
+    }
+    auto &here = get_map();
+    const auto &you = get_avatar();
+    const auto dimension = here.get_bound_dimension().str();
+    auto patch = world_patch{ .world = capture_sections( here, you, dimension ) };
+    const auto memory = you.map_memory_revision();
+    const auto continues = consecutive && basis.valid && basis.epoch == previous.at.epoch &&
+                           previous.at.revision >= basis.revision && previous.at.revision - basis.revision <= 1 &&
+                           basis.coverage == patch.world.coverage;
+    auto visible = map_perception::visible_cells( here );
+    auto vehicles = vehicle_squares( here );
+    if( !continues ) {
+        capture_known( here, you, dimension, patch.cells );
+        patch.exhaustive = true;
+        basis.squares = you.memorized_positions();
+    } else {
+        const auto view = map_perception::current_sight();
+        // Squares that are seen now come first: a square is named once, by what the avatar knows of it.
+        const auto &known = previous.value.world.cells;
+        for( const auto &p : visible ) {
+            if( auto out = visible_cell( here, p, you, view, dimension ) ) { patch.cells.emplace( out->at, std::move( *out ) ); }
+            else if( const auto at = position_of( here, p, dimension ); known.contains( at ) ) { patch.unknown.insert( at ); }
+        }
+        const auto name = [&]( const tripoint_bub_ms & p ) {
+            const auto at = position_of( here, p, dimension );
+            if( patch.cells.contains( at ) || patch.unknown.contains( at ) ) { return; }
+            if( auto out = remembered_cell( here, p, you, dimension ) ) { patch.cells.emplace( at, std::move( *out ) ); }
+            else if( known.contains( at ) ) { patch.unknown.insert( at ); }
+        };
+        if( visible != basis.visible ) { std::ranges::for_each( basis.visible, name ); }
+        std::ranges::for_each( vehicles, name );
+        if( vehicles != basis.vehicles ) { std::ranges::for_each( basis.vehicles, name ); }
+        if( memory != basis.memory || basis.tints != tint_generation() ) {
+            const auto name_all = [&]( const std::vector<tripoint_abs_ms> &squares ) {
+                for( const auto &abs : squares ) { name( abs_to_map_local( here, abs ) ); }
+            };
+            const auto before = std::exchange( basis.squares, you.memorized_positions() );
+            name_all( basis.squares );
+            name_all( before );
+        }
+    }
+    basis = {
+        .valid = true, .epoch = previous.at.epoch, .revision = previous.at.revision,
+        .coverage = patch.world.coverage, .memory = memory, .tints = tint_generation(),
+        .visible = std::move( visible ), .vehicles = std::move( vehicles ),
+        .squares = std::move( basis.squares )
+    };
+    return patch;
 }
 
 } // namespace engine_client::world

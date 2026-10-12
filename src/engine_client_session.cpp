@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 #include <utility>
 
@@ -35,6 +36,8 @@ auto recording() -> std::ofstream * // *NOPAD*
 
 session::session()
 {
+    // Conformance runs set it for the whole process: any publication a patch gets wrong ends the game.
+    oracle_aborts_ = oracle_ = std::getenv( "BN_CAPTURE_ORACLE" ) != nullptr;
     const auto created = new_session_epoch();
     if( !created ) { throw std::runtime_error( "Engine session unavailable" ); }
     epoch_ = *created;
@@ -51,7 +54,20 @@ auto session::current_permissions() const -> command_permissions
 
 auto session::set_phase( std::string phase ) -> void { phase_ = std::move( phase ); }
 
-auto session::set_world_capture( const world_capture_fn capture ) -> void { world_capture_ = capture; }
+auto session::set_world_capture( const world_capture_fn capture,
+                                 const world_patch_fn patch ) -> void
+{
+    world_capture_ = capture;
+    world_patch_ = patch;
+    patch_consecutive_ = false;
+}
+
+auto session::set_oracle( const bool on ) -> void { oracle_ = on; }
+
+auto session::oracle_mismatches() const -> const std::vector<std::string> & // *NOPAD*
+{
+    return oracle_mismatches_;
+}
 
 auto session::refresh_result() -> void
 {
@@ -101,15 +117,15 @@ auto session::restart_epoch( const std::string_view reason ) -> void
     lifecycle_ = std::make_unique<command_lifecycle>( epoch_, *this );
     active_.reset();
     stream_.reset();
+    patch_consecutive_ = false;
 }
 
 auto session::replace_world() -> void { restart_epoch( "world_replaced" ); }
 
-auto session::capture() const -> std::expected<state_value, error>
+auto session::capture_interaction() const -> std::expected<boundary_state, error>
 {
-    ZoneScopedN( "engine_client_capture" );
     const auto permissions = current_permissions();
-    auto boundary = capture_boundary( {
+    return capture_boundary( {
         .epoch = epoch_,
         .ready = {
             .phase = phase_, .game_ready = game_session::running(),
@@ -117,9 +133,47 @@ auto session::capture() const -> std::expected<state_value, error>
             .accepts_registered_actions = permissions.accepts_registered_actions
         },
     } );
+}
+
+auto session::capture() const -> std::expected<state_value, error>
+{
+    ZoneScopedN( "engine_client_capture" );
+    auto boundary = capture_interaction();
     if( !boundary ) { return std::unexpected( boundary.error() ); }
     return state_value{ .interaction = std::move( *boundary ),
                         .world = world_capture_ ? world_capture_() : world_state{} };
+}
+
+auto session::check_oracle( const state_value &before,
+                            const std::optional<public_event> &event ) -> void
+{
+    const auto &now = stream_->current().value;
+    const auto full = state_value{ .interaction = now.interaction,
+                                   .world = world_capture_ ? world_capture_() : world_state{} };
+    const auto expected = diff( before, full );
+    const auto actual = event ? event->value().delta : changes{};
+    auto differs = std::string{};
+    const auto note = [&]( const char *section, const bool same ) { if( !same ) { differs += std::string( " " ) + section; } };
+    note( "coverage", actual.coverage == expected.coverage );
+    note( "view", actual.view == expected.view );
+    note( "cells", actual.cells == expected.cells );
+    note( "forgotten", actual.forgotten == expected.forgotten );
+    note( "entities", actual.entities == expected.entities );
+    note( "gone", actual.gone == expected.gone );
+    note( "avatar", actual.avatar == expected.avatar && actual.avatar_kept == expected.avatar_kept );
+    note( "environment", actual.environment == expected.environment );
+    note( "route", actual.route == expected.route );
+    note( "interaction", actual.interaction.has_value() == expected.interaction.has_value() &&
+          ( !actual.interaction || same_boundary( *actual.interaction, *expected.interaction ) ) &&
+          actual.actions_unchanged == expected.actions_unchanged );
+    note( "state", same_state( now, full ) );
+    if( differs.empty() ) { return; }
+    oracle_mismatches_.push_back( "patch publication differs from the full capture in:" + differs );
+    std::cerr << "engine_client: " << oracle_mismatches_.back() << std::endl;
+    if( oracle_aborts_ ) { std::abort(); }
+    // Go on from the full capture, so that one miss does not hide the next.
+    static_cast<void>( stream_->rebase( full ) );
+    patch_consecutive_ = false;
 }
 
 auto session::publish_boundary( const bool settles ) -> std::expected<void, error>
@@ -127,12 +181,13 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
     ZoneScopedN( "engine_client_publish_boundary" );
     // Startup language/debug prompts are genuine native input boundaries, not engine readiness.
     if( phase_ == "starting" ) { phase_ = "menu"; }
-    auto candidate = capture();
-    if( !candidate ) { return std::unexpected( candidate.error() ); }
     if( !stream_ ) {
+        auto candidate = capture();
+        if( !candidate ) { return std::unexpected( candidate.error() ); }
         auto created = event_stream::create( epoch_, std::move( *candidate ) );
         if( !created ) { return std::unexpected( created.error() ); }
         stream_ = std::move( *created );
+        patch_consecutive_ = false;
         // The whole log is new to this stream: a loaded game's saved lines and a new game's first
         // line were written before it existed. They enter the stream's log, which a snapshot carries.
         message_cursor_ = {};
@@ -145,16 +200,34 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         presentation::collect( true );
         return {};
     }
-    auto request = publish_request{ .next = *candidate };
-    if( active_ && active_->stage == command_stage::executing ) { request.command = active_->command_id; }
-    const auto command = request.command;
+    auto interaction = capture_interaction();
+    if( !interaction ) { return std::unexpected( interaction.error() ); }
+    auto command = std::optional<std::string> {};
+    if( active_ && active_->stage == command_stage::executing ) { command = active_->command_id; }
+    // A patch names the cells that can differ from the stream's state, so what it costs is what changed.
+    auto patch = world_patch_ ? std::optional( world_patch_( stream_->current(),
+                 patch_consecutive_ ) ) :
+                 std::nullopt;
     publish_presentation( command );
-    auto published = [&] {
+    auto before = oracle_ && patch ? std::optional( stream_->current().value ) : std::nullopt;
+    auto candidate = std::optional<state_value> {};
+    auto published = std::expected<std::optional<public_event>, error> {};
+    if( patch ) {
         ZoneScopedN( "engine_client_stream_publish" );
-        return stream_->publish( std::move( request ) );
-    }();
+        published = stream_->publish( patch_request{ .interaction = *interaction, .patch = std::move( *patch ),
+                                      .command = command } );
+    }
+    patch_consecutive_ = patch && published;
+    if( !patch_consecutive_ ) {
+        // No patch, or one the stream cannot take: the whole capture, whose errors recover below.
+        candidate = state_value{ .interaction = std::move( *interaction ),
+                                 .world = world_capture_ ? world_capture_() : world_state{} };
+        ZoneScopedN( "engine_client_stream_publish" );
+        published = stream_->publish( publish_request{ .next = *candidate, .command = command } );
+    }
     if( published ) {
         if( *published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = **published } ); }
+        if( before && patch_consecutive_ ) { check_oracle( *before, *published ); }
     } else if( published.error() == error::resource_limit ||
                published.error() == error::resync_required ) {
         // The change does not fit one event or cannot be expressed: adopt the state and make
