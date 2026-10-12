@@ -136,6 +136,43 @@ struct fixture {
 };
 } // namespace
 
+TEST_CASE(
+    "a timed wait publishes the boundary and lapses with nothing queued",
+    "[engine_client_server][minigames]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    auto waits = std::vector<int>{};
+    auto answers = true;
+    auto timed = bn::mcp::server{{
+        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+        .submit = [&](const auto& input) { return test.queued = input, true; },
+        .has_input = [&] { return !test.queued.empty(); },
+        .wait_input = [&](const int ms) { return waits.push_back(ms), answers; },
+        .contract_session = &test.authority,
+    }};
+    auto input = std::istringstream{hello + subscribe};
+    SECTION("a request that arrives in time is served before the wait can lapse") {
+        // The two requests are read, then the stream ends: the wait said a frame was ready.
+        CHECK_FALSE(timed.pump_until_input(input, test.output, test.errors, 50));
+        CHECK(contains(test.output.str(), R"("version":"1.0")"));
+        CHECK(waits.size() == 3);
+    }
+    SECTION("no request within the wait returns with nothing queued") {
+        answers = false;
+        CHECK(timed.pump_until_input(input, test.output, test.errors, 50));
+        CHECK(test.queued.empty());
+        CHECK(waits.size() == 1);
+        CHECK(waits.front() > 0);
+        CHECK(waits.front() <= 50);
+        // Nothing was read: the lapse leaves the requests for the next wait.
+        CHECK_FALSE(contains(test.output.str(), R"("version":"1.0")"));
+    }
+    SECTION("an untimed pump never consults the wait") {
+        CHECK_FALSE(timed.pump_until_input(input, test.output, test.errors));
+        CHECK(waits.empty());
+    }
+}
+
 TEST_CASE("hello is required and checks the version", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};

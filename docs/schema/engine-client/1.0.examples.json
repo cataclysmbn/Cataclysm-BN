@@ -2318,6 +2318,31 @@
         "selected": false,
         "columns": [{ "label": "Id", "value": "t_grass" }, { "label": "Move cost", "value": "2" }]
       }
+    },
+    {
+      "name": "timed mini-game window with color runs",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:snake",
+        "context": "SNAKE",
+        "kind": "custom",
+        "allow_cancel": false,
+        "allow_set_count": false,
+        "title": "S N A K E",
+        "message": "",
+        "choices": [],
+        "choice_total": 0,
+        "refresh_ms": 100,
+        "compat": { "panes": [] },
+        "canvas": {
+          "cols": 80,
+          "rows": [
+            [["                    S N A K E", 7, 0]],
+            [["#####", 7, 0], ["#", 15, 0], ["   ", 7, 0], ["*", 9, 0]],
+            []
+          ]
+        }
+      }
     }
   ],
   "invalid": [
@@ -3270,6 +3295,15 @@
           "over_weight": false,
           "over_volume": false
         }
+      }
+    },
+    {
+      "name": "canvas run with a color beyond the 16 curses colors",
+      "def": "canvas",
+      "why": "foreground is a curses color index 0-15",
+      "value": {
+        "cols": 4,
+        "rows": [[["#", 16, 0]]]
       }
     }
   ]

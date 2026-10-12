@@ -8,6 +8,7 @@
 
 #include "cata_utility.h"
 #include "catacharset.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "fstream_utils.h"
@@ -240,6 +241,14 @@ int sokoban_game::start_game()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "UNDO" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::custom,
+            .title = _( "Sokoban" ),
+            .canvas = game_client::window_canvas( { w_sokoban } ),
+        };
+    } );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_sokoban );

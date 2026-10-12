@@ -317,6 +317,16 @@ auto interaction_json( const boundary_state &state ) -> json
             result["overmap"]["tiles"] = {{"cells", std::move( rows )}, {"looks_like", om.looks_like}};
         }
     }
+    if( native.canvas ) {
+        auto rows = json::array();
+        for( const auto &row : native.canvas->rows ) {
+            auto runs = json::array();
+            for( const auto &run : row ) { runs.push_back( {run.text, run.foreground, run.background} ); }
+            rows.push_back( std::move( runs ) );
+        }
+        result["canvas"] = {{"cols", native.canvas->cols}, {"rows", std::move( rows )}};
+    }
+    if( native.refresh_ms > 0 ) { result["refresh_ms"] = native.refresh_ms; }
     if( native.vehicle ) {
         const auto &veh = *native.vehicle;
         auto value = json{{"name", veh.name}, {"owner", veh.owner}, {"owned", veh.owned}, {"mode", veh.mode},

@@ -4,6 +4,8 @@
 
 #include "catacharset.h"
 #include "char_validity_check.h"
+#include "cursesdef.h"
+#include "cursesport.h"
 #include "client_command.h"
 #include "client_input.h"
 #include "input.h"
@@ -132,6 +134,7 @@ auto schema_for( const interaction_snapshot &snapshot,
     hash.add( snapshot.message_tone );
     if( snapshot.category_mode ) { hash.add( *snapshot.category_mode ? "category-on" : "category-off" ); }
     std::ranges::for_each( snapshot.banner, [&hash]( const auto & line ) { hash.add( line ); } );
+    hash.add( std::to_string( snapshot.refresh_ms ) );
     hash.add( snapshot.allow_cancel ? "cancel" : "no-cancel" );
     hash.add( snapshot.allow_set_count ? "set-count" : "no-set-count" );
     for( const auto &pane : snapshot.panes ) {
@@ -532,6 +535,49 @@ interaction_scope::~interaction_scope()
 {
     const auto entry = std::ranges::find( providers, token_, &provider_entry::token );
     if( entry != providers.end() ) { providers.erase( entry ); }
+}
+
+auto window_canvas( const std::vector<catacurses::window> &layers ) -> interaction_canvas
+{
+    const auto *const frame = layers.empty() ? nullptr : layers.front().get<cata_cursesport::WINDOW>();
+    if( frame == nullptr ) { return {}; }
+    auto cells = std::vector<cata_cursesport::cursecell>( static_cast<size_t>
+                 ( frame->width * frame->height ) );
+    for( const auto &layer : layers ) {
+        const auto *const window = layer.get<cata_cursesport::WINDOW>();
+        if( window == nullptr ) { continue; }
+        const auto offset = window->pos - frame->pos;
+        for( const auto y : std::views::iota( 0, window->height ) ) {
+            for( const auto x : std::views::iota( 0, window->width ) ) {
+                const auto at = offset + point( x, y );
+                if( at.x < 0 || at.y < 0 || at.x >= frame->width || at.y >= frame->height ) { continue; }
+                cells[static_cast<size_t>( at.y * frame->width + at.x )] = window->line[y].chars[x];
+            }
+        }
+    }
+    auto result = interaction_canvas{ .cols = frame->width };
+    for( const auto y : std::views::iota( 0, frame->height ) ) {
+        auto row = std::vector<interaction_canvas_run> {};
+        for( const auto &cell : cells | std::views::drop( y * frame->width ) | std::views::take(
+                 frame->width ) ) {
+            const auto foreground = static_cast<int>( cell.FG );
+            const auto background = static_cast<int>( cell.BG );
+            if( row.empty() || row.back().foreground != foreground || row.back().background != background ) {
+                row.push_back( { .foreground = foreground, .background = background } );
+            }
+            row.back().text += cell.ch;
+        }
+        // Blank cells over the default background carry nothing a client draws.
+        while( !row.empty() && row.back().background == 0 &&
+               row.back().text.find_first_not_of( ' ' ) == std::string::npos ) {
+            row.pop_back();
+        }
+        if( !row.empty() && row.back().background == 0 ) {
+            row.back().text.erase( row.back().text.find_last_not_of( ' ' ) + 1 );
+        }
+        result.rows.push_back( std::move( row ) );
+    }
+    return result;
 }
 
 auto overmap_tiles() -> bool { return wire_overmap_tiles; }

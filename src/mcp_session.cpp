@@ -211,25 +211,32 @@ auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_
 
 constexpr auto heartbeat_interval = std::chrono::seconds( 2 );
 
-/// Whether a request frame can be read without waiting.
-auto stdin_ready() -> bool
+/// Whether a request frame can be read, waiting up to `wait_ms` for one.
+auto stdin_ready( const int wait_ms = 0 ) -> bool
 {
 #if defined(_WIN32)
     // Only a pipe (or a redirected file) can be tested; a console would need its own event queue.
-    const auto handle = GetStdHandle( STD_INPUT_HANDLE );
-    const auto type = GetFileType( handle );
-    if( std::cin.rdbuf()->in_avail() > 0 || type == FILE_TYPE_DISK ) {
-        return true;
+    const auto ready = []() {
+        const auto handle = GetStdHandle( STD_INPUT_HANDLE );
+        const auto type = GetFileType( handle );
+        if( std::cin.rdbuf()->in_avail() > 0 || type == FILE_TYPE_DISK ) {
+            return true;
+        }
+        if( type != FILE_TYPE_PIPE ) {
+            return false;
+        }
+        auto available = DWORD{ 0 };
+        // A closed pipe fails the peek; report it ready so the read observes the end of input.
+        return !PeekNamedPipe( handle, nullptr, 0, nullptr, &available, nullptr ) || available > 0;
+    };
+    const auto until = std::chrono::steady_clock::now() + std::chrono::milliseconds( wait_ms );
+    while( !ready() && std::chrono::steady_clock::now() < until ) {
+        Sleep( 5 );
     }
-    if( type != FILE_TYPE_PIPE ) {
-        return false;
-    }
-    auto available = DWORD{ 0 };
-    // A closed pipe fails the peek; report it ready so the read observes the end of input.
-    return !PeekNamedPipe( handle, nullptr, 0, nullptr, &available, nullptr ) || available > 0;
+    return ready();
 #else
     auto fd = pollfd { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
-    return std::cin.rdbuf()->in_avail() > 0 || poll( &fd, 1, 0 ) > 0;
+    return std::cin.rdbuf()->in_avail() > 0 || poll( &fd, 1, wait_ms ) > 0;
 #endif
 }
 
@@ -258,6 +265,10 @@ extern "C" auto name_the_signal( const int sig ) -> void
 auto provide_input( const int timeout_ms ) -> input_event
 {
     auto &session = state();
+    // A screen the engine redraws itself (a timed mini-game) moves on when the client sends nothing
+    // within the native wait, as the native input wait would.
+    const auto refreshing = timeout_ms > 0 && game_client::current_interaction( { .limit = 0 } ).refresh_ms
+                            > 0;
     while( !session.stop ) {
         if( !session.events.empty() ) {
             const auto request = std::move( session.events.front() );
@@ -294,8 +305,14 @@ auto provide_input( const int timeout_ms ) -> input_event
             return polled;
         }
         if( !session.transport ||
-            !session.transport->pump_until_input( std::cin, *session.output, std::cerr ) ) {
+            !session.transport->pump_until_input( std::cin, *session.output, std::cerr,
+                    refreshing ? timeout_ms : 0 ) ) {
             break;
+        }
+        if( refreshing && session.events.empty() ) {
+            auto lapsed = input_event{};
+            lapsed.type = input_event_t::timeout;
+            return lapsed;
         }
     }
     leave( "no transport" );
@@ -397,6 +414,7 @@ auto start_session() -> void
         .state = structured_state,
         .submit = submit_events,
         .has_input = has_input,
+        .wait_input = []( const int wait_ms ) { return stdin_ready( wait_ms ); },
         .actions = actions,
         .interaction = interaction,
         .resize_viewport = resize_viewport
