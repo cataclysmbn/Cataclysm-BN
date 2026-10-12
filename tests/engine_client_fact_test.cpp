@@ -2,27 +2,43 @@
 #include "ballistics.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "creature.h"
 #include "dispersion.h"
 #include "engine_client_presentation.h"
 #include "engine_client_world.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
+#include "json.h"
+#include "map/field.h"
 #include "map/map.h"
+#include "map/mapbuffer.h"
+#include "map/mapbuffer_registry.h"
+#include "map/submap_fields.h"
 #include "map_helpers.h"
 #include "map_perception.h"
 #include "monster.h"
 #include "options_helpers.h"
+#include "player_activity.h"
 #include "projectile.h"
 #include "ranged.h"
+#include "rng.h"
 #include "sounds.h"
 #include "state_helpers.h"
+#include "timed_event.h"
 #include "type_id.h"
+#include "units_temperature.h"
 #include "weather/weather.h"
 
 #include <algorithm>
+#include <iterator>
+#include <locale>
+#include <map>
 #include <ranges>
+#include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -401,9 +417,9 @@ TEST_CASE(
     get_map().ter_set(you_at + tripoint_east * 2 + tripoint_south, ter_id("t_wall"));
     scene::refresh();
     REQUIRE_FALSE(get_avatar().sees(zombie));
-    const auto facts = presentation::take();
+    // The three walls changed too; what matters here is the creature.
+    const auto facts = of_type(presentation::take(), "entity.gone");
     REQUIRE(facts.size() == 1);
-    CHECK(facts[0].type == "entity.gone");
     CHECK(facts[0].kind == "lost_sight");
     CHECK(facts[0].entity == engine_client::world::entity_id(zombie));
 }
@@ -448,4 +464,330 @@ TEST_CASE(
     // The next take starts afresh.
     zombie.setpos(from + tripoint_east);
     CHECK(of_type(presentation::take(), "entity.moved").size() == 1);
+}
+
+namespace {
+
+auto abs_cell(const tripoint_bub_ms& at) -> position {
+    return engine_client::world::position_at(at);
+}
+
+/// The last intensity told for each square, for a field type.
+auto told_intensity(const std::vector<presentation_value>& facts, const std::string& field)
+    -> std::map<position, std::uint64_t> {
+    auto result = std::map<position, std::uint64_t>{};
+    for (const auto& fact : facts) {
+        if (fact.type == "field.changed" && fact.field == field) {
+            result[*fact.at] = fact.amount.value();
+        }
+    }
+    return result;
+}
+
+} // namespace
+
+TEST_CASE(
+    "bashing a door in view publishes the terrain it became",
+    "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    auto& here = get_map();
+    const auto door = you_at + tripoint_east * 2;
+    here.ter_set(door, ter_id("t_door_c"));
+    scene::refresh();
+    presentation::take();
+    here.bash(door, 200);
+    const auto changed = of_type(presentation::take(), "terrain.changed");
+    REQUIRE(changed.size() == 1);
+    CHECK(changed[0].at == abs_cell(door));
+    CHECK(changed[0].previous->id == "t_door_c");
+    CHECK(changed[0].appearance->id == here.ter(door).id().str());
+}
+
+TEST_CASE(
+    "furniture set or cleared in view is published", "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    auto& here = get_map();
+    const auto at = you_at + tripoint_east * 2;
+    here.furn_set(at, furn_id("f_chair"));
+    auto changed = of_type(presentation::take(), "furniture.changed");
+    REQUIRE(changed.size() == 1);
+    CHECK(changed[0].previous->id == "f_null");
+    CHECK(changed[0].appearance->id == "f_chair");
+    here.furn_set(at, furn_id("f_chair"));
+    here.furn_set(at, furn_id("f_null"));
+    changed = of_type(presentation::take(), "furniture.changed");
+    // Setting what is already there changes nothing.
+    REQUIRE(changed.size() == 1);
+    CHECK(changed[0].appearance->id == "f_null");
+}
+
+TEST_CASE(
+    "a change out of sight or to nothing is not published",
+    "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    wall_in();
+    auto& here = get_map();
+    const auto hidden = you_at + tripoint_east * 5;
+    REQUIRE_FALSE(get_avatar().sees(hidden));
+    presentation::take();
+    here.ter_set(hidden, ter_id("t_dirt"));
+    here.add_field(hidden, field_type_id("fd_smoke"), 2);
+    // The same terrain again is no change.
+    here.ter_set(you_at, here.ter(you_at));
+    CHECK(presentation::take().empty());
+}
+
+TEST_CASE(
+    "a field added and removed in view tells its intensity",
+    "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    auto& here = get_map();
+    const auto at = you_at + tripoint_east * 2;
+    const auto smoke = field_type_id("fd_smoke");
+    REQUIRE(here.add_field(at, smoke, 3));
+    auto changed = of_type(presentation::take(), "field.changed");
+    REQUIRE(changed.size() == 1);
+    CHECK(changed[0].field == "fd_smoke");
+    CHECK(changed[0].amount == 3);
+    here.remove_field(at, smoke);
+    changed = of_type(presentation::take(), "field.changed");
+    REQUIRE(changed.size() == 1);
+    CHECK(changed[0].amount == 0);
+}
+
+TEST_CASE(
+    "a field turn is told by what it changed, once per square",
+    "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    auto& here = get_map();
+    const auto gas = field_type_id("fd_toxic_gas");
+    const auto fading = you_at + tripoint_east * 2;
+    const auto leaving = you_at + tripoint_east * 3;
+    const auto arriving = you_at + tripoint_east * 4;
+    const auto unchanged = you_at + tripoint_east * 5;
+    for (const auto& at : {fading, leaving, unchanged}) { REQUIRE(here.add_field(at, gas, 3)); }
+    presentation::take();
+    {
+        const auto watch = presentation::field_watch{};
+        // In place, as the field turn does: no map call sees it.
+        here.get_field(fading, gas)->set_field_intensity(1);
+        // Map calls made during the turn are told by the watch, not one by one.
+        here.remove_field(leaving, gas);
+        REQUIRE(here.add_field(arriving, gas, 2));
+    }
+    const auto facts = of_type(presentation::take(), "field.changed");
+    CHECK(facts.size() == 3);
+    const auto told = told_intensity(facts, "fd_toxic_gas");
+    CHECK(told.at(abs_cell(fading)) == 1);
+    CHECK(told.at(abs_cell(leaving)) == 0);
+    CHECK(told.at(abs_cell(arriving)) == 2);
+    CHECK_FALSE(told.contains(abs_cell(unchanged)));
+}
+
+TEST_CASE(
+    "fields that fade during a waited stretch are told",
+    "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    const auto keep_bubble =
+        override_option("REALITY_BUBBLE_SIZE", std::to_string(g_reality_bubble_size));
+    const override_option no_autosave("AUTOSAVE", "false");
+    const override_option no_mobile("ACTIVITY_MOBILE_BUBBLE_SIZE", "0");
+    const override_option no_idle("ACTIVITY_IDLE_BUBBLE_SIZE", "0");
+    const override_option no_underground("UNDERGROUND_BUBBLE_SIZE", "0");
+    const override_option no_vehicle("VEHICLE_BUBBLE_SIZE", "0");
+    const override_option no_combat("COMBAT_BUBBLE_SIZE", "0");
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    g->timed_events = timed_event_manager{};
+    get_weather().nextweather = calendar::turn + 10_minutes;
+    get_weather().temperature = 18_c;
+    get_weather().clear_temp_cache();
+    g->m.invalidate_map_cache(g->get_levz());
+    g->m.build_map_cache(g->get_levz(), true);
+    auto& here = get_map();
+    const auto smoke = field_type_id("fd_smoke");
+    const auto at = you_at + tripoint_east * 2;
+    REQUIRE(here.add_field(at, smoke, 2));
+    here.get_field(at, smoke)->set_field_age(10_hours);
+    g->new_game = false;
+    get_avatar().set_moves(100);
+    get_avatar().assign_activity(activity_id("ACT_WAIT"), to_moves<int>(30_seconds), 0);
+    REQUIRE(get_avatar().activity);
+    presentation::take();
+    const auto start = calendar::turn;
+    CHECK_FALSE(g->do_turn());
+    CHECK(calendar::turn == start + 30_seconds);
+    const auto told = told_intensity(presentation::take(), "fd_smoke");
+    REQUIRE(told.contains(abs_cell(at)));
+    CHECK(told.at(abs_cell(at)) == static_cast<std::uint64_t>(here.get_field_intensity(at, smoke)));
+}
+
+TEST_CASE(
+    "a turn that changes more squares than the bound publishes the first of them",
+    "[engine_client_fact][engine_client_map]") {
+    const auto room = scene{};
+    auto& here = get_map();
+    auto changed = std::size_t{};
+    for (const auto& at : here.points_in_radius(you_at, 10)) {
+        if (at != you_at) {
+            here.ter_set(at, ter_id("t_dirt"));
+            ++changed;
+        }
+    }
+    REQUIRE(changed > presentation::maximum_ambient_facts);
+    CHECK(of_type(presentation::take(), "terrain.changed").size()
+          == presentation::maximum_ambient_facts);
+}
+
+namespace {
+
+/// Whether the animation options are on, as the player chooses; a client listens or not on top.
+struct scenario_options {
+    bool animations = true;
+    bool listening = true;
+};
+
+struct scenario_run {
+    std::vector<presentation_value> facts;
+    std::string rng;
+    std::string state;
+};
+
+auto avatar_save() -> std::string {
+    auto stream = std::ostringstream{};
+    auto json = JsonOut(stream);
+    get_avatar().serialize(json);
+    return stream.str();
+}
+
+/// What gameplay owns around the scenario: the squares, the monsters and the avatar.
+auto authority() -> std::string {
+    auto stream = std::ostringstream{};
+    auto json = JsonOut(stream);
+    auto& here = get_map();
+    json.start_object();
+    json.member("cells");
+    json.start_array();
+    for (const auto& pos : here.points_in_radius(you_at, 8)) {
+        json.start_array();
+        json.write(pos);
+        json.write(here.ter(pos).id().str());
+        json.write(here.furn(pos).id().str());
+        for (const auto& [id, entry] : here.field_at(pos)) {
+            json.write(id.id().str());
+            json.write(entry.get_field_intensity());
+        }
+        json.end_array();
+    }
+    json.end_array();
+    json.member("monsters");
+    json.start_array();
+    for (const auto& mon : g->all_monsters()) { mon.serialize(json); }
+    json.end_array();
+    json.member("avatar");
+    get_avatar().serialize(json);
+    json.end_object();
+    return stream.str();
+}
+
+/// A shot, a bashed door, a step, a wound, drifting gas, a noise and a death, in one turn.
+auto run_scenario(const scenario_options& options, const std::string& start) -> scenario_run {
+    rng_set_engine_seed(424242);
+    clear_all_state();
+    {
+        auto stream = std::istringstream{start};
+        auto json = JsonIn{stream};
+        get_avatar().deserialize(json);
+    }
+    build_test_map(ter_id("t_floor"));
+    calendar::turn = calendar::turn_zero + 12_hours;
+    get_weather().weather_id = weather_type_id("clear");
+    g->reset_light_level();
+    sounds::reset_sounds();
+    get_avatar().setpos(you_at);
+    auto& here = get_map();
+    const auto door = you_at + tripoint_north * 3;
+    here.ter_set(door, ter_id("t_door_c"));
+    scene::refresh();
+    auto& target = spawn_test_monster("mon_zombie", you_at + tripoint_east * 4);
+    auto& walker = spawn_test_monster("mon_zombie", you_at + tripoint_west * 3);
+    scene::refresh();
+    const auto live = restore_on_out_of_scope(test_mode);
+    test_mode = options.animations;
+    const override_option animations("ANIMATIONS", options.animations ? "true" : "false");
+    const override_option projectiles("ANIMATION_PROJECTILES", "true");
+    const override_option stepwise("BULLETS_AS_LASERS", "false");
+    const override_option instant("ANIMATION_DELAY", "0");
+    presentation::collect(options.listening);
+    presentation::take();
+    projectile_attack(sting(), you_at, target.bub_pos(), dispersion_sources{}, &get_avatar(),
+                      &null_item_reference());
+    here.bash(door, 200);
+    walker.setpos(you_at + tripoint_west * 2);
+    walker.apply_damage(nullptr, bodypart_id("torso"), 5);
+    const auto gas = field_type_id("fd_toxic_gas");
+    here.add_field(you_at + tripoint_south * 2, gas, 3);
+    {
+        const auto watch = presentation::field_watch{};
+        auto* sm = here.get_submap_at(you_at);
+        const auto abs_sm = project_to<coords::sm>(map_local_to_abs(here, you_at));
+        process_fields_in_submap(get_avatar().get_dimension(), *sm, abs_sm, MAPBUFFER);
+    }
+    make_noise(you_at + tripoint_east * 3, 90, "a crash");
+    here.batch_flood_fill_sounds();
+    sounds::process_sound_markers(&get_avatar());
+    walker.die(&get_avatar());
+    auto result = scenario_run{.facts = presentation::take()};
+    presentation::collect(false);
+    auto engine = std::ostringstream{};
+    engine.imbue(std::locale::classic());
+    engine << rng_get_engine();
+    result.rng = engine.str();
+    result.state = authority();
+    return result;
+}
+
+} // namespace
+
+TEST_CASE(
+    "listening leaves the facts' gameplay and RNG untouched",
+    "[engine_client_fact][engine_client_equality]") {
+    clear_all_state();
+    const auto start = avatar_save();
+    for (const auto animations : {true, false}) {
+        CAPTURE(animations);
+        const auto bare = run_scenario({.animations = animations, .listening = false}, start);
+        const auto again = run_scenario({.animations = animations, .listening = false}, start);
+        CHECK(again.state == bare.state);
+        CHECK(again.rng == bare.rng);
+        const auto heard = run_scenario({.animations = animations, .listening = true}, start);
+        CHECK(bare.facts.empty());
+        CHECK(heard.rng == bare.rng);
+        CHECK(heard.state == bare.state);
+    }
+}
+
+TEST_CASE(
+    "every family of fact fires in a turn and the animation options only silence the drawn ones",
+    "[engine_client_fact][engine_client_equality]") {
+    clear_all_state();
+    const auto start = avatar_save();
+    const auto animated = run_scenario({.animations = true}, start);
+    const auto silenced = run_scenario({.animations = false}, start);
+    const auto told = types_of(animated.facts);
+    CAPTURE(told);
+    for (const auto* type :
+         {"projectile.moved", "projectile.hit", "entity.damaged", "terrain.changed", "entity.moved",
+          "entity.gone", "field.changed", "sound.heard"}) {
+        CHECK(index_of(told, type) < told.size());
+    }
+    const auto drawn = std::set<std::string>{"projectile.moved", "combat_text.shown"};
+    CHECK(std::ranges::none_of(silenced.facts, [&](const auto& fact) {
+        return drawn.contains(fact.type);
+    }));
+    CHECK(
+        types_of(silenced.facts)
+        == types_of(
+            animated.facts
+            | std::views::filter([&](const auto& fact) { return !drawn.contains(fact.type); })
+            | std::ranges::to<std::vector>()));
 }

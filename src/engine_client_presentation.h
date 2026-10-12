@@ -7,6 +7,7 @@
 #include "type_id.h"
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -84,6 +85,8 @@ namespace engine_client::presentation
 constexpr auto maximum_ambient_facts = std::size_t { 256 };
 
 auto collect( bool on ) -> void;
+/// Whether a client is listening: the cheap test before work done only for a client.
+auto collecting() -> bool;
 /// Everything recorded since the last call, in the order the game produced it.
 auto take() -> std::vector<presentation_value>;
 
@@ -176,15 +179,27 @@ struct damage_options {
     int amount = 0;
 };
 auto record_damage( const damage_options &options ) -> void;
-struct square_terrain {
-    ter_id terrain;
-    furn_id furniture;
-};
-auto terrain_at( const tripoint_bub_ms &at ) -> square_terrain;
-/// `terrain.changed` and `furniture.changed` for what the square holds now, against `before`.
-auto record_terrain_change( const tripoint_bub_ms &at, const square_terrain &before ) -> void;
+/// The map boundary (src/map/mapbuffer.cpp) tells what changed on the avatar's level: a terrain, a
+/// furniture, or a field a map call added, removed or set. The avatar must see the square.
+auto record_terrain_change( const tripoint_bub_ms &at, const ter_id &from,
+                            const ter_id &to ) -> void;
+auto record_furniture_change( const tripoint_bub_ms &at, const furn_id &from,
+                              const furn_id &to ) -> void;
 /// `field.changed` with the intensity the square holds of `field` now (0 when it is gone).
 auto record_field( const tripoint_bub_ms &at, const field_type_id &field ) -> void;
+/// Fields are also changed in place by the field turn (spreading, decay, drift), which no map call sees.
+/// While a watch lives, the fields the avatar sees are compared at its start and end instead, and the
+/// map calls in between are not told one by one.
+class field_watch
+{
+    public:
+        field_watch();
+        ~field_watch();
+        field_watch( const field_watch & ) = delete;
+        auto operator=( const field_watch & ) -> field_watch & = delete; // *NOPAD*
+    private:
+        std::optional<std::map<tripoint_bub_ms, std::map<field_type_id, int>>> before_;
+};
 /// Marks where the facts of one explosion step begin: the blast frame the step ends with goes before them.
 auto begin_blast_step() -> void;
 auto record_text( point at, direction scroll, const std::string &kind, const std::string &first,

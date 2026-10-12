@@ -750,6 +750,8 @@ private:
 
     auto active_reality_bubble_local(const tripoint_abs_ms& p) const
         -> std::optional<tripoint_bub_ms>;
+    /// Tells a client listening that a field of the avatar's level changed.
+    auto tell_field_changed(const tripoint_abs_ms& p, const field_type_id& type) const -> void;
     auto invalidate_active_terrain_set_caches(
         const tripoint_abs_ms& p, const ter_id& old_id, const ter_id& new_id) const -> void;
     auto sync_furniture_change_side_tables(

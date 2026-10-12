@@ -11,6 +11,8 @@
 #include "avatar.h"
 #include "game.h"
 #include "map/map.h"
+#include "map/submap.h"
+#include "game_constants.h"
 #include "messages.h"
 #include "output.h"
 #include "options.h"
@@ -36,6 +38,8 @@ struct feed_state {
     std::size_t blast_step_start = 0;
     /// Busy facts pushed since the last `take`, against `maximum_ambient_facts`.
     std::size_t ambient = 0;
+    /// Live `field_watch`es: the map calls they cover are not told one by one.
+    int watching = 0;
     /// The creatures the client was last told it sees.
     std::set<std::string> known = {};
     std::vector<presentation_value> pending = {};
@@ -102,6 +106,8 @@ auto path_of( const std::vector<tripoint_bub_ms> &points ) -> std::vector<positi
 }
 
 } // namespace
+
+auto collecting() -> bool { return state().collecting; }
 
 auto collect( const bool on ) -> void
 {
@@ -366,33 +372,95 @@ auto record_damage( const damage_options &options ) -> void
             .amount = static_cast<std::uint64_t>( options.amount ) } );
 }
 
-auto terrain_at( const tripoint_bub_ms &at ) -> square_terrain
+auto record_terrain_change( const tripoint_bub_ms &at, const ter_id &from,
+                            const ter_id &to ) -> void
 {
-    const auto &here = get_map();
-    return { .terrain = here.ter( at ), .furniture = here.furn( at ) };
+    auto &feed = state();
+    if( !feed.collecting || feed.ambient >= maximum_ambient_facts || !seen( at ) ) { return; }
+    push_ambient( { .type = "terrain.changed", .at = world::position_at( at ),
+                    .appearance = world::terrain_appearance( to ), .previous = world::terrain_appearance( from ) } );
 }
 
-auto record_terrain_change( const tripoint_bub_ms &at, const square_terrain &before ) -> void
+auto record_furniture_change( const tripoint_bub_ms &at, const furn_id &from,
+                              const furn_id &to ) -> void
 {
-    if( !state().collecting || !seen( at ) ) { return; }
-    const auto now = terrain_at( at );
-    if( now.terrain != before.terrain ) {
-        push( { .type = "terrain.changed", .at = world::position_at( at ),
-                .appearance = world::terrain_appearance( now.terrain ),
-                .previous = world::terrain_appearance( before.terrain ) } );
-    }
-    if( now.furniture != before.furniture ) {
-        push( { .type = "furniture.changed", .at = world::position_at( at ),
-                .appearance = world::furniture_appearance( now.furniture ),
-                .previous = world::furniture_appearance( before.furniture ) } );
-    }
+    auto &feed = state();
+    if( !feed.collecting || feed.ambient >= maximum_ambient_facts || !seen( at ) ) { return; }
+    push_ambient( { .type = "furniture.changed", .at = world::position_at( at ),
+                    .appearance = world::furniture_appearance( to ), .previous = world::furniture_appearance( from ) } );
 }
 
 auto record_field( const tripoint_bub_ms &at, const field_type_id &field ) -> void
 {
-    if( !state().collecting || !seen( at ) ) { return; }
-    push( { .type = "field.changed", .at = world::position_at( at ), .field = field.id().str(),
-            .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ) } );
+    auto &feed = state();
+    if( !feed.collecting || feed.watching > 0 || feed.ambient >= maximum_ambient_facts ||
+        !seen( at ) ) { return; }
+    push_ambient( { .type = "field.changed", .at = world::position_at( at ), .field = field.id().str(),
+                    .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ) } );
+}
+
+namespace
+{
+using field_cells = std::map<tripoint_bub_ms, std::map<field_type_id, int>>;
+/// The fields on the squares the avatar sees on its level, by square and type, with their intensity.
+auto seen_fields() -> field_cells
+{
+    auto cells = field_cells{};
+    const auto &here = get_map();
+    const auto z = get_avatar().bub_pos().z();
+    for( const auto x : std::views::iota( 0, here.getmapsize() ) ) {
+        for( const auto y : std::views::iota( 0, here.getmapsize() ) ) {
+            const auto origin = tripoint_bub_ms( x * SEEX, y * SEEY, z );
+            const auto *sm = here.get_submap_at( origin );
+            if( sm == nullptr || sm->field_count == 0 ) { continue; }
+            for( const auto &local : sm->field_cache ) {
+                const auto at = origin + tripoint_rel_ms( local.x(), local.y(), 0 );
+                if( !seen( at ) ) { continue; }
+                for( const auto &[type, entry] : sm->get_field( local ) ) {
+                    if( entry.get_field_intensity() > 0 ) { cells[at][type] = entry.get_field_intensity(); }
+                }
+            }
+        }
+    }
+    return cells;
+}
+} // namespace
+
+field_watch::field_watch()
+{
+    auto &feed = state();
+    if( !feed.collecting ) { return; }
+    ++feed.watching;
+    before_ = seen_fields();
+}
+
+field_watch::~field_watch()
+{
+    if( !before_ ) { return; }
+    --state().watching;
+    const auto after = seen_fields();
+    const auto intensity_of = []( const field_cells & cells, const tripoint_bub_ms & at,
+    const field_type_id & type ) {
+        const auto cell = cells.find( at );
+        if( cell == cells.end() ) { return 0; }
+        const auto field = cell->second.find( type );
+        return field == cell->second.end() ? 0 : field->second;
+    };
+    const auto tell = [&]( const tripoint_bub_ms & at, const field_type_id & type,
+    const int intensity ) {
+        push_ambient( { .type = "field.changed", .at = world::position_at( at ), .field = type.id().str(),
+                        .amount = static_cast<std::uint64_t>( intensity ) } );
+    };
+    for( const auto &[at, fields] : after ) {
+        for( const auto &[type, now] : fields ) {
+            if( now != intensity_of( *before_, at, type ) ) { tell( at, type, now ); }
+        }
+    }
+    for( const auto &[at, fields] : *before_ ) {
+        for( const auto &[type, was] : fields ) {
+            if( intensity_of( after, at, type ) == 0 ) { tell( at, type, 0 ); }
+        }
+    }
 }
 
 auto begin_blast_step() -> void

@@ -52,6 +52,7 @@
 #include "drop_token.h"
 #include "editmap.h"
 #include "enchantments/enchantment_vision.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -2905,6 +2906,7 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
 
     {
         ZoneScopedN( "activity_fixed_window_batch_submaps" );
+        const auto field_turns = engine_client::presentation::field_watch{};
         MAPBUFFER_REGISTRY.for_each( [&]( const dimension_id & dim, mapbuffer & mb ) {
             if( pocket_simulation_level == pocket_sim_level::off && !dim.is_empty() ) {
                 return;
@@ -5333,6 +5335,8 @@ void game::world_tick()
 
     const auto fire_spread = reality_bubble_fire_spread;
     const auto do_emits = action_time_scale::once_every_this_tick( 10_seconds );
+    // The field turn changes fields in place; a client is told what the avatar sees of it.
+    const auto field_turn = engine_client::presentation::field_watch{};
 
     if( !fire_spread ) {
         fire_loader.clear( submap_loader );
