@@ -145,6 +145,12 @@ struct avatar_stat {
     std::string color = {};
     auto operator<=>( const avatar_stat & ) const = default; // *NOPAD*
 };
+/// The native condition marker at the start of an item name (`||`, `|\`, ...) and its color name.
+struct item_durability {
+    std::string symbol = {};
+    std::string color = {};
+    auto operator<=>( const item_durability & ) const = default; // *NOPAD*
+};
 struct inventory_entry {
     look appearance;
     /// The display name the native UI shows, without color markup.
@@ -152,6 +158,8 @@ struct inventory_entry {
     std::optional<std::uint64_t> count = std::nullopt;
     /// "wielded", "worn" or "carried"; absent for items on the ground.
     std::optional<std::string> slot = std::nullopt;
+    /// Present when `name` starts with the native condition marker: the marker and the color it is drawn in.
+    std::optional<item_durability> durability = std::nullopt;
     auto operator<=>( const inventory_entry & ) const = default; // *NOPAD*
 };
 /// Text the native sidebar prints in a color; `color` is a native color name.

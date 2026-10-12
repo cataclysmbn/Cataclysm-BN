@@ -657,6 +657,22 @@
             "worn",
             "carried"
           ]
+        },
+        "durability": {
+          "type": "object",
+          "properties": {
+            "symbol": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "symbol",
+            "color"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

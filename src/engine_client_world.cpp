@@ -639,8 +639,14 @@ auto season_name() -> std::string
 auto stack_entry( const item &thing, const std::size_t count,
                   std::optional<std::string> slot = std::nullopt ) -> inventory_entry
 {
+    // display_name() leads with the colored marker exactly when the native lists show one.
+    const auto marker = colorize( thing.damage_symbol() + "\u00A0", thing.damage_color() );
+    auto durability = thing.display_name().starts_with( marker )
+                      ? std::optional{ item_durability{ .symbol = thing.damage_symbol(), .color = color_of( thing.damage_color() ) } }
+                      :
+                      std::nullopt;
     return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = count,
-             .slot = std::move( slot ) };
+             .slot = std::move( slot ), .durability = std::move( durability ) };
 }
 
 auto capture_avatar( map &here, const avatar &you,
