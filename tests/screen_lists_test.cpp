@@ -2,6 +2,8 @@
 
 #    include "armor_layers.h"
 #    include "avatar.h"
+#    include "bionics.h"
+#    include "bionics_ui.h"
 #    include "catch/catch.hpp"
 #    include "client_command.h"
 #    include "client_input.h"
@@ -47,6 +49,16 @@ template struct list_items_access<&game::list_items>;
 } // namespace
 
 using namespace client_screen_test;
+
+namespace {
+auto column(const game_client::interaction_choice& choice, const std::string& label)
+    -> std::string {
+    const auto found =
+        std::ranges::find(choice.columns, label, &game_client::interaction_column::label);
+    REQUIRE(found != choice.columns.end());
+    return found->value;
+}
+} // namespace
 
 TEST_CASE(
     "the mission list switches tabs and makes the chosen mission active",
@@ -129,6 +141,13 @@ TEST_CASE(
                     CHECK(active->columns.front().value == "Active");
                     CHECK(passive->highlighted);
                     CHECK(active->selected);
+                    CHECK(passive->pane_id == "passive");
+                    CHECK(active->pane_id == "active");
+                    CHECK(column(*passive, "Color") == string_from_color(c_light_cyan));
+                    CHECK(column(*active, "Color") == string_from_color(c_light_green));
+                    CHECK(column(*active, "Innate") == "No");
+                    CHECK(column(*active, "Cost") == "0");
+                    CHECK(row(snapshot, "action:REASSIGN")->pane_id == "actions");
                     CHECK_FALSE(passive->description.empty());
                     return choose(snapshot, "action:TOGGLE_EXAMINE");
                 }
@@ -151,6 +170,65 @@ TEST_CASE(
         });
     CHECK(stage == 4);
     CHECK_FALSE(you.my_mutations[trait_id("test_preview_active_trait")].powered);
+}
+
+TEST_CASE(
+    "the bionics list publishes power, state and color per row and switches its tabs",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    you.add_bionic(bionic_id("bio_flashlight"));
+    you.add_bionic(bionic_id("bio_power_storage"));
+    const auto active_id = game_client::opaque_interaction_id("bionic", {"bio_flashlight"});
+    const auto passive_id = game_client::opaque_interaction_id("bionic", {"bio_power_storage"});
+    const auto tab = [](const snapshot_t& snapshot, const bool active) {
+        const auto found = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
+            return !choice.pane_id && choice.label.starts_with(active ? "ACTIVE" : "PASSIVE");
+        });
+        REQUIRE(found != snapshot.choices.end());
+        return found;
+    };
+    const auto guard = screen_guard{};
+    auto stage = 0;
+    open_screen(
+        [&] { show_bionics_ui(you); },
+        [&](const auto& snapshot) {
+            switch (stage++) {
+                case 0: {
+                    CHECK(snapshot.context == "BIONICS");
+                    CHECK(tab(snapshot, true)->selected);
+                    CHECK_FALSE(tab(snapshot, false)->selected);
+                    const auto flashlight = row(snapshot, active_id);
+                    REQUIRE(flashlight != snapshot.choices.end());
+                    CHECK(flashlight->pane_id == "active");
+                    CHECK(column(*flashlight, "State") == "Off");
+                    CHECK(column(*flashlight, "Power").find("act") != std::string::npos);
+                    CHECK(column(*flashlight, "Color") == string_from_color(c_light_red));
+                    CHECK(row(snapshot, passive_id) == snapshot.choices.end());
+                    return choose(snapshot, tab(snapshot, false)->id);
+                }
+                case 1: {
+                    CHECK(tab(snapshot, false)->selected);
+                    CHECK(row(snapshot, active_id) == snapshot.choices.end());
+                    const auto storage = row(snapshot, passive_id);
+                    REQUIRE(storage != snapshot.choices.end());
+                    CHECK(storage->pane_id == "passive");
+                    CHECK(column(*storage, "State") == "Passive");
+                    CHECK(column(*storage, "Color") == string_from_color(c_cyan));
+                    return choose(snapshot, tab(snapshot, true)->id);
+                }
+                case 2:
+                    CHECK(tab(snapshot, true)->selected);
+                    CHECK(row(snapshot, active_id) != snapshot.choices.end());
+                    return cancel(snapshot);
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 3);
 }
 
 TEST_CASE(

@@ -97,6 +97,22 @@ static void show_mutations_titlebar( const catacurses::window &window,
     wnoutrefresh( window );
 }
 
+/// The color the mutation list prints a trait in: innate traits darker, active ones green when on and red when off.
+static auto mutation_color( const Character &who, const trait_id &trait, const bool active_kind,
+                            const bool highlighted ) -> nc_color
+{
+    const auto base = who.has_base_trait( trait );
+    if( !active_kind ) {
+        return highlighted ? ( base ? c_cyan_yellow : c_light_cyan_yellow ) :
+               ( base ? c_cyan : c_light_cyan );
+    }
+    if( who.my_mutations.at( trait ).powered ) {
+        return highlighted ? ( base ? c_green_yellow : c_light_green_yellow ) :
+               ( base ? c_green : c_light_green );
+    }
+    return highlighted ? ( base ? c_red_yellow : c_light_red_yellow ) : ( base ? c_red : c_light_red );
+}
+
 static std::optional<trait_id> trait_by_invlet( const mutation_collection &mutations, int ch )
 {
     for( const std::pair<const trait_id, char_trait_data> &mut : mutations ) {
@@ -289,11 +305,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 if( i - scroll_position == list_height ) {
                     break;
                 }
-                if( is_highlighted && tab_mode == mutation_tab_mode::passive ) {
-                    type = who.has_base_trait( passive[i] ) ? c_cyan_yellow : c_light_cyan_yellow;
-                } else {
-                    type = who.has_base_trait( passive[i] ) ? c_cyan : c_light_cyan;
-                }
+                type = mutation_color( who, passive[i], false, is_highlighted &&
+                                       tab_mode == mutation_tab_mode::passive );
                 mvwprintz( wBio, point( 2, list_start_y + i - scroll_position ),
                            type, "%c %s", td.key, md.name() );
                 if( !td.show_sprite ) {
@@ -313,19 +326,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 if( i - scroll_position == list_height ) {
                     break;
                 }
-                if( td.powered ) {
-                    if( is_highlighted && tab_mode == mutation_tab_mode::active ) {
-                        type = who.has_base_trait( active[i] ) ? c_green_yellow : c_light_green_yellow;
-                    } else {
-                        type = who.has_base_trait( active[i] ) ? c_green : c_light_green;
-                    }
-                } else {
-                    if( is_highlighted && tab_mode == mutation_tab_mode::active ) {
-                        type = who.has_base_trait( active[i] ) ? c_red_yellow : c_light_red_yellow;
-                    } else {
-                        type = who.has_base_trait( active[i] ) ? c_red : c_light_red;
-                    }
-                }
+                type = mutation_color( who, active[i], true, is_highlighted &&
+                                       tab_mode == mutation_tab_mode::active );
                 // TODO: track resource(s) used and specify
                 mvwputch( wBio, point( second_column, list_start_y + i - scroll_position ),
                           type, td.key );
@@ -373,6 +375,11 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
             .title = _( "Mutations" ),
             .message = modes.at( menu_mode ),
             .allow_cancel = true,
+            .panes = {
+                { .id = "passive", .label = _( "Passive:" ), .role = tab_mode == mutation_tab_mode::passive ? "current" : "inactive" },
+                { .id = "active", .label = _( "Active:" ), .role = tab_mode == mutation_tab_mode::active ? "current" : "inactive" },
+                { .id = "actions", .label = _( "Actions" ), .role = "controls" },
+            },
         };
         const auto add = [&]( const std::vector<trait_id> &traits, const mutation_tab_mode tab ) {
             for( auto i = std::size_t{ 0 }; i < traits.size(); ++i ) {
@@ -388,6 +395,7 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 snapshot.choices.push_back( {
                     .id = "mutation:" + traits[i].str(), .label = branch.name(),
                     .description = remove_color_tags( branch.desc() ),
+                    .pane_id = active_kind ? "active" : "passive",
                     .selected = data.powered,
                     .highlighted = tab_mode == tab && cursor == static_cast<int>( i ),
                     .columns = {
@@ -395,6 +403,10 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                         { .label = _( "Key" ), .value = std::string( 1, data.key ) },
                         { .label = _( "State" ), .value = state },
                         { .label = _( "Sprite" ), .value = data.show_sprite ? _( "Shown" ) : _( "Hidden" ) },
+                        { .label = _( "Innate" ), .value = who.has_base_trait( traits[i] ) ? _( "Yes" ) : _( "No" ) },
+                        { .label = _( "Cost" ), .value = std::to_string( branch.cost ) },
+                        { .label = _( "Cooldown" ), .value = std::to_string( branch.cooldown ) },
+                        { .label = _( "Color" ), .value = string_from_color( mutation_color( who, traits[i], active_kind, false ) ) },
                     },
                 } );
             }
@@ -403,7 +415,8 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
         add( active, mutation_tab_mode::active );
         for( const auto *id : { "TOGGLE_EXAMINE", "REASSIGN", "TOGGLE_SPRITE" } ) {
             snapshot.choices.push_back( { .id = std::string( "action:" ) + id,
-                                          .label = remove_color_tags( ctxt.get_action_name( id ) ) } );
+                                          .label = remove_color_tags( ctxt.get_action_name( id ) ),
+                                          .pane_id = "actions" } );
         }
         return snapshot;
     } );

@@ -375,6 +375,32 @@ static std::string build_bionic_powerdesc_string( const bionic &bio )
     return power_desc;
 }
 
+/// What a bionic burns for power, as `name: stored/capacity` per available fuel; empty when it burns none.
+static auto build_bionic_fuel_string( const bionic &bio, Character &who ) -> std::string
+{
+    static const flag_id json_flag_PERPETUAL( "PERPETUAL" );
+    auto fuels = std::vector<std::string> {};
+    for( const itype_id &fuel : who.get_fuel_available( bio.id ) ) {
+        const auto &temp_fuel = *item::spawn_temporary( fuel );
+        if( !temp_fuel.has_flag( json_flag_PERPETUAL ) ) {
+            fuels.push_back( string_format( "%s: %s/%d", temp_fuel.tname(), who.get_value( fuel.str() ),
+                                            who.get_total_fuel_capacity( fuel ) ) );
+        } else if( fuel != itype_id( "sunlight" ) || g->is_in_sunlight( who.bub_pos() ) ) {
+            fuels.push_back( temp_fuel.tname() );
+        }
+    }
+    return enumerate_as_string( fuels, enumeration_conjunction::none );
+}
+
+/// The power state a bionic row reports: toggled on or off, incapacitated, or always on.
+static auto bionic_state_string( const bionic &bio ) -> std::string
+{
+    if( bio.incapacitated_time > 0_turns ) {
+        return _( "Incapacitated" );
+    }
+    return bio.id->activated ? ( bio.powered ? _( "On" ) : _( "Off" ) ) : _( "Passive" );
+}
+
 static void draw_bionics_tabs( const catacurses::window &win, const size_t active_num,
                                const size_t passive_num, const bionic_tab_mode current_mode )
 {
@@ -584,6 +610,11 @@ namespace
 auto bionic_choice_id( const bionic &bio ) -> std::string
 {
     return game_client::opaque_interaction_id( "bionic", { bio.id.str() } );
+}
+
+auto bionic_tab_id( const std::string &pane ) -> std::string
+{
+    return game_client::opaque_interaction_id( "bionic-tab", { pane } );
 }
 
 struct occupied_slot_description {
@@ -974,11 +1005,23 @@ void show_bionics_ui( Character &who )
                 .enabled = denial.empty(),
                 .selectable = true,
                 .highlighted = index == static_cast<std::size_t>( cursor ),
-                .columns = { { .label = _( "Manual (shortcut)" ), .value = std::string( 1, bio.invlet ) } },
+                .columns = {
+                    { .label = _( "Manual (shortcut)" ), .value = std::string( 1, bio.invlet ) },
+                    { .label = _( "Power" ), .value = build_bionic_poweronly_string( bio ) },
+                    { .label = _( "State" ), .value = bionic_state_string( bio ) },
+                    { .label = _( "Fuel" ), .value = build_bionic_fuel_string( bio, who ) },
+                    { .label = _( "Color" ), .value = string_from_color( get_bionic_text_color( bio, false ) ) },
+                },
             } );
             auto description = capture_bionic_description( bio, who );
             dependencies.push_back( bionic_description_key( description, descriptions->locale ) );
             descriptions->rows.push_back( std::move( description ) );
+        }
+        // Tab rows follow the bionics and carry no description of their own.
+        for( const auto &pane : snapshot.panes ) {
+            snapshot.choices.push_back( { .id = bionic_tab_id( pane.id ), .label = pane.label,
+                                          .selected = pane.role == "current" } );
+            dependencies.emplace_back( "bionic-tab" );
         }
         auto action = std::string{};
         {
@@ -987,7 +1030,8 @@ void show_bionics_ui( Character &who )
                     .dependency_keys = std::move( dependencies ),
                     .render = [owned = std::shared_ptr<const bionic_description_model>( std::move( descriptions ) )]( const auto index )
                     {
-                        return bionic_details( owned->rows[index], owned->locale );
+                        return index < owned->rows.size() ? bionic_details( owned->rows[index],
+                                owned->locale ) : std::string{};
                     },
                 } ) };
             action = ctxt.handle_input();
@@ -1000,6 +1044,17 @@ void show_bionics_ui( Character &who )
                 }
                 action = "QUIT";
             } else if( event->operation == game_client::interaction_operation::choose ) {
+                const auto tab = event->target_id == bionic_tab_id( "active" ) ? std::optional{ TAB_ACTIVE } :
+                                 event->target_id == bionic_tab_id( "passive" ) ? std::optional{ TAB_PASSIVE } :
+                                 std::nullopt;
+                if( tab ) {
+                    if( *tab != tab_mode ) {
+                        tab_mode = *tab;
+                        cursor = 0;
+                        scroll_position = 0;
+                    }
+                    continue;
+                }
                 const auto found = std::ranges::find_if( *current_bionic_list, [&]( const auto * bio ) {
                     return bionic_choice_id( *bio ) == event->target_id;
                 } );
