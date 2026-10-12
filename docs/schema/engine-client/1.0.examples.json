@@ -2255,6 +2255,37 @@
           "can_do": false
         }
       }
+    },
+    {
+      "name": "terminal answer row at a security query",
+      "def": "choice",
+      "value": {
+        "id": "yes",
+        "label": "Yes",
+        "description": "",
+        "denial": "",
+        "hotkey": "",
+        "pane_id": "terminal",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": []
+      }
+    },
+    {
+      "name": "extended description target row",
+      "def": "choice",
+      "value": {
+        "id": "describe:terrain",
+        "label": "Describe terrain",
+        "description": "",
+        "denial": "",
+        "hotkey": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": true,
+        "columns": []
+      }
     }
   ],
   "invalid": [

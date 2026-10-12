@@ -1,5 +1,6 @@
 #include "avatar.h"
 #include "calendar.h"
+#include "client_interaction.h"
 #include "color.h"
 #include "game.h" // IWYU pragma: associated
 #include "harvest.h"
@@ -83,22 +84,8 @@ void game::extended_description( const tripoint_bub_ms &p )
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
-    ui.on_redraw( [&]( const ui_adaptor & ) {
-        werase( w_head );
-        mvwprintz( w_head, point_zero, c_white,
-                   _( "[%s] describe creatures, [%s] describe furniture, "
-                      "[%s] describe terrain, [%s] close." ),
-                   ctxt.get_desc( "CREATURE" ), ctxt.get_desc( "FURNITURE" ),
-                   ctxt.get_desc( "TERRAIN" ), ctxt.get_desc( "QUIT" ) );
-
-        // Set up line drawings
-        for( int i = 0; i < TERMX; i++ ) {
-            mvwputch( w_head, point( i, top - 1 ), c_white, LINE_OXOX );
-        }
-
-        wnoutrefresh( w_head );
-
-        std::string desc;
+    const auto describe = [&]() {
+        auto desc = std::string{};
         // Allow looking at invisible tiles - player may want to examine hallucinations etc.
         switch( cur_target ) {
             case description_target::creature: {
@@ -155,14 +142,56 @@ void game::extended_description( const tripoint_bub_ms &p )
                     signage );
         }
 
+        return desc;
+    };
+
+    ui.on_redraw( [&]( const ui_adaptor & ) {
+        werase( w_head );
+        mvwprintz( w_head, point_zero, c_white,
+                   _( "[%s] describe creatures, [%s] describe furniture, "
+                      "[%s] describe terrain, [%s] close." ),
+                   ctxt.get_desc( "CREATURE" ), ctxt.get_desc( "FURNITURE" ),
+                   ctxt.get_desc( "TERRAIN" ), ctxt.get_desc( "QUIT" ) );
+
+        // Set up line drawings
+        for( int i = 0; i < TERMX; i++ ) {
+            mvwputch( w_head, point( i, top - 1 ), c_white, LINE_OXOX );
+        }
+
+        wnoutrefresh( w_head );
+
         werase( w_main );
-        fold_and_print_from( w_main, point_zero, width, 0, c_light_gray, desc );
+        fold_and_print_from( w_main, point_zero, width, 0, c_light_gray, describe() );
         wnoutrefresh( w_main );
+    } );
+
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        auto snapshot = game_client::interaction_snapshot{
+            .kind = game_client::interaction_kind::choices,
+            .title = _( "Description" ),
+            .message = describe(),
+            .allow_cancel = true,
+        };
+        const auto add_target = [&]( const std::string & id, const std::string & action_id,
+        const description_target target ) {
+            snapshot.choices.push_back( { .id = "describe:" + id, .label = ctxt.get_action_name( action_id ),
+                                          .selected = cur_target == target,
+                                          .highlighted = cur_target == target } );
+        };
+        add_target( "creature", "CREATURE", description_target::creature );
+        add_target( "furniture", "FURNITURE", description_target::furniture );
+        add_target( "terrain", "TERRAIN", description_target::terrain );
+        return snapshot;
     } );
 
     do {
         ui_manager::redraw();
         action = ctxt.handle_input();
+        if( const auto &event = ctxt.get_raw_input().interaction ) {
+            action = event->operation == game_client::interaction_operation::cancel ? "QUIT" :
+                     event->target_id == "describe:creature" ? "CREATURE" :
+                     event->target_id == "describe:furniture" ? "FURNITURE" : "TERRAIN";
+        }
         if( action == "CREATURE" ) {
             cur_target = description_target::creature;
         } else if( action == "FURNITURE" ) {

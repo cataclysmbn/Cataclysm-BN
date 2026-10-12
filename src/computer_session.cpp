@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "client_interaction.h"
 #include "character_id.h"
 #include "color.h"
 #include "debug.h"
@@ -74,6 +75,31 @@ static const mtype_id mon_manhack( "mon_manhack" );
 static const mtype_id mon_secubot( "mon_secubot" );
 
 static const std::string flag_CONSOLE( "CONSOLE" );
+
+namespace
+{
+
+/// The terminal as the native window draws it: its text lines under the computer's name, with `choices` as the answers.
+auto terminal_snapshot( const std::string &title,
+                        const std::vector<std::pair<int, std::string>> &lines,
+                        std::vector<game_client::interaction_choice> choices ) -> game_client::interaction_snapshot
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = title,
+        .allow_cancel = true,
+        .choices = std::move( choices ),
+    };
+    for( auto &choice : snapshot.choices ) {
+        choice.pane_id = "terminal";
+    }
+    for( const auto &[indent, text] : lines ) {
+        snapshot.message += ( snapshot.message.empty() ? "" : "\n" ) + std::string( indent, ' ' ) + text;
+    }
+    return snapshot;
+}
+
+} // namespace
 
 static catacurses::window init_window()
 {
@@ -1567,8 +1593,13 @@ bool computer_session::query_any( const std::string &text, Args &&... args )
 
 bool computer_session::query_any()
 {
+    input_context ctxt( "COMPUTER_TERMINAL" );
+    ctxt.register_action( "ANY_INPUT" );
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return terminal_snapshot( comp.name, lines, { { .id = "continue", .label = _( "Press any key" ) } } );
+    } );
     ui_manager::redraw();
-    inp_mngr.wait_for_any_key();
+    ctxt.handle_input();
     return true;
 }
 
@@ -1594,9 +1625,22 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
                          ctxt.describe_key_and_name( "NO", allow_key ),
                          ctxt.describe_key_and_name( "QUIT", allow_key ) );
 
+    const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+        return terminal_snapshot( comp.name, lines, {
+            { .id = "yes", .label = ctxt.get_action_name( "YES" ) },
+            { .id = "no", .label = ctxt.get_action_name( "NO" ) },
+            { .id = "quit", .label = ctxt.get_action_name( "QUIT" ) },
+        } );
+    } );
     do {
         ui_manager::redraw();
         const std::string action = ctxt.handle_input();
+        if( const auto &event = ctxt.get_raw_input().interaction ) {
+            if( event->operation == game_client::interaction_operation::cancel || event->target_id == "quit" ) {
+                return ynq::quit;
+            }
+            return event->target_id == "yes" ? ynq::yes : ynq::no;
+        }
         if( allow_key( ctxt.get_raw_input() ) ) {
             if( action == "YES" ) {
                 return ynq::yes;
