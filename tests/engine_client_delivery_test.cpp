@@ -21,6 +21,9 @@
 #    include "weather/weather.h"
 
 #    include <algorithm>
+#    include <chrono>
+#    include <functional>
+#    include <iostream>
 #    include <ranges>
 #    include <sstream>
 #    include <string>
@@ -36,6 +39,7 @@ struct wait_run {
     std::size_t frames = 0;
     std::size_t most_held_frames = 0;
     std::size_t most_held_bytes = 0;
+    double milliseconds = 0;
 };
 
 auto request(const std::string& method, const std::string& params, const std::string& id)
@@ -82,8 +86,11 @@ auto authority() -> std::string {
 }
 
 /// The avatar waits `turns` turns, each of which draws from the RNG and ends with a publication
-/// to the client, if there is one.
-auto wait_for(const client_mode mode, const std::string& start, const int turns) -> wait_run {
+/// to the client, if there is one. Unless `paced`, the clock stands still and every turn is
+/// published.
+auto wait_for(
+    const client_mode mode, const std::string& start, const int turns, const bool paced = false)
+    -> wait_run {
     rng_set_engine_seed(424242);
     clear_all_state();
     restore_avatar(start);
@@ -113,12 +120,16 @@ auto wait_for(const client_mode mode, const std::string& start, const int turns)
     authority_session.set_world_capture(&engine_client::world::capture_world);
     auto output = std::ostringstream{};
     auto errors = std::ostringstream{};
-    auto server = bn::mcp::server{{
-        .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
-        .submit = [](const auto&) { return true; },
-        .has_input = [] { return false; },
-        .contract_session = &authority_session,
-    }};
+    auto server = bn::mcp::server{
+        {
+            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+            .submit = [](const auto&) { return true; },
+            .has_input = [] { return false; },
+            .contract_session = &authority_session,
+        },
+        {.now = paced ? std::function<auto()->std::chrono::steady_clock::time_point>{} : [] {
+            return std::chrono::steady_clock::time_point{};
+        }}};
     const auto feed = [&](const std::string& text) {
         auto lines = std::istringstream{text};
         for (auto left = count_of(text, "\n"); left > 0; --left) {
@@ -141,6 +152,7 @@ auto wait_for(const client_mode mode, const std::string& start, const int turns)
         std::make_unique<player_activity>(activity_id("ACT_WAIT"), to_moves<int>(1_days), 0),
         false);
     auto result = wait_run{};
+    const auto began = std::chrono::steady_clock::now();
     for (auto turn = 0; turn < turns; ++turn) {
         you.set_moves(100);
         you.update_body();
@@ -153,6 +165,8 @@ auto wait_for(const client_mode mode, const std::string& start, const int turns)
         result.most_held_bytes = std::max(result.most_held_bytes, server.held_bytes());
         if (mode == client_mode::paying) { feed(request("bn.credit", R"({"frames":1})", "3")); }
     }
+    result.milliseconds =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - began).count();
     result.frames = count_of(output.str(), R"("method":"bn.events")");
     result.rng = rng_get_engine();
     result.state = authority();
@@ -188,6 +202,18 @@ TEST_CASE(
     CHECK(stalled.most_held_bytes <= maximum_held_bytes);
     CHECK(stalled.rng == absent.rng);
     CHECK(stalled.state == absent.state);
+}
+
+/// Milliseconds a turn of an hour-long wait costs the engine with no, a paying and a stalled
+/// client: `cata_test-mcp "[.engine_client_delivery_cost]"` prints them.
+TEST_CASE("the cost of a waiting turn per client", "[.engine_client_delivery_cost]") {
+    const auto start = baseline();
+    const auto turns = 200;
+    for (const auto mode : {client_mode::absent, client_mode::paying, client_mode::stalled}) {
+        const auto run = wait_for(mode, start, turns, true);
+        std::cerr << "mode " << static_cast<int>(mode) << ": " << run.milliseconds / turns
+                  << " ms/turn\n";
+    }
 }
 
 #endif

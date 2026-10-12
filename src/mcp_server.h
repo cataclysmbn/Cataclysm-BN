@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <deque>
@@ -66,6 +67,8 @@ class server
             std::string version = "development";
             std::string protocol_version = "2025-11-25";
             std::size_t max_frame_bytes = default_max_frame_bytes;
+            /// The wall clock that paces activity publication; unset means the steady clock.
+            std::function < auto() -> std::chrono::steady_clock::time_point > now;
         };
 
         explicit server( mcp_host host );
