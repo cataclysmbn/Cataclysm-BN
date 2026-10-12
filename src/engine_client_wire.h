@@ -28,6 +28,8 @@ struct hello_request {
     std::vector<std::string> tint_ids = {};
     /// Opt-in credit delivery: the pushed frames the engine may send before the client grants more.
     std::optional<std::size_t> credits = std::nullopt;
+    /// With credits: the most pushed frames per second of wall time a running activity may publish.
+    std::optional<std::size_t> max_hz = std::nullopt;
 };
 /// `bn.credit`: more pushed frames the client is ready to read.
 struct credit_request {
@@ -85,9 +87,13 @@ struct engine_info {
     std::string tileset = {};
 };
 /// Validate IDs/UTF-8 and the output bound before returning a complete serialized value.
-/// `credits` is the window granted to a client that asked for credit delivery.
+/// What the engine granted a client that asked for credit delivery.
+struct delivery_grant {
+    std::size_t credits = 0;
+    std::optional<std::size_t> max_hz = std::nullopt;
+};
 auto serialize_hello( const std::string &epoch, const engine_info &engine,
-                      std::optional<std::size_t> credits = std::nullopt ) -> std::string;
+                      const std::optional<delivery_grant> &delivery = std::nullopt ) -> std::string;
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>;
 auto serialize_application_error( const application_error &value )
 -> std::expected<std::string, error>;

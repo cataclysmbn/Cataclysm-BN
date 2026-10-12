@@ -631,6 +631,85 @@ TEST_CASE("a delivery window outside 1..256 is invalid params", "[engine_client_
     }
 }
 
+TEST_CASE("hello echoes the frame rate the client capped", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":2,"max_hz":30})"));
+    CHECK(
+        contains(test.output.str(),
+                 R"("delivery":{"credits":2,"held_frames":256,"held_bytes":1048576,"max_hz":30})"));
+}
+
+TEST_CASE("a frame rate outside 1..240 is invalid params", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    for (const auto* window :
+         {R"({"credits":2,"max_hz":0})", R"({"credits":2,"max_hz":241})",
+          R"({"credits":2,"max_hz":"30"})", R"({"credits":2,"max_hz":1.5})", R"({"max_hz":30})"}) {
+        test.output.str("");
+        test.poll(hello_with(window));
+        CHECK(contains(test.output.str(), R"("code":-32602)"));
+    }
+    for (const auto* window : {R"({"credits":2,"max_hz":1})", R"({"credits":2,"max_hz":240})"}) {
+        test.output.str("");
+        test.poll(hello_with(window));
+        CHECK_FALSE(contains(test.output.str(), R"("code":-32602)"));
+    }
+}
+
+TEST_CASE(
+    "a client's frame rate caps activity publication by wall time and loses no turn",
+    "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    // Publishing is free, so only the client's rate paces; each turn takes one millisecond.
+    auto now = std::chrono::milliseconds{0};
+    test.clock = [&now] { return std::chrono::steady_clock::time_point{} + now; };
+    Messages::clear_messages();
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":256,"max_hz":10})") + subscribe);
+    test.output.str("");
+    const auto turns = 250;
+    for (auto turn = 0; turn < turns; ++turn, ++now) {
+        Messages::add_msg("turn " + std::to_string(turn) + " passed.");
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        REQUIRE(test.server.publish_activity(test.output));
+    }
+    // At 0, 100 and 200 ms.
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == 3);
+    // The boundary the activity ends at is published whatever the rate, with every turn in order.
+    test.step();
+    auto from = std::size_t{0};
+    for (auto turn = 0; turn < turns; ++turn) {
+        const auto at = test.output.str().find("turn " + std::to_string(turn) + " passed.", from);
+        CHECK(at != std::string::npos);
+        if (at != std::string::npos) { from = at; }
+    }
+}
+
+TEST_CASE(
+    "a client's frame rate does not outpace the fifth of the time publishing may take",
+    "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    // Every look at the clock takes one millisecond: the cost cap is 5 ms, the rate's 1 ms.
+    auto ticks = 0;
+    test.clock = [&ticks] {
+        return std::chrono::steady_clock::time_point{} + std::chrono::milliseconds{ticks++};
+    };
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello_with(R"({"credits":256,"max_hz":240})") + subscribe);
+    test.output.str("");
+    const auto turns = 40;
+    for (auto turn = 0; turn < turns; ++turn) {
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        REQUIRE(test.server.publish_activity(test.output));
+    }
+    CHECK(count_of(test.output.str(), R"("method":"bn.events")") == turns / 4);
+}
+
 TEST_CASE("pushed frames wait for credits and then arrive in order", "[engine_client_delivery]") {
     auto boundary = input_boundary{};
     auto test = fixture{};

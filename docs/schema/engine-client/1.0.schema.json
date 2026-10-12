@@ -3146,6 +3146,12 @@
               "minimum": 1,
               "maximum": 256,
               "description": "Pushed `bn.events` and `bn.command` frames the engine may send before the client grants more with `bn.credit`."
+            },
+            "max_hz": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 240,
+              "description": "The most frames per second of wall time the engine publishes while an activity runs; the boundary where the activity ends is always published. Without it the engine paces only by its own cost."
             }
           },
           "required": [
@@ -3251,6 +3257,12 @@
               "type": "integer",
               "minimum": 1,
               "description": "At most this many bytes of pushed frames wait for credits."
+            },
+            "max_hz": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 240,
+              "description": "The frame rate cap the hello asked for; present exactly when it did."
             }
           },
           "required": [

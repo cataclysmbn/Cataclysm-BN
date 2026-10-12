@@ -152,7 +152,11 @@ auto read_request( const json &value, hello_request &result ) -> void
     members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids", "delivery"} );
     if( value.contains( "delivery" ) ) {
         const auto &delivery = value.at( "delivery" );
-        members( delivery, {"credits"} );
+        members( delivery, {"credits"}, {"max_hz"} );
+        if( delivery.contains( "max_hz" ) ) {
+            result.max_hz = static_cast<std::size_t>( integer( delivery, "max_hz", 1,
+                            static_cast<std::int64_t>( maximum_frame_rate ) ) );
+        }
         result.credits = static_cast<std::size_t>( integer( delivery, "credits", 1,
                          static_cast<std::int64_t>( maximum_credits ) ) );
     }
@@ -291,7 +295,7 @@ auto decode_result_request( std::string_view input ) -> std::expected<result_req
 { return decode<result_request>( input ); }
 
 auto serialize_hello( const std::string &epoch, const engine_info &engine,
-                      const std::optional<std::size_t> credits ) -> std::string
+                      const std::optional<delivery_grant> &delivery ) -> std::string
 {
     using ordered = nlohmann::ordered_json;
     auto result = ordered{{"version", contract_version}, {"epoch", epoch},
@@ -306,10 +310,11 @@ auto serialize_hello( const std::string &epoch, const engine_info &engine,
                 {"cells_per_query", cells_per_query}
             }
         }};
-    if( credits ) {
-        result["delivery"] = {{"credits", *credits}, {"held_frames", maximum_held_frames},
+    if( delivery ) {
+        result["delivery"] = {{"credits", delivery->credits}, {"held_frames", maximum_held_frames},
             {"held_bytes", maximum_held_bytes}
         };
+        if( delivery->max_hz ) { result["delivery"]["max_hz"] = *delivery->max_hz; }
     }
     return result.dump();
 }
