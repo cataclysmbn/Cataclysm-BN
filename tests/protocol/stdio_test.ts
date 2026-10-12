@@ -141,6 +141,11 @@ class Client {
     ).then(([status, text]) => ({ status, stderr: text }))
   }
 
+  /** Reads and drops what the engine writes until it closes stdout, as a client that still reads while it sends a bad frame. */
+  async drain() {
+    for (let part = await this.#reader.read(); !part.done; part = await this.#reader.read());
+  }
+
   /** Closes the engine's stdout for good, as a client that died. */
   async abandonOutput() {
     await this.#reader.cancel()
@@ -2177,9 +2182,12 @@ for (const when of ["idle", "during a wait"]) {
           await beginWait(session, await waitChoice(session, "6 hours"))
         }
         client.raw(" ".repeat(frameBytes + 1024))
+        // An engine blocked on a full pipe reads nothing: the frame is seen only when the client keeps reading.
+        const drained = client.drain()
         const { status, stderr } = await client.exit(30_000)
         assertEquals(status.code, 1)
         assert(stderr.includes(`exceeds ${frameBytes} bytes`), stderr.slice(-300))
+        await drained
       } finally {
         client.kill()
         await Deno.remove(profile, { recursive: true })
