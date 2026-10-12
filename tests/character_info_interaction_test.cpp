@@ -366,6 +366,44 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "character info publishes native colors and the speed breakdown as rows",
+    "[character_info_interaction][character_info_colors]") {
+    const auto guard = character_info_guard{};
+    auto& you = get_avatar();
+    you.set_mutation(trait_id("test_character_info_visible_trait"));
+    const auto value_of = [](const client::interaction_choice& row, const std::string& label) {
+        const auto found =
+            std::ranges::find(row.columns, label, &client::interaction_column::label);
+        REQUIRE(found != row.columns.end());
+        return found->value;
+    };
+    auto reads = 0;
+    client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = observe();
+        if (reads++ == 0) {
+            const auto& strength = choice(snapshot, "Strength:");
+            CHECK(value_of(strength, "Color") == string_from_color(c_white));
+            const auto& moves = choice(snapshot, "Current Speed:");
+            CHECK(moves.pane_id == "speed");
+            CHECK_FALSE(moves.selectable);
+            CHECK(value_of(moves, "Value") == std::to_string(you.get_speed()));
+            CHECK(value_of(moves, "Color")
+                  == string_from_color(you.get_speed() >= 100 ? c_green : c_red));
+            CHECK(value_of(choice(snapshot, "Base Move Cost:"), "Value")
+                  == std::to_string(you.run_cost(100)));
+            return choose(snapshot, "TRAITS");
+        }
+        const auto& trait = choice(snapshot, "TEST character info visible trait");
+        CHECK(value_of(trait, "Color")
+              == string_from_color(
+                  trait_id("test_character_info_visible_trait")->get_display_color()));
+        return cancel(snapshot);
+    });
+    character_display::disp_info(you);
+    CHECK(reads == 2);
+}
+
+TEST_CASE(
     "character info exposes simultaneous native panes independently of focus",
     "[character_info_interaction][character_info_cross_pane_red]") {
     const auto guard = character_info_guard{};

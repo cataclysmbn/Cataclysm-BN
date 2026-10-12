@@ -401,6 +401,26 @@ static player_display_tab prev_tab( const player_display_tab tab )
     }
 }
 
+namespace
+{
+/// The color the stats tab prints a stat's current value in, against its base value.
+auto stat_color( const int cur, const int max ) -> nc_color
+{
+    if( cur <= 0 ) {
+        return c_dark_gray;
+    } else if( cur < max / 2 ) {
+        return c_red;
+    } else if( cur < max ) {
+        return c_light_red;
+    } else if( cur == max ) {
+        return c_white;
+    } else if( cur < max * 1.5 ) {
+        return c_light_green;
+    }
+    return c_green;
+}
+} // namespace
+
 static void draw_stats_tab( ui_adaptor &ui, const catacurses::window &w_stats, const Character &you,
                             const unsigned line, const player_display_tab curtab )
 {
@@ -434,20 +454,7 @@ static void draw_stats_tab( ui_adaptor &ui, const catacurses::window &w_stats, c
     // Stats
     const auto display_stat = [&line_color, &set_highlight_cursor, &w_stats]
     ( const char *name, const int cur, const int max, const unsigned line_to_draw ) {
-        nc_color cstatus;
-        if( cur <= 0 ) {
-            cstatus = c_dark_gray;
-        } else if( cur < max / 2 ) {
-            cstatus = c_red;
-        } else if( cur < max ) {
-            cstatus = c_light_red;
-        } else if( cur == max ) {
-            cstatus = c_white;
-        } else if( cur < max * 1.5 ) {
-            cstatus = c_light_green;
-        } else {
-            cstatus = c_green;
-        }
+        const auto cstatus = stat_color( cur, max );
 
         set_highlight_cursor( line_to_draw );
         mvwprintz( w_stats, point( 1, line_to_draw + 1 ), line_color( line_to_draw ), name );
@@ -1001,50 +1008,64 @@ auto draw_skills_info( const skill_info_options &opts ) -> std::string
 
 namespace
 {
+/// The label and value of one speed breakdown row, carried by the line that prints its label.
+struct native_speed_row {
+    std::string label;
+    std::string value;
+    /// The value's color when it differs from the label line's.
+    std::optional<nc_color> value_color;
+};
+
 struct native_speed_line {
     point position;
     nc_color color;
     std::string text;
+    std::optional<native_speed_row> row;
 };
 
 auto prepare_speed_info( const Character &you,
                          const std::map<std::string, int> &speed_effects ) -> std::vector<native_speed_line>
 {
     auto result = std::vector<native_speed_line> {};
-    // NOLINTNEXTLINE(cata-use-named-point-constants)
-    result.push_back( { .position = point( 1, 1 ), .color = c_light_gray, .text = string_format( _( "Base Move Cost:" ) ) } );
-    result.push_back( { .position = point( 1, 2 ), .color = c_light_gray, .text = string_format( _( "Current Speed:" ) ) } );
+    const auto runcost = you.run_cost( 100 );
     const auto newmoves = you.get_speed();
+    // NOLINTNEXTLINE(cata-use-named-point-constants)
+    result.push_back( { .position = point( 1, 1 ), .color = c_light_gray, .text = string_format( _( "Base Move Cost:" ) ),
+                        .row = native_speed_row{ .label = _( "Base Move Cost:" ), .value = std::to_string( runcost ),
+                                                 .value_color = runcost <= 100 ? c_green : c_red } } );
+    result.push_back( { .position = point( 1, 2 ), .color = c_light_gray, .text = string_format( _( "Current Speed:" ) ),
+                        .row = native_speed_row{ .label = _( "Current Speed:" ), .value = std::to_string( newmoves ),
+                                                 .value_color = newmoves >= 100 ? c_green : c_red } } );
     auto pen = 0;
     auto line = 3u;
     if( you.weight_carried() > you.weight_capacity() ) {
         pen = 25 * ( you.weight_carried() - you.weight_capacity() ) / ( you.weight_capacity() );
         //~ %s: Overburdened (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Overburdened" ), 20 ), pen ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Overburdened" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Overburdened" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     pen = character_effects::get_pain_penalty( you ).speed;
     if( pen >= 1 ) {
         //~ %s: Pain (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Pain" ), 20 ), pen ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Pain" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Pain" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     if( you.get_thirst() > thirst_levels::very_thirsty ) {
         pen = std::abs( character_effects::get_thirst_speed_penalty( you.get_thirst() ) );
         //~ %s: Thirsty/Parched (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Thirst" ), 20 ), pen ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Thirst" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Thirst" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     if( character_effects::get_kcal_speed_penalty( you.get_kcal_percent() ) < 0 ) {
         pen = std::abs( character_effects::get_kcal_speed_penalty( you.get_kcal_percent() ) );
         //~ %s: Starving/Underfed (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Starving" ), 20 ), pen ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Starving" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Starving" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
     if( you.has_trait( trait_id( "SUNLIGHT_DEPENDENT" ) ) && !g->is_in_sunlight( you.bub_pos() ) ) {
         pen = ( g->light_level( you.bub_pos().z() ) >= 12 ? 5 : 10 );
         //~ %s: Out of Sunlight (already left-justified), %2d%%: speed penalty
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Out of Sunlight" ), 20 ), pen ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed penalty", "%s-%2d%%" ), left_justify( _( "Out of Sunlight" ), 20 ), pen ), .row = native_speed_row{ .label = _( "Out of Sunlight" ), .value = string_format( "-%d%%", pen ) } } );
         ++line;
     }
 
@@ -1067,7 +1088,8 @@ auto prepare_speed_info( const Character &you,
         if( !pen_sign.empty() ) {
             pen = ( player_local_temp - 65 ) * temperature_speed_modifier;
             //~ %s: Cold-Blooded (already left-justified), %s: sign of bonus/penalty, %2d%%: speed modifier
-            result.push_back( { .position = point( 1, line ), .color = pen_color, .text = string_format( pgettext( "speed modifier", "%s%s%2d%%" ), left_justify( _( "Cold-Blooded" ), 20 ), pen_sign, std::abs( pen ) ) } );
+            result.push_back( { .position = point( 1, line ), .color = pen_color, .text = string_format( pgettext( "speed modifier", "%s%s%2d%%" ), left_justify( _( "Cold-Blooded" ), 20 ), pen_sign, std::abs( pen ) ),
+                                .row = native_speed_row{ .label = _( "Cold-Blooded" ), .value = string_format( "%s%d%%", pen_sign, std::abs( pen ) ) } } );
             ++line;
         }
     }
@@ -1079,28 +1101,32 @@ auto prepare_speed_info( const Character &you,
         const auto pen_sign = quick_bonus >= 0 ? "+" : "-";
         const auto pen_color = quick_bonus >= 0 ? c_green : c_red;
         //~ %s: Mutations (already left-justified), %s: sign of bonus/penalty, %2d%%: speed modifier
-        result.push_back( { .position = point( 1, line ), .color = pen_color, .text = string_format( pgettext( "speed bonus", "%s%s%2d%%" ), left_justify( _( "Mutations" ), 20 ), pen_sign, std::abs( quick_bonus ) ) } );
+        result.push_back( { .position = point( 1, line ), .color = pen_color, .text = string_format( pgettext( "speed bonus", "%s%s%2d%%" ), left_justify( _( "Mutations" ), 20 ), pen_sign, std::abs( quick_bonus ) ),
+                            .row = native_speed_row{ .label = _( "Mutations" ), .value = string_format( "%s%d%%", pen_sign, std::abs( quick_bonus ) ) } } );
         ++line;
     }
     const auto ench_speed = int( ceil( you.bonus_from_enchantments( 100,
                                        enchantment_value_id( "SPEED" ) ) ) );
     if( ench_speed > 0 ) {
-        result.push_back( { .position = point( 1, line ), .color = c_green, .text = string_format( pgettext( "speed bonus", "Misc Speed        +%2d%%" ), ench_speed ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_green, .text = string_format( pgettext( "speed bonus", "Misc Speed        +%2d%%" ), ench_speed ),
+                            .row = native_speed_row{ .label = _( "Misc Speed" ), .value = string_format( "+%d%%", ench_speed ) } } );
         ++line;
     } else if( ench_speed < 0 ) {
-        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed bonus", "Misc Speed        -%2d%%" ), abs( ench_speed ) ) } );
+        result.push_back( { .position = point( 1, line ), .color = c_red, .text = string_format( pgettext( "speed bonus", "Misc Speed        -%2d%%" ), abs( ench_speed ) ),
+                            .row = native_speed_row{ .label = _( "Misc Speed" ), .value = string_format( "-%d%%", abs( ench_speed ) ) } } );
         ++line;
     }
 
     for( const auto &speed_effect : speed_effects ) {
         auto col = ( speed_effect.second > 0 ? c_green : c_red );
-        result.push_back( { .position = point( 1, line ), .color = col, .text = string_format( "%s", speed_effect.first ) } );
+        result.push_back( { .position = point( 1, line ), .color = col, .text = string_format( "%s", speed_effect.first ),
+                            .row = native_speed_row{ .label = speed_effect.first,
+                                                     .value = string_format( "%s%d%%", speed_effect.second > 0 ? "+" : "-", std::abs( speed_effect.second ) ) } } );
         result.push_back( { .position = point( 21, line ), .color = col, .text = string_format( ( speed_effect.second > 0 ? "+" : "-" ) ) } );
         result.push_back( { .position = point( std::abs( speed_effect.second ) >= 10 ? 22 : 23, line ), .color = col, .text = string_format( "%d%%", std::abs( speed_effect.second ) ) } );
         ++line;
     }
 
-    const auto runcost = you.run_cost( 100 );
     nc_color col = ( runcost <= 100 ? c_green : c_red );
     result.push_back( { .position = point( 21 + ( runcost >= 100 ? 0 : ( runcost < 10 ? 2 : 1 ) ), 1 ), .color = col, .text = string_format( "%d", runcost ) } );
     col = ( newmoves >= 100 ? c_green : c_red );
@@ -1293,6 +1319,7 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
                 if( i < 4 ) {
                     columns.push_back( { .label = _( "Current" ), .value = std::to_string( current[i] ) } );
                     columns.push_back( { .label = _( "Base" ), .value = std::to_string( base[i] ) } );
+                    columns.push_back( { .label = _( "Color" ), .value = string_from_color( stat_color( current[i], base[i] ) ) } );
                 } else {
                     columns.push_back( { .label = labels[i], .value = info.values[0] } );
                 }
@@ -1324,8 +1351,9 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
             for( const auto i : std::views::iota( std::size_t{0}, opts.traits.size() ) ) {
                 const auto &trait = opts.traits[i];
                 add_row( { .id = game_client::opaque_interaction_id( "character-trait", { trait.str() } ),
-                           .label = trait->name(), .description = string_format( "%s: %s", colorize( trait->name(), trait->get_display_color() ), trait->desc() ) },
-                         i );
+                           .label = trait->name(), .description = string_format( "%s: %s", colorize( trait->name(), trait->get_display_color() ), trait->desc() ),
+                .columns = { { .label = _( "Color" ), .value = string_from_color( trait->get_display_color() ) } } },
+                i );
             }
             break;
         case player_display_tab::bionics:
@@ -1452,6 +1480,15 @@ auto prepare_display_boundary( const display_model_options &opts ) -> display_bo
         speed_text += "\n";
     }
     snapshot.panes.push_back( { .id = "speed", .label = _( title_SPEED ), .role = "information", .area_description = speed_text } );
+    for( const auto &entry : opts.speed_lines ) {
+        if( entry.row ) {
+            snapshot.choices.push_back( { .id = game_client::opaque_interaction_id( "character-speed", { entry.row->label } ),
+                                          .label = entry.row->label, .pane_id = "speed", .selectable = false,
+            .columns = { { .label = _( "Value" ), .value = entry.row->value },
+                { .label = _( "Color" ), .value = string_from_color( entry.row->value_color.value_or( entry.color ) ) }
+            } } );
+        }
+    }
     snapshot.panes.push_back( { .id = "controls", .label = _( "Controls" ), .role = "controls" } );
     const auto add_control = [&]( const std::string & action, const std::string & label,
     const std::string &denial = std::string{} ) {
