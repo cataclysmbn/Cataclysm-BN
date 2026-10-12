@@ -1,6 +1,8 @@
 #include "engine_client_session.h"
 
 #include <algorithm>
+#include <cstdlib>
+#include <fstream>
 #include <stdexcept>
 #include <utility>
 
@@ -16,6 +18,20 @@
 
 namespace engine_client
 {
+namespace
+{
+/// The sink conformance tests record into: with `BN_PRESENTATION_RECORD` set, every presentation event the
+/// engine publishes is also written as one line, the `bn.events` params it was pushed as.
+auto recording() -> std::ofstream * // *NOPAD*
+{
+    static auto out = []() {
+        const auto *path = std::getenv( "BN_PRESENTATION_RECORD" );
+        return path == nullptr ? std::ofstream() : std::ofstream( path, std::ios::app );
+    }
+    ();
+    return out.is_open() ? &out : nullptr;
+}
+} // namespace
 
 session::session()
 {
@@ -166,7 +182,9 @@ auto session::publish_presentation( const std::optional<std::string> &command ) 
     for( auto &fact : presentation::take() ) {
         // A fact that cannot be published is skipped; it changes no state.
         auto published = stream_->publish_presentation( { .fact = std::move( fact ), .command = command } );
-        if( published ) { push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } ); }
+        if( !published ) { continue; }
+        if( auto *out = recording() ) { *out << published->wire() << std::endl; }
+        push_.emplace_back( event_push{ .epoch = epoch_, .event = std::move( *published ) } );
     }
 }
 

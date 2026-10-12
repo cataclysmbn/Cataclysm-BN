@@ -125,11 +125,22 @@ class Client {
   }
 }
 
+/** The event types that carry state or the message log; every other type tells a game event or an animation. */
+const stateEvents = [
+  "interaction.changed",
+  "coverage.moved",
+  "turn.passed",
+  "cells.seen",
+  "message.logged",
+]
+
 class Session {
   mirror!: Mirror
   /** Stages seen per command id. */
   stages = new Map<string, string[]>()
   eventTypes: string[] = []
+  /** The events that tell what happened rather than what the avatar knows, whole and in arrival order. */
+  told: Value[] = []
   resyncs: Value[] = []
   /** `bn.loading` notifications with their arrival time, in arrival order. */
   loading: Value[] = []
@@ -157,7 +168,10 @@ class Session {
     const { method, params } = note
     if (method === "bn.events") {
       this.mirror.applyEvents(params.epoch, params.events)
-      for (const event of params.events) this.eventTypes.push(event.type)
+      for (const event of params.events) {
+        this.eventTypes.push(event.type)
+        if (!stateEvents.includes(event.type)) this.told.push(event)
+      }
     } else if (method === "bn.command") {
       const stages = this.stages.get(params.command_id) ?? ["received"]
       stages.push(params.stage)
@@ -282,17 +296,20 @@ const checkLoading = async (loading: Value[], chosenAt: number) => {
   }
 }
 
-async function makeProfile(): Promise<string> {
+async function makeProfile(options: Record<string, string> = {}): Promise<string> {
   const profile = await Deno.makeTempDir({ prefix: "bn-protocol-" })
   await Deno.mkdir(`${profile}/config`, { recursive: true })
   await Deno.writeTextFile(
     `${profile}/config/options.json`,
-    JSON.stringify([
-      { name: "USE_LANG", value: "en_US" },
-      { name: "ANIMATIONS", value: "false" },
-      { name: "AUTOSAVE", value: "false" },
-      { name: "COMPUTE_ACCELERATION", value: "gpu_software" },
-    ]),
+    JSON.stringify(
+      Object.entries({
+        USE_LANG: "en_US",
+        ANIMATIONS: "false",
+        AUTOSAVE: "false",
+        COMPUTE_ACCELERATION: "gpu_software",
+        ...options,
+      }).map(([name, value]) => ({ name, value })),
+    ),
   )
   await Deno.writeTextFile(
     `${profile}/config/preload.json`,
@@ -1609,6 +1626,139 @@ Deno.test({
       }
       await client.close()
     } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+/** Spawns one `name` through the debug menu's item wish list, which pages 200 entries at a time. */
+async function wishItem(client: Client, session: Session, name: string) {
+  let found: Value
+  for (let offset = 0; !found; offset += 200) {
+    const page = await client.result("bn.interaction.choices", {
+      epoch: session.mirror.at.epoch,
+      boundary_id: session.mirror.interaction.boundary_id,
+      offset,
+      limit: 200,
+    })
+    assert(page.choices.length > 0, `${name} is listed`)
+    found = page.choices.find((entry: Value) => entry.label === name)
+  }
+  assertEquals(
+    (await session.submit({ kind: "choose", choice_id: found.id })).stages.at(-1),
+    "completed",
+  )
+  const amount = { kind: "fill", field_id: "field:value", value: "1", submit: true }
+  assertEquals((await session.submit(amount)).stages.at(-1), "completed")
+}
+
+/** Chooses the inventory row whose label starts with `prefix`. */
+async function chooseItem(session: Session, prefix: string) {
+  const row = session.mirror.interaction.interaction.choices.find((entry: Value) =>
+    entry.label.startsWith(prefix)
+  )
+  assert(row, `no item ${prefix}`)
+  assertEquals(
+    (await session.submit({ kind: "choose", choice_id: row.id })).stages.at(-1),
+    "completed",
+  )
+}
+
+Deno.test({
+  name:
+    "stdio: a thrown grenade tells its throw, fuse, blast, damage and fields in order, as the engine recorded",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile({
+      ANIMATIONS: "true",
+      ANIMATION_PROJECTILES: "true",
+      ANIMATION_DELAY: "0",
+    })
+    const recording = `${profile}/presentation.jsonl`
+    Deno.env.set("BN_PRESENTATION_RECORD", recording)
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+      const run = async (operation: Value) =>
+        assertEquals((await session.submit(operation)).stages.at(-1), "completed")
+      const clear = () => session.acknowledge(() => session.mirror.interaction.interaction === null)
+
+      // The tutorial is dark: a lit flashlight lets the avatar see the room the grenade lands in.
+      await run({ kind: "action", action_id: "debug" })
+      await session.choose("Spawning…")
+      await session.choose("Spawn an item")
+      await wishItem(client, session, "flashlight (off)")
+      await wishItem(client, session, "grenade")
+      while (session.mirror.interaction.interaction) await run({ kind: "cancel" })
+      await run({ kind: "action", action_id: "apply" })
+      await chooseItem(session, "flashlight")
+      await clear()
+      await run({ kind: "action", action_id: "apply" })
+      await chooseItem(session, "grenade")
+      await clear()
+      await run({ kind: "action", action_id: "throw" })
+      await chooseItem(session, "active grenade")
+      const avatar = session.mirror.avatar.at
+      // Nine squares away: outside the fragments' range of seven, inside the lit room.
+      await run({ kind: "set_target", pos: { ...avatar, x: avatar.x + 9 } })
+      assertEquals(session.mirror.interaction.interaction.target.status, "good")
+      await run({ kind: "action", action_id: "FIRE" })
+      // The fuse burns five turns; tutorial pop-ups may hold the first ones back.
+      for (let turn = 0; turn < 7; turn++) {
+        await clear()
+        await run({ kind: "action", action_id: "pause" })
+      }
+
+      const told = session.told
+      const types = told.map((event) => event.type)
+      const first = (type: string, after = 0) => types.indexOf(type, after)
+      // The flashlight's own activation comes first and has no fuse.
+      const pin = told.findIndex((event) =>
+        event.type === "item.activated" && event.data.turns !== undefined
+      )
+      const thrown = first("item.thrown", pin)
+      const flight = first("projectile.moved", thrown)
+      const landed = first("item.landed", flight)
+      const tick = first("item.activated", landed)
+      const bang = first("explosion.started", tick)
+      const fields = first("field.changed", bang)
+      const done = first("explosion.ended", fields)
+      assert(
+        [pin, thrown, flight, landed, tick, bang, fields, done].every((at) => at >= 0),
+        `an event is missing: ${types}`,
+      )
+      assert(pin < thrown && thrown < flight && flight < landed && landed < tick)
+      assert(tick < bang && bang < fields && fields < done)
+      assertEquals(told[thrown].data.projectile, told[flight].data.projectile)
+      assertEquals(told[thrown].data.projectile, told[landed].data.projectile)
+      assertEquals(told[thrown].data.by, "e:avatar")
+      assertEquals(told[landed].data.at, told[thrown].data.to)
+      assertEquals(told[pin].data.turns, 5)
+      const fuse = told.filter((event) => event.data.turns !== undefined).map((event) =>
+        event.data.turns
+      )
+      assertEquals(fuse.at(-1), 0)
+      assert(
+        fuse.every((turns, i) => i === 0 || turns === fuse[i - 1] || turns === fuse[i - 1] - 1),
+      )
+      assertEquals(types.filter((type) => type === "explosion.ended").length, 1)
+
+      // The engine's own recording of the same facts, by sequence, equals what the client received.
+      const recorded = (await Deno.readTextFile(recording)).split("\n").filter((line) => line)
+        .map((line) => JSON.parse(line)).filter((params) =>
+          params.epoch === session.mirror.at.epoch
+        )
+        .flatMap((params) => params.events)
+      assertEquals(recorded, told)
+      assertEquals(
+        told.map((event) => BigInt(event.sequence)).sort((a, b) => Number(a - b)),
+        told.map((event) => BigInt(event.sequence)),
+      )
+      await client.close()
+    } finally {
+      Deno.env.delete("BN_PRESENTATION_RECORD")
       client.kill()
       await Deno.remove(profile, { recursive: true })
     }
