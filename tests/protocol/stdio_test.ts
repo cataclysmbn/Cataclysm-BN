@@ -2291,3 +2291,35 @@ for (const how of ["stdin and stdout closed", "SIGTERM"] as const) {
     },
   })
 }
+
+for (const how of ["an oversized frame", "the end of stdin"] as const) {
+  Deno.test({
+    name: `stdio: ${how} reaches an engine whose stdout is full and unread`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      try {
+        const session = await enterTutorial(client, { delivery: { credits: 256 } })
+        await settle(session)
+        await beginWait(session, await waitChoice(session, "6 hours"))
+        // The client reads nothing from here: the answers fill the pipe, and the engine must still read stdin.
+        floodCells(session, 64)
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        if (how === "an oversized frame") client.raw(" ".repeat(frameBytes + 1024))
+        else client.closeInput()
+        const { status, stderr } = await client.exit(30_000)
+        if (how === "an oversized frame") {
+          assertEquals(status.code, 1)
+          assert(stderr.includes(`exceeds ${frameBytes} bytes`), stderr.slice(-300))
+        } else {
+          assertEquals(status.signal, null, "left by itself")
+          assert(stderr.includes("mcp: the engine is exiting"), stderr.slice(-300))
+        }
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+}
