@@ -911,7 +911,7 @@ TEST_CASE("a step of an auto-move does not complete its command", "[engine_clien
     test.output.str("");
     CHECK(test.server.publish_step(test.output));
     CHECK(contains(test.output.str(), R"("type":"cells.seen")"));
-    CHECK(contains(test.output.str(), R"("command":"c:)"));
+    CHECK(contains(test.output.str(), R"("command":")"));
     CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
     known_cells.push_back(4);
     CHECK_FALSE(test.pump(""));

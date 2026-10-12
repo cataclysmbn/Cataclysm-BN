@@ -522,7 +522,8 @@ auto server::poll_input( std::istream &in, std::ostream &out, std::ostream &err 
 auto server::publish_step( std::ostream &out ) -> bool
 {
     if( failed_ || eof_ ) { return false; }
-    if( !publish_boundary( out ) ) { failed_ = true; eof_ = true; return false; }
+    // The walk goes on after this step: its command completes at the boundary where input is awaited.
+    if( !publish_boundary( out, false ) ) { failed_ = true; eof_ = true; return false; }
     return true;
 }
 
