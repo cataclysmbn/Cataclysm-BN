@@ -431,4 +431,135 @@ TEST_CASE(
     CHECK(stage == 2);
 }
 
+TEST_CASE(
+    "the map editor edit menus are reachable and list their entries",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    get_map().add_item(you.bub_pos(), item::spawn("rock"));
+    const auto guard = screen_guard{};
+    const auto menus = std::vector<std::pair<std::string, std::string>>{
+        {"action:EDIT_TERRAIN", "EDITMAP_FEATURE"},
+        {"action:EDIT_FIELDS", "EDIT_FIELDS"},
+        {"action:EDIT_ITEMS", "EDIT_ITEMS"},
+        {"action:EDIT_OVERMAP", "EDIT_MAPGEN"}};
+    auto stage = 0;
+    open_screen(
+        [] {
+            auto edit = editmap{};
+            edit.edit();
+        },
+        [&](const auto& snapshot) {
+            const auto index = static_cast<size_t>(stage++ / 2);
+            if (stage % 2 == 1) {
+                if (index == menus.size()) { return cancel(snapshot); }
+                CHECK(snapshot.context == "EDITMAP");
+                return choose(snapshot, menus[index].first);
+            }
+            CHECK(snapshot.context == menus[index].second);
+            CHECK(snapshot.choices.size() > 1);
+            CHECK(std::ranges::all_of(snapshot.choices, [](const auto& choice) {
+                return !choice.id.empty() && !choice.label.empty();
+            }));
+            return cancel(snapshot);
+        });
+    CHECK(stage == static_cast<int>(menus.size()) * 2 + 1);
+}
+
+TEST_CASE(
+    "the map editor shape selection publishes its actions and moves with set_target",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = screen_guard{};
+    const auto start = you.bub_pos();
+    const auto at = [&](const int dx, const int dy) {
+        return game_client::interaction_position{start.x() + dx, start.y() + dy, start.z()};
+    };
+    const auto click = [](const auto& snapshot, const auto position) {
+        return event_of(
+            {.interaction = game_client::interaction_command{
+                 .input_id = snapshot.input_id,
+                 .operation = game_client::interaction_operation::set_target,
+                 .position = position}});
+    };
+    auto edit = editmap{};
+    edit.target = edit.origin = start;
+    edit.target_list = {start};
+    auto stage = 0;
+    auto shape_size = 0;
+    open_screen(
+        [&] { shape_size = edit.select_shape(editmap_rect); },
+        [&](const auto& snapshot) {
+            switch (stage++) {
+                case 0:
+                    CHECK(snapshot.context == "EDITMAP_SHAPE");
+                    CHECK(snapshot.target->status == "editmap_shape_resize");
+                    CHECK(row(snapshot, "action:RESIZE")->pane_id == "actions");
+                    CHECK(row(snapshot, "action:EDITMAP_MOVE") != snapshot.choices.end());
+                    CHECK(row(snapshot, "action:CONFIRM") != snapshot.choices.end());
+                    return click(snapshot, at(2, 1));
+                case 1:
+                    CHECK(snapshot.target->cursor == at(2, 1));
+                    return choose(snapshot, "action:EDITMAP_MOVE");
+                case 2:
+                    CHECK(snapshot.target->status == "editmap_shape_move");
+                    CHECK(row(snapshot, "action:EDITMAP_MOVE") == snapshot.choices.end());
+                    return click(snapshot, at(4, 1));
+                case 3:
+                    CHECK(snapshot.target->cursor == at(4, 1));
+                    return choose(snapshot, "action:CONFIRM");
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 4);
+    CHECK(edit.target == tripoint_bub_ms(start.x() + 4, start.y() + 1, start.z()));
+    CHECK(edit.origin == start + tripoint_rel_ms(2, 0, 0));
+    CHECK(shape_size > 1);
+}
+
+TEST_CASE(
+    "the mapgen retarget publishes its confirm action, moves with set_target and keeps the old target on cancel",
+    "[client][interaction][mcp][screens]") {
+    clear_all_state();
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = screen_guard{};
+    const auto start = you.bub_pos();
+    const auto east = game_client::interaction_position{start.x() + 24, start.y(), start.z()};
+    auto edit = editmap{};
+    edit.target = start;
+    auto stage = 0;
+    open_screen(
+        [&] { edit.mapgen_retarget(); },
+        [&](const auto& snapshot) {
+            switch (stage++) {
+                case 0:
+                    CHECK(snapshot.context == "EDITMAP_RETARGET");
+                    CHECK(snapshot.target->status == "editmap_retarget");
+                    CHECK(row(snapshot, "action:CONFIRM")->pane_id == "actions");
+                    return event_of(
+                        {.interaction = game_client::interaction_command{
+                             .input_id = snapshot.input_id,
+                             .operation = game_client::interaction_operation::set_target,
+                             .position = east}});
+                case 1:
+                    CHECK(snapshot.target->cursor == east);
+                    return cancel(snapshot);
+                default:
+                    FAIL("unexpected extra screen " << snapshot.context);
+            }
+            return input_event{};
+        });
+    CHECK(stage == 2);
+    CHECK(edit.target == start);
+}
+
 #endif // CATA_MCP

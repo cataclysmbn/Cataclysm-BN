@@ -343,9 +343,16 @@ shared_ptr_fast<ui_adaptor> editmap::create_or_get_ui_adaptor()
 namespace
 {
 
-/// The map editor as a client sees it: the cursor with the native bounds, the tile under it, and the edit actions.
-auto editmap_interaction( const editmap &em,
-                          const input_context &ctxt ) -> game_client::interaction_snapshot
+/// What differs between the map editor screens: their title, target status and action rows.
+struct editmap_screen {
+    std::string title;
+    std::string status;
+    std::vector<std::string> actions;
+};
+
+/// The map editor as a client sees it: the cursor with the native bounds, the tile under it, and the screen's actions.
+auto editmap_interaction( const editmap &em, const input_context &ctxt,
+                          const editmap_screen &screen ) -> game_client::interaction_snapshot
 {
     const auto position_of = []( const tripoint_bub_ms & position ) {
         return game_client::interaction_position{ .x = position.x(), .y = position.y(), .z = position.z() };
@@ -353,7 +360,7 @@ auto editmap_interaction( const editmap &em,
     const auto &player_character = get_player_character();
     auto snapshot = game_client::interaction_snapshot{
         .kind = game_client::interaction_kind::target,
-        .title = _( "Map editor" ),
+        .title = screen.title,
         .allow_cancel = true,
         .panes = {
             { .id = "tile", .label = _( "Tile" ), .role = "current" },
@@ -367,7 +374,7 @@ auto editmap_interaction( const editmap &em,
                 .x = g_mapsize_x - 1, .y = g_mapsize_y - 1, .z = OVERMAP_HEIGHT },
             .range = std::max( g_mapsize_x, g_mapsize_y ),
             .distance_metric = "square",
-            .status = "editmap",
+            .status = screen.status,
         },
     };
     const auto add_tile = [&]( const std::string & id, const std::string & label,
@@ -409,16 +416,25 @@ auto editmap_interaction( const editmap &em,
         add_tile( "items", _( "Items" ), ( *items.begin() )->tname(),
         { { .label = _( "Count" ), .value = std::to_string( items.size() ) } } );
     }
-    for( const auto *id : {
-             "EDIT_TERRAIN", "EDIT_FURNITURE", "EDIT_TRAPS", "EDIT_FIELDS", "EDIT_ITEMS", "EDIT_MONSTER",
-             "EDIT_OVERMAP", "EDITMAP_SHOW_ALL", "LEVEL_UP", "LEVEL_DOWN"
-         } ) {
+    for( const auto &id : screen.actions ) {
         snapshot.choices.push_back( {
-            .id = std::string( "action:" ) + id, .label = remove_color_tags( ctxt.get_action_name( id ) ),
-            .hotkey = ctxt.key_bound_to( id ), .pane_id = "actions", .selected = em.uberdraw && std::string( id ) == "EDITMAP_SHOW_ALL",
+            .id = "action:" + id, .label = remove_color_tags( ctxt.get_action_name( id ) ),
+            .hotkey = ctxt.key_bound_to( id ), .pane_id = "actions", .selected = em.uberdraw && id == "EDITMAP_SHOW_ALL",
         } );
     }
     return snapshot;
+}
+
+/// The cell a client clicked while `set_target` was the input, if it was.
+auto clicked_cell( input_context &ctxt ) -> std::optional<tripoint_bub_ms>
+{
+    const auto &event = ctxt.get_raw_input();
+    if( !event.interaction ||
+        event.interaction->operation != game_client::interaction_operation::set_target ) {
+        return std::nullopt;
+    }
+    const auto position = *event.interaction->position;
+    return tripoint_bub_ms( position.x, position.y, position.z );
 }
 
 } // namespace
@@ -488,16 +504,17 @@ std::optional<tripoint_bub_ms> editmap::edit()
         ui_manager::redraw();
 
         const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-            return editmap_interaction( *this, ctxt );
+            return editmap_interaction( *this, ctxt, {
+                .title = _( "Map editor" ), .status = "editmap", .actions = {
+                    "EDIT_TERRAIN", "EDIT_FURNITURE", "EDIT_TRAPS", "EDIT_FIELDS", "EDIT_ITEMS", "EDIT_MONSTER",
+                    "EDIT_OVERMAP", "EDITMAP_SHOW_ALL", "LEVEL_UP", "LEVEL_DOWN"
+                }
+            } );
         } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
-        const auto &event = ctxt.get_raw_input();
-        if( event.interaction &&
-            event.interaction->operation == game_client::interaction_operation::set_target ) {
-            const auto position = *event.interaction->position;
-            const auto moved = tripoint_bub_ms( position.x, position.y, position.z );
-            origin += moved - target;
-            target = moved;
+        if( const auto clicked = clicked_cell( ctxt ) ) {
+            origin += *clicked - target;
+            target = *clicked;
             recalc_target( editshape );
             action.clear();
         } else {
@@ -1717,7 +1734,23 @@ int editmap::select_shape( shapetype shape, int mode )
         }
         do_ui_invalidation();
         ui_manager::redraw();
+        const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+            return editmap_interaction( *this, ctxt, {
+                .title = moveall ? _( "Moving selection" ) : _( "Resizing selection" ),
+                .status = moveall ? "editmap_shape_move" : "editmap_shape_resize",
+.actions = moveall ? std::vector<std::string> { "RESIZE", "SWAP", "EDITMAP_SHOW_ALL", "CONFIRM" } :
+                std::vector<std::string> { "EDITMAP_MOVE", "RESIZE", "SWAP", "START", "EDITMAP_SHOW_ALL", "CONFIRM" }
+            } );
+        } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
+        if( const auto clicked = clicked_cell( ctxt ) ) {
+            origin += moveall ? *clicked - target : tripoint_rel_ms::zero();
+            target = *clicked;
+            update = true;
+            action.clear();
+        } else {
+            action = game_client::action_of( ctxt, action, []( const std::string & ) { return std::string(); } );
+        }
         if( action == "RESIZE" ) {
             if( !moveall ) {
                 const int offset = 16;
@@ -2084,10 +2117,21 @@ void editmap::mapgen_retarget()
         do_ui_invalidation();
 
         ui_manager::redraw();
+        const auto interaction = game_client::interaction_scope( ctxt, [&]() {
+            return editmap_interaction( *this, ctxt, {
+                .title = pgettext( "map generator", "Mapgen: Moving target" ), .status = "editmap_retarget",
+                .actions = { "CONFIRM" }
+            } );
+        } );
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
-        if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
-            auto vec_ms = vec->xy() * coords::map_squares_per( coords::scale::overmap_terrain );
-            auto ptarget = target + vec_ms;
+        const auto clicked = clicked_cell( ctxt );
+        if( !clicked ) {
+            action = game_client::action_of( ctxt, action, []( const std::string & ) { return std::string(); } );
+        }
+        const std::optional<tripoint_rel_ms> vec = clicked ? std::nullopt : ctxt.get_direction( action );
+        if( clicked || vec ) {
+            auto ptarget = clicked ? *clicked :
+                           target + vec->xy() * coords::map_squares_per( coords::scale::overmap_terrain );
             if( editmap_boundaries().contains( ptarget ) &&
                 editmap_boundaries().contains( ptarget + point( SEEX, SEEY ) ) ) {
                 target = ptarget;
