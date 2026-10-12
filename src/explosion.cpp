@@ -678,6 +678,7 @@ auto ExplosionProcess::process_next() -> bool
 
     cur_relative_time = event_queue.top().key.time;
     pace_until( cur_relative_time );
+    engine_client::presentation::begin_blast_step();
 
     // A presentation frame may contain all events at this exact logical time.
     // Pop before dispatch: a zero-delay child cannot replace the event being handled,
@@ -696,6 +697,7 @@ auto ExplosionProcess::process_next() -> bool
             } );
         }
 
+        const auto before = engine_client::presentation::terrain_at( event.position );
         switch( event.kind ) {
             case ExplosionEvent::Kind::SHRAPNEL:
                 project_shrapnel( event.position );
@@ -721,6 +723,7 @@ auto ExplosionProcess::process_next() -> bool
                 );
                 break;
         };
+        engine_client::presentation::record_terrain_change( event.position, before );
     }
     engine_client::presentation::record_blast_frame( presentation_id, frame_blast, frame_shrapnel );
     frame_blast.clear();
@@ -1063,6 +1066,7 @@ void ExplosionProcess::add_field( const tripoint_bub_ms position,
 {
     map &here = get_map();
     here.add_field( position, field, intensity, 0_turns, hit_player );
+    engine_client::presentation::record_field( position, field );
     request_redraw |= position.z() == g->u.bub_pos().z();
 }
 
@@ -1070,6 +1074,7 @@ void ExplosionProcess::remove_field( const tripoint_bub_ms position, field_type_
 {
     map &here = get_map();
     here.remove_field( position, target );
+    engine_client::presentation::record_field( position, target );
     request_redraw |= position.z() == g->u.bub_pos().z();
 }
 

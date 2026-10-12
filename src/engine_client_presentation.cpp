@@ -28,6 +28,9 @@ struct feed_state {
     std::uint64_t next_explosion = 0;
     int last_bullet_index = -1;
     std::string last_projectile = {};
+    /// The projectile of the item being thrown, until it lands.
+    std::string thrown_projectile = {};
+    std::size_t blast_step_start = 0;
     std::vector<presentation_value> pending = {};
     /// Blasts whose start is held back until something of them is seen, and those already announced.
     std::map<std::string, presentation_value> held = {};
@@ -53,6 +56,12 @@ auto animated() -> bool
 auto step_ms() -> std::uint64_t
 {
     return static_cast<std::uint64_t>( std::max( 0, get_option<int>( "ANIMATION_DELAY" ) ) );
+}
+/// A shot flies under the ID of the throw that launched it, else under a new one.
+auto shot_id( feed_state &feed ) -> std::string
+{
+    return feed.thrown_projectile.empty() ? "projectile:" + std::to_string( ++feed.next_projectile ) :
+           feed.thrown_projectile;
 }
 auto bullet_look( const char bullet, const std::string &custom_sprite ) -> look
 {
@@ -85,6 +94,7 @@ auto collect( const bool on ) -> void
 
 auto take() -> std::vector<presentation_value>
 {
+    state().thrown_projectile.clear();
     return std::exchange( state().pending, {} );
 }
 
@@ -94,7 +104,7 @@ auto record_bullet( const bullet_step &step ) -> void
     if( !feed.collecting || !animated() || !seen( step.at ) ) { return; }
     // The native loop draws one square per call; a lower index than the last call starts a new shot.
     if( step.index <= feed.last_bullet_index || feed.last_projectile.empty() ) {
-        feed.last_projectile = "projectile:" + std::to_string( ++feed.next_projectile );
+        feed.last_projectile = shot_id( feed );
     }
     feed.last_bullet_index = step.index;
     push( { .type = "projectile.moved", .id = feed.last_projectile, .cells = { world::position_at( step.at ) },
@@ -111,7 +121,7 @@ auto record_trajectories( const draw_bullet_trajectories_options &options ) -> v
         if( visible.empty() ) { continue; }
         // A line is drawn at once; a shot flies one square per animation step.
         const auto steps = options.draw_as_line ? 1 : trajectory.size();
-        push( { .type = "projectile.moved", .id = "projectile:" + std::to_string( ++feed.next_projectile ),
+        push( { .type = "projectile.moved", .id = shot_id( feed ),
                 .cells = path_of( visible ), .appearance = appearance, .duration_ms = step_ms() * steps } );
     }
     feed.last_bullet_index = -1;
@@ -127,7 +137,7 @@ auto record_line( const draw_sprite_line_options &options ) -> void
     std::erase( points, tripoint_bub_ms::zero() );
     points = only_seen( points );
     if( points.empty() ) { return; }
-    push( { .type = "projectile.moved", .id = "projectile:" + std::to_string( ++feed.next_projectile ),
+    push( { .type = "projectile.moved", .id = shot_id( feed ),
             .cells = path_of( points ), .appearance = bullet_look( '*', options.sprite ),
             .duration_ms = step_ms() } );
 }
@@ -158,18 +168,24 @@ auto record_blast_frame( const std::string &id, const std::vector<tripoint_bub_m
     const auto blasted = only_seen( blast );
     const auto shrapneled = only_seen( shrapnel );
     if( blasted.empty() && shrapneled.empty() ) { return; }
-    if( const auto held = feed.held.extract( id ) ) {
+    auto frames = std::vector<presentation_value> {};
+    if( auto held = feed.held.extract( id ) ) {
         feed.announced.insert( id );
-        push( std::move( held.mapped() ) );
+        frames.push_back( std::move( held.mapped() ) );
     }
     // The native pacing: one logical time unit lasts ten animation delays.
     const auto frame = step_ms() * 10;
     if( !blasted.empty() ) {
-        push( { .type = "explosion.blast", .id = id, .cells = path_of( blasted ), .duration_ms = frame } );
+        frames.push_back( { .type = "explosion.blast", .id = id, .cells = path_of( blasted ), .duration_ms = frame } );
     }
     if( !shrapneled.empty() ) {
-        push( { .type = "explosion.shrapnel", .id = id, .cells = path_of( shrapneled ), .duration_ms = frame } );
+        frames.push_back( { .type = "explosion.shrapnel", .id = id, .cells = path_of( shrapneled ), .duration_ms = frame } );
     }
+    // What the step did (damage, terrain, fields) follows the frame that shows it.
+    if( feed.pending.size() >= maximum_pending ) { return; }
+    const auto at = std::min( feed.blast_step_start, feed.pending.size() );
+    feed.pending.insert( feed.pending.begin() + at, std::make_move_iterator( frames.begin() ),
+                         std::make_move_iterator( frames.end() ) );
 }
 
 auto end_blast( const std::string &id ) -> void
@@ -204,6 +220,79 @@ auto record_custom_explosion( const tripoint_bub_ms &at,
             .duration_ms = step_ms() } );
     push( { .type = "explosion.blast", .id = id, .cells = path_of( cells ), .duration_ms = step_ms() } );
     push( { .type = "explosion.ended", .id = id } );
+}
+
+auto record_throw( const throw_options &options ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || !( seen( options.from ) || seen( options.to ) ) ) { return; }
+    feed.thrown_projectile = "projectile:" + std::to_string( ++feed.next_projectile );
+    // The flight that follows is this projectile's, one square per animation step.
+    feed.last_projectile = feed.thrown_projectile;
+    feed.last_bullet_index = -1;
+    push( { .type = "item.thrown", .id = feed.thrown_projectile, .appearance = world::item_appearance( options.thrown ),
+            .origin = world::position_at( options.from ), .target = world::position_at( options.to ),
+            .entity = world::entity_id( options.by ) } );
+}
+
+auto record_landing( const item &landed, const tripoint_bub_ms &at ) -> void
+{
+    auto &feed = state();
+    auto id = std::exchange( feed.thrown_projectile, {} );
+    if( !feed.collecting || !seen( at ) ) { return; }
+    push( { .type = "item.landed", .id = std::move( id ), .at = world::position_at( at ),
+            .appearance = world::item_appearance( landed ) } );
+}
+
+auto record_activation( const activation_options &options ) -> void
+{
+    if( !state().collecting || !seen( options.at ) ) { return; }
+    push( { .type = "item.activated", .at = world::position_at( options.at ),
+            .appearance = world::item_appearance( options.lit ),
+            .turns = options.turns ? std::optional<std::uint64_t>( std::max( 0, *options.turns ) ) : std::nullopt } );
+}
+
+auto record_damage( const damage_options &options ) -> void
+{
+    if( !state().collecting || options.amount <= 0 || !seen( options.hurt.bub_pos() ) ) { return; }
+    push( { .type = "entity.damaged", .entity = world::entity_id( options.hurt ),
+            .part = options.hurt.as_character() ? options.part.id().str() : std::string{},
+            .amount = static_cast<std::uint64_t>( options.amount ) } );
+}
+
+auto terrain_at( const tripoint_bub_ms &at ) -> square_terrain
+{
+    const auto &here = get_map();
+    return { .terrain = here.ter( at ), .furniture = here.furn( at ) };
+}
+
+auto record_terrain_change( const tripoint_bub_ms &at, const square_terrain &before ) -> void
+{
+    if( !state().collecting || !seen( at ) ) { return; }
+    const auto now = terrain_at( at );
+    if( now.terrain != before.terrain ) {
+        push( { .type = "terrain.changed", .at = world::position_at( at ),
+                .appearance = world::terrain_appearance( now.terrain ),
+                .previous = world::terrain_appearance( before.terrain ) } );
+    }
+    if( now.furniture != before.furniture ) {
+        push( { .type = "furniture.changed", .at = world::position_at( at ),
+                .appearance = world::furniture_appearance( now.furniture ),
+                .previous = world::furniture_appearance( before.furniture ) } );
+    }
+}
+
+auto record_field( const tripoint_bub_ms &at, const field_type_id &field ) -> void
+{
+    if( !state().collecting || !seen( at ) ) { return; }
+    push( { .type = "field.changed", .at = world::position_at( at ), .field = field.id().str(),
+            .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ) } );
+}
+
+auto begin_blast_step() -> void
+{
+    auto &feed = state();
+    feed.blast_step_start = feed.pending.size();
 }
 
 auto record_text( const point at, const direction scroll, const std::string &kind,

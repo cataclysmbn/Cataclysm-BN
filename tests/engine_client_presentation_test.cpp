@@ -130,8 +130,9 @@ TEST_CASE("an explosion publishes its start, shaped blast rings and end", "[engi
     CHECK(types.back() == "explosion.ended");
     const auto blasted = std::ranges::count(types, "explosion.blast");
     CHECK(blasted > 1); // one ring per logical time step
+    // The other facts of the blast (damage, fields) belong to no explosion ID.
     CHECK(std::ranges::all_of(facts, [&](const auto& fact) {
-        return fact.id == facts.front().id;
+        return !fact.type.starts_with("explosion.") || fact.id == facts.front().id;
     }));
     CHECK(facts.front().radius == 4);
     CHECK(facts.front().tile == "explosion");

@@ -455,6 +455,23 @@ auto to_json( const event_value &value ) -> json
             data = {{"explosion", fact.id}, {"cells", to_array( fact.cells )}};
         } else if( value.type == "explosion.ended" ) {
             data = {{"explosion", fact.id}};
+        } else if( value.type == "item.activated" ) {
+            data = {{"at", to_json( *fact.at )}, {"look", to_json( *fact.appearance )}};
+            if( fact.turns ) { data["turns"] = *fact.turns; }
+        } else if( value.type == "item.thrown" ) {
+            data = {{"projectile", fact.id}, {"look", to_json( *fact.appearance )}, {"by", fact.entity},
+                {"from", to_json( *fact.origin )}, {"to", to_json( *fact.target )}
+            };
+        } else if( value.type == "item.landed" ) {
+            data = {{"at", to_json( *fact.at )}, {"look", to_json( *fact.appearance )}};
+            if( !fact.id.empty() ) { data["projectile"] = fact.id; }
+        } else if( value.type == "entity.damaged" ) {
+            data = {{"id", fact.entity}, {"amount", *fact.amount}};
+            if( !fact.part.empty() ) { data["part"] = fact.part; }
+        } else if( value.type == "terrain.changed" || value.type == "furniture.changed" ) {
+            data = {{"at", to_json( *fact.at )}, {"from", to_json( *fact.previous )}, {"to", to_json( *fact.appearance )}};
+        } else if( value.type == "field.changed" ) {
+            data = {{"at", to_json( *fact.at )}, {"field", fact.field}, {"intensity", *fact.amount}};
         } else if( value.type == "combat_text.shown" ) {
             data = {{"at", to_json( *fact.at )}, {"segments", json::array()}};
             for( const auto &segment : fact.segments ) {

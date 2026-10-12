@@ -701,6 +701,20 @@ auto color_name( const nc_color &color ) -> std::string
     return color_of( color );
 }
 
+auto entity_id( const Creature &critter ) -> std::string
+{
+    return critter.is_avatar() ? "e:avatar" : ids.id_for( critter );
+}
+
+auto item_appearance( const item &thing ) -> look { return item_look( thing ); }
+
+auto terrain_appearance( const ter_id &id ) -> look
+{
+    return terrain_look( id, id->symbol(), {} );
+}
+
+auto furniture_appearance( const furn_id &id ) -> look { return furniture_look( id, {} ); }
+
 auto set_tint_ids( std::set<std::string> ids ) -> void { tint_ids() = std::move( ids ); }
 
 auto capture_world() -> world_state

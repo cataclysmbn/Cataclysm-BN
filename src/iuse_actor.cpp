@@ -25,6 +25,7 @@
 #include "clothing_mod.h"
 #include "crafting.h"
 #include "creature.h"
+#include "engine_client_presentation.h"
 #include "debug.h"
 #include "dimension_info.h"
 #include "effect.h"
@@ -411,6 +412,11 @@ int iuse_transform::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
     // Update luminosity as object is "added"
     get_map().update_lum( it, true );
     ( active || countdown ) ? it.activate() : it.deactivate();
+    if( it.is_active() ) {
+        engine_client::presentation::record_activation( {
+            .at = p.bub_pos(), .lit = it,
+            .turns = it.get_use( "explosion" ) ? std::optional<int>( it.charges ) : std::nullopt } );
+    }
     it.set_counter( countdown > 0 ? countdown : it.type->countdown_interval );
     // Check for gaining or losing night vision, eye encumbrance effects, clairvoyance from transforming relics, etc.
     p.recalc_sight_limits();
@@ -692,6 +698,7 @@ void explosion_iuse::load( const JsonObject &obj )
 int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos ) const
 {
     if( t ) {
+        engine_client::presentation::record_activation( { .at = pos, .lit = it, .turns = it.charges } );
         if( sound_volume >= 0_dB ) {
             sound_event se;
             se.origin = pos;

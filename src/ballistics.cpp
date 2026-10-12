@@ -19,6 +19,7 @@
 #include "client_render_hooks.h"
 #include "cata_utility.h" // for normal_cdf
 #include "creature.h"
+#include "engine_client_presentation.h"
 #include "damage.h"
 #include "debug.h"
 #include "dispersion.h"
@@ -182,6 +183,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
 
         map &here = get_map();
         if( drop && do_drop ) {
+            engine_client::presentation::record_landing( *drop, attack.end_point );
             here.add_item_or_charges( attack.end_point, std::move( drop ) );
         }
 

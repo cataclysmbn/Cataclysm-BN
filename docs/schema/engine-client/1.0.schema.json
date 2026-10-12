@@ -2792,6 +2792,12 @@
         },
         "look": {
           "$ref": "#/$defs/look"
+        },
+        "turns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Whole turns left on a fuse: published when the fuse is lit and again every turn it burns."
         }
       },
       "required": [

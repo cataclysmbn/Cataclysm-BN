@@ -14,6 +14,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -1298,6 +1299,7 @@ dealt_damage_instance Creature::deal_damage( Creature *source, bodypart_id bp,
     mod_pain( total_pain );
 
     apply_damage( source, source_weapon, source_projectile, bp, total_damage );
+    engine_client::presentation::record_damage( { .hurt = *this, .part = bp, .amount = total_damage } );
     return dealt_dams;
 }
 dealt_damage_instance Creature::deal_damage( Creature *source, bodypart_id bp,

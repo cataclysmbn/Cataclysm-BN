@@ -26,6 +26,7 @@
 #include "dispersion.h"
 #include "enchantments/enchantment.h"
 #include "enchantments/enchantment_vision.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -1978,6 +1979,7 @@ dealt_projectile_attack throw_item( Character &who, const tripoint_bub_ms &targe
     // This should generally have values below ~20*sqrt(skill_lvl)
     const float final_xp_mult = range_factor * damage_factor;
 
+    engine_client::presentation::record_throw( { .by = who, .thrown = thrown, .from = throw_from, .to = target } );
     auto dealt_attack = projectile_attack( proj, throw_from, target, dispersion, &who );
 
     const double missed_by = dealt_attack.missed_by;
