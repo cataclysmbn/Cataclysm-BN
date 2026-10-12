@@ -42,6 +42,8 @@ TEST_CASE(
                     return choose(snapshot, "continue");
                 }
                 case 1: {
+                    // Native clears the login lines before the root menu, so none is a message.
+                    CHECK_FALSE(has_text(snapshot, "Logging into"));
                     REQUIRE(row(snapshot, "entry:0") != snapshot.choices.end());
                     return choose(snapshot, "entry:0");
                 }
