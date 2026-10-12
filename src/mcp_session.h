@@ -9,6 +9,8 @@ auto start_session() -> void;
 
 /// Publishes the state between two steps of a native auto-move to a subscribed client.
 auto publish_step() -> void;
+/// Publishes what a running activity changed, to a client that negotiated credit delivery.
+auto publish_activity() -> void;
 
 /// Requests input providers to stop waiting. The process may call this during orderly shutdown.
 auto request_stop() -> void;

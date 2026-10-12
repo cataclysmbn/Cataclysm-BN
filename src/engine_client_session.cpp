@@ -122,7 +122,7 @@ auto session::capture() const -> std::expected<state_value, error>
                         .world = world_capture_ ? world_capture_() : world_state{} };
 }
 
-auto session::publish_boundary() -> std::expected<void, error>
+auto session::publish_boundary( const bool settles ) -> std::expected<void, error>
 {
     ZoneScopedN( "engine_client_publish_boundary" );
     // Startup language/debug prompts are genuine native input boundaries, not engine readiness.
@@ -165,7 +165,7 @@ auto session::publish_boundary() -> std::expected<void, error>
         if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
     } else { return std::unexpected( published.error() ); }
     publish_messages( command );
-    if( active_ && active_->stage == command_stage::executing ) {
+    if( settles && active_ && active_->stage == command_stage::executing ) {
         const auto &now = stream_->current();
         const auto completed = lifecycle_->complete_at_boundary( now.at, now.value.interaction );
         if( !completed && completed.error() != error::invalid_lifecycle ) {

@@ -39,8 +39,9 @@ class session final : public command_authority
         auto set_world_capture( world_capture_fn capture ) -> void;
         /// World replacement interrupts the old receipt, queues `resync` and installs a new epoch.
         auto replace_world() -> void;
-        /// Capture the live boundary and publish its change as one event.
-        auto publish_boundary() -> std::expected<void, error>;
+        /// Capture the live boundary and publish its change as one event. A step inside a running
+        /// activity (`settles` false) is not an input boundary: the executing command stays open.
+        auto publish_boundary( bool settles = true ) -> std::expected<void, error>;
         /// Atomic with respect to publication: the game thread is the only writer.
         auto current() const -> std::expected<snapshot, error>;
         auto at() const -> std::optional<clock_point>;

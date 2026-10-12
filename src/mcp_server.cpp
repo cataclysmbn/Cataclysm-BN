@@ -526,6 +526,13 @@ auto server::publish_step( std::ostream &out ) -> bool
     return true;
 }
 
+auto server::publish_activity( std::ostream &out ) -> bool
+{
+    if( failed_ || eof_ ) { return false; }
+    if( credits_ && !publish_boundary( out, false ) ) { failed_ = true; eof_ = true; return false; }
+    return true;
+}
+
 auto server::finish( std::ostream &out ) -> bool
 {
     session_.interrupt( engine_client::error::not_ready );
@@ -600,9 +607,9 @@ auto server::finish_pending( std::ostream &out, std::ostream &err ) -> void
     }
 }
 
-auto server::publish_boundary( std::ostream &out ) -> bool
+auto server::publish_boundary( std::ostream &out, const bool settles ) -> bool
 {
-    if( !session_.publish_boundary() ) { session_.interrupt( engine_client::error::not_ready ); return false; }
+    if( !session_.publish_boundary( settles ) ) { session_.interrupt( engine_client::error::not_ready ); return false; }
     return flush_push( out );
 }
 

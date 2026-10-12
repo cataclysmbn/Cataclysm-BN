@@ -24,22 +24,32 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 
 ## Methods
 
-| Method                   | Params                                      | Result                                           |
-| ------------------------ | ------------------------------------------- | ------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?` | `version`, `epoch`, `engine`, `limits`           |
-| `bn.viewport`            | `cols`, `rows`                              | none                                             |
-| `bn.interrupt`           | none                                        | none                                             |
-| `bn.subscribe`           | none                                        | snapshot header; parts and events follow         |
-| `bn.unsubscribe`         | none                                        | none                                             |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`   | `boundary_id`, `total`, `choices` (reads only)   |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`               | `lines` (reads only)                             |
-| `bn.world.cells`         | `epoch`, `min`, `max`                       | `at`, `cells`, `forgotten` (reads only)          |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`              | `command_id`, `stage: "received"`                |
-| `bn.command.result`      | `epoch`, `command_id`                       | latest stage, for recovering a lost notification |
+| Method                   | Params                                                   | Result                                              |
+| ------------------------ | -------------------------------------------------------- | --------------------------------------------------- |
+| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?`, `delivery?` | `version`, `epoch`, `engine`, `limits`, `delivery?` |
+| `bn.viewport`            | `cols`, `rows`                                           | none                                                |
+| `bn.interrupt`           | none                                                     | none                                                |
+| `bn.subscribe`           | none                                                     | snapshot header; parts and events follow            |
+| `bn.unsubscribe`         | none                                                     | none                                                |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                | `boundary_id`, `total`, `choices` (reads only)      |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                            | `lines` (reads only)                                |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                    | `at`, `cells`, `forgotten` (reads only)             |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                           | `command_id`, `stage: "received"`                   |
+| `bn.command.result`      | `epoch`, `command_id`                                    | latest stage, for recovering a lost notification    |
+| `bn.credit`              | `frames`                                                 | `credits` held after the grant                      |
 
 Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`. All but `bn.loading` and `bn.progress` are sent at input boundaries to a subscribed client. `bn.progress` (`{epoch}`) is a heartbeat, sent every 2 seconds to a client that said `bn.hello` while a wait or other activity runs without reaching an input boundary, so silence on the wire means the engine is not working. `bn.loading` plays the same role while the world loads.
 
 Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says what to do next (`hello`, `subscribe`, `retry`).
+
+## Delivery credits
+
+Opt in with `bn.hello` `delivery = {credits}` (1 to 256). The result then carries `delivery = {credits, held_frames, held_bytes}`. Without `delivery` nothing below applies: pushed frames are written at once, at input boundaries and auto-move steps, as before.
+
+- A pushed `bn.events` or `bn.command` frame costs one credit. With none left the engine keeps the frame, in order, and writes it when `bn.credit {frames}` grants more (the result is the credits held, capped at 256; the held frames follow the response). Snapshot parts, `bn.resync`, `bn.loading` and `bn.progress` cost nothing.
+- The engine holds at most `held_frames` frames and `held_bytes` bytes for a client. Past either bound it drops all of them, sends `bn.resync` with reason `backpressure` (`lost_after` is the newest sequence it wrote) and stops pushing until the client calls `bn.subscribe`, whose snapshot replaces what was dropped. A `bn.command` frame that was dropped is recovered with `bn.command.result`.
+- A client with credits also receives a frame after every turn of a running activity (a wait, a craft), before the command completes; `bn.command` `completed` still comes at the input boundary. The stream never waits for the client: a client that stops granting credits costs the engine at most the held bound, and the game, its RNG and its saves are the same as for a client that reads everything or none.
+- Credits are a promise to read: the engine writes a credited frame without waiting for the pipe to drain, so a client must read what it has credits for.
 
 ## One clock
 

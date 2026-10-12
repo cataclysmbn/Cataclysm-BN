@@ -91,6 +91,10 @@ class server
         /// Publish the state between two steps of an auto-move, which reads no input.
         auto publish_step( std::ostream &out ) -> bool;
 
+        /// Publish what a running activity changed, for a client that negotiated credit delivery
+        /// and reads as it goes; any other client sees the activity's result at the next boundary.
+        auto publish_activity( std::ostream &out ) -> bool;
+
         /// Complete a deferred bn.press response using the latest published screen.
         auto finish_pending( std::ostream &out, std::ostream &err ) -> void;
 
@@ -150,7 +154,7 @@ class server
         std::optional<engine_client::jsonrpc::response_frame> deferred_frame_;
         std::optional<engine_client::jsonrpc::envelope_cursor> pending_requests_;
 
-        auto publish_boundary( std::ostream &out ) -> bool;
+        auto publish_boundary( std::ostream &out, bool settles = true ) -> bool;
         /// Turn what the session published into notifications and write them, in order.
         auto flush_push( std::ostream &out ) -> bool;
         /// Turn what the session published into notifications written after the current response.

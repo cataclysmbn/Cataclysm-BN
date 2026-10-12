@@ -37,7 +37,7 @@ class backend
 {
     public:
         virtual ~backend() = default;
-        virtual auto native_window_handle() const -> void* { return nullptr; }
+        virtual auto native_window_handle() const -> void * { return nullptr; }
 
         /// Performs client setup that must happen after selection and before game data loads.
         virtual auto prepare() -> void {}
@@ -52,6 +52,8 @@ class backend
         virtual auto pump_events() -> void = 0;
         /// Called before each step of a native auto-move, which reads no input in between.
         virtual auto step_boundary() -> void {}
+        /// Called after each step of a running activity (a wait, a craft), which reads no input.
+        virtual auto activity_boundary() -> void {}
         virtual auto resize( point cell_size ) -> void = 0;
         virtual auto projected_size() const -> point = 0;
         virtual auto terminal_size() const -> point { return projected_size(); }

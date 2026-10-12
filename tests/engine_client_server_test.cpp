@@ -686,6 +686,46 @@ TEST_CASE("a client that grants no credits is resynced, not buffered", "[engine_
 }
 
 TEST_CASE(
+    "a running activity is published only to a client with credits", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    test.poll(hello + subscribe);
+    test.output.str("");
+    known_cells.push_back(3);
+    CHECK(test.server.publish_activity(test.output));
+    CHECK(test.output.str().empty());
+    CHECK(test.authority.at()->sequence == 0);
+
+    auto credited = fixture{};
+    REQUIRE(credited.authority.publish_boundary());
+    credited.poll(hello_with(R"({"credits":2})") + subscribe);
+    credited.output.str("");
+    known_cells.push_back(4);
+    CHECK(credited.server.publish_activity(credited.output));
+    CHECK(count_of(credited.output.str(), R"("method":"bn.events")") == 1);
+}
+
+TEST_CASE(
+    "a step of a running activity does not complete its command", "[engine_client_delivery]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello_with(R"({"credits":8})") + subscribe
+        + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+    test.run_native_input();
+    known_cells.push_back(3);
+    test.output.str("");
+    CHECK(test.server.publish_activity(test.output));
+    CHECK(contains(test.output.str(), R"("type":"cells.seen")"));
+    CHECK_FALSE(contains(test.output.str(), R"("stage":"completed")"));
+    known_cells.push_back(4);
+    CHECK_FALSE(test.pump(""));
+    CHECK(contains(test.output.str(), R"("stage":"completed")"));
+}
+
+TEST_CASE(
     "the game is identical with a pushing, a stalled and no client", "[engine_client_delivery]") {
     struct run {
         counter sequence;

@@ -433,6 +433,14 @@ auto publish_step() -> void
     }
 }
 
+auto publish_activity() -> void
+{
+    auto &session = state();
+    if( session.transport && session.output ) {
+        static_cast<void>( session.transport->publish_activity( *session.output ) );
+    }
+}
+
 auto request_stop() -> void
 {
     state().stop = true;
