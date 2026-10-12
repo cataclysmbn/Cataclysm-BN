@@ -96,6 +96,8 @@ class server
 
         /// Publish what a running activity changed, for a client that negotiated credit delivery
         /// and reads as it goes; any other client sees the activity's result at the next boundary.
+        /// Publishing a state costs a capture of the world, so the turns in between wait until the
+        /// publications have taken a fifth of the time; the next publication carries their facts.
         auto publish_activity( std::ostream &out ) -> bool;
 
         /// Complete a deferred bn.press response using the latest published screen.
@@ -152,6 +154,8 @@ class server
         std::optional<std::size_t> credits_;
         std::deque<held_frame> held_;
         std::size_t held_bytes_ = 0;
+        /// The earliest time a running activity is published again.
+        std::chrono::steady_clock::time_point next_activity_publish_{};
         /// Newest event sequence written to the client since its snapshot.
         engine_client::counter delivered_through_ = 0;
         std::optional<engine_client::jsonrpc::response_frame> deferred_frame_;
