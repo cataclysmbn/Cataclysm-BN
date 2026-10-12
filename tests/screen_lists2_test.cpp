@@ -29,14 +29,14 @@ using namespace client_screen_test;
 /// of the main loop opens. Explicit instantiation permits the member pointer without changing the
 /// game header.
 struct nearby_lists_tag {
-    friend auto nearby_lists_member(nearby_lists_tag);
+    friend auto nearby_lists_call(nearby_lists_tag) -> void;
 };
 template <auto Member> struct nearby_lists_access {
-    friend auto nearby_lists_member(nearby_lists_tag) { return Member; }
+    friend auto nearby_lists_call(nearby_lists_tag) -> void { (g.get()->*Member)(); }
 };
 template struct nearby_lists_access<&game::list_items_monsters>;
 
-auto open_nearby_lists() -> void { (g.get()->*nearby_lists_member(nearby_lists_tag{}))(); }
+auto open_nearby_lists() -> void { nearby_lists_call(nearby_lists_tag{}); }
 
 } // namespace
 

@@ -335,10 +335,10 @@ auto take_global_snapshot() -> global_snapshot {
             submap_loader.is_simulated(get_map().get_bound_dimension(), get_map().get_abs_sub()),
         .avatar_dimension = get_avatar().get_dimension().str(),
         .active_dimension = g_active_dimension_id.str(),
-        .avatar_name = get_avatar().name,
         .save_tx_active =
             g->get_active_world() != nullptr && g->get_active_world()->is_save_tx_active(),
         .load_requests = submap_loader.request_count(),
+        .avatar_name = get_avatar().name,
         .world_default_options = std::move(options),
     };
 }

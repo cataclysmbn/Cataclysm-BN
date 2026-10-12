@@ -145,12 +145,20 @@ endfunction()
 # are client libraries below; they must never be added to this source set.
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${CATA_CLIENT_SOURCES_TO_REMOVE})
 
+# The Lua bindings are about a third of the engine's object code.  MSVC cannot write a static library
+# of 4 GiB or more (LNK1248), which the engine reaches with embedded debug information, so they are
+# a library of their own.  The two refer to each other, which static libraries allow.
+list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${CATALUA_BINDINGS_SOURCES})
+
 add_library(cataclysm-bn-engine STATIC
     ${CATACLYSM_BN_SOURCES}
     ${CATACLYSM_BN_HEADERS})
 target_include_directories(cataclysm-bn-engine PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(cataclysm-bn-engine PUBLIC nlohmann_json::nlohmann_json)
 setup_common_target_properties(cataclysm-bn-engine)
+add_library(cataclysm-bn-lua-bindings STATIC ${CATALUA_BINDINGS_SOURCES})
+target_link_libraries(cataclysm-bn-lua-bindings PUBLIC cataclysm-bn-engine)
+target_link_libraries(cataclysm-bn-engine PUBLIC cataclysm-bn-lua-bindings)
 if (CATA_SDL)
     link_sdl_core(cataclysm-bn-engine)
 endif ()

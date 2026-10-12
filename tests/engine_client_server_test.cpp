@@ -517,9 +517,10 @@ TEST_CASE("a progress heartbeat reaches only a client that said hello", "[engine
     test.pump(hello);
     test.output.str("");
     test.server.heartbeat(test.output);
-    CHECK(test.output.str()
-          == R"({"jsonrpc":"2.0","method":"bn.progress","params":{"epoch":")"
-                 + test.authority.epoch() + "\"}}\n");
+    const auto expected =
+        R"({"jsonrpc":"2.0","method":"bn.progress","params":{"epoch":")" + test.authority.epoch()
+        + "\"}}\n";
+    CHECK(test.output.str() == expected);
 }
 
 #endif

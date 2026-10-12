@@ -35,10 +35,12 @@ namespace {
 /// Test-only member access reaches the item list, which only the `V` action of the main loop opens.
 /// Explicit instantiation permits the member pointer without changing the game header.
 struct list_items_tag {
-    friend auto list_items_member(list_items_tag);
+    friend auto list_items_call(list_items_tag, const std::vector<map_item_stack>& stacks) -> void;
 };
 template <auto Member> struct list_items_access {
-    friend auto list_items_member(list_items_tag) { return Member; }
+    friend auto list_items_call(list_items_tag, const std::vector<map_item_stack>& stacks) -> void {
+        static_cast<void>((g.get()->*Member)(stacks));
+    }
 };
 template struct list_items_access<&game::list_items>;
 
@@ -171,7 +173,7 @@ TEST_CASE(
     const auto guard = screen_guard{};
     auto stage = 0;
     open_screen(
-        [&] { static_cast<void>((g.get()->*list_items_member(list_items_tag{}))(stacks)); },
+        [&] { list_items_call(list_items_tag{}, stacks); },
         [&](const auto& snapshot) {
             switch (stage++) {
                 case 0: {
