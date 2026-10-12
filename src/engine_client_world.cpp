@@ -480,12 +480,18 @@ class entity_ids
     public:
         auto id_for( const Creature &critter ) -> std::string {
             const auto owner = g->shared_from( critter );
+            if( !owner ) { return {}; }
             const auto found = std::ranges::find_if( entries_, [&]( const entry & e ) {
                 return !e.owner.owner_before( owner ) && !owner.owner_before( e.owner );
             } );
             if( found != entries_.end() ) { return found->id; }
             entries_.push_back( { owner, "e:" + std::to_string( next_++ ) } );
             return entries_.back().id;
+        }
+        auto alive( const std::string &id ) const -> bool {
+            const auto found = std::ranges::find( entries_, id, &entry::id );
+            const auto owner = found == entries_.end() ? nullptr : found->owner.lock();
+            return owner && !owner->is_dead_state();
         }
         auto forget_expired() -> void {
             std::erase_if( entries_, []( const entry & e ) { return e.owner.expired(); } );
@@ -580,16 +586,23 @@ auto traits_of( const Creature &critter ) -> std::map<std::string, std::vector<s
     return result;
 }
 
+/// The creatures a snapshot discloses: the monsters and NPCs the avatar sees.
+auto disclosed_creatures( const avatar &you ) -> std::vector<const Creature *>
+{
+    const auto all = g->get_creatures_if( []( const Creature & ) { return true; } );
+    return all | std::views::filter( [&]( const Creature * critter ) {
+        return critter != &you && you.sees( *critter ) && ( critter->as_monster() || critter->as_npc() );
+    } ) | std::ranges::to<std::vector<const Creature *>>();
+}
+
 auto capture_entities( const map &here, const avatar &you, const std::string &dimension )
 -> std::map<std::string, entity>
 {
     auto entities = std::map<std::string, entity> {};
     ids.forget_expired();
-    for( const auto *critter : g->get_creatures_if( []( const Creature & ) { return true; } ) ) {
-        if( critter == &you || !you.sees( *critter ) ) { continue; }
+    for( const auto *critter : disclosed_creatures( you ) ) {
         const auto *monster = critter->as_monster();
         const auto *person = critter->as_npc();
-        if( monster == nullptr && person == nullptr ) { continue; }
         const auto type = monster != nullptr ? monster->type->id.str() : person->myclass.str();
         auto id = ids.id_for( *critter );
         auto appearance = creature_look( *critter, monster != nullptr ? "monster" : "npc", type );
@@ -705,6 +718,17 @@ auto entity_id( const Creature &critter ) -> std::string
 {
     return critter.is_avatar() ? "e:avatar" : ids.id_for( critter );
 }
+
+auto disclosed_entity_ids() -> std::set<std::string>
+{
+    if( !g ) { return {}; }
+    const auto seen = disclosed_creatures( get_avatar() );
+    return seen | std::views::transform( []( const Creature * critter ) { return entity_id( *critter ); } )
+    |
+    std::ranges::to<std::set>();
+}
+
+auto entity_alive( const std::string &id ) -> bool { return ids.alive( id ); }
 
 auto item_appearance( const item &thing ) -> look { return item_look( thing ); }
 

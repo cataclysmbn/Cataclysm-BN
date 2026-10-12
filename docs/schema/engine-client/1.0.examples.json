@@ -2473,6 +2473,287 @@
           ]
         }
       }
+    },
+    {
+      "name": "projectile hit on a creature, then the damage it did",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "21",
+            "revision": "9",
+            "type": "projectile.moved",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:3",
+              "path": [
+                {
+                  "dim": "",
+                  "x": 63,
+                  "y": 4,
+                  "z": 0
+                }
+              ],
+              "look": {
+                "kind": "projectile",
+                "id": null,
+                "glyph": "*",
+                "color": "red"
+              }
+            },
+            "display": {
+              "duration_ms": 20
+            }
+          },
+          {
+            "sequence": "22",
+            "revision": "9",
+            "type": "projectile.hit",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:3",
+              "at": {
+                "dim": "",
+                "x": 63,
+                "y": 4,
+                "z": 0
+              },
+              "entity": "e:7"
+            }
+          },
+          {
+            "sequence": "23",
+            "revision": "9",
+            "type": "entity.damaged",
+            "command": "command:12",
+            "data": {
+              "id": "e:7",
+              "amount": 18
+            }
+          },
+          {
+            "sequence": "24",
+            "revision": "9",
+            "type": "projectile.hit",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:4",
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 4,
+                "z": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sound heard with a marker and one from a source in view",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "31",
+            "revision": "12",
+            "type": "sound.heard",
+            "command": "command:14",
+            "data": {
+              "text": "a loud explosion",
+              "volume": 74,
+              "marker": {
+                "dim": "",
+                "x": 70,
+                "y": 61,
+                "z": 0
+              }
+            }
+          },
+          {
+            "sequence": "32",
+            "revision": "12",
+            "type": "sound.heard",
+            "command": "command:14",
+            "data": {
+              "text": "Tick.",
+              "volume": 52
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "creature steps, is pushed, leaves sight, then dies",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "15",
+            "type": "entity.moved",
+            "command": "command:16",
+            "data": {
+              "id": "e:7",
+              "from": {
+                "dim": "",
+                "x": 66,
+                "y": 4,
+                "z": 0
+              },
+              "to": {
+                "dim": "",
+                "x": 65,
+                "y": 4,
+                "z": 0
+              },
+              "mode": "walk"
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "15",
+            "type": "entity.moved",
+            "command": "command:16",
+            "data": {
+              "id": "e:8",
+              "to": {
+                "dim": "",
+                "x": 64,
+                "y": 5,
+                "z": 0
+              },
+              "mode": "propelled"
+            }
+          },
+          {
+            "sequence": "43",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:9",
+              "reason": "lost_sight"
+            }
+          },
+          {
+            "sequence": "44",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:7",
+              "reason": "died"
+            }
+          },
+          {
+            "sequence": "45",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:10",
+              "reason": "removed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "door bashed, furniture moved and a field fading outside an explosion",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "51",
+            "revision": "18",
+            "type": "terrain.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 64,
+                "y": 5,
+                "z": 0
+              },
+              "from": {
+                "kind": "terrain",
+                "id": "t_door_c",
+                "glyph": "+",
+                "color": "brown"
+              },
+              "to": {
+                "kind": "terrain",
+                "id": "t_door_b",
+                "glyph": "&",
+                "color": "brown"
+              }
+            }
+          },
+          {
+            "sequence": "52",
+            "revision": "18",
+            "type": "furniture.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 65,
+                "y": 5,
+                "z": 0
+              },
+              "from": {
+                "kind": "furniture",
+                "id": "f_chair",
+                "glyph": "h",
+                "color": "brown"
+              },
+              "to": {
+                "kind": "furniture",
+                "id": "f_null",
+                "glyph": " ",
+                "color": "white"
+              }
+            }
+          },
+          {
+            "sequence": "53",
+            "revision": "18",
+            "type": "field.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 5,
+                "z": 0
+              },
+              "field": "fd_smoke",
+              "intensity": 2
+            }
+          },
+          {
+            "sequence": "54",
+            "revision": "18",
+            "type": "field.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 5,
+                "z": 0
+              },
+              "field": "fd_smoke",
+              "intensity": 0
+            }
+          }
+        ]
+      }
     }
   ],
   "invalid": [

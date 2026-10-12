@@ -18,6 +18,7 @@
 #include "options_helpers.h"
 #include "ranged.h"
 #include "rng.h"
+#include "sounds.h"
 #include "state_helpers.h"
 #include "weather/weather.h"
 
@@ -100,6 +101,7 @@ auto throw_grenade(const presentation_mode mode, const std::string& start) -> gr
     calendar::turn = calendar::turn_zero + 12_hours;
     get_weather().weather_id = weather_type_id("clear");
     g->reset_light_level();
+    sounds::reset_sounds();
     get_avatar().setpos(you_at);
     auto& here = get_map();
     here.ter_set(landing + tripoint_south, ter_id("t_door_c"));
@@ -126,6 +128,8 @@ auto throw_grenade(const presentation_mode mode, const std::string& start) -> gr
         calendar::turn += 1_turns;
         here.process_items();
         explosion_handler::get_explosion_queue().execute();
+        here.batch_flood_fill_sounds();
+        sounds::process_sound_markers(&you);
     }
     auto result = grenade_run{.facts = presentation::take()};
     presentation::collect(false);
@@ -209,6 +213,14 @@ TEST_CASE("a thrown grenade publishes its events in causal order", "[engine_clie
     CHECK(run.facts[door].appearance->id != run.facts[door].previous->id);
     CHECK(run.facts[door].at == engine_client::world::position_at(landing + tripoint_south));
     CHECK(run.facts[smoke].field == "fd_smoke");
+    // What the blast makes is heard as the avatar hears it; a fuse of 20 dB is under the ambient
+    // noise.
+    auto heard = std::vector<std::string>{};
+    for (const auto& fact : run.facts) {
+        if (fact.type == "sound.heard") { heard.push_back(fact.text); }
+    }
+    CAPTURE(heard);
+    CHECK(first_of(types, "sound.heard", bang) < types.size());
 }
 
 TEST_CASE("a grenade out of sight publishes none of its events", "[engine_client_grenade]") {

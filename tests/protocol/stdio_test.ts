@@ -1744,6 +1744,16 @@ Deno.test({
         fuse.every((turns, i) => i === 0 || turns === fuse[i - 1] || turns === fuse[i - 1] - 1),
       )
       assertEquals(types.filter((type) => type === "explosion.ended").length, 1)
+      // The blast is heard as the native hearing rules decide; a square that changed names both looks.
+      const heard = told.filter((event, at) => event.type === "sound.heard" && at > bang)
+      assert(heard.length > 0, `the blast is not heard: ${types}`)
+      for (const event of heard) {
+        assertEquals(typeof event.data.text, "string")
+        assert(Number.isInteger(event.data.volume) && event.data.volume > 0)
+      }
+      for (const event of told.filter((event) => event.type === "terrain.changed")) {
+        assert(event.data.at && event.data.to, "a terrain change names its square and its new look")
+      }
 
       // The engine's own recording of the same facts, by sequence, equals what the client received.
       const recorded = (await Deno.readTextFile(recording)).split("\n").filter((line) => line)

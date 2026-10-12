@@ -16,6 +16,7 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "effect.h"
+#include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -521,8 +522,10 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 
     const auto wandering = is_wandering();
+    const auto from = bub_pos();
     g->update_zombie_pos( *this, p );
     pos_abs = p;
+    engine_client::presentation::record_move( { .mover = *this, .from = from, .to = bub_pos() } );
     if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
@@ -2744,13 +2747,14 @@ void monster::set_hp( const int hp )
 }
 
 void monster::apply_damage( Creature *source, item *source_weapon, item *source_projectile,
-                            bodypart_id /*bp*/,
+                            bodypart_id bp,
                             int dam,
                             const bool /*bypass_med*/ )
 {
     if( is_dead_state() ) {
         return;
     }
+    engine_client::presentation::record_damage( { .hurt = *this, .part = bp, .amount = dam } );
     hp -= dam;
     if( hp < 1 ) {
         set_killer( source );
@@ -3701,6 +3705,8 @@ void monster::die( Creature *nkiller )
         mounted_player->forced_dismount();
     }
     g->set_critter_died();
+    // The creature tracker stops finding a dead monster, and with it the ID the client knows it by.
+    engine_client::presentation::record_death( *this );
     dead = true;
     set_killer( nkiller );
     if( !death_drops ) {

@@ -11,6 +11,8 @@
 #include "avatar.h"
 #include "game.h"
 #include "map/map.h"
+#include "map/submap.h"
+#include "game_constants.h"
 #include "messages.h"
 #include "output.h"
 #include "options.h"
@@ -28,9 +30,18 @@ struct feed_state {
     std::uint64_t next_explosion = 0;
     int last_bullet_index = -1;
     std::string last_projectile = {};
-    /// The projectile of the item being thrown, until it lands.
+    /// The projectile of the item being thrown, until its attack begins.
     std::string thrown_projectile = {};
+    /// The projectile of the attack in progress, and where its facts begin.
+    std::string current_projectile = {};
+    std::optional<std::size_t> flight_start = std::nullopt;
     std::size_t blast_step_start = 0;
+    /// Busy facts pushed since the last `take`, against `maximum_ambient_facts`.
+    std::size_t ambient = 0;
+    /// Live `field_watch`es: the map calls they cover are not told one by one.
+    int watching = 0;
+    /// The creatures the client was last told it sees.
+    std::set<std::string> known = {};
     std::vector<presentation_value> pending = {};
     /// Blasts whose start is held back until something of them is seen, and those already announced.
     std::map<std::string, presentation_value> held = {};
@@ -47,6 +58,14 @@ auto push( presentation_value fact ) -> void
     auto &feed = state();
     if( feed.pending.size() < maximum_pending ) { feed.pending.push_back( std::move( fact ) ); }
 }
+/// A fact of a busy kind: a crowded turn keeps the first `maximum_ambient_facts` of them.
+auto push_ambient( presentation_value fact ) -> void
+{
+    auto &feed = state();
+    if( feed.ambient >= maximum_ambient_facts ) { return; }
+    ++feed.ambient;
+    push( std::move( fact ) );
+}
 /// The native game draws animations only with ANIMATIONS on; only tests force them on.
 auto animated() -> bool
 {
@@ -57,11 +76,14 @@ auto step_ms() -> std::uint64_t
 {
     return static_cast<std::uint64_t>( std::max( 0, get_option<int>( "ANIMATION_DELAY" ) ) );
 }
-/// A shot flies under the ID of the throw that launched it, else under a new one.
+auto new_projectile( feed_state &feed ) -> std::string
+{
+    return "projectile:" + std::to_string( ++feed.next_projectile );
+}
+/// A shot flies under the ID of the attack in progress, else under a new one.
 auto shot_id( feed_state &feed ) -> std::string
 {
-    return feed.thrown_projectile.empty() ? "projectile:" + std::to_string( ++feed.next_projectile ) :
-           feed.thrown_projectile;
+    return feed.current_projectile.empty() ? new_projectile( feed ) : feed.current_projectile;
 }
 auto bullet_look( const char bullet, const std::string &custom_sprite ) -> look
 {
@@ -85,17 +107,34 @@ auto path_of( const std::vector<tripoint_bub_ms> &points ) -> std::vector<positi
 
 } // namespace
 
+auto collecting() -> bool { return state().collecting; }
+
 auto collect( const bool on ) -> void
 {
     auto &feed = state();
     feed.collecting = on;
-    if( !on ) { feed.pending.clear(); }
+    if( !on ) {
+        feed.pending.clear();
+        feed.known.clear();
+    }
 }
 
 auto take() -> std::vector<presentation_value>
 {
-    state().thrown_projectile.clear();
-    return std::exchange( state().pending, {} );
+    auto &feed = state();
+    feed.thrown_projectile.clear();
+    feed.flight_start.reset();
+    feed.ambient = 0;
+    if( feed.collecting ) {
+        // Creatures that dropped out of the disclosed set without a step or a death of their own.
+        auto now = world::disclosed_entity_ids();
+        for( const auto &id : feed.known ) {
+            if( now.contains( id ) ) { continue; }
+            push( { .type = "entity.gone", .entity = id, .kind = world::entity_alive( id ) ? "lost_sight" : "removed" } );
+        }
+        feed.known = std::move( now );
+    }
+    return std::exchange( feed.pending, {} );
 }
 
 auto record_bullet( const bullet_step &step ) -> void
@@ -137,9 +176,13 @@ auto record_line( const draw_sprite_line_options &options ) -> void
     std::erase( points, tripoint_bub_ms::zero() );
     points = only_seen( points );
     if( points.empty() ) { return; }
-    push( { .type = "projectile.moved", .id = shot_id( feed ),
-            .cells = path_of( points ), .appearance = bullet_look( '*', options.sprite ),
-            .duration_ms = step_ms() } );
+    // The line is drawn once the attack is over; it flew before whatever the attack hit.
+    auto flight = presentation_value{ .type = "projectile.moved", .id = shot_id( feed ),
+                                      .cells = path_of( points ), .appearance = bullet_look( '*', options.sprite ),
+                                      .duration_ms = step_ms() };
+    if( !feed.flight_start || feed.pending.size() >= maximum_pending ) { return push( std::move( flight ) ); }
+    feed.pending.insert( feed.pending.begin() + std::min( *feed.flight_start, feed.pending.size() ),
+                         std::move( flight ) );
 }
 
 auto begin_blast( const tripoint_bub_ms &at, const int radius, const bool fiery ) -> std::string
@@ -226,21 +269,52 @@ auto record_throw( const throw_options &options ) -> void
 {
     auto &feed = state();
     if( !feed.collecting || !( seen( options.from ) || seen( options.to ) ) ) { return; }
-    feed.thrown_projectile = "projectile:" + std::to_string( ++feed.next_projectile );
-    // The flight that follows is this projectile's, one square per animation step.
-    feed.last_projectile = feed.thrown_projectile;
-    feed.last_bullet_index = -1;
+    auto by = world::entity_id( options.by );
+    if( by.empty() ) { return; }
+    feed.thrown_projectile = new_projectile( feed );
     push( { .type = "item.thrown", .id = feed.thrown_projectile, .appearance = world::item_appearance( options.thrown ),
             .origin = world::position_at( options.from ), .target = world::position_at( options.to ),
-            .entity = world::entity_id( options.by ) } );
+            .entity = std::move( by ) } );
+}
+
+flight_scope::flight_scope() : outer_id_( state().current_projectile ),
+    outer_start_( state().flight_start )
+{
+    auto &feed = state();
+    if( !feed.collecting ) { return; }
+    // A throw has minted the ID of its flight already.
+    feed.current_projectile = feed.thrown_projectile.empty() ? new_projectile( feed ) :
+                              std::exchange( feed.thrown_projectile, {} );
+    feed.last_projectile = feed.current_projectile;
+    feed.last_bullet_index = -1;
+    feed.flight_start = feed.pending.size();
+}
+
+flight_scope::~flight_scope()
+{
+    auto &feed = state();
+    feed.current_projectile = std::move( outer_id_ );
+    feed.flight_start = outer_start_;
+}
+
+auto mark() -> std::size_t { return state().pending.size(); }
+
+auto record_hit( const hit_options &options ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || !seen( options.at ) || feed.pending.size() >= maximum_pending ) { return; }
+    const auto disclosed = options.struck != nullptr && get_avatar().sees( *options.struck );
+    feed.pending.insert( feed.pending.begin() + std::min( options.mark, feed.pending.size() ), {
+        .type = "projectile.hit", .id = feed.current_projectile, .at = world::position_at( options.at ),
+        .entity = disclosed ? world::entity_id( *options.struck ) : std::string{}
+    } );
 }
 
 auto record_landing( const item &landed, const tripoint_bub_ms &at ) -> void
 {
     auto &feed = state();
-    auto id = std::exchange( feed.thrown_projectile, {} );
     if( !feed.collecting || !seen( at ) ) { return; }
-    push( { .type = "item.landed", .id = std::move( id ), .at = world::position_at( at ),
+    push( { .type = "item.landed", .id = feed.current_projectile, .at = world::position_at( at ),
             .appearance = world::item_appearance( landed ) } );
 }
 
@@ -252,41 +326,141 @@ auto record_activation( const activation_options &options ) -> void
             .turns = options.turns ? std::optional<std::uint64_t>( std::max( 0, *options.turns ) ) : std::nullopt } );
 }
 
+auto record_sound( const sound_options &options ) -> void
+{
+    if( !state().collecting ) { return; }
+    push( { .type = "sound.heard", .at = options.marker ? std::optional( world::position_at( *options.marker ) ) : std::nullopt,
+            .amount = static_cast<std::uint64_t>( std::max( 0, options.volume ) ), .text = options.text } );
+}
+
+auto record_move( const move_options &options ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || feed.ambient >= maximum_ambient_facts || options.mover.is_avatar() ) { return; }
+    const auto left = get_map().inbounds( options.from ) && seen( options.from );
+    const auto arrived = get_avatar().sees( options.mover );
+    if( !left && !arrived ) { return; }
+    auto id = world::entity_id( options.mover );
+    if( id.empty() ) { return; }
+    if( arrived ) {
+        push_ambient( { .type = "entity.moved", .at = world::position_at( options.to ),
+                        .origin = left ? std::optional( world::position_at( options.from ) ) : std::nullopt,
+                        .entity = std::move( id ), .kind = rl_dist( options.from, options.to ) <= 1 ? "walk" : "propelled" } );
+    } else {
+        feed.known.erase( id );
+        push_ambient( { .type = "entity.gone", .entity = std::move( id ), .kind = "lost_sight" } );
+    }
+}
+
+auto record_death( const Creature &dead ) -> void
+{
+    auto &feed = state();
+    if( !feed.collecting || dead.is_avatar() || !seen( dead.bub_pos() ) ) { return; }
+    auto id = world::entity_id( dead );
+    if( id.empty() ) { return; }
+    feed.known.erase( id );
+    push( { .type = "entity.gone", .entity = std::move( id ), .kind = "died" } );
+}
+
 auto record_damage( const damage_options &options ) -> void
 {
     if( !state().collecting || options.amount <= 0 || !seen( options.hurt.bub_pos() ) ) { return; }
-    push( { .type = "entity.damaged", .entity = world::entity_id( options.hurt ),
+    auto hurt = world::entity_id( options.hurt );
+    if( hurt.empty() ) { return; }
+    push( { .type = "entity.damaged", .entity = std::move( hurt ),
             .part = options.hurt.as_character() ? options.part.id().str() : std::string{},
             .amount = static_cast<std::uint64_t>( options.amount ) } );
 }
 
-auto terrain_at( const tripoint_bub_ms &at ) -> square_terrain
+auto record_terrain_change( const tripoint_bub_ms &at, const ter_id &from,
+                            const ter_id &to ) -> void
 {
-    const auto &here = get_map();
-    return { .terrain = here.ter( at ), .furniture = here.furn( at ) };
+    auto &feed = state();
+    if( !feed.collecting || feed.ambient >= maximum_ambient_facts || !seen( at ) ) { return; }
+    push_ambient( { .type = "terrain.changed", .at = world::position_at( at ),
+                    .appearance = world::terrain_appearance( to ), .previous = world::terrain_appearance( from ) } );
 }
 
-auto record_terrain_change( const tripoint_bub_ms &at, const square_terrain &before ) -> void
+auto record_furniture_change( const tripoint_bub_ms &at, const furn_id &from,
+                              const furn_id &to ) -> void
 {
-    if( !state().collecting || !seen( at ) ) { return; }
-    const auto now = terrain_at( at );
-    if( now.terrain != before.terrain ) {
-        push( { .type = "terrain.changed", .at = world::position_at( at ),
-                .appearance = world::terrain_appearance( now.terrain ),
-                .previous = world::terrain_appearance( before.terrain ) } );
-    }
-    if( now.furniture != before.furniture ) {
-        push( { .type = "furniture.changed", .at = world::position_at( at ),
-                .appearance = world::furniture_appearance( now.furniture ),
-                .previous = world::furniture_appearance( before.furniture ) } );
-    }
+    auto &feed = state();
+    if( !feed.collecting || feed.ambient >= maximum_ambient_facts || !seen( at ) ) { return; }
+    push_ambient( { .type = "furniture.changed", .at = world::position_at( at ),
+                    .appearance = world::furniture_appearance( to ), .previous = world::furniture_appearance( from ) } );
 }
 
 auto record_field( const tripoint_bub_ms &at, const field_type_id &field ) -> void
 {
-    if( !state().collecting || !seen( at ) ) { return; }
-    push( { .type = "field.changed", .at = world::position_at( at ), .field = field.id().str(),
-            .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ) } );
+    auto &feed = state();
+    if( !feed.collecting || feed.watching > 0 || feed.ambient >= maximum_ambient_facts ||
+        !seen( at ) ) { return; }
+    push_ambient( { .type = "field.changed", .at = world::position_at( at ), .field = field.id().str(),
+                    .amount = static_cast<std::uint64_t>( std::max( 0, get_map().get_field_intensity( at, field ) ) ) } );
+}
+
+namespace
+{
+using field_cells = std::map<tripoint_bub_ms, std::map<field_type_id, int>>;
+/// The fields on the squares the avatar sees on its level, by square and type, with their intensity.
+auto seen_fields() -> field_cells
+{
+    auto cells = field_cells{};
+    const auto &here = get_map();
+    const auto z = get_avatar().bub_pos().z();
+    for( const auto x : std::views::iota( 0, here.getmapsize() ) ) {
+        for( const auto y : std::views::iota( 0, here.getmapsize() ) ) {
+            const auto origin = tripoint_bub_ms( x * SEEX, y * SEEY, z );
+            const auto *sm = here.get_submap_at( origin );
+            if( sm == nullptr || sm->field_count == 0 ) { continue; }
+            for( const auto &local : sm->field_cache ) {
+                const auto at = origin + tripoint_rel_ms( local.x(), local.y(), 0 );
+                if( !seen( at ) ) { continue; }
+                for( const auto &[type, entry] : sm->get_field( local ) ) {
+                    if( entry.get_field_intensity() > 0 ) { cells[at][type] = entry.get_field_intensity(); }
+                }
+            }
+        }
+    }
+    return cells;
+}
+} // namespace
+
+field_watch::field_watch()
+{
+    auto &feed = state();
+    if( !feed.collecting ) { return; }
+    ++feed.watching;
+    before_ = seen_fields();
+}
+
+field_watch::~field_watch()
+{
+    if( !before_ ) { return; }
+    --state().watching;
+    const auto after = seen_fields();
+    const auto intensity_of = []( const field_cells & cells, const tripoint_bub_ms & at,
+    const field_type_id & type ) {
+        const auto cell = cells.find( at );
+        if( cell == cells.end() ) { return 0; }
+        const auto field = cell->second.find( type );
+        return field == cell->second.end() ? 0 : field->second;
+    };
+    const auto tell = [&]( const tripoint_bub_ms & at, const field_type_id & type,
+    const int intensity ) {
+        push_ambient( { .type = "field.changed", .at = world::position_at( at ), .field = type.id().str(),
+                        .amount = static_cast<std::uint64_t>( intensity ) } );
+    };
+    for( const auto &[at, fields] : after ) {
+        for( const auto &[type, now] : fields ) {
+            if( now != intensity_of( *before_, at, type ) ) { tell( at, type, now ); }
+        }
+    }
+    for( const auto &[at, fields] : *before_ ) {
+        for( const auto &[type, was] : fields ) {
+            if( intensity_of( after, at, type ) == 0 ) { tell( at, type, 0 ); }
+        }
+    }
 }
 
 auto begin_blast_step() -> void

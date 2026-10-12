@@ -7,6 +7,7 @@
 #include "type_id.h"
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,12 +27,12 @@ struct text_segment {
 /// One native animation fact: what the Tiles and curses renderers would draw, before any renderer.
 /// Transient: it changes no state.
 struct presentation_value {
-    /// `projectile.moved`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
+    /// `projectile.moved`, `projectile.hit`, `explosion.started`, `explosion.blast`, `explosion.shrapnel`, `explosion.ended`,
     /// `combat_text.shown`, `item.activated`, `item.thrown`, `item.landed`, `entity.damaged`,
-    /// `terrain.changed`, `furniture.changed` or `field.changed`.
+    /// `terrain.changed`, `furniture.changed`, `field.changed`, `sound.heard`, `entity.moved` or `entity.gone`.
     std::string type = {};
     /// Opaque ID of the projectile or explosion; empty for combat text. An `item.landed` of an item
-    /// nobody threw has none.
+    /// no attack launched has none.
     std::string id = {};
     /// The path of a projectile or the squares of one blast ring, in drawing order.
     std::vector<position> cells = {};
@@ -40,14 +41,19 @@ struct presentation_value {
     std::optional<look> appearance = std::nullopt;
     /// `terrain.changed` and `furniture.changed`: what the square held before.
     std::optional<look> previous = std::nullopt;
-    /// `item.thrown`: where the item left from and where it was aimed.
+    /// `item.thrown` and `entity.moved`: where the item or creature left from (`entity.moved` leaves it out
+    /// when the avatar did not see that square) and, for a throw, where it was aimed.
     std::optional<position> origin = std::nullopt;
     std::optional<position> target = std::nullopt;
-    /// Opaque ID of the creature that threw (`item.thrown`) or was hurt (`entity.damaged`).
+    /// Opaque ID of the creature that threw (`item.thrown`), was hit (`projectile.hit`, when the avatar sees it) or was hurt
+    /// (`entity.damaged`).
     std::string entity = {};
     /// `entity.damaged`: the body part hit, when the creature has parts.
     std::string part = {};
+    /// The damage of `entity.damaged`, the intensity of `field.changed`, the decibels of `sound.heard`.
     std::optional<std::uint64_t> amount = std::nullopt;
+    /// `sound.heard`: what the avatar hears.
+    std::string text = {};
     /// `field.changed`: the field type, with `amount` its intensity afterwards (0 when gone).
     std::string field = {};
     /// `item.activated`: whole turns left on a fuse.
@@ -59,7 +65,8 @@ struct presentation_value {
     std::vector<text_segment> segments = {};
     /// Combat text only: the unit step the native text scrolls by each animation step.
     std::optional<position> scroll = std::nullopt;
-    /// Combat text only: `hp` for a creature's hit-point readout, which stays beside it.
+    /// Combat text: `hp` for a creature's hit-point readout, which stays beside it. `entity.moved`: `walk` for a
+    /// step to a neighboring square, `propelled` for any longer move. `entity.gone`: `lost_sight`, `died` or `removed`.
     std::string kind = {};
     /// How long the native animation holds this fact, from the ANIMATION_DELAY option.
     std::uint64_t duration_ms = 0;
@@ -73,7 +80,13 @@ struct presentation_value {
 namespace engine_client::presentation
 {
 
+/// The most facts of the busy kinds (creatures moving, terrain and fields changing) one `take` holds. The
+/// state delta of the boundary carries what the rest changed.
+constexpr auto maximum_ambient_facts = std::size_t { 256 };
+
 auto collect( bool on ) -> void;
+/// Whether a client is listening: the cheap test before work done only for a client.
+auto collecting() -> bool;
 /// Everything recorded since the last call, in the order the game produced it.
 auto take() -> std::vector<presentation_value>;
 
@@ -108,6 +121,30 @@ struct throw_options {
 };
 /// The item leaves the thrower's hand. The projectile ID it mints is the one the flight and the landing carry.
 auto record_throw( const throw_options &options ) -> void;
+/// One projectile attack. Its throw, flight, hits and landing share one ID; a nested attack gives the outer
+/// one back when it ends.
+class flight_scope
+{
+    public:
+        flight_scope();
+        ~flight_scope();
+        flight_scope( const flight_scope & ) = delete;
+        auto operator=( const flight_scope & ) -> flight_scope & = delete; // *NOPAD*
+    private:
+        std::string outer_id_;
+        std::optional<std::size_t> outer_start_;
+};
+/// How many facts are pending now: where the facts an event causes begin.
+auto mark() -> std::size_t;
+struct hit_options {
+    tripoint_bub_ms at;
+    /// The creature struck; none for an obstacle.
+    const Creature *struck = nullptr;
+    /// The `mark` taken before the hit did anything: the hit goes before its effects.
+    std::size_t mark = 0;
+};
+/// The projectile of the current `flight_scope` strikes a creature or an obstacle.
+auto record_hit( const hit_options &options ) -> void;
 /// A thrown or fired item comes to rest.
 auto record_landing( const item &landed, const tripoint_bub_ms &at ) -> void;
 struct activation_options {
@@ -117,21 +154,52 @@ struct activation_options {
     std::optional<int> turns = std::nullopt;
 };
 auto record_activation( const activation_options &options ) -> void;
+struct sound_options {
+    /// What the avatar makes of the sound, as the native message names it.
+    const std::string &text;
+    int volume = 0;
+    /// The square the native game marks the sound on: never the source, and none when the avatar sees it.
+    std::optional<tripoint_bub_ms> marker = std::nullopt;
+};
+/// A sound reached the avatar, past its hearing, sleep and deafness.
+auto record_sound( const sound_options &options ) -> void;
+struct move_options {
+    const Creature &mover;
+    tripoint_bub_ms from;
+    tripoint_bub_ms to;
+};
+/// A creature stepped or was moved: `entity.moved` where the avatar sees it arrive, `entity.gone` where it left
+/// the avatar's sight.
+auto record_move( const move_options &options ) -> void;
+/// A creature the avatar sees died.
+auto record_death( const Creature &dead ) -> void;
 struct damage_options {
     const Creature &hurt;
     bodypart_id part;
     int amount = 0;
 };
 auto record_damage( const damage_options &options ) -> void;
-struct square_terrain {
-    ter_id terrain;
-    furn_id furniture;
-};
-auto terrain_at( const tripoint_bub_ms &at ) -> square_terrain;
-/// `terrain.changed` and `furniture.changed` for what the square holds now, against `before`.
-auto record_terrain_change( const tripoint_bub_ms &at, const square_terrain &before ) -> void;
+/// The map boundary (src/map/mapbuffer.cpp) tells what changed on the avatar's level: a terrain, a
+/// furniture, or a field a map call added, removed or set. The avatar must see the square.
+auto record_terrain_change( const tripoint_bub_ms &at, const ter_id &from,
+                            const ter_id &to ) -> void;
+auto record_furniture_change( const tripoint_bub_ms &at, const furn_id &from,
+                              const furn_id &to ) -> void;
 /// `field.changed` with the intensity the square holds of `field` now (0 when it is gone).
 auto record_field( const tripoint_bub_ms &at, const field_type_id &field ) -> void;
+/// Fields are also changed in place by the field turn (spreading, decay, drift), which no map call sees.
+/// While a watch lives, the fields the avatar sees are compared at its start and end instead, and the
+/// map calls in between are not told one by one.
+class field_watch
+{
+    public:
+        field_watch();
+        ~field_watch();
+        field_watch( const field_watch & ) = delete;
+        auto operator=( const field_watch & ) -> field_watch & = delete; // *NOPAD*
+    private:
+        std::optional<std::map<tripoint_bub_ms, std::map<field_type_id, int>>> before_;
+};
 /// Marks where the facts of one explosion step begin: the blast frame the step ends with goes before them.
 auto begin_blast_step() -> void;
 auto record_text( point at, direction scroll, const std::string &kind, const std::string &first,
