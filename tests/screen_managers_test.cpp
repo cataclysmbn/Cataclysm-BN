@@ -272,6 +272,8 @@ TEST_CASE(
                     CHECK(row(snapshot, "action:MOVE_ZONE_UP")->hotkey == "+");
                     CHECK(row(snapshot, "action:CONFIRM")->hotkey.empty());
                     REQUIRE(row(snapshot, "action:debug_submap_grid") != snapshot.choices.end());
+                    CHECK(row(snapshot, "action:debug_submap_grid")->label == "Submap grid");
+                    CHECK(row(snapshot, "action:debug_submap_grid")->hotkey == "g");
                     CHECK_FALSE(row(snapshot, "action:SHOW_ALL_ZONES")->selected);
                     CHECK_FALSE(row(snapshot, "action:MOVE_ZONE_UP")->enabled);
                     return choose(snapshot, "action:SHOW_ALL_ZONES");

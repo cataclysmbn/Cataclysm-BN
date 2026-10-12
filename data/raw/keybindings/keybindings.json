@@ -2936,6 +2936,13 @@
   },
   {
     "type": "keybinding",
+    "id": "debug_submap_grid",
+    "category": "ZONES_MANAGER",
+    "name": "Submap grid",
+    "bindings": [ { "input_method": "keyboard", "key": "g" }, { "input_method": "keyboard", "key": "G" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "PAGE_DOWN",
     "category": "ADVANCED_INVENTORY",
     "name": "Page down",
