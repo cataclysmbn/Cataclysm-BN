@@ -15,9 +15,11 @@
 namespace bn::mcp
 {
 
+#if defined(_WIN32)
 /// A stream buffer that writes `fd`, a pipe, and closes it when destroyed. A write that cannot be
-/// completed fails the stream.
+/// completed fails the stream. Elsewhere stdio is served by `socket_hub::attach_stdio`.
 auto make_fd_output( int fd ) -> std::unique_ptr<std::streambuf>;
+#endif
 
 struct socket_options {
     /// The most bytes of unsent output a connection may hold before it is dropped.
@@ -32,6 +34,10 @@ struct socket_options {
 /// alone may command the game. Every other connection is a spectator and gets the read-only
 /// role. A connection that fails or closes is dropped without touching the others.
 ///
+/// Stdio is served the same way, as one controller connection on a pair of pipes: a client that
+/// stops reading cannot keep the engine from reading its requests, and one whose unread output
+/// passes the bound ends the session, as a socket is dropped.
+///
 /// Sockets never block the game: output goes to a bounded per-connection buffer written without
 /// waiting, and a connection that lets it fill up is dropped. The controller's input is the only
 /// read the game waits for, as with stdio; while it waits, the others are served.
@@ -44,6 +50,13 @@ class socket_hub
         /// Bind `path`, replacing a stale socket file that nothing answers on.
         static auto listen( const std::string &path, const mcp_host &host, socket_options options = {} ) ->
         std::expected<std::unique_ptr<socket_hub>, std::string>;
+#if !defined(_WIN32)
+        /// Serve the protocol on the descriptors `input` and `output` (stdio's pipes, left in their
+        /// blocking mode) as the controller, which never leaves; the hub closes `output` only.
+        static auto attach_stdio( int input, int output, const mcp_host &host, socket_options options = {} )
+        ->
+        std::unique_ptr<socket_hub>;
+#endif
         ~socket_hub();
         socket_hub( const socket_hub & ) = delete;
         auto operator=( const socket_hub & ) -> socket_hub & = delete; // *NOPAD*
@@ -75,6 +88,8 @@ class socket_hub
         auto finish() -> void;
 
         auto connections() const -> std::size_t;
+        /// Whether the hub accepts connections (a socket) rather than serves stdio.
+        auto listening() const -> bool;
 
     private:
         struct connection;

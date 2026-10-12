@@ -4,6 +4,7 @@
 #include <array>
 #include <chrono>
 #include <cerrno>
+#include <climits>
 #include <cstring>
 #include <filesystem>
 #include <functional>
@@ -34,6 +35,8 @@ namespace
 using handle = std::intptr_t;
 using native_socket = decltype( socket( 0, 0, 0 ) );
 constexpr auto invalid_handle = handle { -1 };
+/// How long shutdown waits for a reader to take the output still pending.
+constexpr auto final_drain = std::chrono::seconds( 2 );
 
 #if defined(_WIN32)
 using poll_entry = WSAPOLLFD;
@@ -44,11 +47,14 @@ auto set_nonblocking( const handle fd ) -> bool
     auto enabled = u_long{ 1 };
     return ioctlsocket( native( fd ), FIONBIO, &enabled ) == 0;
 }
-auto receive( const handle fd, char *data, const std::size_t size ) -> std::ptrdiff_t
+// Only sockets are served on Windows: there is no stdio hub, so `pipe` is never set.
+auto receive( const handle fd, char *data, const std::size_t size,
+              const bool /*pipe*/ ) -> std::ptrdiff_t
 {
     return recv( native( fd ), data, static_cast<int>( size ), 0 );
 }
-auto transmit( const handle fd, const char *data, const std::size_t size ) -> std::ptrdiff_t
+auto transmit( const handle fd, const char *data, const std::size_t size,
+               const bool /*pipe*/ ) -> std::ptrdiff_t
 {
     return send( native( fd ), data, static_cast<int>( size ), 0 );
 }
@@ -75,19 +81,37 @@ auto set_nonblocking( const handle fd ) -> bool
     return flags >= 0 && fcntl( static_cast<int>( fd ), F_SETFL, flags | O_NONBLOCK ) == 0 &&
            fcntl( static_cast<int>( fd ), F_SETFD, FD_CLOEXEC ) == 0;
 }
-auto receive( const handle fd, char *data, const std::size_t size ) -> std::ptrdiff_t
+auto would_block() -> bool { return errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR; }
+/// Whether `fd` is ready for `events` now; when it is not, errno says so for `would_block`.
+auto ready_now( const handle fd, const short events ) -> bool
 {
-    return recv( static_cast<int>( fd ), data, size, 0 );
+    auto entry = pollfd{ .fd = static_cast<int>( fd ), .events = events, .revents = 0 };
+    if( poll( &entry, 1, 0 ) > 0 ) { return true; }
+    errno = EAGAIN;
+    return false;
 }
-auto transmit( const handle fd, const char *data, const std::size_t size ) -> std::ptrdiff_t
+/// A pipe may be blocking, and the client's end may be shared with other processes, so it is not
+/// made non-blocking: it is read only when readable, and written at most PIPE_BUF bytes, which a
+/// writable pipe takes at once.
+auto receive( const handle fd, char *data, const std::size_t size,
+              const bool pipe ) -> std::ptrdiff_t
 {
+    if( !pipe ) { return recv( static_cast<int>( fd ), data, size, 0 ); }
+    return ready_now( fd, POLLIN ) ? read( static_cast<int>( fd ), data, size ) : -1;
+}
+auto transmit( const handle fd, const char *data, const std::size_t size,
+               const bool pipe ) -> std::ptrdiff_t
+{
+    if( pipe ) {
+        return ready_now( fd, POLLOUT ) ? write( static_cast<int>( fd ), data, std::min<std::size_t>( size,
+                PIPE_BUF ) ) : -1;
+    }
 #if defined(MSG_NOSIGNAL)
     return send( static_cast<int>( fd ), data, size, MSG_NOSIGNAL );
 #else
     return send( static_cast<int>( fd ), data, size, 0 );
 #endif
 }
-auto would_block() -> bool { return errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR; }
 auto wait_for( std::vector<poll_entry> &entries, const int wait_ms ) -> int
 {
     return poll( entries.data(), entries.size(), wait_ms );
@@ -129,14 +153,15 @@ class input_buffer final : public std::streambuf
     public:
         std::function < auto() -> bool > wait;
 
-        input_buffer( const handle fd, const std::size_t max_line ) : fd_( fd ), max_line_( max_line ) {}
+        input_buffer( const handle fd, const bool pipe, const std::size_t max_line ) :
+            fd_( fd ), pipe_( pipe ), max_line_( max_line ) {}
 
         /// Take what the socket has now, up to one frame past the bound.
         auto fill() -> void {
             data_.erase( 0, static_cast<std::size_t>( gptr() - eback() ) );
             auto chunk = std::array<char, 64 * 1024> {};
             while( !ended_ && data_.size() <= max_line_ ) {
-                const auto got = receive( fd_, chunk.data(), chunk.size() );
+                const auto got = receive( fd_, chunk.data(), chunk.size(), pipe_ );
                 if( got > 0 ) {
                     data_.append( chunk.data(), static_cast<std::size_t>( got ) );
                     continue;
@@ -162,6 +187,7 @@ class input_buffer final : public std::streambuf
 
     private:
         handle fd_;
+        bool pipe_;
         std::size_t max_line_;
         std::string data_;
         bool ended_ = false;
@@ -173,11 +199,12 @@ class input_buffer final : public std::streambuf
 class output_buffer final : public std::streambuf
 {
     public:
-        output_buffer( const handle fd, const std::size_t bound ) : fd_( fd ), bound_( bound ) {}
+        output_buffer( const handle fd, const bool pipe, const std::size_t bound ) :
+            fd_( fd ), pipe_( pipe ), bound_( bound ) {}
 
         auto drain() -> void {
             while( !broken_ && sent_ < pending_.size() ) {
-                const auto wrote = transmit( fd_, pending_.data() + sent_, pending_.size() - sent_ );
+                const auto wrote = transmit( fd_, pending_.data() + sent_, pending_.size() - sent_, pipe_ );
                 if( wrote > 0 ) {
                     sent_ += static_cast<std::size_t>( wrote );
                     continue;
@@ -190,7 +217,8 @@ class output_buffer final : public std::streambuf
                 sent_ = 0;
             }
         }
-        auto pending() const -> std::size_t { return pending_.size() - sent_; }
+        /// What is left to send; a broken connection sends nothing more.
+        auto pending() const -> std::size_t { return broken_ ? 0 : pending_.size() - sent_; }
 
     protected:
         auto xsputn( const char *data, const std::streamsize size ) -> std::streamsize override {
@@ -214,6 +242,7 @@ class output_buffer final : public std::streambuf
 
     private:
         handle fd_;
+        bool pipe_;
         std::size_t bound_;
         std::string pending_;
         std::size_t sent_ = 0;
@@ -221,43 +250,22 @@ class output_buffer final : public std::streambuf
 };
 
 #if defined(_WIN32)
-auto close_pipe( const int fd ) -> void { _close( fd ); }
-#else
-auto close_pipe( const int fd ) -> void { close( fd ); }
-#endif
-
-/// Writes a pipe, the protocol's stdout, whole and in order. A client may hand the engine a
-/// non-blocking pipe: when it is full the write waits until it can take more, as a blocking pipe
-/// would, and only a pipe that failed or whose reader left fails the stream.
+/// Writes a pipe, the protocol's stdout, whole and in order. A pipe that is full blocks the write,
+/// as on any blocking pipe; only one that failed or whose reader left fails the stream. Windows
+/// has no hub for stdio: its pipes cannot be polled with the sockets'.
 class fd_output_buffer final : public std::streambuf
 {
     public:
         explicit fd_output_buffer( const int fd ) : fd_( fd ) {}
-        ~fd_output_buffer() override { close_pipe( fd_ ); }
+        ~fd_output_buffer() override { _close( fd_ ); }
 
     protected:
         auto xsputn( const char *data, const std::streamsize size ) -> std::streamsize override {
             auto remaining = static_cast<size_t>( size );
             while( remaining > 0 ) {
-#if defined(_WIN32)
                 const auto written = _write( fd_, data, static_cast<unsigned int>( remaining ) );
-#else
-                const auto written = ::write( fd_, data, remaining );
-#endif
-#if !defined(_WIN32)
-                if( written < 0 && would_block() ) {
-                    auto full = pollfd{ .fd = fd_, .events = POLLOUT, .revents = 0 };
-                    poll( &full, 1, -1 );
-                    continue;
-                }
-#else
-                if( written < 0 && errno == EINTR ) {
-                    continue;
-                }
-#endif
-                if( written <= 0 ) {
-                    return size - static_cast<std::streamsize>( remaining );
-                }
+                if( written < 0 && errno == EINTR ) { continue; }
+                if( written <= 0 ) { return size - static_cast<std::streamsize>( remaining ); }
                 data += written;
                 remaining -= static_cast<size_t>( written );
             }
@@ -265,9 +273,7 @@ class fd_output_buffer final : public std::streambuf
         }
 
         auto overflow( const int_type character ) -> int_type override {
-            if( character == traits_type::eof() ) {
-                return 0;
-            }
+            if( character == traits_type::eof() ) { return 0; }
             const auto byte = static_cast<char>( character );
             return xsputn( &byte, 1 ) == 1 ? character : traits_type::eof();
         }
@@ -275,16 +281,32 @@ class fd_output_buffer final : public std::streambuf
     private:
         int fd_;
 };
+#endif
 
 } // namespace
 
+#if defined(_WIN32)
 auto make_fd_output( const int fd ) -> std::unique_ptr<std::streambuf>
 {
     return std::make_unique<fd_output_buffer>( fd );
 }
+#endif
+
+namespace
+{
+struct connection_options {
+    handle in;
+    handle out;
+    bool controller;
+    /// `in` and `out` are pipes, read and written by file descriptor, not sockets.
+    bool pipe = false;
+};
+} // namespace
 
 struct socket_hub::connection {
     handle fd;
+    /// Where output goes: `fd`, unless stdio's output is another descriptor than its input.
+    handle out_fd;
     bool controller;
     input_buffer input;
     output_buffer buffered;
@@ -293,12 +315,17 @@ struct socket_hub::connection {
     std::unique_ptr<server> protocol;
     bool dead = false;
 
-    connection( const handle socket_fd, const bool is_controller, const mcp_host &host,
+    connection( const connection_options &opened, const mcp_host &host,
                 const socket_options &options ) :
-        fd( socket_fd ), controller( is_controller ), input( socket_fd, server::default_max_frame_bytes ),
-        buffered( socket_fd, options.output_bound ),
-        protocol( std::make_unique<server>( host, server::options{ .spectator = !is_controller } ) ) {}
-    ~connection() { close_handle( fd ); }
+        fd( opened.in ), out_fd( opened.out ), controller( opened.controller ),
+        input( opened.in, opened.pipe, server::default_max_frame_bytes ),
+        buffered( opened.out, opened.pipe, options.output_bound ),
+        protocol( std::make_unique<server>( host, server::options{ .spectator = !opened.controller } ) ) {}
+    ~connection() {
+        // Stdio's input is the process's own stdin; only its output descriptor is ours to close.
+        if( out_fd != fd ) { close_handle( out_fd ); }
+        else { close_handle( fd ); }
+    }
     connection( const connection & ) = delete;
     auto operator=( const connection & ) -> connection & = delete; // *NOPAD*
 };
@@ -313,9 +340,11 @@ socket_hub::socket_hub( const std::intptr_t listener, std::string path, mcp_host
 socket_hub::~socket_hub()
 {
     connections_.clear();
-    close_handle( listener_ );
-    auto ignored = std::error_code{};
-    std::filesystem::remove( path_, ignored );
+    if( listening() ) {
+        close_handle( listener_ );
+        auto ignored = std::error_code{};
+        std::filesystem::remove( path_, ignored );
+    }
 }
 
 auto socket_hub::listen( const std::string &path, const mcp_host &host,
@@ -356,6 +385,20 @@ std::expected<std::unique_ptr<socket_hub>, std::string>
     }
     return std::unique_ptr<socket_hub>( new socket_hub( fd, path, host, options ) );
 }
+
+#if !defined(_WIN32)
+auto socket_hub::attach_stdio( const int input, const int output, const mcp_host &host,
+                               const socket_options options ) -> std::unique_ptr<socket_hub>
+{
+    auto hub = std::unique_ptr<socket_hub>( new socket_hub( invalid_handle, {}, host, options ) );
+    hub->connections_.push_back( std::make_unique<connection>( connection_options{
+        .in = input, .out = output, .controller = true, .pipe = true }, hub->host_, hub->options_ ) );
+    hub->connections_.back()->input.wait = [raw = hub.get()] { return raw->wait_for_controller_input(); };
+    return hub;
+}
+#endif
+
+auto socket_hub::listening() const -> bool { return listener_ != invalid_handle; }
 
 auto socket_hub::connections() const -> std::size_t { return connections_.size(); }
 
@@ -410,8 +453,8 @@ auto socket_hub::accept_all() -> void
             continue;
         }
         const auto leads = std::ranges::none_of( connections_, &connection::controller );
-        auto &added = *connections_.emplace_back( std::make_unique<connection>( fd, leads, host_,
-                      options_ ) );
+        auto &added = *connections_.emplace_back( std::make_unique<connection>( connection_options{
+            .in = fd, .out = fd, .controller = leads }, host_, options_ ) );
         // The game waits on the controller's input; the other connections are served meanwhile.
         if( leads ) { added.input.wait = [this] { return wait_for_controller_input(); }; }
     }
@@ -449,19 +492,27 @@ auto socket_hub::service( const int wait_ms ) -> void
     flush_spectators();
     reap();
     auto entries = std::vector<poll_entry> {};
-    entries.push_back( { .fd = static_cast<decltype( poll_entry::fd )>( listener_ ), .events = POLLIN, .revents = 0 } );
+    // Entries: the listener, then each connection's input and output. Where one descriptor does
+    // both, the output entry is left empty, and poll skips a negative descriptor.
+    const auto entry = []( const handle fd, const short events ) {
+        return poll_entry{ .fd = static_cast<decltype( poll_entry::fd )>( fd ), .events = events, .revents = 0 };
+    };
+    entries.push_back( entry( listener_, POLLIN ) );
     for( const auto &item : connections_ ) {
-        entries.push_back( { .fd = static_cast<decltype( poll_entry::fd )>( item->fd ),
-                             .events = static_cast<short>( POLLIN | ( item->buffered.pending() > 0 ? POLLOUT : 0 ) ),
-                             .revents = 0 } );
+        const auto shared = item->out_fd == item->fd;
+        const auto pending = item->buffered.pending() > 0;
+        entries.push_back( entry( item->fd, static_cast<short>( POLLIN | ( shared &&
+                                  pending ? POLLOUT : 0 ) ) ) );
+        entries.push_back( entry( !shared && pending ? item->out_fd : invalid_handle, POLLOUT ) );
     }
     if( wait_for( entries, wait_ms ) <= 0 ) { return; }
     const auto known = connections_.size();
     if( entries.front().revents != 0 ) { accept_all(); }
     for( const auto index : std::views::iota( std::size_t{ 0 }, known ) ) {
         auto &item = *connections_[index];
-        const auto ready = entries[index + 1].revents;
-        if( ( ready & POLLOUT ) != 0 ) { item.buffered.drain(); }
+        const auto ready = entries[2 * index + 1].revents;
+        const auto writable = entries[2 * index + 2].revents;
+        if( ( ready & POLLOUT ) != 0 || writable != 0 ) { item.buffered.drain(); }
         if( !item.controller && ( ready & ( POLLIN | POLLHUP | POLLERR ) ) != 0 ) { serve( item ); }
     }
 }
@@ -486,6 +537,21 @@ auto socket_hub::notify_loading( const game_client::loading_progress &progress )
 auto socket_hub::finish() -> void
 {
     for( const auto &item : connections_ ) { static_cast<void>( item->protocol->finish( item->out ) ); }
+    // A reader that is slow gets a moment to take the last frames; one that stalls loses them.
+    const auto until = std::chrono::steady_clock::now() + final_drain;
+    while( std::chrono::steady_clock::now() < until ) {
+        auto entries = std::vector<poll_entry> {};
+        for( const auto &item : connections_ ) {
+            if( item->buffered.pending() > 0 ) {
+                entries.push_back( { .fd = static_cast<decltype( poll_entry::fd )>( item->out_fd ), .events = POLLOUT, .revents = 0 } );
+            }
+        }
+        if( entries.empty() ) { return; }
+        const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              until - std::chrono::steady_clock::now() ).count();
+        wait_for( entries, static_cast<int>( left ) );
+        for( const auto &item : connections_ ) { item->buffered.drain(); }
+    }
 }
 
 } // namespace bn::mcp
