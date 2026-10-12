@@ -28,6 +28,7 @@
 #    include "input.h"
 #    include "inventory_ui.h"
 #    include "item.h"
+#    include "magic/magic.h"
 #    include "map/map.h"
 #    include "map_helpers.h"
 #    include "monster.h"
@@ -4973,6 +4974,58 @@ TEST_CASE(
     ctxt.display_menu();
     CHECK(step == 6);
     CHECK(inp_mngr.get_input_for_action("UP", "default") == before);
+}
+
+TEST_CASE(
+    "real spell menu publishes each spell's details and its callback key rows",
+    "[client][interaction][mcp][magic]") {
+    clear_all_state();
+    const auto guard = interaction_test_guard{};
+    auto& you = get_avatar();
+    you.magic->learn_spell(spell_id("test_spell_pew"), you, true);
+    auto snapshots = std::vector<game_client::interaction_snapshot>{};
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        snapshots.push_back(game_client::current_interaction());
+        const auto& observed = snapshots.back();
+        const auto favorite = std::ranges::
+            find(observed.choices, std::string("Toggle favorite"),
+                 &game_client::interaction_choice::label);
+        const auto choose_favorite = snapshots.size() == 1 && favorite != observed.choices.end();
+        return resolve({
+            .input_id = observed.input_id,
+            .operation = choose_favorite ? game_client::interaction_operation::choose
+                                         : game_client::interaction_operation::cancel,
+            .target_id = choose_favorite ? favorite->id : std::string{},
+        });
+    });
+
+    const auto selected = you.magic->select_spell(you);
+
+    INFO(snapshots.front().context << ": " << snapshots.front().message);
+    CHECK(selected == UILIST_CANCEL);
+    // choosing the favorite key row runs the native handler and leaves the menu open
+    REQUIRE(snapshots.size() == 2);
+    const auto& choices = snapshots.front().choices;
+    const auto spell_row = std::ranges::find_if(choices, [](const auto& choice) {
+        return choice.id.starts_with("entry:");
+    });
+    REQUIRE(spell_row != choices.end());
+    const auto column_value = [&](const std::string& label) {
+        const auto column =
+            std::ranges::find(spell_row->columns, label, &game_client::interaction_column::label);
+        return column == spell_row->columns.end() ? std::string{} : column->value;
+    };
+    CHECK(column_value("Spell Level")
+          == std::to_string(you.magic->get_spell(spell_id("test_spell_pew")).get_level()));
+    CHECK_FALSE(column_value("Failure Chance").empty());
+    CHECK_FALSE(column_value("Casting Cost").empty());
+    CHECK_FALSE(column_value("Casting Time").empty());
+    CHECK_FALSE(column_value("Range").empty());
+    CHECK(spell_row->description.find("Casting Time") != std::string::npos);
+    CHECK(spell_row->description.find("<color_") != std::string::npos);
+    CHECK(std::ranges::any_of(choices, [](const auto& choice) {
+        return choice.label == "Assign spell hotkey" && choice.id.starts_with("action:key:");
+    }));
 }
 
 #endif // CATA_MCP

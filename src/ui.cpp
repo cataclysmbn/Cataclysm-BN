@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <iterator>
 #include <memory>
+#include <ranges>
 
 #include "avatar.h"
 #include "cata_utility.h"
@@ -1086,15 +1087,21 @@ void uilist::query( bool loop, int timeout )
                 snapshot.choices.reserve( snapshot.choices.size() + fentries.size() );
                 for( const auto entry_index : fentries ) {
                     const auto &entry = entries[entry_index];
+                    auto details = callback != nullptr ? callback->row_details( *this,
+                                   static_cast<int>( entry_index ) ) : uilist_row_details{};
                     snapshot.choices.push_back( {
                         .id = "entry:" + std::to_string( entry_index ),
                         .label = remove_color_tags( entry.txt ),
-                        .description = remove_color_tags( entry.desc ),
+                        .description = remove_color_tags( entry.desc ) + details.description,
                         .hotkey = entry.hotkey >= 33 && entry.hotkey < 126 ? std::string( 1, static_cast<char>( entry.hotkey ) ) : std::string{},
                         .enabled = entry.enabled,
                         .selectable = entry.enabled || allow_disabled,
                         .selected = entry_index == selected,
                         .highlighted = entry_index == selected,
+                        .columns = details.columns | std::views::transform( []( const auto & column )
+                        {
+                            return game_client::interaction_column{ .label = column.label, .value = column.value };
+                        } ) | std::ranges::to<std::vector>(),
                     } );
                 }
                 return snapshot;
