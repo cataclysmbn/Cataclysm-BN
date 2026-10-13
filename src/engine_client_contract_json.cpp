@@ -19,6 +19,7 @@ auto to_json( const entity &value ) -> json;
 auto to_json( const avatar_stat &value ) -> json;
 auto to_json( const inventory_entry &value ) -> json;
 auto to_json( const sidebar_text &value ) -> json;
+auto to_json( const std::vector<sidebar_text> &value ) -> json;
 auto to_json( const sidebar_limb &value ) -> json;
 auto to_json( const game_client::interaction_choice &choice ) -> json;
 
@@ -150,7 +151,7 @@ auto to_json( const avatar_stat &value ) -> json
 }
 auto to_json( const inventory_entry &value ) -> json
 {
-    auto result = json{{"look", to_json( value.appearance )}, {"name", value.name}};
+    auto result = json{{"look", to_json( value.appearance )}, {"name", value.name}, {"label", value.label}};
     if( value.count ) { result["count"] = *value.count; }
     if( value.slot ) { result["slot"] = *value.slot; }
     if( value.durability ) {
@@ -161,6 +162,10 @@ auto to_json( const inventory_entry &value ) -> json
 auto to_json( const sidebar_text &value ) -> json
 {
     return {{"text", value.text}, {"color", value.color}};
+}
+auto to_json( const std::vector<sidebar_text> &value ) -> json
+{
+    return to_array( value );
 }
 auto to_json( const sidebar_limb &value ) -> json
 {
@@ -184,7 +189,7 @@ auto to_json( const sidebar_value &value ) -> json
                 {"has_watch", value.has_watch}
             }
         },
-        {"weapon", value.weapon}};
+        {"weapon", value.weapon}, {"rows", to_array( value.rows )}};
     if( value.ambient ) { result["ambient_temperature"] = *value.ambient; }
     if( value.style ) { result["style"] = to_json( *value.style ); }
     return result;
@@ -462,7 +467,7 @@ auto to_json( const event_value &value ) -> json
     if( value.message ) {
         const auto &line = *value.message;
         result["data"] = {{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
-            {"color", line.color}, {"count", line.count}
+            {"color", line.color}, {"count", line.count}, {"label", line.label}
         };
     }
     if( value.presentation ) {
@@ -584,7 +589,7 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
         header["messages"] = json::array();
         for( const auto &line : value.log ) {
             header["messages"].push_back( {{"id", std::to_string( line.id )}, {"text", line.text},
-                {"kind", line.kind}, {"color", line.color}, {"count", line.count}} );
+                {"kind", line.kind}, {"color", line.color}, {"count", line.count}, {"label", line.label}} );
         }
     }
     header["parts"] = result.parts.size();

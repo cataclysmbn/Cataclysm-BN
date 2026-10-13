@@ -161,6 +161,9 @@ struct inventory_entry {
     std::optional<std::string> slot = std::nullopt;
     /// Present when `name` starts with the native condition marker: the marker and the color it is drawn in.
     std::optional<item_durability> durability = std::nullopt;
+    /// The row the way the native lists word it: the stack's display name with its count and condition
+    /// marker as color markup, then the translated slot for a wielded or worn item.
+    std::string label = {};
     auto operator<=>( const inventory_entry & ) const = default; // *NOPAD*
 };
 /// Text the native sidebar prints in a color; `color` is a native color name.
@@ -216,6 +219,10 @@ struct sidebar_value {
     std::optional<std::string> ambient = std::nullopt;
     std::string weapon = {};
     std::optional<sidebar_text> style = std::nullopt;
+    /// The classic panel as the native sidebar words and colors it, in its order: a limb beside a need and a
+    /// stat on the first six rows, then temperature, location, weather, time and weapon. A span that prints
+    /// nothing keeps its place in its row; a row with nothing to print is left out.
+    std::vector<std::vector<sidebar_text>> rows = {};
     auto operator<=>( const sidebar_value & ) const = default; // *NOPAD*
 };
 struct avatar_value {

@@ -402,6 +402,67 @@ TEST_CASE(
             ":" + item::spawn("screwdriver")->display_name() + ":1"});
 }
 
+TEST_CASE(
+    "world capture words a row like the native lists and a single carried item has no suffix",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& you = get_avatar();
+    REQUIRE_FALSE(you.wield(item::spawn("knife_combat")));
+    you.i_add(item::spawn("hammer"));
+    you.i_add(item::spawn("hammer"));
+    you.i_add(item::spawn("screwdriver"));
+    get_map().add_item_or_charges(setup.start, item::spawn("hammer"));
+    get_map().add_item_or_charges(setup.start, item::spawn("hammer"));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto label = [](const auto& entries, const std::string& id) {
+        const auto row = std::ranges::find(entries, id, [](const auto& e) {
+            return e.appearance.id;
+        });
+        REQUIRE(row != entries.end());
+        return row->label;
+    };
+    CHECK(label(state.avatar->inventory, "knife_combat")
+          == item::spawn("knife_combat")->display_name() + " (wielded)");
+    CHECK(label(state.avatar->inventory, "hammer") == item::spawn("hammer")->display_name(2));
+    CHECK(label(state.avatar->inventory, "screwdriver")
+          == item::spawn("screwdriver")->display_name());
+    CHECK(label(state.avatar->ground, "hammer") == item::spawn("hammer")->display_name(2));
+}
+
+TEST_CASE("world capture words the sidebar rows like the native panels", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& you = get_avatar();
+    REQUIRE_FALSE(you.wield(item::spawn("knife_combat")));
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto& rows = state.avatar->sidebar.rows;
+    REQUIRE(rows.size() >= 10);
+    CHECK(rows[0][0].text == state.avatar->sidebar.limbs[0].label.text);
+    CHECK(rows[0][2].text == you.get_pain_description().first);
+    CHECK(rows[1][2].text == you.get_hunger_description().first);
+    CHECK(rows[0].back().text.starts_with("Str "));
+    CHECK(rows[5][2].text == "Spd " + std::to_string(you.get_speed()));
+    const auto find_row = [&](const std::string& label) {
+        return std::ranges::find_if(rows, [&](const auto& row) { return row[0].text == label; });
+    };
+    const auto weapon = find_row("Weapon:");
+    REQUIRE(weapon != rows.end());
+    CHECK((*weapon)[1].text == character_funcs::fmt_wielded_weapon(you));
+    const auto location = find_row("Location:");
+    REQUIRE(location != rows.end());
+    CHECK((*location)[1].text == state.avatar->sidebar.location.text);
+    const auto weather = find_row("Weather :");
+    REQUIRE(weather != rows.end());
+    CHECK((*weather)[1].text == state.avatar->sidebar.weather.text);
+    CHECK(std::ranges::none_of(rows, [&](const auto& row) {
+        return std::ranges::all_of(row, [](const auto& span) { return span.text.empty(); });
+    }));
+    static_cast<void>(setup);
+}
+
 TEST_CASE("world capture gives the color of an item's condition marker", "[engine_client_world]") {
     const auto setup = make_scene();
     auto& you = get_avatar();

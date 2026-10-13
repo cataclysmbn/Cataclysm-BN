@@ -677,11 +677,16 @@
             "color"
           ],
           "additionalProperties": false
+        },
+        "label": {
+          "type": "string",
+          "description": "The row as the native lists word it: the display name of the stack with its count and condition marker as color markup, then the translated slot of a wielded or worn item."
         }
       },
       "required": [
         "look",
-        "name"
+        "name",
+        "label"
       ],
       "additionalProperties": false
     },
@@ -1080,6 +1085,16 @@
         },
         "style": {
           "$ref": "#/$defs/sidebar_text"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/sidebar_text"
+            }
+          },
+          "description": "The classic panel as the native sidebar words and colors it: a limb beside a need and a stat on the first six rows, then temperature, location, weather, time and weapon. A span that prints nothing keeps its place in its row."
         }
       },
       "required": [
@@ -1099,7 +1114,8 @@
         "location",
         "weather",
         "time",
-        "weapon"
+        "weapon",
+        "rows"
       ],
       "additionalProperties": false
     },
@@ -2796,6 +2812,11 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 9007199254740991
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The line as the native log prints it: text, followed by the translated repeat suffix from a count of 2."
         }
       },
       "required": [
@@ -2803,7 +2824,8 @@
         "text",
         "kind",
         "color",
-        "count"
+        "count",
+        "label"
       ],
       "additionalProperties": false,
       "description": "One line of the native message log. A repeat of the last line is published again with the same id and a higher count and replaces it."
