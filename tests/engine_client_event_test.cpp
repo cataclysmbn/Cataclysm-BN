@@ -1,7 +1,9 @@
 #include "catch/catch.hpp"
+#include "engine_client_component.h"
 #include "engine_client_event.h"
 
 #include <algorithm>
+#include <memory>
 #include <nlohmann/json.hpp>
 #include <numeric>
 #include <ranges>
@@ -388,6 +390,23 @@ TEST_CASE(
     const auto big_header = serialize_snapshot(stream_of(crowded).current());
     REQUIRE_FALSE(big_header);
     CHECK(big_header.error() == error::resource_limit);
+}
+
+TEST_CASE(
+    "an interaction change too large in the 0.2 form is a resource limit though 0.1 fits",
+    "[engine_client_event]") {
+    auto first = world_of({});
+    auto stream = stream_of(first);
+    auto next = first;
+    next.interaction.id = "boundary:2";
+    next.interaction.stack = std::make_shared<const std::vector<screen_view>>(
+        std::vector<screen_view>{{.screen_id = "screen:a", .title = std::string(600000, 't')}});
+    const auto published = stream.publish({.next = next});
+    REQUIRE_FALSE(published);
+    CHECK(published.error() == error::resource_limit);
+    next.interaction.stack = std::make_shared<const std::vector<screen_view>>(
+        std::vector<screen_view>{{.screen_id = "screen:a", .title = "small"}});
+    CHECK(stream.publish({.next = next}));
 }
 
 TEST_CASE(
