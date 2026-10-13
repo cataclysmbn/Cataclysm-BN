@@ -2231,29 +2231,38 @@ Deno.test({
         const ids = floodCells(session, 4)
         client.readDelayMs = delay
         const started = performance.now()
-        await client.repliesUntil(ids.length)
+        const stageOf = () => session.stages.get(id)!.at(-1)!
+        const over = () => ["completed", "interrupted", "rejected"].includes(stageOf())
+        // The engine does not wait for a reader, so one slower than the wait publishes runs out of
+        // credits and is resynced, which ends the pushes; its command is then asked for.
+        while (!over() && session.resyncs.length === 0) {
+          session.handle(await client.note())
+          await session.pay()
+        }
         client.readDelayMs = 0
-        // The engine does not wait for a slow reader: a wait that outruns its credits is resynced, as
-        // when a client stops paying, and it runs to its end all the same.
+        await client.repliesUntil(ids.length)
         for (const note of client.notes.splice(0)) session.handle(note)
-        let stage = session.stages.get(id)!.at(-1)!
-        while (!["completed", "interrupted", "rejected"].includes(stage)) {
-          stage = (await client.result("bn.command.result", {
+        while (!over()) {
+          const { stage } = await client.result("bn.command.result", {
             epoch: session.mirror.at.epoch,
             command_id: id,
-          })).stage
+          })
+          session.stages.get(id)!.push(stage)
           await new Promise((resolve) => setTimeout(resolve, 200))
         }
-        client.notes.length = 0
         console.log(
           `wait of 6 hours with ${ids.length} cell answers, ${delay} ms per read: ${
             Math.round(performance.now() - started)
-          } ms`,
+          } ms, ${session.resyncs.length} resyncs`,
         )
         assertEquals(client.replies.every((reply) => reply.result?.cells !== undefined), true)
-        assertEquals(stage, "completed")
+        assertEquals(stageOf(), "completed")
         assert(session.resyncs.every((resync) => resync.reason === "backpressure"))
-        session.mirror = await session.subscribe()
+        client.notes.length = 0
+        const fresh = await session.subscribe()
+        // Without a resync the pushed stream is the whole game; after one, the snapshot replaces it.
+        if (session.resyncs.length === 0) assertEquals(session.mirror.state(), fresh.state())
+        session.mirror = fresh
         assert(BigInt(session.mirror.environment.turn) - turn >= 6n * hour)
         ends.push(authority(session))
         await client.close()
