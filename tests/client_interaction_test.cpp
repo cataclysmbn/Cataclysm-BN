@@ -5959,6 +5959,7 @@ TEST_CASE(
         std::filesystem::remove_all(directory);
         game_client::memory::set_input_provider({});
         clear_pickup_fixture_state();
+        get_avatar().view_offset = tripoint_rel_ms();
         game_session::set_running(running);
     });
     const auto animations = override_option("ANIMATIONS", "false");
