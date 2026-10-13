@@ -863,6 +863,20 @@
             "keys": []
           },
           {
+            "id": "zoom_out",
+            "name": "Zoom Out",
+            "keys": [
+              "Z"
+            ]
+          },
+          {
+            "id": "zoom_in",
+            "name": "Zoom In",
+            "keys": [
+              "z"
+            ]
+          },
+          {
             "id": "toggle_fullscreen",
             "name": "Toggle Fullscreen mode",
             "keys": []
@@ -2118,6 +2132,24 @@
                 "id": "debug_mode",
                 "label": "Toggle Debug Mode",
                 "keys": [],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "zoom_out",
+                "label": "Zoom Out",
+                "keys": [
+                  "Z"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              },
+              {
+                "id": "zoom_in",
+                "label": "Zoom In",
+                "keys": [
+                  "z"
+                ],
                 "enabled": true,
                 "expect": "screen"
               },
@@ -3422,6 +3454,24 @@
             "expect": "screen"
           },
           {
+            "id": "zoom_out",
+            "label": "Zoom Out",
+            "keys": [
+              "Z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "zoom_in",
+            "label": "Zoom In",
+            "keys": [
+              "z"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
             "id": "toggle_fullscreen",
             "label": "Toggle Fullscreen mode",
             "keys": [],
@@ -3714,7 +3764,8 @@
         "data": {
           "text": "footsteps",
           "volume": 60,
-          "logged": false
+          "logged": false,
+          "distance": 0
         }
       }
     },
@@ -4692,6 +4743,126 @@
               }
             ],
             "sidebar": {
+              "layout": {
+                "id": "labels",
+                "side": "right",
+                "width": 44,
+                "panels": [
+                  {
+                    "id": "Hint",
+                    "label": "Hint",
+                    "enabled": true,
+                    "height": 1
+                  },
+                  {
+                    "id": "Limbs",
+                    "label": "Limbs",
+                    "enabled": true,
+                    "height": 2
+                  },
+                  {
+                    "id": "Movement",
+                    "label": "Movement",
+                    "enabled": true,
+                    "height": 2
+                  },
+                  {
+                    "id": "Stats",
+                    "label": "Stats",
+                    "enabled": true,
+                    "height": 2
+                  },
+                  {
+                    "id": "Location",
+                    "label": "Location",
+                    "enabled": true,
+                    "height": 6
+                  },
+                  {
+                    "id": "Wind",
+                    "label": "Wind",
+                    "enabled": false,
+                    "height": 1
+                  },
+                  {
+                    "id": "Location Alt",
+                    "label": "Location Alt",
+                    "enabled": false,
+                    "height": 6
+                  },
+                  {
+                    "id": "Weapon",
+                    "label": "Weapon",
+                    "enabled": true,
+                    "height": 2
+                  },
+                  {
+                    "id": "Wgt/Vol",
+                    "label": "Wgt/Vol",
+                    "enabled": true,
+                    "height": 1
+                  },
+                  {
+                    "id": "Needs",
+                    "label": "Needs",
+                    "enabled": true,
+                    "height": 3
+                  },
+                  {
+                    "id": "Sound",
+                    "label": "Sound",
+                    "enabled": true,
+                    "height": 1
+                  },
+                  {
+                    "id": "Log",
+                    "label": "Log",
+                    "enabled": true
+                  },
+                  {
+                    "id": "Moon",
+                    "label": "Moon",
+                    "enabled": false,
+                    "height": 1
+                  },
+                  {
+                    "id": "Armor",
+                    "label": "Armor",
+                    "enabled": false,
+                    "height": 5
+                  },
+                  {
+                    "id": "comp.Armor",
+                    "label": "comp.Armor",
+                    "enabled": false,
+                    "height": 1
+                  },
+                  {
+                    "id": "Compass",
+                    "label": "Compass",
+                    "enabled": true,
+                    "height": 8
+                  },
+                  {
+                    "id": "Comp.Compass",
+                    "label": "Comp.Compass",
+                    "enabled": false,
+                    "height": 3
+                  },
+                  {
+                    "id": "Sim.Compass",
+                    "label": "Sim.Compass",
+                    "enabled": false,
+                    "height": 1
+                  },
+                  {
+                    "id": "AI Needs",
+                    "label": "AI Needs",
+                    "enabled": false,
+                    "height": 1
+                  }
+                ]
+              },
               "limbs": [
                 {
                   "id": "head",
@@ -6010,6 +6181,24 @@
                     "id": "debug_mode",
                     "label": "Toggle Debug Mode",
                     "keys": [],
+                    "enabled": true,
+                    "expect": "screen"
+                  },
+                  {
+                    "id": "zoom_out",
+                    "label": "Zoom Out",
+                    "keys": [
+                      "Z"
+                    ],
+                    "enabled": true,
+                    "expect": "screen"
+                  },
+                  {
+                    "id": "zoom_in",
+                    "label": "Zoom In",
+                    "keys": [
+                      "z"
+                    ],
                     "enabled": true,
                     "expect": "screen"
                   },
