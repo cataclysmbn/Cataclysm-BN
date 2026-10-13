@@ -66,11 +66,6 @@ auto push_ambient( presentation_value fact ) -> void
     ++feed.ambient;
     push( std::move( fact ) );
 }
-/// The native game draws animations only with ANIMATIONS on; only tests force them on.
-auto animated() -> bool
-{
-    return test_mode || get_option<bool>( "ANIMATIONS" );
-}
 /// One native animation step holds this long.
 auto step_ms() -> std::uint64_t
 {
@@ -140,7 +135,7 @@ auto take() -> std::vector<presentation_value>
 auto record_bullet( const bullet_step &step ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() || !seen( step.at ) ) { return; }
+    if( !feed.collecting || !seen( step.at ) ) { return; }
     // The native loop draws one square per call; a lower index than the last call starts a new shot.
     if( step.index <= feed.last_bullet_index || feed.last_projectile.empty() ) {
         feed.last_projectile = shot_id( feed );
@@ -153,7 +148,7 @@ auto record_bullet( const bullet_step &step ) -> void
 auto record_trajectories( const draw_bullet_trajectories_options &options ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() ) { return; }
+    if( !feed.collecting ) { return; }
     const auto appearance = bullet_look( options.bullet, options.custom_sprite );
     for( const auto &trajectory : options.trajectories ) {
         const auto visible = only_seen( trajectory );
@@ -170,7 +165,7 @@ auto record_trajectories( const draw_bullet_trajectories_options &options ) -> v
 auto record_line( const draw_sprite_line_options &options ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() ) { return; }
+    if( !feed.collecting ) { return; }
     // The caller resizes its trajectory past the end, which leaves value-initialized squares.
     auto points = options.points;
     std::erase( points, tripoint_bub_ms::zero() );
@@ -188,7 +183,7 @@ auto record_line( const draw_sprite_line_options &options ) -> void
 auto begin_blast( const tripoint_bub_ms &at, const int radius, const bool fiery ) -> std::string
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() ) { return {}; }
+    if( !feed.collecting ) { return {}; }
     auto id = "explosion:" + std::to_string( ++feed.next_explosion );
     auto started = presentation_value{ .type = "explosion.started", .id = id, .at = world::position_at( at ),
                                        .radius = static_cast<std::uint64_t>( std::max( 0, radius ) ),
@@ -242,7 +237,7 @@ auto record_explosion( const tripoint_bub_ms &at, const int radius, const nc_col
                        const std::string &tile ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() || !seen( at ) ) { return; }
+    if( !feed.collecting || !seen( at ) ) { return; }
     const auto id = "explosion:" + std::to_string( ++feed.next_explosion );
     push( { .type = "explosion.started", .id = id, .at = world::position_at( at ),
             .radius = static_cast<std::uint64_t>( std::max( 0, radius ) ), .color = world::color_name( color ), .tile = tile,
@@ -255,7 +250,7 @@ auto record_custom_explosion( const tripoint_bub_ms &at,
                               const std::string &tile ) -> void
 {
     auto &feed = state();
-    if( !feed.collecting || !animated() ) { return; }
+    if( !feed.collecting ) { return; }
     const auto cells = only_seen( area | std::views::keys | std::ranges::to<std::vector>() );
     if( cells.empty() ) { return; }
     const auto id = "explosion:" + std::to_string( ++feed.next_explosion );
@@ -475,7 +470,7 @@ auto record_text( const point at, const direction scroll, const std::string &kin
                   const game_message_type first_type,
                   const std::string &second, const game_message_type second_type ) -> void
 {
-    if( !state().collecting || !animated() || !( test_mode || get_option<bool>( "ANIMATION_SCT" ) ) ) {
+    if( !state().collecting || !( test_mode || get_option<bool>( "ANIMATION_SCT" ) ) ) {
         return;
     }
     const auto square = tripoint_bub_ms( at.x, at.y, get_avatar().bub_pos().z() );
