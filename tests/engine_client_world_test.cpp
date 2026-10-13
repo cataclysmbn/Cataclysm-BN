@@ -10,6 +10,7 @@
 #include "engine_client_world.h"
 #include "game.h"
 #include "game_session.h"
+#include "inventory_ui.h"
 #include "itype.h"
 #include "json.h"
 #include "map/map.h"
@@ -403,14 +404,14 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "world capture words a row like the native lists and a single carried item has no suffix",
-    "[engine_client_world]") {
+    "world capture words a row as the native inventory list prints it", "[engine_client_world]") {
     const auto setup = make_scene();
     auto& you = get_avatar();
     REQUIRE_FALSE(you.wield(item::spawn("knife_combat")));
     you.i_add(item::spawn("hammer"));
     you.i_add(item::spawn("hammer"));
     you.i_add(item::spawn("screwdriver"));
+    you.i_add(item::spawn("nail", calendar::turn, 30));
     get_map().add_item_or_charges(setup.start, item::spawn("hammer"));
     get_map().add_item_or_charges(setup.start, item::spawn("hammer"));
     map_perception::acquire();
@@ -423,12 +424,27 @@ TEST_CASE(
         REQUIRE(row != entries.end());
         return row->label;
     };
+    // The oracle is the first cell the native inventory list prints for the same items.
+    const auto native = [](const std::vector<item*>& items) {
+        return inventory_selector_preset{}.get_cell_text(inventory_entry{items}, 0);
+    };
+    const auto carried = [&](const std::string& id) {
+        return you.items_with([&](const item& it) { return it.typeId() == itype_id(id); });
+    };
+    auto ground_hammers = std::vector<item*>{};
+    for (auto* const it : get_map().i_at(setup.start)) {
+        if (it->typeId() == itype_id("hammer")) { ground_hammers.push_back(it); }
+    }
+    REQUIRE(carried("hammer").size() == 2);
+    REQUIRE(ground_hammers.size() == 2);
     CHECK(label(state.avatar->inventory, "knife_combat")
-          == item::spawn("knife_combat")->display_name() + " (wielded)");
-    CHECK(label(state.avatar->inventory, "hammer") == item::spawn("hammer")->display_name(2));
-    CHECK(label(state.avatar->inventory, "screwdriver")
-          == item::spawn("screwdriver")->display_name());
-    CHECK(label(state.avatar->ground, "hammer") == item::spawn("hammer")->display_name(2));
+          == native(carried("knife_combat")) + " (wielded)");
+    CHECK(label(state.avatar->inventory, "hammer") == native(carried("hammer")));
+    CHECK(label(state.avatar->inventory, "hammer").starts_with("2 "));
+    CHECK(label(state.avatar->inventory, "screwdriver") == native(carried("screwdriver")));
+    CHECK(label(state.avatar->inventory, "nail") == native(carried("nail")));
+    CHECK(label(state.avatar->ground, "hammer") == native(ground_hammers));
+    CHECK(label(state.avatar->ground, "hammer").starts_with("2 "));
 }
 
 TEST_CASE("world capture words the sidebar rows like the native panels", "[engine_client_world]") {
