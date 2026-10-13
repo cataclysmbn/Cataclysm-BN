@@ -23,7 +23,6 @@
 #include "client_backend.h"
 #include "client_display.h"
 #include "clzones.h"
-#include "engine_client_contract.h"
 #include "color.h"
 #include "construction.h"
 #include "crafting.h"
@@ -33,6 +32,7 @@
 #include "debug_menu.h"
 #include "diary.h"
 #include "distraction_manager.h"
+#include "engine_client_contract.h"
 #include "faction.h"
 #include "flag.h"
 #include "fstream_utils.h"
@@ -115,6 +115,7 @@
 #include <optional>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 
 static const activity_id ACT_FERTILIZE_PLOT( "ACT_FERTILIZE_PLOT" );
@@ -1985,7 +1986,11 @@ bool game::handle_action()
         user_action_counter += 1;
         u.clear_destination();
         destination_preview.clear();
-        engine_client::run_item_operation( *item );
+        // The session checked the row as it took the command, so a missing row is a replay that diverged.
+        if( !engine_client::run_item_operation( *item ) ) {
+            throw std::runtime_error( "Item operation rejected: row " + item->item_id +
+                                      " is gone or holds less" );
+        }
         u.mod_moves( -current_turn.moves_elapsed() );
         return true;
     }

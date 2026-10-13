@@ -18,8 +18,8 @@
 #include <array>
 #include <limits>
 #include <random>
-#include <string_view>
 #include <ranges>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -261,17 +261,17 @@ auto item_operation_stack( const item_operation &operation ) -> std::optional<wo
     return *row;
 }
 
-auto run_item_operation( const item_operation &operation ) -> void
+auto run_item_operation( const item_operation &operation ) -> bool
 {
     const auto stack = item_operation_stack( operation );
-    if( !stack ) { return; }
+    if( !stack ) { return false; }
     auto &you = get_avatar();
     const auto count = static_cast<int>( operation.count );
     if( operation.drop ) {
         // As the native drop menu: the first item of the stack and how much of the stack goes, in charges
         // for a charges item.
         you.drop( { drop_location( *stack->items.front(), count ) }, you.bub_pos() );
-        return;
+        return true;
     }
     // As the native pickup menu: the stack's items in order until `count` is taken, a charges item in charges.
     auto items = std::vector<item *> {};
@@ -286,6 +286,7 @@ auto run_item_operation( const item_operation &operation ) -> void
     auto targets = pickup::optimize_pickup( items, quantities );
     you.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
                          ( targets, you.bub_pos() ) ) );
+    return true;
 }
 
 auto describe_tile( const describe_request &request, const std::string &epoch )
@@ -530,7 +531,8 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         if( !resolved ) { return reject( error::validation_failed ); }
     } else if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
         if( !permissions.accepts_registered_actions ||
-            game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
+            game_client::active_input_context().category != "DEFAULTMODE" ||
+            get_avatar().is_dead_state() ) { return reject( error::not_ready ); }
         if( !item_operation_stack( *item ) ) {
             return reject( error::validation_failed,
                            item->drop ? _( "You do not have that many of that item to drop." ) :
