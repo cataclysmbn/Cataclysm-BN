@@ -40,6 +40,10 @@ enum class error {
     negotiation_failed, not_ready, stale_epoch, stale_revision, stale_boundary,
     stale_interaction_schema, validation_failed, command_busy, unknown_command,
     invalid_lifecycle, resync_required, resource_limit, read_only,
+    /// 0.2: an invoke's arguments do not match its affordance's shape.
+    invalid_arguments,
+    /// 0.2: the boundary offers no affordance with the invoked id.
+    unknown_affordance,
 };
 auto error_name( error value ) -> std::string;
 /// The error in words for a player, localized.
@@ -185,11 +189,38 @@ struct expectation {
     /// Null exactly when the boundary has no interaction.
     std::optional<std::string> schema_id = std::nullopt;
 };
+using command_operation =
+    std::variant<semantic_operation, registered_action, travel_operation, item_operation>;
 struct command_request {
     std::string epoch = {};
     expectation expect = {};
-    std::variant<semantic_operation, registered_action, travel_operation, item_operation> operation;
+    command_operation operation;
 };
+struct invoke_row {
+    std::string id = {};
+    std::optional<std::uint64_t> count = std::nullopt;
+};
+/// The arguments of a 0.2 invoke; `pos` is absolute.
+struct invoke_args {
+    std::optional<std::string> row = std::nullopt;
+    std::optional<std::vector<invoke_row>> rows = std::nullopt;
+    std::optional<std::int64_t> count = std::nullopt;
+    std::optional<std::string> text = std::nullopt;
+    std::optional<position> pos = std::nullopt;
+    std::optional<std::string> pane = std::nullopt;
+};
+/// The one 0.2 operation: an affordance of the boundary, by id.
+struct invoke_operation {
+    std::string affordance_id = {};
+    invoke_args args = {};
+};
+/// The native operation an invoke stands for at `state`: `unknown_affordance` when the boundary offers
+/// no such affordance, `invalid_arguments` when `args` does not match its shape or names a row the
+/// component does not hold, `not_ready` when readiness refuses it, `validation_failed` when it is
+/// disabled. Pure; validation of the result
+/// against the live widget is the lifecycle's.
+auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke )
+-> std::expected<command_operation, error>;
 enum class command_stage { received, validated, executing, rejected, completed, interrupted };
 auto stage_name( command_stage stage ) -> std::string;
 struct command_result {

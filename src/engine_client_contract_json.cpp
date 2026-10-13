@@ -1,3 +1,4 @@
+#include "engine_client_component.h"
 #include "engine_client_contract.h"
 #include "engine_client_event.h"
 
@@ -275,6 +276,75 @@ auto to_json( const game_client::interaction_choice &choice ) -> json
     if( choice.available_count ) { result["available_count"] = *choice.available_count; }
     return result;
 }
+auto target_json( const game_client::interaction_target &target, const bubble_frame &frame ) -> json
+{
+    auto value = json{{"source", to_json( target.source, frame )}, {"current", to_json( target.cursor, frame )}};
+    if( target.minimum_position ) { value["minimum"] = to_json( *target.minimum_position, frame ); }
+    if( target.maximum_position ) { value["maximum"] = to_json( *target.maximum_position, frame ); }
+    value["range"] = target.range;
+    value["distance_metric"] = target.distance_metric;
+    value["distance"] = game_client::target_distance( target, target.cursor );
+    value["status"] = target.status;
+    if( !target.status_text.empty() ) { value["status_text"] = target.status_text; }
+    value["candidates"] = json::array();
+    for( const auto &candidate : target.candidates ) {
+        value["candidates"].push_back( {{"id", candidate.id}, {"label", candidate.label},
+            {"description", candidate.description}, {"creature", candidate.creature},
+            {"position", to_json( candidate.position, frame )}} );
+    }
+    if( !target.description.empty() ) { value["description"] = target.description; }
+    if( frame.omt ) { value["unit"] = "omt"; }
+    return value;
+}
+auto overmap_json( const game_client::interaction_overmap &om, const bubble_frame &frame ) -> json
+{
+    auto cells = json::array();
+    for( const auto y : std::views::iota( 0, om.rows ) ) {
+        auto row = json::array();
+        for( const auto x : std::views::iota( 0, om.cols ) ) {
+            const auto at = static_cast<std::size_t>( y * om.cols + x );
+            row.push_back( {om.glyphs[at], om.foreground[at], om.background[at]} );
+        }
+        cells.push_back( std::move( row ) );
+    }
+    auto notes = json::array();
+    for( const auto &note : om.notes ) {
+        notes.push_back( {{"pos", to_json( note.position, frame )}, {"text", note.text}} );
+    }
+    auto result = json{{"origin", to_json( om.origin, frame )}, {"player", to_json( om.player, frame )},
+        {"cols", om.cols}, {"rows", om.rows}, {"cells", std::move( cells )},
+        {"legend", om.legend}, {"cursor_description", om.cursor_description}, {"notes", std::move( notes )}
+    };
+    auto path = json::array();
+    for( const auto &step : om.path ) { path.push_back( to_json( step, frame ) ); }
+    result["path"] = std::move( path );
+    if( !om.cursor_here.empty() ) { result["cursor_here"] = om.cursor_here; }
+    if( !om.cursor_note.empty() ) { result["cursor_note"] = om.cursor_note; }
+    if( !om.route_text.empty() ) { result["route_text"] = om.route_text; }
+    if( !om.tiles.empty() ) {
+        auto rows = json::array();
+        for( const auto y : std::views::iota( 0, om.rows ) ) {
+            auto row = json::array();
+            for( const auto x : std::views::iota( 0, om.cols ) ) {
+                const auto &tile = om.tiles[static_cast<std::size_t>( y * om.cols + x )];
+                row.push_back( {tile.id, tile.rotation, tile.subtile} );
+            }
+            rows.push_back( std::move( row ) );
+        }
+        result["tiles"] = {{"cells", std::move( rows )}, {"looks_like", om.looks_like}};
+    }
+    return result;
+}
+auto canvas_json( const game_client::interaction_canvas &canvas ) -> json
+{
+    auto rows = json::array();
+    for( const auto &row : canvas.rows ) {
+        auto runs = json::array();
+        for( const auto &run : row ) { runs.push_back( {run.text, run.foreground, run.background} ); }
+        rows.push_back( std::move( runs ) );
+    }
+    return {{"cols", canvas.cols}, {"rows", std::move( rows )}};
+}
 auto interaction_json( const boundary_state &state ) -> json
 {
     if( !state.interaction ) { return nullptr; }
@@ -295,73 +365,9 @@ auto interaction_json( const boundary_state &state ) -> json
             {"printable", field.printable}
         };
     }
-    if( native.target ) {
-        const auto &target = *native.target;
-        auto value = json{{"source", to_json( target.source, frame )}, {"current", to_json( target.cursor, frame )}};
-        if( target.minimum_position ) { value["minimum"] = to_json( *target.minimum_position, frame ); }
-        if( target.maximum_position ) { value["maximum"] = to_json( *target.maximum_position, frame ); }
-        value["range"] = target.range;
-        value["distance_metric"] = target.distance_metric;
-        value["distance"] = game_client::target_distance( target, target.cursor );
-        value["status"] = target.status;
-        if( !target.status_text.empty() ) { value["status_text"] = target.status_text; }
-        value["candidates"] = json::array();
-        for( const auto &candidate : target.candidates ) {
-            value["candidates"].push_back( {{"id", candidate.id}, {"label", candidate.label},
-                {"description", candidate.description}, {"creature", candidate.creature},
-                {"position", to_json( candidate.position, frame )}} );
-        }
-        if( !target.description.empty() ) { value["description"] = target.description; }
-        if( frame.omt ) { value["unit"] = "omt"; }
-        result["target"] = std::move( value );
-    }
-    if( native.overmap ) {
-        const auto &om = *native.overmap;
-        auto cells = json::array();
-        for( const auto y : std::views::iota( 0, om.rows ) ) {
-            auto row = json::array();
-            for( const auto x : std::views::iota( 0, om.cols ) ) {
-                const auto at = static_cast<std::size_t>( y * om.cols + x );
-                row.push_back( {om.glyphs[at], om.foreground[at], om.background[at]} );
-            }
-            cells.push_back( std::move( row ) );
-        }
-        auto notes = json::array();
-        for( const auto &note : om.notes ) {
-            notes.push_back( {{"pos", to_json( note.position, frame )}, {"text", note.text}} );
-        }
-        result["overmap"] = {{"origin", to_json( om.origin, frame )}, {"player", to_json( om.player, frame )},
-            {"cols", om.cols}, {"rows", om.rows}, {"cells", std::move( cells )},
-            {"legend", om.legend}, {"cursor_description", om.cursor_description}, {"notes", std::move( notes )}
-        };
-        auto path = json::array();
-        for( const auto &step : om.path ) { path.push_back( to_json( step, frame ) ); }
-        result["overmap"]["path"] = std::move( path );
-        if( !om.cursor_here.empty() ) { result["overmap"]["cursor_here"] = om.cursor_here; }
-        if( !om.cursor_note.empty() ) { result["overmap"]["cursor_note"] = om.cursor_note; }
-        if( !om.route_text.empty() ) { result["overmap"]["route_text"] = om.route_text; }
-        if( !om.tiles.empty() ) {
-            auto rows = json::array();
-            for( const auto y : std::views::iota( 0, om.rows ) ) {
-                auto row = json::array();
-                for( const auto x : std::views::iota( 0, om.cols ) ) {
-                    const auto &tile = om.tiles[static_cast<std::size_t>( y * om.cols + x )];
-                    row.push_back( {tile.id, tile.rotation, tile.subtile} );
-                }
-                rows.push_back( std::move( row ) );
-            }
-            result["overmap"]["tiles"] = {{"cells", std::move( rows )}, {"looks_like", om.looks_like}};
-        }
-    }
-    if( native.canvas ) {
-        auto rows = json::array();
-        for( const auto &row : native.canvas->rows ) {
-            auto runs = json::array();
-            for( const auto &run : row ) { runs.push_back( {run.text, run.foreground, run.background} ); }
-            rows.push_back( std::move( runs ) );
-        }
-        result["canvas"] = {{"cols", native.canvas->cols}, {"rows", std::move( rows )}};
-    }
+    if( native.target ) { result["target"] = target_json( *native.target, frame ); }
+    if( native.overmap ) { result["overmap"] = overmap_json( *native.overmap, frame ); }
+    if( native.canvas ) { result["canvas"] = canvas_json( *native.canvas ); }
     if( native.refresh_ms > 0 ) { result["refresh_ms"] = native.refresh_ms; }
     if( native.vehicle ) {
         const auto &veh = *native.vehicle;
@@ -431,19 +437,201 @@ auto interaction_json( const boundary_state &state ) -> json
     result["compat"] = std::move( compat );
     return result;
 }
+auto to_json( const readiness &value ) -> json
+{
+    return {{"phase", value.phase}, {"game_ready", value.game_ready},
+        {"accepts_interaction_commands", value.accepts_interaction_commands},
+        {"accepts_registered_actions", value.accepts_registered_actions}};
+}
 auto to_json( const boundary_state &state ) -> json
 {
     auto result = json{{"boundary_id", state.id},
-        {
-            "readiness", {
-                {"phase", state.ready.phase}, {"game_ready", state.ready.game_ready},
-                {"accepts_interaction_commands", state.ready.accepts_interaction_commands},
-                {"accepts_registered_actions", state.ready.accepts_registered_actions}
-            }
-        }};
+        {"readiness", to_json( state.ready )}};
     result["actions"] = json::array();
     for( const auto &entry : state.actions ) { result["actions"].push_back( {{"id", entry.id}, {"name", entry.name}, {"keys", entry.keys}} ); }
     result["interaction"] = interaction_json( state );
+    return result;
+}
+auto to_json( const arg_shape &shape ) -> json
+{
+    auto result = json::object();
+    if( shape.row ) { result["row"] = {{"component_id", shape.row->component_id}}; }
+    if( shape.rows ) {
+        result["rows"] = {{"component_id", shape.rows->component_id}};
+        if( shape.rows->counts ) { result["rows"]["counts"] = true; }
+    }
+    if( shape.count ) {
+        auto &count = result["count"] = json::object();
+        if( shape.count->min ) { count["min"] = *shape.count->min; }
+        if( shape.count->max ) { count["max"] = *shape.count->max; }
+        if( shape.count->initial ) { count["default"] = *shape.count->initial; }
+    }
+    if( shape.text ) {
+        result["text"] = json::object();
+        if( !shape.text->field_id.empty() ) { result["text"]["field_id"] = shape.text->field_id; }
+    }
+    if( shape.pos ) { result["pos"] = {{"unit", shape.pos->unit}}; }
+    if( shape.pane ) { result["pane"] = {{"component_id", shape.pane->component_id}}; }
+    return result;
+}
+auto to_json( const affordance &value ) -> json
+{
+    auto result = json{{"id", value.id}, {"label", value.label}, {"keys", value.keys}, {"enabled", value.enabled}};
+    if( !value.denial.empty() ) { result["denial"] = value.denial; }
+    if( !value.role.empty() ) { result["role"] = value.role; }
+    if( auto args = to_json( value.args ); !args.empty() ) { result["args"] = std::move( args ); }
+    return result;
+}
+/// A 0.1 choice without the members components replace.
+auto to_json( const list_row &row ) -> json
+{
+    auto result = to_json( row.choice );
+    for( const auto *member : {"pane_id", "area_id", "storage_kind", "action_id", "editor", "available_count"} ) { result.erase( member ); }
+    // Counts are in the row's native units, up to what it holds.
+    if( row.choice.available_count ) { result["max"] = *row.choice.available_count; }
+    if( row.header ) { result["header"] = true; }
+    return result;
+}
+auto to_json( const component &value, const bubble_frame &frame ) -> json;
+auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto columns = json::array();
+    for( const auto &column : body.columns ) { columns.push_back( {{"key", column.key}, {"label", column.label}} ); }
+    auto rows = json::array();
+    for( const auto &row : body.rows ) { rows.push_back( to_json( row ) ); }
+    auto result = json{{"columns", std::move( columns )}, {"rows", std::move( rows )}, {"total", body.total}};
+    if( body.offset != 0 ) { result["offset"] = body.offset; }
+    result["selection"] = body.selection;
+    if( !body.activate.empty() ) { result["activate"] = body.activate; }
+    return result;
+}
+auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto tabs = json::array();
+    for( const auto &tab : body.tabs ) {
+        tabs.push_back( {{"id", tab.id}, {"label", tab.label}, {"selected", tab.selected}, {"enabled", tab.enabled}} );
+    }
+    auto result = json{{"tabs", std::move( tabs )}};
+    if( !body.select.empty() ) { result["select"] = body.select; }
+    return result;
+}
+auto body_json( const split_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto result = json{{"relation", body.relation}};
+    if( !body.active.empty() ) { result["active"] = body.active; }
+    return result;
+}
+auto body_json( const panel_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto result = json{{"title", body.title}};
+    if( !body.subtitle.empty() ) { result["subtitle"] = body.subtitle; }
+    if( !body.stats.empty() ) {
+        result["stats"] = json::array();
+        for( const auto &stat : body.stats ) {
+            auto entry = json{{"key", stat.key}, {"label", stat.label}, {"value", stat.value}};
+            if( !stat.max.empty() ) { entry["max"] = stat.max; }
+            if( !stat.unit.empty() ) { entry["unit"] = stat.unit; }
+            if( !stat.tone.empty() ) { entry["tone"] = stat.tone; }
+            result["stats"].push_back( std::move( entry ) );
+        }
+    }
+    if( !body.filter.empty() ) { result["filter"] = body.filter; }
+    return result;
+}
+auto body_json( const form_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto fields = json::array();
+    for( const auto &field : body.fields ) {
+        auto entry = json{{"id", field.id}, {"label", field.label}};
+        if( !field.description.empty() ) { entry["description"] = field.description; }
+        entry["value"] = field.value;
+        entry["type"] = field.type;
+        if( field.max_length != -1 ) { entry["max_length"] = field.max_length; }
+        if( field.printable ) { entry["printable"] = true; }
+        if( !field.options.empty() ) {
+            entry["options"] = json::array();
+            for( const auto &option : field.options ) { entry["options"].push_back( {{"id", option.id}, {"label", option.label}} ); }
+        }
+        if( field.min ) { entry["min"] = *field.min; }
+        if( field.max ) { entry["max"] = *field.max; }
+        fields.push_back( std::move( entry ) );
+    }
+    auto result = json{{"fields", std::move( fields )}};
+    if( !body.submit.empty() ) { result["submit"] = body.submit; }
+    return result;
+}
+auto body_json( const text_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto result = json{{"markup", body.markup}};
+    if( !body.tone.empty() ) { result["tone"] = body.tone; }
+    if( !body.role.empty() ) { result["role"] = body.role; }
+    return result;
+}
+auto body_json( const grid_body &body, const bubble_frame & /*frame*/ ) -> json
+{
+    auto result = json{{"cols", body.cols}, {"rows", body.rows}};
+    if( body.cursor ) { result["cursor"] = {{"x", body.cursor->x}, {"y", body.cursor->y}}; }
+    result["cells"] = json::array();
+    for( const auto &cell : body.cells ) {
+        auto entry = json{{"x", cell.at.x}, {"y", cell.at.y}};
+        for( const auto &[name, text] : {
+                 std::pair{"id", &cell.id}, std::pair{"glyph", &cell.glyph},
+                 std::pair{"label", &cell.label}, std::pair{"color", &cell.color},
+                 std::pair{"affordance", &cell.affordance}
+             } ) {
+            if( !text->empty() ) { entry[name] = *text; }
+        }
+        entry["enabled"] = cell.enabled;
+        if( !cell.denial.empty() ) { entry["denial"] = cell.denial; }
+        if( cell.selected ) { entry["selected"] = true; }
+        result["cells"].push_back( std::move( entry ) );
+    }
+    return result;
+}
+auto body_json( const map_body &body, const bubble_frame &frame ) -> json
+{
+    auto result = json{{"mode", body.mode}};
+    if( body.target ) { result["target"] = target_json( *body.target, frame ); }
+    if( body.overmap ) { result["overmap"] = overmap_json( *body.overmap, frame ); }
+    return result;
+}
+auto body_json( const game_client::interaction_canvas &body,
+                const bubble_frame & /*frame*/ ) -> json
+{
+    return canvas_json( body );
+}
+/// Kind-specific members come after the common ones, the children last.
+auto to_json( const component &value, const bubble_frame &frame ) -> json
+{
+    auto result = json{{"id", value.id}, {"kind", component_kind( value )}};
+    if( !value.label.empty() ) { result["label"] = value.label; }
+    if( !value.affordances.empty() ) { result["affordances"] = value.affordances; }
+    result.update( std::visit( [&]( const auto & body ) { return body_json( body, frame ); },
+    value.body ) );
+    const auto kind = component_kind( value );
+    if( kind == "split" ) {
+        result["children"] = json::array();
+        for( const auto &child : value.children ) { result["children"].push_back( to_json( child, frame ) ); }
+    } else if( !value.children.empty() ) {
+        result["child"] = to_json( value.children.front(), frame );
+    }
+    return result;
+}
+auto to_json( const interaction_view &view, const bubble_frame &frame ) -> json
+{
+    auto result = json::object();
+    if( !view.schema_id.empty() ) { result["schema_id"] = view.schema_id; }
+    if( !view.context.empty() ) { result["context"] = view.context; }
+    result["title"] = view.title;
+    result["root"] = to_json( view.root, frame );
+    result["affordances"] = json::array();
+    for( const auto &entry : view.affordances ) { result["affordances"].push_back( to_json( entry ) ); }
+    if( !view.focus_component.empty() || !view.focus_row.empty() ) {
+        auto &focus = result["focus"] = json::object();
+        if( !view.focus_component.empty() ) { focus["component_id"] = view.focus_component; }
+        if( !view.focus_row.empty() ) { focus["row_id"] = view.focus_row; }
+    }
+    if( view.refresh_ms > 0 ) { result["refresh_ms"] = view.refresh_ms; }
     return result;
 }
 auto to_json( const changes &delta ) -> json
@@ -549,6 +737,14 @@ auto to_json( const event_value &value ) -> json
 
 auto serialize_clock( const clock_point &at ) -> std::string { return to_json( at ).dump(); }
 auto serialize_boundary( const boundary_state &state ) -> std::string { return to_json( state ).dump(); }
+auto serialize_interaction_boundary( const boundary_state &state ) -> std::string
+{
+    const auto view = interaction_components( state );
+    auto result = json{{"boundary_id", state.id},
+        {"readiness", to_json( state.ready )}};
+    result["interaction"] = view ? to_json( *view, state.frame ) : json( nullptr );
+    return result.dump();
+}
 auto serialize_choices( const choices_page &page ) -> std::string
 {
     return json{{"boundary_id", page.boundary_id}, {"total", page.total}, {"choices", to_array( page.choices )}}.dump();

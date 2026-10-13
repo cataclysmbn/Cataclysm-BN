@@ -1,4 +1,5 @@
 #include "engine_client_contract.h"
+#include "engine_client_component.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "player_activity.h"
@@ -118,6 +119,10 @@ auto error_name( const error value ) -> std::string
             return "resource_limit";
         case error::read_only:
             return "read_only";
+        case error::invalid_arguments:
+            return "invalid_arguments";
+        case error::unknown_affordance:
+            return "unknown_affordance";
     }
     return "validation_failed";
 }
@@ -148,6 +153,10 @@ auto error_text( const error value ) -> std::string
             return _( "Too much data was requested." );
         case error::read_only:
             return _( "This connection can only watch the game." );
+        case error::invalid_arguments:
+            return _( "That needs other details." );
+        case error::unknown_affordance:
+            return _( "That is not possible on this screen." );
     }
     return _( "Not possible here." );
 }
@@ -447,6 +456,133 @@ auto read_choices( const choices_request &request, const std::string &epoch )
         return std::unexpected( error::resource_limit );
     }
     return page;
+}
+
+namespace
+{
+/// Every member of the shape is supplied and no other; named rows are rows of their component.
+auto matches_shape( const interaction_view &view, const arg_shape &shape,
+                    const invoke_args &args ) -> bool
+{
+    const auto present = []( const auto & wanted, const auto & given ) { return wanted.has_value() == given.has_value(); };
+    if( !present( shape.row, args.row ) || !present( shape.rows, args.rows ) ||
+        !present( shape.count, args.count ) ||
+        !present( shape.text, args.text ) || !present( shape.pos, args.pos ) ||
+        !present( shape.pane, args.pane ) ) {
+        return false;
+    }
+    // The avatar's rows and a paged list's unread rows are checked natively.
+    const auto holds = [&]( const std::string & component_id, const std::string & row ) {
+        if( component_id == ground_rows || component_id == inventory_rows ) { return true; }
+        const auto *const found = find_component( view.root, component_id );
+        if( found == nullptr ) { return false; }
+        const auto ids = row_ids( *found );
+        return !ids || std::ranges::contains( *ids, row );
+    };
+    if( shape.row && ( !valid_id( *args.row ) || !holds( shape.row->component_id, *args.row ) ) ) { return false; }
+    if( shape.rows && ( args.rows->empty() ||
+    !std::ranges::all_of( *args.rows, [&]( const auto & row ) {
+    return valid_id( row.id ) && ( shape.rows->counts || !row.count ) &&
+               holds( shape.rows->component_id, row.id );
+    } ) ) ) { return false; }
+    if( shape.count && ( ( shape.count->min && *args.count < *shape.count->min ) ||
+                         ( shape.count->max && *args.count > *shape.count->max ) ) ) { return false; }
+    if( shape.text && args.text->size() > maximum_inline_bytes ) { return false; }
+    if( shape.pane ) {
+        const auto *const parent = find_component( view.root, shape.pane->component_id );
+        if( parent == nullptr || !find_component( *parent, *args.pane ) ) { return false; }
+    }
+    return true;
+}
+auto semantic_of( const game_client::interaction_operation kind ) -> semantic_operation
+{
+    return { .command = { .operation = kind } };
+}
+} // namespace
+
+auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke )
+-> std::expected<command_operation, error>
+{
+    const auto view = interaction_components( state );
+    // Before the game offers anything, as the 0.1 lifecycle answers.
+    if( !view ) { return std::unexpected( error::not_ready ); }
+    const auto found = std::ranges::find( view->affordances, invoke.affordance_id, &affordance::id );
+    if( found == view->affordances.end() ) { return std::unexpected( error::unknown_affordance ); }
+    const auto &args = invoke.args;
+    if( !matches_shape( *view, found->args, args ) ) { return std::unexpected( error::invalid_arguments ); }
+    // Readiness gates as in the 0.1 lifecycle; `enabled` is the screen's own availability.
+    const auto registered = !found->handler && (
+                                found->runs == invoke_kind::action || found->runs == invoke_kind::row_action ||
+                                found->runs == invoke_kind::travel ||
+                                found->runs == invoke_kind::context || found->runs == invoke_kind::pickup ||
+                                found->runs == invoke_kind::drop );
+    if( !( registered ? state.ready.accepts_registered_actions :
+           state.ready.accepts_interaction_commands ) ) {
+        return std::unexpected( error::not_ready );
+    }
+    if( !found->enabled ) { return std::unexpected( error::validation_failed ); }
+    if( found->handler ) { return found->handler( args ); }
+    using game_client::interaction_operation;
+    switch( found->runs ) {
+        case invoke_kind::choose: {
+            auto result = semantic_of( interaction_operation::choose );
+            result.command.target_id = args.row.value_or( found->target );
+            return result;
+        }
+        case invoke_kind::fill:
+        case invoke_kind::submit: {
+            auto result = semantic_of( interaction_operation::fill );
+            const auto &field = found->args.text->field_id;
+            result.command.target_id = field.empty() ? *args.row : field;
+            result.command.value = *args.text;
+            result.command.submit = found->runs == invoke_kind::submit;
+            return result;
+        }
+        case invoke_kind::set_count: {
+            auto result = semantic_of( interaction_operation::set_count );
+            result.command.target_id = *args.row;
+            result.command.count = static_cast<std::uint64_t>( *args.count );
+            return result;
+        }
+        case invoke_kind::set_target: {
+            auto result = semantic_of( interaction_operation::set_target );
+            result.target = *args.pos;
+            return result;
+        }
+        case invoke_kind::target_candidate: {
+            const auto &candidates = state.interaction->target->candidates;
+            const auto candidate = std::ranges::find( candidates, *args.row,
+                                   &game_client::interaction_target_candidate::id );
+            if( candidate == candidates.end() ) { return std::unexpected( error::invalid_arguments ); }
+            const auto &at = candidate->position;
+            auto result = semantic_of( interaction_operation::set_target );
+            result.command.target_id = candidate->id;
+            result.target = position{ .dim = state.frame.dim, .x = at.x + state.frame.x, .y = at.y + state.frame.y, .z = at.z };
+            return result;
+        }
+        case invoke_kind::cancel:
+            return semantic_of( interaction_operation::cancel );
+        case invoke_kind::action:
+            return registered_action{ .id = found->target };
+        case invoke_kind::row_action: {
+            // The row is the action; a closed one is refused as its screen refuses it.
+            const auto *const list = find_component( view->root, found->args.row->component_id );
+            const auto *const body = list ? std::get_if<list_body>( &list->body ) : nullptr;
+            const auto open = body && std::ranges::any_of( body->rows, [&]( const auto & row ) {
+                return row.choice.id == *args.row && row.choice.enabled;
+            } );
+            if( !open ) { return std::unexpected( error::validation_failed ); }
+            return registered_action{ .id = *args.row };
+        }
+        case invoke_kind::travel:
+        case invoke_kind::context:
+            return travel_operation{ .target = *args.pos, .button = found->runs == invoke_kind::travel ? "left" : "right" };
+        case invoke_kind::pickup:
+        case invoke_kind::drop:
+            return item_operation{ .drop = found->runs == invoke_kind::drop, .item_id = *args.row,
+                                   .count = static_cast<std::uint64_t>( *args.count ) };
+    }
+    return std::unexpected( error::unknown_affordance );
 }
 
 command_lifecycle::command_lifecycle( std::string epoch, const command_authority &authority ) :
