@@ -130,7 +130,12 @@ class Client {
   /** Reads until `count` responses to raw frames have arrived; notifications on the way wait in `notes`. */
   async repliesUntil(count: number) {
     while (this.replies.length < count) {
-      const message = await this.#next()
+      // Not `#next`, which keeps reading past a reply until a notification comes: none may follow.
+      const message = await this.#line()
+      if (message.method === undefined && this.rawIds.has(JSON.stringify(message.id))) {
+        this.replies.push(message)
+        continue
+      }
       this.#validateNotification(message)
       this.notes.push(message)
     }
