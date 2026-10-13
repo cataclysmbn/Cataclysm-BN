@@ -1461,6 +1461,10 @@ auto trading_window::perform_trade( npc &np, const std::string &deal ) -> bool
                 .cursor = cursor,
                 .offset = is_theirs ? them_off : you_off,
             } );
+            if( category_mode ) {
+                sync_category_cursor( list, visible, build_category_ranges( list, visible ),
+                                      is_theirs ? them_category_cursor : you_category_cursor, cursor );
+            }
             apply_trade_change( list[visible[cursor]], count );
             return;
         }
