@@ -832,6 +832,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         version_ = offers_02 ? wire_version::v0_2 : wire_version::v0_1;
         locale_ = decoded->locale.value_or( std::string{} );
         push_.use_locale( locale_ );
+        // At an input boundary the live game is what was published; during an activity the next publication captures it.
+        if( !polling_ ) { session_.prepare_locale( locale_ ); }
         credits_ = decoded->credits;
         // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
         subscribed_ = false;

@@ -217,6 +217,7 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         }
         stream_->seed_log( std::move( seeded ) );
         presentation::collect( true );
+        fill_groups();
         return {};
     }
     auto interaction = capture_interaction();
@@ -258,6 +259,7 @@ auto session::publish_boundary( const bool settles ) -> std::expected<void, erro
         groups_.clear();
         if( const auto rebased = stream_->rebase( std::move( *candidate ) ); !rebased ) { return rebased; }
     } else { return std::unexpected( published.error() ); }
+    fill_groups();
     publish_messages( command );
     if( settles && active_ && active_->stage == command_stage::executing ) {
         const auto &now = stream_->current();
@@ -302,18 +304,32 @@ auto session::current( const std::string &lang_id ) -> std::expected<snapshot, e
 {
     auto result = current();
     if( !result || lang_id.empty() || lang_id == get_language().id ) { return result; }
-    prune_groups();
-    auto &state = groups_[lang_id];
-    if( !state ) {
-        auto worded = word( lang_id, {} );
-        if( !worded ) { return std::unexpected( worded.error() ); }
-        state = std::move( *worded );
-    }
+    // The state a language starts from is the one captured at a publication, which the stream holds too.
+    const auto group = groups_.find( lang_id );
+    if( group == groups_.end() || !group->second ) { return std::unexpected( error::not_ready ); }
+    const auto &state = group->second;
     result->value.interaction = *state->interaction;
     // Without a text capture the world has no wording of its own, and the engine's stands.
     if( state->avatar ) { result->value.world.avatar = state->avatar; }
     if( state->environment ) { result->value.world.environment = state->environment; }
     return result;
+}
+
+auto session::prepare_locale( const std::string &lang_id ) -> void
+{
+    if( !stream_ || lang_id.empty() || lang_id == get_language().id ) { return; }
+    auto &state = groups_[lang_id];
+    if( state ) { return; }
+    if( auto worded = word( lang_id, {} ) ) { state = std::move( *worded ); }
+}
+
+auto session::fill_groups() -> void
+{
+    prune_groups();
+    for( const auto &reader : readers_ ) {
+        const auto &lang_id = reader.lock()->locale;
+        if( !lang_id.empty() && lang_id != get_language().id ) { prepare_locale( lang_id ); }
+    }
 }
 
 auto session::word( const std::string &lang_id,

@@ -3,6 +3,7 @@
 #if defined(CATA_MCP)
 
 #    include "catch/catch.hpp"
+#    include "client_command.h"
 #    include "client_input.h"
 #    include "client_interaction.h"
 #    include "input.h"

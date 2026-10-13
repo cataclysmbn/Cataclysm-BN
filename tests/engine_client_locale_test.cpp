@@ -5,6 +5,7 @@
 #    include "catch/catch.hpp"
 #    include "client_input.h"
 #    include "client_interaction.h"
+#    include "engine_client_component.h"
 #    include "engine_client_schema.h"
 #    include "engine_client_session.h"
 #    include "engine_client_world.h"
@@ -168,6 +169,23 @@ TEST_CASE(
         CHECK(authority.current(get_language().id)->value.world.avatar->stats.front().label
               == "Strength");
     }
+    SECTION("a snapshot starts from the last publication, not from the live game") {
+        strength = 50;
+        const auto engine = authority.current();
+        const auto other = authority.current(korean);
+        REQUIRE(other);
+        CHECK(engine->value.world.avatar->stats.front().value == "8");
+        CHECK(other->value.world.avatar->stats.front().value == "8");
+    }
+    SECTION("a language no publication has captured is not ready") {
+        auto late = authority.open_push();
+        late.use_locale("de_DE");
+        const auto none = authority.current("de_DE");
+        REQUIRE_FALSE(none);
+        CHECK(none.error() == ec::error::not_ready);
+        authority.prepare_locale("de_DE");
+        CHECK(authority.current("de_DE"));
+    }
     SECTION("an event has the same sequence, revision and ids, with the words of its reader") {
         REQUIRE(authority.current(korean));
         static_cast<void>(events_of(english));
@@ -177,10 +195,18 @@ TEST_CASE(
         // environment.
         game_client::begin_input_boundary();
         REQUIRE(authority.publish_boundary());
-        const auto base = events_of(english);
-        const auto worded = events_of(reader);
+        // Other tests leave a message or a presentation fact in the game; only the screen change is
+        // compared.
+        const auto screen_changes = [](auto events) {
+            std::erase_if(events, [](const auto& event) {
+                return !event.value().delta.interaction;
+            });
+            return events;
+        };
+        const auto base = screen_changes(events_of(english));
+        const auto worded = screen_changes(events_of(reader));
         REQUIRE(base.size() == 1);
-        REQUIRE(worded.size() == 1);
+        REQUIRE(worded.size() == base.size());
         const auto& left = base.front().value();
         const auto& right = worded.front().value();
         CHECK(right.sequence == left.sequence);
@@ -203,8 +229,8 @@ TEST_CASE(
         // language.
         CHECK(right.delta.avatar_kept == left.delta.avatar_kept);
         // The wire the reader's event goes out as is sealed in the language too.
-        CHECK(worded.front().wire().find("Yes-ko") != std::string::npos);
-        CHECK(base.front().wire().find("Yes-ko") == std::string::npos);
+        CHECK(worded.back().wire().find("Yes-ko") != std::string::npos);
+        CHECK(base.back().wire().find("Yes-ko") == std::string::npos);
     }
     SECTION("an event with no text in it is the engine's own for every reader") {
         REQUIRE(authority.current(korean));
@@ -247,17 +273,21 @@ TEST_CASE(
     REQUIRE(authority.publish_boundary());
     auto controller = connection{authority, false};
     auto spectator = connection{authority, true};
-    controller.send(hello() + subscribe);
-    spectator.send(hello(korean) + subscribe);
+    controller.send(hello());
+    spectator.send(hello(korean));
+    // The language is captured at a publication, which the subscribe then reads.
+    REQUIRE(authority.publish_boundary());
+    controller.send(subscribe);
+    spectator.send(subscribe);
 
     SECTION("the hello names the language granted and the engine's") {
         const auto answer = spectator.result(1);
         CHECK(answer["version"] == "0.2");
         CHECK(answer["locale"] == korean);
-        CHECK(answer["engine_locale"] == get_language().id);
+        CHECK(answer["engine_locale"] == json(get_language().id));
         CHECK(answer["role"] == "spectator");
-        CHECK(controller.result(1)["locale"] == get_language().id);
-        CHECK(controller.result(1)["engine_locale"] == get_language().id);
+        CHECK(controller.result(1)["locale"] == json(get_language().id));
+        CHECK(controller.result(1)["engine_locale"] == json(get_language().id));
     }
     SECTION("the snapshot has the same ids and stack shape, with the words of the language") {
         const auto base = controller.result(2);
@@ -268,20 +298,20 @@ TEST_CASE(
         CHECK(right["interaction"]["schema_id"] == left["interaction"]["schema_id"]);
         CHECK(right["interaction"]["choices"][0]["id"] == left["interaction"]["choices"][0]["id"]);
         CHECK(left["interaction"]["choices"][0]["label"] == "Yes");
-        CHECK(right["interaction"]["choices"][0]["label"] == in_korean("Yes"));
+        CHECK(right["interaction"]["choices"][0]["label"] == json(in_korean("Yes")));
         REQUIRE(left["stack"].size() == right["stack"].size());
         for (const auto index : std::views::iota(std::size_t{0}, left["stack"].size())) {
             CHECK(right["stack"][index]["screen_id"] == left["stack"][index]["screen_id"]);
         }
         CHECK(left["stack"].dump().find("Yes-ko") == std::string::npos);
         CHECK(right["stack"].dump().find("Yes-ko") != std::string::npos);
-        CHECK(left["avatar"]["stats"][0]["label"] == "Strength");
-        CHECK(right["avatar"]["stats"][0]["label"] == in_korean("Strength"));
-        CHECK(right["environment"]["time"] == in_korean("Dawn"));
+        CHECK(base["avatar"]["stats"][0]["label"] == "Strength");
+        CHECK(worded["avatar"]["stats"][0]["label"] == json(in_korean("Strength")));
+        CHECK(worded["environment"]["time"] == json(in_korean("Dawn")));
     }
     SECTION("a message line says it is in the engine's language, to a reader of another") {
         CHECK_FALSE(controller.result(2)["messages"][0].contains("lang"));
-        CHECK(spectator.result(2)["messages"][0]["lang"] == get_language().id);
+        CHECK(spectator.result(2)["messages"][0]["lang"] == json(get_language().id));
         CHECK(spectator.result(2)["messages"][0]["text"] == "First line.");
         controller.output.str("");
         spectator.output.str("");
@@ -295,7 +325,7 @@ TEST_CASE(
         REQUIRE(worded.size() == 1);
         CHECK(base.front()["type"] == "message.logged");
         CHECK_FALSE(base.front()["data"].contains("lang"));
-        CHECK(worded.front()["data"]["lang"] == get_language().id);
+        CHECK(worded.front()["data"]["lang"] == json(get_language().id));
         CHECK(worded.front()["data"]["text"] == "Second line.");
     }
     SECTION("an event carries the screen and avatar of its connection's language") {
@@ -316,9 +346,9 @@ TEST_CASE(
         const auto& right = worded.front()["changes"];
         CHECK(right["interaction"]["boundary_id"] == left["interaction"]["boundary_id"]);
         CHECK(left["interaction"]["interaction"]["choices"][0]["label"] == "Yes");
-        CHECK(right["interaction"]["interaction"]["choices"][0]["label"] == in_korean("Yes"));
+        CHECK(right["interaction"]["interaction"]["choices"][0]["label"] == json(in_korean("Yes")));
         CHECK(left["avatar"]["stats"][0]["label"] == "Strength");
-        CHECK(right["avatar"]["stats"][0]["label"] == in_korean("Strength"));
+        CHECK(right["avatar"]["stats"][0]["label"] == json(in_korean("Strength")));
         CHECK(right["avatar"].at("keep") == left["avatar"].at("keep"));
     }
 }

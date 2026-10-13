@@ -83,8 +83,12 @@ class session final : public command_authority
         /// Atomic with respect to publication: the game thread is the only writer.
         auto current() const -> std::expected<snapshot, error>;
         /// The same snapshot with the screens, avatar and environment worded in `lang_id`; the engine's
-        /// language, or an empty id, gives `current()`. Message lines stay in the engine's language.
+        /// language, or an empty id, gives `current()`. Message lines stay in the engine's language. `not_ready`
+        /// until a publication has captured the language for a reader that uses it.
         auto current( const std::string &lang_id ) -> std::expected<snapshot, error>;
+        /// Capture the state `lang_id` starts from now, if none was captured at a publication. For the input
+        /// boundary, where the live game is what was published.
+        auto prepare_locale( const std::string &lang_id ) -> void;
         /// The boundary last published, which the client has seen; `not_ready` before the first.
         auto boundary() const -> std::expected<boundary_state, error>;
         auto at() const -> std::optional<clock_point>;
@@ -131,6 +135,8 @@ class session final : public command_authority
         auto post( push_item item, const locale_items &variants = {} ) -> void;
         /// Forget the languages no reader uses any more.
         auto prune_groups() -> void;
+        /// Capture the first state of every language a reader uses that has none, after a publication.
+        auto fill_groups() -> void;
         /// The screens, and the avatar and environment, as they are now, worded in a language.
         struct wanted {
             bool interaction = true;
