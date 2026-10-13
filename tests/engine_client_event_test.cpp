@@ -486,7 +486,13 @@ TEST_CASE("loading completion carries only the epoch and done", "[engine_client_
 namespace {
 auto line(const counter id, const std::string& text, const counter count = 1) -> message_request {
     return {
-        .message = {.id = id, .text = text, .kind = "neutral", .color = "c_white", .count = count},
+        .message =
+            {.id = id,
+             .text = text,
+             .kind = "neutral",
+             .color = "c_white",
+             .count = count,
+             .label = count > 1 ? text + " x " + std::to_string(count) : text},
         .command = "c:1"};
 }
 } // namespace
@@ -509,7 +515,7 @@ TEST_CASE("message lines take sequences in order and never a revision", "[engine
         nlohmann::json::parse(
             serialize_events({.epoch = "epoch:a", .events = {*repeat}}))["events"][0]["data"]
         == nlohmann::json::parse(
-            R"({"id":"7","text":"You open the door.","kind":"neutral","color":"c_white","count":2})"));
+            R"({"id":"7","text":"You open the door.","kind":"neutral","color":"c_white","count":2,"label":"You open the door. x 2"})"));
 }
 
 TEST_CASE(
@@ -519,6 +525,9 @@ TEST_CASE(
     CHECK_FALSE(stream.publish_message(line(7, "")));
     CHECK_FALSE(stream.publish_message(line(7, "x", 0)));
     CHECK_FALSE(stream.publish_message(line(0, "x")));
+    auto unlabelled = line(7, "x");
+    unlabelled.message.label.clear();
+    CHECK_FALSE(stream.publish_message(unlabelled));
     CHECK(stream.current().at.sequence == 0);
 }
 
@@ -532,7 +541,7 @@ TEST_CASE("a published event carries its own wire form", "[engine_client_event]"
     CHECK(public_event{event.value()}.wire().empty());
 
     const auto message = stream.publish_message(
-        {.message = {.id = 1, .text = "Hi", .kind = "neutral"}});
+        {.message = {.id = 1, .text = "Hi", .kind = "neutral", .label = "Hi"}});
     REQUIRE(message);
     CHECK(message->wire() == serialize_events({.epoch = "epoch:wire", .events = {*message}}));
 }
