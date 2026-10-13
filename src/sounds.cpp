@@ -2758,9 +2758,14 @@ void sounds::process_sound_markers( Character *who )
             }
 
             // skip some sounds to avoid message spam
-            const auto logged = describe_sound( element.sound.category,
-                                                element.sound.origin == who->bub_pos() );
-            if( logged ) {
+            const auto described = describe_sound( element.sound.category,
+                                                   element.sound.origin == who->bub_pos() );
+            // The avatar's own voice has its message from the action ("You yell ..."), not from here.
+            const auto own_voice = element.sound.from_player && element.sound.origin == who->bub_pos() &&
+                                   ( element.sound.category == sound_t::alert || element.sound.category == sound_t::order ||
+                                     element.sound.category == sound_t::speech );
+            const auto logged = described || own_voice;
+            if( described ) {
                 game_message_type severity = m_info;
                 if( element.sound.category == sound_t::combat || element.sound.category == sound_t::alarm ) {
                     severity = m_warning;
