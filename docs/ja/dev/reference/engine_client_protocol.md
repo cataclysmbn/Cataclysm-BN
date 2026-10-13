@@ -1,14 +1,14 @@
 ---
-title: エンジン/クライアントプロトコル 0.1
+title: エンジン/クライアントプロトコル 0.2
 ---
 
-外部クライアントは `cataclysm-bn-tiles --client=mcp` の stdio 上で、改行区切りの JSON-RPC 2.0 によりゲームをプレイします。値は [Draft 2020-12 スキーマ](../../../schema/engine-client/0.1.schema.json)で定義され、以下の例はすべて[例ファイル](../../../schema/engine-client/0.1.examples.json)でスキーマに照らして検証されています。従来の MCP ツール(`bn.observe`、`bn.press` など)は別の面であり変更されません。クライアントが `bn.hello` を呼ぶと、これらのツールは入力を拒否します。
+外部クライアントは `cataclysm-bn-tiles --client=mcp` の stdio 上で、改行区切りの JSON-RPC 2.0 によりゲームをプレイします。値は [Draft 2020-12 スキーマ](../../../schema/engine-client/0.2.schema.json)で定義され、以下の例はすべて[例ファイル](../../../schema/engine-client/0.2.examples/)でスキーマに照らして検証されています。従来の MCP ツール(`bn.observe`、`bn.press` など)は別の面であり変更されません。クライアントが `bn.hello` を呼ぶと、これらのツールは入力を拒否します。
 
 ## セッション
 
 ```text
--> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.1"],"client":{"name":"my-client","version":"1"}}}
-<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.1","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096}}}
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"},"schema":"sha256:0123456789abcdef"}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"schema":"sha256:0123456789abcdef","locale":"en","engine_locale":"en","role":"controller"}}
 -> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
 <- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
 <- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
@@ -24,32 +24,32 @@ title: エンジン/クライアントプロトコル 0.1
 
 ## メソッド
 
-| メソッド                 | パラメータ                                               | 結果                                                   |
-| ------------------------ | -------------------------------------------------------- | ------------------------------------------------------ |
-| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?`, `delivery?` | `version`, `epoch`, `engine`, `limits`, `delivery?`    |
-| `bn.viewport`            | `cols`, `rows`                                           | なし                                                   |
-| `bn.interrupt`           | なし                                                     | なし                                                   |
-| `bn.subscribe`           | なし                                                     | スナップショットヘッダー。続いてパートとイベントが届く |
-| `bn.unsubscribe`         | なし                                                     | なし                                                   |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                | `boundary_id`, `total`, `choices` (読み取り専用)       |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                            | `lines`(読み取り専用)                                  |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                    | `at`, `cells`, `forgotten` (読み取り専用)              |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                           | `command_id`, `stage: "received"`                      |
-| `bn.command.result`      | `epoch`, `command_id`                                    | 最新のステージ。失われた通知の回復に使う               |
-| `bn.credit`              | `frames`                                                 | 付与後の保有 `credits`                                 |
+| メソッド                 | パラメータ                                                 | 結果                                                                                             |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
+| `bn.viewport`            | `cols`, `rows`                                             | なし                                                                                             |
+| `bn.interrupt`           | なし                                                       | なし                                                                                             |
+| `bn.subscribe`           | なし                                                       | スナップショットヘッダー。続いてパートとイベントが届く                                           |
+| `bn.unsubscribe`         | なし                                                       | なし                                                                                             |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (読み取り専用)                                                 |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines`(読み取り専用)                                                                            |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (読み取り専用)                                                        |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
+| `bn.command.result`      | `epoch`, `command_id`                                      | 最新のステージ。失われた通知の回復に使う                                                         |
+| `bn.credit`              | `frames`                                                   | 付与後の保有 `credits`                                                                           |
 
 エンジンからの通知は `bn.snapshot.part`、`bn.events`、`bn.command`、`bn.resync`、`bn.loading`、`bn.progress` です。`bn.loading` と `bn.progress` 以外は、購読中のクライアントへ入力境界ごとに送られます。`bn.progress`(`{epoch}`)はハートビートで、待機などの行動が入力境界に到達せずに続いている間、`bn.hello` を済ませたクライアントへ 2 秒ごとに送られます。通信が途絶えたなら、エンジンは動いていません。ワールドの読み込み中は `bn.loading` が同じ役割を果たします。
 
 エラーはコード `1000` と `error.data = {kind, action?, at?}` を使い、`action` が次の対応(`hello`、`subscribe`、`retry`)を示します。
 
-## バージョン 0.2（作業中）
+## hello とスタック
 
-エンジンは `"0.1"` を上記のとおりに、`"0.2"` をすべてのトランスポートで提供し、hello が選ぶ。`"0.2"` を列挙した hello には 0.2 で応答し、次を含める必要がある。
+エンジンはすべてのトランスポートで `"0.2"` だけを提供する。`"0.2"` を列挙しない hello は `negotiation_failed`、`action: "hello"` で失敗する。hello は次を含める必要がある。
 
 - `schema`: `sha256:` と、[`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) の生バイトの SHA-256 の先頭 16 桁の 16 進数。ハッシュが異なると `negotiation_failed`、`action: "hello"`、`error.data.schema = {engine, client}` で失敗する。エンジンは CMake の構成時にスキーマファイルからハッシュを得る。
-- 任意の `locale` と `capabilities`（`tiles`、`tint_ids`、`viewport`、`delivery`。0.1 の個別メンバーも受け付けるが両方の形式は併用できない）。結果には `schema`、`locale`（接続のテキストの言語）、`engine_locale`、`role` が加わる。エンジンが接続ごとにローカライズするまで、`locale` はエンジンの言語である。
+- 任意の `locale` と `capabilities`（`tiles`、`tint_ids`、`viewport`、`delivery`。個別メンバーとして送っても受け付けるが両方の形式は併用できない）。結果には `schema`、`locale`（接続のテキストの言語）、`engine_locale`、`role` が加わる。エンジンが接続ごとにローカライズするまで、`locale` はエンジンの言語である。
 
-0.2 の接続だけが、すべてのインタラクション境界（スナップショットのヘッダーとイベント）で 0.1 の `interaction` と並んで `stack` を受け取る。スタックは開いている画面を外側から並べたもので、最後の画面だけが affordance を持つ。`component_id` 付きの `bn.interaction.choices` は最上位画面のその一覧（`rows`、`total`）を読む。
+すべてのインタラクション境界（スナップショットのヘッダーとイベント）は `interaction` と並んで `stack` を持つ。スタックは開いている画面を外側から並べたもので、最後の画面だけが affordance を持つ。`component_id` 付きの `bn.interaction.choices` は最上位画面のその一覧（`rows`、`total`）を読む。
 
 `bn.command.submit` は `operation: {kind: "invoke", affordance_id, args?}` を受け取る。`expect` は affordance の `expect` の範囲に従う。
 
@@ -150,4 +150,4 @@ affordance に合わない形式は `invalid_arguments` である。
 - `sound.heard`(`text`、`volume`、`marker`、`logged`)は、ネイティブの聴覚ルール(周囲の騒音に対する音量、聴覚保護、睡眠、難聴)を通ってアバターに届いた音です。`text` はネイティブのメッセージが挙げる説明、`volume` はアバターに聞こえるデシベル、`marker` はネイティブのゲームが音を示すマスです。マーカーは音源ではなく、その近くでアバターから見えないマスで、アバターが音源にいるか音源が見えるときは省かれるため、隠れた音源は漏れません。音のログ行はネイティブのメッセージルールとクールダウンに従いますが、`sound.heard` は足音などログが省く音も含め、聞こえたすべての音について公開されます。`logged` は、その音がメッセージログにも行を持つとき `true` で、両方を表示するクライアントが同じ音を一度だけ挙げられます。 アバター自身の叫びは、そのアクションが自分で行 (`You yell ...`) を記録するため logged として扱います。
 - `entity.moved`(`id`、`to`、`from`、`mode`)と `entity.gone`(`id`、`reason`)により、クライアントはスナップショットが開示するモンスターと NPC を、再同期なしでアクションの間じゅう追えます。`entity.moved` はアバターに見えるクリーチャーの移動ごとに、移動先のマスで公開されます。移動元のマスがアバターに見えていなければ `from` は省かれ、`mode` は隣のマスへの一歩なら `walk`、それより長い移動(押される、テレポート)なら `propelled` です。アバター自身の移動は状態の差分に含まれます。`entity.gone` は、クライアントが知っていたクリーチャーがもう開示されないことを示し、`reason` は `lost_sight`(視界から出た、またはアバターや視点が動いた)、`died`、`removed`(ゲームから消えた)です。視界から歩き出たクリーチャーはその場で `gone` になり、それ以外は境界の公開時に見つかります。混んだターンでは `entity.moved`、`terrain.changed`、`furniture.changed`、`field.changed` の最初の 256 件だけが公開されます(視界から歩き出たクリーチャーの `gone` も数えます)。境界の `cells.seen` 変更セットは常に最終状態を持つため、イベントは順序とタイミングを加えるだけで、状態を置き換えることはありません。
 
-イベントは `interaction.changed`、`coverage.moved`、`turn.passed`、`cells.seen`、`message.logged` と上記のアニメーション事実で、今後スキーマに挙げた残りの演出タイプが加わります。0.1 の公開前に追加したイベントタイプは 0.1 に含まれ、公開後は新しいイベントタイプに新しい正確なバージョンが必要です。
+イベントは `interaction.changed`、`coverage.moved`、`turn.passed`、`cells.seen`、`message.logged` と上記のアニメーション事実で、今後スキーマに挙げた残りの演出タイプが加わります。0.2 の公開前に追加したイベントタイプは 0.2 に含まれ、公開後は新しいイベントタイプに新しい正確なバージョンが必要です。

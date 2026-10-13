@@ -2,7 +2,7 @@
  * @module
  * The examples are the contract in executable form: valid ones pass their definition,
  * structurally wrong ones fail it. Continuity and visibility rules are tested elsewhere.
- * 0.1 keeps one examples file; 0.2 splits them by area under `0.2.examples/`.
+ * The examples are split by area under `0.2.examples/`.
  */
 import { assert, assertEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
@@ -19,54 +19,44 @@ const areas = async (dir: string) => {
     examples: await read(`${dir}/${name}`) as Examples,
   })))
 }
-const versions = [
-  {
-    version: "0.1",
-    schema: await read("0.1.schema.json"),
-    files: [{ area: "", examples: await read("0.1.examples.json") as Examples }],
-  },
-  { version: "0.2", schema: await read("0.2.schema.json"), files: await areas("0.2.examples") },
-]
-
-for (const { version, schema, files } of versions) {
-  const ajv = new Ajv2020({ strict: false, allErrors: false })
-  ajv.addSchema(schema, "bn")
-  const check = (example: Example) => {
-    const validate = ajv.getSchema(`bn#/$defs/${example.def}`)
-    assert(validate, `no definition ${example.def}`)
-    return { ok: validate(example.value), errors: validate.errors }
-  }
-
-  Deno.test(`${version}: schema compiles as Draft 2020-12`, () => {
-    assert(ajv.validateSchema(schema))
-  })
-
-  for (const { area, examples } of files) {
-    const prefix = area ? `${version} ${area}` : version
-    for (const example of examples.valid) {
-      Deno.test(`${prefix} valid: ${example.name}`, () => {
-        const { ok, errors } = check(example)
-        assert(ok, JSON.stringify(errors))
-      })
-    }
-    for (const example of examples.invalid) {
-      Deno.test(`${prefix} invalid: ${example.name}`, () => {
-        assertEquals(check(example).ok, false, example.why)
-      })
-    }
-  }
-
-  Deno.test(`${version}: every method and notification names an existing definition`, () => {
-    const defs = Object.keys(schema.$defs)
-    const names = [
-      ...Object.values<{ params: string; result: string }>(schema["x-methods"]).flatMap((
-        method,
-      ) => [method.params, method.result]),
-      ...Object.values<string>(schema["x-notifications"]),
-    ]
-    for (const name of names) assert(defs.includes(name), name)
-  })
+const schema = await read("0.2.schema.json")
+const files = await areas("0.2.examples")
+const ajv = new Ajv2020({ strict: false, allErrors: false })
+ajv.addSchema(schema, "bn")
+const check = (example: Example) => {
+  const validate = ajv.getSchema(`bn#/$defs/${example.def}`)
+  assert(validate, `no definition ${example.def}`)
+  return { ok: validate(example.value), errors: validate.errors }
 }
+
+Deno.test("0.2: schema compiles as Draft 2020-12", () => {
+  assert(ajv.validateSchema(schema))
+})
+
+for (const { area, examples } of files) {
+  for (const example of examples.valid) {
+    Deno.test(`0.2 ${area} valid: ${example.name}`, () => {
+      const { ok, errors } = check(example)
+      assert(ok, JSON.stringify(errors))
+    })
+  }
+  for (const example of examples.invalid) {
+    Deno.test(`0.2 ${area} invalid: ${example.name}`, () => {
+      assertEquals(check(example).ok, false, example.why)
+    })
+  }
+}
+
+Deno.test("0.2: every method and notification names an existing definition", () => {
+  const defs = Object.keys(schema.$defs)
+  const names = [
+    ...Object.values<{ params: string; result: string }>(schema["x-methods"]).flatMap((
+      method,
+    ) => [method.params, method.result]),
+    ...Object.values<string>(schema["x-notifications"]),
+  ]
+  for (const name of names) assert(defs.includes(name), name)
+})
 
 Deno.test("0.2: example names are unique across areas", async () => {
   const names = (await areas("0.2.examples")).flatMap(({ examples }) =>
@@ -75,35 +65,24 @@ Deno.test("0.2: example names are unique across areas", async () => {
   assertEquals(names.length, new Set(names).size)
 })
 
-Deno.test("0.2: a hello that offers 0.2 names the schema, any other offers only 0.1", async () => {
-  const schema = await read("0.2.schema.json")
+Deno.test("0.2: a hello names the schema and a 0.1-only hello does not validate", () => {
   assertEquals(schema.$defs.hello_result.properties.version, { const: "0.2" })
-  const hellos = (await areas("0.2.examples")).flatMap(({ examples }) => examples.valid)
+  const hellos = files.flatMap(({ examples }) => examples.valid)
     .filter((example) => example.def === "hello_params")
   assert(hellos.length > 0)
   for (const { name, value } of hellos) {
     const { versions, schema } = value as { versions: string[]; schema?: string }
-    if (versions.includes("0.2")) assert(schema, name)
-    else assertEquals([versions, schema], [["0.1"], undefined], name)
+    assert(versions.includes("0.2") && schema, name)
   }
-})
-
-Deno.test("0.2 is a superset of 0.1: every valid 0.1 example validates", () => {
-  const [v1, v2] = versions
-  const ajv = new Ajv2020({ strict: false, allErrors: false })
-  ajv.addSchema(v2.schema, "bn")
-  // The hello answers with the one version it speaks.
-  const exempt = ["hello_result"]
-  for (const example of v1.files.flatMap(({ examples }) => examples.valid)) {
-    if (exempt.includes(example.def)) continue
-    const validate = ajv.getSchema(`bn#/$defs/${example.def}`)
-    assert(validate, `no definition ${example.def}`)
-    assert(validate(example.value), `${example.name}: ${JSON.stringify(validate.errors)}`)
-  }
+  const client = { name: "bn-deno", version: "1" }
+  assertEquals(
+    check({ name: "", def: "hello_params", value: { versions: ["0.1"], client } }).ok,
+    false,
+  )
 })
 
 Deno.test("0.2: the text a client shows is the one `text` type", async () => {
-  const { $defs } = await read("0.2.schema.json")
+  const { $defs } = schema
   const text = { $ref: "#/$defs/text" }
   const refs = [
     $defs.affordance.properties.label,

@@ -40,17 +40,15 @@ auto rpc(const std::string& method, const std::string& params, const std::string
     return R"({"jsonrpc":"2.0","method":")" + method + R"(","params":)" + params
          + (id.empty() ? "" : R"(,"id":)" + id) + "}\n";
 }
-const auto hello =
-    rpc("bn.hello", R"({"versions":["0.1"],"client":{"name":"test","version":"1"}})", "1");
 const auto subscribe = rpc("bn.subscribe", "{}", "2");
 const auto engine_hash = std::string{engine_schema_hash};
-auto hello_02_with(const std::string& hash) -> std::string {
+auto hello_with_schema(const std::string& hash) -> std::string {
     return rpc(
         "bn.hello",
         R"({"versions":["0.2"],"client":{"name":"test","version":"1"},"schema":")" + hash + R"("})",
         "1");
 }
-const auto hello_02 = hello_02_with(engine_hash);
+const auto hello = hello_with_schema(engine_hash);
 /// The requests of `texts` as one JSON-RPC batch frame.
 auto batch_of(const std::vector<std::string>& texts) -> std::string {
     auto frame = std::string{"["};
@@ -77,8 +75,8 @@ auto count_of(const std::string& text, const std::string& part) -> std::size_t {
 auto hello_with(const std::string& delivery) -> std::string {
     return rpc(
         "bn.hello",
-        R"({"versions":["0.1"],"client":{"name":"test","version":"1"},"delivery":)" + delivery
-            + "}",
+        R"({"versions":["0.2"],"client":{"name":"test","version":"1"},"schema":")" + engine_hash
+            + R"(","delivery":)" + delivery + "}",
         "1");
 }
 
@@ -230,7 +228,7 @@ TEST_CASE(
     SECTION("a request that arrives in time is served before the wait can lapse") {
         // The two requests are read, then the stream ends: the wait said a frame was ready.
         CHECK_FALSE(timed.pump_until_input(input, test.output, test.errors, 50));
-        CHECK(contains(test.output.str(), R"("version":"0.1")"));
+        CHECK(contains(test.output.str(), R"("version":"0.2")"));
         CHECK(waits.size() == 3);
     }
     SECTION("no request within the wait returns with nothing queued") {
@@ -241,7 +239,7 @@ TEST_CASE(
         CHECK(waits.front() > 0);
         CHECK(waits.front() <= 50);
         // Nothing was read: the lapse leaves the requests for the next wait.
-        CHECK_FALSE(contains(test.output.str(), R"("version":"0.1")"));
+        CHECK_FALSE(contains(test.output.str(), R"("version":"0.2")"));
     }
     SECTION("an untimed pump never consults the wait") {
         CHECK_FALSE(timed.pump_until_input(input, test.output, test.errors));
@@ -255,14 +253,14 @@ TEST_CASE("hello is required and checks the version", "[engine_client_server]") 
     test.pump(
         rpc("bn.subscribe", "{}", "1")
         + rpc("bn.hello", R"({"versions":["0.9"],"client":{"name":"t","version":"1"}})", "2")
-        // "1.0" is reserved for the finished protocol; the engine offers "0.1" and "0.2".
+        // "1.0" is reserved for the finished protocol; the engine offers "0.2".
         + rpc("bn.hello", R"({"versions":["1.0"],"client":{"name":"t","version":"1"}})", "3")
         + hello);
     const auto out = test.output.str();
     CHECK(count_of(out, R"("kind":"negotiation_failed","message":")") == 3);
     CHECK(contains(out, R"("action":"hello")"));
     CHECK(index_of(out, R"("id":1)") < index_of(out, R"("id":2)"));
-    CHECK(contains(out, R"("version":"0.1")"));
+    CHECK(contains(out, R"("version":"0.2")"));
     CHECK(contains(out, R"("epoch":")" + test.authority.epoch()));
 }
 
@@ -273,7 +271,8 @@ TEST_CASE(
     const auto declare = [](const std::string& view) {
         return rpc(
             "bn.hello",
-            R"({"versions":["0.1"],"client":{"name":"t","version":"1"},"viewport":)" + view + "}",
+            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")" + engine_hash
+                + R"(","viewport":)" + view + "}",
             "1");
     };
     SECTION("a hello without a viewport leaves the terminal alone") {
@@ -493,12 +492,12 @@ TEST_CASE("interaction choices are a passive paged read", "[engine_client_server
     CHECK(test.authority.at() == before);
 }
 
-TEST_CASE("a 0.2 hello names the schema and a wrong one is refused", "[engine_client_server]") {
+TEST_CASE("a hello names the schema and a wrong one is refused", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
     const auto stranger = std::string{"sha256:0000000000000000"};
     SECTION("the hash, the locale and the role are answered") {
-        test.pump(hello_02);
+        test.pump(hello);
         const auto out = test.output.str();
         CHECK(contains(out, R"("version":"0.2")"));
         CHECK(contains(out, R"("schema":")" + engine_hash + R"(","locale":")"));
@@ -507,7 +506,7 @@ TEST_CASE("a 0.2 hello names the schema and a wrong one is refused", "[engine_cl
         CHECK(contains(out, R"("role":"controller")"));
     }
     SECTION("a different hash fails the negotiation and names both") {
-        test.pump(hello_02_with(stranger));
+        test.pump(hello_with_schema(stranger));
         const auto out = test.output.str();
         CHECK(contains(out, R"("kind":"negotiation_failed")"));
         CHECK(contains(out, R"("action":"hello")"));
@@ -515,22 +514,30 @@ TEST_CASE("a 0.2 hello names the schema and a wrong one is refused", "[engine_cl
             out, R"("schema":{"engine":")" + engine_hash + R"(","client":")" + stranger + R"("})"));
         CHECK_FALSE(contains(out, R"("version":"0.2")"));
     }
-    SECTION("a refused hello negotiates nothing, and a 0.1 hello after it is served as before") {
-        test.pump(hello_02_with(stranger) + rpc("bn.subscribe", "{}", "7") + hello + subscribe);
+    SECTION("a 0.1 hello is refused with negotiation_failed, and negotiates nothing") {
+        test.pump(
+            rpc("bn.hello", R"({"versions":["0.1"],"client":{"name":"t","version":"1"}})", "5")
+            + rpc("bn.subscribe", "{}", "7"));
+        const auto out = test.output.str();
+        CHECK(count_of(out, R"("kind":"negotiation_failed")") == 2);
+        CHECK(contains(out, R"("action":"hello")"));
+        CHECK_FALSE(contains(out, R"("version":"0.)"));
+    }
+    SECTION("a refused hello negotiates nothing, and a hello after it is served") {
+        test.pump(hello_with_schema(stranger) + rpc("bn.subscribe", "{}", "7") + hello + subscribe);
         const auto out = test.output.str();
         CHECK(index_of(out, R"("id":7,"error")") != std::string::npos);
-        CHECK(contains(out, R"("version":"0.1")"));
-        CHECK_FALSE(contains(out, R"("version":"0.2")"));
-        CHECK_FALSE(contains(out, R"("schema":)" + std::string{"\""} + engine_hash));
+        CHECK(contains(out, R"("version":"0.2")"));
+        CHECK(contains(out, R"("schema":)" + std::string{"\""} + engine_hash));
     }
     SECTION("a 0.2 hello without the hash, or with a malformed one, is invalid params") {
         test.pump(
             rpc("bn.hello", R"({"versions":["0.2"],"client":{"name":"t","version":"1"}})", "5")
-            + hello_02_with("sha256:ABCDEF0123456789"));
+            + hello_with_schema("sha256:ABCDEF0123456789"));
         CHECK(count_of(test.output.str(), R"("code":-32602)") == 2);
         CHECK_FALSE(contains(test.output.str(), R"("version":"0.2")"));
     }
-    SECTION("capabilities carry what the loose members of 0.1 did") {
+    SECTION("capabilities carry what the loose members do") {
         test.pump(rpc(
             "bn.hello",
             R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")" + engine_hash
@@ -541,7 +548,7 @@ TEST_CASE("a 0.2 hello names the schema and a wrong one is refused", "[engine_cl
     }
 }
 
-TEST_CASE("only a 0.2 connection reads the stack of a boundary", "[engine_client_server]") {
+TEST_CASE("a connection reads the stack of a boundary", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
     REQUIRE(test.authority.publish_boundary());
@@ -552,8 +559,8 @@ TEST_CASE("only a 0.2 connection reads the stack of a boundary", "[engine_client
             + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
         return test.output.str();
     };
-    SECTION("0.2 snapshot and events") {
-        const auto snapshot = connect(hello_02);
+    SECTION("snapshot and events") {
+        const auto snapshot = connect(hello);
         CHECK(contains(snapshot, stack));
         test.run_native_input();
         known_cells.push_back(3);
@@ -562,18 +569,6 @@ TEST_CASE("only a 0.2 connection reads the stack of a boundary", "[engine_client
         const auto events = test.output.str();
         REQUIRE(contains(events, R"("method":"bn.events")"));
         CHECK(contains(events, stack));
-    }
-    SECTION("0.1 snapshot and events stay as they were") {
-        const auto snapshot = connect(hello);
-        CHECK(contains(snapshot, R"("interaction":{"boundary_id")"));
-        CHECK_FALSE(contains(snapshot, "stack"));
-        test.run_native_input();
-        known_cells.push_back(3);
-        test.output.str("");
-        CHECK_FALSE(test.pump(""));
-        const auto events = test.output.str();
-        REQUIRE(contains(events, R"("method":"bn.events")"));
-        CHECK_FALSE(contains(events, "stack"));
     }
 }
 
@@ -591,7 +586,7 @@ TEST_CASE("a list of the top screen is paged by component", "[engine_client_serv
             n);
     };
     SECTION("rows from the offset and the whole total") {
-        test.pump(hello_02 + rows("list:choices", "6"));
+        test.pump(hello + rows("list:choices", "6"));
         const auto out = test.output.str();
         CHECK(contains(out, R"("component_id":"list:choices","total":2,"rows":[)"));
         CHECK(contains(out, R"("id":"choice:no")"));
@@ -599,23 +594,18 @@ TEST_CASE("a list of the top screen is paged by component", "[engine_client_serv
         CHECK(test.authority.at() == before);
     }
     SECTION("a component the screen does not hold is validation_failed") {
-        test.pump(hello_02 + rows("list:missing", "6"));
+        test.pump(hello + rows("list:missing", "6"));
         CHECK(contains(test.output.str(), R"("kind":"validation_failed")"));
     }
     SECTION("a boundary that has passed is stale") {
         test.pump(
-            hello_02
+            hello
             + rpc(
                 "bn.interaction.choices",
                 R"({"epoch":")" + test.authority.epoch()
                     + R"(","boundary_id":"boundary:old","offset":0,"limit":5,"component_id":"list:choices"})",
                 "6"));
         CHECK(contains(test.output.str(), R"("kind":"stale_boundary")"));
-    }
-    SECTION("a 0.1 connection has no components") {
-        test.pump(hello + rows("list:choices", "6"));
-        CHECK(contains(test.output.str(), R"("code":-32602)"));
-        CHECK_FALSE(contains(test.output.str(), "choice:no"));
     }
 }
 
@@ -635,7 +625,7 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
             n);
     };
     SECTION("a registered action completes at the next boundary") {
-        REQUIRE(test.pump(hello_02 + subscribe + invoke("3")));
+        REQUIRE(test.pump(hello + subscribe + invoke("3")));
         CHECK(contains(test.output.str(), R"("stage":"received")"));
         CHECK(contains(test.output.str(), R"("stage":"validated")"));
         test.run_native_input();
@@ -645,14 +635,13 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
         CHECK(contains(test.output.str(), R"("stage":"completed")"));
     }
     SECTION("a screen that is not on top is stale_screen and delivers nothing") {
-        CHECK_FALSE(
-            test.pump(hello_02 + subscribe + invoke("3", R"({"screen_id":"screen:closed"})")));
+        CHECK_FALSE(test.pump(hello + subscribe + invoke("3", R"({"screen_id":"screen:closed"})")));
         CHECK(test.queued.empty());
         CHECK(contains(test.output.str(), R"("stage":"rejected","error":"stale_screen")"));
     }
     SECTION("an affordance the screen does not offer is unknown_affordance") {
         CHECK_FALSE(test.pump(
-            hello_02 + subscribe
+            hello + subscribe
             + rpc("bn.command.submit",
                   R"({"epoch":")" + test.authority.epoch() + R"(","expect":{"screen_id":")"
                       + screen_id
@@ -665,18 +654,12 @@ TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_serv
         const auto current = test.authority.current();
         REQUIRE(current);
         CHECK_FALSE(test.pump(
-            hello_02 + subscribe
+            hello + subscribe
             + invoke("3",
                      R"({"boundary_id":")" + current->value.interaction.id + R"(","revision":")"
                          + std::to_string(current->at.revision) + R"("})")));
         CHECK(test.queued.empty());
         CHECK(contains(test.output.str(), R"("stage":"rejected","error":"invalid_arguments")"));
-    }
-    SECTION("a 0.1 connection cannot invoke") {
-        CHECK_FALSE(test.pump(hello + subscribe + invoke("3")));
-        CHECK(test.queued.empty());
-        CHECK(contains(test.output.str(), R"("code":-32602)"));
-        CHECK_FALSE(contains(test.output.str(), R"("stage":"received")"));
     }
 }
 
@@ -696,7 +679,7 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
     };
     SECTION("a held key: five in one frame all complete, one at a time") {
         REQUIRE(test.pump(
-            hello_02 + subscribe + batch_of({yes("3"), yes("4"), yes("5"), yes("6"), yes("7")})));
+            hello + subscribe + batch_of({yes("3"), yes("4"), yes("5"), yes("6"), yes("7")})));
         // Five receipts, and only the first is running.
         CHECK(count_of(test.output.str(), R"("stage":"received")") == 5);
         CHECK(count_of(test.output.str(), R"("stage":"validated")") == 1);
@@ -714,20 +697,20 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
     SECTION("the queue holds eight behind the running command") {
         auto frame = std::vector<std::string>{};
         for (auto n = 0; n < 10; ++n) { frame.push_back(yes(std::to_string(10 + n))); }
-        REQUIRE(test.pump(hello_02 + subscribe + batch_of(frame)));
+        REQUIRE(test.pump(hello + subscribe + batch_of(frame)));
         // One running, eight waiting; the tenth is busy.
         CHECK(count_of(test.output.str(), R"("stage":"received")") == 9);
         CHECK(count_of(test.output.str(), R"("kind":"command_busy")") == 1);
     }
     SECTION("a boundary-scoped command is busy while one runs") {
         REQUIRE(test.pump(
-            hello_02 + subscribe
+            hello + subscribe
             + batch_of({yes("3"), test.submit_text(R"({"kind":"cancel"})", test.schema())})));
         CHECK(count_of(test.output.str(), R"("stage":"received")") == 1);
         CHECK(contains(test.output.str(), R"("kind":"command_busy")"));
     }
     SECTION("a burst aimed at a screen that closed is stale_screen for every key after the first") {
-        REQUIRE(test.pump(hello_02 + subscribe + batch_of({yes("3"), yes("4"), yes("5")})));
+        REQUIRE(test.pump(hello + subscribe + batch_of({yes("3"), yes("4"), yes("5")})));
         test.run_native_input();
         // The first key closed the popup; another screen is on top now.
         screen.reset();
@@ -739,7 +722,7 @@ TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_cli
         CHECK(test.queued.empty());
     }
     SECTION("a world replacement interrupts what waits") {
-        REQUIRE(test.pump(hello_02 + subscribe + batch_of({yes("3"), yes("4"), yes("5")})));
+        REQUIRE(test.pump(hello + subscribe + batch_of({yes("3"), yes("4"), yes("5")})));
         test.queued.clear();
         test.output.str("");
         test.authority.replace_world();
@@ -1516,9 +1499,10 @@ TEST_CASE("a spectator's hello leaves the controller's view alone", "[engine_cli
     auto watcher = spectator{test};
     watcher.read(rpc(
         "bn.hello",
-        R"({"versions":["0.1"],"client":{"name":"w","version":"1"},"viewport":{"cols":10,"rows":10}})",
+        R"({"versions":["0.2"],"client":{"name":"w","version":"1"},"schema":")" + engine_hash
+            + R"(","viewport":{"cols":10,"rows":10}})",
         "1"));
-    CHECK(contains(watcher.output.str(), R"("version":"0.1")"));
+    CHECK(contains(watcher.output.str(), R"("version":"0.2")"));
     CHECK(watcher.resized.empty());
     CHECK(declared_viewport.empty());
 }
@@ -1811,7 +1795,7 @@ TEST_CASE(
     rig.poll_controller();
     const auto read = first.receive();
     CHECK(contains(read, R"("code":-32700)"));
-    CHECK(contains(read, R"("version":"0.1")"));
+    CHECK(contains(read, R"("version":"0.2")"));
     CHECK(rig.hub->connections() == 1);
 }
 
@@ -1826,7 +1810,7 @@ TEST_CASE(
     rig.poll_controller();
     CHECK(rig.hub->connections() == 1);
     const auto read = first.receive();
-    CHECK(contains(read, R"("version":"0.1")"));
+    CHECK(contains(read, R"("version":"0.2")"));
     CHECK(contains(read, R"("method":"bn.snapshot.part")"));
 }
 

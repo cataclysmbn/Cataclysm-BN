@@ -17,11 +17,8 @@
 namespace engine_client
 {
 
-inline constexpr auto contract_version = "0.1";
-/// The version whose hello names the schema and whose boundaries carry the `stack`.
-inline constexpr auto contract_version_02 = "0.2";
-/// What a connection negotiated: a 0.1 connection is served exactly as before, without `stack`.
-enum class wire_version { v0_1, v0_2 };
+/// The one version a hello may negotiate; it names the schema and the boundaries carry the `stack`.
+inline constexpr auto contract_version = "0.2";
 /// Screen-scoped invokes a controller may have waiting behind the running command.
 inline constexpr auto maximum_queued_commands = std::size_t {8};
 inline constexpr auto maximum_rows = std::size_t {200};

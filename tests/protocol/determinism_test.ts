@@ -14,6 +14,12 @@ import { Mirror } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
+const schemaFile = new URL("../../docs/schema/engine-client/0.2.schema.json", import.meta.url)
+/** What a hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the schema. */
+const schemaHash = "sha256:" + Array.from(
+  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile))),
+  (byte) => byte.toString(16).padStart(2, "0"),
+).join("").slice(0, 16)
 
 /** One record of a state log: the hashes after one `game::do_turn`. */
 type StateRecord = { step: number; turn: number; parts: Record<string, string> }
@@ -331,7 +337,7 @@ async function wishItem(session: Session, name: string) {
 /** The choices of an open inventory selector. */
 const choices = (session: Session): Value[] => session.mirror.interaction.interaction.choices
 
-/** Every kind of 0.1 operation, once or more, in a session whose start is the tutorial. */
+/** Every kind of boundary operation, once or more, in a session whose start is the tutorial. */
 async function playEveryOperation(session: Session) {
   const run = (operation: Value) => session.run(operation)
   await session.clear()
@@ -450,7 +456,8 @@ async function drive(
   client.readDelayMs = condition.readDelayMs ?? 0
   try {
     await client.result("bn.hello", {
-      versions: ["0.1"],
+      versions: ["0.2"],
+      schema: schemaHash,
       client: { name: "determinism-test", version: "1" },
       ...(condition.delivery ? { delivery: condition.delivery } : {}),
     })
@@ -517,14 +524,10 @@ Deno.test({
     const [baseline] = runs
     assert(baseline.log.length > 10, `turns hashed: ${baseline.log.length}`)
 
-    // Every kind the 0.1 schema lets a client submit was submitted.
-    const schema = JSON.parse(
-      await Deno.readTextFile(
-        new URL("../../docs/schema/engine-client/0.1.schema.json", import.meta.url),
-      ),
-    )
+    // Every kind the schema lets a client submit as a boundary operation was submitted.
+    const schema = JSON.parse(await Deno.readTextFile(schemaFile))
     const offered = schema["$defs"].operation.oneOf.flatMap((operation: Value) =>
-      operation.properties.kind.const ?? operation.properties.kind.enum
+      operation.properties ? operation.properties.kind.const ?? operation.properties.kind.enum : []
     ).sort()
     assertEquals([...baseline.kinds].sort(), offered)
 

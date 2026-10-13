@@ -722,7 +722,7 @@ auto server::queue_push() -> void
         } else if( batch.events.size() == 1 && !batch.events.front().wire().empty() ) {
             notify( "bn.events", batch.events.front().wire(), through );
         } else {
-            notify( "bn.events", serialize_events( batch, version_ ), through );
+            notify( "bn.events", serialize_events( batch ), through );
         }
         batch.events.clear();
         first_params.clear();
@@ -741,10 +741,9 @@ auto server::queue_push() -> void
             }
             const auto &event = marked ? *marked : pushed->event;
             const auto &wire = event.wire();
-            // An event sealed for 0.1 lacks the stack of the boundary it carries.
-            const auto stacked = version_ == wire_version::v0_2 && event.value().delta.interaction;
-            auto params = stacked || wire.empty() ?
-                          serialize_events( {.epoch = pushed->epoch, .events = {event}}, version_ ) : std::string{};
+            // The stack of a boundary is read when it is sent, so such an event is serialized again.
+            auto params = event.value().delta.interaction || wire.empty() ?
+                          serialize_events( {.epoch = pushed->epoch, .events = {event}} ) : std::string{};
             const auto bytes = params.empty() ? wire.size() : params.size();
             if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
             batch.epoch = pushed->epoch;
@@ -814,12 +813,11 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     if( request.method == "bn.hello" ) {
         const auto decoded = decode_hello_request( params );
         if( !decoded ) { return invalid(); }
-        const auto offers_02 = std::ranges::contains( decoded->versions, contract_version_02 );
-        if( !offers_02 && !std::ranges::contains( decoded->versions, contract_version ) ) {
+        if( !std::ranges::contains( decoded->versions, contract_version ) ) {
             return fail( error::negotiation_failed );
         }
-        // Only 0.2 names the schema; the decoder requires it there.
-        if( offers_02 && *decoded->schema != engine_schema_hash ) {
+        // The decoder requires the schema of a hello that offers the version.
+        if( *decoded->schema != engine_schema_hash ) {
             return fail( error::negotiation_failed, schema_hashes{ .engine = engine_schema_hash, .client = *decoded->schema } );
         }
         // The language is the connection's own to ask for, and the engine must be able to word it.
@@ -829,7 +827,6 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             return fail( error::command_busy );
         }
         hello_ = true;
-        version_ = offers_02 ? wire_version::v0_2 : wire_version::v0_1;
         locale_ = decoded->locale.value_or( std::string{} );
         push_.use_locale( locale_ );
         // At an input boundary the live game is what was published; during an activity a subscribe publishes one.
@@ -856,12 +853,10 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto grant = credits_ ? std::optional{ delivery_grant{ .credits = *credits_, .max_hz = decoded->max_hz } } :
                            std::nullopt;
         auto reply = hello_reply{ .epoch = session_.epoch(), .engine = describe_engine(), .delivery = grant };
-        if( offers_02 ) {
-            reply.identity = { .schema = engine_schema_hash, .locale = locale_.empty() ? reply.engine.locale : locale_,
-                               .engine_locale = reply.engine.locale,
-                               .role = options_.spectator ? "spectator" : "controller"
-                             };
-        }
+        reply.identity = { .schema = engine_schema_hash, .locale = locale_.empty() ? reply.engine.locale : locale_,
+                           .engine_locale = reply.engine.locale,
+                           .role = options_.spectator ? "spectator" : "controller"
+                         };
         return rpc::make_result( request, serialize_hello( reply ) );
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
@@ -902,7 +897,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         if( !current ) { return fail( current.error() ); }
         if( foreign_locale() ) { for( auto &line : current->log ) { line.lang = get_language().id; } }
-        const auto wire = serialize_snapshot( *current, version_ );
+        const auto wire = serialize_snapshot( *current );
         if( !wire ) { return fail( wire.error() ); }
         // The parts follow the response frame, before any event after `current->at`.
         for( const auto &part : wire->parts ) {
@@ -937,8 +932,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto decoded = decode_choices_request( params );
         if( !decoded ) { return invalid(); }
         if( decoded->component_id ) {
-            // A list of the top screen, which only a 0.2 connection sees.
-            if( version_ != wire_version::v0_2 ) { return invalid(); }
+            // A list of the top screen.
             // The rows are read from the live screen, so the boundary must be the live one.
             if( decoded->boundary_id != live_boundary_of( session_.epoch() ) ) { return fail( error::stale_boundary ); }
             const auto state = session_.boundary();
@@ -976,11 +970,6 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     if( request.method == "bn.command.submit" ) {
         const auto decoded = decode_command_request( params );
         if( !decoded ) { return invalid(); }
-        // An invoke exists only from 0.2 on.
-        if( version_ != wire_version::v0_2 &&
-            std::holds_alternative<invoke_operation>( decoded->operation ) ) {
-            return invalid();
-        }
         if( !pump_mode_ ) { return fail( error::not_ready ); }
         if( decoded->epoch != session_.epoch() ) { return fail( error::stale_epoch ); }
         const auto received = session_.submit( *decoded );

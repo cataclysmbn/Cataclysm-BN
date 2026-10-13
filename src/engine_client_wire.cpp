@@ -184,7 +184,7 @@ auto read_request( const json &value, viewport &result ) -> void
     result.cols = static_cast<int>( integer( value, "cols", 1, maximum_viewport_cells ) );
     result.rows = static_cast<int>( integer( value, "rows", 1, maximum_viewport_cells ) );
 }
-/// What the client can do: the hello's loose members of 0.1, or the same members under 0.2's `capabilities`.
+/// What the client can do: the hello's loose members, or the same members under `capabilities`.
 auto read_capabilities( const json &source, hello_request &result ) -> void
 {
     if( source.contains( "delivery" ) ) {
@@ -223,10 +223,10 @@ auto read_schema_hash( const json &object, const char *name ) -> std::string
 }
 auto read_request( const json &value, hello_request &result ) -> void
 {
-    // Only a client that offers 0.2 sends (and must send) the schema; a 0.1 hello is read as it always was.
+    // Only a client that offers the version sends (and must send) the schema; any other hello is refused by the negotiation.
     const auto offers_02 = value.is_object() && value.contains( "versions" ) &&
                            value.at( "versions" ).is_array() &&
-    std::ranges::any_of( value.at( "versions" ), []( const json & entry ) { return entry == contract_version_02; } );
+    std::ranges::any_of( value.at( "versions" ), []( const json & entry ) { return entry == contract_version; } );
     if( offers_02 ) {
         members( value, {"versions", "client", "schema"}, {"locale", "capabilities", "viewport", "tiles", "tint_ids", "delivery"} );
         result.schema = read_schema_hash( value, "schema" );
@@ -381,7 +381,7 @@ auto serialize_hello( const hello_reply &reply ) -> std::string
 {
     using ordered = nlohmann::ordered_json;
     const auto &[epoch, engine, delivery, identity] = reply;
-    auto result = ordered{{"version", identity ? contract_version_02 : contract_version}, {"epoch", epoch},
+    auto result = ordered{{"version", contract_version}, {"epoch", epoch},
         {
             "engine", {
                 {"build", engine.build}, {"mods", engine.mods},
@@ -393,19 +393,17 @@ auto serialize_hello( const hello_reply &reply ) -> std::string
                 {"cells_per_query", cells_per_query}
             }
         }};
-    if( identity ) { result["limits"]["screen_queue"] = maximum_queued_commands; }
+    result["limits"]["screen_queue"] = maximum_queued_commands;
     if( delivery ) {
         result["delivery"] = {{"credits", delivery->credits}, {"held_frames", maximum_held_frames},
             {"held_bytes", maximum_held_bytes}
         };
         if( delivery->max_hz ) { result["delivery"]["max_hz"] = *delivery->max_hz; }
     }
-    if( identity ) {
-        result["schema"] = identity->schema;
-        result["locale"] = identity->locale;
-        result["engine_locale"] = identity->engine_locale;
-        result["role"] = identity->role;
-    }
+    result["schema"] = identity.schema;
+    result["locale"] = identity.locale;
+    result["engine_locale"] = identity.engine_locale;
+    result["role"] = identity.role;
     return result.dump();
 }
 auto serialize_description( const tile_description &value ) -> std::string

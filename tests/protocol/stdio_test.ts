@@ -12,32 +12,22 @@ import { Mirror } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
 type Value = any
-type Version = "0.1" | "0.2"
-const schemaFile = (version: Version) =>
-  new URL(`../../docs/schema/engine-client/${version}.schema.json`, import.meta.url)
-// Every message the engine really sends is checked against the schema of the version its hello chose.
-const schemas: Record<Version, Value> = {
-  "0.1": JSON.parse(await Deno.readTextFile(schemaFile("0.1"))),
-  "0.2": JSON.parse(await Deno.readTextFile(schemaFile("0.2"))),
-}
-const validators = Object.fromEntries(
-  (Object.keys(schemas) as Version[]).map((version) => {
-    const ajv = new Ajv2020({ strict: false })
-    ajv.addSchema(schemas[version], "bn")
-    return [version, ajv]
-  }),
-) as Record<Version, Ajv2020>
-const validate = (version: Version, def: string, value: unknown, what: string) => {
-  const check = validators[version].getSchema(`bn#/$defs/${def}`)
+const schemaFile = new URL("../../docs/schema/engine-client/0.2.schema.json", import.meta.url)
+// Every message the engine really sends is checked against the schema.
+const schema: Value = JSON.parse(await Deno.readTextFile(schemaFile))
+const ajv = new Ajv2020({ strict: false })
+ajv.addSchema(schema, "bn")
+const validate = (def: string, value: unknown, what: string) => {
+  const check = ajv.getSchema(`bn#/$defs/${def}`)
   assert(check, def)
   assert(
     check(value),
     `${what} violates ${def}: ${JSON.stringify(check.errors)}\n${JSON.stringify(value)}`,
   )
 }
-/** What a 0.2 hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the 0.2 schema. */
+/** What a hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the schema. */
 const schemaHash = "sha256:" + Array.from(
-  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile("0.2")))),
+  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile))),
   (byte) => byte.toString(16).padStart(2, "0"),
 ).join("").slice(0, 16)
 
@@ -57,8 +47,6 @@ class Client {
   replies: Value[] = []
   /** Pause after every chunk read, to drain the pipe slowly. */
   readDelayMs = 0
-  /** The version the messages are checked against; set it before a hello that negotiates another. */
-  version: Version = "0.1"
 
   constructor(binary: string, profile: string, stderr: "null" | "piped" = "null") {
     this.#process = new Deno.Command(binary, {
@@ -142,8 +130,8 @@ class Client {
   }
 
   #validateNotification(message: Value) {
-    const def = schemas[this.version]["x-notifications"][message.method]
-    validate(this.version, def, message.params, message.method)
+    const def = schema["x-notifications"][message.method]
+    validate(def, message.params, message.method)
   }
 
   /** Drops what was queued for the engine and closes its stdin, as a client that died; a write in flight ends when the engine reads or exits. */
@@ -182,10 +170,10 @@ class Client {
       const message = await this.#next()
       if (message.id === id) {
         if (message.error) {
-          validate(this.version, "application_error", message.error.data, `${method} error`)
+          validate("application_error", message.error.data, `${method} error`)
         } else {
-          const def = schemas[this.version]["x-methods"][method].result
-          validate(this.version, def, message.result, `${method} result`)
+          const def = schema["x-methods"][method].result
+          validate(def, message.result, `${method} result`)
         }
         return message
       }
@@ -461,7 +449,8 @@ async function makeProfile(options: Record<string, string> = {}): Promise<string
 /** Hello, then New Game and Tutorial; returns the session on the loaded tutorial world. */
 async function enterTutorial(client: Client, extra: Value = {}): Promise<Session> {
   await client.result("bn.hello", {
-    versions: ["0.1"],
+    versions: ["0.2"],
+    schema: schemaHash,
     client: { name: "stdio-test", version: "1" },
     ...extra,
   })
@@ -491,11 +480,12 @@ Deno.test({
       const early = await client.request("bn.subscribe", {})
       assertEquals(early.error.data.kind, "negotiation_failed")
       const hello = await client.result("bn.hello", {
-        versions: ["0.0", "0.1"],
+        versions: ["0.0", "0.2"],
+        schema: schemaHash,
         client: { name: "stdio-test", version: "1" },
         viewport: { cols: 40, rows: 25 },
       })
-      assertEquals(hello.version, "0.1")
+      assertEquals(hello.version, "0.2")
       assertEquals(hello.limits.frame_bytes, 1048576)
 
       const session = new Session(client)
@@ -1014,7 +1004,8 @@ const inMainMenu = (session: Session) => () =>
 
 async function startSession(client: Client): Promise<Session> {
   await client.result("bn.hello", {
-    versions: ["0.1"],
+    versions: ["0.2"],
+    schema: schemaHash,
     client: { name: "settings-test", version: "1" },
   })
   const session = new Session(client)
@@ -1540,7 +1531,11 @@ for (const sig of ["SIGTERM", "SIGINT"] as const) {
           jsonrpc: "2.0",
           id: 1,
           method: "bn.hello",
-          params: { client: { name: "stdio-test", version: "1" }, versions: ["0.1"] },
+          params: {
+            client: { name: "stdio-test", version: "1" },
+            versions: ["0.2"],
+            schema: schemaHash,
+          },
         })
         await until(`"id":1`)
         await send({ jsonrpc: "2.0", id: 2, method: "bn.subscribe", params: {} })
@@ -1594,7 +1589,11 @@ for (const sig of ["SIGTERM", "SIGINT"] as const) {
           jsonrpc: "2.0",
           id: 1,
           method: "bn.hello",
-          params: { client: { name: "stdio-test", version: "1" }, versions: ["0.1"] },
+          params: {
+            client: { name: "stdio-test", version: "1" },
+            versions: ["0.2"],
+            schema: schemaHash,
+          },
         })
         // Answered before any input boundary: the engine is still starting, not waiting for input.
         await until(`"id":1`)
@@ -1639,7 +1638,11 @@ Deno.test({
             jsonrpc: "2.0",
             id: 1,
             method: "bn.hello",
-            params: { client: { name: "stdio-test", version: "1" }, versions: ["0.1"] },
+            params: {
+              client: { name: "stdio-test", version: "1" },
+              versions: ["0.2"],
+              schema: schemaHash,
+            },
           }) + "\n",
         ),
       )
@@ -1674,7 +1677,8 @@ Deno.test({
     const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
       await client.result("bn.hello", {
-        versions: ["0.1"],
+        versions: ["0.2"],
+        schema: schemaHash,
         client: { name: "stdio-test", version: "1" },
       })
       const session = new Session(client)
@@ -2217,7 +2221,8 @@ for (const when of ["idle", "during a wait"]) {
         const extra = { delivery: { credits: 256 } }
         if (when === "idle") {
           const hello = await client.result("bn.hello", {
-            versions: ["0.1"],
+            versions: ["0.2"],
+            schema: schemaHash,
             client: { name: "stdio-test", version: "1" },
             ...extra,
           })
@@ -2461,14 +2466,12 @@ async function burst(
 const helloParams = { client: { name: "stdio-test", version: "1" } }
 
 Deno.test({
-  name:
-    "stdio: a 0.2 hello names the schema, a wrong hash fails with both, a 0.1 hello still works",
+  name: "stdio: a hello names the schema, a wrong hash fails with both, a 0.1 hello is refused",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     const profile = await makeProfile()
     const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
-      client.version = "0.2"
       const wrong = "sha256:0000000000000000"
       const refused = await client.request("bn.hello", {
         versions: ["0.2"],
@@ -2496,19 +2499,16 @@ Deno.test({
       await client.repliesUntil(1)
       assertEquals(client.replies[0].error.code, -32602)
 
-      // The same connection can still speak 0.1: no stack, no schema, as before.
-      client.version = "0.1"
-      const old = await client.result("bn.hello", { versions: ["0.1"], ...helloParams })
-      assertEquals(old.version, "0.1")
-      for (const member of ["schema", "locale", "engine_locale", "role"]) {
-        assertEquals(old[member], undefined, member)
-      }
-      const legacy = new Session(client)
-      await legacy.start()
-      assertEquals(legacy.mirror.interaction.stack, undefined)
+      // 0.1 is not spoken any more, whatever else the hello says.
+      const old = await client.request("bn.hello", { versions: ["0.1"], ...helloParams })
+      assertEquals(old.error.data.kind, "negotiation_failed")
+      assertEquals(old.error.data.action, "hello")
+      assertEquals(
+        (await client.request("bn.subscribe", {})).error.data.kind,
+        "negotiation_failed",
+      )
 
-      // And 0.2 after it: the hash, the locale, the role, and a stack of screens.
-      client.version = "0.2"
+      // 0.2: the hash, the locale, the role, and a stack of screens.
       const hello = await client.result("bn.hello", {
         versions: ["0.2"],
         ...helloParams,
@@ -2540,8 +2540,7 @@ Deno.test({
     const profile = await makeProfile()
     const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
-      client.version = "0.2"
-      const session = await enterTutorial(client, { versions: ["0.2"], schema: schemaHash })
+      const session = await enterTutorial(client)
       // The first turns of the tutorial open lessons; let them out of the way.
       await session.submit({ kind: "action", action_id: "wait" })
       await session.choose("5 minutes")
@@ -2583,8 +2582,7 @@ Deno.test({
     const profile = await makeProfile()
     const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
-      client.version = "0.2"
-      const session = await enterTutorial(client, { versions: ["0.2"], schema: schemaHash })
+      const session = await enterTutorial(client)
       await session.acknowledge(() => session.mirror.interaction.interaction === null)
 
       // The wait menu is a screen over the map.

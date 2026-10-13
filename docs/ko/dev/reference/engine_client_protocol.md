@@ -1,14 +1,14 @@
 ---
-title: 엔진/클라이언트 프로토콜 0.1
+title: 엔진/클라이언트 프로토콜 0.2
 ---
 
-외부 클라이언트는 `cataclysm-bn-tiles --client=mcp`의 stdio에서 줄바꿈으로 구분된 JSON-RPC 2.0으로 게임을 플레이합니다. 값은 [Draft 2020-12 스키마](../../../schema/engine-client/0.1.schema.json)가 정의하며, 아래 예시는 모두 [예시 파일](../../../schema/engine-client/0.1.examples.json)에서 스키마로 검증됩니다. 기존 MCP 도구(`bn.observe`, `bn.press` 등)는 별개이며 바뀌지 않습니다. 클라이언트가 `bn.hello`를 호출하면 이 도구들은 입력을 거부합니다.
+외부 클라이언트는 `cataclysm-bn-tiles --client=mcp`의 stdio에서 줄바꿈으로 구분된 JSON-RPC 2.0으로 게임을 플레이합니다. 값은 [Draft 2020-12 스키마](../../../schema/engine-client/0.2.schema.json)가 정의하며, 아래 예시는 모두 [예시 파일](../../../schema/engine-client/0.2.examples/)에서 스키마로 검증됩니다. 기존 MCP 도구(`bn.observe`, `bn.press` 등)는 별개이며 바뀌지 않습니다. 클라이언트가 `bn.hello`를 호출하면 이 도구들은 입력을 거부합니다.
 
 ## 세션
 
 ```text
--> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.1"],"client":{"name":"my-client","version":"1"}}}
-<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.1","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096}}}
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"},"schema":"sha256:0123456789abcdef"}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"schema":"sha256:0123456789abcdef","locale":"en","engine_locale":"en","role":"controller"}}
 -> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
 <- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
 <- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
@@ -24,32 +24,32 @@ title: 엔진/클라이언트 프로토콜 0.1
 
 ## 메서드
 
-| 메서드                   | 매개변수                                                 | 결과                                                |
-| ------------------------ | -------------------------------------------------------- | --------------------------------------------------- |
-| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?`, `delivery?` | `version`, `epoch`, `engine`, `limits`, `delivery?` |
-| `bn.viewport`            | `cols`, `rows`                                           | 없음                                                |
-| `bn.interrupt`           | 없음                                                     | 없음                                                |
-| `bn.subscribe`           | 없음                                                     | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨          |
-| `bn.unsubscribe`         | 없음                                                     | 없음                                                |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                | `boundary_id`, `total`, `choices` (읽기 전용)       |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                            | `lines` (읽기 전용)                                 |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                    | `at`, `cells`, `forgotten` (읽기 전용)              |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                           | `command_id`, `stage: "received"`                   |
-| `bn.command.result`      | `epoch`, `command_id`                                    | 최신 단계. 유실된 알림을 복구할 때 사용             |
-| `bn.credit`              | `frames`                                                 | 부여 후 보유 `credits`                              |
+| 메서드                   | 매개변수                                                   | 결과                                                                                             |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
+| `bn.viewport`            | `cols`, `rows`                                             | 없음                                                                                             |
+| `bn.interrupt`           | 없음                                                       | 없음                                                                                             |
+| `bn.subscribe`           | 없음                                                       | 스냅샷 헤더. 이어서 파트와 이벤트가 전송됨                                                       |
+| `bn.unsubscribe`         | 없음                                                       | 없음                                                                                             |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (읽기 전용)                                                    |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (읽기 전용)                                                                              |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (읽기 전용)                                                           |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
+| `bn.command.result`      | `epoch`, `command_id`                                      | 최신 단계. 유실된 알림을 복구할 때 사용                                                          |
+| `bn.credit`              | `frames`                                                   | 부여 후 보유 `credits`                                                                           |
 
 엔진이 보내는 알림은 `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`입니다. `bn.loading`과 `bn.progress`를 제외한 알림은 구독한 클라이언트에 입력 경계마다 전송됩니다. `bn.progress`(`{epoch}`)는 하트비트로, 대기 같은 활동이 입력 경계에 도달하지 않고 계속되는 동안 `bn.hello`를 마친 클라이언트에 2초마다 전송됩니다. 통신이 끊기면 엔진이 일하지 않는다는 뜻입니다. 월드를 불러오는 동안은 `bn.loading`이 같은 역할을 합니다.
 
 오류는 코드 `1000`과 `error.data = {kind, action?, at?}`를 사용하며, `action`은 다음에 할 일(`hello`, `subscribe`, `retry`)을 알려 줍니다.
 
-## 버전 0.2 (진행 중)
+## hello와 스택
 
-엔진은 `"0.1"`을 위 설명 그대로, `"0.2"`를 모든 전송 방식에서 제공하며 hello가 고른다. `"0.2"`를 나열한 hello는 0.2로 응답하며 다음을 담아야 한다.
+엔진은 모든 전송 방식에서 `"0.2"`만 제공한다. `"0.2"`를 나열하지 않은 hello는 `negotiation_failed`, `action: "hello"`로 실패한다. hello는 다음을 담아야 한다.
 
 - `schema`: `sha256:`과 [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) 원본 바이트의 SHA-256 앞 16자리 16진수. 해시가 다르면 `negotiation_failed`, `action: "hello"`, `error.data.schema = {engine, client}`로 실패한다. 엔진은 CMake 구성 시 스키마 파일에서 해시를 얻는다.
-- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 0.1의 개별 멤버도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `schema`, `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진이 연결별로 현지화하기 전까지 `locale`은 엔진의 언어다.
+- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 개별 멤버로 보내도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `schema`, `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진이 연결별로 현지화하기 전까지 `locale`은 엔진의 언어다.
 
-0.2 연결만 모든 상호작용 경계(스냅샷 헤더와 이벤트)에서 0.1 `interaction` 옆에 `stack`을 받는다. 스택은 열린 화면을 바깥쪽부터 나열하며 마지막 화면만 affordance를 가진다. `component_id`가 있는 `bn.interaction.choices`는 맨 위 화면의 해당 목록(`rows`, `total`)을 읽는다.
+모든 상호작용 경계(스냅샷 헤더와 이벤트)는 `interaction` 옆에 `stack`을 담는다. 스택은 열린 화면을 바깥쪽부터 나열하며 마지막 화면만 affordance를 가진다. `component_id`가 있는 `bn.interaction.choices`는 맨 위 화면의 해당 목록(`rows`, `total`)을 읽는다.
 
 `bn.command.submit`은 `operation: {kind: "invoke", affordance_id, args?}`를 받는다. `expect`는 affordance의 `expect` 범위를 따른다.
 
@@ -150,4 +150,4 @@ affordance와 맞지 않는 형식은 `invalid_arguments`다.
 - `sound.heard`(`text`, `volume`, `marker`, `logged`)는 네이티브 청각 규칙(주변 소음 대비 음량, 청각 보호, 수면, 난청)을 거쳐 아바타에게 닿은 소리입니다. `text`는 네이티브 메시지가 부르는 설명, `volume`은 아바타에게 들리는 데시벨, `marker`는 네이티브 게임이 소리를 표시하는 칸입니다. 마커는 음원이 아니라 그 근처에서 아바타 시야 밖인 칸이며, 아바타가 음원에 있거나 음원이 보이면 생략되므로 숨은 음원이 드러나지 않습니다. 소리의 로그 줄은 네이티브 메시지 규칙과 쿨다운을 따르지만, `sound.heard`는 발소리처럼 로그가 생략하는 소리를 포함해 들린 모든 소리에 대해 게시됩니다. `logged`는 그 소리가 메시지 로그에도 줄을 가질 때 `true`이며, 둘을 모두 표시하는 클라이언트는 같은 소리를 한 번만 보여 줄 수 있습니다. 아바타 자신의 외침은 그 행동이 직접 줄(`You yell ...`)을 기록하므로 logged로 취급합니다.
 - `entity.moved`(`id`, `to`, `from`, `mode`)와 `entity.gone`(`id`, `reason`)으로 클라이언트는 스냅샷이 공개하는 몬스터와 NPC를 재동기화 없이 행동 내내 따라갈 수 있습니다. `entity.moved`는 아바타에게 보이는 생물의 이동마다 도착한 칸에서 게시됩니다. 출발한 칸을 아바타가 보지 못했으면 `from`은 생략되고, `mode`는 이웃한 칸으로의 한 걸음이면 `walk`, 그보다 긴 이동(밀침, 순간이동)이면 `propelled`입니다. 아바타 자신의 이동은 상태 변경분에 있습니다. `entity.gone`은 클라이언트가 알던 생물이 더는 공개되지 않음을 알리며, `reason`은 `lost_sight`(시야에서 걸어 나감, 또는 아바타나 시점이 움직임), `died`, `removed`(게임에서 사라짐)입니다. 시야 밖으로 걸어 나간 생물은 즉시 `gone`이 되고 나머지는 경계를 게시할 때 찾아냅니다. 붐비는 턴에는 `entity.moved`, `terrain.changed`, `furniture.changed`, `field.changed`의 처음 256개만 게시됩니다(시야 밖으로 걸어 나간 생물의 `gone`도 셉니다). 경계의 `cells.seen` 변경 집합은 항상 최종 상태를 담으므로 이벤트는 순서와 시점을 더할 뿐 상태를 대체하지 않습니다.
 
-이벤트는 `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`, `message.logged`와 위의 애니메이션 사실이며, 이후 스키마에 나열된 나머지 연출 유형이 추가됩니다. 0.1 공개 전에 추가한 이벤트 유형은 0.1에 포함되며, 공개 후에는 새 이벤트 유형에 새로운 정확한 버전이 필요합니다.
+이벤트는 `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`, `message.logged`와 위의 애니메이션 사실이며, 이후 스키마에 나열된 나머지 연출 유형이 추가됩니다. 0.2 공개 전에 추가한 이벤트 유형은 0.2에 포함되며, 공개 후에는 새 이벤트 유형에 새로운 정확한 버전이 필요합니다.

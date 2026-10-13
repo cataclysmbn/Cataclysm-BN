@@ -152,8 +152,6 @@ class server
         bool hello_ = false;
         /// The BN language id the connection asked its text in; empty: the engine's.
         std::string locale_;
-        /// What the last hello negotiated; a 0.1 connection is served as it always was.
-        engine_client::wire_version version_ = engine_client::wire_version::v0_1;
         /// Events are pushed from `bn.subscribe` until a resync, `bn.unsubscribe` or `bn.hello`.
         bool subscribed_ = false;
         /// Command stages are pushed from `bn.subscribe` until `bn.unsubscribe` or `bn.hello`: no

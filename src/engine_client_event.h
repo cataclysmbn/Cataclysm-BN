@@ -201,9 +201,8 @@ auto read_cells( const cells_request &request, const snapshot &current )
 -> std::expected<cells_page, error>;
 auto serialize_cells( const cells_page &page ) -> std::string;
 
-/// Params of `bn.events`. A 0.2 connection also gets the `stack` of each boundary an event carries.
-auto serialize_events( const event_batch &batch,
-                       wire_version version = wire_version::v0_1 ) -> std::string;
+/// Params of `bn.events`, with the `stack` of each boundary an event carries.
+auto serialize_events( const event_batch &batch ) -> std::string;
 /// A snapshot as it goes on the wire: the `bn.subscribe` result, then one `bn.snapshot.part`
 /// params value per part. Every piece fits maximum_inline_bytes; parts hold at most
 /// cells_per_part cells and are split by size, so none is empty.
@@ -212,8 +211,7 @@ struct snapshot_wire {
     std::vector<std::string> parts = {};
 };
 /// resource_limit when the header (entities, inventory) or a single cell cannot fit one piece.
-auto serialize_snapshot( const snapshot &value,
-                         wire_version version = wire_version::v0_1 ) -> std::expected<snapshot_wire, error>;
+auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire, error>;
 /// Params of `bn.loading`: one loading step, or `done` once the screen is gone.
 auto serialize_loading( const std::string &epoch, const game_client::loading_progress &progress )
 -> std::string;

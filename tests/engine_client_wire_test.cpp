@@ -15,30 +15,35 @@ auto contains(const std::string& text, const std::string& part) -> bool {
 }
 } // namespace
 
+namespace {
+const auto hash_a = std::string{"sha256:0123456789abcdef"};
+auto hello_02(const std::string& members) -> std::string {
+    return R"({"versions":["0.2"],"client":{"name":"a","version":"1"},"schema":")" + hash_a + "\""
+         + members + "}";
+}
+} // namespace
+
 TEST_CASE("hello request grammar", "[engine_client_wire]") {
+    const auto client = std::string{R"("client":{"name":"deno","version":"1"})"};
+    const auto schema = R"("schema":")" + hash_a + "\"";
     const auto ok = decode_hello_request(
-        R"({"versions":["0.9","0.1"],"client":{"name":"deno","version":"1"}})");
+        R"({"versions":["0.9","0.2"],)" + client + "," + schema + "}");
     REQUIRE(ok);
-    CHECK(ok->versions == std::vector<std::string>{"0.9", "0.1"});
+    CHECK(ok->versions == std::vector<std::string>{"0.9", "0.2"});
     CHECK(ok->client_name == "deno");
-    CHECK_FALSE(decode_hello_request(R"({"versions":[],"client":{"name":"a","version":"1"}})"));
-    CHECK_FALSE(decode_hello_request(R"({"versions":["0.1"]})"));
+    CHECK_FALSE(decode_hello_request(R"({"versions":[],)" + client + "," + schema + "}"));
+    CHECK_FALSE(decode_hello_request(R"({"versions":["0.2"],)" + schema + "}"));
+    CHECK_FALSE(decode_hello_request(hello_02(R"(,"x":1)")));
     CHECK_FALSE(
-        decode_hello_request(R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"x":1})"));
-    CHECK_FALSE(
-        decode_hello_request(R"({"versions":["0.1","0.1"],"client":{"name":"a","version":"1"}})"));
-    CHECK_FALSE(decode_hello_request(R"({"supported_versions":["0.1"]})"));
+        decode_hello_request(R"({"versions":["0.2","0.2"],)" + client + "," + schema + "}"));
+    CHECK_FALSE(decode_hello_request(R"({"supported_versions":["0.2"]})"));
     // The tints of the client's tileset are ids; anything else is refused.
-    const auto tints = decode_hello_request(
-        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":["hair_black","jeans"]})");
+    const auto tints = decode_hello_request(hello_02(R"(,"tint_ids":["hair_black","jeans"])"));
     REQUIRE(tints);
     CHECK(tints->tint_ids == std::vector<std::string>{"hair_black", "jeans"});
-    CHECK_FALSE(decode_hello_request(
-        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":[1]})"));
-    CHECK_FALSE(decode_hello_request(
-        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":[""]})"));
-    CHECK_FALSE(decode_hello_request(
-        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":"jeans"})"));
+    CHECK_FALSE(decode_hello_request(hello_02(R"(,"tint_ids":[1])")));
+    CHECK_FALSE(decode_hello_request(hello_02(R"(,"tint_ids":[""])")));
+    CHECK_FALSE(decode_hello_request(hello_02(R"(,"tint_ids":"jeans")")));
 }
 
 TEST_CASE("empty requests accept only an empty object", "[engine_client_wire]") {
@@ -183,26 +188,21 @@ TEST_CASE("command operations", "[engine_client_wire]") {
 }
 
 TEST_CASE("serialized values", "[engine_client_wire]") {
-    auto reply = hello_reply{
+    const auto reply = hello_reply{
         .epoch = "epoch:a",
-        .engine = {.build = "0.9", .mods = {"bn"}, .use_tiles = false, .tileset = "MSX"}};
+        .engine = {.build = "0.9", .mods = {"bn"}, .use_tiles = false, .tileset = "MSX"},
+        .identity =
+            {.schema = "sha256:0123456789abcdef",
+             .locale = "ko",
+             .engine_locale = "en",
+             .role = "spectator"}};
     const auto hello = serialize_hello(reply);
     CHECK(contains(hello, R"("display":{"tiles":false,"tileset":"MSX"})"));
-    CHECK(contains(hello, R"("version":"0.1")"));
-    CHECK_FALSE(contains(hello, R"("schema")"));
-    CHECK_FALSE(contains(hello, R"("role")"));
-    CHECK_FALSE(contains(hello, R"("screen_queue")"));
-    reply.identity =
-        {.schema = "sha256:0123456789abcdef",
-         .locale = "ko",
-         .engine_locale = "en",
-         .role = "spectator"};
-    const auto hello_v02 = serialize_hello(reply);
-    CHECK(contains(hello_v02, R"("version":"0.2")"));
+    CHECK(contains(hello, R"("version":"0.2")"));
     CHECK(contains(
-        hello_v02,
+        hello,
         R"("schema":"sha256:0123456789abcdef","locale":"ko","engine_locale":"en","role":"spectator")"));
-    CHECK(contains(hello_v02, R"("screen_queue":8)"));
+    CHECK(contains(hello, R"("screen_queue":8)"));
     CHECK(contains(hello, R"("mods":["bn"])"));
     CHECK(contains(hello, R"("cells_per_part":512)"));
     const auto encoded = serialize_receipt({.epoch = "epoch:a", .command_id = "c:1"});
@@ -250,8 +250,8 @@ TEST_CASE("wire accepts what the schema accepts", "[engine_client_wire]") {
     CHECK(decode_result_request(R"({"epoch":")" + id + R"(","command_id":"c"})"));
     CHECK_FALSE(decode_result_request(R"({"epoch":")" + id + "한" + R"(","command_id":"c"})"));
     CHECK(decode_hello_request(
-        R"({"versions":["0.1"],"client":{"name":")" + std::string(1000, 'n')
-        + R"(","version":"1"}})"));
+        R"({"versions":["0.2"],"schema":")" + hash_a + R"(","client":{"name":")"
+        + std::string(1000, 'n') + R"(","version":"1"}})"));
     const auto with_revision = [](const std::string& revision) {
         return R"({"epoch":"e","expect":{"revision":")" + revision
              + R"(","boundary_id":"b","schema_id":null},"operation":{"kind":"cancel"}})";
@@ -259,14 +259,6 @@ TEST_CASE("wire accepts what the schema accepts", "[engine_client_wire]") {
     CHECK(decode_command_request(with_revision("18446744073709551615")));
     CHECK_FALSE(decode_command_request(with_revision("18446744073709551616")));
 }
-
-namespace {
-const auto hash_a = std::string{"sha256:0123456789abcdef"};
-auto hello_02(const std::string& members) -> std::string {
-    return R"({"versions":["0.2"],"client":{"name":"a","version":"1"},"schema":")" + hash_a + "\""
-         + members + "}";
-}
-} // namespace
 
 TEST_CASE("a 0.2 hello names the schema it was built with", "[engine_client_wire]") {
     SECTION("the hash, the locale and the capabilities") {
@@ -282,7 +274,7 @@ TEST_CASE("a 0.2 hello names the schema it was built with", "[engine_client_wire
         CHECK(decoded->credits == 8);
         CHECK(decoded->max_hz == 30);
     }
-    SECTION("the loose members of 0.1 stay accepted") {
+    SECTION("the loose members stay accepted") {
         const auto decoded = decode_hello_request(hello_02(R"(,"tiles":true)"));
         REQUIRE(decoded);
         CHECK(decoded->tiles);
@@ -315,9 +307,12 @@ TEST_CASE("a 0.2 hello names the schema it was built with", "[engine_client_wire
             R"({"versions":["0.1","0.2"],"client":{"name":"a","version":"1"},"schema":")" + hash_a
             + R"("})"));
     }
-    SECTION("a 0.1 hello gets neither the hash nor the locale nor capabilities") {
+    SECTION("a hello that does not offer 0.2 decodes, for the negotiation to refuse it") {
         const auto base = std::string{R"({"versions":["0.1"],"client":{"name":"a","version":"1"})"};
-        CHECK(decode_hello_request(base + "}"));
+        const auto decoded = decode_hello_request(base + "}");
+        REQUIRE(decoded);
+        CHECK(decoded->versions == std::vector<std::string>{"0.1"});
+        CHECK_FALSE(decoded->schema);
         CHECK_FALSE(decode_hello_request(base + R"(,"schema":")" + hash_a + R"("})"));
         CHECK_FALSE(decode_hello_request(base + R"(,"locale":"ko"})"));
         CHECK_FALSE(decode_hello_request(base + R"(,"capabilities":{}})"));

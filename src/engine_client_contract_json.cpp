@@ -246,16 +246,6 @@ auto to_json( const avatar_value &value ) -> json
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     return result;
 }
-/// The sidebar layout and the compass exist on the 0.2 wire only; Z0 removes this gate with 0.1.
-auto to_json( const avatar_value &value, const wire_version version ) -> json
-{
-    auto result = to_json( value );
-    if( version == wire_version::v0_1 ) {
-        result.erase( "compass" );
-        result["sidebar"].erase( "layout" );
-    }
-    return result;
-}
 auto to_json( const environment_value &value ) -> json
 {
     auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
@@ -698,21 +688,20 @@ auto to_json( const screen_view &view, const bubble_frame &frame ) -> json
     if( !view.context.empty() ) { result["context"] = view.context; }
     return result;
 }
-auto to_json( const boundary_state &state, const wire_version version ) -> json
+/// The boundary with the `stack` of its screens.
+auto to_stacked_json( const boundary_state &state ) -> json
 {
     auto result = to_json( state );
-    if( version == wire_version::v0_2 ) {
-        // What was captured with the boundary; a state that was not captured reads the live screens.
-        const auto live = state.stack ? std::vector<screen_view> {} :
-                          interaction_stack( state );
-        result["stack"] = json::array();
-        for( const auto &screen : state.stack ? *state.stack : live ) {
-            result["stack"].push_back( to_json( screen, state.frame ) );
-        }
+    // What was captured with the boundary; a state that was not captured reads the live screens.
+    const auto live = state.stack ? std::vector<screen_view> {} :
+                      interaction_stack( state );
+    result["stack"] = json::array();
+    for( const auto &screen : state.stack ? *state.stack : live ) {
+        result["stack"].push_back( to_json( screen, state.frame ) );
     }
     return result;
 }
-auto to_json( const changes &delta, const wire_version version ) -> json
+auto to_json( const changes &delta ) -> json
 {
     auto result = json::object();
     if( delta.coverage ) { result["coverage"] = to_json( *delta.coverage ); }
@@ -725,9 +714,8 @@ auto to_json( const changes &delta, const wire_version version ) -> json
         for( const auto &value : delta.gone ) { result["gone"].push_back( {{"id", value.id}, {"reason", value.reason}} ); }
     }
     if( delta.avatar ) {
-        result["avatar"] = to_json( *delta.avatar, version );
-        auto kept = delta.avatar_kept;
-        if( version == wire_version::v0_1 ) { std::erase( kept, "compass" ); }
+        result["avatar"] = to_json( *delta.avatar );
+        const auto &kept = delta.avatar_kept;
         if( !kept.empty() ) {
             std::ranges::for_each( kept, [&]( const auto & member ) {
                 result["avatar"].erase( member );
@@ -738,7 +726,7 @@ auto to_json( const changes &delta, const wire_version version ) -> json
     if( delta.environment ) { result["environment"] = to_json( *delta.environment ); }
     if( delta.route ) { result["route"] = to_array( *delta.route ); }
     if( delta.interaction ) {
-        result["interaction"] = to_json( *delta.interaction, version );
+        result["interaction"] = to_stacked_json( *delta.interaction );
         if( delta.actions_unchanged ) { result["interaction"].erase( "actions" ); }
     }
     return result;
@@ -751,13 +739,13 @@ auto to_json( const message_value &line ) -> json
     if( !line.lang.empty() ) { result["lang"] = line.lang; }
     return result;
 }
-auto to_json( const event_value &value, const wire_version version ) -> json
+auto to_json( const event_value &value ) -> json
 {
     auto result = json{{"sequence", std::to_string( value.sequence )}, {"revision", std::to_string( value.revision )},
         {"type", value.type}};
     if( value.cause ) { result["cause"] = std::to_string( *value.cause ); }
     if( value.command ) { result["command"] = *value.command; }
-    result["changes"] = to_json( value.delta, version );
+    result["changes"] = to_json( value.delta );
     if( value.message ) {
         result["data"] = to_json( *value.message );
     }
@@ -794,10 +782,8 @@ auto to_json( const event_value &value, const wire_version version ) -> json
             data = {{"id", fact.entity}, {"reason", fact.kind}};
         } else if( value.type == "sound.heard" ) {
             data = {{"text", fact.text}, {"volume", *fact.amount}, {"logged", fact.logged}};
-            if( version == wire_version::v0_2 ) {
-                if( fact.distance ) { data["distance"] = *fact.distance; }
-                if( fact.from ) { data["direction"] = to_json( *fact.from ); }
-            }
+            if( fact.distance ) { data["distance"] = *fact.distance; }
+            if( fact.from ) { data["direction"] = to_json( *fact.from ); }
             if( fact.at ) { data["marker"] = to_json( *fact.at ); }
         } else if( value.type == "projectile.hit" ) {
             data = {{"projectile", fact.id}, {"at", to_json( *fact.at )}};
@@ -828,7 +814,7 @@ auto serialize_clock( const clock_point &at ) -> std::string { return to_json( a
 auto serialize_boundary( const boundary_state &state ) -> std::string { return to_json( state ).dump(); }
 auto serialize_interaction_boundary( const boundary_state &state ) -> std::string
 {
-    return to_json( state, wire_version::v0_2 ).dump();
+    return to_stacked_json( state ).dump();
 }
 auto serialize_choices( const choices_page &page ) -> std::string
 {
@@ -856,14 +842,13 @@ auto serialize_cells( const cells_page &page ) -> std::string
     return json{{"at", to_json( page.at )}, {"cells", to_array( page.cells )},
         {"forgotten", to_array( page.forgotten )}}.dump();
 }
-auto serialize_events( const event_batch &batch, const wire_version version ) -> std::string
+auto serialize_events( const event_batch &batch ) -> std::string
 {
     auto events = json::array();
-    for( const auto &event : batch.events ) { events.push_back( to_json( event.value(), version ) ); }
+    for( const auto &event : batch.events ) { events.push_back( to_json( event.value() ) ); }
     return json{{"epoch", batch.epoch}, {"events", std::move( events )}}.dump();
 }
-auto serialize_snapshot( const snapshot &value,
-                         const wire_version version ) -> std::expected<snapshot_wire, error>
+auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire, error>
 {
     const auto &world = value.value.world;
     // Room for the part envelope: epoch, clock, index and flags.
@@ -889,8 +874,8 @@ auto serialize_snapshot( const snapshot &value,
     auto header = json{{"at", to_json( value.at )}};
     if( world.coverage ) { header["coverage"] = to_json( *world.coverage ); }
     if( world.view ) { header["view"] = to_json( *world.view ); }
-    header["interaction"] = to_json( value.value.interaction, version );
-    if( world.avatar ) { header["avatar"] = to_json( *world.avatar, version ); }
+    header["interaction"] = to_stacked_json( value.value.interaction );
+    if( world.avatar ) { header["avatar"] = to_json( *world.avatar ); }
     if( world.environment ) { header["environment"] = to_json( *world.environment ); }
     if( !world.route.empty() ) { header["route"] = to_array( world.route ); }
     header["entities"] = json::array();

@@ -310,9 +310,7 @@ auto public_event::seal( const std::string &epoch ) -> bool
 {
     ZoneScopedN( "engine_client_serialize_event" );
     wire_ = serialize_events( {.epoch = epoch, .events = {*this}} );
-    return wire_.size() <= maximum_event_bytes && ( !value_.delta.interaction ||
-            serialize_events( {.epoch = epoch, .events = {*this}}, wire_version::v0_2 ).size() <=
-            maximum_event_bytes );
+    return wire_.size() <= maximum_event_bytes;
 }
 auto public_event::sealed( event_value value,
                            const std::string &epoch ) -> std::optional<public_event>

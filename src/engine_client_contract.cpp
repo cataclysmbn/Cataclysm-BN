@@ -403,7 +403,7 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
             break;
         }
         result.interaction = std::move( interaction );
-        // The value that goes out is the larger one: the 0.1 members and the stack of a 0.2 client.
+        // The value that goes out is the larger one: the interaction members and the stack.
         result.stack = open_screens();
         if( serialize_interaction_boundary( result ).size() <= maximum_inline_bytes ) { break; }
         if( limit == 1 ) { return std::unexpected( error::resource_limit ); }

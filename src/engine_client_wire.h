@@ -104,7 +104,7 @@ struct delivery_grant {
     std::size_t credits = 0;
     std::optional<std::size_t> max_hz = std::nullopt;
 };
-/// What a 0.2 hello answers besides the 0.1 members.
+/// What a hello answers besides the engine, limits and delivery.
 struct hello_identity {
     std::string schema = {};
     /// The language the connection's text is in.
@@ -117,8 +117,7 @@ struct hello_reply {
     std::string epoch = {};
     engine_info engine = {};
     std::optional<delivery_grant> delivery = std::nullopt;
-    /// Present exactly for a 0.2 hello, which also makes the result's version `0.2`.
-    std::optional<hello_identity> identity = std::nullopt;
+    hello_identity identity = {};
 };
 auto serialize_hello( const hello_reply &reply ) -> std::string;
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>;

@@ -501,23 +501,6 @@
         },
         "schema": "sha256:0123456789abcdef"
       }
-    },
-    {
-      "name": "hello request of a 0.1 client",
-      "def": "hello_params",
-      "value": {
-        "versions": [
-          "0.1"
-        ],
-        "client": {
-          "name": "bn-deno",
-          "version": "0.1.0"
-        },
-        "tiles": true,
-        "delivery": {
-          "credits": 8
-        }
-      }
     }
   ],
   "invalid": [
@@ -526,13 +509,14 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "0.1"
+          "0.2"
         ],
         "client": {
           "name": "bn-deno",
           "version": "0.1.0"
         },
-        "delivery": {}
+        "delivery": {},
+        "schema": "sha256:68a6ea2a4ffee321"
       },
       "why": "credits are required"
     },
@@ -541,7 +525,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "0.1"
+          "0.2"
         ],
         "client": {
           "name": "bn-deno",
@@ -549,7 +533,8 @@
         },
         "delivery": {
           "credits": 0
-        }
+        },
+        "schema": "sha256:68a6ea2a4ffee321"
       },
       "why": "a window holds at least one frame"
     },
@@ -558,7 +543,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "0.1"
+          "0.2"
         ],
         "client": {
           "name": "bn-deno",
@@ -567,7 +552,8 @@
         "delivery": {
           "credits": 64,
           "max_hz": 0
-        }
+        },
+        "schema": "sha256:68a6ea2a4ffee321"
       },
       "why": "a frame rate is at least 1 per second"
     },
@@ -576,7 +562,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "0.1"
+          "0.2"
         ],
         "client": {
           "name": "bn-deno",
@@ -585,7 +571,8 @@
         "delivery": {
           "credits": 64,
           "max_hz": 241
-        }
+        },
+        "schema": "sha256:68a6ea2a4ffee321"
       },
       "why": "at most 240 frames per second"
     },
@@ -594,7 +581,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "0.1"
+          "0.2"
         ],
         "client": {
           "name": "bn-deno",
@@ -602,7 +589,8 @@
         },
         "delivery": {
           "max_hz": 30
-        }
+        },
+        "schema": "sha256:68a6ea2a4ffee321"
       },
       "why": "the cap paces credit delivery, so credits are required"
     },
@@ -667,7 +655,7 @@
       "name": "hello with an empty tint id",
       "value": {
         "versions": [
-          "0.1"
+          "0.2"
         ],
         "client": {
           "name": "bn-client",
@@ -675,7 +663,8 @@
         },
         "tint_ids": [
           ""
-        ]
+        ],
+        "schema": "sha256:68a6ea2a4ffee321"
       }
     },
     {
@@ -732,51 +721,6 @@
         }
       },
       "why": "offering 0.2 needs the hash; there is no silent downgrade"
-    },
-    {
-      "name": "hello offering 0.1 with a schema hash",
-      "def": "hello_params",
-      "value": {
-        "versions": [
-          "0.1"
-        ],
-        "client": {
-          "name": "bn-deno",
-          "version": "0.1.0"
-        },
-        "schema": "sha256:0123456789abcdef"
-      },
-      "why": "a 0.1 hello has no 0.2 members"
-    },
-    {
-      "name": "hello offering 0.1 with a locale",
-      "def": "hello_params",
-      "value": {
-        "versions": [
-          "0.1"
-        ],
-        "client": {
-          "name": "bn-deno",
-          "version": "0.1.0"
-        },
-        "locale": "ko"
-      },
-      "why": "a 0.1 hello has no 0.2 members"
-    },
-    {
-      "name": "hello offering 0.1 with capabilities",
-      "def": "hello_params",
-      "value": {
-        "versions": [
-          "0.1"
-        ],
-        "client": {
-          "name": "bn-deno",
-          "version": "0.1.0"
-        },
-        "capabilities": {}
-      },
-      "why": "a 0.1 hello has no 0.2 members"
     },
     {
       "name": "hello with capabilities and a loose member",

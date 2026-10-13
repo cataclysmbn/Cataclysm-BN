@@ -1,14 +1,14 @@
 ---
-title: Engine/client protocol 0.1
+title: Engine/client protocol 0.2
 ---
 
-An external client plays the game over newline-delimited JSON-RPC 2.0 on the stdio of `cataclysm-bn-tiles --client=mcp`. The values are defined by the [Draft 2020-12 schema](../../../schema/engine-client/0.1.schema.json), and every example below is checked against it in the [examples file](../../../schema/engine-client/0.1.examples.json). The legacy MCP tools (`bn.observe`, `bn.press`, ...) are a separate, unchanged surface; once a client says `bn.hello`, they refuse input.
+An external client plays the game over newline-delimited JSON-RPC 2.0 on the stdio of `cataclysm-bn-tiles --client=mcp`. The values are defined by the [Draft 2020-12 schema](../../../schema/engine-client/0.2.schema.json), and every example below is checked against it in the [examples files](../../../schema/engine-client/0.2.examples/). The legacy MCP tools (`bn.observe`, `bn.press`, ...) are a separate, unchanged surface; once a client says `bn.hello`, they refuse input.
 
 ## A session
 
 ```text
--> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.1"],"client":{"name":"my-client","version":"1"}}}
-<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.1","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096}}}
+-> {"jsonrpc":"2.0","id":1,"method":"bn.hello","params":{"versions":["0.2"],"client":{"name":"my-client","version":"1"},"schema":"sha256:0123456789abcdef"}}
+<- {"jsonrpc":"2.0","id":1,"result":{"version":"0.2","epoch":"epoch:e7f3","engine":{"build":"...","mods":["bn"],"display":{"tiles":true,"tileset":"UNDEAD_PEOPLE_BASE"}},"limits":{"frame_bytes":1048576,"cells_per_part":512,"cells_per_query":4096,"screen_queue":8},"schema":"sha256:0123456789abcdef","locale":"en","engine_locale":"en","role":"controller"}}
 -> {"jsonrpc":"2.0","id":2,"method":"bn.subscribe","params":{}}
 <- {"jsonrpc":"2.0","id":2,"result":{"at":{"epoch":"epoch:e7f3","sequence":"40","revision":"31"},"interaction":{...},"entities":[],"parts":1}}
 <- {"jsonrpc":"2.0","method":"bn.snapshot.part","params":{"epoch":"epoch:e7f3","at":{...},"index":0,"last":true,"cells":[...]}}
@@ -24,32 +24,32 @@ Collect the `parts` snapshot parts, then apply `bn.events` in order. A gap, an e
 
 ## Methods
 
-| Method                   | Params                                                   | Result                                              |
-| ------------------------ | -------------------------------------------------------- | --------------------------------------------------- |
-| `bn.hello`               | `versions`, `client`, `viewport?`, `tiles?`, `delivery?` | `version`, `epoch`, `engine`, `limits`, `delivery?` |
-| `bn.viewport`            | `cols`, `rows`                                           | none                                                |
-| `bn.interrupt`           | none                                                     | none                                                |
-| `bn.subscribe`           | none                                                     | snapshot header; parts and events follow            |
-| `bn.unsubscribe`         | none                                                     | none                                                |
-| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                | `boundary_id`, `total`, `choices` (reads only)      |
-| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                            | `lines` (reads only)                                |
-| `bn.world.cells`         | `epoch`, `min`, `max`                                    | `at`, `cells`, `forgotten` (reads only)             |
-| `bn.command.submit`      | `epoch`, `expect`, `operation`                           | `command_id`, `stage: "received"`                   |
-| `bn.command.result`      | `epoch`, `command_id`                                    | latest stage, for recovering a lost notification    |
-| `bn.credit`              | `frames`                                                 | `credits` held after the grant                      |
+| Method                   | Params                                                     | Result                                                                                           |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `bn.hello`               | `versions`, `client`, `schema`, `locale?`, `capabilities?` | `version`, `epoch`, `engine`, `limits`, `delivery?`, `schema`, `locale`, `engine_locale`, `role` |
+| `bn.viewport`            | `cols`, `rows`                                             | none                                                                                             |
+| `bn.interrupt`           | none                                                       | none                                                                                             |
+| `bn.subscribe`           | none                                                       | snapshot header; parts and events follow                                                         |
+| `bn.unsubscribe`         | none                                                       | none                                                                                             |
+| `bn.interaction.choices` | `epoch`, `boundary_id`, `offset`, `limit`                  | `boundary_id`, `total`, `choices` (reads only)                                                   |
+| `bn.world.describe`      | `epoch`, `boundary_id`, `pos`                              | `lines` (reads only)                                                                             |
+| `bn.world.cells`         | `epoch`, `min`, `max`                                      | `at`, `cells`, `forgotten` (reads only)                                                          |
+| `bn.command.submit`      | `epoch`, `expect`, `operation`                             | `command_id`, `stage: "received"`                                                                |
+| `bn.command.result`      | `epoch`, `command_id`                                      | latest stage, for recovering a lost notification                                                 |
+| `bn.credit`              | `frames`                                                   | `credits` held after the grant                                                                   |
 
 Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `bn.resync`, `bn.loading`, `bn.progress`. All but `bn.loading` and `bn.progress` are sent at input boundaries to a subscribed client. `bn.progress` (`{epoch}`) is a heartbeat, sent every 2 seconds to a client that said `bn.hello` while a wait or other activity runs without reaching an input boundary, so silence on the wire means the engine is not working. `bn.loading` plays the same role while the world loads.
 
 Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says what to do next (`hello`, `subscribe`, `retry`).
 
-## Version 0.2 (in progress)
+## Hello and the stack
 
-The engine serves `"0.1"` exactly as described here and `"0.2"` on every transport; the hello picks. A hello that lists `"0.2"` is answered in 0.2 and must carry:
+The engine serves `"0.2"` only, on every transport. A hello that does not list `"0.2"` fails with `negotiation_failed` and `action: "hello"`. The hello must carry:
 
 - `schema`: `sha256:` and the first 16 hex digits of the SHA-256 of the raw bytes of [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json). A different hash fails with `negotiation_failed`, `action: "hello"` and `error.data.schema = {engine, client}`. The engine takes its hash from the schema file when CMake configures.
-- optional `locale` and `capabilities` (`tiles`, `tint_ids`, `viewport`, `delivery`; the loose members of 0.1 are still accepted, but not both forms). The result adds `schema`, `locale` (the language of the connection's text), `engine_locale` and `role`. Until the engine localizes per connection, `locale` is the engine's.
+- optional `locale` and `capabilities` (`tiles`, `tint_ids`, `viewport`, `delivery`; the members may also stand loose in the hello, but not both forms). The result adds `schema`, `locale` (the language of the connection's text), `engine_locale` and `role`. Until the engine localizes per connection, `locale` is the engine's.
 
-Only a 0.2 connection gets `stack` in every interaction boundary (snapshot header and events), next to the 0.1 `interaction`. The stack is the open screens, outermost first; only the last has affordances. `bn.interaction.choices` with `component_id` reads that list of the top screen (`rows`, `total`).
+Every interaction boundary (snapshot header and events) carries `stack`, next to `interaction`. The stack is the open screens, outermost first; only the last has affordances. `bn.interaction.choices` with `component_id` reads that list of the top screen (`rows`, `total`).
 
 `bn.command.submit` takes `operation: {kind: "invoke", affordance_id, args?}`. Its `expect` is the affordance's `expect` scope:
 
@@ -149,4 +149,4 @@ While the world loads, the game thread is busy and reaches no input boundary, so
 - `sound.heard` (`text`, `volume`, `marker`, `logged`) is a sound that reached the avatar through the native hearing rules: its volume against the ambient noise, hearing protection, sleep and deafness. `text` is the description the native message names, `volume` the decibels the avatar hears it at, and `marker` the square the native game marks it on. The marker is never the source: it is a square out of the avatar's sight near it, and it is left out when the avatar is or sees the source, so a hidden source is not given away. The log line of a sound follows the native message rules and the cooldown; `sound.heard` is published for every sound heard, including those the log leaves out, such as footsteps. `logged` is `true` when the sound also has a line in the message log, so a client that shows both lists the sound once. The avatar's own shout counts as logged, since its action logs its own line (`You yell ...`).
 - `entity.moved` (`id`, `to`, `from`, `mode`) and `entity.gone` (`id`, `reason`) let a client follow creatures through an action without a resync, for the monsters and NPCs the snapshot discloses. `entity.moved` is published for every move of a creature the avatar sees at its new square; `from` is left out when the avatar did not see the square it came from, and `mode` is `walk` for a step to a neighboring square and `propelled` for any longer move (a shove, a teleport). The avatar's own moves are in the state delta. `entity.gone` says a creature the client knew is no longer disclosed: `lost_sight` (it stepped out of sight, or the avatar moved or the view changed), `died`, or `removed` (it left the game). A creature that steps out of sight is `gone` at once; the rest are found when the boundary is published. A busy turn publishes the first 256 `entity.moved`, `terrain.changed`, `furniture.changed` and `field.changed` events (the `gone` ones of creatures that step out of sight count too); the `cells.seen` change set of the boundary always holds the final state, so the events add order and timing and never replace it.
 
-Events are `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`, `message.logged` the animation facts above and, later, the remaining presentation types listed in the schema. Event types added before 0.1 is released belong to 0.1; once it is released, a new event type needs a new exact version.
+Events are `interaction.changed`, `coverage.moved`, `turn.passed`, `cells.seen`, `message.logged` the animation facts above and, later, the remaining presentation types listed in the schema. Event types added before 0.2 is released belong to 0.2; once it is released, a new event type needs a new exact version.
