@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <fstream>
+#include <map>
 #include <sstream>
+#include <utility>
 
 #if defined(_WIN32)
 #  if 1 // Prevent IWYU reordering platform_win.h below mmsystem.h
@@ -23,6 +25,7 @@
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "json.h"
+#include "locale_scope.h"
 #include "mod_manager.h"
 #include "name.h"
 #include "options.h"
@@ -471,10 +474,19 @@ const trans_library &get_library()
 
 auto pin_library() -> localization::locale_snapshot { return trans_lib_singleton; }
 
+/// Languages loaded for `locale_scope`, dropped with every catalogue replacement.
+static auto loaded_locales = std::map<std::string, localization::locale_snapshot> {};
+
+static auto publication_of( catalogue_collection collection ) -> localization::locale_snapshot
+{
+    return localization::locale_snapshot::from_library(
+               trans_library::create( std::move( collection.catalogues ) ), collection.identity.value() );
+}
+
 static void set_library( catalogue_collection collection )
 {
-    trans_lib_singleton = localization::locale_snapshot::from_library(
-                              trans_library::create( std::move( collection.catalogues ) ), collection.identity.value() );
+    trans_lib_singleton = publication_of( std::move( collection ) );
+    loaded_locales.clear();
     invalidate_translations();
 }
 
@@ -603,3 +615,49 @@ void translatable_mod_info::update()
     name_tr = lib.get( name_raw_.c_str() );
     description_tr = lib.get( description_raw.c_str() );
 }
+
+namespace localization
+{
+
+auto locale_available( const std::string &lang_id ) -> bool
+{
+    // English is the source language of the strings, so it has no catalogue.
+    return lang_id == get_language().id ||
+           ( std::ranges::contains( lang_options, lang_id, &language_info::id ) &&
+             ( lang_id.starts_with( "en" ) || translations_exists_for_lang( lang_id ) ) );
+}
+
+auto load_locale( const std::string &lang_id ) -> locale_snapshot
+{
+    if( lang_id == get_language().id ) { return l10n_data::pin_library(); }
+    if( const auto loaded = l10n_data::loaded_locales.find( lang_id );
+        loaded != l10n_data::loaded_locales.end() ) {
+        return loaded->second;
+    }
+    auto list = l10n_data::catalogue_collection{};
+    l10n_data::add_base_catalogue( list, lang_id );
+    l10n_data::add_mod_catalogues( list, lang_id );
+    return l10n_data::loaded_locales.emplace( lang_id,
+            l10n_data::publication_of( std::move( list ) ) ).first->second;
+}
+
+locale_scope::locale_scope( const std::string &lang_id )
+{
+    if( lang_id.empty() || lang_id == get_language().id ) { return; }
+    auto library = load_locale( lang_id );
+    const auto *language = get_lang_info( lang_id );
+    previous_ = swapped{
+        .library = std::exchange( l10n_data::trans_lib_singleton, std::move( library ) ),
+        .language = std::exchange( current_language, language ) };
+    invalidate_translations();
+}
+
+locale_scope::~locale_scope()
+{
+    if( !previous_ ) { return; }
+    l10n_data::trans_lib_singleton = std::move( previous_->library );
+    current_language = previous_->language;
+    invalidate_translations();
+}
+
+} // namespace localization
