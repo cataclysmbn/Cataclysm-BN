@@ -483,6 +483,9 @@ auto configured_mode() -> mode { return state().active_mode; }
 auto is_enabled() -> bool { return configured_mode() != mode::none; }
 auto is_recording() -> bool { return configured_mode() == mode::record; }
 auto is_playing() -> bool { return configured_mode() == mode::playback; }
+auto session_rng_seed(const unsigned int seed) -> unsigned int {
+    return is_enabled() ? playback_metadata().rng_seed : seed;
+}
 
 auto start() -> void {
     auto& current = state();

@@ -1,7 +1,9 @@
 #include "catch/catch.hpp"
+#include "debug.h"
 #include "item_factory.h"
 #include "loading_ui_client.h"
 #include "options.h"
+#include "replay/replay.h"
 #include "rng.h"
 #include "rng_observation.h"
 #include "sdlsound.h"
@@ -319,4 +321,32 @@ TEST_CASE(
     REQUIRE(after);
     CHECK(after->engine_state == root->engine_state);
     CHECK(after->next_root_call == root->next_root_call + 2);
+}
+
+TEST_CASE(
+    "a session without a replay is seeded from its own seed", "[rng][replay][deterministic_rng]") {
+    const auto restore = restore_rng{};
+    REQUIRE_FALSE(replay::is_enabled());
+    const auto seed = replay::session_rng_seed(424242);
+    CHECK(seed == 424242);
+    rng_set_deterministic_seed(seed);
+    CHECK(rng_deterministic_seed_active());
+    CHECK(rng_deterministic_seed_value() == 424242);
+}
+
+TEST_CASE(
+    "a draw on a worker outside a task scope is reported only in deterministic mode",
+    "[rng][thread_pool][deterministic_rng]") {
+    const auto restore = restore_rng{};
+    auto pool = cata_thread_pool(1);
+    const auto unscoped = [&pool]() {
+        return capture_debugmsg_during([&pool]() { pool.submit_returning(sample).get(); });
+    };
+    CHECK(unscoped().empty());
+    rng_set_deterministic_seed(424242);
+    CHECK_THAT(unscoped(), Catch::Contains("outside a deterministic task scope"));
+    const auto keyed = capture_debugmsg_during([&pool]() {
+        pool.submit_returning({.stream = 1, .id = 2}, sample).get();
+    });
+    CHECK(keyed.empty());
 }

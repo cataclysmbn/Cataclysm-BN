@@ -618,15 +618,12 @@ auto run_game( int argc, char *argv[] ) -> int
         }
     }
     replay::start();
-    if( replay::is_enabled() ) {
-        rng_set_deterministic_seed( replay::playback_metadata().rng_seed );
-        atexit( []() {
-            replay::stop();
-            rng_clear_deterministic_seed();
-        } );
-    } else {
-        rng_set_engine_seed( seed );
-    }
+    // Every session is seeded deterministically, so workers and keyed tasks never fall back to the clock.
+    rng_set_deterministic_seed( replay::session_rng_seed( seed ) );
+    atexit( []() {
+        if( replay::is_enabled() ) { replay::stop(); }
+        rng_clear_deterministic_seed();
+    } );
 
     if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
 

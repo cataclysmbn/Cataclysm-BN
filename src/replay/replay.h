@@ -47,6 +47,8 @@ auto configure_recording(const std::string& path, session_metadata metadata = {}
 auto configure_playback(const std::string& path) -> void;
 auto configure_playback(const std::string& path, session_metadata expected) -> void;
 auto playback_metadata() -> const session_metadata&; // *NOPAD*
+/// The seed the whole session draws from: the replay's when one is recorded or played, else `seed`.
+auto session_rng_seed(unsigned int seed) -> unsigned int;
 auto configured_mode() -> mode;
 auto is_enabled() -> bool;
 auto is_recording() -> bool;

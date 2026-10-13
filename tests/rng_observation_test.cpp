@@ -1,4 +1,5 @@
 #include "catch/catch.hpp"
+#include "debug.h"
 #include "rng.h"
 #include "rng_observation.h"
 
@@ -141,20 +142,25 @@ TEST_CASE(
     const auto restore = restore_rng_observation_test{};
     rng_set_deterministic_seed(731);
     const auto main_engine = rng_get_engine();
-    const auto worker =
-        std::async(std::launch::async, []() {
-            rng_set_worker_seed(92821);
-            const auto expected = native_trace(false);
-            rng_set_worker_seed(92821);
-            return expected;
-        }).get();
-    // Root stream allocation is process-wide, even for independent worker engines.
-    rng_set_deterministic_seed(731);
-    const auto observed =
-        std::async(std::launch::async, []() {
-            rng_set_worker_seed(92821);
-            return native_trace(true);
-        }).get();
+    // The bare worker engine is what this case observes; the draws outside a task scope are
+    // reported on purpose.
+    auto worker = native_rng_trace{};
+    auto observed = native_rng_trace{};
+    capture_debugmsg_during([&]() {
+        worker = std::async(std::launch::async, []() {
+                     rng_set_worker_seed(92821);
+                     const auto expected = native_trace(false);
+                     rng_set_worker_seed(92821);
+                     return expected;
+                 }).get();
+        // Root stream allocation is process-wide, even for independent worker engines.
+        rng_set_deterministic_seed(731);
+        observed =
+            std::async(std::launch::async, []() {
+                rng_set_worker_seed(92821);
+                return native_trace(true);
+            }).get();
+    });
     check_same_native_trace(worker, observed);
     REQUIRE(observed.observation);
     CHECK(observed.observation->source == rng_engine_source::worker);

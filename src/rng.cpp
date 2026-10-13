@@ -13,6 +13,7 @@
 
 #include "calendar.h"
 #include "cata_utility.h"
+#include "debug.h"
 #include "units.h"
 
 namespace
@@ -91,6 +92,17 @@ thread_local auto tl_task_child_counter = std::uint64_t
     0
 };
 
+auto current_rng_engine() -> cata_default_random_engine & // *NOPAD*
+{
+    if( tl_has_task_engine ) {
+        return tl_task_engine;
+    }
+    if( tl_is_worker ) {
+        return tl_worker_engine;
+    }
+    return main_rng_engine();
+}
+
 } // namespace
 
 auto observe_deterministic_rng() -> std::optional<rng_observation>
@@ -110,7 +122,7 @@ auto observe_deterministic_rng() -> std::optional<rng_observation>
     auto engine_state = std::ostringstream{};
     engine_state.exceptions( std::ios::badbit | std::ios::failbit );
     engine_state.imbue( std::locale::classic() );
-    engine_state << rng_get_engine();
+    engine_state << current_rng_engine();
     return rng_observation{
         .source = source,
         .root_seed = *seed,
@@ -122,13 +134,11 @@ auto observe_deterministic_rng() -> std::optional<rng_observation>
 
 auto rng_get_engine() -> cata_default_random_engine & // *NOPAD*
 {
-    if( tl_has_task_engine ) {
-        return tl_task_engine;
+    // A worker's engine depends on which tasks it ran before, so in deterministic mode only a task scope may draw there.
+    if( tl_is_worker && !tl_has_task_engine && rng_deterministic_seed_active() ) {
+        debugmsg( "rng draw on a worker thread outside a deterministic task scope" );
     }
-    if( tl_is_worker ) {
-        return tl_worker_engine;
-    }
-    return main_rng_engine();
+    return current_rng_engine();
 }
 
 void rng_set_engine_seed( const unsigned int seed )
