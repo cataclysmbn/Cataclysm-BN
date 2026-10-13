@@ -1,0 +1,617 @@
+{
+  "valid": [
+    {
+      "name": "choices request",
+      "def": "choices_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "boundary_id": "boundary:90",
+        "offset": 200,
+        "limit": 200,
+        "component_id": "list:pane:left"
+      }
+    },
+    {
+      "name": "choices result",
+      "def": "choices_result",
+      "value": {
+        "boundary_id": "boundary:90",
+        "component_id": "list:pane:left",
+        "total": 201,
+        "rows": [
+          {
+            "id": "item:201",
+            "label": "rock",
+            "description": "A rock.",
+            "denial": "",
+            "hotkey": "a",
+            "enabled": true,
+            "selectable": true,
+            "selected": false,
+            "columns": [
+              {
+                "key": "weight",
+                "label": "Weight",
+                "value": "0.5 kg"
+              }
+            ],
+            "max": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "map boundary with its clicks, item rows and actions",
+      "def": "interaction_boundary",
+      "value": {
+        "boundary_id": "boundary:90",
+        "readiness": {
+          "phase": "waiting_for_input",
+          "game_ready": true,
+          "accepts_interaction_commands": true,
+          "accepts_registered_actions": true
+        },
+        "interaction": {
+          "title": "",
+          "root": {
+            "id": "map",
+            "kind": "map",
+            "affordances": [
+              "bn:travel",
+              "bn:context"
+            ],
+            "mode": "world"
+          },
+          "affordances": [
+            {
+              "id": "bn:travel",
+              "label": "Travel",
+              "keys": [],
+              "enabled": true,
+              "args": {
+                "pos": {
+                  "unit": "square"
+                }
+              }
+            },
+            {
+              "id": "bn:context",
+              "label": "Examine",
+              "keys": [],
+              "enabled": true,
+              "args": {
+                "pos": {
+                  "unit": "square"
+                }
+              }
+            },
+            {
+              "id": "bn:pickup",
+              "label": "Pick up",
+              "keys": [],
+              "enabled": true,
+              "args": {
+                "row": {
+                  "component_id": "avatar.ground"
+                },
+                "count": {
+                  "min": 1
+                }
+              }
+            },
+            {
+              "id": "bn:drop",
+              "label": "Drop",
+              "keys": [],
+              "enabled": true,
+              "args": {
+                "row": {
+                  "component_id": "avatar.inventory"
+                },
+                "count": {
+                  "min": 1
+                }
+              }
+            },
+            {
+              "id": "move_e",
+              "label": "Move East",
+              "keys": [
+                "l",
+                "RIGHT"
+              ],
+              "enabled": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "boundary before the game offers anything",
+      "def": "interaction_boundary",
+      "value": {
+        "boundary_id": "boundary:1",
+        "readiness": {
+          "phase": "starting",
+          "game_ready": false,
+          "accepts_interaction_commands": false,
+          "accepts_registered_actions": false
+        },
+        "interaction": null
+      }
+    },
+    {
+      "name": "affordance moving counted rows to a pane",
+      "def": "affordance",
+      "value": {
+        "id": "move",
+        "label": "Move",
+        "keys": [
+          "m"
+        ],
+        "enabled": true,
+        "args": {
+          "rows": {
+            "component_id": "list:left",
+            "counts": true
+          },
+          "pane": {
+            "component_id": "body"
+          }
+        }
+      }
+    },
+    {
+      "name": "disabled affordance with its reason",
+      "def": "affordance",
+      "value": {
+        "id": "bn:pickup",
+        "label": "Pick up",
+        "keys": [
+          "g"
+        ],
+        "enabled": false,
+        "denial": "There is nothing here."
+      }
+    },
+    {
+      "name": "press-any-key affordance",
+      "def": "affordance",
+      "value": {
+        "id": "bn:any_key",
+        "label": "Continue",
+        "keys": [],
+        "enabled": true,
+        "role": "any_key"
+      }
+    },
+    {
+      "name": "list with category header rows and a row that allows only some affordances",
+      "def": "list",
+      "value": {
+        "id": "list:npc",
+        "kind": "list",
+        "affordances": [
+          "bn:choose:list:npc"
+        ],
+        "columns": [
+          {
+            "key": "unit_price",
+            "label": "Price"
+          }
+        ],
+        "rows": [
+          {
+            "id": "category:tools",
+            "label": "TOOLS",
+            "description": "",
+            "denial": "",
+            "enabled": true,
+            "selectable": false,
+            "selected": false,
+            "columns": [],
+            "header": true
+          },
+          {
+            "id": "item:hammer",
+            "label": "hammer",
+            "description": "",
+            "denial": "",
+            "enabled": true,
+            "selectable": true,
+            "selected": false,
+            "columns": [
+              {
+                "key": "unit_price",
+                "label": "Price",
+                "value": "$12.00"
+              }
+            ],
+            "affordances": [
+              {
+                "id": "bn:set_count:list:npc",
+                "enabled": false,
+                "denial": "Only one is offered."
+              }
+            ]
+          }
+        ],
+        "total": 40,
+        "selection": "count",
+        "activate": "bn:choose:list:npc",
+        "offset": 0
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "choice window above the limit",
+      "def": "choices_params",
+      "why": "limit is at most 200",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "boundary_id": "boundary:90",
+        "offset": 0,
+        "limit": 201,
+        "component_id": "list"
+      }
+    },
+    {
+      "name": "removed projection member",
+      "def": "subscribe_result",
+      "why": "no page or projection identity exists",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "projection": {
+          "kind": "interaction_choices",
+          "offset": 0,
+          "limit": 100
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": null
+        },
+        "entities": [],
+        "parts": 0
+      }
+    },
+    {
+      "name": "split with a layout direction",
+      "def": "split",
+      "value": {
+        "id": "body",
+        "kind": "split",
+        "relation": "peers",
+        "direction": "row",
+        "children": [
+          {
+            "id": "t",
+            "kind": "text",
+            "markup": ""
+          }
+        ]
+      },
+      "why": "layout is the client's"
+    },
+    {
+      "name": "panel with a placement hint",
+      "def": "panel",
+      "value": {
+        "id": "p",
+        "kind": "panel",
+        "title": "Pick up",
+        "placement": "beside_map"
+      },
+      "why": "layout is the client's"
+    },
+    {
+      "name": "affordance with a display hint",
+      "def": "affordance",
+      "value": {
+        "id": "bn:cancel",
+        "label": "Cancel",
+        "keys": [],
+        "enabled": true,
+        "show": "button"
+      },
+      "why": "where an affordance shows is the client's"
+    },
+    {
+      "name": "interaction with a modal layout hint",
+      "def": "interaction",
+      "value": {
+        "schema_id": "schema:ab",
+        "context": "MAIN_MENU",
+        "title": "Cataclysm: Bright Nights",
+        "root": {
+          "id": "tabs",
+          "kind": "tabs",
+          "affordances": [
+            "bn:choose:tabs"
+          ],
+          "tabs": [
+            {
+              "id": "tab:new_game",
+              "label": "New Game",
+              "selected": true,
+              "enabled": true
+            },
+            {
+              "id": "tab:load",
+              "label": "Load",
+              "selected": false,
+              "enabled": true
+            },
+            {
+              "id": "tab:quit",
+              "label": "Quit",
+              "selected": false,
+              "enabled": true
+            }
+          ],
+          "select": "bn:choose:tabs",
+          "child": {
+            "id": "panel:new_game",
+            "kind": "panel",
+            "title": "New Game",
+            "child": {
+              "id": "list:new_game",
+              "kind": "list",
+              "affordances": [
+                "bn:choose:list:new_game"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "new_game:custom",
+                  "label": "Custom Character",
+                  "description": "Allows you to fully customize the character.",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "new_game:tutorial",
+                  "label": "Tutorial",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "bn:choose:list:new_game"
+            }
+          }
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:new_game",
+            "label": "Choose",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:new_game"
+              }
+            }
+          },
+          {
+            "id": "bn:choose:tabs",
+            "label": "Switch tab",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "tabs"
+              }
+            }
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel"
+          },
+          {
+            "id": "UP",
+            "label": "Move up",
+            "keys": [
+              "UP",
+              "k"
+            ],
+            "enabled": true
+          }
+        ],
+        "focus": {
+          "component_id": "tabs",
+          "row_id": "tab:new_game"
+        },
+        "modal": "screen"
+      },
+      "why": "role says what the screen is; how much it covers is the client's"
+    },
+    {
+      "name": "text in a fixed-width style",
+      "def": "text",
+      "value": {
+        "id": "banner",
+        "kind": "text",
+        "markup": "",
+        "style": "mono"
+      },
+      "why": "fonts are the client's; role says what the text is"
+    },
+    {
+      "name": "text with a presentational role",
+      "def": "text",
+      "value": {
+        "id": "banner",
+        "kind": "text",
+        "markup": "",
+        "role": "mono"
+      },
+      "why": "role names what the text is"
+    },
+    {
+      "name": "affordance with an emphasis role",
+      "def": "affordance",
+      "value": {
+        "id": "move",
+        "label": "Move",
+        "keys": [],
+        "enabled": true,
+        "role": "primary"
+      },
+      "why": "emphasis is the client's; roles are confirm, cancel and any_key"
+    },
+    {
+      "name": "grid cell with a background colour",
+      "def": "grid",
+      "value": {
+        "id": "g",
+        "kind": "grid",
+        "cols": 1,
+        "rows": 1,
+        "cells": [
+          {
+            "x": 0,
+            "y": 0,
+            "enabled": true,
+            "bg": "c_red"
+          }
+        ]
+      },
+      "why": "colours are the client's"
+    },
+    {
+      "name": "list asking to be loaded eagerly",
+      "def": "list",
+      "value": {
+        "id": "l",
+        "kind": "list",
+        "columns": [],
+        "rows": [],
+        "total": 0,
+        "selection": "none",
+        "eager": true
+      },
+      "why": "when to page is the client's"
+    },
+    {
+      "name": "split with an unknown relation",
+      "def": "split",
+      "value": {
+        "id": "body",
+        "kind": "split",
+        "relation": "beside",
+        "children": [
+          {
+            "id": "t",
+            "kind": "text",
+            "markup": ""
+          }
+        ]
+      },
+      "why": "parts are peers, or detail of the first"
+    },
+    {
+      "name": "row with a count bound below zero",
+      "def": "row",
+      "value": {
+        "id": "item:rag",
+        "label": "rag",
+        "description": "",
+        "denial": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [],
+        "max": -1
+      },
+      "why": "max counts native units"
+    },
+    {
+      "name": "component of an unknown kind",
+      "def": "component",
+      "value": {
+        "id": "x",
+        "kind": "button"
+      },
+      "why": "affordances are not components"
+    },
+    {
+      "name": "list without rows",
+      "def": "list",
+      "value": {
+        "id": "l",
+        "kind": "list",
+        "columns": [],
+        "total": 0,
+        "selection": "none"
+      },
+      "why": "rows is required"
+    },
+    {
+      "name": "argument shape with an unknown argument",
+      "def": "arg_shape",
+      "value": {
+        "row": {
+          "component_id": "list"
+        },
+        "choice": {}
+      },
+      "why": "args are row, rows, count, text, pos and pane"
+    },
+    {
+      "name": "interaction without affordances",
+      "def": "interaction",
+      "value": {
+        "schema_id": "s",
+        "root": {
+          "id": "t",
+          "kind": "text",
+          "markup": ""
+        }
+      },
+      "why": "a boundary always lists what can be done, even nothing"
+    },
+    {
+      "name": "choices request without its list",
+      "def": "choices_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "boundary_id": "boundary:90",
+        "offset": 200,
+        "limit": 200
+      },
+      "why": "pages are per list"
+    },
+    {
+      "name": "affordance without keys",
+      "def": "affordance",
+      "value": {
+        "id": "bn:cancel",
+        "label": "Cancel",
+        "enabled": true
+      },
+      "why": "keys lists the player's bindings, possibly none"
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "valid": [
+    {
+      "name": "advanced inventory pane with totals",
+      "def": "panel",
+      "value": {
+        "id": "panel:pane-destination",
+        "kind": "panel",
+        "title": "Destination",
+        "subtitle": "Directly under you",
+        "stats": [
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "0.0",
+            "unit": "kg"
+          },
+          {
+            "key": "volume",
+            "label": "Volume",
+            "value": "0.00",
+            "max": "1000.00",
+            "unit": "L"
+          },
+          {
+            "key": "sort",
+            "label": "Sort",
+            "value": "name"
+          }
+        ]
+      }
+    },
+    {
+      "name": "advanced inventory area picker with the player's keys",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:aim",
+        "context": "ADVANCED_INVENTORY",
+        "title": "Advanced inventory",
+        "root": {
+          "id": "areas",
+          "kind": "list",
+          "affordances": [
+            "bn:choose:areas"
+          ],
+          "columns": [],
+          "rows": [
+            {
+              "id": "ITEMS_CONTAINER",
+              "label": "Container",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "ITEMS_N",
+              "label": "North",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            },
+            {
+              "id": "ITEMS_CE",
+              "label": "Directly below you",
+              "description": "",
+              "denial": "",
+              "enabled": false,
+              "selectable": true,
+              "selected": false,
+              "columns": []
+            }
+          ],
+          "total": 3,
+          "selection": "single",
+          "activate": "bn:choose:areas"
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:areas",
+            "label": "Choose",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "areas"
+              }
+            }
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel"
+          },
+          {
+            "id": "ITEMS_CONTAINER",
+            "label": "Container",
+            "keys": [
+              "C"
+            ],
+            "enabled": true
+          },
+          {
+            "id": "ITEMS_N",
+            "label": "North",
+            "keys": [
+              "k"
+            ],
+            "enabled": true
+          },
+          {
+            "id": "ITEMS_CE",
+            "label": "Directly below you",
+            "keys": [],
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "pane stat with a colour",
+      "def": "panel",
+      "value": {
+        "id": "panel:pane-destination",
+        "kind": "panel",
+        "title": "Destination",
+        "subtitle": "Directly under you",
+        "stats": [
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "50",
+            "color": "c_red"
+          }
+        ]
+      },
+      "why": "tone says over capacity; colours are the client's"
+    },
+    {
+      "name": "pane stat without its value",
+      "def": "panel",
+      "value": {
+        "id": "panel:pane-destination",
+        "kind": "panel",
+        "title": "Destination",
+        "subtitle": "Directly under you",
+        "stats": [
+          {
+            "key": "weight",
+            "label": "Weight"
+          }
+        ]
+      },
+      "why": "a stat states its value"
+    }
+  ]
+}

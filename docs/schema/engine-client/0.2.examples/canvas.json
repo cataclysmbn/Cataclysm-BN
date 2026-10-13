@@ -1,0 +1,80 @@
+{
+  "valid": [
+    {
+      "name": "timed mini-game window with color runs",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:snake",
+        "context": "SNAKE",
+        "title": "S N A K E",
+        "root": {
+          "id": "canvas",
+          "kind": "canvas",
+          "cols": 80,
+          "rows": [
+            [
+              [
+                "                    S N A K E",
+                7,
+                0
+              ]
+            ],
+            [
+              [
+                "#####",
+                7,
+                0
+              ],
+              [
+                "#",
+                15,
+                0
+              ],
+              [
+                "   ",
+                7,
+                0
+              ],
+              [
+                "*",
+                9,
+                0
+              ]
+            ],
+            []
+          ]
+        },
+        "affordances": [
+          {
+            "id": "LEFT",
+            "label": "Turn left",
+            "keys": [
+              "h"
+            ],
+            "enabled": true
+          }
+        ],
+        "refresh_ms": 100
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "canvas run with a color beyond the 16 curses colors",
+      "def": "canvas",
+      "why": "foreground is a curses color index 0-15",
+      "value": {
+        "cols": 4,
+        "rows": [
+          [
+            [
+              "#",
+              16,
+              0
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

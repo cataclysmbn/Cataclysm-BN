@@ -1,0 +1,94 @@
+{
+  "valid": [
+    {
+      "name": "terminal output with an answer row at a security query",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:terminal",
+        "context": "COMPUTER_TERMINAL",
+        "title": "Lab terminal",
+        "root": {
+          "id": "root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "message",
+              "kind": "text",
+              "markup": "ERROR: Please place a security card.\nEnter override code?",
+              "role": "terminal_output"
+            },
+            {
+              "id": "list:terminal",
+              "kind": "list",
+              "affordances": [
+                "bn:choose:list:terminal"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "yes",
+                  "label": "Yes",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "no",
+                  "label": "No",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "bn:choose:list:terminal"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:terminal",
+            "label": "Choose",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:terminal"
+              }
+            }
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel"
+          }
+        ]
+      }
+    },
+    {
+      "name": "extended description target row",
+      "def": "row",
+      "value": {
+        "id": "describe:terrain",
+        "label": "Describe terrain",
+        "description": "",
+        "denial": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": true,
+        "columns": []
+      }
+    }
+  ],
+  "invalid": []
+}

@@ -1,0 +1,572 @@
+{
+  "valid": [
+    {
+      "name": "hello result",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096
+        }
+      }
+    },
+    {
+      "name": "hello result with credit delivery",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096
+        },
+        "delivery": {
+          "credits": 64,
+          "held_frames": 256,
+          "held_bytes": 1048576
+        }
+      }
+    },
+    {
+      "name": "hello result echoing the frame rate cap",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096
+        },
+        "delivery": {
+          "credits": 64,
+          "held_frames": 256,
+          "held_bytes": 1048576,
+          "max_hz": 30
+        }
+      }
+    },
+    {
+      "name": "hello request",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        }
+      }
+    },
+    {
+      "name": "hello request with a viewport",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "viewport": {
+          "cols": 40,
+          "rows": 25
+        }
+      }
+    },
+    {
+      "name": "hello request with credit delivery",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {
+          "credits": 64
+        }
+      }
+    },
+    {
+      "name": "hello request with a frame rate cap",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {
+          "credits": 64,
+          "max_hz": 30
+        }
+      }
+    },
+    {
+      "def": "hello_params",
+      "name": "hello with the tints of a tileset",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-client",
+          "version": "1"
+        },
+        "tiles": true,
+        "tint_ids": [
+          "hair_black",
+          "jeans"
+        ]
+      }
+    },
+    {
+      "name": "viewport request",
+      "def": "viewport",
+      "value": {
+        "cols": 60,
+        "rows": 30
+      }
+    },
+    {
+      "name": "credit request",
+      "def": "credit_params",
+      "value": {
+        "frames": 32
+      }
+    },
+    {
+      "name": "credit result",
+      "def": "credit_result",
+      "value": {
+        "credits": 64
+      }
+    },
+    {
+      "name": "resync after falling behind",
+      "def": "resync_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "reason": "backpressure",
+        "lost_after": "412"
+      }
+    },
+    {
+      "name": "subscribe request",
+      "def": "empty_params",
+      "value": {}
+    },
+    {
+      "name": "snapshot part",
+      "def": "snapshot_part",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "40",
+          "revision": "31"
+        },
+        "index": 0,
+        "last": true,
+        "cells": [
+          {
+            "at": {
+              "dim": "",
+              "x": 3,
+              "y": 4,
+              "z": 0
+            },
+            "known": "visible",
+            "terrain": {
+              "kind": "terrain",
+              "id": "t_dirt",
+              "glyph": ".",
+              "color": "brown",
+              "looks_like": [
+                "t_grass"
+              ],
+              "subtile": "center",
+              "rotation": 0
+            },
+            "fields": [
+              {
+                "look": {
+                  "id": "fd_smoke",
+                  "glyph": "8",
+                  "color": "dark_gray"
+                },
+                "intensity": 1,
+                "hides_items": true
+              }
+            ],
+            "items": [
+              {
+                "kind": "item",
+                "id": "rock",
+                "glyph": "*",
+                "color": "light_gray"
+              },
+              {
+                "kind": "item",
+                "id": "corpse",
+                "glyph": "%",
+                "color": "light_gray",
+                "tile": "corpse_mon_zombie",
+                "looks_like": [
+                  "corpse"
+                ],
+                "stack": 3
+              }
+            ],
+            "light": 1,
+            "memory": {
+              "terrain": {
+                "kind": "terrain",
+                "id": "t_dirt",
+                "glyph": ".",
+                "color": "brown",
+                "subtile": "center",
+                "rotation": 0
+              }
+            },
+            "vehicle": {
+              "kind": "vehicle_part",
+              "id": "door",
+              "glyph": "+",
+              "color": "light_cyan",
+              "tile": "vp_door",
+              "looks_like": [
+                "vp_frame"
+              ],
+              "subtile": "open",
+              "rotation": 3,
+              "tint": {
+                "fg": "#445566"
+              }
+            },
+            "reviving": true
+          },
+          {
+            "at": {
+              "dim": "",
+              "x": 2,
+              "y": 4,
+              "z": 0
+            },
+            "known": "remembered",
+            "memory": {
+              "terrain": {
+                "kind": "terrain",
+                "id": "t_grass",
+                "glyph": "\"",
+                "color": "green",
+                "looks_like": [
+                  "t_dirt"
+                ],
+                "subtile": "edge",
+                "rotation": 1
+              }
+            }
+          },
+          {
+            "at": {
+              "dim": "",
+              "x": 4,
+              "y": 4,
+              "z": 0
+            },
+            "known": "visible",
+            "below": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "submit receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "command notification completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:5",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "42",
+          "revision": "33"
+        }
+      }
+    },
+    {
+      "name": "command notification rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:6",
+        "stage": "rejected",
+        "error": "stale_revision"
+      }
+    },
+    {
+      "name": "command result after a lost notification",
+      "def": "command_result",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:5",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "resync after world replacement",
+      "def": "resync_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "reason": "world_replaced",
+        "lost_after": "977"
+      }
+    },
+    {
+      "name": "loading progress with an image",
+      "def": "loading_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "title": "Loading files",
+        "entries": [
+          "Terrain",
+          "Items"
+        ],
+        "index": 1,
+        "image": {
+          "path": "data/json/loading/Ada_dawn.webp",
+          "author": "Ada"
+        }
+      }
+    },
+    {
+      "name": "loading progress without an image",
+      "def": "loading_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "title": "Loading",
+        "entries": [],
+        "index": 0
+      }
+    },
+    {
+      "name": "loading done",
+      "def": "loading_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "done": true
+      }
+    },
+    {
+      "name": "stale submit error",
+      "def": "application_error",
+      "value": {
+        "kind": "stale_revision",
+        "action": "subscribe",
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "42",
+          "revision": "33"
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "hello delivery without credits",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {}
+      },
+      "why": "credits are required"
+    },
+    {
+      "name": "hello delivery with zero credits",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {
+          "credits": 0
+        }
+      },
+      "why": "a window holds at least one frame"
+    },
+    {
+      "name": "hello frame rate of zero",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {
+          "credits": 64,
+          "max_hz": 0
+        }
+      },
+      "why": "a frame rate is at least 1 per second"
+    },
+    {
+      "name": "hello frame rate beyond a display",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {
+          "credits": 64,
+          "max_hz": 241
+        }
+      },
+      "why": "at most 240 frames per second"
+    },
+    {
+      "name": "hello frame rate without credits",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "delivery": {
+          "max_hz": 30
+        }
+      },
+      "why": "the cap paces credit delivery, so credits are required"
+    },
+    {
+      "name": "credit request beyond the window",
+      "def": "credit_params",
+      "value": {
+        "frames": 257
+      },
+      "why": "at most 256 frames"
+    },
+    {
+      "name": "loading done with progress members",
+      "def": "loading_notification",
+      "why": "done ends the loading screen and carries nothing else",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "done": true,
+        "title": "Loading"
+      }
+    },
+    {
+      "name": "loading index out of range type",
+      "def": "loading_notification",
+      "why": "index is a non-negative integer",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "title": "Loading",
+        "entries": [],
+        "index": -1
+      }
+    },
+    {
+      "name": "received as a notification stage",
+      "def": "command_notification",
+      "why": "received is the submit result, never a notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:5",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "viewport without rows",
+      "def": "viewport",
+      "why": "both dimensions are required",
+      "value": {
+        "cols": 40
+      }
+    },
+    {
+      "name": "viewport of zero columns",
+      "def": "viewport",
+      "why": "a window shows at least one cell",
+      "value": {
+        "cols": 0,
+        "rows": 25
+      }
+    },
+    {
+      "def": "hello_params",
+      "name": "hello with an empty tint id",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-client",
+          "version": "1"
+        },
+        "tint_ids": [
+          ""
+        ]
+      }
+    }
+  ]
+}

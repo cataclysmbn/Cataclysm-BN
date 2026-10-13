@@ -1,0 +1,1133 @@
+{
+  "valid": [
+    {
+      "name": "subscribe result at the main menu",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "title": "Cataclysm: Bright Nights",
+            "root": {
+              "id": "tabs",
+              "kind": "tabs",
+              "affordances": [
+                "bn:choose:tabs"
+              ],
+              "tabs": [
+                {
+                  "id": "tab:new_game",
+                  "label": "New Game",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:load",
+                  "label": "Load",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:quit",
+                  "label": "Quit",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "bn:choose:tabs",
+              "child": {
+                "id": "panel:new_game",
+                "kind": "panel",
+                "title": "New Game",
+                "child": {
+                  "id": "list:new_game",
+                  "kind": "list",
+                  "affordances": [
+                    "bn:choose:list:new_game"
+                  ],
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "new_game:custom",
+                      "label": "Custom Character",
+                      "description": "Allows you to fully customize the character.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    },
+                    {
+                      "id": "new_game:tutorial",
+                      "label": "Tutorial",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    }
+                  ],
+                  "total": 2,
+                  "selection": "single",
+                  "activate": "bn:choose:list:new_game"
+                }
+              }
+            },
+            "affordances": [
+              {
+                "id": "bn:choose:list:new_game",
+                "label": "Choose",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "list:new_game"
+                  }
+                }
+              },
+              {
+                "id": "bn:choose:tabs",
+                "label": "Switch tab",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "tabs"
+                  }
+                }
+              },
+              {
+                "id": "bn:cancel",
+                "label": "Cancel",
+                "keys": [],
+                "enabled": true,
+                "role": "cancel"
+              },
+              {
+                "id": "UP",
+                "label": "Move up",
+                "keys": [
+                  "UP",
+                  "k"
+                ],
+                "enabled": true
+              }
+            ],
+            "focus": {
+              "component_id": "tabs",
+              "row_id": "tab:new_game"
+            }
+          }
+        },
+        "entities": [],
+        "parts": 0
+      }
+    },
+    {
+      "name": "subscribe result with the message log",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "title": "Cataclysm: Bright Nights",
+            "root": {
+              "id": "tabs",
+              "kind": "tabs",
+              "affordances": [
+                "bn:choose:tabs"
+              ],
+              "tabs": [
+                {
+                  "id": "tab:new_game",
+                  "label": "New Game",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:load",
+                  "label": "Load",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:quit",
+                  "label": "Quit",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "bn:choose:tabs",
+              "child": {
+                "id": "panel:new_game",
+                "kind": "panel",
+                "title": "New Game",
+                "child": {
+                  "id": "list:new_game",
+                  "kind": "list",
+                  "affordances": [
+                    "bn:choose:list:new_game"
+                  ],
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "new_game:custom",
+                      "label": "Custom Character",
+                      "description": "Allows you to fully customize the character.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    },
+                    {
+                      "id": "new_game:tutorial",
+                      "label": "Tutorial",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    }
+                  ],
+                  "total": 2,
+                  "selection": "single",
+                  "activate": "bn:choose:list:new_game"
+                }
+              }
+            },
+            "affordances": [
+              {
+                "id": "bn:choose:list:new_game",
+                "label": "Choose",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "list:new_game"
+                  }
+                }
+              },
+              {
+                "id": "bn:choose:tabs",
+                "label": "Switch tab",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "tabs"
+                  }
+                }
+              },
+              {
+                "id": "bn:cancel",
+                "label": "Cancel",
+                "keys": [],
+                "enabled": true,
+                "role": "cancel"
+              },
+              {
+                "id": "UP",
+                "label": "Move up",
+                "keys": [
+                  "UP",
+                  "k"
+                ],
+                "enabled": true
+              }
+            ],
+            "focus": {
+              "component_id": "tabs",
+              "row_id": "tab:new_game"
+            }
+          }
+        },
+        "entities": [],
+        "messages": [
+          {
+            "id": "3",
+            "text": "You have survived the initial wave of panic.",
+            "kind": "neutral",
+            "color": "c_white",
+            "count": 1,
+            "label": "You have survived the initial wave of panic."
+          },
+          {
+            "id": "7",
+            "text": "You open the door.",
+            "kind": "neutral",
+            "color": "c_white",
+            "count": 2,
+            "label": "You open the door. x 2"
+          }
+        ],
+        "parts": 0
+      }
+    },
+    {
+      "name": "subscribe result at a menu",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "title": "Cataclysm: Bright Nights",
+            "root": {
+              "id": "list",
+              "kind": "list",
+              "affordances": [
+                "bn:choose:list"
+              ],
+              "columns": [
+                {
+                  "key": "worlds",
+                  "label": "Worlds"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "root:0",
+                  "label": "New Game",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "root:1",
+                  "label": "Load Game",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "worlds",
+                      "label": "Worlds",
+                      "value": "2",
+                      "color": "c_light_gray"
+                    }
+                  ],
+                  "hotkey": "l",
+                  "color": "c_white",
+                  "key_color": "c_yellow",
+                  "mark": {
+                    "glyph": "-"
+                  }
+                }
+              ],
+              "total": 2,
+              "selection": "multi",
+              "activate": "bn:choose:list"
+            },
+            "affordances": [
+              {
+                "id": "bn:choose:list",
+                "label": "Choose",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "list"
+                  }
+                }
+              },
+              {
+                "id": "bn:cancel",
+                "label": "Cancel",
+                "keys": [],
+                "enabled": true,
+                "role": "cancel"
+              },
+              {
+                "id": "UP",
+                "label": "Move up",
+                "keys": [
+                  "UP",
+                  "k"
+                ],
+                "enabled": true
+              }
+            ],
+            "focus": {
+              "component_id": "list",
+              "row_id": "root:0"
+            }
+          }
+        },
+        "entities": [],
+        "parts": 0
+      }
+    },
+    {
+      "name": "options page with each editor type",
+      "def": "interaction",
+      "value": {
+        "schema_id": "2c1f",
+        "context": "OPTIONS",
+        "title": "Options",
+        "root": {
+          "id": "root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "list:page:general",
+              "kind": "list",
+              "affordances": [
+                "bn:choose:list:page:general"
+              ],
+              "columns": [
+                {
+                  "key": "value",
+                  "label": "Value"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "option:SAFEMODEPROXIMITY",
+                  "label": "Safe mode proximity distance",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "value",
+                      "label": "Value",
+                      "value": "7"
+                    }
+                  ]
+                },
+                {
+                  "id": "option:DROP_EMPTY",
+                  "label": "Drop empty containers",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "value",
+                      "label": "Value",
+                      "value": "No"
+                    }
+                  ]
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "bn:choose:list:page:general"
+            },
+            {
+              "id": "editors",
+              "kind": "form",
+              "affordances": [
+                "bn:submit:editors"
+              ],
+              "fields": [
+                {
+                  "id": "option:SAFEMODEPROXIMITY",
+                  "label": "Safe mode proximity distance",
+                  "value": "7",
+                  "type": "integer",
+                  "min": 0,
+                  "max": 60
+                },
+                {
+                  "id": "option:DROP_EMPTY",
+                  "label": "Drop empty containers",
+                  "value": "no",
+                  "type": "select",
+                  "options": [
+                    {
+                      "id": "no",
+                      "label": "No"
+                    },
+                    {
+                      "id": "watertight",
+                      "label": "Watertight"
+                    },
+                    {
+                      "id": "all",
+                      "label": "All"
+                    }
+                  ]
+                }
+              ],
+              "submit": "bn:submit:editors"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:page:general",
+            "label": "Choose",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:page:general"
+              }
+            }
+          },
+          {
+            "id": "bn:submit:editors",
+            "label": "Set",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "editors"
+              },
+              "text": {}
+            }
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel"
+          }
+        ]
+      }
+    },
+    {
+      "name": "key field of a keybinding prompt",
+      "def": "form",
+      "value": {
+        "id": "field",
+        "kind": "form",
+        "affordances": [
+          "bn:fill:field",
+          "bn:submit:field"
+        ],
+        "fields": [
+          {
+            "id": "field:key",
+            "label": "New key for Move East",
+            "value": "",
+            "type": "key"
+          }
+        ],
+        "submit": "bn:submit:field"
+      }
+    },
+    {
+      "name": "character sheet speed pane with its text and rows",
+      "def": "panel",
+      "value": {
+        "id": "panel:speed",
+        "kind": "panel",
+        "title": "SPEED",
+        "child": {
+          "id": "split:speed",
+          "kind": "split",
+          "relation": "detail",
+          "children": [
+            {
+              "id": "text:speed",
+              "kind": "text",
+              "markup": "Base Move Cost: 100"
+            },
+            {
+              "id": "list:speed",
+              "kind": "list",
+              "columns": [
+                {
+                  "key": "value",
+                  "label": "Value"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "character-speed-1",
+                  "label": "Current Speed:",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "value",
+                      "label": "Value",
+                      "value": "98",
+                      "color": "c_red"
+                    }
+                  ]
+                }
+              ],
+              "total": 1,
+              "selection": "none"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "bionic row with power, state, fuel and color",
+      "def": "row",
+      "value": {
+        "id": "bionic-1",
+        "label": "Flashlight, 0.50 kJ act",
+        "description": "",
+        "denial": "",
+        "hotkey": "a",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "key": "power",
+            "label": "Power",
+            "value": "0.50 kJ act, OFF"
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "value": "Off"
+          },
+          {
+            "key": "fuel",
+            "label": "Fuel",
+            "value": ""
+          }
+        ],
+        "color": "c_light_red"
+      }
+    },
+    {
+      "name": "mutation row with kind, cost and color",
+      "def": "row",
+      "value": {
+        "id": "mutation:night_vision",
+        "label": "Night vision",
+        "description": "",
+        "denial": "",
+        "hotkey": "a",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "key": "kind",
+            "label": "Kind",
+            "value": "Passive"
+          },
+          {
+            "key": "state",
+            "label": "State",
+            "value": ""
+          },
+          {
+            "key": "sprite",
+            "label": "Sprite",
+            "value": "Shown"
+          },
+          {
+            "key": "innate",
+            "label": "Innate",
+            "value": "Yes"
+          },
+          {
+            "key": "cost",
+            "label": "Cost",
+            "value": "0"
+          },
+          {
+            "key": "cooldown",
+            "label": "Cooldown",
+            "value": "0"
+          }
+        ],
+        "color": "c_cyan"
+      }
+    },
+    {
+      "name": "spell menu row with the details of its side panel",
+      "def": "row",
+      "value": {
+        "id": "entry:0",
+        "label": "Magic Missile",
+        "description": "<color_yellow>Mage</color>\nA missile of force.\nSpell Level: 3\nFailure Chance: 12.0 % Failure Chance\nCasting Cost: 15 mana\nCasting Time: 1 second\nRange: 5",
+        "denial": "",
+        "hotkey": "a",
+        "enabled": true,
+        "selectable": true,
+        "selected": true,
+        "columns": [
+          {
+            "key": "spell_level",
+            "label": "Spell Level",
+            "value": "3"
+          },
+          {
+            "key": "failure_chance",
+            "label": "Failure Chance",
+            "value": "12.0 % Failure Chance"
+          },
+          {
+            "key": "casting_cost",
+            "label": "Casting Cost",
+            "value": "15 mana"
+          },
+          {
+            "key": "casting_time",
+            "label": "Casting Time",
+            "value": "1 second"
+          },
+          {
+            "key": "range",
+            "label": "Range",
+            "value": "5"
+          }
+        ]
+      }
+    },
+    {
+      "name": "zone manager key row",
+      "def": "row",
+      "value": {
+        "id": "action:ADD_ZONE",
+        "label": "Add zone",
+        "description": "",
+        "denial": "",
+        "hotkey": "a",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [
+          {
+            "key": "key",
+            "label": "Key",
+            "value": "a or A"
+          }
+        ]
+      }
+    },
+    {
+      "name": "map editor tile row",
+      "def": "row",
+      "value": {
+        "id": "tile:terrain",
+        "label": "Terrain",
+        "description": "grass",
+        "denial": "",
+        "enabled": true,
+        "selectable": false,
+        "selected": false,
+        "columns": [
+          {
+            "key": "id",
+            "label": "Id",
+            "value": "t_grass"
+          },
+          {
+            "key": "move_cost",
+            "label": "Move cost",
+            "value": "2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "in-game main menu row that opens the options",
+      "def": "row",
+      "value": {
+        "id": "entry:4",
+        "label": "Options",
+        "description": "",
+        "denial": "",
+        "hotkey": "o",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": []
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "subscribe result with a message line without text",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "title": "Cataclysm: Bright Nights",
+            "root": {
+              "id": "tabs",
+              "kind": "tabs",
+              "affordances": [
+                "bn:choose:tabs"
+              ],
+              "tabs": [
+                {
+                  "id": "tab:new_game",
+                  "label": "New Game",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:load",
+                  "label": "Load",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:quit",
+                  "label": "Quit",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "bn:choose:tabs",
+              "child": {
+                "id": "panel:new_game",
+                "kind": "panel",
+                "title": "New Game",
+                "child": {
+                  "id": "list:new_game",
+                  "kind": "list",
+                  "affordances": [
+                    "bn:choose:list:new_game"
+                  ],
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "new_game:custom",
+                      "label": "Custom Character",
+                      "description": "Allows you to fully customize the character.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    },
+                    {
+                      "id": "new_game:tutorial",
+                      "label": "Tutorial",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    }
+                  ],
+                  "total": 2,
+                  "selection": "single",
+                  "activate": "bn:choose:list:new_game"
+                }
+              }
+            },
+            "affordances": [
+              {
+                "id": "bn:choose:list:new_game",
+                "label": "Choose",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "list:new_game"
+                  }
+                }
+              },
+              {
+                "id": "bn:choose:tabs",
+                "label": "Switch tab",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "tabs"
+                  }
+                }
+              },
+              {
+                "id": "bn:cancel",
+                "label": "Cancel",
+                "keys": [],
+                "enabled": true,
+                "role": "cancel"
+              },
+              {
+                "id": "UP",
+                "label": "Move up",
+                "keys": [
+                  "UP",
+                  "k"
+                ],
+                "enabled": true
+              }
+            ],
+            "focus": {
+              "component_id": "tabs",
+              "row_id": "tab:new_game"
+            }
+          }
+        },
+        "entities": [],
+        "messages": [
+          {
+            "id": "3",
+            "text": "",
+            "kind": "neutral",
+            "color": "c_white",
+            "count": 1,
+            "label": ""
+          }
+        ],
+        "parts": 0
+      },
+      "why": "a log line has the shape of a message.logged line: its text is not empty"
+    },
+    {
+      "name": "menu entry with an empty tab id",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "0",
+          "revision": "0"
+        },
+        "interaction": {
+          "boundary_id": "boundary:12",
+          "readiness": {
+            "phase": "menu",
+            "game_ready": false,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": {
+            "schema_id": "schema:ab",
+            "context": "MAIN_MENU",
+            "title": "Cataclysm: Bright Nights",
+            "root": {
+              "id": "tabs",
+              "kind": "tabs",
+              "affordances": [
+                "bn:choose:tabs"
+              ],
+              "tabs": [
+                {
+                  "id": "tab:new_game",
+                  "label": "New Game",
+                  "selected": true,
+                  "enabled": true
+                },
+                {
+                  "id": "",
+                  "label": "Load",
+                  "selected": false,
+                  "enabled": true
+                },
+                {
+                  "id": "tab:quit",
+                  "label": "Quit",
+                  "selected": false,
+                  "enabled": true
+                }
+              ],
+              "select": "bn:choose:tabs",
+              "child": {
+                "id": "panel:new_game",
+                "kind": "panel",
+                "title": "New Game",
+                "child": {
+                  "id": "list:new_game",
+                  "kind": "list",
+                  "affordances": [
+                    "bn:choose:list:new_game"
+                  ],
+                  "columns": [],
+                  "rows": [
+                    {
+                      "id": "new_game:custom",
+                      "label": "Custom Character",
+                      "description": "Allows you to fully customize the character.",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    },
+                    {
+                      "id": "new_game:tutorial",
+                      "label": "Tutorial",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": []
+                    }
+                  ],
+                  "total": 2,
+                  "selection": "single",
+                  "activate": "bn:choose:list:new_game"
+                }
+              }
+            },
+            "affordances": [
+              {
+                "id": "bn:choose:list:new_game",
+                "label": "Choose",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "list:new_game"
+                  }
+                }
+              },
+              {
+                "id": "bn:choose:tabs",
+                "label": "Switch tab",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "tabs"
+                  }
+                }
+              },
+              {
+                "id": "bn:cancel",
+                "label": "Cancel",
+                "keys": [],
+                "enabled": true,
+                "role": "cancel"
+              },
+              {
+                "id": "UP",
+                "label": "Move up",
+                "keys": [
+                  "UP",
+                  "k"
+                ],
+                "enabled": true
+              }
+            ],
+            "focus": {
+              "component_id": "tabs",
+              "row_id": "tab:new_game"
+            }
+          }
+        },
+        "entities": [],
+        "parts": 0
+      },
+      "why": "a tab id is the row an invoke names and is never empty"
+    },
+    {
+      "name": "row with the pane it belongs to",
+      "def": "row",
+      "value": {
+        "id": "new_game:custom",
+        "label": "Custom Character",
+        "description": "",
+        "denial": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [],
+        "pane_id": "new_game"
+      },
+      "why": "the list a row is in says where it belongs"
+    },
+    {
+      "name": "row with an editor",
+      "def": "row",
+      "value": {
+        "id": "option:DROP_EMPTY",
+        "label": "Drop empty containers",
+        "description": "",
+        "denial": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [],
+        "editor": {
+          "type": "bool",
+          "value": "false",
+          "values": [],
+          "max_length": -1
+        }
+      },
+      "why": "values to set are form fields"
+    },
+    {
+      "name": "form field of an unknown type",
+      "def": "form_field",
+      "value": {
+        "id": "f",
+        "label": "Colour",
+        "value": "",
+        "type": "color"
+      },
+      "why": "field types are text, integer, float, key, bool and select"
+    }
+  ]
+}

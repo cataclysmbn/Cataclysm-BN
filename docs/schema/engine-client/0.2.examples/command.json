@@ -1,0 +1,454 @@
+{
+  "valid": [
+    {
+      "name": "command notification rejecting arguments that do not fit the affordance",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:7",
+        "stage": "rejected",
+        "error": "invalid_arguments"
+      }
+    },
+    {
+      "name": "application error for an affordance the boundary does not offer",
+      "def": "application_error",
+      "value": {
+        "kind": "unknown_affordance",
+        "message": "That is not possible on this screen."
+      }
+    },
+    {
+      "name": "invoke choosing a row",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:choose:list",
+          "args": {
+            "row": "root:0"
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke a registered action at the map",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "RIGHT"
+        }
+      }
+    },
+    {
+      "name": "invoke moving the target cursor to an absolute square",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:cd"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:set_target",
+          "args": {
+            "pos": {
+              "dim": "",
+              "x": 9,
+              "y": 4,
+              "z": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke aiming at a target candidate",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:cd"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:target_candidate",
+          "args": {
+            "row": "target:1"
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke typing into a field",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ef"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:fill:field",
+          "args": {
+            "text": "Ada"
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke confirming a field",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ef"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:submit:field",
+          "args": {
+            "text": "Ada"
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke setting an editor row",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "2c1f"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:submit:editors",
+          "args": {
+            "row": "option:SAFEMODEPROXIMITY",
+            "text": "8"
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke setting a row's count",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:set_count:list:pane:left",
+          "args": {
+            "row": "item:201",
+            "count": 3
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke cancel",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:cancel"
+        }
+      }
+    },
+    {
+      "name": "invoke travel to a clicked square",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:travel",
+          "args": {
+            "pos": {
+              "dim": "",
+              "x": 9,
+              "y": 4,
+              "z": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke a context click",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:context",
+          "args": {
+            "pos": {
+              "dim": "",
+              "x": 9,
+              "y": 4,
+              "z": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke pickup of two items of a ground row",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:pickup",
+          "args": {
+            "row": "item:3f9a",
+            "count": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke drop of one carried item",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:drop",
+          "args": {
+            "row": "item:77c1",
+            "count": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "invoke moving counted rows to a pane",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "interaction:aim"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "move",
+          "args": {
+            "rows": [
+              {
+                "id": "item:7",
+                "count": 3
+              },
+              {
+                "id": "item:8"
+              }
+            ],
+            "pane": "panel:right"
+          }
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "missing epoch on a command",
+      "def": "submit_params",
+      "why": "submit names its epoch",
+      "value": {
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:cancel"
+        }
+      }
+    },
+    {
+      "name": "0.1 choose operation",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "choose",
+          "choice_id": "root:0"
+        }
+      },
+      "why": "invoke is the only operation"
+    },
+    {
+      "name": "invoke without an affordance",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": ""
+        }
+      },
+      "why": "an invoke names its affordance"
+    },
+    {
+      "name": "invoke with a bubble coordinate",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:travel",
+          "args": {
+            "pos": {
+              "space": "reality_bubble_map_square",
+              "frame_id": "boundary:90",
+              "x": 9,
+              "y": 4,
+              "z": 0
+            }
+          }
+        }
+      },
+      "why": "coordinates are absolute map squares with a dimension"
+    },
+    {
+      "name": "invoke with an argument no shape has",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:choose:list",
+          "args": {
+            "choice_id": "root:0"
+          }
+        }
+      },
+      "why": "args members are row, rows, count, text, pos and pane"
+    },
+    {
+      "name": "invoke with no rows",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "interaction:aim"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "move",
+          "args": {
+            "rows": [],
+            "pane": "panel:right"
+          }
+        }
+      },
+      "why": "rows names at least one row"
+    },
+    {
+      "name": "invoke counting a row below zero",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "interaction:aim"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "move",
+          "args": {
+            "rows": [
+              {
+                "id": "item:3f9a",
+                "count": -1
+              }
+            ]
+          }
+        }
+      },
+      "why": "a row count is never negative"
+    }
+  ]
+}

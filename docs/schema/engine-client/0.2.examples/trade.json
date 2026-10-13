@@ -1,0 +1,58 @@
+{
+  "valid": [
+    {
+      "name": "trade pane with carried against capacity",
+      "def": "panel",
+      "value": {
+        "id": "panel:pane-player",
+        "kind": "panel",
+        "title": "You",
+        "subtitle": "Player items",
+        "stats": [
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "1.17",
+            "max": "45.00",
+            "unit": "kg"
+          },
+          {
+            "key": "volume",
+            "label": "Volume",
+            "value": "0.03",
+            "max": "15.00",
+            "unit": "L"
+          }
+        ],
+        "child": {
+          "id": "text:pane-player",
+          "kind": "text",
+          "markup": "Free capacity: 43.83 kg, 14.97 L"
+        }
+      }
+    },
+    {
+      "name": "trade balance in the trader's favour",
+      "def": "text",
+      "value": {
+        "id": "message",
+        "kind": "text",
+        "markup": "You'll owe $12.00",
+        "tone": "bad"
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "balance tone that is a color",
+      "def": "text",
+      "value": {
+        "id": "message",
+        "kind": "text",
+        "markup": "You'll owe $12.00",
+        "tone": "red"
+      },
+      "why": "tone says good or bad news; colours are the client's"
+    }
+  ]
+}

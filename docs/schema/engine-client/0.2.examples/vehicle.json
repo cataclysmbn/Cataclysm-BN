@@ -1,0 +1,241 @@
+{
+  "valid": [
+    {
+      "name": "vehicle install list with the highlighted part's requirements",
+      "def": "panel",
+      "value": {
+        "id": "vehicle",
+        "kind": "panel",
+        "title": "Bicycle",
+        "subtitle": "Install",
+        "stats": [
+          {
+            "key": "owner",
+            "label": "Owner",
+            "value": "Ada"
+          }
+        ],
+        "child": {
+          "id": "vehicle:body",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "vehicle:grid",
+              "kind": "grid",
+              "cols": 1,
+              "rows": 2,
+              "cursor": {
+                "x": 0,
+                "y": 1
+              },
+              "cells": [
+                {
+                  "x": 0,
+                  "y": 1,
+                  "glyph": "o",
+                  "color": "light_gray",
+                  "enabled": true,
+                  "selected": true
+                },
+                {
+                  "x": 0,
+                  "y": 0,
+                  "glyph": "H",
+                  "color": "light_gray",
+                  "enabled": true
+                }
+              ]
+            },
+            {
+              "id": "vehicle:parts",
+              "kind": "list",
+              "columns": [
+                {
+                  "key": "kind",
+                  "label": "Kind"
+                },
+                {
+                  "key": "health",
+                  "label": "Health"
+                }
+              ],
+              "rows": [
+                {
+                  "id": "vehicle-part:0",
+                  "label": "frame",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [
+                    {
+                      "key": "kind",
+                      "label": "Kind",
+                      "value": "structure"
+                    },
+                    {
+                      "key": "health",
+                      "label": "Health",
+                      "value": "62"
+                    }
+                  ]
+                }
+              ],
+              "total": 1,
+              "selection": "none"
+            },
+            {
+              "id": "vehicle:stats",
+              "kind": "text",
+              "markup": "Safe/Top Speed:  12/ 24 km/h\n\nMass:    16 kg"
+            },
+            {
+              "id": "vehicle:detail",
+              "kind": "panel",
+              "title": "wooden board",
+              "stats": [
+                {
+                  "key": "time",
+                  "label": "Time required:",
+                  "value": "30 minutes"
+                },
+                {
+                  "key": "stat:0",
+                  "label": "Durability",
+                  "value": "120"
+                }
+              ],
+              "child": {
+                "id": "vehicle:detail:body",
+                "kind": "split",
+                "relation": "detail",
+                "children": [
+                  {
+                    "id": "vehicle:description",
+                    "kind": "text",
+                    "markup": "A board mounted on the frame."
+                  },
+                  {
+                    "id": "vehicle:requirements",
+                    "kind": "list",
+                    "columns": [],
+                    "rows": [
+                      {
+                        "id": "group:skill",
+                        "label": "Skills required:",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [],
+                        "header": true
+                      },
+                      {
+                        "id": "need:0",
+                        "label": "mechanics 1",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "group:component",
+                        "label": "Components required:",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [],
+                        "header": true
+                      },
+                      {
+                        "id": "need:1",
+                        "label": "2x plank",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "group:tool",
+                        "label": "Tools required:",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [],
+                        "header": true
+                      },
+                      {
+                        "id": "need:2",
+                        "label": "hammer OR rock",
+                        "description": "",
+                        "denial": "",
+                        "enabled": false,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": []
+                      },
+                      {
+                        "id": "group:extra",
+                        "label": "Additional requirements:",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": [],
+                        "header": true
+                      },
+                      {
+                        "id": "need:3",
+                        "label": "1 tool with lifting 1 OR strength 10",
+                        "description": "",
+                        "denial": "",
+                        "enabled": true,
+                        "selectable": false,
+                        "selected": false,
+                        "columns": []
+                      }
+                    ],
+                    "total": 8,
+                    "selection": "none"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "vehicle grid cell without its availability",
+      "def": "grid",
+      "value": {
+        "id": "vehicle:grid",
+        "kind": "grid",
+        "cols": 1,
+        "rows": 1,
+        "cells": [
+          {
+            "x": 0,
+            "y": 0,
+            "glyph": "o"
+          }
+        ]
+      },
+      "why": "a cell says whether picking it is possible"
+    }
+  ]
+}

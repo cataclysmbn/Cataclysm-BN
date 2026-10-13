@@ -1,0 +1,2469 @@
+{
+  "valid": [
+    {
+      "name": "subscribe result in a world",
+      "def": "subscribe_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "40",
+          "revision": "31"
+        },
+        "coverage": {
+          "min": {
+            "dim": "",
+            "x": -66,
+            "y": -66,
+            "z": -10
+          },
+          "max": {
+            "dim": "",
+            "x": 65,
+            "y": 65,
+            "z": 10
+          }
+        },
+        "view": {
+          "min": {
+            "dim": "",
+            "x": -15,
+            "y": -8,
+            "z": 0
+          },
+          "max": {
+            "dim": "",
+            "x": 20,
+            "y": 16,
+            "z": 0
+          }
+        },
+        "interaction": {
+          "boundary_id": "boundary:90",
+          "readiness": {
+            "phase": "waiting_for_input",
+            "game_ready": true,
+            "accepts_interaction_commands": true,
+            "accepts_registered_actions": true
+          },
+          "interaction": {
+            "title": "",
+            "root": {
+              "id": "map",
+              "kind": "map",
+              "affordances": [
+                "bn:travel",
+                "bn:context"
+              ],
+              "mode": "world"
+            },
+            "affordances": [
+              {
+                "id": "bn:travel",
+                "label": "Travel",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "pos": {
+                    "unit": "square"
+                  }
+                }
+              },
+              {
+                "id": "bn:context",
+                "label": "Examine",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "pos": {
+                    "unit": "square"
+                  }
+                }
+              },
+              {
+                "id": "bn:pickup",
+                "label": "Pick up",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "avatar.ground"
+                  },
+                  "count": {
+                    "min": 1
+                  }
+                }
+              },
+              {
+                "id": "bn:drop",
+                "label": "Drop",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "avatar.inventory"
+                  },
+                  "count": {
+                    "min": 1
+                  }
+                }
+              },
+              {
+                "id": "move_e",
+                "label": "Move East",
+                "keys": [
+                  "l",
+                  "RIGHT"
+                ],
+                "enabled": true
+              }
+            ]
+          }
+        },
+        "avatar": {
+          "id": "e:avatar",
+          "at": {
+            "dim": "",
+            "x": 3,
+            "y": 4,
+            "z": 0
+          },
+          "name": "Ada",
+          "stats": [
+            {
+              "id": "hp",
+              "label": "HP",
+              "value": 80
+            }
+          ],
+          "inventory": [
+            {
+              "look": {
+                "kind": "item",
+                "id": "stick",
+                "glyph": "/",
+                "color": "brown"
+              },
+              "name": "|| stick",
+              "label": "<color_c_light_green>|| </color>stick (wielded)",
+              "slot": "wielded",
+              "durability": {
+                "symbol": "||",
+                "color": "c_light_green"
+              }
+            },
+            {
+              "look": {
+                "kind": "item",
+                "id": "rock",
+                "glyph": "*",
+                "color": "light_gray"
+              },
+              "name": "rock",
+              "label": "2 rocks",
+              "count": 2,
+              "slot": "carried"
+            }
+          ],
+          "look": {
+            "kind": "avatar",
+            "id": "avatar",
+            "glyph": "@",
+            "color": "white",
+            "tile": "player_female",
+            "facing": "left"
+          },
+          "overlays": [
+            {
+              "kind": "overlay",
+              "id": "worn_jacket_leather",
+              "glyph": "",
+              "color": "",
+              "tile": "overlay_female_worn_jacket_leather",
+              "looks_like": [
+                "overlay_worn_jacket_leather"
+              ]
+            }
+          ],
+          "ground": [
+            {
+              "look": {
+                "kind": "item",
+                "id": "lighter",
+                "glyph": ",",
+                "color": "blue"
+              },
+              "name": "lighter (12/25)",
+              "label": "2 lighters (12/25)",
+              "count": 2
+            }
+          ]
+        },
+        "environment": {
+          "turn": "5184000",
+          "time": "2026-04-01T08:00:00Z",
+          "weather": "clear",
+          "season": "spring"
+        },
+        "entities": [
+          {
+            "id": "e:12",
+            "at": {
+              "dim": "",
+              "x": 10,
+              "y": 4,
+              "z": 0
+            },
+            "known": "visible",
+            "look": {
+              "kind": "monster",
+              "id": "mon_zombie",
+              "glyph": "Z",
+              "color": "light_green",
+              "looks_like": [
+                "mon_zombie_base"
+              ],
+              "facing": "right"
+            },
+            "attitude": "hostile",
+            "aware": true
+          },
+          {
+            "id": "e:13",
+            "at": {
+              "dim": "",
+              "x": 12,
+              "y": 9,
+              "z": 0
+            },
+            "known": "sensed",
+            "sense": "sound"
+          }
+        ],
+        "parts": 1
+      }
+    },
+    {
+      "name": "walk one step",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "cells.seen",
+            "command": "c:5",
+            "changes": {
+              "cells": [
+                {
+                  "at": {
+                    "dim": "",
+                    "x": 4,
+                    "y": 4,
+                    "z": 0
+                  },
+                  "known": "visible",
+                  "terrain": {
+                    "kind": "terrain",
+                    "id": "t_dirt",
+                    "glyph": ".",
+                    "color": "brown"
+                  }
+                }
+              ],
+              "forgotten": [
+                {
+                  "dim": "",
+                  "x": -66,
+                  "y": 4,
+                  "z": 0
+                }
+              ],
+              "entities": [
+                {
+                  "id": "e:12",
+                  "at": {
+                    "dim": "",
+                    "x": 10,
+                    "y": 4,
+                    "z": 0
+                  },
+                  "known": "visible",
+                  "look": {
+                    "kind": "monster",
+                    "id": "mon_zombie",
+                    "glyph": "Z",
+                    "color": "light_green"
+                  }
+                }
+              ],
+              "gone": [
+                {
+                  "id": "e:13",
+                  "reason": "lost_sight"
+                }
+              ],
+              "avatar": {
+                "id": "e:avatar",
+                "at": {
+                  "dim": "",
+                  "x": 4,
+                  "y": 4,
+                  "z": 0
+                },
+                "name": "Ada",
+                "stats": []
+              }
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "33",
+            "type": "interaction.changed",
+            "command": "c:5",
+            "changes": {
+              "interaction": {
+                "boundary_id": "boundary:91",
+                "readiness": {
+                  "phase": "waiting_for_input",
+                  "game_ready": true,
+                  "accepts_interaction_commands": true,
+                  "accepts_registered_actions": true
+                },
+                "interaction": {
+                  "title": "",
+                  "root": {
+                    "id": "map",
+                    "kind": "map",
+                    "affordances": [
+                      "bn:travel",
+                      "bn:context"
+                    ],
+                    "mode": "world"
+                  },
+                  "affordances": [
+                    {
+                      "id": "bn:travel",
+                      "label": "Travel",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "pos": {
+                          "unit": "square"
+                        }
+                      }
+                    },
+                    {
+                      "id": "bn:context",
+                      "label": "Examine",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "pos": {
+                          "unit": "square"
+                        }
+                      }
+                    },
+                    {
+                      "id": "bn:pickup",
+                      "label": "Pick up",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "row": {
+                          "component_id": "avatar.ground"
+                        },
+                        "count": {
+                          "min": 1
+                        }
+                      }
+                    },
+                    {
+                      "id": "bn:drop",
+                      "label": "Drop",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "row": {
+                          "component_id": "avatar.inventory"
+                        },
+                        "count": {
+                          "min": 1
+                        }
+                      }
+                    },
+                    {
+                      "id": "move_e",
+                      "label": "Move East",
+                      "keys": [
+                        "l",
+                        "RIGHT"
+                      ],
+                      "enabled": true
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "compact cell layers, then a map boundary",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "60",
+            "revision": "40",
+            "type": "cells.seen",
+            "command": "c:9",
+            "changes": {
+              "cells": [
+                {
+                  "at": {
+                    "dim": "",
+                    "x": 5,
+                    "y": 4,
+                    "z": 0
+                  },
+                  "known": "visible",
+                  "terrain": {
+                    "id": "t_floor",
+                    "glyph": ".",
+                    "color": "c_cyan",
+                    "subtile": "corner",
+                    "rotation": 2
+                  },
+                  "items": [
+                    {
+                      "id": "rock",
+                      "glyph": "*",
+                      "color": "c_light_gray"
+                    }
+                  ],
+                  "light": 3
+                },
+                {
+                  "at": {
+                    "dim": "",
+                    "x": 6,
+                    "y": 4,
+                    "z": 0
+                  },
+                  "known": "remembered",
+                  "memory": {
+                    "terrain": {
+                      "id": "t_wall",
+                      "glyph": "│",
+                      "color": "c_light_gray",
+                      "subtile": "edge",
+                      "rotation": 1
+                    },
+                    "overlay": {
+                      "kind": "trap",
+                      "id": "tr_beartrap",
+                      "glyph": "^",
+                      "color": "c_red"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "sequence": "61",
+            "revision": "41",
+            "type": "interaction.changed",
+            "command": "c:9",
+            "changes": {
+              "interaction": {
+                "boundary_id": "boundary:92",
+                "readiness": {
+                  "phase": "waiting_for_input",
+                  "game_ready": true,
+                  "accepts_interaction_commands": true,
+                  "accepts_registered_actions": true
+                },
+                "interaction": {
+                  "title": "",
+                  "root": {
+                    "id": "map",
+                    "kind": "map",
+                    "affordances": [
+                      "bn:travel",
+                      "bn:context"
+                    ],
+                    "mode": "world"
+                  },
+                  "affordances": [
+                    {
+                      "id": "bn:travel",
+                      "label": "Travel",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "pos": {
+                          "unit": "square"
+                        }
+                      }
+                    },
+                    {
+                      "id": "bn:context",
+                      "label": "Examine",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "pos": {
+                          "unit": "square"
+                        }
+                      }
+                    },
+                    {
+                      "id": "bn:pickup",
+                      "label": "Pick up",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "row": {
+                          "component_id": "avatar.ground"
+                        },
+                        "count": {
+                          "min": 1
+                        }
+                      }
+                    },
+                    {
+                      "id": "bn:drop",
+                      "label": "Drop",
+                      "keys": [],
+                      "enabled": true,
+                      "args": {
+                        "row": {
+                          "component_id": "avatar.inventory"
+                        },
+                        "count": {
+                          "min": 1
+                        }
+                      }
+                    },
+                    {
+                      "id": "move_e",
+                      "label": "Move East",
+                      "keys": [
+                        "l",
+                        "RIGHT"
+                      ],
+                      "enabled": true
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "thrown grenade slice",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 62,
+                "y": 62,
+                "z": 0
+              },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "turns": 5
+            },
+            "revision": "34",
+            "sequence": "43",
+            "type": "item.activated",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "by": "e:avatar",
+              "from": {
+                "dim": "",
+                "x": 62,
+                "y": 62,
+                "z": 0
+              },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "projectile": "projectile:4",
+              "to": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              }
+            },
+            "revision": "34",
+            "sequence": "44",
+            "type": "item.thrown",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "look": {
+                "color": "c_red",
+                "glyph": "*",
+                "id": null,
+                "kind": "projectile"
+              },
+              "path": [
+                {
+                  "dim": "",
+                  "x": 63,
+                  "y": 62,
+                  "z": 0
+                }
+              ],
+              "projectile": "projectile:4"
+            },
+            "revision": "34",
+            "sequence": "45",
+            "type": "projectile.moved",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "projectile": "projectile:4"
+            },
+            "revision": "34",
+            "sequence": "46",
+            "type": "item.landed",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "look": {
+                "color": "c_green",
+                "glyph": "*",
+                "id": "grenade_act",
+                "kind": "item",
+                "name": "active grenade"
+              },
+              "turns": 4
+            },
+            "revision": "34",
+            "sequence": "47",
+            "type": "item.activated",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "color": "c_white",
+              "explosion": "explosion:4",
+              "radius": 2,
+              "tile": "explosion"
+            },
+            "revision": "34",
+            "sequence": "48",
+            "type": "explosion.started",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "cells": [
+                {
+                  "dim": "",
+                  "x": 67,
+                  "y": 62,
+                  "z": 0
+                }
+              ],
+              "explosion": "explosion:4"
+            },
+            "revision": "34",
+            "sequence": "49",
+            "type": "explosion.blast",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "amount": 60,
+              "id": "e:5"
+            },
+            "revision": "34",
+            "sequence": "50",
+            "type": "entity.damaged",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 63,
+                "z": 0
+              },
+              "from": {
+                "color": "c_brown",
+                "glyph": "+",
+                "id": "t_door_c",
+                "kind": "terrain",
+                "name": "closed wood door",
+                "subtile": "center"
+              },
+              "to": {
+                "color": "c_light_gray",
+                "glyph": ".",
+                "id": "t_rock_floor_no_roof",
+                "kind": "terrain",
+                "looks_like": [
+                  "t_rock_floor"
+                ],
+                "name": "rock floor",
+                "subtile": "center"
+              }
+            },
+            "revision": "34",
+            "sequence": "51",
+            "type": "terrain.changed",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 67,
+                "y": 62,
+                "z": 0
+              },
+              "field": "fd_smoke",
+              "intensity": 3
+            },
+            "revision": "34",
+            "sequence": "52",
+            "type": "field.changed",
+            "command": "c:6"
+          },
+          {
+            "changes": {},
+            "data": {
+              "explosion": "explosion:4"
+            },
+            "revision": "34",
+            "sequence": "53",
+            "type": "explosion.ended",
+            "command": "c:6"
+          }
+        ]
+      }
+    },
+    {
+      "name": "world cells query",
+      "def": "world_cells_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "min": {
+          "dim": "",
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "max": {
+          "dim": "",
+          "x": 8,
+          "y": 8,
+          "z": 0
+        }
+      }
+    },
+    {
+      "name": "world cells result",
+      "def": "world_cells_result",
+      "value": {
+        "at": {
+          "epoch": "epoch:e7f3",
+          "sequence": "40",
+          "revision": "31"
+        },
+        "cells": [
+          {
+            "at": {
+              "dim": "",
+              "x": 3,
+              "y": 4,
+              "z": 0
+            },
+            "known": "visible",
+            "terrain": {
+              "kind": "terrain",
+              "id": "t_dirt",
+              "glyph": ".",
+              "color": "brown",
+              "looks_like": [
+                "t_grass"
+              ],
+              "subtile": "center",
+              "rotation": 0
+            },
+            "items": [
+              {
+                "kind": "item",
+                "id": "rock",
+                "glyph": "*",
+                "color": "light_gray"
+              },
+              {
+                "kind": "item",
+                "id": "corpse",
+                "glyph": "%",
+                "color": "light_gray",
+                "tile": "corpse_mon_zombie",
+                "looks_like": [
+                  "corpse"
+                ],
+                "stack": 3
+              }
+            ],
+            "light": 1,
+            "memory": {
+              "terrain": {
+                "kind": "terrain",
+                "id": "t_dirt",
+                "glyph": ".",
+                "color": "brown",
+                "subtile": "center",
+                "rotation": 0
+              }
+            },
+            "vehicle": {
+              "kind": "vehicle_part",
+              "id": "door",
+              "glyph": "+",
+              "color": "light_cyan",
+              "tile": "vp_door",
+              "looks_like": [
+                "vp_frame"
+              ],
+              "subtile": "open",
+              "rotation": 3,
+              "tint": {
+                "fg": "#445566"
+              }
+            },
+            "reviving": true
+          },
+          {
+            "at": {
+              "dim": "",
+              "x": 2,
+              "y": 4,
+              "z": 0
+            },
+            "known": "remembered",
+            "memory": {
+              "terrain": {
+                "kind": "terrain",
+                "id": "t_grass",
+                "glyph": "\"",
+                "color": "green",
+                "looks_like": [
+                  "t_dirt"
+                ],
+                "subtile": "edge",
+                "rotation": 1
+              }
+            }
+          }
+        ],
+        "forgotten": [
+          {
+            "dim": "",
+            "x": 4,
+            "y": 4,
+            "z": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "route planned and then cleared by a confirming click",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "cells.seen",
+            "command": "c:5",
+            "changes": {
+              "route": [
+                {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 6,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 7,
+                  "y": 4,
+                  "z": 0
+                }
+              ]
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "33",
+            "type": "cells.seen",
+            "command": "c:6",
+            "changes": {
+              "route": [],
+              "avatar": {
+                "id": "e:avatar",
+                "at": {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                "name": "Ada",
+                "stats": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "avatar with sidebar",
+      "def": "avatar",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [
+          {
+            "id": "strength",
+            "label": "Strength",
+            "value": "8",
+            "color": "white"
+          }
+        ],
+        "sidebar": {
+          "limbs": [
+            {
+              "id": "head",
+              "label": {
+                "text": "HEAD",
+                "color": "white"
+              },
+              "hp": 55,
+              "hp_max": 55,
+              "color": "green",
+              "broken": false
+            }
+          ],
+          "pain": {
+            "text": "Pain 3",
+            "color": "light_red"
+          },
+          "hunger": {
+            "text": "Hungry",
+            "color": "yellow"
+          },
+          "thirst": {
+            "text": "",
+            "color": "white"
+          },
+          "fatigue": {
+            "text": "Tired",
+            "color": "yellow"
+          },
+          "focus": 100,
+          "morale": {
+            "level": 12,
+            "face": ":)",
+            "color": "green"
+          },
+          "stamina": {
+            "current": 1000,
+            "max": 1000,
+            "color": "green"
+          },
+          "speed": {
+            "value": 100,
+            "color": "white"
+          },
+          "movement": {
+            "counter": 0,
+            "mode": "walk",
+            "color": "white"
+          },
+          "temperature": {
+            "text": "Comfortable",
+            "color": "green"
+          },
+          "power": {
+            "text": "--",
+            "color": "light_gray"
+          },
+          "safe_mode": {
+            "enabled": true,
+            "color": "green"
+          },
+          "location": {
+            "text": "field",
+            "color": "white"
+          },
+          "weather": {
+            "text": "Clear",
+            "color": "light_cyan"
+          },
+          "time": {
+            "season": "Spring",
+            "day": 1,
+            "clock": "Around noon",
+            "has_watch": false
+          },
+          "weapon": "fists",
+          "rows": [
+            [
+              {
+                "text": "HEAD",
+                "color": "white"
+              },
+              {
+                "text": "|||||",
+                "color": "green"
+              },
+              {
+                "text": "Pain 3",
+                "color": "light_red"
+              },
+              {
+                "text": "Str 8",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Hungry",
+                "color": "yellow"
+              },
+              {
+                "text": ":)",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Tired",
+                "color": "yellow"
+              }
+            ],
+            [
+              {
+                "text": "Focus 100",
+                "color": "white"
+              },
+              {
+                "text": "SAFE",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Spd 100",
+                "color": "white"
+              },
+              {
+                "text": "0 W",
+                "color": "white"
+              },
+              {
+                "text": "Stm |||||",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Comfortable",
+                "color": "green"
+              },
+              {
+                "text": "POWER --",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Location:",
+                "color": "light_gray"
+              },
+              {
+                "text": "field",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Weather :",
+                "color": "light_gray"
+              },
+              {
+                "text": "Clear",
+                "color": "light_cyan"
+              }
+            ],
+            [
+              {
+                "text": "Spring, Day 1",
+                "color": "white"
+              },
+              {
+                "text": "Around noon",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Weapon:",
+                "color": "light_gray"
+              },
+              {
+                "text": "fists",
+                "color": "light_gray"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "name": "native message line, then its repeat",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "50",
+            "revision": "34",
+            "type": "message.logged",
+            "command": "c:5",
+            "changes": {},
+            "data": {
+              "id": "7",
+              "text": "You open the door.",
+              "kind": "neutral",
+              "color": "c_white",
+              "count": 1,
+              "label": "You open the door."
+            }
+          },
+          {
+            "sequence": "51",
+            "revision": "34",
+            "type": "message.logged",
+            "command": "c:5",
+            "changes": {},
+            "data": {
+              "id": "7",
+              "text": "You open the door.",
+              "kind": "neutral",
+              "color": "c_white",
+              "count": 2,
+              "label": "You open the door. x 2"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "projectile, explosion and combat text facts",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "8",
+            "revision": "7",
+            "type": "projectile.moved",
+            "command": "command:9",
+            "data": {
+              "projectile": "projectile:1",
+              "path": [
+                {
+                  "dim": "",
+                  "x": 3,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 4,
+                  "y": 4,
+                  "z": 0
+                }
+              ],
+              "look": {
+                "kind": "projectile",
+                "id": null,
+                "glyph": "*",
+                "color": "red"
+              }
+            },
+            "display": {
+              "duration_ms": 20
+            }
+          },
+          {
+            "sequence": "9",
+            "revision": "7",
+            "type": "explosion.started",
+            "command": "command:9",
+            "data": {
+              "explosion": "explosion:1",
+              "at": {
+                "dim": "",
+                "x": 5,
+                "y": 4,
+                "z": 0
+              },
+              "radius": 3,
+              "color": "red",
+              "tile": "explosion"
+            },
+            "display": {
+              "duration_ms": 40
+            }
+          },
+          {
+            "sequence": "10",
+            "revision": "7",
+            "type": "explosion.blast",
+            "command": "command:9",
+            "data": {
+              "explosion": "explosion:2",
+              "cells": [
+                {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                {
+                  "dim": "",
+                  "x": 6,
+                  "y": 4,
+                  "z": 0
+                }
+              ]
+            },
+            "display": {
+              "duration_ms": 10
+            }
+          },
+          {
+            "sequence": "11",
+            "revision": "7",
+            "type": "explosion.ended",
+            "command": "command:9",
+            "data": {
+              "explosion": "explosion:1"
+            }
+          },
+          {
+            "sequence": "12",
+            "revision": "7",
+            "type": "combat_text.shown",
+            "command": "command:9",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 5,
+                "y": 4,
+                "z": 0
+              },
+              "segments": [
+                {
+                  "text": "-12",
+                  "color": "light_red"
+                },
+                {
+                  "text": " crit",
+                  "color": "yellow"
+                }
+              ],
+              "scroll": {
+                "x": 0,
+                "y": -1
+              }
+            },
+            "display": {
+              "duration_ms": 80
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "describe request",
+      "def": "describe_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "boundary_id": "boundary:90",
+        "pos": {
+          "dim": "",
+          "x": 9,
+          "y": 4,
+          "z": 0
+        }
+      }
+    },
+    {
+      "name": "describe result",
+      "def": "describe_result",
+      "value": {
+        "lines": [
+          "Wall",
+          "You can see a zombie here."
+        ]
+      }
+    },
+    {
+      "name": "look with the native display name",
+      "def": "look",
+      "value": {
+        "kind": "terrain",
+        "id": "t_floor",
+        "name": "wooden floor",
+        "glyph": ".",
+        "color": "light_gray"
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of a mutation overlay",
+      "value": {
+        "kind": "overlay",
+        "id": "mutation_hair_long",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_mutation_hair_long",
+        "mutation": {
+          "id": "hair_long",
+          "types": [
+            "hair_style"
+          ],
+          "flags": []
+        }
+      }
+    },
+    {
+      "def": "entity",
+      "name": "entity with the mutations of a character by type",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "environment with the tilesets the game data adds",
+      "value": {
+        "turn": "0",
+        "time": "Spring, day 1 8:00:00 AM",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/data/json/external_tileset/vehicle_parts.json",
+            "base": "/g/data/json/",
+            "index": 1,
+            "compatibility": [
+              "UNDEAD_PEOPLE_BASE"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "def": "cell",
+      "name": "cell holding a loaded vehicle cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "visible",
+        "vehicle": {
+          "kind": "vehicle_part",
+          "id": "trunk",
+          "glyph": "H",
+          "color": "brown"
+        },
+        "cargo": true
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of an item overlay with the ids its tints are keyed by",
+      "value": {
+        "kind": "overlay",
+        "id": "worn_jeans",
+        "glyph": "",
+        "color": "",
+        "tile": "overlay_female_worn_jeans",
+        "tint_keys": [
+          "VARSIZE",
+          "jeans"
+        ]
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of a dyed item",
+      "value": {
+        "kind": "item",
+        "id": "jeans",
+        "glyph": "[",
+        "color": "blue",
+        "tint_keys": [
+          "jeans"
+        ],
+        "tint_vars": {
+          "bg": {
+            "color": "#ff3030"
+          },
+          "fg": {
+            "color": "#ff3030",
+            "blend_mode": "multiply",
+            "brightness": 0.5
+          }
+        }
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of a field with the tint of its type",
+      "value": {
+        "kind": "field",
+        "id": "fd_acid_water",
+        "glyph": "~",
+        "color": "green",
+        "tint": {
+          "bg": "#00aa00",
+          "fg": "#00aa00"
+        }
+      }
+    },
+    {
+      "def": "look",
+      "name": "look of terrain with tint variables",
+      "value": {
+        "kind": "terrain",
+        "id": "t_floor",
+        "glyph": ".",
+        "color": "light_gray",
+        "tint_vars": {
+          "fg": {
+            "color": "#102030"
+          }
+        }
+      }
+    },
+    {
+      "name": "walk one step keeping the sidebar and stats",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "70",
+            "revision": "50",
+            "type": "cells.seen",
+            "command": "c:11",
+            "changes": {
+              "avatar": {
+                "id": "e:avatar",
+                "at": {
+                  "dim": "",
+                  "x": 5,
+                  "y": 4,
+                  "z": 0
+                },
+                "name": "Ada",
+                "keep": [
+                  "stats",
+                  "inventory",
+                  "sidebar"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "projectile hit on a creature, then the damage it did",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "21",
+            "revision": "9",
+            "type": "projectile.moved",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:3",
+              "path": [
+                {
+                  "dim": "",
+                  "x": 63,
+                  "y": 4,
+                  "z": 0
+                }
+              ],
+              "look": {
+                "kind": "projectile",
+                "id": null,
+                "glyph": "*",
+                "color": "red"
+              }
+            },
+            "display": {
+              "duration_ms": 20
+            }
+          },
+          {
+            "sequence": "22",
+            "revision": "9",
+            "type": "projectile.hit",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:3",
+              "at": {
+                "dim": "",
+                "x": 63,
+                "y": 4,
+                "z": 0
+              },
+              "entity": "e:7"
+            }
+          },
+          {
+            "sequence": "23",
+            "revision": "9",
+            "type": "entity.damaged",
+            "command": "command:12",
+            "data": {
+              "id": "e:7",
+              "amount": 18
+            }
+          },
+          {
+            "sequence": "24",
+            "revision": "9",
+            "type": "projectile.hit",
+            "command": "command:12",
+            "data": {
+              "projectile": "projectile:4",
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 4,
+                "z": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "sound heard with a marker and one from a source in view",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "31",
+            "revision": "12",
+            "type": "sound.heard",
+            "command": "command:14",
+            "data": {
+              "text": "a loud explosion",
+              "volume": 74,
+              "logged": true,
+              "marker": {
+                "dim": "",
+                "x": 70,
+                "y": 61,
+                "z": 0
+              }
+            }
+          },
+          {
+            "sequence": "32",
+            "revision": "12",
+            "type": "sound.heard",
+            "command": "command:14",
+            "data": {
+              "text": "Tick.",
+              "volume": 52,
+              "logged": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "creature steps, is pushed, leaves sight, then dies",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "15",
+            "type": "entity.moved",
+            "command": "command:16",
+            "data": {
+              "id": "e:7",
+              "from": {
+                "dim": "",
+                "x": 66,
+                "y": 4,
+                "z": 0
+              },
+              "to": {
+                "dim": "",
+                "x": 65,
+                "y": 4,
+                "z": 0
+              },
+              "mode": "walk"
+            }
+          },
+          {
+            "sequence": "42",
+            "revision": "15",
+            "type": "entity.moved",
+            "command": "command:16",
+            "data": {
+              "id": "e:8",
+              "to": {
+                "dim": "",
+                "x": 64,
+                "y": 5,
+                "z": 0
+              },
+              "mode": "propelled"
+            }
+          },
+          {
+            "sequence": "43",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:9",
+              "reason": "lost_sight"
+            }
+          },
+          {
+            "sequence": "44",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:7",
+              "reason": "died"
+            }
+          },
+          {
+            "sequence": "45",
+            "revision": "15",
+            "type": "entity.gone",
+            "command": "command:16",
+            "data": {
+              "id": "e:10",
+              "reason": "removed"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "door bashed, furniture moved and a field fading outside an explosion",
+      "def": "events_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "51",
+            "revision": "18",
+            "type": "terrain.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 64,
+                "y": 5,
+                "z": 0
+              },
+              "from": {
+                "kind": "terrain",
+                "id": "t_door_c",
+                "glyph": "+",
+                "color": "brown"
+              },
+              "to": {
+                "kind": "terrain",
+                "id": "t_door_b",
+                "glyph": "&",
+                "color": "brown"
+              }
+            }
+          },
+          {
+            "sequence": "52",
+            "revision": "18",
+            "type": "furniture.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 65,
+                "y": 5,
+                "z": 0
+              },
+              "from": {
+                "kind": "furniture",
+                "id": "f_chair",
+                "glyph": "h",
+                "color": "brown"
+              },
+              "to": {
+                "kind": "furniture",
+                "id": "f_null",
+                "glyph": " ",
+                "color": "white"
+              }
+            }
+          },
+          {
+            "sequence": "53",
+            "revision": "18",
+            "type": "field.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 5,
+                "z": 0
+              },
+              "field": "fd_smoke",
+              "intensity": 2
+            }
+          },
+          {
+            "sequence": "54",
+            "revision": "18",
+            "type": "field.changed",
+            "command": "command:20",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 66,
+                "y": 5,
+                "z": 0
+              },
+              "field": "fd_smoke",
+              "intensity": 0
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "position without a dimension",
+      "def": "pos",
+      "why": "dim is required",
+      "value": {
+        "x": 1,
+        "y": 2,
+        "z": 0
+      }
+    },
+    {
+      "name": "unknown event type",
+      "def": "events_notification",
+      "why": "types form a closed catalogue",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "monster.exploded"
+          }
+        ]
+      }
+    },
+    {
+      "name": "missing epoch on events",
+      "def": "events_notification",
+      "why": "every stream position names its epoch",
+      "value": {
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "interaction.changed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "numeric sequence",
+      "def": "events_notification",
+      "why": "counters are decimal strings",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": 41,
+            "revision": "32",
+            "type": "interaction.changed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "typed event without its data",
+      "def": "events_notification",
+      "why": "item.thrown requires data",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "item.thrown"
+          }
+        ]
+      }
+    },
+    {
+      "name": "state-only event carrying data",
+      "def": "events_notification",
+      "why": "interaction.changed has no data",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "41",
+            "revision": "32",
+            "type": "interaction.changed",
+            "data": {}
+          }
+        ]
+      }
+    },
+    {
+      "name": "remembered cell with live terrain",
+      "def": "cell",
+      "why": "a remembered cell discloses only its memory",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 1,
+          "z": 0
+        },
+        "known": "remembered",
+        "terrain": {
+          "kind": "terrain",
+          "id": "t_dirt",
+          "glyph": ".",
+          "color": "brown"
+        },
+        "memory": {
+          "terrain": {
+            "kind": "terrain",
+            "id": "t_dirt",
+            "glyph": ".",
+            "color": "brown"
+          }
+        }
+      }
+    },
+    {
+      "name": "sensed cell with appearance",
+      "def": "cell",
+      "why": "a sensed cell has no appearance",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 1,
+          "z": 0
+        },
+        "known": "sensed",
+        "terrain": {
+          "kind": "terrain",
+          "id": "t_dirt",
+          "glyph": ".",
+          "color": "brown"
+        }
+      }
+    },
+    {
+      "name": "sensed entity with a look",
+      "def": "entity",
+      "why": "a sensed entity has only id, position and sense",
+      "value": {
+        "id": "e:1",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 1,
+          "z": 0
+        },
+        "known": "sensed",
+        "look": {
+          "kind": "monster",
+          "id": "mon_zombie",
+          "glyph": "Z",
+          "color": "green"
+        }
+      }
+    },
+    {
+      "name": "avatar sidebar with unknown movement mode",
+      "def": "avatar",
+      "why": "movement.mode is walk, run, crouch or prone",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [
+          {
+            "id": "strength",
+            "label": "Strength",
+            "value": "8",
+            "color": "white"
+          }
+        ],
+        "sidebar": {
+          "limbs": [
+            {
+              "id": "head",
+              "label": {
+                "text": "HEAD",
+                "color": "white"
+              },
+              "hp": 55,
+              "hp_max": 55,
+              "color": "green",
+              "broken": false
+            }
+          ],
+          "pain": {
+            "text": "Pain 3",
+            "color": "light_red"
+          },
+          "hunger": {
+            "text": "Hungry",
+            "color": "yellow"
+          },
+          "thirst": {
+            "text": "",
+            "color": "white"
+          },
+          "fatigue": {
+            "text": "Tired",
+            "color": "yellow"
+          },
+          "focus": 100,
+          "morale": {
+            "level": 12,
+            "face": ":)",
+            "color": "green"
+          },
+          "stamina": {
+            "current": 1000,
+            "max": 1000,
+            "color": "green"
+          },
+          "speed": {
+            "value": 100,
+            "color": "white"
+          },
+          "movement": {
+            "counter": 0,
+            "mode": "fly",
+            "color": "white"
+          },
+          "temperature": {
+            "text": "Comfortable",
+            "color": "green"
+          },
+          "power": {
+            "text": "--",
+            "color": "light_gray"
+          },
+          "safe_mode": {
+            "enabled": true,
+            "color": "green"
+          },
+          "location": {
+            "text": "field",
+            "color": "white"
+          },
+          "weather": {
+            "text": "Clear",
+            "color": "light_cyan"
+          },
+          "time": {
+            "season": "Spring",
+            "day": 1,
+            "clock": "Around noon",
+            "has_watch": false
+          },
+          "weapon": "fists",
+          "rows": [
+            [
+              {
+                "text": "HEAD",
+                "color": "white"
+              },
+              {
+                "text": "|||||",
+                "color": "green"
+              },
+              {
+                "text": "Pain 3",
+                "color": "light_red"
+              },
+              {
+                "text": "Str 8",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Hungry",
+                "color": "yellow"
+              },
+              {
+                "text": ":)",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Tired",
+                "color": "yellow"
+              }
+            ],
+            [
+              {
+                "text": "Focus 100",
+                "color": "white"
+              },
+              {
+                "text": "SAFE",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Spd 100",
+                "color": "white"
+              },
+              {
+                "text": "0 W",
+                "color": "white"
+              },
+              {
+                "text": "Stm |||||",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Comfortable",
+                "color": "green"
+              },
+              {
+                "text": "POWER --",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Location:",
+                "color": "light_gray"
+              },
+              {
+                "text": "field",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Weather :",
+                "color": "light_gray"
+              },
+              {
+                "text": "Clear",
+                "color": "light_cyan"
+              }
+            ],
+            [
+              {
+                "text": "Spring, Day 1",
+                "color": "white"
+              },
+              {
+                "text": "Around noon",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Weapon:",
+                "color": "light_gray"
+              },
+              {
+                "text": "fists",
+                "color": "light_gray"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "name": "message repeat count zero",
+      "def": "events_notification",
+      "why": "a message is shown at least once",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "50",
+            "revision": "34",
+            "type": "message.logged",
+            "command": "c:5",
+            "changes": {},
+            "data": {
+              "id": "7",
+              "text": "You open the door.",
+              "kind": "neutral",
+              "color": "c_white",
+              "count": 0,
+              "label": "You open the door."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "rotation beyond the four turns",
+      "def": "look",
+      "value": {
+        "kind": "terrain",
+        "id": "t_wall",
+        "glyph": "#",
+        "color": "white",
+        "subtile": "edge",
+        "rotation": 4
+      }
+    },
+    {
+      "name": "subtile the tilesets do not name",
+      "def": "look",
+      "value": {
+        "kind": "terrain",
+        "id": "t_wall",
+        "glyph": "#",
+        "color": "white",
+        "subtile": "corner_inner",
+        "rotation": 0
+      }
+    },
+    {
+      "name": "sensed entity with overlays",
+      "def": "entity",
+      "value": {
+        "id": "e:13",
+        "at": {
+          "dim": "",
+          "x": 12,
+          "y": 9,
+          "z": 0
+        },
+        "known": "sensed",
+        "sense": "sound",
+        "overlays": [
+          {
+            "kind": "overlay",
+            "id": "worn_hat",
+            "glyph": "",
+            "color": ""
+          }
+        ]
+      }
+    },
+    {
+      "name": "avatar item in an unknown slot",
+      "def": "avatar",
+      "why": "slot is wielded, worn or carried",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [],
+        "inventory": [
+          {
+            "look": {
+              "kind": "item",
+              "id": "stick",
+              "glyph": "/",
+              "color": "brown"
+            },
+            "name": "stick",
+            "label": "stick",
+            "slot": "pocket"
+          }
+        ]
+      }
+    },
+    {
+      "name": "combat text without segments",
+      "def": "events_notification",
+      "why": "combat_text.shown carries at least one colored segment",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "events": [
+          {
+            "sequence": "12",
+            "revision": "7",
+            "type": "combat_text.shown",
+            "command": "command:9",
+            "data": {
+              "at": {
+                "dim": "",
+                "x": 5,
+                "y": 4,
+                "z": 0
+              },
+              "segments": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "stack of one item",
+      "def": "look",
+      "value": {
+        "kind": "item",
+        "id": "rock",
+        "glyph": "*",
+        "color": "light_gray",
+        "stack": 1
+      }
+    },
+    {
+      "name": "look name of the wrong type",
+      "def": "look",
+      "why": "name is the display string, not an object",
+      "value": {
+        "kind": "terrain",
+        "id": "t_floor",
+        "name": {
+          "en": "wooden floor"
+        },
+        "glyph": ".",
+        "color": "light_gray"
+      }
+    },
+    {
+      "name": "vehicle tint that is not a hex color",
+      "def": "look",
+      "value": {
+        "kind": "vehicle_part",
+        "id": "door",
+        "glyph": "+",
+        "color": "white",
+        "tint": {
+          "fg": "gray"
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "mod tileset without its compatibility",
+      "value": {
+        "turn": "0",
+        "time": "t",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/a.json",
+            "base": "/g/",
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "def": "entity",
+      "name": "sensed entity with traits",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "sensed",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "cell",
+      "name": "remembered cell with a loaded cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "remembered",
+        "memory": {
+          "terrain": {
+            "kind": "terrain",
+            "id": "t_floor",
+            "glyph": ".",
+            "color": "c_cyan"
+          }
+        },
+        "cargo": true
+      }
+    },
+    {
+      "def": "look",
+      "name": "item tint of a color that is not hex",
+      "value": {
+        "kind": "item",
+        "id": "jeans",
+        "glyph": "[",
+        "color": "blue",
+        "tint_vars": {
+          "fg": {
+            "color": "red"
+          }
+        }
+      }
+    }
+  ]
+}

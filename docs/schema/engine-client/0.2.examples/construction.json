@@ -1,0 +1,74 @@
+{
+  "valid": [
+    {
+      "name": "construction menu: tabs over the buildable rows",
+      "def": "tabs",
+      "value": {
+        "id": "tabs",
+        "kind": "tabs",
+        "affordances": [
+          "bn:choose:tabs"
+        ],
+        "tabs": [
+          {
+            "id": "tab:ALL",
+            "label": "All",
+            "selected": false,
+            "enabled": true
+          },
+          {
+            "id": "tab:WALLS",
+            "label": "Walls",
+            "selected": true,
+            "enabled": true
+          }
+        ],
+        "select": "bn:choose:tabs",
+        "child": {
+          "id": "list",
+          "kind": "list",
+          "affordances": [
+            "bn:choose:list"
+          ],
+          "columns": [
+            {
+              "key": "favorite",
+              "label": "Favorite"
+            },
+            {
+              "key": "buildable",
+              "label": "Buildable"
+            }
+          ],
+          "rows": [
+            {
+              "id": "construction:4f2a",
+              "label": "Build Wooden Wall",
+              "description": "Wooden Wall\n\nStage/Variant #1: wooden wall\nMove cost: 0\nBash str: 12 - 40\nResult: A wall made of wood.\nRequired skills: fabrication (1)\nRequires: floor\nTime to complete: 1 h 30 m\nTools required:\n  hammer\nComponents required:\n  2x4 (10)\n  nail (20)",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": true,
+              "columns": [
+                {
+                  "key": "favorite",
+                  "label": "Favorite",
+                  "value": "no"
+                },
+                {
+                  "key": "buildable",
+                  "label": "Buildable",
+                  "value": "yes"
+                }
+              ]
+            }
+          ],
+          "total": 1,
+          "selection": "single",
+          "activate": "bn:choose:list"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}

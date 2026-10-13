@@ -1,0 +1,36 @@
+{
+  "valid": [
+    {
+      "name": "inventory selector header with hint and carried totals",
+      "def": "panel",
+      "value": {
+        "id": "panel:pane-inventory",
+        "kind": "panel",
+        "title": "Inventory",
+        "subtitle": "Inventory",
+        "stats": [
+          {
+            "key": "weight",
+            "label": "Weight",
+            "value": "3.8",
+            "max": "45.0",
+            "unit": "kg"
+          },
+          {
+            "key": "volume",
+            "label": "Volume",
+            "value": "1.20",
+            "max": "15.00",
+            "unit": "L"
+          }
+        ],
+        "child": {
+          "id": "text:pane-inventory",
+          "kind": "text",
+          "markup": "Item hotkeys assigned: 3/52"
+        }
+      }
+    }
+  ],
+  "invalid": []
+}
