@@ -462,6 +462,20 @@ auto top_screen( const boundary_state &state ) -> screen_view
     return screen_of( state, slots_of( state ).back(), true );
 }
 
+auto native_row_id( const std::string &row_id ) -> std::optional<std::string>
+{
+    for( auto offset = std::size_t{ 0 };; offset += maximum_rows ) {
+        const auto native = game_client::current_interaction( { .offset = offset, .limit = maximum_rows } );
+        if( !native.structured || native.choices.empty() ) { return std::nullopt; }
+        for( const auto &choice : native.choices ) {
+            const auto found = row_of( choice );
+            if( found.id == row_id ) {
+                return found.native_id.empty() ? std::nullopt : std::optional{ found.native_id };
+            }
+        }
+    }
+}
+
 auto read_rows( const rows_request &request,
                 const boundary_state &state ) -> std::expected<rows_page, error>
 {

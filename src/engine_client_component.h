@@ -370,6 +370,9 @@ struct rows_page {
 /// one that holds a page is read natively, so each list pages within its own rows.
 auto read_rows( const rows_request &request,
                 const boundary_state &state ) -> std::expected<rows_page, error>;
+/// The native id of the row of the live generic list that the 0.2 id `row_id` names, read from the whole native
+/// list and not the published page; nullopt when no row has that id or the id is the native one.
+auto native_row_id( const std::string &row_id ) -> std::optional<std::string>;
 auto serialize_rows( const rows_page &page ) -> std::string;
 
 /// The `interaction_boundary` value of the 0.2 schema: the 0.1 members and the `stack`.

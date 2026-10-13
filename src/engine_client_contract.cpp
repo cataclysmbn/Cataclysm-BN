@@ -524,7 +524,7 @@ struct resolve_options {
 };
 /// The native operation the invoke of an offered affordance stands for.
 /// The id the native command names for `row` of `component_id`: a row the screen lists by another identity
-/// answers with its native id, and a row off the page is named as given.
+/// answers with its native id, and a row off the page is looked up in the whole native list.
 auto native_row( const screen_view &top, const std::string &component_id,
                  const std::string &row_id ) -> std::string
 {
@@ -532,7 +532,8 @@ auto native_row( const screen_view &top, const std::string &component_id,
     const auto *const body = found ? std::get_if<list_body>( &found->body ) : nullptr;
     if( body == nullptr ) { return row_id; }
     const auto entry = std::ranges::find( body->rows, row_id, &row::id );
-    return entry == body->rows.end() || entry->native_id.empty() ? row_id : entry->native_id;
+    if( entry == body->rows.end() ) { return native_row_id( row_id ).value_or( row_id ); }
+    return entry->native_id.empty() ? row_id : entry->native_id;
 }
 auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_operation, error>
 {
