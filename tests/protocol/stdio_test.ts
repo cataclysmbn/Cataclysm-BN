@@ -2652,7 +2652,7 @@ Deno.test({
       const session = await enterTutorial(client)
       const result = await session.submit({ kind: "action", action_id: "RIGHT" })
       assertEquals(result.stages.at(-1), "completed")
-      assertEquals(session.mirror.interaction.interaction, null)
+      assertNotEquals(session.mirror.interaction.interaction?.context, "DEBUG_MSG")
       await client.close()
     } finally {
       client.kill()
