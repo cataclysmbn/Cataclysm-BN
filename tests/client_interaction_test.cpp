@@ -5879,4 +5879,51 @@ TEST_CASE(
     }
 }
 
+TEST_CASE(
+    "an item operation counts a row of a charges item in charges",
+    "[client][interaction][mcp][engine_client_contract]") {
+    const auto guard = pickup_fixture_guard{};
+    auto& you = get_avatar();
+    const auto bits = itype_id("test_platinum_bit");
+    const auto row = [&](const bool carried) {
+        const auto stacks = engine_client::world::item_stacks(get_map(), you);
+        const auto& rows = carried ? stacks.inventory : stacks.ground;
+        const auto found = std::ranges::find(rows, bits.str(), [](const auto& stack) {
+            return stack.row.appearance.id.value_or("");
+        });
+        REQUIRE(found != rows.end());
+        return found->row;
+    };
+
+    SECTION("pickup takes the asked charges of a ground row, up to the charges it holds") {
+        add_ground_item(bits, 30);
+        const auto ground = row(false);
+        CHECK(ground.count == 30);
+        CHECK(engine_client::item_operation_stack({.item_id = ground.id, .count = 30}));
+        CHECK_FALSE(engine_client::item_operation_stack({.item_id = ground.id, .count = 31}));
+        engine_client::run_item_operation({.item_id = ground.id, .count = 12});
+        finish_pickup_activity(you);
+        CHECK(ground_charges(bits) == 18);
+        CHECK(you.charges_of(bits) == 12);
+    }
+    SECTION("drop of the whole carried row puts every charge on the ground") {
+        you.i_add(item::spawn(bits, calendar::turn, 30));
+        const auto carried = row(true);
+        CHECK(carried.count == 30);
+        engine_client::run_item_operation({.drop = true, .item_id = carried.id, .count = 30});
+        REQUIRE(you.activity);
+        process_activity(you);
+        CHECK(ground_charges(bits) == 30);
+        CHECK(you.charges_of(bits) == 0);
+    }
+    SECTION("drop of part of a carried row puts that many charges on the ground") {
+        you.i_add(item::spawn(bits, calendar::turn, 30));
+        engine_client::run_item_operation({.drop = true, .item_id = row(true).id, .count = 10});
+        REQUIRE(you.activity);
+        process_activity(you);
+        CHECK(ground_charges(bits) == 10);
+        CHECK(you.charges_of(bits) == 20);
+    }
+}
+
 #endif // CATA_MCP
