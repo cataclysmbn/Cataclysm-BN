@@ -209,6 +209,8 @@ struct sidebar_limb {
 struct sidebar_panel {
     /// The panel manager's own name for it (`Health`, `Compass`, `Messages`), untranslated.
     std::string id = {};
+    /// The name the native panel options print, translated.
+    std::string label = {};
     /// The player has not switched it off.
     bool enabled = true;
     /// Rows; absent for the panel that takes the rest of the column (`Messages`).
@@ -288,6 +290,8 @@ struct compass_creature {
 /// The creatures the avatar sees toward one direction, nearest first.
 struct compass_direction {
     heading toward;
+    /// The heading the native compass panel prints for it ("North:", "NE:"), translated; empty for `center`, which it does not print.
+    std::string label = {};
     std::vector<compass_creature> creatures = {};
     auto operator<=>( const compass_direction & ) const = default; // *NOPAD*
 };

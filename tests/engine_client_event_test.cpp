@@ -575,11 +575,12 @@ TEST_CASE(
          .side = "left",
          .width = 44,
          .panels =
-             {{.id = "Health", .height = 7},
-              {.id = "Compass", .enabled = false, .height = 8},
-              {.id = "Messages"}}};
+             {{.id = "Health", .label = "Health", .height = 7},
+              {.id = "Compass", .label = "Compass", .enabled = false, .height = 8},
+              {.id = "Messages", .label = "Messages"}}};
     first.world.avatar->compass = {
         {.toward = {.id = "north", .name = "north"},
+         .label = "North:",
          .creatures = {
              {.id = "e:3",
               .appearance = zombie(),
@@ -595,13 +596,15 @@ TEST_CASE(
     CHECK(layout["id"] == "classic");
     CHECK(layout["side"] == "left");
     CHECK(layout["width"] == 44);
-    CHECK(layout["panels"][0]
-          == nlohmann::json::parse(R"({"id":"Health","enabled":true,"height":7})"));
+    CHECK(
+        layout["panels"][0]
+        == nlohmann::json::parse(R"({"id":"Health","label":"Health","enabled":true,"height":7})"));
     CHECK(layout["panels"][1]["enabled"] == false);
     CHECK_FALSE(layout["panels"][2].contains("height"));
     const auto& creature = header["compass"][0]["creatures"][0];
     CHECK(header["compass"][0]["toward"]
           == nlohmann::json::parse(R"({"id":"north","name":"north"})"));
+    CHECK(header["compass"][0]["label"] == "North:");
     CHECK(creature["id"] == "e:3");
     CHECK(creature["look"]["id"] == "mon_zombie");
     CHECK(creature["attitude"] == "hostile");

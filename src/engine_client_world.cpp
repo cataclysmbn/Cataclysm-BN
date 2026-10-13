@@ -793,11 +793,20 @@ auto capture_compass( const avatar &you ) -> std::vector<compass_direction>
         return !critter->is_dead_state() && critter->bub_pos() != you.bub_pos() &&
                rl_dist( you.bub_pos(), critter->bub_pos() ) <= g_mapsize_x;
     } ) | ranges::to<std::vector<const Creature *>>();
-    constexpr auto clockwise = std::array{ direction::NORTH, direction::NORTHEAST, direction::EAST,
-                                           direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST,
-                                           direction::NORTHWEST, direction::CENTER };
-    return clockwise | transform( [&]( const direction dir ) {
-        auto result = compass_direction{ .toward = heading_of( dir ) };
+    struct native_heading {
+        direction dir;
+        std::string label;
+    };
+    // The labels the native compass panel prints, clockwise from north; it prints none for its own column.
+    const auto clockwise = std::array{
+        native_heading{ direction::NORTH, _( "North:" ) }, native_heading{ direction::NORTHEAST, _( "NE:" ) },
+        native_heading{ direction::EAST, _( "East:" ) }, native_heading{ direction::SOUTHEAST, _( "SE:" ) },
+        native_heading{ direction::SOUTH, _( "South:" ) }, native_heading{ direction::SOUTHWEST, _( "SW:" ) },
+        native_heading{ direction::WEST, _( "West:" ) }, native_heading{ direction::NORTHWEST, _( "NW:" ) },
+        native_heading{ direction::CENTER, "" } };
+    return clockwise | transform( [&]( const native_heading & heading ) {
+        const auto dir = heading.dir;
+        auto result = compass_direction{ .toward = heading_of( dir ), .label = heading.label };
         for( const auto *critter : shown ) {
             const auto offset = direction_from( you.bub_pos().xy(), critter->bub_pos().xy() );
             if( std::to_underlying( offset ) != std::to_underlying( dir ) ) { continue; }

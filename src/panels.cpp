@@ -3093,7 +3093,7 @@ auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
         std::views::transform( []( const window_panel & panel ) -> sidebar_panel {
             // -2 is the panel that takes the rest of the column.
             return {
-                .id = panel.get_name(), .enabled = panel.toggle,
+                .id = panel.get_name(), .label = _( panel.get_name() ), .enabled = panel.toggle,
                 .height = panel.get_height() == -2 ? std::nullopt : std::optional{ panel.get_height() } };
         } ) | std::ranges::to<std::vector>()
     };

@@ -6111,6 +6111,10 @@
                 "type": "string",
                 "description": "The panel manager's name for the panel, untranslated."
               },
+              "label": {
+                "type": "string",
+                "description": "The name the native panel options print, translated."
+              },
               "enabled": {
                 "type": "boolean",
                 "description": "The player has not switched the panel off in the native panel options."
@@ -6123,6 +6127,7 @@
             },
             "required": [
               "id",
+              "label",
               "enabled"
             ],
             "additionalProperties": false
@@ -6144,6 +6149,11 @@
       "properties": {
         "toward": {
           "$ref": "#/$defs/heading"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The heading the native compass panel prints for it (North:, NE:), translated. Absent for center, which it does not print."
         },
         "creatures": {
           "type": "array",

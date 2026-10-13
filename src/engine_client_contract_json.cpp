@@ -187,7 +187,7 @@ auto to_json( const sidebar_layout &value ) -> json
 {
     auto panels = json::array();
     for( const auto &panel : value.panels ) {
-        auto item = json{{"id", panel.id}, {"enabled", panel.enabled}};
+        auto item = json{{"id", panel.id}, {"label", panel.label}, {"enabled", panel.enabled}};
         if( panel.height ) { item["height"] = *panel.height; }
         panels.push_back( std::move( item ) );
     }
@@ -200,7 +200,9 @@ auto to_json( const compass_direction &value ) -> json
         creatures.push_back( {{"id", creature.id}, {"look", to_json( creature.appearance )}, {"name", creature.name},
             {"attitude", creature.attitude}, {"distance", creature.distance}} );
     }
-    return {{"toward", to_json( value.toward )}, {"creatures", std::move( creatures )}};
+    auto result = json{{"toward", to_json( value.toward )}, {"creatures", std::move( creatures )}};
+    if( !value.label.empty() ) { result["label"] = value.label; }
+    return result;
 }
 auto to_json( const sidebar_value &value ) -> json
 {

@@ -23,6 +23,7 @@
 #include "map_perception.h"
 #include "monster.h"
 #include "npc.h"
+#include "options.h"
 #include "options_helpers.h"
 #include "output.h"
 #include "overmap/omdata.h"
@@ -1485,8 +1486,10 @@ TEST_CASE(
         return *found;
     };
     // Only the panel that takes the rest of the column has no height.
-    CHECK(find(layout, "Messages").height == std::nullopt);
+    CHECK(find(layout, "Log").height == std::nullopt);
     CHECK(find(layout, "Health").height.value_or(0) > 0);
+    // The label is the name the native panel options print.
+    for (const auto& panel : layout.panels) { CHECK(panel.label == _(panel.id)); }
 
     // Switching a panel off in the native panel options shows on the next capture.
     auto& compass =
@@ -1573,6 +1576,7 @@ TEST_CASE(
     CHECK(compass.size() == 2);
     CHECK(compass[0].toward.id == "north");
     CHECK(compass[0].toward.name == direction_name(direction::NORTH));
+    CHECK(compass[0].label == _("North:"));
     REQUIRE(compass[0].creatures.size() == 2);
     // Nearest first, with the id, look and attitude the entity of the same creature has.
     CHECK(compass[0].creatures[0].distance == 2);
@@ -1587,6 +1591,7 @@ TEST_CASE(
     CHECK(state.entities.at(compass[0].creatures[0].id).at == at(near_north.bub_pos()));
     CHECK(state.entities.at(compass[0].creatures[1].id).at == at(far_north.bub_pos()));
     CHECK(compass[1].toward.id == "west");
+    CHECK(compass[1].label == _("West:"));
     CHECK(compass[1].creatures.front().distance == 3);
 
     // Nothing the native compass hides: from the east side only the zombie behind the wall is in

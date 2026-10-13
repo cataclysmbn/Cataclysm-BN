@@ -1078,16 +1078,19 @@
             "panels": [
               {
                 "id": "Health",
+                "label": "Health",
                 "enabled": true,
                 "height": 7
               },
               {
                 "id": "Compass",
+                "label": "Compass",
                 "enabled": false,
                 "height": 8
               },
               {
                 "id": "Messages",
+                "label": "Messages",
                 "enabled": true
               }
             ]
@@ -1214,16 +1217,19 @@
             "panels": [
               {
                 "id": "Health",
+                "label": "Health",
                 "enabled": true,
                 "height": 7
               },
               {
                 "id": "Compass",
+                "label": "Compass",
                 "enabled": false,
                 "height": 8
               },
               {
                 "id": "Messages",
+                "label": "Messages",
                 "enabled": true
               }
             ]
@@ -1325,6 +1331,7 @@
               "id": "east",
               "name": "east"
             },
+            "label": "East:",
             "creatures": [
               {
                 "id": "e:7",
@@ -2240,16 +2247,19 @@
             "panels": [
               {
                 "id": "Health",
+                "label": "Health",
                 "enabled": true,
                 "height": 7
               },
               {
                 "id": "Compass",
+                "label": "Compass",
                 "enabled": false,
                 "height": 8
               },
               {
                 "id": "Messages",
+                "label": "Messages",
                 "enabled": true
               }
             ]
