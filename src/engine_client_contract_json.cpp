@@ -126,6 +126,7 @@ auto to_json( const cell &value ) -> json
     if( !value.items.empty() ) { result["items"] = to_array( value.items ); }
     if( value.vehicle ) { result["vehicle"] = to_json( *value.vehicle ); }
     if( value.light ) { result["light"] = *value.light; }
+    if( value.below ) { result["below"] = *value.below; }
     if( value.memory ) {
         result["memory"] = {{"terrain", layer_json( value.memory->terrain, "terrain" )}};
         if( value.memory->overlay ) { result["memory"]["overlay"] = layer_json( *value.memory->overlay, "" ); }

@@ -356,11 +356,46 @@ auto bare_unmemorized( const map &here, const tripoint_bub_ms &p, const avatar &
     std::ranges::none_of( here.field_at( p ), []( const auto & field ) { return field.second.is_field_alive(); } );
 }
 
+/// How many levels down the native view draws a square in sight that it looks through, as the level loop of
+/// `cata_tiles::draw` decides: it looks down to the first square with a floor, or a remembered one with
+/// something on it, and draws that square when it is in sight, remembered or a vehicle under open air in
+/// sight, else the lowest square in sight with something on it on the way down. None when it draws nothing.
+auto drawn_depth( map &here, const tripoint_bub_ms &p,
+                  const avatar &you ) -> std::optional<int>
+{
+    auto lowest_seen = std::optional<int> {};
+    auto seen_open_air = false;
+    for( auto z = p.z(); z >= -OVERMAP_DEPTH; --z ) {
+        const auto at = tripoint_bub_ms( p.xy(), z );
+        const auto open_air = here.ter( at ) == t_open_air;
+        const auto seen = map_perception::visible_at( here, at );
+        if( seen && !open_air ) { lowest_seen = z; }
+        seen_open_air = seen_open_air || ( seen && open_air );
+        auto memory = std::optional<bool> {};
+        const auto remembered = [&]() {
+            if( !memory ) {
+                const auto abs = map_local_to_abs( here, at );
+                memory = !you.get_terrain_tile( abs ).tile.empty() || !you.get_memorized_tile( abs ).tile.empty();
+            }
+            return *memory;
+        };
+        if( !here.dont_draw_lower_floor( at ) && ( z == p.z() || open_air || !remembered() ) ) { continue; }
+        const auto shown = seen || remembered() || ( seen_open_air && here.veh_at( at ) );
+        const auto drawn = shown ? std::optional( z ) : lowest_seen;
+        if( !drawn || *drawn == p.z() ) { return std::nullopt; }
+        return p.z() - *drawn;
+    }
+    return std::nullopt;
+}
+
 /// Fill the facts of a currently visible cell. False when it is plain terrain the engine never memorizes.
 auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
                    const map_perception::sight &view, cell &out ) -> bool
 {
-    if( bare_unmemorized( here, p, you ) ) { return false; }
+    // A square on the avatar's level without a floor shows what the native view draws through it.
+    if( p.z() == you.bub_pos().z() ) { out.below = drawn_depth( here, p, you ); }
+    // Bare open air elsewhere, or showing nothing, is unknown.
+    if( bare_unmemorized( here, p, you ) ) { return out.below.has_value(); }
     const auto shapes = map_perception::visible_orientations( here, p, view );
     if( here.furn( p ) != f_null ) { out.furniture = furniture_look( here.furn( p ), shapes.furniture, here.furn_vars( p ) ); }
     const auto &displayed = here.field_at( p ).displayed_field_type();
@@ -422,7 +457,7 @@ auto fill_visible( map &here, const tripoint_bub_ms &p, const avatar &you,
     }
     if( here.ter( p )->has_flag( TFLAG_NO_MEMORY ) && !out.furniture && out.fields.empty() &&
         out.items.empty() && !out.vehicle ) {
-        return false;
+        return out.below.has_value();
     }
     out.terrain = terrain_look( here.ter( p ), map_perception::connected_wall_symbol( here, p ),
                                 shapes.terrain, here.ter_vars( p ) );

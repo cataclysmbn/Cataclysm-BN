@@ -118,6 +118,9 @@ struct cell {
     std::vector<look> items = {};
     std::optional<look> vehicle = std::nullopt;
     std::optional<int> light = std::nullopt;
+    /// A square in sight on the avatar's level that the native view looks through: how many levels down
+    /// the square is that it draws here. Bare open air has nothing else.
+    std::optional<int> below = std::nullopt;
     std::optional<memory_layers> memory = std::nullopt;
     auto operator<=>( const cell & ) const = default; // *NOPAD*
 };

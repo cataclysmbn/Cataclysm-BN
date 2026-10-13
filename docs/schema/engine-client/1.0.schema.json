@@ -451,6 +451,12 @@
           "maximum": 9007199254740991,
           "description": "Native lit_level of a visible square: 0 dark, 1 low, 2 bright only, 3 lit, 4 bright. Low light draws darkened."
         },
+        "below": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "A square in sight on the avatar's level that the native tiles view looks through (open air and other terrain without a floor, such as treetops, glass roofs and ramps down): how many levels down the square is that it draws here (the first square with a floor or with something remembered on it, when it is in sight, remembered or a vehicle; else the lowest square in sight with something on it on the way down). The square keeps what is on it, such as a field; bare open air carries nothing else, and bare open air with nothing seen through it is not published."
+        },
         "memory": {
           "type": "object",
           "properties": {
@@ -501,7 +507,8 @@
               "items": false,
               "vehicle": false,
               "light": false,
-              "cargo": false
+              "cargo": false,
+              "below": false
             },
             "required": [
               "memory"
@@ -529,7 +536,8 @@
               "vehicle": false,
               "light": false,
               "memory": false,
-              "cargo": false
+              "cargo": false,
+              "below": false
             }
           }
         }
