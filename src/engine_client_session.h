@@ -93,8 +93,6 @@ class session final : public command_authority
         std::optional<command_result> retired_;
         std::optional<command_request> input_;
         std::optional<input_event> validated_input_;
-        /// The item operation the validated input carries out as the game reads it.
-        std::optional<item_operation> item_operation_;
         std::optional<event_stream> stream_;
         std::vector<std::weak_ptr<std::vector<push_item>>> readers_;
         /// What the stream has already announced of the native message log.

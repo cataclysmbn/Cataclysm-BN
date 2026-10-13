@@ -18,6 +18,7 @@
 #include <array>
 #include <limits>
 #include <random>
+#include <string_view>
 #include <ranges>
 #include <type_traits>
 #include <utility>
@@ -34,6 +35,10 @@ static_assert( std::is_nothrow_constructible_v < std::expected<command_result, e
                command_result && > );
 static_assert( std::is_nothrow_constructible_v < std::expected<input_event, error>,
                input_event && > );
+
+/// The schemas of the semantic inputs `item_operation_event` makes; no screen has them.
+constexpr auto pickup_schema = std::string_view { "item_operation:pickup" };
+constexpr auto drop_schema = std::string_view { "item_operation:drop" };
 
 auto terminal( const command_stage stage ) -> bool
 {
@@ -222,9 +227,29 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
 
 auto item_operation_input() -> game_client::input_command
 {
-    // The command is carried out as the game reads this input; recentring the view is the one default-mode
-    // action that takes no time and changes nothing else, so the game goes on to carry out the activity.
-    return { .action = "center", .input_id = game_client::current_input_id() };
+    return { .key = "TIMEOUT", .input_id = game_client::current_input_id() };
+}
+
+auto item_operation_event( const item_operation &operation ) -> input_event
+{
+    auto result = input_event{};
+    result.type = input_event_t::interaction;
+    result.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::set_count,
+        .schema_id = std::string( operation.drop ? drop_schema : pickup_schema ),
+        .target_id = operation.item_id,
+        .count = operation.count,
+    };
+    return result;
+}
+
+auto item_operation_of( const input_event &event ) -> std::optional<item_operation>
+{
+    const auto &semantic = event.interaction;
+    if( !semantic || semantic->operation != game_client::interaction_operation::set_count ||
+        !semantic->count ||
+        ( semantic->schema_id != drop_schema && semantic->schema_id != pickup_schema ) ) { return std::nullopt; }
+    return item_operation{ .drop = semantic->schema_id == drop_schema, .item_id = semantic->target_id, .count = *semantic->count };
 }
 
 auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>
@@ -511,8 +536,7 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
                            item->drop ? _( "You do not have that many of that item to drop." ) :
                            _( "There are not that many of that item here to pick up." ) );
         }
-        resolved = game_client::resolve_input_command( item_operation_input(), screen_size );
-        if( !resolved ) { return reject( error::validation_failed ); }
+        resolved = item_operation_event( *item );
     } else {
         if( !permissions.accepts_registered_actions ) { return reject( error::not_ready ); }
         auto native = game_client::input_command{};

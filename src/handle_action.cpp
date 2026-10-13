@@ -23,6 +23,7 @@
 #include "client_backend.h"
 #include "client_display.h"
 #include "clzones.h"
+#include "engine_client_contract.h"
 #include "color.h"
 #include "construction.h"
 #include "crafting.h"
@@ -1976,6 +1977,17 @@ bool game::handle_action()
     if( uquit == QUIT_WATCH && action == "QUIT" ) {
         uquit = QUIT_DIED;
         return false;
+    }
+
+    // A pickup or drop a client chose from the rows of the map view, as the native menus start it.
+    if( const auto item = engine_client::item_operation_of( ctxt.get_raw_input() );
+        item && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        engine_client::run_item_operation( *item );
+        u.mod_moves( -current_turn.moves_elapsed() );
+        return true;
     }
 
     if( act == ACTION_NULL ) {

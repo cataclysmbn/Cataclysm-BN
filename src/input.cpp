@@ -10,6 +10,7 @@ std::list<input_context *> input_context::input_context_stack;
 #include "client_input.h"
 #include "client_display.h"
 #include "client_interaction.h"
+#include "engine_client_contract.h"
 
 #include <algorithm>
 #include <cctype>
@@ -942,6 +943,11 @@ const std::string &input_context::handle_input( const int timeout )
             const auto active_context = game_client::input_context_scope( *this, category,
                                         inp_mngr.get_timeout() );
             next_action = inp_mngr.get_input_event();
+        }
+        // The map view carries out a client's pickup or drop itself (game::handle_action); it has no widget.
+        if( category == "DEFAULTMODE" && engine_client::item_operation_of( next_action ) ) {
+            result = &ANY_INPUT;
+            break;
         }
         if( next_action.interaction ) {
             const auto valid = game_client::validate_interaction_event( *this, *next_action.interaction );

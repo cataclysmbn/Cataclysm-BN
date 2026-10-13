@@ -47,6 +47,8 @@ in-game save action in the recording.
 
 Semantic records preserve the operation, opaque choice/field/candidate identity, item count, and target position, but not the transport's request-number-like `input_id`. Playback sends them through the same widget implementation and validates the interaction kind, schema, quantity constraints, and target identity/range before applying them. This permits playback across clients while preventing a reordered inventory, changed target, or different list in the same generic input context from silently consuming the operation.
 
+A client's `pickup` or `drop` command is recorded as a semantic record of the map view: `set_count` with the schema `item_operation:pickup` or `item_operation:drop`, the `avatar.ground` or `avatar.inventory` row id as the target, and the count in the row's native units. Playback starts the same pickup or drop.
+
 A context mismatch, interaction-schema mismatch, unknown format version, malformed event,
 inconsistent count, or missing end record is an error. Diagnostics identify the file and record line. A game that exits before
 consuming the recorded input also fails. Playback reads one record at a time rather than

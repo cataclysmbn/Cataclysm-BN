@@ -167,8 +167,14 @@ struct item_operation {
     std::string item_id = {};
     std::uint64_t count = 0;
 };
-/// The input the game reads for an item operation, which `run_item_operation` rides on.
+/// The input that wakes the native read for an item operation; the session hands the game
+/// `item_operation_event` in its place. A timeout, so nothing happens should it ever reach the game.
 auto item_operation_input() -> game_client::input_command;
+/// The input the map view reads for an item operation and carries out (`game::handle_action`); replay
+/// records and plays it back like any other input.
+auto item_operation_event( const item_operation &operation ) -> input_event;
+/// The item operation `event` carries; nullopt for any other input.
+auto item_operation_of( const input_event &event ) -> std::optional<item_operation>;
 /// The row `operation` names, with the items it stands for; nullopt when no such row holds that much.
 auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>;
 /// Starts the native pickup or drop activity for a validated `operation`.
