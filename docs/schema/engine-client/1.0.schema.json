@@ -1605,7 +1605,7 @@
         },
         "description": {
           "type": "array",
-          "description": "What the native look window prints of the cursor square, one localized line per entry. Present on the look-around screen.",
+          "description": "The text the native look window prints of the cursor square, wrapped at 60 columns, one localized line per entry. Present on the look-around screen.",
           "items": {
             "type": "string"
           }
@@ -1862,7 +1862,7 @@
         },
         "cursor_note": {
           "type": "string",
-          "description": "The note the native window prints in its corner for the cursor square, as one localized line such as `Note: cache`; absent when it prints none."
+          "description": "`Note:`, localized, followed by the text the native window prints in its corner for the cursor square's note, such as `Note: cache`; absent when it prints none."
         },
         "route_text": {
           "type": "string",
