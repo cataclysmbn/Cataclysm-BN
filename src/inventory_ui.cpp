@@ -7,7 +7,8 @@
 #include "client_interaction.h"
 #include "debug.h"
 #include "detached_ptr.h"
-#include "drop_preview.h"
+#include "engine_client_component.h"
+#include "engine_client_world.h"
 #include "flag.h"
 #include "game.h"
 #include "game_inventory.h"
@@ -2169,6 +2170,161 @@ auto inventory_selector::find_interaction_entry( const std::string &id ) const -
     return nullptr;
 }
 
+namespace
+{
+namespace ec = engine_client;
+
+constexpr auto confirm_id = "inventory:confirm";
+constexpr auto cancel_id = "inventory:cancel";
+auto list_id( const std::string &column_key ) -> std::string { return "list:" + column_key; }
+auto choose_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":choose"; }
+auto count_id( const std::string &column_key ) -> std::string { return list_id( column_key ) + ":count"; }
+} // namespace
+
+auto inventory_selector::interaction_rows() const -> std::vector<interaction_row>
+{
+    auto result = std::vector<interaction_row> {};
+    // Equal things are told apart by their order, as the native list does.
+    auto seen = std::unordered_map<std::string, std::size_t> {};
+    for( const auto index : std::views::iota( std::size_t{ 0 }, columns.size() ) ) {
+        const auto &column = *columns[index];
+        // The columns the player's inventory is made of are named; any other is told by its place.
+        const auto key = &column == &own_inv_column ? "inventory" : &column == &map_column ? "nearby" :
+                         &column == &own_gear_column ? "worn" : "extra" + std::to_string( index );
+        auto heading = static_cast<const item_category *>( nullptr );
+        for( const auto &entry : column.entries | std::views::filter( &inventory_entry::is_item ) ) {
+            const auto *const category = entry.get_category_ptr();
+            const auto category_id = category->get_id().str();
+            if( category != heading ) {
+                heading = category;
+                const auto ordinal = seen[key + "|" + category_id]++;
+                result.push_back( {
+                    .id = game_client::opaque_interaction_id( "category", { key, category_id, std::to_string( ordinal ) } ),
+                    .column_key = key, .column = &column, .category = category,
+                } );
+            }
+            const auto type = entry.any_item()->typeId().str();
+            const auto ordinal = seen[key + "|" + category_id + "|" + type]++;
+            result.push_back( {
+                .id = game_client::opaque_interaction_id( "item", { key, category_id, type, std::to_string( ordinal ) } ),
+                .column_key = key, .column = &column, .category = category,
+                .entry = const_cast<inventory_entry *>( &entry ),
+            } );
+        }
+    }
+    return result;
+}
+
+auto inventory_selector::interaction_view() const -> ec::screen_view
+{
+    const auto rows = interaction_rows();
+    const auto &active = get_active_column();
+    const auto &cursor = active.get_selected();
+    const auto on_category = mode == navigation_mode::CATEGORY;
+    auto focus_row = std::string{};
+    auto active_key = std::string{};
+    auto panels = std::vector<ec::component> {};
+    auto affordances = std::vector<ec::affordance> {};
+    for( const auto &column : columns | std::views::transform( []( const auto * c ) -> const
+            inventory_column & { return *c; } ) ) {
+        const auto here = rows | std::views::filter( [&]( const auto & row ) { return row.column == &column; } )
+        |
+        std::ranges::to<std::vector>();
+        if( here.empty() ) { continue; }
+        const auto &key = here.front().column_key;
+        if( &column == &active ) { active_key = key; }
+        auto list_rows = std::vector<ec::row> {};
+        for( const auto &row : here ) {
+            if( row.entry == nullptr ) {
+                list_rows.push_back( { .id = row.id, .label = row.category->name(), .selectable = false, .header = true } );
+                // In category mode the cursor is on the heading of the category it is in.
+                if( on_category && &column == &active && row.category == cursor.get_category_ptr() ) {
+                    focus_row = row.id;
+                }
+                continue;
+            }
+            const auto &entry = *row.entry;
+            const auto under_cursor = &entry == &cursor;
+            if( under_cursor && !on_category ) { focus_row = row.id; }
+            const auto denial = remove_color_tags( preset.get_observed_denial( entry ) );
+            auto cells = std::vector<game_client::interaction_column> {};
+            for( const auto cell : std::views::iota( std::size_t{ 1 }, preset.get_cells_count() ) ) {
+                cells.push_back( { .key = "cell" + std::to_string( cell ), .label = preset.get_cell_title( cell ),
+                                   .value = remove_color_tags( preset.get_cell_text( entry, cell ) ) } );
+            }
+            const auto counted = column.is_multiselect() && supports_semantic_count();
+            // The native window describes the item under the cursor only.
+            const auto description = under_cursor ?
+                                     remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) ) :
+                                     std::string{};
+            list_rows.push_back( {
+                .id = row.id, .label = remove_color_tags( preset.get_cell_text( entry, 0 ) ),
+                .description = description, .denial = denial, .hotkey = invlet_hotkey( entry ),
+                .enabled = entry.is_selectable(),
+                .selectable = column.allows_selecting() && entry.is_selectable() && denial.empty(),
+                .selected = entry.chosen_count > 0, .columns = std::move( cells ),
+                .color = string_from_color( preset.get_color( entry ) ),
+                .key_color = string_from_color( entry.get_invlet_color() ),
+                .markup = preset.get_cell_text( entry, 0 ),
+                .mark = column.is_multiselect() && column.activatable() ? std::optional( selection_mark( entry ) ) : std::nullopt,
+                .selected_count = counted ? std::optional<std::uint64_t>( entry.chosen_count ) : std::nullopt,
+                .minimum_count = counted ? std::optional<std::uint64_t>( 0 ) : std::nullopt,
+                .max = counted ? std::optional<std::uint64_t>( entry.get_available_count() ) : std::nullopt,
+                .look = ec::world::item_appearance( *entry.any_item() ),
+            } );
+        }
+        const auto selecting = column.allows_selecting();
+        auto items = ec::list( {
+            .id = list_id( key ), .rows = std::move( list_rows ), .selection = selecting ? "single" : "none",
+            .activate = selecting ? choose_id( key ) : std::string{},
+        } );
+        if( selecting ) {
+            const auto shape = ec::row_shape{ .component_id = list_id( key ) };
+            const auto label = ctxt.get_action_name( column.is_multiselect() ? "RIGHT" : "CONFIRM" );
+            affordances.push_back( ec::invoke_affordance( { .id = choose_id( key ), .label = label, .args = { .row = shape } } ) );
+            if( supports_semantic_count() ) {
+                items.affordances.push_back( count_id( key ) );
+                // Zero clears the mark; a number is held to what the stack has.
+                affordances.push_back( ec::invoke_affordance( {
+                    .id = count_id( key ), .label = _( "Count" ), .args = { .row = shape, .count = ec::count_shape{ .min = 0 } }
+                } ) );
+            }
+        }
+        panels.push_back( ec::panel( { .id = "panel:" + key, .child = std::move( items ) } ) );
+    }
+    affordances.push_back( ec::invoke_affordance( { .id = confirm_id, .label = ctxt.get_action_name( "CONFIRM" ), .role = "confirm" } ) );
+    affordances.push_back( ec::invoke_affordance( { .id = cancel_id, .label = ctxt.get_action_name( "QUIT" ), .role = "cancel" } ) );
+    auto stats = std::vector<ec::panel_stat> {};
+    if( const auto totals = display_stats ? header_totals( get_raw_stats() ) : std::nullopt ) {
+        stats.push_back( { .key = "weight", .label = _( "Weight" ), .value = totals->weight, .max = totals->weight_max,
+                           .unit = totals->weight_unit, .tone = totals->over_weight ? "bad" : "" } );
+        stats.push_back( { .key = "volume", .label = _( "Volume" ), .value = totals->volume, .max = totals->volume_max,
+                           .unit = totals->volume_unit, .tone = totals->over_volume ? "bad" : "" } );
+    }
+    auto content = panels.empty() ? ec::component{ .id = "text:empty", .body = ec::text_body{ .markup = _( "Your inventory is empty." ) } } :
+                   ec::split( { .id = "split:columns", .active = active_key.empty() ? std::string{} : "panel:" + active_key,
+                                .children = std::move( panels ) } );
+    return {
+        .title = remove_color_tags( title ),
+        .root = ec::panel( {
+            .id = "inventory", .title = remove_color_tags( title ), .subtitle = remove_color_tags( hint ),
+            .stats = std::move( stats ), .filter = filter, .child = std::move( content ),
+        } ),
+        .affordances = std::move( affordances ),
+.focus_component = focus_row.empty() ? std::string{} :
+        list_id( active_key ),
+        .focus_row = focus_row,
+    };
+}
+
+auto inventory_selector::open_screen() -> ec::screen_scope
+{
+    return ec::screen_scope( ctxt, {
+        .role = "screen",
+        .view = [this]( const ec::boundary_state & ) { return interaction_view(); },
+    } );
+}
+
 inventory_input inventory_selector::get_input()
 {
     auto res = inventory_input{};
@@ -2197,6 +2353,26 @@ inventory_input inventory_selector::get_input()
                                       static_cast<std::size_t>( *event.interaction->count ) );
                 res.entry = nullptr;
                 res.action = "SEMANTIC_COUNT";
+            }
+        } else if( const auto invoked = engine_client::invoked( event ) ) {
+            // A row of the published screen, chosen or given a count; the confirm and cancel buttons.
+            res.entry = nullptr;
+            if( invoked->affordance_id == cancel_id ) {
+                res.action = "QUIT";
+            } else if( invoked->affordance_id == confirm_id ) {
+                res.action = "CONFIRM";
+            } else if( invoked->args.row ) {
+                const auto rows = interaction_rows();
+                const auto row = std::ranges::find( rows, *invoked->args.row, &interaction_row::id );
+                if( row != rows.end() && row->entry != nullptr ) {
+                    res.entry = row->entry;
+                    select( res.entry->any_item() );
+                    if( invoked->args.count ) {
+                        apply_semantic_count( *res.entry, static_cast<std::size_t>( *invoked->args.count ) );
+                        res.entry = nullptr;
+                        res.action = "SEMANTIC_COUNT";
+                    }
+                }
             }
         }
     }
@@ -2383,6 +2559,7 @@ std::vector<char> inventory_selector::all_bound_keys() const
 item *inventory_pick_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
     while( true ) {
         ui_manager::redraw();
 
@@ -2506,6 +2683,7 @@ inventory_compare_selector::inventory_compare_selector( player &p ) :
 std::pair<const item *, const item *> inventory_compare_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
     while( true ) {
         ui_manager::redraw();
 
@@ -2579,6 +2757,7 @@ inventory_iuse_selector::inventory_iuse_selector(
 std::vector<iuse_location> inventory_iuse_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
 
     int count = 0;
     while( true ) {
@@ -2714,6 +2893,7 @@ void inventory_drop_selector::process_selected( int &count,
 drop_locations inventory_drop_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
     this->keep_open = false;
     preview_dirty = true;
 
@@ -2909,6 +3089,7 @@ inventory_pickup_selector::inventory_pickup_selector( player &p,
 std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+    const auto screen = open_screen();
 
     while( true ) {
         ui_manager::redraw();

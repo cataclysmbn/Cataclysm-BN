@@ -38,6 +38,12 @@ namespace game_client
 struct interaction_snapshot;
 }
 
+namespace engine_client
+{
+class screen_scope;
+struct screen_view;
+}
+
 using excluded_stack = std::pair<item *, int>;
 using excluded_stacks = std::map<item *, int>;
 
@@ -550,6 +556,21 @@ class inventory_selector
         inventory_input get_input();
         auto interaction_snapshot() const -> game_client::interaction_snapshot;
         auto find_interaction_entry( const std::string &id ) const -> inventory_entry *; // *NOPAD*
+        struct interaction_row {
+            std::string id;
+            /// The key of the column the row is in, which names its panel, list and affordances.
+            std::string column_key;
+            const inventory_column *column = nullptr;
+            const item_category *category = nullptr;
+            /// Null for a category heading.
+            inventory_entry *entry = nullptr;
+        };
+        /// The rows the screen publishes, in order: a heading for each category, then its items.
+        auto interaction_rows() const -> std::vector<interaction_row>;
+        /// The screen as components, composed from the columns and the preset.
+        auto interaction_view() const -> engine_client::screen_view;
+        /// Alive while the selector is open: the screen the protocol publishes.
+        auto open_screen() -> engine_client::screen_scope;
         virtual auto supports_semantic_count() const -> bool { return false; }
         virtual auto apply_semantic_count( inventory_entry &/*entry*/, std::size_t /*count*/ ) -> void {}
 

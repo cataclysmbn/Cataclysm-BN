@@ -7,7 +7,6 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
-#include "client_interaction.h"
 #include "color.h"
 #include "coordinates.h"
 #include "cursesdef.h"
@@ -34,6 +33,7 @@
 #include "output.h"
 #include "overmap/overmapbuffer.h"
 #include "panels.h"
+#include "pickup_screen.h"
 #include "pickup_token.h"
 #include "player.h"
 #include "player_activity.h"
@@ -65,7 +65,6 @@
 #include <optional>
 #include <ranges>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -78,15 +77,6 @@ static void show_pickup_message( const pickup_map &mapPickup );
 static std::optional<tripoint_abs_omt> get_note_pos_from_item( const item &it );
 static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
         const std::string &item_name );
-
-struct pickup_count {
-    bool pick = false;
-    // nullopt if the whole stack is being picked up, nonzero otherwise.
-    std::optional<int> count;
-    std::optional<size_t> parent;
-    std::vector<size_t> children;
-    bool all_children_picked = false;
-};
 
 static bool select_autopickup_items( const std::vector<std::list<item_stack::iterator>> &here,
                                      std::vector<pickup_count> &getitem )
@@ -620,6 +610,7 @@ std::vector<std::list<item_stack::iterator>> flatten( const std::vector<stacked_
 
 namespace
 {
+namespace ec = engine_client;
 
 auto append_item_iterators( item_stack &stack, std::vector<item_stack::iterator> &items ) -> void
 {
@@ -633,209 +624,9 @@ struct pick_up_from_items_options {
     const std::vector<item_stack::iterator> &here;
     int minimum;
     std::optional<tripoint_bub_ms> starting_pos;
-    std::string source;
+    pickup::source_kind source;
     std::string source_identity;
 };
-
-struct pickup_interaction_options {
-    const std::vector<std::list<item_stack::iterator>> &stacked_here;
-    const std::vector<pickup_count> &getitem;
-    const std::vector<int> &matches;
-    const std::string &filter;
-    const std::string &source;
-    const std::string &source_identity;
-    int selected;
-    /// What the avatar would carry, and could carry, once every marked stack is picked up.
-    units::mass weight_predict;
-    units::volume volume_predict;
-    /// The letters the native list prints before its rows, in row order.
-    std::string hotkeys;
-};
-
-auto item_pickup_identity( const item &candidate ) -> std::string
-{
-    const auto &token = *candidate.drop_token;
-    auto position = std::string{ "unknown" };
-    if( candidate.has_position() ) {
-        const auto pos = candidate.abs_pos();
-        position = string_format( "%d:%d:%d", pos.x(), pos.y(), pos.z() );
-    }
-    return string_format( "%s:%s:%d:%d:%d:%d", candidate.typeId().str(), position,
-                          to_turn<int>( token.turn ), token.drop_number, token.parent_number,
-                          candidate.count_by_charges() ? candidate.charges : 1 );
-}
-
-auto pickup_choice_ids( const pickup_interaction_options &opts ) -> std::vector<std::string>
-{
-    auto identity_counts = std::unordered_map<std::string, std::size_t> {};
-    auto ids = std::vector<std::string> {};
-    ids.reserve( opts.matches.size() );
-    std::ranges::transform( opts.matches, std::back_inserter( ids ), [&]( const auto stack_index ) {
-        const auto &stack = opts.stacked_here[stack_index];
-        auto identity = std::vector<std::string> { opts.source_identity };
-        identity.reserve( stack.size() + 2 );
-        std::ranges::transform( stack, std::back_inserter( identity ), []( const auto iter ) {
-            return item_pickup_identity( **iter );
-        } );
-        auto base_identity = std::string{};
-        std::ranges::for_each( identity, [&]( const auto & part ) { base_identity += part + "|"; } );
-        identity.push_back( std::to_string( identity_counts[base_identity]++ ) );
-        return game_client::opaque_interaction_id( "pickup", identity );
-    } );
-    return ids;
-}
-
-/// The native header line with its color tags: predicted and capacity weight and volume, red where over, then the filter in effect.
-auto pickup_interaction_message( const pickup_interaction_options &opts ) -> std::string
-{
-    const auto weight = []( const units::mass value ) {
-        return string_format( "%.1f", round_up( convert_weight( value ), 1 ) );
-    };
-    const auto weight_capacity = g->u.weight_capacity();
-    const auto volume_capacity = g->u.volume_capacity();
-    auto message = string_format( _( "PICK Wgt %1$s/%2$s  Vol %3$s/%4$s" ),
-                                  colorize( weight( opts.weight_predict ), opts.weight_predict > weight_capacity ? c_red : c_white ),
-                                  weight( weight_capacity ),
-                                  colorize( format_volume( opts.volume_predict ),
-                                            opts.volume_predict > volume_capacity ? c_red : c_white ),
-                                  format_volume( volume_capacity ) );
-    if( !opts.filter.empty() ) {
-        message += "\n" + string_format( _( "Filter: %s" ), opts.filter );
-    }
-    return message;
-}
-
-/// The native row text with its color tags: the stack size in front, the charges colored, money as cards and cash.
-auto name_markup( const std::list<item_stack::iterator> &stack,
-                  const pickup_count &selection ) -> std::string
-{
-    const auto &candidate = **stack.front();
-    auto name = std::string{};
-    if( candidate.is_money() ) {
-        const auto sum_charges = []( const auto & iters ) {
-            return std::ranges::fold_left( iters, 0u, []( const auto sum, const auto iter ) { return sum + ( *iter )->charges; } );
-        };
-        const auto charges_total = sum_charges( stack );
-        const auto partial = selection.pick && selection.count;
-        name = partial ? candidate.display_money( *selection.count, charges_total,
-                sum_charges( stack | std::views::take( *selection.count ) ) ) :
-               candidate.display_money( stack.size(), charges_total );
-    } else {
-        name = candidate.display_name( stack.size() );
-    }
-    return stack.size() > 1 ? string_format( "%d %s", stack.size(), name ) : name;
-}
-
-/// The row as the native list prints it: the ITEM_SYMBOLS glyph, and a red `!` before an item that is not the avatar's.
-auto row_markup( const std::list<item_stack::iterator> &stack,
-                 const pickup_count &selection ) -> std::string
-{
-    const auto &candidate = **stack.front();
-    auto name = name_markup( stack, selection );
-    if( get_option<bool>( "ITEM_SYMBOLS" ) ) {
-        name = string_format( "%s %s", candidate.symbol(), name );
-    }
-    return candidate.is_owned_by( g->u, true ) ? name : string_format( "<color_light_red>!</color> %s",
-            name );
-}
-
-/// The key the native list prints before the row at `index`: one of `chars`, else a backtick and two of them.
-auto pickup_hotkey( const std::string &chars, const std::size_t index ) -> std::string
-{
-    if( index < chars.size() ) { return std::string( 1, chars[index] ); }
-    const auto pair = index - chars.size();
-    return pair < chars.size() * chars.size() ? std::string{ '`', chars[pair / chars.size()], chars[pair % chars.size()] } :
-           std::string{};
-}
-
-/// The color of the slash the native list draws before a stack nested in another; empty for a plain stack.
-auto nest_color( const std::vector<pickup_count> &getitem,
-                 const pickup_count &selection ) -> std::string
-{
-    if( !selection.parent ) { return {}; }
-    const auto &parent = getitem[*selection.parent];
-    return parent.pick ? ( parent.all_children_picked ? "c_light_blue" : "c_yellow" ) : "c_dark_gray";
-}
-
-auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
--> game_client::interaction_snapshot
-{
-    auto snapshot = game_client::interaction_snapshot{
-        .kind = game_client::interaction_kind::inventory,
-        .title = _( "Pick up" ),
-        .message = pickup_interaction_message( opts ),
-        .allow_cancel = true,
-        .allow_set_count = true,
-    };
-    const auto text = []( const units::mass value ) { return string_format( "%.1f", round_up( convert_weight( value ), 1 ) ); };
-    snapshot.panes.push_back( {
-        .id = game_client::opaque_interaction_id( "pickup-pane", { "pickup" } ),
-        .label = snapshot.title,
-        .role = "pickup",
-        .area_id = get_option<std::string>( "PICKUP_POSITION" ),
-        .area_label = snapshot.title,
-        .filter = opts.filter,
-        .totals = game_client::interaction_totals{
-            .weight = text( opts.weight_predict ),
-            .weight_max = text( g->u.weight_capacity() ),
-            .weight_unit = weight_units(),
-            .volume = format_volume( opts.volume_predict ),
-            .volume_max = format_volume( g->u.volume_capacity() ),
-            .volume_unit = volume_units_abbr(),
-            .over_weight = opts.weight_predict > g->u.weight_capacity(),
-            .over_volume = opts.volume_predict > g->u.volume_capacity(),
-        },
-    } );
-    const auto ids = pickup_choice_ids( opts );
-    snapshot.choices.reserve( opts.matches.size() );
-    for( const auto visible_index : std::views::iota( std::size_t{ 0 }, opts.matches.size() ) ) {
-        const auto stack_index = static_cast<std::size_t>( opts.matches[visible_index] );
-        const auto &stack = opts.stacked_here[stack_index];
-        const auto &candidate = **stack.front();
-        const auto &selection = opts.getitem[stack_index];
-        const auto available = candidate.count_by_charges() ? candidate.charges :
-                               static_cast<int>( stack.size() );
-        const auto selected_count = selection.pick ? selection.count.value_or( available ) : 0;
-        const auto wear = g->u.can_wear_natively( candidate );
-        const auto wield = g->u.can_wield( candidate );
-        auto nesting = std::string{ _( "none" ) };
-        auto parent_visible = opts.matches.end();
-        if( selection.parent ) {
-            parent_visible = std::ranges::find( opts.matches, static_cast<int>( *selection.parent ) );
-            nesting = parent_visible == opts.matches.end() ? _( "child of a filtered item" ) :
-                      string_format( _( "child of %s" ), ids[std::distance( opts.matches.begin(), parent_visible )] );
-        } else if( !selection.children.empty() ) {
-            nesting = string_format( _( "parent with %d child stacks" ), selection.children.size() );
-        }
-        snapshot.choices.push_back( {
-            .id = ids[visible_index],
-            .label = remove_color_tags( name_markup( stack, selection ) ),
-            .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
-            .hotkey = pickup_hotkey( opts.hotkeys, visible_index ),
-            .enabled = true,
-            .selectable = true,
-            .selected = selection.pick,
-            .highlighted = static_cast<int>( visible_index ) == opts.selected,
-            .columns = {
-                { .key = "type", .label = _( "Type" ), .value = candidate.typeId().str() },
-                { .key = "source", .label = _( "Source" ), .value = opts.source },
-                { .key = "nesting", .label = _( "Nesting" ), .value = std::move( nesting ) },
-                { .key = "wear", .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
-                { .key = "wield", .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
-            },
-            .selected_count = static_cast<std::uint64_t>( selected_count ),
-            .minimum_count = 0,
-            .available_count = static_cast<std::uint64_t>( available ),
-            .color = string_from_color( candidate.color_in_inventory() ),
-            .markup = row_markup( stack, selection ),
-            .parent_id = parent_visible != opts.matches.end() ? std::optional( ids[std::distance( opts.matches.begin(), parent_visible )] ) : std::nullopt,
-            .nest_color = nest_color( opts.getitem, selection ),
-.mark = selection.pick ? game_client::interaction_mark{ .glyph = selection.count ? "#" : "+", .color = "c_light_blue" } :
-            game_client::interaction_mark{ .glyph = "-" },
-        } );
-    }
-    return snapshot;
-}
 
 auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
 {
@@ -1126,6 +917,17 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
         // Continue until we hit return or space
         auto semantic_index = std::optional<int> {};
         auto semantic_count = std::optional<int> {};
+        const auto screen_state = [&]() -> pickup::screen_options {
+            return {
+                .stacked_here = stacked_here, .getitem = getitem, .matches = matches, .filter = filter,
+                .source = opts.source, .source_identity = opts.source_identity, .selected = selected,
+                .weight_predict = weight_predict, .volume_predict = volume_predict,
+                .hotkeys = ctxt.get_available_single_char_hotkeys( all_pickup_chars ), .ctxt = ctxt,
+            };
+        };
+        const auto screen = ec::screen_scope( ctxt, {
+            .view = [&]( const ec::boundary_state & ) { return pickup::screen_of( screen_state() ); },
+        } );
         do {
             const std::string pickup_chars = ctxt.get_available_single_char_hotkeys( all_pickup_chars );
             auto idx = -1;
@@ -1394,54 +1196,24 @@ auto pick_up_from_items( const pick_up_from_items_options &opts ) -> void
             }
 
             ui_manager::redraw();
-            {
-                const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-                    return pickup_interaction_snapshot( {
-                        .stacked_here = stacked_here,
-                        .getitem = getitem,
-                        .matches = matches,
-                        .filter = filter,
-                        .source = opts.source,
-                        .source_identity = opts.source_identity,
-                        .selected = selected,
-                        .weight_predict = weight_predict,
-                        .volume_predict = volume_predict,
-                        .hotkeys = pickup_chars,
-                    } );
-                } );
-                action = ctxt.handle_input();
-            }
+            action = ctxt.handle_input();
             raw_input_char = ctxt.get_raw_input().get_first_input();
-            const auto &event = ctxt.get_raw_input();
-            if( event.interaction ) {
-                if( event.interaction->operation == game_client::interaction_operation::cancel ) {
+            if( const auto invoked = ec::invoked( ctxt.get_raw_input() ) ) {
+                if( invoked->affordance_id == pickup::cancel_id ) {
                     action = "QUIT";
-                } else if( event.interaction->operation == game_client::interaction_operation::choose ||
-                           event.interaction->operation == game_client::interaction_operation::set_count ) {
-                    const auto snapshot = pickup_interaction_snapshot( {
-                        .stacked_here = stacked_here,
-                        .getitem = getitem,
-                        .matches = matches,
-                        .filter = filter,
-                        .source = opts.source,
-                        .source_identity = opts.source_identity,
-                        .selected = selected,
-                        .weight_predict = weight_predict,
-                        .volume_predict = volume_predict,
-                        .hotkeys = pickup_chars,
-                    } );
-                    const auto choice = std::ranges::find( snapshot.choices,
-                                                           event.interaction->target_id,
-                                                           &game_client::interaction_choice::id );
-                    if( choice != snapshot.choices.end() ) {
-                        semantic_index = static_cast<int>( std::distance( snapshot.choices.begin(), choice ) );
-                        if( event.interaction->operation == game_client::interaction_operation::set_count ) {
-                            semantic_count = static_cast<int>( *event.interaction->count );
+                } else if( invoked->affordance_id == pickup::confirm_id ) {
+                    action = "CONFIRM";
+                } else if( invoked->args.row ) {
+                    const auto ids = pickup::choice_ids( screen_state() );
+                    const auto row = std::ranges::find( ids, *invoked->args.row );
+                    if( row != ids.end() ) {
+                        semantic_index = static_cast<int>( std::distance( ids.begin(), row ) );
+                        if( invoked->affordance_id == pickup::count_id ) {
+                            semantic_count = static_cast<int>( *invoked->args.count );
                         }
                     }
                 }
             }
-
         } while( action != "QUIT" && action != "CONFIRM" );
 
         bool item_selected = false;
@@ -1599,7 +1371,7 @@ auto pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_fr
 
     const auto starting_pos = from_vehicle ? std::nullopt : std::make_optional( g->u.bub_pos() );
     const auto absolute = map_local_to_abs( get_map(), p );
-    const auto source = from_vehicle ? _( "vehicle cargo" ) : _( "ground" );
+    const auto source = from_vehicle ? pickup::source_kind::vehicle_cargo : pickup::source_kind::ground;
     const auto source_identity = string_format( "%s:%d:%d:%d:%d", from_vehicle ? "vehicle" : "ground",
                                  absolute.x(), absolute.y(), absolute.z(), cargo_part );
     pick_up_from_items( {
@@ -1657,7 +1429,7 @@ auto pickup::pick_up_all_nearby() -> void
         .here = nearby.items,
         .minimum = 0,
         .starting_pos = starting_pos,
-        .source = _( "ground or vehicle cargo nearby" ),
+        .source = pickup::source_kind::nearby,
         .source_identity = string_format( "nearby:%d:%d:%d", absolute.x(), absolute.y(), absolute.z() ),
     } );
 }
