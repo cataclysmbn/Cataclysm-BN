@@ -34,6 +34,8 @@
 #include "game_ui.h"
 #include "input.h"
 #include "client_backend.h"
+#include "game.h"
+#include "game_session.h"
 #include "mcp_server.h"
 #include "mcp_socket.h"
 #include "json.h"
@@ -248,12 +250,31 @@ auto controller_ready() -> bool
 #endif
 }
 
-/// The controller is gone: a socket's game waits for the next one, stdio's ends with it.
+/// Saves the game being played, as the native save and quit does. Saving may happen inside a
+/// native screen or a running activity, as the Android quicksave on losing focus does.
+auto save_game() -> void
+{
+    // A failed save shows a popup, whose input wait ends here again through the lost controller.
+    static auto saving = false;
+    if( std::exchange( saving, true ) || !game_session::running() || g->uquit != QUIT_NO ) { return; }
+    std::cerr << ( g->save( true ) ? "mcp: the game was saved" : "mcp: the game could not be saved" ) <<
+              std::endl;
+}
+
+/// The controller is gone: a socket's game waits for the next one, stdio's ends with it. A stdio
+/// client dropped for falling behind did not choose to leave, so its game is saved first.
 auto lose_controller( const std::string &why ) -> void
 {
     auto &session = state();
-    if( session.sockets && session.sockets->listening() ) { session.sockets->drop_controller(); }
-    else { leave( why ); }
+    if( session.sockets && session.sockets->listening() ) {
+        session.sockets->drop_controller();
+        return;
+    }
+    if( session.sockets && session.sockets->controller_fell_behind() ) {
+        std::cerr << "mcp: the client left more output unread than the engine keeps" << std::endl;
+        save_game();
+    }
+    leave( why );
 }
 
 /// Without a controller the game waits at its input boundary, as it does for a player who has not

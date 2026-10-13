@@ -1742,6 +1742,8 @@ TEST_CASE(
     }
     CHECK(leader->protocol.failed());
     CHECK(contains(leader->protocol.end_reason(), "unwritable"));
+    // A reader that fell behind, not one that left: the session keeps the game it ends.
+    CHECK(rig.hub->controller_fell_behind());
 }
 
 TEST_CASE(
@@ -1757,6 +1759,7 @@ TEST_CASE(
     CHECK(rig.hub->wait_controller_ready(1000));
     CHECK_FALSE(leader->protocol.poll_input(leader->in, leader->out, rig.test.errors));
     CHECK(leader->protocol.failed());
+    CHECK_FALSE(rig.hub->controller_fell_behind());
 }
 #    endif
 
