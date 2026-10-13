@@ -2217,14 +2217,19 @@ for (const when of ["idle", "during a wait"]) {
   })
 }
 
-/** Writes `count` requests for a box of cells, each answered by a frame far larger than a pipe; the engine holds at most 16 MiB of unread output, so a few are enough. */
-const floodCells = (session: Session, count: number) => {
+/** The largest box of cells around the avatar one request may ask for. */
+const cellsBox = (session: Session) => {
   const at = session.mirror.avatar.at
-  const params = {
+  return {
     epoch: session.mirror.at.epoch,
     min: { ...at, x: at.x - 32, y: at.y - 32 },
     max: { ...at, x: at.x + 31, y: at.y + 31 },
   }
+}
+
+/** Writes `count` requests for a box of cells, each answered by a frame far larger than a pipe; the engine holds at most 16 MiB of unread output, so a few are enough. */
+const floodCells = (session: Session, count: number) => {
+  const params = cellsBox(session)
   const ids = Array.from({ length: count }, (_, i) => `cells-${i}`)
   session.client.raw(
     ids.map((id) => JSON.stringify({ jsonrpc: "2.0", id, method: "bn.world.cells", params }) + "\n")
@@ -2340,6 +2345,42 @@ for (const how of ["an oversized frame", "the end of stdin"] as const) {
           assertEquals(status.signal, null, "left by itself")
           assert(stderr.includes("mcp: the engine is exiting"), stderr.slice(-300))
         }
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+}
+
+/** Unread output past which the engine drops a connection. */
+const outputBound = 16 * 1024 * 1024
+
+for (const when of ["idle", "during a wait"] as const) {
+  Deno.test({
+    name:
+      `stdio: a client that leaves more than 16 MiB unread ${when} is dropped and its game saved`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      try {
+        const session = await enterTutorial(client, { delivery: { credits: 256 } })
+        await settle(session)
+        // Enough answers to pass the bound, whatever the box around the avatar holds.
+        const answer = JSON.stringify(await client.result("bn.world.cells", cellsBox(session)))
+        const count = Math.ceil(outputBound / answer.length) + 1
+        if (when === "during a wait") {
+          await beginWait(session, await waitChoice(session, "6 hours"))
+        }
+        // The client reads nothing from here.
+        floodCells(session, count)
+        const { status, stderr } = await client.exit(120_000)
+        assertEquals(status.signal, null, "left by itself")
+        // Stdio has no next controller: the session ends, and the game the client played is kept.
+        const last = JSON.parse(await Deno.readTextFile(`${profile}/config/lastworld.json`))
+        assertEquals(last.world_name, "TUTORIAL")
+        assert(stderr.includes("unread") && stderr.includes("saved"), stderr.slice(-300))
       } finally {
         client.kill()
         await Deno.remove(profile, { recursive: true })
