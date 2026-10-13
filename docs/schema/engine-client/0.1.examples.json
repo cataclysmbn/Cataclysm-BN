@@ -5,7 +5,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -18,7 +18,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -42,7 +42,7 @@
       "name": "hello result",
       "def": "hello_result",
       "value": {
-        "version": "1.0",
+        "version": "0.1",
         "epoch": "epoch:e7f3",
         "engine": {
           "build": "0.9.1-1234-gabc",
@@ -62,7 +62,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -77,7 +77,7 @@
       "name": "hello result with credit delivery",
       "def": "hello_result",
       "value": {
-        "version": "1.0",
+        "version": "0.1",
         "epoch": "epoch:e7f3",
         "engine": {
           "build": "0.9.1-1234-gabc",
@@ -102,7 +102,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -118,7 +118,7 @@
       "name": "hello result echoing the frame rate cap",
       "def": "hello_result",
       "value": {
-        "version": "1.0",
+        "version": "0.1",
         "epoch": "epoch:e7f3",
         "engine": {
           "build": "0.9.1-1234-gabc",
@@ -2485,7 +2485,7 @@
       "name": "hello with the tints of a tileset",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-client",
@@ -3191,7 +3191,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -3206,7 +3206,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -3223,7 +3223,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -3241,7 +3241,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -3259,7 +3259,7 @@
       "def": "hello_params",
       "value": {
         "versions": [
-          "1.0"
+          "0.1"
         ],
         "client": {
           "name": "bn-deno",
@@ -4334,6 +4334,94 @@
         "color": "white",
         "tint": {
           "fg": "gray"
+        }
+      }
+    },
+    {
+      "def": "environment",
+      "name": "mod tileset without its compatibility",
+      "value": {
+        "turn": "0",
+        "time": "t",
+        "weather": "clear",
+        "mod_tilesets": [
+          {
+            "path": "/g/a.json",
+            "base": "/g/",
+            "index": 1
+          }
+        ]
+      }
+    },
+    {
+      "def": "entity",
+      "name": "sensed entity with traits",
+      "value": {
+        "id": "e:3",
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "sensed",
+        "traits": {
+          "hair_color": [
+            "hair_black"
+          ]
+        }
+      }
+    },
+    {
+      "def": "cell",
+      "name": "remembered cell with a loaded cargo part",
+      "value": {
+        "at": {
+          "dim": "",
+          "x": 1,
+          "y": 2,
+          "z": 0
+        },
+        "known": "remembered",
+        "memory": {
+          "terrain": {
+            "kind": "terrain",
+            "id": "t_floor",
+            "glyph": ".",
+            "color": "c_cyan"
+          }
+        },
+        "cargo": true
+      }
+    },
+    {
+      "def": "hello_params",
+      "name": "hello with an empty tint id",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-client",
+          "version": "1"
+        },
+        "tint_ids": [
+          ""
+        ]
+      }
+    },
+    {
+      "def": "look",
+      "name": "item tint of a color that is not hex",
+      "value": {
+        "kind": "item",
+        "id": "jeans",
+        "glyph": "[",
+        "color": "blue",
+        "tint_vars": {
+          "fg": {
+            "color": "red"
+          }
         }
       }
     },

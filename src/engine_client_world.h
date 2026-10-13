@@ -19,7 +19,7 @@ namespace engine_client
 struct snapshot;
 } // namespace engine_client
 
-/// What the avatar currently sees and remembers, as the owned `world_state` of the 1.0 contract.
+/// What the avatar currently sees and remembers, as the owned `world_state` of the 0.1 contract.
 ///
 /// Register once with `engine_client::process_session().set_world_capture( &capture_world )`; the
 /// session calls it on the game thread at every input boundary and derives diffs and events itself.

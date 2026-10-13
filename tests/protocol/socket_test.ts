@@ -13,7 +13,7 @@ import { Mirror } from "./mirror.ts"
 
 const schema = JSON.parse(
   await Deno.readTextFile(
-    new URL("../../docs/schema/engine-client/1.0.schema.json", import.meta.url),
+    new URL("../../docs/schema/engine-client/0.1.schema.json", import.meta.url),
   ),
 )
 const ajv = new Ajv2020({ strict: false })
@@ -139,7 +139,7 @@ class Peer {
   async hello(delivery?: Value) {
     this.window = delivery?.credits ?? 0
     return await this.result("bn.hello", {
-      versions: ["1.0"],
+      versions: ["0.1"],
       client: { name: "socket-test", version: "1" },
       ...(delivery ? { delivery } : {}),
     })

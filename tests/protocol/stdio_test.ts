@@ -13,7 +13,7 @@ import { Mirror } from "./mirror.ts"
 // Every message the engine really sends is checked against the published schema.
 const schema = JSON.parse(
   await Deno.readTextFile(
-    new URL("../../docs/schema/engine-client/1.0.schema.json", import.meta.url),
+    new URL("../../docs/schema/engine-client/0.1.schema.json", import.meta.url),
   ),
 )
 const ajv = new Ajv2020({ strict: false })
@@ -415,7 +415,7 @@ async function makeProfile(options: Record<string, string> = {}): Promise<string
 /** Hello, then New Game and Tutorial; returns the session on the loaded tutorial world. */
 async function enterTutorial(client: Client, extra: Value = {}): Promise<Session> {
   await client.result("bn.hello", {
-    versions: ["1.0"],
+    versions: ["0.1"],
     client: { name: "stdio-test", version: "1" },
     ...extra,
   })
@@ -445,11 +445,11 @@ Deno.test({
       const early = await client.request("bn.subscribe", {})
       assertEquals(early.error.data.kind, "negotiation_failed")
       const hello = await client.result("bn.hello", {
-        versions: ["0.0", "1.0"],
+        versions: ["0.0", "0.1"],
         client: { name: "stdio-test", version: "1" },
         viewport: { cols: 40, rows: 25 },
       })
-      assertEquals(hello.version, "1.0")
+      assertEquals(hello.version, "0.1")
       assertEquals(hello.limits.frame_bytes, 1048576)
 
       const session = new Session(client)
@@ -968,7 +968,7 @@ const inMainMenu = (session: Session) => () =>
 
 async function startSession(client: Client): Promise<Session> {
   await client.result("bn.hello", {
-    versions: ["1.0"],
+    versions: ["0.1"],
     client: { name: "settings-test", version: "1" },
   })
   const session = new Session(client)
@@ -1494,7 +1494,7 @@ for (const sig of ["SIGTERM", "SIGINT"] as const) {
           jsonrpc: "2.0",
           id: 1,
           method: "bn.hello",
-          params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+          params: { client: { name: "stdio-test", version: "1" }, versions: ["0.1"] },
         })
         await until(`"id":1`)
         await send({ jsonrpc: "2.0", id: 2, method: "bn.subscribe", params: {} })
@@ -1548,7 +1548,7 @@ for (const sig of ["SIGTERM", "SIGINT"] as const) {
           jsonrpc: "2.0",
           id: 1,
           method: "bn.hello",
-          params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+          params: { client: { name: "stdio-test", version: "1" }, versions: ["0.1"] },
         })
         // Answered before any input boundary: the engine is still starting, not waiting for input.
         await until(`"id":1`)
@@ -1593,7 +1593,7 @@ Deno.test({
             jsonrpc: "2.0",
             id: 1,
             method: "bn.hello",
-            params: { client: { name: "stdio-test", version: "1" }, versions: ["1.0"] },
+            params: { client: { name: "stdio-test", version: "1" }, versions: ["0.1"] },
           }) + "\n",
         ),
       )
@@ -1628,7 +1628,7 @@ Deno.test({
     const client = new Client(Deno.env.get("BN_BINARY")!, profile)
     try {
       await client.result("bn.hello", {
-        versions: ["1.0"],
+        versions: ["0.1"],
         client: { name: "stdio-test", version: "1" },
       })
       const session = new Session(client)
@@ -2174,7 +2174,7 @@ for (const when of ["idle", "during a wait"]) {
         const extra = { delivery: { credits: 256 } }
         if (when === "idle") {
           const hello = await client.result("bn.hello", {
-            versions: ["1.0"],
+            versions: ["0.1"],
             client: { name: "stdio-test", version: "1" },
             ...extra,
           })

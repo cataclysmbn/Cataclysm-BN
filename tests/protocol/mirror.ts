@@ -1,6 +1,6 @@
 /**
  * @module
- * Client-side reconstruction of the 1.0 stream: snapshot header plus parts, then events.
+ * Client-side reconstruction of the 0.1 stream: snapshot header plus parts, then events.
  * This is the reference algorithm the engine's reconstruction tests mirror (design 3.4).
  */
 import { assert, assertEquals } from "@std/assert"

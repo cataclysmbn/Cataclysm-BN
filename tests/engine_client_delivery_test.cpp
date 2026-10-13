@@ -162,7 +162,7 @@ auto wait_for(
         auto input = std::istringstream{
             request(
                 "bn.hello",
-                R"({"versions":["1.0"],"client":{"name":"w","version":"1"},"delivery":{"credits":1}})",
+                R"({"versions":["0.1"],"client":{"name":"w","version":"1"},"delivery":{"credits":1}})",
                 "1")
             + request("bn.subscribe", "{}", "2")};
         REQUIRE(watcher.poll_input(input, watcher_output, errors));
@@ -172,7 +172,7 @@ auto wait_for(
         const auto window = mode == client_mode::stalled ? "1" : "256";
         feed(request(
             "bn.hello",
-            R"({"versions":["1.0"],"client":{"name":"t","version":"1"},"delivery":{"credits":)"
+            R"({"versions":["0.1"],"client":{"name":"t","version":"1"},"delivery":{"credits":)"
                 + std::string{window} + "}}",
             "1"));
         feed(request("bn.subscribe", "{}", "2"));
