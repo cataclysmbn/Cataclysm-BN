@@ -127,79 +127,55 @@ auto add_position( localization::content_hash &hash, const interaction_position 
     hash.add( std::to_string( position.z ) );
 }
 
-struct normalization_options {
-    const lazy_choice_descriptions *descriptions = nullptr;
-};
-
+/// The identity of what the native screen offers: its kind, the ids of its choices, panes and targets, their
+/// counts and states, and positions. No text goes in, so the same screen has the same schema in every
+/// language and a recorded input stays valid when it is played in another. Lazily rendered descriptions
+/// enter through their dependency keys, which are owned by the screen that prepared them.
 auto schema_for( const interaction_snapshot &snapshot,
-                 const normalization_options &options ) -> std::string
+                 const lazy_choice_descriptions *descriptions ) -> std::string
 {
-    const auto *descriptions = options.descriptions;
     ++work.schema_hashes;
     work.hashed_choices += snapshot.choices.size();
     auto hash = localization::content_hash{};
     if( descriptions ) { hash.add( "owned-lazy-choice-descriptions-v1" ); }
     hash.add( interaction_kind_name( snapshot.kind ) );
     hash.add( snapshot.context );
-    hash.add( snapshot.title );
-    hash.add( snapshot.message );
     hash.add( snapshot.message_tone );
     if( snapshot.category_mode ) { hash.add( *snapshot.category_mode ? "category-on" : "category-off" ); }
-    std::ranges::for_each( snapshot.banner, [&hash]( const auto & line ) { hash.add( line ); } );
     hash.add( std::to_string( snapshot.refresh_ms ) );
     hash.add( snapshot.allow_cancel ? "cancel" : "no-cancel" );
     hash.add( snapshot.allow_set_count ? "set-count" : "no-set-count" );
     for( const auto &pane : snapshot.panes ) {
         hash.add( pane.id );
-        hash.add( pane.label );
         hash.add( pane.role );
         hash.add( pane.area_id );
-        hash.add( pane.area_label );
-        hash.add( pane.area_description );
         hash.add( pane.filter );
         hash.add( pane.storage_kind );
-        hash.add( pane.sort );
         if( pane.page ) { hash.add( std::to_string( pane.page->number ) + "/" + std::to_string( pane.page->count ) ); }
-        if( pane.totals ) {
-            hash.add( pane.totals->weight_max + pane.totals->volume_max + pane.totals->weight_unit +
-                      pane.totals->volume_unit );
-        }
         std::ranges::for_each( pane.blocked_areas, [&hash]( const auto & area ) { hash.add( area ); } );
     }
     auto ordinal = std::size_t{0};
     for( const auto &choice : snapshot.choices ) {
         hash.add( choice.id );
-        hash.add( choice.label );
-        hash.add( descriptions ? descriptions->dependency_keys[ordinal++] : choice.description );
-        hash.add( choice.denial );
+        if( descriptions ) { hash.add( descriptions->dependency_keys[ordinal++] ); }
         hash.add( choice.pane_id.value_or( "no-pane" ) );
         hash.add( choice.area_id.value_or( "no-area" ) );
         hash.add( choice.storage_kind );
         hash.add( choice.enabled ? "enabled" : "disabled" );
         hash.add( choice.selectable ? "selectable" : "blocked" );
-        for( const auto &column : choice.columns ) {
-            hash.add( column.key );
-            hash.add( column.label );
-            hash.add( column.value );
-            hash.add( column.color );
-        }
+        std::ranges::for_each( choice.columns, [&hash]( const auto & column ) { hash.add( column.key ); } );
         if( choice.editor ) {
             hash.add( choice.editor->type );
             hash.add( std::to_string( choice.editor->max_length ) );
             hash.add( choice.editor->minimum ? std::to_string( *choice.editor->minimum ) : "no-minimum" );
             hash.add( choice.editor->maximum ? std::to_string( *choice.editor->maximum ) : "no-maximum" );
-            for( const auto &value : choice.editor->values ) {
-                hash.add( value.id );
-                hash.add( value.label );
-            }
+            std::ranges::for_each( choice.editor->values, [&hash]( const auto & value ) { hash.add( value.id ); } );
         }
         hash.add( choice.minimum_count ? std::to_string( *choice.minimum_count ) : "default-minimum" );
         hash.add( choice.available_count ? std::to_string( *choice.available_count ) : "no-limit" );
     }
     if( snapshot.field ) {
         hash.add( snapshot.field->id );
-        hash.add( snapshot.field->label );
-        hash.add( snapshot.field->description );
         hash.add( snapshot.field->type );
         hash.add( std::to_string( snapshot.field->max_length ) );
         hash.add( snapshot.field->printable ? "printable" : "controls-allowed" );
@@ -216,12 +192,9 @@ auto schema_for( const interaction_snapshot &snapshot,
         }
         hash.add( std::to_string( snapshot.target->range ) );
         hash.add( snapshot.target->distance_metric );
-        hash.add( snapshot.target->status );
         hash.add( snapshot.target->limit_to_reality_bubble ? "bubble-limited" : "map-limited" );
         for( const auto &candidate : snapshot.target->candidates ) {
             hash.add( candidate.id );
-            hash.add( candidate.label );
-            hash.add( candidate.description );
             add_position( hash, candidate.position );
             hash.add( candidate.creature ? "creature" : "tile" );
         }
@@ -230,13 +203,14 @@ auto schema_for( const interaction_snapshot &snapshot,
 }
 
 auto normalize( const input_context &context, interaction_snapshot snapshot,
-const normalization_options &options = {} ) -> interaction_snapshot {
+                const lazy_choice_descriptions *descriptions = nullptr ) -> interaction_snapshot
+{
     snapshot.context = context.category_name();
     snapshot.structured = true;
     snapshot.actions_only = false;
     snapshot.choice_offset = 0;
     snapshot.choice_total = snapshot.choices.size();
-    snapshot.schema_id = schema_for( snapshot, options );
+    snapshot.schema_id = schema_for( snapshot, descriptions );
     return snapshot;
 }
 
@@ -617,7 +591,7 @@ auto prepare_interaction( const input_context &context, interaction_snapshot sna
     std::ranges::any_of( snapshot.choices, []( const auto & choice ) { return !choice.description.empty(); } ) ) {
         throw std::invalid_argument( "lazy descriptions require empty text and complete owned dependencies" );
     }
-    auto normalized = normalize( context, std::move( snapshot ), { .descriptions = &descriptions } );
+    auto normalized = normalize( context, std::move( snapshot ), &descriptions );
     return std::make_shared<const prepared_interaction>( context, std::move( normalized ),
             std::move( descriptions ) );
 }
