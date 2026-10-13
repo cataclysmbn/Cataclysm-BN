@@ -135,38 +135,6 @@ struct trade_fixture {
     }
 };
 
-/// A popup over the window is a native screen of the 0.1 kind; a client answers it by its choices.
-auto resolve(game_client::interaction_command command) -> input_event {
-    auto input = game_client::input_command{};
-    input.interaction = std::move(command);
-    const auto result =
-        game_client::resolve_input_command(input, game_client::memory::screen_size());
-    REQUIRE(result.has_value());
-    return *result;
-}
-
-auto resolve_action(const std::string& action) -> input_event {
-    auto input = game_client::input_command{};
-    input.action = action;
-    const auto result =
-        game_client::resolve_input_command(input, game_client::memory::screen_size());
-    REQUIRE(result.has_value());
-    return *result;
-}
-
-/// The input that picks the choice of the popup on top whose description is `description`.
-auto pick(const game_client::interaction_snapshot& popup, const std::string& description)
-    -> input_event {
-    const auto found = std::ranges::
-        find(popup.choices, description, &game_client::interaction_choice::description);
-    REQUIRE(found != popup.choices.end());
-    return resolve({
-        .input_id = popup.input_id,
-        .operation = game_client::interaction_operation::choose,
-        .target_id = found->id,
-    });
-}
-
 auto stack_json() -> nlohmann::json {
     return nlohmann::json::parse(ec::serialize_interaction_boundary(ts::live_state()))["stack"];
 }
@@ -338,6 +306,7 @@ TEST_CASE(
         REQUIRE(named);
         CHECK(std::ranges::contains(*named, bits->id));
         CHECK(std::ranges::contains(*named, pipes->id));
+        CHECK_FALSE(std::ranges::contains(*named, theirs.front().id));
         CHECK(ts::resolve("trade:set_count", {.row = bits->id, .count = 3}));
         CHECK(ts::resolve("trade:set_count", {.row = pipes->id, .count = 0}));
         CHECK(ts::resolve("trade:filter", {.text = "pipe", .pane = "pane:npc"}));
@@ -347,6 +316,9 @@ TEST_CASE(
             return result.error();
         };
         CHECK(refused("trade:set_count", {.row = "trade-item:unlisted", .count = 1})
+              == ec::error::invalid_arguments);
+        // A category heading is no item, so a count may not name it.
+        CHECK(refused("trade:set_count", {.row = theirs.front().id, .count = 1})
               == ec::error::invalid_arguments);
         CHECK(refused("trade:set_count", {.row = bits->id, .count = -1})
               == ec::error::invalid_arguments);
@@ -529,6 +501,65 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "NPC trade in category mode highlights the category of the row a count is set on",
+    "[client][interaction][npc_trade][engine_client_trade][mcp]") {
+    const auto guard = screen_guard{};
+    const auto fixture = trade_fixture{};
+    fixture.trader->mission = NPC_MISSION_SHOPKEEP;
+    fixture.add_npc_item(itype_id("test_platinum_bit"), 10);
+    fixture.add_npc_item(itype_id("test_halligan"));
+    fixture.add_npc_item(itype_id("test_pipe"));
+    auto state = npc_trading::trade_state{};
+    npc_trading::setup_trade_state(state, 0, *fixture.trader);
+    // The heading that governs a row: the last one above it.
+    const auto heading_of = [](const std::vector<ec::row>& all, const std::string& id) {
+        const ec::row* heading = nullptr;
+        for (const auto& entry : all) {
+            if (entry.header) { heading = &entry; }
+            if (entry.id == id) { return heading; }
+        }
+        return static_cast<const ec::row*>(nullptr);
+    };
+    auto pending = std::vector<std::string>{};
+    auto checked = std::size_t{0};
+    auto started = false;
+
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto screen = ts::top();
+        REQUIRE(screen);
+        if (!started) {
+            started = true;
+            // The rows to count, last row first.
+            const auto& all = ts::rows(*screen, "list:npc");
+            std::ranges::for_each(all | std::views::reverse, [&](const ec::row& entry) {
+                if (!entry.header) { pending.push_back(entry.id); }
+            });
+            const auto toggle = inp_mngr.get_input_for_action("CATEGORY_SELECTION", "NPC_TRADE");
+            REQUIRE_FALSE(toggle.empty());
+            return toggle.front();
+        }
+        const auto& head = ts::body<ec::panel_body>(ts::part(*screen, "trade:head"));
+        REQUIRE_FALSE(head.stats.empty());
+        CHECK(head.stats.front().value == "ON");
+        const auto& all = ts::rows(*screen, "list:npc");
+        if (checked > 0) {
+            const auto* const heading = heading_of(all, pending[checked - 1]);
+            REQUIRE(heading != nullptr);
+            CHECK(heading->selected);
+            CHECK(std::ranges::count_if(
+                      all, [](const ec::row& entry) { return entry.header && entry.selected; })
+                  == 1);
+        }
+        if (checked == pending.size()) { return ts::invoke("trade:cancel"); }
+        return ts::set_count(pending[checked++], 1);
+    });
+
+    CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
+    CHECK(checked == pending.size());
+    CHECK(checked == 3);
+}
+
+TEST_CASE(
     "NPC trade confirmed through its affordance exchanges items and updates priced debt",
     "[client][interaction][npc_trade][engine_client_trade][mcp]") {
     const auto guard = screen_guard{};
@@ -567,11 +598,10 @@ TEST_CASE(
         REQUIRE(stack.size() == 3);
         CHECK(stack[1].context == "NPC_TRADE");
         CHECK(stack[1].affordances.empty());
-        const auto popup = game_client::current_interaction({.limit = 200});
-        REQUIRE(popup.context == "YESNO");
+        REQUIRE(ec::top_screen(ts::captured()).context == "YESNO");
         REQUIRE(step == 2);
         step = 3;
-        return pick(popup, "YES");
+        return ts::answer("YES");
     });
 
     CHECK(npc_trading::trade(*fixture.trader, 0, "Trade"));
@@ -611,16 +641,11 @@ TEST_CASE(
                 step = 4;
                 return ts::invoke("trade:cancel");
             }
-            const auto popup = game_client::current_interaction({.limit = 200});
-            REQUIRE(popup.context == "POPUP_WAIT");
+            REQUIRE(ec::top_screen(ts::captured()).context == "POPUP_WAIT");
             REQUIRE(step == 2);
-            CHECK(popup.message.find("offer") != std::string::npos);
+            CHECK(ts::popup_message().find("offer") != std::string::npos);
             step = 3;
-            return resolve({
-                .input_id = popup.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = popup.choices.front().id,
-            });
+            return ts::answer();
         });
 
         CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
@@ -653,16 +678,11 @@ TEST_CASE(
                 step = 4;
                 return ts::invoke("trade:cancel");
             }
-            const auto popup = game_client::current_interaction({.limit = 200});
-            REQUIRE(popup.context == "POPUP_WAIT");
+            REQUIRE(ec::top_screen(ts::captured()).context == "POPUP_WAIT");
             REQUIRE(step == 2);
-            CHECK(popup.message.find("carry") != std::string::npos);
+            CHECK(ts::popup_message().find("carry") != std::string::npos);
             step = 3;
-            return resolve({
-                .input_id = popup.input_id,
-                .operation = game_client::interaction_operation::choose,
-                .target_id = popup.choices.front().id,
-            });
+            return ts::answer();
         });
 
         CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
@@ -693,7 +713,7 @@ TEST_CASE(
         if (wires.size() > 1) { return ts::invoke("trade:cancel"); }
         // The window is laid out again for the larger terminal before the next read.
         resize_terminal(200, 60);
-        return resolve_action("TOGGLE_ITEM_INFO");
+        return ts::filter("pane:npc", "");
     });
 
     CHECK_FALSE(trading_window(state).perform_trade(*fixture.trader, "Trade"));
@@ -771,11 +791,10 @@ TEST_CASE(
                 step = 2;
                 return ts::invoke("trade:confirm");
             }
-            const auto popup = game_client::current_interaction({.limit = 200});
-            REQUIRE(popup.context == "YESNO");
+            REQUIRE(ec::top_screen(ts::captured()).context == "YESNO");
             REQUIRE(step == 2);
             step = 3;
-            return pick(popup, "YES");
+            return ts::answer("YES");
         });
         CHECK(npc_trading::trade(*fixture.trader, 0, "Trade"));
         CHECK(step == 3);

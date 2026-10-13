@@ -36,6 +36,13 @@ inline auto live_state() -> ec::boundary_state {
     };
 }
 
+/// A boundary captured as the server does, which reads the popup over the window.
+inline auto captured() -> ec::boundary_state {
+    auto state = ec::capture_boundary({.epoch = "epoch:trade", .ready = live_state().ready});
+    REQUIRE(state.has_value());
+    return std::move(*state);
+}
+
 /// The trade window while it is the screen input goes to; none under a popup of its own.
 inline auto top() -> std::optional<ec::screen_view> {
     auto screen = ec::top_screen(live_state());
@@ -100,6 +107,39 @@ inline auto set_count(const std::string& row, const std::int64_t count) -> input
 
 inline auto filter(const std::string& pane, const std::string& text) -> input_event {
     return invoke("trade:filter", {.text = text, .pane = pane});
+}
+
+/// The message of the popup on top.
+inline auto popup_message() -> std::string {
+    const auto screen = ec::top_screen(captured());
+    return body<ec::text_body>(part(screen, "text:message")).markup;
+}
+
+/// The input that answers the popup on top by choosing its row with `description` (the first when
+/// empty), as a client does: an invoke of the list's choose affordance, resolved to its native
+/// event.
+inline auto answer(const std::string& description = {}) -> input_event {
+    const auto state = captured();
+    const auto screen = ec::top_screen(state);
+    const auto& all = rows(screen, "list:choices");
+    const auto found =
+        description.empty()
+            ? all.begin()
+            : std::ranges::find(all, description, &ec::row::description);
+    REQUIRE(found != all.end());
+    const auto operation = ec::resolve_invoke(
+        state, {.affordance_id = "bn:choose:list:choices", .args = {.row = found->id}});
+    REQUIRE(operation.has_value());
+    const auto* const semantic = std::get_if<ec::semantic_operation>(&*operation);
+    REQUIRE(semantic != nullptr);
+    auto command = semantic->command;
+    command.input_id = game_client::current_input_id();
+    const auto resolved = game_client::resolve_interaction_command(command);
+    REQUIRE(resolved.has_value());
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = *resolved;
+    return event;
 }
 
 /// What the invoke of `affordance_id` with `args` resolves to at the open trade window.

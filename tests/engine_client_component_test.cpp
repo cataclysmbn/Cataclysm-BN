@@ -735,3 +735,66 @@ TEST_CASE(
         CHECK_FALSE(menu.as_interaction().filterable);
     }
 }
+
+TEST_CASE(
+    "a row an affordance names must be one the component or the lists inside its panes hold",
+    "[engine_client_component]") {
+    const auto left = ec::list({.id = "list:left", .rows = {{.id = "item:1"}, {.id = "item:2"}}});
+    const auto right = ec::list(
+        {.id = "list:right", .rows = {{.id = "heading", .header = true}, {.id = "item:3"}}});
+    const auto paged = ec::list({.id = "list:paged", .rows = {{.id = "item:4"}}, .total = 9});
+    // A screen of its own with one affordance per container, each naming rows of that container.
+    const auto context = input_context("TEST_ROWS");
+    const auto scope = ec::screen_scope(
+        context, {.view = [&](const auto&) {
+            const auto naming = [](const std::string& id, const std::string& component_id) {
+                return ec::affordance{
+                    .id = id,
+                    .args = {.row = ec::row_shape{.component_id = component_id}},
+                    .runs = ec::invoke_kind::screen};
+            };
+            return ec::screen_view{
+                .root = ec::split(
+                    {.id = "split:root",
+                     .children = ec::children_of(
+                         ec::split({.id = "split:two", .children = ec::children_of(left, right)}),
+                         ec::panel({.id = "panel:one", .child = left}),
+                         ec::tabs({.id = "tabs:page",
+                                   .tabs = {{.id = "tab:a"}, {.id = "tab:b"}},
+                                   .child = left}),
+                         ec::panel({.id = "panel:paged", .child = paged}))}),
+                .affordances =
+                    {naming("own:split", "split:two"), naming("own:panel", "panel:one"),
+                     naming("own:tabs", "tabs:page"), naming("own:paged", "panel:paged")}};
+        }});
+    const auto input = client::input_context_scope(context, "TEST_ROWS");
+    const auto resolve = [](const std::string& affordance, const std::string& row) {
+        return ec::resolve_invoke(map_only(), {.affordance_id = affordance, .args = {.row = row}});
+    };
+    const auto refused = [&](const std::string& affordance, const std::string& row) {
+        const auto result = resolve(affordance, row);
+        INFO(affordance << " " << row);
+        REQUIRE_FALSE(result);
+        CHECK(result.error() == ec::error::invalid_arguments);
+    };
+
+    SECTION("a split holds the rows of both its lists and no heading") {
+        CHECK(resolve("own:split", "item:1"));
+        CHECK(resolve("own:split", "item:3"));
+        refused("own:split", "item:9");
+        refused("own:split", "heading");
+    }
+    SECTION("a panel holds the rows of the list inside it") {
+        CHECK(resolve("own:panel", "item:2"));
+        refused("own:panel", "item:3");
+        refused("own:panel", "tab:a");
+    }
+    SECTION("a tab strip holds its tabs, not the rows of its page") {
+        CHECK(resolve("own:tabs", "tab:b"));
+        refused("own:tabs", "item:1");
+        refused("own:tabs", "tab:c");
+    }
+    SECTION("the rows a paged list did not read are checked natively") {
+        CHECK_FALSE(ec::row_ids(*ec::top_screen(map_only()).root));
+    }
+}
