@@ -219,6 +219,9 @@ class output_buffer final : public std::streambuf
         }
         /// What is left to send; a broken connection sends nothing more.
         auto pending() const -> std::size_t { return broken_ ? 0 : pending_.size() - sent_; }
+        /// The stream failed because its reader left more than the bound unread, not because the
+        /// connection failed.
+        auto fell_behind() const -> bool { return behind_; }
 
     protected:
         auto xsputn( const char *data, const std::streamsize size ) -> std::streamsize override {
@@ -227,7 +230,8 @@ class output_buffer final : public std::streambuf
             // A frame is judged after the socket took what it could, so only a reader that leaves
             // more than the bound unread ends its connection, however large one frame is.
             if( pending() > bound_ ) { drain(); }
-            broken_ = broken_ || pending() > bound_;
+            behind_ = behind_ || pending() > bound_;
+            broken_ = broken_ || behind_;
             return broken_ ? 0 : size;
         }
         auto overflow( const int_type character ) -> int_type override {
@@ -247,6 +251,7 @@ class output_buffer final : public std::streambuf
         std::string pending_;
         std::size_t sent_ = 0;
         bool broken_ = false;
+        bool behind_ = false;
 };
 
 #if defined(_WIN32)
@@ -431,14 +436,21 @@ auto socket_hub::wait_controller_ready( const int wait_ms ) -> bool
     return true;
 }
 
+auto socket_hub::controller_fell_behind() const -> bool
+{
+    const auto found = std::ranges::find_if( connections_, &connection::controller );
+    return found != connections_.end() && ( *found )->buffered.fell_behind();
+}
+
 auto socket_hub::drop_controller() -> void
 {
     const auto found = std::ranges::find_if( connections_, &connection::controller );
     if( found == connections_.end() ) { return; }
     // The command it left open is interrupted; telling the dead socket is best effort.
     static_cast<void>( ( *found )->protocol->finish( ( *found )->out ) );
-    std::cerr << "mcp: the controller disconnected: " << ( *found )->protocol->end_reason() <<
-              std::endl;
+    std::cerr << "mcp: the controller disconnected: " << ( ( *found )->buffered.fell_behind() ?
+              "it left more than " + std::to_string( options_.output_bound ) + " bytes unread" :
+              ( *found )->protocol->end_reason() ) << std::endl;
     connections_.erase( found );
 }
 

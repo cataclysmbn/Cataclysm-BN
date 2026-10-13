@@ -1133,6 +1133,33 @@ TEST_CASE("shutdown drops the frames that credits cannot pay for", "[engine_clie
     CHECK(test.server.held_frames() == 0);
 }
 
+TEST_CASE(
+    "a command's stages outlast the frames dropped for backpressure", "[engine_client_delivery]") {
+    // Two credits pay for the validated and executing stages; every step after them is held.
+    auto run = running_activity{};
+    auto& test = run.test;
+    SECTION("the command ends after a resync, before the client subscribes again") {
+        for (auto step = 0; step < 300; ++step) { test.step(); }
+        REQUIRE(contains(test.output.str(), R"("reason":"backpressure")"));
+        test.output.str("");
+        CHECK_FALSE(test.pump(rpc("bn.credit", R"({"frames":8})", "9")));
+        CHECK(count_of(test.output.str(), R"("stage":"completed")") == 1);
+        // The events stay stopped until the client subscribes.
+        CHECK_FALSE(contains(test.output.str(), R"("method":"bn.events")"));
+    }
+    SECTION("the client subscribes again while the command's end waits for credits") {
+        for (auto step = 0; step < 4; ++step) { test.step(); }
+        test.output.str("");
+        CHECK_FALSE(test.pump(subscribe + rpc("bn.credit", R"({"frames":8})", "9")));
+        const auto out = test.output.str();
+        REQUIRE(count_of(out, R"("stage":"completed")") == 1);
+        // The snapshot replaces the held events, not the stage that follows it.
+        CHECK(index_of(out, R"("method":"bn.snapshot.part")")
+              < index_of(out, R"("stage":"completed")"));
+        CHECK_FALSE(contains(out, R"("method":"bn.events")"));
+    }
+}
+
 namespace {
 /// A second connection on the controller's session that may only read.
 struct spectator {
@@ -1715,6 +1742,8 @@ TEST_CASE(
     }
     CHECK(leader->protocol.failed());
     CHECK(contains(leader->protocol.end_reason(), "unwritable"));
+    // A reader that fell behind, not one that left: the session keeps the game it ends.
+    CHECK(rig.hub->controller_fell_behind());
 }
 
 TEST_CASE(
@@ -1730,6 +1759,7 @@ TEST_CASE(
     CHECK(rig.hub->wait_controller_ready(1000));
     CHECK_FALSE(leader->protocol.poll_input(leader->in, leader->out, rig.test.errors));
     CHECK(leader->protocol.failed());
+    CHECK_FALSE(rig.hub->controller_fell_behind());
 }
 #    endif
 

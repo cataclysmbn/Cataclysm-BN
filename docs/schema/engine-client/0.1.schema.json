@@ -3448,7 +3448,7 @@
             "held_bytes"
           ],
           "additionalProperties": false,
-          "description": "Present exactly when the hello asked for credit delivery. Past either held bound the engine drops what is waiting and sends `bn.resync` with reason `backpressure`; `lost_after` is the newest sequence it wrote."
+          "description": "Present exactly when the hello asked for credit delivery. Past either held bound the engine drops the events that are waiting, keeps the command stages, and sends `bn.resync` with reason `backpressure`; `lost_after` is the newest sequence it wrote."
         }
       },
       "required": [

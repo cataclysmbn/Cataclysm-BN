@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -642,6 +643,28 @@ auto server::write_notifications( std::ostream &out ) -> bool
     for( const auto &frame : std::exchange( notifications_, {} ) ) {
         if( !rpc::write_frame( out, frame ) ) { return false; }
     }
+    if( !write_held( out ) ) { return false; }
+    if( held_.size() <= engine_client::maximum_held_frames &&
+        held_bytes_ <= engine_client::maximum_held_bytes ) { return true; }
+    // A client without credits does not get an ever longer queue: it starts over from a snapshot.
+    auto resync = "{\"jsonrpc\":\"2.0\",\"method\":\"bn.resync\",\"params\":" +
+                  engine_client::serialize_resync( session_.epoch(), "backpressure", delivered_through_ ) + "}";
+    drop_held_events();
+    // Only a client that left more stages unpaid than the bounds hold loses the oldest of them.
+    while( !held_.empty() && ( held_.size() >= engine_client::maximum_held_frames ||
+                               held_bytes_ + resync.size() > engine_client::maximum_held_bytes ) ) {
+        held_bytes_ -= held_.front().bytes.size();
+        held_.pop_front();
+    }
+    subscribed_ = false;
+    held_bytes_ += resync.size();
+    // The resync costs nothing, so it goes ahead of the stages that wait for credits.
+    held_.push_front( { .bytes = std::move( resync ), .credited = false } );
+    return write_held( out );
+}
+
+auto server::write_held( std::ostream &out ) -> bool
+{
     while( !held_.empty() && ( !held_.front().credited || credits_.value_or( 0 ) > 0 ) ) {
         const auto &next = held_.front();
         if( !rpc::write_frame( out, next.bytes ) ) { return false; }
@@ -650,16 +673,15 @@ auto server::write_notifications( std::ostream &out ) -> bool
         held_bytes_ -= next.bytes.size();
         held_.pop_front();
     }
-    if( held_.size() <= engine_client::maximum_held_frames &&
-        held_bytes_ <= engine_client::maximum_held_bytes ) { return true; }
-    // A client without credits does not get an ever longer queue: it starts over from a snapshot.
-    held_.clear();
-    subscribed_ = false;
-    auto resync = "{\"jsonrpc\":\"2.0\",\"method\":\"bn.resync\",\"params\":" +
-                  engine_client::serialize_resync( session_.epoch(), "backpressure", delivered_through_ ) + "}";
-    held_bytes_ = resync.size();
-    held_.push_back( { .bytes = std::move( resync ), .credited = false } );
-    return write_notifications( out );
+    return true;
+}
+
+auto server::drop_held_events() -> void
+{
+    using namespace std::views;
+    std::erase_if( held_, []( const auto & frame ) { return !frame.command; } );
+    const auto size = []( const auto & frame ) { return frame.bytes.size(); };
+    held_bytes_ = std::ranges::fold_left( held_ | transform( size ), std::size_t{ 0 }, std::plus<> {} );
 }
 
 auto server::flush_push( std::ostream &out ) -> bool
@@ -679,7 +701,7 @@ auto server::queue_push() -> void
         if( !credits_ ) { notifications_.push_back( std::move( frame ) ); return; }
         held_bytes_ += frame.size();
         held_.push_back( { .bytes = std::move( frame ), .credited = method != "bn.resync",
-                           .through = through } );
+                           .command = method == "bn.command", .through = through } );
     };
     auto batch = event_batch{};
     auto batch_bytes = std::size_t{0};
@@ -694,11 +716,9 @@ auto server::queue_push() -> void
         batch.events.clear();
         batch_bytes = 0;
     };
-    // A resync ends the stream for what follows it, but the command that finished in the same
-    // publication still owes its subscriber the outcome: the snapshot does not carry it.
-    const auto was_subscribed = subscribed_;
+    // A resync ends the events that follow it, not the command stages: no snapshot carries them.
     for( auto &item : push_.take() ) {
-        if( !( subscribed_ || ( was_subscribed && std::holds_alternative<command_result>( item ) ) ) ) { continue; }
+        if( !( std::holds_alternative<command_result>( item ) ? commands_ : subscribed_ ) ) { continue; }
         if( const auto *pushed = std::get_if<event_push>( &item ) ) {
             const auto &wire = pushed->event.wire();
             const auto bytes = !wire.empty() ? wire.size() :
@@ -777,6 +797,9 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         hello_ = true;
         credits_ = decoded->credits;
+        // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
+        subscribed_ = false;
+        commands_ = false;
         activity_period_ = decoded->max_hz ?
                            std::chrono::duration_cast<std::chrono::steady_clock::duration>(
                                std::chrono::nanoseconds{ std::chrono::seconds{ 1 } } / static_cast<std::int64_t>
@@ -834,16 +857,17 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
             notifications_.push_back( "{\"jsonrpc\":\"2.0\",\"method\":\"bn.snapshot.part\",\"params\":" +
                                       part + "}" );
         }
-        // The snapshot supersedes whatever was still waiting for credits.
-        held_.clear();
-        held_bytes_ = 0;
+        // The snapshot supersedes the events still waiting for credits, not the command stages.
+        drop_held_events();
         delivered_through_ = current->at.sequence;
         subscribed_ = true;
+        commands_ = true;
         return rpc::make_result( request, wire->header );
     }
     if( request.method == "bn.unsubscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }
         subscribed_ = false;
+        commands_ = false;
         held_.clear();
         held_bytes_ = 0;
         return rpc::make_result( request, "{}" );

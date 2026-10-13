@@ -150,13 +150,19 @@ class server
         engine_client::session &session_;
         engine_client::push_reader push_ = session_.open_push();
         bool hello_ = false;
+        /// Events are pushed from `bn.subscribe` until a resync, `bn.unsubscribe` or `bn.hello`.
         bool subscribed_ = false;
+        /// Command stages are pushed from `bn.subscribe` until `bn.unsubscribe` or `bn.hello`: no
+        /// snapshot carries them, so a resync does not stop them.
+        bool commands_ = false;
         /// Complete notification frames waiting to be written after the current response.
         std::vector<std::string> notifications_;
         /// Pushed frames a client with credit delivery has yet to be paid for, oldest first.
         struct held_frame {
             std::string bytes;
             bool credited = true;
+            /// A `bn.command` stage, which a resync or a new snapshot does not replace.
+            bool command = false;
             /// Newest event sequence the frame carries.
             engine_client::counter through = 0;
         };
@@ -181,6 +187,10 @@ class server
         /// Turn what the session published into notifications written after the current response.
         auto queue_push() -> void;
         auto write_notifications( std::ostream &out ) -> bool;
+        /// Write the held frames that cost nothing or that credits pay for, in order.
+        auto write_held( std::ostream &out ) -> bool;
+        /// Drop the held frames a snapshot replaces: all but the command stages.
+        auto drop_held_events() -> void;
         auto deliver_input() -> bool;
         auto direct( const engine_client::jsonrpc::request &request ) ->
         std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;

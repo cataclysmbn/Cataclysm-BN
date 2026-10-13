@@ -225,18 +225,33 @@ class Session {
   constructor(readonly client: Client) {}
 
   async subscribe(): Promise<Mirror> {
-    const header = await this.client.result("bn.subscribe", {})
-    const parts: Value[] = []
-    while (parts.length < header.parts) {
-      const note = await this.client.note()
-      assertEquals(note.method, "bn.snapshot.part")
-      parts.push(note.params)
-    }
-    return Mirror.fromSnapshot(header, parts)
+    return await Session.parts(this.client, await this.client.result("bn.subscribe", {}))
   }
 
   async start() {
     this.mirror = await this.subscribe()
+  }
+
+  /** Subscribes again after a resync while pushes keep arriving; the parts follow the answer, and what came before it is handled after the new snapshot. */
+  async resubscribe() {
+    const header = await this.client.result("bn.subscribe", {})
+    const early = this.client.notes.splice(0)
+    this.mirror = await Session.parts(this.client, header)
+    for (const note of early) {
+      // A resync stops the events until the snapshot; the command stages go on.
+      assertNotEquals(note.method, "bn.events", "an event between a resync and its snapshot")
+      this.handle(note)
+    }
+  }
+
+  static async parts(client: Client, header: Value): Promise<Mirror> {
+    const parts: Value[] = []
+    while (parts.length < header.parts) {
+      const note = await client.note()
+      assertEquals(note.method, "bn.snapshot.part")
+      parts.push(note.params)
+    }
+    return Mirror.fromSnapshot(header, parts)
   }
 
   /** Grant credits back once half the window has been read; one request per many frames. */
@@ -2091,10 +2106,12 @@ const beginWait = async (session: Session, choice: Value) => {
   return sent.command_id as string
 }
 
-/** Follows the pushes until the command is terminal. */
+/** Follows the pushes until the command is terminal, subscribing again after a resync as a client does. */
 const endWait = async (session: Session, id: string) => {
   while (!["completed", "rejected", "interrupted"].includes(session.stages.get(id)!.at(-1)!)) {
-    session.handle(await session.client.note())
+    const note = await session.client.note()
+    session.handle(note)
+    if (note.method === "bn.resync") await session.resubscribe()
     await session.pay()
   }
 }
@@ -2200,14 +2217,19 @@ for (const when of ["idle", "during a wait"]) {
   })
 }
 
-/** Writes `count` requests for a box of cells, each answered by a frame far larger than a pipe; the engine holds at most 16 MiB of unread output, so a few are enough. */
-const floodCells = (session: Session, count: number) => {
+/** The largest box of cells around the avatar one request may ask for. */
+const cellsBox = (session: Session) => {
   const at = session.mirror.avatar.at
-  const params = {
+  return {
     epoch: session.mirror.at.epoch,
     min: { ...at, x: at.x - 32, y: at.y - 32 },
     max: { ...at, x: at.x + 31, y: at.y + 31 },
   }
+}
+
+/** Writes `count` requests for a box of cells, each answered by a frame far larger than a pipe; the engine holds at most 16 MiB of unread output, so a few are enough. */
+const floodCells = (session: Session, count: number) => {
+  const params = cellsBox(session)
   const ids = Array.from({ length: count }, (_, i) => `cells-${i}`)
   session.client.raw(
     ids.map((id) => JSON.stringify({ jsonrpc: "2.0", id, method: "bn.world.cells", params }) + "\n")
@@ -2235,38 +2257,22 @@ Deno.test({
         const ids = floodCells(session, 4)
         client.readDelayMs = delay
         const started = performance.now()
-        const stageOf = () => session.stages.get(id)!.at(-1)!
-        const over = () => ["completed", "interrupted", "rejected"].includes(stageOf())
         // The engine does not wait for a reader, so one slower than the wait publishes runs out of
-        // credits and is resynced, which ends the pushes; its command is then asked for.
-        while (!over() && session.resyncs.length === 0) {
-          session.handle(await client.note())
-          await session.pay()
-        }
+        // credits and is resynced; no resync drops a command's stages, so the wait's end is pushed.
+        await endWait(session, id)
         client.readDelayMs = 0
         await client.repliesUntil(ids.length)
         for (const note of client.notes.splice(0)) session.handle(note)
-        while (!over()) {
-          const { stage } = await client.result("bn.command.result", {
-            epoch: session.mirror.at.epoch,
-            command_id: id,
-          })
-          session.stages.get(id)!.push(stage)
-          await new Promise((resolve) => setTimeout(resolve, 200))
-        }
         console.log(
           `wait of 6 hours with ${ids.length} cell answers, ${delay} ms per read: ${
             Math.round(performance.now() - started)
           } ms, ${session.resyncs.length} resyncs`,
         )
         assertEquals(client.replies.every((reply) => reply.result?.cells !== undefined), true)
-        assertEquals(stageOf(), "completed")
+        assertEquals(session.stages.get(id)!.at(-1), "completed")
         assert(session.resyncs.every((resync) => resync.reason === "backpressure"))
-        client.notes.length = 0
-        const fresh = await session.subscribe()
-        // Without a resync the pushed stream is the whole game; after one, the snapshot replaces it.
-        if (session.resyncs.length === 0) assertEquals(session.mirror.state(), fresh.state())
-        session.mirror = fresh
+        // The pushed stream, with a new snapshot after each resync, is the whole game.
+        assertEquals(session.mirror.state(), (await session.subscribe()).state())
         assert(BigInt(session.mirror.environment.turn) - turn >= 6n * hour)
         ends.push(authority(session))
         await client.close()
@@ -2339,6 +2345,42 @@ for (const how of ["an oversized frame", "the end of stdin"] as const) {
           assertEquals(status.signal, null, "left by itself")
           assert(stderr.includes("mcp: the engine is exiting"), stderr.slice(-300))
         }
+      } finally {
+        client.kill()
+        await Deno.remove(profile, { recursive: true })
+      }
+    },
+  })
+}
+
+/** Unread output past which the engine drops a connection. */
+const outputBound = 16 * 1024 * 1024
+
+for (const when of ["idle", "during a wait"] as const) {
+  Deno.test({
+    name:
+      `stdio: a client that leaves more than 16 MiB unread ${when} is dropped and its game saved`,
+    ignore: !Deno.env.get("BN_BINARY"),
+    async fn() {
+      const profile = await makeProfile()
+      const client = new Client(Deno.env.get("BN_BINARY")!, profile, "piped")
+      try {
+        const session = await enterTutorial(client, { delivery: { credits: 256 } })
+        await settle(session)
+        // Enough answers to pass the bound, whatever the box around the avatar holds.
+        const answer = JSON.stringify(await client.result("bn.world.cells", cellsBox(session)))
+        const count = Math.ceil(outputBound / answer.length) + 1
+        if (when === "during a wait") {
+          await beginWait(session, await waitChoice(session, "6 hours"))
+        }
+        // The client reads nothing from here.
+        floodCells(session, count)
+        const { status, stderr } = await client.exit(120_000)
+        assertEquals(status.signal, null, "left by itself")
+        // Stdio has no next controller: the session ends, and the game the client played is kept.
+        const last = JSON.parse(await Deno.readTextFile(`${profile}/config/lastworld.json`))
+        assertEquals(last.world_name, "TUTORIAL")
+        assert(stderr.includes("unread") && stderr.includes("saved"), stderr.slice(-300))
       } finally {
         client.kill()
         await Deno.remove(profile, { recursive: true })

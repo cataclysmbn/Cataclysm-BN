@@ -36,7 +36,8 @@ struct socket_options {
 ///
 /// Stdio is served the same way, as one controller connection on a pair of pipes: a client that
 /// stops reading cannot keep the engine from reading its requests, and one whose unread output
-/// passes the bound ends the session, as a socket is dropped.
+/// passes the bound is dropped as a socket is. Stdio has no next controller, so that ends the
+/// session; the caller keeps the game, since the client did not choose to leave.
 ///
 /// Sockets never block the game: output goes to a bounded per-connection buffer written without
 /// waiting, and a connection that lets it fill up is dropped. The controller's input is the only
@@ -75,6 +76,8 @@ class socket_hub
         auto wait_controller_ready( int wait_ms ) -> bool;
         /// Drop the controller after its server ended or failed; its open command is interrupted.
         auto drop_controller() -> void;
+        /// Whether the controller's output failed because it left more than the bound unread.
+        auto controller_fell_behind() const -> bool;
 
         /// Accept connections, serve the spectators' frames and send pending output, waiting up to
         /// `wait_ms` (negative: until something happens) for any of that to be possible.
