@@ -27,6 +27,7 @@
 #include "platform/client_platform.h"
 #include "preload_config.h"
 #include "replay/replay.h"
+#include "replay/state_hash.h"
 #include "rng.h"
 #include "runtime_handlers.h"
 #include "sdlsound.h"
@@ -113,6 +114,7 @@ auto run_game( int argc, char *argv[] ) -> int
     auto seed_explicit = false;
     auto replay_record_path = std::string{};
     auto replay_play_path = std::string{};
+    auto state_hash_log_path = std::string{};
     bool verifyexit = false;
     bool check_mods = false;
     auto check_mods_mode = init::check_mods_mode::default_mods;
@@ -130,7 +132,7 @@ auto run_game( int argc, char *argv[] ) -> int
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 21> first_pass_arguments = {
+        const std::array<arg_handler, 22> first_pass_arguments = {
             {   {
                     "--client", "tiles|curses|mcp|imgui", "Select the runtime client backend",
                     section_default,
@@ -176,6 +178,16 @@ auto run_game( int argc, char *argv[] ) -> int
                     [&replay_play_path]( int num_args, const char **params ) -> int {
                         if( num_args < 1 ) { return -1; }
                         replay_play_path = params[0];
+                        return 1;
+                    }
+                },
+                {
+                    "--state-hash-log", "<jsonl path>",
+                    "Write hashes of the game state after every turn to a new file, to compare runs",
+                    section_default,
+                    [&state_hash_log_path]( int num_args, const char **params ) -> int {
+                        if( num_args < 1 ) { return -1; }
+                        state_hash_log_path = params[0];
                         return 1;
                     }
                 },
@@ -616,6 +628,8 @@ auto run_game( int argc, char *argv[] ) -> int
         rng_set_engine_seed( seed );
     }
 
+    if( !state_hash_log_path.empty() ) { replay::configure_state_hash_log( state_hash_log_path ); }
+
     g = std::make_unique<game>();
     // First load and initialize everything that does not
     // depend on the mods.
@@ -700,7 +714,7 @@ auto run_game( int argc, char *argv[] ) -> int
             shared_ptr_fast<ui_adaptor> ui = g->create_or_get_main_ui_adaptor();
             options_manager::cache_balance_options();
             game_session::set_running( true );
-            while( !g->do_turn() );
+            while( !g->do_turn() ) { replay::log_state_hash(); }
             game_session::set_running( false );
         }
     } catch( const std::exception &error ) {
