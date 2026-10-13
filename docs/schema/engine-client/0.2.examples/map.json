@@ -1,0 +1,215 @@
+{
+  "valid": [
+    {
+      "name": "Options affordance of the map",
+      "def": "affordance",
+      "value": {
+        "id": "open_options",
+        "label": "Options",
+        "keys": [],
+        "enabled": true,
+        "expect": "screen"
+      }
+    },
+    {
+      "name": "first of five held moves, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:map:epoch-2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "RIGHT"
+        }
+      }
+    },
+    {
+      "name": "first of five held moves, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "first of five held moves, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "first of five held moves, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "first of five held moves, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "12",
+          "revision": "8"
+        }
+      }
+    },
+    {
+      "name": "last of five held moves, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:map:epoch-2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "RIGHT"
+        }
+      }
+    },
+    {
+      "name": "last of five held moves, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "last of five held moves, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "last of five held moves, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "last of five held moves, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "20",
+          "revision": "12"
+        }
+      }
+    },
+    {
+      "name": "Options invoked at the map, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:map:epoch-2"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "open_options"
+        }
+      }
+    },
+    {
+      "name": "Options invoked at the map, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "Options invoked at the map, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "Options invoked at the map, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "Options invoked at the map, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "21",
+          "revision": "13"
+        }
+      }
+    },
+    {
+      "name": "key of a burst that met the map after the popup closed, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:7"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:cancel"
+        }
+      }
+    },
+    {
+      "name": "key of a burst that met the map after the popup closed, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "key of a burst that met the map after the popup closed, rejected",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:4",
+        "stage": "rejected",
+        "error": "stale_screen",
+        "error_text": "That screen has closed."
+      }
+    }
+  ],
+  "invalid": []
+}

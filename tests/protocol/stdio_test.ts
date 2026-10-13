@@ -2582,6 +2582,38 @@ Deno.test({
 })
 
 Deno.test({
+  name: "stdio: 0.2 invoke: Options opens from the map through its affordance",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      const session = await enterTutorial(client)
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+
+      const map = top(session)
+      assertEquals(map.role, "map")
+      const options = map.affordances.find((entry: Value) => entry.id === "open_options")
+      assert(options, `no Options in ${JSON.stringify(map.affordances.map((a: Value) => a.id))}`)
+      // The native action name is the label, and a registered action expects its screen.
+      assertEquals([options.label, options.expect], ["Options", "screen"])
+      const [opened] = await burst(
+        session,
+        [{ affordance: options.id, screen: map.screen_id }],
+        300,
+      )
+      assertEquals(opened.stages.at(-1), "completed", JSON.stringify(opened))
+      assertEquals(session.mirror.interaction.interaction.context, "OPTIONS")
+      assertNotEquals(top(session).role, "map")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
   name: "stdio: 0.2 invoke: keys sent at a popup that has closed are stale_screen",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {

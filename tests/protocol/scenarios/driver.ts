@@ -302,6 +302,66 @@ export class Engine {
     )
   }
 
+  /**
+   * Submits invokes of the top screen in one write, without waiting for any of them, and follows the
+   * commands to their end. The engine holds the screen-scoped ones in its queue and validates each when
+   * it is dequeued, so one that outlived its screen ends in `stale_screen`.
+   */
+  async burst(invokes: { affordance: string; args?: Value }[]): Promise<Outcome[]> {
+    const screen_id = this.top().screen_id
+    const requests = invokes.map(({ affordance, args }) => ({
+      epoch: this.mirror.at.epoch,
+      expect: { screen_id },
+      operation: { kind: "invoke", affordance_id: affordance, ...(args ? { args } : {}) },
+    }))
+    const ids = requests.map(() => ++this.#id)
+    await this.#writer.write(
+      new TextEncoder().encode(
+        requests.map((params, n) =>
+          JSON.stringify({ jsonrpc: "2.0", id: ids[n], method: "bn.command.submit", params }) + "\n"
+        ).join(""),
+      ),
+    )
+    const responses = new Map<number, Value>()
+    while (responses.size < ids.length) {
+      const message = await this.#line()
+      if (ids.includes(message.id)) responses.set(message.id, message)
+      else {
+        assert(message.id === undefined, `unexpected response ${JSON.stringify(message)}`)
+        this.notes.push(message)
+      }
+    }
+    const accepted = ids.flatMap((id) => {
+      const result = responses.get(id)!.result
+      return result ? [result.command_id as string] : []
+    })
+    accepted.forEach((id) => this.commands.set(id, []))
+    const ended = (id: string) => terminal.includes(this.commands.get(id)!.at(-1)?.stage ?? "")
+    await this.follow(() => accepted.every(ended))
+    return ids.map((id, n) => {
+      const response = responses.get(id)!
+      if (response.error) {
+        return {
+          request: requests[n],
+          error: response.error.data?.kind ?? `rpc ${response.error.code}`,
+          failure: response.error.data,
+          stages: [],
+          notes: [],
+        }
+      }
+      const command = response.result.command_id
+      const notes = this.commands.get(command)!
+      return {
+        request: requests[n],
+        receipt: response.result,
+        id: command,
+        stages: ["received", ...notes.map((note) => note.stage)],
+        error: notes.at(-1).error,
+        notes,
+      }
+    })
+  }
+
   /** Acknowledges the startup prompts and any lesson text: single-choice screens, until `done` holds. */
   async acknowledge(done: () => boolean) {
     for (let step = 0; !done() && step < 20; step++) {
