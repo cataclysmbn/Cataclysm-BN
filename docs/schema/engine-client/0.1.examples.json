@@ -625,6 +625,18 @@
               "label": "2 rocks",
               "count": 2,
               "slot": "carried"
+            },
+            {
+              "look": {
+                "kind": "item",
+                "id": "nail",
+                "glyph": "=",
+                "color": "cyan"
+              },
+              "name": "nails (200)",
+              "label": "nails (200)",
+              "count": 200,
+              "slot": "carried"
             }
           ],
           "look": {

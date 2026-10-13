@@ -29,6 +29,7 @@
 #    include "engine_client_world.h"
 #    include "faction.h"
 #    include "game.h"
+#    include "game_session.h"
 #    include "input.h"
 #    include "inventory_ui.h"
 #    include "item.h"
@@ -5877,6 +5878,161 @@ TEST_CASE(
         process_activity(you);
         CHECK(ground_item_count(itype_id("test_1kg_cube")) == before + 2);
     }
+}
+
+TEST_CASE(
+    "an item operation counts a row of a charges item in charges",
+    "[client][interaction][mcp][engine_client_contract]") {
+    const auto guard = pickup_fixture_guard{};
+    auto& you = get_avatar();
+    const auto bits = itype_id("test_platinum_bit");
+    const auto row = [&](const bool carried) {
+        const auto stacks = engine_client::world::item_stacks(get_map(), you);
+        const auto& rows = carried ? stacks.inventory : stacks.ground;
+        const auto found = std::ranges::find(rows, bits.str(), [](const auto& stack) {
+            return stack.row.appearance.id.value_or("");
+        });
+        REQUIRE(found != rows.end());
+        return found->row;
+    };
+
+    SECTION("pickup takes the asked charges of a ground row, up to the charges it holds") {
+        add_ground_item(bits, 30);
+        const auto ground = row(false);
+        CHECK(ground.count == 30);
+        CHECK(engine_client::item_operation_stack({.item_id = ground.id, .count = 30}));
+        CHECK_FALSE(engine_client::item_operation_stack({.item_id = ground.id, .count = 31}));
+        engine_client::run_item_operation({.item_id = ground.id, .count = 12});
+        finish_pickup_activity(you);
+        CHECK(ground_charges(bits) == 18);
+        CHECK(you.charges_of(bits) == 12);
+    }
+    SECTION("drop of the whole carried row puts every charge on the ground") {
+        you.i_add(item::spawn(bits, calendar::turn, 30));
+        const auto carried = row(true);
+        CHECK(carried.count == 30);
+        engine_client::run_item_operation({.drop = true, .item_id = carried.id, .count = 30});
+        REQUIRE(you.activity);
+        process_activity(you);
+        CHECK(ground_charges(bits) == 30);
+        CHECK(you.charges_of(bits) == 0);
+    }
+    SECTION("drop of part of a carried row puts that many charges on the ground") {
+        you.i_add(item::spawn(bits, calendar::turn, 30));
+        engine_client::run_item_operation({.drop = true, .item_id = row(true).id, .count = 10});
+        REQUIRE(you.activity);
+        process_activity(you);
+        CHECK(ground_charges(bits) == 10);
+        CHECK(you.charges_of(bits) == 20);
+    }
+}
+
+namespace {
+
+/// `game::handle_action` is private; the explicit instantiation reaches the native dispatch without
+/// changing the game's headers, as map_perception_bionics_boundary_test.cpp does.
+struct handle_action_member {
+    using type = auto (game::*)() -> bool;
+    friend auto native_member(handle_action_member) -> type;
+};
+template <typename Tag, typename Tag::type Member> struct native_test_member {
+    friend auto native_member(Tag /*tag*/) -> typename Tag::type { return Member; }
+};
+template struct native_test_member<handle_action_member, &game::handle_action>;
+
+auto handle_action() -> bool { return (g.get()->*native_member(handle_action_member{}))(); }
+
+} // namespace
+
+TEST_CASE(
+    "a drop a client submits is recorded, replays and leaves the view where it is",
+    "[client][interaction][mcp][engine_client_contract][replay]") {
+    const auto guard = interaction_test_guard{};
+    static auto counter = std::atomic_uint64_t{0};
+    const auto directory =
+        std::filesystem::path(PATH_INFO::user_dir())
+        / ("item-operation-replay-" + std::to_string(counter.fetch_add(1)));
+    REQUIRE(std::filesystem::create_directory(directory));
+    const auto running = game_session::running();
+    const auto cleanup = on_out_of_scope([&] {
+        replay::stop();
+        std::filesystem::remove_all(directory);
+        game_client::memory::set_input_provider({});
+        clear_pickup_fixture_state();
+        get_avatar().view_offset = tripoint_rel_ms();
+        game_session::set_running(running);
+    });
+    const auto animations = override_option("ANIMATIONS", "false");
+    const auto realtime = override_option("TURN_DURATION", "0");
+    const auto path = directory / "input.jsonl";
+    const auto cube = itype_id("test_1kg_cube");
+    const auto panned = tripoint_rel_ms(3, -2, 0);
+    const auto setup = [&] {
+        clear_pickup_fixture_state();
+        auto& you = get_avatar();
+        you.setpos(map_local_to_abs(get_map(), pickup_test_pos));
+        you.set_moves(1000);
+        you.worn.push_back(item::spawn("duffelbag"));
+        for (const auto _ : std::views::iota(0, 3)) { you.i_add(item::spawn(cube)); }
+        you.view_offset = panned;
+        game_session::set_running(true);
+        engine_client::process_session().replace_world();
+    };
+    const auto check_dropped = [&] {
+        auto& you = get_avatar();
+        CHECK(you.view_offset == panned);
+        REQUIRE(you.activity);
+        process_activity(you);
+        CHECK(ground_item_count(cube) == 2);
+        CHECK(you.amount_of(cube) == 1);
+    };
+
+    setup();
+    replay::configure_recording(path.string(), {.rng_seed = 424242});
+    replay::start();
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(reads++ == 0);
+        auto& session = engine_client::process_session();
+        REQUIRE(session.publish_boundary());
+        const auto current = session.current();
+        REQUIRE(current);
+        const auto stacks = engine_client::world::item_stacks(get_map(), get_avatar());
+        const auto carried = std::ranges::find(stacks.inventory, cube.str(), [](const auto& stack) {
+            return stack.row.appearance.id.value_or("");
+        });
+        REQUIRE(carried != stacks.inventory.end());
+        REQUIRE(session.submit({
+            .epoch = session.epoch(),
+            .expect =
+                {.revision = current->at.revision, .boundary_id = current->value.interaction.id},
+            .operation =
+                engine_client::item_operation{.drop = true, .item_id = carried->row.id, .count = 2},
+        }));
+        // As the controller delivers a command: the prepared input, resolved at the native
+        // boundary; the backend then hands the game what the session validated.
+        const auto native = session.prepare_input(game_client::memory::screen_size());
+        REQUIRE(native);
+        const auto event =
+            game_client::resolve_input_command(*native, game_client::memory::screen_size());
+        REQUIRE(event);
+        return *event;
+    });
+    handle_action();
+    check_dropped();
+    replay::finish();
+    REQUIRE(reads == 1);
+
+    setup();
+    game_client::memory::set_input_provider([](const int /*timeout*/) -> input_event {
+        throw std::runtime_error("playback must not read live input");
+    });
+    replay::configure_playback(path.string(), {.rng_seed = 424242});
+    replay::start();
+    handle_action();
+    check_dropped();
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
 }
 
 #endif // CATA_MCP

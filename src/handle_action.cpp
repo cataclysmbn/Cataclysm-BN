@@ -32,6 +32,7 @@
 #include "debug_menu.h"
 #include "diary.h"
 #include "distraction_manager.h"
+#include "engine_client_contract.h"
 #include "faction.h"
 #include "flag.h"
 #include "fstream_utils.h"
@@ -114,6 +115,7 @@
 #include <optional>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 
 static const activity_id ACT_FERTILIZE_PLOT( "ACT_FERTILIZE_PLOT" );
@@ -1976,6 +1978,21 @@ bool game::handle_action()
     if( uquit == QUIT_WATCH && action == "QUIT" ) {
         uquit = QUIT_DIED;
         return false;
+    }
+
+    // A pickup or drop a client chose from the rows of the map view, as the native menus start it.
+    if( const auto item = engine_client::item_operation_of( ctxt.get_raw_input() );
+        item && !u.is_dead_state() ) {
+        user_action_counter += 1;
+        u.clear_destination();
+        destination_preview.clear();
+        // The session checked the row as it took the command, so a missing row is a replay that diverged.
+        if( !engine_client::run_item_operation( *item ) ) {
+            throw std::runtime_error( "Item operation rejected: row " + item->item_id +
+                                      " is gone or holds less" );
+        }
+        u.mod_moves( -current_turn.moves_elapsed() );
+        return true;
     }
 
     if( act == ACTION_NULL ) {
