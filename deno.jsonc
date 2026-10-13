@@ -13,6 +13,8 @@
     "docs:gen:lua": "$CATA_EXE --lua-doc docs/en/mod/lua/reference/lua.md --lua-types lua_annotations.lua",
     "migrate-unit": "deno run -A scripts/migrations/3312.migrate_legacy_unit.ts --paths data/json data/mods",
     "dprint": "deno run -A npm:dprint",
+    "contract:gen": "deno run --allow-read --allow-write --allow-run --allow-env tests/protocol/generate_examples.ts",
+    "contract:check": "deno run --allow-read --allow-write --allow-run --allow-env tests/protocol/generate_examples.ts --check",
     "test:tooling": "deno test --allow-read --allow-write --allow-run --allow-env build-scripts tools/client scripts/format_json_test.ts tests/protocol",
     "changelog:reddit": {
       "description": "creates a weekly reddit changelog template",

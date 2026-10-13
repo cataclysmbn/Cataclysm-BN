@@ -1,0 +1,83 @@
+/**
+ * @module
+ * The wire before a game exists: the hello and its refusal, the first snapshot, a startup prompt
+ * answered, and the main menu with the errors an invoke meets there.
+ */
+import { assert, assertEquals } from "@std/assert"
+import { Engine, helloClient, type Scenario, schemaHash, type Value, without } from "./driver.ts"
+
+export const handshake: Scenario = {
+  area: "handshake",
+  run: (rec) =>
+    Engine.run(rec, async (engine) => {
+      const wrong = "sha256:0000000000000000"
+      const refused = await engine.request("bn.hello", {
+        versions: ["0.2"],
+        client: helloClient,
+        schema: wrong,
+      })
+      assertEquals(refused.error.data.kind, "negotiation_failed")
+      rec.accept(
+        "hello refused for a schema hash the engine was not built with",
+        "application_error",
+        refused.error.data,
+      )
+
+      const { params, result } = await engine.hello()
+      assertEquals(result.schema, schemaHash)
+      rec.accept(
+        "hello of a 0.2 client that sends its schema hash and a viewport",
+        "hello_params",
+        params,
+      )
+      rec.accept("hello result of a 0.2 controller", "hello_result", result)
+      rec.reject(
+        "0.2 hello without the schema hash",
+        "hello_params",
+        without(params, "schema"),
+        "a client that offers 0.2 names the schema it was built with",
+      )
+      rec.reject(
+        "0.2 hello result without the role",
+        "hello_result",
+        without(result, "role"),
+        "the connection learns whether it controls the game",
+      )
+
+      const { header } = await engine.subscribe()
+      rec.accept("subscribe result before the main menu", "subscribe_result", header)
+
+      // The first prompt, answered with the 0.1 choice the boundary still carries beside its stack.
+      const prompt = engine.mirror.interaction.interaction.choices.find((entry: Value) =>
+        entry.enabled
+      )
+      assert(prompt, "a startup prompt to answer")
+      rec.command(
+        "startup prompt answered",
+        await engine.submit({ kind: "choose", choice_id: prompt.id }),
+      )
+      await engine.acknowledge(() => engine.mirror.interaction.interaction?.context === "MAIN_MENU")
+
+      const menu = engine.mirror.interaction
+      rec.accept("boundary of the main menu", "interaction_boundary", menu)
+      for (const [n, screen] of menu.stack.entries()) {
+        rec.accept(`screen ${n + 1} of the main menu stack`, "screen", screen)
+      }
+
+      // Errors an invoke meets at the main menu.
+      const unknown = await engine.invoke("no-such-affordance")
+      assertEquals(unknown.error, "unknown_affordance")
+      rec.command("invoke of an affordance the screen does not offer", unknown)
+      const withArgs = engine.top().affordances.find((entry: Value) =>
+        entry.enabled && Object.keys(entry.args ?? {}).length > 0
+      )
+      assert(withArgs, "an affordance that takes arguments")
+      const bare = await engine.invoke(withArgs.id, {})
+      assertEquals(bare.error, "invalid_arguments")
+      rec.command("invoke that leaves out the arguments the affordance takes", bare)
+      const other = withArgs.expect === "screen" ? "boundary" : "screen"
+      const crossed = await engine.invoke(withArgs.id, {}, other)
+      assertEquals(crossed.error, "invalid_arguments")
+      rec.command("invoke whose expectation is of the other form", crossed)
+    }),
+}
