@@ -1,44 +1,748 @@
 {
   "valid": [
     {
-      "name": "trade pane with carried against capacity",
-      "def": "panel",
+      "name": "trade screen",
+      "def": "screen",
       "value": {
-        "id": "panel:pane-player",
-        "kind": "panel",
-        "title": "You",
-        "subtitle": "Player items",
-        "stats": [
+        "screen_id": "screen:9",
+        "role": "screen",
+        "title": "Trading with Denver Tolbert, Marloss Voice",
+        "root": {
+          "id": "trade:head",
+          "kind": "panel",
+          "title": "Trading with Denver Tolbert, Marloss Voice",
+          "stats": [
+            {
+              "key": "category_mode",
+              "label": "Toggle category select",
+              "value": "OFF"
+            }
+          ],
+          "child": {
+            "id": "trade:panes",
+            "kind": "split",
+            "relation": "peers",
+            "active": "pane:npc",
+            "children": [
+              {
+                "id": "trade:balance",
+                "kind": "text",
+                "markup": "Credit $0.00",
+                "tone": "good"
+              },
+              {
+                "id": "pane:npc",
+                "kind": "panel",
+                "title": "Inventory: Denver Tolbert, Marloss Voice",
+                "stats": [
+                  {
+                    "key": "weight",
+                    "label": "weight",
+                    "value": "9.27",
+                    "max": "53.00",
+                    "unit": "kg",
+                    "tone": "good"
+                  },
+                  {
+                    "key": "volume",
+                    "label": "vol",
+                    "value": "0.97",
+                    "max": "12.50",
+                    "unit": "L",
+                    "tone": "good"
+                  }
+                ],
+                "child": {
+                  "id": "list:npc",
+                  "kind": "list",
+                  "affordances": [
+                    "trade:set_count",
+                    "trade:filter"
+                  ],
+                  "columns": [
+                    {
+                      "key": "qty",
+                      "label": "amt"
+                    },
+                    {
+                      "key": "weight",
+                      "label": "weight"
+                    },
+                    {
+                      "key": "vol",
+                      "label": "vol"
+                    },
+                    {
+                      "key": "price",
+                      "label": "unit price"
+                    }
+                  ],
+                  "rows": [
+                    {
+                      "id": "trade-category:dea8783f13ec9de9",
+                      "label": "FOOD",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "trade-item:b1d9f357579cad1e",
+                      "label": "marloss berry (3)",
+                      "description": "Origin: 'Bright Nights'\n--\nMaterial: Fruit Matter\nVolume: 0.188 L  Weight: 0.53 kg\nOwner: Marloss Evangelists\nCategory: FOOD\n--\nThis looks like a blueberry the size of your fist, but pinkish in color.  It has a strong but delicious aroma, but is clearly either mutated or of alien origin.\n--\nNutrition will vary with available ingredients.\nCalories (kcal): 347  Quench: 20\nEnjoyability: 30\nPortions: 3\nOther contents: Fruit (1%)\n--\nThrow damage: Bash: 2\nThrow range: 24\nMoves per throw: 60\nStamina cost: 83\n--\n* This item is not repairable.\n--\n* This item conducts electricity.\n* This comestible can be eaten even on full stomach.\n--\nPrice: $0.00\n--\nYou know of nothing you could craft with it.\n",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "3"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.53"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.19"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.00"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 3,
+                      "look": {
+                        "kind": "item",
+                        "id": "marloss_berry",
+                        "glyph": "%",
+                        "color": "c_pink",
+                        "name": "marloss berry"
+                      }
+                    },
+                    {
+                      "id": "trade-category:a44a9e739570ed0e",
+                      "label": "BOOKS",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "trade-item:1fdd97fa8aef81e4",
+                      "label": "Mycenacean Hymns (unread)",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": ""
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.40"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.75"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$1.30",
+                          "color": "c_light_red"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 1,
+                      "look": {
+                        "kind": "item",
+                        "id": "mycenacean_hymns",
+                        "glyph": "?",
+                        "color": "c_dark_gray",
+                        "name": "Mycenacean Hymns",
+                        "looks_like": [
+                          "holybook_bible1",
+                          "story_book",
+                          "story_book",
+                          "story_book",
+                          "story_book",
+                          "story_book",
+                          "story_book",
+                          "story_book",
+                          "story_book",
+                          "story_book"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "trade-category:f328a7d89a25f986",
+                      "label": "SEEDS",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "trade-item:89549e35f2d3b804",
+                      "label": "Marloss seed (3)",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": "3"
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "0.53"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "0.03"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.00"
+                        }
+                      ],
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 3,
+                      "look": {
+                        "kind": "item",
+                        "id": "marloss_seed",
+                        "glyph": ".",
+                        "color": "c_cyan",
+                        "name": "Marloss seed"
+                      }
+                    },
+                    {
+                      "id": "trade-category:30751bee58e6a938",
+                      "label": "WOOD SCRAP",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": false,
+                      "selected": false,
+                      "columns": [],
+                      "header": true
+                    },
+                    {
+                      "id": "trade-item:1711144ef27b0aae",
+                      "label": "long stick (1)",
+                      "description": "",
+                      "denial": "",
+                      "enabled": true,
+                      "selectable": true,
+                      "selected": false,
+                      "columns": [
+                        {
+                          "key": "qty",
+                          "label": "amt",
+                          "value": ""
+                        },
+                        {
+                          "key": "weight",
+                          "label": "weight",
+                          "value": "3.40"
+                        },
+                        {
+                          "key": "vol",
+                          "label": "vol",
+                          "value": "2.50"
+                        },
+                        {
+                          "key": "price",
+                          "label": "unit price",
+                          "value": "$0.00"
+                        }
+                      ],
+                      "color": "c_yellow",
+                      "mark": {
+                        "glyph": "-"
+                      },
+                      "selected_count": 0,
+                      "minimum_count": 0,
+                      "max": 1,
+                      "look": {
+                        "kind": "item",
+                        "id": "stick_long",
+                        "glyph": "/",
+                        "color": "c_brown",
+                        "name": "long stick",
+                        "looks_like": [
+                          "stick"
+                        ]
+                      }
+                    }
+                  ],
+                  "total": 8,
+                  "selection": "count",
+                  "filterable": true
+                }
+              },
+              {
+                "id": "pane:you",
+                "kind": "panel",
+                "title": "Inventory: You",
+                "stats": [
+                  {
+                    "key": "weight",
+                    "label": "weight",
+                    "value": "0.00",
+                    "max": "45.00",
+                    "unit": "kg",
+                    "tone": "good"
+                  },
+                  {
+                    "key": "volume",
+                    "label": "vol",
+                    "value": "0.00",
+                    "max": "0.00",
+                    "unit": "L",
+                    "tone": "good"
+                  }
+                ],
+                "child": {
+                  "id": "list:you",
+                  "kind": "list",
+                  "affordances": [
+                    "trade:set_count",
+                    "trade:filter"
+                  ],
+                  "columns": [],
+                  "rows": [],
+                  "total": 0,
+                  "selection": "count",
+                  "filterable": true
+                }
+              }
+            ]
+          }
+        },
+        "affordances": [
           {
-            "key": "weight",
-            "label": "Weight",
-            "value": "1.17",
-            "max": "45.00",
-            "unit": "kg"
+            "id": "trade:set_count",
+            "label": "amt",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "trade:panes"
+              },
+              "count": {
+                "min": 0
+              }
+            },
+            "expect": "boundary"
           },
           {
-            "key": "volume",
-            "label": "Volume",
-            "value": "0.03",
-            "max": "15.00",
-            "unit": "L"
+            "id": "trade:filter",
+            "label": "Filter",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {},
+              "pane": {
+                "component_id": "trade:panes"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "trade:confirm",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "role": "confirm",
+            "expect": "screen"
+          },
+          {
+            "id": "trade:cancel",
+            "label": "Cancel trading",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "SWITCH_LISTS",
+            "label": "Switch lists",
+            "keys": [
+              "TAB"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Back",
+            "keys": [
+              "PPAGE",
+              "NUMPAD_6",
+              "<"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "More",
+            "keys": [
+              "NPAGE",
+              ">"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Move cursor up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Move cursor down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Remove item from trade",
+            "keys": [
+              "LEFT",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Add item to trade",
+            "keys": [
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RESET_FILTER",
+            "label": "Reset filter",
+            "keys": [
+              "r"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CATEGORY_SELECTION",
+            "label": "Toggle category select",
+            "keys": [
+              ";"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "EXAMINE",
+            "label": "Examine item",
+            "keys": [
+              "e"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "AUTOBALANCE",
+            "label": "Autobalance trade",
+            "keys": [
+              "="
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TOGGLE_ITEM_INFO",
+            "label": "Toggle item description",
+            "keys": [
+              "+"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel trading",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
           }
         ],
-        "child": {
-          "id": "text:pane-player",
-          "kind": "text",
-          "markup": "Free capacity: 43.83 kg, 14.97 L"
+        "focus": {
+          "component_id": "list:npc",
+          "row_id": "trade-item:b1d9f357579cad1e"
+        },
+        "context": "NPC_TRADE"
+      }
+    },
+    {
+      "name": "count set on an item row, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "10"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "trade:set_count",
+          "args": {
+            "row": "trade-item:b1d9f357579cad1e",
+            "count": 1
+          }
         }
       }
     },
     {
-      "name": "trade balance in the trader's favour",
-      "def": "text_component",
+      "name": "count set on an item row, receipt",
+      "def": "submit_result",
       "value": {
-        "id": "message",
-        "kind": "text",
-        "markup": "You'll owe $12.00",
-        "tone": "bad"
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "count set on an item row, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "count set on an item row, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "count set on an item row, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "14",
+          "revision": "11"
+        }
+      }
+    },
+    {
+      "name": "player pane filtered, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:2",
+          "revision": "11"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "trade:filter",
+          "args": {
+            "pane": "pane:you",
+            "text": "__no_match__"
+          }
+        }
+      }
+    },
+    {
+      "name": "player pane filtered, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "player pane filtered, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "player pane filtered, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "player pane filtered, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "15",
+          "revision": "12"
+        }
+      }
+    },
+    {
+      "name": "trade cancelled, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:9"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "trade:cancel"
+        }
+      }
+    },
+    {
+      "name": "trade cancelled, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "trade cancelled, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "trade cancelled, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "trade cancelled, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "17",
+          "revision": "14"
+        }
       }
     }
   ],
@@ -47,10 +751,10 @@
       "name": "balance tone that is a color",
       "def": "text_component",
       "value": {
-        "id": "message",
+        "id": "trade:balance",
         "kind": "text",
-        "markup": "You'll owe $12.00",
-        "tone": "red"
+        "markup": "Credit $0.00",
+        "tone": "c_light_red"
       },
       "why": "tone says good or bad news; colours are the client's"
     }
