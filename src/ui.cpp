@@ -1,6 +1,7 @@
 #include "ui.h"
 #include "client_interaction.h"
 #include "client_presentation.h"
+#include "engine_client_component.h"
 
 #include <algorithm>
 #include <cassert>
@@ -1052,6 +1053,7 @@ void uilist::query( bool loop, int timeout )
     ret = UILIST_WAIT_INPUT;
 
     input_context ctxt = create_main_input_context();
+    const auto screen = engine_client::screen_scope( ctxt );
 
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
 

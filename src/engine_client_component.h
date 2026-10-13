@@ -4,7 +4,6 @@
 #include "engine_client_contract.h"
 
 #include <cstdint>
-#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
@@ -13,8 +12,10 @@
 #include <vector>
 
 class input_context;
+struct input_event;
 
-/// The 0.2 interaction model: a tree of generic components and the affordances valid at a boundary.
+/// The 0.2 interaction model: a stack of screens, each a tree of generic components and the affordances
+/// valid on it.
 namespace engine_client
 {
 
@@ -57,14 +58,10 @@ struct arg_shape {
 
 /// The native input an affordance runs, as the 0.1 operation it stands for. Not on the wire.
 enum class invoke_kind {
-    choose, fill, submit, set_count, set_target, target_candidate, cancel, action, travel, context, pickup, drop,
-    /// The registered action `args.row` names, such as an area of the advanced inventory.
-    row_action,
+    choose, fill, submit, set_count, cancel, action, travel, context, pickup, drop,
+    /// The screen's own loop runs it, from the recorded `invoke` input (see `invoked`).
+    screen,
 };
-
-/// Runs an affordance its screen handles itself, once its arguments match its shape.
-using invoke_handler = std::function < auto( const invoke_args & ) ->
-                       std::expected<command_operation, error >>;
 
 struct affordance {
     std::string id = {};
@@ -78,22 +75,46 @@ struct affordance {
     invoke_kind runs = invoke_kind::action;
     /// The registered action of `action`; the choice of a `choose` without `args.row`.
     std::string target = {};
-    /// When set, runs the affordance in place of `runs`. Not on the wire.
-    invoke_handler handler = {};
 };
+/// The expectation an invoke of `value` carries: its screen's when it takes no `row`, `rows`, `pos` or
+/// `text`, so a held key may queue behind another; the boundary's when it names rows or squares.
+auto scope_of( const affordance &value ) -> expect_scope;
 
 struct list_column {
     std::string key = {};
     std::string label = {};
 };
-struct list_row {
-    game_client::interaction_choice choice = {};
+/// One row of a list. The id is the row's identity on its screen, never its position or its text.
+struct row {
+    std::string id = {};
+    std::string label = {};
+    std::string description = {};
+    std::string denial = {};
+    /// The key that chooses the row natively; empty when it has none.
+    std::string hotkey = {};
+    bool enabled = true;
+    bool selectable = true;
+    bool selected = false;
+    std::vector<game_client::interaction_column> columns = {};
+    bool favorite = false;
+    std::string color = {};
+    std::string key_color = {};
+    std::string markup = {};
+    std::optional<std::string> parent_id = std::nullopt;
+    std::string nest_color = {};
+    std::optional<game_client::interaction_mark> mark = std::nullopt;
+    std::optional<std::uint64_t> selected_count = std::nullopt;
+    std::optional<std::uint64_t> minimum_count = std::nullopt;
+    /// The most a count for the row can be, in its native units; none: the row takes no count.
+    std::optional<std::uint64_t> max = std::nullopt;
     /// A category heading over the rows after it.
     bool header = false;
+    /// What the row stands for, for a client to draw.
+    std::optional<engine_client::look> look = std::nullopt;
 };
 struct list_body {
     std::vector<list_column> columns = {};
-    std::vector<list_row> rows = {};
+    std::vector<row> rows = {};
     std::size_t total = 0;
     std::size_t offset = 0;
     /// `none`, `single`, `multi` or `count`.
@@ -197,7 +218,7 @@ using component_body =
 struct component {
     std::string id = {};
     std::string label = {};
-    /// Ids of the interaction's affordances that act on this component.
+    /// Ids of the screen's affordances that act on this component.
     std::vector<std::string> affordances = {};
     component_body body = text_body{};
     /// A split's parts; the one child of tabs and panel.
@@ -210,40 +231,124 @@ auto find_component( const component &root, std::string_view id ) -> const compo
 /// The ids an affordance's `row` may name in `value`; nullopt when it holds only some of them (a paged list).
 auto row_ids( const component &value ) -> std::optional<std::vector<std::string>>;
 
-struct interaction_view {
-    /// Empty at the map, where a submit expects no schema.
-    std::string schema_id = {};
+/// Children moved in; a braced list would copy whole subtrees.
+template<typename... Parts>
+auto children_of( Parts &&... parts ) -> std::vector<component>
+{
+    auto result = std::vector<component> {};
+    result.reserve( sizeof...( parts ) );
+    ( result.push_back( std::forward<Parts>( parts ) ), ... );
+    return result;
+}
+
+struct list_options {
+    std::string id = {};
+    std::vector<row> rows = {};
+    /// The rows of the whole list; none: `rows` are all of it.
+    std::optional<std::size_t> total = std::nullopt;
+    /// How many rows of the list come before `rows`.
+    std::size_t offset = 0;
+    /// Empty: `none` when no row can be picked, `multi` when rows are marked or counted, else `single`.
+    std::string selection = {};
+    /// The affordance that picks a row.
+    std::string activate = {};
+};
+/// A list over `rows`, with the column header they use.
+auto list( list_options options ) -> component;
+
+struct panel_options {
+    std::string id = {};
+    std::string title = {};
+    std::string subtitle = {};
+    std::vector<panel_stat> stats = {};
+    std::string filter = {};
+    std::optional<component> child = std::nullopt;
+};
+auto panel( panel_options options ) -> component;
+
+struct split_options {
+    std::string id = {};
+    /// `peers` or `detail`.
+    std::string relation = "peers";
+    std::string active = {};
+    std::vector<component> children = {};
+};
+auto split( split_options options ) -> component;
+
+struct tabs_options {
+    std::string id = {};
+    std::vector<tab_entry> tabs = {};
+    /// The affordance that switches tab.
+    std::string select = {};
+    component child = {};
+};
+auto tabs( tabs_options options ) -> component;
+
+struct invoke_options {
+    std::string id = {};
+    std::string label = {};
+    arg_shape args = {};
+    std::vector<std::string> keys = {};
+    bool enabled = true;
+    std::string denial = {};
+    std::string role = {};
+};
+/// An affordance the screen runs itself: its loop reads the invoke with `invoked`.
+auto invoke_affordance( invoke_options options ) -> affordance;
+
+/// The affordance a client invoked in the input read that just returned, with its arguments.
+struct invoked_affordance {
+    std::string affordance_id = {};
+    game_client::interaction_arguments args = {};
+};
+auto invoked( const input_event &event ) -> std::optional<invoked_affordance>;
+
+/// What a screen publishes. A provider fills everything but `screen_id`, `role` and `context`, which
+/// come from the screen's scope; `root` is absent for a screen that has no components yet.
+struct screen_view {
+    std::string screen_id = {};
+    /// `map`, `screen` or `dialog`.
+    std::string role = "dialog";
     std::string context = {};
     std::string title = {};
-    component root = {};
+    std::optional<component> root = std::nullopt;
     std::vector<affordance> affordances = {};
     std::string focus_component = {};
     std::string focus_row = {};
     int refresh_ms = 0;
 };
 
-using view_provider = std::function < auto( const boundary_state & ) -> interaction_view >;
+/// A const read of the screen's model state: it changes nothing and draws nothing.
+using view_provider = std::function < auto( const boundary_state & ) -> screen_view >;
 
-/// While alive, the screen waiting on `context` publishes its own components and affordances in
-/// place of the generic ones; the registered actions still follow them. Consulted only while
-/// `context` is the active input context, so the provider and its handlers may refer to the
-/// screen's state.
-class view_scope
-{
-    public:
-        view_scope( const input_context &context, view_provider provider );
-        ~view_scope();
-        view_scope( const view_scope & ) = delete;
-        auto operator=( const view_scope & ) -> view_scope & = delete; // *NOPAD*
-
-    private:
-        const input_context *context;
+struct screen_options {
+    /// `screen` or `dialog`; the map is not a scope.
+    std::string role = "dialog";
+    /// Absent: the generic path describes the screen from its 0.1 interaction.
+    view_provider view = {};
 };
 
-/// The components and affordances of a boundary; nullopt where it offers nothing. At the map, a
-/// world `map` root with the map's actions.
-auto interaction_components( const boundary_state &state ) -> std::optional<interaction_view>;
-/// The `interaction_boundary` value of the 0.2 schema.
+/// Alive for as long as the screen is open, not only while it reads input. Scopes nest as screens do,
+/// and the live ones make up the interaction stack. Its serial names the screen: new when the screen
+/// is reopened.
+class screen_scope
+{
+    public:
+        screen_scope( const input_context &context, screen_options options = {} );
+        ~screen_scope();
+        screen_scope( const screen_scope & ) = delete;
+        auto operator=( const screen_scope & ) -> screen_scope & = delete; // *NOPAD*
+
+    private:
+        std::uint64_t serial_ = 0;
+};
+
+/// The open screens, outermost first. The map is the first while the game runs, and a view that reads
+/// input without a scope is the last, with a new id on every read. Only the last has affordances.
+auto interaction_stack( const boundary_state &state ) -> std::vector<screen_view>;
+/// The last of `interaction_stack`; the screen input goes to.
+auto top_screen( const boundary_state &state ) -> screen_view;
+/// The `interaction_boundary` value of the 0.2 schema: the 0.1 members and the `stack`.
 auto serialize_interaction_boundary( const boundary_state &state ) -> std::string;
 
 } // namespace engine_client

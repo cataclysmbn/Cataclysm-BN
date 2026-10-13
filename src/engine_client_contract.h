@@ -44,6 +44,8 @@ enum class error {
     invalid_arguments,
     /// 0.2: the boundary offers no affordance with the invoked id.
     unknown_affordance,
+    /// 0.2: a command expecting a screen found another on top of the stack.
+    stale_screen,
 };
 auto error_name( error value ) -> std::string;
 /// The error in words for a player, localized.
@@ -91,6 +93,8 @@ auto to_bubble( const position &target, const bubble_frame &frame )
 /// What the player may do at one native input boundary. The numeric native input_id stays internal.
 struct boundary_state {
     std::string id = {};
+    /// The session epoch the boundary belongs to; names the map screen.
+    std::string epoch = {};
     readiness ready = {};
     std::vector<action> actions = {};
     std::optional<game_client::interaction_snapshot> interaction = std::nullopt;
@@ -183,19 +187,6 @@ auto item_operation_of( const input_event &event ) -> std::optional<item_operati
 auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>;
 /// Starts the native pickup or drop activity for `operation`; false when its row is gone or holds less.
 auto run_item_operation( const item_operation &operation ) -> bool;
-struct expectation {
-    counter revision = 0;
-    std::string boundary_id = {};
-    /// Null exactly when the boundary has no interaction.
-    std::optional<std::string> schema_id = std::nullopt;
-};
-using command_operation =
-    std::variant<semantic_operation, registered_action, travel_operation, item_operation>;
-struct command_request {
-    std::string epoch = {};
-    expectation expect = {};
-    command_operation operation;
-};
 struct invoke_row {
     std::string id = {};
     std::optional<std::uint64_t> count = std::nullopt;
@@ -209,16 +200,38 @@ struct invoke_args {
     std::optional<position> pos = std::nullopt;
     std::optional<std::string> pane = std::nullopt;
 };
-/// The one 0.2 operation: an affordance of the boundary, by id.
+/// The one 0.2 operation: an affordance of the top screen, by id. It also stands for an affordance the
+/// screen runs itself, which reaches the screen's loop as a recorded `invoke` input.
 struct invoke_operation {
     std::string affordance_id = {};
     invoke_args args = {};
 };
-/// The native operation an invoke stands for at `state`: `unknown_affordance` when the boundary offers
+/// What a command is conditional on. A 0.1 operation expects the boundary, its revision and the schema of
+/// its interaction; an invoke expects either `screen_id` alone or the boundary and its revision, as the
+/// scope of its affordance says (`scope_of`), and names no schema.
+struct expectation {
+    counter revision = 0;
+    std::string boundary_id = {};
+    /// Null exactly when the boundary has no interaction.
+    std::optional<std::string> schema_id = std::nullopt;
+    /// Set: the command expects this screen on top of the stack, and `revision` and `boundary_id` are unused.
+    std::optional<std::string> screen_id = std::nullopt;
+};
+/// Which expectation an invoke of an affordance carries; the engine assigns it by the arguments.
+enum class expect_scope { screen, boundary };
+auto scope_name( expect_scope scope ) -> std::string;
+using command_operation = std::variant<semantic_operation, registered_action, travel_operation,
+      item_operation, invoke_operation>;
+struct command_request {
+    std::string epoch = {};
+    expectation expect = {};
+    command_operation operation;
+};
+/// The native operation an invoke stands for at `state`: `unknown_affordance` when the top screen offers
 /// no such affordance, `invalid_arguments` when `args` does not match its shape or names a row the
 /// component does not hold, `not_ready` when readiness refuses it, `validation_failed` when it is
-/// disabled. Pure; validation of the result
-/// against the live widget is the lifecycle's.
+/// disabled. Pure; validation of the result against the live widget is the lifecycle's. An affordance its
+/// screen runs itself resolves to the invoke.
 auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke )
 -> std::expected<command_operation, error>;
 enum class command_stage { received, validated, executing, rejected, completed, interrupted };
@@ -269,6 +282,8 @@ class command_lifecycle
         counter next_command_ = 0;
         std::optional<command_request> request_ = std::nullopt;
         std::optional<command_result> result_ = std::nullopt;
+        /// The boundary the command was validated at; it completes at the next distinct one.
+        std::string boundary_ = {};
 };
 
 auto serialize_clock( const clock_point &at ) -> std::string;

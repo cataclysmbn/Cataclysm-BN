@@ -1,6 +1,7 @@
 #include "string_input_popup.h"
 #include "client_interaction.h"
 #include "client_presentation.h"
+#include "engine_client_component.h"
 
 #include <cctype>
 #include <optional>
@@ -385,6 +386,9 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
     _canceled = false;
     _confirmed = false;
+    // A drawing-only call reads no input, so it is no screen of its own.
+    auto screen = std::optional<engine_client::screen_scope> {};
+    if( !draw_only ) { screen.emplace( *ctxt ); }
     do {
         if( _position < 0 ) {
             _position = 0;

@@ -480,16 +480,40 @@ auto to_json( const affordance &value ) -> json
     if( !value.denial.empty() ) { result["denial"] = value.denial; }
     if( !value.role.empty() ) { result["role"] = value.role; }
     if( auto args = to_json( value.args ); !args.empty() ) { result["args"] = std::move( args ); }
+    result["expect"] = scope_name( scope_of( value ) );
     return result;
 }
 /// A 0.1 choice without the members components replace.
-auto to_json( const list_row &row ) -> json
+auto to_json( const row &value ) -> json
 {
-    auto result = to_json( row.choice );
-    for( const auto *member : {"pane_id", "area_id", "storage_kind", "action_id", "editor", "available_count"} ) { result.erase( member ); }
+    auto result = json{{"id", value.id}, {"label", value.label}, {"description", value.description},
+        {"denial", value.denial}};
+    if( !value.hotkey.empty() ) { result["hotkey"] = value.hotkey; }
+    result["enabled"] = value.enabled;
+    result["selectable"] = value.selectable;
+    result["selected"] = value.selected;
+    result["columns"] = json::array();
+    for( const auto &column : value.columns ) {
+        auto entry = json{{"key", column.key}, {"label", column.label}, {"value", column.value}};
+        if( !column.color.empty() ) { entry["color"] = column.color; }
+        result["columns"].push_back( std::move( entry ) );
+    }
+    if( value.favorite ) { result["favorite"] = true; }
+    if( !value.color.empty() ) { result["color"] = value.color; }
+    if( !value.key_color.empty() ) { result["key_color"] = value.key_color; }
+    if( !value.markup.empty() ) { result["markup"] = value.markup; }
+    if( value.parent_id ) { result["parent_id"] = *value.parent_id; }
+    if( !value.nest_color.empty() ) { result["nest_color"] = value.nest_color; }
+    if( value.mark ) {
+        result["mark"] = {{"glyph", value.mark->glyph}};
+        if( !value.mark->color.empty() ) { result["mark"]["color"] = value.mark->color; }
+    }
+    if( value.selected_count ) { result["selected_count"] = *value.selected_count; }
+    if( value.minimum_count ) { result["minimum_count"] = *value.minimum_count; }
     // Counts are in the row's native units, up to what it holds.
-    if( row.choice.available_count ) { result["max"] = *row.choice.available_count; }
-    if( row.header ) { result["header"] = true; }
+    if( value.max ) { result["max"] = *value.max; }
+    if( value.header ) { result["header"] = true; }
+    if( value.look ) { result["look"] = to_json( *value.look ); }
     return result;
 }
 auto to_json( const component &value, const bubble_frame &frame ) -> json;
@@ -498,7 +522,7 @@ auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
     auto columns = json::array();
     for( const auto &column : body.columns ) { columns.push_back( {{"key", column.key}, {"label", column.label}} ); }
     auto rows = json::array();
-    for( const auto &row : body.rows ) { rows.push_back( to_json( row ) ); }
+    for( const auto &row : body.rows | std::views::take( maximum_rows ) ) { rows.push_back( to_json( row ) ); }
     auto result = json{{"columns", std::move( columns )}, {"rows", std::move( rows )}, {"total", body.total}};
     if( body.offset != 0 ) { result["offset"] = body.offset; }
     result["selection"] = body.selection;
@@ -617,13 +641,11 @@ auto to_json( const component &value, const bubble_frame &frame ) -> json
     }
     return result;
 }
-auto to_json( const interaction_view &view, const bubble_frame &frame ) -> json
+auto to_json( const screen_view &view, const bubble_frame &frame ) -> json
 {
-    auto result = json::object();
-    if( !view.schema_id.empty() ) { result["schema_id"] = view.schema_id; }
-    if( !view.context.empty() ) { result["context"] = view.context; }
-    result["title"] = view.title;
-    result["root"] = to_json( view.root, frame );
+    auto result = json{{"screen_id", view.screen_id}, {"role", view.role}};
+    if( !view.title.empty() ) { result["title"] = view.title; }
+    result["root"] = view.root ? to_json( *view.root, frame ) : json( nullptr );
     result["affordances"] = json::array();
     for( const auto &entry : view.affordances ) { result["affordances"].push_back( to_json( entry ) ); }
     if( !view.focus_component.empty() || !view.focus_row.empty() ) {
@@ -632,6 +654,7 @@ auto to_json( const interaction_view &view, const bubble_frame &frame ) -> json
         if( !view.focus_row.empty() ) { focus["row_id"] = view.focus_row; }
     }
     if( view.refresh_ms > 0 ) { result["refresh_ms"] = view.refresh_ms; }
+    if( !view.context.empty() ) { result["context"] = view.context; }
     return result;
 }
 auto to_json( const changes &delta ) -> json
@@ -739,10 +762,9 @@ auto serialize_clock( const clock_point &at ) -> std::string { return to_json( a
 auto serialize_boundary( const boundary_state &state ) -> std::string { return to_json( state ).dump(); }
 auto serialize_interaction_boundary( const boundary_state &state ) -> std::string
 {
-    const auto view = interaction_components( state );
-    auto result = json{{"boundary_id", state.id},
-        {"readiness", to_json( state.ready )}};
-    result["interaction"] = view ? to_json( *view, state.frame ) : json( nullptr );
+    auto result = to_json( state );
+    result["stack"] = json::array();
+    for( const auto &screen : interaction_stack( state ) ) { result["stack"].push_back( to_json( screen, state.frame ) ); }
     return result.dump();
 }
 auto serialize_choices( const choices_page &page ) -> std::string

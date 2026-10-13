@@ -8,6 +8,7 @@
 #include "cached_options.h"
 #include "catacharset.h"
 #include "client_interaction.h"
+#include "engine_client_component.h"
 #include "json.h"
 #include "ime.h"
 #include "input.h"
@@ -336,6 +337,7 @@ query_popup::result query_popup::query_once()
 
     auto ctxt = input_context( category );
     register_input_actions( ctxt );
+    const auto screen = engine_client::screen_scope( ctxt );
 
     result res;
     // Assign outside construction of `res` to ensure execution order

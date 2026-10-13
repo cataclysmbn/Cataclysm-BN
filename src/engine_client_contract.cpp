@@ -56,8 +56,14 @@ auto live_boundary_id( const std::string &epoch ) -> std::string
 }
 auto validate_shape( const command_request &request ) -> bool
 {
-    if( !valid_id( request.epoch ) || !valid_id( request.expect.boundary_id ) ||
-        ( request.expect.schema_id && !valid_id( *request.expect.schema_id ) ) ) { return false; }
+    const auto &expect = request.expect;
+    // A screen expectation names no boundary, and an invoke names no schema.
+    if( !valid_id( request.epoch ) ||
+        ( expect.screen_id ? !valid_id( *expect.screen_id ) :
+          !valid_id( expect.boundary_id ) || ( expect.schema_id && !valid_id( *expect.schema_id ) ) ) ) { return false; }
+    if( const auto invoke = std::get_if<invoke_operation>( &request.operation ) ) {
+        return valid_id( invoke->affordance_id );
+    }
     const auto semantic = std::get_if<semantic_operation>( &request.operation );
     if( semantic == nullptr ) {
         if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
@@ -126,6 +132,8 @@ auto error_name( const error value ) -> std::string
             return "invalid_arguments";
         case error::unknown_affordance:
             return "unknown_affordance";
+        case error::stale_screen:
+            return "stale_screen";
     }
     return "validation_failed";
 }
@@ -160,6 +168,8 @@ auto error_text( const error value ) -> std::string
             return _( "That needs other details." );
         case error::unknown_affordance:
             return _( "That is not possible on this screen." );
+        case error::stale_screen:
+            return _( "That screen has closed." );
     }
     return _( "Not possible here." );
 }
@@ -368,6 +378,7 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
     auto result = boundary_state{};
     result.ready = options.ready;
     result.id = live_boundary_id( options.epoch );
+    result.epoch = options.epoch;
     result.frame = current_bubble_frame();
     for( const auto &entry : game_client::available_input_actions() ) {
         auto keys = entry.bindings
@@ -464,7 +475,7 @@ auto read_choices( const choices_request &request, const std::string &epoch )
 namespace
 {
 /// Every member of the shape is supplied and no other; named rows are rows of their component.
-auto matches_shape( const interaction_view &view, const arg_shape &shape,
+auto matches_shape( const screen_view &view, const arg_shape &shape,
                     const invoke_args &args ) -> bool
 {
     const auto present = []( const auto & wanted, const auto & given ) { return wanted.has_value() == given.has_value(); };
@@ -474,10 +485,13 @@ auto matches_shape( const interaction_view &view, const arg_shape &shape,
         !present( shape.pane, args.pane ) ) {
         return false;
     }
+    const auto component_in = [&]( const std::string & component_id ) -> const component * { // *NOPAD*
+        return view.root ? find_component( *view.root, component_id ) : nullptr;
+    };
     // The avatar's rows and a paged list's unread rows are checked natively.
     const auto holds = [&]( const std::string & component_id, const std::string & row ) {
         if( component_id == ground_rows || component_id == inventory_rows ) { return true; }
-        const auto *const found = find_component( view.root, component_id );
+        const auto *const found = component_in( component_id );
         if( found == nullptr ) { return false; }
         const auto ids = row_ids( *found );
         return !ids || std::ranges::contains( *ids, row );
@@ -492,7 +506,7 @@ auto matches_shape( const interaction_view &view, const arg_shape &shape,
                          ( shape.count->max && *args.count > *shape.count->max ) ) ) { return false; }
     if( shape.text && args.text->size() > maximum_inline_bytes ) { return false; }
     if( shape.pane ) {
-        const auto *const parent = find_component( view.root, shape.pane->component_id );
+        const auto *const parent = component_in( shape.pane->component_id );
         if( parent == nullptr || !find_component( *parent, *args.pane ) ) { return false; }
     }
     return true;
@@ -501,44 +515,43 @@ auto semantic_of( const game_client::interaction_operation kind ) -> semantic_op
 {
     return { .command = { .operation = kind } };
 }
-} // namespace
 
-auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke )
--> std::expected<command_operation, error>
+struct resolve_options {
+    const boundary_state &state;
+    const screen_view &top;
+    const affordance &found;
+    const invoke_args &args;
+};
+/// The native operation the invoke of an offered affordance stands for.
+auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_operation, error>
 {
-    const auto view = interaction_components( state );
-    // Before the game offers anything, as the 0.1 lifecycle answers.
-    if( !view ) { return std::unexpected( error::not_ready ); }
-    const auto found = std::ranges::find( view->affordances, invoke.affordance_id, &affordance::id );
-    if( found == view->affordances.end() ) { return std::unexpected( error::unknown_affordance ); }
-    const auto &args = invoke.args;
-    if( !matches_shape( *view, found->args, args ) ) { return std::unexpected( error::invalid_arguments ); }
+    const auto &state = opts.state;
+    const auto &found = opts.found;
+    const auto &args = opts.args;
+    if( !matches_shape( opts.top, found.args, args ) ) { return std::unexpected( error::invalid_arguments ); }
     // Readiness gates as in the 0.1 lifecycle; `enabled` is the screen's own availability.
-    const auto registered = !found->handler && (
-                                found->runs == invoke_kind::action || found->runs == invoke_kind::row_action ||
-                                found->runs == invoke_kind::travel ||
-                                found->runs == invoke_kind::context || found->runs == invoke_kind::pickup ||
-                                found->runs == invoke_kind::drop );
+    const auto registered = found.runs == invoke_kind::action || found.runs == invoke_kind::travel ||
+                            found.runs == invoke_kind::context || found.runs == invoke_kind::pickup ||
+                            found.runs == invoke_kind::drop;
     if( !( registered ? state.ready.accepts_registered_actions :
            state.ready.accepts_interaction_commands ) ) {
         return std::unexpected( error::not_ready );
     }
-    if( !found->enabled ) { return std::unexpected( error::validation_failed ); }
-    if( found->handler ) { return found->handler( args ); }
+    if( !found.enabled ) { return std::unexpected( error::validation_failed ); }
     using game_client::interaction_operation;
-    switch( found->runs ) {
+    switch( found.runs ) {
         case invoke_kind::choose: {
             auto result = semantic_of( interaction_operation::choose );
-            result.command.target_id = args.row.value_or( found->target );
+            result.command.target_id = args.row.value_or( found.target );
             return result;
         }
         case invoke_kind::fill:
         case invoke_kind::submit: {
             auto result = semantic_of( interaction_operation::fill );
-            const auto &field = found->args.text->field_id;
+            const auto &field = found.args.text->field_id;
             result.command.target_id = field.empty() ? *args.row : field;
             result.command.value = *args.text;
-            result.command.submit = found->runs == invoke_kind::submit;
+            result.command.submit = found.runs == invoke_kind::submit;
             return result;
         }
         case invoke_kind::set_count: {
@@ -547,45 +560,59 @@ auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke
             result.command.count = static_cast<std::uint64_t>( *args.count );
             return result;
         }
-        case invoke_kind::set_target: {
-            auto result = semantic_of( interaction_operation::set_target );
-            result.target = *args.pos;
-            return result;
-        }
-        case invoke_kind::target_candidate: {
-            const auto &candidates = state.interaction->target->candidates;
-            const auto candidate = std::ranges::find( candidates, *args.row,
-                                   &game_client::interaction_target_candidate::id );
-            if( candidate == candidates.end() ) { return std::unexpected( error::invalid_arguments ); }
-            const auto &at = candidate->position;
-            auto result = semantic_of( interaction_operation::set_target );
-            result.command.target_id = candidate->id;
-            result.target = position{ .dim = state.frame.dim, .x = at.x + state.frame.x, .y = at.y + state.frame.y, .z = at.z };
-            return result;
-        }
         case invoke_kind::cancel:
             return semantic_of( interaction_operation::cancel );
         case invoke_kind::action:
-            return registered_action{ .id = found->target };
-        case invoke_kind::row_action: {
-            // The row is the action; a closed one is refused as its screen refuses it.
-            const auto *const list = find_component( view->root, found->args.row->component_id );
-            const auto *const body = list ? std::get_if<list_body>( &list->body ) : nullptr;
-            const auto open = body && std::ranges::any_of( body->rows, [&]( const auto & row ) {
-                return row.choice.id == *args.row && row.choice.enabled;
-            } );
-            if( !open ) { return std::unexpected( error::validation_failed ); }
-            return registered_action{ .id = *args.row };
-        }
+            return registered_action{ .id = found.target };
         case invoke_kind::travel:
         case invoke_kind::context:
-            return travel_operation{ .target = *args.pos, .button = found->runs == invoke_kind::travel ? "left" : "right" };
+            return travel_operation{ .target = *args.pos, .button = found.runs == invoke_kind::travel ? "left" : "right" };
         case invoke_kind::pickup:
         case invoke_kind::drop:
-            return item_operation{ .drop = found->runs == invoke_kind::drop, .item_id = *args.row,
+            return item_operation{ .drop = found.runs == invoke_kind::drop, .item_id = *args.row,
                                    .count = static_cast<std::uint64_t>( *args.count ) };
+        case invoke_kind::screen:
+            return invoke_operation{ .affordance_id = found.id, .args = args };
     }
     return std::unexpected( error::unknown_affordance );
+}
+
+/// The invoke's arguments as the screen's loop reads them, with the position in the bubble; nullopt
+/// when the position is in another dimension or outside the native range.
+auto arguments_of( const invoke_args &args, const bubble_frame &frame )
+-> std::optional<game_client::interaction_arguments>
+{
+    auto result = game_client::interaction_arguments{ .row = args.row, .count = args.count, .text = args.text, .pane = args.pane };
+    if( args.rows ) {
+        result.rows = *args.rows | std::views::transform( []( const invoke_row & row ) {
+            return game_client::interaction_row_count{ .id = row.id, .count = row.count };
+        } ) | std::ranges::to<std::vector>();
+    }
+    if( args.pos ) {
+        result.position = to_bubble( *args.pos, frame );
+        if( !result.position ) { return std::nullopt; }
+    }
+    return result;
+}
+} // namespace
+
+auto scope_name( const expect_scope scope ) -> std::string
+{
+    return scope == expect_scope::screen ? "screen" : "boundary";
+}
+
+auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke )
+-> std::expected<command_operation, error>
+{
+    const auto top = top_screen( state );
+    const auto found = std::ranges::find( top.affordances, invoke.affordance_id, &affordance::id );
+    if( found == top.affordances.end() ) {
+        // Before the game offers anything, as the 0.1 lifecycle answers.
+        const auto offers = state.ready.accepts_interaction_commands ||
+                            state.ready.accepts_registered_actions;
+        return std::unexpected( offers ? error::unknown_affordance : error::not_ready );
+    }
+    return resolve_affordance( { .state = state, .top = top, .found = *found, .args = invoke.args } );
 }
 
 command_lifecycle::command_lifecycle( std::string epoch, const command_authority &authority ) :
@@ -629,16 +656,42 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
     };
     const auto &request = *request_;
     if( request.epoch != epoch_ || at.epoch != epoch_ ) { return reject( error::stale_epoch ); }
-    if( request.expect.revision != at.revision ) { return reject( error::stale_revision ); }
-    if( request.expect.boundary_id != current.id || current.id != live_boundary_id( epoch_ ) ) {
-        return reject( error::stale_boundary );
+    const auto &expect = request.expect;
+    // The native operation to run: the request's own, or the one an invoke resolves to.
+    auto operation = request.operation;
+    auto top = std::optional<screen_view> {};
+    if( const auto invoke = std::get_if<invoke_operation>( &request.operation ) ) {
+        top = top_screen( current );
+        const auto found = std::ranges::find( top->affordances, invoke->affordance_id, &affordance::id );
+        // A screen expectation holds while its screen is on top, however the boundary has moved since.
+        if( expect.screen_id ) {
+            if( *expect.screen_id != top->screen_id ) { return reject( error::stale_screen ); }
+        } else {
+            if( expect.revision != at.revision ) { return reject( error::stale_revision ); }
+            if( expect.boundary_id != current.id || current.id != live_boundary_id( epoch_ ) ) {
+                return reject( error::stale_boundary );
+            }
+        }
+        if( found == top->affordances.end() ) { return reject( error::unknown_affordance ); }
+        if( ( scope_of( *found ) == expect_scope::screen ) != expect.screen_id.has_value() ) {
+            return reject( error::invalid_arguments );
+        }
+        auto native = resolve_affordance( { .state = current, .top = *top, .found = *found, .args = invoke->args } );
+        if( !native ) { return reject( native.error() ); }
+        operation = std::move( *native );
+    } else {
+        if( expect.screen_id ) { return reject( error::invalid_arguments ); }
+        if( expect.revision != at.revision ) { return reject( error::stale_revision ); }
+        if( expect.boundary_id != current.id || current.id != live_boundary_id( epoch_ ) ) {
+            return reject( error::stale_boundary );
+        }
+        const auto live_schema = current.interaction ? std::optional{current.interaction->schema_id} :
+                                 std::nullopt;
+        if( expect.schema_id != live_schema ) { return reject( error::stale_interaction_schema ); }
     }
-    const auto live_schema = current.interaction ? std::optional{current.interaction->schema_id} :
-                             std::nullopt;
-    if( request.expect.schema_id != live_schema ) { return reject( error::stale_interaction_schema ); }
     const auto permissions = authority_.current_permissions();
     auto resolved = std::expected<input_event, std::string> { input_event{} };
-    if( const auto semantic = std::get_if<semantic_operation>( &request.operation ) ) {
+    if( const auto semantic = std::get_if<semantic_operation>( &operation ) ) {
         if( !permissions.accepts_interaction_commands || !current.interaction ) { return reject( error::not_ready ); }
         auto command = semantic->command;
         command.input_id = game_client::current_input_id();
@@ -649,7 +702,8 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         }
         auto checked = game_client::resolve_checked_interaction( {
             .command = command,
-            .expected_schema = *request.expect.schema_id,
+            // An invoke was matched to its screen already and carries no schema.
+.expected_schema = expect.schema_id ? std::optional<std::string_view>{*expect.schema_id} : std::nullopt,
 .target_space = semantic->target ? std::optional<std::string_view>{current_bubble_frame().omt ? "omt" : "bubble_ms"} : std::nullopt,
         } );
         if( !checked ) {
@@ -661,14 +715,14 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         }
         resolved->type = input_event_t::interaction;
         resolved->interaction = std::move( *checked );
-    } else if( const auto travel = std::get_if<travel_operation>( &request.operation ) ) {
+    } else if( const auto travel = std::get_if<travel_operation>( &operation ) ) {
         if( !permissions.accepts_registered_actions ||
             game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
         const auto click = travel_click( *travel );
         if( !click ) { return reject( error::validation_failed, _( "Travel rejected: that square is outside the map window the engine can resolve." ) ); }
         resolved = game_client::resolve_input_command( *click, screen_size );
         if( !resolved ) { return reject( error::validation_failed ); }
-    } else if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
+    } else if( const auto item = std::get_if<item_operation>( &operation ) ) {
         if( !permissions.accepts_registered_actions ||
             game_client::active_input_context().category != "DEFAULTMODE" ||
             get_avatar().is_dead_state() ) { return reject( error::not_ready ); }
@@ -678,15 +732,29 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
                            _( "There are not that many of that item here to pick up." ) );
         }
         resolved = item_operation_event( *item );
+    } else if( const auto screen = std::get_if<invoke_operation>( &operation ) ) {
+        // An affordance the screen runs itself reaches its loop as a recorded input.
+        if( !permissions.accepts_interaction_commands ) { return reject( error::not_ready ); }
+        auto arguments = arguments_of( screen->args, current_bubble_frame() );
+        if( !arguments ) { return reject( error::validation_failed ); }
+        resolved->type = input_event_t::interaction;
+        // The invoke names no schema: the screen's context stands in, so a recording says where it was made.
+        resolved->interaction = game_client::interaction_event{
+            .operation = game_client::interaction_operation::invoke,
+            .schema_id = top->context.empty() ? top->role : top->context,
+            .target_id = screen->affordance_id,
+            .arguments = std::move( *arguments ),
+        };
     } else {
         if( !permissions.accepts_registered_actions ) { return reject( error::not_ready ); }
         auto native = game_client::input_command{};
-        native.action = std::get<registered_action>( request.operation ).id;
+        native.action = std::get<registered_action>( operation ).id;
         native.input_id = game_client::current_input_id();
         resolved = game_client::resolve_input_command( native, screen_size );
         if( !resolved ) { return reject( error::validation_failed ); }
     }
     result_->stage = command_stage::validated;
+    boundary_ = current.id;
     return std::move( *resolved );
 }
 auto command_lifecycle::execution_started() -> std::expected<void, error>
@@ -699,7 +767,7 @@ auto command_lifecycle::complete_at_boundary( const clock_point &at, const bound
 -> std::expected<void, error>
 {
     if( !result_ || result_->stage != command_stage::executing || !request_ ||
-        current.id == request_->expect.boundary_id ) {
+        current.id == boundary_ ) {
         return std::unexpected( error::invalid_lifecycle );
     }
     if( at.epoch != epoch_ ) { return std::unexpected( error::stale_epoch ); }
