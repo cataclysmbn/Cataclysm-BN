@@ -178,8 +178,10 @@ auto schema_for( const interaction_snapshot &snapshot,
         hash.add( choice.enabled ? "enabled" : "disabled" );
         hash.add( choice.selectable ? "selectable" : "blocked" );
         for( const auto &column : choice.columns ) {
+            hash.add( column.key );
             hash.add( column.label );
             hash.add( column.value );
+            hash.add( column.color );
         }
         if( choice.editor ) {
             hash.add( choice.editor->type );
@@ -799,11 +801,26 @@ auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::strin
         json.start_array();
         for( const auto &column : choice.columns ) {
             json.start_object();
+            json.member( "key", column.key );
             json.member( "label", column.label );
             json.member( "value", column.value );
+            if( !column.color.empty() ) { json.member( "color", column.color ); }
             json.end_object();
         }
         json.end_array();
+        if( choice.favorite ) { json.member( "favorite", true ); }
+        if( !choice.color.empty() ) { json.member( "color", choice.color ); }
+        if( !choice.key_color.empty() ) { json.member( "key_color", choice.key_color ); }
+        if( !choice.markup.empty() ) { json.member( "markup", choice.markup ); }
+        if( choice.parent_id ) { json.member( "parent_id", *choice.parent_id ); }
+        if( !choice.nest_color.empty() ) { json.member( "nest_color", choice.nest_color ); }
+        if( choice.mark ) {
+            json.member( "mark" );
+            json.start_object();
+            json.member( "glyph", choice.mark->glyph );
+            if( !choice.mark->color.empty() ) { json.member( "color", choice.mark->color ); }
+            json.end_object();
+        }
         if( choice.editor ) {
             json.member( "editor" );
             json.start_object();

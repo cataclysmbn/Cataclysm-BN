@@ -329,6 +329,7 @@ class inventory_column
             return selected_index;
         }
 
+        auto is_multiselect() const -> bool { return multiselect; }
         void set_multiselect( bool multiselect ) {
             this->multiselect = multiselect;
         }

@@ -366,7 +366,7 @@ auto find_choice_type(
     return std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
         return choice.pane_id == pane->id
             && std::ranges::any_of(choice.columns, [&](const auto& column) {
-                   return column.label == "Type" && column.value == type;
+                   return column.key == "type" && column.value == type;
                });
     });
 }
@@ -459,19 +459,19 @@ TEST_CASE(
             CHECK(charges->pane_id != pipes->pane_id);
             CHECK(charges->area_id != pipes->area_id);
             CHECK(std::ranges::any_of(charges->columns, [](const auto& column) {
-                return column.label == "Unit price" && !column.value.empty();
+                return column.key == "unit_price" && !column.value.empty();
             }));
             const auto column_value = [](const auto& choice, const std::string& label) {
-                const auto found = std::ranges::
-                    find(choice.columns, label, &game_client::interaction_column::label);
+                const auto found =
+                    std::ranges::find(choice.columns, label, &game_client::interaction_column::key);
                 return found == choice.columns.end() ? std::string{} : found->value;
             };
-            CHECK_FALSE(column_value(*charges, "Category").empty());
-            CHECK_FALSE(column_value(*charges, "Stack weight").empty());
-            CHECK_FALSE(column_value(*charges, "Stack volume").empty());
-            CHECK(column_value(*charges, "Category")
-                  == to_upper_case(column_value(*charges, "Category")));
-            CHECK(column_value(*pipes, "Price tone") != "");
+            CHECK_FALSE(column_value(*charges, "category").empty());
+            CHECK_FALSE(column_value(*charges, "stack_weight").empty());
+            CHECK_FALSE(column_value(*charges, "stack_volume").empty());
+            CHECK(column_value(*charges, "category")
+                  == to_upper_case(column_value(*charges, "category")));
+            CHECK(column_value(*pipes, "price_tone") != "");
             CHECK(snapshot.message_tone == (snapshot.message.ends_with(_("yes")) ? "good" : "bad"));
             auto page = game_client::interaction_page_state{};
             CHECK(game_client::paginated_interaction(page).message_tone == snapshot.message_tone);
@@ -1046,13 +1046,13 @@ TEST_CASE(
         const auto ground = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
             return choice.pane_id == source->id && choice.storage_kind == "ground"
                 && std::ranges::any_of(choice.columns, [](const auto& column) {
-                       return column.label == "Type" && column.value == "test_1kg_cube";
+                       return column.key == "type" && column.value == "test_1kg_cube";
                    });
         });
         const auto cargo_item = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
             return choice.pane_id == source->id && choice.storage_kind == "cargo"
                 && std::ranges::any_of(choice.columns, [](const auto& column) {
-                       return column.label == "Type" && column.value == "test_1kg_cube";
+                       return column.key == "type" && column.value == "test_1kg_cube";
                    });
         });
         REQUIRE(ground != snapshot.choices.end());
@@ -2177,24 +2177,29 @@ TEST_CASE(
     CHECK(pane.totals->volume_unit == volume_units_abbr());
     CHECK_FALSE(pane.totals->weight_max.empty());
     CHECK(snapshot.category_mode == false);
-    const auto column =
-        [](const game_client::interaction_choice& choice, const std::string& label) {
-            const auto found =
-                std::ranges::find(choice.columns, label, &game_client::interaction_column::label);
-            return found == choice.columns.end() ? std::string{} : found->value;
-        };
+    const auto column = [](const game_client::interaction_choice& choice, const std::string& key) {
+        const auto found =
+            std::ranges::find(choice.columns, key, &game_client::interaction_column::key);
+        return found == choice.columns.end() ? std::string{} : found->value;
+    };
     const auto worn = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
         return column(choice, "source") == "worn_or_wielded";
     });
     REQUIRE(worn != snapshot.choices.end());
-    CHECK(column(*worn, "Category") == "ITEMS WORN");
-    CHECK_FALSE(column(*worn, "Row color").empty());
-    CHECK_FALSE(column(*worn, "Key color").empty());
+    CHECK(column(*worn, "category") == "ITEMS WORN");
+    CHECK_FALSE(worn->color.empty());
+    CHECK_FALSE(worn->key_color.empty());
+    CHECK_FALSE(worn->markup.empty());
+    CHECK(std::ranges::all_of(snapshot.choices, [](const auto& choice) {
+        return std::ranges::all_of(choice.columns, [](const auto& column) {
+            return !column.key.empty();
+        });
+    }));
     const auto carried = std::ranges::find_if(snapshot.choices, [&](const auto& choice) {
         return column(choice, "source") == "inventory";
     });
     REQUIRE(carried != snapshot.choices.end());
-    CHECK(column(*carried, "Category") != "ITEMS WORN");
+    CHECK(column(*carried, "category") != "ITEMS WORN");
 
     selector.set_display_stats(false);
     CHECK_FALSE(selector.interaction_snapshot().panes.front().totals);
@@ -2454,10 +2459,7 @@ TEST_CASE(
                 return c.columns[0].value;
             });
             REQUIRE(row != snapshot.choices.end());
-            const auto found = std::ranges::
-                find(row->columns, "Name markup", &game_client::interaction_column::label);
-            REQUIRE(found != row->columns.end());
-            return found->value;
+            return row->markup;
         };
         CHECK(markup(id).starts_with("<color_light_red>!</color> "));
         CHECK(markup(id).find(item::spawn(id)->symbol() + " ") != std::string::npos);
@@ -2748,6 +2750,14 @@ TEST_CASE(
             REQUIRE(parent != snapshot.choices.end());
             if (reads++ == 0) {
                 CHECK(parent->columns[2].value.find("2 child stacks") != std::string::npos);
+                CHECK(parent->nest_color.empty());
+                CHECK_FALSE(parent->parent_id);
+                CHECK(parent->mark->glyph == "-");
+                for (const auto& child : snapshot.choices) {
+                    if (child.id == parent->id) { continue; }
+                    CHECK(child.parent_id == parent->id);
+                    CHECK(child.nest_color == "c_dark_gray");
+                }
                 return resolve({
                     .input_id = snapshot.input_id,
                     .operation = game_client::interaction_operation::choose,
@@ -2756,6 +2766,13 @@ TEST_CASE(
             }
             CHECK(
                 std::ranges::all_of(snapshot.choices, &game_client::interaction_choice::selected));
+            CHECK(std::ranges::all_of(snapshot.choices, [](const auto& choice) {
+                return choice.mark->glyph == "+" && choice.mark->color == "c_light_blue";
+            }));
+            CHECK(
+                std::ranges::count(
+                    snapshot.choices, "c_light_blue", &game_client::interaction_choice::nest_color)
+                == 2);
             return resolve_action("CONFIRM");
         });
         pickup::pick_up(pickup_test_pos, 0, pickup::from_ground);
@@ -2778,6 +2795,8 @@ TEST_CASE(
             REQUIRE(child != snapshot.choices.end());
             if (reads++ == 0) {
                 CHECK(child->columns[2].value.starts_with("child of pickup:"));
+                CHECK(child->parent_id->starts_with("pickup:"));
+                CHECK(child->nest_color == "c_dark_gray");
                 return resolve({
                     .input_id = snapshot.input_id,
                     .operation = game_client::interaction_operation::choose,
@@ -5220,15 +5239,15 @@ TEST_CASE(
     REQUIRE(spell_row != choices.end());
     const auto column_value = [&](const std::string& label) {
         const auto column =
-            std::ranges::find(spell_row->columns, label, &game_client::interaction_column::label);
+            std::ranges::find(spell_row->columns, label, &game_client::interaction_column::key);
         return column == spell_row->columns.end() ? std::string{} : column->value;
     };
-    CHECK(column_value("Spell Level")
+    CHECK(column_value("spell_level")
           == std::to_string(you.magic->get_spell(spell_id("test_spell_pew")).get_level()));
-    CHECK_FALSE(column_value("Failure Chance").empty());
-    CHECK_FALSE(column_value("Casting Cost").empty());
-    CHECK_FALSE(column_value("Casting Time").empty());
-    CHECK_FALSE(column_value("Range").empty());
+    CHECK_FALSE(column_value("failure_chance").empty());
+    CHECK_FALSE(column_value("casting_cost").empty());
+    CHECK_FALSE(column_value("casting_time").empty());
+    CHECK_FALSE(column_value("range").empty());
     CHECK(spell_row->description.find("Casting Time") != std::string::npos);
     CHECK(spell_row->description.find("<color_") != std::string::npos);
     CHECK(std::ranges::any_of(choices, [](const auto& choice) {

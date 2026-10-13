@@ -222,6 +222,47 @@ TEST_CASE(
     CHECK(contains(task, R"("time":"1 minute")"));
 }
 
+TEST_CASE(
+    "a row publishes its column keys and typed colors, marks and nesting",
+    "[engine_client_contract]") {
+    auto context = input_context{"TYPED_ROW"};
+    const auto input_scope = game_client::input_context_scope{context, "TYPED_ROW"};
+    const auto wire = [&context](game_client::interaction_choice choice) {
+        const auto scope = game_client::interaction_scope{
+            context, [&choice] {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices, .choices = {choice}};
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    const auto typed = wire({
+        .id = "row:0",
+        .label = "Zeile",
+        .columns = {{.key = "weight", .label = "Gewicht", .value = "2", .color = "c_red"}},
+        .favorite = true,
+        .color = "c_white",
+        .key_color = "c_yellow",
+        .markup = "<color_white>Zeile</color>",
+        .parent_id = "row:1",
+        .nest_color = "c_dark_gray",
+        .mark = game_client::interaction_mark{.glyph = "#", .color = "c_light_blue"},
+    });
+    CHECK(contains(
+        typed, R"("columns":[{"key":"weight","label":"Gewicht","value":"2","color":"c_red"}])"));
+    CHECK(contains(typed, R"("favorite":true)"));
+    CHECK(contains(typed, R"("key_color":"c_yellow")"));
+    CHECK(contains(typed, R"("parent_id":"row:1")"));
+    CHECK(contains(typed, R"("nest_color":"c_dark_gray")"));
+    CHECK(contains(typed, R"("mark":{"glyph":"#","color":"c_light_blue"})"));
+    const auto plain = wire(
+        {.id = "row:0", .label = "Row", .mark = game_client::interaction_mark{.glyph = "-"}});
+    CHECK(contains(plain, R"("mark":{"glyph":"-"})"));
+    for (const auto* absent : {"favorite", "key_color", "markup", "parent_id", "nest_color"}) {
+        CHECK_FALSE(contains(plain, absent));
+    }
+}
+
 TEST_CASE("compat focus survives paging past the focused row", "[engine_client_contract]") {
     auto context = input_context{"BIGLIST"};
     const auto input_scope = game_client::input_context_scope{context, "BIGLIST"};

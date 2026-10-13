@@ -9150,10 +9150,10 @@ void game::zones_manager()
                 .description = remove_color_tags( details ), .pane_id = "zones",
                 .selected = zone.get_enabled(), .highlighted = static_cast<int>( i ) == active_index,
                 .columns = {
-                    { .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
-                    { .label = _( "Distance" ), .value = std::to_string( static_cast<int>( trig_dist( here, center ) ) ) },
-                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( here, center ) ) },
-                    { .label = _( "Vehicle" ), .value = zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ) },
+                    { .key = "type", .label = _( "Type" ), .value = mgr.get_name_from_type( zone.get_type() ) },
+                    { .key = "distance", .label = _( "Distance" ), .value = std::to_string( static_cast<int>( trig_dist( here, center ) ) ) },
+                    { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( here, center ) ) },
+                    { .key = "vehicle", .label = _( "Vehicle" ), .value = zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ) },
                 },
             } );
         }
@@ -9163,7 +9163,7 @@ void game::zones_manager()
                 snapshot.choices.push_back( {
                     .id = "option:" + std::to_string( i ), .label = remove_color_tags( descriptions[i].first ),
                     .pane_id = "options", .selectable = false,
-                    .columns = { { .label = _( "Value" ), .value = remove_color_tags( descriptions[i].second ) } },
+                    .columns = { { .key = "value", .label = _( "Value" ), .value = remove_color_tags( descriptions[i].second ) } },
                 } );
             }
         }
@@ -10359,8 +10359,8 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
                 .description = remove_color_tags( details ),
                 .highlighted = static_cast<int>( i ) == iActive,
                 .columns = {
-                    { .label = _( "Distance" ), .value = std::to_string( entry.dist ) },
-                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( viewer.bub_pos(), entry.pos ) ) },
+                    { .key = "distance", .label = _( "Distance" ), .value = std::to_string( entry.dist ) },
+                    { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( viewer.bub_pos(), entry.pos ) ) },
                 },
             } );
         }
@@ -10768,11 +10768,11 @@ game::vmenu_ret game::list_items( const std::vector<map_item_stack> &item_list )
                     : std::string(),
                       .highlighted = is_active,
                       .columns = {
-                    { .label = _( "Distance" ), .value = std::to_string( rl_dist( point_rel_ms::zero(), first.pos.xy() ) ) },
-                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( point_rel_ms::zero(), first.pos.xy() ) ) },
-                    { .label = _( "Category" ), .value = stack.example->get_category().name() },
-                    { .label = _( "Stacks" ), .value = std::to_string( stack.vIG.size() ) },
-                    { .label = _( "Priority" ), .value = priority },
+                    { .key = "distance", .label = _( "Distance" ), .value = std::to_string( rl_dist( point_rel_ms::zero(), first.pos.xy() ) ) },
+                    { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( point_rel_ms::zero(), first.pos.xy() ) ) },
+                    { .key = "category", .label = _( "Category" ), .value = stack.example->get_category().name() },
+                    { .key = "stacks", .label = _( "Stacks" ), .value = std::to_string( stack.vIG.size() ) },
+                    { .key = "priority", .label = _( "Priority" ), .value = priority },
                 },
             } );
         }
@@ -11311,14 +11311,14 @@ game::vmenu_ret game::list_monsters( const std::vector<Creature *> &monster_list
                 .highlighted = static_cast<int>( i ) == iActive,
                 .columns = {
                     {
-                        .label = _( "Attitude" ), .value = player_knows
+                        .key = "attitude", .label = _( "Attitude" ), .value = player_knows
                         ? Creature::get_attitude_ui_data( critter->attitude_to( u ) ).first.translated() : std::string()
                     },
-                    { .label = _( "Health" ), .value = player_knows ? hp_text : std::string() },
-                    { .label = _( "State" ), .value = attitude },
-                    { .label = _( "Aware" ), .value = player_knows && critter->sees( g->u ) ? _( "Yes" ) : _( "No" ) },
-                    { .label = _( "Distance" ), .value = std::to_string( rl_dist( u.bub_pos(), critter->bub_pos() ) ) },
-                    { .label = _( "Direction" ), .value = direction_name_short( direction_from( u.bub_pos(), critter->bub_pos() ) ) },
+                    { .key = "health", .label = _( "Health" ), .value = player_knows ? hp_text : std::string() },
+                    { .key = "state", .label = _( "State" ), .value = attitude },
+                    { .key = "aware", .label = _( "Aware" ), .value = player_knows && critter->sees( g->u ) ? _( "Yes" ) : _( "No" ) },
+                    { .key = "distance", .label = _( "Distance" ), .value = std::to_string( rl_dist( u.bub_pos(), critter->bub_pos() ) ) },
+                    { .key = "direction", .label = _( "Direction" ), .value = direction_name_short( direction_from( u.bub_pos(), critter->bub_pos() ) ) },
                 },
             } );
         }

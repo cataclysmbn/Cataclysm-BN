@@ -246,8 +246,8 @@ void user_interface::show()
                 .id = "rule:" + std::to_string( index ),
                 .label = rules[index].sRule.empty() ? _( "<empty rule>" ) : rules[index].sRule,
                 .pane_id = "rules", .selected = index == iLine, .highlighted = index == iLine,
-                .columns = { { .label = _( "I/E" ), .value = rules[index].bExclude ? _( "Exclude" ) : _( "Include" ) },
-                    { .label = _( "Active" ), .value = rules[index].bActive ? _( "True" ) : _( "False" ) }
+                .columns = { { .key = "i_e", .label = _( "I/E" ), .value = rules[index].bExclude ? _( "Exclude" ) : _( "Include" ) },
+                    { .key = "active", .label = _( "Active" ), .value = rules[index].bActive ? _( "True" ) : _( "False" ) }
                 },
             } );
         }

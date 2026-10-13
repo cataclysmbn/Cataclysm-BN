@@ -385,27 +385,27 @@ auto editmap_interaction( const editmap &em, const input_context &ctxt,
     auto &here = get_map();
     const auto &terrain = here.ter( em.target ).obj();
     add_tile( "terrain", _( "Terrain" ), terrain.name(), {
-        { .label = _( "Id" ), .value = terrain.id.str() },
-        { .label = _( "Move cost" ), .value = std::to_string( terrain.movecost ) },
+        { .key = "id", .label = _( "Id" ), .value = terrain.id.str() },
+        { .key = "move_cost", .label = _( "Move cost" ), .value = std::to_string( terrain.movecost ) },
     } );
     if( here.furn( em.target ).to_i() > 0 ) {
         const auto &furniture = here.furn( em.target ).obj();
         add_tile( "furniture", _( "Furniture" ), furniture.name(), {
-            { .label = _( "Id" ), .value = furniture.id.str() },
-            { .label = _( "Move cost" ), .value = std::to_string( furniture.movecost ) },
+            { .key = "id", .label = _( "Id" ), .value = furniture.id.str() },
+            { .key = "move_cost", .label = _( "Move cost" ), .value = std::to_string( furniture.movecost ) },
         } );
     }
     for( const auto &fld : here.get_field( em.target ) ) {
         const auto &entry = fld.second;
         const auto field_id = entry.get_field_type().id().str();
         add_tile( "field:" + field_id, _( "Field" ), remove_color_tags( entry.name() ), {
-            { .label = _( "Id" ), .value = field_id },
-            { .label = _( "Intensity" ), .value = std::to_string( entry.get_field_intensity() ) },
-            { .label = _( "Age" ), .value = std::to_string( to_turns<int>( entry.get_field_age() ) ) },
+            { .key = "id", .label = _( "Id" ), .value = field_id },
+            { .key = "intensity", .label = _( "Intensity" ), .value = std::to_string( entry.get_field_intensity() ) },
+            { .key = "age", .label = _( "Age" ), .value = std::to_string( to_turns<int>( entry.get_field_age() ) ) },
         } );
     }
     if( const auto &trap = here.tr_at( em.target ); trap.loadid != tr_null ) {
-        add_tile( "trap", _( "Trap" ), trap.name(), { { .label = _( "Id" ), .value = trap.id.str() } } );
+        add_tile( "trap", _( "Trap" ), trap.name(), { { .key = "id", .label = _( "Id" ), .value = trap.id.str() } } );
     }
     if( const auto *critter = g->critter_at( em.target ) ) {
         add_tile( "creature", _( "Creature" ), critter->disp_name() );
@@ -414,7 +414,7 @@ auto editmap_interaction( const editmap &em, const input_context &ctxt,
     }
     if( const auto items = here.i_at( em.target ); !items.empty() ) {
         add_tile( "items", _( "Items" ), ( *items.begin() )->tname(),
-        { { .label = _( "Count" ), .value = std::to_string( items.size() ) } } );
+        { { .key = "count", .label = _( "Count" ), .value = std::to_string( items.size() ) } } );
     }
     for( const auto &id : screen.actions ) {
         snapshot.choices.push_back( {

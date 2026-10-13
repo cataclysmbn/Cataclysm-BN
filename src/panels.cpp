@@ -2952,7 +2952,7 @@ void panel_manager::show_adm()
                 .id = "panel:" + std::to_string( index ), .label = _( panels[index].get_name() ),
                 .selected = panels[index].toggle,
                 .highlighted = current_col == 0 && row == current_row,
-                .columns = { { .label = _( "Order" ), .value = std::to_string( row + 1 ) } },
+                .columns = { { .key = "order", .label = _( "Order" ), .value = std::to_string( row + 1 ) } },
             } );
         }
         auto row = std::size_t{ 0 };
