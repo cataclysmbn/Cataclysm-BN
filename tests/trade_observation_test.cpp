@@ -28,6 +28,7 @@
 #    include "rng.h"
 #    include "skill.h"
 #    include "state_helpers.h"
+#    include "trade_screen.h"
 #    include "trade_win.h"
 #    include "ui.h"
 #    include "uistate.h"
@@ -267,29 +268,29 @@ TEST_CASE(
                     return *entry.field == entry.value;
                 }));
             };
-            const auto first = game_client::current_interaction({.limit = 200});
-            REQUIRE(first.context == "NPC_TRADE");
+            const auto first = trade_screen::top();
+            REQUIRE(first);
             check_authority();
-            const auto row = std::ranges::find_if(first.choices, [&](const auto& choice) {
-                return std::ranges::any_of(choice.columns, [&](const auto& column) {
-                    return column.key == "type" && column.value == type.str();
-                });
-            });
-            REQUIRE(row != first.choices.end());
+            // The row the cursor is on carries what the native examine would show, described
+            // without changing anything.
+            const auto* const row = trade_screen::item_row(*first, "list:npc", type.str());
+            REQUIRE(row != nullptr);
             description = row->description;
             CHECK(description.find(expected_text) != std::string::npos);
             CHECK(description
                   == remove_color_tags(
                       traded_item.info_string({.mode = iteminfo_mode::observation})));
             check_authority();
+            const auto published = engine_client::serialize_interaction_boundary(
+                trade_screen::live_state());
             for (const auto pass : std::views::iota(0, 3)) {
                 INFO("repeated semantic observation " << pass);
-                CHECK(game_client::serialize_interaction(
-                          game_client::current_interaction({.limit = 200}))
-                      == game_client::serialize_interaction(first));
-                const auto page = game_client::current_interaction({.offset = 0, .limit = 1});
-                REQUIRE(page.choices.size() == 1);
-                CHECK(page.choices.front().description == description);
+                CHECK(engine_client::serialize_interaction_boundary(trade_screen::live_state())
+                      == published);
+                const auto again = trade_screen::top();
+                REQUIRE(again);
+                CHECK(trade_screen::item_row(*again, "list:npc", type.str())->description
+                      == description);
                 check_authority();
             }
             passive_rng = rng_get_engine();
@@ -355,13 +356,13 @@ TEST_CASE(
         ++reads;
         const auto authority_before = nearby_authority();
         const auto rng_before = rng_get_engine();
-        const auto first_snapshot = game_client::current_interaction({.limit = 200});
-        REQUIRE(first_snapshot.context == "NPC_TRADE");
+        const auto first = engine_client::serialize_interaction_boundary(
+            trade_screen::live_state());
+        REQUIRE(trade_screen::top());
         CHECK(saved(stale_member) == stale_before);
         CHECK(nearby_authority() == authority_before);
         CHECK(rng_get_engine() == rng_before);
-        CHECK(game_client::serialize_interaction(game_client::current_interaction({.limit = 200}))
-              == game_client::serialize_interaction(first_snapshot));
+        CHECK(engine_client::serialize_interaction_boundary(trade_screen::live_state()) == first);
         return action("QUIT");
     });
     CHECK_FALSE(trading_window(state).perform_trade(trader, "Trade"));
