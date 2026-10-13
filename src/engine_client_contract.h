@@ -15,7 +15,7 @@
 namespace engine_client
 {
 
-inline constexpr auto contract_version = "1.0";
+inline constexpr auto contract_version = "0.1";
 inline constexpr auto maximum_rows = std::size_t {200};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
 /// Delivery credits a client may hold, each paying for one pushed `bn.events` or `bn.command` frame.

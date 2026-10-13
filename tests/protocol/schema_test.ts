@@ -1,6 +1,6 @@
 /**
  * @module
- * The 1.0 examples are the contract in executable form: valid ones pass their definition,
+ * The 0.1 examples are the contract in executable form: valid ones pass their definition,
  * structurally wrong ones fail it. Continuity and visibility rules are tested elsewhere.
  */
 import { assert, assertEquals } from "@std/assert"
@@ -11,8 +11,8 @@ const read = async (name: string) =>
   JSON.parse(
     await Deno.readTextFile(new URL(`../../docs/schema/engine-client/${name}`, import.meta.url)),
   )
-const schema = await read("1.0.schema.json")
-const examples: { valid: Example[]; invalid: Example[] } = await read("1.0.examples.json")
+const schema = await read("0.1.schema.json")
+const examples: { valid: Example[]; invalid: Example[] } = await read("0.1.examples.json")
 
 const ajv = new Ajv2020({ strict: false, allErrors: false })
 ajv.addSchema(schema, "bn")

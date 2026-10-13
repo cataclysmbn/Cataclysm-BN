@@ -39,7 +39,7 @@ auto rpc(const std::string& method, const std::string& params, const std::string
          + (id.empty() ? "" : R"(,"id":)" + id) + "}\n";
 }
 const auto hello =
-    rpc("bn.hello", R"({"versions":["1.0"],"client":{"name":"test","version":"1"}})", "1");
+    rpc("bn.hello", R"({"versions":["0.1"],"client":{"name":"test","version":"1"}})", "1");
 const auto subscribe = rpc("bn.subscribe", "{}", "2");
 
 auto contains(const std::string& text, const std::string& part) -> bool {
@@ -59,7 +59,7 @@ auto count_of(const std::string& text, const std::string& part) -> std::size_t {
 auto hello_with(const std::string& delivery) -> std::string {
     return rpc(
         "bn.hello",
-        R"({"versions":["1.0"],"client":{"name":"test","version":"1"},"delivery":)" + delivery
+        R"({"versions":["0.1"],"client":{"name":"test","version":"1"},"delivery":)" + delivery
             + "}",
         "1");
 }
@@ -212,7 +212,7 @@ TEST_CASE(
     SECTION("a request that arrives in time is served before the wait can lapse") {
         // The two requests are read, then the stream ends: the wait said a frame was ready.
         CHECK_FALSE(timed.pump_until_input(input, test.output, test.errors, 50));
-        CHECK(contains(test.output.str(), R"("version":"1.0")"));
+        CHECK(contains(test.output.str(), R"("version":"0.1")"));
         CHECK(waits.size() == 3);
     }
     SECTION("no request within the wait returns with nothing queued") {
@@ -223,7 +223,7 @@ TEST_CASE(
         CHECK(waits.front() > 0);
         CHECK(waits.front() <= 50);
         // Nothing was read: the lapse leaves the requests for the next wait.
-        CHECK_FALSE(contains(test.output.str(), R"("version":"1.0")"));
+        CHECK_FALSE(contains(test.output.str(), R"("version":"0.1")"));
     }
     SECTION("an untimed pump never consults the wait") {
         CHECK_FALSE(timed.pump_until_input(input, test.output, test.errors));
@@ -237,12 +237,14 @@ TEST_CASE("hello is required and checks the version", "[engine_client_server]") 
     test.pump(
         rpc("bn.subscribe", "{}", "1")
         + rpc("bn.hello", R"({"versions":["0.9"],"client":{"name":"t","version":"1"}})", "2")
+        // "1.0" is reserved for the finished protocol; the engine offers only "0.1".
+        + rpc("bn.hello", R"({"versions":["1.0"],"client":{"name":"t","version":"1"}})", "3")
         + hello);
     const auto out = test.output.str();
-    CHECK(contains(out, R"("kind":"negotiation_failed","message":")"));
+    CHECK(count_of(out, R"("kind":"negotiation_failed","message":")") == 3);
     CHECK(contains(out, R"("action":"hello")"));
     CHECK(index_of(out, R"("id":1)") < index_of(out, R"("id":2)"));
-    CHECK(contains(out, R"("version":"1.0")"));
+    CHECK(contains(out, R"("version":"0.1")"));
     CHECK(contains(out, R"("epoch":")" + test.authority.epoch()));
 }
 
@@ -253,7 +255,7 @@ TEST_CASE(
     const auto declare = [](const std::string& view) {
         return rpc(
             "bn.hello",
-            R"({"versions":["1.0"],"client":{"name":"t","version":"1"},"viewport":)" + view + "}",
+            R"({"versions":["0.1"],"client":{"name":"t","version":"1"},"viewport":)" + view + "}",
             "1");
     };
     SECTION("a hello without a viewport leaves the terminal alone") {
@@ -1213,9 +1215,9 @@ TEST_CASE("a spectator's hello leaves the controller's view alone", "[engine_cli
     auto watcher = spectator{test};
     watcher.read(rpc(
         "bn.hello",
-        R"({"versions":["1.0"],"client":{"name":"w","version":"1"},"viewport":{"cols":10,"rows":10}})",
+        R"({"versions":["0.1"],"client":{"name":"w","version":"1"},"viewport":{"cols":10,"rows":10}})",
         "1"));
-    CHECK(contains(watcher.output.str(), R"("version":"1.0")"));
+    CHECK(contains(watcher.output.str(), R"("version":"0.1")"));
     CHECK(watcher.resized.empty());
     CHECK(declared_viewport.empty());
 }
@@ -1508,7 +1510,7 @@ TEST_CASE(
     rig.poll_controller();
     const auto read = first.receive();
     CHECK(contains(read, R"("code":-32700)"));
-    CHECK(contains(read, R"("version":"1.0")"));
+    CHECK(contains(read, R"("version":"0.1")"));
     CHECK(rig.hub->connections() == 1);
 }
 
@@ -1523,7 +1525,7 @@ TEST_CASE(
     rig.poll_controller();
     CHECK(rig.hub->connections() == 1);
     const auto read = first.receive();
-    CHECK(contains(read, R"("version":"1.0")"));
+    CHECK(contains(read, R"("version":"0.1")"));
     CHECK(contains(read, R"("method":"bn.snapshot.part")"));
 }
 

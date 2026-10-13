@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://cataclysmbn.org/schema/engine-client/1.0.schema.json",
-  "title": "BN engine/client protocol 1.0",
+  "$id": "https://cataclysmbn.org/schema/engine-client/0.1.schema.json",
+  "title": "BN engine/client protocol 0.1",
   "description": "Application values of the JSON-RPC 2.0 methods and notifications. Framing is not described here. Sequence, revision and visibility invariants are checked by the engine and its reconstruction tests.",
   "x-methods": {
     "bn.hello": {
@@ -3347,7 +3347,7 @@
       "type": "object",
       "properties": {
         "version": {
-          "const": "1.0"
+          "const": "0.1"
         },
         "epoch": {
           "$ref": "#/$defs/opaque_id"

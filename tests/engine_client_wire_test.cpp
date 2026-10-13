@@ -17,28 +17,28 @@ auto contains(const std::string& text, const std::string& part) -> bool {
 
 TEST_CASE("hello request grammar", "[engine_client_wire]") {
     const auto ok = decode_hello_request(
-        R"({"versions":["0.9","1.0"],"client":{"name":"deno","version":"1"}})");
+        R"({"versions":["0.9","0.1"],"client":{"name":"deno","version":"1"}})");
     REQUIRE(ok);
-    CHECK(ok->versions == std::vector<std::string>{"0.9", "1.0"});
+    CHECK(ok->versions == std::vector<std::string>{"0.9", "0.1"});
     CHECK(ok->client_name == "deno");
     CHECK_FALSE(decode_hello_request(R"({"versions":[],"client":{"name":"a","version":"1"}})"));
-    CHECK_FALSE(decode_hello_request(R"({"versions":["1.0"]})"));
+    CHECK_FALSE(decode_hello_request(R"({"versions":["0.1"]})"));
     CHECK_FALSE(
-        decode_hello_request(R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"x":1})"));
+        decode_hello_request(R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"x":1})"));
     CHECK_FALSE(
-        decode_hello_request(R"({"versions":["1.0","1.0"],"client":{"name":"a","version":"1"}})"));
-    CHECK_FALSE(decode_hello_request(R"({"supported_versions":["1.0"]})"));
+        decode_hello_request(R"({"versions":["0.1","0.1"],"client":{"name":"a","version":"1"}})"));
+    CHECK_FALSE(decode_hello_request(R"({"supported_versions":["0.1"]})"));
     // The tints of the client's tileset are ids; anything else is refused.
     const auto tints = decode_hello_request(
-        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":["hair_black","jeans"]})");
+        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":["hair_black","jeans"]})");
     REQUIRE(tints);
     CHECK(tints->tint_ids == std::vector<std::string>{"hair_black", "jeans"});
     CHECK_FALSE(decode_hello_request(
-        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":[1]})"));
+        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":[1]})"));
     CHECK_FALSE(decode_hello_request(
-        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":[""]})"));
+        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":[""]})"));
     CHECK_FALSE(decode_hello_request(
-        R"({"versions":["1.0"],"client":{"name":"a","version":"1"},"tint_ids":"jeans"})"));
+        R"({"versions":["0.1"],"client":{"name":"a","version":"1"},"tint_ids":"jeans"})"));
 }
 
 TEST_CASE("empty requests accept only an empty object", "[engine_client_wire]") {
@@ -186,7 +186,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     const auto hello = serialize_hello(
         "epoch:a", {.build = "0.9", .mods = {"bn"}, .use_tiles = false, .tileset = "MSX"});
     CHECK(contains(hello, R"("display":{"tiles":false,"tileset":"MSX"})"));
-    CHECK(contains(hello, R"("version":"1.0")"));
+    CHECK(contains(hello, R"("version":"0.1")"));
     CHECK(contains(hello, R"("mods":["bn"])"));
     CHECK(contains(hello, R"("cells_per_part":512)"));
     const auto encoded = serialize_receipt({.epoch = "epoch:a", .command_id = "c:1"});
@@ -220,7 +220,7 @@ TEST_CASE("wire accepts what the schema accepts", "[engine_client_wire]") {
     CHECK(decode_result_request(R"({"epoch":")" + id + R"(","command_id":"c"})"));
     CHECK_FALSE(decode_result_request(R"({"epoch":")" + id + "한" + R"(","command_id":"c"})"));
     CHECK(decode_hello_request(
-        R"({"versions":["1.0"],"client":{"name":")" + std::string(1000, 'n')
+        R"({"versions":["0.1"],"client":{"name":")" + std::string(1000, 'n')
         + R"(","version":"1"}})"));
     const auto with_revision = [](const std::string& revision) {
         return R"({"epoch":"e","expect":{"revision":")" + revision

@@ -48,7 +48,7 @@ there, in what order, and how each step is accepted. Read both at session start,
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | H1 Rebuilt history on `feat/magnum-opus` | `git diff <final tree> HEAD` empty; commits grouped by concern; final tree builds `cataclysm-bn-tiles cata_test-tiles cata_test-mcp cata_test-debug-mcp cata_test-perception-mcp`                         |
 | H2 Dead code removed                     | No reference to removed paths (`git grep`); build and suites below pass                                                                                                                                   |
-| H3 Stale docs fixed                      | 1.0 reference no longer says the methods are unconnected (en/ja/ko)                                                                                                                                       |
+| H3 Stale docs fixed                      | 0.1 reference no longer says the methods are unconnected (en/ja/ko)                                                                                                                                       |
 | H4 Leak check (lane L1)                  | Listener in `tests/test_main.cpp` fails the leaking test itself; demonstrated red on a reverted leak fix; known victims explained or fixed at the leaker                                                  |
 | H5 Faster iteration                      | Iterate with one test binary (`cata_test-mcp`); build the others only before the final suite. Full suite split into N name-list shards with separate `--user-dir`, run as N pueue jobs, after H4 is green |
 | H6 Retire old state                      | Old worktree `refactor-engine-client` and `base-upstream-main` removed; 104 `refs/archive/*` refs packed into one git bundle under `out/archive/`; stale `out/` trees moved to trash                      |
@@ -64,7 +64,7 @@ Decision 2026-10-10: a working external client comes before presentation events.
 Slice: an external client walks around, looks at cells, picks up and drops items, and uses every existing
 semantic menu, against a live `cataclysm-bn` over stdio.
 
-- Unified protocol `1.0`: one session clock `(epoch, sequence, revision)`; interaction values from today's 1.0
+- Unified protocol `0.1`: one session clock `(epoch, sequence, revision)`; interaction values from the earlier contract
   (renamed/trimmed per the design); world values (visible and remembered cells, disclosed entities, avatar) in
   absolute map-square coordinates with dimension, knowledge decided by engine perception.
 - Methods: hello, snapshot/subscribe, interaction choices paging, world cells query, command submit (semantic
@@ -149,7 +149,7 @@ validated commits onto `feat/magnum-opus`.
 
 Answers to `out/lanes/l2/protocol-unification.md` §7 and lane follow-ups:
 
-1. The unified protocol is named `1.0` (nothing shipped) and replaces today's 1.0 in place; no compatibility shim.
+1. The unified protocol is named `0.1` (nothing shipped; `1.0` is reserved for the finished project) and replaces the earlier contract in place; no compatibility shim.
 2. Projectile events are emitted per perceived path segment; steps stay ordered inside the event.
 3. World coverage is the whole loaded area on all z levels, sparse; measure snapshot bytes before changing it.
 4. Native list state (`focus`, `pane.filter`) stays for the 1:1 port; clients may ignore it.
