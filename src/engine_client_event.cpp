@@ -301,12 +301,15 @@ auto event_stream::seed_log( std::vector<message_value> lines ) -> void
 }
 auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
 
-/// Serializes the event once for the wire; false when it would not fit a frame.
+/// Serializes the event once for the wire; false when it would not fit a frame in the form any
+/// connection reads. Only an interaction change differs between forms: 0.2 adds the screen stack.
 auto event_stream::seal( public_event &event ) const -> bool
 {
     ZoneScopedN( "engine_client_serialize_event" );
     event.wire_ = serialize_events( {.epoch = current_.at.epoch, .events = {event}} );
-    return event.wire_.size() <= maximum_event_bytes;
+    return event.wire_.size() <= maximum_event_bytes && ( !event.value().delta.interaction ||
+            serialize_events( {.epoch = current_.at.epoch, .events = {event}}, wire_version::v0_2 ).size() <=
+            maximum_event_bytes );
 }
 
 auto event_stream::issue( changes delta, std::optional<std::string> command,
