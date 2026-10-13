@@ -886,8 +886,8 @@ void color_manager::show_gui()
             snapshot.choices.push_back( {
                 .id = "color:" + name, .label = name, .pane_id = "colors",
                 .selected = index == iCurrentLine, .highlighted = index == iCurrentLine,
-                .columns = { { .label = column_labels[0], .value = entry.name_custom.empty() ? _( "default" ) : entry.name_custom },
-                    { .label = column_labels[1], .value = entry.name_invert_custom.empty() ? _( "default" ) : entry.name_invert_custom }
+                .columns = { { .key = "normal", .label = column_labels[0], .value = entry.name_custom.empty() ? _( "default" ) : entry.name_custom },
+                    { .key = "invert", .label = column_labels[1], .value = entry.name_invert_custom.empty() ? _( "default" ) : entry.name_invert_custom }
                 },
             } );
             ++index;

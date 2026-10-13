@@ -1305,9 +1305,9 @@ action_id input_context::display_menu( const bool permit_execute_action )
             snapshot.choices.push_back( {
                 .id = "action:" + action_id, .label = get_action_name( action_id ), .pane_id = "actions",
                 .highlighted = snapshot.choices.size() == cursor,
-                .columns = { { .label = _( "Keys" ), .value = get_desc( action_id ) },
+                .columns = { { .key = "keys", .label = _( "Keys" ), .value = get_desc( action_id ) },
                     {
-                        .label = _( "Scope" ), .value = attributes.input_events.empty() ? _( "Unbound" ) :
+                        .key = "scope", .label = _( "Scope" ), .value = attributes.input_events.empty() ? _( "Unbound" ) :
                         is_local ? _( "Local" ) : _( "Global" )
                     }
                 },

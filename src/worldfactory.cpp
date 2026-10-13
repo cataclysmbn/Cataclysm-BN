@@ -1176,7 +1176,7 @@ int worldfactory::show_modselection_window( const catacurses::window &win,
                 .id = "active:" + std::to_string( i ), .label = active_mod_order[i]->name(),
                 .description = describe( active_mod_order[i], highlighted ),
                 .pane_id = "active", .selected = true, .highlighted = highlighted,
-                .columns = { { .label = _( "Order" ), .value = std::to_string( i + 1 ) } },
+                .columns = { { .key = "order", .label = _( "Order" ), .value = std::to_string( i + 1 ) } },
             } );
         }
         auto actions = std::vector<const char *> { "ADD_MOD", "REMOVE_MOD", "FILTER", "TOGGLE_SHOW_OBSOLETE",

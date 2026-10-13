@@ -212,9 +212,32 @@
                 "selectable": true,
                 "selected": true,
                 "columns": []
+              },
+              {
+                "id": "root:1",
+                "label": "Load Game",
+                "description": "",
+                "denial": "",
+                "hotkey": "l",
+                "enabled": true,
+                "selectable": true,
+                "selected": false,
+                "columns": [
+                  {
+                    "key": "worlds",
+                    "label": "Worlds",
+                    "value": "2",
+                    "color": "c_light_gray"
+                  }
+                ],
+                "color": "c_white",
+                "key_color": "c_yellow",
+                "mark": {
+                  "glyph": "-"
+                }
               }
             ],
-            "choice_total": 1,
+            "choice_total": 2,
             "compat": {
               "focus": {
                 "choice_id": "root:0"
@@ -810,6 +833,7 @@
             "selected": false,
             "columns": [
               {
+                "key": "weight",
                 "label": "Weight",
                 "value": "0.5 kg"
               }
@@ -856,10 +880,12 @@
             "selected": true,
             "columns": [
               {
+                "key": "favorite",
                 "label": "Favorite",
                 "value": "no"
               },
               {
+                "key": "buildable",
                 "label": "Buildable",
                 "value": "yes"
               }
@@ -1733,6 +1759,7 @@
         "selected": false,
         "columns": [
           {
+            "key": "value",
             "label": "Value",
             "value": "7"
           }
@@ -1761,12 +1788,10 @@
         "selected": false,
         "columns": [
           {
+            "key": "value",
             "label": "Value",
-            "value": "98"
-          },
-          {
-            "label": "Color",
-            "value": "c_red"
+            "value": "98",
+            "color": "c_red"
           }
         ]
       }
@@ -1779,32 +1804,29 @@
         "label": "Flashlight, 0.50 kJ act",
         "description": "",
         "denial": "",
+        "hotkey": "a",
         "pane_id": "active",
         "enabled": true,
         "selectable": true,
         "selected": false,
         "columns": [
           {
-            "label": "Manual (shortcut)",
-            "value": "a"
-          },
-          {
+            "key": "power",
             "label": "Power",
             "value": "0.50 kJ act, OFF"
           },
           {
+            "key": "state",
             "label": "State",
             "value": "Off"
           },
           {
+            "key": "fuel",
             "label": "Fuel",
             "value": ""
-          },
-          {
-            "label": "Color",
-            "value": "c_light_red"
           }
-        ]
+        ],
+        "color": "c_light_red"
       }
     },
     {
@@ -1815,44 +1837,44 @@
         "label": "Night vision",
         "description": "",
         "denial": "",
+        "hotkey": "a",
         "pane_id": "passive",
         "enabled": true,
         "selectable": true,
         "selected": false,
         "columns": [
           {
+            "key": "kind",
             "label": "Kind",
             "value": "Passive"
           },
           {
-            "label": "Key",
-            "value": "a"
-          },
-          {
+            "key": "state",
             "label": "State",
             "value": ""
           },
           {
+            "key": "sprite",
             "label": "Sprite",
             "value": "Shown"
           },
           {
+            "key": "innate",
             "label": "Innate",
             "value": "Yes"
           },
           {
+            "key": "cost",
             "label": "Cost",
             "value": "0"
           },
           {
+            "key": "cooldown",
             "label": "Cooldown",
             "value": "0"
-          },
-          {
-            "label": "Color",
-            "value": "c_cyan"
           }
-        ]
+        ],
+        "color": "c_cyan"
       }
     },
     {
@@ -1869,6 +1891,7 @@
         "selected": false,
         "columns": [
           {
+            "key": "value",
             "label": "Value",
             "value": "No"
           }
@@ -2425,11 +2448,11 @@
         "selectable": true,
         "selected": true,
         "columns": [
-          { "label": "Spell Level", "value": "3" },
-          { "label": "Failure Chance", "value": "12.0 % Failure Chance" },
-          { "label": "Casting Cost", "value": "15 mana" },
-          { "label": "Casting Time", "value": "1 second" },
-          { "label": "Range", "value": "5" }
+          { "key": "spell_level", "label": "Spell Level", "value": "3" },
+          { "key": "failure_chance", "label": "Failure Chance", "value": "12.0 % Failure Chance" },
+          { "key": "casting_cost", "label": "Casting Cost", "value": "15 mana" },
+          { "key": "casting_time", "label": "Casting Time", "value": "1 second" },
+          { "key": "range", "label": "Range", "value": "5" }
         ]
       }
     },
@@ -2536,7 +2559,7 @@
         "enabled": true,
         "selectable": true,
         "selected": false,
-        "columns": [{ "label": "Key", "value": "a or A" }]
+        "columns": [{ "key": "key", "label": "Key", "value": "a or A" }]
       }
     },
     {
@@ -2551,7 +2574,10 @@
         "enabled": true,
         "selectable": false,
         "selected": false,
-        "columns": [{ "label": "Id", "value": "t_grass" }, { "label": "Move cost", "value": "2" }]
+        "columns": [
+          { "key": "id", "label": "Id", "value": "t_grass" },
+          { "key": "move_cost", "label": "Move cost", "value": "2" }
+        ]
       }
     },
     {
@@ -2669,6 +2695,7 @@
             "data": {
               "text": "a loud explosion",
               "volume": 74,
+              "logged": true,
               "marker": {
                 "dim": "",
                 "x": 70,
@@ -2684,7 +2711,8 @@
             "command": "command:14",
             "data": {
               "text": "Tick.",
-              "volume": 52
+              "volume": 52,
+              "logged": false
             }
           }
         ]
@@ -3646,6 +3674,7 @@
         "selected": false,
         "columns": [
           {
+            "key": "value",
             "label": "Value",
             "value": "1"
           }

@@ -863,8 +863,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
                 .selected = static_cast<int>( index ) == select,
                 .highlighted = static_cast<int>( index ) == select,
                 .columns = {
-                    { .label = _( "Favorite" ), .value = is_favorite( group ) ? _( "yes" ) : _( "no" ) },
-                    { .label = _( "Buildable" ), .value = buildable ? _( "yes" ) : _( "no" ) },
+                    { .key = "favorite", .label = _( "Favorite" ), .value = is_favorite( group ) ? _( "yes" ) : _( "no" ) },
+                    { .key = "buildable", .label = _( "Buildable" ), .value = buildable ? _( "yes" ) : _( "no" ) },
                 },
             };
         } );

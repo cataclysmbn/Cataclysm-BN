@@ -969,10 +969,10 @@ auto newchar_jump( const std::string &id, const std::string &caption,
     return delta > 0 ? tab_direction::FORWARD : tab_direction::BACKWARD;
 }
 
-auto newchar_column( const std::string &label, const std::string &value ) ->
+auto newchar_column( const std::string &key, const std::string &label, const std::string &value ) ->
 game_client::interaction_column
 {
-    return { .label = label, .value = value };
+    return { .key = key, .label = label, .value = value };
 }
 
 /// What one input read of a character creation tab asks for: a native action, or a tab to go to.
@@ -1363,7 +1363,7 @@ tab_direction set_stats( avatar &u, points_left &points )
             rows.push_back( {
                 .id = std::string( "stat:" ) + stats[i].id, .label = stats[i].label,
                 .description = stats[i].description, .highlighted = sel == i + 1,
-                .columns = { newchar_column( _( "Value" ), std::to_string( stats[i].value ) ) },
+                .columns = { newchar_column( "value", _( "Value" ), std::to_string( stats[i].value ) ) },
             } );
         }
         rows.push_back( { .id = "action:RIGHT", .label = _( "Increase the selected statistic" ) } );
@@ -1758,8 +1758,8 @@ tab_direction set_traits( avatar &u, points_left &points )
                     static_cast<int>( line ) == iCurrentLine[page],
                     .enabled = !entry.forbidden,
                     .columns = {
-                        newchar_column( _( "Points" ), std::to_string( branch.points ) ),
-                        newchar_column( _( "Kind" ), page_names[page] ),
+                        newchar_column( "points", _( "Points" ), std::to_string( branch.points ) ),
+                        newchar_column( "kind", _( "Kind" ), page_names[page] ),
                     },
                 } );
             }
@@ -2246,8 +2246,8 @@ tab_direction set_bionics( avatar &u, points_left &points )
                     static_cast<int>( line ) == iCurrentLine[page],
                     .enabled = !entry.forbidden && !entry.conflicts,
                     .columns = {
-                        newchar_column( _( "Points" ), std::to_string( bio.points ) ),
-                        newchar_column( _( "Kind" ), page_names[page] ),
+                        newchar_column( "points", _( "Points" ), std::to_string( bio.points ) ),
+                        newchar_column( "kind", _( "Kind" ), page_names[page] ),
                     },
                 } );
             }
@@ -2882,7 +2882,7 @@ tab_direction set_profession( avatar &u, points_left &points,
                 .label = prof.gender_appropriate_name( u.male ),
                 .description = remove_color_tags( prof.description( u.male ) ),
                 .selected = sorted_profs[i] == u.prof, .highlighted = i == cur_id,
-                .columns = { newchar_column( _( "Points" ), std::to_string( prof.point_cost() ) ) },
+                .columns = { newchar_column( "points", _( "Points" ), std::to_string( prof.point_cost() ) ) },
             } );
         }
         rows.push_back( { .id = "action:CHANGE_GENDER", .label = _( "Change gender" ) } );
@@ -3238,10 +3238,10 @@ tab_direction set_skills( avatar &u, points_left &points )
                 .description = remove_color_tags( skill.description() ),
                 .highlighted = i == cur_pos,
                 .columns = {
-                    newchar_column( _( "Level" ), std::to_string( u.get_skill_level( skill.ident(), true ) ) ),
-                    newchar_column( _( "Profession" ),
+                    newchar_column( "level", _( "Level" ), std::to_string( u.get_skill_level( skill.ident(), true ) ) ),
+                    newchar_column( "profession", _( "Profession" ),
                                     bonus == prof_skills.end() ? std::string() : std::to_string( bonus->second ) ),
-                    newchar_column( _( "Cost" ), std::to_string( skill_increment_cost( u, skill.ident() ) ) ),
+                    newchar_column( "cost", _( "Cost" ), std::to_string( skill_increment_cost( u, skill.ident() ) ) ),
                 },
             } );
         }
@@ -3475,11 +3475,11 @@ tab_direction set_magic( avatar &u, points_left &points )
                 .description = remove_color_tags( spell->description.translated() ),
                 .selected = knows, .highlighted = i == cur_pos,
                 .columns = {
-                    newchar_column( _( "Class" ), spell->spell_class == trait_id( "NONE" )
+                    newchar_column( "class", _( "Class" ), spell->spell_class == trait_id( "NONE" )
                                     ? _( "Classless" ) : spell->spell_class->name() ),
-                    newchar_column( _( "Level" ),
+                    newchar_column( "level", _( "Level" ),
                                     knows ? std::to_string( u.magic->get_spell( spell ).get_level() ) : std::string() ),
-                    newchar_column( _( "Cost" ), std::to_string( knows ? spell->increase_points
+                    newchar_column( "cost", _( "Cost" ), std::to_string( knows ? spell->increase_points
                                     : spell->starting_points ) ),
                 },
             } );
@@ -3851,7 +3851,7 @@ tab_direction set_scenario( avatar &u, points_left &points,
                 .label = scen.gender_appropriate_name( u.male ),
                 .description = remove_color_tags( scen.description( u.male ) ),
                 .selected = scen.ident() == g->scen->ident(), .highlighted = i == cur_id,
-                .columns = { newchar_column( _( "Points" ), std::to_string( scen.point_cost() ) ) },
+                .columns = { newchar_column( "points", _( "Points" ), std::to_string( scen.point_cost() ) ) },
             } );
         }
         rows.push_back( { .id = "action:SORT", .label = _( "Change the sort order" ) } );
@@ -4568,25 +4568,25 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
         auto rows = std::vector<newchar_row> {};
         rows.push_back( {
             .id = "field:name", .label = _( "Name" ), .highlighted = selected( char_creation::NAME ),
-            .columns = { newchar_column( _( "Value" ), you.name.empty() ? _( "(random)" ) : you.name ) },
+            .columns = { newchar_column( "value", _( "Value" ), you.name.empty() ? _( "(random)" ) : you.name ) },
         } );
         rows.push_back( {
             .id = "field:height", .label = _( "Height" ),
             .highlighted = selected( char_creation::HEIGHT ),
-            .columns = { newchar_column( _( "Value" ), string_format( _( "%d cm" ), you.base_height() ) ) },
+            .columns = { newchar_column( "value", _( "Value" ), string_format( _( "%d cm" ), you.base_height() ) ) },
         } );
         rows.push_back( {
             .id = "field:age", .label = _( "Age" ), .highlighted = selected( char_creation::AGE ),
-            .columns = { newchar_column( _( "Value" ), string_format( _( "%d years" ), you.base_age() ) ) },
+            .columns = { newchar_column( "value", _( "Value" ), string_format( _( "%d years" ), you.base_age() ) ) },
         } );
         rows.push_back( {
             .id = "action:CHANGE_GENDER", .label = _( "Gender" ),
-            .columns = { newchar_column( _( "Value" ), you.male ? _( "Male" ) : _( "Female" ) ) },
+            .columns = { newchar_column( "value", _( "Value" ), you.male ? _( "Male" ) : _( "Female" ) ) },
         } );
         rows.push_back( {
             .id = "action:CHOOSE_LOCATION", .label = _( "Starting location" ),
             .columns = {
-                newchar_column( _( "Value" ), you.random_start_location ? _( "Random" ) :
+                newchar_column( "value", _( "Value" ), you.random_start_location ? _( "Random" ) :
                                 you.start_location.obj().name() )
             },
         } );

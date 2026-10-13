@@ -230,7 +230,19 @@ auto to_json( const game_client::interaction_choice &choice ) -> json
     result["selected"] = choice.selected;
     result["columns"] = json::array();
     for( const auto &column : choice.columns ) {
-        result["columns"].push_back( {{"label", column.label}, {"value", column.value}} );
+        auto entry = json{{"key", column.key}, {"label", column.label}, {"value", column.value}};
+        if( !column.color.empty() ) { entry["color"] = column.color; }
+        result["columns"].push_back( std::move( entry ) );
+    }
+    if( choice.favorite ) { result["favorite"] = true; }
+    if( !choice.color.empty() ) { result["color"] = choice.color; }
+    if( !choice.key_color.empty() ) { result["key_color"] = choice.key_color; }
+    if( !choice.markup.empty() ) { result["markup"] = choice.markup; }
+    if( choice.parent_id ) { result["parent_id"] = *choice.parent_id; }
+    if( !choice.nest_color.empty() ) { result["nest_color"] = choice.nest_color; }
+    if( choice.mark ) {
+        result["mark"] = {{"glyph", choice.mark->glyph}};
+        if( !choice.mark->color.empty() ) { result["mark"]["color"] = choice.mark->color; }
     }
     if( choice.editor ) {
         const auto &editor = *choice.editor;
@@ -471,7 +483,7 @@ auto to_json( const event_value &value ) -> json
         } else if( value.type == "entity.gone" ) {
             data = {{"id", fact.entity}, {"reason", fact.kind}};
         } else if( value.type == "sound.heard" ) {
-            data = {{"text", fact.text}, {"volume", *fact.amount}};
+            data = {{"text", fact.text}, {"volume", *fact.amount}, {"logged", fact.logged}};
             if( fact.at ) { data["marker"] = to_json( *fact.at ); }
         } else if( value.type == "projectile.hit" ) {
             data = {{"projectile", fact.id}, {"at", to_json( *fact.at )}};

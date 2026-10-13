@@ -1250,11 +1250,20 @@
           "items": {
             "type": "object",
             "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The stable, untranslated name of the column; clients look a column up by it, never by `label`."
+              },
               "label": {
                 "type": "string"
               },
               "value": {
                 "type": "string"
+              },
+              "color": {
+                "type": "string",
+                "description": "The game color the native screen prints the value in. Absent when it uses the default."
               }
             },
             "required": [
@@ -1263,6 +1272,50 @@
             ],
             "additionalProperties": false
           }
+        },
+        "favorite": {
+          "type": "boolean",
+          "description": "The row is a favorite, as the native list marks it. Absent when it is not."
+        },
+        "color": {
+          "type": "string",
+          "description": "The game color of the row's text. Absent when the native list uses its default."
+        },
+        "key_color": {
+          "type": "string",
+          "description": "The game color of the row's `hotkey`. Absent when the native list uses its default."
+        },
+        "markup": {
+          "type": "string",
+          "description": "The row's name with the native color tags, when it differs from `label`."
+        },
+        "parent_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The listed row this one is nested under. Absent when it has no parent or the parent is filtered out."
+        },
+        "nest_color": {
+          "type": "string",
+          "description": "The game color of the nesting slash the native list draws before a nested row, lit by how much of its parent is marked. Absent for a row that is not nested."
+        },
+        "mark": {
+          "type": "object",
+          "description": "The selection mark the native list prints before the row: `+` all of it, `#` some of it, `-` none. Absent when the list prints none.",
+          "properties": {
+            "glyph": {
+              "enum": [
+                "+",
+                "#",
+                "-"
+              ]
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "glyph"
+          ],
+          "additionalProperties": false
         },
         "selected_count": {
           "type": "integer",
@@ -2713,6 +2766,9 @@
         },
         "text": {
           "type": "string"
+        },
+        "logged": {
+          "type": "boolean"
         },
         "volume": {
           "type": "integer",

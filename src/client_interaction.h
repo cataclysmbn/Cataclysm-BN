@@ -29,9 +29,19 @@ enum class interaction_kind : int {
     target,
 };
 
+/// One value of a row. `key` is the stable, untranslated name clients look the column up by; `label` is
+/// the translated caption; `color` is the game color the native screen prints the value in, if any.
 struct interaction_column {
+    std::string key;
     std::string label;
     std::string value;
+    std::string color;
+};
+
+/// The selection glyph a native multi-select list prints before a row's name, and its game color.
+struct interaction_mark {
+    std::string glyph;
+    std::string color;
 };
 
 struct interaction_editor_value {
@@ -69,6 +79,19 @@ struct interaction_choice {
     std::optional<std::uint64_t> selected_count;
     std::optional<std::uint64_t> minimum_count;
     std::optional<std::uint64_t> available_count;
+    /// The row is a favorite, as the native list marks it.
+    bool favorite = false;
+    /// The game color of the row's text, and of its key; empty when the native list uses its default.
+    std::string color;
+    std::string key_color;
+    /// The row's name with the native color tags, when it differs from `label`.
+    std::string markup;
+    /// The row this one is nested under, when that row is listed.
+    std::optional<std::string> parent_id;
+    /// The game color of the nesting slash the native list draws before a nested row; empty for a plain row.
+    std::string nest_color;
+    /// The selection mark the native list prints; absent when it prints none.
+    std::optional<interaction_mark> mark;
 };
 
 /// What a pane holds against what it can hold, as the native screen prints it beside the area name:

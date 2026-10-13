@@ -4024,12 +4024,12 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
                 if( item.type == ItemType::GroupHeader ) {
                     choice.id = "group:" + item.data;
                     choice.label = find_group( item.data ).name_.translated();
-                    choice.columns = { { .label = _( "Expanded" ), .value = groups_state[item.data] ? "true" : "false" } };
+                    choice.columns = { { .key = "expanded", .label = _( "Expanded" ), .value = groups_state[item.data] ? "true" : "false" } };
                 } else {
                     const auto &opt = cOPTIONS.find( item.data )->second;
                     choice.id = "option:" + item.data;
                     choice.label = ( item.group.empty() ? "" : "  " ) + opt.getMenuText();
-                    choice.columns = { { .label = _( "Value" ), .value = opt.getValueName() } };
+                    choice.columns = { { .key = "value", .label = _( "Value" ), .value = opt.getValueName() } };
                     choice.editor = editor_of( opt );
                     if( opt.hasPrerequisite() && !opt.checkPrerequisite() ) {
                         choice.enabled = choice.selectable = false;

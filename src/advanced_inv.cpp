@@ -1077,17 +1077,17 @@ auto advanced_inventory::interaction_snapshot() const -> game_client::interactio
             const auto description = remove_color_tags( item.info_string( { .mode = iteminfo_mode::observation } ) );
             const auto available_count = item.count_by_charges() ? item.charges : entry.stacks;
             auto columns = std::vector<game_client::interaction_column> {
-                {.label = "Type", .value = item.typeId().str()},
-                {.label = "Pane", .value = pane_index == left ? "left" : "right"},
-                {.label = "Area", .value = squares[entry.area].name},
-                {.label = "Storage", .value = item_storage_kind},
-                {.label = "Count", .value = std::to_string( available_count )},
+                {.key = "type", .label = "Type", .value = item.typeId().str()},
+                {.key = "pane", .label = "Pane", .value = pane_index == left ? "left" : "right"},
+                {.key = "area", .label = "Area", .value = squares[entry.area].name},
+                {.key = "storage", .label = "Storage", .value = item_storage_kind},
+                {.key = "count", .label = "Count", .value = std::to_string( available_count )},
                 {
-                    .label = "Weight",
+                    .key = "weight", .label = "Weight",
                     .value = string_format( "%.2f %s", convert_weight( entry.weight ), weight_units() )
                 },
                 {
-                    .label = "Volume",
+                    .key = "volume", .label = "Volume",
                     .value = string_format( "%s %s", format_volume( entry.volume ), volume_units_abbr() )
                 },
             };

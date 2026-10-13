@@ -272,7 +272,7 @@ TEST_CASE(
             check_authority();
             const auto row = std::ranges::find_if(first.choices, [&](const auto& choice) {
                 return std::ranges::any_of(choice.columns, [&](const auto& column) {
-                    return column.label == "Type" && column.value == type.str();
+                    return column.key == "type" && column.value == type.str();
                 });
             });
             REQUIRE(row != first.choices.end());

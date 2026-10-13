@@ -371,30 +371,34 @@ TEST_CASE(
     const auto guard = character_info_guard{};
     auto& you = get_avatar();
     you.set_mutation(trait_id("test_character_info_visible_trait"));
-    const auto value_of = [](const client::interaction_choice& row, const std::string& label) {
-        const auto found =
-            std::ranges::find(row.columns, label, &client::interaction_column::label);
+    const auto value_of = [](const client::interaction_choice& row, const std::string& key) {
+        const auto found = std::ranges::find(row.columns, key, &client::interaction_column::key);
         REQUIRE(found != row.columns.end());
         return found->value;
+    };
+    const auto color_of = [](const client::interaction_choice& row, const std::string& key) {
+        const auto found = std::ranges::find(row.columns, key, &client::interaction_column::key);
+        REQUIRE(found != row.columns.end());
+        return found->color;
     };
     auto reads = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
         const auto snapshot = observe();
         if (reads++ == 0) {
             const auto& strength = choice(snapshot, "Strength:");
-            CHECK(value_of(strength, "Color") == string_from_color(c_white));
+            CHECK(color_of(strength, "current") == string_from_color(c_white));
             const auto& moves = choice(snapshot, "Current Speed:");
             CHECK(moves.pane_id == "speed");
             CHECK_FALSE(moves.selectable);
-            CHECK(value_of(moves, "Value") == std::to_string(you.get_speed()));
-            CHECK(value_of(moves, "Color")
+            CHECK(value_of(moves, "value") == std::to_string(you.get_speed()));
+            CHECK(color_of(moves, "value")
                   == string_from_color(you.get_speed() >= 100 ? c_green : c_red));
-            CHECK(value_of(choice(snapshot, "Base Move Cost:"), "Value")
+            CHECK(value_of(choice(snapshot, "Base Move Cost:"), "value")
                   == std::to_string(you.run_cost(100)));
             return choose(snapshot, "TRAITS");
         }
         const auto& trait = choice(snapshot, "TEST character info visible trait");
-        CHECK(value_of(trait, "Color")
+        CHECK(trait.color
               == string_from_color(
                   trait_id("test_character_info_visible_trait")->get_display_color()));
         return cancel(snapshot);
@@ -679,7 +683,7 @@ TEST_CASE(
                 }));
                 CHECK(row.columns[0].value == std::to_string(BIO_CQB_LEVEL));
                 CHECK(row.columns[1].value == "0%");
-                CHECK(row.columns[2].value == string_from_color(h_yellow));
+                CHECK(row.columns[0].color == string_from_color(h_yellow));
                 if (step == 3) { return choose(snapshot, "Toggle skill training"); }
                 CHECK(you.get_skill_level_object(skill_id("melee")).isTraining() != initial);
                 return cancel(snapshot);
@@ -915,7 +919,7 @@ TEST_CASE(
         const auto snapshot = observe();
         const auto& strength = choice(snapshot, "Strength:");
         const auto base =
-            std::ranges::find(strength.columns, "Base", &client::interaction_column::label);
+            std::ranges::find(strength.columns, "base", &client::interaction_column::key);
         REQUIRE(base != strength.columns.end());
         if (step++ == 0) {
             CHECK(calls == 0);

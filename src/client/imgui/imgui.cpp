@@ -429,7 +429,7 @@ auto render_interaction(const bool disabled) -> void {
         }
         if (!choice.storage_kind.empty()) {
             const auto storage = storage_kind_label(choice.storage_kind);
-            const auto area = std::ranges::find(choice.columns, "Area", &interaction_column::label);
+            const auto area = std::ranges::find(choice.columns, "area", &interaction_column::key);
             if (area == choice.columns.end()) {
                 ImGui::Text("[%s]", storage.c_str());
             } else {
