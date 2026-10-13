@@ -6447,7 +6447,7 @@
           }
         ],
         "interaction": {
-          "schema_id": "d3b5ba91b7118c2c",
+          "schema_id": "d35c4bcd17ee8b43",
           "context": "UILIST",
           "kind": "choices",
           "allow_cancel": true,
