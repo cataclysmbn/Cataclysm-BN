@@ -150,6 +150,8 @@ class server
         engine_client::session &session_;
         engine_client::push_reader push_ = session_.open_push();
         bool hello_ = false;
+        /// The BN language id the connection asked its text in; empty: the engine's.
+        std::string locale_;
         /// What the last hello negotiated; a 0.1 connection is served as it always was.
         engine_client::wire_version version_ = engine_client::wire_version::v0_1;
         /// Events are pushed from `bn.subscribe` until a resync, `bn.unsubscribe` or `bn.hello`.
@@ -193,6 +195,8 @@ class server
         auto write_held( std::ostream &out ) -> bool;
         /// Drop the held frames a snapshot replaces: all but the command stages.
         auto drop_held_events() -> void;
+        /// Whether the connection reads a language other than the one the engine is in.
+        auto foreign_locale() const -> bool;
         auto deliver_input() -> bool;
         auto direct( const engine_client::jsonrpc::request &request ) ->
         std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::jsonrpc::output_error>;

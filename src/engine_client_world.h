@@ -46,6 +46,9 @@ struct avatar_item_stacks {
     std::vector<item_stack> ground;
 };
 auto item_stacks( map &here, const avatar &you ) -> avatar_item_stacks;
+/// The sections of `capture_world` whose text the game words (the avatar and the environment) and no other, for a
+/// locale the caller has scoped. They equal those of `capture_world` but for their wording.
+auto capture_worded() -> world_state;
 /// What `capture_world` would capture, as a patch over `previous`, the state the session published last:
 /// every section whole, but of the cells only those that can differ from `previous`. `consecutive` says
 /// that `previous` is the state the patch before this one captured, which the patch builds on; without it

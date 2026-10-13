@@ -941,6 +941,14 @@ auto set_tint_ids( std::set<std::string> ids ) -> void
 
 namespace
 {
+auto capture_environment() -> environment_value
+{
+    return environment_value{
+        .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
+        .weather = get_weather().weather_id.str(), .season = season_name(),
+        .mod_tilesets = mod_tileset_files() };
+}
+
 /// Every section of the world but its cells.
 auto capture_sections( map &here, const avatar &you, const std::string &dimension ) -> world_state
 {
@@ -952,10 +960,7 @@ auto capture_sections( map &here, const avatar &you, const std::string &dimensio
                                 dimension ) },
         .entities = capture_entities( here, you, dimension ),
         .avatar = capture_avatar( here, you, dimension ),
-        .environment = environment_value{
-            .turn = std::to_string( to_turn<int>( calendar::turn ) ), .time = to_string( calendar::turn ),
-            .weather = get_weather().weather_id.str(), .season = season_name(),
-            .mod_tilesets = mod_tileset_files() } };
+        .environment = capture_environment() };
     // The terrain window moves with the view, not the world: its squares are where a click lands.
     if( const auto window = g->click_window() ) {
         const auto z = g->get_levz();
@@ -1001,6 +1006,14 @@ auto capture_world() -> world_state
     auto state = capture_sections( here, you, dimension );
     capture_known( here, you, dimension, state.cells );
     return state;
+}
+
+auto capture_worded() -> world_state
+{
+    if( !g || !game_session::running() ) { return {}; }
+    auto &here = get_map();
+    return { .avatar = capture_avatar( here, get_avatar(), here.get_bound_dimension().str() ),
+             .environment = capture_environment() };
 }
 
 auto capture_patch( const snapshot &previous, const bool consecutive ) -> world_patch

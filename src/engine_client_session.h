@@ -4,7 +4,9 @@
 #include "engine_client_wire.h"
 #include "message_feed.h"
 
+#include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -31,9 +33,17 @@ class push_reader
     public:
         /// Everything published since the last call; the connection decides what to send.
         auto take() -> std::vector<push_item>;
+        /// The BN language id of the text the reader gets from now on; empty: the engine's language.
+        /// A language other than the engine's costs the session a capture of its screens, avatar and
+        /// environment in that language at each publication, shared by the readers that use it.
+        auto use_locale( std::string lang_id ) -> void;
     private:
         friend class session;
-        std::shared_ptr<std::vector<push_item>> inbox_ = std::make_shared<std::vector<push_item>>();
+        struct inbox {
+            std::vector<push_item> items;
+            std::string locale;
+        };
+        std::shared_ptr<inbox> inbox_ = std::make_shared<inbox>();
 };
 
 /// World capture hook. Called on the game thread at every input boundary and returns
@@ -46,6 +56,9 @@ using world_capture_fn = auto( * )() -> world_state;
 /// publication of `world_capture_fn` (the oracle checks it); without the hook every publication captures
 /// the whole world.
 using world_patch_fn = auto( * )( const snapshot &previous, bool consecutive ) -> world_patch;
+/// The sections of the world capture that hold text (avatar, environment) and no other, captured again for a
+/// language other than the engine's. Unset means the world has no text of its own to word.
+using text_capture_fn = auto( * )() -> world_state;
 
 /// Game-thread authority shared by connections. Reads and hello never reset its clock.
 class session final : public command_authority
@@ -55,7 +68,8 @@ class session final : public command_authority
         auto epoch() const -> const std::string &; // *NOPAD*
         auto current_permissions() const -> command_permissions override;
         auto set_phase( std::string phase ) -> void;
-        auto set_world_capture( world_capture_fn capture, world_patch_fn patch = nullptr ) -> void;
+        auto set_world_capture( world_capture_fn capture, world_patch_fn patch = nullptr,
+                                text_capture_fn text = nullptr ) -> void;
         /// With the oracle on, every publication made from a patch is checked against the publication of
         /// a full capture: the same event and the same state, or the difference is recorded (and the
         /// process aborts when `BN_CAPTURE_ORACLE` is set). Costs a full capture and diff per publication.
@@ -68,6 +82,9 @@ class session final : public command_authority
         auto publish_boundary( bool settles = true ) -> std::expected<void, error>;
         /// Atomic with respect to publication: the game thread is the only writer.
         auto current() const -> std::expected<snapshot, error>;
+        /// The same snapshot with the screens, avatar and environment worded in `lang_id`; the engine's
+        /// language, or an empty id, gives `current()`. Message lines stay in the engine's language.
+        auto current( const std::string &lang_id ) -> std::expected<snapshot, error>;
         /// The boundary last published, which the client has seen; `not_ready` before the first.
         auto boundary() const -> std::expected<boundary_state, error>;
         auto at() const -> std::optional<clock_point>;
@@ -85,6 +102,7 @@ class session final : public command_authority
         std::string phase_ = "starting";
         world_capture_fn world_capture_ = nullptr;
         world_patch_fn world_patch_ = nullptr;
+        text_capture_fn text_capture_ = nullptr;
         /// Whether the stream's state is what the last patch stood for, which the next one builds on.
         bool patch_consecutive_ = false;
         bool oracle_ = false;
@@ -96,10 +114,32 @@ class session final : public command_authority
         std::optional<command_request> input_;
         std::optional<input_event> validated_input_;
         std::optional<event_stream> stream_;
-        std::vector<std::weak_ptr<std::vector<push_item>>> readers_;
+        std::vector<std::weak_ptr<push_reader::inbox>> readers_;
+        /// The text sections of a language: what the connections reading it have been sent, so that the next
+        /// event holds only what changed in them. Absent until a snapshot is taken in the language.
+        struct worded_state {
+            std::optional<boundary_state> interaction;
+            std::optional<avatar_value> avatar;
+            std::optional<environment_value> environment;
+        };
+        /// By language id, for the languages other than the engine's that a reader uses.
+        std::map<std::string, std::optional<worded_state>> groups_;
+        /// What a publication posts in place of its item to the readers of a language.
+        using locale_items = std::map<std::string, push_item>;
         /// What the stream has already announced of the native message log.
         Messages::feed_cursor message_cursor_;
-        auto post( push_item item ) -> void;
+        auto post( push_item item, const locale_items &variants = {} ) -> void;
+        /// Forget the languages no reader uses any more.
+        auto prune_groups() -> void;
+        /// The screens, and the avatar and environment, as they are now, worded in a language.
+        struct wanted {
+            bool interaction = true;
+            bool world = true;
+        };
+        auto word( const std::string &lang_id,
+                   wanted sections ) const -> std::expected<worded_state, error>;
+        /// The event as each language in use reads it, for an event that carries text sections.
+        auto worded_variants( const public_event &event ) -> locale_items;
         auto capture() const -> std::expected<state_value, error>;
         auto capture_interaction() const -> std::expected<boundary_state, error>;
         auto check_oracle( const state_value &before, const std::optional<public_event> &event ) -> void;

@@ -743,6 +743,14 @@ auto to_json( const changes &delta, const wire_version version ) -> json
     }
     return result;
 }
+/// `lang` only for a line that is not in the locale of the connection reading it.
+auto to_json( const message_value &line ) -> json
+{
+    auto result = json{{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
+        {"color", line.color}, {"count", line.count}, {"label", line.label}};
+    if( !line.lang.empty() ) { result["lang"] = line.lang; }
+    return result;
+}
 auto to_json( const event_value &value, const wire_version version ) -> json
 {
     auto result = json{{"sequence", std::to_string( value.sequence )}, {"revision", std::to_string( value.revision )},
@@ -751,10 +759,7 @@ auto to_json( const event_value &value, const wire_version version ) -> json
     if( value.command ) { result["command"] = *value.command; }
     result["changes"] = to_json( value.delta, version );
     if( value.message ) {
-        const auto &line = *value.message;
-        result["data"] = {{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
-            {"color", line.color}, {"count", line.count}, {"label", line.label}
-        };
+        result["data"] = to_json( *value.message );
     }
     if( value.presentation ) {
         const auto &fact = *value.presentation;
@@ -892,10 +897,7 @@ auto serialize_snapshot( const snapshot &value,
     for( const auto &entry : world.entities ) { header["entities"].push_back( to_json( entry.second ) ); }
     if( !value.log.empty() ) {
         header["messages"] = json::array();
-        for( const auto &line : value.log ) {
-            header["messages"].push_back( {{"id", std::to_string( line.id )}, {"text", line.text},
-                {"kind", line.kind}, {"color", line.color}, {"count", line.count}, {"label", line.label}} );
-        }
+        for( const auto &line : value.log ) { header["messages"].push_back( to_json( line ) ); }
     }
     header["parts"] = result.parts.size();
     result.header = header.dump();

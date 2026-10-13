@@ -14,6 +14,8 @@
 
 #include "json.h"
 #include "client_memory.h"
+#include "language.h"
+#include "locale_scope.h"
 #include <ranges>
 
 namespace bn::mcp
@@ -730,16 +732,24 @@ auto server::queue_push() -> void
     for( auto &item : push_.take() ) {
         if( !( std::holds_alternative<command_result>( item ) ? commands_ : subscribed_ ) ) { continue; }
         if( const auto *pushed = std::get_if<event_push>( &item ) ) {
-            const auto &wire = pushed->event.wire();
+            // A line in the engine's language says so to a connection that reads another.
+            auto marked = std::optional<public_event> {};
+            if( foreign_locale() && pushed->event.value().message ) {
+                auto value = pushed->event.value();
+                value.message->lang = get_language().id;
+                marked.emplace( std::move( value ) );
+            }
+            const auto &event = marked ? *marked : pushed->event;
+            const auto &wire = event.wire();
             // An event sealed for 0.1 lacks the stack of the boundary it carries.
-            const auto stacked = version_ == wire_version::v0_2 && pushed->event.value().delta.interaction;
+            const auto stacked = version_ == wire_version::v0_2 && event.value().delta.interaction;
             auto params = stacked || wire.empty() ?
-                          serialize_events( {.epoch = pushed->epoch, .events = {pushed->event}}, version_ ) : std::string{};
+                          serialize_events( {.epoch = pushed->epoch, .events = {event}}, version_ ) : std::string{};
             const auto bytes = params.empty() ? wire.size() : params.size();
             if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
             batch.epoch = pushed->epoch;
             if( batch.events.empty() ) { first_params = std::move( params ); }
-            batch.events.push_back( pushed->event );
+            batch.events.push_back( event );
             batch_bytes += bytes;
             continue;
         }
@@ -754,6 +764,8 @@ auto server::queue_push() -> void
     }
     flush_batch();
 }
+
+auto server::foreign_locale() const -> bool { return !locale_.empty() && locale_ != get_language().id; }
 
 auto server::deliver_input() -> bool
 {
@@ -810,12 +822,16 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( offers_02 && *decoded->schema != engine_schema_hash ) {
             return fail( error::negotiation_failed, schema_hashes{ .engine = engine_schema_hash, .client = *decoded->schema } );
         }
+        // The language is the connection's own to ask for, and the engine must be able to word it.
+        if( decoded->locale && !localization::locale_available( *decoded->locale ) ) { return fail( error::negotiation_failed ); }
         // A legacy batch still waiting for native delivery cannot transfer authority mid-flight.
         if( !options_.spectator && ( pending_response_ || ( host_.has_input && host_.has_input() ) ) ) {
             return fail( error::command_busy );
         }
         hello_ = true;
         version_ = offers_02 ? wire_version::v0_2 : wire_version::v0_1;
+        locale_ = decoded->locale.value_or( std::string{} );
+        push_.use_locale( locale_ );
         credits_ = decoded->credits;
         // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
         subscribed_ = false;
@@ -838,9 +854,9 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         const auto grant = credits_ ? std::optional{ delivery_grant{ .credits = *credits_, .max_hz = decoded->max_hz } } :
                            std::nullopt;
         auto reply = hello_reply{ .epoch = session_.epoch(), .engine = describe_engine(), .delivery = grant };
-        // Text is in the engine's language until the engine can serve another (lane L).
         if( offers_02 ) {
-            reply.identity = { .schema = engine_schema_hash, .locale = reply.engine.locale, .engine_locale = reply.engine.locale,
+            reply.identity = { .schema = engine_schema_hash, .locale = locale_.empty() ? reply.engine.locale : locale_,
+                               .engine_locale = reply.engine.locale,
                                .role = options_.spectator ? "spectator" : "controller"
                              };
         }
@@ -875,8 +891,9 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     }
     if( request.method == "bn.subscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }
-        const auto current = session_.current();
+        auto current = session_.current( locale_ );
         if( !current ) { return fail( current.error() ); }
+        if( foreign_locale() ) { for( auto &line : current->log ) { line.lang = get_language().id; } }
         const auto wire = serialize_snapshot( *current, version_ );
         if( !wire ) { return fail( wire.error() ); }
         // The parts follow the response frame, before any event after `current->at`.
@@ -908,6 +925,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         return rpc::make_result( request, "{\"credits\":" + std::to_string( *credits_ ) + "}" );
     }
     if( request.method == "bn.interaction.choices" ) {
+        const auto words = localization::locale_scope{ locale_ };
         const auto decoded = decode_choices_request( params );
         if( !decoded ) { return invalid(); }
         if( decoded->component_id ) {
@@ -931,6 +949,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         return rpc::make_result( request, serialize_choices( *page ) );
     }
     if( request.method == "bn.world.describe" ) {
+        const auto words = localization::locale_scope{ locale_ };
         const auto decoded = decode_describe_request( params );
         if( !decoded ) { return invalid(); }
         const auto text = describe_tile( *decoded, session_.epoch() );

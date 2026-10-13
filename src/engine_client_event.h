@@ -52,6 +52,10 @@ auto diff( const state_value &from, const state_value &to ) -> changes;
 /// stands for, found by comparing only the cells it names.
 auto diff( const state_value &from, const boundary_state &interaction,
            const world_patch &patch ) -> changes;
+/// The members of `after` the wire leaves out of an avatar that replaces `before`: those that equal
+/// `before`'s and are not empty (`changes::avatar_kept`).
+auto kept_members( const avatar_value &before,
+                   const avatar_value &after ) -> std::vector<std::string>;
 /// Fails without partial effects when the changes do not fit `value` (unknown id, cell outside
 /// the coverage, duplicate entry).
 auto apply( state_value &value, const changes &delta ) -> std::expected<void, error>;
@@ -71,6 +75,8 @@ struct message_value {
     counter count = 1;
     /// The line the way the native log prints it: `text`, with the native repeat suffix from `count` 2 on.
     std::string label = {};
+    /// Set on the copy a connection reads of a line that is not in its own locale: the BN language id the line is in.
+    std::string lang = {};
 };
 struct event_value {
     counter sequence = 0;
@@ -94,8 +100,13 @@ class public_event
         /// The event as the sole event of its own `bn.events` params, serialized once when it was
         /// published; empty for an event that never went through a stream.
         auto wire() const -> const std::string &; // *NOPAD*
+        /// The event of `value` as the stream of `epoch` would seal it; none when it would not fit a frame.
+        static auto sealed( event_value value, const std::string &epoch ) -> std::optional<public_event>;
     private:
         friend class event_stream;
+        /// Serializes the event once for the wire; false when it would not fit a frame in the form any
+        /// connection reads. Only an interaction change differs between forms: 0.2 adds the screen stack.
+        auto seal( const std::string &epoch ) -> bool;
         event_value value_;
         std::string wire_;
 };
@@ -160,7 +171,6 @@ class event_stream
         auto rebase( state_value next ) -> std::expected<void, error>;
     private:
         explicit event_stream( snapshot initial );
-        auto seal( public_event &event ) const -> bool;
         /// The event of a delta, with its sequence and revision taken; none when the delta is empty. The
         /// caller then adopts the state the delta leads to.
         auto issue( changes delta, std::optional<std::string> command,

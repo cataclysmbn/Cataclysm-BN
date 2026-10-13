@@ -133,21 +133,7 @@ auto diff_sections( const state_value &from, const world_state &world,
     }
     if( world.avatar && world.avatar != from.world.avatar ) {
         result.avatar = world.avatar;
-        if( from.world.avatar ) {
-            const auto &before = *from.world.avatar;
-            const auto &after = *world.avatar;
-            const auto keep = [&]( const char *member, const bool same, const bool empty ) {
-                if( same && !empty ) { result.avatar_kept.emplace_back( member ); }
-            };
-            keep( "look", before.appearance == after.appearance, !after.appearance );
-            keep( "overlays", before.overlays == after.overlays, after.overlays.empty() );
-            keep( "traits", before.traits == after.traits, after.traits.empty() );
-            keep( "stats", before.stats == after.stats, after.stats.empty() );
-            keep( "inventory", before.inventory == after.inventory, after.inventory.empty() );
-            keep( "sidebar", before.sidebar == after.sidebar, false );
-            keep( "compass", before.compass == after.compass, after.compass.empty() );
-            keep( "ground", before.ground == after.ground, after.ground.empty() );
-        }
+        if( from.world.avatar ) { result.avatar_kept = kept_members( *from.world.avatar, *world.avatar ); }
     }
     if( world.environment && world.environment != from.world.environment ) {
         result.environment = world.environment;
@@ -160,6 +146,24 @@ auto diff_sections( const state_value &from, const world_state &world,
     return result;
 }
 } // namespace
+
+auto kept_members( const avatar_value &before,
+                   const avatar_value &after ) -> std::vector<std::string>
+{
+    auto kept = std::vector<std::string> {};
+    const auto keep = [&]( const char *member, const bool same, const bool empty ) {
+        if( same && !empty ) { kept.emplace_back( member ); }
+    };
+    keep( "look", before.appearance == after.appearance, !after.appearance );
+    keep( "overlays", before.overlays == after.overlays, after.overlays.empty() );
+    keep( "traits", before.traits == after.traits, after.traits.empty() );
+    keep( "stats", before.stats == after.stats, after.stats.empty() );
+    keep( "inventory", before.inventory == after.inventory, after.inventory.empty() );
+    keep( "sidebar", before.sidebar == after.sidebar, false );
+    keep( "compass", before.compass == after.compass, after.compass.empty() );
+    keep( "ground", before.ground == after.ground, after.ground.empty() );
+    return kept;
+}
 
 auto diff( const state_value &from, const state_value &to ) -> changes
 {
@@ -302,15 +306,20 @@ auto event_stream::seed_log( std::vector<message_value> lines ) -> void
 }
 auto event_stream::current() const -> const snapshot & { return current_; } // *NOPAD*
 
-/// Serializes the event once for the wire; false when it would not fit a frame in the form any
-/// connection reads. Only an interaction change differs between forms: 0.2 adds the screen stack.
-auto event_stream::seal( public_event &event ) const -> bool
+auto public_event::seal( const std::string &epoch ) -> bool
 {
     ZoneScopedN( "engine_client_serialize_event" );
-    event.wire_ = serialize_events( {.epoch = current_.at.epoch, .events = {event}} );
-    return event.wire_.size() <= maximum_event_bytes && ( !event.value().delta.interaction ||
-            serialize_events( {.epoch = current_.at.epoch, .events = {event}}, wire_version::v0_2 ).size() <=
+    wire_ = serialize_events( {.epoch = epoch, .events = {*this}} );
+    return wire_.size() <= maximum_event_bytes && ( !value_.delta.interaction ||
+            serialize_events( {.epoch = epoch, .events = {*this}}, wire_version::v0_2 ).size() <=
             maximum_event_bytes );
+}
+auto public_event::sealed( event_value value,
+                           const std::string &epoch ) -> std::optional<public_event>
+{
+    auto event = public_event{ std::move( value ) };
+    if( !event.seal( epoch ) ) { return std::nullopt; }
+    return event;
 }
 
 auto event_stream::issue( changes delta, std::optional<std::string> command,
@@ -331,7 +340,7 @@ auto event_stream::issue( changes delta, std::optional<std::string> command,
             .delta = std::move( delta ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
+    if( !event.seal( current_.at.epoch ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     current_.at.revision = event.value().revision;
     return event;
@@ -409,7 +418,7 @@ auto event_stream::publish_message( message_request request ) -> std::expected<p
             .message = std::move( request.message ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
+    if( !event.seal( current_.at.epoch ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     remember( current_.log, *event.value().message );
     return event;
@@ -429,7 +438,7 @@ std::expected<public_event, error>
             .presentation = std::move( request.fact ),
         }};
     if( !valid_event( event.value() ) ) { return std::unexpected( error::validation_failed ); }
-    if( !seal( event ) ) { return std::unexpected( error::resource_limit ); }
+    if( !event.seal( current_.at.epoch ) ) { return std::unexpected( error::resource_limit ); }
     current_.at.sequence = event.value().sequence;
     return event;
 }
