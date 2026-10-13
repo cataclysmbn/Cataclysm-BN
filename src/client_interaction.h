@@ -86,6 +86,8 @@ struct interaction_choice {
     std::string key_color;
     /// The row's name with the native color tags, when it differs from `label`.
     std::string markup;
+    /// The registered action the row runs, such as `open_options` on the in-game main menu; empty for other rows.
+    std::string action_id;
     /// The row this one is nested under, when that row is listed.
     std::optional<std::string> parent_id;
     /// The game color of the nesting slash the native list draws before a nested row; empty for a plain row.
@@ -184,6 +186,8 @@ struct interaction_overmap {
     std::vector<int> background;
     interaction_position player;
     std::vector<std::string> legend;
+    /// What the native sidebar says of the cursor square, without the window frame or the square's glyph.
+    std::string cursor_description;
     std::vector<interaction_overmap_note> notes;
     /// The planned travel route, nearest square first.
     std::vector<interaction_position> path;
@@ -191,6 +195,15 @@ struct interaction_overmap {
     std::vector<interaction_overmap_tile> tiles;
     /// For each tile id used, the ids to try next, nearest first.
     std::map<std::string, std::vector<std::string>> looks_like;
+};
+
+/// A heading of the requirement list, in the order the native pane prints them.
+struct interaction_requirement_group {
+    /// `skill`, `component`, `tool` or `extra`.
+    std::string kind;
+    std::string heading;
+    /// What the pane prints under the heading when no row has this kind, such as `NONE`; empty when the group is then left out.
+    std::string empty_text;
 };
 
 /// One requirement of the vehicle task being previewed. `kind` is `skill`, `component`, `tool` or `extra`;
@@ -207,6 +220,9 @@ struct interaction_vehicle_detail {
     std::string description;
     /// How long the task takes, as the native pane prints it; empty when the pane has no time line.
     std::string time;
+    /// The heading of the time line.
+    std::string time_heading;
+    std::vector<interaction_requirement_group> groups;
     std::vector<interaction_column> stats;
     std::vector<interaction_requirement> requirements;
     /// Whether the task can be started now: every requirement is met.
@@ -248,6 +264,8 @@ struct interaction_vehicle {
     bool owned = true;
     /// `main`, `install`, `repair`, `remove`, `mend`, `refill`, or `select` for another pick-a-part list.
     std::string mode;
+    /// What the task does to the highlighted part, such as `Install`; empty in the main screen.
+    std::string verb;
     /// The cursor in the vehicle's own frame.
     interaction_position cursor;
     /// The cursor square cannot take a part (terrain, furniture or a creature is in the way).
@@ -278,6 +296,20 @@ struct interaction_canvas {
 /// drawn over the earlier ones; empty when the first holds none.
 auto window_canvas( const std::vector<catacurses::window> &layers ) -> interaction_canvas;
 
+/// A square of the advanced inventory's area picker, placed as the native header draws it.
+struct interaction_area {
+    /// The registered action that points the active pane at this area.
+    std::string action_id;
+    std::string label;
+    /// The key bound to the action; empty when none is.
+    std::string key;
+    /// Character cells from the picker's top-left corner.
+    int x = 0;
+    int y = 0;
+    /// The area exists now: the vehicle is grabbed or on the square, the level is there.
+    bool available = true;
+};
+
 /// Pure data describing the interaction currently waiting at an input boundary.
 struct interaction_snapshot {
     std::uint64_t input_id = 0;
@@ -296,6 +328,7 @@ struct interaction_snapshot {
     bool actions_only = true;
     bool allow_cancel = false;
     std::vector<interaction_pane> panes;
+    std::vector<interaction_area> areas;
     std::vector<interaction_choice> choices;
     std::optional<interaction_field> field;
     std::optional<interaction_target> target;

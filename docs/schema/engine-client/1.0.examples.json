@@ -2489,6 +2489,7 @@
         "owner": "Ada",
         "owned": true,
         "mode": "install",
+        "verb": "Install",
         "cursor": { "x": 0, "y": 1 },
         "blocked": false,
         "cells": [
@@ -2506,6 +2507,13 @@
           "name": "wooden board",
           "description": "A board mounted on the frame.",
           "time": "30 minutes",
+          "time_heading": "Time required:",
+          "groups": [
+            { "kind": "skill", "heading": "Skills required:", "empty_text": "NONE" },
+            { "kind": "component", "heading": "Components required:", "empty_text": "" },
+            { "kind": "tool", "heading": "Tools required:", "empty_text": "" },
+            { "kind": "extra", "heading": "Additional requirements:", "empty_text": "" }
+          ],
           "stats": [{ "label": "Durability", "value": "120" }],
           "requirements": [
             { "kind": "skill", "text": "mechanics 1", "met": true },
@@ -2578,6 +2586,79 @@
           { "key": "id", "label": "Id", "value": "t_grass" },
           { "key": "move_cost", "label": "Move cost", "value": "2" }
         ]
+      }
+    },
+    {
+      "name": "advanced inventory area picker with the player's keys",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:aim",
+        "context": "ADVANCED_INVENTORY",
+        "kind": "inventory",
+        "allow_cancel": true,
+        "allow_set_count": false,
+        "title": "Advanced inventory",
+        "message": "",
+        "choices": [],
+        "choice_total": 0,
+        "areas": [
+          {
+            "action_id": "ITEMS_CONTAINER",
+            "label": "Container",
+            "key": "C",
+            "x": 0,
+            "y": 0,
+            "available": true
+          },
+          {
+            "action_id": "ITEMS_N",
+            "label": "North",
+            "key": "k",
+            "x": 11,
+            "y": 0,
+            "available": true
+          },
+          {
+            "action_id": "ITEMS_CE",
+            "label": "Directly below you",
+            "key": "",
+            "x": 11,
+            "y": 1,
+            "available": false
+          }
+        ],
+        "compat": { "panes": [] }
+      }
+    },
+    {
+      "name": "overmap with the cursor square described",
+      "def": "overmap",
+      "value": {
+        "origin": { "dim": "", "x": 49, "y": 50, "z": 0 },
+        "player": { "dim": "", "x": 50, "y": 50, "z": 0 },
+        "cols": 1,
+        "rows": 1,
+        "cells": [[["F", 2, 0]]],
+        "legend": ["│", "│F forest", "│Use movement keys to pan."],
+        "cursor_description": "forest",
+        "notes": [],
+        "path": []
+      }
+    },
+    {
+      "name": "in-game main menu row that opens the options",
+      "def": "choice",
+      "value": {
+        "id": "entry:4",
+        "label": "Options",
+        "description": "",
+        "denial": "",
+        "hotkey": "o",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": [],
+        "action_id": "open_options"
       }
     },
     {
