@@ -38,3 +38,6 @@
 *.ttf     binary
 
 lua_annotations.txt linguist-generated=true
+
+# The 0.2 hello names the SHA-256 of these raw bytes, so no checkout may rewrite them.
+docs/schema/engine-client/*.json -text
