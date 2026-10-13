@@ -112,6 +112,8 @@ struct row {
     std::optional<std::uint64_t> max = std::nullopt;
     /// A category heading over the rows after it.
     bool header = false;
+    /// The row switches something on or off, and this is which it is now; absent for a row that is no switch.
+    std::optional<bool> toggled = std::nullopt;
     /// What the row stands for, for a client to draw.
     std::optional<engine_client::look> look = std::nullopt;
 };
@@ -123,6 +125,8 @@ struct list_body {
     /// `none`, `single`, `multi` or `count`.
     std::string selection = "none";
     std::string activate = {};
+    /// The list takes a filter text; its filter affordance is among the component's.
+    bool filterable = false;
 };
 struct tab_entry {
     std::string id = {};
@@ -255,6 +259,7 @@ struct list_options {
     std::string selection = {};
     /// The affordance that picks a row.
     std::string activate = {};
+    bool filterable = false;
 };
 /// A list over `rows`, with the column header they use.
 auto list( list_options options ) -> component;

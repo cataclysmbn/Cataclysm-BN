@@ -4932,6 +4932,10 @@
           "type": "boolean",
           "description": "A category heading over the rows after it, not an entry. Absent on an entry."
         },
+        "toggled": {
+          "type": "boolean",
+          "description": "The row switches something on or off, and this is which it is now. Absent for a row that is no switch."
+        },
         "affordances": {
           "type": "array",
           "description": "The row's availability for the affordances placed on its list where it differs from the row's own `enabled`/`denial`: a row that allows some of them only.",
@@ -5466,6 +5470,10 @@
         "activate": {
           "$ref": "#/$defs/opaque_id",
           "description": "The affordance that picks a row (`args.row`)."
+        },
+        "filterable": {
+          "type": "boolean",
+          "description": "The list takes a filter text: invoking the filter affordance among `affordances` opens a prompt whose text narrows `rows`. Absent: it does not."
         }
       },
       "required": [

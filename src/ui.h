@@ -4,6 +4,7 @@
 #include <initializer_list>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,6 +31,11 @@ const int UILIST_CANCEL = -1027;
 const int UILIST_TIMEOUT = -1028;
 const int UILIST_ADDITIONAL = -1029;
 const int MENU_AUTOASSIGN = -1;
+
+namespace game_client
+{
+struct interaction_snapshot;
+} // namespace game_client
 
 class input_context;
 class string_input_popup;
@@ -77,6 +83,8 @@ struct uilist_entry {
     nc_color hilite_color;
     // Registered action the entry runs, published to clients as a stable id for the row
     std::string action_id;
+    // The entry switches something on or off, and this is which it is now; none for an entry that is no switch
+    std::optional<bool> toggled;
 
     uilist_entry( std::string T ) : txt( T ) {}
 
@@ -119,6 +127,11 @@ struct uilist_entry {
 
     uilist_entry &with_hk_color( nc_color c ) {
         hotkey_color = c;
+        return *this;
+    }
+
+    uilist_entry &with_toggled( bool on ) {
+        toggled = on;
         return *this;
     }
 
@@ -274,6 +287,8 @@ class uilist // NOLINT(cata-xy)
         void show( ui_adaptor &ui );
         bool scrollby( int scrollby );
         void query( bool loop = true, int timeout = -1 );
+        /// The list as a client sees it: the filtered entries, and whether it can be filtered.
+        auto as_interaction() const -> game_client::interaction_snapshot;
 
         /**
          * Repopulate filtered entries list (fentries) and set fselected accordingly.
@@ -420,6 +435,7 @@ class uilist // NOLINT(cata-xy)
         report_color_error _color_error = report_color_error::yes;
         input_context create_main_input_context() const;
         input_context create_filter_input_context() const;
+
 
     public:
         // Iternal states

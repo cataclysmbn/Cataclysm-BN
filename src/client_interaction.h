@@ -96,6 +96,8 @@ struct interaction_choice {
     std::optional<interaction_mark> mark;
     /// The row's identity in the 0.2 components when `id` is a position; empty when `id` is the identity.
     std::string identity;
+    /// The row switches something on or off, and this is which it is now; absent for a row that is no switch.
+    std::optional<bool> toggled;
 };
 
 /// What a pane holds against what it can hold, as the native screen prints it beside the area name:
@@ -367,6 +369,8 @@ struct interaction_snapshot {
     std::string any_key_choice_id;
     /// Per `pane_id` of the full list (`""` for rows without one), where this page stands in its rows.
     std::map<std::string, interaction_group_page> groups;
+    /// The list takes a filter text (its screen's FILTER action).
+    bool filterable = false;
 };
 
 struct interaction_page {

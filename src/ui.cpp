@@ -234,7 +234,9 @@ input_context uilist::create_main_input_context() const
     }
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "CONFIRM" );
-    ctxt.register_action( "FILTER" );
+    if( filtering ) {
+        ctxt.register_action( "FILTER" );
+    }
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     for( const auto &additional_action : additional_actions ) {
@@ -450,6 +452,14 @@ void uilist::inputfilter()
     filter_popup->context( ctxt ).text( filter )
     .max_length( 256 )
     .window( window, point( 4, w_height - 1 ), w_width - 4 );
+    // The rows the filter leaves follow each keystroke; they are shown, not chosen, while the prompt has the input.
+    filter_popup->extend_interaction = [this]( game_client::interaction_snapshot & snapshot ) {
+        snapshot.choices = as_interaction().choices;
+        for( auto &choice : snapshot.choices ) {
+            choice.selectable = false;
+            choice.highlighted = false;
+        }
+    };
     ime_sentry sentry;
     do {
         ui_manager::redraw();
@@ -1071,57 +1081,7 @@ void uilist::query( bool loop, int timeout )
     do {
         auto event = input_event{};
         {
-            const auto interaction = game_client::interaction_scope( ctxt, [this]() {
-                auto snapshot = game_client::interaction_snapshot{
-                    .kind = game_client::interaction_kind::choices,
-                    .title = remove_color_tags( title ),
-                    .message = remove_color_tags( text ),
-                    .allow_cancel = allow_cancel,
-                };
-                // Key rows come first, like the main menu's tabs, so they are on the first page of a long menu.
-                if( callback != nullptr ) {
-                    for( const auto &callback_key : callback->keys() ) {
-                        snapshot.choices.push_back( {
-                            .id = "action:key:" + std::to_string( callback_key.key ),
-                            .label = callback_key.name,
-                        } );
-                    }
-                }
-                snapshot.choices.reserve( snapshot.choices.size() + fentries.size() );
-                // A row is known by its entry's own return value; entries that share one are told apart by
-                // their order among them, whatever the filter shows.
-                auto seen = std::map<int, int> {};
-                const auto identities = entries | std::views::transform( [&seen]( const auto & entry ) {
-                    const auto count = seen[entry.retval]++;
-                    return "entry:" + std::to_string( entry.retval ) + ( count == 0 ? "" : "#" + std::to_string(
-                                count ) );
-                } ) | std::ranges::to<std::vector>();
-                for( const auto entry_index : fentries ) {
-                    const auto &entry = entries[entry_index];
-                    auto details = callback != nullptr ? callback->row_details( *this,
-                                   static_cast<int>( entry_index ) ) : uilist_row_details{};
-                    // Native draws the entry description under a rule, apart from the callback's panel.
-                    const auto separator = entry.desc.empty() || details.description.empty() ? "" : "\n--\n";
-                    snapshot.choices.push_back( {
-                        .id = "entry:" + std::to_string( entry_index ),
-                        .label = remove_color_tags( entry.txt ),
-                        .description = remove_color_tags( entry.desc ) + separator + details.description,
-                        .hotkey = entry.hotkey >= 33 && entry.hotkey < 126 ? std::string( 1, static_cast<char>( entry.hotkey ) ) : std::string{},
-                        .enabled = entry.enabled,
-                        .selectable = entry.enabled || allow_disabled,
-                        .selected = entry_index == selected,
-                        .highlighted = entry_index == selected,
-                        .columns = details.columns | std::views::transform( []( const auto & column )
-                        {
-                            return game_client::interaction_column{ .key = column.key, .label = column.label, .value = column.value };
-                        } ) | std::ranges::to<std::vector>(),
-                        .favorite = details.favorite,
-                        .action_id = entry.action_id,
-                        .identity = identities[entry_index],
-                    } );
-                }
-                return snapshot;
-            } );
+            const auto interaction = game_client::interaction_scope( ctxt, [this]() { return as_interaction(); } );
             ret_act = ctxt.handle_input( timeout );
             event = ctxt.get_raw_input();
         }
@@ -1213,6 +1173,64 @@ void uilist::query( bool loop, int timeout )
 }
 
 ///@}
+/**
+ * the list as the client sees it
+ */
+auto uilist::as_interaction() const -> game_client::interaction_snapshot
+{
+    auto snapshot = game_client::interaction_snapshot{
+        .kind = game_client::interaction_kind::choices,
+        .title = remove_color_tags( title ),
+        .message = remove_color_tags( text ),
+        .allow_cancel = allow_cancel,
+        .filterable = filtering,
+    };
+    // Key rows come first, like the main menu's tabs, so they are on the first page of a long menu.
+    if( callback != nullptr ) {
+        for( const auto &callback_key : callback->keys() ) {
+            snapshot.choices.push_back( {
+                .id = "action:key:" + std::to_string( callback_key.key ),
+                .label = callback_key.name,
+            } );
+        }
+    }
+    snapshot.choices.reserve( snapshot.choices.size() + fentries.size() );
+    // A row is known by its entry's own return value; entries that share one are told apart by
+    // their order among them, whatever the filter shows.
+    auto seen = std::map<int, int> {};
+    const auto identities = entries | std::views::transform( [&seen]( const auto & entry ) {
+        const auto count = seen[entry.retval]++;
+        return "entry:" + std::to_string( entry.retval ) + ( count == 0 ? "" : "#" + std::to_string(
+                    count ) );
+    } ) | std::ranges::to<std::vector>();
+    for( const auto entry_index : fentries ) {
+        const auto &entry = entries[entry_index];
+        auto details = callback != nullptr ? callback->row_details( *this,
+                       static_cast<int>( entry_index ) ) : uilist_row_details{};
+        // Native draws the entry description under a rule, apart from the callback's panel.
+        const auto separator = entry.desc.empty() || details.description.empty() ? "" : "\n--\n";
+        snapshot.choices.push_back( {
+            .id = "entry:" + std::to_string( entry_index ),
+            .label = remove_color_tags( entry.txt ),
+            .description = remove_color_tags( entry.desc ) + separator + details.description,
+            .hotkey = entry.hotkey >= 33 && entry.hotkey < 126 ? std::string( 1, static_cast<char>( entry.hotkey ) ) : std::string{},
+            .enabled = entry.enabled,
+            .selectable = entry.enabled || allow_disabled,
+            .selected = entry_index == selected,
+            .highlighted = entry_index == selected,
+            .columns = details.columns | std::views::transform( []( const auto & column )
+            {
+                return game_client::interaction_column{ .key = column.key, .label = column.label, .value = column.value };
+            } ) | std::ranges::to<std::vector>(),
+            .favorite = details.favorite,
+            .action_id = entry.action_id,
+            .identity = identities[entry_index],
+            .toggled = entry.toggled,
+        } );
+    }
+    return snapshot;
+}
+
 /**
  * cleanup
  */

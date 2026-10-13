@@ -552,6 +552,7 @@ auto to_json( const row &value ) -> json
     // Counts are in the row's native units, up to what it holds.
     if( value.max ) { result["max"] = *value.max; }
     if( value.header ) { result["header"] = true; }
+    if( value.toggled ) { result["toggled"] = *value.toggled; }
     if( value.look ) { result["look"] = to_json( *value.look ); }
     return result;
 }
@@ -566,6 +567,7 @@ auto body_json( const list_body &body, const bubble_frame & /*frame*/ ) -> json
     if( body.offset != 0 ) { result["offset"] = body.offset; }
     result["selection"] = body.selection;
     if( !body.activate.empty() ) { result["activate"] = body.activate; }
+    if( body.filterable ) { result["filterable"] = true; }
     return result;
 }
 auto body_json( const tabs_body &body, const bubble_frame & /*frame*/ ) -> json

@@ -1,7 +1,11 @@
+#include "cached_options.h"
+#include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "client_input.h"
+#include "client_interaction.h"
 #include "engine_client_component.h"
 #include "input.h"
+#include "ui.h"
 
 #include <algorithm>
 #include <nlohmann/json.hpp>
@@ -652,4 +656,82 @@ TEST_CASE("a row past the first page is chosen by its native id", "[engine_clien
                 state, {.affordance_id = "bn:choose:list:choices", .args = {.row = "key:1"}}))
             .target_id
         == "entry:1");
+}
+
+TEST_CASE("a row says whether it is switched on", "[engine_client_component]") {
+    auto native = menu();
+    native.choices[0].toggled = true;
+    native.choices[1].toggled = false;
+    const auto state = boundary(native);
+    const auto& rows = body<ec::list_body>(find(top_of(state), "list:choices")).rows;
+    CHECK(rows[0].toggled == std::optional<bool>{true});
+    CHECK(rows[1].toggled == std::optional<bool>{false});
+    const auto listed = wire(state)["stack"].back()["root"]["rows"];
+    CHECK(listed[0]["toggled"] == true);
+    CHECK(listed[1]["toggled"] == false);
+    // A row that is no switch says nothing, and the 0.1 choice never carries it.
+    CHECK_FALSE(wire(boundary(menu()))["stack"].back()["root"]["rows"][0].contains("toggled"));
+    CHECK_FALSE(wire(state)["interaction"]["choices"][0].contains("toggled"));
+}
+
+TEST_CASE("a list says whether it can be filtered", "[engine_client_component]") {
+    auto native = menu();
+    native.filterable = true;
+    auto state = boundary(native);
+    state.actions.push_back({.id = "FILTER", .name = "Filter", .keys = {"/"}});
+    const auto view = top_of(state);
+    CHECK(body<ec::list_body>(find(view, "list:choices")).filterable);
+    CHECK(std::ranges::contains(find(view, "list:choices").affordances, "FILTER"));
+    CHECK(affordance(view, "FILTER").label == "Filter");
+    CHECK(wire(state)["stack"].back()["root"]["filterable"] == true);
+
+    SECTION("a list that cannot be filtered offers no filter") {
+        auto plain = boundary(menu());
+        plain.actions.push_back({.id = "FILTER", .name = "Filter", .keys = {"/"}});
+        CHECK_FALSE(body<ec::list_body>(find(top_of(plain), "list:choices")).filterable);
+        CHECK_FALSE(
+            std::ranges::contains(find(top_of(plain), "list:choices").affordances, "FILTER"));
+        CHECK_FALSE(wire(plain)["stack"].back()["root"].contains("filterable"));
+    }
+    SECTION("a filter that leaves no row keeps the list that changes it") {
+        native.choices.clear();
+        native.choice_total = 0;
+        native.focus_choice_id.clear();
+        const auto empty = top_of(boundary(native));
+        CHECK(body<ec::list_body>(find(empty, "list:choices")).filterable);
+        CHECK(body<ec::list_body>(find(empty, "list:choices")).rows.empty());
+    }
+}
+
+TEST_CASE(
+    "a uilist publishes its filtered rows, switches and filterability",
+    "[engine_client_component]") {
+    // A list is built only outside the test harness; nothing here reads input.
+    const auto live = restore_on_out_of_scope<bool>(test_mode);
+    test_mode = false;
+    auto menu = uilist();
+    menu.addentry(1, true, 'a', "Teleport");
+    menu.addentry(2, true, 'b', "Spawn monster");
+    menu.entries.back().toggled = true;
+    menu.addentry(3, true, 'c', "Teleport to overmap");
+    menu.filterlist();
+    const auto labels = [](const client::interaction_snapshot& snapshot) {
+        return snapshot.choices | std::views::transform(&client::interaction_choice::label)
+             | std::ranges::to<std::vector>();
+    };
+    SECTION("the filter keeps the rows it matches") {
+        menu.set_filter("tele");
+        const auto snapshot = menu.as_interaction();
+        CHECK(labels(snapshot) == std::vector<std::string>{"Teleport", "Teleport to overmap"});
+        CHECK(snapshot.filterable);
+    }
+    SECTION("a switch carries its state") {
+        const auto snapshot = menu.as_interaction();
+        CHECK_FALSE(snapshot.choices[0].toggled);
+        CHECK(snapshot.choices[1].toggled == std::optional<bool>{true});
+    }
+    SECTION("a list that does not filter says so") {
+        menu.filtering = false;
+        CHECK_FALSE(menu.as_interaction().filterable);
+    }
 }

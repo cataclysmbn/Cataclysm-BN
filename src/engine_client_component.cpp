@@ -76,9 +76,12 @@ auto row_of( const interaction_choice &choice ) -> row
         .color = choice.color, .key_color = choice.key_color, .markup = choice.markup,
         .parent_id = choice.parent_id, .nest_color = choice.nest_color, .mark = choice.mark,
         .selected_count = choice.selected_count, .minimum_count = choice.minimum_count,
-        .max = choice.available_count,
+        .max = choice.available_count, .toggled = choice.toggled,
     };
 }
+
+/// The registered action that opens a list's filter prompt.
+constexpr auto filter_action = "FILTER";
 
 auto text_part( std::string id, std::string markup ) -> component
 {
@@ -88,10 +91,15 @@ auto text_part( std::string id, std::string markup ) -> component
 auto make_list( build &b ) -> std::optional<component>
 {
     const auto &native = b.native;
-    if( native.choice_total == 0 ) { return std::nullopt; }
+    // A filter that leaves no row still shows its list, which is where it is changed.
+    if( native.choice_total == 0 && !native.filterable ) { return std::nullopt; }
     const auto id = std::string{ "list:choices" };
     auto result = list( { .id = id, .rows = native.choices | std::views::transform( row_of ) | std::ranges::to<std::vector>(),
-                          .total = native.choice_total, .offset = native.choice_offset } );
+                          .total = native.choice_total, .offset = native.choice_offset, .filterable = native.filterable } );
+    if( native.filterable &&
+        std::ranges::find( b.state.actions, filter_action, &action::id ) != b.state.actions.end() ) {
+        result.affordances.push_back( filter_action );
+    }
     if( std::get<list_body>( result.body ).selection != "none" ) {
         auto &body = std::get<list_body>( result.body );
         body.activate = b.add( { .id = choose_id( id ), .label = native_label( b.state, { "CONFIRM" } ),
@@ -366,7 +374,8 @@ auto row_ids( const component &value ) -> std::optional<std::vector<std::string>
 
 auto list( list_options options ) -> component
 {
-    auto body = list_body{ .rows = std::move( options.rows ), .offset = options.offset, .activate = options.activate };
+    auto body = list_body{ .rows = std::move( options.rows ), .offset = options.offset, .activate = options.activate,
+                           .filterable = options.filterable };
     body.total = std::max( options.total.value_or( 0 ), options.offset + body.rows.size() );
     auto seen = std::set<std::string> {};
     for( const auto &entry : body.rows ) {
