@@ -519,14 +519,16 @@
             "text": "You have survived the initial wave of panic.",
             "kind": "neutral",
             "color": "c_white",
-            "count": 1
+            "count": 1,
+            "label": "You have survived the initial wave of panic."
           },
           {
             "id": "7",
             "text": "You open the door.",
             "kind": "neutral",
             "color": "c_white",
-            "count": 2
+            "count": 2,
+            "label": "You open the door. x 2"
           }
         ],
         "parts": 0
@@ -605,6 +607,7 @@
                 "color": "brown"
               },
               "name": "||\u00a0stick",
+              "label": "<color_c_light_green>||\u00a0</color>stick (wielded)",
               "slot": "wielded",
               "durability": {
                 "symbol": "||",
@@ -619,6 +622,7 @@
                 "color": "light_gray"
               },
               "name": "rock",
+              "label": "2 rocks",
               "count": 2,
               "slot": "carried"
             }
@@ -652,6 +656,7 @@
                 "color": "blue"
               },
               "name": "lighter (12/25)",
+              "label": "2 lighters (12/25)",
               "count": 2
             }
           ]
@@ -1704,7 +1709,117 @@
             "clock": "Around noon",
             "has_watch": false
           },
-          "weapon": "fists"
+          "weapon": "fists",
+          "rows": [
+            [
+              {
+                "text": "HEAD",
+                "color": "white"
+              },
+              {
+                "text": "|||||",
+                "color": "green"
+              },
+              {
+                "text": "Pain 3",
+                "color": "light_red"
+              },
+              {
+                "text": "Str 8",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Hungry",
+                "color": "yellow"
+              },
+              {
+                "text": ":)",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Tired",
+                "color": "yellow"
+              }
+            ],
+            [
+              {
+                "text": "Focus 100",
+                "color": "white"
+              },
+              {
+                "text": "SAFE",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Spd 100",
+                "color": "white"
+              },
+              {
+                "text": "0 W",
+                "color": "white"
+              },
+              {
+                "text": "Stm |||||",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Comfortable",
+                "color": "green"
+              },
+              {
+                "text": "POWER --",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Location:",
+                "color": "light_gray"
+              },
+              {
+                "text": "field",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Weather :",
+                "color": "light_gray"
+              },
+              {
+                "text": "Clear",
+                "color": "light_cyan"
+              }
+            ],
+            [
+              {
+                "text": "Spring, Day 1",
+                "color": "white"
+              },
+              {
+                "text": "Around noon",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Weapon:",
+                "color": "light_gray"
+              },
+              {
+                "text": "fists",
+                "color": "light_gray"
+              }
+            ]
+          ]
         }
       }
     },
@@ -1725,7 +1840,8 @@
               "text": "You open the door.",
               "kind": "neutral",
               "color": "c_white",
-              "count": 1
+              "count": 1,
+              "label": "You open the door."
             }
           },
           {
@@ -1739,7 +1855,8 @@
               "text": "You open the door.",
               "kind": "neutral",
               "color": "c_white",
-              "count": 2
+              "count": 2,
+              "label": "You open the door. x 2"
             }
           }
         ]
@@ -3557,7 +3674,117 @@
             "clock": "Around noon",
             "has_watch": false
           },
-          "weapon": "fists"
+          "weapon": "fists",
+          "rows": [
+            [
+              {
+                "text": "HEAD",
+                "color": "white"
+              },
+              {
+                "text": "|||||",
+                "color": "green"
+              },
+              {
+                "text": "Pain 3",
+                "color": "light_red"
+              },
+              {
+                "text": "Str 8",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Hungry",
+                "color": "yellow"
+              },
+              {
+                "text": ":)",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Tired",
+                "color": "yellow"
+              }
+            ],
+            [
+              {
+                "text": "Focus 100",
+                "color": "white"
+              },
+              {
+                "text": "SAFE",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Spd 100",
+                "color": "white"
+              },
+              {
+                "text": "0 W",
+                "color": "white"
+              },
+              {
+                "text": "Stm |||||",
+                "color": "green"
+              }
+            ],
+            [
+              {
+                "text": "Comfortable",
+                "color": "green"
+              },
+              {
+                "text": "POWER --",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Location:",
+                "color": "light_gray"
+              },
+              {
+                "text": "field",
+                "color": "white"
+              }
+            ],
+            [
+              {
+                "text": "Weather :",
+                "color": "light_gray"
+              },
+              {
+                "text": "Clear",
+                "color": "light_cyan"
+              }
+            ],
+            [
+              {
+                "text": "Spring, Day 1",
+                "color": "white"
+              },
+              {
+                "text": "Around noon",
+                "color": "light_gray"
+              }
+            ],
+            [
+              {
+                "text": "Weapon:",
+                "color": "light_gray"
+              },
+              {
+                "text": "fists",
+                "color": "light_gray"
+              }
+            ]
+          ]
         }
       }
     },
@@ -3579,7 +3806,8 @@
               "text": "You open the door.",
               "kind": "neutral",
               "color": "c_white",
-              "count": 0
+              "count": 0,
+              "label": "You open the door."
             }
           }
         ]
@@ -3655,6 +3883,7 @@
               "color": "brown"
             },
             "name": "stick",
+            "label": "stick",
             "slot": "pocket"
           }
         ]
@@ -3890,7 +4119,8 @@
             "text": "",
             "kind": "neutral",
             "color": "c_white",
-            "count": 1
+            "count": 1,
+            "label": ""
           }
         ],
         "parts": 0
