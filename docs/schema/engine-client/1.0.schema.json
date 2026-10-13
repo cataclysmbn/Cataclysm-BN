@@ -1492,12 +1492,20 @@
         "distance_metric": {
           "type": "string"
         },
+        "distance": {
+          "type": "integer",
+          "description": "How far current is from source by distance_metric, as the game measures range (rounded Euclidean for trig, Chebyshev otherwise; the vertical axis included)."
+        },
         "unit": {
           "const": "omt",
           "description": "Present when positions are overmap terrain squares (the overmap is open), not map squares."
         },
         "status": {
           "type": "string"
+        },
+        "status_text": {
+          "type": "string",
+          "description": "Present where the screen reports range and readiness in words: the localized line, such as range 3/10, ready to fire."
         },
         "candidates": {
           "type": "array",
@@ -1536,6 +1544,7 @@
         "current",
         "range",
         "distance_metric",
+        "distance",
         "status",
         "candidates"
       ],
@@ -1864,6 +1873,10 @@
         "category_mode": {
           "type": "boolean",
           "description": "Present where the native screen has a category-selection mode: whether it is on (the NPC trade window)."
+        },
+        "any_key_choice_id": {
+          "type": "string",
+          "description": "Present on a press-any-key screen that binds no key: the choice any key press acknowledges. Choose it when the player presses a key no action binds."
         },
         "banner": {
           "type": "array",

@@ -492,14 +492,7 @@ auto validate( const acquired_interaction &acquired, const interaction_event &ev
             return std::unexpected(
                        "invalid: target position is above the active coordinate bounds" );
         }
-        const auto dx = static_cast<double>( event.position->x ) - snapshot.target->source.x;
-        const auto dy = static_cast<double>( event.position->y ) - snapshot.target->source.y;
-        const auto dz = static_cast<double>( event.position->z ) - snapshot.target->source.z;
-        const auto distance =
-            snapshot.target->distance_metric == "trig"
-            ? std::round( std::sqrt( dx * dx + dy * dy + dz * dz ) )
-            : std::max( {std::abs( dx ), std::abs( dy ), std::abs( dz )} );
-        if( distance > snapshot.target->range ) {
+        if( target_distance( *snapshot.target, *event.position ) > snapshot.target->range ) {
             return std::unexpected( "invalid: target position is outside the active range" );
         }
         return {};
@@ -713,6 +706,16 @@ auto interaction_kind_name( const interaction_kind kind ) -> std::string
             return "custom";
     }
     return "custom";
+}
+
+auto target_distance( const interaction_target &target, const interaction_position &to ) -> int
+{
+    const auto dx = static_cast<double>( to.x ) - target.source.x;
+    const auto dy = static_cast<double>( to.y ) - target.source.y;
+    const auto dz = static_cast<double>( to.z ) - target.source.z;
+    return target.distance_metric == "trig" ? static_cast<int>( std::round( std::sqrt(
+                dx * dx + dy * dy + dz * dz ) ) )
+           : static_cast<int>( std::max( {std::abs( dx ), std::abs( dy ), std::abs( dz )} ) );
 }
 
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )

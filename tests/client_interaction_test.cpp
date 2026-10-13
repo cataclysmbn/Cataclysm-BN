@@ -1810,6 +1810,7 @@ TEST_CASE(
             REQUIRE(snapshot.choices.size() == 1);
             CHECK(snapshot.choices.front().description == "ANY_INPUT");
             CHECK(snapshot.choices.front().label == "Press any key");
+            CHECK(snapshot.any_key_choice_id == snapshot.choices.front().id);
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,

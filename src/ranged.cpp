@@ -3018,6 +3018,12 @@ auto target_ui::interaction_snapshot() -> game_client::interaction_snapshot
         }
         return std::string( "bad_target" );
     };
+    const auto status_text = [this]() {
+        const auto words = status == Status::Good ? _( "ready to fire" ) : status == Status::OutOfRange ?
+                           _( "out of range" )
+                           : status == Status::OutOfAmmo ? _( "out of ammo" ) : _( "no valid target" );
+        return string_format( _( "range %1$d/%2$d, %3$s" ), dist_fn( dst ), range, words );
+    };
     auto candidates = std::vector<game_client::interaction_target_candidate> {};
     const auto add_candidate = [&]( const tripoint_bub_ms & position, const std::string & label,
     const std::string & description, const bool creature ) {
@@ -3074,6 +3080,7 @@ auto target_ui::interaction_snapshot() -> game_client::interaction_snapshot
             .range = range,
             .distance_metric = trigdist ? "trig" : "square",
             .status = status_name(),
+            .status_text = status_text(),
             .limit_to_reality_bubble = limit_to_reality_bubble,
             .candidates = std::move( candidates ),
         },

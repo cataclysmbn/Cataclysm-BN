@@ -132,6 +132,8 @@ struct interaction_target {
     int range = 0;
     std::string distance_metric;
     std::string status;
+    /// The status in words, localized; empty where the screen has none.
+    std::string status_text;
     bool limit_to_reality_bubble = false;
     std::vector<interaction_target_candidate> candidates;
 };
@@ -288,6 +290,8 @@ struct interaction_snapshot {
     /// The native list cursor, reported before paging so it survives an off-page row.
     std::string focus_choice_id;
     std::optional<std::string> focus_pane_id;
+    /// The choice any key press acknowledges, for a "press any key" screen that binds no key; empty otherwise.
+    std::string any_key_choice_id;
 };
 
 struct interaction_page {
@@ -331,6 +335,10 @@ auto validate_interaction_event( const input_context &context, const interaction
 -> std::expected<void, std::string>;
 
 auto interaction_kind_name( interaction_kind kind ) -> std::string;
+/// How far `to` is from the target source by the screen's metric, as the game measures range:
+/// rounded Euclidean for `trig`, Chebyshev otherwise.
+auto target_distance( const interaction_target &target, const interaction_position &to ) -> int;
+
 auto opaque_interaction_id( const std::string &prefix, const std::vector<std::string> &identity )
 -> std::string;
 auto serialize_interaction( const interaction_snapshot &snapshot ) -> std::string;
