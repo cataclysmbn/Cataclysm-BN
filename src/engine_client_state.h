@@ -149,6 +149,8 @@ struct avatar_stat {
     std::string value = {};
     /// Native color name of the stat, empty when the sidebar does not color it.
     std::string color = {};
+    /// The abbreviation the native sidebar prints before the value, translated; empty where it prints none.
+    std::string short_label = {};
     auto operator<=>( const avatar_stat & ) const = default; // *NOPAD*
 };
 /// The native condition marker at the start of an item name (`||`, `|\`, ...) and its color name.
@@ -175,10 +177,13 @@ struct inventory_entry {
     std::string label = {};
     auto operator<=>( const inventory_entry & ) const = default; // *NOPAD*
 };
-/// Text the native sidebar prints in a color; `color` is a native color name.
+/// A value the native sidebar prints, after the label its panel prints before it.
 struct sidebar_text {
     std::string text = {};
+    /// Native color name of the value where the color carries meaning; empty otherwise.
     std::string color = {};
+    /// The native panel label, translated; empty where the panel prints none.
+    std::string label = {};
     auto operator<=>( const sidebar_text & ) const = default; // *NOPAD*
 };
 struct sidebar_limb {
@@ -192,7 +197,8 @@ struct sidebar_limb {
     bool broken = false;
     auto operator<=>( const sidebar_limb & ) const = default; // *NOPAD*
 };
-/// What the native sidebar (classic layout) shows, taken from the same getters.
+/// What the native sidebar (classic layout) shows, taken from the same getters, with the labels its panels
+/// print. A client lays these out itself.
 struct sidebar_value {
     std::vector<sidebar_limb> limbs = {};
     sidebar_text pain;
@@ -200,38 +206,42 @@ struct sidebar_value {
     sidebar_text thirst;
     sidebar_text fatigue;
     int focus = 0;
+    std::string focus_label = {};
     /// `text` is the native face for the morale level.
     sidebar_text morale;
     int morale_level = 0;
     int stamina = 0;
     int stamina_max = 0;
     std::string stamina_color = {};
+    std::string stamina_label = {};
     int speed = 0;
     std::string speed_color = {};
+    std::string speed_label = {};
     int move_counter = 0;
     /// `walk`, `run`, `crouch` or `prone`.
     std::string move_mode = {};
+    /// The native one-letter name of the mode, translated.
+    std::string move_text = {};
     std::string move_color = {};
     /// Body temperature state with the native trend arrows.
     sidebar_text temperature;
     sidebar_text power;
     bool safe_mode = false;
     std::string safe_color = {};
+    std::string safe_label = {};
     sidebar_text location;
+    /// Unlabelled underground, where the native panel prints only "Underground".
     sidebar_text weather;
     std::string season = {};
+    std::string day_label = {};
     int day = 0;
-    /// The watch time, or the approximate time of day without a watch; empty underground.
+    /// The watch time, the approximate time of day without a watch, or the native unknown-time text underground.
     std::string clock = {};
     bool has_watch = false;
     /// Ambient temperature, only with a thermometer.
-    std::optional<std::string> ambient = std::nullopt;
-    std::string weapon = {};
+    std::optional<sidebar_text> ambient = std::nullopt;
+    sidebar_text weapon;
     std::optional<sidebar_text> style = std::nullopt;
-    /// The classic panel as the native sidebar words and colors it, in its order: a limb beside a need and a
-    /// stat on the first six rows, then temperature, location, weather, time and weapon. A span that prints
-    /// nothing keeps its place in its row; a row with nothing to print is left out.
-    std::vector<std::vector<sidebar_text>> rows = {};
     auto operator<=>( const sidebar_value & ) const = default; // *NOPAD*
 };
 struct avatar_value {

@@ -37,6 +37,7 @@
 #include "panels_snapshot.h"
 #include "panels_utility.h"
 #include "profile.h"
+#include "string_utils.h"
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
@@ -783,10 +784,10 @@ auto capture_avatar( map &here, const avatar &you,
         .overlays = overlays_of( you ),
         .traits = traits_of( you ),
         .stats = {
-            { "strength", _( "Strength" ), std::to_string( you.get_str() ), color_of( color_compare_base( you.get_str_base(), you.get_str() ) ) },
-            { "dexterity", _( "Dexterity" ), std::to_string( you.get_dex() ), color_of( color_compare_base( you.get_dex_base(), you.get_dex() ) ) },
-            { "intelligence", _( "Intelligence" ), std::to_string( you.get_int() ), color_of( color_compare_base( you.get_int_base(), you.get_int() ) ) },
-            { "perception", _( "Perception" ), std::to_string( you.get_per() ), color_of( color_compare_base( you.get_per_base(), you.get_per() ) ) },
+            { "strength", _( "Strength" ), std::to_string( you.get_str() ), color_of( color_compare_base( you.get_str_base(), you.get_str() ) ), trim( _( "Str " ) ) },
+            { "dexterity", _( "Dexterity" ), std::to_string( you.get_dex() ), color_of( color_compare_base( you.get_dex_base(), you.get_dex() ) ), trim( _( "Dex " ) ) },
+            { "intelligence", _( "Intelligence" ), std::to_string( you.get_int() ), color_of( color_compare_base( you.get_int_base(), you.get_int() ) ), trim( _( "Int " ) ) },
+            { "perception", _( "Perception" ), std::to_string( you.get_per() ), color_of( color_compare_base( you.get_per_base(), you.get_per() ) ), trim( _( "Per " ) ) },
             { "moves", _( "Moves" ), std::to_string( you.get_moves() ) },
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },

@@ -5,9 +5,12 @@
 #include "catacharset.h"
 #include "catch/catch.hpp"
 #include "character_functions.h"
+#include "client_interaction.h"
 #include "color.h"
+#include "cursesdef.h"
 #include "engine_client_event.h"
 #include "engine_client_world.h"
+#include "fstream_utils.h"
 #include "game.h"
 #include "game_session.h"
 #include "inventory_ui.h"
@@ -24,6 +27,8 @@
 #include "overmap/omdata.h"
 #include "overmap/overmap.h"
 #include "overmap/overmapbuffer.h"
+#include "panels.h"
+#include "path_info.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "preload_config.h"
@@ -91,6 +96,43 @@ auto at(const tripoint_bub_ms& p) -> ec::position {
 auto find_cell(const ec::world_state& state, const ec::position& p) -> const ec::cell* {
     const auto found = state.cells.find(p);
     return found == state.cells.end() ? nullptr : &found->second;
+}
+
+/// Switches the native sidebar to the classic layout through its saved options, and back.
+struct classic_sidebar_guard {
+    std::string before = panel_manager::get_manager().get_current_layout_id();
+    classic_sidebar_guard() { use("classic"); }
+    classic_sidebar_guard(const classic_sidebar_guard&) = delete;
+    auto operator=(const classic_sidebar_guard&) -> classic_sidebar_guard& = delete;
+    ~classic_sidebar_guard() { use(before); }
+    static auto use(const std::string& id) -> void {
+        REQUIRE(write_to_file(PATH_INFO::panel_options(), [&](std::ostream& out) {
+            out << R"([{"current_layout_id":")" << id << R"(","layouts":[]}])";
+        }));
+        panel_manager::get_manager().init();
+        REQUIRE(panel_manager::get_manager().get_current_layout_id() == id);
+    }
+};
+
+/// The rows of text the native panel `name` of the current layout draws for the avatar.
+auto native_panel(const std::string& name) -> std::vector<std::string> {
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    auto& layout = panel_manager::get_manager().get_current_layout();
+    const auto panel = ranges::find(layout, name, &window_panel::get_name);
+    REQUIRE(panel != layout.end());
+    const auto window = catacurses::newwin(panel->get_height(), panel->get_width(), point_zero);
+    panel->draw(get_avatar(), window);
+    const auto row_text = [](const auto& row) {
+        return row | transform(&game_client::interaction_canvas_run::text) | join
+             | ranges::to<std::string>();
+    };
+    return game_client::window_canvas({window}).rows | transform(row_text)
+         | ranges::to<std::vector>();
+}
+
+auto contains(const std::string& text, const std::string& part) -> bool {
+    return text.find(part) != std::string::npos;
 }
 
 /// Independent oracle: ordinary sight and raw stored memory at z 0, no capture code involved.
@@ -447,36 +489,82 @@ TEST_CASE(
     CHECK(label(state.avatar->ground, "hammer").starts_with("2 "));
 }
 
-TEST_CASE("world capture words the sidebar rows like the native panels", "[engine_client_world]") {
+TEST_CASE(
+    "world capture labels the sidebar values with the text the native classic panels print",
+    "[engine_client_world]") {
     const auto setup = make_scene();
     auto& you = get_avatar();
     REQUIRE_FALSE(you.wield(item::spawn("knife_combat")));
+    g->safe_mode = SAFE_MODE_ON;
     map_perception::acquire();
     const auto state = ec::world::capture_world();
     REQUIRE(state.avatar);
-    const auto& rows = state.avatar->sidebar.rows;
-    REQUIRE(rows.size() >= 10);
-    CHECK(rows[0][0].text == state.avatar->sidebar.limbs[0].label.text);
-    CHECK(rows[0][2].text == you.get_pain_description().first);
-    CHECK(rows[1][2].text == you.get_hunger_description().first);
-    CHECK(rows[0].back().text.starts_with("Str "));
-    CHECK(rows[5][2].text == "Spd " + std::to_string(you.get_speed()));
-    const auto find_row = [&](const std::string& label) {
-        return std::ranges::find_if(rows, [&](const auto& row) { return row[0].text == label; });
+    const auto& side = state.avatar->sidebar;
+    const auto guard = classic_sidebar_guard{};
+
+    const auto health = native_panel("Health");
+    REQUIRE(health.size() >= 7);
+    const auto stat = [&](const std::string& id) {
+        const auto found = std::ranges::find(state.avatar->stats, id, &ec::avatar_stat::id);
+        REQUIRE(found != state.avatar->stats.end());
+        REQUIRE_FALSE(found->short_label.empty());
+        return found->short_label + " " + found->value;
     };
-    const auto weapon = find_row("Weapon:");
-    REQUIRE(weapon != rows.end());
-    CHECK((*weapon)[1].text == character_funcs::fmt_wielded_weapon(you));
-    const auto location = find_row("Location:");
-    REQUIRE(location != rows.end());
-    CHECK((*location)[1].text == state.avatar->sidebar.location.text);
-    const auto weather = find_row("Weather :");
-    REQUIRE(weather != rows.end());
-    CHECK((*weather)[1].text == state.avatar->sidebar.weather.text);
-    CHECK(std::ranges::none_of(rows, [&](const auto& row) {
-        return std::ranges::all_of(row, [](const auto& span) { return span.text.empty(); });
-    }));
+    CHECK(contains(health[0], stat("strength")));
+    CHECK(contains(health[1], stat("dexterity")));
+    CHECK(contains(health[2], stat("intelligence")));
+    CHECK(contains(health[3], stat("perception")));
+    CHECK(contains(health[4], side.focus_label));
+    CHECK(contains(health[4], std::to_string(side.focus)));
+    REQUIRE(side.safe_mode);
+    CHECK(contains(health[4], side.safe_label));
+    CHECK(contains(health[5], side.speed_label + " " + std::to_string(side.speed)));
+    CHECK(contains(health[5], std::to_string(side.move_counter) + " " + side.move_text));
+    CHECK(contains(health[5], side.stamina_label));
+    CHECK(contains(health[6], side.temperature.text));
+    CHECK(contains(health[6], side.power.label));
+    CHECK(contains(health[6], side.power.text));
+    // Each limb label sits on its own row; the client draws the health beside it from hp and
+    // hp_max.
+    for (const auto& [row, limb] : std::views::zip(health, side.limbs)) {
+        CHECK(contains(row, limb.label.text));
+    }
+
+    const auto location = native_panel("Location");
+    REQUIRE_FALSE(location.empty());
+    CHECK(location[0].starts_with(side.location.label));
+    CHECK(contains(location[0], side.location.text));
+    const auto weather = native_panel("Weather");
+    REQUIRE_FALSE(weather.empty());
+    CHECK(weather[0].starts_with(side.weather.label));
+    CHECK(contains(weather[0], side.weather.text));
+    const auto weapon = native_panel("Weapon");
+    REQUIRE_FALSE(weapon.empty());
+    CHECK(weapon[0].starts_with(side.weapon.label));
+    CHECK(contains(weapon[0], side.weapon.text));
+    const auto time = native_panel("Time");
+    REQUIRE_FALSE(time.empty());
+    CHECK(contains(time[0], side.season));
+    CHECK(contains(time[0], side.day_label + " " + std::to_string(side.day)));
     static_cast<void>(setup);
+}
+
+TEST_CASE(
+    "world capture leaves the weather unlabelled underground and names the unknown time",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    step_to(setup.start + tripoint_below);
+    REQUIRE(g->get_levz() < 0);
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto& side = state.avatar->sidebar;
+    const auto guard = classic_sidebar_guard{};
+    const auto weather = native_panel("Weather");
+    REQUIRE_FALSE(weather.empty());
+    CHECK(side.weather.label.empty());
+    CHECK(weather[0].starts_with(side.weather.text));
+    REQUIRE_FALSE(side.has_watch);
+    CHECK(contains(native_panel("Time")[0], side.clock));
 }
 
 TEST_CASE("world capture gives the color of an item's condition marker", "[engine_client_world]") {
@@ -726,7 +814,7 @@ TEST_CASE("world capture carries the native sidebar values", "[engine_client_wor
     CHECK(sidebar.stamina_max == you.get_stamina_max());
     CHECK(sidebar.speed == you.get_speed());
     CHECK(sidebar.move_mode == "walk");
-    CHECK(sidebar.weapon == character_funcs::fmt_wielded_weapon(you));
+    CHECK(sidebar.weapon.text == character_funcs::fmt_wielded_weapon(you));
     CHECK(sidebar.location.text == ACTIVE_OVERMAP_BUFFER.ter(you.abs_omt_pos())->get_name());
     CHECK(sidebar.limbs.size() == you.get_all_body_parts(true).size());
     const auto arm = std::ranges::find(sidebar.limbs, "arm_l", &ec::sidebar_limb::id);

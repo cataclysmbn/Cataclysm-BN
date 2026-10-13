@@ -46,6 +46,7 @@
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "tileray.h"
 #include "translations.h"
 #include "type_id.h"
@@ -3073,6 +3074,8 @@ auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
 {
     using namespace engine_client;
     const auto name = []( const nc_color & color ) { return get_all_colors().get_name( color ); };
+    // The native labels carry the padding that places them; the client lays them out itself.
+    const auto label = []( const std::string & text ) { return trim( text ); };
     const auto text = [&]( const std::pair<std::string, nc_color> &pair ) -> sidebar_text {
         return { .text = pair.first, .color = name( pair.second ) };
     };
@@ -3101,6 +3104,7 @@ auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
     result.thirst = text( u.get_thirst_description() );
     result.fatigue = text( u.get_fatigue_description() );
     result.focus = u.focus_pool;
+    result.focus_label = label( _( "Focus" ) );
     const auto morale = morale_stat( u );
     result.morale_level = morale.second;
     result.morale = { .text = morale_emotion( morale.second, get_face_type( u ),
@@ -3109,85 +3113,46 @@ auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
     result.stamina = u.get_stamina();
     result.stamina_max = u.get_stamina_max();
     result.stamina_color = name( get_hp_bar( u.get_stamina(), u.get_stamina_max() ).second );
+    result.stamina_label = label( _( "Stm" ) );
     result.speed = u.get_speed();
     result.speed_color = name( u.get_speed() < 100 ? c_red : c_white );
+    result.speed_label = label( _( "Spd " ) );
     result.move_counter = u.movecounter;
     result.move_mode = u.movement_mode_is( CMM_RUN ) ? "run" : u.movement_mode_is(
                            CMM_CROUCH ) ? "crouch" :
                        u.movement_mode_is( CMM_PRONE ) ? "prone" : "walk";
+    result.move_text = move_mode_string( u );
     result.move_color = name( u.movement_mode_is( CMM_WALK ) ? c_white : move_mode_color( u ) );
     const auto temperature = temp_stat( u );
     result.temperature = { .text = temperature.second + temp_delta_string( u ), .color = name( temperature.first ) };
     result.power = colored( power_stat( u ) );
+    result.power.label = label( _( "POWER" ) );
     result.safe_mode = g->safe_mode || get_option<bool>( "AUTOSAFEMODE" );
     result.safe_color = name( safe_color() );
-    result.location = { .text = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() )->get_name(), .color = name( c_white ) };
+    result.safe_label = label( _( "SAFE" ) );
+    result.location = { .text = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() )->get_name(), .color = name( c_white ),
+                        .label = label( _( "Location:" ) )
+                      };
     const auto underground = g->get_levz() < 0;
-    result.weather = underground ? sidebar_text{ .text = _( "Underground" ), .color = name( c_light_gray ) } :
+    result.weather = underground ? sidebar_text{ .text = _( "Underground" ) } :
                      sidebar_text{ .text = get_weather().weather_id->name.translated(),
-                                   .color = name( get_weather().weather_id->color ) };
+                                   .color = name( get_weather().weather_id->color ), .label = label( _( "Weather :" ) ) };
     result.season = calendar::name_season( season_of_year( calendar::turn ) );
     result.day = day_of_season<int>( calendar::turn ) + 1;
+    result.day_label = label( _( "Day " ) );
     result.has_watch = u.has_watch();
-    result.clock = result.has_watch ? to_string_time_of_day( calendar::turn ) : underground ? "" :
+    // NOLINTNEXTLINE(cata-text-style): the question mark does not end a sentence
+    result.clock = result.has_watch ? to_string_time_of_day( calendar::turn ) : underground ?
+                   _( "Time: ???" ) :
                    time_approx();
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_enchantment_flag( enchantment_flag_id( "THERMOMETER" ) ) ) {
-        result.ambient = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
+        result.ambient = sidebar_text{ .text = print_temperature( get_weather().get_temperature( u.abs_pos() ) ),
+                                       .label = label( _( "Temp : " ) ) };
     }
-    result.weapon = character_funcs::fmt_wielded_weapon( u );
+    result.weapon = { .text = character_funcs::fmt_wielded_weapon( u ), .label = label( _( "Weapon  :" ) ) };
     if( const auto style = u.martial_arts_data->selected_style_name( u ); !style.empty() ) {
         result.style = sidebar_text{ .text = style, .color = name( u.is_armed() ? c_red : c_blue ) };
     }
-    // The classic panel as rows: a limb beside a need and a stat on the first six, then the rest of the panels.
-    // A span that prints nothing stays in its row so that every span after it keeps its place.
-    const auto gray = [&]( std::string text ) -> sidebar_text { return { .text = std::move( text ), .color = name( c_light_gray ) }; };
-    const auto stat = [&]( const std::pair<nc_color, std::string> &pair ) -> sidebar_text {
-        return { .text = pair.second, .color = name( pair.first ) };
-    };
-    const auto number_style = get_option<std::string>( "HEALTH_STYLE" ) == "number";
-    const auto stamina_bar = get_hp_bar( u.get_stamina(), u.get_stamina_max() );
-    const auto limb_rows = std::max( result.limbs.size(), std::size_t{ 6 } );
-    const auto limb_ids = u.get_all_body_parts( true );
-    const auto beside = std::array<std::vector<sidebar_text>, 6> { {
-            { result.pain, stat( str_string( u ) ) },
-            { result.hunger, result.morale, stat( dex_string( u ) ) },
-            { result.thirst, stat( int_string( u ) ) },
-            { result.fatigue, stat( per_string( u ) ) },
-            {
-                sidebar_text{ .text = _( "Focus" ) + std::string( " " ) + std::to_string( u.focus_pool ), .color = name( c_white ) },
-                sidebar_text{ .text = result.safe_mode ? _( "SAFE" ) : std::string(), .color = result.safe_color }
-            },
-            {
-                sidebar_text{ .text = _( "Spd " ) + std::to_string( u.get_speed() ), .color = result.speed_color },
-                sidebar_text{ .text = std::to_string( u.movecounter ) + " " + move_mode_string( u ), .color = result.move_color },
-                sidebar_text{ .text = _( "Stm" ) + std::string( " " ) + ( number_style ? std::to_string( u.get_stamina() ) : stamina_bar.first ), .color = result.stamina_color }
-            }
-        }
-    };
-    for( std::size_t i = 0; i < limb_rows; ++i ) {
-        auto row = std::vector<sidebar_text> {};
-        if( i < result.limbs.size() ) {
-            const auto &limb = result.limbs[i];
-            const auto runs = limb_health_runs( u, limb_ids[i].id() );
-            row.push_back( limb.label );
-            row.push_back( { .text = runs | std::views::keys | std::views::join | std::ranges::to<std::string>(), .color = name( runs.front().second ) } );
-        }
-        if( i < beside.size() ) { row.insert( row.end(), beside[i].begin(), beside[i].end() ); }
-        result.rows.push_back( std::move( row ) );
-    }
-    result.rows.push_back( { result.temperature, { .text = _( "POWER" ) + std::string( " " ) + result.power.text, .color = result.power.color } } );
-    result.rows.push_back( { gray( _( "Location:" ) ), result.location } );
-    result.rows.push_back( underground ? std::vector<sidebar_text> { result.weather } :
-                           std::vector<sidebar_text> { gray( _( "Weather :" ) ), result.weather } );
-    result.rows.push_back( {
-        { .text = result.season + ", " + _( "Day " ) + std::to_string( result.day ), .color = name( c_white ) },
-        gray( result.clock.empty() ? _( "Time: ???" ) : result.clock ),
-        gray( result.ambient ? _( "Temp : " ) + *result.ambient : std::string() ) } );
-    result.rows.push_back( { gray( _( "Weapon:" ) ), gray( result.weapon ) } );
-    if( result.style ) { result.rows.back().push_back( *result.style ); }
-    std::erase_if( result.rows, []( const auto & row ) {
-        return std::ranges::all_of( row, []( const auto & span ) { return span.text.empty(); } );
-    } );
     return result;
 }

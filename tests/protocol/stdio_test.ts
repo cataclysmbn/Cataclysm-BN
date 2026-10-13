@@ -1909,10 +1909,6 @@ const settle = async (session: Session) => {
 const authority = (session: Session) => {
   const avatar = structuredClone(session.mirror.avatar)
   delete avatar.sidebar.focus
-  // The panel prints the same focus in its words.
-  avatar.sidebar.rows = JSON.parse(
-    JSON.stringify(avatar.sidebar.rows).replace(/"Focus \d+"/g, '"Focus"'),
-  )
   const environment = structuredClone(session.mirror.environment)
   delete environment.turn
   return JSON.stringify({

@@ -321,7 +321,7 @@ TEST_CASE(
     const auto next_wire = nlohmann::json::parse(
         serialize_events({.epoch = "epoch:a", .events = {next}}));
     const auto& next_avatar = next_wire["events"][0]["changes"]["avatar"];
-    CHECK(next_avatar["sidebar"]["focus"] == 90);
+    CHECK(next_avatar["sidebar"]["focus"]["value"] == 90);
     CHECK_FALSE(next_avatar.contains("inventory"));
     CHECK(next_avatar["keep"] == nlohmann::json::parse(R"(["stats"])"));
 
