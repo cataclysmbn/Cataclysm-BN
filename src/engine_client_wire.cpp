@@ -92,8 +92,7 @@ auto read_position( const json &value ) -> position
         .z = static_cast<int>( integer( value, "z", INT32_MIN, INT32_MAX ) ),
     };
 }
-auto read_operation( const json &value ) ->
-std::variant<semantic_operation, registered_action, travel_operation, item_operation>
+auto read_operation( const json &value ) -> command_operation
 {
     require( value.is_object() && value.contains( "kind" ) );
     const auto kind = text( value, "kind" );
@@ -112,7 +111,8 @@ std::variant<semantic_operation, registered_action, travel_operation, item_opera
                                .count = static_cast<std::uint64_t>( integer( value, "count", 1, static_cast<std::int64_t>( maximum_safe_integer ) ) ) };
     }
     const auto parsed = game_client::parse_interaction_operation( kind );
-    require( parsed.has_value() );
+    // The 0.2 `invoke` is not decoded here yet.
+    require( parsed.has_value() && *parsed != game_client::interaction_operation::invoke );
     auto semantic = semantic_operation{};
     semantic.command.operation = *parsed;
     switch( *parsed ) {
@@ -140,6 +140,8 @@ std::variant<semantic_operation, registered_action, travel_operation, item_opera
             break;
         case game_client::interaction_operation::cancel:
             members( value, {"kind"} );
+            break;
+        case game_client::interaction_operation::invoke:
             break;
     }
     return semantic;

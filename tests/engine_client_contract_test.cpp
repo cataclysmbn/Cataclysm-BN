@@ -785,8 +785,10 @@ TEST_CASE("an invoke expects its screen or its boundary by scope", "[engine_clie
         engine_client::expectation{.revision = 1, .boundary_id = boundary.id};
     const auto screen_form = engine_client::expectation{.screen_id = screen_id};
     const auto run = [&](const engine_client::command_request& request) {
-        REQUIRE(lifecycle.submit(request));
-        return lifecycle.validate(at_of(boundary), boundary, point{80, 24});
+        // One command at a time: each run has its own lifecycle.
+        auto fresh = engine_client::command_lifecycle{"epoch:test", authority};
+        REQUIRE(fresh.submit(request));
+        return fresh.validate(at_of(boundary), boundary, point{80, 24});
     };
     SECTION("a screen expectation holds while its screen is on top") {
         const auto resolved = run(invoke("bn:cancel", screen_form));

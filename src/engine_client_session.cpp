@@ -325,6 +325,10 @@ std::expected<game_client::input_command, error>
         native = *travel_click( *travel );
     } else if( std::holds_alternative<item_operation>( input_->operation ) ) {
         native = item_operation_input();
+    } else if( std::holds_alternative<invoke_operation>( input_->operation ) ) {
+        // Wire decode makes no invoke yet; its native input is the validated event.
+        input_.reset();
+        return std::unexpected( error::invalid_arguments );
     } else {
         native.action = std::get<registered_action>( input_->operation ).id;
     }

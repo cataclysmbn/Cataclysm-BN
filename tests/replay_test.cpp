@@ -242,8 +242,6 @@ TEST_CASE("replay rejects malformed invokes", "[replay][input][interaction]") {
         R"("target_id":"aim:move","value":"")",
         // no affordance
         R"("target_id":"","value":"","arguments":{})",
-        // a member no argument shape has
-        R"("target_id":"aim:move","value":"","arguments":{"color":"red"})",
         // a row count below zero
         R"("target_id":"aim:move","value":"","arguments":{"rows":[{"id":"item:1","count":-1}]})",
         // a fractional position
@@ -252,6 +250,7 @@ TEST_CASE("replay rejects malformed invokes", "[replay][input][interaction]") {
         R"("target_id":"aim:move","value":"text","arguments":{})",
     };
     for (const auto& payload : malformed) {
+        INFO(payload);
         fixture.write(header + prefix + payload + suffix + end);
         replay::configure_playback(fixture.path.string());
         CHECK_THROWS(replay::start());

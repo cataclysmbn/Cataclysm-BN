@@ -342,6 +342,9 @@ auto read_event(const JsonObject& object) -> replay_event {
         } else if (*operation == game_client::interaction_operation::set_target) {
             payload.position = read_position(semantic.get_object("position"));
         } else if (*operation == game_client::interaction_operation::invoke) {
+            if (!semantic.has_member("arguments")) {
+                semantic.throw_error("invoke requires arguments");
+            }
             payload.arguments = read_invoke_arguments(semantic.get_object("arguments"));
         }
         semantic.finish();
