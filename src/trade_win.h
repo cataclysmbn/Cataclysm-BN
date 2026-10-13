@@ -14,10 +14,10 @@ class npc;
 class string_input_popup;
 class ui_adaptor;
 
-namespace game_client
+namespace engine_client
 {
-struct interaction_snapshot;
-} // namespace game_client
+struct screen_view;
+} // namespace engine_client
 
 class trading_window
 {
@@ -38,11 +38,18 @@ class trading_window
         auto show_item_data( size_t index, bool target_is_theirs ) -> info_popup_result;
         auto build_filtered_indices( const std::vector<item_pricing> &list,
                                      const std::string &filter ) const -> std::vector<size_t>;
-        auto interaction_snapshot( const npc &np,
-                                   input_context &ctxt ) const -> game_client::interaction_snapshot;
+        /// The screen as the model state shows it, whatever the size of the window.
+        auto view( const npc &np, const input_context &ctxt ) const -> engine_client::screen_view;
         auto get_var_trade( const item &it, int total_count, int amount_hint ) -> int;
 
+        enum class deal_kind {
+            trade,
+            pay,
+            reward
+        };
+
         npc_trading::trade_state &state;
+        deal_kind kind = deal_kind::trade;
         catacurses::window w_head;
         catacurses::window w_them;
         catacurses::window w_you;

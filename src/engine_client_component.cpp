@@ -320,7 +320,7 @@ auto clear_affordances( component &value ) -> void
 
 auto collect_rows( const component &value, std::vector<std::string> &into ) -> bool
 {
-    return std::visit( [&]<typename Body>( const Body & body ) {
+    const auto own = std::visit( [&]<typename Body>( const Body & body ) {
         if constexpr( std::is_same_v<Body, list_body> ) {
             if( body.offset != 0 || body.total != body.rows.size() ) { return false; }
             std::ranges::transform( body.rows, std::back_inserter( into ), &row::id );
@@ -338,6 +338,8 @@ auto collect_rows( const component &value, std::vector<std::string> &into ) -> b
         }
         return true;
     }, value.body );
+    // A pane or a split holds the rows of the lists inside it.
+    return own && std::ranges::all_of( value.children, [&]( const component & child ) { return collect_rows( child, into ); } );
 }
 } // namespace
 
