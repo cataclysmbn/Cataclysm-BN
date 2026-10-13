@@ -320,6 +320,13 @@ struct interaction_area {
     bool available = true;
 };
 
+/// Where a page stands in one pane's rows: how many rows of the full list carry that `pane_id`, and how
+/// many of them come before the page.
+struct interaction_group_page {
+    std::size_t total = 0;
+    std::size_t offset = 0;
+};
+
 /// Pure data describing the interaction currently waiting at an input boundary.
 struct interaction_snapshot {
     std::uint64_t input_id = 0;
@@ -356,11 +363,15 @@ struct interaction_snapshot {
     std::optional<std::string> focus_pane_id;
     /// The choice any key press acknowledges, for a "press any key" screen that binds no key; empty otherwise.
     std::string any_key_choice_id;
+    /// Per `pane_id` of the full list (`""` for rows without one), where this page stands in its rows.
+    std::map<std::string, interaction_group_page> groups;
 };
 
 struct interaction_page {
     std::size_t offset = 0;
     std::size_t limit = 100;
+    /// Page within the rows of this `pane_id` only (`""`: rows without one); the whole list when absent.
+    std::optional<std::string> group = std::nullopt;
 };
 
 /// Retains one client's bounded choice page across interaction state updates.

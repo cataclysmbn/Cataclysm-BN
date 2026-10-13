@@ -308,13 +308,28 @@ auto materialize( acquired_interaction acquired,
                   interaction_page page ) -> interaction_snapshot
 {
     const auto &full = acquired.snapshot();
-    const auto total = full.choices.size();
+    const auto group_of = []( const interaction_choice & choice ) { return choice.pane_id.value_or( "" ); };
+    // Indexes of the rows paged over: all of them, or one pane's.
+    const auto rows = std::views::iota( std::size_t{0}, full.choices.size() )
+    | std::views::filter( [&]( const auto index ) {
+        return !page.group || group_of( full.choices[index] ) == *page.group;
+    } )
+    | std::ranges::to<std::vector>();
+    const auto total = rows.size();
     const auto offset = std::min( page.offset, total );
     const auto count = std::min( total - offset, std::min( page.limit, maximum_page_size ) );
     auto choices = std::vector<interaction_choice> {};
     choices.reserve( count );
-    std::ranges::copy( full.choices | std::views::drop( offset ) | std::views::take( count ),
+    std::ranges::copy( rows | std::views::drop( offset ) | std::views::take( count )
+                       | std::views::transform( [&]( const auto index ) -> const interaction_choice & { return full.choices[index]; } ),
                        std::back_inserter( choices ) );
+    auto groups = std::map<std::string, interaction_group_page> {};
+    const auto first = offset < total ? rows[offset] : full.choices.size();
+    for( const auto index : std::views::iota( std::size_t{0}, full.choices.size() ) ) {
+        auto &group = groups[group_of( full.choices[index] )];
+        ++group.total;
+        if( index < first ) { ++group.offset; }
+    }
     const auto focus = std::ranges::find( full.choices, true, &interaction_choice::highlighted );
     const auto focus_choice = focus == full.choices.end() ? std::string{} :
                               focus->id;
@@ -330,11 +345,12 @@ auto materialize( acquired_interaction acquired,
         result = std::move( acquired.legacy );
     }
     result.choices = std::move( choices );
+    result.groups = std::move( groups );
     result.focus_choice_id = focus_choice;
     result.focus_pane_id = focus_pane;
     if( acquired.prepared && acquired.prepared->descriptions ) {
         for( const auto index : std::views::iota( std::size_t{0}, count ) ) {
-            result.choices[index].description = acquired.prepared->description( offset + index );
+            result.choices[index].description = acquired.prepared->description( rows[offset + index] );
         }
     }
     result.input_id = current_input_id();
