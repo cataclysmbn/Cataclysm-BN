@@ -784,6 +784,10 @@
               },
               "color": {
                 "type": "string"
+              },
+              "short_label": {
+                "type": "string",
+                "description": "The abbreviation the native sidebar prints before the value (Str), translated. Absent where it prints none."
               }
             },
             "required": [
@@ -869,6 +873,10 @@
               },
               "color": {
                 "type": "string"
+              },
+              "short_label": {
+                "type": "string",
+                "description": "The abbreviation the native sidebar prints before the value (Str), translated. Absent where it prints none."
               }
             },
             "required": [
@@ -941,18 +949,23 @@
     "sidebar_text": {
       "type": "object",
       "properties": {
+        "label": {
+          "type": "string",
+          "description": "The label the native panel prints before the value, translated. Absent where it prints none."
+        },
         "text": {
           "type": "string"
         },
         "color": {
-          "type": "string"
+          "type": "string",
+          "description": "Native color name of the value where the color carries meaning. Absent otherwise."
         }
       },
       "required": [
-        "text",
-        "color"
+        "text"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "A value the native sidebar prints. A client lays it out and draws it itself."
     },
     "sidebar": {
       "type": "object",
@@ -1005,7 +1018,20 @@
           "$ref": "#/$defs/sidebar_text"
         },
         "focus": {
-          "type": "integer"
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "value": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "label",
+            "value"
+          ],
+          "additionalProperties": false
         },
         "morale": {
           "type": "object",
@@ -1030,6 +1056,9 @@
         "stamina": {
           "type": "object",
           "properties": {
+            "label": {
+              "type": "string"
+            },
             "current": {
               "type": "integer"
             },
@@ -1041,6 +1070,7 @@
             }
           },
           "required": [
+            "label",
             "current",
             "max",
             "color"
@@ -1050,6 +1080,9 @@
         "speed": {
           "type": "object",
           "properties": {
+            "label": {
+              "type": "string"
+            },
             "value": {
               "type": "integer"
             },
@@ -1058,6 +1091,7 @@
             }
           },
           "required": [
+            "label",
             "value",
             "color"
           ],
@@ -1077,6 +1111,10 @@
                 "prone"
               ]
             },
+            "mode_text": {
+              "type": "string",
+              "description": "The native one-letter name of the mode (W), translated."
+            },
             "color": {
               "type": "string"
             }
@@ -1084,6 +1122,7 @@
           "required": [
             "counter",
             "mode",
+            "mode_text",
             "color"
           ],
           "additionalProperties": false
@@ -1097,6 +1136,9 @@
         "safe_mode": {
           "type": "object",
           "properties": {
+            "label": {
+              "type": "string"
+            },
             "enabled": {
               "type": "boolean"
             },
@@ -1105,6 +1147,7 @@
             }
           },
           "required": [
+            "label",
             "enabled",
             "color"
           ],
@@ -1114,7 +1157,8 @@
           "$ref": "#/$defs/sidebar_text"
         },
         "weather": {
-          "$ref": "#/$defs/sidebar_text"
+          "$ref": "#/$defs/sidebar_text",
+          "description": "Unlabelled underground, where the native panel prints only the underground text."
         },
         "time": {
           "type": "object",
@@ -1122,11 +1166,15 @@
             "season": {
               "type": "string"
             },
+            "day_label": {
+              "type": "string"
+            },
             "day": {
               "type": "integer"
             },
             "clock": {
-              "type": "string"
+              "type": "string",
+              "description": "The watch time, the approximate time of day without a watch, or the native unknown-time text underground."
             },
             "has_watch": {
               "type": "boolean"
@@ -1134,6 +1182,7 @@
           },
           "required": [
             "season",
+            "day_label",
             "day",
             "clock",
             "has_watch"
@@ -1141,23 +1190,13 @@
           "additionalProperties": false
         },
         "ambient_temperature": {
-          "type": "string"
+          "$ref": "#/$defs/sidebar_text"
         },
         "weapon": {
-          "type": "string"
+          "$ref": "#/$defs/sidebar_text"
         },
         "style": {
           "$ref": "#/$defs/sidebar_text"
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/$defs/sidebar_text"
-            }
-          },
-          "description": "The classic panel as the native sidebar words and colors it: a limb beside a need and a stat on the first six rows, then temperature, location, weather, time and weapon. A span that prints nothing keeps its place in its row."
         }
       },
       "required": [
@@ -1177,10 +1216,10 @@
         "location",
         "weather",
         "time",
-        "weapon",
-        "rows"
+        "weapon"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "description": "The values the native classic sidebar shows, with the labels its panels print. Limb health and stamina are numbers: a client lays the sidebar out and draws the bars itself."
     },
     "environment": {
       "type": "object",

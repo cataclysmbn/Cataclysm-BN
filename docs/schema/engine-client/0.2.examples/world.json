@@ -1066,7 +1066,8 @@
             "id": "strength",
             "label": "Strength",
             "value": "8",
-            "color": "white"
+            "color": "white",
+            "short_label": "Str"
           }
         ],
         "sidebar": {
@@ -1099,24 +1100,30 @@
             "text": "Tired",
             "color": "yellow"
           },
-          "focus": 100,
+          "focus": {
+            "label": "Focus",
+            "value": 100
+          },
           "morale": {
             "level": 12,
             "face": ":)",
             "color": "green"
           },
           "stamina": {
+            "label": "Stm",
             "current": 1000,
             "max": 1000,
             "color": "green"
           },
           "speed": {
+            "label": "Spd",
             "value": 100,
             "color": "white"
           },
           "movement": {
             "counter": 0,
             "mode": "walk",
+            "mode_text": "W",
             "color": "white"
           },
           "temperature": {
@@ -1124,138 +1131,36 @@
             "color": "green"
           },
           "power": {
+            "label": "POWER",
             "text": "--",
             "color": "light_gray"
           },
           "safe_mode": {
+            "label": "SAFE",
             "enabled": true,
             "color": "green"
           },
           "location": {
+            "label": "Location:",
             "text": "field",
             "color": "white"
           },
           "weather": {
+            "label": "Weather :",
             "text": "Clear",
             "color": "light_cyan"
           },
           "time": {
             "season": "Spring",
+            "day_label": "Day",
             "day": 1,
             "clock": "Around noon",
             "has_watch": false
           },
-          "weapon": "fists",
-          "rows": [
-            [
-              {
-                "text": "HEAD",
-                "color": "white"
-              },
-              {
-                "text": "|||||",
-                "color": "green"
-              },
-              {
-                "text": "Pain 3",
-                "color": "light_red"
-              },
-              {
-                "text": "Str 8",
-                "color": "white"
-              }
-            ],
-            [
-              {
-                "text": "Hungry",
-                "color": "yellow"
-              },
-              {
-                "text": ":)",
-                "color": "green"
-              }
-            ],
-            [
-              {
-                "text": "Tired",
-                "color": "yellow"
-              }
-            ],
-            [
-              {
-                "text": "Focus 100",
-                "color": "white"
-              },
-              {
-                "text": "SAFE",
-                "color": "green"
-              }
-            ],
-            [
-              {
-                "text": "Spd 100",
-                "color": "white"
-              },
-              {
-                "text": "0 W",
-                "color": "white"
-              },
-              {
-                "text": "Stm |||||",
-                "color": "green"
-              }
-            ],
-            [
-              {
-                "text": "Comfortable",
-                "color": "green"
-              },
-              {
-                "text": "POWER --",
-                "color": "light_gray"
-              }
-            ],
-            [
-              {
-                "text": "Location:",
-                "color": "light_gray"
-              },
-              {
-                "text": "field",
-                "color": "white"
-              }
-            ],
-            [
-              {
-                "text": "Weather :",
-                "color": "light_gray"
-              },
-              {
-                "text": "Clear",
-                "color": "light_cyan"
-              }
-            ],
-            [
-              {
-                "text": "Spring, Day 1",
-                "color": "white"
-              },
-              {
-                "text": "Around noon",
-                "color": "light_gray"
-              }
-            ],
-            [
-              {
-                "text": "Weapon:",
-                "color": "light_gray"
-              },
-              {
-                "text": "fists",
-                "color": "light_gray"
-              }
-            ]
-          ]
+          "weapon": {
+            "label": "Weapon  :",
+            "text": "fists"
+          }
         }
       }
     },
@@ -2106,7 +2011,8 @@
             "id": "strength",
             "label": "Strength",
             "value": "8",
-            "color": "white"
+            "color": "white",
+            "short_label": "Str"
           }
         ],
         "sidebar": {
@@ -2139,24 +2045,30 @@
             "text": "Tired",
             "color": "yellow"
           },
-          "focus": 100,
+          "focus": {
+            "label": "Focus",
+            "value": 100
+          },
           "morale": {
             "level": 12,
             "face": ":)",
             "color": "green"
           },
           "stamina": {
+            "label": "Stm",
             "current": 1000,
             "max": 1000,
             "color": "green"
           },
           "speed": {
+            "label": "Spd",
             "value": 100,
             "color": "white"
           },
           "movement": {
             "counter": 0,
             "mode": "fly",
+            "mode_text": "W",
             "color": "white"
           },
           "temperature": {
@@ -2164,138 +2076,36 @@
             "color": "green"
           },
           "power": {
+            "label": "POWER",
             "text": "--",
             "color": "light_gray"
           },
           "safe_mode": {
+            "label": "SAFE",
             "enabled": true,
             "color": "green"
           },
           "location": {
+            "label": "Location:",
             "text": "field",
             "color": "white"
           },
           "weather": {
+            "label": "Weather :",
             "text": "Clear",
             "color": "light_cyan"
           },
           "time": {
             "season": "Spring",
+            "day_label": "Day",
             "day": 1,
             "clock": "Around noon",
             "has_watch": false
           },
-          "weapon": "fists",
-          "rows": [
-            [
-              {
-                "text": "HEAD",
-                "color": "white"
-              },
-              {
-                "text": "|||||",
-                "color": "green"
-              },
-              {
-                "text": "Pain 3",
-                "color": "light_red"
-              },
-              {
-                "text": "Str 8",
-                "color": "white"
-              }
-            ],
-            [
-              {
-                "text": "Hungry",
-                "color": "yellow"
-              },
-              {
-                "text": ":)",
-                "color": "green"
-              }
-            ],
-            [
-              {
-                "text": "Tired",
-                "color": "yellow"
-              }
-            ],
-            [
-              {
-                "text": "Focus 100",
-                "color": "white"
-              },
-              {
-                "text": "SAFE",
-                "color": "green"
-              }
-            ],
-            [
-              {
-                "text": "Spd 100",
-                "color": "white"
-              },
-              {
-                "text": "0 W",
-                "color": "white"
-              },
-              {
-                "text": "Stm |||||",
-                "color": "green"
-              }
-            ],
-            [
-              {
-                "text": "Comfortable",
-                "color": "green"
-              },
-              {
-                "text": "POWER --",
-                "color": "light_gray"
-              }
-            ],
-            [
-              {
-                "text": "Location:",
-                "color": "light_gray"
-              },
-              {
-                "text": "field",
-                "color": "white"
-              }
-            ],
-            [
-              {
-                "text": "Weather :",
-                "color": "light_gray"
-              },
-              {
-                "text": "Clear",
-                "color": "light_cyan"
-              }
-            ],
-            [
-              {
-                "text": "Spring, Day 1",
-                "color": "white"
-              },
-              {
-                "text": "Around noon",
-                "color": "light_gray"
-              }
-            ],
-            [
-              {
-                "text": "Weapon:",
-                "color": "light_gray"
-              },
-              {
-                "text": "fists",
-                "color": "light_gray"
-              }
-            ]
-          ]
+          "weapon": {
+            "label": "Weapon  :",
+            "text": "fists"
+          }
         }
       }
     },
