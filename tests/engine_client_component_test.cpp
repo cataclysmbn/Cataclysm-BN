@@ -78,6 +78,8 @@ auto menu() -> client::interaction_snapshot {
 }
 auto operation_of(const std::expected<ec::command_operation, ec::error>& result)
     -> client::interaction_command {
+    const auto why = result ? std::string{"ok"} : ec::error_name(result.error());
+    INFO(why);
     REQUIRE(result);
     REQUIRE(std::holds_alternative<ec::semantic_operation>(*result));
     return std::get<ec::semantic_operation>(*result).command;
@@ -101,9 +103,10 @@ TEST_CASE("a generic list is a list with a choose affordance", "[engine_client_c
 
 TEST_CASE("an affordance label is the native action name", "[engine_client_component]") {
     auto state = boundary(menu());
-    // The context offers no CONFIRM or QUIT: the label falls back to the action id, never to prose.
-    CHECK(affordance(top_of(state), "bn:choose:list:choices").label == "CONFIRM");
-    CHECK(affordance(top_of(state), "bn:cancel").label == "QUIT");
+    // Native has no name for CONFIRM or QUIT here: the label is empty, never the id and never
+    // prose.
+    CHECK(affordance(top_of(state), "bn:choose:list:choices").label.empty());
+    CHECK(affordance(top_of(state), "bn:cancel").label.empty());
     state.actions.push_back({.id = "CONFIRM", .name = "Confirm", .keys = {"RETURN"}});
     state.actions.push_back({.id = "QUIT", .name = "Quit", .keys = {"ESC"}});
     CHECK(affordance(top_of(state), "bn:choose:list:choices").label == "Confirm");
@@ -349,7 +352,7 @@ TEST_CASE("every 0.1 operation is an invoke", "[engine_client_component]") {
         CHECK(typed.operation == client::interaction_operation::fill);
         CHECK(typed.target_id == "field:name");
         CHECK(typed.value == "Ada");
-        CHECK_FALSE(typed.submit);
+        CHECK(typed.submit == false);
         CHECK(
             operation_of(
                 ec::resolve_invoke(
@@ -589,4 +592,29 @@ TEST_CASE(
     CHECK(json["component_id"] == "list:choices");
     CHECK(json["total"] == 250);
     CHECK(json["rows"][0]["id"] == "row:100");
+}
+
+TEST_CASE(
+    "a row listed by another identity is chosen by its native id", "[engine_client_component]") {
+    auto native = menu();
+    native.choices[0].id = "entry:0";
+    native.choices[0].identity = "entry:7";
+    native.choices[1].id = "entry:1";
+    native.choices[1].identity = "entry:7#1";
+    native.focus_choice_id = "entry:1";
+    const auto state = boundary(std::move(native));
+    const auto view = top_of(state);
+    CHECK(
+        row_ids_of(find(view, "list:choices")) == std::vector<std::string>{"entry:7", "entry:7#1"});
+    CHECK(view.focus_row == "entry:7#1");
+    const auto command = operation_of(ec::resolve_invoke(
+        state, {.affordance_id = "bn:choose:list:choices", .args = {.row = "entry:7#1"}}));
+    CHECK(command.target_id == "entry:1");
+    // The 0.1 position id is not a row of the 0.2 list.
+    const auto old = ec::resolve_invoke(
+        state, {.affordance_id = "bn:choose:list:choices", .args = {.row = "entry:1"}});
+    REQUIRE_FALSE(old);
+    CHECK(old.error() == ec::error::invalid_arguments);
+    // The 0.1 interaction keeps its ids.
+    CHECK(wire(state)["interaction"]["choices"][0]["id"] == "entry:0");
 }

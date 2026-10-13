@@ -94,6 +94,8 @@ struct interaction_choice {
     std::string nest_color;
     /// The selection mark the native list prints; absent when it prints none.
     std::optional<interaction_mark> mark;
+    /// The row's identity in the 0.2 components when `id` is a position; empty when `id` is the identity.
+    std::string identity;
 };
 
 /// What a pane holds against what it can hold, as the native screen prints it beside the area name:

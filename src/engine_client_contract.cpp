@@ -523,6 +523,17 @@ struct resolve_options {
     const invoke_args &args;
 };
 /// The native operation the invoke of an offered affordance stands for.
+/// The id the native command names for `row` of `component_id`: a row the screen lists by another identity
+/// answers with its native id, and a row off the page is named as given.
+auto native_row( const screen_view &top, const std::string &component_id,
+                 const std::string &row_id ) -> std::string
+{
+    const auto *const found = top.root ? find_component( *top.root, component_id ) : nullptr;
+    const auto *const body = found ? std::get_if<list_body>( &found->body ) : nullptr;
+    if( body == nullptr ) { return row_id; }
+    const auto entry = std::ranges::find( body->rows, row_id, &row::id );
+    return entry == body->rows.end() || entry->native_id.empty() ? row_id : entry->native_id;
+}
 auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_operation, error>
 {
     const auto &state = opts.state;
@@ -542,21 +553,23 @@ auto resolve_affordance( const resolve_options &opts ) -> std::expected<command_
     switch( found.runs ) {
         case invoke_kind::choose: {
             auto result = semantic_of( interaction_operation::choose );
-            result.command.target_id = args.row.value_or( found.target );
+            result.command.target_id = args.row ? native_row( opts.top, found.args.row->component_id,
+                                       *args.row ) : found.target;
             return result;
         }
         case invoke_kind::fill:
         case invoke_kind::submit: {
             auto result = semantic_of( interaction_operation::fill );
             const auto &field = found.args.text->field_id;
-            result.command.target_id = field.empty() ? *args.row : field;
+            result.command.target_id = field.empty() ? native_row( opts.top, found.args.row->component_id,
+                                       *args.row ) : field;
             result.command.value = *args.text;
             result.command.submit = found.runs == invoke_kind::submit;
             return result;
         }
         case invoke_kind::set_count: {
             auto result = semantic_of( interaction_operation::set_count );
-            result.command.target_id = *args.row;
+            result.command.target_id = native_row( opts.top, found.args.row->component_id, *args.row );
             result.command.count = static_cast<std::uint64_t>( *args.count );
             return result;
         }

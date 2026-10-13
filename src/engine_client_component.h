@@ -88,6 +88,8 @@ struct list_column {
 /// One row of a list. The id is the row's identity on its screen, never its position or its text.
 struct row {
     std::string id = {};
+    /// The id the native command names when it differs from `id`; not on the wire.
+    std::string native_id = {};
     std::string label = {};
     std::string description = {};
     std::string denial = {};

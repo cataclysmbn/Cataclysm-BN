@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <memory>
 #include <sstream>
 
@@ -289,15 +290,19 @@ game_client::interaction_snapshot // *NOPAD*
         .allow_cancel = cancel,
     };
     snapshot.choices.reserve( options.size() + ( ( anykey || cancel ) && options.empty() ? 1 : 0 ) );
+    auto seen = std::map<std::string, int> {};
     for( auto index = std::size_t{ 0 }; index < options.size(); ++index ) {
         const auto &option = options[index];
         const auto label = ctxt.get_action_name( option.action );
+        // A row is known by its action; options that share one are told apart by their order among them.
+        const auto count = seen[option.action]++;
         snapshot.choices.push_back( {
             .id = "option:" + std::to_string( index ),
             .label = remove_color_tags( label ),
             .description = option.action,
             .selected = index == cur,
             .highlighted = index == cur,
+            .identity = "option:" + option.action + ( count == 0 ? "" : "#" + std::to_string( count ) ),
         } );
     }
     if( anykey ) {

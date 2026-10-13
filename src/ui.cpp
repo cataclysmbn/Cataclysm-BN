@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iterator>
 #include <memory>
+#include <map>
 #include <ranges>
 
 #include "avatar.h"
@@ -1087,6 +1088,14 @@ void uilist::query( bool loop, int timeout )
                     }
                 }
                 snapshot.choices.reserve( snapshot.choices.size() + fentries.size() );
+                // A row is known by its entry's own return value; entries that share one are told apart by
+                // their order among them, whatever the filter shows.
+                auto seen = std::map<int, int> {};
+                const auto identities = entries | std::views::transform( [&seen]( const auto & entry ) {
+                    const auto count = seen[entry.retval]++;
+                    return "entry:" + std::to_string( entry.retval ) + ( count == 0 ? "" : "#" + std::to_string(
+                                count ) );
+                } ) | std::ranges::to<std::vector>();
                 for( const auto entry_index : fentries ) {
                     const auto &entry = entries[entry_index];
                     auto details = callback != nullptr ? callback->row_details( *this,
@@ -1108,6 +1117,7 @@ void uilist::query( bool loop, int timeout )
                         } ) | std::ranges::to<std::vector>(),
                         .favorite = details.favorite,
                         .action_id = entry.action_id,
+                        .identity = identities[entry_index],
                     } );
                 }
                 return snapshot;

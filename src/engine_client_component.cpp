@@ -40,15 +40,18 @@ auto mint_serial() -> std::uint64_t
 /// Generated affordance ids hold a `:`, which no registered action id does.
 auto choose_id( const std::string &component_id ) -> std::string { return "bn:choose:" + component_id; }
 
-/// The native name of the first of the registered actions `ids` that the context offers. A context that
-/// offers none gives the first id: never a word the adapter made up.
+/// The native name of the first of the actions `ids` that has one: the context's own, else the input
+/// manager's default. Empty when native names none: never a word the adapter made up.
 auto native_label( const boundary_state &state, const std::vector<std::string> &ids ) -> std::string
 {
+    const auto *const context = game_client::active_input_context().context;
     for( const auto &id : ids ) {
         const auto found = std::ranges::find( state.actions, id, &action::id );
         if( found != state.actions.end() ) { return found->name; }
+        // get_action_name answers the id itself when native has no name for it.
+        if( context != nullptr && context->get_action_name( id ) != id ) { return context->get_action_name( id ); }
     }
-    return ids.front();
+    return {};
 }
 
 /// What the adapter builds besides the tree: the affordances it places, in order.
@@ -65,7 +68,9 @@ struct build {
 auto row_of( const interaction_choice &choice ) -> row
 {
     return {
-        .id = choice.id, .label = choice.label, .description = choice.description, .denial = choice.denial,
+        .id = choice.identity.empty() ? choice.id : choice.identity,
+.native_id = choice.identity.empty() ? std::string{} :
+        choice.id, .label = choice.label, .description = choice.description, .denial = choice.denial,
         .hotkey = choice.hotkey, .enabled = choice.enabled, .selectable = choice.selectable,
         .selected = choice.selected, .columns = choice.columns, .favorite = choice.favorite,
         .color = choice.color, .key_color = choice.key_color, .markup = choice.markup,
@@ -189,8 +194,12 @@ auto generic_view( const boundary_state &state ) -> screen_view
     add( make_list( b ) );
     add( make_editors( b ) );
     native_affordances( b );
+    const auto focused = std::ranges::find( native.choices, native.focus_choice_id,
+                                            &interaction_choice::id );
+    const auto focus_row = focused == native.choices.end() ? native.focus_choice_id : row_of(
+                               *focused ).id;
     auto result = screen_view{ .title = native.title, .affordances = std::move( b.affordances ),
-                               .focus_row = native.focus_choice_id, .refresh_ms = native.refresh_ms };
+                               .focus_row = focus_row, .refresh_ms = native.refresh_ms };
     result.root = parts.empty() ? text_part( "text:message",
                   "" ) : parts.size() == 1 ? std::move( parts.front() ) :
                   split( { .id = "split:root", .children = std::move( parts ) } );
@@ -260,6 +269,8 @@ auto slots_of( const boundary_state &state ) -> std::vector<slot>
     }
     return result;
 }
+
+auto clear_affordances( component &value ) -> void;
 
 /// The content of an entry. Only the top screen reads the 0.1 interaction, for it belongs to the view
 /// that is reading input now, and only the top has affordances.
