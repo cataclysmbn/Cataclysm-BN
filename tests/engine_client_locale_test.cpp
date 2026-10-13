@@ -45,7 +45,9 @@ auto test_text() -> ec::world_state {
     result.avatar = ec::avatar_value{
         .id = "e:avatar",
         .name = "Ada",
-        .stats = {{"strength", _("Strength"), std::to_string(strength)}}};
+        .stats = {{"strength", _("Strength"), std::to_string(strength)}},
+        .compass = {{.toward = {}, .label = _("North:")}}};
+    result.avatar->sidebar.focus_label = _("Focus");
     result.environment = ec::environment_value{.turn = "1", .time = _("Dawn")};
     return result;
 }
@@ -163,6 +165,11 @@ TEST_CASE(
         CHECK(engine->value.world.avatar->stats.front().label == "Strength");
         CHECK(other->value.world.avatar->stats.front().label == in_korean("Strength"));
         CHECK(other->value.world.environment->time == in_korean("Dawn"));
+        // The sidebar and the compass panel are worded in the language too.
+        CHECK(engine->value.world.avatar->compass.front().label == "North:");
+        CHECK(other->value.world.avatar->compass.front().label == in_korean("North:"));
+        CHECK(engine->value.world.avatar->sidebar.focus_label == "Focus");
+        CHECK(other->value.world.avatar->sidebar.focus_label == in_korean("Focus"));
         // Only the words differ.
         CHECK(other->value.world.avatar->stats.front().value == "8");
         CHECK(other->value.world.avatar->id == engine->value.world.avatar->id);
@@ -275,8 +282,7 @@ TEST_CASE(
     auto spectator = connection{authority, true};
     controller.send(hello());
     spectator.send(hello(korean));
-    // The language is captured at a publication, which the subscribe then reads.
-    REQUIRE(authority.publish_boundary());
+    // No publication has worded the language yet; the subscribe makes one.
     controller.send(subscribe);
     spectator.send(subscribe);
 

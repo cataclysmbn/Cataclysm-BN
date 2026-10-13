@@ -77,6 +77,8 @@ struct korean_catalogue {
             {"Confirm", "Confirm-ko"},
             {"Strength", "Strength-ko"},
             {"Dawn", "Dawn-ko"},
+            {"North:", "North:-ko"},
+            {"Focus", "Focus-ko"},
             {plural("TEST 1kg cube", "TEST 1kg cubes"),
              plural("TEST 1kg cube-ko", "TEST 1kg cubes-ko")},
         });

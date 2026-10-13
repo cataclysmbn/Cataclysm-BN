@@ -57,6 +57,7 @@ TEST_CASE(
     const auto fixture = korean_catalogue{};
     CHECK(localization::locale_available(korean));
     CHECK(localization::locale_available("en_US"));
+    CHECK(localization::locale_available("en"));
     CHECK(localization::locale_available(get_language().id));
     // Defined, but nothing is compiled for it under the base path.
     CHECK_FALSE(localization::locale_available("de_DE"));

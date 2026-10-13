@@ -621,8 +621,8 @@ namespace localization
 
 auto locale_available( const std::string &lang_id ) -> bool
 {
-    // English is the source language of the strings, so it has no catalogue.
-    return lang_id == get_language().id ||
+    // English is the source language of the strings, so it has no catalogue, and its bare tag is one a client may send.
+    return lang_id == "en" || lang_id == get_language().id ||
            ( std::ranges::contains( lang_options, lang_id, &language_info::id ) &&
              ( lang_id.starts_with( "en" ) || translations_exists_for_lang( lang_id ) ) );
 }

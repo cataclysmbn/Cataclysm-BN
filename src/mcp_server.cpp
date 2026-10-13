@@ -832,7 +832,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         version_ = offers_02 ? wire_version::v0_2 : wire_version::v0_1;
         locale_ = decoded->locale.value_or( std::string{} );
         push_.use_locale( locale_ );
-        // At an input boundary the live game is what was published; during an activity the next publication captures it.
+        // At an input boundary the live game is what was published; during an activity a subscribe publishes one.
         if( !polling_ ) { session_.prepare_locale( locale_ ); }
         credits_ = decoded->credits;
         // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
@@ -894,6 +894,12 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     if( request.method == "bn.subscribe" ) {
         if( !decode_empty_request( params ) ) { return invalid(); }
         auto current = session_.current( locale_ );
+        // During an activity no publication has worded the language yet: publish one, as a resize does.
+        if( !current && polling_ && foreign_locale() && session_.publish_boundary( false ) ) {
+            if( host_.published ) { host_.published(); }
+            queue_push();
+            current = session_.current( locale_ );
+        }
         if( !current ) { return fail( current.error() ); }
         if( foreign_locale() ) { for( auto &line : current->log ) { line.lang = get_language().id; } }
         const auto wire = serialize_snapshot( *current, version_ );
