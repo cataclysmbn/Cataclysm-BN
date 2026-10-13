@@ -972,31 +972,31 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "native debug rejects an earlier report schema without ignoring the new report",
+    "native debug keeps the schema when only the report text changes",
     "[client][debug_prompt][debug_prompt_semantic]") {
     auto fixture = native_fixture{};
     const auto before = support::prompt_options{.text = "earlier full report"};
     const auto after = support::prompt_options{.text = "changed full report"};
-    auto stale = input_event{};
+    auto earlier = input_event{};
     auto reads = 0;
     client::memory::set_input_provider([&](const int /*timeout*/) {
-        if (++reads > 3) { throw std::runtime_error("changed schema input budget"); }
+        if (++reads > 2) { throw std::runtime_error("changed text input budget"); }
         const auto snapshot = client::current_interaction();
-        if (reads == 1) { stale = semantic_choice(snapshot, "Ignore"); }
+        if (reads == 1) { earlier = semantic_choice(snapshot, "Continue"); }
         if (reads == 2) {
-            REQUIRE(stale.interaction.has_value());
-            CHECK(snapshot.schema_id != stale.interaction->schema_id);
+            // The schema names what can be chosen, not the words of the report, so a choice made
+            // before the text changed still names the same choice. Guarding it is the boundary's
+            // job.
+            REQUIRE(earlier.interaction.has_value());
+            CHECK(snapshot.schema_id == earlier.interaction->schema_id);
             CHECK(snapshot.message.find(report(after)) != std::string::npos);
-            return stale;
+            return earlier;
         }
-        return semantic_choice(snapshot, "Continue");
+        return earlier;
     });
     support::prompt(before);
-    CHECK_THROWS_WITH(
-        support::prompt(after), Catch::Matchers::Contains("Semantic interaction rejected:"));
     support::prompt(after);
-    CHECK(reads == 3);
-    CHECK(serialized_messages() == fixture.messages);
+    CHECK(reads == 2);
 }
 
 TEST_CASE(

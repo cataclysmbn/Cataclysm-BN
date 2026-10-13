@@ -125,7 +125,7 @@ TEST_CASE("screen text and keys are published on the wire", "[engine_client_cont
 }
 
 TEST_CASE(
-    "a menu banner is published in order and changes the schema", "[engine_client_contract]") {
+    "a menu banner is published in order without changing the schema", "[engine_client_contract]") {
     auto context = input_context{"TITLE"};
     const auto input_scope = game_client::input_context_scope{context, "TITLE"};
     const auto banner_wire = [&context](std::vector<std::string> lines) {
@@ -147,7 +147,7 @@ TEST_CASE(
     const auto schema = [](const std::string& wire) {
         return wire.substr(wire.find("schema_id"), 40);
     };
-    CHECK(schema(with_art) != schema(plain));
+    CHECK(schema(with_art) == schema(plain));
 }
 
 TEST_CASE(

@@ -757,7 +757,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "text reader replay rejects changed authorized text at the real widget boundary",
+    "text reader replay keeps the recording when only the authorized text changes",
     "[client][interaction][text][replay][mcp]") {
     const auto guard = text_widget_guard{};
     static auto counter = std::atomic_uint64_t{0};
@@ -784,9 +784,9 @@ TEST_CASE(
     });
     replay::configure_playback(path.string(), {.rng_seed = 37});
     replay::start();
-    CHECK_THROWS_WITH(scrollable_text(reader_window, "Document", "Changed authorized text"),
-                      Catch::Matchers::Contains("schema changed"));
-    replay::stop();
+    scrollable_text(reader_window, "Document", "Changed authorized text");
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
     CHECK_FALSE(game_client::active_input_context().context);
     CHECK_FALSE(game_client::current_interaction().structured);
     replay::configure_playback(path.string(), {.rng_seed = 37});
@@ -888,7 +888,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "morale semantic replay keeps native close and rejects changed values",
+    "morale semantic replay keeps native close and accepts changed values",
     "[client][interaction][morale][morale_view][replay][mcp]") {
     const auto guard = text_widget_guard{};
     const auto directory = std::filesystem::path(PATH_INFO::user_dir()) / "morale-view-replay";
@@ -919,8 +919,9 @@ TEST_CASE(
     replay::finish();
     replay::configure_playback(path.string(), {.rng_seed = 37});
     replay::start();
-    CHECK_THROWS_WITH(morale.display(94, 0, 0), Catch::Matchers::Contains("schema changed"));
-    replay::stop();
+    morale.display(94, 0, 0);
+    CHECK_THROWS_AS(replay::next_input_event(), replay::completed);
+    replay::finish();
     CHECK_FALSE(game_client::active_input_context().context);
     CHECK_FALSE(game_client::current_interaction().structured);
 }

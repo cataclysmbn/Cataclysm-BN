@@ -3577,6 +3577,7 @@ TEST_CASE(
     {
         auto different = uilist{};
         different.entries.emplace_back(1, true, MENU_AUTOASSIGN, "Different choice");
+        different.entries.emplace_back(2, true, MENU_AUTOASSIGN, "Another choice");
         CHECK_THROWS_WITH(different.query(), Catch::Matchers::Contains("schema changed"));
     }
 }

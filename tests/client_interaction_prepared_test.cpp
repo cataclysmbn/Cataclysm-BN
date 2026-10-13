@@ -260,17 +260,21 @@ TEST_CASE(
     auto snapshot = model();
     const auto original = schema(context, snapshot);
     auto changes_hash = true;
-    SECTION("off-page description") { snapshot.choices.back().description += "new"; }
-    SECTION("off-page denial") { snapshot.choices.back().denial += "new"; }
     SECTION("ordered choices") { std::swap(snapshot.choices.front(), snapshot.choices.back()); }
     SECTION("selectability") { snapshot.choices.back().selectable = false; }
     SECTION("enabled") { snapshot.choices.back().enabled = true; }
-    SECTION("columns") { snapshot.choices.back().columns.front().value = "3"; }
+    SECTION("column keys") { snapshot.choices.back().columns.front().key = "other"; }
     SECTION("quantity limits") { snapshot.choices.back().minimum_count = 2; }
-    SECTION("pane") { snapshot.panes.front().area_description = "new"; }
     SECTION("target cursor") { snapshot.target->cursor.x = 2; }
-    SECTION("target candidates") { snapshot.target->candidates.front().description += "new"; }
     SECTION("field constraints") { snapshot.field->max_length = 3; }
+    SECTION("text, which is no part of the identity") {
+        changes_hash = false;
+        snapshot.choices.back().description += "new";
+        snapshot.choices.back().denial += "new";
+        snapshot.choices.back().columns.front().value = "3";
+        snapshot.panes.front().area_description = "new";
+        snapshot.target->candidates.front().description += "new";
+    }
     SECTION("excluded selection state and field value") {
         changes_hash = false;
         snapshot.input_id = 234;
@@ -934,9 +938,7 @@ TEST_CASE(
     const auto original = identity(snapshot, keys);
     SECTION("off-page dependency") { keys.back() += "new input"; }
     SECTION("ordered dependency") { std::swap(keys.front(), keys.back()); }
-    SECTION("off-page metadata") { snapshot.choices.back().denial += "new denial"; }
     SECTION("constraints") { snapshot.choices.back().available_count = 3; }
-    SECTION("panes") { snapshot.panes.front().label += "new pane"; }
     CHECK(identity(snapshot, keys) != original);
     // The eager path's historical identity is unchanged and domain-separated from lazy identities.
     CHECK(schema(context, snapshot) != identity(snapshot, keys));
