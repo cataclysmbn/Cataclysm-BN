@@ -132,3 +132,19 @@ TEST_CASE("a dropped reader stops receiving", "[engine_client_session]") {
     REQUIRE(session.publish_boundary());
     CHECK(pushed_events(kept).size() == 1);
 }
+
+TEST_CASE(
+    "a repeated message is labelled with the native repeat suffix and a single one is not",
+    "[engine_client_session]") {
+    Messages::clear_messages();
+    Messages::add_msg("You open the door.");
+    auto session = ec::session{};
+    REQUIRE(session.publish_boundary());
+    CHECK(session.current()->log.back().label == "You open the door.");
+    Messages::add_msg("You open the door.");
+    REQUIRE(session.publish_boundary());
+    const auto line = session.current()->log.back();
+    CHECK(line.count == 2);
+    CHECK(line.label == "You open the door. x 2");
+    CHECK(line.text == "You open the door.");
+}

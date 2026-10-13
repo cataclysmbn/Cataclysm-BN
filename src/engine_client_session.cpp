@@ -14,6 +14,7 @@
 #include "options.h"
 #include "output.h"
 #include "profile.h"
+#include "translations.h"
 #include "world.h"
 #include "worldfactory.h"
 
@@ -94,11 +95,15 @@ auto to_message( const Messages::feed_entry &entry ) -> message_value
 {
     const auto kind = std::ranges::find( msg_type_and_names(), entry.type,
                                          &std::pair<game_message_type, const char *>::first );
+    auto text = remove_color_tags( entry.text );
+    auto label = entry.count > 1 ?
+                 //~ Message %s on the message log was repeated %d times, e.g. "You hear a whack! x 12"
+                 string_format( _( "%s x %d" ), text, entry.count ) : text;
     return {
-        .id = entry.id, .text = remove_color_tags( entry.text ),
+        .id = entry.id, .text = std::move( text ),
         .kind = kind == msg_type_and_names().end() ? "neutral" : kind->second,
         .color = get_all_colors().get_name( msgtype_to_color( entry.type ) ),
-        .count = static_cast<counter>( entry.count )
+        .count = static_cast<counter>( entry.count ), .label = std::move( label )
     };
 }
 } // namespace

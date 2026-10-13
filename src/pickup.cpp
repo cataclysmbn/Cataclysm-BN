@@ -685,15 +685,20 @@ auto pickup_choice_ids( const pickup_interaction_options &opts ) -> std::vector<
     return ids;
 }
 
-/// The native header line: predicted and capacity weight and volume, then the filter in effect.
+/// The native header line with its color tags: predicted and capacity weight and volume, red where over, then the filter in effect.
 auto pickup_interaction_message( const pickup_interaction_options &opts ) -> std::string
 {
     const auto weight = []( const units::mass value ) {
         return string_format( "%.1f", round_up( convert_weight( value ), 1 ) );
     };
+    const auto weight_capacity = g->u.weight_capacity();
+    const auto volume_capacity = g->u.volume_capacity();
     auto message = string_format( _( "PICK Wgt %1$s/%2$s  Vol %3$s/%4$s" ),
-                                  weight( opts.weight_predict ), weight( g->u.weight_capacity() ),
-                                  format_volume( opts.volume_predict ), format_volume( g->u.volume_capacity() ) );
+                                  colorize( weight( opts.weight_predict ), opts.weight_predict > weight_capacity ? c_red : c_white ),
+                                  weight( weight_capacity ),
+                                  colorize( format_volume( opts.volume_predict ),
+                                            opts.volume_predict > volume_capacity ? c_red : c_white ),
+                                  format_volume( volume_capacity ) );
     if( !opts.filter.empty() ) {
         message += "\n" + string_format( _( "Filter: %s" ), opts.filter );
     }

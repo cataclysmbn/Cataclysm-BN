@@ -35,7 +35,7 @@ auto valid_event( const event_value &value ) -> bool
            message == value.message.has_value() && ( !transient || value.delta.empty() ) &&
            ( !value.presentation || ( !message && value.presentation->type == value.type ) ) &&
            ( !value.message || ( value.message->id != 0 && !value.message->text.empty() &&
-                                 value.message->count != 0 ) ) &&
+                                 value.message->count != 0 && !value.message->label.empty() ) ) &&
            ( !value.cause || ( *value.cause != 0 && *value.cause < value.sequence ) ) &&
            ( !value.command || ( !value.command->empty() && value.command->size() <= maximum_id_bytes ) );
 }

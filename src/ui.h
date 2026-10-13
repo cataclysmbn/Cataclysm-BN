@@ -75,6 +75,8 @@ struct uilist_entry {
     // Use 'hilite_color' when selected instead of uilist's 'hilight_color'
     bool override_hilite_color = false;
     nc_color hilite_color;
+    // Registered action the entry runs, published to clients as a stable id for the row
+    std::string action_id;
 
     uilist_entry( std::string T ) : txt( T ) {}
 

@@ -1038,6 +1038,17 @@ auto blocked_areas( const advanced_inventory_pane &pane,
     }
     return result;
 }
+
+/// The first single key bound to `action` on this screen, as the native key help names it; empty when none is.
+auto bound_key( const std::string &action ) -> std::string
+{
+    const auto &events = inp_mngr.get_input_for_action( action, "ADVANCED_INVENTORY" );
+    const auto found = std::ranges::find_if( events, []( const auto & event ) {
+        return event.type == input_event_t::keyboard && event.sequence.size() == 1;
+    } );
+    return found == events.end() ? std::string{} :
+           inp_mngr.get_keyname( found->sequence.front(), found->type, true );
+}
 } // namespace
 
 auto advanced_inventory::interaction_snapshot() const -> game_client::interaction_snapshot
@@ -1048,6 +1059,18 @@ auto advanced_inventory::interaction_snapshot() const -> game_client::interactio
         .allow_cancel = true,
         .allow_set_count = false,
     };
+    for( const auto &square : squares ) {
+        const auto &shown = use_tiles && tile_iso ? squares[square.relative_location] : square;
+        // The picker is laid out from the window's columns: its first one is the Container square's.
+        result.areas.push_back( {
+            .action_id = square.actionname,
+            .label = shown.name,
+            .key = bound_key( square.actionname ),
+            .x = square.hscreen.x - squares[AIM_CONTAINER].hscreen.x,
+            .y = square.hscreen.y - squares[AIM_CONTAINER].hscreen.y,
+            .available = shown.canputitemsloc,
+        } );
+    }
     auto identity_counts = std::unordered_map<std::string, std::size_t> {};
     for( const auto pane_index : std::views::iota( std::size_t{0}, panes.size() ) ) {
         const auto &pane = panes[pane_index];

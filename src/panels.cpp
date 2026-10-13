@@ -997,15 +997,10 @@ static int get_int_digits( const int &digits )
 // panels code
 // ===============================
 
-static void draw_limb_health( avatar &u, const catacurses::window &w, const bodypart_str_id &bp )
+/// The text of a limb's health the sidebar prints, in the colors it prints each part in.
+static auto limb_health_runs( const avatar &u, const bodypart_str_id &bp ) ->
+std::vector<std::pair<std::string, nc_color>>
 {
-    static auto print_symbol_num = []( const catacurses::window & w, int num, const std::string & sym,
-    const nc_color & color ) {
-        while( num-- > 0 ) {
-            wprintz( w, color, sym );
-        }
-    };
-
     const int hp_cur = u.get_part_hp_cur( bp );
     const int hp_max = u.get_part_hp_max( bp );
 
@@ -1022,9 +1017,7 @@ static void draw_limb_health( avatar &u, const catacurses::window &w, const body
             color_override = color;
         } else {
             const int num = mend_perc / 20;
-            print_symbol_num( w, num, "#", color );
-            print_symbol_num( w, 5 - num, "=", color );
-            return;
+            return { { std::string( num, '#' ), color }, { std::string( 5 - num, '=' ), color } };
         }
     }
 
@@ -1035,12 +1028,16 @@ static void draw_limb_health( avatar &u, const catacurses::window &w, const body
     }
 
     if( get_option<std::string>( "HEALTH_STYLE" ) == "number" || u.has_effect( effect_got_checked ) ) {
-        wprintz( w, hp.second, "%3d  ", hp_cur );
-    } else {
-        wprintz( w, hp.second, hp.first );
+        return { { string_format( "%3d  ", hp_cur ), hp.second } };
+    }
+    //Add the trailing symbols for a not-quite-full health bar
+    return { { hp.first, hp.second }, { std::string( std::max( 0, 5 - utf8_width( hp.first ) ), '.' ), c_white } };
+}
 
-        //Add the trailing symbols for a not-quite-full health bar
-        print_symbol_num( w, 5 - utf8_width( hp.first ), ".", c_white );
+static void draw_limb_health( avatar &u, const catacurses::window &w, const bodypart_str_id &bp )
+{
+    for( const auto &[text, color] : limb_health_runs( u, bp ) ) {
+        wprintz( w, color, "%s", text );
     }
 }
 
@@ -3142,5 +3139,55 @@ auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
     if( const auto style = u.martial_arts_data->selected_style_name( u ); !style.empty() ) {
         result.style = sidebar_text{ .text = style, .color = name( u.is_armed() ? c_red : c_blue ) };
     }
+    // The classic panel as rows: a limb beside a need and a stat on the first six, then the rest of the panels.
+    // A span that prints nothing stays in its row so that every span after it keeps its place.
+    const auto gray = [&]( std::string text ) -> sidebar_text { return { .text = std::move( text ), .color = name( c_light_gray ) }; };
+    const auto stat = [&]( const std::pair<nc_color, std::string> &pair ) -> sidebar_text {
+        return { .text = pair.second, .color = name( pair.first ) };
+    };
+    const auto number_style = get_option<std::string>( "HEALTH_STYLE" ) == "number";
+    const auto stamina_bar = get_hp_bar( u.get_stamina(), u.get_stamina_max() );
+    const auto limb_rows = std::max( result.limbs.size(), std::size_t{ 6 } );
+    const auto limb_ids = u.get_all_body_parts( true );
+    const auto beside = std::array<std::vector<sidebar_text>, 6> { {
+            { result.pain, stat( str_string( u ) ) },
+            { result.hunger, result.morale, stat( dex_string( u ) ) },
+            { result.thirst, stat( int_string( u ) ) },
+            { result.fatigue, stat( per_string( u ) ) },
+            {
+                sidebar_text{ .text = _( "Focus" ) + std::string( " " ) + std::to_string( u.focus_pool ), .color = name( c_white ) },
+                sidebar_text{ .text = result.safe_mode ? _( "SAFE" ) : std::string(), .color = result.safe_color }
+            },
+            {
+                sidebar_text{ .text = _( "Spd " ) + std::to_string( u.get_speed() ), .color = result.speed_color },
+                sidebar_text{ .text = std::to_string( u.movecounter ) + " " + move_mode_string( u ), .color = result.move_color },
+                sidebar_text{ .text = _( "Stm" ) + std::string( " " ) + ( number_style ? std::to_string( u.get_stamina() ) : stamina_bar.first ), .color = result.stamina_color }
+            }
+        }
+    };
+    for( std::size_t i = 0; i < limb_rows; ++i ) {
+        auto row = std::vector<sidebar_text> {};
+        if( i < result.limbs.size() ) {
+            const auto &limb = result.limbs[i];
+            const auto runs = limb_health_runs( u, limb_ids[i].id() );
+            row.push_back( limb.label );
+            row.push_back( { .text = runs | std::views::keys | std::views::join | std::ranges::to<std::string>(), .color = name( runs.front().second ) } );
+        }
+        if( i < beside.size() ) { row.insert( row.end(), beside[i].begin(), beside[i].end() ); }
+        result.rows.push_back( std::move( row ) );
+    }
+    result.rows.push_back( { result.temperature, { .text = _( "POWER" ) + std::string( " " ) + result.power.text, .color = result.power.color } } );
+    result.rows.push_back( { gray( _( "Location:" ) ), result.location } );
+    result.rows.push_back( underground ? std::vector<sidebar_text> { result.weather } :
+                           std::vector<sidebar_text> { gray( _( "Weather :" ) ), result.weather } );
+    result.rows.push_back( {
+        { .text = result.season + ", " + _( "Day " ) + std::to_string( result.day ), .color = name( c_white ) },
+        gray( result.clock.empty() ? _( "Time: ???" ) : result.clock ),
+        gray( result.ambient ? _( "Temp : " ) + *result.ambient : std::string() ) } );
+    result.rows.push_back( { gray( _( "Weapon:" ) ), gray( result.weapon ) } );
+    if( result.style ) { result.rows.back().push_back( *result.style ); }
+    std::erase_if( result.rows, []( const auto & row ) {
+        return std::ranges::all_of( row, []( const auto & span ) { return span.text.empty(); } );
+    } );
     return result;
 }

@@ -694,6 +694,16 @@ auto season_name() -> std::string
     }
 }
 
+/// The row text of a stack: what the native lists show for `count` equal items, and where a wielded or worn one is.
+auto stack_label( const item &thing, const std::size_t count,
+                  const std::optional<std::string> &slot ) -> std::string
+{
+    const auto name = thing.display_name( count );
+    if( slot == "wielded" ) { return string_format( _( "%s (wielded)" ), name ); }
+    if( slot == "worn" ) { return string_format( _( "%s (worn)" ), name ); }
+    return name;
+}
+
 /// One inventory row for a stack of equal items, named the way the native lists show it.
 auto stack_entry( const item &thing, const std::size_t count,
                   std::optional<std::string> slot = std::nullopt ) -> inventory_entry
@@ -705,7 +715,7 @@ auto stack_entry( const item &thing, const std::size_t count,
                       :
                       std::nullopt;
     return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = count,
-             .slot = std::move( slot ), .durability = std::move( durability ) };
+             .slot = slot, .durability = std::move( durability ), .label = stack_label( thing, count, slot ) };
 }
 
 /// Gives each row an id from its slot, kind and name; equal rows are told apart by their order.
@@ -737,11 +747,27 @@ auto capture_avatar( map &here, const avatar &you,
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },
         .sidebar = sidebar_snapshot( you ) };
-    const auto stacks = item_stacks( here, you );
-    result.inventory = stacks.inventory | std::views::transform( &item_stack::row ) |
-                       std::ranges::to<std::vector>();
-    result.ground = stacks.ground | std::views::transform( &item_stack::row ) |
-                    std::ranges::to<std::vector>();
+    you.visit_items( [&]( const item * thing ) {
+        if( you.is_wielding( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "wielded" ) ); }
+        else if( you.is_worn( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "worn" ) ); }
+        return VisitResponse::NEXT;
+    } );
+    for( const auto *stack : you.inv_const_slice() ) {
+        if( stack != nullptr ) { result.inventory.push_back( stack_entry( *stack->front(), stack->size(), "carried" ) ); }
+    }
+    if( here.accessible_items( you.bub_pos() ) ) {
+        // The native pickup stacks equal items the same way; each stack is one choice there.
+        for( const auto *thing : here.i_at( you.bub_pos() ) ) {
+            const auto same = std::ranges::find_if( result.ground, [&]( const auto & entry ) {
+                return entry.name == remove_color_tags( thing->display_name() ) &&
+                       entry.appearance.id == thing->typeId().str();
+            } );
+            if( same != result.ground.end() ) {
+                ++*same->count;
+                same->label = stack_label( *thing, *same->count, std::nullopt );
+            } else { result.ground.push_back( stack_entry( *thing, 1 ) ); }
+        }
+    }
     return result;
 }
 

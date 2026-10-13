@@ -337,6 +337,18 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the avatar's own shout is flagged logged because its yell message already shows it",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    sounds::reset_sounds();
+    get_avatar().shout("hey");
+    const auto heard = listen();
+    REQUIRE(heard.size() == 1);
+    CHECK(heard[0].text == "yourself yell \"hey\"");
+    CHECK(heard[0].logged);
+}
+
+TEST_CASE(
     "a sound behind a wall is placed on a square the avatar cannot see",
     "[engine_client_fact][engine_client_sound]") {
     const auto room = scene{};
