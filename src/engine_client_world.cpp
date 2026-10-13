@@ -832,17 +832,21 @@ auto item_stacks( map &here, const avatar &you ) -> avatar_item_stacks
     }
     if( here.accessible_items( you.bub_pos() ) ) {
         // The native pickup stacks equal items the same way; each stack is one choice there.
-        auto piles = std::vector<std::vector<item *>> {};
+        struct pile {
+            itype_id type;
+            std::string name;
+            std::vector<item *> items;
+        };
+        auto piles = std::vector<pile> {};
         for( auto *thing : here.i_at( you.bub_pos() ) ) {
-            const auto name = remove_color_tags( thing->display_name() );
-            const auto same = std::ranges::find_if( piles, [&]( const auto & pile ) {
-                return pile.front()->typeId() == thing->typeId() &&
-                       remove_color_tags( pile.front()->display_name() ) == name;
+            auto name = remove_color_tags( thing->display_name() );
+            const auto same = std::ranges::find_if( piles, [&]( const auto & other ) {
+                return other.type == thing->typeId() && other.name == name;
             } );
-            if( same != piles.end() ) { same->push_back( thing ); }
-            else { piles.push_back( { thing } ); }
+            if( same != piles.end() ) { same->items.push_back( thing ); }
+            else { piles.push_back( { .type = thing->typeId(), .name = std::move( name ), .items = { thing } } ); }
         }
-        const auto stacked = []( const auto & pile ) { return item_stack{ stack_entry( pile ), pile }; };
+        const auto stacked = []( const pile & each ) { return item_stack{ stack_entry( each.items ), each.items }; };
         result.ground = piles | std::views::transform( stacked ) | std::ranges::to<std::vector>();
     }
     result.inventory = identified( std::move( result.inventory ) );
