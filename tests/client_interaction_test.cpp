@@ -1093,6 +1093,14 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the map offers Options as an action of its own", "[client][interaction][mcp][main_menu]") {
+    const auto ctxt = get_default_mode_input_context();
+    const auto actions = ctxt.get_registered_actions_copy();
+    CHECK(std::ranges::find(actions, "open_options") != actions.end());
+    CHECK(ctxt.get_action_name("open_options") == "Options");
+}
+
+TEST_CASE(
     "advanced inventory distinguishes inventory and mixed ground cargo storage",
     "[client][interaction][advanced_inventory][mcp]") {
     const auto guard = interaction_test_guard{};

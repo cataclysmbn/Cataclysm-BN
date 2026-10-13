@@ -531,6 +531,36 @@ TEST_CASE("a registered action is submittable as a command", "[engine_client_ser
     CHECK(test.queued.front().action == "YES");
 }
 
+TEST_CASE(
+    "an action that opens a prompt completes after the event that carries the prompt",
+    "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    REQUIRE(test.pump(
+        hello + subscribe
+        + test.submit_text(R"({"kind":"action","action_id":"YES"})", test.schema())));
+    test.run_native_input();
+    // The action asks for text: the prompt is the next input boundary.
+    auto prompt_context = input_context{"STRING_INPUT"};
+    const auto prompt_input = game_client::input_context_scope{prompt_context, "STRING_INPUT"};
+    const auto prompt = game_client::interaction_scope{
+        prompt_context, [] {
+            return game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::field,
+                .field = game_client::interaction_field{.id = "field:value"},
+            };
+        }};
+    test.output.str("");
+    CHECK_FALSE(test.pump(""));
+    const auto out = test.output.str();
+    const auto field = index_of(out, R"("field:value")");
+    const auto completed = index_of(out, R"("stage":"completed")");
+    REQUIRE(field != std::string::npos);
+    REQUIRE(completed != std::string::npos);
+    CHECK(field < completed);
+}
+
 TEST_CASE("a capture that drops the avatar resynchronizes subscribers", "[engine_client_server]") {
     auto boundary = input_boundary{};
     auto test = fixture{};
