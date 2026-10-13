@@ -124,6 +124,13 @@ struct cell {
     std::optional<memory_layers> memory = std::nullopt;
     auto operator<=>( const cell & ) const = default; // *NOPAD*
 };
+/// A direction the native game names: a stable id (`north`, `southwest_above`, `center`, `above`) and its
+/// name in the connection's language.
+struct heading {
+    std::string id = {};
+    std::string name = {};
+    auto operator<=>( const heading & ) const = default; // *NOPAD*
+};
 /// `sensed` entities carry only id, position and sense.
 struct entity {
     std::string id = {};
@@ -197,9 +204,31 @@ struct sidebar_limb {
     bool broken = false;
     auto operator<=>( const sidebar_limb & ) const = default; // *NOPAD*
 };
+/// A panel of the native sidebar layout the panel manager lists. Panels it hides now (the vehicle panel
+/// outside a vehicle) are left out.
+struct sidebar_panel {
+    /// The panel manager's own name for it (`Health`, `Compass`, `Messages`), untranslated.
+    std::string id = {};
+    /// The player has not switched it off.
+    bool enabled = true;
+    /// Rows; absent for the panel that takes the rest of the column (`Messages`).
+    std::optional<int> height = std::nullopt;
+    auto operator<=>( const sidebar_panel & ) const = default; // *NOPAD*
+};
+/// The native sidebar options: the layout in use, the side it sits on and its width in columns.
+struct sidebar_layout {
+    std::string id = {};
+    /// `left` or `right`.
+    std::string side = {};
+    int width = 0;
+    /// In the panel manager's order, top to bottom.
+    std::vector<sidebar_panel> panels = {};
+    auto operator<=>( const sidebar_layout & ) const = default; // *NOPAD*
+};
 /// What the native sidebar (classic layout) shows, taken from the same getters, with the labels its panels
 /// print. A client lays these out itself.
 struct sidebar_value {
+    sidebar_layout layout;
     std::vector<sidebar_limb> limbs = {};
     sidebar_text pain;
     sidebar_text hunger;
@@ -244,6 +273,24 @@ struct sidebar_value {
     std::optional<sidebar_text> style = std::nullopt;
     auto operator<=>( const sidebar_value & ) const = default; // *NOPAD*
 };
+/// A creature the native compass panel lists.
+struct compass_creature {
+    /// The creature's entity ID.
+    std::string id = {};
+    look appearance;
+    std::string name = {};
+    /// How the creature regards the avatar, as an entity's `attitude`.
+    std::string attitude = {};
+    /// Squares from the avatar, as the native sound and safe mode code count them.
+    int distance = 0;
+    auto operator<=>( const compass_creature & ) const = default; // *NOPAD*
+};
+/// The creatures the avatar sees toward one direction, nearest first.
+struct compass_direction {
+    heading toward;
+    std::vector<compass_creature> creatures = {};
+    auto operator<=>( const compass_direction & ) const = default; // *NOPAD*
+};
 struct avatar_value {
     std::string id = {};
     position at;
@@ -255,6 +302,9 @@ struct avatar_value {
     /// The wielded item, the worn items, then the carried stacks. Items have no instance IDs.
     std::vector<inventory_entry> inventory = {};
     sidebar_value sidebar;
+    /// The creatures the native compass panel lists, by the direction of their horizontal offset from the avatar
+    /// (`center` for the avatar's own column), clockwise from north and `center` last; directions with none are absent.
+    std::vector<compass_direction> compass = {};
     /// The stacks on the avatar's own square, which a pickup chooses from.
     std::vector<inventory_entry> ground = {};
     auto operator<=>( const avatar_value & ) const = default; // *NOPAD*

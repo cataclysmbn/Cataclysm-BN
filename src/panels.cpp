@@ -3083,6 +3083,20 @@ auto sidebar_snapshot( const avatar &u ) -> engine_client::sidebar_value
         return { .text = pair.second, .color = name( pair.first ) };
     };
     auto result = sidebar_value{};
+    auto &manager = panel_manager::get_manager();
+    const auto side = get_option<std::string>( "SIDEBAR_POSITION" );
+    result.layout = {
+        .id = manager.get_current_layout_id(), .side = side,
+        .width = side == "left" ? manager.get_width_left() : manager.get_width_right(),
+        // The panels the native panel options list; the others are not shown in this state.
+        .panels = manager.get_current_layout() | std::views::filter( []( const window_panel & panel ) { return panel.render(); } ) |
+        std::views::transform( []( const window_panel & panel ) -> sidebar_panel {
+            // -2 is the panel that takes the rest of the column.
+            return {
+                .id = panel.get_name(), .enabled = panel.toggle,
+                .height = panel.get_height() == -2 ? std::nullopt : std::optional{ panel.get_height() } };
+        } ) | std::ranges::to<std::vector>()
+    };
     for( const bodypart_id &bp : u.get_all_body_parts( true ) ) {
         const auto broken = u.is_limb_broken( bp.id() ) && !bp->essential;
         const auto splinted = u.worn_with_flag( json_flag_SPLINT, bp.id() ) ||

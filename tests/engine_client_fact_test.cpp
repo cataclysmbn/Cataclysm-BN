@@ -319,6 +319,9 @@ TEST_CASE(
     CHECK(heard[0].text == "Tick.");
     CHECK(heard[0].amount > 0);
     CHECK_FALSE(heard[0].at.has_value());
+    // The native message names no direction for a source in sight; the distance is still counted.
+    CHECK_FALSE(heard[0].from.has_value());
+    CHECK(heard[0].distance == 3);
 }
 
 TEST_CASE(
@@ -364,6 +367,35 @@ TEST_CASE(
     const auto marker = *heard[0].at;
     CHECK(std::abs(marker.x - engine_client::world::position_at(at).x) <= 3);
     CHECK(std::abs(marker.y - engine_client::world::position_at(at).y) <= 3);
+}
+
+TEST_CASE(
+    "a sound out of sight is published with the direction and distance its message names",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    wall_in();
+    const auto at = you_at + tripoint_east * 5;
+    REQUIRE_FALSE(get_avatar().sees(at));
+    make_noise(at, 90, "a muffled crash");
+    const auto heard = listen();
+    REQUIRE(heard.size() == 1);
+    // The oracle is the native message: "From the %1$s you hear %2$s".
+    const auto native = direction_from(you_at, at);
+    REQUIRE(heard[0].from.has_value());
+    CHECK(heard[0].from->id == "east");
+    CHECK(heard[0].from->name == direction_name(native));
+    CHECK(heard[0].distance == 5);
+}
+
+TEST_CASE(
+    "a sound at the avatar's own square names no direction and no distance",
+    "[engine_client_fact][engine_client_sound]") {
+    const auto room = scene{};
+    make_noise(you_at, 80, "a thud", sounds::sound_t::combat);
+    const auto heard = listen();
+    REQUIRE(heard.size() == 1);
+    CHECK_FALSE(heard[0].from.has_value());
+    CHECK(heard[0].distance == 0);
 }
 
 TEST_CASE(

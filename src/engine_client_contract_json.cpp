@@ -21,6 +21,9 @@ auto to_json( const avatar_stat &value ) -> json;
 auto to_json( const inventory_entry &value ) -> json;
 auto to_json( const sidebar_text &value ) -> json;
 auto to_json( const sidebar_limb &value ) -> json;
+auto to_json( const sidebar_layout &value ) -> json;
+auto to_json( const heading &value ) -> json;
+auto to_json( const compass_direction &value ) -> json;
 auto to_json( const game_client::interaction_choice &choice ) -> json;
 
 auto to_json( const clock_point &at ) -> json
@@ -176,9 +179,32 @@ auto to_json( const sidebar_limb &value ) -> json
     return {{"id", value.id}, {"label", to_json( value.label )}, {"hp", value.hp}, {"hp_max", value.hp_max},
         {"color", value.color}, {"broken", value.broken}};
 }
+auto to_json( const heading &value ) -> json
+{
+    return {{"id", value.id}, {"name", value.name}};
+}
+auto to_json( const sidebar_layout &value ) -> json
+{
+    auto panels = json::array();
+    for( const auto &panel : value.panels ) {
+        auto item = json{{"id", panel.id}, {"enabled", panel.enabled}};
+        if( panel.height ) { item["height"] = *panel.height; }
+        panels.push_back( std::move( item ) );
+    }
+    return {{"id", value.id}, {"side", value.side}, {"width", value.width}, {"panels", std::move( panels )}};
+}
+auto to_json( const compass_direction &value ) -> json
+{
+    auto creatures = json::array();
+    for( const auto &creature : value.creatures ) {
+        creatures.push_back( {{"id", creature.id}, {"look", to_json( creature.appearance )}, {"name", creature.name},
+            {"attitude", creature.attitude}, {"distance", creature.distance}} );
+    }
+    return {{"toward", to_json( value.toward )}, {"creatures", std::move( creatures )}};
+}
 auto to_json( const sidebar_value &value ) -> json
 {
-    auto result = json{{"limbs", to_array( value.limbs )}, {"pain", to_json( value.pain )},
+    auto result = json{{"layout", to_json( value.layout )}, {"limbs", to_array( value.limbs )}, {"pain", to_json( value.pain )},
         {"hunger", to_json( value.hunger )}, {"thirst", to_json( value.thirst )},
         {"fatigue", to_json( value.fatigue )}, {"focus", {{"label", value.focus_label}, {"value", value.focus}}},
         {"morale", {{"level", value.morale_level}, {"face", value.morale.text}, {"color", value.morale.color}}},
@@ -214,6 +240,7 @@ auto to_json( const avatar_value &value ) -> json
     if( !value.overlays.empty() ) { result["overlays"] = to_array( value.overlays ); }
     if( !value.traits.empty() ) { result["traits"] = value.traits; }
     if( !value.inventory.empty() ) { result["inventory"] = to_array( value.inventory ); }
+    if( !value.compass.empty() ) { result["compass"] = to_array( value.compass ); }
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     return result;
 }
@@ -746,6 +773,8 @@ auto to_json( const event_value &value, const wire_version version ) -> json
             data = {{"id", fact.entity}, {"reason", fact.kind}};
         } else if( value.type == "sound.heard" ) {
             data = {{"text", fact.text}, {"volume", *fact.amount}, {"logged", fact.logged}};
+            if( fact.distance ) { data["distance"] = *fact.distance; }
+            if( fact.from ) { data["direction"] = to_json( *fact.from ); }
             if( fact.at ) { data["marker"] = to_json( *fact.at ); }
         } else if( value.type == "projectile.hit" ) {
             data = {{"projectile", fact.id}, {"at", to_json( *fact.at )}};

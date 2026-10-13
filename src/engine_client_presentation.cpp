@@ -324,9 +324,14 @@ auto record_activation( const activation_options &options ) -> void
 auto record_sound( const sound_options &options ) -> void
 {
     if( !state().collecting ) { return; }
+    const auto &you = get_avatar();
+    // The native message names a direction unless the sound is at the avatar's square or its source is in sight.
+    const auto named = options.origin != you.bub_pos() && !you.sees( options.origin );
     push( { .type = "sound.heard", .at = options.marker ? std::optional( world::position_at( *options.marker ) ) : std::nullopt,
             .amount = static_cast<std::uint64_t>( std::max( 0, options.volume ) ), .text = options.text,
-            .logged = options.logged } );
+            .logged = options.logged,
+            .from = named ? std::optional( world::heading_of( direction_from( you.bub_pos(), options.origin ) ) ) : std::nullopt,
+            .distance = static_cast<std::uint64_t>( rl_dist( you.bub_pos(), options.origin ) ) } );
 }
 
 auto record_move( const move_options &options ) -> void

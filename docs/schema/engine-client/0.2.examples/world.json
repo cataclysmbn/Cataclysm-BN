@@ -1071,6 +1071,27 @@
           }
         ],
         "sidebar": {
+          "layout": {
+            "id": "labels",
+            "side": "right",
+            "width": 44,
+            "panels": [
+              {
+                "id": "Health",
+                "enabled": true,
+                "height": 7
+              },
+              {
+                "id": "Compass",
+                "enabled": false,
+                "height": 8
+              },
+              {
+                "id": "Messages",
+                "enabled": true
+              }
+            ]
+          },
           "limbs": [
             {
               "id": "head",
@@ -1162,6 +1183,196 @@
             "text": "fists"
           }
         }
+      }
+    },
+    {
+      "name": "avatar with creatures on the compass",
+      "def": "avatar",
+      "value": {
+        "id": "e:avatar",
+        "at": {
+          "dim": "",
+          "x": 3,
+          "y": 4,
+          "z": 0
+        },
+        "name": "Ada",
+        "stats": [
+          {
+            "id": "strength",
+            "label": "Strength",
+            "value": "8",
+            "color": "white",
+            "short_label": "Str"
+          }
+        ],
+        "sidebar": {
+          "layout": {
+            "id": "labels",
+            "side": "right",
+            "width": 44,
+            "panels": [
+              {
+                "id": "Health",
+                "enabled": true,
+                "height": 7
+              },
+              {
+                "id": "Compass",
+                "enabled": false,
+                "height": 8
+              },
+              {
+                "id": "Messages",
+                "enabled": true
+              }
+            ]
+          },
+          "limbs": [
+            {
+              "id": "head",
+              "label": {
+                "text": "HEAD",
+                "color": "white"
+              },
+              "hp": 55,
+              "hp_max": 55,
+              "color": "green",
+              "broken": false
+            }
+          ],
+          "pain": {
+            "text": "Pain 3",
+            "color": "light_red"
+          },
+          "hunger": {
+            "text": "Hungry",
+            "color": "yellow"
+          },
+          "thirst": {
+            "text": "",
+            "color": "white"
+          },
+          "fatigue": {
+            "text": "Tired",
+            "color": "yellow"
+          },
+          "focus": {
+            "label": "Focus",
+            "value": 100
+          },
+          "morale": {
+            "level": 12,
+            "face": ":)",
+            "color": "green"
+          },
+          "stamina": {
+            "label": "Stm",
+            "current": 1000,
+            "max": 1000,
+            "color": "green"
+          },
+          "speed": {
+            "label": "Spd",
+            "value": 100,
+            "color": "white"
+          },
+          "movement": {
+            "counter": 0,
+            "mode": "walk",
+            "mode_text": "W",
+            "color": "white"
+          },
+          "temperature": {
+            "text": "Comfortable",
+            "color": "green"
+          },
+          "power": {
+            "label": "POWER",
+            "text": "--",
+            "color": "light_gray"
+          },
+          "safe_mode": {
+            "label": "SAFE",
+            "enabled": true,
+            "color": "green"
+          },
+          "location": {
+            "label": "Location:",
+            "text": "field",
+            "color": "white"
+          },
+          "weather": {
+            "label": "Weather :",
+            "text": "Clear",
+            "color": "light_cyan"
+          },
+          "time": {
+            "season": "Spring",
+            "day_label": "Day",
+            "day": 1,
+            "clock": "Around noon",
+            "has_watch": false
+          },
+          "weapon": {
+            "label": "Weapon  :",
+            "text": "fists"
+          }
+        },
+        "compass": [
+          {
+            "toward": {
+              "id": "east",
+              "name": "east"
+            },
+            "creatures": [
+              {
+                "id": "e:7",
+                "look": {
+                  "kind": "monster",
+                  "id": "mon_zombie",
+                  "glyph": "Z",
+                  "color": "green"
+                },
+                "name": "zombie",
+                "attitude": "hostile",
+                "distance": 4
+              },
+              {
+                "id": "e:9",
+                "look": {
+                  "kind": "npc",
+                  "id": "NC_DOCTOR",
+                  "glyph": "@",
+                  "color": "white"
+                },
+                "name": "Rae",
+                "attitude": "friendly",
+                "distance": 9
+              }
+            ]
+          },
+          {
+            "toward": {
+              "id": "center",
+              "name": "center"
+            },
+            "creatures": [
+              {
+                "id": "e:12",
+                "look": {
+                  "kind": "monster",
+                  "id": "mon_bat",
+                  "glyph": "b",
+                  "color": "dark_gray"
+                },
+                "name": "bat",
+                "attitude": "hostile",
+                "distance": 1
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -1637,6 +1848,11 @@
                 "x": 70,
                 "y": 61,
                 "z": 0
+              },
+              "distance": 12,
+              "direction": {
+                "id": "southeast",
+                "name": "southeast"
               }
             }
           },
@@ -1648,7 +1864,8 @@
             "data": {
               "text": "Tick.",
               "volume": 52,
-              "logged": false
+              "logged": false,
+              "distance": 3
             }
           }
         ]
@@ -2016,6 +2233,27 @@
           }
         ],
         "sidebar": {
+          "layout": {
+            "id": "labels",
+            "side": "right",
+            "width": 44,
+            "panels": [
+              {
+                "id": "Health",
+                "enabled": true,
+                "height": 7
+              },
+              {
+                "id": "Compass",
+                "enabled": false,
+                "height": 8
+              },
+              {
+                "id": "Messages",
+                "enabled": true
+              }
+            ]
+          },
           "limbs": [
             {
               "id": "head",

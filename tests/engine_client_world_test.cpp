@@ -22,6 +22,7 @@
 #include "map_memory.h"
 #include "map_perception.h"
 #include "monster.h"
+#include "npc.h"
 #include "options_helpers.h"
 #include "output.h"
 #include "overmap/omdata.h"
@@ -1453,49 +1454,181 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "world capture keys terrain, furniture, monsters and parts by the tints the client has",
+    "world capture publishes the sidebar layout the native panel manager holds",
     "[engine_client_world]") {
     const auto setup = make_scene();
-    auto& here = get_map();
-    const auto ground = here.ter(setup.start);
-    const auto flag = *ground->get_flags().begin();
-    here.furn_set(setup.start + tripoint_east, furn_id("f_chair"));
-    const auto car_at = setup.start + tripoint(-5, -4, 0);
-    REQUIRE(here.add_vehicle(vproto_id("golf_cart"), car_at, 0_degrees, 0, 0, false) != nullptr);
-    map_perception::acquire();
-    CHECK(find_cell(ec::world::capture_world(), at(setup.start))->terrain->tint_keys.empty());
-    ec::world::set_tint_ids({flag, ground.id().str(), "f_chair", "seat"});
-    const auto state = ec::world::capture_world();
-    ec::world::set_tint_ids({});
-    // The flags come first, then the id.
-    const auto& floor = find_cell(state, at(setup.start))->terrain->tint_keys;
-    CHECK(floor == (std::vector<std::string>{flag, ground.id().str()}));
-    const auto& chair = find_cell(state, at(setup.start + tripoint_east))->furniture->tint_keys;
-    CHECK(std::ranges::count(chair, "f_chair") == 1);
-    // A vehicle part is keyed by its flags and id, a part with none the client knows by nothing.
-    const auto* part = find_cell(state, at(car_at));
-    REQUIRE(part != nullptr);
-    REQUIRE(part->vehicle);
-    CHECK(part->vehicle->tint_keys.size() <= 1);
+    const auto guard = classic_sidebar_guard{};
+    const auto right = override_option("SIDEBAR_POSITION", "right");
+    auto& manager = panel_manager::get_manager();
+    const auto layout = ec::world::capture_world().avatar->sidebar.layout;
+    CHECK(layout.id == "classic");
+    CHECK(layout.side == get_option<std::string>("SIDEBAR_POSITION"));
+    CHECK(layout.width == manager.get_current_layout().begin()->get_width());
+
+    // The order is the manager's, and the panels it does not list outside a vehicle are left out.
+    const auto ids = [](const auto& panels) {
+        return panels | std::views::transform(&ec::sidebar_panel::id)
+             | std::ranges::to<std::vector>();
+    };
+    auto native = std::vector<std::string>{};
+    for (const auto& panel : manager.get_current_layout()) {
+        if (panel.render()) { native.push_back(panel.get_name()); }
+    }
+    REQUIRE(native.size() >= 3);
+    CHECK(ids(layout.panels) == native);
+    CHECK(std::ranges::count(ids(layout.panels), "Vehicle") == 0);
+    CHECK(std::ranges::count(ids(layout.panels), "Compass") == 1);
+
+    const auto find = [&](const ec::sidebar_layout& in, const std::string& id) {
+        const auto found = std::ranges::find(in.panels, id, &ec::sidebar_panel::id);
+        REQUIRE(found != in.panels.end());
+        return *found;
+    };
+    // Only the panel that takes the rest of the column has no height.
+    CHECK(find(layout, "Messages").height == std::nullopt);
+    CHECK(find(layout, "Health").height.value_or(0) > 0);
+
+    // Switching a panel off in the native panel options shows on the next capture.
+    auto& compass =
+        *std::ranges::find(manager.get_current_layout(), "Compass", &window_panel::get_name);
+    const auto was = compass.toggle;
+    CHECK(find(layout, "Compass").enabled == was);
+    compass.toggle = !was;
+    const auto switched = ec::world::capture_world().avatar->sidebar.layout;
+    compass.toggle = was;
+    CHECK(find(switched, "Compass").enabled == !was);
+    CHECK(ids(switched.panels) == ids(layout.panels));
 }
 
 TEST_CASE(
-    "world capture publishes the tint an item's own variables ask for", "[engine_client_world]") {
+    "world capture publishes the side and width of the native sidebar", "[engine_client_world]") {
     const auto setup = make_scene();
-    auto thing = item::spawn("jeans");
-    thing->set_var("tint_color", RGBColor{255, 48, 48, 255});
-    thing->set_var("tint_blend_mode_fg", std::string("multiply"));
-    thing->set_var("tint_brightness", 0.5f);
-    get_map().add_item_or_charges(setup.start + tripoint_east, std::move(thing));
-    get_map().add_item_or_charges(setup.start + tripoint_west, item::spawn("jeans"));
+    const auto guard = classic_sidebar_guard{};
+    auto& manager = panel_manager::get_manager();
+    const auto side = GENERATE("left", "right");
+    const auto option = override_option("SIDEBAR_POSITION", side);
+    const auto layout = ec::world::capture_world().avatar->sidebar.layout;
+    CHECK(layout.side == side);
+    CHECK(layout.width == manager.get_current_layout().begin()->get_width());
+    CHECK(layout.width
+          == (std::string(side) == "left" ? manager.get_width_left() : manager.get_width_right()));
+    CHECK(layout.width > 0);
+}
+
+TEST_CASE(
+    "heading_of names a direction by its horizontal part and level", "[engine_client_world]") {
+    using ec::heading;
+    const auto id = [](const direction dir) { return ec::world::heading_of(dir).id; };
+    CHECK(id(direction::NORTH) == "north");
+    CHECK(id(direction::SOUTHEAST) == "southeast");
+    CHECK(id(direction::ABOVEWEST) == "west_above");
+    CHECK(id(direction::BELOWNORTHEAST) == "northeast_below");
+    CHECK(id(direction::CENTER) == "center");
+    CHECK(id(direction::ABOVECENTER) == "above");
+    CHECK(id(direction::BELOWCENTER) == "below");
+    // The name is the native one, so the message log and the wire agree.
+    for (const auto dir : {direction::EAST, direction::ABOVESOUTH, direction::BELOWCENTER}) {
+        CHECK(ec::world::heading_of(dir).name == direction_name(dir));
+    }
+    // Every direction has its own id.
+    auto seen = std::set<std::string>{};
+    for (const auto raw : std::views::iota(0u, static_cast<unsigned>(direction::last))) {
+        seen.insert(id(static_cast<direction>(raw)));
+    }
+    CHECK(seen.size() == 27);
+}
+
+TEST_CASE(
+    "world capture lists the creatures the native compass counts, by direction",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& you = get_avatar();
+    // Two to the north (the farther one first), one to the west, one behind the partition wall.
+    auto& far_north = spawn_test_monster("mon_zombie", setup.start + tripoint(0, -4, 0));
+    auto& near_north = spawn_test_monster("mon_zombie", setup.start + tripoint(0, -2, 0));
+    spawn_test_monster("mon_zombie", setup.start + tripoint(-3, 0, 0));
+    const auto& hidden = spawn_test_monster("mon_zombie", setup.start + tripoint(5, 0, 0));
+    map_perception::acquire();
+    REQUIRE_FALSE(you.sees(hidden));
+    g->mon_info_update();
+    const auto native = you.get_mon_visible().visible_count_by_dir;
+    REQUIRE(std::ranges::fold_left(native, 0, std::plus<>{}) == 3);
+
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar);
+    const auto& compass = state.avatar->compass;
+    // The native counts index the headings clockwise from north, then the avatar's own column.
+    const auto order = std::vector<std::string>{
+        "north",     "northeast", "east",      "southeast", "south",
+        "southwest", "west",      "northwest", "center"};
+    for (const auto index : std::views::iota(std::size_t{0}, order.size())) {
+        const auto& name = order[index];
+        const auto found = std::ranges::find(compass, name, [](const auto& d) {
+            return d.toward.id;
+        });
+        CAPTURE(name);
+        CHECK((found == compass.end() ? 0 : static_cast<int>(found->creatures.size()))
+              == native[index]);
+    }
+    CHECK(compass.size() == 2);
+    CHECK(compass[0].toward.id == "north");
+    CHECK(compass[0].toward.name == direction_name(direction::NORTH));
+    REQUIRE(compass[0].creatures.size() == 2);
+    // Nearest first, with the id, look and attitude the entity of the same creature has.
+    CHECK(compass[0].creatures[0].distance == 2);
+    CHECK(compass[0].creatures[1].distance == 4);
+    for (const auto& creature : compass[0].creatures) {
+        REQUIRE(state.entities.contains(creature.id));
+        const auto& entity = state.entities.at(creature.id);
+        CHECK(creature.appearance == entity.appearance);
+        CHECK(creature.name == entity.name);
+        CHECK(creature.attitude == entity.attitude);
+    }
+    CHECK(state.entities.at(compass[0].creatures[0].id).at == at(near_north.bub_pos()));
+    CHECK(state.entities.at(compass[0].creatures[1].id).at == at(far_north.bub_pos()));
+    CHECK(compass[1].toward.id == "west");
+    CHECK(compass[1].creatures.front().distance == 3);
+
+    // Nothing the native compass hides: from the east side only the zombie behind the wall is in
+    // sight.
+    step_to(setup.start + tripoint(4, 5, 0));
+    REQUIRE(you.sees(hidden));
+    REQUIRE_FALSE(you.sees(far_north));
+    g->mon_info_update();
+    REQUIRE(
+        std::ranges::fold_left(you.get_mon_visible().visible_count_by_dir, 0, std::plus<>{}) == 1);
+    const auto moved = ec::world::capture_world();
+    REQUIRE(moved.entities.size() == 1);
+    REQUIRE(moved.avatar->compass.size() == 1);
+    REQUIRE(moved.avatar->compass[0].creatures.size() == 1);
+    CHECK(moved.avatar->compass[0].creatures[0].id == moved.entities.begin()->first);
+}
+
+TEST_CASE("world capture lists an NPC on the native compass count", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& guy = spawn_npc(setup.start + tripoint(0, 3, 0), "test_talker");
+    map_perception::acquire();
+    REQUIRE(get_avatar().sees(guy));
+    g->mon_info_update();
+    REQUIRE(get_avatar().get_mon_visible().visible_count_by_dir[4] == 1);
+    const auto state = ec::world::capture_world();
+    REQUIRE(state.avatar->compass.size() == 1);
+    CHECK(state.avatar->compass[0].toward.id == "south");
+    REQUIRE(state.avatar->compass[0].creatures.size() == 1);
+    const auto& listed = state.avatar->compass[0].creatures[0];
+    CHECK(listed.appearance.kind == "npc");
+    CHECK(listed.distance == 3);
+    CHECK(listed.attitude == Creature::attitude_raw_string(guy.attitude_to(get_avatar())));
+    CHECK(listed.name == guy.get_name());
+}
+
+TEST_CASE(
+    "world capture leaves the compass out when the avatar sees nobody", "[engine_client_world]") {
+    const auto setup = make_scene();
+    spawn_test_monster("mon_zombie", setup.start + tripoint(5, 0, 0));
     map_perception::acquire();
     const auto state = ec::world::capture_world();
-    const auto& dyed = find_cell(state, at(setup.start + tripoint_east))->items.back();
-    REQUIRE(dyed.tint_vars);
-    CHECK(dyed.tint_vars->fg.color == "#ff3030");
-    CHECK(dyed.tint_vars->bg.color == "#ff3030");
-    CHECK(dyed.tint_vars->fg.blend_mode == "multiply");
-    CHECK(dyed.tint_vars->bg.blend_mode.empty());
-    CHECK(dyed.tint_vars->fg.brightness == 0.5f);
-    CHECK_FALSE(find_cell(state, at(setup.start + tripoint_west))->items.back().tint_vars);
+    REQUIRE(state.avatar);
+    CHECK(state.entities.empty());
+    CHECK(state.avatar->compass.empty());
 }

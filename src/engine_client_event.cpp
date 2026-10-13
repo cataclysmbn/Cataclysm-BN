@@ -145,6 +145,7 @@ auto diff_sections( const state_value &from, const world_state &world,
             keep( "stats", before.stats == after.stats, after.stats.empty() );
             keep( "inventory", before.inventory == after.inventory, after.inventory.empty() );
             keep( "sidebar", before.sidebar == after.sidebar, false );
+            keep( "compass", before.compass == after.compass, after.compass.empty() );
             keep( "ground", before.ground == after.ground, after.ground.empty() );
         }
     }

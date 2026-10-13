@@ -1,10 +1,12 @@
 #include "engine_client_world.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <functional>
 #include <ranges>
 #include <set>
+#include <utility>
 
 #include "avatar.h"
 #include "calendar.h"
@@ -14,6 +16,7 @@
 #include "game.h"
 #include "game_session.h"
 #include "inventory_ui.h"
+#include "line.h"
 #include "bionics.h"
 #include "effect.h"
 #include "engine_client_event.h"
@@ -680,25 +683,30 @@ auto disclosed_creatures( const avatar &you ) -> std::vector<const Creature *>
     } ) | std::ranges::to<std::vector<const Creature *>>();
 }
 
+/// The look of a monster or NPC the avatar sees.
+auto disclosed_look( const Creature &critter ) -> look
+{
+    const auto *monster = critter.as_monster();
+    const auto type = monster != nullptr ? monster->type->id.str() : critter.as_npc()->myclass.str();
+    auto appearance = creature_look( critter, monster != nullptr ? "monster" : "npc", type );
+    if( monster != nullptr ) {
+        appearance.tint_keys = tint_keys_of( std::vector<std::string> {}, type );
+        appearance.looks_like = looks_like_chain<mtype_id>( monster->type->looks_like );
+    }
+    return appearance;
+}
+
 auto capture_entities( const map &here, const avatar &you, const std::string &dimension )
 -> std::map<std::string, entity>
 {
     auto entities = std::map<std::string, entity> {};
     ids.forget_expired();
     for( const auto *critter : disclosed_creatures( you ) ) {
-        const auto *monster = critter->as_monster();
-        const auto *person = critter->as_npc();
-        const auto type = monster != nullptr ? monster->type->id.str() : person->myclass.str();
         auto id = ids.id_for( *critter );
-        auto appearance = creature_look( *critter, monster != nullptr ? "monster" : "npc", type );
-        if( monster != nullptr ) {
-            appearance.tint_keys = tint_keys_of( std::vector<std::string> {}, type );
-            appearance.looks_like = looks_like_chain<mtype_id>( monster->type->looks_like );
-        }
         entities.emplace( id, entity{
             .id = id,
             .at = position_of( here, critter->bub_pos(), dimension ),
-            .appearance = std::move( appearance ),
+            .appearance = disclosed_look( *critter ),
             .name = critter->get_name(),
             .overlays = overlays_of( *critter ),
             .traits = traits_of( *critter ),
@@ -775,6 +783,35 @@ auto identified( std::vector<item_stack> rows ) -> std::vector<item_stack>
     return rows;
 }
 
+/// The creatures the native compass panel lists: what the avatar sees alive, within the loaded map and not on
+/// its square, by the heading of the horizontal offset (the native bucket the panel's own count uses).
+auto capture_compass( const avatar &you ) -> std::vector<compass_direction>
+{
+    using namespace std::views;
+    namespace ranges = std::ranges;
+    const auto shown = disclosed_creatures( you ) | filter( [&]( const Creature * critter ) {
+        return !critter->is_dead_state() && critter->bub_pos() != you.bub_pos() &&
+               rl_dist( you.bub_pos(), critter->bub_pos() ) <= g_mapsize_x;
+    } ) | ranges::to<std::vector<const Creature *>>();
+    constexpr auto clockwise = std::array{ direction::NORTH, direction::NORTHEAST, direction::EAST,
+                                           direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST,
+                                           direction::NORTHWEST, direction::CENTER };
+    return clockwise | transform( [&]( const direction dir ) {
+        auto result = compass_direction{ .toward = heading_of( dir ) };
+        for( const auto *critter : shown ) {
+            const auto offset = direction_from( you.bub_pos().xy(), critter->bub_pos().xy() );
+            if( std::to_underlying( offset ) != std::to_underlying( dir ) ) { continue; }
+            result.creatures.push_back( {
+                .id = ids.id_for( *critter ), .appearance = disclosed_look( *critter ), .name = critter->get_name(),
+                .attitude = Creature::attitude_raw_string( critter->attitude_to( you ) ),
+                .distance = rl_dist( you.bub_pos(), critter->bub_pos() ) } );
+        }
+        ranges::stable_sort( result.creatures, {}, &compass_creature::distance );
+        return result;
+    } ) | filter( []( const compass_direction & group ) { return !group.creatures.empty(); } ) |
+    ranges::to<std::vector>();
+}
+
 auto capture_avatar( map &here, const avatar &you,
                      const std::string &dimension ) -> avatar_value
 {
@@ -791,28 +828,12 @@ auto capture_avatar( map &here, const avatar &you,
             { "moves", _( "Moves" ), std::to_string( you.get_moves() ) },
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },
-        .sidebar = sidebar_snapshot( you ) };
-    you.visit_items( [&]( const item * thing ) {
-        if( you.is_wielding( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "wielded" ) ); }
-        else if( you.is_worn( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "worn" ) ); }
-        return VisitResponse::NEXT;
-    } );
-    for( const auto *stack : you.inv_const_slice() ) {
-        if( stack != nullptr ) { result.inventory.push_back( stack_entry( *stack->front(), stack->size(), "carried" ) ); }
-    }
-    if( here.accessible_items( you.bub_pos() ) ) {
-        // The native pickup stacks equal items the same way; each stack is one choice there.
-        for( const auto *thing : here.i_at( you.bub_pos() ) ) {
-            const auto same = std::ranges::find_if( result.ground, [&]( const auto & entry ) {
-                return entry.name == remove_color_tags( thing->display_name() ) &&
-                       entry.appearance.id == thing->typeId().str();
-            } );
-            if( same != result.ground.end() ) {
-                ++*same->count;
-                same->label = stack_label( *thing, *same->count, std::nullopt );
-            } else { result.ground.push_back( stack_entry( *thing, 1 ) ); }
-        }
-    }
+        .sidebar = sidebar_snapshot( you ), .compass = capture_compass( you ) };
+    const auto stacks = item_stacks( here, you );
+    result.inventory = stacks.inventory | std::views::transform( &item_stack::row ) |
+                       std::ranges::to<std::vector>();
+    result.ground = stacks.ground | std::views::transform( &item_stack::row ) |
+                    std::ranges::to<std::vector>();
     return result;
 }
 
@@ -864,6 +885,17 @@ auto position_at( const tripoint_bub_ms &p ) -> position
 auto color_name( const nc_color &color ) -> std::string
 {
     return color_of( color );
+}
+
+auto heading_of( const direction dir ) -> heading
+{
+    static constexpr auto columns = std::array{ "northwest", "north", "northeast", "west", "center", "east",
+                          "southwest", "south", "southeast" };
+    const auto offset = displace( dir );
+    const auto column = std::string( columns[( offset.y + 1 ) * 3 + offset.x + 1] );
+    const auto level = std::string( offset.z > 0 ? "above" : offset.z < 0 ? "below" : "" );
+    const auto vertical = offset.x == 0 && offset.y == 0;
+    return { .id = level.empty() ? column : vertical ? level : column + "_" + level, .name = direction_name( dir ) };
 }
 
 auto entity_id( const Creature &critter ) -> std::string

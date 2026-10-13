@@ -2,6 +2,7 @@
 
 #include "coordinates.h"
 #include "engine_client_state.h"
+#include "line.h"
 #include "color.h"
 #include "type_id.h"
 
@@ -61,6 +62,9 @@ auto set_tint_ids( std::set<std::string> ids ) -> void;
 auto position_at( const tripoint_bub_ms &p ) -> position;
 /// The native color name of `color`.
 auto color_name( const nc_color &color ) -> std::string;
+/// A direction as the native game names it. The id is its horizontal part (`north`, `southwest`, ..., `center` for none) followed by
+/// `_above` or `_below`; straight up and down are `above` and `below`. The name is localized for the connection.
+auto heading_of( direction dir ) -> heading;
 /// The opaque ID of a creature the avatar sees; minted on the first disclosure, like the entities of the snapshot.
 /// Empty for a creature the game does not track (a fake turret NPC, a monster not yet placed).
 auto entity_id( const Creature &critter ) -> std::string;

@@ -564,3 +564,97 @@ TEST_CASE("a published event carries its own wire form", "[engine_client_event]"
     REQUIRE(message);
     CHECK(message->wire() == serialize_events({.epoch = "epoch:wire", .events = {*message}}));
 }
+
+TEST_CASE(
+    "a compass and a sidebar layout are published whole and kept while they do not change",
+    "[engine_client_event]") {
+    auto first = world_of({});
+    first.world.avatar = avatar_value{.id = "e:avatar", .at = pos(1), .name = "Ada"};
+    first.world.avatar->sidebar.layout =
+        {.id = "classic",
+         .side = "left",
+         .width = 44,
+         .panels =
+             {{.id = "Health", .height = 7},
+              {.id = "Compass", .enabled = false, .height = 8},
+              {.id = "Messages"}}};
+    first.world.avatar->compass = {
+        {.toward = {.id = "north", .name = "north"},
+         .creatures = {
+             {.id = "e:3",
+              .appearance = zombie(),
+              .name = "zombie",
+              .attitude = "hostile",
+              .distance = 4}}}};
+    auto stream = stream_of(first);
+
+    const auto snapshot_wire = serialize_snapshot(stream.current());
+    REQUIRE(snapshot_wire);
+    const auto header = nlohmann::json::parse(snapshot_wire->header)["avatar"];
+    const auto& layout = header["sidebar"]["layout"];
+    CHECK(layout["id"] == "classic");
+    CHECK(layout["side"] == "left");
+    CHECK(layout["width"] == 44);
+    CHECK(layout["panels"][0]
+          == nlohmann::json::parse(R"({"id":"Health","enabled":true,"height":7})"));
+    CHECK(layout["panels"][1]["enabled"] == false);
+    CHECK_FALSE(layout["panels"][2].contains("height"));
+    const auto& creature = header["compass"][0]["creatures"][0];
+    CHECK(header["compass"][0]["toward"]
+          == nlohmann::json::parse(R"({"id":"north","name":"north"})"));
+    CHECK(creature["id"] == "e:3");
+    CHECK(creature["look"]["id"] == "mon_zombie");
+    CHECK(creature["attitude"] == "hostile");
+    CHECK(creature["distance"] == 4);
+
+    auto walked = first;
+    walked.world.avatar->at = pos(2);
+    const auto step = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {publish(stream, walked)}}));
+    const auto& step_avatar = step["events"][0]["changes"]["avatar"];
+    CHECK_FALSE(step_avatar.contains("compass"));
+    CHECK_FALSE(step_avatar.contains("sidebar"));
+    CHECK(step_avatar["keep"] == nlohmann::json::parse(R"(["sidebar","compass"])"));
+
+    auto moved = walked;
+    moved.world.avatar->compass.front().creatures.front().distance = 3;
+    moved.world.avatar->sidebar.layout.side = "right";
+    const auto next = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {publish(stream, moved)}}));
+    const auto& next_avatar = next["events"][0]["changes"]["avatar"];
+    CHECK(next_avatar["compass"][0]["creatures"][0]["distance"] == 3);
+    CHECK(next_avatar["sidebar"]["layout"]["side"] == "right");
+    CHECK_FALSE(next_avatar.contains("keep"));
+
+    // A compass that empties is absent and no longer kept, so a client drops its old one.
+    auto empty = moved;
+    empty.world.avatar->compass.clear();
+    const auto cleared = nlohmann::json::parse(
+        serialize_events({.epoch = "epoch:a", .events = {publish(stream, empty)}}));
+    CHECK_FALSE(cleared["events"][0]["changes"]["avatar"].contains("compass"));
+    CHECK(cleared["events"][0]["changes"]["avatar"]["keep"]
+          == nlohmann::json::parse(R"(["sidebar"])"));
+}
+
+TEST_CASE("a heard sound is published with its direction and distance", "[engine_client_event]") {
+    auto stream = stream_of(world_of({}));
+    const auto heard = [&](presentation_value fact) {
+        const auto published = stream.publish_presentation({.fact = std::move(fact)});
+        REQUIRE(published);
+        return nlohmann::json::parse(
+            serialize_events({.epoch = "epoch:a", .events = {*published}}));
+    };
+    const auto named = heard(
+        {.type = "sound.heard",
+         .amount = 70,
+         .text = "a crash",
+         .from = heading{.id = "south_above", .name = "south and above"},
+         .distance = 6});
+    CHECK(named["events"][0]["data"]["direction"]
+          == nlohmann::json::parse(R"({"id":"south_above","name":"south and above"})"));
+    CHECK(named["events"][0]["data"]["distance"] == 6);
+    // A sound in view has a distance and names no direction.
+    const auto seen = heard({.type = "sound.heard", .amount = 50, .text = "Tick.", .distance = 3});
+    CHECK(seen["events"][0]["data"]["distance"] == 3);
+    CHECK_FALSE(seen["events"][0]["data"].contains("direction"));
+}

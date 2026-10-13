@@ -2815,7 +2815,7 @@ void sounds::process_sound_markers( Character *who )
             // Place footstep markers.
             if( element.sound.origin == who->bub_pos() || who->sees( element.sound.origin ) ) {
                 // If we are or can see the source, don't draw a marker.
-                engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .logged = logged } );
+                engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .origin = element.sound.origin, .logged = logged } );
                 continue;
             }
 
@@ -2847,7 +2847,7 @@ void sounds::process_sound_markers( Character *who )
                 marker = random_entry( unseen_points );
                 sound_markers.emplace( *marker, element.sound );
             }
-            engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .marker = marker, .logged = logged } );
+            engine_client::presentation::record_sound( { .text = description, .volume = db_vol, .origin = element.sound.origin, .marker = marker, .logged = logged } );
         }
     }
     // Volume gets reset to zero later in the turn order after the player has acted.

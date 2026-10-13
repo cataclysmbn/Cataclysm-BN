@@ -813,6 +813,13 @@
         "sidebar": {
           "$ref": "#/$defs/sidebar"
         },
+        "compass": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/compass_direction"
+          },
+          "description": "The monsters and NPCs the avatar sees alive within the loaded map and not on its own square, by the direction of their horizontal offset from it (center for the avatar's own column): what the native compass panel lists, clockwise from north and center last. Directions with none are absent. A client decides for itself which of them lie outside its own view."
+        },
         "look": {
           "$ref": "#/$defs/look"
         },
@@ -902,6 +909,13 @@
         "sidebar": {
           "$ref": "#/$defs/sidebar"
         },
+        "compass": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/compass_direction"
+          },
+          "description": "The monsters and NPCs the avatar sees alive within the loaded map and not on its own square, by the direction of their horizontal offset from it (center for the avatar's own column): what the native compass panel lists, clockwise from north and center last. Directions with none are absent. A client decides for itself which of them lie outside its own view."
+        },
         "look": {
           "$ref": "#/$defs/look"
         },
@@ -932,6 +946,7 @@
               "stats",
               "inventory",
               "sidebar",
+              "compass",
               "ground"
             ]
           },
@@ -970,6 +985,9 @@
     "sidebar": {
       "type": "object",
       "properties": {
+        "layout": {
+          "$ref": "#/$defs/sidebar_layout"
+        },
         "limbs": {
           "type": "array",
           "items": {
@@ -3238,6 +3256,16 @@
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991
+        },
+        "direction": {
+          "$ref": "#/$defs/heading",
+          "description": "Where the native message says the sound comes from. Absent when the sound is at the avatar's square or the avatar sees its source, where the message names no direction."
+        },
+        "distance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Squares between the avatar and the source, as the native sound code counts them. Not required while 0.2 still validates every 0.1 event; the engine always sends it."
         }
       },
       "required": [
@@ -6035,6 +6063,136 @@
         }
       ],
       "description": "A generic component, by `kind`. Clients render every kind without knowing the screen."
+    },
+    "heading": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The horizontal part (north, northeast, east, southeast, south, southwest, west, northwest, center for none), then _above or _below; straight up and down are above and below."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name the native game gives the direction, in the connection's language."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "description": "A direction as the native game names it."
+    },
+    "sidebar_layout": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The layout in use (classic, labels, ...), as the native panel options name it."
+        },
+        "side": {
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "The side of the screen the native sidebar sits on (the SIDEBAR_POSITION option)."
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Columns the sidebar takes."
+        },
+        "panels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The panel manager's name for the panel, untranslated."
+              },
+              "enabled": {
+                "type": "boolean",
+                "description": "The player has not switched the panel off in the native panel options."
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Rows. Absent for the panel that takes the rest of the column."
+              }
+            },
+            "required": [
+              "id",
+              "enabled"
+            ],
+            "additionalProperties": false
+          },
+          "description": "In the panel manager's order, top to bottom. Panels the native panel options do not list in this state (the vehicle panel outside a vehicle) are left out."
+        }
+      },
+      "required": [
+        "id",
+        "side",
+        "width",
+        "panels"
+      ],
+      "additionalProperties": false,
+      "description": "The native sidebar options. A change the player makes in the native panel options is published with the next avatar. Not required while 0.2 still validates every 0.1 sidebar; the engine always sends it."
+    },
+    "compass_direction": {
+      "type": "object",
+      "properties": {
+        "toward": {
+          "$ref": "#/$defs/heading"
+        },
+        "creatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id",
+                "description": "The entity id of the creature."
+              },
+              "look": {
+                "$ref": "#/$defs/look"
+              },
+              "name": {
+                "type": "string"
+              },
+              "attitude": {
+                "enum": [
+                  "hostile",
+                  "friendly",
+                  "neutral",
+                  "any"
+                ]
+              },
+              "distance": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Squares from the avatar, as the native sound and safe mode code count them."
+              }
+            },
+            "required": [
+              "id",
+              "look",
+              "name",
+              "attitude",
+              "distance"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Nearest first."
+        }
+      },
+      "required": [
+        "toward",
+        "creatures"
+      ],
+      "additionalProperties": false,
+      "description": "The creatures the native compass panel lists toward one direction."
     }
   }
 }

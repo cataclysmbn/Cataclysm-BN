@@ -56,6 +56,11 @@ struct presentation_value {
     std::string text = {};
     /// `sound.heard`: the native message log also has a line for this sound.
     bool logged = false;
+    /// `sound.heard`: where the native message says the sound comes from. Absent when the sound is at the avatar's
+    /// square or the avatar sees its source, where the message names no direction.
+    std::optional<heading> from = std::nullopt;
+    /// `sound.heard`: squares between the avatar and the source, counted as the native sound code does.
+    std::optional<std::uint64_t> distance = std::nullopt;
     /// `field.changed`: the field type, with `amount` its intensity afterwards (0 when gone).
     std::string field = {};
     /// `item.activated`: whole turns left on a fuse.
@@ -160,6 +165,8 @@ struct sound_options {
     /// What the avatar makes of the sound, as the native message names it.
     const std::string &text;
     int volume = 0;
+    /// The square the sound was made on.
+    tripoint_bub_ms origin;
     /// The square the native game marks the sound on: never the source, and none when the avatar sees it.
     std::optional<tripoint_bub_ms> marker = std::nullopt;
     /// The native game wrote a message log line for the sound.
