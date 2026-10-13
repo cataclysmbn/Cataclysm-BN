@@ -545,6 +545,15 @@ Deno.test({
     const found = firstDivergence(a.log, b.log)
     for (const run of [a, b]) await Deno.remove(run.profile, { recursive: true })
     console.log(`determinism of unrecorded waits: ${found ?? "no difference in the hashes"}`)
+    // Each part on its own, so a part that differs from the first step does not hide the others.
+    for (const part of Object.keys(a.log[0]?.parts ?? {})) {
+      const step = a.log.findIndex((record, i) => record.parts[part] !== b.log[i]?.parts[part])
+      console.log(
+        `  ${part}: ${
+          step < 0 ? "equal" : `first differs at step ${a.log[step].step}, turn ${a.log[step].turn}`
+        }`,
+      )
+    }
     assertEquals(found, undefined)
   },
 })
