@@ -93,6 +93,8 @@ struct look {
 struct field_entry {
     look appearance;
     int intensity = 0;
+    /// The field's type hides the items under it from the native view.
+    bool hides_items = false;
     auto operator<=>( const field_entry & ) const = default; // *NOPAD*
 };
 enum class knowledge { remembered, visible, sensed };
@@ -116,6 +118,9 @@ struct cell {
     std::vector<look> items = {};
     std::optional<look> vehicle = std::nullopt;
     std::optional<int> light = std::nullopt;
+    /// A square in sight on the avatar's level that the native view looks through: how many levels down
+    /// the square is that it draws here. Bare open air has nothing else.
+    std::optional<int> below = std::nullopt;
     std::optional<memory_layers> memory = std::nullopt;
     auto operator<=>( const cell & ) const = default; // *NOPAD*
 };

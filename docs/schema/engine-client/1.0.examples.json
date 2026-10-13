@@ -737,6 +737,17 @@
               "subtile": "center",
               "rotation": 0
             },
+            "fields": [
+              {
+                "look": {
+                  "id": "fd_smoke",
+                  "glyph": "8",
+                  "color": "dark_gray"
+                },
+                "intensity": 1,
+                "hides_items": true
+              }
+            ],
             "items": [
               {
                 "kind": "item",
@@ -805,6 +816,16 @@
                 "rotation": 1
               }
             }
+          },
+          {
+            "at": {
+              "dim": "",
+              "x": 4,
+              "y": 4,
+              "z": 0
+            },
+            "known": "visible",
+            "below": 1
           }
         ]
       }

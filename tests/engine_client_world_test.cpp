@@ -971,6 +971,69 @@ TEST_CASE("world capture marks a square holding a corpse that can rise", "[engin
 }
 
 TEST_CASE(
+    "world capture tells how far down open air in sight on the avatar's level is drawn from",
+    "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    // A platform one level up over the room, ringed by open air.
+    for (const auto y : std::views::iota(-6, 7)) {
+        for (const auto x : std::views::iota(-6, 7)) {
+            const auto platform = std::abs(x) <= 1 && std::abs(y) <= 1;
+            here.ter_set(setup.start + tripoint(x, y, 1),
+                         ter_id(platform ? "t_floor" : "t_open_air"));
+        }
+    }
+    const auto air = setup.start + tripoint(-3, 0, 1);
+    step_to(setup.start + tripoint_above);
+    REQUIRE(map_perception::visible_at(here, air));
+    REQUIRE(map_perception::visible_at(here, air + tripoint_below));
+    const auto above = ec::world::capture_world();
+    const auto* through = find_cell(above, at(air));
+    REQUIRE(through != nullptr);
+    CHECK(through->known == ec::knowledge::visible);
+    CHECK(through->below == 1);
+    CHECK_FALSE(through->terrain);
+    // The floor seen through it is published as itself.
+    const auto* floor = find_cell(above, at(air + tripoint_below));
+    REQUIRE(floor != nullptr);
+    REQUIRE(floor->terrain);
+    CHECK(floor->terrain->id == "t_floor");
+    CHECK_FALSE(floor->below);
+    REQUIRE(find_cell(above, at(setup.start + tripoint_above)) != nullptr);
+    CHECK_FALSE(find_cell(above, at(setup.start + tripoint_above))->below);
+    // A glass roof has no floor either: the remembered floor under it is drawn through it, and it
+    // keeps its terrain.
+    const auto roof = setup.start + tripoint(3, 0, 1);
+    here.ter_set(roof, ter_id("t_glass_roof"));
+    get_avatar()
+        .memorize_terrain_tile(map_local_to_abs(here, roof + tripoint_below), "t_floor", 0, 0);
+    map_perception::acquire();
+    const auto glazed = ec::world::capture_world();
+    const auto* glass = find_cell(glazed, at(roof));
+    REQUIRE(glass != nullptr);
+    CHECK(glass->below == 1);
+    REQUIRE(glass->terrain);
+    CHECK(glass->terrain->id == "t_glass_roof");
+    here.ter_set(roof, ter_id("t_open_air"));
+    // Smoke over the open air draws over the floor seen through it.
+    here.add_field(air, field_type_id("fd_smoke"), 1);
+    const auto smoky = ec::world::capture_world();
+    const auto* hazed = find_cell(smoky, at(air));
+    REQUIRE(hazed != nullptr);
+    CHECK(hazed->below == 1);
+    CHECK_FALSE(hazed->fields.empty());
+    here.remove_field(air, field_type_id("fd_smoke"));
+    // Off the avatar's level open air is unknown again.
+    step_to(setup.start);
+    CHECK(find_cell(ec::world::capture_world(), at(air)) == nullptr);
+    for (const auto y : std::views::iota(-6, 7)) {
+        for (const auto x : std::views::iota(-6, 7)) {
+            here.ter_set(setup.start + tripoint(x, y, 1), ter_id("t_open_air"));
+        }
+    }
+}
+
+TEST_CASE(
     "world capture never gives a remembered square a live vehicle part", "[engine_client_world]") {
     const auto setup = make_scene();
     auto& here = get_map();
@@ -1139,6 +1202,20 @@ TEST_CASE(
     REQUIRE(field.tint);
     CHECK(field.tint->bg == field.tint->fg);
     CHECK_FALSE(field.tint->fg.empty());
+}
+
+TEST_CASE("world capture tells which fields hide the items under them", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto web_at = setup.start + tripoint_west;
+    const auto acid_at = setup.start + tripoint_east;
+    here.add_field(web_at, field_type_id("fd_web"), 1);
+    here.add_field(acid_at, field_type_id("fd_acid_water"), 1);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    // The native view draws no items under a web, and those under acid water as usual.
+    CHECK(find_cell(state, at(web_at))->fields.back().hides_items);
+    CHECK_FALSE(find_cell(state, at(acid_at))->fields.back().hides_items);
 }
 
 namespace {
