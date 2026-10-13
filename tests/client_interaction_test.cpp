@@ -5202,6 +5202,34 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "an invoke names its affordance and its arguments and needs no native widget",
+    "[client][interaction][mcp]") {
+    const auto guard = interaction_test_guard{};
+    auto ctxt = input_context{"INVOKE_TEST"};
+    const auto invoke = [&](game_client::interaction_event event) {
+        event.operation = game_client::interaction_operation::invoke;
+        return game_client::validate_interaction_event(ctxt, event);
+    };
+    // No interaction is bound to the context: the screen runs the affordance itself.
+    CHECK(invoke({.target_id = "aim:move", .arguments = game_client::interaction_arguments{}}));
+    CHECK(invoke(
+        {.target_id = "aim:move",
+         .arguments = game_client::interaction_arguments{.pane = "pane:right"}}));
+    CHECK_FALSE(invoke({.arguments = game_client::interaction_arguments{}}));
+    CHECK_FALSE(invoke({.target_id = "aim:move"}));
+    CHECK_FALSE(invoke(
+        {.target_id = "aim:move", .value = "x", .arguments = game_client::interaction_arguments{}}));
+    CHECK_FALSE(invoke(
+        {.target_id = "aim:move", .count = 1, .arguments = game_client::interaction_arguments{}}));
+    CHECK_FALSE(game_client::validate_interaction_event(
+        ctxt,
+        {.operation = game_client::interaction_operation::choose,
+         .schema_id = "schema",
+         .target_id = "entry:1",
+         .arguments = game_client::interaction_arguments{}}));
+}
+
+TEST_CASE(
     "a choice editor accepts only values of its own type and range",
     "[client][interaction][settings][mcp]") {
     const auto guard = interaction_test_guard{};

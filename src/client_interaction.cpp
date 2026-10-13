@@ -425,6 +425,16 @@ auto validate_editor_value( const interaction_editor &editor, const std::string 
 auto validate( const acquired_interaction &acquired, const interaction_event &event )
 -> std::expected<void, std::string>
 {
+    if( event.operation == interaction_operation::invoke ) {
+        // The screen that offered the affordance runs it from its own loop; the lifecycle has matched it
+        // to the affordance's shape, so no native widget has to describe it.
+        if( event.target_id.empty() || !event.value.empty() || event.submit || event.count ||
+            event.position || !event.arguments ) {
+            return std::unexpected( "invalid: invoke requires only an affordance_id and its arguments" );
+        }
+        return {};
+    }
+    if( event.arguments ) { return std::unexpected( "invalid: only invoke carries arguments" ); }
     const auto &snapshot = acquired.snapshot();
     if( !snapshot.structured ) {
         return std::unexpected( "unsupported: active view only exposes generic actions" );

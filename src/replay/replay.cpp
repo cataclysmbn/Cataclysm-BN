@@ -238,6 +238,73 @@ auto strict_int_array(const JsonObject& object, const std::string& name) -> std:
     return object.get_int_array(name);
 }
 
+auto read_position(JsonObject position) -> game_client::interaction_position {
+    const auto result = game_client::interaction_position{
+        .x = strict_int(position, "x"),
+        .y = strict_int(position, "y"),
+        .z = strict_int(position, "z"),
+    };
+    position.finish();
+    return result;
+}
+
+auto read_invoke_arguments(JsonObject object) -> game_client::interaction_arguments {
+    auto result = game_client::interaction_arguments{};
+    if (object.has_member("row")) { result.row = object.get_string("row"); }
+    if (object.has_member("rows")) {
+        auto rows = std::vector<game_client::interaction_row_count>{};
+        for (JsonObject entry : object.get_array("rows")) {
+            auto row = game_client::interaction_row_count{.id = entry.get_string("id")};
+            if (entry.has_member("count")) {
+                const auto count = strict_int64(entry, "count");
+                if (count < 0) { entry.throw_error("count must not be negative"); }
+                row.count = static_cast<std::uint64_t>(count);
+            }
+            entry.finish();
+            rows.push_back(std::move(row));
+        }
+        result.rows = std::move(rows);
+    }
+    if (object.has_member("count")) { result.count = strict_int64(object, "count"); }
+    if (object.has_member("text")) { result.text = object.get_string("text"); }
+    if (object.has_member("position")) {
+        result.position = read_position(object.get_object("position"));
+    }
+    if (object.has_member("pane")) { result.pane = object.get_string("pane"); }
+    object.finish();
+    return result;
+}
+
+auto write_invoke_arguments(JsonOut& json, const game_client::interaction_arguments& arguments)
+    -> void {
+    json.member("arguments");
+    json.start_object();
+    if (arguments.row) { json.member("row", *arguments.row); }
+    if (arguments.rows) {
+        json.member("rows");
+        json.start_array();
+        for (const auto& row : *arguments.rows) {
+            json.start_object();
+            json.member("id", row.id);
+            if (row.count) { json.member("count", *row.count); }
+            json.end_object();
+        }
+        json.end_array();
+    }
+    if (arguments.count) { json.member("count", *arguments.count); }
+    if (arguments.text) { json.member("text", *arguments.text); }
+    if (arguments.position) {
+        json.member("position");
+        json.start_object();
+        json.member("x", arguments.position->x);
+        json.member("y", arguments.position->y);
+        json.member("z", arguments.position->z);
+        json.end_object();
+    }
+    if (arguments.pane) { json.member("pane", *arguments.pane); }
+    json.end_object();
+}
+
 auto read_event(const JsonObject& object) -> replay_event {
     auto result = replay_event{};
     auto& event = result.event;
@@ -273,13 +340,9 @@ auto read_event(const JsonObject& object) -> replay_event {
             if (count < 0) { semantic.throw_error("count must not be negative"); }
             payload.count = static_cast<std::uint64_t>(count);
         } else if (*operation == game_client::interaction_operation::set_target) {
-            auto position = semantic.get_object("position");
-            payload.position = game_client::interaction_position{
-                .x = strict_int(position, "x"),
-                .y = strict_int(position, "y"),
-                .z = strict_int(position, "z"),
-            };
-            position.finish();
+            payload.position = read_position(semantic.get_object("position"));
+        } else if (*operation == game_client::interaction_operation::invoke) {
+            payload.arguments = read_invoke_arguments(semantic.get_object("arguments"));
         }
         semantic.finish();
         const auto invalid_shape =
@@ -291,7 +354,9 @@ auto read_event(const JsonObject& object) -> replay_event {
             || (*operation == game_client::interaction_operation::set_target
                 && !payload.value.empty())
             || (*operation == game_client::interaction_operation::cancel
-                && (!payload.target_id.empty() || !payload.value.empty()));
+                && (!payload.target_id.empty() || !payload.value.empty()))
+            || (*operation == game_client::interaction_operation::invoke
+                && (payload.target_id.empty() || !payload.value.empty()));
         if (invalid_shape) { throw std::runtime_error("Invalid semantic interaction payload"); }
         event.interaction = std::move(payload);
     }
@@ -527,6 +592,9 @@ auto record_input_event(const input_event& event, const input_boundary_metadata&
             json.member("y", event.interaction->position->y);
             json.member("z", event.interaction->position->z);
             json.end_object();
+        }
+        if (event.interaction->arguments) {
+            write_invoke_arguments(json, *event.interaction->arguments);
         }
         json.end_object();
     }

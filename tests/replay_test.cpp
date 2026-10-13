@@ -21,6 +21,7 @@
 #include <iterator>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 
@@ -194,6 +195,72 @@ TEST_CASE(
         CHECK_THROWS(replay::start());
         CHECK_FALSE(replay::is_enabled());
     }
+}
+
+TEST_CASE("replay plays back an invoke with every argument", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto boundary =
+        replay::input_boundary_metadata{.context = "ADVANCED_INVENTORY", .actions = {"UP"}};
+    auto event = input_event{};
+    event.type = input_event_t::interaction;
+    event.interaction = game_client::interaction_event{
+        .operation = game_client::interaction_operation::invoke,
+        .schema_id = "ADVANCED_INVENTORY",
+        .target_id = "aim:move",
+        .arguments = game_client::interaction_arguments{
+            .row = "item:1",
+            .rows = std::vector<
+                game_client::interaction_row_count>{{.id = "item:1", .count = 2}, {.id = "item:2"}},
+            .count = -3,
+            .text = "rock",
+            .position = game_client::interaction_position{.x = 1, .y = -2, .z = 0},
+            .pane = "pane:right"}};
+    replay::configure_recording(fixture.path.string(), {.rng_seed = 7});
+    replay::start();
+    replay::record_input_event(event, boundary);
+    replay::finish();
+    replay::configure_playback(fixture.path.string());
+    replay::start();
+    const auto played = replay::next_input_event(boundary);
+    REQUIRE(played);
+    CHECK(played->interaction == event.interaction);
+    replay::finish();
+}
+
+TEST_CASE("replay rejects malformed invokes", "[replay][input][interaction]") {
+    const auto fixture = replay_fixture{};
+    const auto end = std::string{
+        R"({"kind":"end","version":1,"events":1})"
+        "\n"};
+    const auto prefix = std::string{
+        R"({"kind":"input","version":1,"type":"interaction","sequence":[],"modifiers":[],"mouse_pos":[0,0],"text":"","edit":"","edit_refresh":false,"interaction":{"operation":"invoke","schema_id":"GAME",)"};
+    const auto suffix = std::string{
+        R"(},"boundary":{"context":"GAME","actions":["ANY_INPUT"],"timeout_ms":-1}})"
+        "\n"};
+    const auto malformed = std::vector<std::string>{
+        // no arguments
+        R"("target_id":"aim:move","value":"")",
+        // no affordance
+        R"("target_id":"","value":"","arguments":{})",
+        // a member no argument shape has
+        R"("target_id":"aim:move","value":"","arguments":{"color":"red"})",
+        // a row count below zero
+        R"("target_id":"aim:move","value":"","arguments":{"rows":[{"id":"item:1","count":-1}]})",
+        // a fractional position
+        R"("target_id":"aim:move","value":"","arguments":{"position":{"x":1,"y":1.5,"z":0}})",
+        // the payload members of other operations
+        R"("target_id":"aim:move","value":"text","arguments":{})",
+    };
+    for (const auto& payload : malformed) {
+        fixture.write(header + prefix + payload + suffix + end);
+        replay::configure_playback(fixture.path.string());
+        CHECK_THROWS(replay::start());
+        CHECK_FALSE(replay::is_enabled());
+    }
+    fixture.write(
+        header + prefix + R"("target_id":"aim:move","value":"","arguments":{})" + suffix + end);
+    replay::configure_playback(fixture.path.string());
+    CHECK_NOTHROW(replay::start());
 }
 
 TEST_CASE("replay validates empty and mismatched input contexts", "[replay][input]") {

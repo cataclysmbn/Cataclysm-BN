@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace game_client
 {
@@ -13,6 +14,8 @@ enum class interaction_operation : int {
     set_count,
     set_target,
     cancel,
+    /// An affordance a screen runs itself, named by `target_id` with its `arguments`.
+    invoke,
 };
 
 struct interaction_position {
@@ -21,6 +24,27 @@ struct interaction_position {
     int z = 0;
 
     auto operator<=>( const interaction_position & ) const = default; // *NOPAD*
+};
+
+/// A row of an invoke's `rows` argument and how much of it.
+struct interaction_row_count {
+    std::string id;
+    std::optional<std::uint64_t> count;
+
+    auto operator<=>( const interaction_row_count & ) const = default; // *NOPAD*
+};
+
+/// What an `invoke` carries beyond its affordance: the members the affordance's argument shape names.
+/// `position` is bubble-relative, like every native position.
+struct interaction_arguments {
+    std::optional<std::string> row;
+    std::optional<std::vector<interaction_row_count>> rows;
+    std::optional<std::int64_t> count;
+    std::optional<std::string> text;
+    std::optional<interaction_position> position;
+    std::optional<std::string> pane;
+
+    auto operator<=>( const interaction_arguments & ) const = default; // *NOPAD*
 };
 
 /// Transport-safe semantic input.  IDs are opaque outside the current interaction snapshot.
@@ -45,6 +69,8 @@ struct interaction_event {
     std::optional<bool> submit;
     std::optional<std::uint64_t> count;
     std::optional<interaction_position> position;
+    /// Present exactly on `invoke`.
+    std::optional<interaction_arguments> arguments;
 
     auto operator<=>( const interaction_event & ) const = default; // *NOPAD*
 };
@@ -62,6 +88,8 @@ inline auto interaction_operation_name( const interaction_operation operation ) 
             return "set_target";
         case interaction_operation::cancel:
             return "cancel";
+        case interaction_operation::invoke:
+            return "invoke";
     }
     return "cancel";
 }
@@ -83,6 +111,9 @@ inline auto parse_interaction_operation( const std::string &operation )
     }
     if( operation == "cancel" ) {
         return interaction_operation::cancel;
+    }
+    if( operation == "invoke" ) {
+        return interaction_operation::invoke;
     }
     return std::nullopt;
 }

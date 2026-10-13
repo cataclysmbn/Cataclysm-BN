@@ -85,6 +85,9 @@ auto validate_shape( const command_request &request ) -> bool
         case game_client::interaction_operation::cancel:
             return command.target_id.empty() && command.value.empty() && !command.submit &&
                    !command.count && !command.position && !semantic->target;
+        // A client invokes an affordance with `invoke_operation`; the lifecycle makes the event.
+        case game_client::interaction_operation::invoke:
+            return false;
     }
     return false;
 }
