@@ -6635,6 +6635,7 @@
                   "id": "list:choices",
                   "kind": "list",
                   "affordances": [
+                    "FILTER",
                     "bn:choose:list:choices"
                   ],
                   "columns": [],
@@ -6785,7 +6786,8 @@
                   ],
                   "total": 13,
                   "selection": "single",
-                  "activate": "bn:choose:list:choices"
+                  "activate": "bn:choose:list:choices",
+                  "filterable": true
                 }
               ]
             },
@@ -6956,6 +6958,7 @@
               "id": "list:choices",
               "kind": "list",
               "affordances": [
+                "FILTER",
                 "bn:choose:list:choices"
               ],
               "columns": [],
@@ -7106,7 +7109,8 @@
               ],
               "total": 13,
               "selection": "single",
-              "activate": "bn:choose:list:choices"
+              "activate": "bn:choose:list:choices",
+              "filterable": true
             }
           ]
         },

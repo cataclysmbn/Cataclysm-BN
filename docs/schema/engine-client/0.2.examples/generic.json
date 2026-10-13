@@ -1,0 +1,1878 @@
+{
+  "valid": [
+    {
+      "name": "query popup screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:8",
+        "role": "dialog",
+        "root": {
+          "id": "split:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "text:message",
+              "kind": "text",
+              "markup": "Save and quit? (Case Sensitive)"
+            },
+            {
+              "id": "list:choices",
+              "kind": "list",
+              "affordances": [
+                "bn:choose:list:choices"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "option:YES",
+                  "label": "Yes",
+                  "description": "YES",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "option:NO",
+                  "label": "No",
+                  "description": "NO",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 2,
+              "selection": "single",
+              "activate": "bn:choose:list:choices"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:choices",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "LEFT",
+            "label": "Pan left",
+            "keys": [
+              "h",
+              "LEFT",
+              "4",
+              "NUMPAD_4"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "RIGHT",
+            "label": "Pan right",
+            "keys": [
+              "l",
+              "RIGHT",
+              "6",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "YES",
+            "label": "Yes",
+            "keys": [
+              "Y",
+              "y"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "NO",
+            "label": "No",
+            "keys": [
+              "N",
+              "n",
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "list:choices",
+          "row_id": "option:NO"
+        },
+        "context": "YESNO"
+      }
+    },
+    {
+      "name": "query popup declined, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:8"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "NO"
+        }
+      }
+    },
+    {
+      "name": "query popup declined, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "query popup declined, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "query popup declined, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "query popup declined, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:1",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "13",
+          "revision": "10"
+        }
+      }
+    },
+    {
+      "name": "filterable list screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:9",
+        "role": "dialog",
+        "root": {
+          "id": "split:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "text:message",
+              "kind": "text",
+              "markup": "Debug Functions - Manipulate the fabric of reality!\nYou can use them to fix a bug or test something.\nBe careful, as some of them may potentially break things."
+            },
+            {
+              "id": "list:choices",
+              "kind": "list",
+              "affordances": [
+                "FILTER",
+                "bn:choose:list:choices"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "entry:1",
+                  "label": "Info…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "i",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "entry:49",
+                  "label": "Quit to main menu",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "Q",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:2",
+                  "label": "Spawning…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "s",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:3",
+                  "label": "Player…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "p",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:6",
+                  "label": "Vehicle…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "v",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:4",
+                  "label": "Teleport…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "t",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:5",
+                  "label": "Map…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "m",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:7",
+                  "label": "Lua console",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "l",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 8,
+              "selection": "single",
+              "activate": "bn:choose:list:choices",
+              "filterable": true
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:choices",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel menu",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel menu",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "list:choices",
+          "row_id": "entry:1"
+        },
+        "context": "UILIST"
+      }
+    },
+    {
+      "name": "filter prompt before typing",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:10",
+        "role": "dialog",
+        "root": {
+          "id": "split:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "form:field",
+              "kind": "form",
+              "affordances": [
+                "bn:fill:form:field",
+                "bn:submit:form:field"
+              ],
+              "fields": [
+                {
+                  "id": "field:value",
+                  "label": "",
+                  "value": "",
+                  "type": "text",
+                  "max_length": 256
+                }
+              ],
+              "submit": "bn:submit:form:field"
+            },
+            {
+              "id": "list:choices",
+              "kind": "list",
+              "columns": [],
+              "rows": [
+                {
+                  "id": "entry:1",
+                  "label": "Info…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "i",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "entry:49",
+                  "label": "Quit to main menu",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "Q",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:2",
+                  "label": "Spawning…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "s",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:3",
+                  "label": "Player…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "p",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:6",
+                  "label": "Vehicle…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "v",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:4",
+                  "label": "Teleport…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "t",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:5",
+                  "label": "Map…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "m",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:7",
+                  "label": "Lua console",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "l",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 8,
+              "selection": "none"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:fill:form:field",
+            "label": "",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "field:value"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:submit:form:field",
+            "label": "Confirm text input",
+            "keys": [],
+            "enabled": true,
+            "role": "confirm",
+            "args": {
+              "text": {
+                "field_id": "field:value"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel menu",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.LEFT",
+            "label": "Move cursor left",
+            "keys": [
+              "LEFT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.RIGHT",
+            "label": "Move cursor right",
+            "keys": [
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.QUIT",
+            "label": "Cancel text input",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CONFIRM",
+            "label": "Confirm text input",
+            "keys": [
+              "RETURN",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CLEAR",
+            "label": "Clear text",
+            "keys": [
+              "CTRL+U"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.BACKSPACE",
+            "label": "Remove previous character",
+            "keys": [
+              "BACKSPACE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.HOME",
+            "label": "Move cursor to start",
+            "keys": [
+              "HOME"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.END",
+            "label": "Move cursor to end",
+            "keys": [
+              "END"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.DELETE",
+            "label": "Remove current character",
+            "keys": [
+              "DELETE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.INPUT_FROM_FILE",
+            "label": "Input text from file",
+            "keys": [
+              "F2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "form:field"
+        },
+        "context": "UILIST"
+      }
+    },
+    {
+      "name": "filter text typed, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "boundary_id": "boundary:1",
+          "revision": "12"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:fill:form:field",
+          "args": {
+            "text": "tele"
+          }
+        }
+      }
+    },
+    {
+      "name": "filter text typed, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "filter text typed, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "filter text typed, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "filter text typed, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:2",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "16",
+          "revision": "13"
+        }
+      }
+    },
+    {
+      "name": "filter prompt after typing",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:11",
+        "role": "dialog",
+        "root": {
+          "id": "split:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "form:field",
+              "kind": "form",
+              "affordances": [
+                "bn:fill:form:field",
+                "bn:submit:form:field"
+              ],
+              "fields": [
+                {
+                  "id": "field:value",
+                  "label": "",
+                  "value": "tele",
+                  "type": "text",
+                  "max_length": 256
+                }
+              ],
+              "submit": "bn:submit:form:field"
+            },
+            {
+              "id": "list:choices",
+              "kind": "list",
+              "columns": [],
+              "rows": [
+                {
+                  "id": "entry:4",
+                  "label": "Teleport…",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "t",
+                  "enabled": true,
+                  "selectable": false,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "none"
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:fill:form:field",
+            "label": "",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "text": {
+                "field_id": "field:value"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:submit:form:field",
+            "label": "Confirm text input",
+            "keys": [],
+            "enabled": true,
+            "role": "confirm",
+            "args": {
+              "text": {
+                "field_id": "field:value"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel menu",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.LEFT",
+            "label": "Move cursor left",
+            "keys": [
+              "LEFT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.RIGHT",
+            "label": "Move cursor right",
+            "keys": [
+              "RIGHT"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.QUIT",
+            "label": "Cancel text input",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CONFIRM",
+            "label": "Confirm text input",
+            "keys": [
+              "RETURN",
+              "NUMPAD_6"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.CLEAR",
+            "label": "Clear text",
+            "keys": [
+              "CTRL+U"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.BACKSPACE",
+            "label": "Remove previous character",
+            "keys": [
+              "BACKSPACE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.HOME",
+            "label": "Move cursor to start",
+            "keys": [
+              "HOME"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.END",
+            "label": "Move cursor to end",
+            "keys": [
+              "END"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.DELETE",
+            "label": "Remove current character",
+            "keys": [
+              "DELETE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "TEXT.INPUT_FROM_FILE",
+            "label": "Input text from file",
+            "keys": [
+              "F2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "form:field"
+        },
+        "context": "UILIST"
+      }
+    },
+    {
+      "name": "filter prompt cancelled, request",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch-2",
+        "expect": {
+          "screen_id": "screen:11"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "bn:cancel"
+        }
+      }
+    },
+    {
+      "name": "filter prompt cancelled, receipt",
+      "def": "submit_result",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "received"
+      }
+    },
+    {
+      "name": "filter prompt cancelled, validated",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "validated"
+      }
+    },
+    {
+      "name": "filter prompt cancelled, executing",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "executing"
+      }
+    },
+    {
+      "name": "filter prompt cancelled, completed",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch-2",
+        "command_id": "command:3",
+        "stage": "completed",
+        "at": {
+          "epoch": "epoch-2",
+          "sequence": "17",
+          "revision": "14"
+        }
+      }
+    },
+    {
+      "name": "list of switches screen",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:12",
+        "role": "dialog",
+        "root": {
+          "id": "split:root",
+          "kind": "split",
+          "relation": "peers",
+          "children": [
+            {
+              "id": "text:message",
+              "kind": "text",
+              "markup": "Info…"
+            },
+            {
+              "id": "list:choices",
+              "kind": "list",
+              "affordances": [
+                "FILTER",
+                "bn:choose:list:choices"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "entry:7",
+                  "label": "Check game state",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "g",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                },
+                {
+                  "id": "entry:23",
+                  "label": "Display hordes",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "h",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:24",
+                  "label": "Test item group",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "i",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:26",
+                  "label": "Show sound clustering",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "c",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:27",
+                  "label": "Display weather",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "w",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:28",
+                  "label": "Display overmap scents",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "S",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:29",
+                  "label": "Display overmap distribution grids",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "G",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:56",
+                  "label": "Toggle display local scents",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "s",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:57",
+                  "label": "Toggle display local scents type",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "y",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:58",
+                  "label": "Toggle display temperature",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "T",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:59",
+                  "label": "Toggle display vehicle autopilot overlay",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "V",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:60",
+                  "label": "Toggle display visibility",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "v",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:61",
+                  "label": "Toggle display lighting",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "l",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:63",
+                  "label": "Toggle display transparency",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "p",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:64",
+                  "label": "Toggle display outside/sheltered/indoors",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "O",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:62",
+                  "label": "Toggle display radiation",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "R",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:65",
+                  "label": "Toggle display submap grid",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "o",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:66",
+                  "label": "Toggle display terrain sound absorption",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "Q",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:67",
+                  "label": "Toggle display sound walls",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "q",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:152",
+                  "label": "Toggle zone overlay",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "z",
+                  "enabled": false,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:31",
+                  "label": "Set automove target",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "A",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:32",
+                  "label": "Show mutation category levels",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "m",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:33",
+                  "label": "Show mutation trait chances",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "u",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:35",
+                  "label": "Draw benchmark",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "b",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:36",
+                  "label": "FPS benchmark",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "B",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:71",
+                  "label": "Toggle hour timer",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "E",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:39",
+                  "label": "Test trait group",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "t",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:40",
+                  "label": "Show debug message",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "d",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:41",
+                  "label": "Crash game (test crash handling)",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "C",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:42",
+                  "label": "Show debug message (worker thread)",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:43",
+                  "label": "Crash worker thread (test crash handling)",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:44",
+                  "label": "Reload translations",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "L",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:46",
+                  "label": "Toggle NPC pathfinding on map",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "n",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": [],
+                  "toggled": false
+                },
+                {
+                  "id": "entry:47",
+                  "label": "Print faction info to console",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "f",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:48",
+                  "label": "Print NPC magic info to console",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "M",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:51",
+                  "label": "Test weather",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "W",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:68",
+                  "label": "Test map extra list",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "e",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:73",
+                  "label": "Reset ignored debug messages",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "I",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:75",
+                  "label": "Control NPC follower",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "x",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:74",
+                  "label": "Reload tileset and show missing tiles",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "D",
+                  "enabled": false,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:76",
+                  "label": "Dump dynamic tile atlas",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "F",
+                  "enabled": false,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:77",
+                  "label": "Toggle tileset visual effects",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "j",
+                  "enabled": false,
+                  "selectable": false,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:52",
+                  "label": "Take screenshot",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "H",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:53",
+                  "label": "Submit a bug report on github",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "U",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:54",
+                  "label": "Generate game report",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "r",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                },
+                {
+                  "id": "entry:55",
+                  "label": "Join the Discord",
+                  "description": "",
+                  "denial": "",
+                  "hotkey": "J",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": false,
+                  "columns": []
+                }
+              ],
+              "total": 46,
+              "selection": "single",
+              "activate": "bn:choose:list:choices",
+              "filterable": true
+            }
+          ]
+        },
+        "affordances": [
+          {
+            "id": "bn:choose:list:choices",
+            "label": "Confirm Choice",
+            "keys": [],
+            "enabled": true,
+            "args": {
+              "row": {
+                "component_id": "list:choices"
+              }
+            },
+            "expect": "boundary"
+          },
+          {
+            "id": "bn:cancel",
+            "label": "Cancel menu",
+            "keys": [],
+            "enabled": true,
+            "role": "cancel",
+            "expect": "screen"
+          },
+          {
+            "id": "UP",
+            "label": "Pan up",
+            "keys": [
+              "UP",
+              "NUMPAD_8"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "DOWN",
+            "label": "Pan down",
+            "keys": [
+              "DOWN",
+              "NUMPAD_2"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_UP",
+            "label": "Fast scroll up",
+            "keys": [
+              "PPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "PAGE_DOWN",
+            "label": "Fast scroll down",
+            "keys": [
+              "NPAGE"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HOME",
+            "label": "Go to first entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "END",
+            "label": "Go to last entry",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_UP",
+            "label": "Scroll up",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SCROLL_DOWN",
+            "label": "Scroll down",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "QUIT",
+            "label": "Cancel menu",
+            "keys": [
+              "ESC"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "SELECT",
+            "label": "Select",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "CONFIRM",
+            "label": "Confirm Choice",
+            "keys": [
+              "RETURN"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "FILTER",
+            "label": "Filter",
+            "keys": [
+              "/"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "ANY_INPUT",
+            "label": "ANY_INPUT",
+            "keys": [],
+            "enabled": true,
+            "expect": "screen"
+          },
+          {
+            "id": "HELP_KEYBINDINGS",
+            "label": "Display keybindings menu",
+            "keys": [
+              "?"
+            ],
+            "enabled": true,
+            "expect": "screen"
+          }
+        ],
+        "focus": {
+          "component_id": "list:choices",
+          "row_id": "entry:7"
+        },
+        "context": "UILIST"
+      }
+    }
+  ],
+  "invalid": []
+}
