@@ -1353,6 +1353,17 @@ static void draw_ascii(
     ui.set_cursor(w, point(om_half_width, om_half_height));
 }
 
+/// What the sidebar says of a seen square: the region's display name for its default terrain, else
+/// the full description.
+static auto seen_description(const tripoint_abs_omt& center) -> std::string {
+    const oter_id cur_oter_id = ACTIVE_OVERMAP_BUFFER.ter(center);
+    const regional_settings& region = ACTIVE_OVERMAP_BUFFER.get_settings(center);
+    const bool has_display = !region.display_oter.is_empty();
+    return has_display && cur_oter_id == region.default_oter.id()
+             ? region.display_oter.id().obj().get_name()
+             : ACTIVE_OVERMAP_BUFFER.get_description_at(project_to<coords::sm>(center));
+}
+
 static void draw_om_sidebar(
     const catacurses::window& wbar, const tripoint_abs_omt& center, const tripoint_abs_omt& orig,
     bool /* blink */, bool fast_scroll, input_context* inp_ctxt, const draw_data_t& data) {
@@ -1414,16 +1425,12 @@ static void draw_om_sidebar(
                     ? sidebar_region.display_oter.id()
                     : cur_oter_id;
             const oter_t& ter = render_oter_id.obj();
-            const auto sm_pos = project_to<coords::sm>(center);
 
             // NOLINTNEXTLINE(cata-use-named-point-constants)
             mvwputch(wbar, point(1, 1), ter.get_color(), ter.get_symbol());
 
             lines = fold_and_print(
-                wbar, point(3, 1), getmaxx(wbar) - 3, c_light_gray,
-                sidebar_has_display && cur_oter_id == default_oter_id
-                    ? ter.get_name()
-                    : ACTIVE_OVERMAP_BUFFER.get_description_at(sm_pos));
+                wbar, point(3, 1), getmaxx(wbar) - 3, c_light_gray, seen_description(center));
         }
     } else {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -2098,6 +2105,11 @@ static auto overmap_interaction(const tripoint_abs_omt& center)
             }
         }
     }
+    const auto seen =
+        get_avatar().has_trait(trait_DEBUG_NIGHTVISION) || ACTIVE_OVERMAP_BUFFER.seen(center);
+    auto unexplored = std::string(_("# Unexplored"));
+    if (unexplored.starts_with("# ")) { unexplored.erase(0, 2); }
+    om.cursor_description = seen ? remove_color_tags(seen_description(center)) : unexplored;
     if (const auto* const legend = g->w_omlegend.get<cata_cursesport::WINDOW>();
         legend != nullptr) {
         for (int y = 0; y < legend->height; ++y) {

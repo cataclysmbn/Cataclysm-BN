@@ -942,7 +942,9 @@ auto make_register_actions( std::vector<uilist_entry> &entries, const input_cont
 {
     return [&]( std::vector<action_id> &&names ) -> void {
         const auto fn = [&]( action_id name ) -> uilist_entry {
-            return { name, true, hotkey_for_action( name ), ctxt.get_action_name( action_ident( name ) ) };
+            auto entry = uilist_entry{ name, true, hotkey_for_action( name ), ctxt.get_action_name( action_ident( name ) ) };
+            entry.action_id = action_ident( name );
+            return entry;
         };
         std::ranges::transform( names, std::back_inserter( entries ), fn );
     };

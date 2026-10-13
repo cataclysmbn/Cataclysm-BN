@@ -19,6 +19,7 @@ auto to_json( const entity &value ) -> json;
 auto to_json( const avatar_stat &value ) -> json;
 auto to_json( const inventory_entry &value ) -> json;
 auto to_json( const sidebar_text &value ) -> json;
+auto to_json( const std::vector<sidebar_text> &value ) -> json;
 auto to_json( const sidebar_limb &value ) -> json;
 auto to_json( const game_client::interaction_choice &choice ) -> json;
 
@@ -150,7 +151,7 @@ auto to_json( const avatar_stat &value ) -> json
 }
 auto to_json( const inventory_entry &value ) -> json
 {
-    auto result = json{{"look", to_json( value.appearance )}, {"name", value.name}};
+    auto result = json{{"look", to_json( value.appearance )}, {"name", value.name}, {"label", value.label}};
     if( value.count ) { result["count"] = *value.count; }
     if( value.slot ) { result["slot"] = *value.slot; }
     if( value.durability ) {
@@ -161,6 +162,10 @@ auto to_json( const inventory_entry &value ) -> json
 auto to_json( const sidebar_text &value ) -> json
 {
     return {{"text", value.text}, {"color", value.color}};
+}
+auto to_json( const std::vector<sidebar_text> &value ) -> json
+{
+    return to_array( value );
 }
 auto to_json( const sidebar_limb &value ) -> json
 {
@@ -184,7 +189,7 @@ auto to_json( const sidebar_value &value ) -> json
                 {"has_watch", value.has_watch}
             }
         },
-        {"weapon", value.weapon}};
+        {"weapon", value.weapon}, {"rows", to_array( value.rows )}};
     if( value.ambient ) { result["ambient_temperature"] = *value.ambient; }
     if( value.style ) { result["style"] = to_json( *value.style ); }
     return result;
@@ -238,6 +243,7 @@ auto to_json( const game_client::interaction_choice &choice ) -> json
     if( !choice.color.empty() ) { result["color"] = choice.color; }
     if( !choice.key_color.empty() ) { result["key_color"] = choice.key_color; }
     if( !choice.markup.empty() ) { result["markup"] = choice.markup; }
+    if( !choice.action_id.empty() ) { result["action_id"] = choice.action_id; }
     if( choice.parent_id ) { result["parent_id"] = *choice.parent_id; }
     if( !choice.nest_color.empty() ) { result["nest_color"] = choice.nest_color; }
     if( choice.mark ) {
@@ -311,7 +317,7 @@ auto interaction_json( const boundary_state &state ) -> json
         }
         result["overmap"] = {{"origin", to_json( om.origin, frame )}, {"player", to_json( om.player, frame )},
             {"cols", om.cols}, {"rows", om.rows}, {"cells", std::move( cells )},
-            {"legend", om.legend}, {"notes", std::move( notes )}
+            {"legend", om.legend}, {"cursor_description", om.cursor_description}, {"notes", std::move( notes )}
         };
         auto path = json::array();
         for( const auto &step : om.path ) { path.push_back( to_json( step, frame ) ); }
@@ -359,13 +365,26 @@ auto interaction_json( const boundary_state &state ) -> json
             auto shown = json{{"name", detail.name}, {"description", detail.description}, {"can_do", detail.can_do},
                 {"stats", json::array()}, {"requirements", json::array()}};
             if( !detail.time.empty() ) { shown["time"] = detail.time; }
+            if( !detail.time_heading.empty() ) { shown["time_heading"] = detail.time_heading; }
+            shown["groups"] = json::array();
+            for( const auto &group : detail.groups ) {
+                shown["groups"].push_back( {{"kind", group.kind}, {"heading", group.heading}, {"empty_text", group.empty_text}} );
+            }
             for( const auto &stat : detail.stats ) { shown["stats"].push_back( {{"label", stat.label}, {"value", stat.value}} ); }
             for( const auto &need : detail.requirements ) {
                 shown["requirements"].push_back( {{"kind", need.kind}, {"text", need.text}, {"met", need.met}} );
             }
             value["detail"] = std::move( shown );
         }
+        if( !veh.verb.empty() ) { value["verb"] = veh.verb; }
         result["vehicle"] = std::move( value );
+    }
+    if( !native.areas.empty() ) {
+        result["areas"] = json::array();
+        for( const auto &area : native.areas ) {
+            result["areas"].push_back( {{"action_id", area.action_id}, {"label", area.label}, {"key", area.key},
+                {"x", area.x}, {"y", area.y}, {"available", area.available}} );
+        }
     }
     auto compat = json::object();
     if( !native.focus_choice_id.empty() ) {
@@ -448,7 +467,7 @@ auto to_json( const event_value &value ) -> json
     if( value.message ) {
         const auto &line = *value.message;
         result["data"] = {{"id", std::to_string( line.id )}, {"text", line.text}, {"kind", line.kind},
-            {"color", line.color}, {"count", line.count}
+            {"color", line.color}, {"count", line.count}, {"label", line.label}
         };
     }
     if( value.presentation ) {
@@ -570,7 +589,7 @@ auto serialize_snapshot( const snapshot &value ) -> std::expected<snapshot_wire,
         header["messages"] = json::array();
         for( const auto &line : value.log ) {
             header["messages"].push_back( {{"id", std::to_string( line.id )}, {"text", line.text},
-                {"kind", line.kind}, {"color", line.color}, {"count", line.count}} );
+                {"kind", line.kind}, {"color", line.color}, {"count", line.count}, {"label", line.label}} );
         }
     }
     header["parts"] = result.parts.size();

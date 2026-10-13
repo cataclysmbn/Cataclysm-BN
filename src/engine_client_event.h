@@ -69,6 +69,8 @@ struct message_value {
     /// Native color name of the type for a new message.
     std::string color = {};
     counter count = 1;
+    /// The line the way the native log prints it: `text`, with the native repeat suffix from `count` 2 on.
+    std::string label = {};
 };
 struct event_value {
     counter sequence = 0;

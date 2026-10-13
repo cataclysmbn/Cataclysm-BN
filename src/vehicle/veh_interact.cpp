@@ -344,6 +344,36 @@ auto requirement_rows(
     return rows;
 }
 
+/// A native pane heading as a client prints it: no color tags, no line break.
+auto heading_text(const std::string& translated) -> std::string {
+    auto heading = remove_color_tags(translated);
+    while (heading.ends_with('\n')) { heading.pop_back(); }
+    return heading;
+}
+
+/// The headings of the requirement list in the order the native pane prints them.
+auto requirement_groups() -> std::vector<game_client::interaction_requirement_group> {
+    return {
+        {.kind = "skill",
+         .heading = heading_text(_("<color_white>Skills required:</color>\n")),
+         .empty_text = _("NONE")},
+        {.kind = "component", .heading = heading_text(_("Components required:"))},
+        {.kind = "tool", .heading = heading_text(_("Tools required:"))},
+        {.kind = "extra",
+         .heading = heading_text(_("<color_white>Additional requirements:</color>\n"))},
+    };
+}
+
+/// What the task list of `mode` does to the highlighted part.
+auto task_verb(const std::string& mode) -> std::string {
+    if (mode == "install") { return _("Install"); }
+    if (mode == "repair") { return _("Repair"); }
+    if (mode == "remove") { return _("Remove"); }
+    if (mode == "mend") { return _("Mend"); }
+    if (mode == "refill") { return _("Refill"); }
+    return mode == "main" ? "" : _("Select");
+}
+
 /// The numbers the install pane prints under a part's name.
 auto part_stat_rows(const vpart_info& part) -> std::vector<game_client::interaction_column> {
     auto rows = std::vector<game_client::interaction_column>{};
@@ -691,6 +721,13 @@ auto veh_interact::make_interaction() -> game_client::interaction_snapshot {
     view.blocked = cursor_obstructed();
     view.stats = stat_lines();
     view.detail = detail;
+    view.verb = task_verb(mode);
+    if (view.detail) {
+        view.detail->groups = requirement_groups();
+        if (!view.detail->time.empty()) {
+            view.detail->time_heading = heading_text(_("<color_white>Time required:</color>\n"));
+        }
+    }
     const auto glyph_of = [this](const int part) {
         const auto direction = normalize(
             270_degrees + veh->part_display_direction(part) - veh->face.dir());
