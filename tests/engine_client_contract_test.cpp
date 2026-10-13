@@ -754,3 +754,82 @@ TEST_CASE("a failed command says why in the game's language", "[engine_client_co
     REQUIRE(stale);
     CHECK(contains(*stale, "\"message\":\"The screen changed, try again.\""));
 }
+
+TEST_CASE("an invoke expects its screen or its boundary by scope", "[engine_client_contract]") {
+    auto context = input_context{"YESNO"};
+    const auto input_scope = game_client::input_context_scope{context, "YESNO"};
+    const auto scope = game_client::interaction_scope{
+        context, [] {
+            return game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices,
+                .allow_cancel = true,
+                .choices = {{.id = "choice:yes", .label = "Yes"}},
+                .choice_total = 1,
+            };
+        }};
+    game_client::begin_input_boundary();
+    const auto boundary = capture();
+    const auto screen_id = "screen:read:" + boundary.id;
+    auto authority = test_authority{};
+    auto lifecycle = engine_client::command_lifecycle{"epoch:test", authority};
+    const auto invoke =
+        [&](const std::string& affordance, const engine_client::expectation& expect,
+            engine_client::invoke_args args = {}) {
+            return engine_client::command_request{
+                .epoch = "epoch:test",
+                .expect = expect,
+                .operation = engine_client::
+                    invoke_operation{.affordance_id = affordance, .args = std::move(args)}};
+        };
+    const auto boundary_form =
+        engine_client::expectation{.revision = 1, .boundary_id = boundary.id};
+    const auto screen_form = engine_client::expectation{.screen_id = screen_id};
+    const auto run = [&](const engine_client::command_request& request) {
+        REQUIRE(lifecycle.submit(request));
+        return lifecycle.validate(at_of(boundary), boundary, point{80, 24});
+    };
+    SECTION("a screen expectation holds while its screen is on top") {
+        const auto resolved = run(invoke("bn:cancel", screen_form));
+        REQUIRE(resolved);
+        REQUIRE(resolved->interaction);
+        CHECK(resolved->interaction->operation == game_client::interaction_operation::cancel);
+    }
+    SECTION("a screen expectation for another screen is stale_screen") {
+        const auto resolved = run(invoke("bn:cancel", {.screen_id = "screen:read:boundary:old"}));
+        REQUIRE_FALSE(resolved);
+        CHECK(resolved.error() == engine_client::error::stale_screen);
+    }
+    SECTION("a boundary expectation names rows and checks the boundary") {
+        const auto resolved = run(
+            invoke("bn:choose:list:choices", boundary_form, {.row = "choice:yes"}));
+        REQUIRE(resolved);
+        REQUIRE(resolved->interaction);
+        CHECK(resolved->interaction->target_id == "choice:yes");
+        const auto stale = run(
+            invoke("bn:choose:list:choices", {.revision = 1, .boundary_id = "boundary:old"},
+                   {.row = "choice:yes"}));
+        REQUIRE_FALSE(stale);
+        CHECK(stale.error() == engine_client::error::stale_boundary);
+    }
+    SECTION("the wrong form for the scope is invalid_arguments") {
+        const auto row_on_screen = run(
+            invoke("bn:choose:list:choices", screen_form, {.row = "choice:yes"}));
+        REQUIRE_FALSE(row_on_screen);
+        CHECK(row_on_screen.error() == engine_client::error::invalid_arguments);
+        const auto cancel_on_boundary = run(invoke("bn:cancel", boundary_form));
+        REQUIRE_FALSE(cancel_on_boundary);
+        CHECK(cancel_on_boundary.error() == engine_client::error::invalid_arguments);
+    }
+    SECTION("a screen expectation on a 0.1 operation is invalid_arguments") {
+        auto request = choose_request(boundary, "choice:yes");
+        request.expect.screen_id = screen_id;
+        const auto resolved = run(request);
+        REQUIRE_FALSE(resolved);
+        CHECK(resolved.error() == engine_client::error::invalid_arguments);
+    }
+    SECTION("an unknown affordance is named after the expectation holds") {
+        const auto resolved = run(invoke("bn:nothing", screen_form));
+        REQUIRE_FALSE(resolved);
+        CHECK(resolved.error() == engine_client::error::unknown_affordance);
+    }
+}
