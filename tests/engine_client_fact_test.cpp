@@ -795,7 +795,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "every family of fact fires in a turn and the animation options only silence the drawn ones",
+    "every family of fact fires in a turn whatever the animation options say",
     "[engine_client_fact][engine_client_equality]") {
     clear_all_state();
     const auto start = avatar_save();
@@ -808,14 +808,5 @@ TEST_CASE(
           "entity.gone", "field.changed", "sound.heard"}) {
         CHECK(index_of(told, type) < told.size());
     }
-    const auto drawn = std::set<std::string>{"projectile.moved", "combat_text.shown"};
-    CHECK(std::ranges::none_of(silenced.facts, [&](const auto& fact) {
-        return drawn.contains(fact.type);
-    }));
-    CHECK(
-        types_of(silenced.facts)
-        == types_of(
-            animated.facts
-            | std::views::filter([&](const auto& fact) { return !drawn.contains(fact.type); })
-            | std::ranges::to<std::vector>()));
+    CHECK(types_of(silenced.facts) == told);
 }
