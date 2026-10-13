@@ -85,7 +85,7 @@ Opt in with `bn.hello` `delivery = {credits, max_hz?}` (`credits` 1 to 256, opti
 { "kind": "travel", "pos": { "dim": "", "x": 9, "y": 4, "z": 0 } }
 ```
 
-Every boundary action lists `keys`, the portable names (`ESC`, `SPACE`, `RETURN`, `UP`, `>`, ...) of the single keyboard keys the active input context binds to it; an action without keys cannot be run by `action`. A client that wants to act on a pressed key finds the action whose `keys` contain it instead of guessing from the key settings files.
+Every boundary action lists `keys`, the portable names (`ESC`, `SPACE`, `RETURN`, `UP`, `>`, ...) of the single keyboard keys the active input context binds to it; `action` runs an action by its id, also one without keys (such as `open_options` while unbound). A client that wants to act on a pressed key finds the action whose `keys` contain it instead of guessing from the key settings files.
 
 `travel` is the left click of Tiles and curses on an absolute map square in view, at a boundary without interaction. The first click publishes the engine's own route as `route`; clicking the same square again starts native auto-move. The avatar then walks one step at a time, each step publishing ordinary events attached to that command, and stops where the engine stops (arrival, a monster coming into view, ...). The command is `completed` when the walk ends and input is awaited again. Any other command or a click elsewhere replaces or clears the plan. A client never computes routes.
 
