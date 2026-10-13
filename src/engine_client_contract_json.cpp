@@ -246,6 +246,16 @@ auto to_json( const avatar_value &value ) -> json
     if( !value.ground.empty() ) { result["ground"] = to_array( value.ground ); }
     return result;
 }
+/// The sidebar layout and the compass exist on the 0.2 wire only; Z0 removes this gate with 0.1.
+auto to_json( const avatar_value &value, const wire_version version ) -> json
+{
+    auto result = to_json( value );
+    if( version == wire_version::v0_1 ) {
+        result.erase( "compass" );
+        result["sidebar"].erase( "layout" );
+    }
+    return result;
+}
 auto to_json( const environment_value &value ) -> json
 {
     auto result = json{{"turn", value.turn}, {"time", value.time}, {"weather", value.weather}};
@@ -713,12 +723,14 @@ auto to_json( const changes &delta, const wire_version version ) -> json
         for( const auto &value : delta.gone ) { result["gone"].push_back( {{"id", value.id}, {"reason", value.reason}} ); }
     }
     if( delta.avatar ) {
-        result["avatar"] = to_json( *delta.avatar );
-        if( !delta.avatar_kept.empty() ) {
-            std::ranges::for_each( delta.avatar_kept, [&]( const auto & member ) {
+        result["avatar"] = to_json( *delta.avatar, version );
+        auto kept = delta.avatar_kept;
+        if( version == wire_version::v0_1 ) { std::erase( kept, "compass" ); }
+        if( !kept.empty() ) {
+            std::ranges::for_each( kept, [&]( const auto & member ) {
                 result["avatar"].erase( member );
             } );
-            result["avatar"]["keep"] = delta.avatar_kept;
+            result["avatar"]["keep"] = kept;
         }
     }
     if( delta.environment ) { result["environment"] = to_json( *delta.environment ); }
@@ -775,8 +787,10 @@ auto to_json( const event_value &value, const wire_version version ) -> json
             data = {{"id", fact.entity}, {"reason", fact.kind}};
         } else if( value.type == "sound.heard" ) {
             data = {{"text", fact.text}, {"volume", *fact.amount}, {"logged", fact.logged}};
-            if( fact.distance ) { data["distance"] = *fact.distance; }
-            if( fact.from ) { data["direction"] = to_json( *fact.from ); }
+            if( version == wire_version::v0_2 ) {
+                if( fact.distance ) { data["distance"] = *fact.distance; }
+                if( fact.from ) { data["direction"] = to_json( *fact.from ); }
+            }
             if( fact.at ) { data["marker"] = to_json( *fact.at ); }
         } else if( value.type == "projectile.hit" ) {
             data = {{"projectile", fact.id}, {"at", to_json( *fact.at )}};
@@ -869,7 +883,7 @@ auto serialize_snapshot( const snapshot &value,
     if( world.coverage ) { header["coverage"] = to_json( *world.coverage ); }
     if( world.view ) { header["view"] = to_json( *world.view ); }
     header["interaction"] = to_json( value.value.interaction, version );
-    if( world.avatar ) { header["avatar"] = to_json( *world.avatar ); }
+    if( world.avatar ) { header["avatar"] = to_json( *world.avatar, version ); }
     if( world.environment ) { header["environment"] = to_json( *world.environment ); }
     if( !world.route.empty() ) { header["route"] = to_array( world.route ); }
     header["entities"] = json::array();

@@ -589,7 +589,7 @@ TEST_CASE(
               .distance = 4}}}};
     auto stream = stream_of(first);
 
-    const auto snapshot_wire = serialize_snapshot(stream.current());
+    const auto snapshot_wire = serialize_snapshot(stream.current(), wire_version::v0_2);
     REQUIRE(snapshot_wire);
     const auto header = nlohmann::json::parse(snapshot_wire->header)["avatar"];
     const auto& layout = header["sidebar"]["layout"];
@@ -612,8 +612,8 @@ TEST_CASE(
 
     auto walked = first;
     walked.world.avatar->at = pos(2);
-    const auto step = nlohmann::json::parse(
-        serialize_events({.epoch = "epoch:a", .events = {publish(stream, walked)}}));
+    const auto step = nlohmann::json::parse(serialize_events(
+        {.epoch = "epoch:a", .events = {publish(stream, walked)}}, wire_version::v0_2));
     const auto& step_avatar = step["events"][0]["changes"]["avatar"];
     CHECK_FALSE(step_avatar.contains("compass"));
     CHECK_FALSE(step_avatar.contains("sidebar"));
@@ -622,8 +622,8 @@ TEST_CASE(
     auto moved = walked;
     moved.world.avatar->compass.front().creatures.front().distance = 3;
     moved.world.avatar->sidebar.layout.side = "right";
-    const auto next = nlohmann::json::parse(
-        serialize_events({.epoch = "epoch:a", .events = {publish(stream, moved)}}));
+    const auto next = nlohmann::json::parse(serialize_events(
+        {.epoch = "epoch:a", .events = {publish(stream, moved)}}, wire_version::v0_2));
     const auto& next_avatar = next["events"][0]["changes"]["avatar"];
     CHECK(next_avatar["compass"][0]["creatures"][0]["distance"] == 3);
     CHECK(next_avatar["sidebar"]["layout"]["side"] == "right");
@@ -632,8 +632,8 @@ TEST_CASE(
     // A compass that empties is absent and no longer kept, so a client drops its old one.
     auto empty = moved;
     empty.world.avatar->compass.clear();
-    const auto cleared = nlohmann::json::parse(
-        serialize_events({.epoch = "epoch:a", .events = {publish(stream, empty)}}));
+    const auto cleared = nlohmann::json::parse(serialize_events(
+        {.epoch = "epoch:a", .events = {publish(stream, empty)}}, wire_version::v0_2));
     CHECK_FALSE(cleared["events"][0]["changes"]["avatar"].contains("compass"));
     CHECK(cleared["events"][0]["changes"]["avatar"]["keep"]
           == nlohmann::json::parse(R"(["sidebar"])"));
@@ -645,7 +645,7 @@ TEST_CASE("a heard sound is published with its direction and distance", "[engine
         const auto published = stream.publish_presentation({.fact = std::move(fact)});
         REQUIRE(published);
         return nlohmann::json::parse(
-            serialize_events({.epoch = "epoch:a", .events = {*published}}));
+            serialize_events({.epoch = "epoch:a", .events = {*published}}, wire_version::v0_2));
     };
     const auto named = heard(
         {.type = "sound.heard",
@@ -660,4 +660,58 @@ TEST_CASE("a heard sound is published with its direction and distance", "[engine
     const auto seen = heard({.type = "sound.heard", .amount = 50, .text = "Tick.", .distance = 3});
     CHECK(seen["events"][0]["data"]["distance"] == 3);
     CHECK_FALSE(seen["events"][0]["data"].contains("direction"));
+}
+
+TEST_CASE(
+    "the sidebar layout, the compass and a sound's direction are on the 0.2 wire only",
+    "[engine_client_event]") {
+    auto first = world_of({});
+    first.world.avatar = avatar_value{.id = "e:avatar", .at = pos(1), .name = "Ada"};
+    first.world.avatar->sidebar.layout = {.id = "classic", .side = "right", .width = 44};
+    first.world.avatar->compass = {
+        {.toward = {.id = "north", .name = "north"},
+         .creatures = {
+             {.id = "e:3",
+              .appearance = zombie(),
+              .name = "zombie",
+              .attitude = "hostile",
+              .distance = 4}}}};
+    auto stream = stream_of(first);
+    const auto avatar_of = [&](const wire_version version) {
+        return nlohmann::json::parse(
+            serialize_snapshot(stream.current(), version)->header)["avatar"];
+    };
+    CHECK(avatar_of(wire_version::v0_2)["sidebar"].contains("layout"));
+    CHECK(avatar_of(wire_version::v0_2).contains("compass"));
+    CHECK_FALSE(avatar_of(wire_version::v0_1)["sidebar"].contains("layout"));
+    CHECK_FALSE(avatar_of(wire_version::v0_1).contains("compass"));
+
+    auto walked = first;
+    walked.world.avatar->at = pos(2);
+    const auto step = publish(stream, walked);
+    const auto kept = [&](const wire_version version) {
+        const auto wire = nlohmann::json::parse(
+            serialize_events({.epoch = "epoch:a", .events = {step}}, version));
+        return wire["events"][0]["changes"]["avatar"]["keep"];
+    };
+    CHECK(kept(wire_version::v0_2) == nlohmann::json::parse(R"(["sidebar","compass"])"));
+    CHECK(kept(wire_version::v0_1) == nlohmann::json::parse(R"(["sidebar"])"));
+
+    const auto fact = stream.publish_presentation(
+        {.fact =
+             {.type = "sound.heard",
+              .amount = 70,
+              .text = "a crash",
+              .from = heading{.id = "east", .name = "east"},
+              .distance = 6}});
+    REQUIRE(fact);
+    const auto sound = [&](const wire_version version) {
+        return nlohmann::json::parse(
+            serialize_events({.epoch = "epoch:a", .events = {*fact}}, version))
+            ["events"][0]["data"];
+    };
+    CHECK(sound(wire_version::v0_2).contains("direction"));
+    CHECK(sound(wire_version::v0_2)["distance"] == 6);
+    CHECK_FALSE(sound(wire_version::v0_1).contains("direction"));
+    CHECK_FALSE(sound(wire_version::v0_1).contains("distance"));
 }
