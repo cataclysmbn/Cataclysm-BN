@@ -278,16 +278,16 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 .label = rule.rule.empty() ? _( "<empty rule>" ) : rule.rule,
                 .pane_id = "rules", .selected = index == line, .highlighted = index == line,
                 .columns = { {
-                        .label = column_labels[1], .value = rule.category == Categories::HOSTILE_SPOTTED ?
+                        .key = "attitude", .label = column_labels[1], .value = rule.category == Categories::HOSTILE_SPOTTED ?
                         Creature::get_attitude_ui_data( rule.attitude ).first.translated() : "---"
                     },
                     {
-                        .label = column_labels[2], .value = rule.category == Categories::SOUND || !rule.whitelist ?
+                        .key = "dist", .label = column_labels[2], .value = rule.category == Categories::SOUND || !rule.whitelist ?
                         std::to_string( rule.proximity ) : "---"
                     },
-                    { .label = column_labels[3], .value = rule.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) },
-                    { .label = column_labels[4], .value = rule.category == Categories::SOUND ? _( "Sound" ) : _( "Hostile" ) },
-                    { .label = _( "Active" ), .value = rule.active ? _( "True" ) : _( "False" ) }
+                    { .key = "whitelist", .label = column_labels[3], .value = rule.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) },
+                    { .key = "category", .label = column_labels[4], .value = rule.category == Categories::SOUND ? _( "Sound" ) : _( "Hostile" ) },
+                    { .key = "active", .label = _( "Active" ), .value = rule.active ? _( "True" ) : _( "False" ) }
                 },
             } );
         }

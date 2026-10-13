@@ -347,37 +347,45 @@ auto requirement_rows(
 /// The numbers the install pane prints under a part's name.
 auto part_stat_rows(const vpart_info& part) -> std::vector<game_client::interaction_column> {
     auto rows = std::vector<game_client::interaction_column>{};
-    const auto add = [&rows](const std::string& label, const std::string& value) {
-        rows.push_back({.label = label, .value = value});
-    };
-    add(_("Durability"), string_format("%d", part.durability));
-    add(_("Damage"), string_format("%d%%", part.dmg_mod));
-    add(_("Weight"), string_format("%.1f%s", convert_weight(part.item->weight), weight_units()));
+    const auto add =
+        [&rows](const std::string& key, const std::string& label, const std::string& value) {
+            rows.push_back({.key = key, .label = label, .value = value});
+        };
+    add("durability", _("Durability"), string_format("%d", part.durability));
+    add("damage", _("Damage"), string_format("%d%%", part.dmg_mod));
+    add("weight", _("Weight"),
+        string_format("%.1f%s", convert_weight(part.item->weight), weight_units()));
     if (part.folded_volume != 0_ml) {
-        add(_("Folded Volume"),
+        add("folded_volume", _("Folded Volume"),
             string_format("%s %s", format_volume(part.folded_volume), volume_units_abbr()));
     }
     if (part.size > 0_ml && part.has_flag(VPFLAG_CARGO)) {
-        add(_("Capacity"), string_format("%s %s", format_volume(part.size), volume_units_abbr()));
+        add("capacity", _("Capacity"),
+            string_format("%s %s", format_volume(part.size), volume_units_abbr()));
     }
     if (part.has_flag(VPFLAG_WHEEL)) {
         const cata::value_ptr<islot_wheel>& whl = part.item->wheel;
-        add(_("Wheel Diameter"), wheel_dimensions::format_for_display(whl ? whl->diameter : 0));
-        add(_("Wheel Width"), wheel_dimensions::format_for_display(whl ? whl->width : 0));
+        add("wheel_diameter", _("Wheel Diameter"),
+            wheel_dimensions::format_for_display(whl ? whl->diameter : 0));
+        add("wheel_width", _("Wheel Width"),
+            wheel_dimensions::format_for_display(whl ? whl->width : 0));
     }
-    if (part.epower != 0) { add(_("Electric Power"), string_format("%+d", part.epower)); }
-    if (!part.fuel_type.is_null()) { add(_("Charge"), item::nname(part.fuel_type)); }
+    if (part.epower != 0) {
+        add("electric_power", _("Electric Power"), string_format("%+d", part.epower));
+    }
+    if (!part.fuel_type.is_null()) { add("charge", _("Charge"), item::nname(part.fuel_type)); }
     if (part.energy_consumption != 0) {
-        add(_("Drain"), string_format("%+d", -part.energy_consumption));
+        add("drain", _("Drain"), string_format("%+d", -part.energy_consumption));
     }
     if (part.fuel_type == itype_battery && !part.has_flag(VPFLAG_ENGINE)
         && !part.has_flag(VPFLAG_ALTERNATOR)) {
-        add(_("Battery Capacity"), string_format("%d", part.item->magazine->capacity));
+        add("battery_capacity", _("Battery Capacity"),
+            string_format("%d", part.item->magazine->capacity));
     } else if (
         const auto power =
             part.power != 0 ? part.power : item::spawn_temporary(part.item)->engine_displacement();
         power != 0) {
-        add(_("Power"), string_format("%+d", power));
+        add("power", _("Power"), string_format("%+d", power));
     }
     return rows;
 }
@@ -778,7 +786,6 @@ auto veh_interact::make_interaction() -> game_client::interaction_snapshot {
         auto& tabs = view.tabs.emplace();
         tabs.labels = std::vector(install_info->tab_list.begin(), install_info->tab_list.end());
         tabs.selected = static_cast<int>(install_info->tab);
-        const auto installable = std::span(can_mount).first(installable_count);
         for (const auto [index, label] : std::views::enumerate(tabs.labels)) {
             snapshot.choices.push_back({
                 .id = "tab:" + std::to_string(index),
@@ -790,9 +797,8 @@ auto veh_interact::make_interaction() -> game_client::interaction_snapshot {
             row("part:" + std::to_string(index), info->name(),
                 index != install_info->pos || (detail && detail->can_do),
                 _("The requirements are not met."), index == install_info->pos);
-            snapshot.choices.back().columns.push_back(
-                {.label = _("Materials"),
-                 .value = std::ranges::contains(installable, info) ? _("yes") : _("no")});
+            snapshot.choices.back().color =
+                can_potentially_install(*info) ? "c_white" : "c_dark_gray";
         }
     } else if (mode == "repair") {
         for (const auto [index, part] : std::views::enumerate(need_repair)) {

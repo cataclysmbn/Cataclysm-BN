@@ -734,6 +734,24 @@ auto row_markup( const std::list<item_stack::iterator> &stack,
             name );
 }
 
+/// The key the native list prints before the row at `index`: one of `chars`, else a backtick and two of them.
+auto pickup_hotkey( const std::string &chars, const std::size_t index ) -> std::string
+{
+    if( index < chars.size() ) { return std::string( 1, chars[index] ); }
+    const auto pair = index - chars.size();
+    return pair < chars.size() * chars.size() ? std::string{ '`', chars[pair / chars.size()], chars[pair % chars.size()] } :
+           std::string{};
+}
+
+/// The color of the slash the native list draws before a stack nested in another; empty for a plain stack.
+auto nest_color( const std::vector<pickup_count> &getitem,
+                 const pickup_count &selection ) -> std::string
+{
+    if( !selection.parent ) { return {}; }
+    const auto &parent = getitem[*selection.parent];
+    return parent.pick ? ( parent.all_children_picked ? "c_light_blue" : "c_yellow" ) : "c_dark_gray";
+}
+
 auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
 -> game_client::interaction_snapshot
 {
@@ -776,9 +794,9 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
         const auto wear = g->u.can_wear_natively( candidate );
         const auto wield = g->u.can_wield( candidate );
         auto nesting = std::string{ _( "none" ) };
+        auto parent_visible = opts.matches.end();
         if( selection.parent ) {
-            const auto parent_visible = std::ranges::find( opts.matches,
-                                        static_cast<int>( *selection.parent ) );
+            parent_visible = std::ranges::find( opts.matches, static_cast<int>( *selection.parent ) );
             nesting = parent_visible == opts.matches.end() ? _( "child of a filtered item" ) :
                       string_format( _( "child of %s" ), ids[std::distance( opts.matches.begin(), parent_visible )] );
         } else if( !selection.children.empty() ) {
@@ -788,23 +806,27 @@ auto pickup_interaction_snapshot( const pickup_interaction_options &opts )
             .id = ids[visible_index],
             .label = remove_color_tags( name_markup( stack, selection ) ),
             .description = remove_color_tags( candidate.info_string( { .mode = iteminfo_mode::observation } ) ),
-            .hotkey = visible_index < opts.hotkeys.size() ? std::string( 1, opts.hotkeys[visible_index] ) : std::string{},
+            .hotkey = pickup_hotkey( opts.hotkeys, visible_index ),
             .enabled = true,
             .selectable = true,
             .selected = selection.pick,
             .highlighted = static_cast<int>( visible_index ) == opts.selected,
             .columns = {
-                { .label = _( "Type" ), .value = candidate.typeId().str() },
-                { .label = _( "Source" ), .value = opts.source },
-                { .label = _( "Nesting" ), .value = std::move( nesting ) },
-                { .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
-                { .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
-                { .label = "Name markup", .value = row_markup( stack, selection ) },
-                { .label = "Row color", .value = string_from_color( candidate.color_in_inventory() ) },
+                { .key = "type", .label = _( "Type" ), .value = candidate.typeId().str() },
+                { .key = "source", .label = _( "Source" ), .value = opts.source },
+                { .key = "nesting", .label = _( "Nesting" ), .value = std::move( nesting ) },
+                { .key = "wear", .label = _( "Wear" ), .value = wear.success() ? _( "available" ) : wear.c_str() },
+                { .key = "wield", .label = _( "Wield" ), .value = wield.success() ? _( "available" ) : wield.c_str() },
             },
             .selected_count = static_cast<std::uint64_t>( selected_count ),
             .minimum_count = 0,
             .available_count = static_cast<std::uint64_t>( available ),
+            .color = string_from_color( candidate.color_in_inventory() ),
+            .markup = row_markup( stack, selection ),
+            .parent_id = parent_visible != opts.matches.end() ? std::optional( ids[std::distance( opts.matches.begin(), parent_visible )] ) : std::nullopt,
+            .nest_color = nest_color( opts.getitem, selection ),
+.mark = selection.pick ? game_client::interaction_mark{ .glyph = selection.count ? "#" : "+", .color = "c_light_blue" } :
+            game_client::interaction_mark{ .glyph = "-" },
         } );
     }
     return snapshot;

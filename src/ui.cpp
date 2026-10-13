@@ -1102,8 +1102,9 @@ void uilist::query( bool loop, int timeout )
                         .highlighted = entry_index == selected,
                         .columns = details.columns | std::views::transform( []( const auto & column )
                         {
-                            return game_client::interaction_column{ .label = column.label, .value = column.value };
+                            return game_client::interaction_column{ .key = column.key, .label = column.label, .value = column.value };
                         } ) | std::ranges::to<std::vector>(),
+                        .favorite = details.favorite,
                     } );
                 }
                 return snapshot;

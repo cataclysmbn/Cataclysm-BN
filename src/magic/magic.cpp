@@ -1862,19 +1862,25 @@ public:
         }
         const auto& sp = *known_spells[index];
         auto columns = std::vector<uilist_detail_column>{
-            {.label = _("Spell Level"), .value = std::to_string(sp.get_level())},
-            {.label = _("Failure Chance"),
+            {.key = "spell_level",
+             .label = _("Spell Level"),
+             .value = std::to_string(sp.get_level())},
+            {.key = "failure_chance",
+             .label = _("Failure Chance"),
              .value = remove_color_tags(sp.colorized_fail_percent(guy))},
-            {.label = _("Casting Cost"),
+            {.key = "casting_cost",
+             .label = _("Casting Cost"),
              .value = string_format("%s %s", sp.energy_cost_string(guy), sp.energy_string())},
-            {.label = _("Casting Time"), .value = moves_to_string(sp.casting_time(guy))},
-            {.label = _("Range"),
+            {.key = "casting_time",
+             .label = _("Casting Time"),
+             .value = moves_to_string(sp.casting_time(guy))},
+            {.key = "range",
+             .label = _("Range"),
              .value = sp.range() <= 0 ? _("self") : std::to_string(sp.range())},
         };
-        if (categories.spells[index].favorite) {
-            columns.push_back({.label = _("Favorite"), .value = "*"});
-        }
-        return {.description = spell_info_text(sp, no_fold_width), .columns = std::move(columns)};
+        return {.description = spell_info_text(sp, no_fold_width),
+                .columns = std::move(columns),
+                .favorite = categories.spells[index].favorite};
     }
     auto key(const input_context& ctxt, const input_event& event, int entnum, uilist* menu)
         -> bool override {

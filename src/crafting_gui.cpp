@@ -362,20 +362,20 @@ auto crafting_interaction_snapshot( const crafting_interaction_options &opts )
         const auto occurrence = identity_counts[base_identity]++;
         auto columns = std::vector<game_client::interaction_column> {
             {
-                .label = _( "Category" ), .value = normalized_names.contains( rec->category )
+                .key = "category", .label = _( "Category" ), .value = normalized_names.contains( rec->category )
                 ? normalized_names.at( rec->category ) : rec->category
             },
             {
-                .label = _( "Subcategory" ), .value = normalized_names.contains( rec->subcategory )
+                .key = "subcategory", .label = _( "Subcategory" ), .value = normalized_names.contains( rec->subcategory )
                 ? normalized_names.at( rec->subcategory ) : rec->subcategory
             },
-            { .label = _( "Difficulty" ), .value = std::to_string( rec->difficulty ) },
-            { .label = _( "Known" ), .value = opts.available[index].known ? _( "yes" ) : _( "no" ) },
+            { .key = "difficulty", .label = _( "Difficulty" ), .value = std::to_string( rec->difficulty ) },
+            { .key = "known", .label = _( "Known" ), .value = opts.available[index].known ? _( "yes" ) : _( "no" ) },
             {
-                .label = _( "Craftable" ),
+                .key = "craftable", .label = _( "Craftable" ),
                 .value = opts.available[index].can_craft ? _( "yes" ) : _( "no" )
             },
-            { .label = _( "Batch" ), .value = std::to_string( count ) },
+            { .key = "batch", .label = _( "Batch" ), .value = std::to_string( count ) },
         };
         auto choice = game_client::interaction_choice{
             .id = game_client::opaque_interaction_id( "recipe", {

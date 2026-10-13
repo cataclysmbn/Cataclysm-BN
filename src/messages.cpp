@@ -744,8 +744,8 @@ void Messages::dialog::input( const ui_adaptor &ui )
                     .id = "message:" + std::to_string( msg_ind ),
                     .label = remove_color_tags( msg.get_with_count() ), .selectable = false,
                     .columns = {
-                        { .label = _( "Time" ), .value = to_string_clipped( calendar::turn - msg.timestamp_in_turns, clipped_align::right ) },
-                        { .label = _( "Type" ), .value = type == type_names.end() ? std::string() : type->second },
+                        { .key = "time", .label = _( "Time" ), .value = to_string_clipped( calendar::turn - msg.timestamp_in_turns, clipped_align::right ) },
+                        { .key = "type", .label = _( "Type" ), .value = type == type_names.end() ? std::string() : type->second },
                     },
                 } );
             }

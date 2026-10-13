@@ -174,6 +174,7 @@ struct uilist_key {
 };
 
 struct uilist_detail_column {
+    std::string key;
     std::string label;
     std::string value;
 };
@@ -182,6 +183,7 @@ struct uilist_detail_column {
 struct uilist_row_details {
     std::string description;
     std::vector<uilist_detail_column> columns;
+    bool favorite = false;
 };
 
 class uilist_callback
