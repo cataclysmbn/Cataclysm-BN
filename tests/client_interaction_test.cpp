@@ -1819,6 +1819,21 @@ TEST_CASE(
         const auto result = query_popup().message("%s", "Notice").allow_anykey(true).query();
         CHECK(result.action == "ANY_INPUT");
     }
+    SECTION("a popup that only closes offers OK") {
+        game_client::memory::set_input_provider([&](const int /*timeout*/) {
+            const auto snapshot = game_client::current_interaction();
+            REQUIRE(snapshot.choices.size() == 1);
+            CHECK(snapshot.choices.front().description == "QUIT");
+            CHECK(snapshot.choices.front().label == "OK");
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::choose,
+                .target_id = snapshot.choices.front().id,
+            });
+        });
+        const auto result = query_popup().message("%s", "Done").allow_cancel(true).query();
+        CHECK(result.action == "QUIT");
+    }
     SECTION("cancel") {
         game_client::memory::set_input_provider([&](const int /*timeout*/) {
             const auto snapshot = game_client::current_interaction();
