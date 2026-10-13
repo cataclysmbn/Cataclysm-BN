@@ -178,20 +178,25 @@ auto describe_tile( const describe_request &request, const std::string &epoch )
     const auto target = to_bubble( request.target, current_bubble_frame() );
     const auto at = target ? tripoint_bub_ms( target->x, target->y, target->z ) : tripoint_bub_ms();
     if( !target || !g->click_cell_of( at ) ) { return std::unexpected( error::validation_failed ); }
-    // The mouse view prints into a window; read the text back from a private one.
+    return tile_description{ .lines = tile_info_lines( *target ) };
+}
+
+auto tile_info_lines( const game_client::interaction_position &at ) -> std::vector<std::string>
+{
+    // The views print into a window; read the text back from a private one.
     constexpr auto width = 60;
     constexpr auto height = 24;
     const auto window = catacurses::newwin( height, width, point_zero );
     auto line = 1;
-    g->pre_print_all_tile_info( at, window, line, height - 2,
+    g->pre_print_all_tile_info( tripoint_bub_ms( at.x, at.y, at.z ), window, line, height - 2,
                                 get_map().get_visibility_variables_cache() );
     const auto *const printed = window.get<cata_cursesport::WINDOW>();
-    auto result = tile_description{};
+    auto result = std::vector<std::string> {};
     for( const auto &row : printed->line ) {
         auto text = std::string{};
         for( const auto &cell : row.chars ) { text += cell.ch; }
         const auto last = text.find_last_not_of( ' ' );
-        if( last != std::string::npos ) { result.lines.push_back( text.substr( 0, last + 1 ) ); }
+        if( last != std::string::npos ) { result.push_back( text.substr( 0, last + 1 ) ); }
     }
     return result;
 }

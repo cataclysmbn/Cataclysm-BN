@@ -842,6 +842,26 @@ static auto show_notes_manager(const tripoint_abs_omt& origin) -> tripoint_abs_o
     return result;
 }
 
+/// The note line the native window prints in its corner.
+struct corner_note_line {
+    nc_color color;
+    /// Empty when the note has no text after its symbol and color.
+    std::string text;
+};
+
+/// The corner line of the note on `at`; none when the square has no note or only a label.
+static auto corner_note(const tripoint_abs_omt& at) -> std::optional<corner_note_line> {
+    const auto& note_text = ACTIVE_OVERMAP_BUFFER.note(at);
+    if (note_text.empty() || overmap_label_note::is_label_only(note_text)) { return std::nullopt; }
+    const auto [symbol, color, pos] = get_note_display_info(note_text);
+    return corner_note_line{
+        .color = color,
+        .text = pos == std::string::npos
+                  ? std::string()
+                  : note_label_utils::strip_label_commands(note_text.substr(pos)),
+    };
+}
+
 static void draw_ascii(
     ui_adaptor& ui, const catacurses::window& w, const tripoint_abs_omt& center,
     const tripoint_abs_omt& /*orig*/, bool blink, bool show_explored, bool /*fast_scroll*/,
@@ -1270,17 +1290,8 @@ static void draw_ascii(
     std::vector<std::pair<nc_color, std::string>> corner_text;
 
     if (uistate.overmap_show_map_notes) {
-        const std::string& note_text = ACTIVE_OVERMAP_BUFFER.note(center);
-        if (!note_text.empty() && !overmap_label_note::is_label_only(note_text)) {
-            const std::tuple<char, nc_color, size_t> note_info = get_note_display_info(note_text);
-            const size_t pos = std::get<2>(note_info);
-            if (pos != std::string::npos) {
-                const auto display_note_text = note_label_utils::strip_label_commands(
-                    note_text.substr(pos));
-                if (!display_note_text.empty()) {
-                    corner_text.emplace_back(std::get<1>(note_info), display_note_text);
-                }
-            }
+        if (const auto note = corner_note(center)) {
+            if (!note->text.empty()) { corner_text.emplace_back(note->color, note->text); }
             if (ACTIVE_OVERMAP_BUFFER.is_marked_dangerous(center)) {
                 corner_text.emplace_back(c_red, _("DANGEROUS AREA!"));
             }
@@ -2110,6 +2121,18 @@ static auto overmap_interaction(const tripoint_abs_omt& center)
     auto unexplored = std::string(_("# Unexplored"));
     if (unexplored.starts_with("# ")) { unexplored.erase(0, 2); }
     om.cursor_description = seen ? remove_color_tags(seen_description(center)) : unexplored;
+    if (center == player) { om.cursor_here = _("You are here."); }
+    if (const auto note = uistate.overmap_show_map_notes ? corner_note(center) : std::nullopt;
+        note && !note->text.empty()) {
+        //~ The note on the overmap square under the cursor; %s is its text.
+        om.cursor_note = string_format(_("Note: %s"), note->text);
+    }
+    if (const auto steps = om.path.size(); steps > 0) {
+        om.route_text = string_format(
+            //~ The planned overmap travel route; %d is its length in overmap squares.
+            vgettext("Route of %d square.", "Route of %d squares.", steps),
+            static_cast<int>(steps));
+    }
     if (const auto* const legend = g->w_omlegend.get<cata_cursesport::WINDOW>();
         legend != nullptr) {
         for (int y = 0; y < legend->height; ++y) {

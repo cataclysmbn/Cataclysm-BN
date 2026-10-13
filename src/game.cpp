@@ -53,6 +53,7 @@
 #include "drop_token.h"
 #include "editmap.h"
 #include "enchantments/enchantment_vision.h"
+#include "engine_client_contract.h"
 #include "engine_client_presentation.h"
 #include "enums.h"
 #include "event.h"
@@ -9670,6 +9671,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                     .distance_metric = "square",
                     .status = is_moving_zone ? "zone_move" : !select_zone ? "look" :
                     has_first_point ? "zone_second" : "zone_first",
+                    .description = engine_client::tile_info_lines( position_of( lp ) ),
                 },
             };
         } );

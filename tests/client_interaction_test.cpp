@@ -23,6 +23,7 @@
 #    include "debug_menu.h"
 #    include "debug_test_support.h"
 #    include "drop_token.h"
+#    include "engine_client_contract.h"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
 #    include "faction.h"
@@ -42,6 +43,7 @@
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "overmap/overmap_ui.h"
+#    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
 #    include "pickup.h"
 #    include "player_activity.h"
@@ -1088,6 +1090,14 @@ TEST_CASE(
     REQUIRE(options != observed.choices.end());
     CHECK(options->enabled);
     CHECK(options->label == "Options");
+}
+
+TEST_CASE(
+    "the map offers Options as an action of its own", "[client][interaction][mcp][main_menu]") {
+    const auto ctxt = get_default_mode_input_context();
+    const auto actions = ctxt.get_registered_actions_copy();
+    CHECK(std::ranges::find(actions, "open_options") != actions.end());
+    CHECK(ctxt.get_action_name("open_options") == "Options");
 }
 
 TEST_CASE(
@@ -4294,6 +4304,50 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the overmap says when the cursor is on the player and gives its note and the route length",
+    "[client][interaction][overmap][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto restore_notes = restore_on_out_of_scope<bool>(uistate.overmap_show_map_notes);
+    uistate.overmap_show_map_notes = true;
+    auto& you = get_avatar();
+    const auto here = you.abs_omt_pos();
+    const auto noted = here + point_east * 3;
+    // A note with a glyph prefix: the corner shows only its text.
+    ACTIVE_OVERMAP_BUFFER.add_note(noted, "C:cache");
+    const auto remove_note = on_out_of_scope([noted]() {
+        ACTIVE_OVERMAP_BUFFER.delete_note(noted);
+    });
+    const auto restore_path = restore_on_out_of_scope<std::vector<tripoint_abs_omt>>(you.omt_path);
+    you.omt_path = {here + point_east, here + point_east * 2};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.overmap);
+        const auto& om = *snapshot.overmap;
+        CHECK(om.route_text == "Route of 2 squares.");
+        if (reads++ == 0) {
+            CHECK(om.cursor_here == "You are here.");
+            CHECK(om.cursor_note.empty());
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::set_target,
+                .position = game_client::interaction_position{noted.x(), noted.y(), noted.z()},
+            });
+        }
+        CHECK(om.cursor_here.empty());
+        CHECK(om.cursor_note == "Note: cache");
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    ui::omap::display();
+    CHECK(reads == 2);
+}
+
+TEST_CASE(
     "debugmsg reaches an engine client as a structured interaction with its text",
     "[client][interaction][debug_prompt][mcp]") {
     const auto guard = interaction_test_guard{};
@@ -5111,6 +5165,37 @@ TEST_CASE(
     CHECK_FALSE(result.position);
     REQUIRE(reads == 2);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
+}
+
+TEST_CASE(
+    "look around publishes what the native look window prints of the cursor square",
+    "[client][interaction][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.target);
+        const auto& target = *snapshot.target;
+        CHECK(target.status == "look");
+        CHECK_FALSE(target.description.empty());
+        // The square under the cursor, wherever it moves, as the mouse view describes it too.
+        CHECK(target.description == engine_client::tile_info_lines(target.cursor));
+        if (reads++ == 0) {
+            CHECK(target.cursor == target.source);
+            return resolve_action("RIGHT");
+        }
+        CHECK(target.cursor.x == target.source.x + 1);
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    auto center = you.bub_pos();
+    g->look_around(false, center, center, false, false, false);
+    CHECK(reads == 2);
 }
 
 TEST_CASE(

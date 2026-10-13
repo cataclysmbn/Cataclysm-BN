@@ -159,6 +159,8 @@ struct interaction_target {
     std::string status;
     bool limit_to_reality_bubble = false;
     std::vector<interaction_target_candidate> candidates;
+    /// What the native look window prints of the cursor square, line by line, localized; empty where the screen prints nothing.
+    std::vector<std::string> description;
 };
 
 struct interaction_overmap_note {
@@ -188,6 +190,12 @@ struct interaction_overmap {
     std::vector<std::string> legend;
     /// What the native sidebar says of the cursor square, without the window frame or the square's glyph.
     std::string cursor_description;
+    /// `You are here.`, localized, when the cursor is on the player's square; empty otherwise.
+    std::string cursor_here;
+    /// The note the native window prints in its corner for the cursor square, as one localized line; empty when none.
+    std::string cursor_note;
+    /// The length of the planned travel route as one localized line; empty without a route.
+    std::string route_text;
     std::vector<interaction_overmap_note> notes;
     /// The planned travel route, nearest square first.
     std::vector<interaction_position> path;

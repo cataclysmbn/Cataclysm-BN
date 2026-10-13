@@ -2784,6 +2784,49 @@
       }
     },
     {
+      "name": "overmap with the cursor on the player, its note and a route",
+      "def": "overmap",
+      "value": {
+        "origin": { "dim": "", "x": 50, "y": 50, "z": 0 },
+        "player": { "dim": "", "x": 50, "y": 50, "z": 0 },
+        "cols": 1,
+        "rows": 1,
+        "cells": [[["N", 15, 0]]],
+        "legend": ["│", "│F forest"],
+        "cursor_description": "forest",
+        "cursor_here": "You are here.",
+        "cursor_note": "Note: cache",
+        "route_text": "Route of 2 squares.",
+        "notes": [{ "pos": { "dim": "", "x": 50, "y": 50, "z": 0 }, "text": "cache" }],
+        "path": [{ "dim": "", "x": 51, "y": 50, "z": 0 }, { "dim": "", "x": 52, "y": 50, "z": 0 }]
+      }
+    },
+    {
+      "name": "look-around with the cursor square described",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:look",
+        "context": "LOOK",
+        "kind": "target",
+        "allow_cancel": true,
+        "allow_set_count": false,
+        "title": "Look Around",
+        "message": "",
+        "choices": [],
+        "choice_total": 0,
+        "target": {
+          "source": { "dim": "", "x": 60, "y": 60, "z": 0 },
+          "current": { "dim": "", "x": 61, "y": 60, "z": 0 },
+          "range": 132,
+          "distance_metric": "square",
+          "status": "look",
+          "candidates": [],
+          "description": ["Grass; Lighting: bright", "There is a tree here."]
+        },
+        "compat": { "panes": [] }
+      }
+    },
+    {
       "name": "in-game main menu row that opens the options",
       "def": "choice",
       "value": {
