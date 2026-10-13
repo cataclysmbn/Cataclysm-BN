@@ -297,6 +297,7 @@ auto interaction_json( const boundary_state &state ) -> json
                 {"description", candidate.description}, {"creature", candidate.creature},
                 {"position", to_json( candidate.position, frame )}} );
         }
+        if( !target.description.empty() ) { value["description"] = target.description; }
         if( frame.omt ) { value["unit"] = "omt"; }
         result["target"] = std::move( value );
     }

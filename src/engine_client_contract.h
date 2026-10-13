@@ -124,6 +124,8 @@ struct describe_request {
 struct tile_description {
     std::vector<std::string> lines = {};
 };
+/// What the native look-around and mouse views print of bubble square `at`, one entry per printed line.
+auto tile_info_lines( const game_client::interaction_position &at ) -> std::vector<std::string>;
 /// Passive read of the hovered square's native description; nothing is selected or planned.
 /// Rejected with `validation_failed` outside the terrain window or on another level.
 auto describe_tile( const describe_request &request, const std::string &epoch )

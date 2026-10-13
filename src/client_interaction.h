@@ -159,6 +159,8 @@ struct interaction_target {
     std::string status;
     bool limit_to_reality_bubble = false;
     std::vector<interaction_target_candidate> candidates;
+    /// What the native look window prints of the cursor square, line by line, localized; empty where the screen prints nothing.
+    std::vector<std::string> description;
 };
 
 struct interaction_overmap_note {

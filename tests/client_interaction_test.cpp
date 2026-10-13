@@ -23,6 +23,7 @@
 #    include "debug_menu.h"
 #    include "debug_test_support.h"
 #    include "drop_token.h"
+#    include "engine_client_contract.h"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
 #    include "faction.h"
@@ -5111,6 +5112,37 @@ TEST_CASE(
     CHECK_FALSE(result.position);
     REQUIRE(reads == 2);
     CHECK(cursor == tripoint_bub_ms(you.bub_pos().x() + 1, you.bub_pos().y(), you.bub_pos().z()));
+}
+
+TEST_CASE(
+    "look around publishes what the native look window prints of the cursor square",
+    "[client][interaction][mcp]") {
+    clear_map();
+    auto& you = get_avatar();
+    clear_character(you, false);
+    const auto guard = interaction_test_guard{};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.target);
+        const auto& target = *snapshot.target;
+        CHECK(target.status == "look");
+        CHECK_FALSE(target.description.empty());
+        // The square under the cursor, wherever it moves, as the mouse view describes it too.
+        CHECK(target.description == engine_client::tile_info_lines(target.cursor));
+        if (reads++ == 0) {
+            CHECK(target.cursor == target.source);
+            return resolve_action("RIGHT");
+        }
+        CHECK(target.cursor.x == target.source.x + 1);
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    auto center = you.bub_pos();
+    g->look_around(false, center, center, false, false, false);
+    CHECK(reads == 2);
 }
 
 TEST_CASE(

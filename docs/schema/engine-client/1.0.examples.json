@@ -2763,6 +2763,31 @@
       }
     },
     {
+      "name": "look-around with the cursor square described",
+      "def": "interaction",
+      "value": {
+        "schema_id": "interaction:look",
+        "context": "LOOK",
+        "kind": "target",
+        "allow_cancel": true,
+        "allow_set_count": false,
+        "title": "Look Around",
+        "message": "",
+        "choices": [],
+        "choice_total": 0,
+        "target": {
+          "source": { "dim": "", "x": 60, "y": 60, "z": 0 },
+          "current": { "dim": "", "x": 61, "y": 60, "z": 0 },
+          "range": 132,
+          "distance_metric": "square",
+          "status": "look",
+          "candidates": [],
+          "description": ["Grass; Lighting: bright", "There is a tree here."]
+        },
+        "compat": { "panes": [] }
+      }
+    },
+    {
       "name": "in-game main menu row that opens the options",
       "def": "choice",
       "value": {

@@ -1602,6 +1602,13 @@
             ],
             "additionalProperties": false
           }
+        },
+        "description": {
+          "type": "array",
+          "description": "What the native look window prints of the cursor square, one localized line per entry. Present on the look-around screen.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
