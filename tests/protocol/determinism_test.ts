@@ -240,12 +240,17 @@ class Session {
     assertEquals(await this.submit(operation), "completed", JSON.stringify(operation))
   }
 
-  async choose(label: string) {
+  /** Choose the entry; the stage is returned, as loading a world ends its command `interrupted`. */
+  async pick(label: string) {
     const choice = this.mirror.interaction.interaction.choices.find((entry: Value) =>
       entry.enabled && entry.label === label
     )
     assert(choice, `no choice ${label}`)
-    await this.run({ kind: "choose", choice_id: choice.id })
+    return await this.submit({ kind: "choose", choice_id: choice.id })
+  }
+
+  async choose(label: string) {
+    assertEquals(await this.pick(label), "completed", label)
   }
 
   /** Acknowledge single-choice prompts until `done` holds. */
@@ -434,7 +439,7 @@ async function drive(
     await session.start()
     await session.acknowledge(() => session.mirror.interaction.interaction?.context === "MAIN_MENU")
     await session.choose("New Game")
-    await session.choose("Tutorial")
+    await session.pick("Tutorial")
     assertEquals((await client.note()).method, "bn.resync")
     const window = session.window
     session = new Session(client)
