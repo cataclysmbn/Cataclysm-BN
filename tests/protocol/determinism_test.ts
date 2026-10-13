@@ -11,7 +11,7 @@
  *
  * BN_DETERMINISM_FOCUS=1 adds the unrecorded run that looks for the sidebar Focus difference.
  */
-import { assert, assertEquals } from "@std/assert"
+import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { Mirror } from "./mirror.ts"
 
 // deno-lint-ignore no-explicit-any
@@ -182,8 +182,19 @@ class Session {
 
   constructor(readonly client: Client) {}
 
-  async start() {
+  /** Subscribes again after a `bn.resync`: the snapshot replaces the mirror; command stages that arrived meanwhile are handled after it, and no event may. */
+  async resubscribe() {
     const header = await this.client.result("bn.subscribe", {})
+    const early = this.client.notes.splice(0)
+    await this.start(header)
+    for (const note of early) {
+      assertNotEquals(note.method, "bn.events", "an event between a resync and its snapshot")
+      this.handle(note)
+    }
+  }
+
+  async start(subscribed?: Value) {
+    const header = subscribed ?? await this.client.result("bn.subscribe", {})
     const parts: Value[] = []
     while (parts.length < header.parts) {
       const note = await this.client.note()
@@ -209,7 +220,7 @@ class Session {
       const stages = this.stages.get(params.command_id) ?? ["received"]
       stages.push(params.stage)
       this.stages.set(params.command_id, stages)
-    } else if (method !== "bn.loading" && method !== "bn.progress") {
+    } else if (!["bn.loading", "bn.progress", "bn.resync"].includes(method)) {
       throw new Error(`unexpected notification ${method}`)
     }
   }
@@ -229,7 +240,9 @@ class Session {
     })
     this.stages.set(id, ["received"])
     while (!["completed", "rejected", "interrupted"].includes(this.stages.get(id)!.at(-1)!)) {
-      this.handle(await this.client.note())
+      const note = await this.client.note()
+      this.handle(note)
+      if (note.method === "bn.resync") await this.resubscribe()
       await this.pay()
     }
     return this.stages.get(id)!.at(-1)!
