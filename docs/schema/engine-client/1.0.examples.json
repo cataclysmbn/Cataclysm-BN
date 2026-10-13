@@ -2851,8 +2851,11 @@
         "target": {
           "source": { "dim": "", "x": 60, "y": 60, "z": 0 },
           "current": { "dim": "", "x": 61, "y": 60, "z": 0 },
+          "minimum": { "dim": "", "x": 0, "y": 0, "z": -10 },
+          "maximum": { "dim": "", "x": 131, "y": 131, "z": 10 },
           "range": 132,
           "distance_metric": "square",
+          "distance": 1,
           "status": "look",
           "candidates": [],
           "description": ["Grass; Lighting: bright", "There is a tree here."]
