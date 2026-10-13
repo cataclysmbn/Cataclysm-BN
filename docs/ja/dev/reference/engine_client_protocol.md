@@ -42,6 +42,22 @@ title: エンジン/クライアントプロトコル 0.1
 
 エラーはコード `1000` と `error.data = {kind, action?, at?}` を使い、`action` が次の対応(`hello`、`subscribe`、`retry`)を示します。
 
+## バージョン 0.2（作業中）
+
+エンジンは `"0.1"` を上記のとおりに、`"0.2"` をすべてのトランスポートで提供し、hello が選ぶ。`"0.2"` を列挙した hello には 0.2 で応答し、次を含める必要がある。
+
+- `schema`: `sha256:` と、[`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) の生バイトの SHA-256 の先頭 16 桁の 16 進数。ハッシュが異なると `negotiation_failed`、`action: "hello"`、`error.data.schema = {engine, client}` で失敗する。エンジンは CMake の構成時にスキーマファイルからハッシュを得る。
+- 任意の `locale` と `capabilities`（`tiles`、`tint_ids`、`viewport`、`delivery`。0.1 の個別メンバーも受け付けるが両方の形式は併用できない）。結果には `schema`、`locale`（接続のテキストの言語）、`engine_locale`、`role` が加わる。エンジンが接続ごとにローカライズするまで、`locale` はエンジンの言語である。
+
+0.2 の接続だけが、すべてのインタラクション境界（スナップショットのヘッダーとイベント）で 0.1 の `interaction` と並んで `stack` を受け取る。スタックは開いている画面を外側から並べたもので、最後の画面だけが affordance を持つ。`component_id` 付きの `bn.interaction.choices` は最上位画面のその一覧（`rows`、`total`）を読む。
+
+`bn.command.submit` は `operation: {kind: "invoke", affordance_id, args?}` を受け取る。`expect` は affordance の `expect` の範囲に従う。
+
+- `screen`: `{screen_id}`。その画面が最上位の間だけ有効で、そうでなければ `stale_screen` で拒否される。エンジンはコマンドの実行中、この種の送信を最大 8 件待たせ、順番が来たときに個別に検証する。キーを押し続けても動き続け、閉じたポップアップ宛てのキーは拒否される。
+- `boundary`: `{boundary_id, revision}`。従来どおり。コマンドの実行中は `command_busy` で失敗する。
+
+affordance に合わない形式は `invalid_arguments` である。
+
 ## 配信クレジット
 
 `bn.hello` の `delivery = {credits, max_hz?}`(`credits` は 1〜256、任意の `max_hz` は 1〜240)で有効にします。結果には `delivery = {credits, held_frames, held_bytes, max_hz?}` が付き、`max_hz` を要求した場合はそのまま返されます。`delivery` を送らない場合、以下は適用されず、プッシュされるフレームは従来どおり入力境界と自動移動のステップで即座に書き込まれます。

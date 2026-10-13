@@ -3,6 +3,8 @@
 #    include "avatar.h"
 #    include "catch/catch.hpp"
 #    include "client_input.h"
+#    include "engine_client_component.h"
+#    include "engine_client_schema.h"
 #    include "engine_client_session.h"
 #    include "input.h"
 #    include "json.h"
@@ -41,6 +43,22 @@ auto rpc(const std::string& method, const std::string& params, const std::string
 const auto hello =
     rpc("bn.hello", R"({"versions":["0.1"],"client":{"name":"test","version":"1"}})", "1");
 const auto subscribe = rpc("bn.subscribe", "{}", "2");
+const auto engine_hash = std::string{engine_schema_hash};
+auto hello_02_with(const std::string& hash) -> std::string {
+    return rpc(
+        "bn.hello",
+        R"({"versions":["0.2"],"client":{"name":"test","version":"1"},"schema":")" + hash + R"("})",
+        "1");
+}
+const auto hello_02 = hello_02_with(engine_hash);
+/// The requests of `texts` as one JSON-RPC batch frame.
+auto batch_of(const std::vector<std::string>& texts) -> std::string {
+    auto frame = std::string{"["};
+    for (const auto& text : texts) {
+        frame += (frame.size() > 1 ? "," : "") + text.substr(0, text.find_last_not_of('\n') + 1);
+    }
+    return frame + "]\n";
+}
 
 auto contains(const std::string& text, const std::string& part) -> bool {
     return text.find(part) != std::string::npos;
@@ -237,7 +255,7 @@ TEST_CASE("hello is required and checks the version", "[engine_client_server]") 
     test.pump(
         rpc("bn.subscribe", "{}", "1")
         + rpc("bn.hello", R"({"versions":["0.9"],"client":{"name":"t","version":"1"}})", "2")
-        // "1.0" is reserved for the finished protocol; the engine offers only "0.1".
+        // "1.0" is reserved for the finished protocol; the engine offers "0.1" and "0.2".
         + rpc("bn.hello", R"({"versions":["1.0"],"client":{"name":"t","version":"1"}})", "3")
         + hello);
     const auto out = test.output.str();
@@ -473,6 +491,261 @@ TEST_CASE("interaction choices are a passive paged read", "[engine_client_server
     CHECK(contains(test.output.str(), R"("id":"choice:no")"));
     CHECK_FALSE(contains(test.output.str(), R"("id":"choice:yes")"));
     CHECK(test.authority.at() == before);
+}
+
+TEST_CASE("a 0.2 hello names the schema and a wrong one is refused", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    const auto stranger = std::string{"sha256:0000000000000000"};
+    SECTION("the hash, the locale and the role are answered") {
+        test.pump(hello_02);
+        const auto out = test.output.str();
+        CHECK(contains(out, R"("version":"0.2")"));
+        CHECK(contains(out, R"("schema":")" + engine_hash + R"(","locale":")"));
+        CHECK(contains(out, R"("engine_locale":")"));
+        CHECK(contains(out, R"("role":"controller")"));
+    }
+    SECTION("a different hash fails the negotiation and names both") {
+        test.pump(hello_02_with(stranger));
+        const auto out = test.output.str();
+        CHECK(contains(out, R"("kind":"negotiation_failed")"));
+        CHECK(contains(out, R"("action":"hello")"));
+        CHECK(contains(
+            out, R"("schema":{"engine":")" + engine_hash + R"(","client":")" + stranger + R"("})"));
+        CHECK_FALSE(contains(out, R"("version":"0.2")"));
+    }
+    SECTION("a refused hello negotiates nothing, and a 0.1 hello after it is served as before") {
+        test.pump(hello_02_with(stranger) + rpc("bn.subscribe", "{}", "7") + hello + subscribe);
+        const auto out = test.output.str();
+        CHECK(index_of(out, R"("id":7,"error")") != std::string::npos);
+        CHECK(contains(out, R"("version":"0.1")"));
+        CHECK_FALSE(contains(out, R"("version":"0.2")"));
+        CHECK_FALSE(contains(out, R"("schema":)" + std::string{"\""} + engine_hash));
+    }
+    SECTION("a 0.2 hello without the hash, or with a malformed one, is invalid params") {
+        test.pump(
+            rpc("bn.hello", R"({"versions":["0.2"],"client":{"name":"t","version":"1"}})", "5")
+            + hello_02_with("sha256:ABCDEF0123456789"));
+        CHECK(count_of(test.output.str(), R"("code":-32602)") == 2);
+        CHECK_FALSE(contains(test.output.str(), R"("version":"0.2")"));
+    }
+    SECTION("capabilities carry what the loose members of 0.1 did") {
+        test.pump(rpc(
+            "bn.hello",
+            R"({"versions":["0.2"],"client":{"name":"t","version":"1"},"schema":")" + engine_hash
+                + R"(","capabilities":{"viewport":{"cols":40,"rows":25},"delivery":{"credits":4}}})",
+            "1"));
+        CHECK(declared_viewport == std::vector<std::pair<int, int>>{{40, 25}});
+        CHECK(contains(test.output.str(), R"("delivery":{"credits":4)"));
+    }
+}
+
+TEST_CASE("only a 0.2 connection reads the stack of a boundary", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto stack = R"("stack":[{"screen_id":")";
+    const auto connect = [&](const std::string& greeting) {
+        REQUIRE(test.pump(
+            greeting + subscribe
+            + test.submit_text(R"({"kind":"choose","choice_id":"choice:yes"})", test.schema())));
+        return test.output.str();
+    };
+    SECTION("0.2 snapshot and events") {
+        const auto snapshot = connect(hello_02);
+        CHECK(contains(snapshot, stack));
+        test.run_native_input();
+        known_cells.push_back(3);
+        test.output.str("");
+        CHECK_FALSE(test.pump(""));
+        const auto events = test.output.str();
+        REQUIRE(contains(events, R"("method":"bn.events")"));
+        CHECK(contains(events, stack));
+    }
+    SECTION("0.1 snapshot and events stay as they were") {
+        const auto snapshot = connect(hello);
+        CHECK(contains(snapshot, R"("interaction":{"boundary_id")"));
+        CHECK_FALSE(contains(snapshot, "stack"));
+        test.run_native_input();
+        known_cells.push_back(3);
+        test.output.str("");
+        CHECK_FALSE(test.pump(""));
+        const auto events = test.output.str();
+        REQUIRE(contains(events, R"("method":"bn.events")"));
+        CHECK_FALSE(contains(events, "stack"));
+    }
+}
+
+TEST_CASE("a list of the top screen is paged by component", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto before = test.authority.at();
+    const auto id = test.authority.current()->value.interaction.id;
+    const auto rows = [&](const std::string& component, const std::string& n) {
+        return rpc(
+            "bn.interaction.choices",
+            R"({"epoch":")" + test.authority.epoch() + R"(","boundary_id":")" + id
+                + R"(","offset":1,"limit":5,"component_id":")" + component + R"("})",
+            n);
+    };
+    SECTION("rows from the offset and the whole total") {
+        test.pump(hello_02 + rows("list:choices", "6"));
+        const auto out = test.output.str();
+        CHECK(contains(out, R"("component_id":"list:choices","total":2,"rows":[)"));
+        CHECK(contains(out, R"("id":"choice:no")"));
+        CHECK_FALSE(contains(out, R"("id":"choice:yes")"));
+        CHECK(test.authority.at() == before);
+    }
+    SECTION("a component the screen does not hold is validation_failed") {
+        test.pump(hello_02 + rows("list:missing", "6"));
+        CHECK(contains(test.output.str(), R"("kind":"validation_failed")"));
+    }
+    SECTION("a boundary that has passed is stale") {
+        test.pump(
+            hello_02
+            + rpc(
+                "bn.interaction.choices",
+                R"({"epoch":")" + test.authority.epoch()
+                    + R"(","boundary_id":"boundary:old","offset":0,"limit":5,"component_id":"list:choices"})",
+                "6"));
+        CHECK(contains(test.output.str(), R"("kind":"stale_boundary")"));
+    }
+    SECTION("a 0.1 connection has no components") {
+        test.pump(hello + rows("list:choices", "6"));
+        CHECK(contains(test.output.str(), R"("code":-32602)"));
+        CHECK_FALSE(contains(test.output.str(), "choice:no"));
+    }
+}
+
+TEST_CASE("an invoke runs an affordance of the top screen", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto screen = std::optional<screen_scope>{};
+    screen.emplace(boundary.context);
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto screen_id = top_screen(*test.authority.boundary()).screen_id;
+    const auto invoke = [&](const std::string& n, const std::string& expect = {}) {
+        return rpc(
+            "bn.command.submit",
+            R"({"epoch":")" + test.authority.epoch() + R"(","expect":)"
+                + (expect.empty() ? R"({"screen_id":")" + screen_id + R"("})" : expect)
+                + R"(,"operation":{"kind":"invoke","affordance_id":"YES"}})",
+            n);
+    };
+    SECTION("a registered action completes at the next boundary") {
+        REQUIRE(test.pump(hello_02 + subscribe + invoke("3")));
+        CHECK(contains(test.output.str(), R"("stage":"received")"));
+        CHECK(contains(test.output.str(), R"("stage":"validated")"));
+        test.run_native_input();
+        test.output.str("");
+        CHECK_FALSE(test.pump(""));
+        CHECK(contains(test.output.str(), R"("stage":"executing")"));
+        CHECK(contains(test.output.str(), R"("stage":"completed")"));
+    }
+    SECTION("a screen that is not on top is stale_screen and delivers nothing") {
+        CHECK_FALSE(
+            test.pump(hello_02 + subscribe + invoke("3", R"({"screen_id":"screen:closed"})")));
+        CHECK(test.queued.empty());
+        CHECK(contains(test.output.str(), R"("stage":"rejected","error":"stale_screen")"));
+    }
+    SECTION("an affordance the screen does not offer is unknown_affordance") {
+        CHECK_FALSE(test.pump(
+            hello_02 + subscribe
+            + rpc("bn.command.submit",
+                  R"({"epoch":")" + test.authority.epoch() + R"(","expect":{"screen_id":")"
+                      + screen_id
+                      + R"("},"operation":{"kind":"invoke","affordance_id":"bn:nothing"}})",
+                  "3")));
+        CHECK(test.queued.empty());
+        CHECK(contains(test.output.str(), R"("stage":"rejected","error":"unknown_affordance")"));
+    }
+    SECTION("a boundary expectation for an affordance that expects a screen is invalid_arguments") {
+        const auto current = test.authority.current();
+        REQUIRE(current);
+        CHECK_FALSE(test.pump(
+            hello_02 + subscribe
+            + invoke("3",
+                     R"({"boundary_id":")" + current->value.interaction.id + R"(","revision":")"
+                         + std::to_string(current->at.revision) + R"("})")));
+        CHECK(test.queued.empty());
+        CHECK(contains(test.output.str(), R"("stage":"rejected","error":"invalid_arguments")"));
+    }
+    SECTION("a 0.1 connection cannot invoke") {
+        CHECK_FALSE(test.pump(hello + subscribe + invoke("3")));
+        CHECK(test.queued.empty());
+        CHECK(contains(test.output.str(), R"("code":-32602)"));
+        CHECK_FALSE(contains(test.output.str(), R"("stage":"received")"));
+    }
+}
+
+TEST_CASE("screen-scoped invokes queue behind the running command", "[engine_client_server]") {
+    auto boundary = input_boundary{};
+    auto screen = std::optional<screen_scope>{};
+    screen.emplace(boundary.context);
+    auto test = fixture{};
+    REQUIRE(test.authority.publish_boundary());
+    const auto screen_id = top_screen(*test.authority.boundary()).screen_id;
+    const auto yes = [&](const std::string& n) {
+        return rpc(
+            "bn.command.submit",
+            R"({"epoch":")" + test.authority.epoch() + R"(","expect":{"screen_id":")" + screen_id
+                + R"("},"operation":{"kind":"invoke","affordance_id":"YES"}})",
+            n);
+    };
+    SECTION("a held key: five in one frame all complete, one at a time") {
+        REQUIRE(test.pump(
+            hello_02 + subscribe + batch_of({yes("3"), yes("4"), yes("5"), yes("6"), yes("7")})));
+        // Five receipts, and only the first is running.
+        CHECK(count_of(test.output.str(), R"("stage":"received")") == 5);
+        CHECK(count_of(test.output.str(), R"("stage":"validated")") == 1);
+        for (auto done = 1; done < 5; ++done) {
+            test.run_native_input();
+            REQUIRE(test.pump(""));
+            CHECK(count_of(test.output.str(), R"("stage":"completed")") == done);
+            CHECK(count_of(test.output.str(), R"("stage":"validated")") == done + 1);
+        }
+        test.run_native_input();
+        CHECK_FALSE(test.pump(""));
+        CHECK(count_of(test.output.str(), R"("stage":"completed")") == 5);
+        CHECK_FALSE(contains(test.output.str(), R"("stage":"rejected")"));
+    }
+    SECTION("the queue holds eight behind the running command") {
+        auto frame = std::vector<std::string>{};
+        for (auto n = 0; n < 10; ++n) { frame.push_back(yes(std::to_string(10 + n))); }
+        REQUIRE(test.pump(hello_02 + subscribe + batch_of(frame)));
+        // One running, eight waiting; the tenth is busy.
+        CHECK(count_of(test.output.str(), R"("stage":"received")") == 9);
+        CHECK(count_of(test.output.str(), R"("kind":"command_busy")") == 1);
+    }
+    SECTION("a boundary-scoped command is busy while one runs") {
+        REQUIRE(test.pump(
+            hello_02 + subscribe
+            + batch_of({yes("3"), test.submit_text(R"({"kind":"cancel"})", test.schema())})));
+        CHECK(count_of(test.output.str(), R"("stage":"received")") == 1);
+        CHECK(contains(test.output.str(), R"("kind":"command_busy")"));
+    }
+    SECTION("a burst aimed at a screen that closed is stale_screen for every key after the first") {
+        REQUIRE(test.pump(hello_02 + subscribe + batch_of({yes("3"), yes("4"), yes("5")})));
+        test.run_native_input();
+        // The first key closed the popup; another screen is on top now.
+        screen.reset();
+        screen.emplace(boundary.context);
+        CHECK_FALSE(test.pump(""));
+        const auto out = test.output.str();
+        CHECK(count_of(out, R"("stage":"completed")") == 1);
+        CHECK(count_of(out, R"("stage":"rejected","error":"stale_screen")") == 2);
+        CHECK(test.queued.empty());
+    }
+    SECTION("a world replacement interrupts what waits") {
+        REQUIRE(test.pump(hello_02 + subscribe + batch_of({yes("3"), yes("4"), yes("5")})));
+        test.queued.clear();
+        test.output.str("");
+        test.authority.replace_world();
+        test.next_boundary();
+        CHECK_FALSE(test.pump(""));
+        CHECK(count_of(test.output.str(), R"("stage":"interrupted","error":"stale_epoch")") == 3);
+    }
 }
 
 TEST_CASE("world cells are a passive read of the known box", "[engine_client_server]") {

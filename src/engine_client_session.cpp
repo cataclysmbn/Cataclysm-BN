@@ -10,6 +10,7 @@
 #include "color.h"
 #include "game_session.h"
 #include "get_version.h"
+#include "language.h"
 #include "message_types.h"
 #include "options.h"
 #include "output.h"
@@ -77,11 +78,19 @@ auto session::refresh_result() -> void
     if( !current ) { return; }
     if( current->stage != active_->stage ) { post( *current ); }
     active_ = *current;
+    // A screen-scoped invoke that waited takes over once the running command has ended.
+    if( auto next = lifecycle_->promote() ) {
+        active_ = std::move( next->result );
+        input_ = std::move( next->request );
+        retired_.reset();
+    }
 }
 
 auto session::interrupt( const error reason ) -> void
 {
     if( active_ ) {
+        // The waiting commands end first, so that none takes over from the running one.
+        for( auto &ended : lifecycle_->drain( reason ) ) { post( std::move( ended ) ); }
         static_cast<void>( lifecycle_->interrupt( reason ) );
         refresh_result();
     }
@@ -281,6 +290,12 @@ auto session::current() const -> std::expected<snapshot, error>
     return stream_->current();
 }
 
+auto session::boundary() const -> std::expected<boundary_state, error>
+{
+    if( !stream_ ) { return std::unexpected( error::not_ready ); }
+    return stream_->current().value.interaction;
+}
+
 auto session::at() const -> std::optional<clock_point>
 {
     if( !stream_ ) { return std::nullopt; }
@@ -289,6 +304,12 @@ auto session::at() const -> std::optional<clock_point>
 
 auto session::submit( command_request request ) -> std::expected<receipt, error>
 {
+    if( lifecycle_->busy() ) {
+        // Only a screen-scoped invoke may wait; it keeps its receipt and is validated when it runs.
+        const auto waiting = lifecycle_->enqueue( std::move( request ) );
+        if( !waiting ) { return std::unexpected( waiting.error() ); }
+        return receipt{ .epoch = waiting->epoch, .command_id = waiting->command_id };
+    }
     auto input = request;
     const auto received = lifecycle_->submit( std::move( request ) );
     if( !received ) { return std::unexpected( received.error() ); }
@@ -309,8 +330,10 @@ std::expected<game_client::input_command, error>
     if( !stream_ || !input_ ) { return std::unexpected( error::not_ready ); }
     const auto &now = stream_->current();
     const auto validated = lifecycle_->validate( now.at, now.value.interaction, screen_size );
+    // A rejected command is over, and the one that waited behind it takes its place.
+    if( !validated ) { input_.reset(); }
     refresh_result();
-    if( !validated ) { input_.reset(); return std::unexpected( validated.error() ); }
+    if( !validated ) { return std::unexpected( validated.error() ); }
     validated_input_ = *validated;
     auto native = game_client::input_command{ .input_id = game_client::current_input_id() };
     if( const auto semantic = std::get_if<semantic_operation>( &input_->operation ) ) {
@@ -323,12 +346,10 @@ std::expected<game_client::input_command, error>
         }
     } else if( const auto travel = std::get_if<travel_operation>( &input_->operation ) ) {
         native = *travel_click( *travel );
-    } else if( std::holds_alternative<item_operation>( input_->operation ) ) {
+    } else if( std::holds_alternative<item_operation>( input_->operation ) ||
+               std::holds_alternative<invoke_operation>( input_->operation ) ) {
+        // The native input only wakes the read; the validated event takes its place at the delivery seam.
         native = item_operation_input();
-    } else if( std::holds_alternative<invoke_operation>( input_->operation ) ) {
-        // Wire decode makes no invoke yet; its native input is the validated event.
-        input_.reset();
-        return std::unexpected( error::invalid_arguments );
     } else {
         native.action = std::get<registered_action>( input_->operation ).id;
     }
@@ -382,6 +403,7 @@ auto describe_engine() -> engine_info
         .build = getVersionString(),
         .use_tiles = get_option<bool>( "USE_TILES" ),
         .tileset = get_option<std::string>( "TILES" ),
+        .locale = get_language().id,
     };
     if( world_generator && world_generator->active_world && world_generator->active_world->info ) {
         for( const auto &mod : world_generator->active_world->info->active_mod_order ) {

@@ -762,6 +762,18 @@ if (NOT GETTEXT_MSGFMT_EXECUTABLE )
     set(GETTEXT_MSGFMT_EXECUTABLE "${GETTEXT_MSGFMT_BINARY}")
 endif()
 
+# The engine/client protocol schema a client must have been built with: the hash of its raw bytes goes
+# into a generated header, and the hello compares it. A changed schema re-runs the configure step.
+set(ENGINE_CLIENT_SCHEMA "${CMAKE_SOURCE_DIR}/docs/schema/engine-client/0.2.schema.json")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${ENGINE_CLIENT_SCHEMA}")
+file(SHA256 "${ENGINE_CLIENT_SCHEMA}" ENGINE_CLIENT_SCHEMA_SHA256)
+string(SUBSTRING "${ENGINE_CLIENT_SCHEMA_SHA256}" 0 16 ENGINE_CLIENT_SCHEMA_HASH)
+configure_file(
+    "${CMAKE_SOURCE_DIR}/src/engine_client_schema.h.in"
+    "${CMAKE_BINARY_DIR}/generated/engine_client_schema.h"
+    @ONLY)
+include_directories("${CMAKE_BINARY_DIR}/generated")
+
 # Ok. Now create build and install recipes
 add_subdirectory(lang)
 

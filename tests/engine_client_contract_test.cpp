@@ -835,3 +835,122 @@ TEST_CASE("an invoke expects its screen or its boundary by scope", "[engine_clie
         CHECK(resolved.error() == engine_client::error::unknown_affordance);
     }
 }
+
+namespace {
+auto invoke_request(const std::string& screen_id, const std::string& affordance = "action:any")
+    -> engine_client::command_request {
+    return {.epoch = "epoch:test",
+            .expect = {.screen_id = screen_id},
+            .operation = engine_client::invoke_operation{.affordance_id = affordance}};
+}
+} // namespace
+
+TEST_CASE("screen-scoped invokes wait behind the running command", "[engine_client_contract]") {
+    auto context = input_context{"YESNO"};
+    context.register_action("YES");
+    const auto input_scope = game_client::input_context_scope{context, "YESNO"};
+    const auto scope = game_client::interaction_scope{
+        context, [] {
+            return game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices,
+                .allow_cancel = true,
+                .choices = {{.id = "choice:yes", .label = "Yes"}},
+            };
+        }};
+    game_client::begin_input_boundary();
+    const auto boundary = capture();
+    auto authority = test_authority{};
+    auto lifecycle = engine_client::command_lifecycle{"epoch:test", authority};
+
+    SECTION("nothing waits while nothing runs") {
+        const auto idle = lifecycle.enqueue(invoke_request("screen:1"));
+        REQUIRE_FALSE(idle);
+        CHECK(idle.error() == engine_client::error::invalid_lifecycle);
+        CHECK_FALSE(lifecycle.promote());
+    }
+    SECTION("only an invoke that expects a screen waits") {
+        REQUIRE(lifecycle.submit(choose_request(boundary, "choice:yes")));
+        const auto cancel = lifecycle.enqueue(choose_request(boundary, "choice:yes"));
+        REQUIRE_FALSE(cancel);
+        CHECK(cancel.error() == engine_client::error::command_busy);
+        auto by_boundary = invoke_request("screen:1");
+        by_boundary.expect = {.revision = 1, .boundary_id = boundary.id};
+        const auto boundary_scoped = lifecycle.enqueue(by_boundary);
+        REQUIRE_FALSE(boundary_scoped);
+        CHECK(boundary_scoped.error() == engine_client::error::command_busy);
+        // The same request is refused outright when submitted while busy.
+        const auto busy = lifecycle.submit(invoke_request("screen:1"));
+        REQUIRE_FALSE(busy);
+        CHECK(busy.error() == engine_client::error::command_busy);
+    }
+    SECTION("a waiting command keeps its receipt and takes over in order") {
+        const auto running = lifecycle.submit(choose_request(boundary, "choice:yes"));
+        REQUIRE(running);
+        const auto first = lifecycle.enqueue(invoke_request("screen:1", "action:first"));
+        const auto second = lifecycle.enqueue(invoke_request("screen:1", "action:second"));
+        REQUIRE(first);
+        REQUIRE(second);
+        CHECK(first->stage == engine_client::command_stage::received);
+        CHECK(first->command_id != running->command_id);
+        CHECK(first->command_id != second->command_id);
+        CHECK(
+            lifecycle.result(second->command_id)->stage == engine_client::command_stage::received);
+        // The running command is still the one that is validated, and nothing takes over before it
+        // ends.
+        CHECK_FALSE(lifecycle.promote());
+        REQUIRE(lifecycle.interrupt(engine_client::error::not_ready));
+        const auto next = lifecycle.promote();
+        REQUIRE(next);
+        CHECK(next->result.command_id == first->command_id);
+        CHECK(std::get<engine_client::invoke_operation>(next->request.operation).affordance_id
+              == "action:first");
+        CHECK(lifecycle.busy());
+        CHECK_FALSE(lifecycle.promote());
+        REQUIRE(lifecycle.interrupt(engine_client::error::not_ready));
+        const auto last = lifecycle.promote();
+        REQUIRE(last);
+        CHECK(last->result.command_id == second->command_id);
+        REQUIRE(lifecycle.interrupt(engine_client::error::not_ready));
+        CHECK_FALSE(lifecycle.promote());
+    }
+    SECTION("a waiting command is validated when it runs, against the screen then on top") {
+        REQUIRE(lifecycle.submit(choose_request(boundary, "choice:yes")));
+        const auto waiting = lifecycle.enqueue(invoke_request("screen:closed"));
+        REQUIRE(waiting);
+        REQUIRE(lifecycle.interrupt(engine_client::error::not_ready));
+        REQUIRE(lifecycle.promote());
+        const auto rejected = lifecycle.validate(at_of(boundary), boundary, point{80, 24});
+        REQUIRE_FALSE(rejected);
+        CHECK(rejected.error() == engine_client::error::stale_screen);
+        CHECK(lifecycle.result(waiting->command_id)->failure == engine_client::error::stale_screen);
+        CHECK_FALSE(lifecycle.busy());
+    }
+    SECTION("the queue holds eight") {
+        REQUIRE(lifecycle.submit(choose_request(boundary, "choice:yes")));
+        for (auto i = std::size_t{0}; i < engine_client::maximum_queued_commands; ++i) {
+            REQUIRE(lifecycle.enqueue(invoke_request("screen:1")));
+        }
+        const auto over = lifecycle.enqueue(invoke_request("screen:1"));
+        REQUIRE_FALSE(over);
+        CHECK(over.error() == engine_client::error::command_busy);
+    }
+    SECTION("draining ends every waiting command and keeps the running one") {
+        REQUIRE(lifecycle.submit(choose_request(boundary, "choice:yes")));
+        const auto first = lifecycle.enqueue(invoke_request("screen:1"));
+        const auto second = lifecycle.enqueue(invoke_request("screen:1"));
+        REQUIRE(first);
+        REQUIRE(second);
+        const auto ended = lifecycle.drain(engine_client::error::stale_epoch);
+        REQUIRE(ended.size() == 2);
+        CHECK(ended[0].command_id == first->command_id);
+        CHECK(ended[1].command_id == second->command_id);
+        for (const auto& result : ended) {
+            CHECK(result.stage == engine_client::command_stage::interrupted);
+            CHECK(result.failure == engine_client::error::stale_epoch);
+        }
+        CHECK(lifecycle.busy());
+        CHECK_FALSE(lifecycle.promote());
+        CHECK_FALSE(lifecycle.result(first->command_id));
+        CHECK(lifecycle.drain(engine_client::error::stale_epoch).empty());
+    }
+}

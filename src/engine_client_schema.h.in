@@ -1,0 +1,9 @@
+#pragma once
+
+namespace engine_client
+{
+
+/// The hash of the raw bytes of docs/schema/engine-client/0.2.schema.json this engine was configured with.
+inline constexpr auto engine_schema_hash = "sha256:@ENGINE_CLIENT_SCHEMA_HASH@";
+
+} // namespace engine_client

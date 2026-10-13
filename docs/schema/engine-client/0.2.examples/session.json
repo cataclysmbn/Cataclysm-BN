@@ -397,6 +397,19 @@
       }
     },
     {
+      "name": "hello refused for a different schema",
+      "def": "application_error",
+      "value": {
+        "kind": "negotiation_failed",
+        "action": "hello",
+        "message": "The client and the engine speak different protocol schemas.",
+        "schema": {
+          "engine": "sha256:8f33752cf415ac5a",
+          "client": "sha256:0123456789abcdef"
+        }
+      }
+    },
+    {
       "name": "stale submit error",
       "def": "application_error",
       "value": {
@@ -611,6 +624,17 @@
           ""
         ]
       }
+    },
+    {
+      "name": "schema mismatch naming only the engine's hash",
+      "def": "application_error",
+      "value": {
+        "kind": "negotiation_failed",
+        "schema": {
+          "engine": "sha256:8f33752cf415ac5a"
+        }
+      },
+      "why": "both hashes are named"
     },
     {
       "name": "hello request with a malformed schema hash",

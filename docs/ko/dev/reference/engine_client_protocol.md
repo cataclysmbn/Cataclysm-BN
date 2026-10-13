@@ -42,6 +42,22 @@ title: 엔진/클라이언트 프로토콜 0.1
 
 오류는 코드 `1000`과 `error.data = {kind, action?, at?}`를 사용하며, `action`은 다음에 할 일(`hello`, `subscribe`, `retry`)을 알려 줍니다.
 
+## 버전 0.2 (진행 중)
+
+엔진은 `"0.1"`을 위 설명 그대로, `"0.2"`를 모든 전송 방식에서 제공하며 hello가 고른다. `"0.2"`를 나열한 hello는 0.2로 응답하며 다음을 담아야 한다.
+
+- `schema`: `sha256:`과 [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json) 원본 바이트의 SHA-256 앞 16자리 16진수. 해시가 다르면 `negotiation_failed`, `action: "hello"`, `error.data.schema = {engine, client}`로 실패한다. 엔진은 CMake 구성 시 스키마 파일에서 해시를 얻는다.
+- 선택 항목 `locale`, `capabilities`(`tiles`, `tint_ids`, `viewport`, `delivery`; 0.1의 개별 멤버도 받지만 두 형식을 함께 쓸 수 없다). 결과에는 `schema`, `locale`(연결의 텍스트 언어), `engine_locale`, `role`이 추가된다. 엔진이 연결별로 현지화하기 전까지 `locale`은 엔진의 언어다.
+
+0.2 연결만 모든 상호작용 경계(스냅샷 헤더와 이벤트)에서 0.1 `interaction` 옆에 `stack`을 받는다. 스택은 열린 화면을 바깥쪽부터 나열하며 마지막 화면만 affordance를 가진다. `component_id`가 있는 `bn.interaction.choices`는 맨 위 화면의 해당 목록(`rows`, `total`)을 읽는다.
+
+`bn.command.submit`은 `operation: {kind: "invoke", affordance_id, args?}`를 받는다. `expect`는 affordance의 `expect` 범위를 따른다.
+
+- `screen`: `{screen_id}`. 그 화면이 맨 위인 동안만 유효하며, 아니면 `stale_screen`으로 거부된다. 엔진은 명령이 실행 중일 때 이런 제출을 최대 8개 대기시키고 차례가 되면 각각 검증한다. 키를 누르고 있어도 계속 움직이고, 이미 닫힌 팝업을 향한 키는 거부된다.
+- `boundary`: `{boundary_id, revision}`, 기존과 같다. 명령이 실행 중이면 `command_busy`로 실패한다.
+
+affordance와 맞지 않는 형식은 `invalid_arguments`다.
+
 ## 전달 크레딧
 
 `bn.hello`의 `delivery = {credits, max_hz?}`(`credits` 1~256, 선택 `max_hz` 1~240)로 켭니다. 결과에는 `delivery = {credits, held_frames, held_bytes, max_hz?}`가 붙고, `max_hz`를 요청했다면 그대로 되돌려 줍니다. `delivery`를 보내지 않으면 아래는 적용되지 않으며, 푸시되는 프레임은 전과 같이 입력 경계와 자동 이동 단계에서 즉시 기록됩니다.

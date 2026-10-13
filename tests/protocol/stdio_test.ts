@@ -10,25 +10,37 @@ import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
 import { Mirror } from "./mirror.ts"
 
-// Every message the engine really sends is checked against the published schema.
-const schema = JSON.parse(
-  await Deno.readTextFile(
-    new URL("../../docs/schema/engine-client/0.1.schema.json", import.meta.url),
-  ),
-)
-const ajv = new Ajv2020({ strict: false })
-ajv.addSchema(schema, "bn")
-const validate = (def: string, value: unknown, what: string) => {
-  const check = ajv.getSchema(`bn#/$defs/${def}`)
+// deno-lint-ignore no-explicit-any
+type Value = any
+type Version = "0.1" | "0.2"
+const schemaFile = (version: Version) =>
+  new URL(`../../docs/schema/engine-client/${version}.schema.json`, import.meta.url)
+// Every message the engine really sends is checked against the schema of the version its hello chose.
+const schemas: Record<Version, Value> = {
+  "0.1": JSON.parse(await Deno.readTextFile(schemaFile("0.1"))),
+  "0.2": JSON.parse(await Deno.readTextFile(schemaFile("0.2"))),
+}
+const validators = Object.fromEntries(
+  (Object.keys(schemas) as Version[]).map((version) => {
+    const ajv = new Ajv2020({ strict: false })
+    ajv.addSchema(schemas[version], "bn")
+    return [version, ajv]
+  }),
+) as Record<Version, Ajv2020>
+const validate = (version: Version, def: string, value: unknown, what: string) => {
+  const check = validators[version].getSchema(`bn#/$defs/${def}`)
   assert(check, def)
   assert(
     check(value),
     `${what} violates ${def}: ${JSON.stringify(check.errors)}\n${JSON.stringify(value)}`,
   )
 }
+/** What a 0.2 hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the 0.2 schema. */
+const schemaHash = "sha256:" + Array.from(
+  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile("0.2")))),
+  (byte) => byte.toString(16).padStart(2, "0"),
+).join("").slice(0, 16)
 
-// deno-lint-ignore no-explicit-any
-type Value = any
 /** The engine is killed after this long without protocol traffic, busy or not: loading steps and activities send heartbeats. */
 const stall = 120_000
 
@@ -45,6 +57,8 @@ class Client {
   replies: Value[] = []
   /** Pause after every chunk read, to drain the pipe slowly. */
   readDelayMs = 0
+  /** The version the messages are checked against; set it before a hello that negotiates another. */
+  version: Version = "0.1"
 
   constructor(binary: string, profile: string, stderr: "null" | "piped" = "null") {
     this.#process = new Deno.Command(binary, {
@@ -117,9 +131,14 @@ class Client {
   async repliesUntil(count: number) {
     while (this.replies.length < count) {
       const message = await this.#next()
-      validate(schema["x-notifications"][message.method], message.params, message.method)
+      this.#validateNotification(message)
       this.notes.push(message)
     }
+  }
+
+  #validateNotification(message: Value) {
+    const def = schemas[this.version]["x-notifications"][message.method]
+    validate(this.version, def, message.params, message.method)
   }
 
   /** Drops what was queued for the engine and closes its stdin, as a client that died; a write in flight ends when the engine reads or exits. */
@@ -157,12 +176,16 @@ class Client {
     while (true) {
       const message = await this.#next()
       if (message.id === id) {
-        if (message.error) validate("application_error", message.error.data, `${method} error`)
-        else validate(schema["x-methods"][method].result, message.result, `${method} result`)
+        if (message.error) {
+          validate(this.version, "application_error", message.error.data, `${method} error`)
+        } else {
+          const def = schemas[this.version]["x-methods"][method].result
+          validate(this.version, def, message.result, `${method} result`)
+        }
         return message
       }
       assert(message.id === undefined, `unexpected response ${JSON.stringify(message)}`)
-      validate(schema["x-notifications"][message.method], message.params, message.method)
+      this.#validateNotification(message)
       this.notes.push(message)
     }
   }
@@ -178,7 +201,7 @@ class Client {
     const queued = this.notes.shift()
     if (queued) return queued
     const message = await this.#next()
-    validate(schema["x-notifications"][message.method], message.params, message.method)
+    this.#validateNotification(message)
     return message
   }
 
@@ -208,6 +231,8 @@ class Session {
   mirror!: Mirror
   /** Stages seen per command id. */
   stages = new Map<string, string[]>()
+  /** The error of each command that ended in one. */
+  errors = new Map<string, string>()
   eventTypes: string[] = []
   /** The events that tell what happened rather than what the avatar knows, whole and in arrival order. */
   told: Value[] = []
@@ -280,6 +305,7 @@ class Session {
       const stages = this.stages.get(params.command_id) ?? ["received"]
       stages.push(params.stage)
       this.stages.set(params.command_id, stages)
+      if (params.error) this.errors.set(params.command_id, params.error)
     } else if (method === "bn.loading") {
       this.loading.push({ ...params, receivedAt: note.receivedAt })
     } else if (method === "bn.resync") {
@@ -2383,3 +2409,211 @@ for (const when of ["idle", "during a wait"] as const) {
     },
   })
 }
+
+/** The screen input goes to: the last of the stack a 0.2 boundary carries. */
+const top = (session: Session): Value => session.mirror.interaction.stack.at(-1)
+
+/** Submits `invokes` in one write (the engine reads them one frame at a time, so each runs alone; the queue is covered by the server suite's batch frame), without waiting for any of them, and follows the pushes until each has ended. */
+async function burst(
+  session: Session,
+  invokes: { affordance: string; screen: string; args?: Value }[],
+  firstId: number,
+) {
+  const { client } = session
+  const epoch = session.mirror.at.epoch
+  const ids = invokes.map((_, n) => firstId + n)
+  const answered = client.replies.length
+  client.raw(
+    invokes.map(({ affordance, screen, args }, n) =>
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id: ids[n],
+        method: "bn.command.submit",
+        params: {
+          epoch,
+          expect: { screen_id: screen },
+          operation: { kind: "invoke", affordance_id: affordance, ...(args ? { args } : {}) },
+        },
+      }) + "\n"
+    ).join(""),
+    ids,
+  )
+  await client.repliesUntil(answered + ids.length)
+  const commands = client.replies.slice(answered).map((reply) => {
+    assert(reply.error === undefined, JSON.stringify(reply.error))
+    return reply.result.command_id as string
+  })
+  const ended = (id: string) =>
+    ["completed", "rejected", "interrupted"].includes(session.stages.get(id)?.at(-1) ?? "")
+  while (!commands.every(ended)) session.handle(await client.note())
+  return commands.map((id) => ({
+    id,
+    stages: session.stages.get(id)!,
+    error: session.errors.get(id),
+  }))
+}
+
+const helloParams = { client: { name: "stdio-test", version: "1" } }
+
+Deno.test({
+  name:
+    "stdio: a 0.2 hello names the schema, a wrong hash fails with both, a 0.1 hello still works",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      client.version = "0.2"
+      const wrong = "sha256:0000000000000000"
+      const refused = await client.request("bn.hello", {
+        versions: ["0.2"],
+        ...helloParams,
+        schema: wrong,
+      })
+      assertEquals(refused.error.data.kind, "negotiation_failed")
+      assertEquals(refused.error.data.action, "hello")
+      assertEquals(refused.error.data.schema, { engine: schemaHash, client: wrong })
+      // Nothing was negotiated.
+      assertEquals(
+        (await client.request("bn.subscribe", {})).error.data.kind,
+        "negotiation_failed",
+      )
+      // A 0.2 hello without the hash is malformed, not a mismatch.
+      client.raw(
+        JSON.stringify({
+          jsonrpc: "2.0",
+          id: 90,
+          method: "bn.hello",
+          params: { versions: ["0.2"], ...helloParams },
+        }) + "\n",
+        [90],
+      )
+      await client.repliesUntil(1)
+      assertEquals(client.replies[0].error.code, -32602)
+
+      // The same connection can still speak 0.1: no stack, no schema, as before.
+      client.version = "0.1"
+      const old = await client.result("bn.hello", { versions: ["0.1"], ...helloParams })
+      assertEquals(old.version, "0.1")
+      for (const member of ["schema", "locale", "engine_locale", "role"]) {
+        assertEquals(old[member], undefined, member)
+      }
+      const legacy = new Session(client)
+      await legacy.start()
+      assertEquals(legacy.mirror.interaction.stack, undefined)
+
+      // And 0.2 after it: the hash, the locale, the role, and a stack of screens.
+      client.version = "0.2"
+      const hello = await client.result("bn.hello", {
+        versions: ["0.2"],
+        ...helloParams,
+        schema: schemaHash,
+        locale: "en",
+        capabilities: { viewport: { cols: 40, rows: 25 } },
+      })
+      assertEquals([hello.version, hello.schema, hello.role], ["0.2", schemaHash, "controller"])
+      assertEquals(typeof hello.locale, "string")
+      assertEquals(typeof hello.engine_locale, "string")
+      const modern = new Session(client)
+      await modern.start()
+      const stack: Value[] = modern.mirror.interaction.stack
+      assert(Array.isArray(stack) && stack.length >= 1, "a 0.2 boundary carries its stack")
+      assertEquals(new Set(stack.map((screen) => screen.screen_id)).size, stack.length)
+      for (const covered of stack.slice(0, -1)) assertEquals(covered.affordances, [])
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: 0.2 invoke: five moves sent at the map without waiting all complete",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      client.version = "0.2"
+      const session = await enterTutorial(client, { versions: ["0.2"], schema: schemaHash })
+      // The first turns of the tutorial open lessons; let them out of the way.
+      await session.submit({ kind: "action", action_id: "wait" })
+      await session.choose("5 minutes")
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+
+      const map = top(session)
+      assertEquals(map.role, "map")
+      const arrow = map.affordances.find((entry: Value) =>
+        ["RIGHT", "LEFT", "UP", "DOWN"].includes(entry.id)
+      )
+      assert(arrow, `no movement affordance in ${JSON.stringify(map.affordances)}`)
+      // A registered action has no row, position or text to validate, so it expects its screen.
+      assertEquals(arrow.expect, "screen")
+      const before = BigInt(session.mirror.at.sequence)
+      const outcomes = await burst(
+        session,
+        Array.from({ length: 5 }, () => ({ affordance: arrow.id, screen: map.screen_id })),
+        100,
+      )
+      for (const outcome of outcomes) {
+        assertEquals(outcome.stages.at(-1), "completed", JSON.stringify(outcome))
+        assertEquals(outcome.stages.slice(0, 3), ["received", "validated", "executing"])
+      }
+      assertEquals(new Set(outcomes.map((outcome) => outcome.id)).size, 5)
+      assert(BigInt(session.mirror.at.sequence) > before, "the boundaries were published")
+      assertEquals(top(session).screen_id, map.screen_id, "the map keeps its id")
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: 0.2 invoke: keys sent at a popup that has closed are stale_screen",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile)
+    try {
+      client.version = "0.2"
+      const session = await enterTutorial(client, { versions: ["0.2"], schema: schemaHash })
+      await session.acknowledge(() => session.mirror.interaction.interaction === null)
+
+      // The wait menu is a screen over the map.
+      assertEquals(
+        (await session.submit({ kind: "action", action_id: "wait" })).stages.at(-1),
+        "completed",
+      )
+      const popup = top(session)
+      assertNotEquals(popup.role, "map")
+      const cancel = popup.affordances.find((entry: Value) => entry.role === "cancel")
+      assert(cancel, `no cancel in ${JSON.stringify(popup.affordances)}`)
+      assertEquals(cancel.expect, "screen")
+
+      // A burst aimed at the popup: the first closes it, the rest meet the map.
+      const outcomes = await burst(
+        session,
+        Array.from({ length: 4 }, () => ({ affordance: cancel.id, screen: popup.screen_id })),
+        200,
+      )
+      assertEquals(outcomes[0].stages.at(-1), "completed")
+      for (const late of outcomes.slice(1)) {
+        assertEquals([late.stages.at(-1), late.error], ["rejected", "stale_screen"])
+      }
+      assertEquals(top(session).role, "map")
+      // The command that failed is told why, and it ran nothing: the map is where it was.
+      const last = await client.result("bn.command.result", {
+        epoch: session.mirror.at.epoch,
+        command_id: outcomes.at(-1)!.id,
+      })
+      assertEquals([last.stage, last.error], ["rejected", "stale_screen"])
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})

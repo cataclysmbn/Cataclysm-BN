@@ -150,6 +150,8 @@ class server
         engine_client::session &session_;
         engine_client::push_reader push_ = session_.open_push();
         bool hello_ = false;
+        /// What the last hello negotiated; a 0.1 connection is served as it always was.
+        engine_client::wire_version version_ = engine_client::wire_version::v0_1;
         /// Events are pushed from `bn.subscribe` until a resync, `bn.unsubscribe` or `bn.hello`.
         bool subscribed_ = false;
         /// Command stages are pushed from `bn.subscribe` until `bn.unsubscribe` or `bn.hello`: no

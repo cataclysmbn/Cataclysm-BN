@@ -21,6 +21,10 @@ struct hello_request {
     std::vector<std::string> versions = {};
     std::string client_name = {};
     std::string client_version = {};
+    /// 0.2 only, and then required: the hash of the schema the client was built with.
+    std::optional<std::string> schema = std::nullopt;
+    /// 0.2 only: the BN language id the client wants its text in; absent: the engine's.
+    std::optional<std::string> locale = std::nullopt;
     std::optional<viewport> view = std::nullopt;
     /// The client draws tiles, so it wants tile ids where the engine has them (the overmap).
     bool tiles = false;
@@ -72,11 +76,17 @@ auto serialize_description( const tile_description &value ) -> std::string;
 
 /// What the client should do after an application error.
 enum class required_action { none, hello, subscribe, retry };
+/// The schema hashes of a hello the engine refused, so that both sides can say what differs.
+struct schema_hashes {
+    std::string engine = {};
+    std::string client = {};
+};
 /// Closed application_error data, with no free-form diagnostics or arbitrary payloads.
 struct application_error {
     error kind = error::validation_failed;
     required_action action = required_action::none;
     std::optional<clock_point> at = std::nullopt;
+    std::optional<schema_hashes> schemas = std::nullopt;
 };
 
 struct engine_info {
@@ -85,6 +95,8 @@ struct engine_info {
     /// The `USE_TILES` and `TILES` options: how the native client would draw the map.
     bool use_tiles = true;
     std::string tileset = {};
+    /// The BN language id the engine's text is in.
+    std::string locale = {};
 };
 /// Validate IDs/UTF-8 and the output bound before returning a complete serialized value.
 /// What the engine granted a client that asked for credit delivery.
@@ -92,8 +104,23 @@ struct delivery_grant {
     std::size_t credits = 0;
     std::optional<std::size_t> max_hz = std::nullopt;
 };
-auto serialize_hello( const std::string &epoch, const engine_info &engine,
-                      const std::optional<delivery_grant> &delivery = std::nullopt ) -> std::string;
+/// What a 0.2 hello answers besides the 0.1 members.
+struct hello_identity {
+    std::string schema = {};
+    /// The language the connection's text is in.
+    std::string locale = {};
+    std::string engine_locale = {};
+    /// `controller` or `spectator`.
+    std::string role = {};
+};
+struct hello_reply {
+    std::string epoch = {};
+    engine_info engine = {};
+    std::optional<delivery_grant> delivery = std::nullopt;
+    /// Present exactly for a 0.2 hello, which also makes the result's version `0.2`.
+    std::optional<hello_identity> identity = std::nullopt;
+};
+auto serialize_hello( const hello_reply &reply ) -> std::string;
 auto serialize_receipt( const receipt &value ) -> std::expected<std::string, error>;
 auto serialize_application_error( const application_error &value )
 -> std::expected<std::string, error>;

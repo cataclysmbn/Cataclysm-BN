@@ -6,7 +6,9 @@
 #include "engine_client_world.h"
 
 #include <cstdint>
+#include <deque>
 #include <expected>
+#include <memory>
 #include <optional>
 #include <string>
 #include <variant>
@@ -16,6 +18,12 @@ namespace engine_client
 {
 
 inline constexpr auto contract_version = "0.1";
+/// The version whose hello names the schema and whose boundaries carry the `stack`.
+inline constexpr auto contract_version_02 = "0.2";
+/// What a connection negotiated: a 0.1 connection is served exactly as before, without `stack`.
+enum class wire_version { v0_1, v0_2 };
+/// Screen-scoped invokes a controller may have waiting behind the running command.
+inline constexpr auto maximum_queued_commands = std::size_t {8};
 inline constexpr auto maximum_rows = std::size_t {200};
 inline constexpr auto maximum_inline_bytes = std::size_t {262144};
 /// Delivery credits a client may hold, each paying for one pushed `bn.events` or `bn.command` frame.
@@ -90,6 +98,7 @@ auto current_bubble_frame() -> bubble_frame;
 auto to_bubble( const position &target, const bubble_frame &frame )
 -> std::optional<game_client::interaction_position>;
 
+struct screen_view;
 /// What the player may do at one native input boundary. The numeric native input_id stays internal.
 struct boundary_state {
     std::string id = {};
@@ -99,6 +108,9 @@ struct boundary_state {
     std::vector<action> actions = {};
     std::optional<game_client::interaction_snapshot> interaction = std::nullopt;
     bubble_frame frame = {};
+    /// The open screens as `capture_boundary` found them, so that what is published stays what the
+    /// client saw. Null for a state not captured: serialization then reads the live screens.
+    std::shared_ptr<const std::vector<screen_view>> stack = nullptr;
 };
 struct capture_options {
     std::string epoch = {};
@@ -108,12 +120,16 @@ struct capture_options {
 /// value would exceed maximum_inline_bytes; `choice_total` always states the full count.
 /// This does not publish anything.
 auto capture_boundary( const capture_options &options ) -> std::expected<boundary_state, error>;
+/// The id the boundary has now, whatever was published last.
+auto live_boundary_of( const std::string &epoch ) -> std::string;
 auto validate_boundary( const boundary_state &state ) -> std::expected<void, error>;
 auto same_boundary( const boundary_state &left, const boundary_state &right ) -> bool;
 
 struct choices_request {
     std::string epoch = {};
     std::string boundary_id = {};
+    /// A `list` of the top screen whose rows are read (0.2); absent: the 0.1 choices of the interaction.
+    std::optional<std::string> component_id = std::nullopt;
     std::size_t offset = 0;
     std::size_t limit = 100;
 };
@@ -259,12 +275,29 @@ class command_authority
         virtual auto current_permissions() const -> command_permissions = 0;
 };
 
-/// One outstanding command and one replaceable terminal result, not a history map.
+/// A waiting command that has become the running one.
+struct promoted_command {
+    command_result result;
+    command_request request;
+};
+
+/// One outstanding command and one replaceable terminal result, not a history map; behind it wait at most
+/// `maximum_queued_commands` screen-scoped invokes, each validated only when it runs.
 class command_lifecycle
 {
     public:
         command_lifecycle( std::string epoch, const command_authority &authority );
         auto submit( command_request request ) -> std::expected<command_result, error>;
+        /// A command is running and has not ended.
+        auto busy() const -> bool;
+        /// Queues a screen-scoped invoke behind the running command, with the receipt it will keep.
+        /// `command_busy` for any other request or when the queue is full, `invalid_lifecycle` when no
+        /// command is running (it is submitted instead).
+        auto enqueue( command_request request ) -> std::expected<command_result, error>;
+        /// The oldest waiting command takes over once the running one has ended; nullopt otherwise.
+        auto promote() -> std::optional<promoted_command>;
+        /// Ends every waiting command as interrupted by `reason` and returns what became of each.
+        auto drain( error reason ) -> std::vector<command_result>;
         /// Pure native resolution, not callback invocation or execution.
         auto validate( const clock_point &at, const boundary_state &current, point screen_size )
         -> std::expected<input_event, error>;
@@ -284,6 +317,9 @@ class command_lifecycle
         std::optional<command_result> result_ = std::nullopt;
         /// The boundary the command was validated at; it completes at the next distinct one.
         std::string boundary_ = {};
+        std::deque<promoted_command> queue_ = {};
+        /// The receipt of a request that passes the shape and limit checks, with its id taken.
+        auto receive( const command_request &request ) -> std::expected<command_result, error>;
 };
 
 auto serialize_clock( const clock_point &at ) -> std::string;

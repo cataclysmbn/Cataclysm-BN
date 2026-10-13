@@ -92,10 +92,40 @@ auto read_position( const json &value ) -> position
         .z = static_cast<int>( integer( value, "z", INT32_MIN, INT32_MAX ) ),
     };
 }
+auto read_invoke_args( const json &value ) -> invoke_args
+{
+    members( value, {}, {"row", "rows", "count", "text", "pos", "pane"} );
+    auto result = invoke_args{};
+    if( value.contains( "row" ) ) { result.row = id( value, "row" ); }
+    if( value.contains( "rows" ) ) {
+        const auto &rows = value.at( "rows" );
+        require( rows.is_array() && !rows.empty() );
+        result.rows.emplace();
+        for( const auto &entry : rows ) {
+            members( entry, {"id"}, {"count"} );
+            result.rows->push_back( { .id = id( entry, "id" ), .count = entry.contains( "count" ) ?
+                                      std::optional{ static_cast<std::uint64_t>( integer( entry, "count", 0, static_cast<std::int64_t>( maximum_safe_integer ) ) ) } :
+                                      std::nullopt } );
+        }
+    }
+    if( value.contains( "count" ) ) {
+        constexpr auto limit = static_cast<std::int64_t>( maximum_safe_integer );
+        result.count = integer( value, "count", -limit, limit );
+    }
+    if( value.contains( "text" ) ) { result.text = text( value, "text" ); }
+    if( value.contains( "pos" ) ) { result.pos = read_position( value.at( "pos" ) ); }
+    if( value.contains( "pane" ) ) { result.pane = id( value, "pane" ); }
+    return result;
+}
 auto read_operation( const json &value ) -> command_operation
 {
     require( value.is_object() && value.contains( "kind" ) );
     const auto kind = text( value, "kind" );
+    if( kind == "invoke" ) {
+        members( value, {"kind", "affordance_id"}, {"args"} );
+        return invoke_operation{ .affordance_id = id( value, "affordance_id" ),
+                                 .args = value.contains( "args" ) ? read_invoke_args( value.at( "args" ) ) : invoke_args{} };
+    }
     if( kind == "action" ) {
         members( value, {"kind", "action_id"} );
         return registered_action{ .id = id( value, "action_id" ) };
@@ -111,7 +141,7 @@ auto read_operation( const json &value ) -> command_operation
                                .count = static_cast<std::uint64_t>( integer( value, "count", 1, static_cast<std::int64_t>( maximum_safe_integer ) ) ) };
     }
     const auto parsed = game_client::parse_interaction_operation( kind );
-    // The 0.2 `invoke` is not decoded here yet.
+    // `invoke` is read above.
     require( parsed.has_value() && *parsed != game_client::interaction_operation::invoke );
     auto semantic = semantic_operation{};
     semantic.command.operation = *parsed;
@@ -154,11 +184,11 @@ auto read_request( const json &value, viewport &result ) -> void
     result.cols = static_cast<int>( integer( value, "cols", 1, maximum_viewport_cells ) );
     result.rows = static_cast<int>( integer( value, "rows", 1, maximum_viewport_cells ) );
 }
-auto read_request( const json &value, hello_request &result ) -> void
+/// What the client can do: the hello's loose members of 0.1, or the same members under 0.2's `capabilities`.
+auto read_capabilities( const json &source, hello_request &result ) -> void
 {
-    members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids", "delivery"} );
-    if( value.contains( "delivery" ) ) {
-        const auto &delivery = value.at( "delivery" );
+    if( source.contains( "delivery" ) ) {
+        const auto &delivery = source.at( "delivery" );
         members( delivery, {"credits"}, {"max_hz"} );
         if( delivery.contains( "max_hz" ) ) {
             result.max_hz = static_cast<std::size_t>( integer( delivery, "max_hz", 1,
@@ -167,18 +197,53 @@ auto read_request( const json &value, hello_request &result ) -> void
         result.credits = static_cast<std::size_t>( integer( delivery, "credits", 1,
                          static_cast<std::int64_t>( maximum_credits ) ) );
     }
-    if( value.contains( "tint_ids" ) ) {
-        const auto &ids = value.at( "tint_ids" );
+    if( source.contains( "tint_ids" ) ) {
+        const auto &ids = source.at( "tint_ids" );
         require( ids.is_array() && ids.size() <= maximum_tint_ids );
         for( const auto &id : ids ) {
             require( id.is_string() && !id.get<std::string>().empty() && id.get<std::string>().size() <= 128 );
             result.tint_ids.push_back( id.get<std::string>() );
         }
     }
-    if( value.contains( "viewport" ) ) { read_request( value.at( "viewport" ), result.view.emplace() ); }
-    if( value.contains( "tiles" ) ) {
-        require( value.at( "tiles" ).is_boolean() );
-        result.tiles = value.at( "tiles" ).get<bool>();
+    if( source.contains( "viewport" ) ) { read_request( source.at( "viewport" ), result.view.emplace() ); }
+    if( source.contains( "tiles" ) ) {
+        require( source.at( "tiles" ).is_boolean() );
+        result.tiles = source.at( "tiles" ).get<bool>();
+    }
+}
+/// `sha256:` and 16 lowercase hex digits.
+auto read_schema_hash( const json &object, const char *name ) -> std::string
+{
+    auto value = text( object, name );
+    require( value.size() == 23 && value.starts_with( "sha256:" ) &&
+    std::ranges::all_of( value.substr( 7 ), []( const char digit ) {
+        return ( digit >= '0' && digit <= '9' ) || ( digit >= 'a' && digit <= 'f' );
+    } ) );
+    return value;
+}
+auto read_request( const json &value, hello_request &result ) -> void
+{
+    // Only a client that offers 0.2 sends (and must send) the schema; a 0.1 hello is read as it always was.
+    const auto offers_02 = value.is_object() && value.contains( "versions" ) &&
+                           value.at( "versions" ).is_array() &&
+    std::ranges::any_of( value.at( "versions" ), []( const json & entry ) { return entry == contract_version_02; } );
+    if( offers_02 ) {
+        members( value, {"versions", "client", "schema"}, {"locale", "capabilities", "viewport", "tiles", "tint_ids", "delivery"} );
+        result.schema = read_schema_hash( value, "schema" );
+        if( value.contains( "locale" ) ) { result.locale = id( value, "locale" ); }
+    } else {
+        members( value, {"versions", "client"}, {"viewport", "tiles", "tint_ids", "delivery"} );
+    }
+    if( value.contains( "capabilities" ) ) {
+        const auto &capabilities = value.at( "capabilities" );
+        // The same member is not said twice.
+        require( !value.contains( "viewport" ) && !value.contains( "tiles" ) &&
+                 !value.contains( "tint_ids" ) &&
+                 !value.contains( "delivery" ) );
+        members( capabilities, {}, {"tiles", "tint_ids", "viewport", "delivery"} );
+        read_capabilities( capabilities, result );
+    } else {
+        read_capabilities( value, result );
     }
     const auto &versions = value.at( "versions" );
     require( versions.is_array() && !versions.empty() );
@@ -201,9 +266,10 @@ auto read_request( const json &value, credit_request &result ) -> void
 }
 auto read_request( const json &value, choices_request &result ) -> void
 {
-    members( value, {"epoch", "boundary_id", "offset", "limit"} );
+    members( value, {"epoch", "boundary_id", "offset", "limit"}, {"component_id"} );
     result.epoch = id( value, "epoch" );
     result.boundary_id = id( value, "boundary_id" );
+    if( value.contains( "component_id" ) ) { result.component_id = id( value, "component_id" ); }
     result.offset = static_cast<std::size_t>( integer( value, "offset", 0,
                     static_cast<std::int64_t>( maximum_safe_integer ) ) );
     result.limit = static_cast<std::size_t>( integer( value, "limit", 1,
@@ -227,12 +293,22 @@ auto read_request( const json &value, command_request &result ) -> void
 {
     members( value, {"epoch", "expect", "operation"} );
     result.epoch = id( value, "epoch" );
-    const auto &expect = value.at( "expect" );
-    members( expect, {"revision", "boundary_id", "schema_id"} );
-    result.expect.revision = counter_of( expect, "revision" );
-    result.expect.boundary_id = id( expect, "boundary_id" );
-    if( !expect.at( "schema_id" ).is_null() ) { result.expect.schema_id = id( expect, "schema_id" ); }
     result.operation = read_operation( value.at( "operation" ) );
+    const auto &expect = value.at( "expect" );
+    if( !std::holds_alternative<invoke_operation>( result.operation ) ) {
+        members( expect, {"revision", "boundary_id", "schema_id"} );
+        result.expect.revision = counter_of( expect, "revision" );
+        result.expect.boundary_id = id( expect, "boundary_id" );
+        if( !expect.at( "schema_id" ).is_null() ) { result.expect.schema_id = id( expect, "schema_id" ); }
+    } else if( expect.is_object() && expect.contains( "screen_id" ) ) {
+        // An invoke expects its screen, or the boundary and its revision, and names no schema.
+        members( expect, {"screen_id"} );
+        result.expect.screen_id = id( expect, "screen_id" );
+    } else {
+        members( expect, {"boundary_id", "revision"} );
+        result.expect.revision = counter_of( expect, "revision" );
+        result.expect.boundary_id = id( expect, "boundary_id" );
+    }
 }
 auto read_request( const json &value, result_request &result ) -> void
 {
@@ -301,11 +377,11 @@ std::expected<command_request, decode_error>
 auto decode_result_request( std::string_view input ) -> std::expected<result_request, decode_error>
 { return decode<result_request>( input ); }
 
-auto serialize_hello( const std::string &epoch, const engine_info &engine,
-                      const std::optional<delivery_grant> &delivery ) -> std::string
+auto serialize_hello( const hello_reply &reply ) -> std::string
 {
     using ordered = nlohmann::ordered_json;
-    auto result = ordered{{"version", contract_version}, {"epoch", epoch},
+    const auto &[epoch, engine, delivery, identity] = reply;
+    auto result = ordered{{"version", identity ? contract_version_02 : contract_version}, {"epoch", epoch},
         {
             "engine", {
                 {"build", engine.build}, {"mods", engine.mods},
@@ -322,6 +398,12 @@ auto serialize_hello( const std::string &epoch, const engine_info &engine,
             {"held_bytes", maximum_held_bytes}
         };
         if( delivery->max_hz ) { result["delivery"]["max_hz"] = *delivery->max_hz; }
+    }
+    if( identity ) {
+        result["schema"] = identity->schema;
+        result["locale"] = identity->locale;
+        result["engine_locale"] = identity->engine_locale;
+        result["role"] = identity->role;
     }
     return result.dump();
 }
@@ -343,7 +425,7 @@ std::expected<std::string, error>
 {
     const auto action = action_name( value.action );
     // error is a contiguous closed enum; reject invalid native enum casts.
-    if( !action || value.kind < error::negotiation_failed || value.kind > error::read_only ||
+    if( !action || value.kind < error::negotiation_failed || value.kind > error::stale_screen ||
         ( value.at && !valid_id( value.at->epoch ) ) ) {
         return std::unexpected( error::validation_failed );
     }
@@ -351,6 +433,7 @@ std::expected<std::string, error>
     result["message"] = error_text( value.kind );
     if( !action->empty() ) { result["action"] = std::string( *action ); }
     if( value.at ) { result["at"] = nlohmann::ordered_json::parse( serialize_clock( *value.at ) ); }
+    if( value.schemas ) { result["schema"] = {{"engine", value.schemas->engine}, {"client", value.schemas->client}}; }
     return result.dump();
 }
 } // namespace engine_client

@@ -116,3 +116,29 @@ Deno.test("0.2: the text a client shows is the one `text` type", async () => {
   ]
   for (const ref of refs) assertEquals(ref.$ref, text.$ref)
 })
+
+Deno.test("0.2: the hash of the schema file is a hello `schema` and a refusal names it", async () => {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    await Deno.readFile(new URL("0.2.schema.json", root)),
+  )
+  const hash = "sha256:" +
+    Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0"))
+      .join("").slice(0, 16)
+  const ajv = new Ajv2020({ strict: false })
+  ajv.addSchema(await read("0.2.schema.json"), "bn")
+  const validate = (def: string, value: unknown) => ajv.getSchema(`bn#/$defs/${def}`)!(value)
+  const client = { name: "bn-deno", version: "1" }
+  assert(validate("hello_params", { versions: ["0.2"], client, schema: hash }))
+  assert(validate("hello_result", {
+    version: "0.2",
+    epoch: "epoch:1",
+    engine: { build: "x", mods: [] },
+    limits: { frame_bytes: 1, cells_per_part: 1, cells_per_query: 1 },
+    schema: hash,
+  }))
+  assert(validate("application_error", {
+    kind: "negotiation_failed",
+    schema: { engine: hash, client: "sha256:0000000000000000" },
+  }))
+})

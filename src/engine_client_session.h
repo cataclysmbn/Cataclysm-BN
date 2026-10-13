@@ -68,6 +68,8 @@ class session final : public command_authority
         auto publish_boundary( bool settles = true ) -> std::expected<void, error>;
         /// Atomic with respect to publication: the game thread is the only writer.
         auto current() const -> std::expected<snapshot, error>;
+        /// The boundary last published, which the client has seen; `not_ready` before the first.
+        auto boundary() const -> std::expected<boundary_state, error>;
         auto at() const -> std::optional<clock_point>;
         auto submit( command_request request ) -> std::expected<receipt, error>;
         auto prepare_input( point screen_size ) -> std::expected<game_client::input_command, error>;

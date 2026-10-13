@@ -11,21 +11,33 @@ import { assert, assertEquals } from "@std/assert"
 import { Ajv2020 } from "npm:ajv@8.17.1/dist/2020.js"
 import { Mirror } from "./mirror.ts"
 
-const schema = JSON.parse(
-  await Deno.readTextFile(
-    new URL("../../docs/schema/engine-client/0.1.schema.json", import.meta.url),
-  ),
-)
-const ajv = new Ajv2020({ strict: false })
-ajv.addSchema(schema, "bn")
-const validate = (def: string, value: unknown, what: string) => {
-  const check = ajv.getSchema(`bn#/$defs/${def}`)
+// deno-lint-ignore no-explicit-any
+type Value = any
+type Version = "0.1" | "0.2"
+const schemaFile = (version: Version) =>
+  new URL(`../../docs/schema/engine-client/${version}.schema.json`, import.meta.url)
+// Every message is checked against the schema of the version its connection's hello chose.
+const schemas: Record<Version, Value> = {
+  "0.1": JSON.parse(await Deno.readTextFile(schemaFile("0.1"))),
+  "0.2": JSON.parse(await Deno.readTextFile(schemaFile("0.2"))),
+}
+const validators = Object.fromEntries(
+  (Object.keys(schemas) as Version[]).map((version) => {
+    const ajv = new Ajv2020({ strict: false })
+    ajv.addSchema(schemas[version], "bn")
+    return [version, ajv]
+  }),
+) as Record<Version, Ajv2020>
+const validate = (version: Version, def: string, value: unknown, what: string) => {
+  const check = validators[version].getSchema(`bn#/$defs/${def}`)
   assert(check, def)
   assert(check(value), `${what} violates ${def}: ${JSON.stringify(check.errors)}`)
 }
-
-// deno-lint-ignore no-explicit-any
-type Value = any
+/** What a 0.2 hello names: the first 16 hex digits of the SHA-256 of the raw bytes of the 0.2 schema. */
+const schemaHash = "sha256:" + Array.from(
+  new Uint8Array(await crypto.subtle.digest("SHA-256", await Deno.readFile(schemaFile("0.2")))),
+  (byte) => byte.toString(16).padStart(2, "0"),
+).join("").slice(0, 16)
 /** A connection that hears nothing for this long is a failure, busy engine or not. */
 const stall = 120_000
 const hour = 3600n
@@ -46,6 +58,8 @@ class Peer {
   stages = new Map<string, string[]>()
   frames = 0
   closed = false
+  /** The version this connection's messages are checked against; `hello` and `hello02` set it. */
+  version: Version = "0.1"
 
   constructor(readonly conn: Deno.UnixConn) {}
 
@@ -108,16 +122,23 @@ class Peer {
       const message = await this.frame()
       assert(message, `the engine closed the connection during ${method}`)
       if (message.id === id) {
-        if (message.error?.data) validate("application_error", message.error.data, method)
-        else if (!message.error) {
-          validate(schema["x-methods"][method].result, message.result, `${method} result`)
+        if (message.error?.data) {
+          validate(this.version, "application_error", message.error.data, method)
+        } else if (!message.error) {
+          const def = schemas[this.version]["x-methods"][method].result
+          validate(this.version, def, message.result, `${method} result`)
         }
         return message
       }
       assert(message.id === undefined, `unexpected response ${JSON.stringify(message)}`)
-      validate(schema["x-notifications"][message.method], message.params, message.method)
+      this.#validateNotification(message)
       this.notes.push(message)
     }
+  }
+
+  #validateNotification(message: Value) {
+    const def = schemas[this.version]["x-notifications"][message.method]
+    validate(this.version, def, message.params, message.method)
   }
 
   async result(method: string, params: unknown): Promise<Value> {
@@ -130,14 +151,24 @@ class Peer {
     const queued = this.notes.shift()
     if (queued) return queued
     const message = await this.frame(ms, idle)
-    if (message && message !== "idle") {
-      validate(schema["x-notifications"][message.method], message.params, message.method)
-    }
+    if (message && message !== "idle") this.#validateNotification(message)
     return message
+  }
+
+  /** A 0.2 hello, which names the schema the client was built with. */
+  async hello02(extra: Value = {}) {
+    this.version = "0.2"
+    return await this.result("bn.hello", {
+      versions: ["0.2"],
+      client: { name: "socket-test", version: "1" },
+      schema: schemaHash,
+      ...extra,
+    })
   }
 
   async hello(delivery?: Value) {
     this.window = delivery?.credits ?? 0
+    this.version = "0.1"
     return await this.result("bn.hello", {
       versions: ["0.1"],
       client: { name: "socket-test", version: "1" },
@@ -455,6 +486,84 @@ Deno.test({
         (await again.request("bn.interrupt", {})).error.data.kind,
         "read_only",
       )
+    } finally {
+      for (const peer of peers) peer.close()
+      try {
+        engine.process.kill("SIGKILL")
+      } catch { /* already gone */ }
+      await engine.process.status
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name:
+    "socket: a 0.1 controller and a 0.2 spectator share the game, each served in its own version",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile()
+    const engine = launch(profile)
+    const peers: Peer[] = []
+    try {
+      const controller = await Peer.connect(engine.path)
+      peers.push(controller)
+      await enterTutorial(controller)
+
+      // A wrong schema hash is refused on a socket as on stdio, naming both.
+      const stranger = await Peer.connect(engine.path)
+      peers.push(stranger)
+      stranger.version = "0.2"
+      const wrong = "sha256:0000000000000000"
+      const refused = await stranger.request("bn.hello", {
+        versions: ["0.2"],
+        client: { name: "socket-test", version: "1" },
+        schema: wrong,
+      })
+      assertEquals(refused.error.data.kind, "negotiation_failed")
+      assertEquals(refused.error.data.schema, { engine: schemaHash, client: wrong })
+
+      // The spectator is told its role and reads the stack; the controller's 0.1 messages carry none.
+      const spectator = await Peer.connect(engine.path)
+      peers.push(spectator)
+      const hello = await spectator.hello02({ locale: "en" })
+      assertEquals([hello.version, hello.schema, hello.role], ["0.2", schemaHash, "spectator"])
+      await spectator.subscribe()
+      const stack = spectator.mirror.interaction.stack
+      assert(Array.isArray(stack) && stack.length >= 1, "a 0.2 boundary carries its stack")
+      assertEquals(stack.at(-1).role, "map")
+      assertEquals(controller.mirror.interaction.stack, undefined)
+
+      // One move by the controller reaches both, each in the shape of its version.
+      const move = ["RIGHT", "LEFT", "UP", "DOWN"].find((id) =>
+        controller.mirror.interaction.actions.some((action: Value) => action.id === id)
+      )
+      assert(move)
+      let done = false
+      const following = spectator.follow(() =>
+        done && spectator.mirror.at.sequence === controller.mirror.at.sequence
+      )
+      assertEquals(
+        (await controller.submit({ kind: "action", action_id: move })).stages.at(-1),
+        "completed",
+      )
+      done = true
+      await following
+      assertEquals(controller.mirror.interaction.stack, undefined)
+      assertEquals(spectator.mirror.interaction.stack.at(-1).role, "map")
+      assertEquals(
+        spectator.mirror.interaction.boundary_id,
+        controller.mirror.interaction.boundary_id,
+      )
+
+      // A spectator cannot invoke, whichever version it speaks.
+      const screen = spectator.mirror.interaction.stack.at(-1).screen_id
+      const invoke = await spectator.request("bn.command.submit", {
+        epoch: spectator.mirror.at.epoch,
+        expect: { screen_id: screen },
+        operation: { kind: "invoke", affordance_id: move },
+      })
+      assertEquals(invoke.error.data.kind, "read_only")
     } finally {
       for (const peer of peers) peer.close()
       try {

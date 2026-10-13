@@ -391,6 +391,7 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
         | std::ranges::to<std::vector>();
         result.actions.push_back( {.id = entry.id, .name = entry.name, .keys = std::move( keys )} );
     }
+    const auto open_screens = [&]() { return std::make_shared<const std::vector<screen_view>>( interaction_stack( result ) ); };
     // A value over the byte bound keeps fewer rows; choice_total still states the full count.
     for( auto limit = maximum_rows; limit > 0; limit /= 2 ) {
         auto interaction = game_client::current_interaction( {.offset = 0, .limit = limit} );
@@ -398,15 +399,19 @@ auto capture_boundary( const capture_options &options ) -> std::expected<boundar
             // A view with no structured interaction still shows its composed screen to the client.
             result.interaction = screen_interaction( std::string(
                                      game_client::active_input_context().category ) );
+            result.stack = open_screens();
             break;
         }
         result.interaction = std::move( interaction );
-        if( serialize_boundary( result ).size() <= maximum_inline_bytes ) { break; }
+        // The value that goes out is the larger one: the 0.1 members and the stack of a 0.2 client.
+        result.stack = open_screens();
+        if( serialize_interaction_boundary( result ).size() <= maximum_inline_bytes ) { break; }
         if( limit == 1 ) { return std::unexpected( error::resource_limit ); }
     }
     if( const auto valid = validate_boundary( result ); !valid ) { return std::unexpected( valid.error() ); }
     return result;
 }
+auto live_boundary_of( const std::string &epoch ) -> std::string { return live_boundary_id( epoch ); }
 auto validate_boundary( const boundary_state &state ) -> std::expected<void, error>
 {
     constexpr auto phases = std::array{"starting", "menu", "loading", "waiting_for_input", "executing", "shutting_down"};
@@ -632,9 +637,9 @@ auto resolve_invoke( const boundary_state &state, const invoke_operation &invoke
 command_lifecycle::command_lifecycle( std::string epoch, const command_authority &authority ) :
     epoch_( std::move( epoch ) ), authority_( authority ) {}
 
-auto command_lifecycle::submit( command_request request ) -> std::expected<command_result, error>
+auto command_lifecycle::receive( const command_request &request ) ->
+std::expected<command_result, error>
 {
-    if( result_ && !terminal( result_->stage ) ) { return std::unexpected( error::command_busy ); }
     if( const auto semantic = std::get_if<semantic_operation>( &request.operation );
         semantic && semantic->command.value.size() > maximum_inline_bytes ) {
         return std::unexpected( error::resource_limit );
@@ -643,16 +648,51 @@ auto command_lifecycle::submit( command_request request ) -> std::expected<comma
     if( next_command_ == std::numeric_limits<counter>::max() || !valid_id( epoch_ ) ) {
         return std::unexpected( error::resource_limit );
     }
-    const auto next_command = next_command_ + 1;
-    auto received = command_result{
+    ++next_command_;
+    return command_result{
         .epoch = epoch_,
-        .command_id = game_client::opaque_interaction_id( "command", {epoch_, std::to_string( next_command )} ),
+        .command_id = game_client::opaque_interaction_id( "command", {epoch_, std::to_string( next_command_ )} ),
     };
-    auto response = received;
+}
+auto command_lifecycle::busy() const -> bool { return result_ && !terminal( result_->stage ); }
+auto command_lifecycle::submit( command_request request ) -> std::expected<command_result, error>
+{
+    if( busy() ) { return std::unexpected( error::command_busy ); }
+    auto received = receive( request );
+    if( !received ) { return received; }
     request_ = std::move( request );
-    result_ = std::move( received );
-    next_command_ = next_command;
-    return response;
+    result_ = *received;
+    return received;
+}
+auto command_lifecycle::enqueue( command_request request ) -> std::expected<command_result, error>
+{
+    if( !busy() ) { return std::unexpected( error::invalid_lifecycle ); }
+    // Only a screen expectation can outlive the boundary it was made at.
+    if( !std::holds_alternative<invoke_operation>( request.operation ) || !request.expect.screen_id ||
+        queue_.size() >= maximum_queued_commands ) { return std::unexpected( error::command_busy ); }
+    auto received = receive( request );
+    if( !received ) { return received; }
+    queue_.push_back( { .result = *received, .request = std::move( request ) } );
+    return received;
+}
+auto command_lifecycle::promote() -> std::optional<promoted_command>
+{
+    if( busy() || queue_.empty() ) { return std::nullopt; }
+    auto next = std::move( queue_.front() );
+    queue_.pop_front();
+    request_ = next.request;
+    result_ = next.result;
+    return next;
+}
+auto command_lifecycle::drain( const error reason ) -> std::vector<command_result>
+{
+    auto ended = std::vector<command_result> {};
+    for( auto &entry : std::exchange( queue_, {} ) ) {
+        entry.result.stage = command_stage::interrupted;
+        entry.result.failure = reason;
+        ended.push_back( std::move( entry.result ) );
+    }
+    return ended;
 }
 auto command_lifecycle::validate( const clock_point &at, const boundary_state &current,
                                   const point screen_size ) -> std::expected<input_event, error>
@@ -806,7 +846,10 @@ auto command_lifecycle::interrupt( const error reason ) -> std::expected<void, e
 auto command_lifecycle::result( const std::string &command_id ) const ->
 std::expected<command_result, error>
 {
-    if( !result_ || result_->command_id != command_id ) { return std::unexpected( error::unknown_command ); }
-    return *result_;
+    if( result_ && result_->command_id == command_id ) { return *result_; }
+    // A waiting command has only its receipt.
+    const auto waiting = std::ranges::find( queue_, command_id, []( const auto & entry ) { return entry.result.command_id; } );
+    if( waiting == queue_.end() ) { return std::unexpected( error::unknown_command ); }
+    return waiting->result;
 }
 } // namespace engine_client

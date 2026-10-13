@@ -1,4 +1,6 @@
 #include "mcp_server.h"
+#include "engine_client_component.h"
+#include "engine_client_schema.h"
 #include "engine_client_world.h"
 
 #include <algorithm>
@@ -469,7 +471,10 @@ auto server::pump_until_input( std::istream &in, std::ostream &out, std::ostream
         }
         // A direct command is not queued until its complete bounded receipt frame is written.
         if( session_.has_received() && !deferred_frame_ ) {
-            static_cast<void>( deliver_input() );
+            // A rejected command hands over to the one that waited behind it: go on until one is queued
+            // or none is left, for no request may arrive to move the queue.
+            auto queued = false;
+            while( !queued && session_.has_received() ) { queued = deliver_input(); }
             if( !flush_push( out ) ) { failed_ = true; break; }
         }
         if( host_.has_input && host_.has_input() ) {
@@ -705,15 +710,20 @@ auto server::queue_push() -> void
     };
     auto batch = event_batch{};
     auto batch_bytes = std::size_t{0};
+    /// The params of the batch's first event when the event's own wire is not what this connection reads.
+    auto first_params = std::string{};
     const auto flush_batch = [&]() {
         if( batch.events.empty() ) { return; }
         const auto through = batch.events.back().value().sequence;
-        if( batch.events.size() == 1 && !batch.events.front().wire().empty() ) {
+        if( batch.events.size() == 1 && !first_params.empty() ) {
+            notify( "bn.events", first_params, through );
+        } else if( batch.events.size() == 1 && !batch.events.front().wire().empty() ) {
             notify( "bn.events", batch.events.front().wire(), through );
         } else {
-            notify( "bn.events", serialize_events( batch ), through );
+            notify( "bn.events", serialize_events( batch, version_ ), through );
         }
         batch.events.clear();
+        first_params.clear();
         batch_bytes = 0;
     };
     // A resync ends the events that follow it, not the command stages: no snapshot carries them.
@@ -721,10 +731,14 @@ auto server::queue_push() -> void
         if( !( std::holds_alternative<command_result>( item ) ? commands_ : subscribed_ ) ) { continue; }
         if( const auto *pushed = std::get_if<event_push>( &item ) ) {
             const auto &wire = pushed->event.wire();
-            const auto bytes = !wire.empty() ? wire.size() :
-                               serialize_events( {.epoch = pushed->epoch, .events = {pushed->event}} ).size();
+            // An event sealed for 0.1 lacks the stack of the boundary it carries.
+            const auto stacked = version_ == wire_version::v0_2 && pushed->event.value().delta.interaction;
+            auto params = stacked || wire.empty() ?
+                          serialize_events( {.epoch = pushed->epoch, .events = {pushed->event}}, version_ ) : std::string{};
+            const auto bytes = params.empty() ? wire.size() : params.size();
             if( batch.epoch != pushed->epoch || batch_bytes + bytes > maximum_inline_bytes ) { flush_batch(); }
             batch.epoch = pushed->epoch;
+            if( batch.events.empty() ) { first_params = std::move( params ); }
             batch.events.push_back( pushed->event );
             batch_bytes += bytes;
             continue;
@@ -756,8 +770,8 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     namespace rpc = jsonrpc;
     // Direct notifications are deliberately effect-free, including hello and reads.
     if( !request.id.json ) { return std::nullopt; }
-    const auto fail = [&]( const error reason ) {
-        auto data = application_error{ .kind = reason, .at = session_.at() };
+    const auto fail = [&]( const error reason, std::optional<schema_hashes> schemas = std::nullopt ) {
+        auto data = application_error{ .kind = reason, .at = session_.at(), .schemas = std::move( schemas ) };
         switch( reason ) {
             case error::negotiation_failed:
                 data.action = required_action::hello;
@@ -788,14 +802,20 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     if( request.method == "bn.hello" ) {
         const auto decoded = decode_hello_request( params );
         if( !decoded ) { return invalid(); }
-        if( std::ranges::find( decoded->versions, contract_version ) == decoded->versions.end() ) {
+        const auto offers_02 = std::ranges::contains( decoded->versions, contract_version_02 );
+        if( !offers_02 && !std::ranges::contains( decoded->versions, contract_version ) ) {
             return fail( error::negotiation_failed );
+        }
+        // Only 0.2 names the schema; the decoder requires it there.
+        if( offers_02 && *decoded->schema != engine_schema_hash ) {
+            return fail( error::negotiation_failed, schema_hashes{ .engine = engine_schema_hash, .client = *decoded->schema } );
         }
         // A legacy batch still waiting for native delivery cannot transfer authority mid-flight.
         if( !options_.spectator && ( pending_response_ || ( host_.has_input && host_.has_input() ) ) ) {
             return fail( error::command_busy );
         }
         hello_ = true;
+        version_ = offers_02 ? wire_version::v0_2 : wire_version::v0_1;
         credits_ = decoded->credits;
         // A new negotiation drops what was held for the old one, so its stream restarts at a snapshot.
         subscribed_ = false;
@@ -817,7 +837,14 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         }
         const auto grant = credits_ ? std::optional{ delivery_grant{ .credits = *credits_, .max_hz = decoded->max_hz } } :
                            std::nullopt;
-        return rpc::make_result( request, serialize_hello( session_.epoch(), describe_engine(), grant ) );
+        auto reply = hello_reply{ .epoch = session_.epoch(), .engine = describe_engine(), .delivery = grant };
+        // Text is in the engine's language until the engine can serve another (lane L).
+        if( offers_02 ) {
+            reply.identity = { .schema = engine_schema_hash, .locale = reply.engine.locale, .engine_locale = reply.engine.locale,
+                               .role = options_.spectator ? "spectator" : "controller"
+                             };
+        }
+        return rpc::make_result( request, serialize_hello( reply ) );
     }
     if( !hello_ ) { return fail( error::negotiation_failed ); }
     if( options_.spectator && ( request.method == "bn.viewport" || request.method == "bn.interrupt" ||
@@ -850,7 +877,7 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
         if( !decode_empty_request( params ) ) { return invalid(); }
         const auto current = session_.current();
         if( !current ) { return fail( current.error() ); }
-        const auto wire = serialize_snapshot( *current );
+        const auto wire = serialize_snapshot( *current, version_ );
         if( !wire ) { return fail( wire.error() ); }
         // The parts follow the response frame, before any event after `current->at`.
         for( const auto &part : wire->parts ) {
@@ -883,6 +910,22 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     if( request.method == "bn.interaction.choices" ) {
         const auto decoded = decode_choices_request( params );
         if( !decoded ) { return invalid(); }
+        if( decoded->component_id ) {
+            // A list of the top screen, which only a 0.2 connection sees.
+            if( version_ != wire_version::v0_2 ) { return invalid(); }
+            // The rows are read from the live screen, so the boundary must be the live one.
+            if( decoded->boundary_id != live_boundary_of( session_.epoch() ) ) { return fail( error::stale_boundary ); }
+            const auto state = session_.boundary();
+            if( !state ) { return fail( state.error() ); }
+            const auto rows = read_rows( { .epoch = decoded->epoch, .boundary_id = decoded->boundary_id,
+                                           .component_id = *decoded->component_id, .offset = decoded->offset, .limit = decoded->limit },
+                                         *state );
+            if( !rows ) { return fail( rows.error() ); }
+            // A page that cannot be sent is recoverable: the client asks for fewer rows.
+            auto wire = serialize_rows( *rows );
+            if( wire.size() > maximum_inline_bytes ) { return fail( error::resource_limit ); }
+            return rpc::make_result( request, wire );
+        }
         const auto page = read_choices( *decoded, session_.epoch() );
         if( !page ) { return fail( page.error() ); }
         return rpc::make_result( request, serialize_choices( *page ) );
@@ -906,6 +949,11 @@ std::expected<std::optional<engine_client::jsonrpc::response>, engine_client::js
     if( request.method == "bn.command.submit" ) {
         const auto decoded = decode_command_request( params );
         if( !decoded ) { return invalid(); }
+        // An invoke exists only from 0.2 on.
+        if( version_ != wire_version::v0_2 &&
+            std::holds_alternative<invoke_operation>( decoded->operation ) ) {
+            return invalid();
+        }
         if( !pump_mode_ ) { return fail( error::not_ready ); }
         if( decoded->epoch != session_.epoch() ) { return fail( error::stale_epoch ); }
         const auto received = session_.submit( *decoded );

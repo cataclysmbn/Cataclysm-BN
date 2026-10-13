@@ -42,6 +42,22 @@ Notifications from the engine: `bn.snapshot.part`, `bn.events`, `bn.command`, `b
 
 Errors use code `1000` with `error.data = {kind, action?, at?}`; `action` says what to do next (`hello`, `subscribe`, `retry`).
 
+## Version 0.2 (in progress)
+
+The engine serves `"0.1"` exactly as described here and `"0.2"` on every transport; the hello picks. A hello that lists `"0.2"` is answered in 0.2 and must carry:
+
+- `schema`: `sha256:` and the first 16 hex digits of the SHA-256 of the raw bytes of [`0.2.schema.json`](../../../schema/engine-client/0.2.schema.json). A different hash fails with `negotiation_failed`, `action: "hello"` and `error.data.schema = {engine, client}`. The engine takes its hash from the schema file when CMake configures.
+- optional `locale` and `capabilities` (`tiles`, `tint_ids`, `viewport`, `delivery`; the loose members of 0.1 are still accepted, but not both forms). The result adds `schema`, `locale` (the language of the connection's text), `engine_locale` and `role`. Until the engine localizes per connection, `locale` is the engine's.
+
+Only a 0.2 connection gets `stack` in every interaction boundary (snapshot header and events), next to the 0.1 `interaction`. The stack is the open screens, outermost first; only the last has affordances. `bn.interaction.choices` with `component_id` reads that list of the top screen (`rows`, `total`).
+
+`bn.command.submit` takes `operation: {kind: "invoke", affordance_id, args?}`. Its `expect` is the affordance's `expect` scope:
+
+- `screen`: `{screen_id}`, valid while that screen is on top, else the command is rejected with `stale_screen`. The engine keeps up to 8 of these waiting while a command runs and validates each when it takes its turn, so a held key keeps moving and keys aimed at a popup that has closed are rejected.
+- `boundary`: `{boundary_id, revision}`, as before. While a command runs the submit fails with `command_busy`.
+
+A form that does not match the affordance is `invalid_arguments`.
+
 ## Delivery credits
 
 Opt in with `bn.hello` `delivery = {credits, max_hz?}` (`credits` 1 to 256, optional `max_hz` 1 to 240). The result then carries `delivery = {credits, held_frames, held_bytes, max_hz?}`, `max_hz` echoed when asked for. Without `delivery` nothing below applies: pushed frames are written at once, at input boundaries and auto-move steps, as before.
