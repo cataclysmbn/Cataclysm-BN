@@ -13,7 +13,7 @@
           "revision": "0"
         },
         "schema": {
-          "engine": "sha256:c5f4fa7bf0650963",
+          "engine": "sha256:68a6ea2a4ffee321",
           "client": "sha256:0000000000000000"
         }
       }
@@ -29,7 +29,7 @@
           "name": "contract-gen",
           "version": "1"
         },
-        "schema": "sha256:c5f4fa7bf0650963",
+        "schema": "sha256:68a6ea2a4ffee321",
         "capabilities": {
           "viewport": {
             "cols": 40,
@@ -58,7 +58,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:c5f4fa7bf0650963",
+        "schema": "sha256:68a6ea2a4ffee321",
         "locale": "en_US",
         "engine_locale": "en_US",
         "role": "controller"
@@ -174,7 +174,7 @@
             }
           ],
           "interaction": {
-            "schema_id": "008c16084a992c41",
+            "schema_id": "89d8b4755f414baf",
             "context": "MAIN_MENU",
             "kind": "choices",
             "allow_cancel": false,
@@ -473,7 +473,7 @@
         "expect": {
           "revision": "0",
           "boundary_id": "boundary:1",
-          "schema_id": "008c16084a992c41"
+          "schema_id": "89d8b4755f414baf"
         },
         "operation": {
           "kind": "choose",
@@ -534,7 +534,7 @@
           "accepts_registered_actions": true
         },
         "interaction": {
-          "schema_id": "89b510e5b3d17ac7",
+          "schema_id": "6be240671ef7bcca",
           "context": "MAIN_MENU",
           "kind": "choices",
           "allow_cancel": false,
@@ -924,7 +924,7 @@
           "cells_per_query": 4096,
           "screen_queue": 8
         },
-        "schema": "sha256:c5f4fa7bf0650963",
+        "schema": "sha256:68a6ea2a4ffee321",
         "locale": "en_US",
         "engine_locale": "en_US"
       },
