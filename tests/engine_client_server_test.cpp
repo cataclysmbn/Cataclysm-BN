@@ -239,7 +239,8 @@ TEST_CASE("hello is required and checks the version", "[engine_client_server]") 
         + rpc("bn.hello", R"({"versions":["0.9"],"client":{"name":"t","version":"1"}})", "2")
         + hello);
     const auto out = test.output.str();
-    CHECK(contains(out, R"("kind":"negotiation_failed","action":"hello")"));
+    CHECK(contains(out, R"("kind":"negotiation_failed","message":")"));
+    CHECK(contains(out, R"("action":"hello")"));
     CHECK(index_of(out, R"("id":1)") < index_of(out, R"("id":2)"));
     CHECK(contains(out, R"("version":"1.0")"));
     CHECK(contains(out, R"("epoch":")" + test.authority.epoch()));
