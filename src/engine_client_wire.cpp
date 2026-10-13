@@ -393,6 +393,7 @@ auto serialize_hello( const hello_reply &reply ) -> std::string
                 {"cells_per_query", cells_per_query}
             }
         }};
+    if( identity ) { result["limits"]["screen_queue"] = maximum_queued_commands; }
     if( delivery ) {
         result["delivery"] = {{"credits", delivery->credits}, {"held_frames", maximum_held_frames},
             {"held_bytes", maximum_held_bytes}

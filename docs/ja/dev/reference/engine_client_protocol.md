@@ -53,7 +53,7 @@ title: エンジン/クライアントプロトコル 0.1
 
 `bn.command.submit` は `operation: {kind: "invoke", affordance_id, args?}` を受け取る。`expect` は affordance の `expect` の範囲に従う。
 
-- `screen`: `{screen_id}`。その画面が最上位の間だけ有効で、そうでなければ `stale_screen` で拒否される。エンジンはコマンドの実行中、この種の送信を最大 8 件待たせ、順番が来たときに個別に検証する。キーを押し続けても動き続け、閉じたポップアップ宛てのキーは拒否される。
+- `screen`: `{screen_id}`。その画面が最上位の間だけ有効で、そうでなければ `stale_screen` で拒否される。エンジンはコマンドの実行中、この種の送信を最大 8 件(hello 結果の `limits.screen_queue`)待たせ、順番が来たときに個別に検証する。キーを押し続けても動き続け、閉じたポップアップ宛てのキーは拒否される。
 - `boundary`: `{boundary_id, revision}`。従来どおり。コマンドの実行中は `command_busy` で失敗する。
 
 affordance に合わない形式は `invalid_arguments` である。

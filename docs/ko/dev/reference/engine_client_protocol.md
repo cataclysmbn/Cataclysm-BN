@@ -53,7 +53,7 @@ title: 엔진/클라이언트 프로토콜 0.1
 
 `bn.command.submit`은 `operation: {kind: "invoke", affordance_id, args?}`를 받는다. `expect`는 affordance의 `expect` 범위를 따른다.
 
-- `screen`: `{screen_id}`. 그 화면이 맨 위인 동안만 유효하며, 아니면 `stale_screen`으로 거부된다. 엔진은 명령이 실행 중일 때 이런 제출을 최대 8개 대기시키고 차례가 되면 각각 검증한다. 키를 누르고 있어도 계속 움직이고, 이미 닫힌 팝업을 향한 키는 거부된다.
+- `screen`: `{screen_id}`. 그 화면이 맨 위인 동안만 유효하며, 아니면 `stale_screen`으로 거부된다. 엔진은 명령이 실행 중일 때 이런 제출을 최대 8개(hello 결과의 `limits.screen_queue`) 대기시키고 차례가 되면 각각 검증한다. 키를 누르고 있어도 계속 움직이고, 이미 닫힌 팝업을 향한 키는 거부된다.
 - `boundary`: `{boundary_id, revision}`, 기존과 같다. 명령이 실행 중이면 `command_busy`로 실패한다.
 
 affordance와 맞지 않는 형식은 `invalid_arguments`다.

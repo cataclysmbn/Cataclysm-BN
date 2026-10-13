@@ -503,6 +503,7 @@ TEST_CASE("a 0.2 hello names the schema and a wrong one is refused", "[engine_cl
         CHECK(contains(out, R"("version":"0.2")"));
         CHECK(contains(out, R"("schema":")" + engine_hash + R"(","locale":")"));
         CHECK(contains(out, R"("engine_locale":")"));
+        CHECK(contains(out, R"("screen_queue":8)"));
         CHECK(contains(out, R"("role":"controller")"));
     }
     SECTION("a different hash fails the negotiation and names both") {

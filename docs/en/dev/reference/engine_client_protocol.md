@@ -53,7 +53,7 @@ Only a 0.2 connection gets `stack` in every interaction boundary (snapshot heade
 
 `bn.command.submit` takes `operation: {kind: "invoke", affordance_id, args?}`. Its `expect` is the affordance's `expect` scope:
 
-- `screen`: `{screen_id}`, valid while that screen is on top, else the command is rejected with `stale_screen`. The engine keeps up to 8 of these waiting while a command runs and validates each when it takes its turn, so a held key keeps moving and keys aimed at a popup that has closed are rejected.
+- `screen`: `{screen_id}`, valid while that screen is on top, else the command is rejected with `stale_screen`. The engine keeps up to 8 of these waiting (`limits.screen_queue` in the hello result) while a command runs and validates each when it takes its turn, so a held key keeps moving and keys aimed at a popup that has closed are rejected.
 - `boundary`: `{boundary_id, revision}`, as before. While a command runs the submit fails with `command_busy`.
 
 A form that does not match the affordance is `invalid_arguments`.

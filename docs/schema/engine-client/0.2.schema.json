@@ -3615,6 +3615,17 @@
       "description": "Floating text at a square, as the native scrolling combat text: one or two colored segments."
     },
     "hello_params": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/hello_params_0_1"
+        },
+        {
+          "$ref": "#/$defs/hello_params_0_2"
+        }
+      ],
+      "description": "A hello is read by the versions it offers: one that offers 0.2 is a 0.2 hello and names the schema, any other is a 0.1 hello."
+    },
+    "hello_params_0_1": {
       "type": "object",
       "properties": {
         "versions": {
@@ -3641,8 +3652,88 @@
           ],
           "additionalProperties": false
         },
+        "tiles": {
+          "type": "boolean",
+          "description": "The client draws tiles, so the engine adds tile ids where it has them (the overmap)."
+        },
+        "tint_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "maxItems": 4096,
+          "description": "The ids of the tints the client's tileset has (hair colors, item or terrain ids, flags). The engine publishes on looks the tint_keys among them that apply, in the order the native view tries them."
+        },
         "viewport": {
           "$ref": "#/$defs/viewport"
+        },
+        "delivery": {
+          "type": "object",
+          "properties": {
+            "credits": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256,
+              "description": "Pushed `bn.events` and `bn.command` frames the engine may send before the client grants more with `bn.credit`."
+            },
+            "max_hz": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 240,
+              "description": "The most frames per second of wall time the engine publishes while an activity runs; the boundary where the activity ends is always published. Without it the engine paces only by its own cost."
+            }
+          },
+          "required": [
+            "credits"
+          ],
+          "additionalProperties": false,
+          "description": "Opt in to credit delivery. Without it every pushed frame is written at once, as before."
+        }
+      },
+      "required": [
+        "versions",
+        "client"
+      ],
+      "additionalProperties": false,
+      "not": {
+        "properties": {
+          "versions": {
+            "contains": {
+              "const": "0.2"
+            }
+          }
+        }
+      },
+      "description": "A hello that does not offer 0.2: the loose members only."
+    },
+    "hello_params_0_2": {
+      "type": "object",
+      "properties": {
+        "versions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "client": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "additionalProperties": false
         },
         "tiles": {
           "type": "boolean",
@@ -3657,6 +3748,9 @@
           },
           "maxItems": 4096,
           "description": "The ids of the tints the client's tileset has (hair colors, item or terrain ids, flags). The engine publishes on looks the tint_keys among them that apply, in the order the native view tries them."
+        },
+        "viewport": {
+          "$ref": "#/$defs/viewport"
         },
         "delivery": {
           "type": "object",
@@ -3683,11 +3777,12 @@
         "schema": {
           "type": "string",
           "pattern": "^sha256:[0-9a-f]{16}$",
-          "description": "Raw-byte SHA-256 prefix of 0.2.schema.json the client was built with. A mismatch fails with `negotiation_failed`."
+          "description": "Raw-byte SHA-256 prefix of 0.2.schema.json the client was built with. A mismatch fails with `negotiation_failed`; the engine never falls back to an older version."
         },
         "locale": {
           "type": "string",
-          "description": "BN language id, such as `ko`. Default: the engine's."
+          "description": "BN language id, such as `ko`. Default: the engine's.",
+          "minLength": 1
         },
         "capabilities": {
           "type": "object",
@@ -3739,9 +3834,51 @@
       },
       "required": [
         "versions",
-        "client"
+        "client",
+        "schema"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "properties": {
+            "versions": {
+              "contains": {
+                "const": "0.2"
+              }
+            }
+          }
+        }
+      ],
+      "dependentSchemas": {
+        "capabilities": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "tiles"
+                ]
+              },
+              {
+                "required": [
+                  "tint_ids"
+                ]
+              },
+              {
+                "required": [
+                  "viewport"
+                ]
+              },
+              {
+                "required": [
+                  "delivery"
+                ]
+              }
+            ]
+          },
+          "description": "Either `capabilities` or the loose members, not both."
+        }
+      },
+      "description": "A hello that offers 0.2."
     },
     "hello_result": {
       "type": "object",
@@ -3806,12 +3943,19 @@
               "type": "integer",
               "minimum": 0,
               "maximum": 9007199254740991
+            },
+            "screen_queue": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "How many commands that wait for a screen (`expect.screen_id`) the engine holds behind the running one."
             }
           },
           "required": [
             "frame_bytes",
             "cells_per_part",
-            "cells_per_query"
+            "cells_per_query",
+            "screen_queue"
           ],
           "additionalProperties": false
         },
@@ -3871,7 +4015,11 @@
         "version",
         "epoch",
         "engine",
-        "limits"
+        "limits",
+        "schema",
+        "locale",
+        "engine_locale",
+        "role"
       ],
       "additionalProperties": false
     },

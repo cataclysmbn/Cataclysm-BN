@@ -191,6 +191,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     CHECK(contains(hello, R"("version":"0.1")"));
     CHECK_FALSE(contains(hello, R"("schema")"));
     CHECK_FALSE(contains(hello, R"("role")"));
+    CHECK_FALSE(contains(hello, R"("screen_queue")"));
     reply.identity =
         {.schema = "sha256:0123456789abcdef",
          .locale = "ko",
@@ -201,6 +202,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     CHECK(contains(
         hello_v02,
         R"("schema":"sha256:0123456789abcdef","locale":"ko","engine_locale":"en","role":"spectator")"));
+    CHECK(contains(hello_v02, R"("screen_queue":8)"));
     CHECK(contains(hello, R"("mods":["bn"])"));
     CHECK(contains(hello, R"("cells_per_part":512)"));
     const auto encoded = serialize_receipt({.epoch = "epoch:a", .command_id = "c:1"});

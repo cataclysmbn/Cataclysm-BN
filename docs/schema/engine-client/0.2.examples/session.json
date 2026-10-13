@@ -15,8 +15,13 @@
         "limits": {
           "frame_bytes": 1048576,
           "cells_per_part": 512,
-          "cells_per_query": 4096
-        }
+          "cells_per_query": 4096,
+          "screen_queue": 8
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "en",
+        "engine_locale": "en",
+        "role": "controller"
       }
     },
     {
@@ -34,13 +39,18 @@
         "limits": {
           "frame_bytes": 1048576,
           "cells_per_part": 512,
-          "cells_per_query": 4096
+          "cells_per_query": 4096,
+          "screen_queue": 8
         },
         "delivery": {
           "credits": 64,
           "held_frames": 256,
           "held_bytes": 1048576
-        }
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "en",
+        "engine_locale": "en",
+        "role": "controller"
       }
     },
     {
@@ -58,14 +68,19 @@
         "limits": {
           "frame_bytes": 1048576,
           "cells_per_part": 512,
-          "cells_per_query": 4096
+          "cells_per_query": 4096,
+          "screen_queue": 8
         },
         "delivery": {
           "credits": 64,
           "held_frames": 256,
           "held_bytes": 1048576,
           "max_hz": 30
-        }
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "en",
+        "engine_locale": "en",
+        "role": "controller"
       }
     },
     {
@@ -78,7 +93,8 @@
         "client": {
           "name": "bn-deno",
           "version": "0.1.0"
-        }
+        },
+        "schema": "sha256:0123456789abcdef"
       }
     },
     {
@@ -92,6 +108,7 @@
           "name": "bn-deno",
           "version": "0.1.0"
         },
+        "schema": "sha256:0123456789abcdef",
         "viewport": {
           "cols": 40,
           "rows": 25
@@ -109,6 +126,7 @@
           "name": "bn-deno",
           "version": "0.1.0"
         },
+        "schema": "sha256:0123456789abcdef",
         "delivery": {
           "credits": 64
         }
@@ -125,6 +143,7 @@
           "name": "bn-deno",
           "version": "0.1.0"
         },
+        "schema": "sha256:0123456789abcdef",
         "delivery": {
           "credits": 64,
           "max_hz": 30
@@ -142,6 +161,7 @@
           "name": "bn-client",
           "version": "1"
         },
+        "schema": "sha256:0123456789abcdef",
         "tiles": true,
         "tint_ids": [
           "hair_black",
@@ -404,7 +424,7 @@
         "action": "hello",
         "message": "The client and the engine speak different protocol schemas.",
         "schema": {
-          "engine": "sha256:8f33752cf415ac5a",
+          "engine": "sha256:fedcba9876543210",
           "client": "sha256:0123456789abcdef"
         }
       }
@@ -458,12 +478,45 @@
         "limits": {
           "frame_bytes": 1048576,
           "cells_per_part": 512,
-          "cells_per_query": 4096
+          "cells_per_query": 4096,
+          "screen_queue": 8
         },
         "schema": "sha256:0123456789abcdef",
         "locale": "ko",
         "engine_locale": "en",
         "role": "spectator"
+      }
+    },
+    {
+      "name": "hello request offering both versions",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1",
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "sha256:0123456789abcdef"
+      }
+    },
+    {
+      "name": "hello request of a 0.1 client",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "tiles": true,
+        "delivery": {
+          "credits": 8
+        }
       }
     }
   ],
@@ -650,6 +703,250 @@
         "schema": "0123456789abcdef"
       },
       "why": "the schema hash is sha256: and 16 hex digits"
+    },
+    {
+      "name": "hello offering 0.2 without the schema hash",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        }
+      },
+      "why": "a 0.2 hello names the schema it was built with"
+    },
+    {
+      "name": "hello offering both versions without the schema hash",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1",
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        }
+      },
+      "why": "offering 0.2 needs the hash; there is no silent downgrade"
+    },
+    {
+      "name": "hello offering 0.1 with a schema hash",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "sha256:0123456789abcdef"
+      },
+      "why": "a 0.1 hello has no 0.2 members"
+    },
+    {
+      "name": "hello offering 0.1 with a locale",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "locale": "ko"
+      },
+      "why": "a 0.1 hello has no 0.2 members"
+    },
+    {
+      "name": "hello offering 0.1 with capabilities",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.1"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "capabilities": {}
+      },
+      "why": "a 0.1 hello has no 0.2 members"
+    },
+    {
+      "name": "hello with capabilities and a loose member",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "sha256:0123456789abcdef",
+        "tiles": true,
+        "capabilities": {
+          "tiles": true
+        }
+      },
+      "why": "either capabilities or the loose members"
+    },
+    {
+      "name": "hello with an empty locale",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": ""
+      },
+      "why": "a locale is a language id"
+    },
+    {
+      "name": "hello with a schema hash of the wrong shape",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "sha256:ABC"
+      },
+      "why": "16 lowercase hex digits"
+    },
+    {
+      "name": "hello result without schema",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096,
+          "screen_queue": 8
+        },
+        "locale": "ko",
+        "engine_locale": "en",
+        "role": "spectator"
+      },
+      "why": "a 0.2 hello result always carries schema"
+    },
+    {
+      "name": "hello result without locale",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096,
+          "screen_queue": 8
+        },
+        "schema": "sha256:0123456789abcdef",
+        "engine_locale": "en",
+        "role": "spectator"
+      },
+      "why": "a 0.2 hello result always carries locale"
+    },
+    {
+      "name": "hello result without engine_locale",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096,
+          "screen_queue": 8
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "ko",
+        "role": "spectator"
+      },
+      "why": "a 0.2 hello result always carries engine_locale"
+    },
+    {
+      "name": "hello result without role",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096,
+          "screen_queue": 8
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "ko",
+        "engine_locale": "en"
+      },
+      "why": "a 0.2 hello result always carries role"
+    },
+    {
+      "name": "hello result without the screen queue depth",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "ko",
+        "engine_locale": "en",
+        "role": "spectator"
+      },
+      "why": "the client reads limits.screen_queue"
     }
   ]
 }

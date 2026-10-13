@@ -75,14 +75,16 @@ Deno.test("0.2: example names are unique across areas", async () => {
   assertEquals(names.length, new Set(names).size)
 })
 
-Deno.test("0.2: hello offers only 0.2", async () => {
+Deno.test("0.2: a hello that offers 0.2 names the schema, any other offers only 0.1", async () => {
   const schema = await read("0.2.schema.json")
   assertEquals(schema.$defs.hello_result.properties.version, { const: "0.2" })
   const hellos = (await areas("0.2.examples")).flatMap(({ examples }) => examples.valid)
     .filter((example) => example.def === "hello_params")
   assert(hellos.length > 0)
-  for (const hello of hellos) {
-    assertEquals((hello.value as { versions: string[] }).versions, ["0.2"], hello.name)
+  for (const { name, value } of hellos) {
+    const { versions, schema } = value as { versions: string[]; schema?: string }
+    if (versions.includes("0.2")) assert(schema, name)
+    else assertEquals([versions, schema], [["0.1"], undefined], name)
   }
 })
 
@@ -134,8 +136,11 @@ Deno.test("0.2: the hash of the schema file is a hello `schema` and a refusal na
     version: "0.2",
     epoch: "epoch:1",
     engine: { build: "x", mods: [] },
-    limits: { frame_bytes: 1, cells_per_part: 1, cells_per_query: 1 },
+    limits: { frame_bytes: 1, cells_per_part: 1, cells_per_query: 1, screen_queue: 8 },
     schema: hash,
+    locale: "en",
+    engine_locale: "en",
+    role: "controller",
   }))
   assert(validate("application_error", {
     kind: "negotiation_failed",
