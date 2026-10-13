@@ -315,6 +315,7 @@ game_client::interaction_snapshot // *NOPAD*
             .selected = true,
             .highlighted = true,
         } );
+        if( anykey ) { snapshot.any_key_choice_id = "acknowledge"; }
     }
     return snapshot;
 }

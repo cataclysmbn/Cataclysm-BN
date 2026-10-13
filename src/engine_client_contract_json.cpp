@@ -279,6 +279,7 @@ auto interaction_json( const boundary_state &state ) -> json
     if( !native.banner.empty() ) { result["banner"] = native.banner; }
     if( !native.message_tone.empty() ) { result["message_tone"] = native.message_tone; }
     if( native.category_mode ) { result["category_mode"] = *native.category_mode; }
+    if( !native.any_key_choice_id.empty() ) { result["any_key_choice_id"] = native.any_key_choice_id; }
     if( native.field ) {
         const auto &field = *native.field;
         result["field"] = {{"id", field.id}, {"label", field.label}, {"description", field.description},
@@ -293,7 +294,9 @@ auto interaction_json( const boundary_state &state ) -> json
         if( target.maximum_position ) { value["maximum"] = to_json( *target.maximum_position, frame ); }
         value["range"] = target.range;
         value["distance_metric"] = target.distance_metric;
+        value["distance"] = game_client::target_distance( target, target.cursor );
         value["status"] = target.status;
+        if( !target.status_text.empty() ) { value["status_text"] = target.status_text; }
         value["candidates"] = json::array();
         for( const auto &candidate : target.candidates ) {
             value["candidates"].push_back( {{"id", candidate.id}, {"label", candidate.label},
@@ -545,7 +548,10 @@ auto serialize_choices( const choices_page &page ) -> std::string
 auto serialize_command_result( const command_result &value ) -> std::string
 {
     auto result = json{{"epoch", value.epoch}, {"command_id", value.command_id}, {"stage", stage_name( value.stage )}};
-    if( value.failure ) { result["error"] = error_name( *value.failure ); }
+    if( value.failure ) {
+        result["error"] = error_name( *value.failure );
+        result["error_text"] = value.message.empty() ? error_text( *value.failure ) : value.message;
+    }
     if( value.at ) { result["at"] = to_json( *value.at ); }
     return result.dump();
 }

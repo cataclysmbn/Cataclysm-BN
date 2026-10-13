@@ -109,6 +109,25 @@ TEST_CASE("command operations", "[engine_client_wire]") {
             R"({"kind":"travel","pos":{"space":"reality_bubble_map_square","frame_id":"b","x":1,"y":1,"z":0}})",
             "null")));
     }
+    SECTION("pickup and drop name a row and a positive count") {
+        const auto pickup = decode_command_request(
+            command(R"({"kind":"pickup","item_id":"item:1","count":2})", "null"));
+        REQUIRE(pickup);
+        const auto* item = std::get_if<item_operation>(&pickup->operation);
+        REQUIRE(item);
+        CHECK_FALSE(item->drop);
+        CHECK(item->item_id == "item:1");
+        CHECK(item->count == 2);
+        const auto drop = decode_command_request(
+            command(R"({"kind":"drop","item_id":"item:1","count":1})", "null"));
+        REQUIRE(drop);
+        CHECK(std::get<item_operation>(drop->operation).drop);
+        CHECK_FALSE(decode_command_request(
+            command(R"({"kind":"pickup","item_id":"item:1","count":0})", "null")));
+        CHECK_FALSE(decode_command_request(command(R"({"kind":"pickup","count":1})", "null")));
+        CHECK_FALSE(
+            decode_command_request(command(R"({"kind":"drop","item_id":"","count":1})", "null")));
+    }
     SECTION("a context click is the right button on an absolute square") {
         const auto decoded = decode_command_request(
             command(R"({"kind":"context","pos":{"dim":"","x":2,"y":3,"z":0}})", "null"));
@@ -184,7 +203,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     CHECK(contains(*failure, R"("at":{"epoch":"epoch:a","sequence":"4","revision":"3"})"));
     const auto bare = serialize_application_error({.kind = error::command_busy});
     REQUIRE(bare);
-    CHECK(*bare == R"({"kind":"command_busy"})");
+    CHECK(*bare == R"({"kind":"command_busy","message":"Another command is still running."})");
 }
 
 TEST_CASE("wire decoding rejects a raw NUL that would hide a suffix", "[engine_client_wire]") {

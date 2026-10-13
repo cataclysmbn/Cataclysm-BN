@@ -1578,6 +1578,40 @@
       }
     },
     {
+      "name": "submit pickup of two items of a ground row",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "pickup",
+          "item_id": "item:3f9a",
+          "count": 2
+        }
+      }
+    },
+    {
+      "name": "submit drop of one carried item",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "drop",
+          "item_id": "item:77c1",
+          "count": 1
+        }
+      }
+    },
+    {
       "name": "route planned and then cleared by a confirming click",
       "def": "events_notification",
       "value": {
@@ -3702,6 +3736,24 @@
         },
         "operation": {
           "kind": "travel"
+        }
+      }
+    },
+    {
+      "name": "pickup with a zero count",
+      "def": "submit_params",
+      "why": "a pickup moves at least one item",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "pickup",
+          "item_id": "item:3f9a",
+          "count": 0
         }
       }
     },

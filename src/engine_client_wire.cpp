@@ -93,7 +93,7 @@ auto read_position( const json &value ) -> position
     };
 }
 auto read_operation( const json &value ) ->
-std::variant<semantic_operation, registered_action, travel_operation>
+std::variant<semantic_operation, registered_action, travel_operation, item_operation>
 {
     require( value.is_object() && value.contains( "kind" ) );
     const auto kind = text( value, "kind" );
@@ -105,6 +105,11 @@ std::variant<semantic_operation, registered_action, travel_operation>
         members( value, {"kind", "pos"} );
         return travel_operation{ .target = read_position( value.at( "pos" ) ),
                                  .button = kind == "travel" ? "left" : "right" };
+    }
+    if( kind == "pickup" || kind == "drop" ) {
+        members( value, {"kind", "item_id", "count"} );
+        return item_operation{ .drop = kind == "drop", .item_id = id( value, "item_id" ),
+                               .count = static_cast<std::uint64_t>( integer( value, "count", 1, static_cast<std::int64_t>( maximum_safe_integer ) ) ) };
     }
     const auto parsed = game_client::parse_interaction_operation( kind );
     require( parsed.has_value() );
@@ -341,6 +346,7 @@ std::expected<std::string, error>
         return std::unexpected( error::validation_failed );
     }
     auto result = nlohmann::ordered_json{{"kind", error_name( value.kind )}};
+    result["message"] = error_text( value.kind );
     if( !action->empty() ) { result["action"] = std::string( *action ); }
     if( value.at ) { result["at"] = nlohmann::ordered_json::parse( serialize_clock( *value.at ) ); }
     return result.dump();

@@ -26,6 +26,7 @@
 #    include "engine_client_contract.h"
 #    include "engine_client_event.h"
 #    include "engine_client_session.h"
+#    include "engine_client_world.h"
 #    include "faction.h"
 #    include "game.h"
 #    include "input.h"
@@ -1894,6 +1895,7 @@ TEST_CASE(
             REQUIRE(snapshot.choices.size() == 1);
             CHECK(snapshot.choices.front().description == "ANY_INPUT");
             CHECK(snapshot.choices.front().label == "Press any key");
+            CHECK(snapshot.any_key_choice_id == snapshot.choices.front().id);
             return resolve({
                 .input_id = snapshot.input_id,
                 .operation = game_client::interaction_operation::choose,
@@ -5822,6 +5824,59 @@ TEST_CASE(
     // picking a body part through the client changes the panel of the redrawn list
     CHECK(selected_entry(observed[3]).description.find(body_part->name.translated())
           != std::string::npos);
+}
+
+TEST_CASE(
+    "an item operation picks up or drops the stack a row names",
+    "[client][interaction][mcp][engine_client_contract]") {
+    const auto guard = pickup_fixture_guard{};
+    auto& you = get_avatar();
+    for (const auto _ : std::views::iota(0, 3)) { add_ground_item(itype_id("test_1kg_cube")); }
+    add_ground_item(itype_id("test_2x4"));
+    const auto ground_id = [&](const std::string& name) {
+        const auto stacks = engine_client::world::item_stacks(get_map(), you);
+        const auto row = std::ranges::find(stacks.ground, name, [](const auto& stack) {
+            return stack.row.appearance.id.value_or("");
+        });
+        REQUIRE(row != stacks.ground.end());
+        return row->row.id;
+    };
+    const auto test_1kg_cube = ground_id("test_1kg_cube");
+
+    SECTION("a ground row stands for its equal items") {
+        const auto stack = engine_client::item_operation_stack(
+            {.item_id = test_1kg_cube, .count = 3});
+        REQUIRE(stack);
+        CHECK(stack->items.size() == 3);
+        CHECK(stack->row.count == 3);
+        CHECK(test_1kg_cube != ground_id("test_2x4"));
+    }
+    SECTION("an unknown row, a row of the other list and a count past the stack name nothing") {
+        CHECK_FALSE(engine_client::item_operation_stack({.item_id = "item:none", .count = 1}));
+        CHECK_FALSE(engine_client::item_operation_stack({.item_id = test_1kg_cube, .count = 4}));
+        CHECK_FALSE(engine_client::item_operation_stack(
+            {.drop = true, .item_id = test_1kg_cube, .count = 1}));
+    }
+    SECTION("pickup moves only the asked count to the avatar") {
+        engine_client::run_item_operation({.item_id = test_1kg_cube, .count = 2});
+        finish_pickup_activity(you);
+        CHECK(ground_item_count(itype_id("test_1kg_cube")) == 1);
+        CHECK(ground_item_count(itype_id("test_2x4")) == 1);
+        CHECK(you.amount_of(itype_id("test_1kg_cube")) == 2);
+    }
+    SECTION("drop puts the asked count of a carried stack on the ground") {
+        for (const auto _ : std::views::iota(0, 3)) { you.i_add(item::spawn("test_1kg_cube")); }
+        const auto stacks = engine_client::world::item_stacks(get_map(), you);
+        const auto carried = std::ranges::find(stacks.inventory, "carried", [](const auto& stack) {
+            return stack.row.slot.value_or("");
+        });
+        REQUIRE(carried != stacks.inventory.end());
+        const auto before = ground_item_count(itype_id("test_1kg_cube"));
+        engine_client::run_item_operation({.drop = true, .item_id = carried->row.id, .count = 2});
+        REQUIRE(you.activity);
+        process_activity(you);
+        CHECK(ground_item_count(itype_id("test_1kg_cube")) == before + 2);
+    }
 }
 
 #endif // CATA_MCP

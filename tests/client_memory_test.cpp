@@ -270,6 +270,47 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "a travel click on a closed door beside the avatar moves into it, as native movement opens it",
+    "[client][mcp][input][engine_client_contract]") {
+    auto guard = memory_screen_guard{};
+    REQUIRE(g != nullptr);
+    clear_all_state();
+    TERMX = 20;
+    TERMY = 10;
+    game_client::memory::resize(TERMX, TERMY);
+    const auto restore_terrain = restore_on_out_of_scope<catacurses::window>(g->w_terrain);
+    const auto restore_view = restore_on_out_of_scope<tripoint_bub_ms>(g->ter_view_p);
+    g->w_terrain = catacurses::newwin(9, 15, point(2, 1));
+    const auto me = get_avatar().bub_pos();
+    g->ter_view_p = me;
+    auto& here = get_map();
+    const auto frame = engine_client::current_bubble_frame();
+    const auto target = [&](const tripoint_bub_ms& at) {
+        return engine_client::travel_operation{
+            .target = {.dim = frame.dim, .x = frame.x + at.x(), .y = frame.y + at.y(), .z = at.z()}};
+    };
+    here.ter_set(me + tripoint_east, ter_id("t_door_c"));
+    here.ter_set(me + tripoint_east * 3, ter_id("t_door_c"));
+    here.ter_set(me + tripoint_west, ter_id("t_floor"));
+    here.ter_set(me + tripoint_north, ter_id("t_door_locked"));
+
+    SECTION("a closed door beside the avatar is a move into it") {
+        const auto click = engine_client::travel_click(target(me + tripoint_east));
+        REQUIRE(click);
+        CHECK(click->action == "RIGHT");
+        CHECK_FALSE(click->mouse_position);
+    }
+    SECTION("a door further away, open floor and a locked door stay a click") {
+        for (const auto& at : {me + tripoint_east * 3, me + tripoint_west, me + tripoint_north}) {
+            const auto click = engine_client::travel_click(target(at));
+            REQUIRE(click);
+            CHECK(click->action.empty());
+            CHECK(click->mouse_position);
+        }
+    }
+}
+
+TEST_CASE(
     "every action the default mode offers resolves to that action",
     "[client][mcp][input][engine_client_contract]") {
     const auto guard = memory_screen_guard{};

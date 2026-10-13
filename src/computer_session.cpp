@@ -1596,7 +1596,9 @@ bool computer_session::query_any()
     input_context ctxt( "COMPUTER_TERMINAL" );
     ctxt.register_action( "ANY_INPUT" );
     const auto interaction = game_client::interaction_scope( ctxt, [&]() {
-        return terminal_snapshot( comp.name, lines, { { .id = "continue", .label = _( "Press any key" ) } } );
+        auto snapshot = terminal_snapshot( comp.name, lines, { { .id = "continue", .label = _( "Press any key" ) } } );
+        snapshot.any_key_choice_id = "continue";
+        return snapshot;
     } );
     ui_manager::redraw();
     ctxt.handle_input();

@@ -1,4 +1,9 @@
 #include "engine_client_contract.h"
+#include "action.h"
+#include "activity_actor_definitions.h"
+#include "player_activity.h"
+#include "pickup_token.h"
+#include "avatar.h"
 #include "client_input.h"
 #include "client_memory.h"
 #include "client_interaction_validation.h"
@@ -6,6 +11,7 @@
 #include "cursesport.h"
 #include "game.h"
 #include "input.h"
+#include "translations.h"
 #include "map/map.h"
 
 #include <algorithm>
@@ -48,6 +54,9 @@ auto validate_shape( const command_request &request ) -> bool
         ( request.expect.schema_id && !valid_id( *request.expect.schema_id ) ) ) { return false; }
     const auto semantic = std::get_if<semantic_operation>( &request.operation );
     if( semantic == nullptr ) {
+        if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
+            return valid_id( item->item_id ) && item->count > 0 && item->count <= maximum_safe_integer;
+        }
         const auto action = std::get_if<registered_action>( &request.operation );
         return action == nullptr || valid_id( action->id );
     }
@@ -107,6 +116,36 @@ auto error_name( const error value ) -> std::string
     }
     return "validation_failed";
 }
+auto error_text( const error value ) -> std::string
+{
+    switch( value ) {
+        case error::negotiation_failed:
+            return _( "The protocol version is not supported." );
+        case error::not_ready:
+            return _( "The game is not ready." );
+        case error::stale_epoch:
+            return _( "The world changed." );
+        case error::stale_revision:
+        case error::stale_boundary:
+        case error::stale_interaction_schema:
+            return _( "The screen changed, try again." );
+        case error::validation_failed:
+            return _( "Not possible here." );
+        case error::command_busy:
+            return _( "Another command is still running." );
+        case error::unknown_command:
+            return _( "Unknown command." );
+        case error::invalid_lifecycle:
+            return _( "The command cannot run now." );
+        case error::resync_required:
+            return _( "Resynchronizing with the game." );
+        case error::resource_limit:
+            return _( "Too much data was requested." );
+        case error::read_only:
+            return _( "This connection can only watch the game." );
+    }
+    return _( "Not possible here." );
+}
 auto stage_name( const command_stage stage ) -> std::string
 {
     switch( stage ) {
@@ -165,9 +204,53 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
 {
     const auto target = to_bubble( operation.target, current_bubble_frame() );
     if( !target ) { return std::nullopt; }
-    const auto cell = g->click_cell_of( tripoint_bub_ms( target->x, target->y, target->z ) );
+    const auto at = tripoint_bub_ms( target->x, target->y, target->z );
+    const auto &you = get_avatar();
+    const auto step = at - you.bub_pos();
+    // The route planner takes no step into a closed door; native movement opens it.
+    if( operation.button == "left" && step.z() == 0 &&
+        square_dist( at.xy().raw(), you.bub_pos().xy().raw() ) == 1 &&
+        get_map().can_open_door( &you, at, !get_map().is_outside( you.bub_pos() ) ) ) {
+        return game_client::input_command{
+            .action = action_ident( get_movement_action_from_delta( step, iso_rotate::yes ) ),
+            .input_id = game_client::current_input_id() };
+    }
+    const auto cell = g->click_cell_of( at );
     if( !cell ) { return std::nullopt; }
     return game_client::input_command{ .mouse_position = *cell, .mouse_button = operation.button };
+}
+
+auto item_operation_input() -> game_client::input_command
+{
+    // The command is carried out as the game reads this input; recentring the view is the one default-mode
+    // action that takes no time and changes nothing else, so the game goes on to carry out the activity.
+    return { .action = "center", .input_id = game_client::current_input_id() };
+}
+
+auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>
+{
+    auto stacks = world::item_stacks( get_map(), get_avatar() );
+    auto &rows = operation.drop ? stacks.inventory : stacks.ground;
+    const auto row = std::ranges::find( rows, operation.item_id, []( const auto & stack ) { return stack.row.id; } );
+    if( row == rows.end() || operation.count > row->items.size() ) { return std::nullopt; }
+    return *row;
+}
+
+auto run_item_operation( const item_operation &operation ) -> void
+{
+    const auto stack = item_operation_stack( operation );
+    if( !stack ) { return; }
+    auto &you = get_avatar();
+    const auto count = static_cast<std::size_t>( operation.count );
+    if( operation.drop ) {
+        // As the native drop menu: the first item of the stack and how many of the stack go.
+        you.drop( { drop_location( *stack->items.front(), static_cast<int>( count ) ) }, you.bub_pos() );
+        return;
+    }
+    auto items = std::vector<item *>( stack->items.begin(), stack->items.begin() + count );
+    auto targets = pickup::optimize_pickup( items, std::vector<int>( count, 0 ) );
+    you.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                         ( targets, you.bub_pos() ) ) );
 }
 
 auto describe_tile( const describe_request &request, const std::string &epoch )
@@ -361,9 +444,11 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
     if( !result_ || result_->stage != command_stage::received ) {
         return std::unexpected( error::invalid_lifecycle );
     }
-    const auto reject = [&]( const error reason ) -> std::expected<input_event, error> {
+    const auto reject = [&]( const error reason, std::string message = {} ) ->
+    std::expected<input_event, error> {
         result_->stage = command_stage::rejected;
         result_->failure = reason;
+        result_->message = std::move( message );
         request_.reset();
         return std::unexpected( reason );
     };
@@ -405,8 +490,18 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         if( !permissions.accepts_registered_actions ||
             game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
         const auto click = travel_click( *travel );
-        if( !click ) { return reject( error::validation_failed ); }
+        if( !click ) { return reject( error::validation_failed, _( "Travel rejected: that square is outside the map window the engine can resolve." ) ); }
         resolved = game_client::resolve_input_command( *click, screen_size );
+        if( !resolved ) { return reject( error::validation_failed ); }
+    } else if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
+        if( !permissions.accepts_registered_actions ||
+            game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
+        if( !item_operation_stack( *item ) ) {
+            return reject( error::validation_failed,
+                           item->drop ? _( "You do not have that many of that item to drop." ) :
+                           _( "There are not that many of that item here to pick up." ) );
+        }
+        resolved = game_client::resolve_input_command( item_operation_input(), screen_size );
         if( !resolved ) { return reject( error::validation_failed ); }
     } else {
         if( !permissions.accepts_registered_actions ) { return reject( error::not_ready ); }

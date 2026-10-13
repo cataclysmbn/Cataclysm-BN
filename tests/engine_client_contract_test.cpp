@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 #include "client_input.h"
 #include "engine_client_contract.h"
+#include "engine_client_wire.h"
 #include "input.h"
 #include "path_info.h"
 
@@ -678,4 +679,78 @@ TEST_CASE("an oversized choices page is a recoverable resource limit", "[engine_
     REQUIRE(light);
     CHECK(light->choices.size() == 10);
     CHECK(light->total == 200);
+}
+
+TEST_CASE(
+    "a target publishes its distance by the game's metric and its status in words",
+    "[engine_client_contract]") {
+    auto context = input_context{"TARGET"};
+    const auto input_scope = game_client::input_context_scope{context, "TARGET"};
+    const auto wire_of = [&](const std::string& metric, const int dz) {
+        const auto scope = game_client::interaction_scope{
+            context, [&] {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::target,
+                    .target =
+                        game_client::interaction_target{
+                            .source = {.x = 10, .y = 10, .z = 0},
+                            .cursor = {.x = 13, .y = 14, .z = dz},
+                            .range = 9,
+                            .distance_metric = metric,
+                            .status = "good",
+                            .status_text = "range here, ready",
+                        },
+                };
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    CHECK(contains(wire_of("square", 0), "\"distance\":4"));
+    CHECK(contains(wire_of("trig", 0), "\"distance\":5"));
+    // The vertical axis counts, which a client computing from x and y alone misses.
+    CHECK(contains(wire_of("square", 6), "\"distance\":6"));
+    CHECK(contains(wire_of("trig", 6), "\"distance\":8"));
+    CHECK(contains(wire_of("square", 0), "\"status_text\":\"range here, ready\""));
+}
+
+TEST_CASE("a screen that acknowledges any key names its choice", "[engine_client_contract]") {
+    auto context = input_context{"POPUP"};
+    const auto input_scope = game_client::input_context_scope{context, "POPUP"};
+    const auto wire_of = [&](const std::string& choice) {
+        const auto scope = game_client::interaction_scope{
+            context, [&] {
+                return game_client::interaction_snapshot{
+                    .kind = game_client::interaction_kind::choices,
+                    .choices = {{.id = "acknowledge", .label = "Press any key"}},
+                    .any_key_choice_id = choice,
+                };
+            }};
+        game_client::begin_input_boundary();
+        return engine_client::serialize_boundary(capture());
+    };
+    CHECK(contains(wire_of("acknowledge"), "\"any_key_choice_id\":\"acknowledge\""));
+    CHECK_FALSE(contains(wire_of(""), "any_key_choice_id"));
+}
+
+TEST_CASE("a failed command says why in the game's language", "[engine_client_contract]") {
+    const auto failed = [](const std::string& message) {
+        return engine_client::serialize_command_result(
+            {.epoch = "epoch:test",
+             .command_id = "command:1",
+             .stage = engine_client::command_stage::rejected,
+             .failure = engine_client::error::validation_failed,
+             .message = message});
+    };
+    CHECK(contains(failed(""), "\"error_text\":\"Not possible here.\""));
+    CHECK(contains(failed("Out of reach."), "\"error_text\":\"Out of reach.\""));
+    CHECK_FALSE(contains(
+        engine_client::serialize_command_result(
+            {.epoch = "epoch:test",
+             .command_id = "command:1",
+             .stage = engine_client::command_stage::completed}),
+        "error_text"));
+    const auto stale = engine_client::serialize_application_error(
+        {.kind = engine_client::error::stale_boundary});
+    REQUIRE(stale);
+    CHECK(contains(*stale, "\"message\":\"The screen changed, try again.\""));
 }

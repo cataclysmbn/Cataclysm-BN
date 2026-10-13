@@ -443,6 +443,7 @@ void robot_finds_kitten::process_input()
                 .selected = true,
                 .highlighted = true,
             } );
+            snapshot.any_key_choice_id = "acknowledge";
         }
         return snapshot;
     } );

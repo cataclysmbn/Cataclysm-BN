@@ -656,6 +656,10 @@
     "item_row": {
       "type": "object",
       "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "Names the row for the pickup and drop operations. Stable while the stack stays what it is; two equal rows are told apart by their order."
+        },
         "look": {
           "$ref": "#/$defs/look"
         },
@@ -1577,12 +1581,20 @@
         "distance_metric": {
           "type": "string"
         },
+        "distance": {
+          "type": "integer",
+          "description": "How far current is from source by distance_metric, as the game measures range (rounded Euclidean for trig, Chebyshev otherwise; the vertical axis included)."
+        },
         "unit": {
           "const": "omt",
           "description": "Present when positions are overmap terrain squares (the overmap is open), not map squares."
         },
         "status": {
           "type": "string"
+        },
+        "status_text": {
+          "type": "string",
+          "description": "Present where the screen reports range and readiness in words: the localized line, such as range 3/10, ready to fire."
         },
         "candidates": {
           "type": "array",
@@ -1628,6 +1640,7 @@
         "current",
         "range",
         "distance_metric",
+        "distance",
         "status",
         "candidates"
       ],
@@ -1997,6 +2010,10 @@
         "category_mode": {
           "type": "boolean",
           "description": "Present where the native screen has a category-selection mode: whether it is on (the NPC trade window)."
+        },
+        "any_key_choice_id": {
+          "type": "string",
+          "description": "Present on a press-any-key screen that binds no key: the choice any key press acknowledges. Choose it when the player presses a key no action binds."
         },
         "banner": {
           "type": "array",
@@ -3760,6 +3777,33 @@
           "type": "object",
           "properties": {
             "kind": {
+              "enum": [
+                "pickup",
+                "drop"
+              ]
+            },
+            "item_id": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "The id of a row of avatar.ground (pickup) or avatar.inventory (drop)."
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "How many of the row's items."
+            }
+          },
+          "required": [
+            "kind",
+            "item_id",
+            "count"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
               "const": "context"
             },
             "pos": {
@@ -3886,6 +3930,10 @@
         "error": {
           "$ref": "#/$defs/command_error"
         },
+        "error_text": {
+          "type": "string",
+          "description": "Present with error: the localized reason, specific where the engine knows more than the kind."
+        },
         "at": {
           "$ref": "#/$defs/at"
         }
@@ -3970,6 +4018,10 @@
         },
         "error": {
           "$ref": "#/$defs/command_error"
+        },
+        "error_text": {
+          "type": "string",
+          "description": "Present with error: the localized reason, specific where the engine knows more than the kind."
         },
         "at": {
           "$ref": "#/$defs/at"
@@ -4110,6 +4162,10 @@
             "subscribe",
             "retry"
           ]
+        },
+        "message": {
+          "type": "string",
+          "description": "The localized reason for kind."
         },
         "at": {
           "$ref": "#/$defs/at"
