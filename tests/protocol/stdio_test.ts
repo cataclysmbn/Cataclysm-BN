@@ -48,9 +48,15 @@ class Client {
   /** Pause after every chunk read, to drain the pipe slowly. */
   readDelayMs = 0
 
-  constructor(binary: string, profile: string, stderr: "null" | "piped" = "null") {
+  constructor(
+    binary: string,
+    profile: string,
+    stderr: "null" | "piped" = "null",
+    extraArgs: string[] = [],
+  ) {
     this.#process = new Deno.Command(binary, {
       args: [
+        ...extraArgs,
         "--client=mcp",
         "--seed",
         "protocol-stdio-1",
@@ -2613,6 +2619,40 @@ Deno.test({
         command_id: outcomes.at(-1)!.id,
       })
       assertEquals([last.stage, last.error], ["rejected", "stale_screen"])
+      await client.close()
+    } finally {
+      client.kill()
+      await Deno.remove(profile, { recursive: true })
+    }
+  },
+})
+
+Deno.test({
+  name: "stdio: the tutorial loads and plays with automatic compute when data/shaders is missing",
+  ignore: !Deno.env.get("BN_BINARY"),
+  async fn() {
+    const profile = await makeProfile({ COMPUTE_ACCELERATION: "auto" })
+    await Deno.writeTextFile(
+      `${profile}/config/preload.json`,
+      JSON.stringify({ compute_acceleration: "auto" }),
+    )
+    // The game data without the build-generated shaders: every entry of data/ but shaders.
+    const data = `${profile}/data`
+    await Deno.mkdir(data)
+    for await (const entry of Deno.readDir("data")) {
+      if (entry.name !== "shaders") {
+        await Deno.symlink(await Deno.realPath(`data/${entry.name}`), `${data}/${entry.name}`)
+      }
+    }
+    const client = new Client(Deno.env.get("BN_BINARY")!, profile, "null", [
+      "--datadir",
+      `${data}/`,
+    ])
+    try {
+      const session = await enterTutorial(client)
+      const result = await session.submit({ kind: "action", action_id: "RIGHT" })
+      assertEquals(result.stages.at(-1), "completed")
+      assertEquals(session.mirror.interaction.interaction, null)
       await client.close()
     } finally {
       client.kill()
