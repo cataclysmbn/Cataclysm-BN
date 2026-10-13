@@ -45,79 +45,98 @@
             "accepts_interaction_commands": true,
             "accepts_registered_actions": true
           },
-          "interaction": {
-            "title": "",
-            "root": {
-              "id": "map",
-              "kind": "map",
-              "affordances": [
-                "bn:travel",
-                "bn:context"
-              ],
-              "mode": "world"
-            },
-            "affordances": [
-              {
-                "id": "bn:travel",
-                "label": "Travel",
-                "keys": [],
-                "enabled": true,
-                "args": {
-                  "pos": {
-                    "unit": "square"
-                  }
-                }
-              },
-              {
-                "id": "bn:context",
-                "label": "Examine",
-                "keys": [],
-                "enabled": true,
-                "args": {
-                  "pos": {
-                    "unit": "square"
-                  }
-                }
-              },
-              {
-                "id": "bn:pickup",
-                "label": "Pick up",
-                "keys": [],
-                "enabled": true,
-                "args": {
-                  "row": {
-                    "component_id": "avatar.ground"
-                  },
-                  "count": {
-                    "min": 1
-                  }
-                }
-              },
-              {
-                "id": "bn:drop",
-                "label": "Drop",
-                "keys": [],
-                "enabled": true,
-                "args": {
-                  "row": {
-                    "component_id": "avatar.inventory"
-                  },
-                  "count": {
-                    "min": 1
-                  }
-                }
-              },
-              {
-                "id": "move_e",
-                "label": "Move East",
-                "keys": [
-                  "l",
-                  "RIGHT"
+          "actions": [
+            {
+              "id": "move_e",
+              "name": "Move East",
+              "keys": [
+                "l",
+                "RIGHT"
+              ]
+            }
+          ],
+          "interaction": null,
+          "stack": [
+            {
+              "screen_id": "screen:15",
+              "role": "map",
+              "root": {
+                "id": "map",
+                "kind": "map",
+                "affordances": [
+                  "bn:travel",
+                  "bn:context"
                 ],
-                "enabled": true
-              }
-            ]
-          }
+                "mode": "world"
+              },
+              "affordances": [
+                {
+                  "id": "bn:travel",
+                  "label": "Travel",
+                  "keys": [],
+                  "enabled": true,
+                  "args": {
+                    "pos": {
+                      "unit": "square"
+                    }
+                  },
+                  "expect": "boundary"
+                },
+                {
+                  "id": "bn:context",
+                  "label": "Examine",
+                  "keys": [],
+                  "enabled": true,
+                  "args": {
+                    "pos": {
+                      "unit": "square"
+                    }
+                  },
+                  "expect": "boundary"
+                },
+                {
+                  "id": "bn:pickup",
+                  "label": "Pick up",
+                  "keys": [],
+                  "enabled": true,
+                  "args": {
+                    "row": {
+                      "component_id": "avatar.ground"
+                    },
+                    "count": {
+                      "min": 1
+                    }
+                  },
+                  "expect": "boundary"
+                },
+                {
+                  "id": "bn:drop",
+                  "label": "Drop",
+                  "keys": [],
+                  "enabled": true,
+                  "args": {
+                    "row": {
+                      "component_id": "avatar.inventory"
+                    },
+                    "count": {
+                      "min": 1
+                    }
+                  },
+                  "expect": "boundary"
+                },
+                {
+                  "id": "move_e",
+                  "label": "Move East",
+                  "keys": [
+                    "l",
+                    "RIGHT"
+                  ],
+                  "enabled": true,
+                  "expect": "screen"
+                }
+              ]
+            }
+          ]
         },
         "avatar": {
           "id": "e:avatar",
@@ -330,79 +349,98 @@
                   "accepts_interaction_commands": true,
                   "accepts_registered_actions": true
                 },
-                "interaction": {
-                  "title": "",
-                  "root": {
-                    "id": "map",
-                    "kind": "map",
-                    "affordances": [
-                      "bn:travel",
-                      "bn:context"
-                    ],
-                    "mode": "world"
-                  },
-                  "affordances": [
-                    {
-                      "id": "bn:travel",
-                      "label": "Travel",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "pos": {
-                          "unit": "square"
-                        }
-                      }
-                    },
-                    {
-                      "id": "bn:context",
-                      "label": "Examine",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "pos": {
-                          "unit": "square"
-                        }
-                      }
-                    },
-                    {
-                      "id": "bn:pickup",
-                      "label": "Pick up",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "row": {
-                          "component_id": "avatar.ground"
-                        },
-                        "count": {
-                          "min": 1
-                        }
-                      }
-                    },
-                    {
-                      "id": "bn:drop",
-                      "label": "Drop",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "row": {
-                          "component_id": "avatar.inventory"
-                        },
-                        "count": {
-                          "min": 1
-                        }
-                      }
-                    },
-                    {
-                      "id": "move_e",
-                      "label": "Move East",
-                      "keys": [
-                        "l",
-                        "RIGHT"
+                "actions": [
+                  {
+                    "id": "move_e",
+                    "name": "Move East",
+                    "keys": [
+                      "l",
+                      "RIGHT"
+                    ]
+                  }
+                ],
+                "interaction": null,
+                "stack": [
+                  {
+                    "screen_id": "screen:16",
+                    "role": "map",
+                    "root": {
+                      "id": "map",
+                      "kind": "map",
+                      "affordances": [
+                        "bn:travel",
+                        "bn:context"
                       ],
-                      "enabled": true
-                    }
-                  ]
-                }
+                      "mode": "world"
+                    },
+                    "affordances": [
+                      {
+                        "id": "bn:travel",
+                        "label": "Travel",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "pos": {
+                            "unit": "square"
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "bn:context",
+                        "label": "Examine",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "pos": {
+                            "unit": "square"
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "bn:pickup",
+                        "label": "Pick up",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "row": {
+                            "component_id": "avatar.ground"
+                          },
+                          "count": {
+                            "min": 1
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "bn:drop",
+                        "label": "Drop",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "row": {
+                            "component_id": "avatar.inventory"
+                          },
+                          "count": {
+                            "min": 1
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "move_e",
+                        "label": "Move East",
+                        "keys": [
+                          "l",
+                          "RIGHT"
+                        ],
+                        "enabled": true,
+                        "expect": "screen"
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -487,79 +525,98 @@
                   "accepts_interaction_commands": true,
                   "accepts_registered_actions": true
                 },
-                "interaction": {
-                  "title": "",
-                  "root": {
-                    "id": "map",
-                    "kind": "map",
-                    "affordances": [
-                      "bn:travel",
-                      "bn:context"
-                    ],
-                    "mode": "world"
-                  },
-                  "affordances": [
-                    {
-                      "id": "bn:travel",
-                      "label": "Travel",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "pos": {
-                          "unit": "square"
-                        }
-                      }
-                    },
-                    {
-                      "id": "bn:context",
-                      "label": "Examine",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "pos": {
-                          "unit": "square"
-                        }
-                      }
-                    },
-                    {
-                      "id": "bn:pickup",
-                      "label": "Pick up",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "row": {
-                          "component_id": "avatar.ground"
-                        },
-                        "count": {
-                          "min": 1
-                        }
-                      }
-                    },
-                    {
-                      "id": "bn:drop",
-                      "label": "Drop",
-                      "keys": [],
-                      "enabled": true,
-                      "args": {
-                        "row": {
-                          "component_id": "avatar.inventory"
-                        },
-                        "count": {
-                          "min": 1
-                        }
-                      }
-                    },
-                    {
-                      "id": "move_e",
-                      "label": "Move East",
-                      "keys": [
-                        "l",
-                        "RIGHT"
+                "actions": [
+                  {
+                    "id": "move_e",
+                    "name": "Move East",
+                    "keys": [
+                      "l",
+                      "RIGHT"
+                    ]
+                  }
+                ],
+                "interaction": null,
+                "stack": [
+                  {
+                    "screen_id": "screen:17",
+                    "role": "map",
+                    "root": {
+                      "id": "map",
+                      "kind": "map",
+                      "affordances": [
+                        "bn:travel",
+                        "bn:context"
                       ],
-                      "enabled": true
-                    }
-                  ]
-                }
+                      "mode": "world"
+                    },
+                    "affordances": [
+                      {
+                        "id": "bn:travel",
+                        "label": "Travel",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "pos": {
+                            "unit": "square"
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "bn:context",
+                        "label": "Examine",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "pos": {
+                            "unit": "square"
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "bn:pickup",
+                        "label": "Pick up",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "row": {
+                            "component_id": "avatar.ground"
+                          },
+                          "count": {
+                            "min": 1
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "bn:drop",
+                        "label": "Drop",
+                        "keys": [],
+                        "enabled": true,
+                        "args": {
+                          "row": {
+                            "component_id": "avatar.inventory"
+                          },
+                          "count": {
+                            "min": 1
+                          }
+                        },
+                        "expect": "boundary"
+                      },
+                      {
+                        "id": "move_e",
+                        "label": "Move East",
+                        "keys": [
+                          "l",
+                          "RIGHT"
+                        ],
+                        "enabled": true,
+                        "expect": "screen"
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -1860,6 +1917,19 @@
             }
           }
         ]
+      }
+    },
+    {
+      "name": "message line rendered in the engine's language for a spectator",
+      "def": "data_message_logged",
+      "value": {
+        "id": "8",
+        "text": "You open the door.",
+        "kind": "neutral",
+        "color": "c_white",
+        "count": 1,
+        "label": "You open the door.",
+        "lang": "en"
       }
     }
   ],

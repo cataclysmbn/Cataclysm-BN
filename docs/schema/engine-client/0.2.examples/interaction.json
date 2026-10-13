@@ -51,79 +51,98 @@
           "accepts_interaction_commands": true,
           "accepts_registered_actions": true
         },
-        "interaction": {
-          "title": "",
-          "root": {
-            "id": "map",
-            "kind": "map",
-            "affordances": [
-              "bn:travel",
-              "bn:context"
-            ],
-            "mode": "world"
-          },
-          "affordances": [
-            {
-              "id": "bn:travel",
-              "label": "Travel",
-              "keys": [],
-              "enabled": true,
-              "args": {
-                "pos": {
-                  "unit": "square"
-                }
-              }
-            },
-            {
-              "id": "bn:context",
-              "label": "Examine",
-              "keys": [],
-              "enabled": true,
-              "args": {
-                "pos": {
-                  "unit": "square"
-                }
-              }
-            },
-            {
-              "id": "bn:pickup",
-              "label": "Pick up",
-              "keys": [],
-              "enabled": true,
-              "args": {
-                "row": {
-                  "component_id": "avatar.ground"
-                },
-                "count": {
-                  "min": 1
-                }
-              }
-            },
-            {
-              "id": "bn:drop",
-              "label": "Drop",
-              "keys": [],
-              "enabled": true,
-              "args": {
-                "row": {
-                  "component_id": "avatar.inventory"
-                },
-                "count": {
-                  "min": 1
-                }
-              }
-            },
-            {
-              "id": "move_e",
-              "label": "Move East",
-              "keys": [
-                "l",
-                "RIGHT"
+        "actions": [
+          {
+            "id": "move_e",
+            "name": "Move East",
+            "keys": [
+              "l",
+              "RIGHT"
+            ]
+          }
+        ],
+        "interaction": null,
+        "stack": [
+          {
+            "screen_id": "screen:3",
+            "role": "map",
+            "root": {
+              "id": "map",
+              "kind": "map",
+              "affordances": [
+                "bn:travel",
+                "bn:context"
               ],
-              "enabled": true
-            }
-          ]
-        }
+              "mode": "world"
+            },
+            "affordances": [
+              {
+                "id": "bn:travel",
+                "label": "Travel",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "pos": {
+                    "unit": "square"
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "bn:context",
+                "label": "Examine",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "pos": {
+                    "unit": "square"
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "bn:pickup",
+                "label": "Pick up",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "avatar.ground"
+                  },
+                  "count": {
+                    "min": 1
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "bn:drop",
+                "label": "Drop",
+                "keys": [],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "avatar.inventory"
+                  },
+                  "count": {
+                    "min": 1
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "move_e",
+                "label": "Move East",
+                "keys": [
+                  "l",
+                  "RIGHT"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -137,7 +156,16 @@
           "accepts_interaction_commands": false,
           "accepts_registered_actions": false
         },
-        "interaction": null
+        "actions": [],
+        "interaction": null,
+        "stack": [
+          {
+            "screen_id": "screen:4",
+            "role": "screen",
+            "root": null,
+            "affordances": []
+          }
+        ]
       }
     },
     {
@@ -158,7 +186,8 @@
           "pane": {
             "component_id": "body"
           }
-        }
+        },
+        "expect": "boundary"
       }
     },
     {
@@ -171,7 +200,8 @@
           "g"
         ],
         "enabled": false,
-        "denial": "There is nothing here."
+        "denial": "There is nothing here.",
+        "expect": "screen"
       }
     },
     {
@@ -182,7 +212,8 @@
         "label": "Continue",
         "keys": [],
         "enabled": true,
-        "role": "any_key"
+        "role": "any_key",
+        "expect": "screen"
       }
     },
     {
@@ -241,6 +272,171 @@
         "activate": "bn:choose:list:npc",
         "offset": 0
       }
+    },
+    {
+      "name": "screen the engine has not described by components yet",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:9",
+        "role": "screen",
+        "root": null,
+        "affordances": []
+      }
+    },
+    {
+      "name": "stack of the map under a dialog",
+      "def": "interaction_boundary",
+      "value": {
+        "boundary_id": "boundary:91",
+        "readiness": {
+          "phase": "waiting_for_input",
+          "game_ready": true,
+          "accepts_interaction_commands": true,
+          "accepts_registered_actions": true
+        },
+        "actions": [
+          {
+            "id": "QUIT",
+            "name": "Quit",
+            "keys": [
+              "ESC"
+            ]
+          }
+        ],
+        "interaction": null,
+        "stack": [
+          {
+            "screen_id": "screen:map:epoch:e7f3",
+            "role": "map",
+            "root": {
+              "id": "map:world",
+              "kind": "map",
+              "mode": "world"
+            },
+            "affordances": []
+          },
+          {
+            "screen_id": "screen:7",
+            "role": "dialog",
+            "title": "Really quit?",
+            "root": {
+              "id": "list:choices",
+              "kind": "list",
+              "affordances": [
+                "bn:choose:list:choices"
+              ],
+              "columns": [],
+              "rows": [
+                {
+                  "id": "option:0",
+                  "label": "Yes",
+                  "description": "",
+                  "denial": "",
+                  "enabled": true,
+                  "selectable": true,
+                  "selected": true,
+                  "columns": []
+                }
+              ],
+              "total": 1,
+              "selection": "single",
+              "activate": "bn:choose:list:choices"
+            },
+            "affordances": [
+              {
+                "id": "bn:choose:list:choices",
+                "label": "Confirm",
+                "keys": [
+                  "RETURN"
+                ],
+                "enabled": true,
+                "args": {
+                  "row": {
+                    "component_id": "list:choices"
+                  }
+                },
+                "expect": "boundary"
+              },
+              {
+                "id": "QUIT",
+                "label": "Quit",
+                "keys": [
+                  "ESC"
+                ],
+                "enabled": true,
+                "expect": "screen"
+              }
+            ],
+            "focus": {
+              "component_id": "list:choices",
+              "row_id": "option:0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "boundary with a screen's 0.1 interaction and its stack",
+      "def": "interaction_boundary",
+      "value": {
+        "boundary_id": "boundary:92",
+        "readiness": {
+          "phase": "waiting_for_input",
+          "game_ready": true,
+          "accepts_interaction_commands": true,
+          "accepts_registered_actions": true
+        },
+        "actions": [],
+        "interaction": {
+          "schema_id": "schema:ab",
+          "context": "UILIST",
+          "kind": "choices",
+          "allow_cancel": true,
+          "allow_set_count": false,
+          "title": "Really quit?",
+          "message": "",
+          "choices": [
+            {
+              "id": "option:0",
+              "label": "Yes",
+              "description": "",
+              "denial": "",
+              "enabled": true,
+              "selectable": true,
+              "selected": true,
+              "columns": []
+            }
+          ],
+          "choice_total": 1,
+          "compat": {
+            "panes": []
+          }
+        },
+        "stack": [
+          {
+            "screen_id": "screen:7",
+            "role": "dialog",
+            "title": "Really quit?",
+            "root": null,
+            "affordances": [],
+            "focus": {
+              "component_id": "list:choices",
+              "row_id": "option:0"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "choices request naming a list",
+      "def": "choices_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "boundary_id": "boundary:90",
+        "offset": 200,
+        "limit": 100,
+        "component_id": "list:choices"
+      }
     }
   ],
   "invalid": [
@@ -279,7 +475,16 @@
             "accepts_interaction_commands": true,
             "accepts_registered_actions": true
           },
-          "interaction": null
+          "actions": [],
+          "interaction": null,
+          "stack": [
+            {
+              "screen_id": "screen:5",
+              "role": "screen",
+              "root": null,
+              "affordances": []
+            }
+          ]
         },
         "entities": [],
         "parts": 0
@@ -322,16 +527,17 @@
         "label": "Cancel",
         "keys": [],
         "enabled": true,
-        "show": "button"
+        "show": "button",
+        "expect": "screen"
       },
       "why": "where an affordance shows is the client's"
     },
     {
       "name": "interaction with a modal layout hint",
-      "def": "interaction",
+      "def": "screen",
       "value": {
-        "schema_id": "schema:ab",
-        "context": "MAIN_MENU",
+        "screen_id": "screen:6",
+        "role": "dialog",
         "title": "Cataclysm: Bright Nights",
         "root": {
           "id": "tabs",
@@ -409,7 +615,8 @@
               "row": {
                 "component_id": "list:new_game"
               }
-            }
+            },
+            "expect": "boundary"
           },
           {
             "id": "bn:choose:tabs",
@@ -420,14 +627,16 @@
               "row": {
                 "component_id": "tabs"
               }
-            }
+            },
+            "expect": "boundary"
           },
           {
             "id": "bn:cancel",
             "label": "Cancel",
             "keys": [],
             "enabled": true,
-            "role": "cancel"
+            "role": "cancel",
+            "expect": "screen"
           },
           {
             "id": "UP",
@@ -436,20 +645,22 @@
               "UP",
               "k"
             ],
-            "enabled": true
+            "enabled": true,
+            "expect": "screen"
           }
         ],
         "focus": {
           "component_id": "tabs",
           "row_id": "tab:new_game"
         },
-        "modal": "screen"
+        "context": "MAIN_MENU",
+        "modal": true
       },
       "why": "role says what the screen is; how much it covers is the client's"
     },
     {
       "name": "text in a fixed-width style",
-      "def": "text",
+      "def": "text_component",
       "value": {
         "id": "banner",
         "kind": "text",
@@ -460,7 +671,7 @@
     },
     {
       "name": "text with a presentational role",
-      "def": "text",
+      "def": "text_component",
       "value": {
         "id": "banner",
         "kind": "text",
@@ -477,7 +688,8 @@
         "label": "Move",
         "keys": [],
         "enabled": true,
-        "role": "primary"
+        "role": "primary",
+        "expect": "screen"
       },
       "why": "emphasis is the client's; roles are confirm, cancel and any_key"
     },
@@ -580,28 +792,14 @@
       "why": "args are row, rows, count, text, pos and pane"
     },
     {
-      "name": "interaction without affordances",
-      "def": "interaction",
+      "name": "screen without affordances",
+      "def": "screen",
       "value": {
-        "schema_id": "s",
-        "root": {
-          "id": "t",
-          "kind": "text",
-          "markup": ""
-        }
+        "screen_id": "screen:8",
+        "role": "dialog",
+        "root": null
       },
-      "why": "a boundary always lists what can be done, even nothing"
-    },
-    {
-      "name": "choices request without its list",
-      "def": "choices_params",
-      "value": {
-        "epoch": "epoch:e7f3",
-        "boundary_id": "boundary:90",
-        "offset": 200,
-        "limit": 200
-      },
-      "why": "pages are per list"
+      "why": "a screen always lists what can be done, even nothing"
     },
     {
       "name": "affordance without keys",
@@ -612,6 +810,71 @@
         "enabled": true
       },
       "why": "keys lists the player's bindings, possibly none"
+    },
+    {
+      "name": "stack without a screen",
+      "def": "interaction_boundary",
+      "value": {
+        "boundary_id": "boundary:91",
+        "readiness": {
+          "phase": "waiting_for_input",
+          "game_ready": true,
+          "accepts_interaction_commands": true,
+          "accepts_registered_actions": true
+        },
+        "actions": [],
+        "interaction": null,
+        "stack": []
+      },
+      "why": "the stack always holds the screen input goes to"
+    },
+    {
+      "name": "screen without an id",
+      "def": "screen",
+      "value": {
+        "role": "dialog",
+        "root": null,
+        "affordances": []
+      },
+      "why": "an expectation names the screen by id"
+    },
+    {
+      "name": "screen of an unknown role",
+      "def": "screen",
+      "value": {
+        "screen_id": "screen:9",
+        "role": "overlay",
+        "root": null,
+        "affordances": []
+      },
+      "why": "roles are map, screen and dialog"
+    },
+    {
+      "name": "affordance without its expectation scope",
+      "def": "affordance",
+      "value": {
+        "id": "QUIT",
+        "label": "Quit",
+        "keys": [
+          "ESC"
+        ],
+        "enabled": true
+      },
+      "why": "the engine says which expectation an invoke carries"
+    },
+    {
+      "name": "affordance with an expectation of its own",
+      "def": "affordance",
+      "value": {
+        "id": "QUIT",
+        "label": "Quit",
+        "keys": [
+          "ESC"
+        ],
+        "enabled": true,
+        "expect": "queue"
+      },
+      "why": "expect is screen or boundary"
     }
   ]
 }

@@ -1,0 +1,101 @@
+{
+  "valid": [
+    {
+      "name": "text as a string",
+      "def": "text",
+      "value": "Really quit?"
+    },
+    {
+      "name": "text as a message key",
+      "def": "text",
+      "value": {
+        "key": "Really quit?"
+      }
+    },
+    {
+      "name": "text with a context and a count",
+      "def": "text",
+      "value": {
+        "key": "%d item",
+        "ctx": "inventory",
+        "plural": 3,
+        "args": [
+          3
+        ]
+      }
+    },
+    {
+      "name": "text concatenating a translated name and a string",
+      "def": "text",
+      "value": {
+        "key": "",
+        "args": [
+          {
+            "key": "rock"
+          },
+          " ",
+          "(2)"
+        ]
+      }
+    },
+    {
+      "name": "row labelled by a message key",
+      "def": "row",
+      "value": {
+        "id": "option:0",
+        "label": {
+          "key": "Yes"
+        },
+        "description": "",
+        "denial": "",
+        "enabled": true,
+        "selectable": true,
+        "selected": false,
+        "columns": []
+      }
+    }
+  ],
+  "invalid": [
+    {
+      "name": "text as an empty object",
+      "def": "text",
+      "value": {},
+      "why": "a message key is required"
+    },
+    {
+      "name": "text with a boolean argument",
+      "def": "text",
+      "value": {
+        "key": "%s",
+        "args": [
+          true
+        ]
+      },
+      "why": "arguments are text or numbers"
+    },
+    {
+      "name": "text with a plural given as a string",
+      "def": "text",
+      "value": {
+        "key": "%d item",
+        "plural": "3"
+      },
+      "why": "the plural selector is a number"
+    },
+    {
+      "name": "text with a member of its own",
+      "def": "text",
+      "value": {
+        "key": "Yes",
+        "bold": true
+      },
+      "why": "presentation is the client's"
+    },
+    {
+      "name": "text as a number",
+      "def": "text",
+      "value": 3,
+      "why": "numbers go in the arguments"
+    }
+  ]
+}

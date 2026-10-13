@@ -2,10 +2,10 @@
   "valid": [
     {
       "name": "terminal output with an answer row at a security query",
-      "def": "interaction",
+      "def": "screen",
       "value": {
-        "schema_id": "interaction:terminal",
-        "context": "COMPUTER_TERMINAL",
+        "screen_id": "screen:14",
+        "role": "dialog",
         "title": "Lab terminal",
         "root": {
           "id": "root",
@@ -63,16 +63,19 @@
               "row": {
                 "component_id": "list:terminal"
               }
-            }
+            },
+            "expect": "boundary"
           },
           {
             "id": "bn:cancel",
             "label": "Cancel",
             "keys": [],
             "enabled": true,
-            "role": "cancel"
+            "role": "cancel",
+            "expect": "screen"
           }
-        ]
+        ],
+        "context": "COMPUTER_TERMINAL"
       }
     },
     {

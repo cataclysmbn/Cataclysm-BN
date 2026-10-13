@@ -408,6 +408,50 @@
           "revision": "33"
         }
       }
+    },
+    {
+      "name": "hello request with a schema hash, a locale and capabilities",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "ko",
+        "capabilities": {
+          "tiles": true,
+          "delivery": {
+            "credits": 32
+          }
+        }
+      }
+    },
+    {
+      "name": "hello result naming the locale and the role",
+      "def": "hello_result",
+      "value": {
+        "version": "0.2",
+        "epoch": "epoch:e7f3",
+        "engine": {
+          "build": "0.9.1-1234-gabc",
+          "mods": [
+            "bn"
+          ]
+        },
+        "limits": {
+          "frame_bytes": 1048576,
+          "cells_per_part": 512,
+          "cells_per_query": 4096
+        },
+        "schema": "sha256:0123456789abcdef",
+        "locale": "ko",
+        "engine_locale": "en",
+        "role": "spectator"
+      }
     }
   ],
   "invalid": [
@@ -567,6 +611,21 @@
           ""
         ]
       }
+    },
+    {
+      "name": "hello request with a malformed schema hash",
+      "def": "hello_params",
+      "value": {
+        "versions": [
+          "0.2"
+        ],
+        "client": {
+          "name": "bn-deno",
+          "version": "0.1.0"
+        },
+        "schema": "0123456789abcdef"
+      },
+      "why": "the schema hash is sha256: and 16 hex digits"
     }
   ]
 }

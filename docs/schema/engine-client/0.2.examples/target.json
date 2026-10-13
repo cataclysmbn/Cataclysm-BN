@@ -101,10 +101,10 @@
     },
     {
       "name": "look-around with the cursor square described",
-      "def": "interaction",
+      "def": "screen",
       "value": {
-        "schema_id": "interaction:look",
-        "context": "LOOK",
+        "screen_id": "screen:13",
+        "role": "dialog",
         "title": "Look Around",
         "root": {
           "id": "map",
@@ -159,16 +159,19 @@
               "pos": {
                 "unit": "square"
               }
-            }
+            },
+            "expect": "boundary"
           },
           {
             "id": "bn:cancel",
             "label": "Cancel",
             "keys": [],
             "enabled": true,
-            "role": "cancel"
+            "role": "cancel",
+            "expect": "screen"
           }
-        ]
+        ],
+        "context": "LOOK"
       }
     },
     {

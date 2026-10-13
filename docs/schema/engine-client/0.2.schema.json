@@ -68,6 +68,52 @@
       "minLength": 1,
       "maxLength": 256
     },
+    "text": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/localised_string"
+        }
+      ],
+      "description": "Player-facing text: a string, already localized for the connection, or a LocalisedString for the client to render from the engine's catalogues. 0.2 engines send strings only."
+    },
+    "localised_string": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "The msgid. The empty key concatenates `args`."
+        },
+        "ctx": {
+          "type": "string",
+          "description": "The gettext context."
+        },
+        "plural": {
+          "type": "number",
+          "description": "The count that selects the plural form."
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "description": "Values for the placeholders, in order."
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "additionalProperties": false
+    },
     "pos": {
       "type": "object",
       "properties": {
@@ -669,7 +715,8 @@
         "count": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 9007199254740991
+          "maximum": 9007199254740991,
+          "description": "How much the row holds in native units: charges of a charges item, else items. The most a pickup or drop of the row takes."
         },
         "slot": {
           "enum": [
@@ -1238,6 +1285,353 @@
       ],
       "additionalProperties": false
     },
+    "choice": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "denial": {
+          "type": "string"
+        },
+        "hotkey": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The key that chooses the row natively, printed before the label (a uilist entry's key, an inventory item's invlet). Absent when the row has none."
+        },
+        "pane_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The pane or tab this entry belongs to. Tab rows of a tabbed menu have none."
+        },
+        "area_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "storage_kind": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "selectable": {
+          "type": "boolean"
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The stable, untranslated name of the column; clients look a column up by it, never by `label`."
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string",
+                "description": "The game color the native screen prints the value in. Absent when it uses the default."
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "favorite": {
+          "type": "boolean",
+          "description": "The row is a favorite, as the native list marks it. Absent when it is not."
+        },
+        "color": {
+          "type": "string",
+          "description": "The game color of the row's text. Absent when the native list uses its default."
+        },
+        "key_color": {
+          "type": "string",
+          "description": "The game color of the row's `hotkey`. Absent when the native list uses its default."
+        },
+        "markup": {
+          "type": "string",
+          "description": "The row's name with the native color tags, when it differs from `label`."
+        },
+        "action_id": {
+          "type": "string",
+          "description": "The registered action the row runs, such as `open_options` on the in-game main menu. Absent on other rows."
+        },
+        "parent_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "The listed row this one is nested under. Absent when it has no parent or the parent is filtered out."
+        },
+        "nest_color": {
+          "type": "string",
+          "description": "The game color of the nesting slash the native list draws before a nested row, lit by how much of its parent is marked. Absent for a row that is not nested."
+        },
+        "mark": {
+          "type": "object",
+          "description": "The selection mark the native list prints before the row: `+` all of it, `#` some of it, `-` none. Absent when the list prints none.",
+          "properties": {
+            "glyph": {
+              "enum": [
+                "+",
+                "#",
+                "-"
+              ]
+            },
+            "color": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "glyph"
+          ],
+          "additionalProperties": false
+        },
+        "selected_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "minimum_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "available_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "editor": {
+          "type": "object",
+          "description": "A value the client can set directly with `fill` (field_id is this choice's id) instead of cycling it natively. `bool` takes `true` or `false`, `select` one of `values[].id`, `integer` and `float` a number within `minimum` and `maximum`, `text` a string of at most `max_length` (-1: unbounded). `value` is the current value in the same form.",
+          "properties": {
+            "type": {
+              "enum": [
+                "bool",
+                "select",
+                "integer",
+                "float",
+                "text"
+              ]
+            },
+            "value": {
+              "type": "string"
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "label"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "minimum": {
+              "type": "number"
+            },
+            "maximum": {
+              "type": "number"
+            },
+            "max_length": {
+              "type": "integer",
+              "minimum": -1
+            }
+          },
+          "required": [
+            "type",
+            "value",
+            "values",
+            "max_length"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "description",
+        "denial",
+        "enabled",
+        "selectable",
+        "selected",
+        "columns"
+      ],
+      "additionalProperties": false
+    },
+    "pane": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "area_id": {
+          "type": "string"
+        },
+        "area_label": {
+          "type": "string"
+        },
+        "area_description": {
+          "type": "string"
+        },
+        "filter": {
+          "type": "string"
+        },
+        "storage_kind": {
+          "type": "string"
+        },
+        "sort": {
+          "type": "string"
+        },
+        "page": {
+          "type": "object",
+          "properties": {
+            "number": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "number",
+            "count"
+          ],
+          "additionalProperties": false,
+          "description": "The native page indicator of a paged list, counted from 1 (the NPC trade window)."
+        },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "weight": {
+              "type": "string"
+            },
+            "weight_max": {
+              "type": "string"
+            },
+            "weight_unit": {
+              "type": "string"
+            },
+            "volume": {
+              "type": "string"
+            },
+            "volume_max": {
+              "type": "string"
+            },
+            "volume_unit": {
+              "type": "string"
+            },
+            "over_weight": {
+              "type": "boolean"
+            },
+            "over_volume": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "weight",
+            "weight_max",
+            "weight_unit",
+            "volume",
+            "volume_max",
+            "volume_unit",
+            "over_weight",
+            "over_volume"
+          ],
+          "additionalProperties": false
+        },
+        "blocked_areas": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Registered actions of the areas the pane cannot put items in; the native screen draws them red."
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "role",
+        "area_id",
+        "area_label",
+        "area_description",
+        "filter",
+        "storage_kind"
+      ],
+      "additionalProperties": false
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "text",
+            "integer",
+            "key"
+          ]
+        },
+        "max_length": {
+          "type": "integer",
+          "minimum": -1
+        },
+        "printable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "description",
+        "value",
+        "type",
+        "max_length",
+        "printable"
+      ],
+      "additionalProperties": false
+    },
     "target": {
       "type": "object",
       "properties": {
@@ -1321,6 +1715,272 @@
         "distance",
         "status",
         "candidates"
+      ],
+      "additionalProperties": false
+    },
+    "vehicle": {
+      "type": "object",
+      "description": "The native vehicle interaction window (veh_interact). `mode` select is the pick-a-part list of siphon, crew and the like. `cells` is the grid around the cursor in screen cells relative to it (x right, y down); `parts` are the parts on the cursor square, topmost first; `stats` are the native stat lines in reading order (an empty string is a blank slot). In a task list (install, repair, remove, mend, refill) the choices are the candidate parts, `tabs` is the install tab bar, and `detail` previews the highlighted part with its requirements. Choosing the highlighted part starts the task, choosing another part moves the highlight.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "owned": {
+          "type": "boolean",
+          "description": "The player owns the vehicle, so rename, crew and label are allowed."
+        },
+        "mode": {
+          "enum": [
+            "main",
+            "install",
+            "repair",
+            "remove",
+            "mend",
+            "refill",
+            "select"
+          ]
+        },
+        "verb": {
+          "type": "string",
+          "description": "What the task does to the highlighted part, localized, such as `Install`. Absent on the main screen."
+        },
+        "cursor": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "integer"
+            },
+            "y": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "blocked": {
+          "type": "boolean",
+          "description": "Terrain, furniture or a creature keeps the cursor square from taking a part."
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dx": {
+                "type": "integer"
+              },
+              "dy": {
+                "type": "integer"
+              },
+              "glyph": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string",
+                "description": "A game color name such as `light_gray`."
+              }
+            },
+            "required": [
+              "dx",
+              "dy",
+              "glyph",
+              "color"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name with its contents or cargo load, as the native part list prints it."
+              },
+              "open": {
+                "type": "string",
+                "description": "The mark before the name: `[` for structure, `(` for armor, `-` otherwise."
+              },
+              "close": {
+                "type": "string"
+              },
+              "health": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "broken": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "open",
+              "close",
+              "health",
+              "broken"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "stats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tabs": {
+          "type": "object",
+          "description": "The install tab bar. Choose `tab:<index>` to switch.",
+          "properties": {
+            "labels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "selected": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "filter": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "labels",
+            "selected",
+            "filter"
+          ],
+          "additionalProperties": false
+        },
+        "detail": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string",
+              "description": "Absent when the pane has no time line."
+            },
+            "time_heading": {
+              "type": "string",
+              "description": "The localized heading of the time line; absent with `time`."
+            },
+            "groups": {
+              "type": "array",
+              "description": "The requirement headings in the order the native pane prints them.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "skill",
+                      "component",
+                      "tool",
+                      "extra"
+                    ]
+                  },
+                  "heading": {
+                    "type": "string"
+                  },
+                  "empty_text": {
+                    "type": "string",
+                    "description": "Printed under the heading when no requirement has this kind, such as NONE. Empty: leave the group out then."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "heading",
+                  "empty_text"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "stats": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "label",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "requirements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "skill",
+                      "component",
+                      "tool",
+                      "extra"
+                    ]
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "A component or tool row lists its alternatives joined with OR."
+                  },
+                  "met": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "text",
+                  "met"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "can_do": {
+              "type": "boolean",
+              "description": "Every requirement is met, so choosing the part starts the task."
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "stats",
+            "requirements",
+            "can_do"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "name",
+        "owner",
+        "owned",
+        "mode",
+        "cursor",
+        "blocked",
+        "cells",
+        "parts",
+        "stats"
       ],
       "additionalProperties": false
     },
@@ -1509,31 +2169,325 @@
       "type": "object",
       "properties": {
         "schema_id": {
-          "$ref": "#/$defs/opaque_id",
-          "description": "The native screen's schema, which a submit expects. Absent only where no native screen is open (the map, or registered actions alone); a submit then expects null."
+          "$ref": "#/$defs/opaque_id"
         },
         "context": {
-          "type": "string",
-          "description": "Diagnostics and tests only. Clients must not branch on it."
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "custom",
+            "choices",
+            "field",
+            "inventory",
+            "target"
+          ]
+        },
+        "allow_cancel": {
+          "type": "boolean"
+        },
+        "allow_set_count": {
+          "type": "boolean"
         },
         "title": {
           "type": "string"
         },
+        "message": {
+          "type": "string"
+        },
+        "message_tone": {
+          "enum": [
+            "good",
+            "bad"
+          ],
+          "description": "Present where the native screen colors the message line, green for good and red for bad: the NPC trade balance."
+        },
+        "category_mode": {
+          "type": "boolean",
+          "description": "Present where the native screen has a category-selection mode: whether it is on (the NPC trade window)."
+        },
+        "any_key_choice_id": {
+          "type": "string",
+          "description": "Present on a press-any-key screen that binds no key: the choice any key press acknowledges. Choose it when the player presses a key no action binds."
+        },
+        "banner": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fixed-width lines drawn above the menu, with color tags: the main menu's title art and version line."
+        },
+        "areas": {
+          "type": "array",
+          "description": "The advanced inventory's area picker as the native header lays it out. `action_id` is the registered action that points the active pane at the area, `key` the key the player has bound to it (empty when none), `x` and `y` its position in character cells from the picker's top-left corner, `available` whether the area exists now (the vehicle is grabbed or on the square, the level is there). A pane is on the area whose `label` is its `area_label`.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "key": {
+                "type": "string"
+              },
+              "x": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "y": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "available": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "action_id",
+              "label",
+              "key",
+              "x",
+              "y",
+              "available"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/choice"
+          },
+          "maxItems": 200
+        },
+        "choice_total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "field": {
+          "$ref": "#/$defs/field"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "overmap": {
+          "$ref": "#/$defs/overmap"
+        },
+        "vehicle": {
+          "$ref": "#/$defs/vehicle"
+        },
+        "canvas": {
+          "$ref": "#/$defs/canvas"
+        },
+        "refresh_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new canvas."
+        },
+        "compat": {
+          "type": "object",
+          "properties": {
+            "focus": {
+              "type": "object",
+              "properties": {
+                "pane_id": {
+                  "$ref": "#/$defs/opaque_id"
+                },
+                "choice_id": {
+                  "$ref": "#/$defs/opaque_id"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            },
+            "panes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/pane"
+              }
+            }
+          },
+          "required": [
+            "panes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_id",
+        "context",
+        "kind",
+        "allow_cancel",
+        "allow_set_count",
+        "title",
+        "message",
+        "choices",
+        "choice_total",
+        "compat"
+      ],
+      "additionalProperties": false,
+      "description": "choices holds at most the first 200 rows, fewer when they would be too large; read the rest with bn.interaction.choices from offset = choices.length. choice_total is the full count."
+    },
+    "interaction_boundary": {
+      "type": "object",
+      "properties": {
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "readiness": {
+          "$ref": "#/$defs/readiness"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interaction": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stack": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/screen"
+          },
+          "description": "The open screens, outermost first; the last is the one input goes to and the only one with affordances. Present on every boundary a 0.2 engine sends, next to the 0.1 `interaction`, which a screen's `root` replaces once its slice lands."
+        }
+      },
+      "required": [
+        "boundary_id",
+        "readiness",
+        "actions",
+        "interaction"
+      ],
+      "additionalProperties": false
+    },
+    "interaction_update": {
+      "type": "object",
+      "properties": {
+        "boundary_id": {
+          "$ref": "#/$defs/opaque_id"
+        },
+        "readiness": {
+          "$ref": "#/$defs/readiness"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/opaque_id"
+              },
+              "name": {
+                "type": "string"
+              },
+              "keys": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "interaction": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/interaction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stack": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/screen"
+          },
+          "description": "The open screens, outermost first; the last is the one input goes to and the only one with affordances. Present on every boundary a 0.2 engine sends, next to the 0.1 `interaction`, which a screen's `root` replaces once its slice lands."
+        }
+      },
+      "required": [
+        "boundary_id",
+        "readiness",
+        "interaction"
+      ],
+      "additionalProperties": false,
+      "description": "A boundary in an event. `actions` is left out when it equals the previous boundary's; the client keeps its own."
+    },
+    "screen": {
+      "type": "object",
+      "properties": {
+        "screen_id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "One native screen instance: stable while it stays open, new when it is reopened. The map's id is fixed for the epoch."
+        },
         "role": {
           "enum": [
-            "dialog",
-            "screen"
+            "map",
+            "screen",
+            "dialog"
           ],
-          "description": "`dialog`: a question over the game that the player answers and leaves. `screen`: a place of its own, such as a menu or a manager."
+          "description": "`map`: the running game. `dialog`: a question over it that the player answers and leaves. `screen`: a place of its own, such as a menu or a manager."
+        },
+        "title": {
+          "$ref": "#/$defs/text"
         },
         "root": {
-          "$ref": "#/$defs/component"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/component"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`null`: the screen is not described by components yet; read the boundary's `interaction`."
         },
         "affordances": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/affordance"
-          }
+          },
+          "description": "What the player can do on this screen; empty for a screen that input does not reach. Only the last entry of `stack` has any."
         },
         "focus": {
           "type": "object",
@@ -1553,69 +2507,20 @@
           "type": "integer",
           "minimum": 1,
           "description": "Present where the engine redraws the screen on its own every this many milliseconds with no input, such as the snake game; each redraw publishes a new canvas."
+        },
+        "context": {
+          "type": "string",
+          "description": "Diagnostics and tests only. Clients must not branch on it."
         }
       },
       "required": [
+        "screen_id",
+        "role",
         "root",
         "affordances"
       ],
       "additionalProperties": false,
-      "description": "What the player sees and may do at the boundary. At the map, `root` is a world `map` and `affordances` are the map's actions."
-    },
-    "interaction_boundary": {
-      "type": "object",
-      "properties": {
-        "boundary_id": {
-          "$ref": "#/$defs/opaque_id"
-        },
-        "readiness": {
-          "$ref": "#/$defs/readiness"
-        },
-        "interaction": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/interaction"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "required": [
-        "boundary_id",
-        "readiness",
-        "interaction"
-      ],
-      "additionalProperties": false
-    },
-    "interaction_update": {
-      "type": "object",
-      "properties": {
-        "boundary_id": {
-          "$ref": "#/$defs/opaque_id"
-        },
-        "readiness": {
-          "$ref": "#/$defs/readiness"
-        },
-        "interaction": {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/interaction"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      },
-      "required": [
-        "boundary_id",
-        "readiness",
-        "interaction"
-      ],
-      "additionalProperties": false,
-      "description": "A boundary in an event."
+      "description": "One screen of the interaction stack."
     },
     "changes": {
       "type": "object",
@@ -2261,6 +3166,10 @@
           "type": "string",
           "minLength": 1,
           "description": "The line as the native log prints it: text, followed by the translated repeat suffix from a count of 2."
+        },
+        "lang": {
+          "type": "string",
+          "description": "Present when the line is not in the connection's locale: the BN language id it was rendered in."
         }
       },
       "required": [
@@ -2731,6 +3640,62 @@
           ],
           "additionalProperties": false,
           "description": "Opt in to credit delivery. Without it every pushed frame is written at once, as before."
+        },
+        "schema": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{16}$",
+          "description": "Raw-byte SHA-256 prefix of 0.2.schema.json the client was built with. A mismatch fails with `negotiation_failed`."
+        },
+        "locale": {
+          "type": "string",
+          "description": "BN language id, such as `ko`. Default: the engine's."
+        },
+        "capabilities": {
+          "type": "object",
+          "properties": {
+            "tiles": {
+              "type": "boolean",
+              "description": "The client draws tiles, so the engine adds tile ids where it has them (the overmap)."
+            },
+            "tint_ids": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "maxItems": 4096,
+              "description": "The ids of the tints the client's tileset has (hair colors, item or terrain ids, flags). The engine publishes on looks the tint_keys among them that apply, in the order the native view tries them."
+            },
+            "viewport": {
+              "$ref": "#/$defs/viewport"
+            },
+            "delivery": {
+              "type": "object",
+              "properties": {
+                "credits": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 256,
+                  "description": "Pushed `bn.events` and `bn.command` frames the engine may send before the client grants more with `bn.credit`."
+                },
+                "max_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 240,
+                  "description": "The most frames per second of wall time the engine publishes while an activity runs; the boundary where the activity ends is always published. Without it the engine paces only by its own cost."
+                }
+              },
+              "required": [
+                "credits"
+              ],
+              "additionalProperties": false,
+              "description": "Opt in to credit delivery. Without it every pushed frame is written at once, as before."
+            }
+          },
+          "required": [],
+          "additionalProperties": false,
+          "description": "What the client can do; the same members as the loose hello members, which stay accepted."
         }
       },
       "required": [
@@ -2844,6 +3809,23 @@
           ],
           "additionalProperties": false,
           "description": "Present exactly when the hello asked for credit delivery. Past either held bound the engine drops what is waiting and sends `bn.resync` with reason `backpressure`; `lost_after` is the newest sequence it wrote."
+        },
+        "schema": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{16}$"
+        },
+        "locale": {
+          "type": "string",
+          "description": "The locale this connection receives."
+        },
+        "engine_locale": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "controller",
+            "spectator"
+          ]
         }
       },
       "required": [
@@ -2963,47 +3945,77 @@
         },
         "component_id": {
           "$ref": "#/$defs/opaque_id",
-          "description": "The `list` to read."
+          "description": "The `list` to read, when the screen has components. Absent: the 0.1 list of the interaction."
         }
       },
       "required": [
         "epoch",
         "boundary_id",
         "offset",
-        "limit",
-        "component_id"
+        "limit"
       ],
       "additionalProperties": false
     },
     "choices_result": {
-      "type": "object",
-      "properties": {
-        "boundary_id": {
-          "$ref": "#/$defs/opaque_id"
-        },
-        "component_id": {
-          "$ref": "#/$defs/opaque_id"
-        },
-        "total": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991
-        },
-        "rows": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/row"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "boundary_id": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "choices": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/choice"
+              },
+              "maxItems": 200
+            }
           },
-          "maxItems": 200
+          "required": [
+            "boundary_id",
+            "total",
+            "choices"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "boundary_id": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "component_id": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/row"
+              },
+              "maxItems": 200
+            }
+          },
+          "required": [
+            "boundary_id",
+            "component_id",
+            "total",
+            "rows"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "boundary_id",
-        "component_id",
-        "total",
-        "rows"
       ],
-      "additionalProperties": false
+      "description": "With `component_id`: the rows of that list from `offset`, and its total. Without: the 0.1 choices."
     },
     "world_cells_params": {
       "type": "object",
@@ -3058,31 +4070,38 @@
           "$ref": "#/$defs/opaque_id"
         },
         "expect": {
-          "type": "object",
-          "properties": {
-            "revision": {
-              "$ref": "#/$defs/counter"
-            },
-            "boundary_id": {
-              "$ref": "#/$defs/opaque_id"
-            },
-            "schema_id": {
-              "oneOf": [
-                {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "revision": {
+                  "$ref": "#/$defs/counter"
+                },
+                "boundary_id": {
                   "$ref": "#/$defs/opaque_id"
                 },
-                {
-                  "type": "null"
+                "schema_id": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/opaque_id"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
-              ]
+              },
+              "required": [
+                "revision",
+                "boundary_id",
+                "schema_id"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "$ref": "#/$defs/expectation"
             }
-          },
-          "required": [
-            "revision",
-            "boundary_id",
-            "schema_id"
-          ],
-          "additionalProperties": false
+          ]
         },
         "operation": {
           "$ref": "#/$defs/operation"
@@ -3093,7 +4112,66 @@
         "expect",
         "operation"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "operation": {
+                "properties": {
+                  "kind": {
+                    "const": "invoke"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            },
+            "required": [
+              "operation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "expect": {
+                "$ref": "#/$defs/expectation"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "expect": {
+                "type": "object",
+                "properties": {
+                  "revision": {
+                    "$ref": "#/$defs/counter"
+                  },
+                  "boundary_id": {
+                    "$ref": "#/$defs/opaque_id"
+                  },
+                  "schema_id": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/opaque_id"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "revision",
+                  "boundary_id",
+                  "schema_id"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
     },
     "submit_result": {
       "type": "object",
@@ -3140,7 +4218,8 @@
         "validation_failed",
         "not_ready",
         "invalid_arguments",
-        "unknown_affordance"
+        "unknown_affordance",
+        "stale_screen"
       ]
     },
     "command_result": {
@@ -3390,7 +4469,8 @@
             "resource_limit",
             "read_only",
             "invalid_arguments",
-            "unknown_affordance"
+            "unknown_affordance",
+            "stale_screen"
           ]
         },
         "action": {
@@ -3505,13 +4585,13 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "description": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "denial": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "hotkey": {
           "type": "string",
@@ -3538,10 +4618,10 @@
                 "description": "The stable, untranslated name of the column; clients look a column up by it, never by `label`."
               },
               "label": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "value": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "color": {
                 "type": "string",
@@ -3640,6 +4720,10 @@
             ],
             "additionalProperties": false
           }
+        },
+        "look": {
+          "$ref": "#/$defs/look",
+          "description": "What the row stands for, for a client to draw. Absent for rows that are not things."
         }
       },
       "required": [
@@ -3754,8 +4838,8 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
-          "description": "Localized."
+          "$ref": "#/$defs/text",
+          "description": "The native action name (`input_context::get_action_name`) or the screen's own word; never invented by the adapter."
         },
         "keys": {
           "type": "array",
@@ -3768,7 +4852,7 @@
           "type": "boolean"
         },
         "denial": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized reason when disabled."
         },
         "role": {
@@ -3781,13 +4865,21 @@
         },
         "args": {
           "$ref": "#/$defs/arg_shape"
+        },
+        "expect": {
+          "enum": [
+            "screen",
+            "boundary"
+          ],
+          "description": "Which expectation an invoke carries, assigned by the engine. `screen`: the affordance takes no `row`, `rows`, `pos` or `text`; the invoke expects `{screen_id}` and may queue. `boundary`: the invoke expects `{boundary_id, revision}` and the engine checks its row ids against the full list."
         }
       },
       "required": [
         "id",
         "label",
         "keys",
-        "enabled"
+        "enabled",
+        "expect"
       ],
       "additionalProperties": false,
       "description": "Something the player can do now, invoked by `id` with an `invoke` operation. Ids are opaque."
@@ -3839,6 +4931,181 @@
       "description": "The members the affordance's `args` shape names, and no others."
     },
     "operation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "choose"
+            },
+            "choice_id": {
+              "$ref": "#/$defs/opaque_id"
+            }
+          },
+          "required": [
+            "kind",
+            "choice_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "fill"
+            },
+            "field_id": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "value": {
+              "type": "string"
+            },
+            "submit": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "field_id",
+            "value",
+            "submit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "set_count"
+            },
+            "choice_id": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "choice_id",
+            "count"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "set_target"
+            },
+            "pos": {
+              "$ref": "#/$defs/pos"
+            },
+            "candidate_id": {
+              "$ref": "#/$defs/opaque_id"
+            }
+          },
+          "required": [
+            "kind",
+            "pos"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "cancel"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "action"
+            },
+            "action_id": {
+              "$ref": "#/$defs/opaque_id"
+            }
+          },
+          "required": [
+            "kind",
+            "action_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "travel"
+            },
+            "pos": {
+              "$ref": "#/$defs/pos"
+            }
+          },
+          "required": [
+            "kind",
+            "pos"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "pickup",
+                "drop"
+              ]
+            },
+            "item_id": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "The id of a row of avatar.ground (pickup) or avatar.inventory (drop)."
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "How much of the row, in its native units: charges of a charges item, else items. At most the row's count."
+            }
+          },
+          "required": [
+            "kind",
+            "item_id",
+            "count"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "context"
+            },
+            "pos": {
+              "$ref": "#/$defs/pos"
+            }
+          },
+          "required": [
+            "kind",
+            "pos"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/invoke"
+        }
+      ]
+    },
+    "invoke": {
       "type": "object",
       "properties": {
         "kind": {
@@ -3858,6 +5125,41 @@
       "additionalProperties": false,
       "description": "Runs an affordance of the expected boundary. The engine checks `args` against the affordance's shape and rejects with `invalid_arguments` before running anything; an id the boundary does not offer is `unknown_affordance`."
     },
+    "expectation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "screen_id": {
+              "$ref": "#/$defs/opaque_id"
+            }
+          },
+          "required": [
+            "screen_id"
+          ],
+          "additionalProperties": false,
+          "description": "Holds while that screen is the top of the stack; otherwise `stale_screen`. For affordances with `expect: screen`."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "boundary_id": {
+              "$ref": "#/$defs/opaque_id"
+            },
+            "revision": {
+              "$ref": "#/$defs/counter"
+            }
+          },
+          "required": [
+            "boundary_id",
+            "revision"
+          ],
+          "additionalProperties": false,
+          "description": "Holds while the boundary and revision stand; otherwise `stale_boundary` or `stale_revision`. For affordances with `expect: boundary`."
+        }
+      ],
+      "description": "What an invoke is conditional on. A form that does not match the affordance's `expect` fails with `invalid_arguments`."
+    },
     "list": {
       "type": "object",
       "properties": {
@@ -3865,7 +5167,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -3873,7 +5175,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "list"
@@ -3888,7 +5190,7 @@
                 "minLength": 1
               },
               "label": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               }
             },
             "required": [
@@ -3950,7 +5252,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -3958,7 +5260,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "tabs"
@@ -3972,7 +5274,7 @@
                 "$ref": "#/$defs/opaque_id"
               },
               "label": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "selected": {
                 "type": "boolean"
@@ -4014,7 +5316,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4022,7 +5324,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "split"
@@ -4062,7 +5364,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4070,16 +5372,16 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "panel"
         },
         "title": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "subtitle": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "stats": {
           "type": "array",
@@ -4091,17 +5393,17 @@
                 "minLength": 1
               },
               "label": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "value": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "max": {
-                "type": "string",
+                "$ref": "#/$defs/text",
                 "description": "What the value can reach. Absent: unbounded."
               },
               "unit": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "tone": {
                 "enum": [
@@ -4143,10 +5445,10 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "description": {
-          "type": "string"
+          "$ref": "#/$defs/text"
         },
         "value": {
           "type": "string",
@@ -4180,7 +5482,7 @@
                 "type": "string"
               },
               "label": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               }
             },
             "required": [
@@ -4213,7 +5515,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4221,7 +5523,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "form"
@@ -4245,14 +5547,14 @@
       "additionalProperties": false,
       "description": "Values the player types or sets."
     },
-    "text": {
+    "text_component": {
       "type": "object",
       "properties": {
         "id": {
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4260,13 +5562,13 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "text"
         },
         "markup": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized, with native color tags."
         },
         "tone": {
@@ -4299,7 +5601,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4307,7 +5609,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "grid"
@@ -4356,7 +5658,7 @@
                 "type": "string"
               },
               "label": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "color": {
                 "type": "string",
@@ -4370,7 +5672,7 @@
                 "type": "boolean"
               },
               "denial": {
-                "type": "string"
+                "$ref": "#/$defs/text"
               },
               "selected": {
                 "type": "boolean"
@@ -4402,7 +5704,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4410,7 +5712,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "map"
@@ -4444,7 +5746,7 @@
           "$ref": "#/$defs/opaque_id"
         },
         "label": {
-          "type": "string",
+          "$ref": "#/$defs/text",
           "description": "Localized."
         },
         "affordances": {
@@ -4452,7 +5754,7 @@
           "items": {
             "$ref": "#/$defs/opaque_id"
           },
-          "description": "Ids of `interaction.affordances` that act on this component."
+          "description": "Ids of `screen.affordances` that act on this component."
         },
         "kind": {
           "const": "canvas"
@@ -4514,7 +5816,7 @@
           "$ref": "#/$defs/form"
         },
         {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/text_component"
         },
         {
           "$ref": "#/$defs/grid"

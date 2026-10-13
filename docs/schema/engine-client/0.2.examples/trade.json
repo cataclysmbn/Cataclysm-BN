@@ -33,7 +33,7 @@
     },
     {
       "name": "trade balance in the trader's favour",
-      "def": "text",
+      "def": "text_component",
       "value": {
         "id": "message",
         "kind": "text",
@@ -45,7 +45,7 @@
   "invalid": [
     {
       "name": "balance tone that is a color",
-      "def": "text",
+      "def": "text_component",
       "value": {
         "id": "message",
         "kind": "text",

@@ -2,10 +2,10 @@
   "valid": [
     {
       "name": "timed mini-game window with color runs",
-      "def": "interaction",
+      "def": "screen",
       "value": {
-        "schema_id": "interaction:snake",
-        "context": "SNAKE",
+        "screen_id": "screen:2",
+        "role": "dialog",
         "title": "S N A K E",
         "root": {
           "id": "canvas",
@@ -51,10 +51,12 @@
             "keys": [
               "h"
             ],
-            "enabled": true
+            "enabled": true,
+            "expect": "screen"
           }
         ],
-        "refresh_ms": 100
+        "refresh_ms": 100,
+        "context": "SNAKE"
       }
     }
   ],

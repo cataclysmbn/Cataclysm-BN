@@ -24,9 +24,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "schema:ab"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -43,9 +42,7 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
-          "boundary_id": "boundary:90",
-          "schema_id": null
+          "screen_id": "screen:3"
         },
         "operation": {
           "kind": "invoke",
@@ -59,9 +56,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "schema:cd"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -83,9 +79,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "schema:cd"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -102,9 +97,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "schema:ef"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -121,9 +115,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "schema:ef"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -140,9 +133,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "2c1f"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -160,9 +152,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "schema:ab"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -180,9 +171,7 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
-          "boundary_id": "boundary:90",
-          "schema_id": "schema:ab"
+          "screen_id": "screen:3"
         },
         "operation": {
           "kind": "invoke",
@@ -196,9 +185,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": null
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -220,9 +208,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": null
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -244,9 +231,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": null
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -264,9 +250,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": null
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -284,9 +269,8 @@
       "value": {
         "epoch": "epoch:e7f3",
         "expect": {
-          "revision": "31",
           "boundary_id": "boundary:90",
-          "schema_id": "interaction:aim"
+          "revision": "31"
         },
         "operation": {
           "kind": "invoke",
@@ -304,6 +288,55 @@
             "pane": "panel:right"
           }
         }
+      }
+    },
+    {
+      "name": "invoke a registered action expecting its screen",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "screen_id": "screen:3"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "UP"
+        }
+      }
+    },
+    {
+      "name": "a 0.1 choose keeps the 0.1 expectation",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": "schema:ab"
+        },
+        "operation": {
+          "kind": "choose",
+          "choice_id": "entry:1"
+        }
+      }
+    },
+    {
+      "name": "command notification rejecting an invoke for a screen that is gone",
+      "def": "command_notification",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "command_id": "c:8",
+        "stage": "rejected",
+        "error": "stale_screen"
+      }
+    },
+    {
+      "name": "application error for a screen that is gone",
+      "def": "application_error",
+      "value": {
+        "kind": "stale_screen",
+        "message": "That screen has closed.",
+        "action": "subscribe"
       }
     }
   ],
@@ -323,23 +356,6 @@
           "affordance_id": "bn:cancel"
         }
       }
-    },
-    {
-      "name": "0.1 choose operation",
-      "def": "submit_params",
-      "value": {
-        "epoch": "epoch:e7f3",
-        "expect": {
-          "revision": "31",
-          "boundary_id": "boundary:90",
-          "schema_id": "schema:ab"
-        },
-        "operation": {
-          "kind": "choose",
-          "choice_id": "root:0"
-        }
-      },
-      "why": "invoke is the only operation"
     },
     {
       "name": "invoke without an affordance",
@@ -449,6 +465,67 @@
         }
       },
       "why": "a row count is never negative"
+    },
+    {
+      "name": "invoke expecting a screen and a boundary",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "screen_id": "screen:3",
+          "boundary_id": "boundary:90",
+          "revision": "31"
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "UP"
+        }
+      },
+      "why": "an expectation is one form or the other"
+    },
+    {
+      "name": "invoke with the 0.1 expectation",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "revision": "31",
+          "boundary_id": "boundary:90",
+          "schema_id": null
+        },
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "UP"
+        }
+      },
+      "why": "the schema hash is not part of a 0.2 expectation"
+    },
+    {
+      "name": "0.1 operation with a screen expectation",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {
+          "screen_id": "screen:3"
+        },
+        "operation": {
+          "kind": "cancel"
+        }
+      },
+      "why": "0.1 operations take the 0.1 expectation"
+    },
+    {
+      "name": "screen expectation without its screen",
+      "def": "submit_params",
+      "value": {
+        "epoch": "epoch:e7f3",
+        "expect": {},
+        "operation": {
+          "kind": "invoke",
+          "affordance_id": "UP"
+        }
+      },
+      "why": "an expectation names a screen or a boundary"
     }
   ]
 }

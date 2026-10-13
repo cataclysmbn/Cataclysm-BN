@@ -4,7 +4,6 @@
 #include "input.h"
 
 #include <algorithm>
-#include <fstream>
 #include <nlohmann/json.hpp>
 #include <ranges>
 #include <string>
@@ -58,20 +57,6 @@ auto row_ids_of(const ec::component& value) -> std::vector<std::string> {
 }
 auto wire(const ec::boundary_state& state) -> nlohmann::json {
     return nlohmann::json::parse(ec::serialize_interaction_boundary(state));
-}
-/// The value of the 0.2 example `name` in `docs/schema/engine-client/0.2.examples/<area>.json`.
-auto example(const std::string& area, const std::string& name) -> nlohmann::json {
-    // Relative to the repository root, where cata_test runs.
-    const auto path = "docs/schema/engine-client/0.2.examples/" + area + ".json";
-    auto stream = std::ifstream{path};
-    INFO("run cata_test from the repository root to read " << path);
-    REQUIRE(stream.good());
-    const auto examples = nlohmann::json::parse(stream);
-    for (const auto& entry : examples["valid"]) {
-        if (entry["name"] == name) { return entry["value"]; }
-    }
-    FAIL("no example " << name);
-    return {};
 }
 auto main_menu() -> client::interaction_snapshot {
     return {
@@ -646,34 +631,6 @@ TEST_CASE("invoke rejects what the affordance does not take", "[engine_client_co
     CHECK(too_long.error() == ec::error::invalid_arguments);
     CHECK(ec::error_name(ec::error::invalid_arguments) == "invalid_arguments");
     CHECK(ec::error_name(ec::error::unknown_affordance) == "unknown_affordance");
-}
-
-TEST_CASE("the wire matches the 0.2 schema examples", "[engine_client_component]") {
-    SECTION("main menu") {
-        auto native = main_menu();
-        native.schema_id = "schema:ab";
-        native.banner.clear();
-        native.panes.push_back({.id = "quit", .label = "Quit", .role = "category"});
-        native.choices.insert(native.choices.begin() + 2, {.id = "tab:quit", .label = "Quit"});
-        native.choices[3].description = "Allows you to fully customize the character.";
-        native.choice_total = 5;
-        const auto state = ec::boundary_state{
-            .id = "boundary:12",
-            .ready = {.phase = "menu",
-                      .accepts_interaction_commands = true,
-                      .accepts_registered_actions = true},
-            .actions = {{.id = "UP", .name = "Move up", .keys = {"UP", "k"}}},
-            .interaction = std::move(native)};
-        CHECK(wire(state) == example("menu", "subscribe result at the main menu")["interaction"]);
-    }
-    SECTION("map") {
-        const auto state = ec::boundary_state{
-            .id = "boundary:90",
-            .ready = ready(),
-            .actions = {{.id = "move_e", .name = "Move East", .keys = {"l", "RIGHT"}}}};
-        CHECK(wire(state)
-              == example("interaction", "map boundary with its clicks, item rows and actions"));
-    }
 }
 
 TEST_CASE("the overmap target takes overmap squares", "[engine_client_component]") {

@@ -32,10 +32,10 @@
     },
     {
       "name": "advanced inventory area picker with the player's keys",
-      "def": "interaction",
+      "def": "screen",
       "value": {
-        "schema_id": "interaction:aim",
-        "context": "ADVANCED_INVENTORY",
+        "screen_id": "screen:1",
+        "role": "dialog",
         "title": "Advanced inventory",
         "root": {
           "id": "areas",
@@ -90,14 +90,16 @@
               "row": {
                 "component_id": "areas"
               }
-            }
+            },
+            "expect": "boundary"
           },
           {
             "id": "bn:cancel",
             "label": "Cancel",
             "keys": [],
             "enabled": true,
-            "role": "cancel"
+            "role": "cancel",
+            "expect": "screen"
           },
           {
             "id": "ITEMS_CONTAINER",
@@ -105,7 +107,8 @@
             "keys": [
               "C"
             ],
-            "enabled": true
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "ITEMS_N",
@@ -113,15 +116,18 @@
             "keys": [
               "k"
             ],
-            "enabled": true
+            "enabled": true,
+            "expect": "screen"
           },
           {
             "id": "ITEMS_CE",
             "label": "Directly below you",
             "keys": [],
-            "enabled": true
+            "enabled": true,
+            "expect": "screen"
           }
-        ]
+        ],
+        "context": "ADVANCED_INVENTORY"
       }
     }
   ],

@@ -85,3 +85,34 @@ Deno.test("0.2: hello offers only 0.2", async () => {
     assertEquals((hello.value as { versions: string[] }).versions, ["0.2"], hello.name)
   }
 })
+
+Deno.test("0.2 is a superset of 0.1: every valid 0.1 example validates", () => {
+  const [v1, v2] = versions
+  const ajv = new Ajv2020({ strict: false, allErrors: false })
+  ajv.addSchema(v2.schema, "bn")
+  // The hello answers with the one version it speaks.
+  const exempt = ["hello_result"]
+  for (const example of v1.files.flatMap(({ examples }) => examples.valid)) {
+    if (exempt.includes(example.def)) continue
+    const validate = ajv.getSchema(`bn#/$defs/${example.def}`)
+    assert(validate, `no definition ${example.def}`)
+    assert(validate(example.value), `${example.name}: ${JSON.stringify(validate.errors)}`)
+  }
+})
+
+Deno.test("0.2: the text a client shows is the one `text` type", async () => {
+  const { $defs } = await read("0.2.schema.json")
+  const text = { $ref: "#/$defs/text" }
+  const refs = [
+    $defs.affordance.properties.label,
+    $defs.affordance.properties.denial,
+    $defs.row.properties.label,
+    $defs.row.properties.description,
+    $defs.screen.properties.title,
+    $defs.panel.properties.title,
+    $defs.tabs.properties.tabs.items.properties.label,
+    $defs.form_field.properties.label,
+    $defs.text_component.properties.markup,
+  ]
+  for (const ref of refs) assertEquals(ref.$ref, text.$ref)
+})
