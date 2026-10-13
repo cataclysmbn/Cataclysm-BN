@@ -12,6 +12,7 @@
 #include "creature.h"
 #include "game.h"
 #include "game_session.h"
+#include "inventory_ui.h"
 #include "bionics.h"
 #include "effect.h"
 #include "engine_client_event.h"
@@ -730,28 +731,31 @@ auto season_name() -> std::string
     }
 }
 
-/// The row text of a stack: what the native lists show for `count` equal items, and where a wielded or worn one is.
-auto stack_label( const item &thing, const std::size_t count,
+/// The row text of a stack: the first cell the native inventory list prints for these items, then where
+/// a wielded or worn one is.
+auto stack_label( const std::vector<item *> &items,
                   const std::optional<std::string> &slot ) -> std::string
 {
-    const auto name = thing.display_name( count );
-    if( slot == "wielded" ) { return string_format( _( "%s (wielded)" ), name ); }
-    if( slot == "worn" ) { return string_format( _( "%s (worn)" ), name ); }
-    return name;
+    static const auto preset = inventory_selector_preset{};
+    const auto caption = preset.get_cell_text( ::inventory_entry{ items }, 0 );
+    if( slot == "wielded" ) { return string_format( _( "%s (wielded)" ), caption ); }
+    if( slot == "worn" ) { return string_format( _( "%s (worn)" ), caption ); }
+    return caption;
 }
 
 /// One inventory row for a stack of equal items, named the way the native lists show it.
-auto stack_entry( const item &thing, const std::size_t count,
+auto stack_entry( const std::vector<item *> &items,
                   std::optional<std::string> slot = std::nullopt ) -> inventory_entry
 {
+    const auto &thing = *items.front();
     // display_name() leads with the colored marker exactly when the native lists show one.
     const auto marker = colorize( thing.damage_symbol() + "\u00A0", thing.damage_color() );
     auto durability = thing.display_name().starts_with( marker )
                       ? std::optional{ item_durability{ .symbol = thing.damage_symbol(), .color = color_of( thing.damage_color() ) } }
                       :
                       std::nullopt;
-    return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = count,
-             .slot = slot, .durability = std::move( durability ), .label = stack_label( thing, count, slot ) };
+    return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = items.size(),
+             .slot = slot, .durability = std::move( durability ), .label = stack_label( items, slot ) };
 }
 
 /// Gives each row an id from its slot, kind and name; equal rows are told apart by their order.
@@ -815,23 +819,27 @@ auto item_stacks( map &here, const avatar &you ) -> avatar_item_stacks
     you.visit_items( [&]( const item * visited ) {
         // The rows are read-only here; the item operations that change the items pass the avatar they own.
         auto *thing = const_cast<item *>( visited );
-        if( you.is_wielding( *thing ) ) { result.inventory.push_back( { stack_entry( *thing, 1, "wielded" ), { thing } } ); }
-        else if( you.is_worn( *thing ) ) { result.inventory.push_back( { stack_entry( *thing, 1, "worn" ), { thing } } ); }
+        if( you.is_wielding( *thing ) ) { result.inventory.push_back( { stack_entry( { thing }, "wielded" ), { thing } } ); }
+        else if( you.is_worn( *thing ) ) { result.inventory.push_back( { stack_entry( { thing }, "worn" ), { thing } } ); }
         return VisitResponse::NEXT;
     } );
     for( const auto *stack : you.inv_const_slice() ) {
-        if( stack != nullptr ) { result.inventory.push_back( { stack_entry( *stack->front(), stack->size(), "carried" ), *stack } ); }
+        if( stack != nullptr ) { result.inventory.push_back( { stack_entry( *stack, "carried" ), *stack } ); }
     }
     if( here.accessible_items( you.bub_pos() ) ) {
         // The native pickup stacks equal items the same way; each stack is one choice there.
+        auto piles = std::vector<std::vector<item *>> {};
         for( auto *thing : here.i_at( you.bub_pos() ) ) {
-            const auto same = std::ranges::find_if( result.ground, [&]( const auto & entry ) {
-                return entry.row.name == remove_color_tags( thing->display_name() ) &&
-                       entry.row.appearance.id == thing->typeId().str();
+            const auto name = remove_color_tags( thing->display_name() );
+            const auto same = std::ranges::find_if( piles, [&]( const auto & pile ) {
+                return pile.front()->typeId() == thing->typeId() &&
+                       remove_color_tags( pile.front()->display_name() ) == name;
             } );
-            if( same != result.ground.end() ) { same->items.push_back( thing ); ++*same->row.count; }
-            else { result.ground.push_back( { stack_entry( *thing, 1 ), { thing } } ); }
+            if( same != piles.end() ) { same->push_back( thing ); }
+            else { piles.push_back( { thing } ); }
         }
+        const auto stacked = []( const auto & pile ) { return item_stack{ stack_entry( pile ), pile }; };
+        result.ground = piles | std::views::transform( stacked ) | std::ranges::to<std::vector>();
     }
     result.inventory = identified( std::move( result.inventory ) );
     result.ground = identified( std::move( result.ground ) );
