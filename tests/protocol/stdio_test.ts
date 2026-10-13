@@ -1905,10 +1905,9 @@ const settle = async (session: Session) => {
   await session.acknowledge(() => session.mirror.interaction.interaction === null)
 }
 
-/** What the engine owns after a wait, without the clock of the stream, the turn and the sidebar's focus, which differ between two runs of the same session. */
+/** What the engine owns after a wait, without the clock of the stream and the turn, which differ between two runs of the same session. */
 const authority = (session: Session) => {
   const avatar = structuredClone(session.mirror.avatar)
-  delete avatar.sidebar.focus
   const environment = structuredClone(session.mirror.environment)
   delete environment.turn
   return JSON.stringify({

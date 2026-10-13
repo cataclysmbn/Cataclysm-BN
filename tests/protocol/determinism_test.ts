@@ -8,8 +8,6 @@
  *
  * BN_BINARY=out/build/linux-full/cataclysm-bn-tiles deno test --allow-read --allow-write \
  *   --allow-run --allow-env tests/protocol/determinism_test.ts
- *
- * BN_DETERMINISM_FOCUS=1 adds the unrecorded run that looks for the sidebar Focus difference.
  */
 import { assert, assertEquals, assertNotEquals } from "@std/assert"
 import { Mirror } from "./mirror.ts"
@@ -549,24 +547,15 @@ Deno.test({
 })
 
 Deno.test({
-  name:
-    "determinism: two runs of the same waits without a recording differ where the report says (investigation)",
-  ignore: !binary || !Deno.env.get("BN_DETERMINISM_FOCUS"),
+  name: "determinism: the same seed and waits leave the same per-turn hashes without a recording",
+  ignore: !binary,
   async fn() {
-    const a = await drive(binary!, { name: "first" }, playWait, false)
-    const b = await drive(binary!, { name: "second" }, playWait, false)
-    const found = firstDivergence(a.log, b.log)
-    for (const run of [a, b]) await Deno.remove(run.profile, { recursive: true })
-    console.log(`determinism of unrecorded waits: ${found ?? "no difference in the hashes"}`)
-    // Each part on its own, so a part that differs from the first step does not hide the others.
-    for (const part of Object.keys(a.log[0]?.parts ?? {})) {
-      const step = a.log.findIndex((record, i) => record.parts[part] !== b.log[i]?.parts[part])
-      console.log(
-        `  ${part}: ${
-          step < 0 ? "equal" : `first differs at step ${a.log[step].step}, turn ${a.log[step].turn}`
-        }`,
-      )
+    for (const pair of [1, 2, 3]) {
+      const a = await drive(binary!, { name: "first" }, playWait, false)
+      const b = await drive(binary!, { name: "second" }, playWait, false)
+      const found = firstDivergence(a.log, b.log)
+      for (const run of [a, b]) await Deno.remove(run.profile, { recursive: true })
+      assertEquals(found, undefined, `pair ${pair} of unrecorded runs`)
     }
-    assertEquals(found, undefined)
   },
 })
