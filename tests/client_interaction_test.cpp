@@ -1103,6 +1103,20 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "the map offers zoom to a client that draws the map itself",
+    "[client][interaction][mcp][zoom]") {
+    const auto ctxt = get_default_mode_input_context();
+    const auto actions = ctxt.get_registered_actions_copy();
+    for (const auto* const action : {"zoom_in", "zoom_out"}) {
+        CAPTURE(action);
+        CHECK(std::ranges::find(actions, action) != actions.end());
+        // The client zooms its own map on the key the engine names for the action.
+        CHECK(ctxt.keys_bound_to(action)
+              == std::vector<char>{std::string_view(action) == "zoom_in" ? 'z' : 'Z'});
+    }
+}
+
+TEST_CASE(
     "advanced inventory distinguishes inventory and mixed ground cargo storage",
     "[client][interaction][advanced_inventory][mcp]") {
     const auto guard = interaction_test_guard{};
