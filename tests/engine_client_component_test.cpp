@@ -494,3 +494,94 @@ TEST_CASE("before the game offers anything an invoke is not ready", "[engine_cli
     REQUIRE_FALSE(early);
     CHECK(early.error() == ec::error::not_ready);
 }
+
+namespace {
+auto numbered_rows(const std::size_t count) -> std::vector<client::interaction_choice> {
+    return std::views::iota(std::size_t{0}, count) | std::views::transform([](const auto i) {
+               return client::interaction_choice{.id = "row:" + std::to_string(i), .label = "Row"};
+           })
+         | std::ranges::to<std::vector>();
+}
+auto ids_of(const ec::rows_page& page) -> std::vector<std::string> {
+    return page.rows | std::views::transform(&ec::row::id) | std::ranges::to<std::vector>();
+}
+auto rows_at(const std::size_t offset, const std::size_t limit) -> ec::rows_request {
+    return {
+        .epoch = "epoch:test",
+        .boundary_id = "boundary:test",
+        .component_id = "list:choices",
+        .offset = offset,
+        .limit = limit};
+}
+} // namespace
+
+TEST_CASE("rows are paged within the list a component names", "[engine_client_component]") {
+    const auto state = boundary(
+        {.kind = client::interaction_kind::choices, .choices = numbered_rows(5), .choice_total = 5});
+    SECTION("a window of a complete list is sliced from its own rows") {
+        const auto page = ec::read_rows(rows_at(2, 2), state);
+        REQUIRE(page);
+        CHECK(ids_of(*page) == std::vector<std::string>{"row:2", "row:3"});
+        CHECK(page->total == 5);
+        CHECK(page->component_id == "list:choices");
+        CHECK(page->boundary_id == "boundary:test");
+    }
+    SECTION("a window past the end is empty and states the total") {
+        const auto page = ec::read_rows(rows_at(9, 10), state);
+        REQUIRE(page);
+        CHECK(page->rows.empty());
+        CHECK(page->total == 5);
+    }
+    SECTION("a component that is not a list of the top screen is refused") {
+        auto request = rows_at(0, 10);
+        request.component_id = "list:elsewhere";
+        const auto missing = ec::read_rows(request, state);
+        REQUIRE_FALSE(missing);
+        CHECK(missing.error() == ec::error::validation_failed);
+        const auto map = ec::read_rows(
+            {.epoch = "epoch:test", .boundary_id = "boundary:test", .component_id = "map:world"},
+            map_only());
+        REQUIRE_FALSE(map);
+        CHECK(map.error() == ec::error::validation_failed);
+    }
+    SECTION("the window is bounded and the boundary must be live") {
+        CHECK(ec::read_rows(rows_at(0, 0), state).error() == ec::error::resource_limit);
+        CHECK(ec::read_rows(rows_at(0, ec::maximum_rows + 1), state).error()
+              == ec::error::resource_limit);
+        CHECK(ec::read_rows(rows_at(0, ec::maximum_rows), state));
+        auto stale = rows_at(0, 10);
+        stale.epoch = "epoch:old";
+        CHECK(ec::read_rows(stale, state).error() == ec::error::stale_epoch);
+        stale = rows_at(0, 10);
+        stale.boundary_id = "boundary:old";
+        CHECK(ec::read_rows(stale, state).error() == ec::error::stale_boundary);
+    }
+}
+
+TEST_CASE(
+    "a partial list pages natively beyond the page the boundary holds",
+    "[engine_client_component]") {
+    const auto context = input_context("TEST_PAGED");
+    const auto input = client::input_context_scope(context, "TEST_PAGED");
+    const auto scope = client::interaction_scope(context, [] {
+        return client::interaction_snapshot{
+            .kind = client::interaction_kind::choices,
+            .choices = numbered_rows(250),
+            .choice_total = 250};
+    });
+    client::begin_input_boundary();
+    // The boundary holds the first page only.
+    const auto state = boundary(
+        {.kind = client::interaction_kind::choices,
+         .choices = numbered_rows(2),
+         .choice_total = 250});
+    const auto page = ec::read_rows(rows_at(100, 2), state);
+    REQUIRE(page);
+    CHECK(ids_of(*page) == std::vector<std::string>{"row:100", "row:101"});
+    CHECK(page->total == 250);
+    // The wire page names its list and carries the rows as the boundary does.
+    const auto json = nlohmann::json::parse(ec::serialize_rows(*page));
+    CHECK(json["component_id"] == "list:choices");
+    CHECK(json["total"] == 250);
+    CHECK(json["rows"][0]["id"] == "row:100");
+}
