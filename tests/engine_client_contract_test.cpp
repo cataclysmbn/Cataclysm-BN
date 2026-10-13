@@ -80,6 +80,49 @@ TEST_CASE("wire interaction is trimmed and renamed", "[engine_client_contract]")
     }
 }
 
+TEST_CASE("screen text and keys are published on the wire", "[engine_client_contract]") {
+    auto context = input_context{"YESNO"};
+    const auto input_scope = game_client::input_context_scope{context, "YESNO"};
+    const auto scope = game_client::interaction_scope{
+        context, [] {
+            return game_client::interaction_snapshot{
+                .kind = game_client::interaction_kind::choices,
+                .areas =
+                    {{.action_id = "ITEMS_N",
+                      .label = "North",
+                      .key = "z",
+                      .x = 11,
+                      .y = 0,
+                      .available = false}},
+                .choices = {{.id = "entry:4", .label = "Options", .action_id = "open_options"}},
+                .overmap = game_client::
+                    interaction_overmap{.cols = 0, .rows = 0, .cursor_description = "forest"},
+                .vehicle =
+                    game_client::interaction_vehicle{
+                        .mode = "install",
+                        .verb = "Install",
+                        .detail =
+                            game_client::interaction_vehicle_detail{
+                                .time = "1 minute",
+                                .time_heading = "Time required:",
+                                .groups = {{.kind = "skill",
+                                            .heading = "Skills required:",
+                                            .empty_text = "NONE"}}}},
+            };
+        }};
+    game_client::begin_input_boundary();
+    const auto wire = engine_client::serialize_boundary(capture());
+    CHECK(contains(
+        wire,
+        R"("areas":[{"action_id":"ITEMS_N","label":"North","key":"z","x":11,"y":0,"available":false}])"));
+    CHECK(contains(wire, R"("action_id":"open_options")"));
+    CHECK(contains(wire, R"("cursor_description":"forest")"));
+    CHECK(contains(wire, R"("verb":"Install")"));
+    CHECK(contains(wire, R"("time_heading":"Time required:")"));
+    CHECK(contains(
+        wire, R"("groups":[{"kind":"skill","heading":"Skills required:","empty_text":"NONE"}])"));
+}
+
 TEST_CASE(
     "a menu banner is published in order and changes the schema", "[engine_client_contract]") {
     auto context = input_context{"TITLE"};

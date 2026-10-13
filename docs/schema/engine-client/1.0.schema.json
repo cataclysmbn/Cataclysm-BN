@@ -1289,6 +1289,10 @@
           "type": "string",
           "description": "The row's name with the native color tags, when it differs from `label`."
         },
+        "action_id": {
+          "type": "string",
+          "description": "The registered action the row runs, such as `open_options` on the in-game main menu. Absent on other rows."
+        },
         "parent_id": {
           "$ref": "#/$defs/opaque_id",
           "description": "The listed row this one is nested under. Absent when it has no parent or the parent is filtered out."
@@ -1605,6 +1609,10 @@
           "description": "The player owns the vehicle, so rename, crew and label are allowed."
         },
         "mode": { "enum": ["main", "install", "repair", "remove", "mend", "refill", "select"] },
+        "verb": {
+          "type": "string",
+          "description": "What the task does to the highlighted part, localized, such as `Install`. Absent on the main screen."
+        },
         "cursor": {
           "type": "object",
           "properties": { "x": { "type": "integer" }, "y": { "type": "integer" } },
@@ -1671,6 +1679,27 @@
             "name": { "type": "string" },
             "description": { "type": "string" },
             "time": { "type": "string", "description": "Absent when the pane has no time line." },
+            "time_heading": {
+              "type": "string",
+              "description": "The localized heading of the time line; absent with `time`."
+            },
+            "groups": {
+              "type": "array",
+              "description": "The requirement headings in the order the native pane prints them.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": { "enum": ["skill", "component", "tool", "extra"] },
+                  "heading": { "type": "string" },
+                  "empty_text": {
+                    "type": "string",
+                    "description": "Printed under the heading when no requirement has this kind, such as NONE. Empty: leave the group out then."
+                  }
+                },
+                "required": ["kind", "heading", "empty_text"],
+                "additionalProperties": false
+              }
+            },
             "stats": {
               "type": "array",
               "items": {
@@ -1800,6 +1829,10 @@
             "type": "string"
           }
         },
+        "cursor_description": {
+          "type": "string",
+          "description": "What the native sidebar says of the cursor square, localized, without the window frame or the square's glyph."
+        },
         "notes": {
           "type": "array",
           "items": {
@@ -1924,6 +1957,23 @@
             "type": "string"
           },
           "description": "Fixed-width lines drawn above the menu, with color tags: the main menu's title art and version line."
+        },
+        "areas": {
+          "type": "array",
+          "description": "The advanced inventory's area picker as the native header lays it out. `action_id` is the registered action that points the active pane at the area, `key` the key the player has bound to it (empty when none), `x` and `y` its position in character cells from the picker's top-left corner, `available` whether the area exists now (the vehicle is grabbed or on the square, the level is there). A pane is on the area whose `label` is its `area_label`.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "action_id": { "type": "string" },
+              "label": { "type": "string" },
+              "key": { "type": "string" },
+              "x": { "type": "integer", "minimum": 0 },
+              "y": { "type": "integer", "minimum": 0 },
+              "available": { "type": "boolean" }
+            },
+            "required": ["action_id", "label", "key", "x", "y", "available"],
+            "additionalProperties": false
+          }
         },
         "choices": {
           "type": "array",

@@ -1105,6 +1105,7 @@ void uilist::query( bool loop, int timeout )
                             return game_client::interaction_column{ .key = column.key, .label = column.label, .value = column.value };
                         } ) | std::ranges::to<std::vector>(),
                         .favorite = details.favorite,
+                        .action_id = entry.action_id,
                     } );
                 }
                 return snapshot;
