@@ -1856,6 +1856,18 @@
           "type": "string",
           "description": "What the native sidebar says of the cursor square, localized, without the window frame or the square's glyph."
         },
+        "cursor_here": {
+          "type": "string",
+          "description": "`You are here.`, localized, when the cursor is on the player's square; absent otherwise."
+        },
+        "cursor_note": {
+          "type": "string",
+          "description": "The note the native window prints in its corner for the cursor square, as one localized line such as `Note: cache`; absent when it prints none."
+        },
+        "route_text": {
+          "type": "string",
+          "description": "The length of the planned travel route as one localized line, such as `Route of 2 squares.`; absent without a route."
+        },
         "notes": {
           "type": "array",
           "items": {

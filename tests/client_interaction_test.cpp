@@ -43,6 +43,7 @@
 #    include "options_helpers.h"
 #    include "output.h"
 #    include "overmap/overmap_ui.h"
+#    include "overmap/overmapbuffer.h"
 #    include "path_info.h"
 #    include "pickup.h"
 #    include "player_activity.h"
@@ -4292,6 +4293,47 @@ TEST_CASE(
         ui::omap::display();
     }
     CHECK(reads == 2);
+}
+
+TEST_CASE(
+    "the overmap says when the cursor is on the player and gives its note and the route length",
+    "[client][interaction][overmap][mcp]") {
+    clear_all_state();
+    const auto cleanup = on_out_of_scope([]() { clear_all_state(); });
+    const auto guard = interaction_test_guard{};
+    const auto restore_notes = restore_on_out_of_scope<bool>(uistate.overmap_show_map_notes);
+    uistate.overmap_show_map_notes = true;
+    auto& you = get_avatar();
+    const auto here = you.abs_omt_pos();
+    const auto noted = here + point_east * 3;
+    // A note with a glyph prefix: the corner shows only its text.
+    ACTIVE_OVERMAP_BUFFER.add_note(noted, "C:cache");
+    you.omt_path = {here + point_east, here + point_east * 2};
+    auto reads = 0;
+    game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        const auto snapshot = game_client::current_interaction();
+        REQUIRE(snapshot.overmap);
+        const auto& om = *snapshot.overmap;
+        CHECK(om.route_text == "Route of 2 squares.");
+        if (reads++ == 0) {
+            CHECK(om.cursor_here == "You are here.");
+            CHECK(om.cursor_note.empty());
+            return resolve({
+                .input_id = snapshot.input_id,
+                .operation = game_client::interaction_operation::set_target,
+                .position = game_client::interaction_position{noted.x(), noted.y(), noted.z()},
+            });
+        }
+        CHECK(om.cursor_here.empty());
+        CHECK(om.cursor_note == "Note: cache");
+        return resolve({
+            .input_id = snapshot.input_id,
+            .operation = game_client::interaction_operation::cancel,
+        });
+    });
+    ui::omap::display();
+    CHECK(reads == 2);
+    ACTIVE_OVERMAP_BUFFER.delete_note(noted);
 }
 
 TEST_CASE(

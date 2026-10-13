@@ -190,6 +190,12 @@ struct interaction_overmap {
     std::vector<std::string> legend;
     /// What the native sidebar says of the cursor square, without the window frame or the square's glyph.
     std::string cursor_description;
+    /// `You are here.`, localized, when the cursor is on the player's square; empty otherwise.
+    std::string cursor_here;
+    /// The note the native window prints in its corner for the cursor square, as one localized line; empty when none.
+    std::string cursor_note;
+    /// The length of the planned travel route as one localized line; empty without a route.
+    std::string route_text;
     std::vector<interaction_overmap_note> notes;
     /// The planned travel route, nearest square first.
     std::vector<interaction_position> path;

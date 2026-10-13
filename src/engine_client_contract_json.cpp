@@ -323,6 +323,9 @@ auto interaction_json( const boundary_state &state ) -> json
         auto path = json::array();
         for( const auto &step : om.path ) { path.push_back( to_json( step, frame ) ); }
         result["overmap"]["path"] = std::move( path );
+        if( !om.cursor_here.empty() ) { result["overmap"]["cursor_here"] = om.cursor_here; }
+        if( !om.cursor_note.empty() ) { result["overmap"]["cursor_note"] = om.cursor_note; }
+        if( !om.route_text.empty() ) { result["overmap"]["route_text"] = om.route_text; }
         if( !om.tiles.empty() ) {
             auto rows = json::array();
             for( const auto y : std::views::iota( 0, om.rows ) ) {
