@@ -618,3 +618,38 @@ TEST_CASE(
     // The 0.1 interaction keeps its ids.
     CHECK(wire(state)["interaction"]["choices"][0]["id"] == "entry:0");
 }
+
+TEST_CASE("a row past the first page is chosen by its native id", "[engine_client_component]") {
+    const auto keyed = [](const std::size_t count) {
+        auto rows = numbered_rows(count);
+        for (auto i = std::size_t{0}; i < count; ++i) {
+            rows[i].id = "entry:" + std::to_string(i);
+            rows[i].identity = "key:" + std::to_string(i);
+        }
+        return rows;
+    };
+    const auto context = input_context("TEST_KEYED");
+    const auto input = client::input_context_scope(context, "TEST_KEYED");
+    const auto scope = client::interaction_scope(context, [&] {
+        return client::interaction_snapshot{
+            .kind = client::interaction_kind::choices, .choices = keyed(450), .choice_total = 450};
+    });
+    client::begin_input_boundary();
+    // The boundary holds the first page only.
+    const auto state = boundary(
+        {.kind = client::interaction_kind::choices, .choices = keyed(2), .choice_total = 450});
+    const auto page = ec::read_rows(rows_at(300, 1), state);
+    REQUIRE(page);
+    REQUIRE(page->rows.size() == 1);
+    CHECK(page->rows[0].id == "key:300");
+    const auto command = operation_of(ec::resolve_invoke(
+        state, {.affordance_id = "bn:choose:list:choices", .args = {.row = page->rows[0].id}}));
+    CHECK(command.target_id == "entry:300");
+    // A row on the held page resolves the same way.
+    CHECK(
+        operation_of(
+            ec::resolve_invoke(
+                state, {.affordance_id = "bn:choose:list:choices", .args = {.row = "key:1"}}))
+            .target_id
+        == "entry:1");
+}
