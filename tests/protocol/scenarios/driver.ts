@@ -317,12 +317,12 @@ export class Engine {
     assert(done())
   }
 
-  /** Chooses by the label of the 0.1 choice list, which the menus still publish beside their stack. */
-  async choose(label: string) {
+  /** Chooses by the id of the 0.1 choice list, which the menus still publish beside their stack. */
+  async choose(id: string) {
     const choice = this.mirror.interaction.interaction?.choices.find((entry: Value) =>
-      entry.enabled && entry.label === label
+      entry.enabled && entry.id === id
     )
-    assert(choice, `no choice ${label}`)
+    assert(choice, `no choice ${id}`)
     return await this.submit({ kind: "choose", choice_id: choice.id })
   }
 
@@ -336,8 +336,8 @@ export class Engine {
 
   /** From the main menu to the tutorial map: New Game, Tutorial, the new world's snapshot, its first lessons. */
   async enterTutorial() {
-    await this.choose("New Game")
-    await this.choose("Tutorial")
+    await this.choose("tab:new_game")
+    await this.choose("new_game:tutorial")
     await this.follow(() => this.stale)
     await this.subscribe()
     await this.acknowledge(() => this.mirror.interaction.interaction === null)

@@ -64,20 +64,9 @@ export const handshake: Scenario = {
         rec.accept(`screen ${n + 1} of the main menu stack`, "screen", screen)
       }
 
-      // Errors an invoke meets at the main menu.
+      // The main menu offers no affordance yet.
       const unknown = await engine.invoke("no-such-affordance")
       assertEquals(unknown.error, "unknown_affordance")
       rec.command("invoke of an affordance the screen does not offer", unknown)
-      const withArgs = engine.top().affordances.find((entry: Value) =>
-        entry.enabled && Object.keys(entry.args ?? {}).length > 0
-      )
-      assert(withArgs, "an affordance that takes arguments")
-      const bare = await engine.invoke(withArgs.id, {})
-      assertEquals(bare.error, "invalid_arguments")
-      rec.command("invoke that leaves out the arguments the affordance takes", bare)
-      const other = withArgs.expect === "screen" ? "boundary" : "screen"
-      const crossed = await engine.invoke(withArgs.id, {}, other)
-      assertEquals(crossed.error, "invalid_arguments")
-      rec.command("invoke whose expectation is of the other form", crossed)
     }),
 }

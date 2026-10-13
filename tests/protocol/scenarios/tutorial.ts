@@ -14,11 +14,11 @@ export const tutorial: Scenario = {
       await engine.enterTutorial()
       // The first turns of the tutorial open lessons; let them out of the way.
       await engine.submit({ kind: "action", action_id: "wait" })
-      await engine.choose("5 minutes")
+      await engine.choose("entry:0")
       await engine.acknowledge(() => engine.mirror.interaction.interaction === null)
 
       assert(engine.loading.at(-1)?.done, "loading ends with done")
-      rec.accept("loading done", "loading_notification", engine.loading.at(-1))
+      rec.accept("loading of the new world done", "loading_notification", engine.loading.at(-1))
       assertEquals(engine.resyncs.length, 1)
       rec.accept("resync after the world was replaced", "resync_notification", engine.resyncs[0])
 
@@ -39,11 +39,23 @@ export const tutorial: Scenario = {
       assert(arrow, "a movement affordance")
       rec.accept("movement affordance of the map", "affordance", arrow)
       rec.reject(
-        "affordance without its expectation scope",
+        "movement affordance without its expectation scope",
         "affordance",
         without(arrow, "expect"),
         "the engine assigns the scope; a client does not guess it",
       )
+
+      const withArgs = engine.top().affordances.find((entry: Value) =>
+        entry.enabled && Object.keys(entry.args ?? {}).length > 0
+      )
+      assert(withArgs, "an affordance that takes arguments")
+      const bare = await engine.invoke(withArgs.id, {})
+      assertEquals(bare.error, "invalid_arguments")
+      rec.command("invoke that leaves out the arguments the affordance takes", bare)
+      const other = withArgs.expect === "screen" ? "boundary" : "screen"
+      const crossed = await engine.invoke(withArgs.id, {}, other)
+      assertEquals(crossed.error, "invalid_arguments")
+      rec.command("invoke whose expectation is of the other form", crossed)
 
       const before = engine.events.length
       const move = await engine.invoke(arrow.id)

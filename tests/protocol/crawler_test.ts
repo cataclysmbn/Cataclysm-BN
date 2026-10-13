@@ -1,9 +1,10 @@
 /**
  * @module
- * A seeded walk from the main menu over the affordances the engine offers: every enabled one that can be
+ * A seeded walk over the affordances the engine offers: every enabled one that can be
  * given arguments is invoked and must not fail with an error the engine's own offer rules out, and an
  * invoke whose arguments do not fit the affordance's shape must be refused with `invalid_arguments`.
- * Affordances that need a map position and quit are left alone (the game would end).
+ * Affordances that need a map position and the ways out of the game are left alone. The main menu is not
+ * sliced yet (no affordances), so the walk enters the tutorial by the 0.1 choice ids first.
  *
  * BN_BINARY=out/build/linux-full/src/cataclysm-bn-tiles deno test --allow-read --allow-write \
  *   --allow-run --allow-env tests/protocol/crawler_test.ts
@@ -39,7 +40,7 @@ const components = (value: Value): Value[] =>
   ]
 
 /** The rows a component holds, in the sense of `arg_shape.row`, that can be chosen. */
-const rowsOf = (component: Value): { id: string; label?: string }[] => {
+const rowsOf = (component: Value): { id: string }[] => {
   switch (component.kind) {
     case "list":
       return component.rows.filter((row: Value) => row.enabled && row.selectable && !row.header)
@@ -54,9 +55,11 @@ const rowsOf = (component: Value): { id: string; label?: string }[] => {
   }
 }
 
-/** Quitting ends the game, so the walk leaves it alone; the engine names it by its label, and ids are opaque. */
-const leaving = /quit|exit/i
-const staying = (entry: { id: string; label?: string }) => !leaving.test(entry.label ?? "")
+/**
+ * Ways out of the game, by identity: the quit tab, saving (which asks "Save and quit?"), the suicide prompt,
+ * and the two menus that list "Save and Quit" among their rows.
+ */
+const leaving = new Set(["tab:quit", "save", "SUICIDE", "main_menu", "action_menu"])
 
 /** Arguments that fit the affordance's shape on this screen, or undefined when the screen offers none to give. */
 function argumentsFor(screen: Value, shape: Value, pick: <T>(items: T[]) => T): Value | undefined {
@@ -64,12 +67,16 @@ function argumentsFor(screen: Value, shape: Value, pick: <T>(items: T[]) => T): 
   const find = (id: string) => all.find((component) => component.id === id)
   const args: Value = {}
   if (shape.row) {
-    const ids = rowsOf(find(shape.row.component_id) ?? {}).filter(staying).map((row) => row.id)
+    const ids = rowsOf(find(shape.row.component_id) ?? {}).map((row) => row.id).filter((id) =>
+      !leaving.has(id)
+    )
     if (ids.length === 0) return undefined
     args.row = pick(ids)
   }
   if (shape.rows) {
-    const ids = rowsOf(find(shape.rows.component_id) ?? {}).filter(staying).map((row) => row.id)
+    const ids = rowsOf(find(shape.rows.component_id) ?? {}).map((row) => row.id).filter((id) =>
+      !leaving.has(id)
+    )
     if (ids.length === 0) return undefined
     args.rows = [shape.rows.counts ? { id: pick(ids), count: 1 } : { id: pick(ids) }]
   }
@@ -89,16 +96,18 @@ function argumentsFor(screen: Value, shape: Value, pick: <T>(items: T[]) => T): 
 }
 
 Deno.test({
-  name: "crawler: from the main menu, offered affordances run and malformed invokes are refused",
+  name: "crawler: from the tutorial map, offered affordances run and malformed invokes are refused",
   ignore: !Deno.env.get("BN_BINARY"),
   async fn() {
     await Engine.run(new Recorder(), async (engine) => {
       await engine.toMainMenu()
+      // The main menu offers no affordances yet; the walk starts on the tutorial map.
+      await engine.enterTutorial()
       const random = mulberry32(walkSeed)
       const pick = <T>(items: T[]) => items[Math.floor(random() * items.length)]
       const tried = new Set<string>()
       const path: string[] = []
-      const counts = { invoked: 0, skipped: 0, refused: 0 }
+      const counts = { invoked: 0, skipped: 0, refused: 0, escaped: 0 }
       const screens = new Set<string>()
 
       for (let step = 0; step < steps; step++) {
@@ -106,7 +115,7 @@ Deno.test({
         const top = engine.top()
         screens.add(`${top.role}:${top.context ?? top.title ?? ""}`)
         const enabled: Value[] = top.affordances.filter((entry: Value) =>
-          entry.enabled && staying(entry) &&
+          entry.enabled && !leaving.has(entry.id) &&
           !(entry.role === "cancel" && engine.mirror.interaction.stack.length === 1)
         )
 
@@ -131,7 +140,14 @@ Deno.test({
           return args === undefined ? [] : [{ found, args }]
         })
         counts.skipped += enabled.length - runnable.length
-        if (runnable.length === 0) break
+        if (runnable.length === 0) {
+          // A screen no slice has described offers no affordance; the 0.1 cancel leaves it until 0.1 goes.
+          path.push("(0.1 cancel)")
+          const left = await engine.submit({ kind: "cancel" })
+          assertEquals(left.error, undefined, `step ${step}: no way out; path ${path.join(" > ")}`)
+          counts.escaped++
+          continue
+        }
         const { found, args } = pick(runnable)
         path.push(found.id)
         const outcome = await engine.invoke(
@@ -147,7 +163,7 @@ Deno.test({
         )
       }
       console.log(
-        `crawler: ${counts.invoked} invoked, ${counts.refused} malformed refused, ${counts.skipped} skipped, ${screens.size} screens: ${
+        `crawler: ${counts.invoked} invoked, ${counts.refused} malformed refused, ${counts.skipped} skipped, ${counts.escaped} left by the 0.1 cancel, ${screens.size} screens: ${
           [...screens].join(", ")
         }`,
       )

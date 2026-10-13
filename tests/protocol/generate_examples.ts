@@ -91,6 +91,7 @@ for (const { area, run } of scenarios) {
 
 // Example names are unique across areas (schema_test), generated or not.
 const names = new Map<string, string>()
+const clashes: string[] = []
 const file = (name: string) => new URL(name, examplesDir)
 const others = (await Array.fromAsync(Deno.readDir(examplesDir)))
   .map((entry) => entry.name).filter((name) => name.endsWith(".json") && !generated.has(name))
@@ -105,10 +106,11 @@ for (
   const { valid, invalid } = JSON.parse(text) as { valid: Example[]; invalid: Example[] }
   for (const example of [...valid, ...invalid]) {
     const owner = names.get(example.name)
-    assert(!owner, `"${example.name}" is in ${owner} and ${name}`)
+    if (owner) clashes.push(`"${example.name}" is in ${owner} and ${name}`)
     names.set(example.name, name)
   }
 }
+assert(clashes.length === 0, clashes.join("\n"))
 
 const drifted: string[] = []
 for (const [name, text] of generated) {
