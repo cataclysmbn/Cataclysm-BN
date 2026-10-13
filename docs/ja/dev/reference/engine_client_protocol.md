@@ -91,7 +91,7 @@ title: エンジン/クライアントプロトコル 1.0
 
 `context` は同じマスへの右クリック(SEC_SELECT)です。ネイティブでは隣のマスを調べる、隣のドアを閉じる、足元のアイテムを拾う、見えているモンスターを撃つ、あるいは計画中のルートをまず取り消します。`bn.world.describe` はターミナルウィンドウ内のマスにホバーしたときにネイティブのマウスビューが表示するテキストを返します(範囲外は `validation_failed`)。何も選択も計画もしません。`bn.world.cells` は 1 つの階層の範囲(`min` と `max` を含み、`dim` と `z` が同じで最大 `limits.cells_per_query` マス)でアバターが知っている内容を返します。セルはスナップショットが持つものと同一で、`forgotten` は範囲内のロード済み領域(coverage)で何も分かっていないマスです。反転した範囲や複数階層にまたがる範囲は `validation_failed`、大きすぎる範囲は `resource_limit`、別の `epoch` は `stale_epoch` です。メニューでのホイール 1 ステップは登録済みアクション `SCROLL_UP` または `SCROLL_DOWN` で、エンジンがネイティブのカーソルを 3 行動かします。
 
-ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` で、`interrupted` の `error` が理由を示します(ワールドが入れ替わると `stale_epoch`、ゲームが入力を拒否すると `validation_failed`、それ以外は `not_ready`)。`completed` は入力が再び待たれていることを意味します。待機などの行動は、終わるか、ゲームが何かを尋ねる(ポップアップや中断)まで先に実行されます。その `at` はその境界の終点です。同時に実行できるコマンドは 1 つです(`command_busy`)。 待機などの行動の実行中もリクエストには応答します。`bn.interrupt` はネイティブの中断キーを押し、行動は Tiles と同様に中止するか尋ね、その質問が次の境界になります。行動中でなければ `not_ready` で失敗します。
+ステージは `received`、`validated`、`executing`、`completed`、または `rejected`、または `interrupted` で、`interrupted` の `error` が理由を示します(ワールドが入れ替わると `stale_epoch`、ゲームが入力を拒否すると `validation_failed`、それ以外は `not_ready`)。`completed` は入力が再び待たれていることを意味します。待機などの行動は、終わるか、ゲームが何かを尋ねる(ポップアップや中断)まで先に実行されます。その `at` はその境界の終点です。そのため、入力が開くプロンプト(テキスト欄、数量)は、それを運ぶイベントが先に届くので `completed` の到着時には状態に含まれています。そのときプロンプトが無ければ、プロンプトは開かれなかったということです。同時に実行できるコマンドは 1 つです(`command_busy`)。 待機などの行動の実行中もリクエストには応答します。`bn.interrupt` はネイティブの中断キーを押し、行動は Tiles と同様に中止するか尋ね、その質問が次の境界になります。行動中でなければ `not_ready` で失敗します。
 
 ## 読み込み画面
 

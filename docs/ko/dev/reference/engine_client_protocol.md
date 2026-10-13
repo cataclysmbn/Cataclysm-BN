@@ -91,7 +91,7 @@ title: 엔진/클라이언트 프로토콜 1.0
 
 `context`는 같은 칸에 대한 오른쪽 클릭(SEC_SELECT)입니다. 네이티브에서는 인접한 칸을 조사하거나, 인접한 문을 닫거나, 발밑 아이템을 줍거나, 보이는 몬스터를 쏘거나, 계획된 경로를 먼저 취소합니다. `bn.world.describe`는 터미널 창 안의 칸에 마우스를 올렸을 때 네이티브 마우스 뷰가 출력하는 텍스트를 돌려줍니다(범위 밖은 `validation_failed`). 아무것도 선택하거나 계획하지 않습니다. `bn.world.cells`는 한 층의 상자(`min`과 `max` 포함, `dim`과 `z`가 같고 최대 `limits.cells_per_query`칸) 안에서 아바타가 아는 것을 돌려줍니다. 셀은 스냅샷이 가진 그대로이며, `forgotten`은 상자 안의 로드된 범위(coverage) 안에서 아무것도 알려지지 않은 칸입니다. 뒤집힌 상자나 여러 층에 걸친 상자는 `validation_failed`, 너무 큰 상자는 `resource_limit`, 다른 `epoch`은 `stale_epoch`입니다. 메뉴의 휠 한 단계는 등록된 행동 `SCROLL_UP` 또는 `SCROLL_DOWN`이며 엔진이 네이티브 커서를 세 행 옮깁니다.
 
-단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`이며, `interrupted`의 `error`가 이유를 알려 줍니다(월드가 교체되면 `stale_epoch`, 게임이 입력을 거부하면 `validation_failed`, 그 외에는 `not_ready`). `completed`는 입력이 다시 대기 중이라는 뜻입니다. 대기 같은 활동은 끝나거나 게임이 무언가를 물을 때(팝업, 중단)까지 먼저 실행됩니다. 그 `at`은 해당 경계의 끝 지점입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`). 대기 같은 활동이 실행되는 동안에도 요청에는 응답합니다. `bn.interrupt`는 네이티브 중단 키를 눌러 활동이 Tiles처럼 중지할지 묻게 하며, 그 질문이 다음 경계가 됩니다. 활동 중이 아니면 `not_ready`로 실패합니다.
+단계는 `received`, `validated`, `executing`, `completed`이며, 또는 `rejected`, 또는 `interrupted`이며, `interrupted`의 `error`가 이유를 알려 줍니다(월드가 교체되면 `stale_epoch`, 게임이 입력을 거부하면 `validation_failed`, 그 외에는 `not_ready`). `completed`는 입력이 다시 대기 중이라는 뜻입니다. 대기 같은 활동은 끝나거나 게임이 무언가를 물을 때(팝업, 중단)까지 먼저 실행됩니다. 그 `at`은 해당 경계의 끝 지점입니다. 따라서 입력이 여는 프롬프트(텍스트 칸, 수량)는 그것을 담은 이벤트가 먼저 오므로 `completed`가 도착할 때 이미 상태에 있습니다. 그때 프롬프트가 없으면 프롬프트는 열리지 않은 것입니다. 한 번에 하나의 명령만 진행할 수 있습니다(`command_busy`). 대기 같은 활동이 실행되는 동안에도 요청에는 응답합니다. `bn.interrupt`는 네이티브 중단 키를 눌러 활동이 Tiles처럼 중지할지 묻게 하며, 그 질문이 다음 경계가 됩니다. 활동 중이 아니면 `not_ready`로 실패합니다.
 
 ## 로딩 화면
 
