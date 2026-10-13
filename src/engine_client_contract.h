@@ -41,6 +41,8 @@ enum class error {
     invalid_lifecycle, resync_required, resource_limit, read_only,
 };
 auto error_name( error value ) -> std::string;
+/// The error in words for a player, localized.
+auto error_text( error value ) -> std::string;
 
 /// Invoke once for each new authoritative session/world/process, never on a read.
 auto new_session_epoch() -> std::expected<std::string, error>;
@@ -173,6 +175,8 @@ struct command_result {
     std::string command_id = {};
     command_stage stage = command_stage::received;
     std::optional<error> failure = std::nullopt;
+    /// Why, localized, where the engine knows more than the error kind; empty otherwise.
+    std::string message = {};
     /// Endpoint of the boundary that completed the command.
     std::optional<clock_point> at = std::nullopt;
 };

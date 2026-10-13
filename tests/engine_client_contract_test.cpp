@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 #include "client_input.h"
 #include "engine_client_contract.h"
+#include "engine_client_wire.h"
 #include "input.h"
 #include "path_info.h"
 
@@ -645,4 +646,27 @@ TEST_CASE("a screen that acknowledges any key names its choice", "[engine_client
     };
     CHECK(contains(wire_of("acknowledge"), "\"any_key_choice_id\":\"acknowledge\""));
     CHECK_FALSE(contains(wire_of(""), "any_key_choice_id"));
+}
+
+TEST_CASE("a failed command says why in the game's language", "[engine_client_contract]") {
+    const auto failed = [](const std::string& message) {
+        return engine_client::serialize_command_result(
+            {.epoch = "epoch:test",
+             .command_id = "command:1",
+             .stage = engine_client::command_stage::rejected,
+             .failure = engine_client::error::validation_failed,
+             .message = message});
+    };
+    CHECK(contains(failed(""), "\"error_text\":\"Not possible here.\""));
+    CHECK(contains(failed("Out of reach."), "\"error_text\":\"Out of reach.\""));
+    CHECK_FALSE(contains(
+        engine_client::serialize_command_result(
+            {.epoch = "epoch:test",
+             .command_id = "command:1",
+             .stage = engine_client::command_stage::completed}),
+        "error_text"));
+    const auto stale = engine_client::serialize_application_error(
+        {.kind = engine_client::error::stale_boundary});
+    REQUIRE(stale);
+    CHECK(contains(*stale, "\"message\":\"The screen changed, try again.\""));
 }

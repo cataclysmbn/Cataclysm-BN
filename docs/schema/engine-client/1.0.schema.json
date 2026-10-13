@@ -3743,6 +3743,10 @@
         "error": {
           "$ref": "#/$defs/command_error"
         },
+        "error_text": {
+          "type": "string",
+          "description": "Present with error: the localized reason, specific where the engine knows more than the kind."
+        },
         "at": {
           "$ref": "#/$defs/at"
         }
@@ -3827,6 +3831,10 @@
         },
         "error": {
           "$ref": "#/$defs/command_error"
+        },
+        "error_text": {
+          "type": "string",
+          "description": "Present with error: the localized reason, specific where the engine knows more than the kind."
         },
         "at": {
           "$ref": "#/$defs/at"
@@ -3967,6 +3975,10 @@
             "subscribe",
             "retry"
           ]
+        },
+        "message": {
+          "type": "string",
+          "description": "The localized reason for kind."
         },
         "at": {
           "$ref": "#/$defs/at"

@@ -11,6 +11,7 @@
 #include "cursesport.h"
 #include "game.h"
 #include "input.h"
+#include "translations.h"
 #include "map/map.h"
 
 #include <algorithm>
@@ -111,6 +112,36 @@ auto error_name( const error value ) -> std::string
             return "read_only";
     }
     return "validation_failed";
+}
+auto error_text( const error value ) -> std::string
+{
+    switch( value ) {
+        case error::negotiation_failed:
+            return _( "The protocol version is not supported." );
+        case error::not_ready:
+            return _( "The game is not ready." );
+        case error::stale_epoch:
+            return _( "The world changed." );
+        case error::stale_revision:
+        case error::stale_boundary:
+        case error::stale_interaction_schema:
+            return _( "The screen changed, try again." );
+        case error::validation_failed:
+            return _( "Not possible here." );
+        case error::command_busy:
+            return _( "Another command is still running." );
+        case error::unknown_command:
+            return _( "Unknown command." );
+        case error::invalid_lifecycle:
+            return _( "The command cannot run now." );
+        case error::resync_required:
+            return _( "Resynchronizing with the game." );
+        case error::resource_limit:
+            return _( "Too much data was requested." );
+        case error::read_only:
+            return _( "This connection can only watch the game." );
+    }
+    return _( "Not possible here." );
 }
 auto stage_name( const command_stage stage ) -> std::string
 {
@@ -372,9 +403,11 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
     if( !result_ || result_->stage != command_stage::received ) {
         return std::unexpected( error::invalid_lifecycle );
     }
-    const auto reject = [&]( const error reason ) -> std::expected<input_event, error> {
+    const auto reject = [&]( const error reason, std::string message = {} ) ->
+    std::expected<input_event, error> {
         result_->stage = command_stage::rejected;
         result_->failure = reason;
+        result_->message = std::move( message );
         request_.reset();
         return std::unexpected( reason );
     };
@@ -416,7 +449,7 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         if( !permissions.accepts_registered_actions ||
             game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
         const auto click = travel_click( *travel );
-        if( !click ) { return reject( error::validation_failed ); }
+        if( !click ) { return reject( error::validation_failed, _( "Travel rejected: that square is outside the map window the engine can resolve." ) ); }
         resolved = game_client::resolve_input_command( *click, screen_size );
         if( !resolved ) { return reject( error::validation_failed ); }
     } else {

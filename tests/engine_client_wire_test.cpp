@@ -184,7 +184,7 @@ TEST_CASE("serialized values", "[engine_client_wire]") {
     CHECK(contains(*failure, R"("at":{"epoch":"epoch:a","sequence":"4","revision":"3"})"));
     const auto bare = serialize_application_error({.kind = error::command_busy});
     REQUIRE(bare);
-    CHECK(*bare == R"({"kind":"command_busy"})");
+    CHECK(*bare == R"({"kind":"command_busy","message":"Another command is still running."})");
 }
 
 TEST_CASE("wire decoding rejects a raw NUL that would hide a suffix", "[engine_client_wire]") {

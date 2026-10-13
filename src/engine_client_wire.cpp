@@ -341,6 +341,7 @@ std::expected<std::string, error>
         return std::unexpected( error::validation_failed );
     }
     auto result = nlohmann::ordered_json{{"kind", error_name( value.kind )}};
+    result["message"] = error_text( value.kind );
     if( !action->empty() ) { result["action"] = std::string( *action ); }
     if( value.at ) { result["at"] = nlohmann::ordered_json::parse( serialize_clock( *value.at ) ); }
     return result.dump();
