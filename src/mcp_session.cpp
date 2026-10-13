@@ -22,7 +22,6 @@
 #include <io.h>
 #include "platform_win.h"
 #else
-#include <poll.h>
 #include <unistd.h>
 #endif
 
@@ -178,10 +177,10 @@ auto interaction( const std::size_t offset, const std::size_t limit ) -> screen_
 
 constexpr auto heartbeat_interval = std::chrono::seconds( 2 );
 
+#if defined(_WIN32)
 /// Whether a request frame can be read, waiting up to `wait_ms` for one.
 auto stdin_ready( const int wait_ms = 0 ) -> bool
 {
-#if defined(_WIN32)
     // Only a pipe (or a redirected file) can be tested; a console would need its own event queue.
     const auto ready = []() {
         const auto handle = GetStdHandle( STD_INPUT_HANDLE );
@@ -201,11 +200,8 @@ auto stdin_ready( const int wait_ms = 0 ) -> bool
         Sleep( 5 );
     }
     return ready();
-#else
-    auto fd = pollfd { .fd = STDIN_FILENO, .events = POLLIN, .revents = 0 };
-    return std::cin.rdbuf()->in_avail() > 0 || poll( &fd, 1, wait_ms ) > 0;
-#endif
 }
+#endif
 
 #if !defined(_WIN32)
 /// Says which signal ended the engine, then dies of it like any other process.
@@ -223,10 +219,11 @@ extern "C" auto name_the_signal( const int sig ) -> void
 [[noreturn]] auto leave( const std::string &why ) -> void
 {
     auto &session = state();
+    const auto leader = session.sockets ? session.sockets->controller() : std::nullopt;
+    const auto protocol = leader ? &leader->protocol : session.transport.get();
     std::cerr << "mcp: the engine is exiting: "
-              << ( session.stop ? "a stop was requested" :
-                   session.transport ? session.transport->end_reason() : why ) << std::endl;
-    exit_handler( session.transport && session.transport->failed() ? 1 : 0 );
+              << ( session.stop ? "a stop was requested" : protocol ? protocol->end_reason() : why ) << std::endl;
+    exit_handler( protocol && protocol->failed() ? 1 : 0 );
 }
 
 /// The connection that commands the game: stdio, or the socket that holds the controller role.
@@ -234,15 +231,29 @@ auto controller() -> std::optional<socket_hub::endpoint>
 {
     auto &session = state();
     if( session.sockets ) { return session.sockets->controller(); }
+#if defined(_WIN32)
     if( session.transport && session.output ) {
         return socket_hub::endpoint{ *session.transport, std::cin, *session.output };
     }
+#endif
     return std::nullopt;
 }
 
 auto controller_ready() -> bool
 {
+#if defined(_WIN32)
     return state().sockets ? state().sockets->controller_ready() : stdin_ready();
+#else
+    return state().sockets->controller_ready();
+#endif
+}
+
+/// The controller is gone: a socket's game waits for the next one, stdio's ends with it.
+auto lose_controller( const std::string &why ) -> void
+{
+    auto &session = state();
+    if( session.sockets && session.sockets->listening() ) { session.sockets->drop_controller(); }
+    else { leave( why ); }
 }
 
 /// Without a controller the game waits at its input boundary, as it does for a player who has not
@@ -297,8 +308,7 @@ auto provide_input( const int timeout_ms ) -> input_event
             while( session.events.empty() && controller() && controller_ready() ) {
                 const auto leader = controller();
                 if( leader->protocol.poll_input( leader->in, leader->out, std::cerr ) ) { continue; }
-                if( !session.sockets ) { leave( "input ended while an activity was running" ); }
-                session.sockets->drop_controller();
+                lose_controller( "input ended while an activity was running" );
             }
             if( !session.events.empty() ) {
                 continue;
@@ -315,8 +325,8 @@ auto provide_input( const int timeout_ms ) -> input_event
         session.published_unled = false;
         if( !leader || !leader->protocol.pump_until_input( leader->in, leader->out, std::cerr,
                 refreshing ? timeout_ms : 0 ) ) {
-            if( !leader || !session.sockets ) { break; }
-            session.sockets->drop_controller();
+            if( !leader ) { break; }
+            lose_controller( "input ended" );
             continue;
         }
         if( refreshing && session.events.empty() ) {
@@ -425,21 +435,25 @@ auto start_session() -> void
         .state = structured_state,
         .submit = submit_events,
         .has_input = has_input,
-        .wait_input = []( const int wait_ms ) { return stdin_ready( wait_ms ); },
+        .wait_input = []( const int wait_ms ) { return state().sockets->wait_controller_ready( wait_ms ); },
         .actions = actions,
         .interaction = interaction,
         .resize_viewport = resize_viewport
     };
     if( const auto &path = game_client::listen_endpoint(); !path.empty() ) {
         close_fd( protocol_fd );
-        host.wait_input = []( const int wait_ms ) { return state().sockets->wait_controller_ready( wait_ms ); };
         auto listening = socket_hub::listen( path, host );
         if( !listening ) { throw std::runtime_error( listening.error() ); }
         session.sockets = std::move( *listening );
     } else {
+#if defined(_WIN32)
+        host.wait_input = []( const int wait_ms ) { return stdin_ready( wait_ms ); };
         session.output_buffer = make_fd_output( protocol_fd );
         session.output = std::make_unique<std::ostream>( session.output_buffer.get() );
         session.transport = std::make_unique<server>( std::move( host ) );
+#else
+        session.sockets = socket_hub::attach_stdio( STDIN_FILENO, protocol_fd, host );
+#endif
     }
     session.started = true;
     game_client::memory::set_input_provider( provide_input );

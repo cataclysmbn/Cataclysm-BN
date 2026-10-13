@@ -97,11 +97,17 @@ inline auto rows_with(const snapshot_t& snapshot, const std::string& prefix)
     return ids;
 }
 
-/// Answers each input read of the screen `open` shows with `script`.
+/// The most input reads a screen script may be asked for; a screen that asks for more is stuck.
+constexpr auto max_screen_reads = 1000;
+
+/// Answers each input read of the screen `open` shows with `script`. A screen that keeps reading
+/// input without ending (a script answering with no input at all) fails instead of spinning.
 inline auto open_screen(
     const std::function<auto()->void>& open,
     const std::function<auto(const snapshot_t&)->input_event>& script) -> void {
+    auto reads = 0;
     game_client::memory::set_input_provider([&](const int /*timeout*/) {
+        REQUIRE(++reads <= max_screen_reads);
         const auto snapshot = game_client::current_interaction();
         REQUIRE(snapshot.structured);
         return script(snapshot);

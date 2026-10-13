@@ -1329,9 +1329,35 @@ struct hub_rig {
          / ("bn-hub-" + std::to_string(getpid()) + "-" + std::to_string(++made) + ".sock"))
             .string();
     std::unique_ptr<bn::mcp::socket_hub> hub;
+    /// With `stdio`, the hub serves these pipes as the controller instead of listening: the
+    /// engine's ends stay blocking, as a client's pipe is, and the test's ends do not wait.
+    std::array<int, 2> to_engine{-1, -1};
+    std::array<int, 2> from_engine{-1, -1};
     static inline auto made = 0;
-    explicit hub_rig(const bn::mcp::socket_options options = {}) {
+    explicit hub_rig(const bn::mcp::socket_options options = {}, const bool stdio = false) {
         REQUIRE(test.authority.publish_boundary());
+        const auto host = bn::mcp::mcp_host{
+            .observe = [] { return bn::mcp::screen_snapshot{.json = "{}"}; },
+            .submit =
+                [this](const auto& input) {
+                    test.queued = input;
+                    return true;
+                },
+            .has_input = [this] { return !test.queued.empty(); },
+            .resize_viewport =
+                [](const int cols, const int rows) { declared_viewport.push_back({cols, rows}); },
+            .contract_session = &test.authority,
+        };
+        if (stdio) {
+            REQUIRE(pipe(to_engine.data()) == 0);
+            REQUIRE(pipe(from_engine.data()) == 0);
+            // A pipe this small fills at once, so the engine's output stalls without a big flood.
+            REQUIRE(fcntl(from_engine[1], F_SETPIPE_SZ, 4096) >= 4096);
+            REQUIRE(fcntl(to_engine[1], F_SETFL, O_NONBLOCK) == 0);
+            REQUIRE(fcntl(from_engine[0], F_SETFL, O_NONBLOCK) == 0);
+            hub = bn::mcp::socket_hub::attach_stdio(to_engine[0], from_engine[1], host, options);
+            return;
+        }
         auto listening = bn::mcp::socket_hub::listen(
             path,
             {
@@ -1351,6 +1377,32 @@ struct hub_rig {
             options);
         REQUIRE(listening);
         hub = std::move(*listening);
+    }
+    ~hub_rig() {
+        // The hub closes the engine's output end itself; the test's ends and the engine's input end
+        // remain.
+        for (const auto fd : {to_engine[0], to_engine[1], from_engine[0]}) {
+            if (fd >= 0) { close(fd); }
+        }
+    }
+    /// What the engine has written to the client since the last call.
+    auto client_receive() -> std::string {
+        auto text = std::string{};
+        auto chunk = std::array<char, 65536>{};
+        for (auto got = read(from_engine[0], chunk.data(), chunk.size()); got > 0;
+             got = read(from_engine[0], chunk.data(), chunk.size())) {
+            text.append(chunk.data(), static_cast<std::size_t>(got));
+        }
+        return text;
+    }
+    /// Sends all of `bytes` to the engine, which reads its input whenever the pipe is full.
+    auto client_send(const std::string& bytes) -> void {
+        for (auto sent = std::size_t{0}; sent < bytes.size();) {
+            const auto wrote = write(to_engine[1], bytes.data() + sent, bytes.size() - sent);
+            if (wrote > 0) { sent += static_cast<std::size_t>(wrote); }
+            hub->service(0);
+            hub->controller_ready();
+        }
     }
     /// The game loop's turn: accept, read the spectators, send what is pending.
     auto settle() -> void {
@@ -1591,51 +1643,90 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "a non-blocking stdout that is full delays frames without losing or reordering them",
+    "stdio output that fills the pipe is delivered whole and in order once the client reads",
     "[engine_client_socket]") {
-    auto ends = std::array<int, 2>{};
-    REQUIRE(pipe(ends.data()) == 0);
-    REQUIRE(fcntl(ends[1], F_SETFL, fcntl(ends[1], F_GETFL) | O_NONBLOCK) == 0);
-    auto expected = std::string{};
-    auto wrote = false;
-    auto writer = std::thread{[&] {
-        auto out = std::ostream{bn::mcp::make_fd_output(ends[1]).release()};
-        for (auto frame = 0; frame < 64; ++frame) {
-            out << std::string(4096, static_cast<char>('a' + frame % 26)) << '\n' << std::flush;
-        }
-        wrote = out.good();
-        delete out.rdbuf();
-    }};
-    for (auto frame = 0; frame < 64; ++frame) {
-        expected += std::string(4096, static_cast<char>('a' + frame % 26)) + '\n';
-    }
-    // The pipe holds 64 KiB, less than the 256 KiB sent: the reader stalls while it is full.
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    auto reference = fixture{};
+    REQUIRE(reference.authority.publish_boundary());
+    reference.poll(hello + subscribe);
+    auto rig = hub_rig{{}, true};
+    rig.client_send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    // The pipe holds 4 KiB, less than the snapshot: the rest waits in the hub, not in a blocked
+    // write.
     auto received = std::string{};
-    auto chunk = std::array<char, 1000>{};
-    while (received.size() < expected.size()) {
-        const auto got = read(ends[0], chunk.data(), chunk.size());
-        if (got <= 0) { break; }
-        received.append(chunk.data(), static_cast<std::size_t>(got));
-        std::this_thread::sleep_for(std::chrono::microseconds(200));
+    const auto lines = count_of(reference.output.str(), "\n");
+    for (auto round = 0; round < 200 && count_of(received, "\n") < lines; ++round) {
+        rig.hub->service(20);
+        received += rig.client_receive();
     }
-    close(ends[0]);
-    writer.join();
-    CHECK(wrote);
-    CHECK(received == expected);
+    CHECK(received.ends_with("\n"));
+    CHECK(count_of(received, "\n") == lines);
+    CHECK(count_of(received, R"("method":"bn.snapshot.part")")
+          == count_of(reference.output.str(), R"("method":"bn.snapshot.part")"));
+    CHECK(index_of(received, R"("id":1)") < index_of(received, R"("id":2)"));
+    // The pipe the client handed over is not switched to non-blocking for whoever shares it.
+    CHECK((fcntl(rig.from_engine[1], F_GETFL) & O_NONBLOCK) == 0);
 }
 
 TEST_CASE(
-    "a stdout whose reader left fails the stream instead of ending the process",
+    "stdio requests are read while the client leaves the engine's output unread",
+    "[engine_client_socket]") {
+    auto rig = hub_rig{{}, true};
+    rig.client_send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    // The client reads nothing from here; the engine must still see what it sends.
+    rig.client_send(rpc("bn.unsubscribe", "{}", "8"));
+    CHECK(rig.hub->wait_controller_ready(1000));
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    CHECK(leader->protocol.poll_input(leader->in, leader->out, rig.test.errors));
+    auto received = rig.client_receive();
+    for (auto round = 0; round < 50 && !contains(received, R"("id":8)"); ++round) {
+        rig.hub->service(20);
+        received += rig.client_receive();
+    }
+    CHECK(contains(received, R"("id":8,"result":{})"));
+    // An oversized frame reaches the engine the same way, and ends the session.
+    rig.client_send(rpc("bn.subscribe", "{}", "9"));
+    rig.settle();
+    rig.client_send(std::string(bn::mcp::server::default_max_frame_bytes + 2, ' '));
+    CHECK(rig.hub->wait_controller_ready(1000));
+    // The subscribe sent first is served; the frame past the limit ends the session.
+    while (leader->protocol.poll_input(leader->in, leader->out, rig.test.errors)) {}
+    CHECK(leader->protocol.failed());
+}
+
+TEST_CASE(
+    "stdio output unread past the bound ends the session with a reason", "[engine_client_socket]") {
+    auto rig = hub_rig{{.output_bound = 32 * 1024}, true};
+    rig.client_send(hello + subscribe);
+    rig.settle();
+    rig.poll_controller();
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    for (auto step = 0; step < 5000 && !leader->protocol.failed(); ++step) {
+        known_cells.push_back(static_cast<int>(known_cells.size()) + 1);
+        static_cast<void>(leader->protocol.publish_step(leader->out));
+    }
+    CHECK(leader->protocol.failed());
+    CHECK(contains(leader->protocol.end_reason(), "unwritable"));
+}
+
+TEST_CASE(
+    "stdio whose reader left fails the stream instead of ending the process",
     "[engine_client_socket]") {
     std::signal(SIGPIPE, SIG_IGN);
-    auto ends = std::array<int, 2>{};
-    REQUIRE(pipe(ends.data()) == 0);
-    close(ends[0]);
-    auto out = std::ostream{bn::mcp::make_fd_output(ends[1]).release()};
-    out << "frame\n" << std::flush;
-    CHECK_FALSE(out.good());
-    delete out.rdbuf();
+    auto rig = hub_rig{{}, true};
+    close(rig.from_engine[0]);
+    rig.from_engine[0] = -1;
+    const auto leader = rig.hub->controller();
+    REQUIRE(leader);
+    rig.client_send(hello);
+    CHECK(rig.hub->wait_controller_ready(1000));
+    CHECK_FALSE(leader->protocol.poll_input(leader->in, leader->out, rig.test.errors));
+    CHECK(leader->protocol.failed());
 }
 #    endif
 
