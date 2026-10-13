@@ -27,7 +27,6 @@
 #include <locale>
 #include <nlohmann/json.hpp>
 #include <ranges>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -272,20 +271,14 @@ TEST_CASE(
     }
     CHECK(bare.facts.empty());
     CHECK_FALSE(animated.facts.empty());
-    // With the animations off the game events still happen; only their drawing is left out.
-    const auto drawn = std::set<std::string>{
-        "projectile.moved",   "explosion.started", "explosion.blast",
-        "explosion.shrapnel", "explosion.ended",   "combat_text.shown"};
+    // The ANIMATIONS option is the player's to draw with; the facts of the grenade do not depend on
+    // it.
     CHECK_FALSE(silenced.facts.empty());
-    CHECK(std::ranges::none_of(silenced.facts, [&](const auto& fact) {
-        return drawn.contains(fact.type);
-    }));
-    CHECK(
-        types_of(silenced.facts)
-        == types_of(
-            animated.facts
-            | std::views::filter([&](const auto& fact) { return !drawn.contains(fact.type); })
-            | std::ranges::to<std::vector>()));
+    CHECK(types_of(silenced.facts) == types_of(animated.facts));
+    for (const auto* drawn : {"projectile.moved", "explosion.started", "explosion.ended"}) {
+        CAPTURE(drawn);
+        CHECK(first_of(types_of(silenced.facts), drawn) < silenced.facts.size());
+    }
     CHECK(animated.rng == bare.rng);
     CHECK(animated.state == bare.state);
     CHECK(silenced.rng == bare.rng);

@@ -213,9 +213,9 @@ TEST_CASE(
     const auto facts = shoot(at);
     const auto types = types_of(facts);
     CAPTURE(types);
-    CHECK(index_of(types, "projectile.moved") == types.size());
     const auto hit = index_of(types, "projectile.hit");
     REQUIRE(hit < types.size());
+    CHECK(index_of(types, "projectile.moved") < hit);
     CHECK_FALSE(facts[hit].id.empty());
     CHECK(types[hit + 1] == "entity.damaged");
 }

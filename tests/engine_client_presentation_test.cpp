@@ -197,7 +197,7 @@ TEST_CASE(
     CHECK(wire["events"][0]["data"]["path"].size() == 2);
 }
 
-TEST_CASE("the native animation options silence the facts outside tests", "[engine_client_event]") {
+TEST_CASE("only the SCT option silences combat text outside tests", "[engine_client_event]") {
     lit_floor(tripoint_bub_ms(70, 70, 0));
     const auto at = tripoint_bub_ms(70, 70, 0);
     const auto text = [] { SCT.add(point(65, 66), direction::NORTH, "-1", m_bad); };
@@ -206,8 +206,8 @@ TEST_CASE("the native animation options silence the facts outside tests", "[engi
         const auto live = restore_on_out_of_scope(test_mode);
         test_mode = false;
         const override_option animations("ANIMATIONS", "false");
-        CHECK(facts_of(text).empty());
-        CHECK(facts_of(bang).empty());
+        CHECK(facts_of(text).size() == 1);
+        CHECK(facts_of(bang).size() == 2);
     }
     {
         const auto live = restore_on_out_of_scope(test_mode);
@@ -218,7 +218,7 @@ TEST_CASE("the native animation options silence the facts outside tests", "[engi
         CHECK(facts_of(bang).size() == 2);
     }
     SCT.vSCT.clear();
-    // Tests force the animations on, so every other case sees its facts.
+    // Tests force the combat text on, so every other case sees its facts.
     CHECK(facts_of(text).size() == 1);
 }
 
