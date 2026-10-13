@@ -644,6 +644,10 @@
     "item_row": {
       "type": "object",
       "properties": {
+        "id": {
+          "$ref": "#/$defs/opaque_id",
+          "description": "Names the row for the pickup and drop operations. Stable while the stack stays what it is; two equal rows are told apart by their order."
+        },
         "look": {
           "$ref": "#/$defs/look"
         },
@@ -3610,6 +3614,33 @@
           "required": [
             "kind",
             "pos"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "pickup",
+                "drop"
+              ]
+            },
+            "item_id": {
+              "$ref": "#/$defs/opaque_id",
+              "description": "The id of a row of avatar.ground (pickup) or avatar.inventory (drop)."
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "How many of the row's items."
+            }
+          },
+          "required": [
+            "kind",
+            "item_id",
+            "count"
           ],
           "additionalProperties": false
         },

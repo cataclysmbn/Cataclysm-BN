@@ -151,6 +151,7 @@ auto to_json( const avatar_stat &value ) -> json
 auto to_json( const inventory_entry &value ) -> json
 {
     auto result = json{{"look", to_json( value.appearance )}, {"name", value.name}};
+    if( !value.id.empty() ) { result["id"] = value.id; }
     if( value.count ) { result["count"] = *value.count; }
     if( value.slot ) { result["slot"] = *value.slot; }
     if( value.durability ) {

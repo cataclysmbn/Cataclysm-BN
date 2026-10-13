@@ -144,8 +144,8 @@ auto tint_generation() -> std::size_t & // *NOPAD*
     return generation;
 }
 
-auto flag_text( const std::string &flag ) -> const std::string & { return flag; }
-auto flag_text( const flag_id &flag ) -> const std::string & { return flag.str(); }
+auto flag_text( const std::string &flag ) -> const std::string& { return flag; }
+auto flag_text( const flag_id &flag ) -> const std::string& { return flag.str(); }
 
 /// What a tileset's tints are tried by for a thing, in the native order, kept to those the client has:
 /// its flags, then its id.
@@ -708,6 +708,18 @@ auto stack_entry( const item &thing, const std::size_t count,
              .slot = std::move( slot ), .durability = std::move( durability ) };
 }
 
+/// Gives each row an id from its slot, kind and name; equal rows are told apart by their order.
+auto identified( std::vector<item_stack> rows ) -> std::vector<item_stack>
+{
+    auto seen = std::map<std::vector<std::string>, std::size_t> {};
+    for( auto &stack : rows ) {
+        auto identity = std::vector<std::string> { stack.row.slot.value_or( "ground" ), stack.row.appearance.id.value_or( "" ), stack.row.name };
+        identity.push_back( std::to_string( seen[identity]++ ) );
+        stack.row.id = game_client::opaque_interaction_id( "item", identity );
+    }
+    return rows;
+}
+
 auto capture_avatar( map &here, const avatar &you,
                      const std::string &dimension ) -> avatar_value
 {
@@ -725,29 +737,44 @@ auto capture_avatar( map &here, const avatar &you,
             { "pain", _( "Pain" ), std::to_string( you.get_pain() ) }
         },
         .sidebar = sidebar_snapshot( you ) };
-    you.visit_items( [&]( const item * thing ) {
-        if( you.is_wielding( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "wielded" ) ); }
-        else if( you.is_worn( *thing ) ) { result.inventory.push_back( stack_entry( *thing, 1, "worn" ) ); }
-        return VisitResponse::NEXT;
-    } );
-    for( const auto *stack : you.inv_const_slice() ) {
-        if( stack != nullptr ) { result.inventory.push_back( stack_entry( *stack->front(), stack->size(), "carried" ) ); }
-    }
-    if( here.accessible_items( you.bub_pos() ) ) {
-        // The native pickup stacks equal items the same way; each stack is one choice there.
-        for( const auto *thing : here.i_at( you.bub_pos() ) ) {
-            const auto same = std::ranges::find_if( result.ground, [&]( const auto & entry ) {
-                return entry.name == remove_color_tags( thing->display_name() ) &&
-                       entry.appearance.id == thing->typeId().str();
-            } );
-            if( same != result.ground.end() ) { ++*same->count; }
-            else { result.ground.push_back( stack_entry( *thing, 1 ) ); }
-        }
-    }
+    const auto stacks = item_stacks( here, you );
+    result.inventory = stacks.inventory | std::views::transform( &item_stack::row ) |
+                       std::ranges::to<std::vector>();
+    result.ground = stacks.ground | std::views::transform( &item_stack::row ) |
+                    std::ranges::to<std::vector>();
     return result;
 }
 
 } // namespace
+
+auto item_stacks( map &here, const avatar &you ) -> avatar_item_stacks
+{
+    auto result = avatar_item_stacks{};
+    you.visit_items( [&]( const item * visited ) {
+        // The rows are read-only here; the item operations that change the items pass the avatar they own.
+        auto *thing = const_cast<item *>( visited );
+        if( you.is_wielding( *thing ) ) { result.inventory.push_back( { stack_entry( *thing, 1, "wielded" ), { thing } } ); }
+        else if( you.is_worn( *thing ) ) { result.inventory.push_back( { stack_entry( *thing, 1, "worn" ), { thing } } ); }
+        return VisitResponse::NEXT;
+    } );
+    for( const auto *stack : you.inv_const_slice() ) {
+        if( stack != nullptr ) { result.inventory.push_back( { stack_entry( *stack->front(), stack->size(), "carried" ), *stack } ); }
+    }
+    if( here.accessible_items( you.bub_pos() ) ) {
+        // The native pickup stacks equal items the same way; each stack is one choice there.
+        for( auto *thing : here.i_at( you.bub_pos() ) ) {
+            const auto same = std::ranges::find_if( result.ground, [&]( const auto & entry ) {
+                return entry.row.name == remove_color_tags( thing->display_name() ) &&
+                       entry.row.appearance.id == thing->typeId().str();
+            } );
+            if( same != result.ground.end() ) { same->items.push_back( thing ); ++*same->row.count; }
+            else { result.ground.push_back( { stack_entry( *thing, 1 ), { thing } } ); }
+        }
+    }
+    result.inventory = identified( std::move( result.inventory ) );
+    result.ground = identified( std::move( result.ground ) );
+    return result;
+}
 
 auto position_at( const tripoint_bub_ms &p ) -> position
 {

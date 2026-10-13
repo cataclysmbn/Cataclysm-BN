@@ -153,6 +153,8 @@ struct item_durability {
     auto operator<=>( const item_durability & ) const = default; // *NOPAD*
 };
 struct inventory_entry {
+    /// Names the row for the item operations; stable while the stack stays what it is.
+    std::string id = {};
     look appearance;
     /// The display name the native UI shows, without color markup.
     std::string name = {};

@@ -54,6 +54,9 @@ auto validate_shape( const command_request &request ) -> bool
         ( request.expect.schema_id && !valid_id( *request.expect.schema_id ) ) ) { return false; }
     const auto semantic = std::get_if<semantic_operation>( &request.operation );
     if( semantic == nullptr ) {
+        if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
+            return valid_id( item->item_id ) && item->count > 0 && item->count <= maximum_safe_integer;
+        }
         const auto action = std::get_if<registered_action>( &request.operation );
         return action == nullptr || valid_id( action->id );
     }
@@ -215,6 +218,39 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
     const auto cell = g->click_cell_of( at );
     if( !cell ) { return std::nullopt; }
     return game_client::input_command{ .mouse_position = *cell, .mouse_button = operation.button };
+}
+
+auto item_operation_input() -> game_client::input_command
+{
+    // The command is carried out as the game reads this input; recentring the view is the one default-mode
+    // action that takes no time and changes nothing else, so the game goes on to carry out the activity.
+    return { .action = "center", .input_id = game_client::current_input_id() };
+}
+
+auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>
+{
+    auto stacks = world::item_stacks( get_map(), get_avatar() );
+    auto &rows = operation.drop ? stacks.inventory : stacks.ground;
+    const auto row = std::ranges::find( rows, operation.item_id, []( const auto & stack ) { return stack.row.id; } );
+    if( row == rows.end() || operation.count > row->items.size() ) { return std::nullopt; }
+    return *row;
+}
+
+auto run_item_operation( const item_operation &operation ) -> void
+{
+    const auto stack = item_operation_stack( operation );
+    if( !stack ) { return; }
+    auto &you = get_avatar();
+    const auto count = static_cast<std::size_t>( operation.count );
+    if( operation.drop ) {
+        // As the native drop menu: the first item of the stack and how many of the stack go.
+        you.drop( { drop_location( *stack->items.front(), static_cast<int>( count ) ) }, you.bub_pos() );
+        return;
+    }
+    auto items = std::vector<item *>( stack->items.begin(), stack->items.begin() + count );
+    auto targets = pickup::optimize_pickup( items, std::vector<int>( count, 0 ) );
+    you.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                         ( targets, you.bub_pos() ) ) );
 }
 
 auto describe_tile( const describe_request &request, const std::string &epoch )
@@ -451,6 +487,16 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
         const auto click = travel_click( *travel );
         if( !click ) { return reject( error::validation_failed, _( "Travel rejected: that square is outside the map window the engine can resolve." ) ); }
         resolved = game_client::resolve_input_command( *click, screen_size );
+        if( !resolved ) { return reject( error::validation_failed ); }
+    } else if( const auto item = std::get_if<item_operation>( &request.operation ) ) {
+        if( !permissions.accepts_registered_actions ||
+            game_client::active_input_context().category != "DEFAULTMODE" ) { return reject( error::not_ready ); }
+        if( !item_operation_stack( *item ) ) {
+            return reject( error::validation_failed,
+                           item->drop ? _( "You do not have that many of that item to drop." ) :
+                           _( "There are not that many of that item here to pick up." ) );
+        }
+        resolved = game_client::resolve_input_command( item_operation_input(), screen_size );
         if( !resolved ) { return reject( error::validation_failed ); }
     } else {
         if( !permissions.accepts_registered_actions ) { return reject( error::not_ready ); }

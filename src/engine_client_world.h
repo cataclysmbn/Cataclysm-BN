@@ -7,9 +7,12 @@
 
 #include <set>
 #include <string>
+#include <vector>
 
+class avatar;
 class Creature;
 class item;
+class map;
 
 namespace engine_client
 {
@@ -30,6 +33,18 @@ namespace engine_client::world
 {
 
 auto capture_world() -> world_state;
+/// An inventory or ground row with the items it stands for.
+struct item_stack {
+    inventory_entry row;
+    std::vector<item *> items;
+};
+struct avatar_item_stacks {
+    /// The wielded item, the worn items, then the carried stacks.
+    std::vector<item_stack> inventory;
+    /// The stacks on the avatar's square.
+    std::vector<item_stack> ground;
+};
+auto item_stacks( map &here, const avatar &you ) -> avatar_item_stacks;
 /// What `capture_world` would capture, as a patch over `previous`, the state the session published last:
 /// every section whole, but of the cells only those that can differ from `previous`. `consecutive` says
 /// that `previous` is the state the patch before this one captured, which the patch builds on; without it

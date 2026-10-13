@@ -307,6 +307,7 @@ std::expected<game_client::input_command, error>
     refresh_result();
     if( !validated ) { input_.reset(); return std::unexpected( validated.error() ); }
     validated_input_ = *validated;
+    item_operation_.reset();
     auto native = game_client::input_command{ .input_id = game_client::current_input_id() };
     if( const auto semantic = std::get_if<semantic_operation>( &input_->operation ) ) {
         // Semantic commands carry their boundary inside the operation, not the raw-input field.
@@ -318,6 +319,9 @@ std::expected<game_client::input_command, error>
         }
     } else if( const auto travel = std::get_if<travel_operation>( &input_->operation ) ) {
         native = *travel_click( *travel );
+    } else if( const auto item = std::get_if<item_operation>( &input_->operation ) ) {
+        native = item_operation_input();
+        item_operation_ = *item;
     } else {
         native.action = std::get<registered_action>( input_->operation ).id;
     }
@@ -331,6 +335,7 @@ auto session::delivered( input_event fallback ) -> input_event
         if( lifecycle_->execution_started() ) {
             refresh_result();
             auto validated = std::exchange( validated_input_, std::nullopt );
+            if( const auto item = std::exchange( item_operation_, std::nullopt ) ) { run_item_operation( *item ); }
             return std::move( *validated );
         }
         interrupt( error::not_ready );
