@@ -516,7 +516,7 @@
           "version": "0.1.0"
         },
         "delivery": {},
-        "schema": "sha256:68a6ea2a4ffee321"
+        "schema": "sha256:0123456789abcdef"
       },
       "why": "credits are required"
     },
@@ -534,7 +534,7 @@
         "delivery": {
           "credits": 0
         },
-        "schema": "sha256:68a6ea2a4ffee321"
+        "schema": "sha256:0123456789abcdef"
       },
       "why": "a window holds at least one frame"
     },
@@ -553,7 +553,7 @@
           "credits": 64,
           "max_hz": 0
         },
-        "schema": "sha256:68a6ea2a4ffee321"
+        "schema": "sha256:0123456789abcdef"
       },
       "why": "a frame rate is at least 1 per second"
     },
@@ -572,7 +572,7 @@
           "credits": 64,
           "max_hz": 241
         },
-        "schema": "sha256:68a6ea2a4ffee321"
+        "schema": "sha256:0123456789abcdef"
       },
       "why": "at most 240 frames per second"
     },
@@ -590,7 +590,7 @@
         "delivery": {
           "max_hz": 30
         },
-        "schema": "sha256:68a6ea2a4ffee321"
+        "schema": "sha256:0123456789abcdef"
       },
       "why": "the cap paces credit delivery, so credits are required"
     },
@@ -664,7 +664,7 @@
         "tint_ids": [
           ""
         ],
-        "schema": "sha256:68a6ea2a4ffee321"
+        "schema": "sha256:0123456789abcdef"
       }
     },
     {
