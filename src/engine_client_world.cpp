@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <ranges>
 #include <set>
 
@@ -754,7 +755,10 @@ auto stack_entry( const std::vector<item *> &items,
                       ? std::optional{ item_durability{ .symbol = thing.damage_symbol(), .color = color_of( thing.damage_color() ) } }
                       :
                       std::nullopt;
-    return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = items.size(),
+    // Native units, as the native lists count what can be chosen: charges of a charges item, else items.
+    const auto count = std::ranges::fold_left( items | std::views::transform( &item::count ), 0,
+                       std::plus<> {} );
+    return { .appearance = item_look( thing ), .name = remove_color_tags( thing.display_name() ), .count = static_cast<std::uint64_t>( count ),
              .slot = slot, .durability = std::move( durability ), .label = stack_label( items, slot ) };
 }
 

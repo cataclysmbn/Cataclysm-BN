@@ -163,6 +163,8 @@ struct inventory_entry {
     look appearance;
     /// The display name the native UI shows, without color markup.
     std::string name = {};
+    /// How much the row holds in native units, charges of a charges item, else items: the most a pickup or
+    /// drop of the row takes.
     std::optional<std::uint64_t> count = std::nullopt;
     /// "wielded", "worn" or "carried"; absent for items on the ground.
     std::optional<std::string> slot = std::nullopt;

@@ -160,8 +160,8 @@ struct travel_operation {
 /// beside the avatar the move into it, which opens it. Nullopt when another dimension or level, or a
 /// square outside the terrain window.
 auto travel_click( const travel_operation &operation ) -> std::optional<game_client::input_command>;
-/// Picks up `count` items of a row of `avatar.ground`, or drops `count` of a row of `avatar.inventory`,
-/// as the native pickup and drop menus do once the rows are marked and confirmed.
+/// Picks up `count` of a row of `avatar.ground`, or drops `count` of a row of `avatar.inventory`, in the row's native units
+/// (charges of a charges item, else items), as the native pickup and drop menus do once the rows are marked and confirmed.
 struct item_operation {
     bool drop = false;
     std::string item_id = {};
@@ -169,7 +169,7 @@ struct item_operation {
 };
 /// The input the game reads for an item operation, which `run_item_operation` rides on.
 auto item_operation_input() -> game_client::input_command;
-/// The row `operation` names, with the items it stands for; nullopt when no such row holds that many items.
+/// The row `operation` names, with the items it stands for; nullopt when no such row holds that much.
 auto item_operation_stack( const item_operation &operation ) -> std::optional<world::item_stack>;
 /// Starts the native pickup or drop activity for a validated `operation`.
 auto run_item_operation( const item_operation &operation ) -> void;

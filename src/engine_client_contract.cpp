@@ -232,7 +232,7 @@ auto item_operation_stack( const item_operation &operation ) -> std::optional<wo
     auto stacks = world::item_stacks( get_map(), get_avatar() );
     auto &rows = operation.drop ? stacks.inventory : stacks.ground;
     const auto row = std::ranges::find( rows, operation.item_id, []( const auto & stack ) { return stack.row.id; } );
-    if( row == rows.end() || operation.count > row->items.size() ) { return std::nullopt; }
+    if( row == rows.end() || operation.count > row->row.count.value_or( 0 ) ) { return std::nullopt; }
     return *row;
 }
 
@@ -241,14 +241,24 @@ auto run_item_operation( const item_operation &operation ) -> void
     const auto stack = item_operation_stack( operation );
     if( !stack ) { return; }
     auto &you = get_avatar();
-    const auto count = static_cast<std::size_t>( operation.count );
+    const auto count = static_cast<int>( operation.count );
     if( operation.drop ) {
-        // As the native drop menu: the first item of the stack and how many of the stack go.
-        you.drop( { drop_location( *stack->items.front(), static_cast<int>( count ) ) }, you.bub_pos() );
+        // As the native drop menu: the first item of the stack and how much of the stack goes, in charges
+        // for a charges item.
+        you.drop( { drop_location( *stack->items.front(), count ) }, you.bub_pos() );
         return;
     }
-    auto items = std::vector<item *>( stack->items.begin(), stack->items.begin() + count );
-    auto targets = pickup::optimize_pickup( items, std::vector<int>( count, 0 ) );
+    // As the native pickup menu: the stack's items in order until `count` is taken, a charges item in charges.
+    auto items = std::vector<item *> {};
+    auto quantities = std::vector<int> {};
+    for( auto left = count; auto *thing : stack->items ) {
+        if( left <= 0 ) { break; }
+        const auto taken = std::min( left, thing->count() );
+        items.push_back( thing );
+        quantities.push_back( thing->count_by_charges() ? taken : 0 );
+        left -= taken;
+    }
+    auto targets = pickup::optimize_pickup( items, quantities );
     you.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
                          ( targets, you.bub_pos() ) ) );
 }
