@@ -771,6 +771,13 @@ auto serialize_choices( const choices_page &page ) -> std::string
 {
     return json{{"boundary_id", page.boundary_id}, {"total", page.total}, {"choices", to_array( page.choices )}}.dump();
 }
+auto serialize_rows( const rows_page &page ) -> std::string
+{
+    auto rows = json::array();
+    for( const auto &entry : page.rows ) { rows.push_back( to_json( entry ) ); }
+    return json{{"boundary_id", page.boundary_id}, {"component_id", page.component_id},
+        {"total", page.total}, {"rows", std::move( rows )}}.dump();
+}
 auto serialize_command_result( const command_result &value ) -> std::string
 {
     auto result = json{{"epoch", value.epoch}, {"command_id", value.command_id}, {"stage", stage_name( value.stage )}};

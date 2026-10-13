@@ -440,4 +440,33 @@ auto top_screen( const boundary_state &state ) -> screen_view
     return screen_of( state, slots_of( state ).back(), true );
 }
 
+auto read_rows( const rows_request &request,
+                const boundary_state &state ) -> std::expected<rows_page, error>
+{
+    if( request.epoch != state.epoch ) { return std::unexpected( error::stale_epoch ); }
+    if( request.boundary_id != state.id ) { return std::unexpected( error::stale_boundary ); }
+    if( request.limit == 0 || request.limit > maximum_rows ) { return std::unexpected( error::resource_limit ); }
+    const auto top = top_screen( state );
+    const auto *const found = top.root ? find_component( *top.root, request.component_id ) : nullptr;
+    const auto *const held = found ? std::get_if<list_body>( &found->body ) : nullptr;
+    if( held == nullptr ) { return std::unexpected( error::validation_failed ); }
+    auto result = rows_page{ .boundary_id = state.id, .component_id = request.component_id, .total = held->total };
+    if( !row_ids( *found ) && found->id == "list:choices" ) {
+        // The generic list holds one page of a longer native list: the rest is read from the screen.
+        auto native = game_client::current_interaction( { .offset = request.offset, .limit = request.limit } );
+        if( !native.structured ) { return std::unexpected( error::not_ready ); }
+        result.total = native.choice_total;
+        result.rows = native.choices | std::views::transform( row_of ) | std::ranges::to<std::vector>();
+        return result;
+    }
+    // Rows the list holds start at its own offset.
+    const auto size = held->rows.size();
+    const auto first = std::min( request.offset > held->offset ? request.offset - held->offset : 0,
+                                 size );
+    const auto last = std::max( first, std::min( request.offset + request.limit > held->offset ?
+                                request.offset + request.limit - held->offset : 0, size ) );
+    result.rows.assign( held->rows.begin() + first, held->rows.begin() + last );
+    return result;
+}
+
 } // namespace engine_client

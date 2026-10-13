@@ -4,6 +4,7 @@
 #include "engine_client_contract.h"
 
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <optional>
 #include <string>
@@ -348,6 +349,27 @@ class screen_scope
 auto interaction_stack( const boundary_state &state ) -> std::vector<screen_view>;
 /// The last of `interaction_stack`; the screen input goes to.
 auto top_screen( const boundary_state &state ) -> screen_view;
+struct rows_request {
+    std::string epoch = {};
+    std::string boundary_id = {};
+    /// A `list` of the top screen.
+    std::string component_id = {};
+    std::size_t offset = 0;
+    std::size_t limit = 100;
+};
+struct rows_page {
+    std::string boundary_id = {};
+    std::string component_id = {};
+    /// The rows of the whole list.
+    std::size_t total = 0;
+    std::vector<row> rows = {};
+};
+/// A window of one list's rows at the live boundary. A list that holds all its rows is sliced from them;
+/// one that holds a page is read natively, so each list pages within its own rows.
+auto read_rows( const rows_request &request,
+                const boundary_state &state ) -> std::expected<rows_page, error>;
+auto serialize_rows( const rows_page &page ) -> std::string;
+
 /// The `interaction_boundary` value of the 0.2 schema: the 0.1 members and the `stack`.
 auto serialize_interaction_boundary( const boundary_state &state ) -> std::string;
 
