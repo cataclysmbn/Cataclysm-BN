@@ -763,8 +763,8 @@ void show_armor_layers_ui( Character &who )
                 .selected = static_cast<int>( i ) == selected,
                 .highlighted = static_cast<int>( i ) == leftListIndex,
                 .columns = {
-                    { .label = _( "Storage" ), .value = format_volume( worn.get_storage() ) },
-                    { .label = _( "Hidden" ), .value = worn.has_flag( json_flag_HIDDEN ) ? _( "Yes" ) : _( "No" ) },
+                    { .key = "storage", .label = _( "Storage" ), .value = format_volume( worn.get_storage() ) },
+                    { .key = "hidden", .label = _( "Hidden" ), .value = worn.has_flag( json_flag_HIDDEN ) ? _( "Yes" ) : _( "No" ) },
                 },
             } );
         }

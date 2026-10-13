@@ -2045,6 +2045,13 @@ std::optional<game_client::interaction_totals>
 }
 } // namespace
 
+/// The mark the native column prints before a row of a multi-select list: none, some or all of it chosen.
+static auto selection_mark( const inventory_entry &entry ) -> game_client::interaction_mark
+{
+    if( entry.chosen_count == 0 ) { return { .glyph = "-", .color = "c_dark_gray" }; }
+    return { .glyph = entry.chosen_count >= entry.get_available_count() ? "+" : "#", .color = "c_light_green" };
+}
+
 auto inventory_selector::interaction_snapshot() const -> game_client::interaction_snapshot
 {
     const auto message = !filter.empty() ? string_format( _( "Filter: %s" ), filter ) :
@@ -2085,20 +2092,17 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
             }
             auto columns = std::vector<game_client::interaction_column> {};
             columns.reserve( preset.get_cells_count() + 1 );
-            columns.push_back( { .label = "source", .value = source } );
+            columns.push_back( { .key = "source", .label = "source", .value = source } );
             for( const auto cell_index : std::views::iota( std::size_t{ 0 },
                     preset.get_cells_count() ) ) {
                 columns.push_back( {
+                    .key = "cell" + std::to_string( cell_index ),
                     .label = preset.get_cell_title( cell_index ),
                     .value = remove_color_tags( preset.get_cell_text( entry, cell_index ) ),
                 } );
             }
-            // What the native column prints around the cells: the category header the row sits under,
-            // its name with the native color tags, the color of its text, and the color of its key.
-            columns.push_back( { .label = "Name markup", .value = preset.get_cell_text( entry, 0 ) } );
-            columns.push_back( { .label = "Category", .value = entry.get_category_ptr()->name() } );
-            columns.push_back( { .label = "Row color", .value = string_from_color( preset.get_color( entry ) ) } );
-            columns.push_back( { .label = "Key color", .value = string_from_color( entry.get_invlet_color() ) } );
+            // The category header the row sits under.
+            columns.push_back( { .key = "category", .label = "Category", .value = entry.get_category_ptr()->name() } );
             const auto denial = remove_color_tags( preset.get_observed_denial( entry ) );
             const auto description = remove_color_tags( entry.any_item()->info_string( { .mode = iteminfo_mode::observation } ) );
             auto identity = std::vector<std::string> {
@@ -2128,6 +2132,11 @@ auto inventory_selector::interaction_snapshot() const -> game_client::interactio
                 .columns = std::move( columns ),
                 .selected_count = entry.chosen_count,
                 .available_count = entry.get_available_count(),
+                .color = string_from_color( preset.get_color( entry ) ),
+                .key_color = string_from_color( entry.get_invlet_color() ),
+                .markup = preset.get_cell_text( entry, 0 ),
+                .mark = column.is_multiselect() && column.activatable() ?
+                std::optional( selection_mark( entry ) ) : std::nullopt,
             } );
         }
     }

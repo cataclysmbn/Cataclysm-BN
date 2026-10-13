@@ -185,7 +185,7 @@ void distraction_manager_gui::show()
                 .id = "distraction:" + io::enum_to_string( distractions_status[index] ),
                 .label = _( name ), .description = _( description ),
                 .selected = index == currentLine, .highlighted = index == currentLine,
-                .columns = { { .label = _( "Status" ), .value = enabled ? _( "Enabled" ) : _( "Disabled" ) } },
+                .columns = { { .key = "status", .label = _( "Status" ), .value = enabled ? _( "Enabled" ) : _( "Disabled" ) } },
                 .editor = game_client::interaction_editor{ .type = "bool", .value = enabled ? "true" : "false" },
             } );
         }

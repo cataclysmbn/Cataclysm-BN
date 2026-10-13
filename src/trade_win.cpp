@@ -1031,29 +1031,30 @@ game_client::interaction_snapshot
                 .selected = selected_amount > 0,
                 .highlighted = focus_them == opts.is_theirs && visible_index == opts.cursor,
                 .columns = {
-                    {.label = "Type", .value = candidate.typeId().str()},
-                    {.label = "Party", .value = opts.role},
-                    {.label = "Source", .value = storage_kind},
-                    {.label = "Unit price", .value = format_money( pricing.price )},
-                    {.label = "Price tone", .value = price_tone( pricing, candidate, opts.is_theirs )},
-                    {.label = "Category", .value = to_upper_case( candidate.get_category().name() )},
+                    {.key = "name", .label = _( "Name (charges)" ), .value = candidate.display_name( available_amount )},
+                    {.key = "type", .label = "Type", .value = candidate.typeId().str()},
+                    {.key = "party", .label = "Party", .value = opts.role},
+                    {.key = "source", .label = "Source", .value = storage_kind},
+                    {.key = "unit_price", .label = _( "unit price" ), .value = format_money( pricing.price )},
+                    {.key = "price_tone", .label = "Price tone", .value = price_tone( pricing, candidate, opts.is_theirs )},
+                    {.key = "category", .label = "Category", .value = to_upper_case( candidate.get_category().name() )},
                     {
-                        .label = "Stack weight",
+                        .key = "stack_weight", .label = _( "weight" ),
                         .value = string_format( "%.2f", convert_weight( pricing.weight * available_amount ) )
                     },
                     {
-                        .label = "Stack volume",
+                        .key = "stack_volume", .label = _( "vol" ),
                         .value = string_format( "%.2f", convert_volume( to_milliliter( pricing.vol * available_amount ) ) )
                     },
-                    {.label = "Available", .value = std::to_string( available_amount )},
-                    {.label = "Selected", .value = std::to_string( selected_amount )},
+                    {.key = "available", .label = _( "amt" ), .value = std::to_string( available_amount )},
+                    {.key = "selected", .label = "Selected", .value = std::to_string( selected_amount )},
                     {
-                        .label = "Weight",
+                        .key = "weight", .label = "Weight",
                         .value = string_format( "%.2f %s", convert_weight( pricing.weight ),
                                                 weight_units() )
                     },
                     {
-                        .label = "Volume",
+                        .key = "volume", .label = "Volume",
                         .value = string_format( "%.2f %s",
                                                 convert_volume( to_milliliter( pricing.vol ) ),
                                                 volume_units_abbr() )
@@ -1062,6 +1063,9 @@ game_client::interaction_snapshot
                 .selected_count = static_cast<std::uint64_t>( selected_amount ),
                 .minimum_count = 0,
                 .available_count = static_cast<std::uint64_t>( available_amount ),
+                .mark = game_client::interaction_mark{
+                    .glyph = selected_amount >= available_amount && available_amount > 0 ? "+" :
+                    selected_amount > 0 ? "#" : "-" },
             } );
         }
     };

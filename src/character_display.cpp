@@ -1317,11 +1317,11 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
                 }
                 auto columns = std::vector<game_client::interaction_column> {};
                 if( i < 4 ) {
-                    columns.push_back( { .label = _( "Current" ), .value = std::to_string( current[i] ) } );
-                    columns.push_back( { .label = _( "Base" ), .value = std::to_string( base[i] ) } );
-                    columns.push_back( { .label = _( "Color" ), .value = string_from_color( stat_color( current[i], base[i] ) ) } );
+                    columns.push_back( { .key = "current", .label = _( "Current" ), .value = std::to_string( current[i] ),
+                                         .color = string_from_color( stat_color( current[i], base[i] ) ) } );
+                    columns.push_back( { .key = "base", .label = _( "Base" ), .value = std::to_string( base[i] ) } );
                 } else {
-                    columns.push_back( { .label = labels[i], .value = info.values[0] } );
+                    columns.push_back( { .key = "current", .label = labels[i], .value = info.values[0] } );
                 }
                 add_row( { .id = game_client::opaque_interaction_id( "character-stat", { std::to_string( i ) } ),
                            .label = labels[i], .description = text, .columns = std::move( columns ) }, i );
@@ -1338,11 +1338,15 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
                            .label = body_part_name_as_heading( bp, combined ? 2 : 1 ),
                            .description = get_encumbrance_description( you, bp, combined ),
                 .columns = {
-                    { .label = _( "Encumbrance" ), .value = std::to_string( data.encumbrance - data.layer_penalty ) },
-                    { .label = _( "Layering" ), .value = std::to_string( data.layer_penalty ) },
-                    { .label = _( "Warmth" ), .value = std::to_string( temperature_print_rescaling( get_temp_conv( you, bp ) ) ) },
-                    { .label = _( "Encumbrance color" ), .value = string_from_color( encumb_color( data.encumbrance ) ) },
-                    { .label = _( "Warmth color" ), .value = string_from_color( warmth::bodytemp_color( you, bp ) ) }
+                    {
+                        .key = "encumbrance", .label = _( "Encumbrance" ), .value = std::to_string( data.encumbrance - data.layer_penalty ),
+                        .color = string_from_color( encumb_color( data.encumbrance ) )
+                    },
+                    { .key = "layering", .label = _( "Layering" ), .value = std::to_string( data.layer_penalty ) },
+                    {
+                        .key = "warmth", .label = _( "Warmth" ), .value = std::to_string( temperature_print_rescaling( get_temp_conv( you, bp ) ) ),
+                        .color = string_from_color( warmth::bodytemp_color( you, bp ) )
+                    }
                 } }, i );
             }
             break;
@@ -1352,8 +1356,8 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
                 const auto &trait = opts.traits[i];
                 add_row( { .id = game_client::opaque_interaction_id( "character-trait", { trait.str() } ),
                            .label = trait->name(), .description = string_format( "%s: %s", colorize( trait->name(), trait->get_display_color() ), trait->desc() ),
-                .columns = { { .label = _( "Color" ), .value = string_from_color( trait->get_display_color() ) } } },
-                i );
+                           .color = string_from_color( trait->get_display_color() ) },
+                         i );
             }
             break;
         case player_display_tab::bionics:
@@ -1365,8 +1369,8 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
                 add_row( { .id = game_client::opaque_interaction_id( "character-bionic", { bio.id.str() } ),
                            .label = count > 1 ? string_format( "%s (%d)", bio.info().name, count ) : bio.info().name.translated(),
                            .description = count > 1 ? string_format( "%s\n\nYou have %s instances of this bionic installed.", bio.info().description, count ) : bio.info().description.translated(),
-                .columns = { { .label = _( "Color" ), .value = string_from_color( focused && i == opts.line ? hilite( get_bionic_text_color( bio, true ) ) : get_bionic_text_color( bio, false ) ) } } },
-                i );
+                           .color = string_from_color( focused && i == opts.line ? hilite( get_bionic_text_color( bio, true ) ) : get_bionic_text_color( bio, false ) ) },
+                         i );
             }
             break;
         case player_display_tab::effects:
@@ -1387,14 +1391,13 @@ auto prepare_display_pane( const display_model_options &opts ) -> display_pane_c
                 }
                 const auto &values = opts.skill_values[i];
                 auto columns = std::vector<game_client::interaction_column> {
-                    { .label = _( "Level" ), .value = std::to_string( values.number ) },
-                    { .label = _( "Exercise" ), .value = string_format( "%d%%", values.exercise ) },
-                    { .label = _( "Color" ), .value = string_from_color( values.color ) },
+                    { .key = "level", .label = _( "Level" ), .value = std::to_string( values.number ), .color = string_from_color( values.color ) },
+                    { .key = "exercise", .label = _( "Exercise" ), .value = string_format( "%d%%", values.exercise ) },
                 };
                 if( entry.skill->ident() == skill_unarmed ) {
-                    columns.push_back( { .label = _( "Damage" ), .value = std::to_string( *values.damage ) } );
+                    columns.push_back( { .key = "damage", .label = _( "Damage" ), .value = std::to_string( *values.damage ) } );
                 } else if( entry.skill->ident() == skill_id( "dodge" ) ) {
-                    columns.push_back( { .label = _( "Dodge" ), .value = string_format( "%.1f", *values.dodge ) } );
+                    columns.push_back( { .key = "dodge", .label = _( "Dodge" ), .value = string_format( "%.1f", *values.dodge ) } );
                 }
                 add_row( { .id = game_client::opaque_interaction_id( "character-skill", { entry.skill->ident().str() } ),
                            .label = entry.skill->name(), .description = entry.skill->description(),
@@ -1484,8 +1487,10 @@ auto prepare_display_boundary( const display_model_options &opts ) -> display_bo
         if( entry.row ) {
             snapshot.choices.push_back( { .id = game_client::opaque_interaction_id( "character-speed", { entry.row->label } ),
                                           .label = entry.row->label, .pane_id = "speed", .selectable = false,
-            .columns = { { .label = _( "Value" ), .value = entry.row->value },
-                { .label = _( "Color" ), .value = string_from_color( entry.row->value_color.value_or( entry.color ) ) }
+            .columns = { {
+                    .key = "value", .label = _( "Value" ), .value = entry.row->value,
+                    .color = string_from_color( entry.row->value_color.value_or( entry.color ) )
+                }
             } } );
         }
     }

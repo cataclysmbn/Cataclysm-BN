@@ -395,19 +395,19 @@ detail::mutations_ui_result detail::show_mutations_ui_internal( Character &who )
                 snapshot.choices.push_back( {
                     .id = "mutation:" + traits[i].str(), .label = branch.name(),
                     .description = remove_color_tags( branch.desc() ),
+                    .hotkey = std::string( 1, data.key ),
                     .pane_id = active_kind ? "active" : "passive",
                     .selected = data.powered,
                     .highlighted = tab_mode == tab && cursor == static_cast<int>( i ),
                     .columns = {
-                        { .label = _( "Kind" ), .value = active_kind ? _( "Active" ) : _( "Passive" ) },
-                        { .label = _( "Key" ), .value = std::string( 1, data.key ) },
-                        { .label = _( "State" ), .value = state },
-                        { .label = _( "Sprite" ), .value = data.show_sprite ? _( "Shown" ) : _( "Hidden" ) },
-                        { .label = _( "Innate" ), .value = who.has_base_trait( traits[i] ) ? _( "Yes" ) : _( "No" ) },
-                        { .label = _( "Cost" ), .value = std::to_string( branch.cost ) },
-                        { .label = _( "Cooldown" ), .value = std::to_string( branch.cooldown ) },
-                        { .label = _( "Color" ), .value = string_from_color( mutation_color( who, traits[i], active_kind, false ) ) },
+                        { .key = "kind", .label = _( "Kind" ), .value = active_kind ? _( "Active" ) : _( "Passive" ) },
+                        { .key = "state", .label = _( "State" ), .value = state },
+                        { .key = "sprite", .label = _( "Sprite" ), .value = data.show_sprite ? _( "Shown" ) : _( "Hidden" ) },
+                        { .key = "innate", .label = _( "Innate" ), .value = who.has_base_trait( traits[i] ) ? _( "Yes" ) : _( "No" ) },
+                        { .key = "cost", .label = _( "Cost" ), .value = std::to_string( branch.cost ) },
+                        { .key = "cooldown", .label = _( "Cooldown" ), .value = std::to_string( branch.cooldown ) },
                     },
+                    .color = string_from_color( mutation_color( who, traits[i], active_kind, false ) ),
                 } );
             }
         };

@@ -341,9 +341,9 @@ void auto_note_manager_gui::show()
                 .id = "extra:" + displayCache[i].str(), .label = entry.first.name(),
                 .selected = entry.second, .highlighted = static_cast<int>( i ) == currentLine,
                 .columns = {
-                    { .label = _( "Symbol" ), .value = entry.first.get_symbol() },
+                    { .key = "symbol", .label = _( "Symbol" ), .value = entry.first.get_symbol() },
                     {
-                        .label = _( "Enabled" ), .value = entry.second ? pgettext( "auto notes status value", "yes" )
+                        .key = "enabled", .label = _( "Enabled" ), .value = entry.second ? pgettext( "auto notes status value", "yes" )
                         : pgettext( "auto notes status value", "no" )
                     },
                 },

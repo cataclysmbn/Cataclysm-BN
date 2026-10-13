@@ -996,17 +996,17 @@ void show_bionics_ui( Character &who )
                 .id = bionic_choice_id( bio ),
                 .label = remove_color_tags( build_bionic_powerdesc_string( bio ) ),
                 .denial = denial,
+.hotkey = bio.invlet == '\0' ? std::string{} : std::string( 1, bio.invlet ),
                 .pane_id = tab_mode == TAB_ACTIVE ? "active" : "passive",
                 .enabled = denial.empty(),
                 .selectable = true,
                 .highlighted = index == static_cast<std::size_t>( cursor ),
                 .columns = {
-                    { .label = _( "Manual (shortcut)" ), .value = std::string( 1, bio.invlet ) },
-                    { .label = _( "Power" ), .value = build_bionic_poweronly_string( bio ) },
-                    { .label = _( "State" ), .value = bionic_state_string( bio ) },
-                    { .label = _( "Fuel" ), .value = build_bionic_fuel_string( bio, who ) },
-                    { .label = _( "Color" ), .value = string_from_color( get_bionic_text_color( bio, false ) ) },
+                    { .key = "power", .label = _( "Power" ), .value = build_bionic_poweronly_string( bio ) },
+                    { .key = "state", .label = _( "State" ), .value = bionic_state_string( bio ) },
+                    { .key = "fuel", .label = _( "Fuel" ), .value = build_bionic_fuel_string( bio, who ) },
                 },
+                .color = string_from_color( get_bionic_text_color( bio, false ) ),
             } );
             auto description = capture_bionic_description( bio, who );
             dependencies.push_back( bionic_description_key( description, descriptions->locale ) );

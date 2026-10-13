@@ -51,10 +51,9 @@ template struct list_items_access<&game::list_items>;
 using namespace client_screen_test;
 
 namespace {
-auto column(const game_client::interaction_choice& choice, const std::string& label)
-    -> std::string {
+auto column(const game_client::interaction_choice& choice, const std::string& key) -> std::string {
     const auto found =
-        std::ranges::find(choice.columns, label, &game_client::interaction_column::label);
+        std::ranges::find(choice.columns, key, &game_client::interaction_column::key);
     REQUIRE(found != choice.columns.end());
     return found->value;
 }
@@ -143,10 +142,10 @@ TEST_CASE(
                     CHECK(active->selected);
                     CHECK(passive->pane_id == "passive");
                     CHECK(active->pane_id == "active");
-                    CHECK(column(*passive, "Color") == string_from_color(c_light_cyan));
-                    CHECK(column(*active, "Color") == string_from_color(c_light_green));
-                    CHECK(column(*active, "Innate") == "No");
-                    CHECK(column(*active, "Cost") == "0");
+                    CHECK(passive->color == string_from_color(c_light_cyan));
+                    CHECK(active->color == string_from_color(c_light_green));
+                    CHECK(column(*active, "innate") == "No");
+                    CHECK(column(*active, "cost") == "0");
                     CHECK(row(snapshot, "action:REASSIGN")->pane_id == "actions");
                     CHECK_FALSE(passive->description.empty());
                     return choose(snapshot, "action:TOGGLE_EXAMINE");
@@ -197,9 +196,9 @@ TEST_CASE(
                     const auto flashlight = row(snapshot, active_id);
                     REQUIRE(flashlight != snapshot.choices.end());
                     CHECK(flashlight->pane_id == "active");
-                    CHECK(column(*flashlight, "State") == "Off");
-                    CHECK(column(*flashlight, "Power").find("act") != std::string::npos);
-                    CHECK(column(*flashlight, "Color") == string_from_color(c_light_red));
+                    CHECK(column(*flashlight, "state") == "Off");
+                    CHECK(column(*flashlight, "power").find("act") != std::string::npos);
+                    CHECK(flashlight->color == string_from_color(c_light_red));
                     CHECK(row(snapshot, passive_id) == snapshot.choices.end());
                     return event_of({.action = "NEXT_TAB"});
                 }
@@ -210,8 +209,8 @@ TEST_CASE(
                     const auto storage = row(snapshot, passive_id);
                     REQUIRE(storage != snapshot.choices.end());
                     CHECK(storage->pane_id == "passive");
-                    CHECK(column(*storage, "State") == "Passive");
-                    CHECK(column(*storage, "Color") == string_from_color(c_cyan));
+                    CHECK(column(*storage, "state") == "Passive");
+                    CHECK(storage->color == string_from_color(c_cyan));
                     return event_of({.action = "NEXT_TAB"});
                 }
                 case 2:
