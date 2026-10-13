@@ -3809,7 +3809,7 @@
         },
         "locale": {
           "type": "string",
-          "description": "BN language id, such as `ko`. Default: the engine's.",
+          "description": "BN language id, such as `ko_KR`. Default: the engine's.",
           "minLength": 1
         },
         "capabilities": {
