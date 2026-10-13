@@ -76,7 +76,7 @@ public:
     }
     auto projected_size() const -> point override { return memory::screen_size(); }
     auto capabilities() const -> client_capabilities override {
-        return {.tiles = false, .mouse = true, .gamepad = false};
+        return {.tiles = false, .mouse = true, .gamepad = false, .protocol = true};
     }
 };
 

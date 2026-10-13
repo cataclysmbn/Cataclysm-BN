@@ -51,6 +51,8 @@ auto backend_selected() -> bool { return static_cast<bool>( selected_backend() )
 
 auto has_tiles() -> bool { return backend_selected() && active_backend().capabilities().tiles; }
 
+auto has_protocol_client() -> bool { return backend_selected() && active_backend().capabilities().protocol; }
+
 auto create_backend( const client_kind kind ) -> backend_ptr
 {
     const auto factory = backend_factories().find( kind );

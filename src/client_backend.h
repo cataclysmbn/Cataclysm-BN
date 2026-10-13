@@ -30,6 +30,8 @@ struct client_capabilities {
     bool mouse = false;
     bool gamepad = false;
     bool requires_display = false;
+    /// A protocol client draws the game from the engine's published state and keys itself.
+    bool protocol = false;
 };
 
 /// Runtime device boundary shared by the game loop and every display client.

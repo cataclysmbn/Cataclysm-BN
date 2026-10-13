@@ -3607,7 +3607,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "debug_sound_walls" );
     ctxt.register_action( "debug_hour_timer" );
     ctxt.register_action( "debug_mode" );
-    if( use_tiles ) {
+    if( use_tiles || game_client::has_protocol_client() ) {
         ctxt.register_action( "zoom_out" );
         ctxt.register_action( "zoom_in" );
     }
@@ -9534,9 +9534,11 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    if( use_tiles ) {
+    if( use_tiles || game_client::has_protocol_client() ) {
         ctxt.register_action( "zoom_out" );
         ctxt.register_action( "zoom_in" );
+    }
+    if( use_tiles ) {
         ctxt.register_action( "debug_tileset" );
     }
     if( game_client::has_tiles() ) {
