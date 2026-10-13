@@ -22,6 +22,9 @@ auto ready() -> ec::readiness {
 }
 auto boundary(client::interaction_snapshot native) -> ec::boundary_state {
     native.schema_id = native.schema_id.empty() ? "schema:test" : native.schema_id;
+    // A captured boundary is structured; the snapshot's defaults describe a bare actions screen.
+    native.structured = true;
+    native.actions_only = false;
     return {
         .id = "boundary:test",
         .epoch = "epoch:test",
@@ -267,6 +270,8 @@ TEST_CASE(
     REQUIRE(stack.size() == 2);
     CHECK(stack[0].role == "map");
     CHECK(stack[0].affordances.empty());
+    // A covered screen's components name no affordance either.
+    CHECK(stack[0].root->affordances.empty());
     CHECK(stack[1].screen_id == "screen:read:boundary:test");
     CHECK(stack[1].role == "dialog");
     state.id = "boundary:next";

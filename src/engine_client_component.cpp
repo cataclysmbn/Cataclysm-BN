@@ -145,9 +145,9 @@ auto native_affordances( build &b ) -> void
     }
     if( !native.any_key_choice_id.empty() ) {
         // The screen's own word: the row any key acknowledges.
-        const auto row = std::ranges::find( native.choices, native.any_key_choice_id,
-                                            &interaction_choice::id );
-        b.add( { .id = "bn:any_key", .label = row != native.choices.end() ? row->label : native_label( b.state, { "ANY_INPUT" } ),
+        const auto acknowledged = std::ranges::find( native.choices, native.any_key_choice_id,
+                                  &interaction_choice::id );
+        b.add( { .id = "bn:any_key", .label = acknowledged != native.choices.end() ? acknowledged->label : native_label( b.state, { "ANY_INPUT" } ),
                  .role = "any_key", .runs = invoke_kind::choose, .target = native.any_key_choice_id } );
     }
 }
@@ -281,11 +281,22 @@ auto screen_of( const boundary_state &state, const slot &entry, const bool top )
     result.context = entry.context;
     if( !top ) {
         result.affordances.clear();
+        if( result.root ) { clear_affordances( *result.root ); }
     } else if( described ) {
         // The registered actions of the context follow the screen's own affordances.
         std::ranges::move( registered_affordances( state ), std::back_inserter( result.affordances ) );
     }
     return result;
+}
+
+/// A covered screen offers nothing, so its components name no affordance either.
+auto clear_affordances( component &value ) -> void
+{
+    value.affordances.clear();
+    if( auto *const body = std::get_if<list_body>( &value.body ) ) { body->activate.clear(); }
+    if( auto *const body = std::get_if<tabs_body>( &value.body ) ) { body->select.clear(); }
+    if( auto *const body = std::get_if<form_body>( &value.body ) ) { body->submit.clear(); }
+    for( auto &child : value.children ) { clear_affordances( child ); }
 }
 
 auto collect_rows( const component &value, std::vector<std::string> &into ) -> bool

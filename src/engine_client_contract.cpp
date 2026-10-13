@@ -672,7 +672,12 @@ auto command_lifecycle::validate( const clock_point &at, const boundary_state &c
                 return reject( error::stale_boundary );
             }
         }
-        if( found == top->affordances.end() ) { return reject( error::unknown_affordance ); }
+        if( found == top->affordances.end() ) {
+            // Before the game offers anything, as the 0.1 lifecycle answers.
+            return reject( current.ready.accepts_interaction_commands ||
+                           current.ready.accepts_registered_actions ?
+                           error::unknown_affordance : error::not_ready );
+        }
         if( ( scope_of( *found ) == expect_scope::screen ) != expect.screen_id.has_value() ) {
             return reject( error::invalid_arguments );
         }
