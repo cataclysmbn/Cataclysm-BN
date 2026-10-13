@@ -1141,6 +1141,20 @@ TEST_CASE(
     CHECK_FALSE(field.tint->fg.empty());
 }
 
+TEST_CASE("world capture tells which fields hide the items under them", "[engine_client_world]") {
+    const auto setup = make_scene();
+    auto& here = get_map();
+    const auto web_at = setup.start + tripoint_west;
+    const auto acid_at = setup.start + tripoint_east;
+    here.add_field(web_at, field_type_id("fd_web"), 1);
+    here.add_field(acid_at, field_type_id("fd_acid_water"), 1);
+    map_perception::acquire();
+    const auto state = ec::world::capture_world();
+    // The native view draws no items under a web, and those under acid water as usual.
+    CHECK(find_cell(state, at(web_at))->fields.back().hides_items);
+    CHECK_FALSE(find_cell(state, at(acid_at))->fields.back().hides_items);
+}
+
 namespace {
 /// The partition wall seen, then left out of sight and captured, so a capture cache holds it as
 /// memory.

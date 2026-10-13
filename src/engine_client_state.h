@@ -93,6 +93,8 @@ struct look {
 struct field_entry {
     look appearance;
     int intensity = 0;
+    /// The field's type hides the items under it from the native view.
+    bool hides_items = false;
     auto operator<=>( const field_entry & ) const = default; // *NOPAD*
 };
 enum class knowledge { remembered, visible, sensed };

@@ -417,6 +417,10 @@
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991
+              },
+              "hides_items": {
+                "const": true,
+                "description": "The field's type hides the items under it: the native tiles view draws neither them nor their highlight while it is the displayed field."
               }
             },
             "required": [

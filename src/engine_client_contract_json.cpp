@@ -98,7 +98,9 @@ auto layer_array( const std::vector<look> &values, const std::string_view layer_
 }
 auto to_json( const field_entry &value ) -> json
 {
-    return {{"look", layer_json( value.appearance, "field" )}, {"intensity", value.intensity}};
+    auto result = json{{"look", layer_json( value.appearance, "field" )}, {"intensity", value.intensity}};
+    if( value.hides_items ) { result["hides_items"] = true; }
+    return result;
 }
 auto known_name( const knowledge value ) -> const char *
 {
