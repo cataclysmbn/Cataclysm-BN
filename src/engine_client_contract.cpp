@@ -1,4 +1,9 @@
 #include "engine_client_contract.h"
+#include "action.h"
+#include "activity_actor_definitions.h"
+#include "player_activity.h"
+#include "pickup_token.h"
+#include "avatar.h"
 #include "client_input.h"
 #include "client_memory.h"
 #include "client_interaction_validation.h"
@@ -165,7 +170,18 @@ auto travel_click( const travel_operation &operation ) -> std::optional<game_cli
 {
     const auto target = to_bubble( operation.target, current_bubble_frame() );
     if( !target ) { return std::nullopt; }
-    const auto cell = g->click_cell_of( tripoint_bub_ms( target->x, target->y, target->z ) );
+    const auto at = tripoint_bub_ms( target->x, target->y, target->z );
+    const auto &you = get_avatar();
+    const auto step = at - you.bub_pos();
+    // The route planner takes no step into a closed door; native movement opens it.
+    if( operation.button == "left" && step.z() == 0 &&
+        square_dist( at.xy().raw(), you.bub_pos().xy().raw() ) == 1 &&
+        get_map().can_open_door( &you, at, !get_map().is_outside( you.bub_pos() ) ) ) {
+        return game_client::input_command{
+            .action = action_ident( get_movement_action_from_delta( step, iso_rotate::yes ) ),
+            .input_id = game_client::current_input_id() };
+    }
+    const auto cell = g->click_cell_of( at );
     if( !cell ) { return std::nullopt; }
     return game_client::input_command{ .mouse_position = *cell, .mouse_button = operation.button };
 }

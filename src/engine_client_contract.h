@@ -151,8 +151,9 @@ struct travel_operation {
     /// `left` is Tiles' SELECT; `right` is SEC_SELECT, which examines, closes, picks up or fires.
     std::string button = "left";
 };
-/// The native click input that selects `operation.target`; nullopt when another dimension or
-/// level, or a square outside the terrain window.
+/// The native input that travels to `operation.target`: its click, or for a left click on a closed door
+/// beside the avatar the move into it, which opens it. Nullopt when another dimension or level, or a
+/// square outside the terrain window.
 auto travel_click( const travel_operation &operation ) -> std::optional<game_client::input_command>;
 struct expectation {
     counter revision = 0;
